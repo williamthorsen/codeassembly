@@ -145,20 +145,6 @@ describe('createRunsRouter', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ artifacts: ['status.json', 'plan.md', 'architecture.json'] });
-      expect(res.body).toEqual({
-        artifacts: expect.arrayContaining([
-          expect.stringMatching(/\.(md|json)$/),
-        ]),
-      });
-      expect(res.body).not.toEqual({
-        artifacts: expect.arrayContaining(['notes.txt']),
-      });
-      expect(res.body).not.toEqual({
-        artifacts: expect.arrayContaining(['image.png']),
-      });
-      expect(res.body).not.toEqual({
-        artifacts: expect.arrayContaining(['data.csv']),
-      });
     });
 
     it('returns 404 when run is not found', async () => {
