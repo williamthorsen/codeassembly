@@ -4,14 +4,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "paths": {
-      "~src/*": ["./src/*"],
-    },
     "strict": true,
-    "types": ["@types/chrome"],
+    "useDefineForClassFields": true,
   },
-  "include": [
-    "src/", //
-    "*.ts",
-  ],
+  "include": ["src/", "*.ts"],
 }

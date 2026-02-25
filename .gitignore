@@ -49,10 +49,6 @@ logs
 # OS files
 .DS_Store
 
-# Shared files (symlinks)
-.agents/shared
-.claude
-
 # Testing
 coverage/
 .vitest-result.json
