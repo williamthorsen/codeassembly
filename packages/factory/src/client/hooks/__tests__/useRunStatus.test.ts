@@ -44,11 +44,11 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
 describe('useRunStatus', () => {
   beforeEach(() => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    mockedFetchRunStatus.mockReset();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it('returns null data when no project or run is selected', () => {
@@ -82,5 +82,88 @@ describe('useRunStatus', () => {
     });
 
     expect(result.current.error?.message).toBe('Network error');
+  });
+
+  it('starts polling when status is in_progress', async () => {
+    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+    mockedFetchRunStatus.mockResolvedValue(inProgressStatus);
+
+    renderHook(() => useRunStatus('test', 'test-run'));
+
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
+    });
+
+    // Advance past the poll interval to trigger a second fetch
+    vi.advanceTimersByTime(2000);
+
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('stops polling when run completes', async () => {
+    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+    const completedStatus = createMockStatus({ status: 'completed' });
+
+    mockedFetchRunStatus.mockResolvedValueOnce(inProgressStatus).mockResolvedValueOnce(completedStatus);
+
+    renderHook(() => useRunStatus('test', 'test-run'));
+
+    // Wait for first fetch (in_progress) to complete
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
+    });
+
+    // Advance to trigger second fetch which returns completed
+    vi.advanceTimersByTime(2000);
+
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
+    });
+
+    // Advance again — no more fetches should happen since polling stopped
+    vi.advanceTimersByTime(2000);
+
+    // Small wait to confirm no additional calls were made
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('does not start polling for completed runs', async () => {
+    const completedStatus = createMockStatus({ status: 'completed' });
+    mockedFetchRunStatus.mockResolvedValue(completedStatus);
+
+    renderHook(() => useRunStatus('test', 'test-run'));
+
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
+    });
+
+    // Advance well past the poll interval
+    vi.advanceTimersByTime(4000);
+
+    // No additional fetches should have been made
+    expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
+  });
+
+  it('cleans up interval on unmount while polling', async () => {
+    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+    mockedFetchRunStatus.mockResolvedValue(inProgressStatus);
+
+    const { unmount } = renderHook(() => useRunStatus('test', 'test-run'));
+
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
+    });
+
+    // Unmount while polling is active
+    unmount();
+
+    // Advance past the poll interval — no new fetches should occur
+    vi.advanceTimersByTime(4000);
+
+    expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
   });
 });
