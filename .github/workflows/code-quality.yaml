@@ -1,0 +1,79 @@
+name: Code Quality Checks
+
+# This workflow runs code quality checks on push and pull request events
+# It uses pnpm run ci to run all checks, which includes:
+# - Type checking
+# - Formatting checks
+# - Linting
+# - Tests with coverage
+# - Security audits
+# - Building all packages in the monorepo
+#
+# Note: This workflow will be automatically skipped if the commit message includes
+# any of the following strings: [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
+
+on:
+  push:
+    branches:
+      - main
+      - next
+
+  pull_request:
+    branches:
+      - main
+      - next
+
+jobs:
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    env:
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.2 # Match the version in .tool-versions
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0' # Match the version in .tool-versions
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          pnpm config set auto-install-peers false
+          pnpm install
+
+      - name: Install AWS SAM CLI
+        env:
+          SAM_VERSION: 1.138.0
+        run: |
+          curl -Lo /tmp/aws-sam-cli.zip https://github.com/aws/aws-sam-cli/releases/download/v${SAM_VERSION}/aws-sam-cli-linux-x86_64.zip
+          unzip /tmp/aws-sam-cli.zip -d /tmp/sam-install
+          # Pass the --update flag because SAM may already exist in the runner image
+          sudo /tmp/sam-install/install --update
+
+          # Verify installation
+          sam --version
+
+      - name: Run code quality checks
+        # Needed for the workspaces/cdk build
+        env:
+          CDK_DEFAULT_ACCOUNT: '000000000000'
+          CDK_DEFAULT_REGION: 'us-east-1'
+          npm_package_version: '0.0.0-ci' # dummy version just for packages/cdk/scripts/synth.sh
+        run: pnpm run ci
