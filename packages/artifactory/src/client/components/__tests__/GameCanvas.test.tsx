@@ -1,7 +1,8 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
+import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
+import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 
 const { mockEngineConstructor, mockEngineStart, mockEngineStop, mockEngineAddScene, mockEngineGoToScene, mockUpdateStatus } = vi.hoisted(
   () => {
@@ -60,40 +61,6 @@ vi.mock('../GameCanvas.css', () => ({}));
 const { GameCanvas } = await import('../GameCanvas.js');
 const { FactoryScene } = await import('../../game/scenes/FactoryScene.js');
 
-function emptyPhases(): Phases {
-  return {
-    architecture: undefined,
-    planning: undefined,
-    implementation: undefined,
-    parallelReview: undefined,
-    review: undefined,
-    codeSimplifier: undefined,
-    holisticReview: undefined,
-  };
-}
-
-function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
-  return {
-    runId: 'test-run',
-    projectSlug: 'test',
-    ticketId: undefined,
-    projectRoot: '/test',
-    branch: 'main',
-    task: 'test task',
-    startedAt: '2026-01-01T00:00:00Z',
-    completedAt: undefined,
-    status: 'completed',
-    externalPlan: false,
-    mergeBaseSha: undefined,
-    diffBase: undefined,
-    maxReviewRounds: undefined,
-    fixLowFindings: undefined,
-    phases: emptyPhases(),
-    phaseDecision: {},
-    ...overrides,
-  };
-}
-
 function getAddedScene(): unknown {
   const call = mockEngineAddScene.mock.calls.find(
     (c: unknown[]) => c[0] === 'factory',
@@ -116,7 +83,7 @@ describe('GameCanvas', () => {
   });
 
   it('renders a canvas element', () => {
-    const status = createMockStatus();
+    const status = createMockRunStatus();
     const { container } = render(<GameCanvas status={status} />);
 
     const canvas = container.querySelector('canvas');
@@ -124,7 +91,7 @@ describe('GameCanvas', () => {
   });
 
   it('creates an Excalibur engine on mount', () => {
-    const status = createMockStatus();
+    const status = createMockRunStatus();
     render(<GameCanvas status={status} />);
 
     expect(mockEngineConstructor).toHaveBeenCalledTimes(1);
@@ -137,7 +104,7 @@ describe('GameCanvas', () => {
   });
 
   it('adds a FactoryScene and navigates to it', () => {
-    const status = createMockStatus();
+    const status = createMockRunStatus();
     render(<GameCanvas status={status} />);
 
     expect(mockEngineAddScene).toHaveBeenCalledWith('factory', expect.anything());
@@ -145,14 +112,14 @@ describe('GameCanvas', () => {
   });
 
   it('starts the engine', () => {
-    const status = createMockStatus();
+    const status = createMockRunStatus();
     render(<GameCanvas status={status} />);
 
     expect(mockEngineStart).toHaveBeenCalledTimes(1);
   });
 
   it('stops the engine on unmount', () => {
-    const status = createMockStatus();
+    const status = createMockRunStatus();
     const { unmount } = render(<GameCanvas status={status} />);
 
     unmount();
@@ -161,8 +128,8 @@ describe('GameCanvas', () => {
   });
 
   it('updates scene when status changes after initialization', async () => {
-    const status1 = createMockStatus({ runId: 'run-1' });
-    const status2 = createMockStatus({ runId: 'run-2' });
+    const status1 = createMockRunStatus({ runId: 'run-1' });
+    const status2 = createMockRunStatus({ runId: 'run-2' });
 
     const { rerender } = render(<GameCanvas status={status1} />);
 
@@ -184,8 +151,8 @@ describe('GameCanvas', () => {
     // Make start() return a pending promise that never resolves
     mockEngineStart.mockReturnValue(new Promise(() => {}));
 
-    const status1 = createMockStatus({ runId: 'run-1' });
-    const status2 = createMockStatus({ runId: 'run-2' });
+    const status1 = createMockRunStatus({ runId: 'run-1' });
+    const status2 = createMockRunStatus({ runId: 'run-2' });
 
     const { rerender } = render(<GameCanvas status={status1} />);
 
@@ -197,7 +164,7 @@ describe('GameCanvas', () => {
   });
 
   it('creates FactoryScene as an instance of the mocked class', () => {
-    const status = createMockStatus();
+    const status = createMockRunStatus();
     render(<GameCanvas status={status} />);
 
     const scene = getAddedScene();
