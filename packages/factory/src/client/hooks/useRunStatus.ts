@@ -34,7 +34,6 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
 
     async function loadStatus() {
       try {
-        setIsLoading(true);
         const status = await fetchRunStatus(slug, id);
         if (mounted) {
           setData(status);
@@ -60,6 +59,7 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
       }
     }
 
+    setIsLoading(true);
     void loadStatus();
 
     return () => {
