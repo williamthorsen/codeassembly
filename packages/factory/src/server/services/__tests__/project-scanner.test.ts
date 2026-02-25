@@ -71,8 +71,9 @@ describe('ProjectScanner', () => {
     mockStatDirectory();
     mockReaddirResult(['tickets']);
     mockReaddirResult(['TICKET-1']);
+    mockStatDirectory(); // stat check for TICKET-1 directory
     mockReaddirResult(['20260225-run1']);
-    mockStatDirectory();
+    mockStatDirectory(); // stat check for run directory
 
     mockedParseStatusFile.mockResolvedValueOnce(
       createMockStatus({
@@ -196,5 +197,99 @@ describe('ProjectScanner', () => {
     const index = scanner.getIndex();
     expect(index).not.toBeNull();
     expect(index?.projects).toHaveLength(0);
+  });
+
+  it('skips runs with invalid status.json and continues scanning other runs', async () => {
+    const scanner = new ProjectScanner('/test/projects');
+
+    mockReaddirResult(['proj']);
+    mockStatDirectory();
+    mockReaddirResult(['tickets']);
+    mockReaddirResult(['TICKET-1']);
+    mockStatDirectory(); // stat for TICKET-1 directory
+    mockReaddirResult(['bad-run', 'good-run']);
+    mockStatDirectory(); // stat for bad-run directory
+    mockStatDirectory(); // stat for good-run directory
+
+    mockedParseStatusFile.mockRejectedValueOnce(new Error('Invalid JSON'));
+    mockedParseStatusFile.mockResolvedValueOnce(
+      createMockStatus({
+        runId: 'good-run',
+        startedAt: '2026-03-01T00:00:00Z',
+      }),
+    );
+
+    const result = await scanner.scan();
+
+    expect(result.projects).toHaveLength(1);
+    const runs = result.projects[0]?.tickets[0]?.runs;
+    expect(runs).toHaveLength(1);
+    expect(runs?.[0]?.runId).toBe('good-run');
+  });
+
+  it('does not scan direct entries when tickets/ directory exists', async () => {
+    const scanner = new ProjectScanner('/test/projects');
+
+    // Project has both tickets/ directory and a sibling directory OTHER-1
+    mockReaddirResult(['proj']);
+    mockStatDirectory();
+    mockReaddirResult(['tickets', 'OTHER-1']);
+    // Pattern 1: scan tickets/ directory
+    mockReaddirResult(['TICKET-1']);
+    mockStatDirectory(); // stat for TICKET-1 directory
+    mockReaddirResult(['20260301-run']);
+    mockStatDirectory(); // stat for run directory
+
+    mockedParseStatusFile.mockResolvedValueOnce(
+      createMockStatus({
+        runId: '20260301-run',
+        projectSlug: 'proj',
+        ticketId: 'TICKET-1',
+        startedAt: '2026-03-01T00:00:00Z',
+      }),
+    );
+
+    const result = await scanner.scan();
+
+    expect(result.projects).toHaveLength(1);
+    expect(result.projects[0]?.tickets).toHaveLength(1);
+    expect(result.projects[0]?.tickets[0]?.ticketId).toBe('TICKET-1');
+    // OTHER-1 should NOT appear as a ticket — Pattern 2 was skipped
+    const ticketIds = result.projects[0]?.tickets.map((t) => t.ticketId);
+    expect(ticketIds).not.toContain('OTHER-1');
+  });
+
+  it('uses AI_PROJECTS_PATH environment variable when no basePath is provided', async () => {
+    const originalEnv = process.env.AI_PROJECTS_PATH;
+    try {
+      process.env.AI_PROJECTS_PATH = '/custom/ai/path';
+      const scanner = new ProjectScanner();
+
+      mockReaddirResult(['my-project']);
+      mockStatDirectory();
+      mockReaddirResult(['TICKET-1']);
+      mockStatDirectory();
+      mockReaddirResult(['run-1']);
+      mockStatDirectory();
+
+      mockedParseStatusFile.mockResolvedValueOnce(
+        createMockStatus({
+          runId: 'run-1',
+          startedAt: '2026-03-01T00:00:00Z',
+        }),
+      );
+
+      const result = await scanner.scan();
+
+      expect(result.projects).toHaveLength(1);
+      // Verify readdir was called with the env var path, not the default
+      expect(mockedReaddir).toHaveBeenCalledWith('/custom/ai/path');
+    } finally {
+      if (originalEnv === undefined) {
+        delete process.env.AI_PROJECTS_PATH;
+      } else {
+        process.env.AI_PROJECTS_PATH = originalEnv;
+      }
+    }
   });
 });
