@@ -264,9 +264,7 @@ describe('parseStatusFile', () => {
     });
 
     it('rejects array phases', async () => {
-      mockedReadFile.mockResolvedValue(
-        JSON.stringify({ ...minimalValid(), phases: [] }),
-      );
+      mockJson({ ...minimalValid(), phases: [] } as Record<string, unknown>);
 
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
         'Invalid status.json',
