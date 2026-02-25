@@ -29,4 +29,4 @@ export interface ArtifactContentResponse {
   content: string;
 }
 
-export {type CanonicalRunStatus} from './canonical.js';
+export { type CanonicalRunStatus } from './canonical.js';
