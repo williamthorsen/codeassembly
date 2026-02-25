@@ -2,9 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-🚨**Important:** On startup read and follow the instructions in `.agents/shared/startup.md`.
-Be aware that `.agents/shared` is a symlink.
-
 ## Project Structure
 
 This is a PNPM monorepo with multiple package templates including React, Next.js, Svelte, Astro, Chrome extension, CDK, and API packages. Each package in `packages/` represents a different technology template with its own build configuration.
