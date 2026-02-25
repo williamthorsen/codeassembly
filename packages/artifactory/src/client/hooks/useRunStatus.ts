@@ -51,6 +51,10 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
       } catch (error_) {
         if (mounted) {
           setError(error_ instanceof Error ? error_ : new Error('Unknown error'));
+          if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
         }
       } finally {
         if (mounted) {
