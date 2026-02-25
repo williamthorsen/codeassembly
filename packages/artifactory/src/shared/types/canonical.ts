@@ -1,0 +1,107 @@
+export type RunStatus = 'in_progress' | 'completed' | 'failed' | 'needs_manual_review';
+export type Criticality = 'none' | 'low' | 'medium' | 'high';
+export type ReviewerStatus = 'completed' | 'skipped' | 'failed';
+export type PhaseStatus = 'completed' | 'skipped' | 'failed' | 'in_progress' | 'approved';
+
+export interface CanonicalRunStatus {
+  runId: string;
+  projectSlug: string;
+  ticketId: string | undefined;
+  projectRoot: string;
+  branch: string;
+  task: string;
+  startedAt: string;
+  completedAt: string | undefined;
+  status: RunStatus;
+  externalPlan: boolean;
+  mergeBaseSha: string | undefined;
+  diffBase: string | undefined;
+  maxReviewRounds: number | undefined;
+  fixLowFindings: boolean | undefined;
+  phases: Phases;
+  phaseDecision: Record<string, PhaseDecision>;
+}
+
+export interface PhaseDecision {
+  run: boolean;
+  reason: string;
+}
+
+export interface Phases {
+  architecture: ArchitecturePhase | undefined;
+  planning: PlanningPhase | undefined;
+  implementation: ImplementationPhase | undefined;
+  parallelReview: ParallelReviewPhase | undefined;
+  review: LegacyReviewPhase | undefined;
+  codeSimplifier: CodeSimplifierPhase | undefined;
+  holisticReview: HolisticReviewPhase | undefined;
+}
+
+export interface ArchitecturePhase {
+  status: PhaseStatus;
+  impactLevel: string | undefined;
+  artifact: string | undefined;
+}
+
+export interface PlanningPhase {
+  status: PhaseStatus;
+  stepCount: number | undefined;
+  artifacts: string[] | undefined;
+}
+
+export interface ImplementationPhase {
+  status: PhaseStatus;
+  artifact: string | undefined;
+  qualityGates: string | QualityGates | undefined;
+}
+
+export interface QualityGates {
+  typecheck: string | undefined;
+  lint: string | undefined;
+  tests: string | undefined;
+}
+
+export interface ParallelReviewPhase {
+  aggregatedCriticality: Criticality;
+  reviewRoundsUsed: number;
+  reviewers: Record<string, ReviewerInfo>;
+  coderFixCycleRan: boolean;
+  selectiveReReview: SelectiveReReview | undefined;
+}
+
+export interface ReviewerInfo {
+  ran: boolean;
+  status: ReviewerStatus | undefined;
+  criticality: Criticality | undefined;
+  reason: string | undefined;
+  reReviewCriticality: Criticality | undefined;
+  reReviewError: string | undefined;
+}
+
+export interface SelectiveReReview {
+  ran: boolean;
+  reviewersDispatched: string[];
+  additionalFixCycleRan: boolean;
+}
+
+export interface CodeSimplifierPhase {
+  ran: boolean;
+  actionableFindings: boolean;
+  coderFixCycleRan: boolean;
+  artifact: string | undefined;
+}
+
+export interface HolisticReviewPhase {
+  status: PhaseStatus;
+  criticality: Criticality | undefined;
+  reReviewCriticality: Criticality | undefined;
+  coderFixCycleRan: boolean;
+  reviewRoundsUsed: number;
+  artifact: string | undefined;
+}
+
+export interface LegacyReviewPhase {
+  status: PhaseStatus;
+  iterations: number | undefined;
+  finalCriticality: Criticality | undefined;
+}

@@ -6,6 +6,7 @@ integrations:
   jira:
     enabled: false
 repository:
+  slug: artifactory
   default_remote:
     - name: origin
       default_branch: next
