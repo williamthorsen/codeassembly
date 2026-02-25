@@ -1,3 +1,6 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
@@ -130,6 +133,7 @@ describe('ProjectScanner', () => {
     expect(result.projects[0]?.tickets[0]?.ticketId).toBe('RAD-1');
   });
 
+  // Error recovery: graceful degradation — returns an empty index rather than throwing
   it('handles missing base directory gracefully', async () => {
     const scanner = new ProjectScanner('/nonexistent');
 
@@ -199,6 +203,7 @@ describe('ProjectScanner', () => {
     expect(index?.projects).toHaveLength(0);
   });
 
+  // Error recovery: skip-and-continue — invalid runs are skipped, valid siblings still collected
   it('skips runs with invalid status.json and continues scanning other runs', async () => {
     const scanner = new ProjectScanner('/test/projects');
 
@@ -282,8 +287,30 @@ describe('ProjectScanner', () => {
       const result = await scanner.scan();
 
       expect(result.projects).toHaveLength(1);
-      // Verify readdir was called with the env var path, not the default
+      // Implementation-level check: verifies the constructor resolved the env var correctly.
+      // Mock call assertion is standard here since filesystem ops are fully mocked.
       expect(mockedReaddir).toHaveBeenCalledWith('/custom/ai/path');
+    } finally {
+      if (originalEnv === undefined) {
+        delete process.env.AI_PROJECTS_PATH;
+      } else {
+        process.env.AI_PROJECTS_PATH = originalEnv;
+      }
+    }
+  });
+
+  it('falls back to homedir default when no basePath or env var is set', async () => {
+    const originalEnv = process.env.AI_PROJECTS_PATH;
+    try {
+      delete process.env.AI_PROJECTS_PATH;
+      const scanner = new ProjectScanner();
+
+      mockReaddirResult([]);
+
+      await scanner.scan();
+
+      const expectedPath = join(homedir(), '.ai', 'projects');
+      expect(mockedReaddir).toHaveBeenCalledWith(expectedPath);
     } finally {
       if (originalEnv === undefined) {
         delete process.env.AI_PROJECTS_PATH;
