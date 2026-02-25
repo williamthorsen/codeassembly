@@ -51,14 +51,15 @@ export class ProjectScanner {
       const entries = await readdir(projectPath);
 
       // Pattern 1: tickets/{ticket-id}/{run-id}
+      // Pattern 2: {ticket-id}/{run-id} (direct entries, no tickets/ directory)
+      // Only one pattern is used per project to avoid duplicate ticket entries.
       if (entries.includes('tickets')) {
         const ticketResults = await this.scanTicketsDirectory(projectPath, slug);
         tickets.push(...ticketResults);
+      } else {
+        const directResults = await this.scanDirectEntries(entries, projectPath, slug);
+        tickets.push(...directResults);
       }
-
-      // Pattern 2: {ticket-id}/{run-id} (no tickets/ directory)
-      const directResults = await this.scanDirectEntries(entries, projectPath, slug);
-      tickets.push(...directResults);
     } catch (error) {
       console.error(`Error reading project directory ${slug}:`, error);
     }
@@ -76,6 +77,12 @@ export class ProjectScanner {
       for (const ticketId of ticketDirs) {
         if (ticketId.startsWith('.')) continue;
         const ticketPath = join(ticketsPath, ticketId);
+        try {
+          const ticketStat = await stat(ticketPath);
+          if (!ticketStat.isDirectory()) continue;
+        } catch {
+          continue;
+        }
         const runs = await this.scanTicket(ticketPath, slug, ticketId);
         if (runs.length > 0) {
           tickets.push({ ticketId, runs });
