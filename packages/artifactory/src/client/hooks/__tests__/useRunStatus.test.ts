@@ -229,14 +229,13 @@ describe('useRunStatus', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('recovers from errors during active polling', async () => {
+  it('stops polling when a fetch error occurs', async () => {
     const inProgressStatus = createMockStatus({ status: 'in_progress' });
 
-    // First call succeeds, second call (during polling) fails, third recovers
+    // First call succeeds, second call (during polling) fails
     mockedFetchRunStatus
       .mockResolvedValueOnce(inProgressStatus)
-      .mockRejectedValueOnce(new Error('Transient failure'))
-      .mockResolvedValueOnce(inProgressStatus);
+      .mockRejectedValueOnce(new Error('Transient failure'));
 
     const { result } = renderHook(() => useRunStatus('test', 'test-run'));
 
@@ -257,14 +256,8 @@ describe('useRunStatus', () => {
     // Stale data is intentionally preserved during transient errors (no setData(null) in catch)
     expect(result.current.data).not.toBeNull();
 
-    // Advance again — the interval should still be running and the next poll recovers
-    vi.advanceTimersByTime(2000);
-
-    await waitFor(() => {
-      expect(result.current.data).not.toBeNull();
-    });
-
-    // Error is cleared on successful recovery (setError(null) in try block)
-    expect(result.current.error).toBeNull();
+    // Advance again — polling should have stopped after the error, so no additional fetches
+    vi.advanceTimersByTime(4000);
+    expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
   });
 });
