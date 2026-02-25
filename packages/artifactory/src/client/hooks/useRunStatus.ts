@@ -28,6 +28,7 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
     setError(null);
 
     let mounted = true;
+    // Capture narrowed non-null values for use inside the async closure
     const slug = projectSlug;
     const id = runId;
 
