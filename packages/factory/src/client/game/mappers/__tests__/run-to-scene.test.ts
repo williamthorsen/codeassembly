@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
-import { createSceneConfig } from '../run-to-scene.js';
+import { createSceneConfig, PHASE_NAMES } from '../run-to-scene.js';
 
 function emptyPhases(): Phases {
   return {
@@ -109,6 +109,25 @@ describe('createSceneConfig', () => {
       expect(config.agents[2]).toEqual({ role: 'coder', stationIndex: 2 });
       expect(config.agents[3]).toEqual({ role: 'reviewer', stationIndex: 3 });
     });
+
+    it('assigns stationIndex values matching PHASE_NAMES ordering', () => {
+      const status = createBaseStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+
+      const config = createSceneConfig(status);
+
+      const architectIndex = PHASE_NAMES.indexOf('architecture');
+      const planningIndex = PHASE_NAMES.indexOf('planning');
+      const implementationIndex = PHASE_NAMES.indexOf('implementation');
+      const reviewIndex = PHASE_NAMES.indexOf('review');
+
+      expect(config.agents.find((a) => a.role === 'architect')?.stationIndex).toBe(architectIndex);
+      expect(config.agents.find((a) => a.role === 'planner')?.stationIndex).toBe(planningIndex);
+      expect(config.agents.find((a) => a.role === 'coder')?.stationIndex).toBe(implementationIndex);
+      expect(config.agents.find((a) => a.role === 'reviewer')?.stationIndex).toBe(reviewIndex);
+    });
   });
 
   describe('artifacts', () => {
@@ -179,5 +198,61 @@ describe('createSceneConfig', () => {
 
     expect(config.stations).toHaveLength(7);
     expect(config.gates).toHaveLength(6);
+  });
+
+  describe('station phase names match PHASE_NAMES ordering', () => {
+    it('assigns station phases in PHASE_NAMES order', () => {
+      const status = createBaseStatus();
+
+      const config = createSceneConfig(status);
+
+      config.stations.forEach((station, i) => {
+        expect(station.phase).toBe(PHASE_NAMES[i]);
+      });
+    });
+  });
+
+  describe('codeSimplifier activation', () => {
+    it('marks simplifier station active when codeSimplifier.ran is true', () => {
+      const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
+      const status = createBaseStatus({
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[simplifierIndex]?.active).toBe(true);
+    });
+
+    it('marks simplifier station inactive when codeSimplifier.ran is false', () => {
+      const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
+      const status = createBaseStatus({
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: { ran: false, actionableFindings: false, coderFixCycleRan: false, artifact: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[simplifierIndex]?.active).toBe(false);
+    });
+
+    it('marks simplifier station inactive when codeSimplifier is undefined', () => {
+      const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
+      const status = createBaseStatus({
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: undefined,
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[simplifierIndex]?.active).toBe(false);
+    });
   });
 });

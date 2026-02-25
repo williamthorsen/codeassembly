@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProjectIndex } from '../../../shared/types/api.js';
 import { createRunsRouter } from '../runs.js';
-import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.js';
+import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
 const { mockedReaddir, mockedReadFile, mockedParseStatusFile } = vi.hoisted(() => ({
   mockedReaddir: vi.fn(),
