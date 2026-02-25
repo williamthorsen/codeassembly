@@ -181,18 +181,14 @@ describe('parseStatusFile', () => {
       async (status) => {
         mockJson({ ...minimalValid(), status });
 
-        await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-          'Invalid status.json',
-        );
+        await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
       },
     );
 
     it('rejects non-string status', async () => {
       mockJson({ ...minimalValid(), status: 42 });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
   });
 
@@ -200,57 +196,43 @@ describe('parseStatusFile', () => {
     it('rejects non-string ticketId', async () => {
       mockJson({ ...minimalValid(), ticketId: 123 });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects non-string completedAt', async () => {
       mockJson({ ...minimalValid(), completedAt: true });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects non-boolean externalPlan', async () => {
       mockJson({ ...minimalValid(), externalPlan: 'yes' });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects non-string mergeBaseSha', async () => {
       mockJson({ ...minimalValid(), mergeBaseSha: 42 });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects non-string diffBase', async () => {
       mockJson({ ...minimalValid(), diffBase: false });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects non-number maxReviewRounds', async () => {
       mockJson({ ...minimalValid(), maxReviewRounds: '3' });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects non-boolean fixLowFindings', async () => {
       mockJson({ ...minimalValid(), fixLowFindings: 'true' });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
   });
 
@@ -258,25 +240,19 @@ describe('parseStatusFile', () => {
     it('rejects null phases', async () => {
       mockJson({ ...minimalValid(), phases: null });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects array phases', async () => {
-      mockJson({ ...minimalValid(), phases: [] } as Record<string, unknown>);
+      mockedReadFile.mockResolvedValue(JSON.stringify({ ...minimalValid(), phases: [] }));
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects string phases', async () => {
       mockJson({ ...minimalValid(), phases: 'phases' });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('accepts empty phases object', async () => {
@@ -295,9 +271,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phase with non-string status', async () => {
@@ -308,9 +282,13 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
+    });
+
+    it('rejects null phase entry', async () => {
+      mockedReadFile.mockResolvedValue(JSON.stringify({ ...minimalValid(), phases: { architecture: null } }));
+
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phase that is not an object', async () => {
@@ -321,9 +299,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phase with invalid criticality', async () => {
@@ -334,9 +310,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phase with invalid finalCriticality', async () => {
@@ -347,9 +321,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('accepts phase with valid criticality values', async () => {
@@ -380,9 +352,7 @@ describe('parseStatusFile', () => {
     it('rejects non-object phaseDecision', async () => {
       mockJson({ ...minimalValid(), phaseDecision: 'decisions' });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phaseDecision entry missing run', async () => {
@@ -393,9 +363,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phaseDecision entry missing reason', async () => {
@@ -406,9 +374,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phaseDecision entry with wrong types', async () => {
@@ -419,9 +385,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('rejects phaseDecision entry that is not an object', async () => {
@@ -432,9 +396,7 @@ describe('parseStatusFile', () => {
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
   });
 
@@ -486,25 +448,19 @@ describe('parseStatusFile', () => {
     it('throws when input is an array', async () => {
       mockedReadFile.mockResolvedValue('[]');
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('throws when input is an empty object', async () => {
       mockedReadFile.mockResolvedValue('{}');
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
     it('throws when input is null', async () => {
       mockedReadFile.mockResolvedValue('null');
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
-        'Invalid status.json',
-      );
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
   });
 });

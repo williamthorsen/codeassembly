@@ -80,7 +80,7 @@ function isValidPhasesObject(value: unknown): boolean {
     return false;
   }
   for (const phase of Object.values(value)) {
-    if (phase === undefined || phase === null) {
+    if (phase === undefined) {
       continue;
     }
     if (!isValidPhaseEntry(phase)) {
