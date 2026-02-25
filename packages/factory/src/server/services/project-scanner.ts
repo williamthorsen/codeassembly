@@ -45,8 +45,6 @@ export class ProjectScanner {
   }
 
   private async scanProject(projectPath: string, slug: string): Promise<TicketInfo[]> {
-    const tickets: TicketInfo[] = [];
-
     try {
       const entries = await readdir(projectPath);
 
@@ -54,17 +52,13 @@ export class ProjectScanner {
       // Pattern 2: {ticket-id}/{run-id} (direct entries, no tickets/ directory)
       // Only one pattern is used per project to avoid duplicate ticket entries.
       if (entries.includes('tickets')) {
-        const ticketResults = await this.scanTicketsDirectory(projectPath, slug);
-        tickets.push(...ticketResults);
-      } else {
-        const directResults = await this.scanDirectEntries(entries, projectPath, slug);
-        tickets.push(...directResults);
+        return this.scanTicketsDirectory(projectPath, slug);
       }
+      return this.scanDirectEntries(entries, projectPath, slug);
     } catch (error) {
       console.error(`Error reading project directory ${slug}:`, error);
+      return [];
     }
-
-    return tickets;
   }
 
   private async scanTicketsDirectory(projectPath: string, slug: string): Promise<TicketInfo[]> {
