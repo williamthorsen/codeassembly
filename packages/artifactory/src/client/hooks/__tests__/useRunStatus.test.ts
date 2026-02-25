@@ -106,9 +106,7 @@ describe('useRunStatus', () => {
     const inProgressStatus = createMockStatus({ status: 'in_progress' });
     const completedStatus = createMockStatus({ status: 'completed' });
 
-    mockedFetchRunStatus
-      .mockResolvedValueOnce(inProgressStatus)
-      .mockResolvedValueOnce(completedStatus);
+    mockedFetchRunStatus.mockResolvedValueOnce(inProgressStatus).mockResolvedValueOnce(completedStatus);
 
     renderHook(() => useRunStatus('test', 'test-run'));
 
@@ -175,10 +173,9 @@ describe('useRunStatus', () => {
 
     mockedFetchRunStatus.mockResolvedValue(statusA);
 
-    const { result, rerender } = renderHook(
-      ({ slug, run }: { slug: string; run: string }) => useRunStatus(slug, run),
-      { initialProps: { slug: 'proj', run: 'run-a' } },
-    );
+    const { result, rerender } = renderHook(({ slug, run }: { slug: string; run: string }) => useRunStatus(slug, run), {
+      initialProps: { slug: 'proj', run: 'run-a' },
+    });
 
     // Wait for initial fetch of run-a
     await waitFor(() => {
@@ -208,10 +205,9 @@ describe('useRunStatus', () => {
   it('clears stale data and error when switching runs', async () => {
     mockedFetchRunStatus.mockRejectedValueOnce(new Error('First run error'));
 
-    const { result, rerender } = renderHook(
-      ({ slug, run }: { slug: string; run: string }) => useRunStatus(slug, run),
-      { initialProps: { slug: 'proj', run: 'run-a' } },
-    );
+    const { result, rerender } = renderHook(({ slug, run }: { slug: string; run: string }) => useRunStatus(slug, run), {
+      initialProps: { slug: 'proj', run: 'run-a' },
+    });
 
     // Wait for the error to be set
     await waitFor(() => {
@@ -258,11 +254,17 @@ describe('useRunStatus', () => {
 
     expect(result.current.error?.message).toBe('Transient failure');
 
+    // Stale data is intentionally preserved during transient errors (no setData(null) in catch)
+    expect(result.current.data).not.toBeNull();
+
     // Advance again — the interval should still be running and the next poll recovers
     vi.advanceTimersByTime(2000);
 
     await waitFor(() => {
       expect(result.current.data).not.toBeNull();
     });
+
+    // Error is cleared on successful recovery (setError(null) in try block)
+    expect(result.current.error).toBeNull();
   });
 });
