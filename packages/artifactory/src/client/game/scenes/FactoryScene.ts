@@ -20,6 +20,10 @@ export class FactoryScene extends Scene {
     this.backgroundColor = Color.fromHex(PALETTE.black);
   }
 
+  override onInitialize(): void {
+    this.buildScene();
+  }
+
   updateStatus(status: CanonicalRunStatus): void {
     this.status = status;
     this.clear();
