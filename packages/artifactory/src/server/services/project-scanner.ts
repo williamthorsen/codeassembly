@@ -52,9 +52,9 @@ export class ProjectScanner {
       // Pattern 2: {ticket-id}/{run-id} (direct entries, no tickets/ directory)
       // Only one pattern is used per project to avoid duplicate ticket entries.
       if (entries.includes('tickets')) {
-        return this.scanTicketsDirectory(projectPath, slug);
+        return await this.scanTicketsDirectory(projectPath, slug);
       }
-      return this.scanDirectEntries(entries, projectPath, slug);
+      return await this.scanDirectEntries(entries, projectPath, slug);
     } catch (error) {
       console.error(`Error reading project directory ${slug}:`, error);
       return [];
@@ -74,7 +74,8 @@ export class ProjectScanner {
         try {
           const ticketStat = await stat(ticketPath);
           if (!ticketStat.isDirectory()) continue;
-        } catch {
+        } catch (error) {
+          console.debug(`Skipping non-directory ticket entry ${ticketId}:`, error);
           continue;
         }
         const runs = await this.scanTicket(ticketPath, slug, ticketId);
