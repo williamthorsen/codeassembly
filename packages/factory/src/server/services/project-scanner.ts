@@ -99,7 +99,7 @@ export class ProjectScanner {
     const tickets: TicketInfo[] = [];
 
     for (const entry of entries) {
-      if (entry === 'tickets' || entry.startsWith('.')) continue;
+      if (entry.startsWith('.')) continue;
       const entryPath = join(projectPath, entry);
       try {
         const entryStat = await stat(entryPath);
