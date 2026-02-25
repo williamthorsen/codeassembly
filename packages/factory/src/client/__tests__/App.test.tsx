@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockRunStatus } from '../../__test-helpers__/fixtures.js';
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 
 const { mockUseRunStatus, mockRunSelector, mockStatusBar, mockGameCanvas } = vi.hoisted(() => {
@@ -32,36 +33,6 @@ vi.mock('../components/GameCanvas.js', () => ({
 vi.mock('../App.css', () => ({}));
 
 const { App } = await import('../App.js');
-
-function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
-  return {
-    runId: 'test-run',
-    projectSlug: 'test',
-    ticketId: undefined,
-    projectRoot: '/test',
-    branch: 'main',
-    task: 'test task',
-    startedAt: '2026-01-01T00:00:00Z',
-    completedAt: undefined,
-    status: 'completed',
-    externalPlan: false,
-    mergeBaseSha: undefined,
-    diffBase: undefined,
-    maxReviewRounds: undefined,
-    fixLowFindings: undefined,
-    phases: {
-      architecture: undefined,
-      planning: undefined,
-      implementation: undefined,
-      parallelReview: undefined,
-      review: undefined,
-      codeSimplifier: undefined,
-      holisticReview: undefined,
-    },
-    phaseDecision: {},
-    ...overrides,
-  };
-}
 
 describe('App', () => {
   afterEach(() => {
@@ -108,7 +79,7 @@ describe('App', () => {
   });
 
   it('renders StatusBar and GameCanvas when runStatus exists', () => {
-    const status = createMockStatus({ runId: 'run-42' });
+    const status = createMockRunStatus({ runId: 'run-42' });
     mockUseRunStatus.mockReturnValue({ data: status, isLoading: false, error: null });
 
     const { container } = render(<App />);

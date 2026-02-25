@@ -1,64 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
+import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
 import { createSceneConfig, PHASE_NAMES } from '../run-to-scene.js';
-
-function emptyPhases(): Phases {
-  return {
-    architecture: undefined,
-    planning: undefined,
-    implementation: undefined,
-    parallelReview: undefined,
-    review: undefined,
-    codeSimplifier: undefined,
-    holisticReview: undefined,
-  };
-}
-
-function createBaseStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
-  return {
-    runId: 'test-run',
-    projectSlug: 'test',
-    ticketId: undefined,
-    projectRoot: '/test',
-    branch: 'main',
-    task: 'test task',
-    startedAt: '2026-01-01T00:00:00Z',
-    completedAt: undefined,
-    status: 'in_progress',
-    externalPlan: false,
-    mergeBaseSha: undefined,
-    diffBase: undefined,
-    maxReviewRounds: undefined,
-    fixLowFindings: undefined,
-    phases: emptyPhases(),
-    phaseDecision: {},
-    ...overrides,
-  };
-}
-
-function createCompletedRunPhases(): Phases {
-  return {
-    architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
-    planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
-    implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
-    parallelReview: {
-      aggregatedCriticality: 'low',
-      reviewRoundsUsed: 1,
-      reviewers: {},
-      coderFixCycleRan: false,
-      selectiveReReview: undefined,
-    },
-    review: undefined,
-    codeSimplifier: undefined,
-    holisticReview: undefined,
-  };
-}
 
 describe('createSceneConfig', () => {
   describe('station activation', () => {
     it('marks active phases as active stations', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         completedAt: '2026-01-01T01:00:00Z',
         phases: createCompletedRunPhases(),
@@ -73,7 +21,7 @@ describe('createSceneConfig', () => {
     });
 
     it('marks skipped phases as inactive stations', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         completedAt: '2026-01-01T01:00:00Z',
         phases: createCompletedRunPhases(),
@@ -86,7 +34,7 @@ describe('createSceneConfig', () => {
     });
 
     it('marks summary station active when run is completed', () => {
-      const status = createBaseStatus({ status: 'completed', completedAt: '2026-01-01T01:00:00Z' });
+      const status = createMockRunStatus({ status: 'completed', completedAt: '2026-01-01T01:00:00Z' });
 
       const config = createSceneConfig(status);
 
@@ -96,7 +44,7 @@ describe('createSceneConfig', () => {
 
   describe('agents', () => {
     it('creates agents for active phases with correct station indices', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -111,7 +59,7 @@ describe('createSceneConfig', () => {
     });
 
     it('assigns stationIndex values matching PHASE_NAMES ordering', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -132,7 +80,7 @@ describe('createSceneConfig', () => {
 
   describe('artifacts', () => {
     it('creates artifacts for phases that produced them', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -148,7 +96,7 @@ describe('createSceneConfig', () => {
 
   describe('gates', () => {
     it('opens gates between consecutive active stations', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -162,7 +110,7 @@ describe('createSceneConfig', () => {
   });
 
   it('maps legacy format with review phase', () => {
-    const status = createBaseStatus({
+    const status = createMockRunStatus({
       status: 'completed',
       completedAt: '2026-01-01T01:00:00Z',
       phases: {
@@ -181,7 +129,7 @@ describe('createSceneConfig', () => {
   });
 
   it('handles all phases skipped', () => {
-    const status = createBaseStatus();
+    const status = createMockRunStatus();
 
     const config = createSceneConfig(status);
 
@@ -192,7 +140,7 @@ describe('createSceneConfig', () => {
   });
 
   it('always generates 7 stations and 6 gates', () => {
-    const status = createBaseStatus();
+    const status = createMockRunStatus();
 
     const config = createSceneConfig(status);
 
@@ -202,7 +150,7 @@ describe('createSceneConfig', () => {
 
   describe('station phase names match PHASE_NAMES ordering', () => {
     it('assigns station phases in PHASE_NAMES order', () => {
-      const status = createBaseStatus();
+      const status = createMockRunStatus();
 
       const config = createSceneConfig(status);
 
@@ -215,7 +163,7 @@ describe('createSceneConfig', () => {
   describe('codeSimplifier activation', () => {
     it('marks simplifier station active when codeSimplifier.ran is true', () => {
       const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         phases: {
           ...emptyPhases(),
           codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: undefined },
@@ -229,7 +177,7 @@ describe('createSceneConfig', () => {
 
     it('marks simplifier station inactive when codeSimplifier.ran is false', () => {
       const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         phases: {
           ...emptyPhases(),
           codeSimplifier: { ran: false, actionableFindings: false, coderFixCycleRan: false, artifact: undefined },
@@ -243,7 +191,7 @@ describe('createSceneConfig', () => {
 
     it('marks simplifier station inactive when codeSimplifier is undefined', () => {
       const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         phases: {
           ...emptyPhases(),
           codeSimplifier: undefined,

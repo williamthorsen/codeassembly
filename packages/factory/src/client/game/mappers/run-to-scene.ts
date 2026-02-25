@@ -65,9 +65,15 @@ function buildStations(status: CanonicalRunStatus): StationConfig[] {
 }
 
 function buildGates(stations: StationConfig[]): GateConfig[] {
-  return PHASE_NAMES.slice(0, -1).map((_phase, i) => ({
-    open: (stations[i]?.active && stations[i + 1]?.active) === true,
-  }));
+  const gates: GateConfig[] = [];
+  let prev: StationConfig | undefined;
+  for (const station of stations) {
+    if (prev !== undefined) {
+      gates.push({ open: prev.active && station.active });
+    }
+    prev = station;
+  }
+  return gates;
 }
 
 function buildAgents(phases: Phases): AgentConfig[] {

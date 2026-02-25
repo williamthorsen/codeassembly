@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
+import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
 import { useRunStatus } from '../useRunStatus.js';
 
 vi.mock('../../api/client.js', () => ({
@@ -10,36 +10,6 @@ vi.mock('../../api/client.js', () => ({
 
 const { fetchRunStatus } = await import('../../api/client.js');
 const mockedFetchRunStatus = vi.mocked(fetchRunStatus);
-
-function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
-  return {
-    runId: 'test-run',
-    projectSlug: 'test',
-    ticketId: undefined,
-    projectRoot: '/test',
-    branch: 'main',
-    task: 'test task',
-    startedAt: '2026-01-01T00:00:00Z',
-    completedAt: undefined,
-    status: 'completed',
-    externalPlan: false,
-    mergeBaseSha: undefined,
-    diffBase: undefined,
-    maxReviewRounds: undefined,
-    fixLowFindings: undefined,
-    phases: {
-      architecture: undefined,
-      planning: undefined,
-      implementation: undefined,
-      parallelReview: undefined,
-      review: undefined,
-      codeSimplifier: undefined,
-      holisticReview: undefined,
-    },
-    phaseDecision: {},
-    ...overrides,
-  };
-}
 
 describe('useRunStatus', () => {
   beforeEach(() => {
@@ -59,7 +29,7 @@ describe('useRunStatus', () => {
   });
 
   it('fetches run status when project and run are provided', async () => {
-    const mockStatus = createMockStatus();
+    const mockStatus = createMockRunStatus({ status: 'completed' });
     mockedFetchRunStatus.mockResolvedValue(mockStatus);
 
     const { result } = renderHook(() => useRunStatus('test', 'test-run'));
@@ -85,7 +55,7 @@ describe('useRunStatus', () => {
   });
 
   it('starts polling when status is in_progress', async () => {
-    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+    const inProgressStatus = createMockRunStatus({ status: 'in_progress' });
     mockedFetchRunStatus.mockResolvedValue(inProgressStatus);
 
     renderHook(() => useRunStatus('test', 'test-run'));
@@ -103,8 +73,8 @@ describe('useRunStatus', () => {
   });
 
   it('stops polling when run completes', async () => {
-    const inProgressStatus = createMockStatus({ status: 'in_progress' });
-    const completedStatus = createMockStatus({ status: 'completed' });
+    const inProgressStatus = createMockRunStatus({ status: 'in_progress' });
+    const completedStatus = createMockRunStatus({ status: 'completed' });
 
     mockedFetchRunStatus.mockResolvedValueOnce(inProgressStatus).mockResolvedValueOnce(completedStatus);
 
@@ -132,7 +102,7 @@ describe('useRunStatus', () => {
   });
 
   it('does not start polling for completed runs', async () => {
-    const completedStatus = createMockStatus({ status: 'completed' });
+    const completedStatus = createMockRunStatus({ status: 'completed' });
     mockedFetchRunStatus.mockResolvedValue(completedStatus);
 
     renderHook(() => useRunStatus('test', 'test-run'));
@@ -149,7 +119,7 @@ describe('useRunStatus', () => {
   });
 
   it('cleans up interval on unmount while polling', async () => {
-    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+    const inProgressStatus = createMockRunStatus({ status: 'in_progress' });
     mockedFetchRunStatus.mockResolvedValue(inProgressStatus);
 
     const { unmount } = renderHook(() => useRunStatus('test', 'test-run'));
@@ -168,8 +138,8 @@ describe('useRunStatus', () => {
   });
 
   it('restarts polling when switching to a different run', async () => {
-    const statusA = createMockStatus({ runId: 'run-a', status: 'in_progress' });
-    const statusB = createMockStatus({ runId: 'run-b', status: 'in_progress' });
+    const statusA = createMockRunStatus({ runId: 'run-a', status: 'in_progress' });
+    const statusB = createMockRunStatus({ runId: 'run-b', status: 'in_progress' });
 
     mockedFetchRunStatus.mockResolvedValue(statusA);
 
@@ -217,7 +187,7 @@ describe('useRunStatus', () => {
     expect(result.current.error?.message).toBe('First run error');
 
     // Switch to run-b with a successful response
-    const statusB = createMockStatus({ runId: 'run-b', status: 'completed' });
+    const statusB = createMockRunStatus({ runId: 'run-b', status: 'completed' });
     mockedFetchRunStatus.mockResolvedValue(statusB);
     rerender({ slug: 'proj', run: 'run-b' });
 
@@ -230,7 +200,7 @@ describe('useRunStatus', () => {
   });
 
   it('stops polling when a fetch error occurs', async () => {
-    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+    const inProgressStatus = createMockRunStatus({ status: 'in_progress' });
 
     // First call succeeds, second call (during polling) fails
     mockedFetchRunStatus.mockResolvedValueOnce(inProgressStatus).mockRejectedValueOnce(new Error('Transient failure'));

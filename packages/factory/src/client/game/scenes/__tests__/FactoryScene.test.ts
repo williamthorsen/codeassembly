@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
+import { createCompletedRunPhases, createMockRunStatus } from '../../../../__test-helpers__/fixtures.js';
 
 const { mockSceneAdd, mockSceneClear } = vi.hoisted(() => {
   return {
@@ -79,58 +79,6 @@ vi.mock('../../../game/actors/GateActor.js', () => ({
 
 const { FactoryScene } = await import('../FactoryScene.js');
 
-function emptyPhases(): Phases {
-  return {
-    architecture: undefined,
-    planning: undefined,
-    implementation: undefined,
-    parallelReview: undefined,
-    review: undefined,
-    codeSimplifier: undefined,
-    holisticReview: undefined,
-  };
-}
-
-function createBaseStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
-  return {
-    runId: 'test-run',
-    projectSlug: 'test',
-    ticketId: undefined,
-    projectRoot: '/test',
-    branch: 'main',
-    task: 'test task',
-    startedAt: '2026-01-01T00:00:00Z',
-    completedAt: undefined,
-    status: 'in_progress',
-    externalPlan: false,
-    mergeBaseSha: undefined,
-    diffBase: undefined,
-    maxReviewRounds: undefined,
-    fixLowFindings: undefined,
-    phases: emptyPhases(),
-    phaseDecision: {},
-    ...overrides,
-  };
-}
-
-function createCompletedRunPhases(): Phases {
-  return {
-    architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
-    planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
-    implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
-    parallelReview: {
-      aggregatedCriticality: 'low',
-      reviewRoundsUsed: 1,
-      reviewers: {},
-      coderFixCycleRan: false,
-      selectiveReReview: undefined,
-    },
-    review: undefined,
-    codeSimplifier: undefined,
-    holisticReview: undefined,
-  };
-}
-
 interface MockActorWithKind {
   kind?: string;
   phase?: string;
@@ -160,7 +108,7 @@ describe('FactoryScene', () => {
 
   describe('onInitialize', () => {
     it('calls buildScene to add actors', () => {
-      const status = createBaseStatus();
+      const status = createMockRunStatus();
       const scene = new FactoryScene(status);
 
       scene.onInitialize();
@@ -172,13 +120,13 @@ describe('FactoryScene', () => {
 
   describe('updateStatus', () => {
     it('clears existing actors and rebuilds the scene', () => {
-      const status = createBaseStatus();
+      const status = createMockRunStatus();
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
       mockSceneAdd.mockClear();
 
-      const updatedStatus = createBaseStatus({
+      const updatedStatus = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -192,7 +140,7 @@ describe('FactoryScene', () => {
 
   describe('actor counts per status', () => {
     it('adds correct number of actors for empty phases', () => {
-      const status = createBaseStatus();
+      const status = createMockRunStatus();
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
@@ -201,7 +149,7 @@ describe('FactoryScene', () => {
     });
 
     it('adds correct number of actors for a completed run', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -213,7 +161,7 @@ describe('FactoryScene', () => {
     });
 
     it('adds station actors with correct phase names', () => {
-      const status = createBaseStatus();
+      const status = createMockRunStatus();
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
@@ -235,7 +183,7 @@ describe('FactoryScene', () => {
     });
 
     it('adds gate actors between stations', () => {
-      const status = createBaseStatus();
+      const status = createMockRunStatus();
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
@@ -244,7 +192,7 @@ describe('FactoryScene', () => {
     });
 
     it('adds agent actors for active phases', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
@@ -256,7 +204,7 @@ describe('FactoryScene', () => {
     });
 
     it('adds artifact actors for phases that produced them', () => {
-      const status = createBaseStatus({
+      const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
