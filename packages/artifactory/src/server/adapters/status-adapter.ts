@@ -41,10 +41,6 @@ function isValidCriticality(value: unknown): boolean {
   return typeof value === 'string' && VALID_CRITICALITIES.has(value);
 }
 
-function isOptionalCriticality(value: unknown): boolean {
-  return value === undefined || isValidCriticality(value);
-}
-
 function isValidPhaseDecisionMap(value: unknown): boolean {
   if (value === undefined) {
     return true;
@@ -52,8 +48,7 @@ function isValidPhaseDecisionMap(value: unknown): boolean {
   if (!isRecord(value)) {
     return false;
   }
-  for (const key of Object.keys(value)) {
-    const entry = value[key];
+  for (const entry of Object.values(value)) {
     if (!isRecord(entry)) return false;
     if (typeof entry.run !== 'boolean') return false;
     if (typeof entry.reason !== 'string') return false;
@@ -65,15 +60,13 @@ function isValidPhaseEntry(phase: unknown): boolean {
   if (!isRecord(phase)) {
     return false;
   }
-  // All phase types that have a status field must have a valid PhaseStatus
   if ('status' in phase && !isValidPhaseStatus(phase.status)) {
     return false;
   }
-  // Validate criticality fields if present
-  if ('criticality' in phase && !isOptionalCriticality(phase.criticality)) {
+  if ('criticality' in phase && !isValidCriticality(phase.criticality)) {
     return false;
   }
-  if ('finalCriticality' in phase && !isOptionalCriticality(phase.finalCriticality)) {
+  if ('finalCriticality' in phase && !isValidCriticality(phase.finalCriticality)) {
     return false;
   }
   if ('aggregatedCriticality' in phase && !isValidCriticality(phase.aggregatedCriticality)) {
@@ -86,9 +79,7 @@ function isValidPhasesObject(value: unknown): boolean {
   if (!isRecord(value)) {
     return false;
   }
-  // Validate each present phase entry
-  for (const key of Object.keys(value)) {
-    const phase = value[key];
+  for (const phase of Object.values(value)) {
     if (phase === undefined || phase === null) {
       continue;
     }
