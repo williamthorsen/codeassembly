@@ -254,11 +254,17 @@ describe('useRunStatus', () => {
 
     expect(result.current.error?.message).toBe('Transient failure');
 
+    // Stale data is intentionally preserved during transient errors (no setData(null) in catch)
+    expect(result.current.data).not.toBeNull();
+
     // Advance again — the interval should still be running and the next poll recovers
     vi.advanceTimersByTime(2000);
 
     await waitFor(() => {
       expect(result.current.data).not.toBeNull();
     });
+
+    // Error is cleared on successful recovery (setError(null) in try block)
+    expect(result.current.error).toBeNull();
   });
 });
