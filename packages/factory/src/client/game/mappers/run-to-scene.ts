@@ -26,7 +26,15 @@ export interface SceneConfig {
   artifacts: ArtifactConfig[];
 }
 
-const PHASE_NAMES = ['architecture', 'planning', 'implementation', 'review', 'simplifier', 'holistic', 'summary'];
+export const PHASE_NAMES = [
+  'architecture',
+  'planning',
+  'implementation',
+  'review',
+  'simplifier',
+  'holistic',
+  'summary',
+] as const;
 
 function isPhaseActive(phase: string, phases: Phases, runStatus: string): boolean {
   switch (phase) {
