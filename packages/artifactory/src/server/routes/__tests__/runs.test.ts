@@ -127,17 +127,36 @@ describe('createRunsRouter', () => {
   });
 
   describe('GET /:projectSlug/:runId/artifacts', () => {
-    it('returns filtered artifact list', async () => {
+    it('includes only .md and .json files and excludes other extensions', async () => {
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
 
-      mockedReaddir.mockResolvedValueOnce(['status.json', 'plan.md', 'notes.txt', 'architecture.json']);
+      mockedReaddir.mockResolvedValueOnce([
+        'status.json',
+        'plan.md',
+        'notes.txt',
+        'architecture.json',
+        'image.png',
+        'data.csv',
+      ]);
 
       await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ artifacts: ['status.json', 'plan.md', 'architecture.json'] });
+      expect(res.body).toEqual({
+        artifacts: expect.arrayContaining([expect.stringMatching(/\.(md|json)$/)]),
+      });
+      expect(res.body).not.toEqual({
+        artifacts: expect.arrayContaining(['notes.txt']),
+      });
+      expect(res.body).not.toEqual({
+        artifacts: expect.arrayContaining(['image.png']),
+      });
+      expect(res.body).not.toEqual({
+        artifacts: expect.arrayContaining(['data.csv']),
+      });
     });
 
     it('returns 404 when run is not found', async () => {
@@ -162,6 +181,32 @@ describe('createRunsRouter', () => {
 
       expect(res.statusCode).toBe(500);
       expect(res.body).toEqual({ error: 'Failed to list artifacts' });
+    });
+
+    it('returns 500 when readdir fails with ENOENT (directory removed after index lookup)', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
+
+      mockedReaddir.mockRejectedValueOnce(createEnoentError(RUN_PATH));
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body).toEqual({ error: 'Failed to list artifacts' });
+    });
+
+    it('returns empty artifacts array when directory contains no .md or .json files', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
+
+      mockedReaddir.mockResolvedValueOnce(['image.png', 'data.csv', 'notes.txt']);
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ artifacts: [] });
     });
   });
 
