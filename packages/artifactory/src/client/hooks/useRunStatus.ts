@@ -23,6 +23,10 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
       return;
     }
 
+    // Reset stale state from previous run selection
+    setData(null);
+    setError(null);
+
     let mounted = true;
     const slug = projectSlug;
     const id = runId;
@@ -61,6 +65,7 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
       mounted = false;
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [projectSlug, runId]);

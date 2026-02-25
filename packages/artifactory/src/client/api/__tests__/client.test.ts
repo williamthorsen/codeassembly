@@ -20,7 +20,7 @@ function createMockResponse(data: unknown, ok = true, statusText = 'OK') {
   };
 }
 
-describe('fetchProjects', () => {
+describe('fetchJson (via fetchProjects)', () => {
   it('returns project index on success', async () => {
     const mockData = { projects: [{ slug: 'test', tickets: [] }] };
     mockFetch.mockResolvedValue(createMockResponse(mockData));
@@ -35,6 +35,16 @@ describe('fetchProjects', () => {
     mockFetch.mockResolvedValue(createMockResponse(null, false, 'Not Found'));
 
     await expect(fetchProjects()).rejects.toThrow('Failed to fetch projects: Not Found');
+  });
+
+  it('throws on malformed JSON response', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      statusText: 'OK',
+      json: () => Promise.reject(new SyntaxError('Unexpected token')),
+    });
+
+    await expect(fetchProjects()).rejects.toThrow(SyntaxError);
   });
 });
 

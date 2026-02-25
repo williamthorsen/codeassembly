@@ -168,4 +168,101 @@ describe('useRunStatus', () => {
 
     expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
   });
+
+  it('restarts polling when switching to a different run', async () => {
+    const statusA = createMockStatus({ runId: 'run-a', status: 'in_progress' });
+    const statusB = createMockStatus({ runId: 'run-b', status: 'in_progress' });
+
+    mockedFetchRunStatus.mockResolvedValue(statusA);
+
+    const { result, rerender } = renderHook(
+      ({ slug, run }: { slug: string; run: string }) => useRunStatus(slug, run),
+      { initialProps: { slug: 'proj', run: 'run-a' } },
+    );
+
+    // Wait for initial fetch of run-a
+    await waitFor(() => {
+      expect(result.current.data).not.toBeNull();
+    });
+
+    expect(result.current.data?.runId).toBe('run-a');
+
+    // Switch to run-b — the cleanup should clear the interval and null the ref
+    mockedFetchRunStatus.mockResolvedValue(statusB);
+    rerender({ slug: 'proj', run: 'run-b' });
+
+    // Wait for the new fetch to complete
+    await waitFor(() => {
+      expect(result.current.data?.runId).toBe('run-b');
+    });
+
+    // Advance past the poll interval to confirm polling works for the new run
+    const callsAfterSwitch = mockedFetchRunStatus.mock.calls.length;
+    vi.advanceTimersByTime(2000);
+
+    await waitFor(() => {
+      expect(mockedFetchRunStatus).toHaveBeenCalledTimes(callsAfterSwitch + 1);
+    });
+  });
+
+  it('clears stale data and error when switching runs', async () => {
+    mockedFetchRunStatus.mockRejectedValueOnce(new Error('First run error'));
+
+    const { result, rerender } = renderHook(
+      ({ slug, run }: { slug: string; run: string }) => useRunStatus(slug, run),
+      { initialProps: { slug: 'proj', run: 'run-a' } },
+    );
+
+    // Wait for the error to be set
+    await waitFor(() => {
+      expect(result.current.error).not.toBeNull();
+    });
+
+    expect(result.current.error?.message).toBe('First run error');
+
+    // Switch to run-b with a successful response
+    const statusB = createMockStatus({ runId: 'run-b', status: 'completed' });
+    mockedFetchRunStatus.mockResolvedValue(statusB);
+    rerender({ slug: 'proj', run: 'run-b' });
+
+    // After switching, stale error should be cleared and new data loaded
+    await waitFor(() => {
+      expect(result.current.data?.runId).toBe('run-b');
+    });
+
+    expect(result.current.error).toBeNull();
+  });
+
+  it('recovers from errors during active polling', async () => {
+    const inProgressStatus = createMockStatus({ status: 'in_progress' });
+
+    // First call succeeds, second call (during polling) fails, third recovers
+    mockedFetchRunStatus
+      .mockResolvedValueOnce(inProgressStatus)
+      .mockRejectedValueOnce(new Error('Transient failure'))
+      .mockResolvedValueOnce(inProgressStatus);
+
+    const { result } = renderHook(() => useRunStatus('test', 'test-run'));
+
+    // Wait for initial fetch
+    await waitFor(() => {
+      expect(result.current.data).not.toBeNull();
+    });
+
+    // Advance to trigger the failing poll
+    vi.advanceTimersByTime(2000);
+
+    await waitFor(() => {
+      expect(result.current.error).not.toBeNull();
+    });
+
+    expect(result.current.error?.message).toBe('Transient failure');
+
+    // Advance again — the interval should still be running and the next poll recovers
+    vi.advanceTimersByTime(2000);
+
+    await waitFor(() => {
+      expect(result.current.data).not.toBeNull();
+    });
+  });
 });
