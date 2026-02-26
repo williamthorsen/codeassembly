@@ -5,7 +5,12 @@ editors:
 integrations:
   jira:
     enabled: false
+project:
+  slug: codeassembly
+  ticket_prefix: CODY-
 repository:
   default_remote:
     - name: origin
       default_branch: next
+  # Deprecated. Remove in favor of project.slug after skills have been updated.
+  slug: codeassembly

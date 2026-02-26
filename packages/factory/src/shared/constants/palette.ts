@@ -1,0 +1,18 @@
+export const PALETTE = {
+  black: '#000000',
+  darkBlue: '#0000AA',
+  darkGreen: '#00AA00',
+  darkCyan: '#00AAAA',
+  darkRed: '#AA0000',
+  darkMagenta: '#AA00AA',
+  brown: '#AA5500',
+  lightGray: '#AAAAAA',
+  darkGray: '#555555',
+  blue: '#5555FF',
+  green: '#55FF55',
+  cyan: '#55FFFF',
+  red: '#FF5555',
+  magenta: '#FF55FF',
+  yellow: '#FFFF55',
+  white: '#FFFFFF',
+} as const;
