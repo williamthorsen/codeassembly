@@ -29,6 +29,7 @@ dist-ssr/
 out/
 
 # Framework
+.agents/*.manifest.json
 .astro/
 .aws-sam/
 .cdk.out/

@@ -70,6 +70,10 @@ When packages are added to `packages/`, they can use these commands from the pac
 - TypeScript strict mode
 - Optional strict linting with `@williamthorsen/strict-lint`
 
+## Skills
+
+Always invoke the `typescript-conventions` skill before writing or modifying TypeScript code.
+
 ## Dependency management
 
 - Use exact versions in package.json (no `^` or `~` range indicators)
