@@ -6,6 +6,7 @@ import { Router } from 'express';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
 import { parseStatusFile } from '../adapters/status-adapter.js';
+import { isEnoent } from '../type-guards.js';
 
 interface RunParams {
   projectSlug: string;
@@ -14,10 +15,6 @@ interface RunParams {
 
 interface ArtifactParams extends RunParams {
   filename: string;
-}
-
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }
 
 export function createRunsRouter(scanner: ProjectIndexProvider): Router {

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.js';
 import { parseStatusFile } from '../adapters/status-adapter.js';
+import { isEnoent } from '../type-guards.js';
 
 export class ProjectScanner {
   private basePath: string;
@@ -136,6 +137,9 @@ export class ProjectScanner {
             startedAt: status.startedAt,
           });
         } catch (error) {
+          if (isEnoent(error)) {
+            continue;
+          }
           console.error(`Error parsing status.json for ${slug}/${ticketId}/${runId}:`, error);
           continue;
         }
