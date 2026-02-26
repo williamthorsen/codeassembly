@@ -34,7 +34,7 @@ jobs:
       cancel-in-progress: true
 
     env:
-      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -58,22 +58,5 @@ jobs:
           pnpm config set auto-install-peers false
           pnpm install
 
-      - name: Install AWS SAM CLI
-        env:
-          SAM_VERSION: 1.138.0
-        run: |
-          curl -Lo /tmp/aws-sam-cli.zip https://github.com/aws/aws-sam-cli/releases/download/v${SAM_VERSION}/aws-sam-cli-linux-x86_64.zip
-          unzip /tmp/aws-sam-cli.zip -d /tmp/sam-install
-          # Pass the --update flag because SAM may already exist in the runner image
-          sudo /tmp/sam-install/install --update
-
-          # Verify installation
-          sam --version
-
       - name: Run code quality checks
-        # Needed for the workspaces/cdk build
-        env:
-          CDK_DEFAULT_ACCOUNT: '000000000000'
-          CDK_DEFAULT_REGION: 'us-east-1'
-          npm_package_version: '0.0.0-ci' # dummy version just for packages/cdk/scripts/synth.sh
         run: pnpm run ci
