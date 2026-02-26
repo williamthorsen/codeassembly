@@ -34,4 +34,4 @@ export interface ProjectIndexProvider {
   getIndex(): ProjectIndex | null;
 }
 
-export { type CanonicalRunStatus } from './canonical.js';
+export { type ArtifactEntry, type CanonicalRunStatus } from './canonical.js';

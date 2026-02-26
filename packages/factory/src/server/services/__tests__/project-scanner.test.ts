@@ -6,10 +6,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { ProjectScanner } from '../project-scanner.js';
 
-const { mockedReaddir, mockedStat, mockedParseStatusFile } = vi.hoisted(() => ({
+const { mockedReaddir, mockedStat, mockedParseRunData } = vi.hoisted(() => ({
   mockedReaddir: vi.fn(),
   mockedStat: vi.fn(),
-  mockedParseStatusFile: vi.fn(),
+  mockedParseRunData: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -19,7 +19,7 @@ vi.mock('node:fs/promises', () => ({
 }));
 
 vi.mock('../../adapters/status-adapter.js', () => ({
-  parseStatusFile: mockedParseStatusFile,
+  parseRunData: mockedParseRunData,
 }));
 
 // Helper to mock readdir returning string arrays
@@ -57,7 +57,10 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
       codeSimplifier: undefined,
       holisticReview: undefined,
     },
-    phaseDecision: {},
+    mode: undefined,
+    model: undefined,
+    phaseDecisions: {},
+    artifacts: undefined,
     ...overrides,
   };
 }
@@ -78,7 +81,7 @@ describe('ProjectScanner', () => {
     mockReaddirResult(['20260225-run1']);
     mockStatDirectory(); // stat check for run directory
 
-    mockedParseStatusFile.mockResolvedValueOnce(
+    mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: '20260225-run1',
         projectSlug: 'factory',
@@ -107,7 +110,7 @@ describe('ProjectScanner', () => {
     mockReaddirResult(['20260222-run1']);
     mockStatDirectory();
 
-    mockedParseStatusFile.mockResolvedValueOnce(
+    mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: '20260222-run1',
         projectSlug: 'rad-app',
@@ -155,14 +158,14 @@ describe('ProjectScanner', () => {
     mockStatDirectory();
     mockStatDirectory();
 
-    mockedParseStatusFile.mockResolvedValueOnce(
+    mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: 'run-old',
         startedAt: '2026-01-01T00:00:00Z',
       }),
     );
 
-    mockedParseStatusFile.mockResolvedValueOnce(
+    mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: 'run-new',
         startedAt: '2026-02-01T00:00:00Z',
@@ -216,8 +219,8 @@ describe('ProjectScanner', () => {
     mockStatDirectory(); // stat for bad-run directory
     mockStatDirectory(); // stat for good-run directory
 
-    mockedParseStatusFile.mockRejectedValueOnce(new Error('Invalid JSON'));
-    mockedParseStatusFile.mockResolvedValueOnce(
+    mockedParseRunData.mockRejectedValueOnce(new Error('Invalid JSON'));
+    mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: 'good-run',
         startedAt: '2026-03-01T00:00:00Z',
@@ -245,7 +248,7 @@ describe('ProjectScanner', () => {
     mockReaddirResult(['20260301-run']);
     mockStatDirectory(); // stat for run directory
 
-    mockedParseStatusFile.mockResolvedValueOnce(
+    mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: '20260301-run',
         projectSlug: 'proj',
@@ -277,7 +280,7 @@ describe('ProjectScanner', () => {
       mockReaddirResult(['run-1']);
       mockStatDirectory();
 
-      mockedParseStatusFile.mockResolvedValueOnce(
+      mockedParseRunData.mockResolvedValueOnce(
         createMockStatus({
           runId: 'run-1',
           startedAt: '2026-03-01T00:00:00Z',

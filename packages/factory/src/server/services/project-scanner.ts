@@ -3,7 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.js';
-import { parseStatusFile } from '../adapters/status-adapter.js';
+import { parseRunData } from '../adapters/status-adapter.js';
 import { isEnoent } from '../type-guards.js';
 
 export class ProjectScanner {
@@ -128,8 +128,7 @@ export class ProjectScanner {
           const runStat = await stat(runPath);
           if (!runStat.isDirectory()) continue;
 
-          const statusPath = join(runPath, 'status.json');
-          const status = await parseStatusFile(statusPath);
+          const status = await parseRunData(runPath);
           runs.push({
             runId,
             path: runPath,
@@ -140,7 +139,7 @@ export class ProjectScanner {
           if (isEnoent(error)) {
             continue;
           }
-          console.error(`Error parsing status.json for ${slug}/${ticketId}/${runId}:`, error);
+          console.error(`Error parsing run data for ${slug}/${ticketId}/${runId}:`, error);
           continue;
         }
       }
