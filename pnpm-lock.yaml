@@ -96,19 +96,19 @@ importers:
   packages/factory:
     dependencies:
       cors:
-        specifier: ^2.8.6
+        specifier: 2.8.6
         version: 2.8.6
       excalibur:
-        specifier: ^0.32.0
+        specifier: 0.32.0
         version: 0.32.0
       express:
-        specifier: ^5.0.0
+        specifier: 5.2.1
         version: 5.2.1
       react:
-        specifier: ^19.2.4
+        specifier: 19.2.4
         version: 19.2.4
       react-dom:
-        specifier: ^19.2.4
+        specifier: 19.2.4
         version: 19.2.4(react@19.2.4)
     devDependencies:
       '@testing-library/dom':
@@ -121,10 +121,10 @@ importers:
         specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@types/cors':
-        specifier: ^2.8.17
+        specifier: 2.8.19
         version: 2.8.19
       '@types/express':
-        specifier: ^5.0.0
+        specifier: 5.0.6
         version: 5.0.6
       '@types/react':
         specifier: 19.2.14
@@ -1543,15 +1543,6 @@ packages:
 
   debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
-  debug@4.4.1:
-    resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
-    engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
     peerDependenciesMeta:
@@ -4712,10 +4703,6 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
-  debug@4.4.1:
-    dependencies:
-      ms: 2.1.3
-
   debug@4.4.3:
     dependencies:
       ms: 2.1.3
@@ -5189,7 +5176,7 @@ snapshots:
 
   eslint-plugin-yml@1.19.0(eslint@9.38.0):
     dependencies:
-      debug: 4.4.1
+      debug: 4.4.3
       diff-sequences: 27.5.1
       escape-string-regexp: 4.0.0
       eslint: 9.38.0

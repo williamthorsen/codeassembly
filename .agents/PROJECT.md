@@ -36,20 +36,20 @@ When packages are added to `packages/`, they can use these commands from the pac
 
 ## Architecture
 
-### Root-level Tests
+### Root-level tests
 
 - Located in `__tests__/` directory
 - Verify Node.js and pnpm versions match `.tool-versions`
 - Use Vitest with config in `vitest.root.config.ts`
 
-### Workspace Script System
+### Workspace script system
 
 - Centralized script management via `scripts/run-workspace-script.ts`
 - Each package uses `pnpm run ws {command}` for consistent tooling
 - Common scripts defined in `run-workspace-script.ts` with package-level overrides
 - Supports integration tests with `--int-test` flag
 
-### Build System
+### Build system
 
 - Uses esbuild via custom `config/build.ts` for TypeScript packages
 - Intelligent caching based on content hashes
@@ -63,9 +63,13 @@ When packages are added to `packages/`, they can use these commands from the pac
 - Coverage reporting with v8 provider
 - Package-specific configurations for different test types
 
-### Code Quality
+### Code quality
 
 - ESLint with `@williamthorsen/eslint-config-typescript`
 - Prettier for formatting
 - TypeScript strict mode
 - Optional strict linting with `@williamthorsen/strict-lint`
+
+## Dependency management
+
+- Use exact versions in package.json (no `^` or `~` range indicators)
