@@ -9,3 +9,4 @@ repository:
   default_remote:
     - name: origin
       default_branch: next
+  slug: codeassembly

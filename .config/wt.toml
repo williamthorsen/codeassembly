@@ -3,4 +3,3 @@
 [post-create]
 direnv = "direnv allow"
 deps = "pnpm install"
-

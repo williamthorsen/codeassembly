@@ -1,15 +1,15 @@
 {
-  "name": "templates.node-monorepo",
-  "version": "1.3.0",
-  "description": "PNPM Node Monorepo",
+  "name": "codeassembly-monorepo",
+  "version": "0.1.0",
+  "description": "CodeAssembly monorepo",
   "keywords": [],
-  "homepage": "https://github.com/williamthorsen/templates.node-monorepo#readme",
+  "homepage": "https://github.com/williamthorsen/codeassembly#readme",
   "bugs": {
-    "url": "https://github.com/williamthorsen/templates.node-monorepo/issues"
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/williamthorsen/templates.node-monorepo.git"
+    "url": "git+https://github.com/williamthorsen/codeassembly.git"
   },
   "license": "UNLICENSED",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
