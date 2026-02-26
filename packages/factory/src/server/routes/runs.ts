@@ -7,6 +7,15 @@ import { Router } from 'express';
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
 import { parseStatusFile } from '../adapters/status-adapter.js';
 
+interface RunParams {
+  projectSlug: string;
+  runId: string;
+}
+
+interface ArtifactParams extends RunParams {
+  filename: string;
+}
+
 function isEnoent(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }
@@ -15,12 +24,8 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
   const router = Router();
 
   // GET /api/runs/:projectSlug/:runId - return full run status
-  router.get('/:projectSlug/:runId', async (req: Request, res: Response) => {
+  router.get('/:projectSlug/:runId', async (req: Request<RunParams>, res: Response) => {
     const { projectSlug, runId } = req.params;
-    if (typeof projectSlug !== 'string' || typeof runId !== 'string') {
-      res.status(400).json({ error: 'Missing required parameters' });
-      return;
-    }
 
     const runPath = findRunPath(scanner, projectSlug, runId);
     if (!runPath) {
@@ -43,12 +48,8 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
   });
 
   // GET /api/runs/:projectSlug/:runId/artifacts - list all artifacts
-  router.get('/:projectSlug/:runId/artifacts', async (req: Request, res: Response) => {
+  router.get('/:projectSlug/:runId/artifacts', async (req: Request<RunParams>, res: Response) => {
     const { projectSlug, runId } = req.params;
-    if (typeof projectSlug !== 'string' || typeof runId !== 'string') {
-      res.status(400).json({ error: 'Missing required parameters' });
-      return;
-    }
 
     const runPath = findRunPath(scanner, projectSlug, runId);
     if (!runPath) {
@@ -67,12 +68,8 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
   });
 
   // GET /api/runs/:projectSlug/:runId/artifacts/:filename - get artifact content
-  router.get('/:projectSlug/:runId/artifacts/:filename', async (req: Request, res: Response) => {
+  router.get('/:projectSlug/:runId/artifacts/:filename', async (req: Request<ArtifactParams>, res: Response) => {
     const { projectSlug, runId, filename } = req.params;
-    if (typeof projectSlug !== 'string' || typeof runId !== 'string' || typeof filename !== 'string') {
-      res.status(400).json({ error: 'Missing required parameters' });
-      return;
-    }
 
     if (filename.includes('..') || filename.includes('/') || filename.includes('\\') || filename.includes('\0')) {
       res.status(400).json({ error: 'Invalid filename' });
