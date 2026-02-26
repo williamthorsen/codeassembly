@@ -28,8 +28,11 @@ export function createMockRunStatus(overrides: Partial<CanonicalRunStatus> = {})
     diffBase: undefined,
     maxReviewRounds: undefined,
     fixLowFindings: undefined,
+    mode: undefined,
+    model: undefined,
     phases: emptyPhases(),
-    phaseDecision: {},
+    phaseDecisions: {},
+    artifacts: undefined,
     ...overrides,
   };
 }

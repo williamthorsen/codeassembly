@@ -3,6 +3,18 @@ export type Criticality = 'none' | 'low' | 'medium' | 'high';
 export type ReviewerStatus = 'completed' | 'skipped' | 'failed';
 export type PhaseStatus = 'completed' | 'skipped' | 'failed' | 'in_progress' | 'approved';
 
+export interface ArtifactEntry {
+  filename: string;
+  role: string;
+  roleType: string;
+  agent: string;
+  type: string;
+  phase: string;
+  createdAt: string;
+  iteration?: number;
+  note?: string;
+}
+
 export interface CanonicalRunStatus {
   runId: string;
   projectSlug: string;
@@ -18,8 +30,11 @@ export interface CanonicalRunStatus {
   diffBase: string | undefined;
   maxReviewRounds: number | undefined;
   fixLowFindings: boolean | undefined;
+  mode: string | undefined;
+  model: string | undefined;
   phases: Phases;
-  phaseDecision: Record<string, PhaseDecision> | undefined;
+  phaseDecisions: Record<string, PhaseDecision> | undefined;
+  artifacts: ArtifactEntry[] | undefined;
 }
 
 export interface PhaseDecision {

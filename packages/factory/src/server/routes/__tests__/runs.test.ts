@@ -6,10 +6,10 @@ import type { ProjectIndex } from '../../../shared/types/api.js';
 import { createRunsRouter } from '../runs.js';
 import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
-const { mockedReaddir, mockedReadFile, mockedParseStatusFile } = vi.hoisted(() => ({
+const { mockedReaddir, mockedReadFile, mockedParseRunData } = vi.hoisted(() => ({
   mockedReaddir: vi.fn(),
   mockedReadFile: vi.fn(),
-  mockedParseStatusFile: vi.fn(),
+  mockedParseRunData: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -19,7 +19,7 @@ vi.mock('node:fs/promises', () => ({
 }));
 
 vi.mock('../../adapters/status-adapter.js', () => ({
-  parseStatusFile: mockedParseStatusFile,
+  parseRunData: mockedParseRunData,
 }));
 
 const RUN_PATH = '/projects/test-project/tickets/TICKET-1/run-1';
@@ -68,11 +68,11 @@ describe('createRunsRouter', () => {
       const handler = getHandler(router, 'get', '/:projectSlug/:runId');
 
       const mockStatus = { runId: 'run-1', status: 'completed' };
-      mockedParseStatusFile.mockResolvedValueOnce(mockStatus);
+      mockedParseRunData.mockResolvedValueOnce(mockStatus);
 
       await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
 
-      expect(mockedParseStatusFile).toHaveBeenCalledWith(join(RUN_PATH, 'status.json'));
+      expect(mockedParseRunData).toHaveBeenCalledWith(RUN_PATH);
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual(mockStatus);
     });
@@ -99,17 +99,17 @@ describe('createRunsRouter', () => {
       expect(res.body).toEqual({ error: 'Run not found' });
     });
 
-    it('returns 404 when status file does not exist (ENOENT)', async () => {
+    it('returns 404 when run data files do not exist (ENOENT)', async () => {
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId');
 
-      mockedParseStatusFile.mockRejectedValueOnce(createEnoentError(join(RUN_PATH, 'status.json')));
+      mockedParseRunData.mockRejectedValueOnce(createEnoentError(RUN_PATH));
 
       await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
 
       expect(res.statusCode).toBe(404);
-      expect(res.body).toEqual({ error: 'Status file not found' });
+      expect(res.body).toEqual({ error: 'Run data not found' });
     });
 
     it('returns 500 on non-ENOENT errors', async () => {
@@ -117,7 +117,7 @@ describe('createRunsRouter', () => {
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId');
 
-      mockedParseStatusFile.mockRejectedValueOnce(new Error('Parse error'));
+      mockedParseRunData.mockRejectedValueOnce(new Error('Parse error'));
 
       await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
 

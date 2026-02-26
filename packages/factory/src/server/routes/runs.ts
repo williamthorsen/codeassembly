@@ -5,7 +5,7 @@ import type { Request, Response } from 'express';
 import { Router } from 'express';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
-import { parseStatusFile } from '../adapters/status-adapter.js';
+import { parseRunData } from '../adapters/status-adapter.js';
 import { isEnoent } from '../type-guards.js';
 
 interface RunParams {
@@ -30,13 +30,12 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
       return;
     }
 
-    const statusPath = join(runPath, 'status.json');
     try {
-      const status = await parseStatusFile(statusPath);
+      const status = await parseRunData(runPath);
       res.json(status);
     } catch (error) {
       if (isEnoent(error)) {
-        res.status(404).json({ error: 'Status file not found' });
+        res.status(404).json({ error: 'Run data not found' });
         return;
       }
       console.error('Error getting run status:', error);

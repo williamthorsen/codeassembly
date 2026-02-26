@@ -33,7 +33,10 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
       codeSimplifier: undefined,
       holisticReview: undefined,
     },
-    phaseDecision: {},
+    mode: undefined,
+    model: undefined,
+    phaseDecisions: {},
+    artifacts: undefined,
     ...overrides,
   };
 }

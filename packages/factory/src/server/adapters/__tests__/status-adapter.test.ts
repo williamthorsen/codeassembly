@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { parseStatusFile } from '../status-adapter.js';
+import { parseRunData, parseStatusFile } from '../status-adapter.js';
 
 const { mockedReadFile } = vi.hoisted(() => ({
   mockedReadFile: vi.fn(),
@@ -74,8 +74,81 @@ const legacyFormatFixture = {
   },
 };
 
+const v2Fixture = {
+  version: 2,
+  context: {
+    runId: '20260226-1400Z-orchestrated',
+    projectSlug: 'factory',
+    ticketId: 'CODY-3',
+    projectRoot: '/Users/william/repos/projects/factory',
+    branch: 'cody-3_feat_run-index-v2',
+    task: 'Support run-index.json v2 format',
+    startedAt: '2026-02-26T14:00:00Z',
+    completedAt: '2026-02-26T15:30:00Z',
+    status: 'completed',
+    phases: {
+      architecture: { status: 'completed', impactLevel: 'medium', artifact: 'architecture.md' },
+      planning: { status: 'completed', stepCount: 10, artifacts: ['plan.md'] },
+      implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+    },
+    phaseDecisions: {
+      architecture: { run: true, reason: 'New format support' },
+      planning: { run: true, reason: 'Multi-step implementation' },
+    },
+  },
+  config: {
+    externalPlan: false,
+    mergeBaseSha: 'abc123',
+    diffBase: 'origin/main',
+    maxReviewRounds: 2,
+    fixLowFindings: false,
+    mode: 'orchestrated',
+    model: 'claude-opus-4-6',
+  },
+  artifacts: [
+    {
+      filename: 'architecture.md',
+      role: 'Architecture document',
+      roleType: 'architecture',
+      agent: 'architect',
+      type: 'markdown',
+      phase: 'architecture',
+      createdAt: '2026-02-26T14:05:00Z',
+    },
+    {
+      filename: 'plan.md',
+      role: 'Implementation plan',
+      roleType: 'plan',
+      agent: 'planner',
+      type: 'markdown',
+      phase: 'planning',
+      createdAt: '2026-02-26T14:10:00Z',
+      iteration: 1,
+      note: 'Initial plan',
+    },
+  ],
+};
+
 function mockJson(data: Record<string, unknown>): void {
   mockedReadFile.mockResolvedValue(JSON.stringify(data));
+}
+
+function mockFileContents(pathContentMap: Record<string, string>): void {
+  mockedReadFile.mockImplementation((path: string) => {
+    const content = pathContentMap[path];
+    if (content !== undefined) {
+      return Promise.resolve(content);
+    }
+    const error = new Error(`ENOENT: no such file or directory, open '${path}'`);
+    Object.assign(error, { code: 'ENOENT' });
+    return Promise.reject(error);
+  });
+}
+
+function mockEnoent(): void {
+  const error = new Error('ENOENT: no such file or directory');
+  Object.assign(error, { code: 'ENOENT' });
+  mockedReadFile.mockRejectedValue(error);
 }
 
 function minimalValid(): Record<string, unknown> {
@@ -88,6 +161,30 @@ function minimalValid(): Record<string, unknown> {
     startedAt: '2026-01-01T00:00:00Z',
     status: 'in_progress',
     phases: {},
+  };
+}
+
+interface MinimalV2 {
+  version: number;
+  context: Record<string, unknown>;
+  config: Record<string, unknown>;
+  artifacts?: unknown[];
+}
+
+function minimalV2(): MinimalV2 {
+  return {
+    version: 2,
+    context: {
+      runId: 'test-run',
+      projectSlug: 'test',
+      projectRoot: '/test',
+      branch: 'main',
+      task: 'test task',
+      startedAt: '2026-01-01T00:00:00Z',
+      status: 'in_progress',
+      phases: {},
+    },
+    config: {},
   };
 }
 
@@ -104,10 +201,20 @@ describe('parseStatusFile', () => {
       expect(result.externalPlan).toBe(true);
       expect(result.phases.architecture?.status).toBe('completed');
       expect(result.phases.planning?.stepCount).toBe(7);
-      expect(result.phaseDecision).toEqual({
+      expect(result.phaseDecisions).toEqual({
         architecture: { run: true, reason: 'External plan exists' },
         planning: { run: true, reason: 'External plan exists with 7 steps' },
       });
+    });
+
+    it('normalizes v1 fields to canonical shape', async () => {
+      mockJson(currentFormatFixture);
+
+      const result = await parseStatusFile('/path/to/status.json');
+
+      expect(result.mode).toBeUndefined();
+      expect(result.model).toBeUndefined();
+      expect(result.artifacts).toBeUndefined();
     });
   });
 
@@ -133,13 +240,13 @@ describe('parseStatusFile', () => {
       expect(result.externalPlan).toBeUndefined();
     });
 
-    it('parses phaseDecision from legacy format', async () => {
+    it('parses phaseDecision from legacy format as phaseDecisions', async () => {
       mockJson(legacyFormatFixture);
 
       const result = await parseStatusFile('/path/to/status.json');
 
-      expect(result.phaseDecision).toBeDefined();
-      expect(result.phaseDecision?.architecture).toEqual({
+      expect(result.phaseDecisions).toBeDefined();
+      expect(result.phaseDecisions?.architecture).toEqual({
         run: true,
         reason: 'Significant UI redesign',
       });
@@ -160,7 +267,7 @@ describe('parseStatusFile', () => {
       expect(result.diffBase).toBeUndefined();
       expect(result.maxReviewRounds).toBeUndefined();
       expect(result.fixLowFindings).toBeUndefined();
-      expect(result.phaseDecision).toBeUndefined();
+      expect(result.phaseDecisions).toBeUndefined();
     });
   });
 
@@ -340,13 +447,13 @@ describe('parseStatusFile', () => {
     });
   });
 
-  describe('phaseDecision validation', () => {
+  describe('phaseDecisions validation', () => {
     it('accepts undefined phaseDecision', async () => {
       mockJson(minimalValid());
 
       const result = await parseStatusFile('/path/to/status.json');
 
-      expect(result.phaseDecision).toBeUndefined();
+      expect(result.phaseDecisions).toBeUndefined();
     });
 
     it('rejects non-object phaseDecision', async () => {
@@ -408,9 +515,7 @@ describe('parseStatusFile', () => {
     });
 
     it('throws on file read error (ENOENT)', async () => {
-      const error = new Error('ENOENT: no such file or directory');
-      Object.assign(error, { code: 'ENOENT' });
-      mockedReadFile.mockRejectedValue(error);
+      mockEnoent();
 
       await expect(parseStatusFile('/path/to/missing.json')).rejects.toThrow('ENOENT');
     });
@@ -461,6 +566,297 @@ describe('parseStatusFile', () => {
       mockedReadFile.mockResolvedValue('null');
 
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
+    });
+  });
+});
+
+describe('parseRunData', () => {
+  describe('v2 parsing', () => {
+    it('parses v2 run-index.json', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.runId).toBe('20260226-1400Z-orchestrated');
+      expect(result.projectSlug).toBe('factory');
+      expect(result.ticketId).toBe('CODY-3');
+      expect(result.status).toBe('completed');
+      expect(result.completedAt).toBe('2026-02-26T15:30:00Z');
+      expect(result.mode).toBe('orchestrated');
+      expect(result.model).toBe('claude-opus-4-6');
+    });
+
+    it('flattens nested context and config to top-level fields', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.externalPlan).toBe(false);
+      expect(result.mergeBaseSha).toBe('abc123');
+      expect(result.diffBase).toBe('origin/main');
+      expect(result.maxReviewRounds).toBe(2);
+      expect(result.fixLowFindings).toBe(false);
+      expect(result.phases.architecture?.status).toBe('completed');
+      expect(result.phaseDecisions).toEqual({
+        architecture: { run: true, reason: 'New format support' },
+        planning: { run: true, reason: 'Multi-step implementation' },
+      });
+    });
+
+    it('passes through artifacts array', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.artifacts).toHaveLength(2);
+      expect(result.artifacts?.[0]?.filename).toBe('architecture.md');
+      expect(result.artifacts?.[1]?.iteration).toBe(1);
+      expect(result.artifacts?.[1]?.note).toBe('Initial plan');
+    });
+
+    it('converts completedAt: null to undefined', async () => {
+      const fixture = {
+        ...minimalV2(),
+        context: {
+          ...minimalV2().context,
+          completedAt: null,
+        },
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.completedAt).toBeUndefined();
+    });
+
+    it('preserves valid string completedAt value', async () => {
+      const fixture = {
+        ...minimalV2(),
+        context: {
+          ...minimalV2().context,
+          completedAt: '2026-02-26T15:30:00Z',
+        },
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.completedAt).toBe('2026-02-26T15:30:00Z');
+    });
+  });
+
+  describe('v1 fallback', () => {
+    it('falls back to status.json when run-index.json is missing', async () => {
+      mockFileContents({
+        '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.runId).toBe('20260225-1323Z-orchestrated');
+      expect(result.projectSlug).toBe('factory');
+    });
+
+    it('normalizes v1 phaseDecision to phaseDecisions', async () => {
+      mockFileContents({
+        '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.phaseDecisions).toEqual({
+        architecture: { run: true, reason: 'External plan exists' },
+        planning: { run: true, reason: 'External plan exists with 7 steps' },
+      });
+    });
+  });
+
+  describe('v2 precedence', () => {
+    it('uses v2 when both files exist', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
+        '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      // v2 fixture has different runId than v1 fixture
+      expect(result.runId).toBe('20260226-1400Z-orchestrated');
+      expect(result.mode).toBe('orchestrated');
+      expect(result.model).toBe('claude-opus-4-6');
+    });
+  });
+
+  describe('v2 validation errors', () => {
+    it('throws on invalid v2 version number', async () => {
+      const invalid = { ...minimalV2(), version: 1 };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws on missing context', async () => {
+      const invalid = { version: 2, config: {} };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws on missing config', async () => {
+      const invalid = {
+        version: 2,
+        context: minimalV2().context,
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws when context is missing required fields', async () => {
+      const invalid = {
+        version: 2,
+        context: { runId: 'test' },
+        config: {},
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws when context has invalid status', async () => {
+      const invalid = {
+        ...minimalV2(),
+        context: {
+          ...minimalV2().context,
+          status: 'invalid_status',
+        },
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws when config has invalid field types', async () => {
+      const invalid = {
+        ...minimalV2(),
+        config: { externalPlan: 'yes' },
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws when artifacts array contains invalid entry', async () => {
+      const invalid = {
+        ...minimalV2(),
+        artifacts: [{ filename: 'test.md' }],
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('throws when artifacts is not an array', async () => {
+      const invalid = {
+        ...minimalV2(),
+        artifacts: 'not-an-array',
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('accepts v2 without artifacts field', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV2()),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.artifacts).toBeUndefined();
+    });
+
+    it('accepts v2 with empty artifacts array', async () => {
+      const fixture = {
+        ...minimalV2(),
+        artifacts: [],
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.artifacts).toEqual([]);
+    });
+
+    it('throws when artifact entry has invalid iteration type', async () => {
+      const invalid = {
+        ...minimalV2(),
+        artifacts: [
+          {
+            filename: 'test.md',
+            role: 'test',
+            roleType: 'test',
+            agent: 'test',
+            type: 'markdown',
+            phase: 'test',
+            createdAt: '2026-01-01T00:00:00Z',
+            iteration: 'one',
+          },
+        ],
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+  });
+
+  describe('error handling', () => {
+    it('throws ENOENT when neither file exists', async () => {
+      mockEnoent();
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('ENOENT');
+    });
+
+    it('throws on corrupt run-index.json without falling back to status.json', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': '{ invalid json !!!',
+        '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
+      });
+      mockedReadFile.mockClear();
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow();
+      expect(mockedReadFile).toHaveBeenCalledTimes(1);
+      expect(mockedReadFile).toHaveBeenCalledWith('/runs/test-run/run-index.json', 'utf8');
     });
   });
 });
