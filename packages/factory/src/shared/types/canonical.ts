@@ -13,13 +13,13 @@ export interface CanonicalRunStatus {
   startedAt: string;
   completedAt: string | undefined;
   status: RunStatus;
-  externalPlan: boolean;
+  externalPlan: boolean | undefined;
   mergeBaseSha: string | undefined;
   diffBase: string | undefined;
   maxReviewRounds: number | undefined;
   fixLowFindings: boolean | undefined;
   phases: Phases;
-  phaseDecision: Record<string, PhaseDecision>;
+  phaseDecision: Record<string, PhaseDecision> | undefined;
 }
 
 export interface PhaseDecision {
