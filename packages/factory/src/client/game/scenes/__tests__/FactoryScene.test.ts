@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCompletedRunPhases, createMockRunStatus } from '../../../../__test-helpers__/fixtures.js';
+import { createSceneConfig } from '../../mappers/run-to-scene.js';
 
 const { mockSceneAdd, mockSceneClear } = vi.hoisted(() => {
   return {
@@ -51,7 +52,7 @@ vi.mock('../../../game/actors/AgentActor.js', () => ({
   AgentActor: class AgentActor {
     kind = 'agent';
     constructor(
-      public role: string,
+      public roleType: string,
       public position: unknown,
     ) {}
   },
@@ -82,6 +83,8 @@ const { FactoryScene } = await import('../FactoryScene.js');
 interface MockActorWithKind {
   kind?: string;
   phase?: string;
+  roleType?: string;
+  position?: { x: number; y: number };
 }
 
 function hasKind(value: unknown): value is MockActorWithKind {
@@ -156,8 +159,8 @@ describe('FactoryScene', () => {
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
-      // 1 platform + 7 stations + 6 gates + 4 agents + 3 artifacts = 21
-      expect(mockSceneAdd).toHaveBeenCalledTimes(21);
+      // 1 platform + 7 stations + 6 gates + 8 agents + 3 artifacts = 25
+      expect(mockSceneAdd).toHaveBeenCalledTimes(25);
     });
 
     it('adds station actors with correct phase names', () => {
@@ -200,7 +203,8 @@ describe('FactoryScene', () => {
       scene.onInitialize();
 
       const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
-      expect(agentCalls).toHaveLength(4);
+      // 1 architect + 1 planner + 1 coder + 2 reviewers + 1 simplifier + 1 holistic + 1 orchestrator = 8
+      expect(agentCalls).toHaveLength(8);
     });
 
     it('adds artifact actors for phases that produced them', () => {
@@ -215,6 +219,51 @@ describe('FactoryScene', () => {
         (call: unknown[]) => getActorFromCall(call).kind === 'artifact',
       );
       expect(artifactCalls).toHaveLength(3);
+    });
+  });
+
+  describe('vertical stacking', () => {
+    it('stacks agents vertically at same station', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
+
+      // Find reviewer agents (roleType 'reviewer') at station index 3
+      const reviewerActors = agentCalls
+        .map((call: unknown[]) => getActorFromCall(call))
+        .filter((actor) => actor.roleType === 'reviewer');
+
+      expect(reviewerActors.length).toBeGreaterThanOrEqual(2);
+
+      // Verify y-position formula: 320 - stackOffset * 20
+      const positions = reviewerActors.map((actor) => actor.position);
+      expect(positions[0]).toEqual({ x: expect.any(Number), y: 320 });
+      expect(positions[1]).toEqual({ x: expect.any(Number), y: 300 });
+    });
+
+    it('applies y = 320 - stackOffset * 20 formula to all agents', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const config = createSceneConfig(status);
+      const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
+
+      expect(agentCalls).toHaveLength(config.agents.length);
+
+      agentCalls.forEach((call: unknown[], i: number) => {
+        const actor = getActorFromCall(call);
+        const agent = config.agents[i];
+        expect(actor.position).toEqual(expect.objectContaining({ y: 320 - (agent?.stackOffset ?? 0) * 20 }));
+      });
     });
   });
 });

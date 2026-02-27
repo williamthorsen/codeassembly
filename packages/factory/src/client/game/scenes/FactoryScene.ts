@@ -52,7 +52,10 @@ export class FactoryScene extends Scene {
     });
 
     config.agents.forEach((agent) => {
-      const agentActor = new AgentActor(agent.role, vec(START_X + agent.stationIndex * STATION_SPACING, 320));
+      const agentActor = new AgentActor(
+        agent.roleType,
+        vec(START_X + agent.stationIndex * STATION_SPACING, 320 - agent.stackOffset * 20),
+      );
       this.add(agentActor);
     });
 
