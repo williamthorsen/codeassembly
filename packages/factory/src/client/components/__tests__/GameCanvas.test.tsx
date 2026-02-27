@@ -20,7 +20,7 @@ const {
     mockEngineAddScene: vi.fn(),
     mockEngineGoToScene: vi.fn(),
     mockUpdateStatus: vi.fn(),
-    mockLoadAllSprites: vi.fn(),
+    mockLoadAllSprites: vi.fn(() => Promise.resolve()),
   };
 });
 
@@ -125,6 +125,7 @@ describe('GameCanvas', () => {
     const callOrder: string[] = [];
     mockLoadAllSprites.mockImplementation(() => {
       callOrder.push('loadAllSprites');
+      return Promise.resolve();
     });
     mockEngineStart.mockImplementation(() => {
       callOrder.push('engine.start');

@@ -134,5 +134,4 @@ describe('AgentActor', () => {
       expect(mockGraphicsUse).not.toHaveBeenCalled();
     });
   });
-
 });

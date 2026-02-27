@@ -15,6 +15,7 @@ import {
   WORKING_STRATEGY,
 } from './sprite-definitions.js';
 
+const imageSourceCache = new Map<RoleType, ImageSource>();
 const spriteSheetCache = new Map<RoleType, SpriteSheet>();
 const idleCache = new Map<RoleType, Animation>();
 const workingCache = new Map<RoleType, Animation>();
@@ -25,6 +26,7 @@ function getOrCreateSpriteSheet(roleType: RoleType): SpriteSheet {
 
   const svg = generateSpriteSheetSvg(roleType);
   const imageSource = ImageSource.fromSvgString(svg, { filtering: ImageFiltering.Pixel });
+  imageSourceCache.set(roleType, imageSource);
 
   const spriteSheet = SpriteSheet.fromImageSource({
     image: imageSource,
@@ -76,16 +78,18 @@ export function getWorkingAnimation(roleType: RoleType): Animation {
   return animation;
 }
 
-/** Preload animations for all role types. */
-export function loadAllSprites(): void {
+/** Preload animations for all role types and load their image data. */
+export async function loadAllSprites(): Promise<void> {
   for (const roleType of ROLE_TYPES) {
     getIdleAnimation(roleType);
     getWorkingAnimation(roleType);
   }
+  await Promise.all([...imageSourceCache.values()].map((source) => source.load()));
 }
 
 /** Clear the sprite cache. Useful for tests. */
 export function clearSpriteCache(): void {
+  imageSourceCache.clear();
   spriteSheetCache.clear();
   idleCache.clear();
   workingCache.clear();

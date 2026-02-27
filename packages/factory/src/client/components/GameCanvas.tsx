@@ -30,10 +30,8 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
     engine.addScene('factory', scene);
     void engine.goToScene('factory');
 
-    loadAllSprites();
-
-    void engine
-      .start()
+    void loadAllSprites()
+      .then(() => engine.start())
       .then(() => {
         initializedRef.current = true;
         return;

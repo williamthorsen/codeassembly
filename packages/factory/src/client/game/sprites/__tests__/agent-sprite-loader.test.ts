@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { mockFromSvgString, mockFromImageSource, mockFromSpriteSheetCoordinates } = vi.hoisted(() => {
+const { mockFromSvgString, mockFromImageSource, mockFromSpriteSheetCoordinates, mockLoad } = vi.hoisted(() => {
+  const mockLoad = vi.fn(() => Promise.resolve());
   const mockAnimation = { type: 'animation' };
   return {
-    mockFromSvgString: vi.fn(() => ({ type: 'imageSource' })),
+    mockLoad,
+    mockFromSvgString: vi.fn(() => ({ type: 'imageSource', load: mockLoad })),
     mockFromImageSource: vi.fn(() => ({ type: 'spriteSheet' })),
     mockFromSpriteSheetCoordinates: vi.fn(() => ({ ...mockAnimation })),
   };
@@ -157,18 +159,18 @@ describe('agent-sprite-loader', () => {
   });
 
   describe('loadAllSprites', () => {
-    it('preloads animations for all 5 roleTypes', () => {
-      loadAllSprites();
+    it('preloads animations for all 5 roleTypes', async () => {
+      await loadAllSprites();
 
       // 2 calls per roleType (idle + working) x 5 roleTypes = 10
       expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(10);
     });
 
-    it('is synchronous (not a promise)', () => {
-      loadAllSprites();
+    it('calls load() on all image sources', async () => {
+      await loadAllSprites();
 
-      // Verify all sprites were loaded synchronously without await
-      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalled();
+      // 5 roleTypes = 5 ImageSources, each loaded once
+      expect(mockLoad).toHaveBeenCalledTimes(5);
     });
   });
 });
