@@ -13,6 +13,8 @@ import { useRunStatus } from './hooks/useRunStatus.js';
 
 import './App.css';
 
+const PROJECT_POLL_INTERVAL_MS = 5000;
+
 export function App(): React.JSX.Element {
   const [index, setIndex] = useState<ProjectIndex | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -38,6 +40,19 @@ export function App(): React.JSX.Element {
         console.error('Failed to fetch projects:', error_);
         setFetchError(error_ instanceof Error ? error_.message : 'Failed to load projects');
       });
+  }, []);
+
+  // Poll for project updates
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchProjects()
+        .then(setIndex)
+        .catch(() => {
+          // Silently ignore poll errors — display stale data rather than flash errors
+        });
+    }, PROJECT_POLL_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const allRuns = useMemo(() => flattenProjectIndex(index), [index]);

@@ -302,6 +302,11 @@ describe('ProjectScanner', () => {
     }
   });
 
+  it('exposes basePath via getBasePath()', () => {
+    const scanner = new ProjectScanner('/custom/path');
+    expect(scanner.getBasePath()).toBe('/custom/path');
+  });
+
   it('falls back to homedir default when no basePath or env var is set', async () => {
     const originalEnv = process.env.AI_PROJECTS_PATH;
     try {

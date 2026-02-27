@@ -344,4 +344,49 @@ describe('App', () => {
 
     expect(mockDismissAll).toHaveBeenCalledWith([]);
   });
+
+  describe('polling', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('polls for project updates every 5 seconds', async () => {
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(mockFetchProjects).toHaveBeenCalledOnce();
+      });
+
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(mockFetchProjects).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(mockFetchProjects).toHaveBeenCalledTimes(3);
+    });
+
+    it('silently ignores poll fetch errors', async () => {
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+      mockFetchProjects.mockResolvedValueOnce({ projects: [] });
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      await waitFor(() => {
+        expect(mockFetchProjects).toHaveBeenCalledOnce();
+      });
+
+      // Next poll fails
+      mockFetchProjects.mockRejectedValueOnce(new Error('Network error'));
+      await vi.advanceTimersByTimeAsync(5000);
+
+      // Should not display the poll error
+      expect(view.queryByText('Network error')).not.toBeInTheDocument();
+    });
+  });
 });
