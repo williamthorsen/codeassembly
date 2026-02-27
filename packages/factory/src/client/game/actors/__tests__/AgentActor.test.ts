@@ -4,6 +4,7 @@ const {
   mockActorConstructor,
   mockGraphicsUse,
   mockMoveTo,
+  mockClearActions,
   mockGetIdleAnimation,
   mockGetWalkingAnimation,
   mockGetWorkingAnimation,
@@ -17,6 +18,7 @@ const {
     mockActorConstructor: vi.fn(),
     mockGraphicsUse: vi.fn(),
     mockMoveTo: moveTo,
+    mockClearActions: vi.fn(),
     mockGetIdleAnimation: vi.fn(() => ({ id: 'idle-animation' })),
     mockGetWalkingAnimation: vi.fn(() => ({ id: 'walking-animation' })),
     mockGetWorkingAnimation: vi.fn(() => ({ id: 'working-animation' })),
@@ -28,11 +30,19 @@ const {
 vi.mock('excalibur', () => {
   class MockActor {
     config: Record<string, unknown>;
+    pos: { x: number; y: number };
     graphics = { use: mockGraphicsUse };
-    actions = { moveTo: mockMoveTo };
+    actions = { moveTo: mockMoveTo, clearActions: mockClearActions };
     constructor(config: Record<string, unknown>) {
       mockActorConstructor(config);
       this.config = config;
+      const pos = config.pos;
+      if (typeof pos === 'object' && pos !== null && 'x' in pos && 'y' in pos) {
+        const { x, y } = pos;
+        this.pos = { x: typeof x === 'number' ? x : 0, y: typeof y === 'number' ? y : 0 };
+      } else {
+        this.pos = { x: 0, y: 0 };
+      }
     }
   }
 
@@ -275,6 +285,174 @@ describe('AgentActor', () => {
       mockGraphicsUse.mockClear();
       actor.setAnimationState('working');
       expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'working-animation' });
+    });
+  });
+
+  describe('walkPath', () => {
+    it('returns immediately for empty waypoints without changing animation', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      mockGraphicsUse.mockClear();
+
+      await actor.walkPath([]);
+
+      expect(mockMoveTo).not.toHaveBeenCalled();
+      expect(mockGraphicsUse).not.toHaveBeenCalled();
+    });
+
+    it('calls moveTo for non-teleport waypoint', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      await actor.walkPath([{ x: 200, y: 0, teleport: false }]);
+
+      expect(mockMoveTo).toHaveBeenCalledWith({ x: 200, y: 0 }, 100);
+    });
+
+    it('sets position directly for teleport waypoint without calling moveTo', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      mockMoveTo.mockClear();
+
+      await actor.walkPath([{ x: 300, y: 100, teleport: true }]);
+
+      expect(mockMoveTo).not.toHaveBeenCalled();
+      expect(actor.pos).toEqual({ x: 300, y: 100 });
+    });
+
+    it('calls moveTo for each non-teleport waypoint in sequence', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      mockMoveTo.mockClear();
+
+      await actor.walkPath([
+        { x: 100, y: 0, teleport: false },
+        { x: 100, y: 200, teleport: true },
+        { x: 300, y: 200, teleport: false },
+      ]);
+
+      // moveTo called for first and third waypoints (second is teleport)
+      expect(mockMoveTo).toHaveBeenCalledTimes(2);
+      expect(mockMoveTo).toHaveBeenNthCalledWith(1, { x: 100, y: 0 }, 100);
+      expect(mockMoveTo).toHaveBeenNthCalledWith(2, { x: 300, y: 200 }, 100);
+      // Teleport waypoint updated position directly (moveTo mock does not update pos)
+      expect(actor.pos).toEqual({ x: 100, y: 200 });
+    });
+
+    it('plays walking animation at start and restores idle after completion', async () => {
+      const actor = new AgentActor('agent', 'reviewer', vec(0, 0));
+      mockGraphicsUse.mockClear();
+
+      await actor.walkPath([{ x: 200, y: 0, teleport: false }]);
+
+      expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'walking-animation' });
+      expect(mockGraphicsUse).toHaveBeenLastCalledWith({ id: 'idle-animation' });
+    });
+
+    it('applies pending state after walk completes', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      const walkPromise = actor.walkPath([{ x: 200, y: 0, teleport: false }]);
+
+      actor.setAnimationState('working');
+
+      mockGraphicsUse.mockClear();
+      await walkPromise;
+
+      expect(mockGraphicsUse).toHaveBeenLastCalledWith({ id: 'working-animation' });
+    });
+
+    it('cancels previous walk and starts new path when called during walk', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      // Start first walk
+      const walk1 = actor.walkPath([{ x: 100, y: 0, teleport: false }]);
+
+      // Start second walk (should cancel first)
+      mockMoveTo.mockClear();
+      const walk2 = actor.walkPath([{ x: 500, y: 0, teleport: false }]);
+
+      expect(mockClearActions).toHaveBeenCalled();
+      expect(mockMoveTo).toHaveBeenCalledWith({ x: 500, y: 0 }, 100);
+
+      await walk1;
+      await walk2;
+    });
+
+    it('skips zero-distance waypoint', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(100, 200));
+      mockMoveTo.mockClear();
+
+      await actor.walkPath([{ x: 100, y: 200, teleport: false }]);
+
+      expect(mockMoveTo).not.toHaveBeenCalled();
+    });
+
+    it('skips waypoint within POSITION_TOLERANCE but walks to one beyond it', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(100, 200));
+      mockMoveTo.mockClear();
+
+      await actor.walkPath([
+        { x: 100.5, y: 200, teleport: false }, // within 1px tolerance, should skip
+        { x: 102, y: 200, teleport: false }, // beyond tolerance, should walk
+      ]);
+
+      expect(mockMoveTo).toHaveBeenCalledTimes(1);
+      expect(mockMoveTo).toHaveBeenCalledWith({ x: 102, y: 200 }, 100);
+    });
+
+    it('does not process remaining waypoints from cancelled walk', async () => {
+      let resolveFirstMove: (() => void) | undefined;
+      const firstMovePromise = new Promise<void>((resolve) => {
+        resolveFirstMove = resolve;
+      });
+
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      mockMoveTo.mockClear();
+
+      // First call blocks, subsequent calls resolve immediately
+      mockMoveTo.mockReturnValueOnce({ toPromise: vi.fn(() => firstMovePromise) });
+      mockMoveTo.mockReturnValue({ toPromise: vi.fn(() => Promise.resolve()) });
+
+      // Start a walk with 2 waypoints
+      const walk1 = actor.walkPath([
+        { x: 100, y: 0, teleport: false },
+        { x: 200, y: 0, teleport: false },
+      ]);
+
+      // Cancel by starting a new walk (goes to a different destination)
+      const walk2 = actor.walkPath([{ x: 500, y: 0, teleport: false }]);
+
+      // Resolve the blocked first move (the cancelled walk should detect generation change)
+      resolveFirstMove?.();
+
+      await walk1;
+      await walk2;
+
+      // The 1st walk's 2nd waypoint (x: 200) should never have been processed
+      const moveToArgs = mockMoveTo.mock.calls.map((call: unknown[]) => call[0]);
+      expect(moveToArgs).not.toContainEqual({ x: 200, y: 0 });
+    });
+
+    it('restores idle animation after path where all waypoints are within tolerance', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(100, 200));
+      mockGraphicsUse.mockClear();
+
+      await actor.walkPath([{ x: 100.5, y: 200.5, teleport: false }]);
+
+      // Should still restore to idle after the loop completes
+      expect(mockGraphicsUse).toHaveBeenLastCalledWith({ id: 'idle-animation' });
+    });
+
+    it('does not trigger extra animation changes during teleport segments', async () => {
+      const actor = new AgentActor('agent', 'reviewer', vec(0, 0));
+      mockGraphicsUse.mockClear();
+
+      await actor.walkPath([
+        { x: 100, y: 0, teleport: false },
+        { x: 100, y: 200, teleport: true },
+        { x: 300, y: 200, teleport: false },
+      ]);
+
+      // graphics.use called exactly twice: walking at start, idle at end
+      expect(mockGraphicsUse).toHaveBeenCalledTimes(2);
+      expect(mockGraphicsUse).toHaveBeenNthCalledWith(1, { id: 'walking-animation' });
+      expect(mockGraphicsUse).toHaveBeenNthCalledWith(2, { id: 'idle-animation' });
     });
   });
 });

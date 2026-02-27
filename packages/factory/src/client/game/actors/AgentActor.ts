@@ -1,6 +1,7 @@
-import { Actor, type Vector } from 'excalibur';
+import { Actor, vec, type Vector } from 'excalibur';
 
 import type { RoleType } from '../../../shared/constants/role-types.js';
+import type { Waypoint } from '../layout/walk-path.js';
 import {
   getCelebratingAnimation,
   getConcernedAnimation,
@@ -32,12 +33,16 @@ function getAnimationForState(state: AgentAnimationState, roleType: RoleType) {
   }
 }
 
+/** Skip waypoints closer than 1px to avoid sub-pixel moveTo calls on same-position agents. */
+const POSITION_TOLERANCE = 1;
+
 export class AgentActor extends Actor {
   readonly agentKey: string;
   private currentState: AgentAnimationState = 'idle';
   private isWalking = false;
   private pendingState: AgentAnimationState | undefined;
   private readonly roleType: RoleType;
+  private walkGeneration = 0;
 
   constructor(agentKey: string, roleType: RoleType, position: Vector) {
     super({
@@ -70,7 +75,10 @@ export class AgentActor extends Actor {
     return state;
   }
 
-  /** Move the actor to the target position, playing the walking animation during transit. */
+  /**
+   * Move the actor to the target position, playing the walking animation during transit.
+   * Prefer walkPath() for new code: it supports cancel-and-restart and multi-waypoint paths.
+   */
   async walkTo(target: Vector): Promise<void> {
     if (this.isWalking) return;
 
@@ -83,6 +91,54 @@ export class AgentActor extends Actor {
 
     this.isWalking = false;
     // pendingState may be set by setAnimationState() during the await above
+    const restoreState = this.resolvePendingState();
+    this.currentState = restoreState;
+    this.graphics.use(getAnimationForState(restoreState, this.roleType));
+  }
+
+  /**
+   * Walk through a sequence of waypoints with cancel-and-restart support.
+   * If called while already walking, cancels the current walk and starts the new path.
+   * Teleport waypoints snap position directly; walk waypoints use moveTo animation.
+   */
+  async walkPath(waypoints: ReadonlyArray<Waypoint>): Promise<void> {
+    if (waypoints.length === 0) return;
+
+    // Cancel any in-flight walk
+    if (this.isWalking) {
+      this.actions.clearActions();
+    }
+
+    this.walkGeneration += 1;
+    const generation = this.walkGeneration;
+
+    this.isWalking = true;
+    this.pendingState = undefined;
+    this.currentState = 'walking';
+    this.graphics.use(getAnimationForState('walking', this.roleType));
+
+    for (const waypoint of waypoints) {
+      if (generation !== this.walkGeneration) return;
+
+      if (waypoint.teleport) {
+        this.pos = vec(waypoint.x, waypoint.y);
+        continue;
+      }
+
+      // Skip zero-distance waypoints
+      if (
+        Math.abs(this.pos.x - waypoint.x) < POSITION_TOLERANCE &&
+        Math.abs(this.pos.y - waypoint.y) < POSITION_TOLERANCE
+      ) {
+        continue;
+      }
+
+      await this.actions.moveTo(vec(waypoint.x, waypoint.y), WALK_SPEED).toPromise();
+
+      if (generation !== this.walkGeneration) return;
+    }
+
+    this.isWalking = false;
     const restoreState = this.resolvePendingState();
     this.currentState = restoreState;
     this.graphics.use(getAnimationForState(restoreState, this.roleType));

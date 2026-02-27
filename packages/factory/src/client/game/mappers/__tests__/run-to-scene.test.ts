@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
 import { PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
-import { createSceneConfig, PHASE_NAMES } from '../run-to-scene.js';
+import { REVIEW_STATION_INDEX as LAYOUT_REVIEW_STATION_INDEX } from '../../layout/platform-layout.js';
+import { createSceneConfig, PHASE_NAMES, REVIEW_STATION_INDEX } from '../run-to-scene.js';
 
 describe('createSceneConfig', () => {
   describe('station activation', () => {
@@ -507,7 +508,158 @@ describe('createSceneConfig', () => {
       expect(orchestrator?.stackOffset).toBe(1);
     });
 
-    it('counts only level-0 agents when computing orchestrator stackOffset at review station', () => {
+    it('places orchestrator at highest reviewer level when review has 2 reviewers', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'security-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      expect(orchestrator?.stationIndex).toBe(3);
+      expect(orchestrator?.level).toBe(1);
+    });
+
+    it('places orchestrator at highest reviewer level when review has 3 reviewers', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'security-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'performance-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'medium',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      expect(orchestrator?.stationIndex).toBe(3);
+      expect(orchestrator?.level).toBe(2);
+    });
+
+    it('places orchestrator at level 0 when parallelReview has 0 reviewers', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      expect(orchestrator?.stationIndex).toBe(3);
+      expect(orchestrator?.level).toBe(0);
+    });
+
+    it('places orchestrator at level 0 when review has 1 reviewer', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      expect(orchestrator?.stationIndex).toBe(3);
+      expect(orchestrator?.level).toBe(0);
+    });
+
+    it('counts only agents at orchestrator level when computing stackOffset at review station', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -554,11 +706,12 @@ describe('createSceneConfig', () => {
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
       const reviewers = config.agents.filter((a) => a.roleType === PHASE_ROLE_TYPE.review);
 
-      // 3 reviewers at levels 0, 1, 2 — only the level-0 reviewer counts for stackOffset
+      // 3 reviewers at levels 0, 1, 2 — orchestrator is on level 2 with 1 reviewer there
       expect(reviewers).toHaveLength(3);
       expect(orchestrator?.stationIndex).toBe(3);
+      expect(orchestrator?.level).toBe(2);
+      // Only the level-2 reviewer (performance-reviewer) is at the same level, so stackOffset = 1
       expect(orchestrator?.stackOffset).toBe(1);
-      expect(orchestrator?.level).toBe(0);
     });
   });
 
@@ -641,6 +794,12 @@ describe('createSceneConfig', () => {
       config.stations.forEach((station, i) => {
         expect(station.phase).toBe(PHASE_NAMES[i]);
       });
+    });
+  });
+
+  describe('constant synchronization', () => {
+    it('REVIEW_STATION_INDEX matches the layout constant', () => {
+      expect(REVIEW_STATION_INDEX).toBe(LAYOUT_REVIEW_STATION_INDEX);
     });
   });
 
