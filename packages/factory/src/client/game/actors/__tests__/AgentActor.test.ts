@@ -1,103 +1,83 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { mockActorConstructor } = vi.hoisted(() => {
+const { mockActorConstructor, mockGraphicsUse, mockGetIdleAnimation, mockGetWorkingAnimation } = vi.hoisted(() => {
   return {
     mockActorConstructor: vi.fn(),
+    mockGraphicsUse: vi.fn(),
+    mockGetIdleAnimation: vi.fn(() => ({ id: 'idle-animation' })),
+    mockGetWorkingAnimation: vi.fn(() => ({ id: 'working-animation' })),
   };
 });
 
 vi.mock('excalibur', () => {
   class MockActor {
     config: Record<string, unknown>;
+    graphics = { use: mockGraphicsUse };
     constructor(config: Record<string, unknown>) {
       mockActorConstructor(config);
       this.config = config;
     }
   }
 
-  class MockColor {
-    hex: string;
-    constructor(hex: string) {
-      this.hex = hex;
-    }
-    static fromHex(hex: string) {
-      return new MockColor(hex);
-    }
-  }
-
   return {
     Actor: MockActor,
-    Color: MockColor,
     vec: (x: number, y: number) => ({ x, y }),
   };
 });
 
+vi.mock('../../sprites/agent-sprite-loader.js', () => ({
+  getIdleAnimation: mockGetIdleAnimation,
+  getWorkingAnimation: mockGetWorkingAnimation,
+}));
+
+vi.mock('../../sprites/sprite-definitions.js', () => ({}));
+
 const { AgentActor } = await import('../AgentActor.js');
-const { Color, vec } = await import('excalibur');
-const { ROLE_TYPE_COLORS } = await import('../../../../shared/constants/role-types.js');
+const { vec } = await import('excalibur');
 
 describe('AgentActor', () => {
-  it('uses correct color for orchestrator roleType', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('loads idle animation for the given roleType on construction', () => {
     new AgentActor('orchestrator', vec(0, 0));
 
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(ROLE_TYPE_COLORS.orchestrator),
-      }),
-    );
+    expect(mockGetIdleAnimation).toHaveBeenCalledWith('orchestrator');
+    expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'idle-animation' });
   });
 
-  it('uses correct color for analyst roleType', () => {
-    const pos = vec(100, 200);
-    new AgentActor('analyst', pos);
+  it('loads idle animation for analyst roleType', () => {
+    new AgentActor('analyst', vec(100, 200));
 
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        pos,
-        width: 20,
-        height: 30,
-        color: Color.fromHex(ROLE_TYPE_COLORS.analyst),
-      }),
-    );
+    expect(mockGetIdleAnimation).toHaveBeenCalledWith('analyst');
   });
 
-  it('uses correct color for planner roleType', () => {
+  it('loads idle animation for planner roleType', () => {
     new AgentActor('planner', vec(0, 0));
 
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(ROLE_TYPE_COLORS.planner),
-      }),
-    );
+    expect(mockGetIdleAnimation).toHaveBeenCalledWith('planner');
   });
 
-  it('uses correct color for author roleType', () => {
+  it('loads idle animation for author roleType', () => {
     new AgentActor('author', vec(0, 0));
 
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(ROLE_TYPE_COLORS.author),
-      }),
-    );
+    expect(mockGetIdleAnimation).toHaveBeenCalledWith('author');
   });
 
-  it('uses correct color for reviewer roleType', () => {
+  it('loads idle animation for reviewer roleType', () => {
     new AgentActor('reviewer', vec(0, 0));
 
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(ROLE_TYPE_COLORS.reviewer),
-      }),
-    );
+    expect(mockGetIdleAnimation).toHaveBeenCalledWith('reviewer');
   });
 
-  it('sets correct dimensions', () => {
+  it('sets dimensions to 32x32', () => {
     new AgentActor('analyst', vec(50, 75));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        width: 20,
-        height: 30,
+        width: 32,
+        height: 32,
       }),
     );
   });
@@ -111,5 +91,47 @@ describe('AgentActor', () => {
         pos,
       }),
     );
+  });
+
+  describe('setAnimationState', () => {
+    it('switches to working animation', () => {
+      const actor = new AgentActor('orchestrator', vec(0, 0));
+      mockGraphicsUse.mockClear();
+
+      actor.setAnimationState('working');
+
+      expect(mockGetWorkingAnimation).toHaveBeenCalledWith('orchestrator');
+      expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'working-animation' });
+    });
+
+    it('switches back to idle animation', () => {
+      const actor = new AgentActor('analyst', vec(0, 0));
+      actor.setAnimationState('working');
+      mockGraphicsUse.mockClear();
+
+      actor.setAnimationState('idle');
+
+      expect(mockGetIdleAnimation).toHaveBeenCalledWith('analyst');
+      expect(mockGraphicsUse).toHaveBeenCalled();
+    });
+
+    it('does not trigger graphics.use when setting same state', () => {
+      const actor = new AgentActor('planner', vec(0, 0));
+      mockGraphicsUse.mockClear();
+
+      actor.setAnimationState('idle');
+
+      expect(mockGraphicsUse).not.toHaveBeenCalled();
+    });
+
+    it('does not trigger graphics.use when setting working twice', () => {
+      const actor = new AgentActor('reviewer', vec(0, 0));
+      actor.setAnimationState('working');
+      mockGraphicsUse.mockClear();
+
+      actor.setAnimationState('working');
+
+      expect(mockGraphicsUse).not.toHaveBeenCalled();
+    });
   });
 });
