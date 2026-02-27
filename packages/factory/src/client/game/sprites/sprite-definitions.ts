@@ -35,7 +35,7 @@ export const CONCERNED_FRAME_COORDINATES: ReadonlyArray<{ x: number; y: number }
 export const IDLE_DURATION = 600;
 export const WALKING_DURATION = 200;
 export const WORKING_DURATION = 300;
-export const CELEBRATING_DURATION = 400;
+export const CELEBRATING_DURATION = 500;
 export const CONCERNED_DURATION = 600;
 
 // Animation playback strategies

@@ -9,6 +9,7 @@ function createAgent(overrides: Partial<AgentConfig> = {}): AgentConfig {
     roleType: 'analyst',
     stationIndex: 0,
     stackOffset: 0,
+    level: 0,
     ...overrides,
   };
 }
@@ -103,6 +104,33 @@ describe('diffAgents', () => {
 
     expect(result.added).toHaveLength(1);
     expect(result.added[0]?.role).toBe('reviewer');
+  });
+
+  it('marks agent as moved when level changes from 0 to 1', () => {
+    const prev = createAgent({ role: 'reviewer-a', roleType: 'reviewer', stationIndex: 3, stackOffset: 0, level: 0 });
+    const next = createAgent({ role: 'reviewer-a', roleType: 'reviewer', stationIndex: 3, stackOffset: 0, level: 1 });
+
+    const result = diffAgents([prev], [next]);
+
+    expect(result.moved).toEqual([{ prev, next }]);
+  });
+
+  it('marks agent as moved when level changes from 1 to 2', () => {
+    const prev = createAgent({ role: 'reviewer-b', roleType: 'reviewer', stationIndex: 3, stackOffset: 1, level: 1 });
+    const next = createAgent({ role: 'reviewer-b', roleType: 'reviewer', stationIndex: 3, stackOffset: 1, level: 2 });
+
+    const result = diffAgents([prev], [next]);
+
+    expect(result.moved).toEqual([{ prev, next }]);
+  });
+
+  it('marks agent as unchanged when level is the same', () => {
+    const agent = createAgent({ role: 'reviewer-a', roleType: 'reviewer', stationIndex: 3, stackOffset: 0, level: 1 });
+
+    const result = diffAgents([agent], [agent]);
+
+    expect(result.unchanged).toEqual([agent]);
+    expect(result.moved).toEqual([]);
   });
 
   it('treats roleType changes as unchanged when position is the same', () => {

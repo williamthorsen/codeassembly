@@ -99,6 +99,28 @@ vi.mock('../../../game/actors/GateActor.js', () => ({
   },
 }));
 
+vi.mock('../../../game/actors/PlatformActor.js', () => ({
+  PlatformActor: class PlatformActor {
+    kind = 'platform';
+    constructor(
+      public position: unknown,
+      public width: number,
+      public height: number,
+    ) {}
+  },
+}));
+
+vi.mock('../../../game/actors/LadderActor.js', () => ({
+  LadderActor: class LadderActor {
+    kind = 'ladder';
+    constructor(
+      public x: number,
+      public bottomY: number,
+      public topY: number,
+    ) {}
+  },
+}));
+
 const { FactoryScene } = await import('../FactoryScene.js');
 
 interface MockActorWithKind {
@@ -166,18 +188,17 @@ describe('FactoryScene', () => {
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
-      const initialPos = { ...mockCamera.pos };
-      const initialZoom = mockCamera.zoom;
-
       const updatedStatus = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
       });
       scene.updateStatus(updatedStatus);
 
-      // Camera should still be set (zoom and position are deterministic from constants)
-      expect(mockCamera.zoom).toBe(initialZoom);
-      expect(mockCamera.pos).toEqual(initialPos);
+      // Camera should be set (zoom and position are recomputed from layout bounds)
+      expect(mockCamera.zoom).toBeGreaterThan(0);
+      expect(mockCamera.zoom).toBeLessThanOrEqual(1);
+      expect(mockCamera.pos.x).toBeGreaterThan(0);
+      expect(mockCamera.pos.y).toBeGreaterThan(0);
     });
 
     it('never zooms in past 1x', () => {
@@ -227,10 +248,12 @@ describe('FactoryScene', () => {
       // Static rebuild clears the scene
       expect(mockSceneClear).toHaveBeenCalledTimes(1);
 
-      // New agent should be added
+      // New agents should be added (architect + orchestrator at active phase)
       const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
-      expect(agentCalls).toHaveLength(1);
-      expect(getActorFromCall(agentCalls[0] ?? []).agentKey).toBe('architect');
+      expect(agentCalls).toHaveLength(2);
+      const agentKeys = agentCalls.map((call: unknown[]) => getActorFromCall(call).agentKey);
+      expect(agentKeys).toContain('architect');
+      expect(agentKeys).toContain('orchestrator');
     });
   });
 
@@ -240,7 +263,7 @@ describe('FactoryScene', () => {
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
-      // 1 platform + 7 stations + 6 gates + 0 agents + 0 artifacts = 14
+      // 1 platform + 7 stations + 6 gates + 0 agents + 0 artifacts + 0 ladders = 14
       expect(mockSceneAdd).toHaveBeenCalledTimes(14);
     });
 
@@ -252,8 +275,8 @@ describe('FactoryScene', () => {
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
-      // 1 platform + 7 stations + 6 gates + 8 agents + 3 artifacts = 25
-      expect(mockSceneAdd).toHaveBeenCalledTimes(25);
+      // 2 platforms (main + 1 upper for 2 reviewers) + 1 ladder + 7 stations + 6 gates + 8 agents + 3 artifacts = 27
+      expect(mockSceneAdd).toHaveBeenCalledTimes(27);
     });
 
     it('adds station actors with correct phase names', () => {
@@ -315,8 +338,8 @@ describe('FactoryScene', () => {
     });
   });
 
-  describe('grid-based stacking', () => {
-    it('arranges agents at same station in a grid', () => {
+  describe('level-based agent positioning', () => {
+    it('places first reviewer on level 0 and second on level 1', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -333,15 +356,14 @@ describe('FactoryScene', () => {
 
       expect(reviewerActors.length).toBeGreaterThanOrEqual(2);
 
-      // stackOffset 0 → col 0 row 0, stackOffset 1 → col 1 row 0
-      // Both should be at y=320 (same row), different x positions
+      // First reviewer at level 0: y = 400 - 22 = 378
+      // Second reviewer at level 1: y = 400 - 56 - 22 = 322
       const positions = reviewerActors.map((actor) => actor.position);
-      expect(positions[0]?.y).toBe(320);
-      expect(positions[1]?.y).toBe(320);
-      expect(positions[0]?.x).not.toBe(positions[1]?.x);
+      expect(positions[0]?.y).toBe(378);
+      expect(positions[1]?.y).toBe(322);
     });
 
-    it('applies grid formula to all agents', () => {
+    it('places level-0 agents using grid formula', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -354,13 +376,79 @@ describe('FactoryScene', () => {
 
       expect(agentCalls).toHaveLength(config.agents.length);
 
+      // Check level-0 agents use the grid formula
       agentCalls.forEach((call: unknown[], i: number) => {
         const actor = getActorFromCall(call);
         const agent = config.agents[i];
-        if (agent === undefined) return;
+        if (agent === undefined || agent.level !== 0) return;
         const row = Math.floor(agent.stackOffset / 3);
-        expect(actor.position).toEqual(expect.objectContaining({ y: 320 - row * 38 }));
+        expect(actor.position).toEqual(expect.objectContaining({ y: 378 - row * 38 }));
       });
+    });
+  });
+
+  describe('platforms and ladders', () => {
+    it('adds platform actors for upper levels with 2+ reviewers', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const platformCalls = mockSceneAdd.mock.calls.filter(
+        (call: unknown[]) => getActorFromCall(call).kind === 'platform',
+      );
+      // 2 reviewers: main platform + 1 upper platform
+      expect(platformCalls).toHaveLength(2);
+    });
+
+    it('adds ladder actors connecting floors', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const ladderCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'ladder');
+      // 2 reviewers: 1 ladder
+      expect(ladderCalls).toHaveLength(1);
+    });
+
+    it('adds no upper platforms or ladders for single reviewer', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const platformCalls = mockSceneAdd.mock.calls.filter(
+        (call: unknown[]) => getActorFromCall(call).kind === 'platform',
+      );
+      const ladderCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'ladder');
+      // 1 reviewer: only main platform, no ladders
+      expect(platformCalls).toHaveLength(1);
+      expect(ladderCalls).toHaveLength(0);
     });
   });
 

@@ -38,7 +38,11 @@ export function diffAgents(prev: ReadonlyArray<AgentConfig>, next: ReadonlyArray
     const prevAgent = prevByRole.get(role);
     if (prevAgent === undefined) {
       added.push(nextAgent);
-    } else if (prevAgent.stationIndex !== nextAgent.stationIndex || prevAgent.stackOffset !== nextAgent.stackOffset) {
+    } else if (
+      prevAgent.stationIndex !== nextAgent.stationIndex ||
+      prevAgent.stackOffset !== nextAgent.stackOffset ||
+      prevAgent.level !== nextAgent.level
+    ) {
       moved.push({ prev: prevAgent, next: nextAgent });
     } else {
       unchanged.push(nextAgent);

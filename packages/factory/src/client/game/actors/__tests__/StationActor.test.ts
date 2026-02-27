@@ -83,35 +83,41 @@ const { Color, vec } = await import('excalibur');
 const { PALETTE } = await import('../../../../shared/constants/palette.js');
 
 describe('StationActor', () => {
-  it('creates a Rectangle with lightGray color when active', () => {
+  it('creates a Rectangle with semi-transparent lightGray when active', () => {
     new StationActor('architecture', true, vec(100, 200));
 
+    const expectedColor = Color.fromHex(PALETTE.lightGray);
+    expectedColor.a = 0.15;
     expect(mockRectangleConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         width: 100,
-        height: 60,
-        color: Color.fromHex(PALETTE.lightGray),
+        height: 40,
+        color: expectedColor,
       }),
     );
   });
 
-  it('creates a Rectangle with darkGray color when inactive', () => {
+  it('creates a Rectangle with semi-transparent darkGray when inactive', () => {
     new StationActor('architecture', false, vec(100, 200));
 
+    const expectedColor = Color.fromHex(PALETTE.darkGray);
+    expectedColor.a = 0.15;
     expect(mockRectangleConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        color: Color.fromHex(PALETTE.darkGray),
+        color: expectedColor,
       }),
     );
   });
 
-  it('creates a Text label with the phase name', () => {
+  it('creates a Text label with the phase name at reduced opacity', () => {
     new StationActor('planning', true, vec(0, 0));
 
+    const expectedColor = Color.fromHex(PALETTE.white);
+    expectedColor.a = 0.6;
     expect(mockTextConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         text: 'planning',
-        color: Color.fromHex(PALETTE.white),
+        color: expectedColor,
       }),
     );
   });
@@ -142,7 +148,7 @@ describe('StationActor', () => {
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         width: 100,
-        height: 60,
+        height: 40,
       }),
     );
   });

@@ -73,7 +73,12 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
     return agents.map((agent) => buildStateInfo(agent, 'concerned'));
   }
 
+  // Note: Terminal state checks (completed/failed) above must remain before this
+  // per-agent mapping so that orchestrators correctly show celebrating/concerned states.
   return agents.map((agent) => {
+    if (agent.roleType === 'orchestrator') {
+      return buildStateInfo(agent, 'working');
+    }
     const animationState: AgentAnimationState = isPhaseInProgress(agent.stationIndex, status.phases)
       ? 'working'
       : 'idle';
