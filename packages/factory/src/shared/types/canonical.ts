@@ -39,7 +39,7 @@ export interface CanonicalRunStatus {
 
 export interface PhaseDecision {
   run: boolean;
-  reason: string;
+  reason: string | undefined;
 }
 
 export interface Phases {
