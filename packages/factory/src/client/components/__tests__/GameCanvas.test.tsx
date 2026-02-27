@@ -11,6 +11,7 @@ const {
   mockEngineAddScene,
   mockEngineGoToScene,
   mockUpdateStatus,
+  mockLoadAllSprites,
 } = vi.hoisted(() => {
   return {
     mockEngineConstructor: vi.fn(),
@@ -19,6 +20,7 @@ const {
     mockEngineAddScene: vi.fn(),
     mockEngineGoToScene: vi.fn(),
     mockUpdateStatus: vi.fn(),
+    mockLoadAllSprites: vi.fn(),
   };
 });
 
@@ -61,6 +63,10 @@ vi.mock('../../game/scenes/FactoryScene.js', () => ({
   },
 }));
 
+vi.mock('../../game/sprites/agent-sprite-loader.js', () => ({
+  loadAllSprites: mockLoadAllSprites,
+}));
+
 vi.mock('../GameCanvas.css', () => ({}));
 
 const { GameCanvas } = await import('../GameCanvas.js');
@@ -79,6 +85,7 @@ describe('GameCanvas', () => {
     mockEngineAddScene.mockClear();
     mockEngineGoToScene.mockClear();
     mockUpdateStatus.mockClear();
+    mockLoadAllSprites.mockClear();
   });
 
   afterEach(() => {
@@ -114,11 +121,25 @@ describe('GameCanvas', () => {
     expect(mockEngineGoToScene).toHaveBeenCalledWith('factory');
   });
 
-  it('starts the engine', () => {
+  it('starts the engine after loading sprites', async () => {
+    const callOrder: string[] = [];
+    mockLoadAllSprites.mockImplementation(() => {
+      callOrder.push('loadAllSprites');
+    });
+    mockEngineStart.mockImplementation(() => {
+      callOrder.push('engine.start');
+      return Promise.resolve();
+    });
+
     const status = createMockRunStatus();
     render(<GameCanvas status={status} />);
 
-    expect(mockEngineStart).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(mockLoadAllSprites).toHaveBeenCalledTimes(1);
+      expect(mockEngineStart).toHaveBeenCalledTimes(1);
+    });
+
+    expect(callOrder).toEqual(['loadAllSprites', 'engine.start']);
   });
 
   it('stops the engine on unmount', () => {

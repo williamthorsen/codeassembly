@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import { FactoryScene } from '../game/scenes/FactoryScene.js';
+import { loadAllSprites } from '../game/sprites/agent-sprite-loader.js';
 
 import './GameCanvas.css';
 
@@ -28,6 +29,9 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
     const scene = new FactoryScene(status);
     engine.addScene('factory', scene);
     void engine.goToScene('factory');
+
+    loadAllSprites();
+
     void engine
       .start()
       .then(() => {
