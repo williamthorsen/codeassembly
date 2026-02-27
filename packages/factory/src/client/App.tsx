@@ -40,6 +40,19 @@ export function App(): React.JSX.Element {
       });
   }, []);
 
+  // Poll for project updates
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchProjects()
+        .then(setIndex)
+        .catch(() => {
+          // Silently ignore poll errors — display stale data rather than flash errors
+        });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const allRuns = useMemo(() => flattenProjectIndex(index), [index]);
 
   const visibleRuns = useMemo(

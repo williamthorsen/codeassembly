@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ProjectScanner } from '../project-scanner.js';
 import { ProjectWatcher } from '../project-watcher.js';
 
 // Mock fs.watch
@@ -10,8 +9,10 @@ const mockWatcher = {
   on: vi.fn().mockReturnThis(),
 };
 
+type WatchCallback = (event: string, filename: string) => void;
+
 const { mockedWatch } = vi.hoisted(() => ({
-  mockedWatch: vi.fn(),
+  mockedWatch: vi.fn<(path: string, options: { recursive: boolean }, cb: WatchCallback) => typeof mockWatcher>(),
 }));
 
 vi.mock('node:fs', () => ({
@@ -19,12 +20,20 @@ vi.mock('node:fs', () => ({
   watch: mockedWatch,
 }));
 
-function createMockScanner(): ProjectScanner {
+function getWatchCallback(): WatchCallback {
+  const call = mockedWatch.mock.calls[0];
+  if (!call) {
+    throw new TypeError('Expected fs.watch to have been called');
+  }
+  return call[2];
+}
+
+function createMockScanner() {
   return {
     scan: vi.fn<() => Promise<{ projects: [] }>>().mockResolvedValue({ projects: [] }),
     getIndex: vi.fn().mockReturnValue(null),
     getBasePath: vi.fn().mockReturnValue('/test/projects'),
-  } as unknown as ProjectScanner;
+  };
 }
 
 describe('ProjectWatcher', () => {
@@ -44,11 +53,7 @@ describe('ProjectWatcher', () => {
 
     watcher.start();
 
-    expect(mockedWatch).toHaveBeenCalledWith(
-      '/test/projects',
-      { recursive: true },
-      expect.any(Function),
-    );
+    expect(mockedWatch).toHaveBeenCalledWith('/test/projects', { recursive: true }, expect.any(Function));
 
     watcher.stop();
   });
@@ -59,8 +64,7 @@ describe('ProjectWatcher', () => {
 
     watcher.start();
 
-    // Extract the callback passed to fs.watch
-    const watchCallback = mockedWatch.mock.calls[0]?.[2] as (event: string, filename: string) => void;
+    const watchCallback = getWatchCallback();
     watchCallback('rename', 'new-ticket');
 
     // Before debounce: scan should not have been called
@@ -80,7 +84,7 @@ describe('ProjectWatcher', () => {
 
     watcher.start();
 
-    const watchCallback = mockedWatch.mock.calls[0]?.[2] as (event: string, filename: string) => void;
+    const watchCallback = getWatchCallback();
 
     // Fire multiple events in quick succession
     watchCallback('rename', 'file-1');
@@ -124,15 +128,12 @@ describe('ProjectWatcher', () => {
     const watcher = new ProjectWatcher(scanner);
     watcher.start();
 
-    const watchCallback = mockedWatch.mock.calls[0]?.[2] as (event: string, filename: string) => void;
+    const watchCallback = getWatchCallback();
     watchCallback('rename', 'new-file');
 
     await vi.advanceTimersByTimeAsync(1000);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('rescan'),
-      expect.any(Error),
-    );
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('rescan'), expect.any(Error));
 
     consoleSpy.mockRestore();
     watcher.stop();

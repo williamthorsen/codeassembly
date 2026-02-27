@@ -1,15 +1,21 @@
-import { watch, type FSWatcher } from 'node:fs';
+import type { FSWatcher } from 'node:fs';
+import { watch } from 'node:fs';
 
-import type { ProjectScanner } from './project-scanner.js';
+import type { ProjectIndex } from '../../shared/types/api.js';
+
+export interface Scannable {
+  scan(): Promise<ProjectIndex>;
+  getBasePath(): string;
+}
 
 const DEBOUNCE_MS = 1000;
 
 export class ProjectWatcher {
-  private scanner: ProjectScanner;
+  private scanner: Scannable;
   private watcher: FSWatcher | undefined;
   private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(scanner: ProjectScanner) {
+  constructor(scanner: Scannable) {
     this.scanner = scanner;
   }
 
