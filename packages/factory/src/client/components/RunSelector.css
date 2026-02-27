@@ -27,12 +27,3 @@
   outline: 1px solid #5555ff;
   border-color: #5555ff;
 }
-
-.run-selector-error {
-  color: #ff5555;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  padding: 6px 8px;
-  border: 1px solid #aa0000;
-  background-color: #1a0000;
-}
