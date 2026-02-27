@@ -17,13 +17,18 @@ export function StatusBar({ status }: StatusBarProps): React.JSX.Element {
   return (
     <div className="status-bar">
       <span className="status-item">
+        <strong>Project:</strong> {status.projectSlug}
+      </span>
+      {status.ticketId !== undefined && (
+        <span className="status-item">
+          <strong>Ticket:</strong> {status.ticketId}
+        </span>
+      )}
+      <span className="status-item">
         <strong>Run:</strong> {status.runId}
       </span>
       <span className="status-item">
         <strong>Status:</strong> {status.status}
-      </span>
-      <span className="status-item">
-        <strong>Branch:</strong> {status.branch}
       </span>
       {duration !== null && (
         <span className="status-item">

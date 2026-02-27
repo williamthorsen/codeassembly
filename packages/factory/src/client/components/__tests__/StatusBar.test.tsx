@@ -46,18 +46,28 @@ describe('StatusBar', () => {
     cleanup();
   });
 
-  it('renders runId, status, and branch', () => {
+  it('renders project, ticket, runId, and status', () => {
     const status = createMockStatus({
+      projectSlug: 'my-project',
+      ticketId: 'PROJ-42',
       runId: 'abc-123',
       status: 'in_progress',
-      branch: 'feature/cool',
     });
 
     render(<StatusBar status={status} />);
 
+    expect(screen.getByText('my-project')).toBeInTheDocument();
+    expect(screen.getByText('PROJ-42')).toBeInTheDocument();
     expect(screen.getByText('abc-123')).toBeInTheDocument();
     expect(screen.getByText('in_progress')).toBeInTheDocument();
-    expect(screen.getByText('feature/cool')).toBeInTheDocument();
+  });
+
+  it('does not display ticket when ticketId is undefined', () => {
+    const status = createMockStatus({ ticketId: undefined });
+
+    const { container } = render(<StatusBar status={status} />);
+
+    expect(container.textContent).not.toContain('Ticket:');
   });
 
   it('calculates and displays duration when completedAt exists', () => {
