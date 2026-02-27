@@ -252,7 +252,7 @@ function isValidPhaseDecisionMap(value: unknown): boolean {
   for (const entry of Object.values(value)) {
     if (!isRecord(entry)) return false;
     if (typeof entry.run !== 'boolean') return false;
-    if (typeof entry.reason !== 'string') return false;
+    if (!isOptionalString(entry.reason)) return false;
   }
   return true;
 }

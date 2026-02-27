@@ -473,15 +473,18 @@ describe('parseStatusFile', () => {
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
-    it('rejects phaseDecision entry missing reason', async () => {
+    it('accepts phaseDecision entry without reason', async () => {
       mockJson({
         ...minimalValid(),
         phaseDecision: {
           architecture: { run: true },
+          implementation: { run: true },
         },
       });
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
+      const result = await parseStatusFile('/path/to/status.json');
+
+      expect(result.phaseDecisions?.architecture).toEqual({ run: true });
     });
 
     it('rejects phaseDecision entry with wrong types', async () => {
@@ -698,6 +701,29 @@ describe('parseRunData', () => {
   });
 
   describe('v2 validation errors', () => {
+    it('accepts v2 phaseDecisions with missing reason', async () => {
+      const fixture = {
+        ...minimalV2(),
+        context: {
+          ...minimalV2().context,
+          phaseDecisions: {
+            architecture: { run: true, reason: 'Validate assumptions' },
+            implementation: { run: true },
+            'review-cycle': { run: true },
+          },
+        },
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(fixture),
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.phaseDecisions?.architecture?.reason).toBe('Validate assumptions');
+      expect(result.phaseDecisions?.implementation?.reason).toBeUndefined();
+      expect(result.phaseDecisions?.['review-cycle']?.reason).toBeUndefined();
+    });
+
     it('throws on invalid v2 version number', async () => {
       const invalid = { ...minimalV2(), version: 1 };
       mockFileContents({
