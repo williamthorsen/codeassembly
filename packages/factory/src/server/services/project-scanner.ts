@@ -153,6 +153,10 @@ export class ProjectScanner {
     return runs;
   }
 
+  getBasePath(): string {
+    return this.basePath;
+  }
+
   getIndex(): ProjectIndex | null {
     return this.index;
   }
