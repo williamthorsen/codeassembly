@@ -21,6 +21,11 @@ export interface RunInfo {
   startedAt: string;
 }
 
+export interface FlatRunInfo extends Omit<RunInfo, 'path'> {
+  projectSlug: string;
+  ticketId: string;
+}
+
 export interface ArtifactListResponse {
   artifacts: string[];
 }

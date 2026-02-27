@@ -1,18 +1,10 @@
-import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProjectIndex } from '../../../shared/types/api.js';
 
-const { mockFetchProjects } = vi.hoisted(() => ({
-  mockFetchProjects: vi.fn<() => Promise<ProjectIndex>>(),
-}));
-
 const { mockUseSelectionParams } = vi.hoisted(() => ({
   mockUseSelectionParams: vi.fn(),
-}));
-
-vi.mock('../../api/client.js', () => ({
-  fetchProjects: mockFetchProjects,
 }));
 
 vi.mock('../../hooks/useSelectionParams.js', () => ({
@@ -81,51 +73,21 @@ describe('RunSelector', () => {
     setDefaultSelectionParams();
   });
 
-  it('fetches projects on mount and populates dropdown', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('populates project dropdown when index is provided', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
 
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
-
+    expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
     expect(view.getByRole('option', { name: 'beta' })).toBeInTheDocument();
-    expect(mockFetchProjects).toHaveBeenCalledOnce();
   });
 
-  it('displays error when fetchProjects fails', async () => {
-    mockFetchProjects.mockRejectedValue(new Error('Server down'));
+  it('shows ticket dropdown after selecting project', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByText('Server down')).toBeInTheDocument();
-    });
-  });
-
-  it('displays fallback error when fetchProjects rejects with non-Error', async () => {
-    mockFetchProjects.mockRejectedValue('string error');
-
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
-    const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByText('Failed to load projects')).toBeInTheDocument();
-    });
-  });
-
-  it('shows ticket dropdown after selecting project', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
-
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
-    const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
 
     // Initially, no ticket dropdown visible
     expect(view.queryByText('Ticket:')).not.toBeInTheDocument();
@@ -139,15 +101,11 @@ describe('RunSelector', () => {
     expect(view.getByRole('option', { name: 'T-2 (1 runs)' })).toBeInTheDocument();
   });
 
-  it('shows run dropdown after selecting ticket', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('shows run dropdown after selecting ticket', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
 
     fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
     fireEvent.change(view.getByLabelText('Ticket:'), { target: { value: 'T-1' } });
@@ -158,15 +116,11 @@ describe('RunSelector', () => {
     expect(view.getByRole('option', { name: 'run-b (in_progress)' })).toBeInTheDocument();
   });
 
-  it('calls onSelectRun when a run is selected', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('calls onSelectRun when a run is selected', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
 
     fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
     fireEvent.change(view.getByLabelText('Ticket:'), { target: { value: 'T-1' } });
@@ -175,15 +129,11 @@ describe('RunSelector', () => {
     expect(onSelectRun).toHaveBeenCalledWith('alpha', 'run-a');
   });
 
-  it('resets ticket and run when project changes', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('resets ticket and run when project changes', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
 
     // Select project -> ticket -> run
     fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
@@ -202,15 +152,11 @@ describe('RunSelector', () => {
     expect(view.queryByText('Run:')).not.toBeInTheDocument();
   });
 
-  it('resets run when ticket changes', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('resets run when ticket changes', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
 
     fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
     fireEvent.change(view.getByLabelText('Ticket:'), { target: { value: 'T-1' } });
@@ -225,31 +171,35 @@ describe('RunSelector', () => {
     expect(view.queryByRole('option', { name: 'run-a (completed)' })).not.toBeInTheDocument();
   });
 
-  it('does not render ticket dropdown when no project is selected', async () => {
-    mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('does not render ticket dropdown when no project is selected', () => {
+    const index = createProjectIndex();
 
-    const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
     const view = within(container);
-
-    await waitFor(() => {
-      expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-    });
 
     expect(view.queryByText('Ticket:')).not.toBeInTheDocument();
     expect(view.queryByText('Run:')).not.toBeInTheDocument();
   });
 
-  describe('URL param restoration', () => {
-    it('restores full selection from URL params after fetch and fires onSelectRun', async () => {
-      setDefaultSelectionParams({ project: 'alpha', ticket: 'T-1', run: 'run-a' });
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+  it('renders empty project dropdown when index is null', () => {
+    const { container } = render(<RunSelector index={null} onSelectRun={onSelectRun} />);
+    const view = within(container);
 
-      const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+    // Only the placeholder option should be present
+    const options = view.getAllByRole('option');
+    expect(options).toHaveLength(1);
+    expect(options[0]).toHaveTextContent('Select project...');
+  });
+
+  describe('URL param restoration', () => {
+    it('restores full selection from URL params after fetch and fires onSelectRun', () => {
+      setDefaultSelectionParams({ project: 'alpha', ticket: 'T-1', run: 'run-a' });
+      const index = createProjectIndex();
+
+      const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
       const view = within(container);
 
-      await waitFor(() => {
-        expect(onSelectRun).toHaveBeenCalledWith('alpha', 'run-a');
-      });
+      expect(onSelectRun).toHaveBeenCalledWith('alpha', 'run-a');
 
       // All three dropdowns should be populated
       expect(view.getByLabelText('Project:')).toHaveValue('alpha');
@@ -257,33 +207,29 @@ describe('RunSelector', () => {
       expect(view.getByLabelText('Run:')).toHaveValue('run-a');
     });
 
-    it('clears invalid URL params via setParams', async () => {
+    it('clears invalid URL params via setParams', () => {
       setDefaultSelectionParams({ project: 'nonexistent', ticket: 'T-99', run: 'run-z' });
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+      const index = createProjectIndex();
 
-      render(<RunSelector onSelectRun={onSelectRun} />);
+      render(<RunSelector index={index} onSelectRun={onSelectRun} />);
 
-      await waitFor(() => {
-        expect(mockSetParams).toHaveBeenCalledWith({
-          project: '',
-          ticket: '',
-          run: '',
-        });
+      expect(mockSetParams).toHaveBeenCalledWith({
+        project: '',
+        ticket: '',
+        run: '',
       });
 
       expect(onSelectRun).not.toHaveBeenCalled();
     });
 
-    it('restores partial URL params (project only)', async () => {
+    it('restores partial URL params (project only)', () => {
       setDefaultSelectionParams({ project: 'alpha' });
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+      const index = createProjectIndex();
 
-      const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+      const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
       const view = within(container);
 
-      await waitFor(() => {
-        expect(view.getByLabelText('Project:')).toHaveValue('alpha');
-      });
+      expect(view.getByLabelText('Project:')).toHaveValue('alpha');
 
       // Ticket dropdown should be visible
       expect(view.getByText('Ticket:')).toBeInTheDocument();
@@ -293,47 +239,37 @@ describe('RunSelector', () => {
       expect(onSelectRun).not.toHaveBeenCalled();
     });
 
-    it('clears invalid ticket while keeping valid project', async () => {
+    it('clears invalid ticket while keeping valid project', () => {
       setDefaultSelectionParams({ project: 'alpha', ticket: 'INVALID', run: 'run-a' });
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+      const index = createProjectIndex();
 
-      render(<RunSelector onSelectRun={onSelectRun} />);
+      render(<RunSelector index={index} onSelectRun={onSelectRun} />);
 
-      await waitFor(() => {
-        expect(mockSetParams).toHaveBeenCalledWith({
-          project: 'alpha',
-          ticket: '',
-          run: '',
-        });
+      expect(mockSetParams).toHaveBeenCalledWith({
+        project: 'alpha',
+        ticket: '',
+        run: '',
       });
 
       expect(onSelectRun).not.toHaveBeenCalled();
     });
 
-    it('changing project calls setParams with cascade clear', async () => {
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+    it('changing project calls setParams with cascade clear', () => {
+      const index = createProjectIndex();
 
-      const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+      const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
       const view = within(container);
-
-      await waitFor(() => {
-        expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-      });
 
       fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
 
       expect(mockSetParams).toHaveBeenCalledWith({ project: 'alpha', ticket: '', run: '' });
     });
 
-    it('changing ticket calls setParams clearing run', async () => {
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+    it('changing ticket calls setParams clearing run', () => {
+      const index = createProjectIndex();
 
-      const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+      const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
       const view = within(container);
-
-      await waitFor(() => {
-        expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-      });
 
       fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
       fireEvent.change(view.getByLabelText('Ticket:'), { target: { value: 'T-1' } });
@@ -341,15 +277,11 @@ describe('RunSelector', () => {
       expect(mockSetParams).toHaveBeenCalledWith({ ticket: 'T-1', run: '' });
     });
 
-    it('selecting run calls setParams', async () => {
-      mockFetchProjects.mockResolvedValue(createProjectIndex());
+    it('selecting run calls setParams', () => {
+      const index = createProjectIndex();
 
-      const { container } = render(<RunSelector onSelectRun={onSelectRun} />);
+      const { container } = render(<RunSelector index={index} onSelectRun={onSelectRun} />);
       const view = within(container);
-
-      await waitFor(() => {
-        expect(view.getByRole('option', { name: 'alpha' })).toBeInTheDocument();
-      });
 
       fireEvent.change(view.getByLabelText('Project:'), { target: { value: 'alpha' } });
       fireEvent.change(view.getByLabelText('Ticket:'), { target: { value: 'T-1' } });

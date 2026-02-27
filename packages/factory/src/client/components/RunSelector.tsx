@@ -1,35 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../../shared/types/api.js';
-import { fetchProjects } from '../api/client.js';
 import { useSelectionParams } from '../hooks/useSelectionParams.js';
 
 import './RunSelector.css';
 
 interface RunSelectorProps {
+  index: ProjectIndex | null;
   onSelectRun: (projectSlug: string, runId: string) => void;
 }
 
-export function RunSelector({ onSelectRun }: RunSelectorProps): React.JSX.Element {
+export function RunSelector({ index, onSelectRun }: RunSelectorProps): React.JSX.Element {
   const { initialParams, setParams } = useSelectionParams();
 
-  const [index, setIndex] = useState<ProjectIndex | null>(null);
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<string>(initialParams.project);
   const [selectedTicket, setSelectedTicket] = useState<string>(initialParams.ticket);
   const [selectedRun, setSelectedRun] = useState<string>(initialParams.run);
 
   const hasValidated = useRef(false);
-
-  useEffect(() => {
-    fetchProjects()
-      .then(setIndex)
-      .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Failed to load projects';
-        setFetchError(message);
-        console.error('Failed to fetch projects:', error);
-      });
-  }, []);
 
   // Validate URL params against loaded data
   useEffect(() => {
@@ -82,7 +70,6 @@ export function RunSelector({ onSelectRun }: RunSelectorProps): React.JSX.Elemen
 
   return (
     <div className="run-selector">
-      {fetchError && <div className="run-selector-error">{fetchError}</div>}
       <label>
         Project:
         <select

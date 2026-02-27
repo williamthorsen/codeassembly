@@ -1,0 +1,110 @@
+.run-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+}
+
+.run-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.run-list-header-label {
+  font-size: 12px;
+  color: #aaaaaa;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.run-list-clear-btn {
+  background: none;
+  border: none;
+  color: #aaaaaa;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.run-list-clear-btn:hover {
+  color: #ff5555;
+}
+
+.run-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.run-list-empty {
+  color: #555555;
+  font-style: italic;
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.run-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  background-color: transparent;
+}
+
+.run-list-item:hover {
+  background-color: #111111;
+}
+
+.run-list-item--selected {
+  border-left-color: #5555ff;
+  background-color: #00001a;
+}
+
+.run-list-item-status {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.run-list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.run-list-item-run-id {
+  color: #ffffff;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-list-item-context {
+  color: #555555;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-list-item-dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: #aaaaaa;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.run-list-item-dismiss:hover {
+  color: #ff5555;
+}
