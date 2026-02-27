@@ -34,65 +34,65 @@ vi.mock('excalibur', () => {
 
 const { AgentActor } = await import('../AgentActor.js');
 const { Color, vec } = await import('excalibur');
-const { PALETTE } = await import('../../../../shared/constants/palette.js');
+const { ROLE_TYPE_COLORS } = await import('../../../../shared/constants/role-types.js');
 
 describe('AgentActor', () => {
-  it('uses correct color for architect role', () => {
+  it('uses correct color for orchestrator roleType', () => {
+    new AgentActor('orchestrator', vec(0, 0));
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: Color.fromHex(ROLE_TYPE_COLORS.orchestrator),
+      }),
+    );
+  });
+
+  it('uses correct color for analyst roleType', () => {
     const pos = vec(100, 200);
-    new AgentActor('architect', pos);
+    new AgentActor('analyst', pos);
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         pos,
         width: 20,
         height: 30,
-        color: Color.fromHex(PALETTE.blue),
+        color: Color.fromHex(ROLE_TYPE_COLORS.analyst),
       }),
     );
   });
 
-  it('uses correct color for planner role', () => {
+  it('uses correct color for planner roleType', () => {
     new AgentActor('planner', vec(0, 0));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        color: Color.fromHex(PALETTE.green),
+        color: Color.fromHex(ROLE_TYPE_COLORS.planner),
       }),
     );
   });
 
-  it('uses correct color for coder role', () => {
-    new AgentActor('coder', vec(0, 0));
+  it('uses correct color for author roleType', () => {
+    new AgentActor('author', vec(0, 0));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        color: Color.fromHex(PALETTE.yellow),
+        color: Color.fromHex(ROLE_TYPE_COLORS.author),
       }),
     );
   });
 
-  it('uses correct color for reviewer role', () => {
+  it('uses correct color for reviewer roleType', () => {
     new AgentActor('reviewer', vec(0, 0));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        color: Color.fromHex(PALETTE.red),
-      }),
-    );
-  });
-
-  it('falls back to white for unknown roles', () => {
-    new AgentActor('unknown-role', vec(0, 0));
-
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(PALETTE.white),
+        color: Color.fromHex(ROLE_TYPE_COLORS.reviewer),
       }),
     );
   });
 
   it('sets correct dimensions', () => {
-    new AgentActor('architect', vec(50, 75));
+    new AgentActor('analyst', vec(50, 75));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -104,7 +104,7 @@ describe('AgentActor', () => {
 
   it('passes position to Actor constructor', () => {
     const pos = vec(300, 400);
-    new AgentActor('coder', pos);
+    new AgentActor('author', pos);
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({

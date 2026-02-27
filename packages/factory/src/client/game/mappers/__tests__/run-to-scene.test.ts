@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
+import { PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
 import { createSceneConfig, PHASE_NAMES } from '../run-to-scene.js';
 
 describe('createSceneConfig', () => {
@@ -20,7 +21,7 @@ describe('createSceneConfig', () => {
       expect(config.stations[3]?.active).toBe(true);
     });
 
-    it('marks skipped phases as inactive stations', () => {
+    it('marks simplifier station active when codeSimplifier.ran is true', () => {
       const status = createMockRunStatus({
         status: 'completed',
         completedAt: '2026-01-01T01:00:00Z',
@@ -28,9 +29,38 @@ describe('createSceneConfig', () => {
       });
 
       const config = createSceneConfig(status);
+      const simplifierIndex = PHASE_NAMES.indexOf('simplifier');
 
-      expect(config.stations[4]?.active).toBe(false);
-      expect(config.stations[5]?.active).toBe(false);
+      expect(config.stations[simplifierIndex]?.active).toBe(true);
+    });
+
+    it('marks holistic station active when holisticReview exists', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const config = createSceneConfig(status);
+      const holisticIndex = PHASE_NAMES.indexOf('holistic');
+
+      expect(config.stations[holisticIndex]?.active).toBe(true);
+    });
+
+    it('marks skipped phases as inactive stations', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[1]?.active).toBe(false);
+      expect(config.stations[2]?.active).toBe(false);
     });
 
     it('marks summary station active when run is completed', () => {
@@ -43,7 +73,79 @@ describe('createSceneConfig', () => {
   });
 
   describe('agents', () => {
-    it('creates agents for active phases with correct station indices', () => {
+    it('creates agents for all 7 phases when run is completed', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const config = createSceneConfig(status);
+
+      // 1 architect + 1 planner + 1 coder + 2 reviewers + 1 simplifier + 1 holistic + 1 orchestrator = 8
+      expect(config.agents).toHaveLength(8);
+    });
+
+    it('assigns correct roleType to each agent', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.agents[0]).toEqual({
+        role: 'architect',
+        roleType: PHASE_ROLE_TYPE.architecture,
+        stationIndex: 0,
+        stackOffset: 0,
+      });
+      expect(config.agents[1]).toEqual({
+        role: 'planner',
+        roleType: PHASE_ROLE_TYPE.planning,
+        stationIndex: 1,
+        stackOffset: 0,
+      });
+      expect(config.agents[2]).toEqual({
+        role: 'coder',
+        roleType: PHASE_ROLE_TYPE.implementation,
+        stationIndex: 2,
+        stackOffset: 0,
+      });
+      expect(config.agents[3]).toEqual({
+        role: 'correctness-reviewer',
+        roleType: PHASE_ROLE_TYPE.review,
+        stationIndex: 3,
+        stackOffset: 0,
+      });
+      expect(config.agents[4]).toEqual({
+        role: 'security-reviewer',
+        roleType: PHASE_ROLE_TYPE.review,
+        stationIndex: 3,
+        stackOffset: 1,
+      });
+      expect(config.agents[5]).toEqual({
+        role: 'simplifier',
+        roleType: PHASE_ROLE_TYPE.simplifier,
+        stationIndex: 4,
+        stackOffset: 0,
+      });
+      expect(config.agents[6]).toEqual({
+        role: 'holistic-reviewer',
+        roleType: PHASE_ROLE_TYPE.holistic,
+        stationIndex: 5,
+        stackOffset: 0,
+      });
+      expect(config.agents[7]).toEqual({
+        role: 'orchestrator',
+        roleType: PHASE_ROLE_TYPE.summary,
+        stationIndex: 6,
+        stackOffset: 0,
+      });
+    });
+
+    it('creates one agent per parallel reviewer with sequential stackOffset', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -51,11 +153,140 @@ describe('createSceneConfig', () => {
 
       const config = createSceneConfig(status);
 
-      expect(config.agents).toHaveLength(4);
-      expect(config.agents[0]).toEqual({ role: 'architect', stationIndex: 0 });
-      expect(config.agents[1]).toEqual({ role: 'planner', stationIndex: 1 });
-      expect(config.agents[2]).toEqual({ role: 'coder', stationIndex: 2 });
-      expect(config.agents[3]).toEqual({ role: 'reviewer', stationIndex: 3 });
+      const reviewerAgents = config.agents.filter((a) => a.stationIndex === 3);
+      expect(reviewerAgents).toHaveLength(2);
+      expect(reviewerAgents[0]?.stackOffset).toBe(0);
+      expect(reviewerAgents[1]?.stackOffset).toBe(1);
+    });
+
+    it('creates single generic reviewer when reviewers map is empty', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.stationIndex === 3);
+      expect(reviewerAgents).toHaveLength(1);
+      expect(reviewerAgents[0]).toEqual({ role: 'reviewer', roleType: 'reviewer', stationIndex: 3, stackOffset: 0 });
+    });
+
+    it('creates single reviewer for legacy review format', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          review: { status: 'approved', iterations: 2, finalCriticality: 'low' },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.stationIndex === 3);
+      expect(reviewerAgents).toHaveLength(1);
+      expect(reviewerAgents[0]).toEqual({ role: 'reviewer', roleType: 'reviewer', stationIndex: 3, stackOffset: 0 });
+    });
+
+    it('assigns sequential stackOffset for 3+ parallel reviewers', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'security-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'performance-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'medium',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.stationIndex === 3);
+      expect(reviewerAgents).toHaveLength(3);
+      expect(reviewerAgents[0]?.stackOffset).toBe(0);
+      expect(reviewerAgents[1]?.stackOffset).toBe(1);
+      expect(reviewerAgents[2]?.stackOffset).toBe(2);
+    });
+
+    it('does not create simplifier agent when codeSimplifier is undefined', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: undefined,
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const simplifierAgents = config.agents.filter((a) => a.stationIndex === 4);
+      expect(simplifierAgents).toHaveLength(0);
+    });
+
+    it('does not create simplifier agent when codeSimplifier.ran is false', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: { ran: false, actionableFindings: false, coderFixCycleRan: false, artifact: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const simplifierAgents = config.agents.filter((a) => a.stationIndex === 4);
+      expect(simplifierAgents).toHaveLength(0);
+    });
+
+    it('does not create orchestrator agent when run is not completed', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: createCompletedRunPhases(),
+      });
+
+      const config = createSceneConfig(status);
+
+      const orchestratorAgents = config.agents.filter((a) => a.stationIndex === 6);
+      expect(orchestratorAgents).toHaveLength(0);
     });
 
     it('assigns stationIndex values matching PHASE_NAMES ordering', () => {
@@ -74,7 +305,7 @@ describe('createSceneConfig', () => {
       expect(config.agents.find((a) => a.role === 'architect')?.stationIndex).toBe(architectIndex);
       expect(config.agents.find((a) => a.role === 'planner')?.stationIndex).toBe(planningIndex);
       expect(config.agents.find((a) => a.role === 'coder')?.stationIndex).toBe(implementationIndex);
-      expect(config.agents.find((a) => a.role === 'reviewer')?.stationIndex).toBe(reviewIndex);
+      expect(config.agents.find((a) => a.role === 'correctness-reviewer')?.stationIndex).toBe(reviewIndex);
     });
   });
 

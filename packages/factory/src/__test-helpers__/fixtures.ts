@@ -45,12 +45,36 @@ export function createCompletedRunPhases(): Phases {
     parallelReview: {
       aggregatedCriticality: 'low',
       reviewRoundsUsed: 1,
-      reviewers: {},
+      reviewers: {
+        'correctness-reviewer': {
+          ran: true,
+          status: 'completed',
+          criticality: 'low',
+          reason: undefined,
+          reReviewCriticality: undefined,
+          reReviewError: undefined,
+        },
+        'security-reviewer': {
+          ran: true,
+          status: 'completed',
+          criticality: 'low',
+          reason: undefined,
+          reReviewCriticality: undefined,
+          reReviewError: undefined,
+        },
+      },
       coderFixCycleRan: false,
       selectiveReReview: undefined,
     },
     review: undefined,
-    codeSimplifier: undefined,
-    holisticReview: undefined,
+    codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: undefined },
+    holisticReview: {
+      status: 'completed',
+      criticality: 'low',
+      reReviewCriticality: undefined,
+      coderFixCycleRan: false,
+      reviewRoundsUsed: 1,
+      artifact: undefined,
+    },
   };
 }
