@@ -61,12 +61,12 @@ const { Color } = await import('excalibur');
 const { PALETTE } = await import('../../../../shared/constants/palette.js');
 
 describe('LadderActor', () => {
-  it('creates Actor at vertical center of ladder', () => {
+  it('creates Actor at topY so GraphicsGroup renders downward from top', () => {
     new LadderActor(650, 400, 344);
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        pos: { x: 650, y: 372 },
+        pos: { x: 650, y: 344 },
         height: 56,
       }),
     );

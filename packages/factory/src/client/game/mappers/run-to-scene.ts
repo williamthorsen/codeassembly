@@ -115,7 +115,7 @@ function buildOrchestratorAgent(phases: Phases, runStatus: string, agents: Agent
   if (runStatus === 'in_progress') {
     const station = findOrchestratorStation(phases, runStatus);
     if (station !== undefined) {
-      const existingAtStation = agents.filter((a) => a.stationIndex === station).length;
+      const existingAtStation = agents.filter((a) => a.stationIndex === station && a.level === 0).length;
       return {
         role: 'orchestrator',
         roleType: PHASE_ROLE_TYPE.summary,

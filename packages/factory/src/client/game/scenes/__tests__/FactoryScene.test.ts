@@ -356,11 +356,11 @@ describe('FactoryScene', () => {
 
       expect(reviewerActors.length).toBeGreaterThanOrEqual(2);
 
-      // First reviewer at level 0: y = 400 - 80 = 320
-      // Second reviewer at level 1: y = 400 - 56 - 80 = 264
+      // First reviewer at level 0: y = 400 - 22 = 378
+      // Second reviewer at level 1: y = 400 - 56 - 22 = 322
       const positions = reviewerActors.map((actor) => actor.position);
-      expect(positions[0]?.y).toBe(320);
-      expect(positions[1]?.y).toBe(264);
+      expect(positions[0]?.y).toBe(378);
+      expect(positions[1]?.y).toBe(322);
     });
 
     it('places level-0 agents using grid formula', () => {
@@ -382,7 +382,7 @@ describe('FactoryScene', () => {
         const agent = config.agents[i];
         if (agent === undefined || agent.level !== 0) return;
         const row = Math.floor(agent.stackOffset / 3);
-        expect(actor.position).toEqual(expect.objectContaining({ y: 320 - row * 38 }));
+        expect(actor.position).toEqual(expect.objectContaining({ y: 378 - row * 38 }));
       });
     });
   });

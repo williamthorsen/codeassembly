@@ -10,10 +10,9 @@ const LADDER_WIDTH = 16;
 export class LadderActor extends Actor {
   constructor(x: number, bottomY: number, topY: number) {
     const height = bottomY - topY;
-    const centerY = (bottomY + topY) / 2;
 
     super({
-      pos: vec(x, centerY),
+      pos: vec(x, topY),
       width: LADDER_WIDTH,
       height,
     });

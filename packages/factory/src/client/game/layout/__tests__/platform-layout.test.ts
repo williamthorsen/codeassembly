@@ -151,7 +151,7 @@ describe('computeLayout', () => {
 
       // stationX = 200 + 3*150 = 650
       // col=0, xOffset = (0-1)*36 = -36
-      expect(pos).toEqual({ x: 650 - 36, y: 400 - 80 });
+      expect(pos).toEqual({ x: 650 - 36, y: 400 - 22 });
     });
 
     it('returns correct position for stackOffset 1 on level 0', () => {
@@ -159,7 +159,7 @@ describe('computeLayout', () => {
       const pos = layout.agentPosition(3, 1, 0);
 
       // col=1, xOffset = (1-1)*36 = 0
-      expect(pos).toEqual({ x: 650, y: 400 - 80 });
+      expect(pos).toEqual({ x: 650, y: 400 - 22 });
     });
 
     it('returns correct position for stackOffset 2 on level 0', () => {
@@ -167,7 +167,7 @@ describe('computeLayout', () => {
       const pos = layout.agentPosition(3, 2, 0);
 
       // col=2, xOffset = (2-1)*36 = 36
-      expect(pos).toEqual({ x: 650 + 36, y: 400 - 80 });
+      expect(pos).toEqual({ x: 650 + 36, y: 400 - 22 });
     });
 
     it('wraps to next row at stackOffset 3 on level 0', () => {
@@ -175,22 +175,22 @@ describe('computeLayout', () => {
       const pos = layout.agentPosition(3, 3, 0);
 
       // col=0 row=1, xOffset = (0-1)*36 = -36
-      expect(pos).toEqual({ x: 650 - 36, y: 400 - 80 - 38 });
+      expect(pos).toEqual({ x: 650 - 36, y: 400 - 22 - 38 });
     });
 
     it('returns upper-level position centered on review station', () => {
       const layout = computeLayout(2);
       const pos = layout.agentPosition(3, 0, 1);
 
-      // stationX = 650, y = 400 - 1*56 - 80
-      expect(pos).toEqual({ x: 650, y: 400 - 56 - 80 });
+      // stationX = 650, y = 400 - 1*56 - 22
+      expect(pos).toEqual({ x: 650, y: 400 - 56 - 22 });
     });
 
     it('returns level-2 position correctly', () => {
       const layout = computeLayout(3);
       const pos = layout.agentPosition(3, 0, 2);
 
-      expect(pos).toEqual({ x: 650, y: 400 - 2 * 56 - 80 });
+      expect(pos).toEqual({ x: 650, y: 400 - 2 * 56 - 22 });
     });
   });
 

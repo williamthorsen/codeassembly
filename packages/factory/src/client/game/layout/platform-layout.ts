@@ -121,6 +121,8 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
   /** Compute the screen position for an agent based on station, offset, and level. */
   function agentPosition(stationIndex: number, stackOffset: number, level: number): { x: number; y: number } {
     const stationX = c.startX + stationIndex * c.stationSpacing;
+    // Place agent feet near platform surface: half-platform + half-sprite - padding compensation
+    const standOffset = c.platformHeight / 2 + 12;
 
     if (level === 0) {
       const col = stackOffset % c.agentsPerRow;
@@ -128,14 +130,14 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
       const xOffset = (col - (c.agentsPerRow - 1) / 2) * c.agentHSpacing;
       return {
         x: stationX + xOffset,
-        y: c.baseY - 80 - row * c.agentVSpacing,
+        y: c.baseY - standOffset - row * c.agentVSpacing,
       };
     }
 
     // Upper levels: center agent on the upper platform
     return {
       x: stationX,
-      y: c.baseY - level * c.levelHeight - 80,
+      y: c.baseY - level * c.levelHeight - standOffset,
     };
   }
 
@@ -155,7 +157,8 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
   const maxY = c.baseY + c.platformHeight + margin;
 
   // Top bound: account for agent positions on the highest level
-  const highestAgentY = upperLevelCount > 0 ? c.baseY - upperLevelCount * c.levelHeight - 80 : c.baseY - 80;
+  const standOffset = c.platformHeight / 2 + 12;
+  const highestAgentY = c.baseY - upperLevelCount * c.levelHeight - standOffset;
   const minY = highestAgentY - c.agentVSpacing - margin;
 
   return {
