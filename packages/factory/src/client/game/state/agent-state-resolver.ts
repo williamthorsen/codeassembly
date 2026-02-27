@@ -32,10 +32,10 @@ const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
     return phases.review?.status;
   },
   // The code simplifier phase tracks `ran` and `actionableFindings` but not a PhaseStatus.
-  simplifier: () => {},
+  simplifier: () => undefined,
   holistic: (phases) => phases.holisticReview?.status,
   // The summary phase has no in-progress status; it maps to run completion.
-  summary: () => {},
+  summary: () => undefined,
 };
 
 /** Determine whether the phase at the given station index is currently in progress. */
@@ -73,7 +73,12 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
     return agents.map((agent) => buildStateInfo(agent, 'concerned'));
   }
 
+  // Note: Terminal state checks (completed/failed) above must remain before this
+  // per-agent mapping so that orchestrators correctly show celebrating/concerned states.
   return agents.map((agent) => {
+    if (agent.roleType === 'orchestrator') {
+      return buildStateInfo(agent, 'working');
+    }
     const animationState: AgentAnimationState = isPhaseInProgress(agent.stationIndex, status.phases)
       ? 'working'
       : 'idle';

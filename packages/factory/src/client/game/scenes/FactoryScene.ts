@@ -1,35 +1,25 @@
-import { Actor, Color, Scene, vec } from 'excalibur';
+import { Color, Scene, vec } from 'excalibur';
 
 import { PALETTE } from '../../../shared/constants/palette.js';
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { AgentActor } from '../actors/AgentActor.js';
 import { ArtifactActor } from '../actors/ArtifactActor.js';
 import { GateActor } from '../actors/GateActor.js';
+import { LadderActor } from '../actors/LadderActor.js';
+import { PlatformActor } from '../actors/PlatformActor.js';
 import { StationActor } from '../actors/StationActor.js';
+import type { LayoutResult } from '../layout/platform-layout.js';
+import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.js';
 import type { AgentConfig, SceneConfig } from '../mappers/run-to-scene.js';
-import { createSceneConfig, PHASE_NAMES } from '../mappers/run-to-scene.js';
+import { createSceneConfig } from '../mappers/run-to-scene.js';
 import { diffAgents } from '../state/agent-differ.js';
 import { resolveAgentStates } from '../state/agent-state-resolver.js';
-
-const STATION_SPACING = 150;
-const START_X = 200;
-
-const AGENTS_PER_ROW = 3;
-const AGENT_H_SPACING = 36; // 32px sprite + 4px gap
-const AGENT_V_SPACING = 38; // 32px sprite + 6px gap
-
-/** Compute the screen position for an agent based on its config. */
-function agentPosition(agent: AgentConfig) {
-  const col = agent.stackOffset % AGENTS_PER_ROW;
-  const row = Math.floor(agent.stackOffset / AGENTS_PER_ROW);
-  const xOffset = (col - (AGENTS_PER_ROW - 1) / 2) * AGENT_H_SPACING;
-  return vec(START_X + agent.stationIndex * STATION_SPACING + xOffset, 320 - row * AGENT_V_SPACING);
-}
 
 export class FactoryScene extends Scene {
   private agentMap = new Map<string, AgentActor>();
   private prevAgentConfigs: AgentConfig[] = [];
   private status: CanonicalRunStatus;
+  private layout: LayoutResult | undefined;
 
   constructor(status: CanonicalRunStatus) {
     super();
@@ -57,31 +47,54 @@ export class FactoryScene extends Scene {
   }
 
   private buildStaticElements(config: SceneConfig) {
-    const platform = new Actor({
-      pos: vec(600, 400),
-      width: 1100,
-      height: 20,
-      color: Color.fromHex(PALETTE.darkGray),
-    });
-    this.add(platform);
+    const reviewerCount = config.agents.filter(
+      (a) => a.stationIndex === REVIEW_STATION_INDEX && a.roleType === 'reviewer',
+    ).length;
+    this.layout = computeLayout(reviewerCount);
 
-    config.stations.forEach((station, i) => {
-      const stationActor = new StationActor(station.phase, station.active, vec(START_X + i * STATION_SPACING, 350));
-      this.add(stationActor);
-    });
+    for (const platform of this.layout.platforms) {
+      this.add(new PlatformActor(vec(platform.x, platform.y), platform.width, platform.height));
+    }
 
-    config.gates.forEach((gate, i) => {
-      const gateActor = new GateActor(gate.open, vec(START_X + (i + 0.5) * STATION_SPACING, 380));
-      this.add(gateActor);
-    });
+    for (const ladder of this.layout.ladders) {
+      this.add(new LadderActor(ladder.x, ladder.bottomY, ladder.topY));
+    }
 
-    config.artifacts.forEach((artifact) => {
-      const artifactActor = new ArtifactActor(
-        artifact.type,
-        vec(START_X + artifact.stationIndex * STATION_SPACING + 30, 340),
+    this.addStations(config, this.layout);
+    this.addGates(config, this.layout);
+
+    for (const artifact of config.artifacts) {
+      const pos = this.layout.artifactPosition(artifact.stationIndex);
+      this.add(new ArtifactActor(artifact.type, vec(pos.x, pos.y)));
+    }
+  }
+
+  private addStations(config: SceneConfig, layout: LayoutResult): void {
+    if (layout.stationPositions.length !== config.stations.length) {
+      console.error(
+        `[FactoryScene] Station count mismatch: ${String(config.stations.length)} stations but ${String(layout.stationPositions.length)} positions`,
       );
-      this.add(artifactActor);
-    });
+    }
+    for (let i = 0; i < config.stations.length; i++) {
+      const station = config.stations[i];
+      const pos = layout.stationPositions[i];
+      if (station === undefined || pos === undefined) continue;
+      this.add(new StationActor(station.phase, station.active, vec(pos.x, pos.y)));
+    }
+  }
+
+  private addGates(config: SceneConfig, layout: LayoutResult): void {
+    if (layout.gatePositions.length !== config.gates.length) {
+      console.error(
+        `[FactoryScene] Gate count mismatch: ${String(config.gates.length)} gates but ${String(layout.gatePositions.length)} positions`,
+      );
+    }
+    for (let i = 0; i < config.gates.length; i++) {
+      const gate = config.gates[i];
+      const pos = layout.gatePositions[i];
+      if (gate === undefined || pos === undefined) continue;
+      this.add(new GateActor(gate.open, vec(pos.x, pos.y)));
+    }
   }
 
   /** Remove all actors and rebuild static elements (platform, stations, gates, artifacts). */
@@ -97,7 +110,12 @@ export class FactoryScene extends Scene {
     this.buildStaticElements(config);
   }
 
-  /** Fade an agent to transparent over 300ms, then remove it from the scene. */
+  /**
+   * Fade an agent to transparent over 300ms, then remove it from the scene.
+   * Fade errors are intentionally ignored because the actor may already have been
+   * removed from the scene before the animation completes. The finally block
+   * ensures the actor is always killed regardless of fade outcome.
+   */
   private fadeOutAndKill(actor: AgentActor): void {
     void actor.actions
       .fade(0, 300)
@@ -108,14 +126,26 @@ export class FactoryScene extends Scene {
       });
   }
 
+  /** Apply resolved animation states to all current agent actors. */
+  private applyAnimationStates(agents: ReadonlyArray<AgentConfig>): void {
+    const stateInfos = resolveAgentStates(agents, this.status);
+    const stateByRole = new Map(stateInfos.map((info) => [info.role, info.animationState]));
+
+    for (const agent of agents) {
+      const actor = this.agentMap.get(agent.role);
+      const animationState = stateByRole.get(agent.role);
+      if (actor !== undefined && animationState !== undefined) {
+        actor.setAnimationState(animationState);
+      } else if (actor !== undefined && animationState === undefined) {
+        console.warn(`[FactoryScene] No animation state resolved for agent "${agent.role}"`);
+      }
+    }
+  }
+
   /** Apply incremental agent updates: add, remove, move, and update animation states. */
   private updateAgents(config: SceneConfig) {
     const nextAgentConfigs = config.agents;
     const diff = diffAgents(this.prevAgentConfigs, nextAgentConfigs);
-    const stateInfos = resolveAgentStates(nextAgentConfigs, this.status);
-
-    // Build a lookup from role to resolved animation state
-    const stateByRole = new Map(stateInfos.map((info) => [info.role, info.animationState]));
 
     // Remove agents no longer present with a fade-out transition
     for (const removed of diff.removed) {
@@ -126,9 +156,14 @@ export class FactoryScene extends Scene {
       }
     }
 
-    // Add new agents
+    // Add new agents (layout must be initialized via buildStaticElements before this point)
     for (const added of diff.added) {
-      const actor = new AgentActor(added.role, added.roleType, agentPosition(added));
+      if (this.layout === undefined) {
+        console.warn(`[FactoryScene] Cannot add agent "${added.role}": layout not initialized`);
+        continue;
+      }
+      const pos = this.layout.agentPosition(added.stationIndex, added.stackOffset, added.level);
+      const actor = new AgentActor(added.role, added.roleType, vec(pos.x, pos.y));
       this.agentMap.set(added.role, actor);
       this.add(actor);
     }
@@ -136,44 +171,29 @@ export class FactoryScene extends Scene {
     // Move agents that changed position
     for (const { next } of diff.moved) {
       const actor = this.agentMap.get(next.role);
-      if (actor !== undefined) {
-        actor.walkTo(agentPosition(next)).catch((error: unknown) => {
+      if (actor !== undefined && this.layout !== undefined) {
+        const pos = this.layout.agentPosition(next.stationIndex, next.stackOffset, next.level);
+        actor.walkTo(vec(pos.x, pos.y)).catch((error: unknown) => {
           console.warn(`[FactoryScene] walkTo failed for agent "${next.role}":`, error);
         });
       }
     }
 
-    // Apply animation states to all current agents
-    for (const nextAgent of nextAgentConfigs) {
-      const actor = this.agentMap.get(nextAgent.role);
-      const animationState = stateByRole.get(nextAgent.role);
-      if (actor !== undefined && animationState !== undefined) {
-        actor.setAnimationState(animationState);
-      } else if (actor !== undefined && animationState === undefined) {
-        console.warn(`[FactoryScene] No animation state resolved for agent "${nextAgent.role}"`);
-      }
-    }
-
+    this.applyAnimationStates(nextAgentConfigs);
     this.prevAgentConfigs = nextAgentConfigs;
   }
 
   /** Adjust camera position and zoom so that all stations fit within the viewport. */
   private fitCamera(): void {
-    const margin = 40;
-    const stationCount = PHASE_NAMES.length;
-    const stationHalfWidth = 50;
+    if (this.layout === undefined) return;
 
-    const left = START_X - stationHalfWidth - margin;
-    const right = START_X + (stationCount - 1) * STATION_SPACING + stationHalfWidth + margin;
-    const bottom = 420 + margin; // platform bottom edge + margin
-    const top = 260 - margin; // conservative top for agent stacks
-
-    const contentWidth = right - left;
-    const contentHeight = bottom - top;
+    const { minX, maxX, minY, maxY } = this.layout.bounds;
+    const contentWidth = maxX - minX;
+    const contentHeight = maxY - minY;
     const zoomX = 1200 / contentWidth;
     const zoomY = 600 / contentHeight;
 
     this.camera.zoom = Math.min(zoomX, zoomY, 1); // never zoom in past 1x
-    this.camera.pos = vec((left + right) / 2, (top + bottom) / 2);
+    this.camera.pos = vec((minX + maxX) / 2, (minY + maxY) / 2);
   }
 }

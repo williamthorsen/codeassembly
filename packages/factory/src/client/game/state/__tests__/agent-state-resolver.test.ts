@@ -10,6 +10,7 @@ function createAgent(overrides: Partial<AgentConfig> = {}): AgentConfig {
     roleType: 'analyst',
     stationIndex: 0,
     stackOffset: 0,
+    level: 0,
     ...overrides,
   };
 }
@@ -268,6 +269,50 @@ describe('resolveAgentStates', () => {
 
       expect(result[0]?.animationState).toBe('idle');
       expect(result[1]?.animationState).toBe('working');
+    });
+  });
+
+  describe('orchestrator animation state', () => {
+    it('assigns working to orchestrator during in_progress', () => {
+      const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('working');
+    });
+
+    it('assigns celebrating to orchestrator when completed', () => {
+      const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 6 })];
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('celebrating');
+    });
+
+    it('assigns concerned to orchestrator when failed', () => {
+      const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'failed',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('concerned');
     });
   });
 
