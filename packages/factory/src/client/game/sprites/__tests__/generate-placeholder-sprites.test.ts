@@ -22,24 +22,33 @@ describe('generateSpriteSheetSvg', () => {
       expect(svg).toMatch(/<\/svg>$/);
     });
 
-    it('has correct dimensions (96x64)', () => {
+    it('has correct dimensions (96x96 for 3x3 grid)', () => {
       const svg = generateSpriteSheetSvg('orchestrator');
 
       expect(svg).toContain('width="96"');
-      expect(svg).toContain('height="64"');
+      expect(svg).toContain('height="96"');
     });
 
-    it('contains 5 frames total (2 idle + 3 working)', () => {
+    it('contains 9 frames total (2 idle + 1 walking + 3 working + 2 celebrating + 1 concerned)', () => {
       const svg = generateSpriteSheetSvg('orchestrator');
 
-      // Each frame renders a circle (head), rect (body), and line (arm)
+      // Idle: 3 elements each (circle + rect + line) x 2 = 6
+      // Walking: 3 elements x 1 = 3
+      // Working: 3 elements each x 3 = 9
+      // Celebrating: 4 elements each (circle + rect + 2 lines) x 2 = 8
+      // Concerned: 4 elements (circle + rect + 2 lines) x 1 = 4
       const circleCount = (svg.match(/<circle /g) ?? []).length;
       const rectCount = (svg.match(/<rect /g) ?? []).length;
       const lineCount = (svg.match(/<line /g) ?? []).length;
 
-      expect(circleCount).toBe(5);
-      expect(rectCount).toBe(5);
-      expect(lineCount).toBe(5);
+      // 9 frames, each has 1 circle
+      expect(circleCount).toBe(9);
+      // 9 frames, each has 1 rect
+      expect(rectCount).toBe(9);
+      // 5 single-arm frames + 3 dual-arm frames = 5 + 6 = 11
+      // Single-arm: 2 idle + 1 walking + 3 working = 6
+      // Dual-arm: 2 celebrating + 1 concerned = 3 (each has 2 lines)
+      expect(lineCount).toBe(6 + 6);
     });
   });
 
@@ -66,6 +75,15 @@ describe('generateSpriteSheetSvg', () => {
 
       // Col 1, row 0, yOffset -2: cx = 1*32 + 16 = 48, headCy = 0*32 + 10 + (-2) = 8
       expect(svg).toContain('cx="48" cy="8"');
+    });
+  });
+
+  describe('walking frame (row 0, col 2)', () => {
+    it('positions walking frame head with side-step offset', () => {
+      const svg = generateSpriteSheetSvg('orchestrator');
+
+      // Col 2, row 0: cx = 2*32 + 16 + 3 = 83, headCy = 10
+      expect(svg).toContain('cx="83" cy="10"');
     });
   });
 
@@ -120,6 +138,46 @@ describe('generateSpriteSheetSvg', () => {
       // armEndX = 16 + 8 * sin(0) = 16
       // armEndY = 50 - 8 * cos(0) = 42
       expect(svg).toContain('x1="16" y1="50" x2="16" y2="42"');
+    });
+  });
+
+  describe('celebrating frames (row 2, cols 0-1)', () => {
+    it('positions celebrating frame heads in row 2', () => {
+      const svg = generateSpriteSheetSvg('orchestrator');
+
+      // Col 0, row 2: cx = 16, headCy = 64 + 8 = 72
+      expect(svg).toContain('cx="16" cy="72"');
+      // Col 1, row 2: cx = 48, headCy = 72
+      expect(svg).toContain('cx="48" cy="72"');
+    });
+
+    it('renders two arm lines per celebrating frame', () => {
+      const svg = generateSpriteSheetSvg('orchestrator');
+
+      // Celebrating frames at row 2 have dual arms
+      // Col 0, row 2: bodyCy = 64 + 20 = 84, armStartY = 80
+      // Both arms start from (16, 80)
+      const armMatches = svg.match(/x1="16" y1="80"/g);
+      expect(armMatches).toHaveLength(2);
+    });
+  });
+
+  describe('concerned frame (row 2, col 2)', () => {
+    it('positions concerned frame head in row 2, col 2', () => {
+      const svg = generateSpriteSheetSvg('orchestrator');
+
+      // Col 2, row 2: cx = 80, headCy = 64 + 10 = 74
+      expect(svg).toContain('cx="80" cy="74"');
+    });
+
+    it('renders two arm lines reaching to head level', () => {
+      const svg = generateSpriteSheetSvg('orchestrator');
+
+      // Col 2, row 2: cx = 80, bodyCy = 64 + 22 = 86, armStartY = 82
+      // Left arm: (80, 82) -> (75, 74)
+      // Right arm: (80, 82) -> (85, 74)
+      expect(svg).toContain('x1="80" y1="82" x2="75" y2="74"');
+      expect(svg).toContain('x1="80" y1="82" x2="85" y2="74"');
     });
   });
 });

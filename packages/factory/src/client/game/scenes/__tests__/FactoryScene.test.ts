@@ -1,20 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createCompletedRunPhases, createMockRunStatus } from '../../../../__test-helpers__/fixtures.js';
+import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
 import { createSceneConfig } from '../../mappers/run-to-scene.js';
 
-const { mockSceneAdd, mockSceneClear } = vi.hoisted(() => {
-  return {
-    mockSceneAdd: vi.fn(),
-    mockSceneClear: vi.fn(),
-  };
-});
+const { mockSceneAdd, mockSceneClear, mockSetAnimationState, mockWalkTo, mockKill, mockFade, mockCamera } = vi.hoisted(
+  () => {
+    const kill = vi.fn();
+    const fade = vi.fn(() => ({
+      toPromise: () => Promise.resolve(),
+    }));
+
+    return {
+      mockSceneAdd: vi.fn(),
+      mockSceneClear: vi.fn(),
+      mockSetAnimationState: vi.fn(),
+      mockWalkTo: vi.fn(() => Promise.resolve()),
+      mockKill: kill,
+      mockFade: fade,
+      mockCamera: { zoom: 1, pos: { x: 0, y: 0 } },
+    };
+  },
+);
 
 vi.mock('excalibur', () => {
   class MockScene {
     backgroundColor: unknown;
     add = mockSceneAdd;
     clear = mockSceneClear;
+    camera = mockCamera;
   }
 
   class MockActor {}
@@ -51,10 +64,18 @@ vi.mock('../../../game/actors/StationActor.js', () => ({
 vi.mock('../../../game/actors/AgentActor.js', () => ({
   AgentActor: class AgentActor {
     kind = 'agent';
+    agentKey: string;
+    setAnimationState = mockSetAnimationState;
+    walkTo = mockWalkTo;
+    kill = mockKill;
+    actions = { fade: mockFade };
     constructor(
+      agentKey: string,
       public roleType: string,
       public position: unknown,
-    ) {}
+    ) {
+      this.agentKey = agentKey;
+    }
   },
 }));
 
@@ -82,6 +103,7 @@ const { FactoryScene } = await import('../FactoryScene.js');
 
 interface MockActorWithKind {
   kind?: string;
+  agentKey?: string;
   phase?: string;
   roleType?: string;
   position?: { x: number; y: number };
@@ -103,6 +125,12 @@ describe('FactoryScene', () => {
   beforeEach(() => {
     mockSceneAdd.mockClear();
     mockSceneClear.mockClear();
+    mockSetAnimationState.mockClear();
+    mockWalkTo.mockClear();
+    mockKill.mockClear();
+    mockFade.mockClear();
+    mockCamera.zoom = 1;
+    mockCamera.pos = { x: 0, y: 0 };
   });
 
   afterEach(() => {
@@ -110,7 +138,7 @@ describe('FactoryScene', () => {
   });
 
   describe('onInitialize', () => {
-    it('calls buildScene to add actors', () => {
+    it('adds static elements and agents on first build', () => {
       const status = createMockRunStatus();
       const scene = new FactoryScene(status);
 
@@ -121,8 +149,48 @@ describe('FactoryScene', () => {
     });
   });
 
+  describe('camera fitting', () => {
+    it('sets camera position and zoom after initialization', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      expect(mockCamera.zoom).toBeGreaterThan(0);
+      expect(mockCamera.zoom).toBeLessThanOrEqual(1);
+      expect(mockCamera.pos.x).toBeGreaterThan(0);
+      expect(mockCamera.pos.y).toBeGreaterThan(0);
+    });
+
+    it('updates camera after status change', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const initialPos = { ...mockCamera.pos };
+      const initialZoom = mockCamera.zoom;
+
+      const updatedStatus = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      scene.updateStatus(updatedStatus);
+
+      // Camera should still be set (zoom and position are deterministic from constants)
+      expect(mockCamera.zoom).toBe(initialZoom);
+      expect(mockCamera.pos).toEqual(initialPos);
+    });
+
+    it('never zooms in past 1x', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      expect(mockCamera.zoom).toBeLessThanOrEqual(1);
+    });
+  });
+
   describe('updateStatus', () => {
-    it('clears existing actors and rebuilds the scene', () => {
+    it('clears and rebuilds static elements on update', () => {
       const status = createMockRunStatus();
       const scene = new FactoryScene(status);
       scene.onInitialize();
@@ -136,8 +204,33 @@ describe('FactoryScene', () => {
       scene.updateStatus(updatedStatus);
 
       expect(mockSceneClear).toHaveBeenCalledTimes(1);
-      // Rebuilds with actors
       expect(mockSceneAdd).toHaveBeenCalled();
+    });
+
+    it('adds new agents incrementally without full scene rebuild', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      mockSceneAdd.mockClear();
+      mockSceneClear.mockClear();
+
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // Static rebuild clears the scene
+      expect(mockSceneClear).toHaveBeenCalledTimes(1);
+
+      // New agent should be added
+      const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
+      expect(agentCalls).toHaveLength(1);
+      expect(getActorFromCall(agentCalls[0] ?? []).agentKey).toBe('architect');
     });
   });
 
@@ -222,8 +315,8 @@ describe('FactoryScene', () => {
     });
   });
 
-  describe('vertical stacking', () => {
-    it('stacks agents vertically at same station', () => {
+  describe('grid-based stacking', () => {
+    it('arranges agents at same station in a grid', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -240,13 +333,15 @@ describe('FactoryScene', () => {
 
       expect(reviewerActors.length).toBeGreaterThanOrEqual(2);
 
-      // Verify y-position formula: 320 - stackOffset * 20
+      // stackOffset 0 → col 0 row 0, stackOffset 1 → col 1 row 0
+      // Both should be at y=320 (same row), different x positions
       const positions = reviewerActors.map((actor) => actor.position);
-      expect(positions[0]).toEqual({ x: expect.any(Number), y: 320 });
-      expect(positions[1]).toEqual({ x: expect.any(Number), y: 300 });
+      expect(positions[0]?.y).toBe(320);
+      expect(positions[1]?.y).toBe(320);
+      expect(positions[0]?.x).not.toBe(positions[1]?.x);
     });
 
-    it('applies y = 320 - stackOffset * 20 formula to all agents', () => {
+    it('applies grid formula to all agents', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -262,8 +357,265 @@ describe('FactoryScene', () => {
       agentCalls.forEach((call: unknown[], i: number) => {
         const actor = getActorFromCall(call);
         const agent = config.agents[i];
-        expect(actor.position).toEqual(expect.objectContaining({ y: 320 - (agent?.stackOffset ?? 0) * 20 }));
+        if (agent === undefined) return;
+        const row = Math.floor(agent.stackOffset / 3);
+        expect(actor.position).toEqual(expect.objectContaining({ y: 320 - row * 38 }));
       });
+    });
+  });
+
+  describe('state-driven transitions', () => {
+    it('sets celebrating animation on all agents when run transitions to completed', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetAnimationState.mockClear();
+
+      const completedStatus = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      scene.updateStatus(completedStatus);
+
+      // All setAnimationState calls should use 'celebrating'
+      const celebratingCalls = mockSetAnimationState.mock.calls.filter((call: unknown[]) => call[0] === 'celebrating');
+      expect(celebratingCalls.length).toBeGreaterThan(0);
+
+      // No calls with other states (except from initial construction)
+      const nonCelebratingCalls = mockSetAnimationState.mock.calls.filter(
+        (call: unknown[]) => call[0] !== 'celebrating',
+      );
+      expect(nonCelebratingCalls).toHaveLength(0);
+    });
+
+    it('sets concerned animation on all agents when run transitions to failed', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetAnimationState.mockClear();
+
+      const failedStatus = createMockRunStatus({
+        status: 'failed',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      scene.updateStatus(failedStatus);
+
+      const concernedCalls = mockSetAnimationState.mock.calls.filter((call: unknown[]) => call[0] === 'concerned');
+      expect(concernedCalls.length).toBeGreaterThan(0);
+
+      const nonConcernedCalls = mockSetAnimationState.mock.calls.filter((call: unknown[]) => call[0] !== 'concerned');
+      expect(nonConcernedCalls).toHaveLength(0);
+    });
+
+    it('sets working animation on agent whose phase activates', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetAnimationState.mockClear();
+
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // At least one call with 'working' for the planner agent
+      const workingCalls = mockSetAnimationState.mock.calls.filter((call: unknown[]) => call[0] === 'working');
+      expect(workingCalls.length).toBeGreaterThan(0);
+    });
+
+    it('adds reviewer agents when populated from empty', () => {
+      const status = createMockRunStatus({ status: 'in_progress' });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      mockSceneAdd.mockClear();
+
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'security-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
+      const reviewerKeys = agentCalls
+        .map((call: unknown[]) => getActorFromCall(call).agentKey)
+        .filter((key) => key !== undefined);
+
+      expect(reviewerKeys).toContain('correctness-reviewer');
+      expect(reviewerKeys).toContain('security-reviewer');
+    });
+
+    it('fades out removed agents over 300ms before kill', async () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      // Update with no phases (architect removed)
+      scene.updateStatus(createMockRunStatus({ status: 'in_progress' }));
+
+      // Fade should be called with opacity 0 and 300ms duration
+      expect(mockFade).toHaveBeenCalledWith(0, 300);
+
+      // Kill is called after the fade promise resolves
+      await vi.waitFor(() => {
+        expect(mockKill).toHaveBeenCalled();
+      });
+    });
+
+    it('triggers walkTo when an agent changes position', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 5, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockWalkTo.mockClear();
+
+      // Add a second reviewer, which changes stackOffset of existing reviewer
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 5, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'security-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // correctness-reviewer moved from stackOffset 0 to stackOffset 1
+      expect(mockWalkTo).toHaveBeenCalled();
+    });
+
+    it('applies setAnimationState to agents including those currently walking', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetAnimationState.mockClear();
+
+      // Transition to planning in_progress (architect stays, planner added)
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // setAnimationState is called on agents (the real AgentActor handles walking priority)
+      expect(mockSetAnimationState).toHaveBeenCalled();
     });
   });
 });
