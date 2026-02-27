@@ -20,8 +20,11 @@ export class ProjectWatcher {
   }
 
   start(): void {
+    if (this.watcher !== undefined) return;
+
     const basePath = this.scanner.getBasePath();
 
+    // Note: recursive fs.watch is well-supported on macOS/Windows but not on Linux.
     this.watcher = watch(basePath, { recursive: true }, () => {
       this.scheduleRescan();
     });

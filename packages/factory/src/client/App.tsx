@@ -13,6 +13,8 @@ import { useRunStatus } from './hooks/useRunStatus.js';
 
 import './App.css';
 
+const PROJECT_POLL_INTERVAL_MS = 5000;
+
 export function App(): React.JSX.Element {
   const [index, setIndex] = useState<ProjectIndex | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -48,7 +50,7 @@ export function App(): React.JSX.Element {
         .catch(() => {
           // Silently ignore poll errors — display stale data rather than flash errors
         });
-    }, 5000);
+    }, PROJECT_POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalId);
   }, []);

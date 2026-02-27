@@ -51,6 +51,8 @@ app.listen(port, () => {
 
 function shutdown() {
   watcher.stop();
+  // eslint-disable-next-line n/no-process-exit, unicorn/no-process-exit -- Signal handlers override Node's default termination; must exit explicitly.
+  process.exit(0);
 }
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
