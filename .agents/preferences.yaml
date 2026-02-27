@@ -11,6 +11,6 @@ project:
 repository:
   default_remote:
     - name: origin
-      default_branch: next
+      default_branch: main
   # Deprecated. Remove in favor of project.slug after skills have been updated.
   slug: codeassembly

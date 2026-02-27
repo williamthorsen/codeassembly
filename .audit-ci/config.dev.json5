@@ -2,10 +2,16 @@
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "moderate": true,
   "allowlist": [
+    // @williamthorsen/eslint-config-typescript>typescript-eslint>@typescript-eslint/typescript-estree>minimatch
+    // https://github.com/advisories/GHSA-23c5-xmqv-rm74
+    "GHSA-23c5-xmqv-rm74",
+    "GHSA-3ppc-4f35-3m26", // ReDoS vulnerability
+    // minimatch - Transitive from ESLint (dev-only)
+    // @williamthorsen/eslint-config-typescript>typescript-eslint>@typescript-eslint/typescript-estree>minimatch
+    // https://github.com/advisories/GHSA-7r86-cg39-jmmj
+    "GHSA-7r86-cg39-jmmj",
     // js-yaml - Transitive from @changesets/cli (dev-only)
     "GHSA-mh29-5h37-fv8m", // Prototype pollution
-    // minimatch - Transitive from ESLint (dev-only)
-    "GHSA-3ppc-4f35-3m26", // ReDoS vulnerability
   ],
   "extra-args": ["--dev"],
   "report-type": "summary",
