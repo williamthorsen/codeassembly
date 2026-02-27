@@ -33,15 +33,31 @@ vi.mock('excalibur', () => ({
   },
 }));
 
-const { clearSpriteCache, getIdleAnimation, getWorkingAnimation, loadAllSprites } =
-  await import('../agent-sprite-loader.js');
+const {
+  clearSpriteCache,
+  getCelebratingAnimation,
+  getConcernedAnimation,
+  getIdleAnimation,
+  getWalkingAnimation,
+  getWorkingAnimation,
+  loadAllSprites,
+} = await import('../agent-sprite-loader.js');
 
 const {
-  IDLE_FRAME_COORDINATES,
+  CELEBRATING_DURATION,
+  CELEBRATING_FRAME_COORDINATES,
+  CELEBRATING_STRATEGY,
+  CONCERNED_DURATION,
+  CONCERNED_FRAME_COORDINATES,
+  CONCERNED_STRATEGY,
   IDLE_DURATION,
+  IDLE_FRAME_COORDINATES,
   IDLE_STRATEGY,
-  WORKING_FRAME_COORDINATES,
+  WALKING_DURATION,
+  WALKING_FRAME_COORDINATES,
+  WALKING_STRATEGY,
   WORKING_DURATION,
+  WORKING_FRAME_COORDINATES,
   WORKING_STRATEGY,
 } = await import('../sprite-definitions.js');
 
@@ -75,7 +91,7 @@ describe('agent-sprite-loader', () => {
       expect(mockFromImageSource).toHaveBeenCalledWith({
         image: expect.objectContaining({ type: 'imageSource' }),
         grid: {
-          rows: 2,
+          rows: 3,
           columns: 3,
           spriteWidth: 32,
           spriteHeight: 32,
@@ -91,6 +107,27 @@ describe('agent-sprite-loader', () => {
         frameCoordinates: IDLE_FRAME_COORDINATES,
         durationPerFrame: IDLE_DURATION,
         strategy: IDLE_STRATEGY,
+      });
+    });
+  });
+
+  describe('getWalkingAnimation', () => {
+    it('returns a cached animation on repeated calls for the same roleType', () => {
+      const first = getWalkingAnimation('planner');
+      const second = getWalkingAnimation('planner');
+
+      expect(first).toBe(second);
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes correct animation parameters for walking', () => {
+      getWalkingAnimation('analyst');
+
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledWith({
+        spriteSheet: expect.objectContaining({ type: 'spriteSheet' }),
+        frameCoordinates: WALKING_FRAME_COORDINATES,
+        durationPerFrame: WALKING_DURATION,
+        strategy: WALKING_STRATEGY,
       });
     });
   });
@@ -116,10 +153,55 @@ describe('agent-sprite-loader', () => {
     });
   });
 
+  describe('getCelebratingAnimation', () => {
+    it('returns a cached animation on repeated calls for the same roleType', () => {
+      const first = getCelebratingAnimation('orchestrator');
+      const second = getCelebratingAnimation('orchestrator');
+
+      expect(first).toBe(second);
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes correct animation parameters for celebrating', () => {
+      getCelebratingAnimation('planner');
+
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledWith({
+        spriteSheet: expect.objectContaining({ type: 'spriteSheet' }),
+        frameCoordinates: CELEBRATING_FRAME_COORDINATES,
+        durationPerFrame: CELEBRATING_DURATION,
+        strategy: CELEBRATING_STRATEGY,
+      });
+    });
+  });
+
+  describe('getConcernedAnimation', () => {
+    it('returns a cached animation on repeated calls for the same roleType', () => {
+      const first = getConcernedAnimation('reviewer');
+      const second = getConcernedAnimation('reviewer');
+
+      expect(first).toBe(second);
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes correct animation parameters for concerned', () => {
+      getConcernedAnimation('author');
+
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledWith({
+        spriteSheet: expect.objectContaining({ type: 'spriteSheet' }),
+        frameCoordinates: CONCERNED_FRAME_COORDINATES,
+        durationPerFrame: CONCERNED_DURATION,
+        strategy: CONCERNED_STRATEGY,
+      });
+    });
+  });
+
   describe('sprite sheet caching', () => {
-    it('creates only one ImageSource per roleType when both animations are requested', () => {
+    it('creates only one ImageSource per roleType when all animations are requested', () => {
       getIdleAnimation('orchestrator');
+      getWalkingAnimation('orchestrator');
       getWorkingAnimation('orchestrator');
+      getCelebratingAnimation('orchestrator');
+      getConcernedAnimation('orchestrator');
 
       expect(mockFromSvgString).toHaveBeenCalledTimes(1);
     });
@@ -131,9 +213,12 @@ describe('agent-sprite-loader', () => {
       expect(mockFromSvgString).toHaveBeenCalledTimes(2);
     });
 
-    it('creates only one SpriteSheet per roleType when both animations are requested', () => {
+    it('creates only one SpriteSheet per roleType when all animations are requested', () => {
       getIdleAnimation('planner');
+      getWalkingAnimation('planner');
       getWorkingAnimation('planner');
+      getCelebratingAnimation('planner');
+      getConcernedAnimation('planner');
 
       expect(mockFromImageSource).toHaveBeenCalledTimes(1);
     });
@@ -156,14 +241,32 @@ describe('agent-sprite-loader', () => {
 
       expect(mockFromSvgString).toHaveBeenCalledTimes(2);
     });
+
+    it('clears caches for all animation types', () => {
+      getIdleAnimation('analyst');
+      getWalkingAnimation('analyst');
+      getWorkingAnimation('analyst');
+      getCelebratingAnimation('analyst');
+      getConcernedAnimation('analyst');
+      clearSpriteCache();
+
+      getIdleAnimation('analyst');
+      getWalkingAnimation('analyst');
+      getWorkingAnimation('analyst');
+      getCelebratingAnimation('analyst');
+      getConcernedAnimation('analyst');
+
+      // 5 before clear + 5 after clear = 10
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(10);
+    });
   });
 
   describe('loadAllSprites', () => {
     it('preloads animations for all 5 roleTypes', async () => {
       await loadAllSprites();
 
-      // 2 calls per roleType (idle + working) x 5 roleTypes = 10
-      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(10);
+      // 5 calls per roleType (idle + walking + working + celebrating + concerned) x 5 roleTypes = 25
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(25);
     });
 
     it('calls load() on all image sources', async () => {

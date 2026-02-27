@@ -10,21 +10,40 @@ vi.mock('excalibur', () => ({
 }));
 
 const {
+  CELEBRATING_DURATION,
+  CELEBRATING_FRAME_COORDINATES,
+  CELEBRATING_STRATEGY,
+  CONCERNED_DURATION,
+  CONCERNED_FRAME_COORDINATES,
+  CONCERNED_STRATEGY,
   GRID_COLUMNS,
   GRID_ROWS,
-  IDLE_FRAME_COORDINATES,
-  WORKING_FRAME_COORDINATES,
   IDLE_DURATION,
-  WORKING_DURATION,
+  IDLE_FRAME_COORDINATES,
   IDLE_STRATEGY,
+  WALKING_DURATION,
+  WALKING_FRAME_COORDINATES,
+  WALKING_STRATEGY,
+  WORKING_DURATION,
+  WORKING_FRAME_COORDINATES,
   WORKING_STRATEGY,
 } = await import('../sprite-definitions.js');
 
 const { AnimationStrategy } = await import('excalibur');
 
 describe('sprite definitions', () => {
+  describe('grid dimensions', () => {
+    it('has 3 columns', () => {
+      expect(GRID_COLUMNS).toBe(3);
+    });
+
+    it('has 3 rows', () => {
+      expect(GRID_ROWS).toBe(3);
+    });
+  });
+
   describe('idle frame coordinates', () => {
-    it('contains coordinates within 3x2 grid bounds', () => {
+    it('contains coordinates within grid bounds', () => {
       for (const coord of IDLE_FRAME_COORDINATES) {
         expect(coord.x).toBeGreaterThanOrEqual(0);
         expect(coord.x).toBeLessThan(GRID_COLUMNS);
@@ -38,8 +57,23 @@ describe('sprite definitions', () => {
     });
   });
 
+  describe('walking frame coordinates', () => {
+    it('contains coordinates within grid bounds', () => {
+      for (const coord of WALKING_FRAME_COORDINATES) {
+        expect(coord.x).toBeGreaterThanOrEqual(0);
+        expect(coord.x).toBeLessThan(GRID_COLUMNS);
+        expect(coord.y).toBeGreaterThanOrEqual(0);
+        expect(coord.y).toBeLessThan(GRID_ROWS);
+      }
+    });
+
+    it('has 1 frame', () => {
+      expect(WALKING_FRAME_COORDINATES).toHaveLength(1);
+    });
+  });
+
   describe('working frame coordinates', () => {
-    it('contains coordinates within 3x2 grid bounds', () => {
+    it('contains coordinates within grid bounds', () => {
       for (const coord of WORKING_FRAME_COORDINATES) {
         expect(coord.x).toBeGreaterThanOrEqual(0);
         expect(coord.x).toBeLessThan(GRID_COLUMNS);
@@ -53,13 +87,55 @@ describe('sprite definitions', () => {
     });
   });
 
+  describe('celebrating frame coordinates', () => {
+    it('contains coordinates within grid bounds', () => {
+      for (const coord of CELEBRATING_FRAME_COORDINATES) {
+        expect(coord.x).toBeGreaterThanOrEqual(0);
+        expect(coord.x).toBeLessThan(GRID_COLUMNS);
+        expect(coord.y).toBeGreaterThanOrEqual(0);
+        expect(coord.y).toBeLessThan(GRID_ROWS);
+      }
+    });
+
+    it('has 2 frames', () => {
+      expect(CELEBRATING_FRAME_COORDINATES).toHaveLength(2);
+    });
+  });
+
+  describe('concerned frame coordinates', () => {
+    it('contains coordinates within grid bounds', () => {
+      for (const coord of CONCERNED_FRAME_COORDINATES) {
+        expect(coord.x).toBeGreaterThanOrEqual(0);
+        expect(coord.x).toBeLessThan(GRID_COLUMNS);
+        expect(coord.y).toBeGreaterThanOrEqual(0);
+        expect(coord.y).toBeLessThan(GRID_ROWS);
+      }
+    });
+
+    it('has 1 frame', () => {
+      expect(CONCERNED_FRAME_COORDINATES).toHaveLength(1);
+    });
+  });
+
   describe('duration constants', () => {
     it('has a positive idle duration', () => {
       expect(IDLE_DURATION).toBeGreaterThan(0);
     });
 
+    it('has a positive walking duration', () => {
+      expect(WALKING_DURATION).toBeGreaterThan(0);
+    });
+
     it('has a positive working duration', () => {
       expect(WORKING_DURATION).toBeGreaterThan(0);
+    });
+
+    it('has a positive celebrating duration', () => {
+      expect(CELEBRATING_DURATION).toBeGreaterThan(0);
+    });
+
+    it('has a positive concerned duration', () => {
+      expect(CONCERNED_DURATION).toBeGreaterThan(0);
     });
   });
 
@@ -68,8 +144,20 @@ describe('sprite definitions', () => {
       expect(IDLE_STRATEGY).toBe(AnimationStrategy.PingPong);
     });
 
+    it('uses Loop strategy for walking', () => {
+      expect(WALKING_STRATEGY).toBe(AnimationStrategy.Loop);
+    });
+
     it('uses Loop strategy for working', () => {
       expect(WORKING_STRATEGY).toBe(AnimationStrategy.Loop);
+    });
+
+    it('uses PingPong strategy for celebrating', () => {
+      expect(CELEBRATING_STRATEGY).toBe(AnimationStrategy.PingPong);
+    });
+
+    it('uses Freeze strategy for concerned', () => {
+      expect(CONCERNED_STRATEGY).toBe(AnimationStrategy.Freeze);
     });
   });
 });
