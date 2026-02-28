@@ -72,24 +72,20 @@ export function App(): React.JSX.Element {
     });
   }, [selectedProject, selectedTicket, selectedRun, setParams]);
 
-  // Validate initial URL params against loaded data (runs once when index arrives)
-  const hasValidated = useRef(false);
+  // Validate initial URL params against loaded data (runs once when index arrives).
+  // Captures initial selection at mount time so the dependency array is honest: [index] only.
+  const initialSelection = useRef({ project: selectedProject, ticket: selectedTicket, run: selectedRun });
   useEffect(() => {
-    if (!index || hasValidated.current) return;
-    hasValidated.current = true;
+    if (!index) return;
 
-    const validated = validateSelection(index, {
-      project: selectedProject,
-      ticket: selectedTicket,
-      run: selectedRun,
-    });
+    const validated = validateSelection(index, initialSelection.current);
 
     if (validated) {
       setSelectedProject(validated.project);
       setSelectedTicket(validated.ticket);
       setSelectedRun(validated.run);
     }
-  }, [index, selectedProject, selectedTicket, selectedRun]);
+  }, [index]);
 
   useEffect(() => {
     fetchProjects()
