@@ -30,7 +30,8 @@ export function createSettingsRouter(store: SettingsProvider): Router {
       return;
     }
 
-    // Build a typed partial from the validated data, only including defined keys.
+    // Build a typed partial — Zod's .partial() infers `T | undefined` for each key, which
+    // is not assignable to Partial<UserSettings> under exactOptionalPropertyTypes.
     const partial: Partial<UserSettings> = {};
     if (result.data.dismissedRuns !== undefined) {
       partial.dismissedRuns = result.data.dismissedRuns;

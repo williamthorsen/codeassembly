@@ -103,7 +103,7 @@ export function App(): React.JSX.Element {
           runs={visibleRuns}
           selectedRunKey={selectedRunKey}
           onSelectRun={handleSelectRun}
-          onDismissRun={(key: string, status: string) => dismiss(key, status)}
+          onDismissRun={dismiss}
           onDismissAll={handleDismissAll}
         />
       </aside>
