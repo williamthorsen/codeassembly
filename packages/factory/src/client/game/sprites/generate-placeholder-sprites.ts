@@ -111,8 +111,8 @@ export function generateSpriteSheetSvg(roleType: RoleType): string {
   const frames: string[] = [];
 
   // Row 0: idle frames (cols 0-1)
-  for (let col = 0; col < 2; col++) {
-    frames.push(renderFrame(color, col, 0, IDLE_Y_OFFSETS[col] ?? 0, 0));
+  for (const [col, yOffset] of IDLE_Y_OFFSETS.entries()) {
+    frames.push(renderFrame(color, col, 0, yOffset, 0));
   }
 
   // Row 0, col 2: walking frame
@@ -124,16 +124,16 @@ export function generateSpriteSheetSvg(roleType: RoleType): string {
   }
 
   // Row 2: celebrating frames (cols 0-1)
-  for (let col = 0; col < 2; col++) {
-    frames.push(renderCelebratingFrame(color, col, 2, CELEBRATING_ARM_ANGLES[col] ?? 45));
+  for (const [col, armAngle] of CELEBRATING_ARM_ANGLES.entries()) {
+    frames.push(renderCelebratingFrame(color, col, 2, armAngle));
   }
 
   // Row 2, col 2: concerned frame
   frames.push(renderConcernedFrame(color, 2, 2));
 
   // Column 3: resting frames (rows 0-2)
-  for (let row = 0; row < GRID_ROWS; row++) {
-    frames.push(renderFrame(color, 3, row, 0, RESTING_ARM_ANGLES[row] ?? 0));
+  for (const [row, armAngle] of RESTING_ARM_ANGLES.entries()) {
+    frames.push(renderFrame(color, 3, row, 0, armAngle));
   }
 
   return [
