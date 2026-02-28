@@ -1,6 +1,6 @@
 import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
-import { findCurrentPhase } from '../../../shared/phase-inference.js';
+import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
 
 export interface StationConfig {
@@ -34,27 +34,10 @@ export interface SceneConfig {
 
 export { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 
-function isPhaseActive(phase: string, phases: Phases, runStatus: string, currentPhase?: PhaseName): boolean {
+function isPhaseActive(phase: PhaseName, phases: Phases, runStatus: string, currentPhase?: PhaseName): boolean {
   if (phase === currentPhase) return true;
-
-  switch (phase) {
-    case 'architecture':
-      return phases.architecture !== undefined;
-    case 'planning':
-      return phases.planning !== undefined;
-    case 'implementation':
-      return phases.implementation !== undefined;
-    case 'review':
-      return (phases.parallelReview ?? phases.review) !== undefined;
-    case 'simplifier':
-      return phases.codeSimplifier?.ran === true;
-    case 'holistic':
-      return phases.holisticReview !== undefined;
-    case 'summary':
-      return runStatus === 'completed';
-    default:
-      return false;
-  }
+  if (phase === 'summary') return runStatus === 'completed';
+  return isPhasePresentInData(phase, phases);
 }
 
 function buildStations(status: CanonicalRunStatus, currentPhase?: PhaseName): StationConfig[] {
@@ -190,21 +173,7 @@ function buildReviewAgentsWithInference(phases: Phases, currentPhase?: PhaseName
 /** Check whether a phase should produce an agent based on existing data or inference. */
 function shouldShowPhaseAgent(phase: PhaseName, phases: Phases, currentPhase?: PhaseName): boolean {
   if (currentPhase === phase) return true;
-
-  switch (phase) {
-    case 'architecture':
-      return phases.architecture !== undefined;
-    case 'planning':
-      return phases.planning !== undefined;
-    case 'implementation':
-      return phases.implementation !== undefined;
-    case 'simplifier':
-      return phases.codeSimplifier?.ran === true;
-    case 'holistic':
-      return phases.holisticReview !== undefined;
-    default:
-      return false;
-  }
+  return isPhasePresentInData(phase, phases);
 }
 
 /** Build the list of phase-level agents (non-orchestrator) for a given run. */

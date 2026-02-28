@@ -34,9 +34,10 @@ export function findPhaseDecision(
 /**
  * Returns `true` when the phase has already produced data in `phases`.
  *
- * This mirrors the logic in `isPhaseActive()` in `run-to-scene.ts` for the
- * seven phase-to-field mappings. `summary` always returns `false` because it
- * has no phase-level data; only `runStatus === 'completed'` signals it.
+ * This is the single source of truth for phase-to-field mappings, used by
+ * both `isPhaseActive()` and `shouldShowPhaseAgent()` in `run-to-scene.ts`.
+ * `summary` always returns `false` because it has no phase-level data; only
+ * `runStatus === 'completed'` signals it.
  */
 export function isPhasePresentInData(phase: PhaseName, phases: Phases): boolean {
   switch (phase) {
