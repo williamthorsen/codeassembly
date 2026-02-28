@@ -34,6 +34,14 @@ export interface SceneConfig {
 
 export { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 
+/**
+ * The Phases type uses `| undefined` but runtime data from Zod can carry `null`
+ * phase values. This helper handles both cases while satisfying the eqeqeq lint rule.
+ */
+function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== undefined && value !== null;
+}
+
 function isPhaseActive(phase: PhaseName, phases: Phases, runStatus: string, currentPhase?: PhaseName): boolean {
   if (phase === currentPhase) return true;
   if (phase === 'summary') return runStatus === 'completed';
@@ -80,7 +88,7 @@ function findOrchestratorStation(phases: Phases, runStatus: string, currentPhase
 }
 
 function buildReviewerAgents(phases: Phases): AgentConfig[] {
-  if (phases.parallelReview !== undefined) {
+  if (isPresent(phases.parallelReview)) {
     const reviewerEntries = Object.entries(phases.parallelReview.reviewers);
     if (reviewerEntries.length > 0) {
       return reviewerEntries.map(([name], i) => ({
@@ -93,7 +101,7 @@ function buildReviewerAgents(phases: Phases): AgentConfig[] {
     }
     return [{ role: 'reviewer', roleType: PHASE_ROLE_TYPE.review, stationIndex: 3, stackOffset: 0, level: 0 }];
   }
-  if (phases.review !== undefined) {
+  if (isPresent(phases.review)) {
     return [{ role: 'reviewer', roleType: PHASE_ROLE_TYPE.review, stationIndex: 3, stackOffset: 0, level: 0 }];
   }
   return [];
@@ -235,9 +243,9 @@ function buildAgents(phases: Phases, runStatus: string, currentPhase?: PhaseName
 
 function buildArtifacts(phases: Phases): ArtifactConfig[] {
   const artifacts: ArtifactConfig[] = [];
-  if (phases.architecture?.artifact !== undefined) artifacts.push({ type: 'architecture', stationIndex: 0 });
+  if (isPresent(phases.architecture?.artifact)) artifacts.push({ type: 'architecture', stationIndex: 0 });
   if ((phases.planning?.artifacts?.length ?? 0) > 0) artifacts.push({ type: 'plan', stationIndex: 1 });
-  if (phases.implementation?.artifact !== undefined) artifacts.push({ type: 'code', stationIndex: 2 });
+  if (isPresent(phases.implementation?.artifact)) artifacts.push({ type: 'code', stationIndex: 2 });
   return artifacts;
 }
 

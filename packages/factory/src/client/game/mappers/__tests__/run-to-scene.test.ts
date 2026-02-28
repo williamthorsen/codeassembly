@@ -879,6 +879,80 @@ describe('createSceneConfig', () => {
     });
   });
 
+  describe('null phase values', () => {
+    /**
+     * The Zod schema allows null for phase values at runtime, but the TypeScript
+     * Phases type uses `| undefined`. These tests verify that `isPresent()` guards
+     * handle null phases correctly at runtime.
+     *
+     * JSON round-tripping produces runtime null values without type assertions:
+     * undefined fields are stripped by JSON.stringify, explicit nulls are preserved.
+     */
+    /**
+     * Create a status where specific phase fields are null (simulating Zod
+     * runtime data). A phaseDecisions skip entry is added for each null phase
+     * so that phase inference does not re-infer the null phase as "current"
+     * (which would bypass the null-safety guard being tested).
+     */
+    function statusWithNullPhases(overrides: Record<string, null>) {
+      const phases = Object.assign(emptyPhases(), overrides);
+      const phaseDecisions: Record<string, { run: boolean; reason: string | undefined }> = {};
+      for (const key of Object.keys(overrides)) {
+        phaseDecisions[key] = { run: false, reason: undefined };
+      }
+      return createMockRunStatus({ status: 'in_progress', phases, phaseDecisions });
+    }
+
+    it('does not create architect agent when architecture phase is null', () => {
+      const status = statusWithNullPhases({ architecture: null });
+
+      const config = createSceneConfig(status);
+
+      expect(config.agents.find((a) => a.role === 'architect')).toBeUndefined();
+    });
+
+    it('does not create planner agent when planning phase is null', () => {
+      const status = statusWithNullPhases({ planning: null });
+
+      const config = createSceneConfig(status);
+
+      expect(config.agents.find((a) => a.role === 'planner')).toBeUndefined();
+    });
+
+    it('does not create coder agent when implementation phase is null', () => {
+      const status = statusWithNullPhases({ implementation: null });
+
+      const config = createSceneConfig(status);
+
+      expect(config.agents.find((a) => a.role === 'coder')).toBeUndefined();
+    });
+
+    it('does not create reviewer agents when both review phases are null', () => {
+      const status = statusWithNullPhases({ parallelReview: null, review: null });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.roleType === PHASE_ROLE_TYPE.review);
+      expect(reviewerAgents).toHaveLength(0);
+    });
+
+    it('does not create holistic-reviewer agent when holisticReview phase is null', () => {
+      const status = statusWithNullPhases({ holisticReview: null });
+
+      const config = createSceneConfig(status);
+
+      expect(config.agents.find((a) => a.role === 'holistic-reviewer')).toBeUndefined();
+    });
+
+    it('marks station as inactive when phase is null', () => {
+      const status = statusWithNullPhases({ architecture: null });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[0]?.active).toBe(false);
+    });
+  });
+
   describe('codeSimplifier activation', () => {
     it('marks simplifier station active when codeSimplifier.ran is true', () => {
       const simplifierIndex = PHASE_NAMES.indexOf('simplifier');

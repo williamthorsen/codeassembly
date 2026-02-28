@@ -10,11 +10,23 @@ import { PlatformActor } from '../actors/PlatformActor.js';
 import { StationActor } from '../actors/StationActor.js';
 import type { LayoutResult } from '../layout/platform-layout.js';
 import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.js';
-import { computeWalkPath } from '../layout/walk-path.js';
+import { computeWalkPath, type Waypoint } from '../layout/walk-path.js';
 import type { AgentConfig, SceneConfig } from '../mappers/run-to-scene.js';
 import { createSceneConfig } from '../mappers/run-to-scene.js';
 import { diffAgents } from '../state/agent-differ.js';
 import { resolveAgentStates } from '../state/agent-state-resolver.js';
+
+function delay(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function walkWithWarning(actor: AgentActor, role: string, waypoints: ReadonlyArray<Waypoint>): Promise<void> {
+  return actor.walkPath(waypoints).catch((error: unknown) => {
+    console.warn(`[FactoryScene] walkPath failed for agent "${role}":`, error);
+  });
+}
 
 export class FactoryScene extends Scene {
   private agentMap = new Map<string, AgentActor>();
@@ -172,15 +184,26 @@ export class FactoryScene extends Scene {
     }
 
     // Move agents that changed position
-    for (const { next } of diff.moved) {
+    for (const { prev, next } of diff.moved) {
       const actor = this.agentMap.get(next.role);
       if (actor !== undefined && this.layout !== undefined) {
         const source = { x: actor.pos.x, y: actor.pos.y };
         const destination = this.layout.agentPosition(next.stationIndex, next.stackOffset, next.level);
         const waypoints = computeWalkPath(source, destination, this.layout);
-        actor.walkPath(waypoints).catch((error: unknown) => {
-          console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
-        });
+
+        if (next.role === 'orchestrator') {
+          const artifact = config.artifacts.find((a) => a.stationIndex === prev.stationIndex);
+          if (artifact !== undefined) {
+            actor.showArtifactIndicator(artifact.type);
+          }
+          void walkWithWarning(actor, next.role, waypoints)
+            .then(() => delay(300))
+            .finally(() => {
+              actor.hideArtifactIndicator();
+            });
+        } else {
+          void walkWithWarning(actor, next.role, waypoints);
+        }
       }
     }
 

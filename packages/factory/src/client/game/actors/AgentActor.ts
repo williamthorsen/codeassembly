@@ -10,6 +10,7 @@ import {
   getWorkingAnimation,
 } from '../sprites/agent-sprite-loader.js';
 import type { AgentAnimationState } from '../sprites/sprite-definitions.js';
+import { ArtifactIndicatorActor } from './ArtifactIndicatorActor.js';
 
 const WALK_SPEED = 100;
 
@@ -38,6 +39,7 @@ const POSITION_TOLERANCE = 1;
 
 export class AgentActor extends Actor {
   readonly agentKey: string;
+  private artifactIndicator: ArtifactIndicatorActor | undefined;
   private currentState: AgentAnimationState = 'idle';
   private isWalking = false;
   private pendingState: AgentAnimationState | undefined;
@@ -55,6 +57,19 @@ export class AgentActor extends Actor {
     this.roleType = roleType;
     const animation = getIdleAnimation(roleType);
     this.graphics.use(animation);
+  }
+
+  showArtifactIndicator(type: string): void {
+    if (this.artifactIndicator !== undefined) {
+      this.artifactIndicator.kill();
+    }
+    this.artifactIndicator = new ArtifactIndicatorActor(type);
+    this.addChild(this.artifactIndicator);
+    this.artifactIndicator.show();
+  }
+
+  hideArtifactIndicator(): void {
+    this.artifactIndicator?.hide();
   }
 
   setAnimationState(state: AgentAnimationState): void {
