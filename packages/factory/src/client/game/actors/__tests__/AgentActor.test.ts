@@ -13,6 +13,7 @@ const {
   mockGetConcernedAnimation,
   mockIndicatorShow,
   mockIndicatorHide,
+  mockIndicatorKill,
 } = vi.hoisted(() => {
   const toPromise = vi.fn(() => Promise.resolve());
   const moveTo = vi.fn(() => ({ toPromise }));
@@ -30,6 +31,7 @@ const {
     mockGetConcernedAnimation: vi.fn(() => ({ id: 'concerned-animation' })),
     mockIndicatorShow: vi.fn(),
     mockIndicatorHide: vi.fn(),
+    mockIndicatorKill: vi.fn(),
   };
 });
 
@@ -64,6 +66,7 @@ vi.mock('../ArtifactIndicatorActor.js', () => ({
     type: string;
     show = mockIndicatorShow;
     hide = mockIndicatorHide;
+    kill = mockIndicatorKill;
     constructor(type: string) {
       this.type = type;
     }
@@ -316,13 +319,14 @@ describe('AgentActor', () => {
       expect(mockIndicatorShow).toHaveBeenCalledTimes(1);
     });
 
-    it('does not create a second indicator on subsequent calls', () => {
+    it('recreates indicator with new type on subsequent calls', () => {
       const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
 
       actor.showArtifactIndicator('architecture');
       actor.showArtifactIndicator('plan');
 
-      expect(mockAddChild).toHaveBeenCalledTimes(1);
+      expect(mockIndicatorKill).toHaveBeenCalledTimes(1);
+      expect(mockAddChild).toHaveBeenCalledTimes(2);
       expect(mockIndicatorShow).toHaveBeenCalledTimes(2);
     });
   });

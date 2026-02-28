@@ -184,16 +184,19 @@ export class FactoryScene extends Scene {
           if (artifact !== undefined) {
             actor.showArtifactIndicator(artifact.type);
           }
-          actor
+          void actor
             .walkPath(waypoints)
-            .then(() => {
-              actor.hideArtifactIndicator();
-              return new Promise<void>((resolve) => {
-                setTimeout(resolve, 300);
-              });
-            })
+            .then(
+              () =>
+                new Promise<void>((resolve) => {
+                  setTimeout(resolve, 300);
+                }),
+            )
             .catch((error: unknown) => {
               console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
+            })
+            .finally(() => {
+              actor.hideArtifactIndicator();
             });
         } else {
           actor.walkPath(waypoints).catch((error: unknown) => {

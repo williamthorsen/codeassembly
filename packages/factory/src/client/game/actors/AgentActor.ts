@@ -60,10 +60,11 @@ export class AgentActor extends Actor {
   }
 
   showArtifactIndicator(type: string): void {
-    if (this.artifactIndicator === undefined) {
-      this.artifactIndicator = new ArtifactIndicatorActor(type);
-      this.addChild(this.artifactIndicator);
+    if (this.artifactIndicator !== undefined) {
+      this.artifactIndicator.kill();
     }
+    this.artifactIndicator = new ArtifactIndicatorActor(type);
+    this.addChild(this.artifactIndicator);
     this.artifactIndicator.show();
   }
 

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { mockActorConstructor, mockGraphicsIsVisible } = vi.hoisted(() => {
   return {
@@ -46,6 +46,11 @@ const { Color } = await import('excalibur');
 const { PALETTE } = await import('../../../../shared/constants/palette.js');
 
 describe('ArtifactIndicatorActor', () => {
+  afterEach(() => {
+    mockGraphicsIsVisible.value = true;
+    vi.clearAllMocks();
+  });
+
   it('uses correct color for architecture type', () => {
     new ArtifactIndicatorActor('architecture');
 

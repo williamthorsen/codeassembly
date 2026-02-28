@@ -758,6 +758,107 @@ describe('FactoryScene', () => {
       });
     });
 
+    it('hides artifact indicator even when walkPath rejects', async () => {
+      mockWalkPath.mockImplementationOnce(() => Promise.reject(new Error('walk failed')));
+
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockHideArtifactIndicator.mockClear();
+
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      await vi.waitFor(() => {
+        expect(mockHideArtifactIndicator).toHaveBeenCalled();
+      });
+    });
+
+    it('does not show artifact indicator for non-orchestrator agent moves', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 5, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockShowArtifactIndicator.mockClear();
+      mockWalkPath.mockClear();
+
+      // Add a second reviewer, which moves the existing reviewer (non-orchestrator move)
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 5, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'security-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // walkPath is called for the moved reviewer but showArtifactIndicator should not be
+      expect(mockWalkPath).toHaveBeenCalled();
+      expect(mockShowArtifactIndicator).not.toHaveBeenCalled();
+    });
+
     it('does not show artifact indicator when no artifact exists at orchestrator previous station', () => {
       // Start with architecture active but no artifact produced (artifact: undefined)
       const status = createMockRunStatus({
