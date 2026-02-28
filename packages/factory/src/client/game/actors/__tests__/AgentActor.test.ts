@@ -5,11 +5,14 @@ const {
   mockGraphicsUse,
   mockMoveTo,
   mockClearActions,
+  mockAddChild,
   mockGetIdleAnimation,
   mockGetWalkingAnimation,
   mockGetWorkingAnimation,
   mockGetCelebratingAnimation,
   mockGetConcernedAnimation,
+  mockIndicatorShow,
+  mockIndicatorHide,
 } = vi.hoisted(() => {
   const toPromise = vi.fn(() => Promise.resolve());
   const moveTo = vi.fn(() => ({ toPromise }));
@@ -19,11 +22,14 @@ const {
     mockGraphicsUse: vi.fn(),
     mockMoveTo: moveTo,
     mockClearActions: vi.fn(),
+    mockAddChild: vi.fn(),
     mockGetIdleAnimation: vi.fn(() => ({ id: 'idle-animation' })),
     mockGetWalkingAnimation: vi.fn(() => ({ id: 'walking-animation' })),
     mockGetWorkingAnimation: vi.fn(() => ({ id: 'working-animation' })),
     mockGetCelebratingAnimation: vi.fn(() => ({ id: 'celebrating-animation' })),
     mockGetConcernedAnimation: vi.fn(() => ({ id: 'concerned-animation' })),
+    mockIndicatorShow: vi.fn(),
+    mockIndicatorHide: vi.fn(),
   };
 });
 
@@ -33,6 +39,7 @@ vi.mock('excalibur', () => {
     pos: { x: number; y: number };
     graphics = { use: mockGraphicsUse };
     actions = { moveTo: mockMoveTo, clearActions: mockClearActions };
+    addChild = mockAddChild;
     constructor(config: Record<string, unknown>) {
       mockActorConstructor(config);
       this.config = config;
@@ -51,6 +58,17 @@ vi.mock('excalibur', () => {
     vec: (x: number, y: number) => ({ x, y }),
   };
 });
+
+vi.mock('../ArtifactIndicatorActor.js', () => ({
+  ArtifactIndicatorActor: class MockArtifactIndicatorActor {
+    type: string;
+    show = mockIndicatorShow;
+    hide = mockIndicatorHide;
+    constructor(type: string) {
+      this.type = type;
+    }
+  },
+}));
 
 vi.mock('../../sprites/agent-sprite-loader.js', () => ({
   getIdleAnimation: mockGetIdleAnimation,
@@ -285,6 +303,44 @@ describe('AgentActor', () => {
       mockGraphicsUse.mockClear();
       actor.setAnimationState('working');
       expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'working-animation' });
+    });
+  });
+
+  describe('showArtifactIndicator', () => {
+    it('creates and adds a child indicator on first call', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      actor.showArtifactIndicator('architecture');
+
+      expect(mockAddChild).toHaveBeenCalledTimes(1);
+      expect(mockIndicatorShow).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not create a second indicator on subsequent calls', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      actor.showArtifactIndicator('architecture');
+      actor.showArtifactIndicator('plan');
+
+      expect(mockAddChild).toHaveBeenCalledTimes(1);
+      expect(mockIndicatorShow).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('hideArtifactIndicator', () => {
+    it('calls hide() on the indicator', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      actor.showArtifactIndicator('architecture');
+
+      actor.hideArtifactIndicator();
+
+      expect(mockIndicatorHide).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not throw when called before any showArtifactIndicator', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      expect(() => actor.hideArtifactIndicator()).not.toThrow();
     });
   });
 

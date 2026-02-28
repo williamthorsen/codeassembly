@@ -172,15 +172,34 @@ export class FactoryScene extends Scene {
     }
 
     // Move agents that changed position
-    for (const { next } of diff.moved) {
+    for (const { prev, next } of diff.moved) {
       const actor = this.agentMap.get(next.role);
       if (actor !== undefined && this.layout !== undefined) {
         const source = { x: actor.pos.x, y: actor.pos.y };
         const destination = this.layout.agentPosition(next.stationIndex, next.stackOffset, next.level);
         const waypoints = computeWalkPath(source, destination, this.layout);
-        actor.walkPath(waypoints).catch((error: unknown) => {
-          console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
-        });
+
+        if (next.role === 'orchestrator') {
+          const artifact = config.artifacts.find((a) => a.stationIndex === prev.stationIndex);
+          if (artifact !== undefined) {
+            actor.showArtifactIndicator(artifact.type);
+          }
+          actor
+            .walkPath(waypoints)
+            .then(() => {
+              actor.hideArtifactIndicator();
+              return new Promise<void>((resolve) => {
+                setTimeout(resolve, 300);
+              });
+            })
+            .catch((error: unknown) => {
+              console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
+            });
+        } else {
+          actor.walkPath(waypoints).catch((error: unknown) => {
+            console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
+          });
+        }
       }
     }
 

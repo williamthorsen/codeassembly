@@ -2,7 +2,7 @@ import { Actor, Color, type Vector } from 'excalibur';
 
 import { PALETTE } from '../../../shared/constants/palette.js';
 
-const ARTIFACT_COLORS: Record<string, string> = {
+export const ARTIFACT_COLORS: Record<string, string> = {
   architecture: PALETTE.blue,
   plan: PALETTE.green,
   code: PALETTE.yellow,

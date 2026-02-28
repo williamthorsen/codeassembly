@@ -3,23 +3,34 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
 import { createSceneConfig } from '../../mappers/run-to-scene.js';
 
-const { mockSceneAdd, mockSceneClear, mockSetAnimationState, mockWalkPath, mockKill, mockFade, mockCamera } =
-  vi.hoisted(() => {
-    const kill = vi.fn();
-    const fade = vi.fn(() => ({
-      toPromise: () => Promise.resolve(),
-    }));
+const {
+  mockSceneAdd,
+  mockSceneClear,
+  mockSetAnimationState,
+  mockWalkPath,
+  mockKill,
+  mockFade,
+  mockCamera,
+  mockShowArtifactIndicator,
+  mockHideArtifactIndicator,
+} = vi.hoisted(() => {
+  const kill = vi.fn();
+  const fade = vi.fn(() => ({
+    toPromise: () => Promise.resolve(),
+  }));
 
-    return {
-      mockSceneAdd: vi.fn(),
-      mockSceneClear: vi.fn(),
-      mockSetAnimationState: vi.fn(),
-      mockWalkPath: vi.fn(() => Promise.resolve()),
-      mockKill: kill,
-      mockFade: fade,
-      mockCamera: { zoom: 1, pos: { x: 0, y: 0 } },
-    };
-  });
+  return {
+    mockSceneAdd: vi.fn(),
+    mockSceneClear: vi.fn(),
+    mockSetAnimationState: vi.fn(),
+    mockWalkPath: vi.fn(() => Promise.resolve()),
+    mockKill: kill,
+    mockFade: fade,
+    mockCamera: { zoom: 1, pos: { x: 0, y: 0 } },
+    mockShowArtifactIndicator: vi.fn(),
+    mockHideArtifactIndicator: vi.fn(),
+  };
+});
 
 vi.mock('excalibur', () => {
   class MockScene {
@@ -67,6 +78,8 @@ vi.mock('../../../game/actors/AgentActor.js', () => ({
     pos: { x: number; y: number };
     setAnimationState = mockSetAnimationState;
     walkPath = mockWalkPath;
+    showArtifactIndicator = mockShowArtifactIndicator;
+    hideArtifactIndicator = mockHideArtifactIndicator;
     kill = mockKill;
     actions = { fade: mockFade };
     constructor(
@@ -155,6 +168,8 @@ describe('FactoryScene', () => {
     mockSceneClear.mockClear();
     mockSetAnimationState.mockClear();
     mockWalkPath.mockClear();
+    mockShowArtifactIndicator.mockClear();
+    mockHideArtifactIndicator.mockClear();
     mockKill.mockClear();
     mockFade.mockClear();
     mockCamera.zoom = 1;
@@ -685,6 +700,89 @@ describe('FactoryScene', () => {
 
       // correctness-reviewer moved from stackOffset 0 to stackOffset 1
       expect(mockWalkPath).toHaveBeenCalled();
+    });
+
+    it('shows artifact indicator on orchestrator before walk when artifact exists at previous station', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockShowArtifactIndicator.mockClear();
+      mockWalkPath.mockClear();
+
+      // Orchestrator moves from station 0 (architecture) to station 1 (planning)
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      expect(mockShowArtifactIndicator).toHaveBeenCalledWith('architecture');
+      expect(mockWalkPath).toHaveBeenCalled();
+    });
+
+    it('hides artifact indicator after orchestrator walk completes', async () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockHideArtifactIndicator.mockClear();
+
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // walkPath resolves immediately in the mock, so hideArtifactIndicator should be called
+      await vi.waitFor(() => {
+        expect(mockHideArtifactIndicator).toHaveBeenCalled();
+      });
+    });
+
+    it('does not show artifact indicator when no artifact exists at orchestrator previous station', () => {
+      // Start with architecture active but no artifact produced (artifact: undefined)
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockShowArtifactIndicator.mockClear();
+
+      // Orchestrator moves from station 0 to station 1, but no artifact at station 0
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: undefined },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      expect(mockShowArtifactIndicator).not.toHaveBeenCalled();
     });
 
     it('applies setAnimationState to agents including those currently walking', () => {
