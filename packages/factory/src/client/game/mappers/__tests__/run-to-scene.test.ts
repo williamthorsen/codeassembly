@@ -394,7 +394,7 @@ describe('createSceneConfig', () => {
   });
 
   describe('orchestrator positioning', () => {
-    it('places orchestrator at architecture station when only architecture is active', () => {
+    it('places orchestrator at inferred frontier when architecture has data', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -406,12 +406,13 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
 
+      // Architecture has data, so planning (index 1) is the inferred current phase
       expect(orchestrator).toBeDefined();
-      expect(orchestrator?.stationIndex).toBe(0);
+      expect(orchestrator?.stationIndex).toBe(1);
       expect(orchestrator?.level).toBe(0);
     });
 
-    it('places orchestrator at review station when review is active', () => {
+    it('places orchestrator at review station when review is active and post-review phases are skipped', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -436,6 +437,10 @@ describe('createSceneConfig', () => {
             selectiveReReview: undefined,
           },
         },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
+        },
       });
 
       const config = createSceneConfig(status);
@@ -447,7 +452,40 @@ describe('createSceneConfig', () => {
       expect(orchestrator?.stackOffset).toBe(1);
     });
 
-    it('does not create orchestrator when no phases are active', () => {
+    it('places orchestrator at inferred current phase when prior phases have data', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      // Planning (index 1) is the inferred current phase; orchestrator should be there, not at architecture (index 0)
+      expect(orchestrator).toBeDefined();
+      expect(orchestrator?.stationIndex).toBe(1);
+    });
+
+    it('does not create orchestrator when no phases are active on non-in_progress runs', () => {
+      const status = createMockRunStatus({
+        status: 'failed',
+        phases: emptyPhases(),
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      expect(orchestrator).toBeUndefined();
+    });
+
+    it('creates orchestrator at inferred phase when in_progress with empty phases', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: emptyPhases(),
@@ -456,7 +494,8 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
 
-      expect(orchestrator).toBeUndefined();
+      expect(orchestrator).toBeDefined();
+      expect(orchestrator?.stationIndex).toBe(0);
     });
 
     it('does not create orchestrator on failed runs', () => {
@@ -490,7 +529,7 @@ describe('createSceneConfig', () => {
       expect(orchestrator?.level).toBe(0);
     });
 
-    it('sets orchestrator stackOffset to avoid overlap with existing agents', () => {
+    it('sets orchestrator stackOffset to avoid overlap with existing agents at inferred station', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -501,10 +540,11 @@ describe('createSceneConfig', () => {
 
       const config = createSceneConfig(status);
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
-      const architect = config.agents.find((a) => a.role === 'architect');
+      const planner = config.agents.find((a) => a.role === 'planner');
 
-      expect(architect?.stationIndex).toBe(0);
-      expect(orchestrator?.stationIndex).toBe(0);
+      // Planning (station 1) is the inferred current phase; planner is at stackOffset 0, orchestrator at 1
+      expect(planner?.stationIndex).toBe(1);
+      expect(orchestrator?.stationIndex).toBe(1);
       expect(orchestrator?.stackOffset).toBe(1);
     });
 
@@ -540,6 +580,10 @@ describe('createSceneConfig', () => {
             coderFixCycleRan: false,
             selectiveReReview: undefined,
           },
+        },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
         },
       });
 
@@ -591,6 +635,10 @@ describe('createSceneConfig', () => {
             selectiveReReview: undefined,
           },
         },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
+        },
       });
 
       const config = createSceneConfig(status);
@@ -615,6 +663,10 @@ describe('createSceneConfig', () => {
             coderFixCycleRan: false,
             selectiveReReview: undefined,
           },
+        },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
         },
       });
 
@@ -649,6 +701,10 @@ describe('createSceneConfig', () => {
             coderFixCycleRan: false,
             selectiveReReview: undefined,
           },
+        },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
         },
       });
 
@@ -700,11 +756,17 @@ describe('createSceneConfig', () => {
             selectiveReReview: undefined,
           },
         },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
+        },
       });
 
       const config = createSceneConfig(status);
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
-      const reviewers = config.agents.filter((a) => a.roleType === PHASE_ROLE_TYPE.review);
+      const reviewers = config.agents.filter(
+        (a) => a.stationIndex === REVIEW_STATION_INDEX && a.role !== 'orchestrator',
+      );
 
       // 3 reviewers at levels 0, 1, 2 — orchestrator is on level 2 with 1 reviewer there
       expect(reviewers).toHaveLength(3);
@@ -765,8 +827,8 @@ describe('createSceneConfig', () => {
     expect(config.agents.find((a) => a.role === 'reviewer')).toBeDefined();
   });
 
-  it('handles all phases skipped', () => {
-    const status = createMockRunStatus();
+  it('handles all phases skipped on non-in_progress runs', () => {
+    const status = createMockRunStatus({ status: 'failed' });
 
     const config = createSceneConfig(status);
 
@@ -774,6 +836,20 @@ describe('createSceneConfig', () => {
     expect(config.agents).toHaveLength(0);
     expect(config.artifacts).toHaveLength(0);
     expect(config.gates.every((g) => !g.open)).toBe(true);
+  });
+
+  it('infers first phase as active when in_progress with empty phases and no decisions', () => {
+    const status = createMockRunStatus();
+
+    const config = createSceneConfig(status);
+
+    // Architecture station is inferred as active
+    expect(config.stations[0]?.active).toBe(true);
+    // Remaining stations are not active
+    expect(config.stations.slice(1).every((s) => !s.active)).toBe(true);
+    // Architect + orchestrator agents are created
+    expect(config.agents).toHaveLength(2);
+    expect(config.artifacts).toHaveLength(0);
   });
 
   it('always generates 7 stations and 6 gates', () => {
@@ -844,6 +920,245 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
 
       expect(config.stations[simplifierIndex]?.active).toBe(false);
+    });
+  });
+
+  describe('phase inference (in_progress)', () => {
+    it('creates agent for architecture phase when phases is empty and phaseDecisions.architecture.run is true', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
+
+      const config = createSceneConfig(status);
+      const architect = config.agents.find((a) => a.role === 'architect');
+
+      expect(architect).toBeDefined();
+      expect(architect?.stationIndex).toBe(0);
+    });
+
+    it('marks architecture station active when currentPhase is architecture and no phase data exists', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[0]?.active).toBe(true);
+    });
+
+    it('does not create agent when its phase is decided to skip and no phase data exists', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: {
+          architecture: { run: false, reason: 'skipped' },
+          planning: { run: true, reason: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const architect = config.agents.find((a) => a.role === 'architect');
+      const planner = config.agents.find((a) => a.role === 'planner');
+
+      expect(architect).toBeUndefined();
+      expect(planner).toBeDefined();
+      expect(planner?.stationIndex).toBe(1);
+    });
+
+    it('creates generic reviewer at station 3 when currentPhase is review and no review data exists', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+          implementation: { run: true, reason: undefined },
+          'review-cycle': { run: true, reason: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const reviewers = config.agents.filter(
+        (a) => a.stationIndex === REVIEW_STATION_INDEX && a.role !== 'orchestrator',
+      );
+
+      expect(reviewers).toHaveLength(1);
+      expect(reviewers[0]).toEqual({
+        role: 'reviewer',
+        roleType: 'reviewer',
+        stationIndex: 3,
+        stackOffset: 0,
+        level: 0,
+      });
+    });
+
+    it('positions orchestrator at architecture station when phases is empty and currentPhase is architecture', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      expect(orchestrator).toBeDefined();
+      expect(orchestrator?.stationIndex).toBe(0);
+    });
+
+    it('keeps gate between architecture and planning closed when only architecture is inferred-active', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
+
+      const config = createSceneConfig(status);
+
+      // Gate between station 0 (architecture) and station 1 (planning)
+      expect(config.gates[0]?.open).toBe(false);
+    });
+
+    it('creates simplifier agent at station 4 when all prior phases have data and simplifier has no data or decision', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+          implementation: { run: true, reason: undefined },
+          'review-cycle': { run: true, reason: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const simplifier = config.agents.find((a) => a.role === 'simplifier');
+
+      expect(simplifier).toBeDefined();
+      expect(simplifier?.stationIndex).toBe(4);
+    });
+
+    it('creates holistic-reviewer agent at station 5 when all prior phases including simplifier have data', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+          codeSimplifier: { ran: true, actionableFindings: false, coderFixCycleRan: false, artifact: undefined },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+          implementation: { run: true, reason: undefined },
+          'review-cycle': { run: true, reason: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const holistic = config.agents.find((a) => a.role === 'holistic-reviewer');
+
+      expect(holistic).toBeDefined();
+      expect(holistic?.stationIndex).toBe(5);
+    });
+
+    it('does not infer simplifier as current when codeSimplifier has data with ran: false', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+          codeSimplifier: { ran: false, actionableFindings: false, coderFixCycleRan: false, artifact: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const simplifier = config.agents.find((a) => a.role === 'simplifier');
+      const holistic = config.agents.find((a) => a.role === 'holistic-reviewer');
+
+      // Simplifier should NOT appear (ran: false means it was skipped, not inferred as current)
+      expect(simplifier).toBeUndefined();
+      // Holistic should appear as the inferred current phase
+      expect(holistic).toBeDefined();
+      expect(holistic?.stationIndex).toBe(5);
+    });
+
+    it('does not crash and produces no agents or active stations when phaseDecisions is empty and phases is empty with failed status', () => {
+      const status = createMockRunStatus({
+        status: 'failed',
+        phases: emptyPhases(),
+        phaseDecisions: {},
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations.every((s) => !s.active)).toBe(true);
+      expect(config.agents).toHaveLength(0);
     });
   });
 });
