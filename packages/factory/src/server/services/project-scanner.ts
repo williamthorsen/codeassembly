@@ -134,6 +134,7 @@ export class ProjectScanner {
             path: runPath,
             status: status.status,
             startedAt: status.startedAt,
+            completedAt: status.completedAt,
           });
         } catch (error) {
           if (isEnoent(error)) {

@@ -19,6 +19,7 @@ export interface RunInfo {
   path: string;
   status: RunStatus;
   startedAt: string;
+  completedAt: string | undefined;
 }
 
 export interface FlatRunInfo extends Omit<RunInfo, 'path'> {
