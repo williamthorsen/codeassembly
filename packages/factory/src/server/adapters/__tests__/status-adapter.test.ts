@@ -392,10 +392,11 @@ describe('parseStatusFile', () => {
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
-    it('rejects null phase entry', async () => {
+    it('accepts null phase entry (skipped phase)', async () => {
       mockedReadFile.mockResolvedValue(JSON.stringify({ ...minimalValid(), phases: { architecture: null } }));
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
+      const result = await parseStatusFile('/path/to/status.json');
+      expect(result.phases).toEqual({ architecture: null });
     });
 
     it('rejects phase that is not an object', async () => {
@@ -407,6 +408,18 @@ describe('parseStatusFile', () => {
       });
 
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
+    });
+
+    it('accepts phase with null criticality (skipped review)', async () => {
+      mockJson({
+        ...minimalValid(),
+        phases: {
+          holisticReview: { status: 'skipped', criticality: null },
+        },
+      });
+
+      const result = await parseStatusFile('/path/to/status.json');
+      expect(result.phases.holisticReview).toEqual({ status: 'skipped', criticality: null });
     });
 
     it('rejects phase with invalid criticality', async () => {
