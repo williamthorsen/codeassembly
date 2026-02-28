@@ -9,10 +9,8 @@ import type {
   RunStatus,
 } from '../../shared/types/canonical.js';
 import { isEnoent } from '../type-guards.js';
-
-const VALID_RUN_STATUSES = new Set(['in_progress', 'completed', 'failed', 'needs_manual_review']);
-const VALID_PHASE_STATUSES = new Set(['completed', 'skipped', 'failed', 'in_progress', 'approved']);
-const VALID_CRITICALITIES = new Set(['none', 'low', 'medium', 'high']);
+import { v2RunIndexSchema } from './schemas/run-index-schema.js';
+import { v1StatusSchema } from './schemas/status-json-schema.js';
 
 /** Try v2 (run-index.json) first, fall back to v1 (status.json). */
 export async function parseRunData(runPath: string): Promise<CanonicalRunStatus> {
@@ -50,7 +48,7 @@ interface V1StatusObject {
   branch: string;
   task: string;
   startedAt: string;
-  completedAt: string | undefined;
+  completedAt: string | null | undefined;
   status: RunStatus;
   externalPlan: boolean | undefined;
   mergeBaseSha: string | undefined;
@@ -62,9 +60,10 @@ interface V1StatusObject {
 }
 
 function normalizeV1(raw: V1StatusObject): CanonicalRunStatus {
-  const { phaseDecision, ...rest } = raw;
+  const { phaseDecision, completedAt, ...rest } = raw;
   return {
     ...rest,
+    completedAt: completedAt ?? undefined,
     mode: undefined,
     model: undefined,
     phaseDecisions: phaseDecision,
@@ -142,181 +141,12 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
   };
 }
 
-// -- v2 validation -----------------------------------------------------------
+// -- validation via Zod schemas ----------------------------------------------
 
 function isValidRunIndex(raw: unknown): raw is V2RunIndex {
-  if (!isRecord(raw)) return false;
-  if (raw.version !== 2) return false;
-  if (!isRecord(raw.context) || !isValidContext(raw.context)) return false;
-  if (!isRecord(raw.config) || !isValidConfig(raw.config)) return false;
-  if (!isValidArtifactsArray(raw.artifacts)) return false;
-  return true;
-}
-
-function isValidContext(context: Record<string, unknown>): boolean {
-  if (!hasValidRequiredFields(context)) return false;
-  if (!isOptionalString(context.ticketId)) return false;
-  if (!isOptionalNullableString(context.completedAt)) return false;
-  if (!isValidPhasesObject(context.phases)) return false;
-  if (!isValidPhaseDecisionMap(context.phaseDecisions)) return false;
-  return true;
-}
-
-function isOptionalNullableString(value: unknown): boolean {
-  return value === undefined || value === null || typeof value === 'string';
-}
-
-function isValidConfig(config: Record<string, unknown>): boolean {
-  if (!isOptionalBoolean(config.externalPlan)) return false;
-  if (!isOptionalString(config.mergeBaseSha)) return false;
-  if (!isOptionalString(config.diffBase)) return false;
-  if (!isOptionalNumber(config.maxReviewRounds)) return false;
-  if (!isOptionalBoolean(config.fixLowFindings)) return false;
-  if (!isOptionalString(config.mode)) return false;
-  if (!isOptionalString(config.model)) return false;
-  return true;
-}
-
-function isValidArtifactsArray(value: unknown): boolean {
-  if (value === undefined) return true;
-  if (!Array.isArray(value)) return false;
-  for (const entry of value) {
-    if (!isValidArtifactEntry(entry)) return false;
-  }
-  return true;
-}
-
-function isValidArtifactEntry(value: unknown): boolean {
-  if (!isRecord(value)) return false;
-  if (!hasValidArtifactRequiredFields(value)) return false;
-  if (!isOptionalNumber(value.iteration)) return false;
-  if (!isOptionalString(value.note)) return false;
-  return true;
-}
-
-function hasValidArtifactRequiredFields(entry: Record<string, unknown>): boolean {
-  if (typeof entry.filename !== 'string') return false;
-  if (typeof entry.role !== 'string') return false;
-  if (typeof entry.roleType !== 'string') return false;
-  if (typeof entry.agent !== 'string') return false;
-  if (typeof entry.type !== 'string') return false;
-  if (typeof entry.phase !== 'string') return false;
-  if (typeof entry.createdAt !== 'string') return false;
-  return true;
-}
-
-// -- shared validation helpers -----------------------------------------------
-
-function hasValidRequiredFields(raw: Record<string, unknown>): boolean {
-  if (typeof raw.runId !== 'string') return false;
-  if (typeof raw.projectSlug !== 'string') return false;
-  if (typeof raw.projectRoot !== 'string') return false;
-  if (typeof raw.branch !== 'string') return false;
-  if (typeof raw.task !== 'string') return false;
-  if (typeof raw.startedAt !== 'string') return false;
-  if (typeof raw.status !== 'string' || !VALID_RUN_STATUSES.has(raw.status)) return false;
-  return true;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isOptionalString(value: unknown): value is string | undefined {
-  return value === undefined || typeof value === 'string';
-}
-
-function isOptionalNumber(value: unknown): value is number | undefined {
-  return value === undefined || typeof value === 'number';
-}
-
-function isOptionalBoolean(value: unknown): value is boolean | undefined {
-  return value === undefined || typeof value === 'boolean';
-}
-
-function isValidPhaseStatus(value: unknown): boolean {
-  return typeof value === 'string' && VALID_PHASE_STATUSES.has(value);
-}
-
-function isValidCriticality(value: unknown): boolean {
-  return typeof value === 'string' && VALID_CRITICALITIES.has(value);
-}
-
-function isValidPhaseDecisionMap(value: unknown): boolean {
-  if (value === undefined) {
-    return true;
-  }
-  if (!isRecord(value)) {
-    return false;
-  }
-  for (const entry of Object.values(value)) {
-    if (!isRecord(entry)) return false;
-    if (typeof entry.run !== 'boolean') return false;
-    if (!isOptionalString(entry.reason)) return false;
-  }
-  return true;
-}
-
-function isNullOrValid(value: unknown, check: (v: unknown) => boolean): boolean {
-  return value === null || check(value);
-}
-
-function isValidPhaseEntry(phase: unknown): boolean {
-  if (!isRecord(phase)) {
-    return false;
-  }
-  if ('status' in phase && !isNullOrValid(phase.status, isValidPhaseStatus)) {
-    return false;
-  }
-  if ('criticality' in phase && !isNullOrValid(phase.criticality, isValidCriticality)) {
-    return false;
-  }
-  if ('finalCriticality' in phase && !isNullOrValid(phase.finalCriticality, isValidCriticality)) {
-    return false;
-  }
-  if ('aggregatedCriticality' in phase && !isNullOrValid(phase.aggregatedCriticality, isValidCriticality)) {
-    return false;
-  }
-  return true;
-}
-
-function isValidPhasesObject(value: unknown): boolean {
-  if (!isRecord(value)) {
-    return false;
-  }
-  for (const phase of Object.values(value)) {
-    if (phase === undefined || phase === null) {
-      continue;
-    }
-    if (!isValidPhaseEntry(phase)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// -- v1 validation -----------------------------------------------------------
-
-function hasValidOptionalFields(raw: Record<string, unknown>): boolean {
-  if (!isOptionalString(raw.ticketId)) return false;
-  if (!isOptionalString(raw.completedAt)) return false;
-  if (!isOptionalBoolean(raw.externalPlan)) return false;
-  if (!isOptionalString(raw.mergeBaseSha)) return false;
-  if (!isOptionalString(raw.diffBase)) return false;
-  if (!isOptionalNumber(raw.maxReviewRounds)) return false;
-  if (!isOptionalBoolean(raw.fixLowFindings)) return false;
-  return true;
+  return v2RunIndexSchema.safeParse(raw).success;
 }
 
 function isValidStatusObject(raw: unknown): raw is V1StatusObject {
-  if (!isRecord(raw)) {
-    return false;
-  }
-
-  if (!hasValidRequiredFields(raw)) return false;
-  if (!hasValidOptionalFields(raw)) return false;
-  if (!isValidPhasesObject(raw.phases)) return false;
-  if (!isValidPhaseDecisionMap(raw.phaseDecision)) return false;
-
-  return true;
+  return v1StatusSchema.safeParse(raw).success;
 }
