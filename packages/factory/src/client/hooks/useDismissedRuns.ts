@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { DismissedRunEntry } from '../../shared/types/settings.js';
 import { fetchSettings, patchSettings } from '../api/client.js';
@@ -12,36 +12,45 @@ interface UseDismissedRunsResult {
 /** Manages server-persisted dismissed run state with optimistic updates. */
 export function useDismissedRuns(): UseDismissedRunsResult {
   const [dismissed, setDismissed] = useState<Record<string, DismissedRunEntry>>({});
+  const dismissedRef = useRef(dismissed);
+  dismissedRef.current = dismissed;
 
   useEffect(() => {
     fetchSettings()
       .then((settings) => setDismissed(settings.dismissedRuns))
-      .catch(() => {
-        // Graceful degradation: leave dismissed as empty on fetch failure
+      .catch((error: unknown) => {
+        console.warn('Failed to load settings, continuing with empty state:', error);
       });
   }, []);
 
   const dismiss = useCallback((key: string, status: string): void => {
-    setDismissed((prev) => {
-      const next = { ...prev, [key]: { status } };
-      patchSettings({ dismissedRuns: next }).catch(() => {
-        // Fire-and-forget: persist failure does not revert optimistic update
-      });
-      return next;
+    const prev = dismissedRef.current;
+    if (prev[key]?.status === status) return;
+
+    const next = { ...prev, [key]: { status } };
+    setDismissed(next);
+    patchSettings({ dismissedRuns: next }).catch((error: unknown) => {
+      console.warn('Failed to persist dismissal:', error);
     });
   }, []);
 
   const dismissAll = useCallback((entries: { key: string; status: string }[]): void => {
     if (entries.length === 0) return;
-    setDismissed((prev) => {
-      const next = { ...prev };
-      for (const { key, status } of entries) {
+
+    const prev = dismissedRef.current;
+    let changed = false;
+    const next = { ...prev };
+    for (const { key, status } of entries) {
+      if (next[key]?.status !== status) {
         next[key] = { status };
+        changed = true;
       }
-      patchSettings({ dismissedRuns: next }).catch(() => {
-        // Fire-and-forget: persist failure does not revert optimistic update
-      });
-      return next;
+    }
+    if (!changed) return;
+
+    setDismissed(next);
+    patchSettings({ dismissedRuns: next }).catch((error: unknown) => {
+      console.warn('Failed to persist dismissals:', error);
     });
   }, []);
 

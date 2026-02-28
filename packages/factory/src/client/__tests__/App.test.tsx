@@ -202,6 +202,35 @@ describe('App', () => {
     });
   });
 
+  it('shows a dismissed run when its status has changed since dismissal', async () => {
+    mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+    const runs: FlatRunInfo[] = [
+      { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
+      { projectSlug: 'beta', ticketId: 'T-2', runId: 'run-b', status: 'completed', startedAt: '2026-01-02T00:00:00Z' },
+    ];
+    mockFlattenProjectIndex.mockReturnValue(runs);
+
+    // run-a was dismissed when it had 'failed' status, but now shows 'completed' — should reappear
+    // run-b was dismissed with 'completed' status and still has 'completed' — stays hidden
+    mockDismissedRecord = {
+      'alpha/T-1/run-a': { status: 'failed' },
+      'beta/T-2/run-b': { status: 'completed' },
+    };
+    mockUseDismissedRuns.mockReturnValue({
+      dismissed: mockDismissedRecord,
+      dismiss: mockDismiss,
+      dismissAll: mockDismissAll,
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      const lastCall = mockRunList.mock.lastCall;
+      expect(lastCall?.[0]).toEqual(expect.objectContaining({ runs: [runs[0]] }));
+    });
+  });
+
   it('handles fetchProjects error', async () => {
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
     mockFetchProjects.mockRejectedValue(new Error('Server down'));

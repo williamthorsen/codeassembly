@@ -71,7 +71,7 @@ describe('useDismissedRuns', () => {
     });
   });
 
-  it('dismissAll handles batch case and calls patchSettings', async () => {
+  it('dismissAll handles batch case and calls patchSettings with full record', async () => {
     mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
     mockedPatchSettings.mockResolvedValue({
       dismissedRuns: {
@@ -95,7 +95,12 @@ describe('useDismissedRuns', () => {
 
     expect(result.current.dismissed['alpha/T-1/run-a']).toEqual({ status: 'completed' });
     expect(result.current.dismissed['beta/T-2/run-b']).toEqual({ status: 'failed' });
-    expect(mockedPatchSettings).toHaveBeenCalled();
+    expect(mockedPatchSettings).toHaveBeenCalledWith({
+      dismissedRuns: {
+        'alpha/T-1/run-a': { status: 'completed' },
+        'beta/T-2/run-b': { status: 'failed' },
+      },
+    });
   });
 
   it('dismissAll with empty entries does not call patchSettings', async () => {
@@ -109,6 +114,50 @@ describe('useDismissedRuns', () => {
 
     act(() => {
       result.current.dismissAll([]);
+    });
+
+    expect(mockedPatchSettings).not.toHaveBeenCalled();
+  });
+
+  it('dismiss skips patchSettings when key already has the same status', async () => {
+    mockedFetchSettings.mockResolvedValue({
+      dismissedRuns: { 'alpha/T-1/run-a': { status: 'completed' } },
+    });
+    mockedPatchSettings.mockResolvedValue({ dismissedRuns: {} });
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismiss('alpha/T-1/run-a', 'completed');
+    });
+
+    expect(mockedPatchSettings).not.toHaveBeenCalled();
+  });
+
+  it('dismissAll skips patchSettings when all entries already match', async () => {
+    mockedFetchSettings.mockResolvedValue({
+      dismissedRuns: {
+        'alpha/T-1/run-a': { status: 'completed' },
+        'beta/T-2/run-b': { status: 'failed' },
+      },
+    });
+    mockedPatchSettings.mockResolvedValue({ dismissedRuns: {} });
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismissAll([
+        { key: 'alpha/T-1/run-a', status: 'completed' },
+        { key: 'beta/T-2/run-b', status: 'failed' },
+      ]);
     });
 
     expect(mockedPatchSettings).not.toHaveBeenCalled();

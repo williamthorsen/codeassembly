@@ -14,11 +14,9 @@ describe('userSettingsSchema', () => {
         'beta/T-2/run-b': { status: 'in_progress' },
       },
     };
-    const result = userSettingsSchema.safeParse(data);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.dismissedRuns['alpha/T-1/run-a']?.status).toBe('completed');
-    }
+    const parsed = userSettingsSchema.parse(data);
+    expect(parsed.dismissedRuns['alpha/T-1/run-a']?.status).toBe('completed');
+    expect(parsed.dismissedRuns['beta/T-2/run-b']?.status).toBe('in_progress');
   });
 
   it('rejects missing dismissedRuns key', () => {

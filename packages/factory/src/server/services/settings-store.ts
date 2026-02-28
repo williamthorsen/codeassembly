@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -6,10 +6,12 @@ import type { UserSettings } from '../../shared/types/settings.js';
 import { userSettingsSchema } from '../adapters/schemas/settings-schema.js';
 import { isEnoent } from '../type-guards.js';
 
-const DEFAULT_SETTINGS: UserSettings = { dismissedRuns: {} };
+function defaultSettings(): UserSettings {
+  return { dismissedRuns: {} };
+}
 
 export class SettingsStore {
-  private filePath: string;
+  private readonly filePath: string;
 
   constructor(dirPath?: string) {
     const dir = dirPath ?? process.env.FACTORY_SETTINGS_PATH ?? join(homedir(), '.config', 'codeassembly', 'factory');
@@ -25,9 +27,9 @@ export class SettingsStore {
     try {
       raw = await readFile(this.filePath, 'utf8');
     } catch (error: unknown) {
-      if (isEnoent(error)) return { ...DEFAULT_SETTINGS };
+      if (isEnoent(error)) return defaultSettings();
       console.warn('Failed to read settings file, using defaults:', error);
-      return { ...DEFAULT_SETTINGS };
+      return defaultSettings();
     }
 
     let parsed: unknown;
@@ -35,13 +37,13 @@ export class SettingsStore {
       parsed = JSON.parse(raw);
     } catch {
       console.warn('Settings file contains invalid JSON, using defaults');
-      return { ...DEFAULT_SETTINGS };
+      return defaultSettings();
     }
 
     const result = userSettingsSchema.safeParse(parsed);
     if (!result.success) {
       console.warn('Settings file failed schema validation, using defaults:', result.error.issues);
-      return { ...DEFAULT_SETTINGS };
+      return defaultSettings();
     }
 
     return result.data;
@@ -56,7 +58,12 @@ export class SettingsStore {
 
     // rename() is atomic when source and destination are on the same filesystem.
     // If FACTORY_SETTINGS_PATH points to a different volume, rename() will throw EXDEV.
-    await rename(tmpPath, this.filePath);
+    try {
+      await rename(tmpPath, this.filePath);
+    } catch (renameError) {
+      await unlink(tmpPath).catch(() => {});
+      throw renameError;
+    }
   }
 
   async patch(partial: Partial<UserSettings>): Promise<UserSettings> {

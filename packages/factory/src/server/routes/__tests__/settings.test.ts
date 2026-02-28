@@ -73,6 +73,7 @@ describe('createSettingsRouter', () => {
 
       expect(store.patch).toHaveBeenCalledWith(body);
       expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ dismissedRuns: { 'd/e/f': { status: 'failed' } } });
     });
 
     it('returns 400 on invalid body', async () => {

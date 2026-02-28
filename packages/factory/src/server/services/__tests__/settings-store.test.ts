@@ -112,15 +112,28 @@ describe('SettingsStore', () => {
   });
 
   describe('patch', () => {
-    it('merges partial settings and persists', async () => {
+    it('replaces dismissedRuns with the provided value and persists', async () => {
       const store = new SettingsStore(tempDir);
       await store.save({ dismissedRuns: { 'a/b/c': { status: 'completed' } } });
 
+      // The client always sends its full local state, so the server replaces the entire key.
       const merged = await store.patch({ dismissedRuns: { 'd/e/f': { status: 'failed' } } });
 
       expect(merged).toEqual({ dismissedRuns: { 'd/e/f': { status: 'failed' } } });
 
       // Verify persistence
+      const loaded = await store.load();
+      expect(loaded).toEqual(merged);
+    });
+
+    it('preserves existing settings when patching with empty object', async () => {
+      const store = new SettingsStore(tempDir);
+      await store.save({ dismissedRuns: { 'a/b/c': { status: 'completed' } } });
+
+      const merged = await store.patch({});
+
+      expect(merged).toEqual({ dismissedRuns: { 'a/b/c': { status: 'completed' } } });
+
       const loaded = await store.load();
       expect(loaded).toEqual(merged);
     });
