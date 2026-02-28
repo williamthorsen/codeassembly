@@ -76,8 +76,10 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
   // Note: Terminal state checks (completed/failed) above must remain before this
   // per-agent mapping so that orchestrators correctly show celebrating/concerned states.
   return agents.map((agent) => {
+    // Orchestrators use 'idle' as their default in-progress state because they
+    // walk between stations; movement is animated separately via walkPath.
     if (agent.roleType === 'orchestrator') {
-      return buildStateInfo(agent, 'working');
+      return buildStateInfo(agent, 'idle');
     }
     const animationState: AgentAnimationState = isPhaseInProgress(agent.stationIndex, status.phases)
       ? 'working'

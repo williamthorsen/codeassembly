@@ -108,6 +108,27 @@ function buildReviewerAgents(phases: Phases): AgentConfig[] {
   return [];
 }
 
+/**
+ * Review station index (0-based). Kept in sync with REVIEW_STATION_INDEX in
+ * platform-layout.ts. Defined locally to avoid a mapper -> layout dependency.
+ * Exported for test verification that this stays in sync with the layout constant.
+ */
+export const REVIEW_STATION_INDEX = 3;
+
+/**
+ * Determine which level the orchestrator should occupy at a given station.
+ *
+ * When at the review station with multiple reviewers, the orchestrator goes to
+ * the highest reviewer level (reviewerCount - 1) to visually "supervise" from above.
+ * With 0 or 1 reviewer, all agents are on level 0 (no upper platforms), so the
+ * orchestrator stays on level 0.
+ */
+function computeOrchestratorLevel(station: number, phases: Phases): number {
+  if (station !== REVIEW_STATION_INDEX) return 0;
+  const reviewerCount = Object.keys(phases.parallelReview?.reviewers ?? {}).length;
+  return reviewerCount > 1 ? reviewerCount - 1 : 0;
+}
+
 function buildOrchestratorAgent(phases: Phases, runStatus: string, agents: AgentConfig[]): AgentConfig | undefined {
   if (runStatus === 'completed') {
     return { role: 'orchestrator', roleType: PHASE_ROLE_TYPE.summary, stationIndex: 6, stackOffset: 0, level: 0 };
@@ -115,13 +136,16 @@ function buildOrchestratorAgent(phases: Phases, runStatus: string, agents: Agent
   if (runStatus === 'in_progress') {
     const station = findOrchestratorStation(phases, runStatus);
     if (station !== undefined) {
-      const existingAtStation = agents.filter((a) => a.stationIndex === station && a.level === 0).length;
+      const orchestratorLevel = computeOrchestratorLevel(station, phases);
+      const existingAtStation = agents.filter(
+        (a) => a.stationIndex === station && a.level === orchestratorLevel,
+      ).length;
       return {
         role: 'orchestrator',
         roleType: PHASE_ROLE_TYPE.summary,
         stationIndex: station,
         stackOffset: existingAtStation,
-        level: 0,
+        level: orchestratorLevel,
       };
     }
   }

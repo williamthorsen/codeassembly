@@ -10,6 +10,7 @@ import { PlatformActor } from '../actors/PlatformActor.js';
 import { StationActor } from '../actors/StationActor.js';
 import type { LayoutResult } from '../layout/platform-layout.js';
 import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.js';
+import { computeWalkPath } from '../layout/walk-path.js';
 import type { AgentConfig, SceneConfig } from '../mappers/run-to-scene.js';
 import { createSceneConfig } from '../mappers/run-to-scene.js';
 import { diffAgents } from '../state/agent-differ.js';
@@ -120,7 +121,9 @@ export class FactoryScene extends Scene {
     void actor.actions
       .fade(0, 300)
       .toPromise()
-      .catch(() => {})
+      .catch(() => {
+        /* Fade cancelled - actor removed before completion */
+      })
       .finally(() => {
         actor.kill();
       });
@@ -172,9 +175,11 @@ export class FactoryScene extends Scene {
     for (const { next } of diff.moved) {
       const actor = this.agentMap.get(next.role);
       if (actor !== undefined && this.layout !== undefined) {
-        const pos = this.layout.agentPosition(next.stationIndex, next.stackOffset, next.level);
-        actor.walkTo(vec(pos.x, pos.y)).catch((error: unknown) => {
-          console.warn(`[FactoryScene] walkTo failed for agent "${next.role}":`, error);
+        const source = { x: actor.pos.x, y: actor.pos.y };
+        const destination = this.layout.agentPosition(next.stationIndex, next.stackOffset, next.level);
+        const waypoints = computeWalkPath(source, destination, this.layout);
+        actor.walkPath(waypoints).catch((error: unknown) => {
+          console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
         });
       }
     }

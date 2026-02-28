@@ -273,7 +273,7 @@ describe('resolveAgentStates', () => {
   });
 
   describe('orchestrator animation state', () => {
-    it('assigns working to orchestrator during in_progress', () => {
+    it('assigns idle to orchestrator during in_progress', () => {
       const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 0 })];
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -285,7 +285,7 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('working');
+      expect(result[0]?.animationState).toBe('idle');
     });
 
     it('assigns celebrating to orchestrator when completed', () => {

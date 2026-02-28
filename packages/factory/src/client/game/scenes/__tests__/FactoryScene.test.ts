@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
 import { createSceneConfig } from '../../mappers/run-to-scene.js';
 
-const { mockSceneAdd, mockSceneClear, mockSetAnimationState, mockWalkTo, mockKill, mockFade, mockCamera } = vi.hoisted(
-  () => {
+const { mockSceneAdd, mockSceneClear, mockSetAnimationState, mockWalkPath, mockKill, mockFade, mockCamera } =
+  vi.hoisted(() => {
     const kill = vi.fn();
     const fade = vi.fn(() => ({
       toPromise: () => Promise.resolve(),
@@ -14,13 +14,12 @@ const { mockSceneAdd, mockSceneClear, mockSetAnimationState, mockWalkTo, mockKil
       mockSceneAdd: vi.fn(),
       mockSceneClear: vi.fn(),
       mockSetAnimationState: vi.fn(),
-      mockWalkTo: vi.fn(() => Promise.resolve()),
+      mockWalkPath: vi.fn(() => Promise.resolve()),
       mockKill: kill,
       mockFade: fade,
       mockCamera: { zoom: 1, pos: { x: 0, y: 0 } },
     };
-  },
-);
+  });
 
 vi.mock('excalibur', () => {
   class MockScene {
@@ -65,8 +64,9 @@ vi.mock('../../../game/actors/AgentActor.js', () => ({
   AgentActor: class AgentActor {
     kind = 'agent';
     agentKey: string;
+    pos: { x: number; y: number };
     setAnimationState = mockSetAnimationState;
-    walkTo = mockWalkTo;
+    walkPath = mockWalkPath;
     kill = mockKill;
     actions = { fade: mockFade };
     constructor(
@@ -75,6 +75,12 @@ vi.mock('../../../game/actors/AgentActor.js', () => ({
       public position: unknown,
     ) {
       this.agentKey = agentKey;
+      if (typeof position === 'object' && position !== null && 'x' in position && 'y' in position) {
+        const { x, y } = position;
+        this.pos = { x: typeof x === 'number' ? x : 0, y: typeof y === 'number' ? y : 0 };
+      } else {
+        this.pos = { x: 0, y: 0 };
+      }
     }
   },
 }));
@@ -148,7 +154,7 @@ describe('FactoryScene', () => {
     mockSceneAdd.mockClear();
     mockSceneClear.mockClear();
     mockSetAnimationState.mockClear();
-    mockWalkTo.mockClear();
+    mockWalkPath.mockClear();
     mockKill.mockClear();
     mockFade.mockClear();
     mockCamera.zoom = 1;
@@ -609,7 +615,7 @@ describe('FactoryScene', () => {
       });
     });
 
-    it('triggers walkTo when an agent changes position', () => {
+    it('triggers walkPath when an agent changes position', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -637,7 +643,7 @@ describe('FactoryScene', () => {
       });
       const scene = new FactoryScene(status);
       scene.onInitialize();
-      mockWalkTo.mockClear();
+      mockWalkPath.mockClear();
 
       // Add a second reviewer, which changes stackOffset of existing reviewer
       const updatedStatus = createMockRunStatus({
@@ -676,7 +682,7 @@ describe('FactoryScene', () => {
       scene.updateStatus(updatedStatus);
 
       // correctness-reviewer moved from stackOffset 0 to stackOffset 1
-      expect(mockWalkTo).toHaveBeenCalled();
+      expect(mockWalkPath).toHaveBeenCalled();
     });
 
     it('applies setAnimationState to agents including those currently walking', () => {
