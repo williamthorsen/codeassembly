@@ -25,13 +25,33 @@ function createProjectIndex(): ProjectIndex {
           {
             ticketId: 'T-1',
             runs: [
-              { runId: 'run-a', path: '/a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
-              { runId: 'run-b', path: '/b', status: 'in_progress', startedAt: '2026-01-02T00:00:00Z' },
+              {
+                runId: 'run-a',
+                path: '/a',
+                status: 'completed',
+                startedAt: '2026-01-01T00:00:00Z',
+                completedAt: undefined,
+              },
+              {
+                runId: 'run-b',
+                path: '/b',
+                status: 'in_progress',
+                startedAt: '2026-01-02T00:00:00Z',
+                completedAt: undefined,
+              },
             ],
           },
           {
             ticketId: 'T-2',
-            runs: [{ runId: 'run-c', path: '/c', status: 'failed', startedAt: '2026-01-03T00:00:00Z' }],
+            runs: [
+              {
+                runId: 'run-c',
+                path: '/c',
+                status: 'failed',
+                startedAt: '2026-01-03T00:00:00Z',
+                completedAt: undefined,
+              },
+            ],
           },
         ],
       },
@@ -40,7 +60,15 @@ function createProjectIndex(): ProjectIndex {
         tickets: [
           {
             ticketId: 'T-3',
-            runs: [{ runId: 'run-d', path: '/d', status: 'completed', startedAt: '2026-01-04T00:00:00Z' }],
+            runs: [
+              {
+                runId: 'run-d',
+                path: '/d',
+                status: 'completed',
+                startedAt: '2026-01-04T00:00:00Z',
+                completedAt: undefined,
+              },
+            ],
           },
         ],
       },

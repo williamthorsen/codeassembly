@@ -70,6 +70,7 @@ describe('ProjectScanner', () => {
     vi.resetAllMocks();
   });
 
+  // eslint-disable-next-line complexity
   it('scans projects with tickets/ subdirectory', async () => {
     const scanner = new ProjectScanner('/test/projects');
 
@@ -98,6 +99,7 @@ describe('ProjectScanner', () => {
     expect(result.projects[0]?.tickets[0]?.ticketId).toBe('TICKET-1');
     expect(result.projects[0]?.tickets[0]?.runs).toHaveLength(1);
     expect(result.projects[0]?.tickets[0]?.runs[0]?.runId).toBe('20260225-run1');
+    expect(result.projects[0]?.tickets[0]?.runs[0]?.completedAt).toBeUndefined();
   });
 
   it('scans projects without tickets/ subdirectory (RAD-1 pattern)', async () => {
@@ -134,6 +136,7 @@ describe('ProjectScanner', () => {
     expect(result.projects).toHaveLength(1);
     expect(result.projects[0]?.slug).toBe('rad-app');
     expect(result.projects[0]?.tickets[0]?.ticketId).toBe('RAD-1');
+    expect(result.projects[0]?.tickets[0]?.runs[0]?.completedAt).toBe('2026-02-22T23:40:57Z');
   });
 
   // Error recovery: graceful degradation — returns an empty index rather than throwing

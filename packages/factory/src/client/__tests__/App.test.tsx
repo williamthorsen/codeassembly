@@ -183,8 +183,22 @@ describe('App', () => {
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
 
     const runs: FlatRunInfo[] = [
-      { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
-      { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-b', status: 'failed', startedAt: '2026-01-02T00:00:00Z' },
+      {
+        projectSlug: 'alpha',
+        ticketId: 'T-1',
+        runId: 'run-a',
+        status: 'completed',
+        startedAt: '2026-01-01T00:00:00Z',
+        completedAt: undefined,
+      },
+      {
+        projectSlug: 'alpha',
+        ticketId: 'T-1',
+        runId: 'run-b',
+        status: 'failed',
+        startedAt: '2026-01-02T00:00:00Z',
+        completedAt: undefined,
+      },
     ];
     mockFlattenProjectIndex.mockReturnValue(runs);
     mockDismissedRecord = { 'alpha/T-1/run-a': { status: 'completed' } };
@@ -206,8 +220,22 @@ describe('App', () => {
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
 
     const runs: FlatRunInfo[] = [
-      { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
-      { projectSlug: 'beta', ticketId: 'T-2', runId: 'run-b', status: 'completed', startedAt: '2026-01-02T00:00:00Z' },
+      {
+        projectSlug: 'alpha',
+        ticketId: 'T-1',
+        runId: 'run-a',
+        status: 'completed',
+        startedAt: '2026-01-01T00:00:00Z',
+        completedAt: undefined,
+      },
+      {
+        projectSlug: 'beta',
+        ticketId: 'T-2',
+        runId: 'run-b',
+        status: 'completed',
+        startedAt: '2026-01-02T00:00:00Z',
+        completedAt: undefined,
+      },
     ];
     mockFlattenProjectIndex.mockReturnValue(runs);
 
@@ -281,7 +309,15 @@ describe('App', () => {
           tickets: [
             {
               ticketId: 'T-1',
-              runs: [{ runId: 'run-a', path: '/a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' }],
+              runs: [
+                {
+                  runId: 'run-a',
+                  path: '/a',
+                  status: 'completed',
+                  startedAt: '2026-01-01T00:00:00Z',
+                  completedAt: undefined,
+                },
+              ],
             },
           ],
         },
@@ -337,8 +373,22 @@ describe('App', () => {
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
 
     const runs: FlatRunInfo[] = [
-      { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
-      { projectSlug: 'beta', ticketId: 'T-2', runId: 'run-b', status: 'failed', startedAt: '2026-01-02T00:00:00Z' },
+      {
+        projectSlug: 'alpha',
+        ticketId: 'T-1',
+        runId: 'run-a',
+        status: 'completed',
+        startedAt: '2026-01-01T00:00:00Z',
+        completedAt: undefined,
+      },
+      {
+        projectSlug: 'beta',
+        ticketId: 'T-2',
+        runId: 'run-b',
+        status: 'failed',
+        startedAt: '2026-01-02T00:00:00Z',
+        completedAt: undefined,
+      },
     ];
     mockFlattenProjectIndex.mockReturnValue(runs);
 

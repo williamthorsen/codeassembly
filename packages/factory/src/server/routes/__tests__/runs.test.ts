@@ -38,6 +38,7 @@ function indexWithRun(): ProjectIndex {
                 path: RUN_PATH,
                 status: 'completed',
                 startedAt: '2026-01-01T00:00:00Z',
+                completedAt: undefined,
               },
             ],
           },

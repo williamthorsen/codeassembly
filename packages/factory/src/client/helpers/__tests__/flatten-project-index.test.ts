@@ -12,13 +12,33 @@ function createProjectIndex(): ProjectIndex {
           {
             ticketId: 'T-1',
             runs: [
-              { runId: 'run-a', path: '/a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
-              { runId: 'run-b', path: '/b', status: 'in_progress', startedAt: '2026-01-02T00:00:00Z' },
+              {
+                runId: 'run-a',
+                path: '/a',
+                status: 'completed',
+                startedAt: '2026-01-01T00:00:00Z',
+                completedAt: undefined,
+              },
+              {
+                runId: 'run-b',
+                path: '/b',
+                status: 'in_progress',
+                startedAt: '2026-01-02T00:00:00Z',
+                completedAt: undefined,
+              },
             ],
           },
           {
             ticketId: 'T-2',
-            runs: [{ runId: 'run-c', path: '/c', status: 'failed', startedAt: '2026-01-03T00:00:00Z' }],
+            runs: [
+              {
+                runId: 'run-c',
+                path: '/c',
+                status: 'failed',
+                startedAt: '2026-01-03T00:00:00Z',
+                completedAt: undefined,
+              },
+            ],
           },
         ],
       },
@@ -27,7 +47,15 @@ function createProjectIndex(): ProjectIndex {
         tickets: [
           {
             ticketId: 'T-3',
-            runs: [{ runId: 'run-d', path: '/d', status: 'completed', startedAt: '2026-01-04T00:00:00Z' }],
+            runs: [
+              {
+                runId: 'run-d',
+                path: '/d',
+                status: 'completed',
+                startedAt: '2026-01-04T00:00:00Z',
+                completedAt: undefined,
+              },
+            ],
           },
         ],
       },
@@ -52,11 +80,27 @@ describe('flattenProjectIndex', () => {
           tickets: [
             {
               ticketId: 'T-1',
-              runs: [{ runId: 'run-a', path: '/a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' }],
+              runs: [
+                {
+                  runId: 'run-a',
+                  path: '/a',
+                  status: 'completed',
+                  startedAt: '2026-01-01T00:00:00Z',
+                  completedAt: undefined,
+                },
+              ],
             },
             {
               ticketId: 'T-2',
-              runs: [{ runId: 'run-b', path: '/b', status: 'failed', startedAt: '2026-01-02T00:00:00Z' }],
+              runs: [
+                {
+                  runId: 'run-b',
+                  path: '/b',
+                  status: 'failed',
+                  startedAt: '2026-01-02T00:00:00Z',
+                  completedAt: undefined,
+                },
+              ],
             },
           ],
         },
@@ -72,6 +116,7 @@ describe('flattenProjectIndex', () => {
       runId: 'run-b',
       status: 'failed',
       startedAt: '2026-01-02T00:00:00Z',
+      completedAt: undefined,
     });
     expect(result[1]).toEqual({
       projectSlug: 'alpha',
@@ -79,6 +124,7 @@ describe('flattenProjectIndex', () => {
       runId: 'run-a',
       status: 'completed',
       startedAt: '2026-01-01T00:00:00Z',
+      completedAt: undefined,
     });
   });
 
@@ -99,6 +145,7 @@ describe('flattenProjectIndex', () => {
       runId: 'run-d',
       status: 'completed',
       startedAt: '2026-01-04T00:00:00Z',
+      completedAt: undefined,
     });
 
     const runC = result.find((r) => r.runId === 'run-c');
@@ -108,6 +155,7 @@ describe('flattenProjectIndex', () => {
       runId: 'run-c',
       status: 'failed',
       startedAt: '2026-01-03T00:00:00Z',
+      completedAt: undefined,
     });
   });
 
@@ -125,5 +173,41 @@ describe('flattenProjectIndex', () => {
     };
 
     expect(flattenProjectIndex(index)).toEqual([]);
+  });
+
+  it('preserves a non-undefined completedAt value', () => {
+    const index: ProjectIndex = {
+      projects: [
+        {
+          slug: 'gamma',
+          tickets: [
+            {
+              ticketId: 'T-5',
+              runs: [
+                {
+                  runId: 'run-e',
+                  path: '/e',
+                  status: 'completed',
+                  startedAt: '2026-01-04T12:00:00Z',
+                  completedAt: '2026-01-04T13:45:00Z',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = flattenProjectIndex(index);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      projectSlug: 'gamma',
+      ticketId: 'T-5',
+      runId: 'run-e',
+      status: 'completed',
+      startedAt: '2026-01-04T12:00:00Z',
+      completedAt: '2026-01-04T13:45:00Z',
+    });
   });
 });

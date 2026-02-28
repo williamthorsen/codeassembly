@@ -3,9 +3,17 @@ import React from 'react';
 import { PALETTE } from '../../shared/constants/palette.js';
 import type { FlatRunInfo } from '../../shared/types/api.js';
 import type { RunStatus } from '../../shared/types/canonical.js';
+import { formatRunId } from '../helpers/format-run-id.js';
+import { formatRunTimestamp } from '../helpers/format-run-timestamp.js';
 import { toRunKey } from '../helpers/run-key.js';
 
 import './RunList.css';
+
+function buildRunTooltip(run: FlatRunInfo): string {
+  const lines = [`Started: ${formatRunTimestamp(run.startedAt)}`];
+  if (run.completedAt) lines.push(`Ended: ${formatRunTimestamp(run.completedAt)}`);
+  return lines.join('\n');
+}
 
 interface RunListProps {
   runs: FlatRunInfo[];
@@ -72,11 +80,11 @@ export function RunList({
                 <span className="run-list-item-status" style={{ color: indicator.color }}>
                   {indicator.symbol}
                 </span>
-                <div className="run-list-item-content">
-                  <div className="run-list-item-run-id">{run.runId}</div>
-                  <div className="run-list-item-context">
+                <div className="run-list-item-content" title={buildRunTooltip(run)}>
+                  <div className="run-list-item-primary">
                     {run.projectSlug} / {run.ticketId}
                   </div>
+                  <div className="run-list-item-secondary">{formatRunTimestamp(run.startedAt)}</div>
                 </div>
                 <button
                   className="run-list-item-dismiss"
@@ -84,7 +92,7 @@ export function RunList({
                     e.stopPropagation();
                     onDismissRun(key, run.status);
                   }}
-                  aria-label={`Dismiss ${run.runId}`}
+                  aria-label={`Dismiss ${formatRunId(run.runId)}`}
                 >
                   {'\u00D7'}
                 </button>

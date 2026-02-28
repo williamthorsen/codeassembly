@@ -15,6 +15,7 @@ export function flattenProjectIndex(index: ProjectIndex | null): FlatRunInfo[] {
           runId: run.runId,
           status: run.status,
           startedAt: run.startedAt,
+          completedAt: run.completedAt,
         });
       }
     }

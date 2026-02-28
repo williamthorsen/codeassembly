@@ -75,7 +75,7 @@
   min-width: 0;
 }
 
-.run-list-item-run-id {
+.run-list-item-primary {
   color: #ffffff;
   font-family: 'Courier New', monospace;
   font-size: 13px;
@@ -84,10 +84,10 @@
   text-overflow: ellipsis;
 }
 
-.run-list-item-context {
-  color: #555555;
+.run-list-item-secondary {
+  color: #aaaaaa;
   font-family: 'Courier New', monospace;
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
