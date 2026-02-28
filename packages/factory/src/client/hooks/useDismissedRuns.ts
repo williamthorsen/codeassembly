@@ -15,9 +15,7 @@ export function useDismissedRuns(): UseDismissedRunsResult {
 
   useEffect(() => {
     fetchSettings()
-      .then((settings) => {
-        setDismissed(settings.dismissedRuns);
-      })
+      .then((settings) => setDismissed(settings.dismissedRuns))
       .catch(() => {
         // Graceful degradation: leave dismissed as empty on fetch failure
       });

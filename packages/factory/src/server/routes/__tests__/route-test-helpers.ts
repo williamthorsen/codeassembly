@@ -35,7 +35,10 @@ export function createMockScanner(index: ProjectIndex | null): ProjectIndexProvi
 
 // --- Handler extraction ---
 
-export type RouteHandler = (req: { params: Record<string, string> }, res: MockResponse) => void | Promise<void>;
+export type RouteHandler = (
+  req: { params: Record<string, string>; body?: unknown },
+  res: MockResponse,
+) => void | Promise<void>;
 
 function prop(obj: unknown, key: string): unknown {
   if (obj === null || obj === undefined) return undefined;
@@ -74,7 +77,7 @@ function extractLayerWithHandle(route: unknown): HasHandle | undefined {
  */
 async function invokeLayerHandle(
   layer: HasHandle,
-  req: { params: Record<string, string> },
+  req: { params: Record<string, string>; body?: unknown },
   res: MockResponse,
 ): Promise<void> {
   const result: unknown = layer.handle(req, res);

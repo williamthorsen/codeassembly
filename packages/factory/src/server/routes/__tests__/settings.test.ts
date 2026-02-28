@@ -7,10 +7,12 @@ import { createMockResponse, getHandler, type MockResponse } from './route-test-
 function createMockStore(settings: UserSettings): SettingsProvider {
   return {
     load: vi.fn<() => Promise<UserSettings>>().mockResolvedValue(settings),
-    patch: vi.fn<(p: Partial<UserSettings>) => Promise<UserSettings>>().mockImplementation(async (partial) => ({
-      ...settings,
-      ...partial,
-    })),
+    patch: vi.fn<(p: Partial<UserSettings>) => Promise<UserSettings>>().mockImplementation((partial) =>
+      Promise.resolve({
+        ...settings,
+        ...partial,
+      }),
+    ),
   };
 }
 
@@ -67,7 +69,7 @@ describe('createSettingsRouter', () => {
       const handler = getHandler(router, 'patch', '/');
 
       const body = { dismissedRuns: { 'd/e/f': { status: 'failed' } } };
-      await handler({ params: {}, body } as never, res);
+      await handler({ params: {}, body }, res);
 
       expect(store.patch).toHaveBeenCalledWith(body);
       expect(res.statusCode).toBe(200);
@@ -79,7 +81,7 @@ describe('createSettingsRouter', () => {
       const handler = getHandler(router, 'patch', '/');
 
       const body = { dismissedRuns: 'not-an-object' };
-      await handler({ params: {}, body } as never, res);
+      await handler({ params: {}, body }, res);
 
       expect(res.statusCode).toBe(400);
       expect(res.body).toHaveProperty('error', 'Invalid settings');
@@ -92,7 +94,7 @@ describe('createSettingsRouter', () => {
       const handler = getHandler(router, 'patch', '/');
 
       const body = { dismissedRuns: { 'x/y/z': { status: 'in_progress' } } };
-      await handler({ params: {}, body } as never, res);
+      await handler({ params: {}, body }, res);
 
       expect(res.statusCode).toBe(500);
       expect(res.body).toEqual({ error: 'Failed to update settings' });
@@ -103,7 +105,7 @@ describe('createSettingsRouter', () => {
       const router = createSettingsRouter(store);
       const handler = getHandler(router, 'patch', '/');
 
-      await handler({ params: {}, body: {} } as never, res);
+      await handler({ params: {}, body: {} }, res);
 
       expect(res.statusCode).toBe(200);
       expect(store.patch).toHaveBeenCalledWith({});
