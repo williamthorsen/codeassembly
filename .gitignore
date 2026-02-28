@@ -29,6 +29,7 @@ dist-ssr/
 out/
 
 # Framework
+.agents/*.branch-manifest.json
 .agents/*.manifest.json
 .astro/
 .aws-sam/
