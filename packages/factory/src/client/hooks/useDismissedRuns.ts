@@ -1,31 +1,56 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import type { DismissedRunEntry } from '../../shared/types/settings.js';
+import { fetchSettings, patchSettings } from '../api/client.js';
 
 interface UseDismissedRunsResult {
-  dismissed: ReadonlySet<string>;
-  dismiss: (key: string) => void;
-  dismissAll: (keys: string[]) => void;
+  dismissed: Readonly<Record<string, DismissedRunEntry>>;
+  dismiss: (key: string, status: string) => void;
+  dismissAll: (entries: { key: string; status: string }[]) => void;
 }
 
-/** Manages session-scoped dismissed run state. Keys use the format "projectSlug/ticketId/runId". */
+/** Manages server-persisted dismissed run state with optimistic updates. */
 export function useDismissedRuns(): UseDismissedRunsResult {
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [dismissed, setDismissed] = useState<Record<string, DismissedRunEntry>>({});
+  const dismissedRef = useRef(dismissed);
+  dismissedRef.current = dismissed;
 
-  const dismiss = useCallback((key: string): void => {
-    setDismissed((prev) => {
-      if (prev.has(key)) return prev;
-      const next = new Set(prev);
-      next.add(key);
-      return next;
+  useEffect(() => {
+    fetchSettings()
+      .then((settings) => setDismissed(settings.dismissedRuns))
+      .catch((error: unknown) => {
+        console.warn('Failed to load settings, continuing with empty state:', error);
+      });
+  }, []);
+
+  const dismiss = useCallback((key: string, status: string): void => {
+    const prev = dismissedRef.current;
+    if (prev[key]?.status === status) return;
+
+    const next = { ...prev, [key]: { status } };
+    setDismissed(next);
+    patchSettings({ dismissedRuns: next }).catch((error: unknown) => {
+      console.warn('Failed to persist dismissal:', error);
     });
   }, []);
 
-  const dismissAll = useCallback((keys: string[]): void => {
-    setDismissed((prev) => {
-      const next = new Set(prev);
-      for (const key of keys) {
-        next.add(key);
+  const dismissAll = useCallback((entries: { key: string; status: string }[]): void => {
+    if (entries.length === 0) return;
+
+    const prev = dismissedRef.current;
+    let changed = false;
+    const next = { ...prev };
+    for (const { key, status } of entries) {
+      if (next[key]?.status !== status) {
+        next[key] = { status };
+        changed = true;
       }
-      return next.size === prev.size ? prev : next;
+    }
+    if (!changed) return;
+
+    setDismissed(next);
+    patchSettings({ dismissedRuns: next }).catch((error: unknown) => {
+      console.warn('Failed to persist dismissals:', error);
     });
   }, []);
 

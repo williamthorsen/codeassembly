@@ -4,8 +4,10 @@ import express from 'express';
 
 import { createProjectsRouter } from './routes/projects.js';
 import { createRunsRouter } from './routes/runs.js';
+import { createSettingsRouter } from './routes/settings.js';
 import { ProjectScanner } from './services/project-scanner.js';
 import { ProjectWatcher } from './services/project-watcher.js';
+import { SettingsStore } from './services/settings-store.js';
 
 const app = express();
 const port = 5181;
@@ -17,10 +19,12 @@ app.use(express.json());
 // Initialize scanner and watcher
 const scanner = new ProjectScanner();
 const watcher = new ProjectWatcher(scanner);
+const settingsStore = new SettingsStore();
 
 // Routes
 app.use('/api/projects', createProjectsRouter(scanner));
 app.use('/api/runs', createRunsRouter(scanner));
+app.use('/api/settings', createSettingsRouter(settingsStore));
 
 // Error handling with proper types
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {

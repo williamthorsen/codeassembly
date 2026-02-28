@@ -67,7 +67,7 @@ const { App } = await import('../App.js');
 describe('App', () => {
   const mockDismiss = vi.fn();
   const mockDismissAll = vi.fn();
-  let mockDismissedSet: Set<string>;
+  let mockDismissedRecord: Record<string, { status: string }>;
 
   afterEach(() => {
     cleanup();
@@ -75,11 +75,11 @@ describe('App', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockDismissedSet = new Set();
+    mockDismissedRecord = {};
     mockFetchProjects.mockResolvedValue({ projects: [] });
     mockFlattenProjectIndex.mockReturnValue([]);
     mockUseDismissedRuns.mockReturnValue({
-      dismissed: mockDismissedSet,
+      dismissed: mockDismissedRecord,
       dismiss: mockDismiss,
       dismissAll: mockDismissAll,
     });
@@ -187,9 +187,9 @@ describe('App', () => {
       { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-b', status: 'failed', startedAt: '2026-01-02T00:00:00Z' },
     ];
     mockFlattenProjectIndex.mockReturnValue(runs);
-    mockDismissedSet = new Set(['alpha/T-1/run-a']);
+    mockDismissedRecord = { 'alpha/T-1/run-a': { status: 'completed' } };
     mockUseDismissedRuns.mockReturnValue({
-      dismissed: mockDismissedSet,
+      dismissed: mockDismissedRecord,
       dismiss: mockDismiss,
       dismissAll: mockDismissAll,
     });
@@ -199,6 +199,35 @@ describe('App', () => {
     await waitFor(() => {
       const lastCall = mockRunList.mock.lastCall;
       expect(lastCall?.[0]).toEqual(expect.objectContaining({ runs: [runs[1]] }));
+    });
+  });
+
+  it('shows a dismissed run when its status has changed since dismissal', async () => {
+    mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+    const runs: FlatRunInfo[] = [
+      { projectSlug: 'alpha', ticketId: 'T-1', runId: 'run-a', status: 'completed', startedAt: '2026-01-01T00:00:00Z' },
+      { projectSlug: 'beta', ticketId: 'T-2', runId: 'run-b', status: 'completed', startedAt: '2026-01-02T00:00:00Z' },
+    ];
+    mockFlattenProjectIndex.mockReturnValue(runs);
+
+    // run-a was dismissed when it had 'failed' status, but now shows 'completed' — should reappear
+    // run-b was dismissed with 'completed' status and still has 'completed' — stays hidden
+    mockDismissedRecord = {
+      'alpha/T-1/run-a': { status: 'failed' },
+      'beta/T-2/run-b': { status: 'completed' },
+    };
+    mockUseDismissedRuns.mockReturnValue({
+      dismissed: mockDismissedRecord,
+      dismiss: mockDismiss,
+      dismissAll: mockDismissAll,
+    });
+
+    render(<App />);
+
+    await waitFor(() => {
+      const lastCall = mockRunList.mock.lastCall;
+      expect(lastCall?.[0]).toEqual(expect.objectContaining({ runs: [runs[0]] }));
     });
   });
 
@@ -290,8 +319,8 @@ describe('App', () => {
 
   it('dismiss callback wired to RunList onDismissRun', () => {
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
-    mockRunList.mockImplementation(({ onDismissRun }: { onDismissRun: (key: string) => void }) => (
-      <button data-testid="dismiss-btn" onClick={() => onDismissRun('alpha/T-1/run-a')}>
+    mockRunList.mockImplementation(({ onDismissRun }: { onDismissRun: (key: string, status: string) => void }) => (
+      <button data-testid="dismiss-btn" onClick={() => onDismissRun('alpha/T-1/run-a', 'completed')}>
         Dismiss
       </button>
     ));
@@ -301,7 +330,7 @@ describe('App', () => {
 
     fireEvent.click(view.getByTestId('dismiss-btn'));
 
-    expect(mockDismiss).toHaveBeenCalledWith('alpha/T-1/run-a');
+    expect(mockDismiss).toHaveBeenCalledWith('alpha/T-1/run-a', 'completed');
   });
 
   it('handleDismissAll calls dismissAll with all visible run keys', () => {
@@ -324,7 +353,10 @@ describe('App', () => {
 
     fireEvent.click(view.getByTestId('dismiss-all-btn'));
 
-    expect(mockDismissAll).toHaveBeenCalledWith(['alpha/T-1/run-a', 'beta/T-2/run-b']);
+    expect(mockDismissAll).toHaveBeenCalledWith([
+      { key: 'alpha/T-1/run-a', status: 'completed' },
+      { key: 'beta/T-2/run-b', status: 'failed' },
+    ]);
   });
 
   it('handleDismissAll with empty visibleRuns calls dismissAll with empty array', () => {

@@ -58,7 +58,13 @@ export function App(): React.JSX.Element {
   const allRuns = useMemo(() => flattenProjectIndex(index), [index]);
 
   const visibleRuns = useMemo(
-    () => allRuns.filter((run) => !dismissed.has(toRunKey(run.projectSlug, run.ticketId, run.runId))),
+    () =>
+      allRuns.filter((run) => {
+        const key = toRunKey(run.projectSlug, run.ticketId, run.runId);
+        const entry = dismissed[key];
+        // Show run if: not dismissed, or status has changed since dismissal
+        return !entry || entry.status !== run.status;
+      }),
     [allRuns, dismissed],
   );
 
@@ -79,7 +85,12 @@ export function App(): React.JSX.Element {
   }
 
   function handleDismissAll(): void {
-    dismissAll(visibleRuns.map((r) => toRunKey(r.projectSlug, r.ticketId, r.runId)));
+    dismissAll(
+      visibleRuns.map((r) => ({
+        key: toRunKey(r.projectSlug, r.ticketId, r.runId),
+        status: r.status,
+      })),
+    );
   }
 
   return (

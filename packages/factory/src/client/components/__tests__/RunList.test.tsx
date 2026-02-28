@@ -118,7 +118,7 @@ describe('RunList', () => {
 
     fireEvent.click(view.getByLabelText('Dismiss run-c'));
 
-    expect(onDismissRun).toHaveBeenCalledWith('beta/T-3/run-c');
+    expect(onDismissRun).toHaveBeenCalledWith('beta/T-3/run-c', 'failed');
     expect(onSelectRun).not.toHaveBeenCalled();
   });
 

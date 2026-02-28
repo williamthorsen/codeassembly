@@ -1,69 +1,176 @@
-import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { UserSettings } from '../../../shared/types/settings.js';
 import { useDismissedRuns } from '../useDismissedRuns.js';
 
+vi.mock('../../api/client.js', () => ({
+  fetchSettings: vi.fn(),
+  patchSettings: vi.fn(),
+}));
+
+const { fetchSettings, patchSettings } = await import('../../api/client.js');
+const mockedFetchSettings = vi.mocked(fetchSettings);
+const mockedPatchSettings = vi.mocked(patchSettings);
+
 describe('useDismissedRuns', () => {
-  it('starts with no dismissed runs', () => {
+  beforeEach(() => {
+    mockedFetchSettings.mockReset();
+    mockedPatchSettings.mockReset();
+  });
+  it('initializes with empty dismissed record before server responds', () => {
+    mockedFetchSettings.mockReturnValue(new Promise(() => {})); // never resolves
     const { result } = renderHook(() => useDismissedRuns());
 
-    expect(result.current.dismissed.has('alpha/T-1/run-a')).toBe(false);
+    expect(result.current.dismissed).toEqual({});
   });
 
-  it('dismisses a single run', () => {
+  it('hydrates dismissed from fetchSettings on mount', async () => {
+    const settings: UserSettings = {
+      dismissedRuns: { 'alpha/T-1/run-a': { status: 'completed' } },
+    };
+    mockedFetchSettings.mockResolvedValue(settings);
+
     const { result } = renderHook(() => useDismissedRuns());
 
-    act(() => {
-      result.current.dismiss('alpha/T-1/run-a');
+    await waitFor(() => {
+      expect(result.current.dismissed).toEqual(settings.dismissedRuns);
     });
-
-    expect(result.current.dismissed.has('alpha/T-1/run-a')).toBe(true);
-    expect(result.current.dismissed.has('alpha/T-1/run-b')).toBe(false);
   });
 
-  it('dismisses multiple runs via dismissAll', () => {
+  it('leaves dismissed as empty on fetchSettings failure', async () => {
+    mockedFetchSettings.mockRejectedValue(new Error('Network error'));
+
     const { result } = renderHook(() => useDismissedRuns());
 
-    act(() => {
-      result.current.dismissAll(['alpha/T-1/run-a', 'beta/T-3/run-d']);
+    // Wait for the rejection to be handled
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
     });
 
-    expect(result.current.dismissed.has('alpha/T-1/run-a')).toBe(true);
-    expect(result.current.dismissed.has('beta/T-3/run-d')).toBe(true);
-    expect(result.current.dismissed.has('alpha/T-2/run-c')).toBe(false);
+    expect(result.current.dismissed).toEqual({});
   });
 
-  it('exposes dismissed set for direct access', () => {
+  it('dismiss performs optimistic update and calls patchSettings', async () => {
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+    mockedPatchSettings.mockResolvedValue({ dismissedRuns: { 'alpha/T-1/run-a': { status: 'completed' } } });
+
     const { result } = renderHook(() => useDismissedRuns());
 
-    act(() => {
-      result.current.dismiss('alpha/T-1/run-a');
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
     });
 
-    expect(result.current.dismissed.has('alpha/T-1/run-a')).toBe(true);
-    expect(result.current.dismissed.has('alpha/T-1/run-b')).toBe(false);
+    act(() => {
+      result.current.dismiss('alpha/T-1/run-a', 'completed');
+    });
+
+    expect(result.current.dismissed['alpha/T-1/run-a']).toEqual({ status: 'completed' });
+    expect(mockedPatchSettings).toHaveBeenCalledWith({
+      dismissedRuns: { 'alpha/T-1/run-a': { status: 'completed' } },
+    });
   });
 
-  it('dismissed set reference is stable when dismissing the same key twice', () => {
+  it('dismissAll handles batch case and calls patchSettings with full record', async () => {
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+    mockedPatchSettings.mockResolvedValue({
+      dismissedRuns: {
+        'alpha/T-1/run-a': { status: 'completed' },
+        'beta/T-2/run-b': { status: 'failed' },
+      },
+    });
+
     const { result } = renderHook(() => useDismissedRuns());
 
-    act(() => {
-      result.current.dismiss('alpha/T-1/run-a');
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
     });
 
-    const setAfterFirst = result.current.dismissed;
-
     act(() => {
-      result.current.dismiss('alpha/T-1/run-a');
+      result.current.dismissAll([
+        { key: 'alpha/T-1/run-a', status: 'completed' },
+        { key: 'beta/T-2/run-b', status: 'failed' },
+      ]);
     });
 
-    // dismissed set reference should be stable when the set does not change
-    expect(result.current.dismissed).toBe(setAfterFirst);
-    expect(result.current.dismissed.has('alpha/T-1/run-a')).toBe(true);
+    expect(result.current.dismissed['alpha/T-1/run-a']).toEqual({ status: 'completed' });
+    expect(result.current.dismissed['beta/T-2/run-b']).toEqual({ status: 'failed' });
+    expect(mockedPatchSettings).toHaveBeenCalledWith({
+      dismissedRuns: {
+        'alpha/T-1/run-a': { status: 'completed' },
+        'beta/T-2/run-b': { status: 'failed' },
+      },
+    });
   });
 
-  it('dismiss callback is stable across re-renders', () => {
+  it('dismissAll with empty entries does not call patchSettings', async () => {
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismissAll([]);
+    });
+
+    expect(mockedPatchSettings).not.toHaveBeenCalled();
+  });
+
+  it('dismiss skips patchSettings when key already has the same status', async () => {
+    mockedFetchSettings.mockResolvedValue({
+      dismissedRuns: { 'alpha/T-1/run-a': { status: 'completed' } },
+    });
+    mockedPatchSettings.mockResolvedValue({ dismissedRuns: {} });
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismiss('alpha/T-1/run-a', 'completed');
+    });
+
+    expect(mockedPatchSettings).not.toHaveBeenCalled();
+  });
+
+  it('dismissAll skips patchSettings when all entries already match', async () => {
+    mockedFetchSettings.mockResolvedValue({
+      dismissedRuns: {
+        'alpha/T-1/run-a': { status: 'completed' },
+        'beta/T-2/run-b': { status: 'failed' },
+      },
+    });
+    mockedPatchSettings.mockResolvedValue({ dismissedRuns: {} });
+
+    const { result } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.dismissAll([
+        { key: 'alpha/T-1/run-a', status: 'completed' },
+        { key: 'beta/T-2/run-b', status: 'failed' },
+      ]);
+    });
+
+    expect(mockedPatchSettings).not.toHaveBeenCalled();
+  });
+
+  it('dismiss callback is stable across re-renders', async () => {
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+
     const { result, rerender } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
 
     const firstDismiss = result.current.dismiss;
     rerender();
@@ -71,8 +178,14 @@ describe('useDismissedRuns', () => {
     expect(result.current.dismiss).toBe(firstDismiss);
   });
 
-  it('dismissAll callback is stable across re-renders', () => {
+  it('dismissAll callback is stable across re-renders', async () => {
+    mockedFetchSettings.mockResolvedValue({ dismissedRuns: {} });
+
     const { result, rerender } = renderHook(() => useDismissedRuns());
+
+    await waitFor(() => {
+      expect(mockedFetchSettings).toHaveBeenCalledTimes(1);
+    });
 
     const firstDismissAll = result.current.dismissAll;
     rerender();

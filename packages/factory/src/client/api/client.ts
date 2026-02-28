@@ -4,6 +4,7 @@ import type {
   CanonicalRunStatus,
   ProjectIndex,
 } from '../../shared/types/api.js';
+import type { UserSettings } from '../../shared/types/settings.js';
 
 const API_BASE = '/api';
 
@@ -38,4 +39,21 @@ export async function fetchArtifactContent(projectSlug: string, runId: string, f
     'Failed to fetch artifact',
   );
   return data.content;
+}
+
+export function fetchSettings(): Promise<UserSettings> {
+  return fetchJson<UserSettings>(`${API_BASE}/settings`, 'Failed to fetch settings');
+}
+
+export async function patchSettings(partial: Partial<UserSettings>): Promise<UserSettings> {
+  const response = await fetch(`${API_BASE}/settings`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(partial),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to update settings: ${response.statusText}`);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- response.json() returns Promise<any> from DOM lib
+  return response.json();
 }
