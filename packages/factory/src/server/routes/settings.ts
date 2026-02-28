@@ -1,10 +1,16 @@
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 
+import type { UserSettings } from '../../shared/types/settings.js';
 import { userSettingsSchema } from '../adapters/schemas/settings-schema.js';
-import type { SettingsStore } from '../services/settings-store.js';
 
-export function createSettingsRouter(store: SettingsStore): Router {
+/** Public interface consumed by the settings route. */
+export interface SettingsProvider {
+  load(): Promise<UserSettings>;
+  patch(partial: Partial<UserSettings>): Promise<UserSettings>;
+}
+
+export function createSettingsRouter(store: SettingsProvider): Router {
   const router = Router();
 
   router.get('/', async (_req: Request, res: Response) => {
@@ -24,8 +30,14 @@ export function createSettingsRouter(store: SettingsStore): Router {
       return;
     }
 
+    // Build a typed partial from the validated data, only including defined keys.
+    const partial: Partial<UserSettings> = {};
+    if (result.data.dismissedRuns !== undefined) {
+      partial.dismissedRuns = result.data.dismissedRuns;
+    }
+
     try {
-      const merged = await store.patch(result.data);
+      const merged = await store.patch(partial);
       res.json(merged);
     } catch (error) {
       console.error('Failed to update settings:', error);

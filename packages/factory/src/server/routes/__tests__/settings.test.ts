@@ -1,20 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '../../../shared/types/settings.js';
-import type { SettingsStore } from '../../services/settings-store.js';
-import { createSettingsRouter } from '../settings.js';
+import { createSettingsRouter, type SettingsProvider } from '../settings.js';
 import { createMockResponse, getHandler, type MockResponse } from './route-test-helpers.ts';
 
-function createMockStore(settings: UserSettings): SettingsStore {
+function createMockStore(settings: UserSettings): SettingsProvider {
   return {
     load: vi.fn<() => Promise<UserSettings>>().mockResolvedValue(settings),
-    save: vi.fn<(s: UserSettings) => Promise<void>>().mockResolvedValue(undefined),
     patch: vi.fn<(p: Partial<UserSettings>) => Promise<UserSettings>>().mockImplementation(async (partial) => ({
       ...settings,
       ...partial,
     })),
-    getFilePath: vi.fn<() => string>().mockReturnValue('/mock/settings.json'),
-  } satisfies Record<keyof SettingsStore, unknown>;
+  };
 }
 
 describe('createSettingsRouter', () => {
