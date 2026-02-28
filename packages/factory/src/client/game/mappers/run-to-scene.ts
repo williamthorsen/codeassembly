@@ -64,18 +64,17 @@ function buildGates(stations: StationConfig[]): GateConfig[] {
  * Returns undefined if no phases are active, which causes no orchestrator agent
  * to be created by buildOrchestratorAgent.
  *
- * When `currentPhase` is provided, it is used as a fallback position if no
- * completed phase is found via `isPhaseActive` (i.e., when all `phases` are empty).
+ * The `currentPhase` is passed through to `isPhaseActive` so that the inferred
+ * current phase is considered active during the right-to-left scan. This ensures
+ * the orchestrator positions at the frontier of activity, not at the rightmost
+ * completed phase.
  */
 function findOrchestratorStation(phases: Phases, runStatus: string, currentPhase?: PhaseName): number | undefined {
   for (let i = PHASE_NAMES.length - 1; i >= 0; i--) {
     const phase = PHASE_NAMES[i];
-    if (phase !== undefined && isPhaseActive(phase, phases, runStatus)) {
+    if (phase !== undefined && isPhaseActive(phase, phases, runStatus, currentPhase)) {
       return i;
     }
-  }
-  if (currentPhase !== undefined) {
-    return PHASE_NAMES.indexOf(currentPhase);
   }
   return undefined;
 }

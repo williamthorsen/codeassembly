@@ -32,14 +32,18 @@ export function findPhaseDecision(
 }
 
 /**
- * Returns `true` when the phase has already produced data in `phases`.
+ * Returns `true` when the orchestrator has written any data for the phase,
+ * regardless of the phase's outcome. Used by `findCurrentPhase` to determine
+ * whether to advance past this phase during inference.
  *
- * This is the single source of truth for phase-to-field mappings, used by
- * both `isPhaseActive()` and `shouldShowPhaseAgent()` in `run-to-scene.ts`.
+ * For the simplifier, `codeSimplifier: { ran: false }` counts as evaluated
+ * because the orchestrator made a decision — the phase should not be
+ * re-inferred as "current."
+ *
  * `summary` always returns `false` because it has no phase-level data; only
  * `runStatus === 'completed'` signals it.
  */
-export function isPhasePresentInData(phase: PhaseName, phases: Phases): boolean {
+export function isPhaseEvaluated(phase: PhaseName, phases: Phases): boolean {
   switch (phase) {
     case 'architecture':
       return phases.architecture !== undefined;
@@ -50,7 +54,7 @@ export function isPhasePresentInData(phase: PhaseName, phases: Phases): boolean 
     case 'review':
       return (phases.parallelReview ?? phases.review) !== undefined;
     case 'simplifier':
-      return phases.codeSimplifier?.ran === true;
+      return phases.codeSimplifier !== undefined;
     case 'holistic':
       return phases.holisticReview !== undefined;
     case 'summary':
@@ -58,6 +62,24 @@ export function isPhasePresentInData(phase: PhaseName, phases: Phases): boolean 
     default:
       return false;
   }
+}
+
+/**
+ * Returns `true` when the phase has produced meaningful data for display.
+ *
+ * Used by `isPhaseActive()` and `shouldShowPhaseAgent()` in `run-to-scene.ts`
+ * to control station activation and agent visibility. For the simplifier,
+ * only `ran === true` counts — `ran: false` means the orchestrator decided
+ * not to run the simplifier, so no agent or active station should be shown.
+ *
+ * `summary` always returns `false` because it has no phase-level data; only
+ * `runStatus === 'completed'` signals it.
+ */
+export function isPhasePresentInData(phase: PhaseName, phases: Phases): boolean {
+  if (phase === 'simplifier') {
+    return phases.codeSimplifier?.ran === true;
+  }
+  return isPhaseEvaluated(phase, phases);
 }
 
 /**
@@ -84,7 +106,7 @@ export function findCurrentPhase(
     // run completes, and inference only applies to in_progress runs.
     if (phase === 'summary') continue;
 
-    if (isPhasePresentInData(phase, phases)) continue;
+    if (isPhaseEvaluated(phase, phases)) continue;
 
     const decision = findPhaseDecision(phase, phaseDecisions);
     // A missing decision (including when phaseDecisions is undefined or empty)
