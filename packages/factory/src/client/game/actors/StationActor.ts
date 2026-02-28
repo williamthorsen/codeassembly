@@ -31,7 +31,6 @@ export class StationActor extends Actor {
     });
 
     const group = new GraphicsGroup({
-      useAnchor: false,
       members: [
         { graphic: rect, offset: vec(0, 0) },
         { graphic: label, offset: vec(10, STATION_HEIGHT / 2 - 5), useBounds: false },

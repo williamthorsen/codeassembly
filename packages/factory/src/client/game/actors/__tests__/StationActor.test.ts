@@ -127,7 +127,6 @@ describe('StationActor', () => {
 
     expect(mockGraphicsGroupConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        useAnchor: false,
         members: expect.arrayContaining([
           expect.objectContaining({ offset: { x: 0, y: 0 } }),
           expect.objectContaining({ useBounds: false }),

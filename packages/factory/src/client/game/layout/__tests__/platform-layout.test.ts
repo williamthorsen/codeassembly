@@ -29,7 +29,7 @@ describe('computeLayout', () => {
       expect(layout.platforms[1]).toEqual(
         expect.objectContaining({
           y: 400 - 56,
-          width: 120,
+          width: 100,
           height: 20,
         }),
       );
@@ -68,10 +68,11 @@ describe('computeLayout', () => {
       const layout = computeLayout(2);
 
       expect(layout.ladders).toHaveLength(1);
+      // bottomY/topY align with platform surfaces (baseY - level*levelHeight - platformHeight/2)
       expect(layout.ladders[0]).toEqual(
         expect.objectContaining({
-          bottomY: 400,
-          topY: 400 - 56,
+          bottomY: 390,
+          topY: 390 - 56,
         }),
       );
     });
@@ -80,19 +81,19 @@ describe('computeLayout', () => {
       const layout = computeLayout(3);
 
       expect(layout.ladders).toHaveLength(2);
-      expect(layout.ladders[0]?.bottomY).toBe(400);
-      expect(layout.ladders[0]?.topY).toBe(400 - 56);
-      expect(layout.ladders[1]?.bottomY).toBe(400 - 56);
-      expect(layout.ladders[1]?.topY).toBe(400 - 2 * 56);
+      expect(layout.ladders[0]?.bottomY).toBe(390);
+      expect(layout.ladders[0]?.topY).toBe(390 - 56);
+      expect(layout.ladders[1]?.bottomY).toBe(390 - 56);
+      expect(layout.ladders[1]?.topY).toBe(390 - 2 * 56);
     });
 
-    it('positions ladder at platform edge plus offset', () => {
+    it('positions ladder to the left of the upper platform', () => {
       const layout = computeLayout(2);
       const reviewStationX = 200 + 3 * 150; // 650
-      const upperPlatformWidth = 120;
+      const upperPlatformWidth = 100;
 
-      // ladder X = reviewStationX + upperPlatformWidth / 2 + 10 = 650 + 60 + 10 = 720
-      expect(layout.ladders[0]?.x).toBe(reviewStationX + upperPlatformWidth / 2 + 10);
+      // ladder X = reviewStationX - upperPlatformWidth / 2 - 16 = 650 - 50 - 16 = 584
+      expect(layout.ladders[0]?.x).toBe(reviewStationX - upperPlatformWidth / 2 - 16);
     });
   });
 
@@ -111,11 +112,12 @@ describe('computeLayout', () => {
       expect(layout.stationPositions[6]?.x).toBe(200 + 6 * 150);
     });
 
-    it('positions all stations at baseY - 50', () => {
+    it('positions station centers so bottom edge meets platform surface', () => {
       const layout = computeLayout(0);
 
+      // baseY - platformHeight/2 - 20 = 400 - 10 - 20 = 370
       for (const pos of layout.stationPositions) {
-        expect(pos.y).toBe(350);
+        expect(pos.y).toBe(370);
       }
     });
   });
@@ -134,12 +136,12 @@ describe('computeLayout', () => {
       expect(layout.gatePositions[5]?.x).toBe(200 + 5.5 * 150);
     });
 
-    it('positions gates at baseY - 20', () => {
+    it('positions gate centers so bottom edge meets platform surface', () => {
       const layout = computeLayout(0);
 
-      // All gates should be at y = 400 - 20 = 380
+      // baseY - platformHeight/2 - 20 = 400 - 10 - 20 = 370
       for (const pos of layout.gatePositions) {
-        expect(pos.y).toBe(380);
+        expect(pos.y).toBe(370);
       }
     });
   });
