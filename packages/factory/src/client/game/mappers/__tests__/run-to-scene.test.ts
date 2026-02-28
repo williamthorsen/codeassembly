@@ -888,9 +888,19 @@ describe('createSceneConfig', () => {
      * JSON round-tripping produces runtime null values without type assertions:
      * undefined fields are stripped by JSON.stringify, explicit nulls are preserved.
      */
+    /**
+     * Create a status where specific phase fields are null (simulating Zod
+     * runtime data). A phaseDecisions skip entry is added for each null phase
+     * so that phase inference does not re-infer the null phase as "current"
+     * (which would bypass the null-safety guard being tested).
+     */
     function statusWithNullPhases(overrides: Record<string, null>) {
       const phases = Object.assign(emptyPhases(), overrides);
-      return createMockRunStatus({ status: 'in_progress', phases });
+      const phaseDecisions: Record<string, { run: boolean; reason: string | undefined }> = {};
+      for (const key of Object.keys(overrides)) {
+        phaseDecisions[key] = { run: false, reason: undefined };
+      }
+      return createMockRunStatus({ status: 'in_progress', phases, phaseDecisions });
     }
 
     it('does not create architect agent when architecture phase is null', () => {

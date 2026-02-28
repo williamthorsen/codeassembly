@@ -32,6 +32,16 @@ export function findPhaseDecision(
 }
 
 /**
+ * Check that a value is neither null nor undefined. The Phases type uses
+ * `| undefined` but runtime data from Zod can carry `null` phase values
+ * (meaning "phase not yet reached"). This helper handles both cases while
+ * satisfying the eqeqeq lint rule.
+ */
+function isPresent<T>(value: T | null | undefined): value is T {
+  return value !== undefined && value !== null;
+}
+
+/**
  * Returns `true` when the orchestrator has written any data for the phase,
  * regardless of the phase's outcome. Used by `findCurrentPhase` to determine
  * whether to advance past this phase during inference.
@@ -46,17 +56,17 @@ export function findPhaseDecision(
 export function isPhaseEvaluated(phase: PhaseName, phases: Phases): boolean {
   switch (phase) {
     case 'architecture':
-      return phases.architecture !== undefined;
+      return isPresent(phases.architecture);
     case 'planning':
-      return phases.planning !== undefined;
+      return isPresent(phases.planning);
     case 'implementation':
-      return phases.implementation !== undefined;
+      return isPresent(phases.implementation);
     case 'review':
-      return (phases.parallelReview ?? phases.review) !== undefined;
+      return isPresent(phases.parallelReview ?? phases.review);
     case 'simplifier':
-      return phases.codeSimplifier !== undefined;
+      return isPresent(phases.codeSimplifier);
     case 'holistic':
-      return phases.holisticReview !== undefined;
+      return isPresent(phases.holisticReview);
     case 'summary':
       return false;
     default:

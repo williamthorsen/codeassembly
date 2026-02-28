@@ -703,11 +703,13 @@ describe('FactoryScene', () => {
     });
 
     it('shows artifact indicator on orchestrator before walk when artifact exists at previous station', () => {
+      // Initial: arch + planning completed → implementation inferred as current → orchestrator at station 2
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
           ...emptyPhases(),
           architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
         },
       });
       const scene = new FactoryScene(status);
@@ -715,18 +717,19 @@ describe('FactoryScene', () => {
       mockShowArtifactIndicator.mockClear();
       mockWalkPath.mockClear();
 
-      // Orchestrator moves from station 0 (architecture) to station 1 (planning)
+      // Updated: implementation completed with artifact → review inferred as current → orchestrator moves to station 3
       const updatedStatus = createMockRunStatus({
         status: 'in_progress',
         phases: {
           ...emptyPhases(),
           architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
-          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', qualityGates: 'passed', artifact: 'summary.md' },
         },
       });
       scene.updateStatus(updatedStatus);
 
-      expect(mockShowArtifactIndicator).toHaveBeenCalledWith('architecture');
+      expect(mockShowArtifactIndicator).toHaveBeenCalledWith('code');
       expect(mockWalkPath).toHaveBeenCalled();
     });
 
@@ -736,6 +739,7 @@ describe('FactoryScene', () => {
         phases: {
           ...emptyPhases(),
           architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
         },
       });
       const scene = new FactoryScene(status);
@@ -747,7 +751,8 @@ describe('FactoryScene', () => {
         phases: {
           ...emptyPhases(),
           architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
-          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', qualityGates: 'passed', artifact: 'summary.md' },
         },
       });
       scene.updateStatus(updatedStatus);
@@ -766,6 +771,7 @@ describe('FactoryScene', () => {
         phases: {
           ...emptyPhases(),
           architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
         },
       });
       const scene = new FactoryScene(status);
@@ -777,7 +783,8 @@ describe('FactoryScene', () => {
         phases: {
           ...emptyPhases(),
           architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
-          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', qualityGates: 'passed', artifact: 'summary.md' },
         },
       });
       scene.updateStatus(updatedStatus);
