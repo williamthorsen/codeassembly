@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import type { DismissedRunEntry, UserSettings } from '../../shared/types/settings.js';
+import type { DismissedRunEntry } from '../../shared/types/settings.js';
 import { fetchSettings, patchSettings } from '../api/client.js';
 
 interface UseDismissedRunsResult {

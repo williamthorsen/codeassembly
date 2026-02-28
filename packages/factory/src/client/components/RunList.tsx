@@ -11,7 +11,7 @@ interface RunListProps {
   runs: FlatRunInfo[];
   selectedRunKey: string | null;
   onSelectRun: (projectSlug: string, runId: string) => void;
-  onDismissRun: (key: string) => void;
+  onDismissRun: (key: string, status: string) => void;
   onDismissAll: () => void;
 }
 
@@ -82,7 +82,7 @@ export function RunList({
                   className="run-list-item-dismiss"
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDismissRun(key);
+                    onDismissRun(key, run.status);
                   }}
                   aria-label={`Dismiss ${run.runId}`}
                 >
