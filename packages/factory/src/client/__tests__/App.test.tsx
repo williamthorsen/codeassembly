@@ -14,6 +14,7 @@ const {
   mockFlattenProjectIndex,
   mockUseDismissedRuns,
   mockRunList,
+  mockUseSelectionParams,
 } = vi.hoisted(() => {
   return {
     mockUseRunStatus: vi.fn(),
@@ -24,6 +25,7 @@ const {
     mockFlattenProjectIndex: vi.fn<(index: ProjectIndex | null) => FlatRunInfo[]>(),
     mockUseDismissedRuns: vi.fn(),
     mockRunList: vi.fn(),
+    mockUseSelectionParams: vi.fn(),
   };
 });
 
@@ -59,23 +61,50 @@ vi.mock('../components/RunList.js', () => ({
   RunList: mockRunList,
 }));
 
+vi.mock('../hooks/useSelectionParams.js', () => ({
+  useSelectionParams: mockUseSelectionParams,
+}));
+
 // Stub CSS import
 vi.mock('../App.css', () => ({}));
 
 const { App } = await import('../App.js');
 
+interface RunSelectorMockProps {
+  index: ProjectIndex | null;
+  selectedProject: string;
+  selectedTicket: string;
+  selectedRun: string;
+  onSelectProject: (slug: string) => void;
+  onSelectTicket: (ticketId: string) => void;
+  onSelectRun: (slug: string, runId: string) => void;
+}
+
 describe('App', () => {
   const mockDismiss = vi.fn();
   const mockDismissAll = vi.fn();
+  const mockSetParams = vi.fn();
   let mockDismissedRecord: Record<string, { status: string }>;
 
   afterEach(() => {
     cleanup();
   });
 
+  function setInitialParams(params: { project?: string; ticket?: string; run?: string } = {}): void {
+    mockUseSelectionParams.mockReturnValue({
+      initialParams: {
+        project: params.project ?? '',
+        ticket: params.ticket ?? '',
+        run: params.run ?? '',
+      },
+      setParams: mockSetParams,
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockDismissedRecord = {};
+    setInitialParams();
     mockFetchProjects.mockResolvedValue({ projects: [] });
     mockFlattenProjectIndex.mockReturnValue([]);
     mockUseDismissedRuns.mockReturnValue({
@@ -83,13 +112,11 @@ describe('App', () => {
       dismiss: mockDismiss,
       dismissAll: mockDismissAll,
     });
-    mockRunSelector.mockImplementation(
-      ({ onSelectRun }: { index: ProjectIndex | null; onSelectRun: (slug: string, runId: string) => void }) => (
-        <button data-testid="run-selector" onClick={() => onSelectRun('proj-a', 'run-1')}>
-          Select run
-        </button>
-      ),
-    );
+    mockRunSelector.mockImplementation(({ onSelectRun }: RunSelectorMockProps) => (
+      <button data-testid="run-selector" onClick={() => onSelectRun('proj-a', 'run-1')}>
+        Select run
+      </button>
+    ));
     mockStatusBar.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
       <div data-testid="status-bar">{status.runId}</div>
     ));
@@ -144,7 +171,6 @@ describe('App', () => {
 
     fireEvent.click(view.getByTestId('run-selector'));
 
-    // After clicking, useRunStatus should have been called with the new project/run values.
     expect(mockUseRunStatus).toHaveBeenLastCalledWith('proj-a', 'run-1');
   });
 
@@ -239,8 +265,6 @@ describe('App', () => {
     ];
     mockFlattenProjectIndex.mockReturnValue(runs);
 
-    // run-a was dismissed when it had 'failed' status, but now shows 'completed' — should reappear
-    // run-b was dismissed with 'completed' status and still has 'completed' — stays hidden
     mockDismissedRecord = {
       'alpha/T-1/run-a': { status: 'failed' },
       'beta/T-2/run-b': { status: 'completed' },
@@ -325,28 +349,22 @@ describe('App', () => {
     };
     mockFetchProjects.mockResolvedValue(projectIndex);
 
-    // Mock RunSelector to select a non-existent run in the 'alpha' project
-    mockRunSelector.mockImplementation(
-      ({ onSelectRun }: { index: ProjectIndex | null; onSelectRun: (slug: string, runId: string) => void }) => (
-        <button data-testid="run-selector" onClick={() => onSelectRun('alpha', 'non-existent-run')}>
-          Select run
-        </button>
-      ),
-    );
+    mockRunSelector.mockImplementation(({ onSelectRun }: RunSelectorMockProps) => (
+      <button data-testid="run-selector" onClick={() => onSelectRun('alpha', 'non-existent-run')}>
+        Select run
+      </button>
+    ));
 
     const { container } = render(<App />);
     const view = within(container);
 
-    // Wait for the project index to load
     await waitFor(() => {
       const lastSelectorCall = mockRunSelector.mock.lastCall;
       expect(lastSelectorCall?.[0]).toEqual(expect.objectContaining({ index: projectIndex }));
     });
 
-    // Select a run that does not exist in the project
     fireEvent.click(view.getByTestId('run-selector'));
 
-    // RunList should receive null for selectedRunKey
     await waitFor(() => {
       const lastRunListCall = mockRunList.mock.lastCall;
       expect(lastRunListCall?.[0]).toEqual(expect.objectContaining({ selectedRunKey: null }));
@@ -425,6 +443,204 @@ describe('App', () => {
     fireEvent.click(view.getByTestId('dismiss-all-btn'));
 
     expect(mockDismissAll).toHaveBeenCalledWith([]);
+  });
+
+  describe('URL sync', () => {
+    it('syncs selection state to URL params via setParams', () => {
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      fireEvent.click(view.getByTestId('run-selector'));
+
+      expect(mockSetParams).toHaveBeenCalledWith(expect.objectContaining({ project: 'proj-a', run: 'run-1' }));
+    });
+
+    it('RunList click updates URL params', () => {
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      const runs: FlatRunInfo[] = [
+        {
+          projectSlug: 'beta',
+          ticketId: 'T-2',
+          runId: 'run-x',
+          status: 'completed',
+          startedAt: '2026-01-01T00:00:00Z',
+          completedAt: undefined,
+        },
+      ];
+      mockFlattenProjectIndex.mockReturnValue(runs);
+
+      mockRunList.mockImplementation(
+        ({ onSelectRun }: { onSelectRun: (projectSlug: string, runId: string) => void }) => (
+          <button data-testid="run-list-select" onClick={() => onSelectRun('beta', 'run-x')}>
+            Select from list
+          </button>
+        ),
+      );
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      mockSetParams.mockClear();
+      fireEvent.click(view.getByTestId('run-list-select'));
+
+      expect(mockSetParams).toHaveBeenCalledWith({
+        project: 'beta',
+        ticket: 'T-2',
+        run: 'run-x',
+      });
+    });
+
+    it('RunList click updates RunSelector props', () => {
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      const runs: FlatRunInfo[] = [
+        {
+          projectSlug: 'beta',
+          ticketId: 'T-2',
+          runId: 'run-x',
+          status: 'completed',
+          startedAt: '2026-01-01T00:00:00Z',
+          completedAt: undefined,
+        },
+      ];
+      mockFlattenProjectIndex.mockReturnValue(runs);
+
+      mockRunList.mockImplementation(
+        ({ onSelectRun }: { onSelectRun: (projectSlug: string, runId: string) => void }) => (
+          <button data-testid="run-list-select" onClick={() => onSelectRun('beta', 'run-x')}>
+            Select from list
+          </button>
+        ),
+      );
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      fireEvent.click(view.getByTestId('run-list-select'));
+
+      const lastSelectorCall = mockRunSelector.mock.lastCall;
+      expect(lastSelectorCall?.[0]).toEqual(
+        expect.objectContaining({
+          selectedProject: 'beta',
+          selectedTicket: 'T-2',
+          selectedRun: 'run-x',
+        }),
+      );
+    });
+
+    it('initializes selection from URL params', () => {
+      setInitialParams({ project: 'alpha', ticket: 'T-1', run: 'run-a' });
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      render(<App />);
+
+      expect(mockUseRunStatus).toHaveBeenCalledWith('alpha', 'run-a');
+    });
+  });
+
+  describe('URL param validation', () => {
+    it('corrects invalid params when index arrives', async () => {
+      setInitialParams({ project: 'nonexistent', ticket: 'T-99', run: 'run-z' });
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      const projectIndex: ProjectIndex = {
+        projects: [{ slug: 'alpha', tickets: [{ ticketId: 'T-1', runs: [] }] }],
+      };
+      mockFetchProjects.mockResolvedValue(projectIndex);
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(mockUseRunStatus).toHaveBeenLastCalledWith(null, null);
+      });
+    });
+
+    it('preserves valid params and selects the correct run', async () => {
+      setInitialParams({ project: 'alpha', ticket: 'T-1', run: 'run-a' });
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      const projectIndex: ProjectIndex = {
+        projects: [
+          {
+            slug: 'alpha',
+            tickets: [
+              {
+                ticketId: 'T-1',
+                runs: [
+                  {
+                    runId: 'run-a',
+                    path: '/a',
+                    status: 'completed',
+                    startedAt: '2026-01-01T00:00:00Z',
+                    completedAt: undefined,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      mockFetchProjects.mockResolvedValue(projectIndex);
+
+      render(<App />);
+
+      await waitFor(() => {
+        const lastSelectorCall = mockRunSelector.mock.lastCall;
+        expect(lastSelectorCall?.[0]).toEqual(
+          expect.objectContaining({
+            selectedProject: 'alpha',
+            selectedTicket: 'T-1',
+            selectedRun: 'run-a',
+          }),
+        );
+      });
+
+      expect(mockUseRunStatus).toHaveBeenCalledWith('alpha', 'run-a');
+    });
+
+    it('clears invalid ticket while keeping valid project', async () => {
+      setInitialParams({ project: 'alpha', ticket: 'INVALID', run: 'run-a' });
+      mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
+
+      const projectIndex: ProjectIndex = {
+        projects: [
+          {
+            slug: 'alpha',
+            tickets: [
+              {
+                ticketId: 'T-1',
+                runs: [
+                  {
+                    runId: 'run-a',
+                    path: '/a',
+                    status: 'completed',
+                    startedAt: '2026-01-01T00:00:00Z',
+                    completedAt: undefined,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+      mockFetchProjects.mockResolvedValue(projectIndex);
+
+      render(<App />);
+
+      await waitFor(() => {
+        const lastSelectorCall = mockRunSelector.mock.lastCall;
+        expect(lastSelectorCall?.[0]).toEqual(
+          expect.objectContaining({
+            selectedProject: 'alpha',
+            selectedTicket: '',
+            selectedRun: '',
+          }),
+        );
+      });
+    });
   });
 
   describe('polling', () => {
