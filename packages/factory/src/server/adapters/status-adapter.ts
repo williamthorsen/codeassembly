@@ -257,20 +257,24 @@ function isValidPhaseDecisionMap(value: unknown): boolean {
   return true;
 }
 
+function isNullOrValid(value: unknown, check: (v: unknown) => boolean): boolean {
+  return value === null || check(value);
+}
+
 function isValidPhaseEntry(phase: unknown): boolean {
   if (!isRecord(phase)) {
     return false;
   }
-  if ('status' in phase && !isValidPhaseStatus(phase.status)) {
+  if ('status' in phase && !isNullOrValid(phase.status, isValidPhaseStatus)) {
     return false;
   }
-  if ('criticality' in phase && !isValidCriticality(phase.criticality)) {
+  if ('criticality' in phase && !isNullOrValid(phase.criticality, isValidCriticality)) {
     return false;
   }
-  if ('finalCriticality' in phase && !isValidCriticality(phase.finalCriticality)) {
+  if ('finalCriticality' in phase && !isNullOrValid(phase.finalCriticality, isValidCriticality)) {
     return false;
   }
-  if ('aggregatedCriticality' in phase && !isValidCriticality(phase.aggregatedCriticality)) {
+  if ('aggregatedCriticality' in phase && !isNullOrValid(phase.aggregatedCriticality, isValidCriticality)) {
     return false;
   }
   return true;
@@ -281,7 +285,7 @@ function isValidPhasesObject(value: unknown): boolean {
     return false;
   }
   for (const phase of Object.values(value)) {
-    if (phase === undefined) {
+    if (phase === undefined || phase === null) {
       continue;
     }
     if (!isValidPhaseEntry(phase)) {
