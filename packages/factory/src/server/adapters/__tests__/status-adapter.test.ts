@@ -312,6 +312,14 @@ describe('parseStatusFile', () => {
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
+    it('converts completedAt: null to undefined', async () => {
+      mockJson({ ...minimalValid(), completedAt: null });
+
+      const result = await parseStatusFile('/path/to/status.json');
+
+      expect(result.completedAt).toBeUndefined();
+    });
+
     it('rejects non-boolean externalPlan', async () => {
       mockJson({ ...minimalValid(), externalPlan: 'yes' });
 
@@ -392,10 +400,11 @@ describe('parseStatusFile', () => {
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
 
-    it('accepts null phase entry (skipped phase)', async () => {
+    it('accepts null phase entry (phase not yet reached)', async () => {
       mockedReadFile.mockResolvedValue(JSON.stringify({ ...minimalValid(), phases: { architecture: null } }));
 
       const result = await parseStatusFile('/path/to/status.json');
+
       expect(result.phases).toEqual({ architecture: null });
     });
 
