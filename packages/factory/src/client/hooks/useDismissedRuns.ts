@@ -1,31 +1,49 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
+import type { DismissedRunEntry, UserSettings } from '../../shared/types/settings.js';
+import { fetchSettings, patchSettings } from '../api/client.js';
 
 interface UseDismissedRunsResult {
-  dismissed: ReadonlySet<string>;
-  dismiss: (key: string) => void;
-  dismissAll: (keys: string[]) => void;
+  dismissed: Readonly<Record<string, DismissedRunEntry>>;
+  dismiss: (key: string, status: string) => void;
+  dismissAll: (entries: { key: string; status: string }[]) => void;
 }
 
-/** Manages session-scoped dismissed run state. Keys use the format "projectSlug/ticketId/runId". */
+/** Manages server-persisted dismissed run state with optimistic updates. */
 export function useDismissedRuns(): UseDismissedRunsResult {
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [dismissed, setDismissed] = useState<Record<string, DismissedRunEntry>>({});
 
-  const dismiss = useCallback((key: string): void => {
+  useEffect(() => {
+    fetchSettings()
+      .then((settings) => {
+        setDismissed(settings.dismissedRuns);
+      })
+      .catch(() => {
+        // Graceful degradation: leave dismissed as empty on fetch failure
+      });
+  }, []);
+
+  const dismiss = useCallback((key: string, status: string): void => {
     setDismissed((prev) => {
-      if (prev.has(key)) return prev;
-      const next = new Set(prev);
-      next.add(key);
+      const next = { ...prev, [key]: { status } };
+      patchSettings({ dismissedRuns: next }).catch(() => {
+        // Fire-and-forget: persist failure does not revert optimistic update
+      });
       return next;
     });
   }, []);
 
-  const dismissAll = useCallback((keys: string[]): void => {
+  const dismissAll = useCallback((entries: { key: string; status: string }[]): void => {
+    if (entries.length === 0) return;
     setDismissed((prev) => {
-      const next = new Set(prev);
-      for (const key of keys) {
-        next.add(key);
+      const next = { ...prev };
+      for (const { key, status } of entries) {
+        next[key] = { status };
       }
-      return next.size === prev.size ? prev : next;
+      patchSettings({ dismissedRuns: next }).catch(() => {
+        // Fire-and-forget: persist failure does not revert optimistic update
+      });
+      return next;
     });
   }, []);
 
