@@ -194,6 +194,30 @@ describe('computeLayout', () => {
 
       expect(pos).toEqual({ x: 650, y: 400 - 2 * 56 - 22 });
     });
+
+    it('returns approach position at level 0 (one spacing left of leftmost grid slot)', () => {
+      const layout = computeLayout(1);
+      const pos = layout.agentPosition(3, 0, 0, true);
+
+      // stationX = 650; approaching x = 650 - 72 = 578; y = 400 - 22 = 378
+      expect(pos).toEqual({ x: 578, y: 378 });
+    });
+
+    it('returns approach position at upper level (one spacing left of station center)', () => {
+      const layout = computeLayout(2);
+      const pos = layout.agentPosition(3, 0, 1, true);
+
+      // stationX = 650; approaching x = 650 - 36 = 614; y = 400 - 56 - 22 = 322
+      expect(pos).toEqual({ x: 614, y: 322 });
+    });
+
+    it('ignores stackOffset when approaching is true', () => {
+      const layout = computeLayout(1);
+      const posOffset0 = layout.agentPosition(3, 0, 0, true);
+      const posOffset1 = layout.agentPosition(3, 1, 0, true);
+
+      expect(posOffset0).toEqual(posOffset1);
+    });
   });
 
   describe('artifactPosition', () => {

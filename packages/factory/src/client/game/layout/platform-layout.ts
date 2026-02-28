@@ -35,7 +35,12 @@ export interface LayoutResult {
   ladders: LadderSegment[];
   stationPositions: Array<{ x: number; y: number }>;
   gatePositions: Array<{ x: number; y: number }>;
-  agentPosition(stationIndex: number, stackOffset: number, level: number): { x: number; y: number };
+  agentPosition(
+    stationIndex: number,
+    stackOffset: number,
+    level: number,
+    approaching?: boolean,
+  ): { x: number; y: number };
   artifactPosition(stationIndex: number): { x: number; y: number };
   bounds: LayoutBounds;
 }
@@ -118,11 +123,35 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
     });
   }
 
-  /** Compute the screen position for an agent based on station, offset, and level. */
-  function agentPosition(stationIndex: number, stackOffset: number, level: number): { x: number; y: number } {
+  /**
+   * Compute the screen position for an agent based on station, offset, and level.
+   * @param approaching When true, the agent is approaching (not a resident at) the station.
+   *   The `stackOffset` parameter is ignored when `approaching` is true.
+   */
+  function agentPosition(
+    stationIndex: number,
+    stackOffset: number,
+    level: number,
+    approaching?: boolean,
+  ): { x: number; y: number } {
     const stationX = c.startX + stationIndex * c.stationSpacing;
     // Place agent feet near platform surface: half-platform + half-sprite - padding compensation
     const standOffset = c.platformHeight / 2 + 12;
+
+    // TODO(CODY-55): flip orchestrator sprite to face right when approaching
+    if (approaching) {
+      if (level === 0) {
+        const leftmostSlotOffset = -((c.agentsPerRow - 1) / 2) * c.agentHSpacing;
+        return {
+          x: stationX + leftmostSlotOffset - c.agentHSpacing,
+          y: c.baseY - standOffset,
+        };
+      }
+      return {
+        x: stationX - c.agentHSpacing,
+        y: c.baseY - level * c.levelHeight - standOffset,
+      };
+    }
 
     if (level === 0) {
       const col = stackOffset % c.agentsPerRow;

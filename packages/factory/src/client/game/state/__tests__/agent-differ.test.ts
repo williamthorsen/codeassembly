@@ -133,6 +133,52 @@ describe('diffAgents', () => {
     expect(result.moved).toEqual([]);
   });
 
+  it('marks agent as moved when approaching changes from true to undefined', () => {
+    const prev = createAgent({
+      role: 'orchestrator',
+      roleType: 'orchestrator',
+      stationIndex: 1,
+      stackOffset: 0,
+      level: 0,
+      approaching: true,
+    });
+    const next = createAgent({
+      role: 'orchestrator',
+      roleType: 'orchestrator',
+      stationIndex: 1,
+      stackOffset: 0,
+      level: 0,
+    });
+
+    const result = diffAgents([prev], [next]);
+
+    expect(result.moved).toHaveLength(1);
+    expect(result.unchanged).toHaveLength(0);
+  });
+
+  it('marks agent as moved when approaching changes from undefined to true', () => {
+    const prev = createAgent({
+      role: 'orchestrator',
+      roleType: 'orchestrator',
+      stationIndex: 1,
+      stackOffset: 0,
+      level: 0,
+    });
+    const next = createAgent({
+      role: 'orchestrator',
+      roleType: 'orchestrator',
+      stationIndex: 1,
+      stackOffset: 0,
+      level: 0,
+      approaching: true,
+    });
+
+    const result = diffAgents([prev], [next]);
+
+    expect(result.moved).toHaveLength(1);
+    expect(result.unchanged).toHaveLength(0);
+  });
+
   it('treats roleType changes as unchanged when position is the same', () => {
     const prev = createAgent({ role: 'agent-x', roleType: 'analyst', stationIndex: 0 });
     const next = createAgent({ role: 'agent-x', roleType: 'planner', stationIndex: 0 });

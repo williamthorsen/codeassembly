@@ -177,7 +177,7 @@ export class FactoryScene extends Scene {
         console.warn(`[FactoryScene] Cannot add agent "${added.role}": layout not initialized`);
         continue;
       }
-      const pos = this.layout.agentPosition(added.stationIndex, added.stackOffset, added.level);
+      const pos = this.layout.agentPosition(added.stationIndex, added.stackOffset, added.level, added.approaching);
       const actor = new AgentActor(added.role, added.roleType, vec(pos.x, pos.y));
       this.agentMap.set(added.role, actor);
       this.add(actor);
@@ -188,7 +188,12 @@ export class FactoryScene extends Scene {
       const actor = this.agentMap.get(next.role);
       if (actor !== undefined && this.layout !== undefined) {
         const source = { x: actor.pos.x, y: actor.pos.y };
-        const destination = this.layout.agentPosition(next.stationIndex, next.stackOffset, next.level);
+        const destination = this.layout.agentPosition(
+          next.stationIndex,
+          next.stackOffset,
+          next.level,
+          next.approaching,
+        );
         const waypoints = computeWalkPath(source, destination, this.layout);
 
         if (next.role === 'orchestrator') {

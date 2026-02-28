@@ -448,8 +448,9 @@ describe('createSceneConfig', () => {
 
       expect(orchestrator).toBeDefined();
       expect(orchestrator?.stationIndex).toBe(3);
-      // Orchestrator should have stackOffset 1 to avoid overlapping the reviewer at stackOffset 0
-      expect(orchestrator?.stackOffset).toBe(1);
+      // Orchestrator approaches the station rather than occupying a grid slot
+      expect(orchestrator?.stackOffset).toBe(0);
+      expect(orchestrator?.approaching).toBe(true);
     });
 
     it('places orchestrator at inferred current phase when prior phases have data', () => {
@@ -527,9 +528,10 @@ describe('createSceneConfig', () => {
       expect(orchestrator?.stationIndex).toBe(6);
       expect(orchestrator?.stackOffset).toBe(0);
       expect(orchestrator?.level).toBe(0);
+      expect(orchestrator?.approaching).toBeUndefined();
     });
 
-    it('sets orchestrator stackOffset to avoid overlap with existing agents at inferred station', () => {
+    it('places orchestrator with approaching flag at inferred station instead of grid offset', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -542,10 +544,11 @@ describe('createSceneConfig', () => {
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
       const planner = config.agents.find((a) => a.role === 'planner');
 
-      // Planning (station 1) is the inferred current phase; planner is at stackOffset 0, orchestrator at 1
+      // Planning (station 1) is the inferred current phase; orchestrator approaches rather than taking a grid slot
       expect(planner?.stationIndex).toBe(1);
       expect(orchestrator?.stationIndex).toBe(1);
-      expect(orchestrator?.stackOffset).toBe(1);
+      expect(orchestrator?.stackOffset).toBe(0);
+      expect(orchestrator?.approaching).toBe(true);
     });
 
     it('places orchestrator at highest reviewer level when review has 2 reviewers', () => {
@@ -592,6 +595,8 @@ describe('createSceneConfig', () => {
 
       expect(orchestrator?.stationIndex).toBe(3);
       expect(orchestrator?.level).toBe(1);
+      expect(orchestrator?.stackOffset).toBe(0);
+      expect(orchestrator?.approaching).toBe(true);
     });
 
     it('places orchestrator at highest reviewer level when review has 3 reviewers', () => {
@@ -715,7 +720,7 @@ describe('createSceneConfig', () => {
       expect(orchestrator?.level).toBe(0);
     });
 
-    it('counts only agents at orchestrator level when computing stackOffset at review station', () => {
+    it('places orchestrator with approaching flag at highest reviewer level with 3 reviewers', () => {
       const status = createMockRunStatus({
         status: 'in_progress',
         phases: {
@@ -768,12 +773,12 @@ describe('createSceneConfig', () => {
         (a) => a.stationIndex === REVIEW_STATION_INDEX && a.role !== 'orchestrator',
       );
 
-      // 3 reviewers at levels 0, 1, 2 — orchestrator is on level 2 with 1 reviewer there
+      // 3 reviewers at levels 0, 1, 2 — orchestrator approaches at level 2
       expect(reviewers).toHaveLength(3);
       expect(orchestrator?.stationIndex).toBe(3);
       expect(orchestrator?.level).toBe(2);
-      // Only the level-2 reviewer (performance-reviewer) is at the same level, so stackOffset = 1
-      expect(orchestrator?.stackOffset).toBe(1);
+      expect(orchestrator?.stackOffset).toBe(0);
+      expect(orchestrator?.approaching).toBe(true);
     });
   });
 
