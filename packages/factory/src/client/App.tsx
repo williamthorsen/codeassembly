@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
@@ -10,28 +10,86 @@ import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
 import { useDismissedRuns } from './hooks/useDismissedRuns.js';
 import { useRunStatus } from './hooks/useRunStatus.js';
+import { useSelectionParams } from './hooks/useSelectionParams.js';
 
 import './App.css';
 
 const PROJECT_POLL_INTERVAL_MS = 5000;
 
+interface Selection {
+  project: string | null;
+  ticket: string | null;
+  run: string | null;
+}
+
+/**
+ * Validates selection params against the project index, cascading nulls for invalid entries.
+ * Returns the corrected selection, or `null` if no correction is needed.
+ */
+function validateSelection(index: ProjectIndex, selection: Selection): Selection | null {
+  const projectEntry = index.projects.find((p) => p.slug === selection.project);
+  const validProject = projectEntry ? projectEntry.slug : null;
+
+  const ticketEntry = projectEntry ? projectEntry.tickets.find((t) => t.ticketId === selection.ticket) : undefined;
+  const validTicket = ticketEntry ? ticketEntry.ticketId : null;
+
+  const runEntry = ticketEntry ? ticketEntry.runs.find((r) => r.runId === selection.run) : undefined;
+  const validRun = runEntry ? runEntry.runId : null;
+
+  if (validProject === selection.project && validTicket === selection.ticket && validRun === selection.run) {
+    return null;
+  }
+  return { project: validProject, ticket: validTicket, run: validRun };
+}
+
 export function App(): React.JSX.Element {
   const [index, setIndex] = useState<ProjectIndex | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  /**
-   * Currently selected project slug. Used together with `selectedRun` to look up the full run
-   * context. The `selectedRunKey` derivation assumes that `runId` values are unique within a
-   * project (across all its tickets). This invariant is guaranteed by the directory-based data
-   * source: each run directory name is a unique timestamp-based identifier scoped to its project.
-   */
-  const [selectedProject, setSelectedProject] = useState<string | null>(null);
+  const { initialParams, setParams } = useSelectionParams();
 
-  /** Currently selected run ID within `selectedProject`. See `selectedProject` for uniqueness assumption. */
-  const [selectedRun, setSelectedRun] = useState<string | null>(null);
+  /**
+   * Selection state — the single source of truth for which project/ticket/run is active.
+   * Initialized from URL params so that URLs are shareable. The `selectedRunKey` derivation
+   * assumes that `runId` values are unique within a project (across all its tickets). This
+   * invariant is guaranteed by the directory-based data source: each run directory name is a
+   * unique timestamp-based identifier scoped to its project.
+   */
+  const [selectedProject, setSelectedProject] = useState<string | null>(() => initialParams.project || null);
+  const [selectedTicket, setSelectedTicket] = useState<string | null>(() => initialParams.ticket || null);
+  const [selectedRun, setSelectedRun] = useState<string | null>(() => initialParams.run || null);
+
   const { data: runStatus, isLoading, error } = useRunStatus(selectedProject, selectedRun);
 
   const { dismissed, dismiss, dismissAll } = useDismissedRuns();
+
+  // Sync selection state → URL params. A single effect replaces ad-hoc setParams calls.
+  useEffect(() => {
+    setParams({
+      project: selectedProject ?? '',
+      ticket: selectedTicket ?? '',
+      run: selectedRun ?? '',
+    });
+  }, [selectedProject, selectedTicket, selectedRun, setParams]);
+
+  // Validate initial URL params against loaded data (runs once when index arrives)
+  const hasValidated = useRef(false);
+  useEffect(() => {
+    if (!index || hasValidated.current) return;
+    hasValidated.current = true;
+
+    const validated = validateSelection(index, {
+      project: selectedProject,
+      ticket: selectedTicket,
+      run: selectedRun,
+    });
+
+    if (validated) {
+      setSelectedProject(validated.project);
+      setSelectedTicket(validated.ticket);
+      setSelectedRun(validated.run);
+    }
+  }, [index, selectedProject, selectedTicket, selectedRun]);
 
   useEffect(() => {
     fetchProjects()
@@ -69,18 +127,25 @@ export function App(): React.JSX.Element {
   );
 
   const selectedRunKey = useMemo(() => {
-    if (!selectedProject || !selectedRun) return null;
-    const match = allRuns.find((r) => r.projectSlug === selectedProject && r.runId === selectedRun);
-    return match ? toRunKey(match.projectSlug, match.ticketId, match.runId) : null;
-  }, [selectedProject, selectedRun, allRuns]);
+    if (!selectedProject || !selectedTicket || !selectedRun) return null;
+    return toRunKey(selectedProject, selectedTicket, selectedRun);
+  }, [selectedProject, selectedTicket, selectedRun]);
 
-  /**
-   * Selects a run by project slug and run ID. The ticket is not tracked because `runId` is
-   * assumed to be unique within a project -- the `selectedRunKey` derivation resolves the
-   * ticket by finding the matching run in the already-flattened `allRuns` array.
-   */
+  function handleSelectProject(projectSlug: string): void {
+    setSelectedProject(projectSlug || null);
+    setSelectedTicket(null);
+    setSelectedRun(null);
+  }
+
+  function handleSelectTicket(ticketId: string): void {
+    setSelectedTicket(ticketId || null);
+    setSelectedRun(null);
+  }
+
   function handleSelectRun(projectSlug: string, runId: string): void {
+    const match = allRuns.find((r) => r.projectSlug === projectSlug && r.runId === runId);
     setSelectedProject(projectSlug);
+    setSelectedTicket(match?.ticketId ?? null);
     setSelectedRun(runId);
   }
 
@@ -98,7 +163,15 @@ export function App(): React.JSX.Element {
       <aside className="sidebar">
         <h1>Artifactory</h1>
         {fetchError && <div className="fetch-error">{fetchError}</div>}
-        <RunSelector index={index} onSelectRun={handleSelectRun} />
+        <RunSelector
+          index={index}
+          selectedProject={selectedProject ?? ''}
+          selectedTicket={selectedTicket ?? ''}
+          selectedRun={selectedRun ?? ''}
+          onSelectProject={handleSelectProject}
+          onSelectTicket={handleSelectTicket}
+          onSelectRun={handleSelectRun}
+        />
         <RunList
           runs={visibleRuns}
           selectedRunKey={selectedRunKey}
