@@ -385,6 +385,48 @@ describe('FactoryScene', () => {
       expect(positions[1]?.y).toBe(322);
     });
 
+    it('places approaching orchestrator at approach position instead of grid position', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
+      const orchestratorActor = agentCalls
+        .map((call: unknown[]) => getActorFromCall(call))
+        .find((actor) => actor.agentKey === 'orchestrator');
+
+      // Station 3 at level 0 with approaching=true: x = 578, y = 378
+      expect(orchestratorActor?.position).toEqual({ x: 578, y: 378 });
+    });
+
     it('places level-0 agents using grid formula', () => {
       const status = createMockRunStatus({
         status: 'completed',

@@ -18,6 +18,7 @@ export interface AgentConfig {
   stationIndex: number;
   stackOffset: number;
   level: number;
+  approaching?: boolean;
 }
 
 export interface ArtifactConfig {
@@ -128,12 +129,7 @@ function computeOrchestratorLevel(station: number, phases: Phases): number {
   return reviewerCount > 1 ? reviewerCount - 1 : 0;
 }
 
-function buildOrchestratorAgent(
-  phases: Phases,
-  runStatus: string,
-  agents: AgentConfig[],
-  currentPhase?: PhaseName,
-): AgentConfig | undefined {
+function buildOrchestratorAgent(phases: Phases, runStatus: string, currentPhase?: PhaseName): AgentConfig | undefined {
   if (runStatus === 'completed') {
     return { role: 'orchestrator', roleType: PHASE_ROLE_TYPE.summary, stationIndex: 6, stackOffset: 0, level: 0 };
   }
@@ -141,14 +137,12 @@ function buildOrchestratorAgent(
     const station = findOrchestratorStation(phases, runStatus, currentPhase);
     if (station !== undefined) {
       const orchestratorLevel = computeOrchestratorLevel(station, phases);
-      const existingAtStation = agents.filter(
-        (a) => a.stationIndex === station && a.level === orchestratorLevel,
-      ).length;
       return {
         role: 'orchestrator',
         roleType: PHASE_ROLE_TYPE.summary,
         stationIndex: station,
-        stackOffset: existingAtStation,
+        stackOffset: 0,
+        approaching: true,
         level: orchestratorLevel,
       };
     }
@@ -233,7 +227,7 @@ function buildPhaseAgents(phases: Phases, currentPhase?: PhaseName): AgentConfig
 function buildAgents(phases: Phases, runStatus: string, currentPhase?: PhaseName): AgentConfig[] {
   const agents = buildPhaseAgents(phases, currentPhase);
 
-  const orchestrator = buildOrchestratorAgent(phases, runStatus, agents, currentPhase);
+  const orchestrator = buildOrchestratorAgent(phases, runStatus, currentPhase);
   if (orchestrator !== undefined) {
     agents.push(orchestrator);
   }
