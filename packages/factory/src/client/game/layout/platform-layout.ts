@@ -79,7 +79,7 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
   // Upper platforms (levels 1+): one per additional reviewer beyond the first
   const upperLevelCount = Math.max(0, reviewerCount - 1);
   const reviewStationX = c.startX + REVIEW_STATION_INDEX * c.stationSpacing;
-  const upperPlatformWidth = 120;
+  const upperPlatformWidth = 100;
 
   for (let level = 1; level <= upperLevelCount; level++) {
     platforms.push({
@@ -94,9 +94,9 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
   const ladders: LadderSegment[] = [];
   for (let level = 1; level <= upperLevelCount; level++) {
     ladders.push({
-      x: reviewStationX + upperPlatformWidth / 2 + 10,
-      bottomY: c.baseY - (level - 1) * c.levelHeight,
-      topY: c.baseY - level * c.levelHeight,
+      x: reviewStationX - upperPlatformWidth / 2 - 16,
+      bottomY: c.baseY - (level - 1) * c.levelHeight - c.platformHeight / 2,
+      topY: c.baseY - level * c.levelHeight - c.platformHeight / 2,
     });
   }
 
@@ -105,7 +105,7 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
   for (let i = 0; i < STATION_COUNT; i++) {
     stationPositions.push({
       x: c.startX + i * c.stationSpacing,
-      y: c.baseY - 50,
+      y: c.baseY - c.platformHeight / 2 - 20,
     });
   }
 
@@ -114,7 +114,7 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
   for (let i = 0; i < STATION_COUNT - 1; i++) {
     gatePositions.push({
       x: c.startX + (i + 0.5) * c.stationSpacing,
-      y: c.baseY - 20,
+      y: c.baseY - c.platformHeight / 2 - 20,
     });
   }
 
