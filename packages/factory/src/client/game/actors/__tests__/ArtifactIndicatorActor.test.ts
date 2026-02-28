@@ -51,43 +51,16 @@ describe('ArtifactIndicatorActor', () => {
     vi.clearAllMocks();
   });
 
-  it('uses correct color for architecture type', () => {
-    new ArtifactIndicatorActor('architecture');
+  it.each([
+    ['architecture', (): string => PALETTE.blue],
+    ['plan', (): string => PALETTE.green],
+    ['code', (): string => PALETTE.yellow],
+    ['review', (): string => PALETTE.red],
+  ])('uses correct color for %s type', (type, getExpectedColor) => {
+    new ArtifactIndicatorActor(type);
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(PALETTE.blue),
-      }),
-    );
-  });
-
-  it('uses correct color for plan type', () => {
-    new ArtifactIndicatorActor('plan');
-
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(PALETTE.green),
-      }),
-    );
-  });
-
-  it('uses correct color for code type', () => {
-    new ArtifactIndicatorActor('code');
-
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(PALETTE.yellow),
-      }),
-    );
-  });
-
-  it('uses correct color for review type', () => {
-    new ArtifactIndicatorActor('review');
-
-    expect(mockActorConstructor).toHaveBeenCalledWith(
-      expect.objectContaining({
-        color: Color.fromHex(PALETTE.red),
-      }),
+      expect.objectContaining({ color: Color.fromHex(getExpectedColor()) }),
     );
   });
 

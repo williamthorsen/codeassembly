@@ -35,9 +35,8 @@ export interface SceneConfig {
 export { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 
 /**
- * Check that a value is neither null nor undefined. The Phases type uses
- * `| undefined` but runtime data from Zod can carry `null` phase values.
- * This helper handles both cases while satisfying the eqeqeq lint rule.
+ * The Phases type uses `| undefined` but runtime data from Zod can carry `null`
+ * phase values. This helper handles both cases while satisfying the eqeqeq lint rule.
  */
 function isPresent<T>(value: T | null | undefined): value is T {
   return value !== undefined && value !== null;

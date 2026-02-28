@@ -39,7 +39,7 @@ const POSITION_TOLERANCE = 1;
 
 export class AgentActor extends Actor {
   readonly agentKey: string;
-  private artifactIndicator: ArtifactIndicatorActor | undefined = undefined;
+  private artifactIndicator: ArtifactIndicatorActor | undefined;
   private currentState: AgentAnimationState = 'idle';
   private isWalking = false;
   private pendingState: AgentAnimationState | undefined;

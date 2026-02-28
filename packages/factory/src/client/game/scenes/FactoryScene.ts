@@ -10,11 +10,23 @@ import { PlatformActor } from '../actors/PlatformActor.js';
 import { StationActor } from '../actors/StationActor.js';
 import type { LayoutResult } from '../layout/platform-layout.js';
 import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.js';
-import { computeWalkPath } from '../layout/walk-path.js';
+import { computeWalkPath, type Waypoint } from '../layout/walk-path.js';
 import type { AgentConfig, SceneConfig } from '../mappers/run-to-scene.js';
 import { createSceneConfig } from '../mappers/run-to-scene.js';
 import { diffAgents } from '../state/agent-differ.js';
 import { resolveAgentStates } from '../state/agent-state-resolver.js';
+
+function delay(ms: number): Promise<void> {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function walkWithWarning(actor: AgentActor, role: string, waypoints: ReadonlyArray<Waypoint>): Promise<void> {
+  return actor.walkPath(waypoints).catch((error: unknown) => {
+    console.warn(`[FactoryScene] walkPath failed for agent "${role}":`, error);
+  });
+}
 
 export class FactoryScene extends Scene {
   private agentMap = new Map<string, AgentActor>();
@@ -184,24 +196,13 @@ export class FactoryScene extends Scene {
           if (artifact !== undefined) {
             actor.showArtifactIndicator(artifact.type);
           }
-          void actor
-            .walkPath(waypoints)
-            .then(
-              () =>
-                new Promise<void>((resolve) => {
-                  setTimeout(resolve, 300);
-                }),
-            )
-            .catch((error: unknown) => {
-              console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
-            })
+          void walkWithWarning(actor, next.role, waypoints)
+            .then(() => delay(300))
             .finally(() => {
               actor.hideArtifactIndicator();
             });
         } else {
-          actor.walkPath(waypoints).catch((error: unknown) => {
-            console.warn(`[FactoryScene] walkPath failed for agent "${next.role}":`, error);
-          });
+          void walkWithWarning(actor, next.role, waypoints);
         }
       }
     }
