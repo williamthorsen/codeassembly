@@ -142,9 +142,9 @@ describe('resolveAgentStates', () => {
       expect(result[0]?.animationState).toBe('idle');
     });
 
-    it('assigns idle to agent when no phases are active', () => {
+    it('assigns idle to agent when no phases are active on non-in_progress runs', () => {
       const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
-      const status = createMockRunStatus({ status: 'in_progress' });
+      const status = createMockRunStatus({ status: 'needs_manual_review' });
 
       const result = resolveAgentStates(agents, status);
 
@@ -330,6 +330,108 @@ describe('resolveAgentStates', () => {
       const result = resolveAgentStates(agents, status);
 
       expect(result[0]?.animationState).toBe('idle');
+    });
+  });
+
+  describe('inferred current phase (working state)', () => {
+    it('assigns working to agent at architecture station when phaseDecisions.architecture.run is true and phases.architecture is undefined', () => {
+      const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('working');
+    });
+
+    it('assigns working to agent at planning station when architecture has data but planning does not', () => {
+      const agents = [createAgent({ role: 'planner', roleType: 'planner', stationIndex: 1 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('working');
+    });
+
+    it('assigns idle to agent at architecture station when currentPhase is planning', () => {
+      const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('idle');
+    });
+
+    it('assigns idle to orchestrator even when currentPhase matches its station', () => {
+      const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('idle');
+    });
+
+    it('assigns working when phaseDecisions is undefined and phases is empty', () => {
+      const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: undefined,
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('working');
+    });
+
+    it('assigns working to agent at review station when review-cycle decision allows it and no review data exists', () => {
+      const agents = [createAgent({ role: 'reviewer', roleType: 'reviewer', stationIndex: 3 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        phaseDecisions: {
+          architecture: { run: true, reason: undefined },
+          planning: { run: true, reason: undefined },
+          implementation: { run: true, reason: undefined },
+          'review-cycle': { run: true, reason: undefined },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('working');
     });
   });
 });

@@ -1,5 +1,6 @@
 import type { PhaseName } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES } from '../../../shared/constants/role-types.js';
+import { findCurrentPhase } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, Phases, PhaseStatus } from '../../../shared/types/canonical.js';
 import type { AgentConfig } from '../mappers/run-to-scene.js';
 import type { AgentAnimationState } from '../sprites/sprite-definitions.js';
@@ -61,8 +62,10 @@ function buildStateInfo(agent: AgentConfig, animationState: AgentAnimationState)
  * Resolution priority:
  * 1. Run completed -> all agents celebrating
  * 2. Run failed -> all agents concerned
- * 3. Agent's phase in_progress -> working
- * 4. Otherwise -> idle
+ * 3. Agent is orchestrator -> idle
+ * 4. Agent's station is inferred current phase -> working
+ * 5. Agent's phase in_progress -> working
+ * 6. Otherwise -> idle
  */
 export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: CanonicalRunStatus): AgentStateInfo[] {
   if (status.status === 'completed') {
@@ -73,6 +76,9 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
     return agents.map((agent) => buildStateInfo(agent, 'concerned'));
   }
 
+  const currentPhase = findCurrentPhase(status.phases, status.phaseDecisions, status.status);
+  const currentPhaseIndex = currentPhase === undefined ? -1 : PHASE_NAMES.indexOf(currentPhase);
+
   // Note: Terminal state checks (completed/failed) above must remain before this
   // per-agent mapping so that orchestrators correctly show celebrating/concerned states.
   return agents.map((agent) => {
@@ -81,6 +87,13 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
     if (agent.roleType === 'orchestrator') {
       return buildStateInfo(agent, 'idle');
     }
+
+    // Agents at the inferred current phase station should animate as working
+    // even before phase data is written to run-index.json.
+    if (currentPhaseIndex >= 0 && agent.stationIndex === currentPhaseIndex) {
+      return buildStateInfo(agent, 'working');
+    }
+
     const animationState: AgentAnimationState = isPhaseInProgress(agent.stationIndex, status.phases)
       ? 'working'
       : 'idle';

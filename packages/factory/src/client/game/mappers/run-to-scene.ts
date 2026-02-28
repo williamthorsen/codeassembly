@@ -1,5 +1,6 @@
-import type { RoleType } from '../../../shared/constants/role-types.js';
+import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
+import { findCurrentPhase } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
 
 export interface StationConfig {
@@ -33,7 +34,9 @@ export interface SceneConfig {
 
 export { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 
-function isPhaseActive(phase: string, phases: Phases, runStatus: string): boolean {
+function isPhaseActive(phase: string, phases: Phases, runStatus: string, currentPhase?: PhaseName): boolean {
+  if (phase === currentPhase) return true;
+
   switch (phase) {
     case 'architecture':
       return phases.architecture !== undefined;
@@ -54,10 +57,10 @@ function isPhaseActive(phase: string, phases: Phases, runStatus: string): boolea
   }
 }
 
-function buildStations(status: CanonicalRunStatus): StationConfig[] {
+function buildStations(status: CanonicalRunStatus, currentPhase?: PhaseName): StationConfig[] {
   return PHASE_NAMES.map((phase) => ({
     phase,
-    active: isPhaseActive(phase, status.phases, status.status),
+    active: isPhaseActive(phase, status.phases, status.status, currentPhase),
   }));
 }
 
@@ -77,13 +80,19 @@ function buildGates(stations: StationConfig[]): GateConfig[] {
  * Find the station index of the rightmost active phase during an in-progress run.
  * Returns undefined if no phases are active, which causes no orchestrator agent
  * to be created by buildOrchestratorAgent.
+ *
+ * When `currentPhase` is provided, it is used as a fallback position if no
+ * completed phase is found via `isPhaseActive` (i.e., when all `phases` are empty).
  */
-function findOrchestratorStation(phases: Phases, runStatus: string): number | undefined {
+function findOrchestratorStation(phases: Phases, runStatus: string, currentPhase?: PhaseName): number | undefined {
   for (let i = PHASE_NAMES.length - 1; i >= 0; i--) {
     const phase = PHASE_NAMES[i];
     if (phase !== undefined && isPhaseActive(phase, phases, runStatus)) {
       return i;
     }
+  }
+  if (currentPhase !== undefined) {
+    return PHASE_NAMES.indexOf(currentPhase);
   }
   return undefined;
 }
@@ -129,12 +138,17 @@ function computeOrchestratorLevel(station: number, phases: Phases): number {
   return reviewerCount > 1 ? reviewerCount - 1 : 0;
 }
 
-function buildOrchestratorAgent(phases: Phases, runStatus: string, agents: AgentConfig[]): AgentConfig | undefined {
+function buildOrchestratorAgent(
+  phases: Phases,
+  runStatus: string,
+  agents: AgentConfig[],
+  currentPhase?: PhaseName,
+): AgentConfig | undefined {
   if (runStatus === 'completed') {
     return { role: 'orchestrator', roleType: PHASE_ROLE_TYPE.summary, stationIndex: 6, stackOffset: 0, level: 0 };
   }
   if (runStatus === 'in_progress') {
-    const station = findOrchestratorStation(phases, runStatus);
+    const station = findOrchestratorStation(phases, runStatus, currentPhase);
     if (station !== undefined) {
       const orchestratorLevel = computeOrchestratorLevel(station, phases);
       const existingAtStation = agents.filter(
@@ -152,10 +166,52 @@ function buildOrchestratorAgent(phases: Phases, runStatus: string, agents: Agent
   return undefined;
 }
 
-function buildAgents(phases: Phases, runStatus: string): AgentConfig[] {
+/**
+ * Build review agents, handling the case where the review phase is inferred as
+ * current but no review data exists yet. In that case, a single generic reviewer
+ * agent is created instead of calling `buildReviewerAgents` (which returns `[]`
+ * when neither `parallelReview` nor `review` is set).
+ */
+function buildReviewAgentsWithInference(phases: Phases, currentPhase?: PhaseName): AgentConfig[] {
+  if (currentPhase === 'review' && phases.parallelReview === undefined && phases.review === undefined) {
+    return [
+      {
+        role: 'reviewer',
+        roleType: PHASE_ROLE_TYPE.review,
+        stationIndex: REVIEW_STATION_INDEX,
+        stackOffset: 0,
+        level: 0,
+      },
+    ];
+  }
+  return buildReviewerAgents(phases);
+}
+
+/** Check whether a phase should produce an agent based on existing data or inference. */
+function shouldShowPhaseAgent(phase: PhaseName, phases: Phases, currentPhase?: PhaseName): boolean {
+  if (currentPhase === phase) return true;
+
+  switch (phase) {
+    case 'architecture':
+      return phases.architecture !== undefined;
+    case 'planning':
+      return phases.planning !== undefined;
+    case 'implementation':
+      return phases.implementation !== undefined;
+    case 'simplifier':
+      return phases.codeSimplifier?.ran === true;
+    case 'holistic':
+      return phases.holisticReview !== undefined;
+    default:
+      return false;
+  }
+}
+
+/** Build the list of phase-level agents (non-orchestrator) for a given run. */
+function buildPhaseAgents(phases: Phases, currentPhase?: PhaseName): AgentConfig[] {
   const agents: AgentConfig[] = [];
 
-  if (phases.architecture !== undefined) {
+  if (shouldShowPhaseAgent('architecture', phases, currentPhase)) {
     agents.push({
       role: 'architect',
       roleType: PHASE_ROLE_TYPE.architecture,
@@ -165,17 +221,17 @@ function buildAgents(phases: Phases, runStatus: string): AgentConfig[] {
     });
   }
 
-  if (phases.planning !== undefined) {
+  if (shouldShowPhaseAgent('planning', phases, currentPhase)) {
     agents.push({ role: 'planner', roleType: PHASE_ROLE_TYPE.planning, stationIndex: 1, stackOffset: 0, level: 0 });
   }
 
-  if (phases.implementation !== undefined) {
+  if (shouldShowPhaseAgent('implementation', phases, currentPhase)) {
     agents.push({ role: 'coder', roleType: PHASE_ROLE_TYPE.implementation, stationIndex: 2, stackOffset: 0, level: 0 });
   }
 
-  agents.push(...buildReviewerAgents(phases));
+  agents.push(...buildReviewAgentsWithInference(phases, currentPhase));
 
-  if (phases.codeSimplifier?.ran === true) {
+  if (shouldShowPhaseAgent('simplifier', phases, currentPhase)) {
     agents.push({
       role: 'simplifier',
       roleType: PHASE_ROLE_TYPE.simplifier,
@@ -185,7 +241,7 @@ function buildAgents(phases: Phases, runStatus: string): AgentConfig[] {
     });
   }
 
-  if (phases.holisticReview !== undefined) {
+  if (shouldShowPhaseAgent('holistic', phases, currentPhase)) {
     agents.push({
       role: 'holistic-reviewer',
       roleType: PHASE_ROLE_TYPE.holistic,
@@ -195,7 +251,13 @@ function buildAgents(phases: Phases, runStatus: string): AgentConfig[] {
     });
   }
 
-  const orchestrator = buildOrchestratorAgent(phases, runStatus, agents);
+  return agents;
+}
+
+function buildAgents(phases: Phases, runStatus: string, currentPhase?: PhaseName): AgentConfig[] {
+  const agents = buildPhaseAgents(phases, currentPhase);
+
+  const orchestrator = buildOrchestratorAgent(phases, runStatus, agents, currentPhase);
   if (orchestrator !== undefined) {
     agents.push(orchestrator);
   }
@@ -212,9 +274,10 @@ function buildArtifacts(phases: Phases): ArtifactConfig[] {
 }
 
 export function createSceneConfig(status: CanonicalRunStatus): SceneConfig {
-  const stations = buildStations(status);
+  const currentPhase = findCurrentPhase(status.phases, status.phaseDecisions, status.status);
+  const stations = buildStations(status, currentPhase);
   const gates = buildGates(stations);
-  const agents = buildAgents(status.phases, status.status);
+  const agents = buildAgents(status.phases, status.status, currentPhase);
   const artifacts = buildArtifacts(status.phases);
 
   return { stations, gates, agents, artifacts };

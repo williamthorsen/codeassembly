@@ -172,8 +172,8 @@ describe('FactoryScene', () => {
 
       scene.onInitialize();
 
-      // 7 stations + 6 gates + 0 agents + 0 artifacts + 1 platform = 14
-      expect(mockSceneAdd).toHaveBeenCalledTimes(14);
+      // 7 stations + 6 gates + 2 agents (inferred architect + orchestrator) + 0 artifacts + 1 platform = 16
+      expect(mockSceneAdd).toHaveBeenCalledTimes(16);
     });
   });
 
@@ -254,11 +254,12 @@ describe('FactoryScene', () => {
       // Static rebuild clears the scene
       expect(mockSceneClear).toHaveBeenCalledTimes(1);
 
-      // New agents should be added (architect + orchestrator at active phase)
+      // Agents added: architect (from data) + planner (inferred current) + orchestrator
       const agentCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'agent');
-      expect(agentCalls).toHaveLength(2);
+      expect(agentCalls).toHaveLength(3);
       const agentKeys = agentCalls.map((call: unknown[]) => getActorFromCall(call).agentKey);
       expect(agentKeys).toContain('architect');
+      expect(agentKeys).toContain('planner');
       expect(agentKeys).toContain('orchestrator');
     });
   });
@@ -269,8 +270,8 @@ describe('FactoryScene', () => {
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
-      // 1 platform + 7 stations + 6 gates + 0 agents + 0 artifacts + 0 ladders = 14
-      expect(mockSceneAdd).toHaveBeenCalledTimes(14);
+      // 1 platform + 7 stations + 6 gates + 2 agents (inferred architect + orchestrator) + 0 artifacts + 0 ladders = 16
+      expect(mockSceneAdd).toHaveBeenCalledTimes(16);
     });
 
     it('adds correct number of actors for a completed run', () => {
@@ -603,7 +604,8 @@ describe('FactoryScene', () => {
       const scene = new FactoryScene(status);
       scene.onInitialize();
 
-      // Update with no phases (architect removed)
+      // Update with empty phases: planner (inferred from architecture data) fades out,
+      // architect stays (inferred as current phase with empty phases)
       scene.updateStatus(createMockRunStatus({ status: 'in_progress' }));
 
       // Fade should be called with opacity 0 and 300ms duration
