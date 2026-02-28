@@ -15,6 +15,9 @@ import {
   IDLE_DURATION,
   IDLE_FRAME_COORDINATES,
   IDLE_STRATEGY,
+  RESTING_DURATION,
+  RESTING_FRAME_COORDINATES,
+  RESTING_STRATEGY,
   SPRITE_SIZE,
   WALKING_DURATION,
   WALKING_FRAME_COORDINATES,
@@ -31,6 +34,7 @@ const walkingCache = new Map<RoleType, Animation>();
 const workingCache = new Map<RoleType, Animation>();
 const celebratingCache = new Map<RoleType, Animation>();
 const concernedCache = new Map<RoleType, Animation>();
+const restingCache = new Map<RoleType, Animation>();
 
 function getOrCreateSpriteSheet(roleType: RoleType): SpriteSheet {
   const cached = spriteSheetCache.get(roleType);
@@ -144,6 +148,24 @@ export function getConcernedAnimation(roleType: RoleType): Animation {
   return animation;
 }
 
+/** Return a cached resting animation for the given role type. */
+export function getRestingAnimation(roleType: RoleType): Animation {
+  const cached = restingCache.get(roleType);
+  if (cached) return cached;
+
+  const spriteSheet = getOrCreateSpriteSheet(roleType);
+  const animation = Animation.fromSpriteSheetCoordinates({
+    spriteSheet,
+    // Spread required: Excalibur's type expects a mutable array
+    frameCoordinates: [...RESTING_FRAME_COORDINATES],
+    durationPerFrame: RESTING_DURATION,
+    strategy: RESTING_STRATEGY,
+  });
+
+  restingCache.set(roleType, animation);
+  return animation;
+}
+
 /** Preload animations for all role types and load their image data. */
 export async function loadAllSprites(): Promise<void> {
   for (const roleType of ROLE_TYPES) {
@@ -152,6 +174,7 @@ export async function loadAllSprites(): Promise<void> {
     getWorkingAnimation(roleType);
     getCelebratingAnimation(roleType);
     getConcernedAnimation(roleType);
+    getRestingAnimation(roleType);
   }
   await Promise.all([...imageSourceCache.values()].map((source) => source.load()));
 }
@@ -165,4 +188,5 @@ export function clearSpriteCache(): void {
   workingCache.clear();
   celebratingCache.clear();
   concernedCache.clear();
+  restingCache.clear();
 }

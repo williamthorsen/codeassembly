@@ -1,6 +1,6 @@
 import type { PhaseName } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES } from '../../../shared/constants/role-types.js';
-import { findCurrentPhase } from '../../../shared/phase-inference.js';
+import { findCurrentPhase, isPhaseEvaluated } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, Phases, PhaseStatus } from '../../../shared/types/canonical.js';
 import type { AgentConfig } from '../mappers/run-to-scene.js';
 import type { AgentAnimationState } from '../sprites/sprite-definitions.js';
@@ -62,10 +62,12 @@ function buildStateInfo(agent: AgentConfig, animationState: AgentAnimationState)
  * Resolution priority:
  * 1. Run completed -> all agents celebrating
  * 2. Run failed -> all agents concerned
- * 3. Agent is orchestrator -> idle
+ * 3. Agent is orchestrator -> resting
  * 4. Agent's station is inferred current phase -> working
  * 5. Agent's phase in_progress -> working
- * 6. Otherwise -> idle
+ * 6. Agent's phase has been evaluated (data written) -> resting
+ * 7. Agent's station is behind the current phase -> resting
+ * 8. Otherwise -> idle
  */
 export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: CanonicalRunStatus): AgentStateInfo[] {
   if (status.status === 'completed') {
@@ -82,10 +84,10 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
   // Note: Terminal state checks (completed/failed) above must remain before this
   // per-agent mapping so that orchestrators correctly show celebrating/concerned states.
   return agents.map((agent) => {
-    // Orchestrators use 'idle' as their default in-progress state because they
+    // Orchestrators use 'resting' as their default in-progress state because they
     // walk between stations; movement is animated separately via walkPath.
     if (agent.roleType === 'orchestrator') {
-      return buildStateInfo(agent, 'idle');
+      return buildStateInfo(agent, 'resting');
     }
 
     // Agents at the inferred current phase station should animate as working
@@ -94,9 +96,19 @@ export function resolveAgentStates(agents: ReadonlyArray<AgentConfig>, status: C
       return buildStateInfo(agent, 'working');
     }
 
-    const animationState: AgentAnimationState = isPhaseInProgress(agent.stationIndex, status.phases)
-      ? 'working'
-      : 'idle';
-    return buildStateInfo(agent, animationState);
+    if (isPhaseInProgress(agent.stationIndex, status.phases)) {
+      return buildStateInfo(agent, 'working');
+    }
+
+    const phaseName = PHASE_NAMES[agent.stationIndex];
+    if (phaseName !== undefined && isPhaseEvaluated(phaseName, status.phases)) {
+      return buildStateInfo(agent, 'resting');
+    }
+
+    if (agent.stationIndex < currentPhaseIndex) {
+      return buildStateInfo(agent, 'resting');
+    }
+
+    return buildStateInfo(agent, 'idle');
   });
 }

@@ -11,6 +11,7 @@ const {
   mockGetWorkingAnimation,
   mockGetCelebratingAnimation,
   mockGetConcernedAnimation,
+  mockGetRestingAnimation,
   mockIndicatorShow,
   mockIndicatorHide,
   mockIndicatorKill,
@@ -29,6 +30,7 @@ const {
     mockGetWorkingAnimation: vi.fn(() => ({ id: 'working-animation' })),
     mockGetCelebratingAnimation: vi.fn(() => ({ id: 'celebrating-animation' })),
     mockGetConcernedAnimation: vi.fn(() => ({ id: 'concerned-animation' })),
+    mockGetRestingAnimation: vi.fn(() => ({ id: 'resting-animation' })),
     mockIndicatorShow: vi.fn(),
     mockIndicatorHide: vi.fn(),
     mockIndicatorKill: vi.fn(),
@@ -79,6 +81,7 @@ vi.mock('../../sprites/agent-sprite-loader.js', () => ({
   getWorkingAnimation: mockGetWorkingAnimation,
   getCelebratingAnimation: mockGetCelebratingAnimation,
   getConcernedAnimation: mockGetConcernedAnimation,
+  getRestingAnimation: mockGetRestingAnimation,
 }));
 
 vi.mock('../../sprites/sprite-definitions.js', () => ({}));
@@ -190,6 +193,16 @@ describe('AgentActor', () => {
 
       expect(mockGetConcernedAnimation).toHaveBeenCalledWith('author');
       expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'concerned-animation' });
+    });
+
+    it('switches to resting animation', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      mockGraphicsUse.mockClear();
+
+      actor.setAnimationState('resting');
+
+      expect(mockGetRestingAnimation).toHaveBeenCalledWith('orchestrator');
+      expect(mockGraphicsUse).toHaveBeenCalledWith({ id: 'resting-animation' });
     });
 
     it('does not trigger graphics.use when setting same state', () => {

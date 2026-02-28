@@ -6,6 +6,7 @@ import {
   getCelebratingAnimation,
   getConcernedAnimation,
   getIdleAnimation,
+  getRestingAnimation,
   getWalkingAnimation,
   getWorkingAnimation,
 } from '../sprites/agent-sprite-loader.js';
@@ -26,6 +27,8 @@ function getAnimationForState(state: AgentAnimationState, roleType: RoleType) {
       return getCelebratingAnimation(roleType);
     case 'concerned':
       return getConcernedAnimation(roleType);
+    case 'resting':
+      return getRestingAnimation(roleType);
     default: {
       // Exhaustive check: ensure all AgentAnimationState values are handled
       const _exhaustive: never = state;

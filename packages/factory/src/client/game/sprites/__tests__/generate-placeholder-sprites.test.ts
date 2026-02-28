@@ -22,14 +22,14 @@ describe('generateSpriteSheetSvg', () => {
       expect(svg).toMatch(/<\/svg>$/);
     });
 
-    it('has correct dimensions (96x96 for 3x3 grid)', () => {
+    it('has correct dimensions (128x96 for 4x3 grid)', () => {
       const svg = generateSpriteSheetSvg('orchestrator');
 
-      expect(svg).toContain('width="96"');
+      expect(svg).toContain('width="128"');
       expect(svg).toContain('height="96"');
     });
 
-    it('contains 9 frames total (2 idle + 1 walking + 3 working + 2 celebrating + 1 concerned)', () => {
+    it('contains 12 frames total (2 idle + 1 walking + 3 working + 2 celebrating + 1 concerned + 3 resting)', () => {
       const svg = generateSpriteSheetSvg('orchestrator');
 
       // Idle: 3 elements each (circle + rect + line) x 2 = 6
@@ -37,18 +37,18 @@ describe('generateSpriteSheetSvg', () => {
       // Working: 3 elements each x 3 = 9
       // Celebrating: 4 elements each (circle + rect + 2 lines) x 2 = 8
       // Concerned: 4 elements (circle + rect + 2 lines) x 1 = 4
+      // Resting: 3 elements each (circle + rect + line) x 3 = 9
       const circleCount = (svg.match(/<circle /g) ?? []).length;
       const rectCount = (svg.match(/<rect /g) ?? []).length;
       const lineCount = (svg.match(/<line /g) ?? []).length;
 
-      // 9 frames, each has 1 circle
-      expect(circleCount).toBe(9);
-      // 9 frames, each has 1 rect
-      expect(rectCount).toBe(9);
-      // 5 single-arm frames + 3 dual-arm frames = 5 + 6 = 11
-      // Single-arm: 2 idle + 1 walking + 3 working = 6
+      // 12 frames, each has 1 circle
+      expect(circleCount).toBe(12);
+      // 12 frames, each has 1 rect
+      expect(rectCount).toBe(12);
+      // Single-arm: 2 idle + 1 walking + 3 working + 3 resting = 9
       // Dual-arm: 2 celebrating + 1 concerned = 3 (each has 2 lines)
-      expect(lineCount).toBe(6 + 6);
+      expect(lineCount).toBe(9 + 6);
     });
   });
 
@@ -178,6 +178,19 @@ describe('generateSpriteSheetSvg', () => {
       // Right arm: (80, 82) -> (85, 74)
       expect(svg).toContain('x1="80" y1="82" x2="75" y2="74"');
       expect(svg).toContain('x1="80" y1="82" x2="85" y2="74"');
+    });
+  });
+
+  describe('resting frames (col 3, rows 0-2)', () => {
+    it('positions resting frame heads in column 3 with no y-offset', () => {
+      const svg = generateSpriteSheetSvg('orchestrator');
+
+      // Col 3, row 0: cx = 3*32 + 16 = 112, headCy = 0*32 + 10 + 0 = 10
+      expect(svg).toContain('cx="112" cy="10"');
+      // Col 3, row 1: cx = 112, headCy = 32 + 10 = 42
+      expect(svg).toContain('cx="112" cy="42"');
+      // Col 3, row 2: cx = 112, headCy = 64 + 10 = 74
+      expect(svg).toContain('cx="112" cy="74"');
     });
   });
 });
