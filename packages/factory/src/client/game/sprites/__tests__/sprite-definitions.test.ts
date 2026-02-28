@@ -21,6 +21,9 @@ const {
   IDLE_DURATION,
   IDLE_FRAME_COORDINATES,
   IDLE_STRATEGY,
+  RESTING_DURATION,
+  RESTING_FRAME_COORDINATES,
+  RESTING_STRATEGY,
   WALKING_DURATION,
   WALKING_FRAME_COORDINATES,
   WALKING_STRATEGY,
@@ -33,8 +36,8 @@ const { AnimationStrategy } = await import('excalibur');
 
 describe('sprite definitions', () => {
   describe('grid dimensions', () => {
-    it('has 3 columns', () => {
-      expect(GRID_COLUMNS).toBe(3);
+    it('has 4 columns', () => {
+      expect(GRID_COLUMNS).toBe(4);
     });
 
     it('has 3 rows', () => {
@@ -114,6 +117,29 @@ describe('sprite definitions', () => {
 
     it('has 1 frame', () => {
       expect(CONCERNED_FRAME_COORDINATES).toHaveLength(1);
+    });
+  });
+
+  describe('resting frame coordinates', () => {
+    it('contains coordinates within grid bounds', () => {
+      for (const coord of RESTING_FRAME_COORDINATES) {
+        expect(coord.x).toBeGreaterThanOrEqual(0);
+        expect(coord.x).toBeLessThan(GRID_COLUMNS);
+        expect(coord.y).toBeGreaterThanOrEqual(0);
+        expect(coord.y).toBeLessThan(GRID_ROWS);
+      }
+    });
+
+    it('has 3 frames', () => {
+      expect(RESTING_FRAME_COORDINATES).toHaveLength(3);
+    });
+
+    it('has a positive duration', () => {
+      expect(RESTING_DURATION).toBeGreaterThan(0);
+    });
+
+    it('uses PingPong strategy', () => {
+      expect(RESTING_STRATEGY).toBe(AnimationStrategy.PingPong);
     });
   });
 

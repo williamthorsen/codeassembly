@@ -96,12 +96,15 @@ function renderConcernedFrame(color: string, col: number, row: number): string {
 // Celebrating arm angles in degrees (row 2, cols 0-1)
 const CELEBRATING_ARM_ANGLES = [45, 60];
 
+// Resting arm angles in degrees (col 3, rows 0-2)
+const RESTING_ARM_ANGLES = [45, 80, -45];
+
 /**
  * Generate a placeholder sprite sheet SVG for the given role type.
- * The output is a 96x96 image (3 columns x 3 rows of 32x32 frames).
- * Row 0: idle frames (cols 0-1), walking frame (col 2).
- * Row 1: working frames (cols 0-2).
- * Row 2: celebrating frames (cols 0-1), concerned frame (col 2).
+ * The output is a 128x96 image (4 columns x 3 rows of 32x32 frames).
+ * Row 0: idle frames (cols 0-1), walking frame (col 2), resting frame 1 (col 3).
+ * Row 1: working frames (cols 0-2), resting frame 2 (col 3).
+ * Row 2: celebrating frames (cols 0-1), concerned frame (col 2), resting frame 3 (col 3).
  */
 export function generateSpriteSheetSvg(roleType: RoleType): string {
   const color = ROLE_TYPE_COLORS[roleType];
@@ -116,8 +119,8 @@ export function generateSpriteSheetSvg(roleType: RoleType): string {
   frames.push(renderWalkingFrame(color, 2, 0));
 
   // Row 1: working frames (cols 0-2)
-  for (let col = 0; col < GRID_COLUMNS; col++) {
-    frames.push(renderFrame(color, col, 1, 0, WORKING_ARM_ANGLES[col] ?? 0));
+  for (const [col, WORKING_ARM_ANGLE] of WORKING_ARM_ANGLES.entries()) {
+    frames.push(renderFrame(color, col, 1, 0, WORKING_ARM_ANGLE));
   }
 
   // Row 2: celebrating frames (cols 0-1)
@@ -127,6 +130,11 @@ export function generateSpriteSheetSvg(roleType: RoleType): string {
 
   // Row 2, col 2: concerned frame
   frames.push(renderConcernedFrame(color, 2, 2));
+
+  // Column 3: resting frames (rows 0-2)
+  for (let row = 0; row < GRID_ROWS; row++) {
+    frames.push(renderFrame(color, 3, row, 0, RESTING_ARM_ANGLES[row] ?? 0));
+  }
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${SHEET_WIDTH}" height="${SHEET_HEIGHT}">`,

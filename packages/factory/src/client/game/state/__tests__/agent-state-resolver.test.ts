@@ -126,8 +126,8 @@ describe('resolveAgentStates', () => {
     });
   });
 
-  describe('idle fallback', () => {
-    it('assigns idle to agent whose phase is completed', () => {
+  describe('resting and idle fallback', () => {
+    it('assigns resting to agent whose phase is completed', () => {
       const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -139,12 +139,41 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('idle');
+      expect(result[0]?.animationState).toBe('resting');
     });
 
     it('assigns idle to agent when no phases are active on non-in_progress runs', () => {
       const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
       const status = createMockRunStatus({ status: 'needs_manual_review' });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('idle');
+    });
+
+    it('assigns resting to agent at past station (stationIndex < currentPhaseIndex, no phase data written)', () => {
+      const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: {
+          architecture: { run: false, reason: 'skipped' },
+          planning: { run: true, reason: undefined },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('resting');
+    });
+
+    it('assigns idle to agent at future station (not yet started)', () => {
+      const agents = [createAgent({ role: 'planner', roleType: 'planner', stationIndex: 1 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        phaseDecisions: { architecture: { run: true, reason: undefined } },
+      });
 
       const result = resolveAgentStates(agents, status);
 
@@ -204,7 +233,7 @@ describe('resolveAgentStates', () => {
       expect(result[0]?.animationState).toBe('working');
     });
 
-    it('assigns idle to review agents when all parallelReview reviewers are completed', () => {
+    it('assigns resting to review agents when all parallelReview reviewers are completed', () => {
       const agents = [createAgent({ role: 'correctness-reviewer', roleType: 'reviewer', stationIndex: 3 })];
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -231,7 +260,7 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('idle');
+      expect(result[0]?.animationState).toBe('resting');
     });
   });
 
@@ -251,7 +280,7 @@ describe('resolveAgentStates', () => {
       expect(result[0]?.animationState).toBe('working');
     });
 
-    it('assigns idle to agent whose phase is completed during needs_manual_review', () => {
+    it('assigns resting to agent whose phase is completed during needs_manual_review', () => {
       const agents = [
         createAgent({ role: 'architect', stationIndex: 0 }),
         createAgent({ role: 'planner', roleType: 'planner', stationIndex: 1 }),
@@ -267,13 +296,13 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('idle');
+      expect(result[0]?.animationState).toBe('resting');
       expect(result[1]?.animationState).toBe('working');
     });
   });
 
   describe('orchestrator animation state', () => {
-    it('assigns idle to orchestrator during in_progress', () => {
+    it('assigns resting to orchestrator during in_progress', () => {
       const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 0 })];
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -285,7 +314,7 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('idle');
+      expect(result[0]?.animationState).toBe('resting');
     });
 
     it('assigns celebrating to orchestrator when completed', () => {
@@ -366,7 +395,7 @@ describe('resolveAgentStates', () => {
       expect(result[0]?.animationState).toBe('working');
     });
 
-    it('assigns idle to agent at architecture station when currentPhase is planning', () => {
+    it('assigns resting to agent at architecture station when currentPhase is planning', () => {
       const agents = [createAgent({ role: 'architect', stationIndex: 0 })];
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -382,10 +411,10 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('idle');
+      expect(result[0]?.animationState).toBe('resting');
     });
 
-    it('assigns idle to orchestrator even when currentPhase matches its station', () => {
+    it('assigns resting to orchestrator even when currentPhase matches its station', () => {
       const agents = [createAgent({ role: 'orchestrator', roleType: 'orchestrator', stationIndex: 0 })];
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -395,7 +424,7 @@ describe('resolveAgentStates', () => {
 
       const result = resolveAgentStates(agents, status);
 
-      expect(result[0]?.animationState).toBe('idle');
+      expect(result[0]?.animationState).toBe('resting');
     });
 
     it('assigns working when phaseDecisions is undefined and phases is empty', () => {

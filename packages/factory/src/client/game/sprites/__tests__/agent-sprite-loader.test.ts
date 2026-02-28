@@ -38,6 +38,7 @@ const {
   getCelebratingAnimation,
   getConcernedAnimation,
   getIdleAnimation,
+  getRestingAnimation,
   getWalkingAnimation,
   getWorkingAnimation,
   loadAllSprites,
@@ -53,6 +54,9 @@ const {
   IDLE_DURATION,
   IDLE_FRAME_COORDINATES,
   IDLE_STRATEGY,
+  RESTING_DURATION,
+  RESTING_FRAME_COORDINATES,
+  RESTING_STRATEGY,
   WALKING_DURATION,
   WALKING_FRAME_COORDINATES,
   WALKING_STRATEGY,
@@ -92,7 +96,7 @@ describe('agent-sprite-loader', () => {
         image: expect.objectContaining({ type: 'imageSource' }),
         grid: {
           rows: 3,
-          columns: 3,
+          columns: 4,
           spriteWidth: 32,
           spriteHeight: 32,
         },
@@ -195,6 +199,27 @@ describe('agent-sprite-loader', () => {
     });
   });
 
+  describe('getRestingAnimation', () => {
+    it('returns a cached animation on repeated calls for the same roleType', () => {
+      const first = getRestingAnimation('orchestrator');
+      const second = getRestingAnimation('orchestrator');
+
+      expect(first).toBe(second);
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(1);
+    });
+
+    it('passes correct animation parameters for resting', () => {
+      getRestingAnimation('planner');
+
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledWith({
+        spriteSheet: expect.objectContaining({ type: 'spriteSheet' }),
+        frameCoordinates: RESTING_FRAME_COORDINATES,
+        durationPerFrame: RESTING_DURATION,
+        strategy: RESTING_STRATEGY,
+      });
+    });
+  });
+
   describe('sprite sheet caching', () => {
     it('creates only one ImageSource per roleType when all animations are requested', () => {
       getIdleAnimation('orchestrator');
@@ -202,6 +227,7 @@ describe('agent-sprite-loader', () => {
       getWorkingAnimation('orchestrator');
       getCelebratingAnimation('orchestrator');
       getConcernedAnimation('orchestrator');
+      getRestingAnimation('orchestrator');
 
       expect(mockFromSvgString).toHaveBeenCalledTimes(1);
     });
@@ -219,6 +245,7 @@ describe('agent-sprite-loader', () => {
       getWorkingAnimation('planner');
       getCelebratingAnimation('planner');
       getConcernedAnimation('planner');
+      getRestingAnimation('planner');
 
       expect(mockFromImageSource).toHaveBeenCalledTimes(1);
     });
@@ -248,6 +275,7 @@ describe('agent-sprite-loader', () => {
       getWorkingAnimation('analyst');
       getCelebratingAnimation('analyst');
       getConcernedAnimation('analyst');
+      getRestingAnimation('analyst');
       clearSpriteCache();
 
       getIdleAnimation('analyst');
@@ -255,9 +283,10 @@ describe('agent-sprite-loader', () => {
       getWorkingAnimation('analyst');
       getCelebratingAnimation('analyst');
       getConcernedAnimation('analyst');
+      getRestingAnimation('analyst');
 
-      // 5 before clear + 5 after clear = 10
-      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(10);
+      // 6 before clear + 6 after clear = 12
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(12);
     });
   });
 
@@ -265,8 +294,8 @@ describe('agent-sprite-loader', () => {
     it('preloads animations for all 5 roleTypes', async () => {
       await loadAllSprites();
 
-      // 5 calls per roleType (idle + walking + working + celebrating + concerned) x 5 roleTypes = 25
-      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(25);
+      // 6 calls per roleType (idle + walking + working + celebrating + concerned + resting) x 5 roleTypes = 30
+      expect(mockFromSpriteSheetCoordinates).toHaveBeenCalledTimes(30);
     });
 
     it('calls load() on all image sources', async () => {
