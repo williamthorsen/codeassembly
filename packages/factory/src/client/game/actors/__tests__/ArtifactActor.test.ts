@@ -110,12 +110,12 @@ describe('ArtifactActor', () => {
   });
 
   it('uses provided size when size argument is passed', () => {
-    new ArtifactActor('architecture', vec(50, 75), { width: 12, height: 12 });
+    new ArtifactActor('architecture', vec(50, 75), { width: 20, height: 8 });
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        width: 12,
-        height: 12,
+        width: 20,
+        height: 8,
       }),
     );
   });
