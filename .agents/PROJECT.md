@@ -2,7 +2,113 @@
 
 ## Project structure
 
-This is a Pnpm monorepo centered around agentic code-orchestration flows.
+This is a pnpm monorepo centered around agentic code-orchestration flows. It contains two packages:
+
+- **Agents** (`packages/agents/`) — a CLI tool and content library of reusable AI agent skills and subagent definitions that power orchestrated development workflows
+- **Factory** (`packages/factory/`) — a web-based visualization that renders orchestration runs as an interactive 2D game scene
+
+The two packages share a domain model: the orchestration skills (agents) write `run-index.json` artifacts during runs, and Factory reads and visualizes them. Co-locating both in this monorepo ensures schema changes can be made atomically.
+
+### Agents (`packages/agents/`)
+
+The agents package is a CLI tool (`codeassembly-agents`) that installs reusable AI skills and subagent definitions into platform-specific directories. It also serves as the canonical home for all skill and subagent content.
+
+**Package:** `@codeassembly/agents` (private)
+
+**CLI commands:**
+
+| Command     | Description                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| `install`   | Copies or symlinks skills and subagents into platform directories |
+| `uninstall` | Removes previously installed items (respects drift detection)     |
+| `status`    | Shows current vs modified vs missing installed items              |
+
+Key flags: `--platform <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`.
+
+**Supported platforms:**
+
+- **Claude Code** (`claude`) — installs into `~/.claude/skills/` and `~/.claude/agents/`
+- **Rovo Dev** (`rovodev`) — installs into `~/.rovodev/skills/` and `~/.rovodev/subagents/`
+
+**Source layout:**
+
+```
+packages/agents/
+  src/
+    cli.ts                         # CLI entry point (Commander-based)
+    lib/
+      types.ts                     # Core interfaces: PlatformId, ManifestEntry, InstallOptions
+      platform.ts                  # Platform config table, detection, path resolution
+      manifest.ts                  # ~/.codeassembly/agents-manifest.json; SHA-256 hashing; drift detection
+      installer.ts                 # copyItem(), linkItem(), removeItem(), checkSymlinkSafety()
+      content-resolver.ts          # Resolves content/ dir in dev vs built layouts
+      frontmatter-merger.ts        # Parses YAML frontmatter; merges platform overrides from _data/*.yml
+      __tests__/                   # Unit tests for library modules
+  content/                         # Skill and subagent definitions (see below)
+  scripts/
+    copy-content.ts                # Post-compile: copies content/ to dist/, adds shebang to CLI
+```
+
+**Content directory:**
+
+```
+content/
+  skills/
+    _data/                         # Shared reference data (not skills themselves)
+      artifact-conventions.md      # run-index.json schema, artifact naming conventions
+      branch-format.md             # Branch naming specification
+      case-conventions.md          # Naming conventions
+      commit-format.md             # Commit title format specification
+      git-commands.md              # Git command reference
+      work-types.md                # Commit work-type taxonomy
+    {skill-name}/SKILL.md          # Each skill is a directory with a single SKILL.md file
+    orchestrate/                   # Multi-file skill with sub-modules
+      SKILL.md
+      modules/
+        review-cycle.md
+  subagents/
+    _data/
+      claude.yml                   # Platform frontmatter overrides for Claude Code
+      rovodev.yml                  # Platform frontmatter overrides for Rovo Dev
+    {agent-name}.md                # Each subagent is a single .md file
+```
+
+**Skill frontmatter:** `name`, `description`, `user-invocable` (true = directly invocable, false = internal/referenced by other skills).
+
+**Subagent frontmatter:** `name`, `description`, `tools` (allowed tools), `maxTurns`, `skills` (injected skill references).
+
+**Platform overlay mechanism:** `claude.yml` and `rovodev.yml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
+
+#### The orchestration system
+
+The skills implement a multi-phase agentic development pipeline. Entry points:
+
+- **`/orchestrate-dev`** — full workflow: architecture (optional) -> planning (optional) -> implementation -> review cycle
+- **`/orchestrate-review`** — review-only workflow for manually written code
+
+The `orchestrate` skill is the internal pipeline engine. It:
+
+1. Generates a run ID, writes `run-manifest.md` and `run-index.json`
+2. Dispatches subagents via the Task tool for each phase
+3. Runs a review cycle (parallel aspect reviewers + code-simplifier + holistic review)
+4. Writes `run-summary.md` and finalizes `run-index.json`
+
+**Subagent roles:**
+
+| Subagent                         | Phase             | Purpose                                                                |
+| -------------------------------- | ----------------- | ---------------------------------------------------------------------- |
+| `orchestrated-architect`         | Architecture      | Assesses architectural impact; classifies as none/low/medium/high      |
+| `orchestrated-planner`           | Planning          | Creates ordered implementation plans (.md + .json)                     |
+| `orchestrated-coder`             | Implementation    | Implements code, runs quality gates, commits, writes change-summary.md |
+| `orchestrated-reviewer`          | Review + Holistic | Structured code review with F/W/T/R/S/L finding scheme                 |
+| `aspect-code-reviewer`           | Review (parallel) | Focused on CLAUDE.md compliance, bugs, logic errors                    |
+| `aspect-silent-failure-reviewer` | Review (parallel) | Focused on error-handling and silent failures                          |
+| `aspect-test-reviewer`           | Review (parallel) | Focused on test coverage quality and behavioral gaps                   |
+| `planner`                        | Standalone        | Breaks stories into independently orchestrable steps                   |
+
+**Artifact storage:** `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/{run-id}/`
+
+**Flow control:** Each subagent returns a structured block with `Criticality`, `Impact`, `Steps`, and `Status` that the orchestrator parses.
 
 ### Factory (`packages/factory/`)
 
@@ -18,6 +124,7 @@ packages/factory/src/
     components/              # React UI: GameCanvas, RunSelector, StatusBar
     game/
       actors/                # Excalibur actors: AgentActor, StationActor, GateActor, ArtifactActor
+      layout/                # Platform/station positioning, walk paths
       mappers/               # run-to-scene: converts CanonicalRunStatus -> SceneConfig
       scenes/                # FactoryScene: orchestrates actors, diffing, camera
       sprites/               # Sprite sheet generation, caching, animation definitions
@@ -48,6 +155,8 @@ packages/factory/src/
 - **Color palette:** CGA-16 colors in `palette.ts`, role-type colors derived from it
 - **Run statuses:** `in_progress`, `completed`, `failed`, `needs_manual_review`
 
+**Connection to agents:** Factory's `status-adapter.ts` parses the `run-index.json` files that the orchestration engine writes. The schema is defined in `content/skills/_data/artifact-conventions.md` (agents) and represented as TypeScript types in `shared/types/canonical.ts` (factory). When the schema changes, both must be updated together.
+
 ## Common commands
 
 **Root-level development:**
@@ -76,6 +185,13 @@ packages/factory/src/
 - `pnpm run ws lint` - Lint
 - `pnpm run ws typecheck` - TypeScript check
 
+**Agents package (`packages/agents/`):**
+
+- `pnpm run build` - Compile TypeScript + copy content to dist
+- `pnpm run ws test` - Run tests
+- `pnpm run ws lint` - Lint
+- `pnpm run ws typecheck` - TypeScript check
+
 ## Architecture
 
 ### Root-level tests
@@ -97,6 +213,13 @@ packages/factory/src/
 - Intelligent caching based on content hashes
 - Automatic `.ts` to `.js` extension rewriting
 - Alias resolution support (`~src/` -> `src/`)
+- Factory uses Vite with `@vitejs/plugin-react` for the web app
+
+### TypeScript
+
+- Strict mode across all packages (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitReturns`)
+- `moduleResolution: NodeNext`, `target: ES2022`
+- Type checking via `tsgo` (`@typescript/native-preview`) for speed
 
 ### Testing
 
