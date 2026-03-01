@@ -95,7 +95,7 @@ export class FactoryScene extends Scene {
       const station = config.stations[i];
       const pos = layout.stationPositions[i];
       if (station === undefined || pos === undefined) continue;
-      this.add(new StationActor(station.phase, station.active, vec(pos.x, pos.y)));
+      this.add(new StationActor(station.role, station.active, vec(pos.x, pos.y)));
     }
   }
 

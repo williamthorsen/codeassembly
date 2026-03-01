@@ -1,12 +1,13 @@
-import { Actor, Color, Font, GraphicsGroup, Rectangle, Text, vec, type Vector } from 'excalibur';
+import { Actor, Color, Font, GraphicsGroup, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
 import { PALETTE } from '../../../shared/constants/palette.js';
 
 const STATION_WIDTH = 100;
 const STATION_HEIGHT = 40;
+const PLATFORM_HEIGHT = 20;
 
 export class StationActor extends Actor {
-  constructor(phase: string, active: boolean, position: Vector) {
+  constructor(role: string, active: boolean, position: Vector) {
     const color = active ? PALETTE.lightGray : PALETTE.darkGray;
     super({
       pos: position,
@@ -25,15 +26,15 @@ export class StationActor extends Actor {
     const labelColor = Color.fromHex(PALETTE.white);
     labelColor.a = 0.6;
     const label = new Text({
-      text: phase,
+      text: role,
       color: labelColor,
-      font: new Font({ size: 10 }),
+      font: new Font({ size: 10, textAlign: TextAlign.Center }),
     });
 
     const group = new GraphicsGroup({
       members: [
         { graphic: rect, offset: vec(0, 0) },
-        { graphic: label, offset: vec(10, STATION_HEIGHT / 2 - 5), useBounds: false },
+        { graphic: label, offset: vec(STATION_WIDTH / 2, STATION_HEIGHT / 2 + PLATFORM_HEIGHT / 2 - 5), useBounds: false },
       ],
     });
 
