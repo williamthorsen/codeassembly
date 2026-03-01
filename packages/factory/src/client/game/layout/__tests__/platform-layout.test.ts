@@ -249,6 +249,14 @@ describe('computeLayout', () => {
       expect(pos2.x - pos0.x).toBe(32);
     });
 
+    it('respects custom artifactOffsetY', () => {
+      const layout = computeLayout(0, { artifactOffsetY: -80 });
+      const pos = layout.artifactPosition(0, 0);
+
+      // y = baseY(400) + artifactOffsetY(-80) = 320
+      expect(pos.y).toBe(320);
+    });
+
     it('respects custom artifactOffsetX, artifactGap, and artifactSize', () => {
       const layout = computeLayout(0, {
         artifactOffsetX: 10,

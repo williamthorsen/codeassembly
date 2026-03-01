@@ -87,13 +87,13 @@ describe('ArtifactActor', () => {
     );
   });
 
-  it('sets correct dimensions', () => {
+  it('falls back to 12x12 when size argument is omitted', () => {
     new ArtifactActor('architecture', vec(50, 75));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        width: 15,
-        height: 15,
+        width: 12,
+        height: 12,
       }),
     );
   });

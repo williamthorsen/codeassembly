@@ -14,7 +14,7 @@ export const ARTIFACT_COLORS: Record<string, string> = {
 export class ArtifactActor extends Actor {
   constructor(type: string, position: Vector, size?: { width: number; height: number }) {
     const color = ARTIFACT_COLORS[type] ?? PALETTE.cyan;
-    const { width, height } = size ?? { width: 15, height: 15 };
+    const { width, height } = size ?? { width: 12, height: 12 };
     super({
       pos: position,
       width,

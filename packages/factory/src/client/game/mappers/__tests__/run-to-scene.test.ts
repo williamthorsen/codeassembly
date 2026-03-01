@@ -870,6 +870,47 @@ describe('createSceneConfig', () => {
       expect(holisticArtifacts[0]).toEqual({ type: 'holistic', stationIndex: 5, indexAtStation: 0 });
     });
 
+    it('does not create holisticReview artifact when artifact is undefined (fallback path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          holisticReview: {
+            status: 'completed',
+            criticality: 'low',
+            reReviewCriticality: undefined,
+            coderFixCycleRan: false,
+            reviewRoundsUsed: 1,
+            artifact: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const holisticArtifacts = config.artifacts.filter((a) => a.stationIndex === 5);
+
+      expect(holisticArtifacts).toHaveLength(0);
+    });
+
+    it('falls back to phase fields when status.artifacts is an empty array', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [],
+      });
+
+      const config = createSceneConfig(status);
+
+      // Empty array triggers fallback path, so phase-based artifacts should be returned
+      expect(config.artifacts).toHaveLength(2);
+      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
+      expect(config.artifacts[1]).toEqual({ type: 'code', stationIndex: 2, indexAtStation: 0 });
+    });
+
     it('does not create codeSimplifier artifact when artifact is undefined (fallback path)', () => {
       const status = createMockRunStatus({
         status: 'completed',
@@ -890,8 +931,24 @@ describe('createSceneConfig', () => {
         status: 'completed',
         phases: createCompletedRunPhases(),
         artifacts: [
-          { filename: 'arch.md', role: 'architect', roleType: 'analyst', agent: 'architect', type: 'architecture', phase: 'architecture', createdAt: '2026-01-01T00:10:00Z' },
-          { filename: 'plan.md', role: 'planner', roleType: 'planner', agent: 'planner', type: 'plan', phase: 'planning', createdAt: '2026-01-01T00:20:00Z' },
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
         ],
       });
 
@@ -925,9 +982,33 @@ describe('createSceneConfig', () => {
       const status = createMockRunStatus({
         status: 'completed',
         artifacts: [
-          { filename: 'plan1.md', role: 'planner', roleType: 'planner', agent: 'planner', type: 'plan', phase: 'planning', createdAt: '2026-01-01T00:10:00Z' },
-          { filename: 'plan2.json', role: 'planner', roleType: 'planner', agent: 'planner', type: 'plan', phase: 'planning', createdAt: '2026-01-01T00:11:00Z' },
-          { filename: 'plan3.md', role: 'planner', roleType: 'planner', agent: 'planner', type: 'plan', phase: 'planning', createdAt: '2026-01-01T00:12:00Z' },
+          {
+            filename: 'plan1.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan2.json',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:11:00Z',
+          },
+          {
+            filename: 'plan3.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:12:00Z',
+          },
         ],
       });
 
@@ -943,7 +1024,15 @@ describe('createSceneConfig', () => {
       const status = createMockRunStatus({
         status: 'completed',
         artifacts: [
-          { filename: 'simplifier.md', role: 'simplifier', roleType: 'reviewer', agent: 'code-simplifier', type: 'simplifier', phase: 'codeSimplifier', createdAt: '2026-01-01T00:40:00Z' },
+          {
+            filename: 'simplifier.md',
+            role: 'simplifier',
+            roleType: 'reviewer',
+            agent: 'code-simplifier',
+            type: 'simplifier',
+            phase: 'codeSimplifier',
+            createdAt: '2026-01-01T00:40:00Z',
+          },
         ],
       });
 
@@ -957,7 +1046,15 @@ describe('createSceneConfig', () => {
       const status = createMockRunStatus({
         status: 'completed',
         artifacts: [
-          { filename: 'holistic.md', role: 'holistic-reviewer', roleType: 'reviewer', agent: 'holistic-reviewer', type: 'holistic', phase: 'holisticReview', createdAt: '2026-01-01T00:50:00Z' },
+          {
+            filename: 'holistic.md',
+            role: 'holistic-reviewer',
+            roleType: 'reviewer',
+            agent: 'holistic-reviewer',
+            type: 'holistic',
+            phase: 'holisticReview',
+            createdAt: '2026-01-01T00:50:00Z',
+          },
         ],
       });
 
@@ -971,8 +1068,24 @@ describe('createSceneConfig', () => {
       const status = createMockRunStatus({
         status: 'completed',
         artifacts: [
-          { filename: 'arch.md', role: 'architect', roleType: 'analyst', agent: 'architect', type: 'architecture', phase: 'architecture', createdAt: '2026-01-01T00:10:00Z' },
-          { filename: 'unknown.md', role: 'unknown', roleType: 'unknown', agent: 'unknown', type: 'unknown', phase: 'unknownPhase', createdAt: '2026-01-01T00:20:00Z' },
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'unknown.md',
+            role: 'unknown',
+            roleType: 'unknown',
+            agent: 'unknown',
+            type: 'unknown',
+            phase: 'unknownPhase',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
         ],
       });
 

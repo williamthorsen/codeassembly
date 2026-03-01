@@ -297,9 +297,9 @@ function buildArtifactsFromPhases(phases: Phases): ArtifactConfig[] {
   }
 
   if (isPresent(phases.planning?.artifacts)) {
-    for (const _artifact of phases.planning.artifacts) {
+    phases.planning.artifacts.forEach(() => {
       artifacts.push({ type: 'plan', stationIndex: 1, indexAtStation: nextIndexAtStation(counter, 1) });
-    }
+    });
   }
 
   if (isPresent(phases.implementation?.artifact)) {
