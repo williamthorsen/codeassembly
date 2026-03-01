@@ -180,35 +180,36 @@ describe('computeLayout', () => {
       expect(pos).toEqual({ x: 650 - 36, y: 400 - 22 - 38 });
     });
 
-    it('returns upper-level position centered on review station', () => {
+    it('returns upper-level position aligned with level-0 stackOffset-0', () => {
       const layout = computeLayout(2);
       const pos = layout.agentPosition(3, 0, 1);
 
-      // stationX = 650, y = 400 - 1*56 - 22
-      expect(pos).toEqual({ x: 650, y: 400 - 56 - 22 });
+      // stationX = 650; col0Offset = (0-1)*36 = -36; x = 614; y = 400 - 56 - 22
+      expect(pos).toEqual({ x: 614, y: 400 - 56 - 22 });
     });
 
     it('returns level-2 position correctly', () => {
       const layout = computeLayout(3);
       const pos = layout.agentPosition(3, 0, 2);
 
-      expect(pos).toEqual({ x: 650, y: 400 - 2 * 56 - 22 });
+      // Same x alignment as level 0: stationX - 36 = 614
+      expect(pos).toEqual({ x: 614, y: 400 - 2 * 56 - 22 });
     });
 
-    it('returns approach position at level 0 (one spacing left of leftmost grid slot)', () => {
+    it('returns approach position at level 0 using approachGap from leftmost grid slot', () => {
       const layout = computeLayout(1);
       const pos = layout.agentPosition(3, 0, 0, true);
 
-      // stationX = 650; approaching x = 650 - 72 = 578; y = 400 - 22 = 378
-      expect(pos).toEqual({ x: 578, y: 378 });
+      // stationX = 650; leftmostSlot = -36; approachGap = 14; x = 650 - 36 - 20 = 594
+      expect(pos).toEqual({ x: 594, y: 378 });
     });
 
-    it('returns approach position at upper level (one spacing left of station center)', () => {
+    it('returns approach position at upper level using approachGap from station center', () => {
       const layout = computeLayout(2);
       const pos = layout.agentPosition(3, 0, 1, true);
 
-      // stationX = 650; approaching x = 650 - 36 = 614; y = 400 - 56 - 22 = 322
-      expect(pos).toEqual({ x: 614, y: 322 });
+      // stationX = 650; approachGap = 20; x = 650 - 20 = 630; y = 400 - 56 - 22 = 322
+      expect(pos).toEqual({ x: 630, y: 322 });
     });
 
     it('ignores stackOffset when approaching is true', () => {
@@ -225,9 +226,9 @@ describe('computeLayout', () => {
       const layout = computeLayout(0);
       const pos = layout.artifactPosition(0, 0);
 
-      // x = startX(200) + 0*stationSpacing(150) + artifactOffsetX(20) + 0*(12+4) = 220
-      // y = baseY(400) + artifactOffsetY(-60) = 340
-      expect(pos).toEqual({ x: 220, y: 340 });
+      // x = startX(200) + 0*stationSpacing(150) + artifactOffsetX(-18) + 0*(12+4) = 182
+      // y = baseY(400) + artifactOffsetY(-36) = 364
+      expect(pos).toEqual({ x: 182, y: 364 });
     });
 
     it('offsets indexAtStation 1 by artifactSize.width + artifactGap from indexAtStation 0', () => {

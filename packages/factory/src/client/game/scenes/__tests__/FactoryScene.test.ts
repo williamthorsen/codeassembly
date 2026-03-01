@@ -436,8 +436,8 @@ describe('FactoryScene', () => {
         .map((call: unknown[]) => getActorFromCall(call))
         .find((actor) => actor.agentKey === 'orchestrator');
 
-      // Station 3 at level 0 with approaching=true: x = 578, y = 378
-      expect(orchestratorActor?.position).toEqual({ x: 578, y: 378 });
+      // Station 3 at level 0 with approaching=true: x = 650 - 36 - 20 = 594, y = 378
+      expect(orchestratorActor?.position).toEqual({ x: 594, y: 378 });
     });
 
     it('places level-0 agents using grid formula', () => {

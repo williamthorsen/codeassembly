@@ -48,6 +48,14 @@ export class FactoryScene extends Scene {
   }
 
   updateStatus(status: CanonicalRunStatus): void {
+    // When the run changes (e.g. switching to demo playback), clear all agent
+    // state so agents are placed at their new positions without walking from
+    // the previous run's layout.
+    if (status.runId !== this.status.runId) {
+      this.agentMap.clear();
+      this.prevAgentConfigs = [];
+    }
+
     this.status = status;
     const config = createSceneConfig(this.status);
     this.rebuildStaticElements(config);
@@ -95,7 +103,10 @@ export class FactoryScene extends Scene {
       const station = config.stations[i];
       const pos = layout.stationPositions[i];
       if (station === undefined || pos === undefined) continue;
-      this.add(new StationActor(station.role, station.active, vec(pos.x, pos.y)));
+      const agentPos = layout.agentPosition(i, 0, 0);
+      const labelNudge = 8; // px left of agent center, visually tuned
+      const labelOffsetX = agentPos.x - labelNudge - pos.x;
+      this.add(new StationActor(station.role, station.active, vec(pos.x, pos.y), labelOffsetX));
     }
   }
 
