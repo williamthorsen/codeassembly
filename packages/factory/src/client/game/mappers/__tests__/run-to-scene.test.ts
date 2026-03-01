@@ -799,7 +799,7 @@ describe('createSceneConfig', () => {
   });
 
   describe('artifacts', () => {
-    it('creates artifacts for phases that produced them', () => {
+    it('creates artifacts for phases that produced them (fallback path)', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -808,9 +808,291 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
 
       expect(config.artifacts).toHaveLength(3);
-      expect(config.artifacts[0]?.type).toBe('architecture');
-      expect(config.artifacts[1]?.type).toBe('plan');
-      expect(config.artifacts[2]?.type).toBe('code');
+      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
+      expect(config.artifacts[1]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 0 });
+      expect(config.artifacts[2]).toEqual({ type: 'code', stationIndex: 2, indexAtStation: 0 });
+    });
+
+    it('expands multiple planning.artifacts entries into separate configs with sequential indexAtStation (fallback path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan1.md', 'plan2.md', 'plan3.md'] },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const planArtifacts = config.artifacts.filter((a) => a.stationIndex === 1);
+
+      expect(planArtifacts).toHaveLength(3);
+      expect(planArtifacts[0]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 0 });
+      expect(planArtifacts[1]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 1 });
+      expect(planArtifacts[2]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 2 });
+    });
+
+    it('creates artifact for codeSimplifier when artifact is present (fallback path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: 'simplifier.md' },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const simplifierArtifacts = config.artifacts.filter((a) => a.stationIndex === 4);
+
+      expect(simplifierArtifacts).toHaveLength(1);
+      expect(simplifierArtifacts[0]).toEqual({ type: 'simplifier', stationIndex: 4, indexAtStation: 0 });
+    });
+
+    it('creates artifact for holisticReview when artifact is present (fallback path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          holisticReview: {
+            status: 'completed',
+            criticality: 'low',
+            reReviewCriticality: undefined,
+            coderFixCycleRan: false,
+            reviewRoundsUsed: 1,
+            artifact: 'holistic.md',
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const holisticArtifacts = config.artifacts.filter((a) => a.stationIndex === 5);
+
+      expect(holisticArtifacts).toHaveLength(1);
+      expect(holisticArtifacts[0]).toEqual({ type: 'holistic', stationIndex: 5, indexAtStation: 0 });
+    });
+
+    it('does not create holisticReview artifact when artifact is undefined (fallback path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          holisticReview: {
+            status: 'completed',
+            criticality: 'low',
+            reReviewCriticality: undefined,
+            coderFixCycleRan: false,
+            reviewRoundsUsed: 1,
+            artifact: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const holisticArtifacts = config.artifacts.filter((a) => a.stationIndex === 5);
+
+      expect(holisticArtifacts).toHaveLength(0);
+    });
+
+    it('falls back to phase fields when status.artifacts is an empty array', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [],
+      });
+
+      const config = createSceneConfig(status);
+
+      // Empty array triggers fallback path, so phase-based artifacts should be returned
+      expect(config.artifacts).toHaveLength(2);
+      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
+      expect(config.artifacts[1]).toEqual({ type: 'code', stationIndex: 2, indexAtStation: 0 });
+    });
+
+    it('does not create codeSimplifier artifact when artifact is undefined (fallback path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: undefined },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const simplifierArtifacts = config.artifacts.filter((a) => a.stationIndex === 4);
+
+      expect(simplifierArtifacts).toHaveLength(0);
+    });
+
+    it('uses top-level artifacts array as primary source when populated', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+
+      // Should use the top-level artifacts array, not phase fields
+      expect(config.artifacts).toHaveLength(2);
+      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
+      expect(config.artifacts[1]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 0 });
+    });
+
+    it('falls back to phase fields when status.artifacts is undefined', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: undefined,
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.artifacts).toHaveLength(2);
+      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
+      expect(config.artifacts[1]).toEqual({ type: 'code', stationIndex: 2, indexAtStation: 0 });
+    });
+
+    it('assigns correct indexAtStation for multiple artifacts at the same station (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'plan1.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan2.json',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:11:00Z',
+          },
+          {
+            filename: 'plan3.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:12:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.artifacts).toHaveLength(3);
+      expect(config.artifacts[0]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 0 });
+      expect(config.artifacts[1]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 1 });
+      expect(config.artifacts[2]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 2 });
+    });
+
+    it('maps codeSimplifier phase alias to station 4 (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'simplifier.md',
+            role: 'simplifier',
+            roleType: 'reviewer',
+            agent: 'code-simplifier',
+            type: 'simplifier',
+            phase: 'codeSimplifier',
+            createdAt: '2026-01-01T00:40:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.artifacts).toHaveLength(1);
+      expect(config.artifacts[0]).toEqual({ type: 'simplifier', stationIndex: 4, indexAtStation: 0 });
+    });
+
+    it('maps holisticReview phase alias to station 5 (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'holistic.md',
+            role: 'holistic-reviewer',
+            roleType: 'reviewer',
+            agent: 'holistic-reviewer',
+            type: 'holistic',
+            phase: 'holisticReview',
+            createdAt: '2026-01-01T00:50:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.artifacts).toHaveLength(1);
+      expect(config.artifacts[0]).toEqual({ type: 'holistic', stationIndex: 5, indexAtStation: 0 });
+    });
+
+    it('skips entries with unknown phases (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'unknown.md',
+            role: 'unknown',
+            roleType: 'unknown',
+            agent: 'unknown',
+            type: 'unknown',
+            phase: 'unknownPhase',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.artifacts).toHaveLength(1);
+      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
     });
   });
 

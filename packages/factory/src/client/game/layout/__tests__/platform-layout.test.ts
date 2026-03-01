@@ -221,11 +221,69 @@ describe('computeLayout', () => {
   });
 
   describe('artifactPosition', () => {
-    it('returns position offset from station', () => {
+    it('returns position offset from station for indexAtStation 0', () => {
       const layout = computeLayout(0);
-      const pos = layout.artifactPosition(0);
+      const pos = layout.artifactPosition(0, 0);
 
-      expect(pos).toEqual({ x: 200 + 30, y: 400 - 60 });
+      // x = startX(200) + 0*stationSpacing(150) + artifactOffsetX(20) + 0*(12+4) = 220
+      // y = baseY(400) + artifactOffsetY(-60) = 340
+      expect(pos).toEqual({ x: 220, y: 340 });
+    });
+
+    it('offsets indexAtStation 1 by artifactSize.width + artifactGap from indexAtStation 0', () => {
+      const layout = computeLayout(0);
+      const pos0 = layout.artifactPosition(0, 0);
+      const pos1 = layout.artifactPosition(0, 1);
+
+      // Default: width=12, gap=4 => offset = 16
+      expect(pos1.x - pos0.x).toBe(16);
+      expect(pos1.y).toBe(pos0.y);
+    });
+
+    it('offsets indexAtStation 2 with correct cumulative offset', () => {
+      const layout = computeLayout(0);
+      const pos0 = layout.artifactPosition(0, 0);
+      const pos2 = layout.artifactPosition(0, 2);
+
+      // 2 * (12 + 4) = 32
+      expect(pos2.x - pos0.x).toBe(32);
+    });
+
+    it('respects custom artifactOffsetY', () => {
+      const layout = computeLayout(0, { artifactOffsetY: -80 });
+      const pos = layout.artifactPosition(0, 0);
+
+      // y = baseY(400) + artifactOffsetY(-80) = 320
+      expect(pos.y).toBe(320);
+    });
+
+    it('respects custom artifactOffsetX, artifactGap, and artifactSize', () => {
+      const layout = computeLayout(0, {
+        artifactOffsetX: 10,
+        artifactGap: 6,
+        artifactSize: { width: 20, height: 20 },
+      });
+      const pos0 = layout.artifactPosition(0, 0);
+      const pos1 = layout.artifactPosition(0, 1);
+
+      // x = 200 + 0*150 + 10 + 0*(20+6) = 210
+      expect(pos0.x).toBe(210);
+      // x = 200 + 0*150 + 10 + 1*(20+6) = 236
+      expect(pos1.x).toBe(236);
+    });
+  });
+
+  describe('artifactSize', () => {
+    it('equals default { width: 12, height: 12 }', () => {
+      const layout = computeLayout(0);
+
+      expect(layout.artifactSize).toEqual({ width: 12, height: 12 });
+    });
+
+    it('reflects custom config values', () => {
+      const layout = computeLayout(0, { artifactSize: { width: 20, height: 20 } });
+
+      expect(layout.artifactSize).toEqual({ width: 20, height: 20 });
     });
   });
 

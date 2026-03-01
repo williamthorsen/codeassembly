@@ -8,6 +8,10 @@ export interface LayoutConfig {
   levelHeight: number;
   platformWidth: number;
   platformHeight: number;
+  artifactSize: { width: number; height: number };
+  artifactGap: number;
+  artifactOffsetX: number;
+  artifactOffsetY: number;
 }
 
 export interface PlatformSegment {
@@ -41,7 +45,8 @@ export interface LayoutResult {
     level: number,
     approaching?: boolean,
   ): { x: number; y: number };
-  artifactPosition(stationIndex: number): { x: number; y: number };
+  artifactPosition(stationIndex: number, indexAtStation: number): { x: number; y: number };
+  artifactSize: { width: number; height: number };
   bounds: LayoutBounds;
 }
 
@@ -58,6 +63,10 @@ const DEFAULT_CONFIG: LayoutConfig = {
   levelHeight: 56,
   platformWidth: 1100,
   platformHeight: 20,
+  artifactSize: { width: 12, height: 12 },
+  artifactGap: 4,
+  artifactOffsetX: 20,
+  artifactOffsetY: -60,
 };
 
 /**
@@ -169,11 +178,15 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
     };
   }
 
-  /** Compute the artifact position for a given station. */
-  function artifactPosition(stationIndex: number): { x: number; y: number } {
+  /** Compute the artifact position for a given station and index within that station. */
+  function artifactPosition(stationIndex: number, indexAtStation: number): { x: number; y: number } {
     return {
-      x: c.startX + stationIndex * c.stationSpacing + 30,
-      y: c.baseY - 60,
+      x:
+        c.startX +
+        stationIndex * c.stationSpacing +
+        c.artifactOffsetX +
+        indexAtStation * (c.artifactSize.width + c.artifactGap),
+      y: c.baseY + c.artifactOffsetY,
     };
   }
 
@@ -196,6 +209,7 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
     gatePositions,
     agentPosition,
     artifactPosition,
+    artifactSize: c.artifactSize,
     bounds: { minX, maxX, minY, maxY },
   };
 }

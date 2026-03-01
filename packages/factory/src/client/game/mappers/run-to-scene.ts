@@ -1,7 +1,7 @@
 import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
+import type { ArtifactEntry, CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
 
 export interface StationConfig {
   phase: string;
@@ -25,6 +25,7 @@ export interface AgentConfig {
 export interface ArtifactConfig {
   type: string;
   stationIndex: number;
+  indexAtStation: number;
 }
 
 export interface SceneConfig {
@@ -237,12 +238,90 @@ function buildAgents(phases: Phases, runStatus: string, currentPhase?: PhaseName
   return agents;
 }
 
-function buildArtifacts(phases: Phases): ArtifactConfig[] {
+/**
+ * Map from phase names (both visualization-layer PHASE_NAMES aliases and
+ * data-model property names) to station indices. Entries with unknown
+ * phases are skipped during artifact building.
+ */
+const PHASE_TO_STATION: Record<string, number> = {
+  architecture: 0,
+  planning: 1,
+  implementation: 2,
+  review: 3,
+  parallelReview: 3,
+  simplifier: 4,
+  codeSimplifier: 4,
+  holistic: 5,
+  holisticReview: 5,
+  summary: 6,
+};
+
+/** Increment and return the current count for a station in the counter map. */
+function nextIndexAtStation(counter: Map<number, number>, station: number): number {
+  const current = counter.get(station) ?? 0;
+  counter.set(station, current + 1);
+  return current;
+}
+
+/**
+ * Primary path: build artifacts from the top-level `status.artifacts` array.
+ * Each ArtifactEntry is mapped to an ArtifactConfig using PHASE_TO_STATION.
+ */
+function buildArtifactsFromEntries(entries: ReadonlyArray<ArtifactEntry>): ArtifactConfig[] {
   const artifacts: ArtifactConfig[] = [];
-  if (isPresent(phases.architecture?.artifact)) artifacts.push({ type: 'architecture', stationIndex: 0 });
-  if ((phases.planning?.artifacts?.length ?? 0) > 0) artifacts.push({ type: 'plan', stationIndex: 1 });
-  if (isPresent(phases.implementation?.artifact)) artifacts.push({ type: 'code', stationIndex: 2 });
+  const counter = new Map<number, number>();
+
+  for (const entry of entries) {
+    const station = PHASE_TO_STATION[entry.phase];
+    if (station === undefined) continue;
+    artifacts.push({
+      type: entry.type,
+      stationIndex: station,
+      indexAtStation: nextIndexAtStation(counter, station),
+    });
+  }
+
   return artifacts;
+}
+
+/**
+ * Fallback path: build artifacts from phase-specific fields when the
+ * top-level artifacts array is not populated.
+ */
+function buildArtifactsFromPhases(phases: Phases): ArtifactConfig[] {
+  const artifacts: ArtifactConfig[] = [];
+  const counter = new Map<number, number>();
+
+  if (isPresent(phases.architecture?.artifact)) {
+    artifacts.push({ type: 'architecture', stationIndex: 0, indexAtStation: nextIndexAtStation(counter, 0) });
+  }
+
+  if (isPresent(phases.planning?.artifacts)) {
+    phases.planning.artifacts.forEach(() => {
+      artifacts.push({ type: 'plan', stationIndex: 1, indexAtStation: nextIndexAtStation(counter, 1) });
+    });
+  }
+
+  if (isPresent(phases.implementation?.artifact)) {
+    artifacts.push({ type: 'code', stationIndex: 2, indexAtStation: nextIndexAtStation(counter, 2) });
+  }
+
+  if (isPresent(phases.codeSimplifier?.artifact)) {
+    artifacts.push({ type: 'simplifier', stationIndex: 4, indexAtStation: nextIndexAtStation(counter, 4) });
+  }
+
+  if (isPresent(phases.holisticReview?.artifact)) {
+    artifacts.push({ type: 'holistic', stationIndex: 5, indexAtStation: nextIndexAtStation(counter, 5) });
+  }
+
+  return artifacts;
+}
+
+function buildArtifacts(status: CanonicalRunStatus): ArtifactConfig[] {
+  if (isPresent(status.artifacts) && status.artifacts.length > 0) {
+    return buildArtifactsFromEntries(status.artifacts);
+  }
+  return buildArtifactsFromPhases(status.phases);
 }
 
 export function createSceneConfig(status: CanonicalRunStatus): SceneConfig {
@@ -250,7 +329,7 @@ export function createSceneConfig(status: CanonicalRunStatus): SceneConfig {
   const stations = buildStations(status, currentPhase);
   const gates = buildGates(stations);
   const agents = buildAgents(status.phases, status.status, currentPhase);
-  const artifacts = buildArtifacts(status.phases);
+  const artifacts = buildArtifacts(status);
 
   return { stations, gates, agents, artifacts };
 }

@@ -87,13 +87,13 @@ describe('ArtifactActor', () => {
     );
   });
 
-  it('sets correct dimensions', () => {
+  it('falls back to 12x12 when size argument is omitted', () => {
     new ArtifactActor('architecture', vec(50, 75));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        width: 15,
-        height: 15,
+        width: 12,
+        height: 12,
       }),
     );
   });
@@ -105,6 +105,37 @@ describe('ArtifactActor', () => {
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         pos,
+      }),
+    );
+  });
+
+  it('uses provided size when size argument is passed', () => {
+    new ArtifactActor('architecture', vec(50, 75), { width: 20, height: 8 });
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        width: 20,
+        height: 8,
+      }),
+    );
+  });
+
+  it('uses correct color for simplifier type', () => {
+    new ArtifactActor('simplifier', vec(0, 0));
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: Color.fromHex(PALETTE.darkMagenta),
+      }),
+    );
+  });
+
+  it('uses correct color for holistic type', () => {
+    new ArtifactActor('holistic', vec(0, 0));
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: Color.fromHex(PALETTE.darkCyan),
       }),
     );
   });
