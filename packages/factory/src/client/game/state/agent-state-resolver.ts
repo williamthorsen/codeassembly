@@ -35,8 +35,7 @@ const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
     }
     return phases.review?.status;
   },
-  // The code simplifier phase tracks `ran` and `actionableFindings` but not a PhaseStatus.
-  simplifier: () => {},
+  simplifier: (phases) => phases.codeSimplifier?.status,
   holistic: (phases) => phases.holisticReview?.status,
   // The summary phase has no in-progress status; it maps to run completion.
   summary: () => {},

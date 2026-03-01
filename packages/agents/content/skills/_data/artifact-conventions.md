@@ -269,6 +269,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
         ]
       },
       "codeSimplifier": {
+        "status": "completed",
         "ran": true,
         "actionableFindings": true,
         "coderFixCycleRan": true,

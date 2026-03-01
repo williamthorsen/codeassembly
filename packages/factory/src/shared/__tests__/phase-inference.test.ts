@@ -124,6 +124,33 @@ describe('findCurrentPhase', () => {
     expect(result).toBe('holistic');
   });
 
+  it('does not advance past simplifier when codeSimplifier.status is in_progress', () => {
+    const phases: Phases = {
+      ...emptyPhases(),
+      architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+      planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+      implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+      parallelReview: {
+        status: 'completed',
+        aggregatedCriticality: 'low',
+        reviewRoundsUsed: 1,
+        reviewers: {},
+        coderFixCycleRan: false,
+        selectiveReReview: undefined,
+      },
+      codeSimplifier: {
+        ran: false,
+        actionableFindings: false,
+        coderFixCycleRan: false,
+        artifact: undefined,
+        status: 'in_progress',
+        startedAt: '2026-01-01T01:00:00Z',
+      },
+    };
+    const result = findCurrentPhase(phases, {}, 'in_progress');
+    expect(result).toBe('simplifier');
+  });
+
   it('does not advance past review when parallelReview.status is in_progress', () => {
     const phases = createInProgressReviewPhases();
     const result = findCurrentPhase(phases, {}, 'in_progress');
@@ -203,6 +230,21 @@ describe('isPhasePresentInData', () => {
     expect(isPhasePresentInData('simplifier', emptyPhases())).toBe(false);
   });
 
+  it('returns true for simplifier when codeSimplifier.status is in_progress', () => {
+    expect(
+      isPhasePresentInData('simplifier', {
+        ...emptyPhases(),
+        codeSimplifier: {
+          ran: false,
+          actionableFindings: false,
+          coderFixCycleRan: false,
+          artifact: undefined,
+          status: 'in_progress',
+        },
+      }),
+    ).toBe(true);
+  });
+
   it('returns true for review when parallelReview is defined', () => {
     expect(
       isPhasePresentInData('review', {
@@ -254,6 +296,36 @@ describe('isPhaseEvaluated', () => {
 
   it('returns false for simplifier when codeSimplifier is undefined', () => {
     expect(isPhaseEvaluated('simplifier', emptyPhases())).toBe(false);
+  });
+
+  it('returns false for simplifier when codeSimplifier.status is in_progress', () => {
+    expect(
+      isPhaseEvaluated('simplifier', {
+        ...emptyPhases(),
+        codeSimplifier: {
+          ran: false,
+          actionableFindings: false,
+          coderFixCycleRan: false,
+          artifact: undefined,
+          status: 'in_progress',
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true for simplifier when codeSimplifier.status is completed', () => {
+    expect(
+      isPhaseEvaluated('simplifier', {
+        ...emptyPhases(),
+        codeSimplifier: {
+          ran: true,
+          actionableFindings: false,
+          coderFixCycleRan: false,
+          artifact: undefined,
+          status: 'completed',
+        },
+      }),
+    ).toBe(true);
   });
 
   it('returns false for summary regardless of phases', () => {

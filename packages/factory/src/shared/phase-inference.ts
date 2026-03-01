@@ -80,7 +80,10 @@ function isReviewEvaluated(phases: Phases): boolean {
  *
  * For the simplifier, `codeSimplifier: { ran: false }` counts as evaluated
  * because the orchestrator made a decision — the phase should not be
- * re-inferred as "current."
+ * re-inferred as "current." An explicit `status: "in_progress"` blocks
+ * advancement, consistent with all other phases. Missing `status` is
+ * treated as evaluated for backward compatibility with data written before
+ * the `status` field was added.
  *
  * `summary` always returns `false` because it has no phase-level data; only
  * `runStatus === 'completed'` signals it.
@@ -96,7 +99,7 @@ export function isPhaseEvaluated(phase: PhaseName, phases: Phases): boolean {
     case 'review':
       return isReviewEvaluated(phases);
     case 'simplifier':
-      return isPresent(phases.codeSimplifier);
+      return isPresent(phases.codeSimplifier) && phases.codeSimplifier.status !== 'in_progress';
     case 'holistic':
       return isPresentAndNotInProgress(phases.holisticReview);
     case 'summary':
@@ -107,13 +110,22 @@ export function isPhaseEvaluated(phase: PhaseName, phases: Phases): boolean {
 }
 
 /**
+ * Check whether the code simplifier has meaningful data for display.
+ * Returns `true` when `ran` is `true` (phase completed) or `status` is
+ * `'in_progress'` (phase is currently running). `ran: false` without an
+ * in-progress status means the orchestrator decided not to run the
+ * simplifier, so no agent or active station should be shown.
+ */
+function isSimplifierPresentInData(phases: Phases): boolean {
+  return phases.codeSimplifier?.ran === true || phases.codeSimplifier?.status === 'in_progress';
+}
+
+/**
  * Returns `true` when the phase has produced meaningful data for display,
  * including phases that are currently in progress.
  *
  * Used by `isPhaseActive()` and `shouldShowPhaseAgent()` in `run-to-scene.ts`
- * to control station activation and agent visibility. For the simplifier,
- * only `ran === true` counts — `ran: false` means the orchestrator decided
- * not to run the simplifier, so no agent or active station should be shown.
+ * to control station activation and agent visibility.
  *
  * Unlike `isPhaseEvaluated`, this returns `true` for in-progress phases so
  * that stations and agents remain visible while a phase is running.
@@ -132,7 +144,7 @@ export function isPhasePresentInData(phase: PhaseName, phases: Phases): boolean 
     case 'review':
       return isPresent(phases.parallelReview ?? phases.review);
     case 'simplifier':
-      return phases.codeSimplifier?.ran === true;
+      return isSimplifierPresentInData(phases);
     case 'holistic':
       return isPresent(phases.holisticReview);
     case 'summary':

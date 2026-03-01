@@ -124,6 +124,7 @@ export interface CodeSimplifierPhase {
   actionableFindings: boolean;
   coderFixCycleRan: boolean;
   artifact: string | undefined;
+  status?: PhaseStatus;
   startedAt?: string;
   completedAt?: string;
 }
