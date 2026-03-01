@@ -2,12 +2,15 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
+import { DemoControlPanel } from './components/DemoControlPanel.js';
+import { DemoStatusLight } from './components/DemoStatusLight.js';
 import { GameCanvas } from './components/GameCanvas.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
 import { StatusBar } from './components/StatusBar.js';
 import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
+import { useDemoMode } from './hooks/useDemoMode.js';
 import { useDismissedRuns } from './hooks/useDismissedRuns.js';
 import { useRunStatus } from './hooks/useRunStatus.js';
 import { useSelectionParams } from './hooks/useSelectionParams.js';
@@ -62,6 +65,20 @@ export function App(): React.JSX.Element {
   const { data: runStatus, isLoading, error } = useRunStatus(selectedProject, selectedRun);
 
   const { dismissed, dismiss, dismissAll } = useDismissedRuns();
+
+  const demo = useDemoMode();
+  const [showDemoPanel, setShowDemoPanel] = useState(false);
+  const [normalized, setNormalized] = useState(true);
+
+  // Reset normalization to match the new controller's initial state when recording changes
+  useEffect(() => {
+    if (demo.activeRecording) {
+      setNormalized(true);
+    }
+  }, [demo.activeRecording]);
+
+  // Determine the active data source: demo data takes precedence when available
+  const activeStatus = demo.isActive && demo.data !== null ? demo.data : runStatus;
 
   // Sync selection state → URL params. A single effect replaces ad-hoc setParams calls.
   useEffect(() => {
@@ -139,6 +156,7 @@ export function App(): React.JSX.Element {
   }
 
   function handleSelectRun(projectSlug: string, runId: string): void {
+    demo.stopDemo();
     const match = allRuns.find((r) => r.projectSlug === projectSlug && r.runId === runId);
     setSelectedProject(projectSlug);
     setSelectedTicket(match?.ticketId ?? null);
@@ -153,6 +171,38 @@ export function App(): React.JSX.Element {
       })),
     );
   }
+
+  function handleToggleNormalized(): void {
+    const next = !normalized;
+    setNormalized(next);
+    demo.controls.setNormalized(next);
+  }
+
+  function handleStopDemo(): void {
+    demo.stopDemo();
+    setShowDemoPanel(false);
+  }
+
+  const demoSlot = (
+    <>
+      <DemoStatusLight playbackState={demo.playbackState} onClick={() => setShowDemoPanel((prev) => !prev)} />
+      {showDemoPanel && (
+        <DemoControlPanel
+          recordings={demo.recordings}
+          activeRecording={demo.activeRecording}
+          playbackState={demo.playbackState}
+          speed={demo.speed}
+          cursor={demo.cursor}
+          eventCount={demo.eventCount}
+          normalized={normalized}
+          controls={demo.controls}
+          onSelectRecording={demo.loadRecording}
+          onStop={handleStopDemo}
+          onToggleNormalized={handleToggleNormalized}
+        />
+      )}
+    </>
+  );
 
   return (
     <div className="app">
@@ -177,11 +227,11 @@ export function App(): React.JSX.Element {
         />
       </aside>
       <main className="main">
-        {runStatus && <StatusBar status={runStatus} />}
+        {activeStatus && <StatusBar status={activeStatus} demoSlot={demoSlot} />}
         <div className="canvas-container">
           {isLoading && <p>Loading...</p>}
           {error && <p>Error: {error.message}</p>}
-          {runStatus && <GameCanvas status={runStatus} />}
+          {activeStatus && <GameCanvas status={activeStatus} />}
         </div>
       </main>
     </div>

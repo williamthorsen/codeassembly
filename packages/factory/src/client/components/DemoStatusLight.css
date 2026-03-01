@@ -1,0 +1,36 @@
+.demo-status-light {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.demo-status-light--stopped {
+  background: #555555;
+}
+
+.demo-status-light--playing {
+  background: #00ff00;
+  animation: demo-pulse 1s ease-in-out infinite;
+}
+
+.demo-status-light--paused {
+  background: #ff8800;
+}
+
+.demo-status-light--ended {
+  background: #ffffff;
+}
+
+@keyframes demo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
