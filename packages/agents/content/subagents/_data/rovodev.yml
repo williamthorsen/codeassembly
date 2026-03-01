@@ -1,0 +1,12 @@
+# rovodev.yml
+_defaults:
+  tools: [bash, create_file, expand_code_chunks, expand_folder, grep, open_files]
+
+orchestrated-coder:
+  tools: [bash, create_file, expand_code_chunks, expand_folder, find_and_replace_code, grep, open_files]
+
+aspect-code-reviewer: {} # inherits _defaults
+
+aspect-silent-failure-reviewer: {} # inherits _defaults
+
+aspect-test-reviewer: {} # inherits _defaults

@@ -1,0 +1,101 @@
+---
+name: save-artifact
+description: Save AI-generated artifacts with standardized naming and organization
+user-invocable: false
+---
+
+# Save artifact
+
+Save AI-generated files with standardized naming conventions.
+
+## Filename formats
+
+### Ticket-level artifacts
+
+```text
+{timestamp}_{slug}_{artifact-type}.md
+```
+
+- **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
+- **slug**: Kebab-case descriptor drawn from work context — e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
+- **artifact-type**: Type of artifact (see below)
+
+### Run artifacts (review workflow)
+
+```text
+{timestamp}_{role}_{artifact}.md
+```
+
+- **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
+- **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType` (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`). See [artifact-conventions.md](_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](_data/artifact-conventions.md#roletype-taxonomy).
+- **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](_data/artifact-conventions.md#artifact-types) for the complete artifact type list.
+
+Run artifacts are saved by the skills that produce them (`review-change`, `respond-to-review`). They handle run directory discovery and creation.
+
+> **Note:** In orchestrated runs, the orchestrator is responsible for maintaining `run-index.json` — individual skills do not write to it directly.
+
+## Artifact types
+
+### Ticket-level
+
+- `change-summary` — Branch change summary for PRs
+- `orchestration-plan` — Orchestration plan for the orchestrate engine
+- `plan` — Implementation plan document
+- `pull-request` — PR description file
+- `review` — Code review (ticket-level, commit scope)
+- `ticket` — Issue ticket
+
+### Run artifacts
+
+- `run-manifest` — Immutable record of run initial conditions
+- `change-summary` — What changed + dispositions on prior findings
+- `orchestration-plan` — Structured orchestration steps
+- `plan` — Implementation plan document
+- `review` — Code review findings + dispositions on own prior findings
+- `holistic-review` — Holistic review after iterative convergence
+- `run-summary` — Final summary of the orchestrated run
+
+### Non-ticket
+
+- `devlog` — Development log entry
+- `chat-summary` — Conversation summary
+
+## Path resolution
+
+Resolve the artifact directory before saving:
+
+1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
+2. If not found there, read from `~/.agents/preferences.yaml`
+3. If still not found, use default: base_dir=`~/.ai`
+4. If base_dir is relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
+5. Use `get-project-slug` for the project slug.
+
+### Ticket-scoped path
+
+```
+{base_dir}/projects/{project-slug}/tickets/{ticket-id}/
+```
+
+Use `get-ticket-id` for the ticket ID. Create the directory if needed.
+
+### Non-ticket paths
+
+Read `artifacts.paths.{category}` from preferences.yaml for chats, devlogs, plans. Defaults: `chats`, `devlogs`, `plans`. These are relative to the project directory: `{base_dir}/projects/{project-slug}/{category}/`.
+
+Follow [artifact conventions](_data/artifact-conventions.md).
+
+## Slug generation
+
+Create a filesystem-safe slug (for ticket-level artifacts only):
+
+1. If explicit title provided, use it (convert to kebab-case)
+2. Extract descriptive part from branch name after ticket ID
+3. Analyze recent commits for work theme
+4. Generate concise description
+
+Format requirements:
+
+- Kebab-case (lowercase, hyphens)
+- Maximum 60 characters
+- Filesystem-safe characters only
+- No leading/trailing hyphens
