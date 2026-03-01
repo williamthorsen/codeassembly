@@ -1,0 +1,19 @@
+{
+  "name": "@codeassembly/agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "codeassembly-agents": "dist/esm/cli.js"
+  },
+  "scripts": {
+    "build": "pnpm run ws compile && tsx scripts/copy-content.ts",
+    "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
+  },
+  "dependencies": {
+    "js-yaml": "4.1.1"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "4.0.9"
+  }
+}

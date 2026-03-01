@@ -1,0 +1,28 @@
+# claude.yml
+_defaults:
+  permissionMode: bypassPermissions
+
+orchestrated-architect:
+  model: sonnet
+
+orchestrated-coder:
+  model: inherit
+  memory: user
+
+orchestrated-planner:
+  model: sonnet
+
+orchestrated-reviewer:
+  model: inherit
+
+aspect-code-reviewer:
+  model: sonnet
+
+aspect-silent-failure-reviewer:
+  model: sonnet
+
+aspect-test-reviewer:
+  model: sonnet
+
+planner:
+  model: sonnet
