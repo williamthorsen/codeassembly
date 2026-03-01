@@ -41,7 +41,7 @@ vi.mock('excalibur', () => {
   class MockActor {
     config: Record<string, unknown>;
     pos: { x: number; y: number };
-    graphics = { use: mockGraphicsUse };
+    graphics = { use: mockGraphicsUse, flipHorizontal: false };
     actions = { moveTo: mockMoveTo, clearActions: mockClearActions };
     addChild = mockAddChild;
     constructor(config: Record<string, unknown>) {
@@ -358,6 +358,95 @@ describe('AgentActor', () => {
       const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
 
       expect(() => actor.hideArtifactIndicator()).not.toThrow();
+    });
+  });
+
+  describe('setFacing', () => {
+    it('defaults to left-facing (flipHorizontal false) on construction', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      expect(actor.graphics.flipHorizontal).toBe(false);
+    });
+
+    it('sets flipHorizontal to true when facing right', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      actor.setFacing('right');
+
+      expect(actor.graphics.flipHorizontal).toBe(true);
+    });
+
+    it('restores flipHorizontal to false when facing left after right', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      actor.setFacing('right');
+      actor.setFacing('left');
+
+      expect(actor.graphics.flipHorizontal).toBe(false);
+    });
+
+    it('does not reassign flipHorizontal when called with the current direction', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+      actor.setFacing('right');
+
+      // Use Object.defineProperty to detect a write
+      let writeCount = 0;
+      Object.defineProperty(actor.graphics, 'flipHorizontal', {
+        get() {
+          return true;
+        },
+        set() {
+          writeCount += 1;
+        },
+        configurable: true,
+      });
+
+      actor.setFacing('right');
+
+      expect(writeCount).toBe(0);
+    });
+
+    it('persists through animation state change', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      actor.setFacing('right');
+      actor.setAnimationState('working');
+
+      expect(actor.graphics.flipHorizontal).toBe(true);
+    });
+
+    it('persists through walkPath completion', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      actor.setFacing('right');
+      await actor.walkPath([{ x: 200, y: 0, teleport: false }]);
+
+      expect(actor.graphics.flipHorizontal).toBe(true);
+    });
+  });
+
+  describe('walkGeneration', () => {
+    it('starts at 0 on construction', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      expect(actor.walkGeneration).toBe(0);
+    });
+
+    it('increments each time walkPath starts a new walk', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      await actor.walkPath([{ x: 100, y: 0, teleport: false }]);
+      expect(actor.walkGeneration).toBe(1);
+
+      await actor.walkPath([{ x: 200, y: 0, teleport: false }]);
+      expect(actor.walkGeneration).toBe(2);
+    });
+
+    it('does not increment for empty waypoints', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      await actor.walkPath([]);
+      expect(actor.walkGeneration).toBe(0);
     });
   });
 

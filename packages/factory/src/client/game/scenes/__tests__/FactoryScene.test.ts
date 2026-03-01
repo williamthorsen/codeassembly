@@ -13,6 +13,7 @@ const {
   mockCamera,
   mockShowArtifactIndicator,
   mockHideArtifactIndicator,
+  mockSetFacing,
 } = vi.hoisted(() => {
   const kill = vi.fn();
   const fade = vi.fn(() => ({
@@ -29,6 +30,7 @@ const {
     mockCamera: { zoom: 1, pos: { x: 0, y: 0 } },
     mockShowArtifactIndicator: vi.fn(),
     mockHideArtifactIndicator: vi.fn(),
+    mockSetFacing: vi.fn(),
   };
 });
 
@@ -76,7 +78,9 @@ vi.mock('../../../game/actors/AgentActor.js', () => ({
     kind = 'agent';
     agentKey: string;
     pos: { x: number; y: number };
+    walkGeneration = 0;
     setAnimationState = mockSetAnimationState;
+    setFacing = mockSetFacing;
     walkPath = mockWalkPath;
     showArtifactIndicator = mockShowArtifactIndicator;
     hideArtifactIndicator = mockHideArtifactIndicator;
@@ -167,6 +171,7 @@ describe('FactoryScene', () => {
     mockSceneAdd.mockClear();
     mockSceneClear.mockClear();
     mockSetAnimationState.mockClear();
+    mockSetFacing.mockClear();
     mockWalkPath.mockClear();
     mockShowArtifactIndicator.mockClear();
     mockHideArtifactIndicator.mockClear();
@@ -960,6 +965,114 @@ describe('FactoryScene', () => {
 
       // setAnimationState is called on agents (the real AgentActor handles walking priority)
       expect(mockSetAnimationState).toHaveBeenCalled();
+    });
+  });
+
+  describe('setFacing integration', () => {
+    it('calls setFacing with right for a newly added approaching agent', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      // The orchestrator has approaching: true in this configuration
+      expect(mockSetFacing).toHaveBeenCalledWith('right');
+    });
+
+    it('does not call setFacing when no added agent has approaching: true', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      // Completed run: orchestrator has no approaching flag, so setFacing should not be called
+      expect(mockSetFacing).not.toHaveBeenCalled();
+    });
+
+    it('calls setFacing with right after orchestrator walks to an approaching position', async () => {
+      // Start with orchestrator at station 1 (planning in_progress, approaching: true)
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetFacing.mockClear();
+
+      // Transition: orchestrator moves to station 2 (implementation in_progress, still approaching)
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      await vi.waitFor(() => {
+        expect(mockSetFacing).toHaveBeenCalledWith('right');
+      });
+    });
+
+    it('calls setFacing with left after orchestrator walks to a non-approaching position', async () => {
+      // Start with orchestrator at approaching position
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetFacing.mockClear();
+
+      // Transition: orchestrator moves to summary station (non-approaching)
+      const updatedStatus = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      scene.updateStatus(updatedStatus);
+
+      await vi.waitFor(() => {
+        expect(mockSetFacing).toHaveBeenCalledWith('left');
+      });
     });
   });
 });
