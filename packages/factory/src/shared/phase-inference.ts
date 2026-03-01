@@ -45,9 +45,7 @@ function isPresent<T>(value: T | null | undefined): value is T {
  * Check whether a phase with a `status` field is present and not in progress.
  * Returns `true` when data is present and the status is anything other than `'in_progress'`.
  */
-function isPresentAndNotInProgress(
-  value: { status: string } | null | undefined,
-): boolean {
+function isPresentAndNotInProgress(value: { status?: string } | null | undefined): boolean {
   return isPresent(value) && value.status !== 'in_progress';
 }
 
@@ -99,7 +97,7 @@ export function isPhaseEvaluated(phase: PhaseName, phases: Phases): boolean {
     case 'review':
       return isReviewEvaluated(phases);
     case 'simplifier':
-      return isPresent(phases.codeSimplifier) && phases.codeSimplifier.status !== 'in_progress';
+      return isPresentAndNotInProgress(phases.codeSimplifier);
     case 'holistic':
       return isPresentAndNotInProgress(phases.holisticReview);
     case 'summary':
