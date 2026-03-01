@@ -6,7 +6,7 @@ import {
   createMockRunStatus,
   emptyPhases,
 } from '../../../../__test-helpers__/fixtures.js';
-import { PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
+import { PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
 import { REVIEW_STATION_INDEX as LAYOUT_REVIEW_STATION_INDEX } from '../../layout/platform-layout.js';
 import { createSceneConfig, PHASE_NAMES, REVIEW_STATION_INDEX } from '../run-to-scene.js';
 
@@ -890,6 +890,19 @@ describe('createSceneConfig', () => {
 
       config.stations.forEach((station, i) => {
         expect(station.phase).toBe(PHASE_NAMES[i]);
+      });
+    });
+
+    it('assigns station role from PHASE_ROLE for each phase', () => {
+      const status = createMockRunStatus();
+
+      const config = createSceneConfig(status);
+
+      config.stations.forEach((station, i) => {
+        const phase = PHASE_NAMES[i];
+        if (phase !== undefined) {
+          expect(station.role).toBe(PHASE_ROLE[phase]);
+        }
       });
     });
   });

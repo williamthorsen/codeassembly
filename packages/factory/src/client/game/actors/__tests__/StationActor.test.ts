@@ -36,10 +36,14 @@ vi.mock('excalibur', () => {
     }
   }
 
+  const MockTextAlign = { Center: 'center' };
+
   class MockFont {
     size: number;
-    constructor(opts: { size: number }) {
+    textAlign: string | undefined;
+    constructor(opts: { size: number; textAlign?: string }) {
       this.size = opts.size;
+      this.textAlign = opts.textAlign;
     }
   }
 
@@ -72,6 +76,7 @@ vi.mock('excalibur', () => {
     Color: MockColor,
     Font: MockFont,
     Text: MockText,
+    TextAlign: MockTextAlign,
     Rectangle: MockRectangle,
     GraphicsGroup: MockGraphicsGroup,
     vec: (x: number, y: number) => ({ x, y }),
@@ -84,7 +89,7 @@ const { PALETTE } = await import('../../../../shared/constants/palette.js');
 
 describe('StationActor', () => {
   it('creates a Rectangle with semi-transparent lightGray when active', () => {
-    new StationActor('architecture', true, vec(100, 200));
+    new StationActor('architect', true, vec(100, 200));
 
     const expectedColor = Color.fromHex(PALETTE.lightGray);
     expectedColor.a = 0.15;
@@ -98,7 +103,7 @@ describe('StationActor', () => {
   });
 
   it('creates a Rectangle with semi-transparent darkGray when inactive', () => {
-    new StationActor('architecture', false, vec(100, 200));
+    new StationActor('architect', false, vec(100, 200));
 
     const expectedColor = Color.fromHex(PALETTE.darkGray);
     expectedColor.a = 0.15;
@@ -109,21 +114,21 @@ describe('StationActor', () => {
     );
   });
 
-  it('creates a Text label with the phase name at reduced opacity', () => {
-    new StationActor('planning', true, vec(0, 0));
+  it('creates a Text label with the role name at reduced opacity', () => {
+    new StationActor('planner', true, vec(0, 0));
 
     const expectedColor = Color.fromHex(PALETTE.white);
     expectedColor.a = 0.6;
     expect(mockTextConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: 'planning',
+        text: 'planner',
         color: expectedColor,
       }),
     );
   });
 
   it('creates a GraphicsGroup composing rectangle and text', () => {
-    new StationActor('implementation', true, vec(0, 0));
+    new StationActor('coder', true, vec(0, 0));
 
     expect(mockGraphicsGroupConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -136,13 +141,13 @@ describe('StationActor', () => {
   });
 
   it('uses the GraphicsGroup via graphics.use()', () => {
-    new StationActor('review', true, vec(0, 0));
+    new StationActor('reviewer', true, vec(0, 0));
 
     expect(mockGraphicsUse).toHaveBeenCalled();
   });
 
   it('sets correct dimensions on the Actor', () => {
-    new StationActor('architecture', true, vec(50, 75));
+    new StationActor('architect', true, vec(50, 75));
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -154,11 +159,31 @@ describe('StationActor', () => {
 
   it('passes position to Actor constructor', () => {
     const pos = vec(300, 400);
-    new StationActor('holistic', false, pos);
+    new StationActor('holistic reviewer', false, pos);
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         pos,
+      }),
+    );
+  });
+
+  it('positions label centered on platform below station', () => {
+    new StationActor('architect', true, vec(0, 0));
+
+    expect(mockGraphicsGroupConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        members: expect.arrayContaining([expect.objectContaining({ offset: { x: 50, y: 45 }, useBounds: false })]),
+      }),
+    );
+  });
+
+  it('uses center-aligned text on the Font', () => {
+    new StationActor('coder', true, vec(0, 0));
+
+    expect(mockTextConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        font: expect.objectContaining({ textAlign: 'center' }),
       }),
     );
   });

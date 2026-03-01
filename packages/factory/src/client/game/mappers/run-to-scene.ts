@@ -1,10 +1,11 @@
 import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
-import { PHASE_NAMES, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
+import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
 
 export interface StationConfig {
   phase: string;
+  role: string;
   active: boolean;
 }
 
@@ -52,6 +53,7 @@ function isPhaseActive(phase: PhaseName, phases: Phases, runStatus: string, curr
 function buildStations(status: CanonicalRunStatus, currentPhase?: PhaseName): StationConfig[] {
   return PHASE_NAMES.map((phase) => ({
     phase,
+    role: PHASE_ROLE[phase],
     active: isPhaseActive(phase, status.phases, status.status, currentPhase),
   }));
 }

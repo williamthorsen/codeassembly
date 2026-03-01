@@ -70,7 +70,7 @@ vi.mock('../../../game/actors/StationActor.js', () => ({
   StationActor: class StationActor {
     kind = 'station';
     constructor(
-      public phase: string,
+      public role: string,
       public active: boolean,
       public position: unknown,
     ) {}
@@ -155,7 +155,7 @@ const { FactoryScene } = await import('../FactoryScene.js');
 interface MockActorWithKind {
   kind?: string;
   agentKey?: string;
-  phase?: string;
+  role?: string;
   roleType?: string;
   position?: { x: number; y: number };
 }
@@ -314,7 +314,7 @@ describe('FactoryScene', () => {
       expect(mockSceneAdd).toHaveBeenCalledTimes(27);
     });
 
-    it('adds station actors with correct phase names', () => {
+    it('adds station actors with correct role names', () => {
       const status = createMockRunStatus();
       const scene = new FactoryScene(status);
       scene.onInitialize();
@@ -324,15 +324,15 @@ describe('FactoryScene', () => {
       );
       expect(stationCalls).toHaveLength(7);
 
-      const phaseNames = stationCalls.map((call: unknown[]) => getActorFromCall(call).phase);
-      expect(phaseNames).toEqual([
-        'architecture',
-        'planning',
-        'implementation',
-        'review',
+      const roleNames = stationCalls.map((call: unknown[]) => getActorFromCall(call).role);
+      expect(roleNames).toEqual([
+        'architect',
+        'planner',
+        'coder',
+        'reviewer',
         'simplifier',
-        'holistic',
-        'summary',
+        'holistic reviewer',
+        'orchestrator',
       ]);
     });
 
