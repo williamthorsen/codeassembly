@@ -138,7 +138,6 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
     // Place agent feet near platform surface: half-platform + half-sprite - padding compensation
     const standOffset = c.platformHeight / 2 + 12;
 
-    // TODO(CODY-55): flip orchestrator sprite to face right when approaching
     if (approaching) {
       if (level === 0) {
         const leftmostSlotOffset = -((c.agentsPerRow - 1) / 2) * c.agentHSpacing;

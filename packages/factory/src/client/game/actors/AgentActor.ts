@@ -13,6 +13,8 @@ import {
 import type { AgentAnimationState } from '../sprites/sprite-definitions.js';
 import { ArtifactIndicatorActor } from './ArtifactIndicatorActor.js';
 
+export type FacingDirection = 'left' | 'right';
+
 const WALK_SPEED = 100;
 
 function getAnimationForState(state: AgentAnimationState, roleType: RoleType) {
@@ -44,6 +46,7 @@ export class AgentActor extends Actor {
   readonly agentKey: string;
   private artifactIndicator: ArtifactIndicatorActor | undefined;
   private currentState: AgentAnimationState = 'idle';
+  private facing: FacingDirection = 'left';
   private isWalking = false;
   private pendingState: AgentAnimationState | undefined;
   private readonly roleType: RoleType;
@@ -73,6 +76,12 @@ export class AgentActor extends Actor {
 
   hideArtifactIndicator(): void {
     this.artifactIndicator?.hide();
+  }
+
+  setFacing(direction: FacingDirection): void {
+    if (direction === this.facing) return;
+    this.facing = direction;
+    this.graphics.flipHorizontal = direction === 'right';
   }
 
   setAnimationState(state: AgentAnimationState): void {

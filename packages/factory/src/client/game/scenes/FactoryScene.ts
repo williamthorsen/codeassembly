@@ -181,6 +181,9 @@ export class FactoryScene extends Scene {
       const actor = new AgentActor(added.role, added.roleType, vec(pos.x, pos.y));
       this.agentMap.set(added.role, actor);
       this.add(actor);
+      if (added.approaching === true) {
+        actor.setFacing('right');
+      }
     }
 
     // Move agents that changed position
@@ -205,6 +208,7 @@ export class FactoryScene extends Scene {
             .then(() => delay(300))
             .finally(() => {
               actor.hideArtifactIndicator();
+              actor.setFacing(next.approaching === true ? 'right' : 'left');
             });
         } else {
           void walkWithWarning(actor, next.role, waypoints);
