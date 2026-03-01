@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { emptyPhases } from '../../__test-helpers__/fixtures.js';
+import { createInProgressReviewPhases, emptyPhases } from '../../__test-helpers__/fixtures.js';
 import { findCurrentPhase, findPhaseDecision, isPhaseEvaluated, isPhasePresentInData } from '../phase-inference.js';
 import type { PhaseDecision, Phases } from '../types/canonical.js';
 
@@ -124,6 +124,39 @@ describe('findCurrentPhase', () => {
     expect(result).toBe('holistic');
   });
 
+  it('does not advance past simplifier when codeSimplifier.status is in_progress', () => {
+    const phases: Phases = {
+      ...emptyPhases(),
+      architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+      planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+      implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+      parallelReview: {
+        status: 'completed',
+        aggregatedCriticality: 'low',
+        reviewRoundsUsed: 1,
+        reviewers: {},
+        coderFixCycleRan: false,
+        selectiveReReview: undefined,
+      },
+      codeSimplifier: {
+        ran: false,
+        actionableFindings: false,
+        coderFixCycleRan: false,
+        artifact: undefined,
+        status: 'in_progress',
+        startedAt: '2026-01-01T01:00:00Z',
+      },
+    };
+    const result = findCurrentPhase(phases, {}, 'in_progress');
+    expect(result).toBe('simplifier');
+  });
+
+  it('does not advance past review when parallelReview.status is in_progress', () => {
+    const phases = createInProgressReviewPhases();
+    const result = findCurrentPhase(phases, {}, 'in_progress');
+    expect(result).toBe('review');
+  });
+
   it('returns undefined when all phases have data', () => {
     const phases: Phases = {
       architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
@@ -197,6 +230,21 @@ describe('isPhasePresentInData', () => {
     expect(isPhasePresentInData('simplifier', emptyPhases())).toBe(false);
   });
 
+  it('returns true for simplifier when codeSimplifier.status is in_progress', () => {
+    expect(
+      isPhasePresentInData('simplifier', {
+        ...emptyPhases(),
+        codeSimplifier: {
+          ran: false,
+          actionableFindings: false,
+          coderFixCycleRan: false,
+          artifact: undefined,
+          status: 'in_progress',
+        },
+      }),
+    ).toBe(true);
+  });
+
   it('returns true for review when parallelReview is defined', () => {
     expect(
       isPhasePresentInData('review', {
@@ -219,6 +267,11 @@ describe('isPhasePresentInData', () => {
         review: { status: 'approved', iterations: 2, finalCriticality: 'low' },
       }),
     ).toBe(true);
+  });
+
+  it('returns true for review when parallelReview.status is in_progress', () => {
+    const phases = createInProgressReviewPhases();
+    expect(isPhasePresentInData('review', phases)).toBe(true);
   });
 });
 
@@ -243,6 +296,36 @@ describe('isPhaseEvaluated', () => {
 
   it('returns false for simplifier when codeSimplifier is undefined', () => {
     expect(isPhaseEvaluated('simplifier', emptyPhases())).toBe(false);
+  });
+
+  it('returns false for simplifier when codeSimplifier.status is in_progress', () => {
+    expect(
+      isPhaseEvaluated('simplifier', {
+        ...emptyPhases(),
+        codeSimplifier: {
+          ran: false,
+          actionableFindings: false,
+          coderFixCycleRan: false,
+          artifact: undefined,
+          status: 'in_progress',
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true for simplifier when codeSimplifier.status is completed', () => {
+    expect(
+      isPhaseEvaluated('simplifier', {
+        ...emptyPhases(),
+        codeSimplifier: {
+          ran: true,
+          actionableFindings: false,
+          coderFixCycleRan: false,
+          artifact: undefined,
+          status: 'completed',
+        },
+      }),
+    ).toBe(true);
   });
 
   it('returns false for summary regardless of phases', () => {
@@ -271,13 +354,88 @@ describe('isPhaseEvaluated', () => {
     expect(isPhaseEvaluated('summary', phases)).toBe(false);
   });
 
-  it('delegates to same logic as isPhasePresentInData for non-simplifier phases', () => {
+  it('returns true for non-simplifier completed phases', () => {
     const phases: Phases = {
       ...emptyPhases(),
       architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
     };
     expect(isPhaseEvaluated('architecture', phases)).toBe(true);
     expect(isPhaseEvaluated('planning', phases)).toBe(false);
+  });
+
+  describe('in_progress status handling', () => {
+    it('returns false for review when parallelReview.status is in_progress', () => {
+      const phases = createInProgressReviewPhases();
+      expect(isPhaseEvaluated('review', phases)).toBe(false);
+    });
+
+    it('returns true for review when parallelReview.status is undefined (backward compat)', () => {
+      const phases: Phases = {
+        ...emptyPhases(),
+        parallelReview: {
+          aggregatedCriticality: 'low',
+          reviewRoundsUsed: 1,
+          reviewers: {},
+          coderFixCycleRan: false,
+          selectiveReReview: undefined,
+        },
+      };
+      expect(isPhaseEvaluated('review', phases)).toBe(true);
+    });
+
+    it('returns true for review when parallelReview.status is completed', () => {
+      const phases: Phases = {
+        ...emptyPhases(),
+        parallelReview: {
+          status: 'completed',
+          aggregatedCriticality: 'low',
+          reviewRoundsUsed: 1,
+          reviewers: {},
+          coderFixCycleRan: false,
+          selectiveReReview: undefined,
+        },
+      };
+      expect(isPhaseEvaluated('review', phases)).toBe(true);
+    });
+
+    it('returns false for architecture when status is in_progress', () => {
+      const phases: Phases = {
+        ...emptyPhases(),
+        architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+      };
+      expect(isPhaseEvaluated('architecture', phases)).toBe(false);
+    });
+
+    it('returns false for planning when status is in_progress', () => {
+      const phases: Phases = {
+        ...emptyPhases(),
+        planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+      };
+      expect(isPhaseEvaluated('planning', phases)).toBe(false);
+    });
+
+    it('returns false for implementation when status is in_progress', () => {
+      const phases: Phases = {
+        ...emptyPhases(),
+        implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
+      };
+      expect(isPhaseEvaluated('implementation', phases)).toBe(false);
+    });
+
+    it('returns false for holistic when status is in_progress', () => {
+      const phases: Phases = {
+        ...emptyPhases(),
+        holisticReview: {
+          status: 'in_progress',
+          criticality: undefined,
+          reReviewCriticality: undefined,
+          coderFixCycleRan: false,
+          reviewRoundsUsed: 0,
+          artifact: undefined,
+        },
+      };
+      expect(isPhaseEvaluated('holistic', phases)).toBe(false);
+    });
   });
 });
 

@@ -37,6 +37,39 @@ export function createMockRunStatus(overrides: Partial<CanonicalRunStatus> = {})
   };
 }
 
+export function createInProgressReviewPhases(): Phases {
+  return {
+    ...emptyPhases(),
+    architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+    planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+    implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+    parallelReview: {
+      status: 'in_progress',
+      aggregatedCriticality: undefined,
+      reviewRoundsUsed: 0,
+      reviewers: {
+        'correctness-reviewer': {
+          ran: true,
+          status: undefined,
+          criticality: undefined,
+          reason: undefined,
+          reReviewCriticality: undefined,
+          reReviewError: undefined,
+        },
+      },
+      coderFixCycleRan: false,
+      selectiveReReview: undefined,
+      startedAt: '2026-01-01T00:30:00Z',
+      iterations: [
+        {
+          reviewers: ['correctness-reviewer'],
+          dispatchedAt: '2026-01-01T00:30:00Z',
+        },
+      ],
+    },
+  };
+}
+
 export function createCompletedRunPhases(): Phases {
   return {
     architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },

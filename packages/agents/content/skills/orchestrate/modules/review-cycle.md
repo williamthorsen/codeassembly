@@ -68,6 +68,8 @@ orchestration:
 
 Before dispatching, compute the changed-file list once: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}`. Evaluate activation rules for each aspect reviewer.
 
+Before: write `context.phases.parallelReview` to run-index.json with `status: "in_progress"`, `startedAt: {ISO timestamp}`, and an initial `iterations` entry: `iterations[0]` with `reviewers: [{list of dispatched reviewer names}]` and `dispatchedAt: {ISO timestamp}`. Do not write `aggregatedCriticality` yet (unknown until batch completes). Write per-reviewer entries with `ran: true` and `startedAt: {ISO timestamp}`.
+
 Send all activated Task calls in a single message so they run concurrently. Each agent examines the branch diff independently.
 
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.reviewer}`:
@@ -188,13 +190,29 @@ After re-reviews complete, aggregate findings again using the same rules. If new
 - After N iterations unresolved (where N is the configured `max-review-rounds`): exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
 - Structural issues: may return to Planning once per run.
 
-After: record `context.phaseDecisions.parallelReview` with `{ "run": true, "disposition": "executed" }` and update `context.phases.parallelReview` in run-index.json with: `aggregatedCriticality`, per-reviewer `status`/`criticality`/`reReviewCriticality`, `coderFixCycleRan`, and `selectiveReReview` details (see [artifact-conventions.md](../../_data/artifact-conventions.md) for the full schema).
+### Incremental writes
+
+Write run-index.json at every state transition within Phase 4:
+
+**After the initial review batch completes:** update `context.phases.parallelReview` to add `iterations[0].reviewsCompletedAt: {ISO timestamp}` and the aggregated criticality. Write per-reviewer `completedAt`, `status`, and `criticality` for each reviewer entry.
+
+**Before dispatching a coder fix cycle:** update `context.phases.parallelReview.iterations[n-1].coderFixStartedAt: {ISO timestamp}` (where n is the current iteration number).
+
+**After a coder fix cycle completes:** update `iterations[n-1].coderFixCompletedAt: {ISO timestamp}`.
+
+**Before dispatching selective re-review:** add a new `iterations[n]` entry with `reviewers: [{list of re-dispatched reviewer names}]` and `dispatchedAt: {ISO timestamp}`. Update per-reviewer `startedAt` for re-dispatched reviewers.
+
+**After re-review completes:** update `iterations[n].reviewsCompletedAt: {ISO timestamp}` and per-reviewer `completedAt`, `status`, `criticality`, and `reReviewCriticality`.
+
+**At phase completion:** write final `status: "completed"` (or `"failed"` / `"needs_manual_review"`), `completedAt: {ISO timestamp}`, and top-level `aggregatedCriticality`, `reviewRoundsUsed`, `coderFixCycleRan`, and `selectiveReReview` summary fields. Record `context.phaseDecisions.parallelReview` with `{ "run": true, "disposition": "executed" }` (see [artifact-conventions.md](../../_data/artifact-conventions.md) for the full schema).
 
 ## Phase 4a: Code simplifier
 
 After all reviewers converge (aggregated criticality is `none` or `low`, or after fix cycles complete), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
 
 Before dispatching code-simplifier, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
+
+Before: write `context.phases.codeSimplifier` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
 
 Call Task with `subagent_type: pr-review-toolkit:code-simplifier`, `max_turns: 15`, `model: {models.code_simplifier}`:
 
@@ -225,13 +243,15 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Write your response to: `{artifact-dir}/{timestamp}_coder_change-summary.md`
 
-After: record `context.phaseDecisions.codeSimplifier` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.codeSimplifier` in run-index.json with: `ran`, `actionableFindings`, `coderFixCycleRan` (see [artifact-conventions.md](../../_data/artifact-conventions.md) for the full schema).
+After: record `context.phaseDecisions.codeSimplifier` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.codeSimplifier` in run-index.json with: `ran`, `actionableFindings`, `coderFixCycleRan`, `status: "completed"` (or `"failed"`), and `completedAt: {ISO timestamp}` (see [artifact-conventions.md](../../_data/artifact-conventions.md) for the full schema).
 
 ## Phase 4b: Final comprehensive review
 
 After the parallel review and code-simplifier complete, perform one additional review with a clean context. This is NOT part of the parallel review. Skip Phase 4b if Phase 4 exited with unresolved findings (`needs_manual_review`); in that case Phase 4a was also skipped — under the parallel review structure, `needs_manual_review` is the only non-converged exit path, so no other skip condition is needed. If Phase 4 converged, always run Phase 4b (whether or not Phase 4a produced findings).
 
 The initial Phase 4b review always runs regardless of remaining budget. Phase 4b shares the review-round budget with Phase 4 only for subsequent fix-and-re-review cycles — rounds consumed in Phase 4 reduce the budget available for those cycles.
+
+Before: write `context.phases.holisticReview` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
 
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.holistic_reviewer}`:
 
@@ -266,4 +286,4 @@ Extract `Criticality` using Task return parsing (see SKILL.md).
 - **`medium` or `high`** with review rounds remaining: delegate fixes to coder, then re-review using remaining budget — apply the same flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
 - **`medium` or `high`** with no review rounds remaining: delegate one coder fix round (no re-review), then set `{review-status}` to `needs_manual_review`.
 
-After: record `context.phaseDecisions.holisticReview` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.holisticReview` in run-index.json with the holistic review outcome (criticality and whether a coder fix round was needed).
+After: record `context.phaseDecisions.holisticReview` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.holisticReview` in run-index.json with `status: "completed"` (or `"failed"` / `"needs_manual_review"`), `completedAt: {ISO timestamp}`, and the holistic review outcome (criticality and whether a coder fix round was needed).

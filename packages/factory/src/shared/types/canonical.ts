@@ -56,18 +56,24 @@ export interface ArchitecturePhase {
   status: PhaseStatus;
   impactLevel: string | undefined;
   artifact: string | undefined;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface PlanningPhase {
   status: PhaseStatus;
   stepCount: number | undefined;
   artifacts: string[] | undefined;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface ImplementationPhase {
   status: PhaseStatus;
   artifact: string | undefined;
   qualityGates: string | QualityGates | undefined;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface QualityGates {
@@ -76,12 +82,24 @@ export interface QualityGates {
   tests: string | undefined;
 }
 
+export interface ReviewIteration {
+  reviewers: string[];
+  dispatchedAt?: string;
+  reviewsCompletedAt?: string;
+  coderFixStartedAt?: string;
+  coderFixCompletedAt?: string;
+}
+
 export interface ParallelReviewPhase {
-  aggregatedCriticality: Criticality;
+  aggregatedCriticality: Criticality | undefined;
   reviewRoundsUsed: number;
   reviewers: Record<string, ReviewerInfo>;
   coderFixCycleRan: boolean;
   selectiveReReview: SelectiveReReview | undefined;
+  status?: PhaseStatus;
+  startedAt?: string;
+  completedAt?: string;
+  iterations?: ReviewIteration[];
 }
 
 export interface ReviewerInfo {
@@ -91,6 +109,8 @@ export interface ReviewerInfo {
   reason: string | undefined;
   reReviewCriticality: Criticality | undefined;
   reReviewError: string | undefined;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface SelectiveReReview {
@@ -104,6 +124,9 @@ export interface CodeSimplifierPhase {
   actionableFindings: boolean;
   coderFixCycleRan: boolean;
   artifact: string | undefined;
+  status?: PhaseStatus;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface HolisticReviewPhase {
@@ -113,6 +136,8 @@ export interface HolisticReviewPhase {
   coderFixCycleRan: boolean;
   reviewRoundsUsed: number;
   artifact: string | undefined;
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface LegacyReviewPhase {
