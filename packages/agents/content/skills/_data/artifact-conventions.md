@@ -202,26 +202,85 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "holisticReview": { "run": true, "disposition": "executed" }
     },
     "phases": {
-      "architecture": { "status": "completed", "impactLevel": "moderate" },
-      "planning": { "status": "completed", "stepCount": 5 },
-      "implementation": { "status": "completed" },
+      "architecture": {
+        "status": "completed",
+        "impactLevel": "moderate",
+        "startedAt": "2026-02-21T03:41:30Z",
+        "completedAt": "2026-02-21T03:42:00Z"
+      },
+      "planning": {
+        "status": "completed",
+        "stepCount": 5,
+        "startedAt": "2026-02-21T03:42:10Z",
+        "completedAt": "2026-02-21T03:43:00Z"
+      },
+      "implementation": {
+        "status": "completed",
+        "startedAt": "2026-02-21T03:43:10Z",
+        "completedAt": "2026-02-21T03:45:00Z"
+      },
       "parallelReview": {
+        "status": "completed",
+        "startedAt": "2026-02-21T03:45:10Z",
+        "completedAt": "2026-02-21T04:10:00Z",
         "aggregatedCriticality": "medium",
         "reviewers": {
-          "reviewer": { "status": "completed", "criticality": "medium", "reReviewCriticality": "low" },
-          "silent-failure-reviewer": { "status": "completed", "criticality": "low" },
+          "reviewer": {
+            "status": "completed",
+            "criticality": "medium",
+            "reReviewCriticality": "low",
+            "startedAt": "2026-02-21T03:45:10Z",
+            "completedAt": "2026-02-21T03:47:00Z"
+          },
+          "silent-failure-reviewer": {
+            "status": "completed",
+            "criticality": "low",
+            "startedAt": "2026-02-21T03:45:10Z",
+            "completedAt": "2026-02-21T03:47:00Z"
+          },
           "test-reviewer": { "status": "skipped", "reason": "no source or test files changed" },
-          "code-reviewer": { "status": "completed", "criticality": "medium", "reReviewCriticality": "none" }
+          "code-reviewer": {
+            "status": "completed",
+            "criticality": "medium",
+            "reReviewCriticality": "none",
+            "startedAt": "2026-02-21T03:45:10Z",
+            "completedAt": "2026-02-21T03:47:00Z"
+          }
         },
         "coderFixCycleRan": true,
         "selectiveReReview": {
           "ran": true,
           "reviewersDispatched": ["reviewer", "code-reviewer"],
           "additionalFixCycleRan": false
-        }
+        },
+        "iterations": [
+          {
+            "reviewers": ["reviewer", "silent-failure-reviewer", "code-reviewer"],
+            "dispatchedAt": "2026-02-21T03:45:10Z",
+            "reviewsCompletedAt": "2026-02-21T03:47:00Z",
+            "coderFixStartedAt": "2026-02-21T03:47:30Z",
+            "coderFixCompletedAt": "2026-02-21T04:00:00Z"
+          },
+          {
+            "reviewers": ["reviewer", "code-reviewer"],
+            "dispatchedAt": "2026-02-21T04:00:30Z",
+            "reviewsCompletedAt": "2026-02-21T04:10:00Z"
+          }
+        ]
       },
-      "codeSimplifier": { "ran": true, "actionableFindings": true, "coderFixCycleRan": true },
-      "holisticReview": { "status": "completed", "criticality": "none" }
+      "codeSimplifier": {
+        "ran": true,
+        "actionableFindings": true,
+        "coderFixCycleRan": true,
+        "startedAt": "2026-02-21T04:10:10Z",
+        "completedAt": "2026-02-21T04:12:00Z"
+      },
+      "holisticReview": {
+        "status": "completed",
+        "criticality": "none",
+        "startedAt": "2026-02-21T04:12:10Z",
+        "completedAt": "2026-02-21T04:15:00Z"
+      }
     }
   },
   "config": {
@@ -333,6 +392,14 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
   ]
 }
 ```
+
+### Incremental write pattern
+
+The `parallelReview` entry is first written with `status: "in_progress"` before reviewers are dispatched, then updated at each state transition (batch completion, coder fix dispatch/completion, re-review dispatch/completion, phase completion). The `iterations` array captures per-iteration data: which reviewers were dispatched, when reviews completed, and when coder fix cycles ran. Per-reviewer `startedAt`/`completedAt` timestamps track individual agent execution.
+
+The same pattern applies to all phases: `architecture`, `planning`, `implementation`, `codeSimplifier`, and `holisticReview` are each written with `status: "in_progress"` and `startedAt` before the agent is dispatched, then updated with `status: "completed"` (or `"failed"`) and `completedAt` after the agent completes. The `startedAt` and `completedAt` fields are optional on all phase objects.
+
+**Backward compatibility:** Old `run-index.json` data without top-level `status` fields on phase objects (e.g., `parallelReview` without a `status` field) is treated as completed by the factory visualization. The factory only blocks advancement past a phase when `status` is explicitly `"in_progress"`.
 
 ### roleType taxonomy
 

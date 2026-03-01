@@ -307,6 +307,8 @@ Search the `artifacts` array in run-index.json for entries where `role` is `code
 
 ## Phase 1: Architecture (optional)
 
+Before: write `context.phases.architecture` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
+
 Call Task with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model: {models.architect}`:
 
 > Assess the architectural impact of the following task.
@@ -319,9 +321,11 @@ Call Task with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model:
 >
 > Write your analysis to: `{artifact-dir}/{timestamp}_architect_architecture.md`
 
-After: extract `Impact` using Task return parsing. Update run-index.json with impact level. Pass architecture content downstream only if impact > `none`.
+After: extract `Impact` using Task return parsing. Update `context.phases.architecture` in run-index.json with `status: "completed"` (or `"failed"`), `completedAt: {ISO timestamp}`, and impact level. Pass architecture content downstream only if impact > `none`.
 
 ## Phase 2: Planning (optional)
+
+Before: write `context.phases.planning` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
 
 Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {models.planner}`:
 
@@ -337,9 +341,11 @@ Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {
 >
 > Write plan files to: `{artifact-dir}/{timestamp}_planner_orchestration-plan.md` and `{artifact-dir}/{timestamp}_planner_orchestration-plan.json`
 
-After: extract `Steps` using Task return parsing. Update run-index.json with step count.
+After: extract `Steps` using Task return parsing. Update `context.phases.planning` in run-index.json with `status: "completed"` (or `"failed"`), `completedAt: {ISO timestamp}`, and step count.
 
 ## Phase 3: Implementation (required)
+
+Before: write `context.phases.implementation` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
 
@@ -354,7 +360,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 
 Pass all plan steps at once — the coder decides execution order.
 
-After: extract `Status` and `QualityGates` using Task return parsing. Update run-index.json.
+After: extract `Status` and `QualityGates` using Task return parsing. Update `context.phases.implementation` in run-index.json with `status: "completed"` (or `"failed"`), `completedAt: {ISO timestamp}`, and quality gates results.
 
 ## Review cycle (module)
 
