@@ -80,8 +80,8 @@ export class FactoryScene extends Scene {
     this.addGates(config, this.layout);
 
     for (const artifact of config.artifacts) {
-      const pos = this.layout.artifactPosition(artifact.stationIndex);
-      this.add(new ArtifactActor(artifact.type, vec(pos.x, pos.y)));
+      const pos = this.layout.artifactPosition(artifact.stationIndex, artifact.indexAtStation);
+      this.add(new ArtifactActor(artifact.type, vec(pos.x, pos.y), this.layout.artifactSize));
     }
   }
 

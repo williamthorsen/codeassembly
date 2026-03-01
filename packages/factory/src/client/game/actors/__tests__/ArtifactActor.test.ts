@@ -108,4 +108,35 @@ describe('ArtifactActor', () => {
       }),
     );
   });
+
+  it('uses provided size when size argument is passed', () => {
+    new ArtifactActor('architecture', vec(50, 75), { width: 12, height: 12 });
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        width: 12,
+        height: 12,
+      }),
+    );
+  });
+
+  it('uses correct color for simplifier type', () => {
+    new ArtifactActor('simplifier', vec(0, 0));
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: Color.fromHex(PALETTE.darkMagenta),
+      }),
+    );
+  });
+
+  it('uses correct color for holistic type', () => {
+    new ArtifactActor('holistic', vec(0, 0));
+
+    expect(mockActorConstructor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        color: Color.fromHex(PALETTE.darkCyan),
+      }),
+    );
+  });
 });
