@@ -204,11 +204,14 @@ export class FactoryScene extends Scene {
           if (artifact !== undefined) {
             actor.showArtifactIndicator(artifact.type);
           }
+          const generationAtStart = actor.walkGeneration;
           void walkWithWarning(actor, next.role, waypoints)
             .then(() => delay(300))
             .finally(() => {
               actor.hideArtifactIndicator();
-              actor.setFacing(next.approaching === true ? 'right' : 'left');
+              if (actor.walkGeneration === generationAtStart) {
+                actor.setFacing(next.approaching === true ? 'right' : 'left');
+              }
             });
         } else {
           void walkWithWarning(actor, next.role, waypoints);

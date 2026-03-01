@@ -78,6 +78,7 @@ vi.mock('../../../game/actors/AgentActor.js', () => ({
     kind = 'agent';
     agentKey: string;
     pos: { x: number; y: number };
+    walkGeneration = 0;
     setAnimationState = mockSetAnimationState;
     setFacing = mockSetFacing;
     walkPath = mockWalkPath;
@@ -1005,7 +1006,7 @@ describe('FactoryScene', () => {
       expect(mockSetFacing).toHaveBeenCalledWith('right');
     });
 
-    it('does not call setFacing for non-approaching agents', () => {
+    it('does not call setFacing when no added agent has approaching: true', () => {
       const status = createMockRunStatus({
         status: 'completed',
         phases: createCompletedRunPhases(),
@@ -1015,6 +1016,37 @@ describe('FactoryScene', () => {
 
       // Completed run: orchestrator has no approaching flag, so setFacing should not be called
       expect(mockSetFacing).not.toHaveBeenCalled();
+    });
+
+    it('calls setFacing with right after orchestrator walks to an approaching position', async () => {
+      // Start with orchestrator at station 1 (planning in_progress, approaching: true)
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockSetFacing.mockClear();
+
+      // Transition: orchestrator moves to station 2 (implementation in_progress, still approaching)
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      await vi.waitFor(() => {
+        expect(mockSetFacing).toHaveBeenCalledWith('right');
+      });
     });
 
     it('calls setFacing with left after orchestrator walks to a non-approaching position', async () => {

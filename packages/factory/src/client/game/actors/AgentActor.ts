@@ -50,7 +50,12 @@ export class AgentActor extends Actor {
   private isWalking = false;
   private pendingState: AgentAnimationState | undefined;
   private readonly roleType: RoleType;
-  private walkGeneration = 0;
+  private _walkGeneration = 0;
+
+  /** Monotonically increasing counter; incremented each time walkPath starts a new walk. */
+  get walkGeneration(): number {
+    return this._walkGeneration;
+  }
 
   constructor(agentKey: string, roleType: RoleType, position: Vector) {
     super({
@@ -136,8 +141,8 @@ export class AgentActor extends Actor {
       this.actions.clearActions();
     }
 
-    this.walkGeneration += 1;
-    const generation = this.walkGeneration;
+    this._walkGeneration += 1;
+    const generation = this._walkGeneration;
 
     this.isWalking = true;
     this.pendingState = undefined;
@@ -145,7 +150,7 @@ export class AgentActor extends Actor {
     this.graphics.use(getAnimationForState('walking', this.roleType));
 
     for (const waypoint of waypoints) {
-      if (generation !== this.walkGeneration) return;
+      if (generation !== this._walkGeneration) return;
 
       if (waypoint.teleport) {
         this.pos = vec(waypoint.x, waypoint.y);
@@ -162,7 +167,7 @@ export class AgentActor extends Actor {
 
       await this.actions.moveTo(vec(waypoint.x, waypoint.y), WALK_SPEED).toPromise();
 
-      if (generation !== this.walkGeneration) return;
+      if (generation !== this._walkGeneration) return;
     }
 
     this.isWalking = false;

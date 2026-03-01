@@ -425,6 +425,31 @@ describe('AgentActor', () => {
     });
   });
 
+  describe('walkGeneration', () => {
+    it('starts at 0 on construction', () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      expect(actor.walkGeneration).toBe(0);
+    });
+
+    it('increments each time walkPath starts a new walk', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      await actor.walkPath([{ x: 100, y: 0, teleport: false }]);
+      expect(actor.walkGeneration).toBe(1);
+
+      await actor.walkPath([{ x: 200, y: 0, teleport: false }]);
+      expect(actor.walkGeneration).toBe(2);
+    });
+
+    it('does not increment for empty waypoints', async () => {
+      const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
+
+      await actor.walkPath([]);
+      expect(actor.walkGeneration).toBe(0);
+    });
+  });
+
   describe('walkPath', () => {
     it('returns immediately for empty waypoints without changing animation', async () => {
       const actor = new AgentActor('agent', 'orchestrator', vec(0, 0));
