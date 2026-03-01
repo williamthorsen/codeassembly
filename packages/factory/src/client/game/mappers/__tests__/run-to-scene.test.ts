@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
+import {
+  createCompletedRunPhases,
+  createInProgressReviewPhases,
+  createMockRunStatus,
+  emptyPhases,
+} from '../../../../__test-helpers__/fixtures.js';
 import { PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
 import { REVIEW_STATION_INDEX as LAYOUT_REVIEW_STATION_INDEX } from '../../layout/platform-layout.js';
 import { createSceneConfig, PHASE_NAMES, REVIEW_STATION_INDEX } from '../run-to-scene.js';
@@ -46,6 +51,17 @@ describe('createSceneConfig', () => {
       const holisticIndex = PHASE_NAMES.indexOf('holistic');
 
       expect(config.stations[holisticIndex]?.active).toBe(true);
+    });
+
+    it('marks review station active when parallelReview.status is in_progress', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: createInProgressReviewPhases(),
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.stations[3]?.active).toBe(true);
     });
 
     it('marks skipped phases as inactive stations', () => {
@@ -399,14 +415,14 @@ describe('createSceneConfig', () => {
         status: 'in_progress',
         phases: {
           ...emptyPhases(),
-          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+          architecture: { status: 'completed', impactLevel: undefined, artifact: undefined },
         },
       });
 
       const config = createSceneConfig(status);
       const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
 
-      // Architecture has data, so planning (index 1) is the inferred current phase
+      // Architecture is completed, so planning (index 1) is the inferred current phase
       expect(orchestrator).toBeDefined();
       expect(orchestrator?.stationIndex).toBe(1);
       expect(orchestrator?.level).toBe(0);
@@ -536,7 +552,7 @@ describe('createSceneConfig', () => {
         status: 'in_progress',
         phases: {
           ...emptyPhases(),
-          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+          architecture: { status: 'completed', impactLevel: undefined, artifact: undefined },
         },
       });
 

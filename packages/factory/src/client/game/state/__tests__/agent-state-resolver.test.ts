@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
+import {
+  createCompletedRunPhases,
+  createInProgressReviewPhases,
+  createMockRunStatus,
+  emptyPhases,
+} from '../../../../__test-helpers__/fixtures.js';
 import type { AgentConfig } from '../../mappers/run-to-scene.js';
 import { resolveAgentStates } from '../agent-state-resolver.js';
 
@@ -240,6 +245,49 @@ describe('resolveAgentStates', () => {
         phases: {
           ...emptyPhases(),
           parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('resting');
+    });
+
+    it('assigns working to review agent when parallelReview.status is in_progress (explicit status field)', () => {
+      const agents = [createAgent({ role: 'correctness-reviewer', roleType: 'reviewer', stationIndex: 3 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: createInProgressReviewPhases(),
+      });
+
+      const result = resolveAgentStates(agents, status);
+
+      expect(result[0]?.animationState).toBe('working');
+    });
+
+    it('assigns resting to review agent when parallelReview.status is completed (explicit status field)', () => {
+      const agents = [createAgent({ role: 'correctness-reviewer', roleType: 'reviewer', stationIndex: 3 })];
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            status: 'completed',
             aggregatedCriticality: 'low',
             reviewRoundsUsed: 1,
             reviewers: {

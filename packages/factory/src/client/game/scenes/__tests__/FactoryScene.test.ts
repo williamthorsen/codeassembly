@@ -274,7 +274,7 @@ describe('FactoryScene', () => {
         status: 'in_progress',
         phases: {
           ...emptyPhases(),
-          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+          architecture: { status: 'completed', impactLevel: undefined, artifact: undefined },
         },
       });
       scene.updateStatus(updatedStatus);
