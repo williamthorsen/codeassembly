@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { foldEvents } from '../../shared/event-folder.js';
 import type {
   ArtifactEntry,
   CanonicalRunStatus,
@@ -8,23 +9,80 @@ import type {
   Phases,
   RunStatus,
 } from '../../shared/types/canonical.js';
+import type { RunEvent, RunHeader } from '../../shared/types/run-log.js';
 import { isEnoent } from '../type-guards.js';
 import { v2RunIndexSchema } from './schemas/run-index-schema.js';
+import { parseRunLogLine, v3RunIndexSchema } from './schemas/run-log-schema.js';
 import { v1StatusSchema } from './schemas/status-json-schema.js';
 
-/** Try v2 (run-index.json) first, fall back to v1 (status.json). */
+/** Try v3 (header + log) first, then v2 (run-index.json), fall back to v1 (status.json). */
 export async function parseRunData(runPath: string): Promise<CanonicalRunStatus> {
-  const v2Path = join(runPath, 'run-index.json');
+  const indexPath = join(runPath, 'run-index.json');
+  let indexContent: string;
+
   try {
-    return await parseRunIndex(v2Path);
+    indexContent = await readFile(indexPath, 'utf8');
   } catch (error) {
     if (!isEnoent(error)) {
       throw error;
     }
+    // run-index.json missing — fall back to v1
+    const v1Path = join(runPath, 'status.json');
+    return parseStatusFile(v1Path);
   }
 
-  const v1Path = join(runPath, 'status.json');
-  return parseStatusFile(v1Path);
+  // Parse the JSON (corrupt JSON propagates, no fallback)
+  const raw: unknown = JSON.parse(indexContent);
+
+  // Try v3 first
+  const v3Result = v3RunIndexSchema.safeParse(raw);
+  if (v3Result.success) {
+    const logPath = join(runPath, 'run-log.jsonl');
+    let logContent: string;
+    try {
+      logContent = await readFile(logPath, 'utf8');
+    } catch (error) {
+      if (!isEnoent(error)) {
+        throw error;
+      }
+      // run-log.jsonl missing — fall back to v2 path
+      return parseRunIndexFromRaw(raw, indexPath);
+    }
+
+    const v3Data = v3Result.data;
+    const header: RunHeader = {
+      runId: v3Data.context.runId,
+      projectSlug: v3Data.context.projectSlug,
+      ticketId: v3Data.context.ticketId,
+      projectRoot: v3Data.context.projectRoot,
+      branch: v3Data.context.branch,
+      task: v3Data.context.task,
+      startedAt: v3Data.context.startedAt,
+      externalPlan: v3Data.config.externalPlan,
+      mergeBaseSha: v3Data.config.mergeBaseSha,
+      diffBase: v3Data.config.diffBase,
+      maxReviewRounds: v3Data.config.maxReviewRounds,
+      fixLowFindings: v3Data.config.fixLowFindings,
+      mode: v3Data.config.mode,
+      model: v3Data.config.model,
+    };
+
+    const events: RunEvent[] = [];
+    const lines = logContent.split('\n').filter((line) => line.trim() !== '');
+    for (const [i, line] of lines.entries()) {
+      try {
+        events.push(parseRunLogLine(line));
+      } catch (error) {
+        // Forward-compat: skip unrecognized event types and malformed lines, but log for observability
+        console.warn(`[status-adapter] skipped unparseable log line at index ${String(i)}:`, error);
+      }
+    }
+
+    return foldEvents(header, events);
+  }
+
+  // Try v2
+  return parseRunIndexFromRaw(raw, indexPath);
 }
 
 export async function parseStatusFile(filePath: string): Promise<CanonicalRunStatus> {
@@ -104,10 +162,7 @@ interface V2Config {
   model: string | undefined;
 }
 
-async function parseRunIndex(filePath: string): Promise<CanonicalRunStatus> {
-  const content = await readFile(filePath, 'utf8');
-  const raw: unknown = JSON.parse(content);
-
+function parseRunIndexFromRaw(raw: unknown, filePath: string): CanonicalRunStatus {
   if (!isValidRunIndex(raw)) {
     throw new Error(`Invalid run-index.json at ${filePath}`);
   }

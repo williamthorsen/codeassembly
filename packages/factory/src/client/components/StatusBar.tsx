@@ -6,9 +6,10 @@ import './StatusBar.css';
 
 interface StatusBarProps {
   status: CanonicalRunStatus;
+  demoSlot?: React.ReactNode;
 }
 
-export function StatusBar({ status }: StatusBarProps): React.JSX.Element {
+export function StatusBar({ status, demoSlot }: StatusBarProps): React.JSX.Element {
   const duration =
     status.completedAt === undefined
       ? null
@@ -35,6 +36,7 @@ export function StatusBar({ status }: StatusBarProps): React.JSX.Element {
           <strong>Duration:</strong> {duration}s
         </span>
       )}
+      {demoSlot !== undefined && <span className="status-bar-right">{demoSlot}</span>}
     </div>
   );
 }

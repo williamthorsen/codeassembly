@@ -907,4 +907,98 @@ describe('parseRunData', () => {
       expect(mockedReadFile).toHaveBeenCalledWith('/runs/test-run/run-index.json', 'utf8');
     });
   });
+
+  describe('v3 (header + log)', () => {
+    function minimalV3Header(): Record<string, unknown> {
+      return {
+        version: 3,
+        context: {
+          runId: 'v3-test-run',
+          projectSlug: 'test',
+          projectRoot: '/test',
+          branch: 'main',
+          task: 'test task',
+          startedAt: '2026-01-01T00:00:00Z',
+        },
+        config: {
+          mode: 'orchestrated',
+          model: 'claude-opus-4-6',
+        },
+      };
+    }
+
+    function jsonlLines(...events: Record<string, unknown>[]): string {
+      return events.map((e) => JSON.stringify(e)).join('\n');
+    }
+
+    it('parses v3 header + JSONL into CanonicalRunStatus', async () => {
+      const logContent = jsonlLines(
+        { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+        { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' },
+        {
+          t: '2026-01-01T00:02:00Z',
+          event: 'phase_completed',
+          phase: 'architecture',
+          status: 'completed',
+          data: { impactLevel: 'high' },
+        },
+        { t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' },
+      );
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': logContent,
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.runId).toBe('v3-test-run');
+      expect(result.status).toBe('completed');
+      expect(result.completedAt).toBe('2026-01-01T00:10:00Z');
+      expect(result.phases.architecture).toMatchObject({ status: 'completed', impactLevel: 'high' });
+      expect(result.mode).toBe('orchestrated');
+      expect(result.model).toBe('claude-opus-4-6');
+    });
+
+    it('falls back to v2 parse when v3 header is present but run-log.jsonl is ENOENT', async () => {
+      // A v3 header without a run-log.jsonl causes the adapter to fall back to parseRunIndexFromRaw.
+      // A v3 header fails the v2 schema (version 3 !== 2), so this should throw.
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+    });
+
+    it('handles empty log file (returns initial state)', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': '',
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.runId).toBe('v3-test-run');
+      expect(result.status).toBe('in_progress');
+      expect(result.phaseDecisions).toEqual({});
+      expect(result.artifacts).toEqual([]);
+    });
+
+    it('skips unrecognized event types (forward compatibility)', async () => {
+      const logContent = jsonlLines(
+        { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+        { t: '2026-01-01T00:01:00Z', event: 'future_event_type', data: {} },
+        { t: '2026-01-01T00:02:00Z', event: 'run_completed', status: 'completed' },
+      );
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': logContent,
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.status).toBe('completed');
+    });
+  });
 });
