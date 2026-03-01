@@ -70,7 +70,6 @@ describe('ProjectScanner', () => {
     vi.resetAllMocks();
   });
 
-  // eslint-disable-next-line complexity
   it('scans projects with tickets/ subdirectory', async () => {
     const scanner = new ProjectScanner('/test/projects');
 

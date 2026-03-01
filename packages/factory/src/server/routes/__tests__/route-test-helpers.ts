@@ -84,6 +84,10 @@ async function invokeLayerHandle(
   if (result instanceof Promise) await result;
 }
 
+function createRouteHandler(layer: HasHandle): RouteHandler {
+  return (req, res) => invokeLayerHandle(layer, req, res);
+}
+
 /**
  * Extracts a route handler from an Express Router by method and path.
  *
@@ -101,7 +105,7 @@ export function getHandler(router: Router, method: string, path: string): RouteH
     const routeLayer = extractLayerWithHandle(route);
     if (!routeLayer) continue;
 
-    return (req, res) => invokeLayerHandle(routeLayer, req, res);
+    return createRouteHandler(routeLayer);
   }
 
   throw new Error(`No handler found for ${method.toUpperCase()} ${path}`);

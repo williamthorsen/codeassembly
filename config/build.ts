@@ -85,7 +85,7 @@ function rewriteTsExtensions(): Plugin {
 function resolveAliasImports(code: string, fileDir: string, aliasMap: Record<string, string>): string {
   for (const [alias, targetDir] of Object.entries(aliasMap)) {
     const escaped = alias.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`); // escape regex
-    const regex = new RegExp(`(?<=from\\s+['"])${escaped}([^'"]+)(?=['"])`, 'g');
+    const regex = new RegExp(String.raw`(?<=from\s+['"])${escaped}([^'"]+)(?=['"])`, 'g');
 
     code = code.replace(regex, (_, subpath: string) => {
       const absolute = path.resolve(targetDir, subpath);
