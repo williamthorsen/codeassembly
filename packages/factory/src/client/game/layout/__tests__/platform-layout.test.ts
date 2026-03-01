@@ -195,20 +195,20 @@ describe('computeLayout', () => {
       expect(pos).toEqual({ x: 650, y: 400 - 2 * 56 - 22 });
     });
 
-    it('returns approach position at level 0 (one spacing left of leftmost grid slot)', () => {
+    it('returns approach position at level 0 using approachGap from leftmost grid slot', () => {
       const layout = computeLayout(1);
       const pos = layout.agentPosition(3, 0, 0, true);
 
-      // stationX = 650; approaching x = 650 - 72 = 578; y = 400 - 22 = 378
-      expect(pos).toEqual({ x: 578, y: 378 });
+      // stationX = 650; leftmostSlot = -36; approachGap = 14; x = 650 - 36 - 14 = 600
+      expect(pos).toEqual({ x: 600, y: 378 });
     });
 
-    it('returns approach position at upper level (one spacing left of station center)', () => {
+    it('returns approach position at upper level using approachGap from station center', () => {
       const layout = computeLayout(2);
       const pos = layout.agentPosition(3, 0, 1, true);
 
-      // stationX = 650; approaching x = 650 - 36 = 614; y = 400 - 56 - 22 = 322
-      expect(pos).toEqual({ x: 614, y: 322 });
+      // stationX = 650; approachGap = 14; x = 650 - 14 = 636; y = 400 - 56 - 22 = 322
+      expect(pos).toEqual({ x: 636, y: 322 });
     });
 
     it('ignores stackOffset when approaching is true', () => {

@@ -48,6 +48,14 @@ export class FactoryScene extends Scene {
   }
 
   updateStatus(status: CanonicalRunStatus): void {
+    // When the run changes (e.g. switching to demo playback), clear all agent
+    // state so agents are placed at their new positions without walking from
+    // the previous run's layout.
+    if (status.runId !== this.status.runId) {
+      this.agentMap.clear();
+      this.prevAgentConfigs = [];
+    }
+
     this.status = status;
     const config = createSceneConfig(this.status);
     this.rebuildStaticElements(config);

@@ -12,6 +12,13 @@ export interface LayoutConfig {
   artifactGap: number;
   artifactOffsetX: number;
   artifactOffsetY: number;
+  /**
+   * Gap in pixels between an approaching agent and the nearest resident
+   * agent at the target station. Smaller values bring the approaching agent
+   * closer. The original gap was 36 px (one full agentHSpacing); the default
+   * of 20 px places the approaching agent approximately 60 % closer.
+   */
+  approachGap: number;
 }
 
 export interface PlatformSegment {
@@ -67,6 +74,7 @@ const DEFAULT_CONFIG: LayoutConfig = {
   artifactGap: 4,
   artifactOffsetX: 20,
   artifactOffsetY: -60,
+  approachGap: 20,
 };
 
 /**
@@ -151,12 +159,12 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
       if (level === 0) {
         const leftmostSlotOffset = -((c.agentsPerRow - 1) / 2) * c.agentHSpacing;
         return {
-          x: stationX + leftmostSlotOffset - c.agentHSpacing,
+          x: stationX + leftmostSlotOffset - c.approachGap,
           y: c.baseY - standOffset,
         };
       }
       return {
-        x: stationX - c.agentHSpacing,
+        x: stationX - c.approachGap,
         y: c.baseY - level * c.levelHeight - standOffset,
       };
     }
