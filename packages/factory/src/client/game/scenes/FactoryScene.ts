@@ -103,7 +103,10 @@ export class FactoryScene extends Scene {
       const station = config.stations[i];
       const pos = layout.stationPositions[i];
       if (station === undefined || pos === undefined) continue;
-      this.add(new StationActor(station.role, station.active, vec(pos.x, pos.y)));
+      const agentPos = layout.agentPosition(i, 0, 0);
+      const labelNudge = 8; // px left of agent center, visually tuned
+      const labelOffsetX = agentPos.x - labelNudge - pos.x;
+      this.add(new StationActor(station.role, station.active, vec(pos.x, pos.y), labelOffsetX));
     }
   }
 

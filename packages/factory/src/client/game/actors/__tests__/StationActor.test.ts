@@ -36,7 +36,7 @@ vi.mock('excalibur', () => {
     }
   }
 
-  const MockTextAlign = { Center: 'center' };
+  const MockTextAlign = { Center: 'center', Left: 'left' };
 
   class MockFont {
     size: number;
@@ -168,22 +168,23 @@ describe('StationActor', () => {
     );
   });
 
-  it('positions label centered on platform below station', () => {
-    new StationActor('architect', true, vec(0, 0));
+  it('positions label below station using labelOffsetX', () => {
+    new StationActor('architect', true, vec(0, 0), -36);
 
+    // groupLabelX = STATION_WIDTH/2 + (-36) = 50 - 36 = 14
     expect(mockGraphicsGroupConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        members: expect.arrayContaining([expect.objectContaining({ offset: { x: 50, y: 45 }, useBounds: false })]),
+        members: expect.arrayContaining([expect.objectContaining({ offset: { x: 14, y: 45 }, useBounds: false })]),
       }),
     );
   });
 
-  it('uses center-aligned text on the Font', () => {
+  it('uses left-aligned text on the Font', () => {
     new StationActor('coder', true, vec(0, 0));
 
     expect(mockTextConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        font: expect.objectContaining({ textAlign: 'center' }),
+        font: expect.objectContaining({ textAlign: 'left' }),
       }),
     );
   });

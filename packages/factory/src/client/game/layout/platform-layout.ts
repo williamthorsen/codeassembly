@@ -72,8 +72,8 @@ const DEFAULT_CONFIG: LayoutConfig = {
   platformHeight: 20,
   artifactSize: { width: 12, height: 12 },
   artifactGap: 4,
-  artifactOffsetX: 20,
-  artifactOffsetY: -60,
+  artifactOffsetX: -18,
+  artifactOffsetY: -36,
   approachGap: 20,
 };
 
@@ -179,9 +179,10 @@ export function computeLayout(reviewerCount: number, config?: Partial<LayoutConf
       };
     }
 
-    // Upper levels: center agent on the upper platform
+    // Upper levels: align with level-0, stackOffset-0 position
+    const col0Offset = (0 - (c.agentsPerRow - 1) / 2) * c.agentHSpacing;
     return {
-      x: stationX,
+      x: stationX + col0Offset,
       y: c.baseY - level * c.levelHeight - standOffset,
     };
   }
