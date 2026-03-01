@@ -331,7 +331,7 @@ describe('FactoryScene', () => {
         'coder',
         'reviewer',
         'simplifier',
-        'holistic-reviewer',
+        'holistic reviewer',
         'orchestrator',
       ]);
     });

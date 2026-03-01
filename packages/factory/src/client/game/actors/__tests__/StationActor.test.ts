@@ -159,7 +159,7 @@ describe('StationActor', () => {
 
   it('passes position to Actor constructor', () => {
     const pos = vec(300, 400);
-    new StationActor('holistic-reviewer', false, pos);
+    new StationActor('holistic reviewer', false, pos);
 
     expect(mockActorConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -173,9 +173,7 @@ describe('StationActor', () => {
 
     expect(mockGraphicsGroupConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
-        members: expect.arrayContaining([
-          expect.objectContaining({ offset: { x: 50, y: 25 }, useBounds: false }),
-        ]),
+        members: expect.arrayContaining([expect.objectContaining({ offset: { x: 50, y: 45 }, useBounds: false })]),
       }),
     );
   });

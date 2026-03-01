@@ -20,7 +20,7 @@ export const PHASE_ROLE: Record<PhaseName, string> = {
   implementation: 'coder',
   review: 'reviewer',
   simplifier: 'simplifier',
-  holistic: 'holistic-reviewer',
+  holistic: 'holistic reviewer',
   summary: 'orchestrator',
 };
 

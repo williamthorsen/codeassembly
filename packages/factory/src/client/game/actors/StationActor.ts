@@ -34,7 +34,7 @@ export class StationActor extends Actor {
     const group = new GraphicsGroup({
       members: [
         { graphic: rect, offset: vec(0, 0) },
-        { graphic: label, offset: vec(STATION_WIDTH / 2, STATION_HEIGHT / 2 + PLATFORM_HEIGHT / 2 - 5), useBounds: false },
+        { graphic: label, offset: vec(STATION_WIDTH / 2, STATION_HEIGHT + PLATFORM_HEIGHT / 2 - 5), useBounds: false },
       ],
     });
 
