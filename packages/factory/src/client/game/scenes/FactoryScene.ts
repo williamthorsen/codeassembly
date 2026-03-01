@@ -11,7 +11,7 @@ import { StationActor } from '../actors/StationActor.js';
 import type { LayoutResult } from '../layout/platform-layout.js';
 import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.js';
 import { computeWalkPath, type Waypoint } from '../layout/walk-path.js';
-import type { AgentConfig, SceneConfig } from '../mappers/run-to-scene.js';
+import type { AgentConfig, GateConfig, SceneConfig } from '../mappers/run-to-scene.js';
 import { createSceneConfig } from '../mappers/run-to-scene.js';
 import { diffAgents } from '../state/agent-differ.js';
 import { resolveAgentStates } from '../state/agent-state-resolver.js';
@@ -31,6 +31,8 @@ function walkWithWarning(actor: AgentActor, role: string, waypoints: ReadonlyArr
 export class FactoryScene extends Scene {
   private agentMap = new Map<string, AgentActor>();
   private prevAgentConfigs: AgentConfig[] = [];
+  private gateMap = new Map<number, GateActor>();
+  private prevGateConfigs: GateConfig[] = [];
   private status: CanonicalRunStatus;
   private layout: LayoutResult | undefined;
 
@@ -49,6 +51,7 @@ export class FactoryScene extends Scene {
     this.status = status;
     const config = createSceneConfig(this.status);
     this.rebuildStaticElements(config);
+    this.updateGates(config);
     this.updateAgents(config);
     this.fitCamera();
   }
@@ -97,6 +100,8 @@ export class FactoryScene extends Scene {
   }
 
   private addGates(config: SceneConfig, layout: LayoutResult): void {
+    if (this.gateMap.size > 0) return;
+
     if (layout.gatePositions.length !== config.gates.length) {
       console.error(
         `[FactoryScene] Gate count mismatch: ${String(config.gates.length)} gates but ${String(layout.gatePositions.length)} positions`,
@@ -106,8 +111,11 @@ export class FactoryScene extends Scene {
       const gate = config.gates[i];
       const pos = layout.gatePositions[i];
       if (gate === undefined || pos === undefined) continue;
-      this.add(new GateActor(gate.open, vec(pos.x, pos.y)));
+      const gateActor = new GateActor(gate.open, vec(pos.x, pos.y));
+      this.gateMap.set(i, gateActor);
+      this.add(gateActor);
     }
+    this.prevGateConfigs = config.gates;
   }
 
   /** Remove all actors and rebuild static elements (platform, stations, gates, artifacts). */
@@ -120,7 +128,29 @@ export class FactoryScene extends Scene {
       this.add(agentActor);
     }
 
+    // Re-add persistent gate actors
+    for (const gateActor of this.gateMap.values()) {
+      this.add(gateActor);
+    }
+
     this.buildStaticElements(config);
+  }
+
+  /** Diff gate open/closed states and call setOpen on changed gates. */
+  private updateGates(config: SceneConfig): void {
+    for (let i = 0; i < config.gates.length; i++) {
+      const gateConfig = config.gates[i];
+      const prevConfig = this.prevGateConfigs[i];
+      if (gateConfig !== undefined && gateConfig.open !== prevConfig?.open) {
+        const actor = this.gateMap.get(i);
+        if (actor === undefined) {
+          console.warn(`[FactoryScene] updateGates: no actor for gate index ${String(i)}`);
+          continue;
+        }
+        actor.setOpen(gateConfig.open);
+      }
+    }
+    this.prevGateConfigs = config.gates;
   }
 
   /**
@@ -204,15 +234,26 @@ export class FactoryScene extends Scene {
           if (artifact !== undefined) {
             actor.showArtifactIndicator(artifact.type);
           }
+
+          // For multi-station jumps, only the nearest gate is awaited. Intermediate
+          // gates are guaranteed open because updateGates runs before updateAgents
+          // and all intervening stations are already active at that point.
+          const gateIndex = Math.min(prev.stationIndex, next.stationIndex);
+          const gate = this.gateMap.get(gateIndex);
           const generationAtStart = actor.walkGeneration;
-          void walkWithWarning(actor, next.role, waypoints)
-            .then(() => delay(300))
-            .finally(() => {
-              actor.hideArtifactIndicator();
-              if (actor.walkGeneration === generationAtStart) {
-                actor.setFacing(next.approaching === true ? 'right' : 'left');
-              }
-            });
+
+          void (async () => {
+            if (gate !== undefined) {
+              await gate.waitForOpen();
+            }
+            await walkWithWarning(actor, next.role, waypoints);
+            await delay(300);
+          })().finally(() => {
+            actor.hideArtifactIndicator();
+            if (actor.walkGeneration === generationAtStart) {
+              actor.setFacing(next.approaching === true ? 'right' : 'left');
+            }
+          });
         } else {
           void walkWithWarning(actor, next.role, waypoints);
         }
