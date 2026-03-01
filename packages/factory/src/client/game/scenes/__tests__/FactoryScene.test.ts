@@ -14,6 +14,8 @@ const {
   mockShowArtifactIndicator,
   mockHideArtifactIndicator,
   mockSetFacing,
+  mockGateSetOpen,
+  mockGateWaitForOpen,
 } = vi.hoisted(() => {
   const kill = vi.fn();
   const fade = vi.fn(() => ({
@@ -31,6 +33,8 @@ const {
     mockShowArtifactIndicator: vi.fn(),
     mockHideArtifactIndicator: vi.fn(),
     mockSetFacing: vi.fn(),
+    mockGateSetOpen: vi.fn(),
+    mockGateWaitForOpen: vi.fn(() => Promise.resolve()),
   };
 });
 
@@ -115,6 +119,8 @@ vi.mock('../../../game/actors/ArtifactActor.js', () => ({
 vi.mock('../../../game/actors/GateActor.js', () => ({
   GateActor: class GateActor {
     kind = 'gate';
+    setOpen = mockGateSetOpen;
+    waitForOpen = mockGateWaitForOpen;
     constructor(
       public open: boolean,
       public position: unknown,
@@ -177,6 +183,8 @@ describe('FactoryScene', () => {
     mockHideArtifactIndicator.mockClear();
     mockKill.mockClear();
     mockFade.mockClear();
+    mockGateSetOpen.mockClear();
+    mockGateWaitForOpen.mockClear();
     mockCamera.zoom = 1;
     mockCamera.pos = { x: 0, y: 0 };
   });
@@ -749,7 +757,7 @@ describe('FactoryScene', () => {
       expect(mockWalkPath).toHaveBeenCalled();
     });
 
-    it('shows artifact indicator on orchestrator before walk when artifact exists at previous station', () => {
+    it('shows artifact indicator on orchestrator before walk when artifact exists at previous station', async () => {
       // Initial: arch + planning completed → implementation inferred as current → orchestrator at station 2
       const status = createMockRunStatus({
         status: 'in_progress',
@@ -776,8 +784,12 @@ describe('FactoryScene', () => {
       });
       scene.updateStatus(updatedStatus);
 
+      // showArtifactIndicator is called synchronously before the async doWalk
       expect(mockShowArtifactIndicator).toHaveBeenCalledWith('code');
-      expect(mockWalkPath).toHaveBeenCalled();
+      // walkPath is called after awaiting gate.waitForOpen() (async)
+      await vi.waitFor(() => {
+        expect(mockWalkPath).toHaveBeenCalled();
+      });
     });
 
     it('hides artifact indicator after orchestrator walk completes', async () => {
@@ -1073,6 +1085,162 @@ describe('FactoryScene', () => {
       await vi.waitFor(() => {
         expect(mockSetFacing).toHaveBeenCalledWith('left');
       });
+    });
+  });
+
+  describe('gate persistence', () => {
+    it('does not create new gate actors on second updateStatus call', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      mockSceneAdd.mockClear();
+
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // Gate actors are re-added (6) but not newly constructed — they are the same instances
+      const gateCalls = mockSceneAdd.mock.calls.filter((call: unknown[]) => getActorFromCall(call).kind === 'gate');
+      expect(gateCalls).toHaveLength(6);
+    });
+
+    it('calls setOpen when gate state changes between updates', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      // Initial state: architecture is inferred as current, so only station 0 is active.
+      // Gates between inactive stations are closed. Now activate more stations.
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // Gate between stations 0 and 1 should now be open (both active)
+      expect(mockGateSetOpen).toHaveBeenCalledWith(true);
+    });
+
+    it('does not call setOpen when gate state is unchanged', () => {
+      const status = createMockRunStatus();
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+
+      mockGateSetOpen.mockClear();
+
+      // Re-apply the same status — no gate state changes
+      scene.updateStatus(createMockRunStatus());
+
+      expect(mockGateSetOpen).not.toHaveBeenCalled();
+    });
+
+    it('orchestrator awaits waitForOpen before walking', () => {
+      // Initial: arch + planning completed → implementation inferred as current → orchestrator at station 2
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockGateWaitForOpen.mockClear();
+      mockWalkPath.mockClear();
+
+      // Updated: implementation completed → review inferred as current → orchestrator moves to station 3
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', qualityGates: 'passed', artifact: 'summary.md' },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      expect(mockGateWaitForOpen).toHaveBeenCalled();
+    });
+
+    it('orchestrator awaits waitForOpen before walking backward', () => {
+      // Initial: all phases through simplifier completed, holistic inferred as current → orchestrator at station 5
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+          codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: undefined },
+        },
+      });
+      const scene = new FactoryScene(status);
+      scene.onInitialize();
+      mockGateWaitForOpen.mockClear();
+      mockWalkPath.mockClear();
+
+      // Updated: holistic decided to skip → no inferred current phase → orchestrator falls back to station 4 (simplifier)
+      const updatedStatus = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+          codeSimplifier: { ran: true, actionableFindings: true, coderFixCycleRan: false, artifact: undefined },
+        },
+        phaseDecisions: {
+          holistic: { run: false, reason: 'skipped' },
+        },
+      });
+      scene.updateStatus(updatedStatus);
+
+      // Gate between stations 4 and 5 (index 4) should be awaited for backward movement
+      expect(mockGateWaitForOpen).toHaveBeenCalled();
     });
   });
 });
