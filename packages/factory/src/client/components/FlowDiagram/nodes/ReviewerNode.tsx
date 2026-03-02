@@ -23,9 +23,6 @@ export function ReviewerNode({ data }: NodeProps<Node<FlowNodeData>>): React.JSX
   const borderColor = ROLE_TYPE_COLORS.reviewer;
   const fillColor = ROLE_TYPE_LIGHT_FILLS.reviewer;
 
-  const criticality = data.criticality;
-  const reReviewCriticality = data.reReviewCriticality;
-
   return (
     <div
       className="flow-node"
@@ -44,35 +41,35 @@ export function ReviewerNode({ data }: NodeProps<Node<FlowNodeData>>): React.JSX
         <span className="flow-node__label">{data.role}</span>
       </div>
       <span className="flow-node__sublabel">{data.agentId}</span>
-      {criticality !== undefined && (
+      {data.criticality !== undefined && (
         <div>
-          {reReviewCriticality === undefined ? (
+          {data.reReviewCriticality === undefined ? (
             <span
               className="flow-node__badge"
-              data-criticality={criticality}
-              style={{ background: getCriticalityColor(criticality), color: '#ffffff' }}
+              data-criticality={data.criticality}
+              style={{ background: getCriticalityColor(data.criticality), color: '#ffffff' }}
             >
-              {criticality}
+              {data.criticality}
             </span>
           ) : (
             <span>
               <span
                 className="flow-node__badge"
-                data-criticality={criticality}
-                style={{ background: getCriticalityColor(criticality), color: '#ffffff' }}
+                data-criticality={data.criticality}
+                style={{ background: getCriticalityColor(data.criticality), color: '#ffffff' }}
               >
-                {criticality}
+                {data.criticality}
               </span>
               <span style={{ margin: '0 4px', fontSize: 10 }}>&rarr;</span>
               <span
                 className="flow-node__badge"
-                data-criticality={reReviewCriticality}
+                data-criticality={data.reReviewCriticality}
                 style={{
-                  background: getCriticalityColor(reReviewCriticality),
+                  background: getCriticalityColor(data.reReviewCriticality),
                   color: '#ffffff',
                 }}
               >
-                {reReviewCriticality}
+                {data.reReviewCriticality}
               </span>
             </span>
           )}

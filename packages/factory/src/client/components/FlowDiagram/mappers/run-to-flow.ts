@@ -3,7 +3,12 @@ import type { Edge, Node } from '@xyflow/react';
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, ParallelReviewPhase, Phases, QualityGates } from '../../../../shared/types/canonical.js';
+import type {
+  CanonicalRunStatus,
+  ParallelReviewPhase,
+  Phases,
+  QualityGates,
+} from '../../../../shared/types/canonical.js';
 
 export interface FlowNodeData extends Record<string, unknown> {
   role: string;
@@ -163,10 +168,6 @@ function extractReviewerNames(parallelReview: ParallelReviewPhase): string[] {
   return [];
 }
 
-function getPhaseColumn(phase: PhaseName): PhaseColumn {
-  return PHASE_COLUMNS[phase];
-}
-
 /** Build phase agent nodes for each active phase. */
 function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: PhaseName): Node<FlowNodeData>[] {
   const nodes: Node<FlowNodeData>[] = [];
@@ -177,7 +178,7 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
     // Skipped phases are handled by buildGhostNodes
     if (!shouldShowPhaseAgent(phase, phases, currentPhase)) continue;
 
-    const column = getPhaseColumn(phase);
+    const column = PHASE_COLUMNS[phase];
     const nodeStatus = resolvePhaseNodeStatus(phase, phases, runStatus, currentPhase);
     const roleType = PHASE_ROLE_TYPE[phase];
     const color = ROLE_TYPE_COLORS[roleType];
@@ -222,7 +223,7 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
 /** Build reviewer nodes with vertical fan-out. */
 function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
   const nodes: Node<FlowNodeData>[] = [];
-  const reviewColumn = getPhaseColumn('review');
+  const reviewColumn = PHASE_COLUMNS.review;
 
   if (!isPresent(phases.parallelReview)) return nodes;
 
@@ -244,10 +245,10 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
         status: resolveReviewerStatus(phases.parallelReview, name),
         phase: 'review',
         label: name,
-        ...(reviewerInfo?.criticality === undefined ? {} : { criticality: reviewerInfo.criticality }),
-        ...(reviewerInfo?.reReviewCriticality === undefined
-          ? {}
-          : { reReviewCriticality: reviewerInfo.reReviewCriticality }),
+        ...(reviewerInfo?.criticality !== undefined ? { criticality: reviewerInfo.criticality } : {}),
+        ...(reviewerInfo?.reReviewCriticality !== undefined
+          ? { reReviewCriticality: reviewerInfo.reReviewCriticality }
+          : {}),
       },
       style: {
         background: color,
@@ -278,7 +279,7 @@ function resolveReviewerStatus(parallelReview: ParallelReviewPhase, reviewerName
 function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
   if (phases.parallelReview?.coderFixCycleRan !== true) return [];
 
-  const reviewColumn = getPhaseColumn('review');
+  const reviewColumn = PHASE_COLUMNS.review;
   const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.implementation];
 
   return [
@@ -316,11 +317,11 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
   let nodeStatus: FlowNodeData['status'];
 
   if (status.status === 'completed') {
-    column = getPhaseColumn('summary');
+    column = PHASE_COLUMNS.summary;
     nodeStatus = 'completed';
   } else if (status.status === 'in_progress') {
     const phase = currentPhase ?? 'architecture';
-    column = getPhaseColumn(phase);
+    column = PHASE_COLUMNS[phase];
     nodeStatus = 'working';
   } else {
     // Failed or needs_manual_review -- no orchestrator
@@ -370,7 +371,7 @@ function buildGhostNodes(
     const decision = phaseDecisions[phase];
     if (decision === undefined || decision.run) continue;
 
-    const column = getPhaseColumn(phase);
+    const column = PHASE_COLUMNS[phase];
 
     nodes.push({
       id: `ghost-${phase}`,

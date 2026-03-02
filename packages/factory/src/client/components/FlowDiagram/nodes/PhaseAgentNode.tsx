@@ -23,8 +23,18 @@ function renderQualityGates(gates: QualityGates): React.JSX.Element {
     <span className="flow-node__badge" style={{ background: '#e8e8e8', color: '#333333' }}>
       {items.map((item) => {
         const passed = item.value === 'pass' || item.value === 'passed';
-        const status = item.value === undefined ? 'unknown' : passed ? 'pass' : 'fail';
-        const color = item.value === undefined ? '#999999' : passed ? '#2da44e' : '#cf222e';
+        let status: string;
+        let color: string;
+        if (item.value === undefined) {
+          status = 'unknown';
+          color = '#999999';
+        } else if (passed) {
+          status = 'pass';
+          color = '#2da44e';
+        } else {
+          status = 'fail';
+          color = '#cf222e';
+        }
         return (
           <span key={item.label} data-gate-status={status} style={{ color, marginRight: 4 }}>
             {item.label}
