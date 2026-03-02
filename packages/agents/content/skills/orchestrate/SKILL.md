@@ -137,7 +137,8 @@ Prefix the status line with a colored emoji for visual distinction:
 
 1. **Get context**: Use `get-project-slug` and `get-ticket-id`. Resolve the diff base: use `--diff-base` if provided, otherwise use `get-default-branch`. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` — this concrete SHA is what you pass to all downstream agents. If no ticket ID is available, auto-generate one: `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}`.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
-3. **Initialize run via MCP**: Call MCP tool `init_run` with:
+3. **Detect external plan**: Determine whether the task description contains an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content for use in downstream prompts. Otherwise, set `{externalPlan}` to `false`. This detection must happen before `init_run` so the flag is recorded correctly in the run header.
+4. **Initialize run via MCP**: Call MCP tool `init_run` with:
 
    ```
    projectSlug: {slug}
@@ -148,7 +149,7 @@ Prefix the status line with a colored emoji for visual distinction:
    pipeline: [{phase names from wrapper pipeline specification}]
    models: {resolved models map}
    config: {
-     externalPlan: false,
+     externalPlan: {externalPlan},
      mergeBaseSha: {merge-base-sha},
      diffBase: {diff-base},
      maxReviewRounds: {N},
@@ -162,7 +163,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
 
-4. **Write run-manifest artifact** to `{run-dir}/{file-timestamp}_orchestrator_run-manifest.md`:
+5. **Write run-manifest artifact** to `{run-dir}/{file-timestamp}_orchestrator_run-manifest.md`:
 
 ```markdown
 # Run manifest
@@ -194,7 +195,7 @@ Prefix the status line with a colored emoji for visual distinction:
    phase: initialization
    ```
 
-5. **Write ticket content artifact** (if available): If `{ticket-content}` is non-empty, write to `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`. Then call MCP tool `register_artifact` with:
+6. **Write ticket content artifact** (if available): If `{ticket-content}` is non-empty, write to `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`. Then call MCP tool `register_artifact` with:
 
    ```
    runDir: {run-dir}
@@ -206,7 +207,7 @@ Prefix the status line with a colored emoji for visual distinction:
    phase: initialization
    ```
 
-6. **Write external plan artifact** (if present): If an external plan was extracted from the task description, write to `{run-dir}/{file-timestamp}_orchestrator_external-plan.md`. Then call MCP tool `register_artifact` with:
+7. **Write external plan artifact** (if present): If an external plan was extracted in step 3, write to `{run-dir}/{file-timestamp}_orchestrator_external-plan.md`. Then call MCP tool `register_artifact` with:
 
    ```
    runDir: {run-dir}
@@ -218,11 +219,11 @@ Prefix the status line with a colored emoji for visual distinction:
    phase: initialization
    ```
 
-7. **Register all subsequent artifacts**: For every artifact file written during the run, call MCP tool `register_artifact` immediately after writing the file. Required fields: `runDir`, `filename`, `role`, `roleType`, `agent`, `type`, `phase`. Optional fields: `iteration` (for review phase artifacts), `note` (free-text context). Use the [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy) defined in artifact-conventions.md to populate the `roleType` field for each artifact entry. Quick reference: orchestrator -> `orchestrator`, architect -> `analyst`, planner -> `planner`, coder -> `author`, all reviewers -> `reviewer`. See [artifact entry fields](../_data/artifact-conventions.md#artifact-entry-fields) for the full field reference.
+8. **Register all subsequent artifacts**: For every artifact file written during the run, call MCP tool `register_artifact` immediately after writing the file. Required fields: `runDir`, `filename`, `role`, `roleType`, `agent`, `type`, `phase`. Optional fields: `iteration` (for review phase artifacts), `note` (free-text context). Use the [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy) defined in artifact-conventions.md to populate the `roleType` field for each artifact entry. Quick reference: orchestrator -> `orchestrator`, architect -> `analyst`, planner -> `planner`, coder -> `author`, all reviewers -> `reviewer`. See [artifact entry fields](../_data/artifact-conventions.md#artifact-entry-fields) for the full field reference.
 
 ## Phase decisions
 
-First, determine whether the task contains an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, extract the plan content for use in downstream prompts. (The `externalPlan` flag was already set in the `config` passed to `init_run`.)
+The `{externalPlan}` flag and extracted plan content were already determined in step 3 of run initialization and recorded in the `config` passed to `init_run`.
 
 Emit a `phase_decision` event for every known phase. Iterate through the complete set of known phases (`architecture`, `planning`, `implementation`, `review-cycle`) — not just the phases present in the pipeline:
 

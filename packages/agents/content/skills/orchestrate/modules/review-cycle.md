@@ -136,13 +136,22 @@ Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {
 
 ### Findings aggregation
 
-After all dispatched reviewers complete, emit one `reviewer_completed` event per reviewer:
+After all dispatched reviewers complete, emit one `reviewer_completed` event per dispatched reviewer:
 
 ```
 Call MCP tool emit_event with:
   runDir: {run-dir}
   event: { event: "reviewer_completed", reviewer: "{name}",
-           status: "completed"|"failed"|"skipped", criticality: "{level}" }
+           status: "completed"|"failed", criticality: "{level}" }
+```
+
+For each aspect reviewer that was **not activated** (skipped by activation rules), emit a separate `reviewer_completed` event:
+
+```
+Call MCP tool emit_event with:
+  runDir: {run-dir}
+  event: { event: "reviewer_completed", reviewer: "{name}",
+           status: "skipped", criticality: "none" }
 ```
 
 Then aggregate findings from all sources into a consolidated set.
@@ -220,7 +229,14 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `re
 - After N iterations unresolved (where N is the configured `max-review-rounds`): exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
 - Structural issues: may return to Planning once per run.
 
-At phase completion (converged or `needs_manual_review`): call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Emit `phase_decision` for `parallelReview` with `run: true`.
+At phase completion (converged or `needs_manual_review`): call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Then emit `phase_decision` for `parallelReview`:
+
+```
+Call MCP tool emit_event with:
+  runDir: {run-dir}
+  event: { event: "phase_decision", phase: "parallelReview", run: true,
+           reason: "executed" }
+```
 
 ## Phase 4a: Code simplifier
 
@@ -270,7 +286,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Write your response to: `{run-dir}/{file-timestamp}_coder_change-summary.md`
 
-After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure). Call `register_artifact` for the code-simplifier review and coder change-summary artifacts.
+After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure). Call `register_artifact` for the code-simplifier review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
 
 ## Phase 4b: Final comprehensive review
 
