@@ -895,6 +895,12 @@ describe('createFlowConfig', () => {
       expect(edges.find((e) => e.id === 'dispatch-reviewer-reviewer-b')).toBeDefined();
       expect(edges.find((e) => e.id === 'return-reviewer-reviewer-b')).toBeDefined();
 
+      // Round 1 edges have no offset (first edge on each source-target pair)
+      const r1Dispatch = edges.find((e) => e.id === 'dispatch-reviewer-reviewer-a');
+      const r1Return = edges.find((e) => e.id === 'return-reviewer-reviewer-a');
+      expect(r1Dispatch?.data?.offset).toBeUndefined();
+      expect(r1Return?.data?.offset).toBeUndefined();
+
       // Round 2 edges only for reviewer-a
       const r2Dispatch = edges.find((e) => e.id === 'dispatch-reviewer-reviewer-a-r2');
       const r2Return = edges.find((e) => e.id === 'return-reviewer-reviewer-a-r2');
@@ -902,11 +908,14 @@ describe('createFlowConfig', () => {
       expect(r2Dispatch).toBeDefined();
       expect(r2Dispatch?.type).toBe('dispatch');
       expect(r2Dispatch?.data?.iteration).toBe(2);
+      // Second edge on same source-target pair => offset 12
+      expect(r2Dispatch?.data?.offset).toBe(12);
 
       expect(r2Return).toBeDefined();
       expect(r2Return?.type).toBe('return');
       expect(r2Return?.data?.iteration).toBe(2);
       expect(r2Return?.data?.criticality).toBe('low');
+      expect(r2Return?.data?.offset).toBe(12);
 
       // No round 2 edges for reviewer-b
       expect(edges.find((e) => e.id === 'dispatch-reviewer-reviewer-b-r2')).toBeUndefined();
@@ -1076,11 +1085,46 @@ describe('createFlowConfig', () => {
             aggregatedCriticality: 'low',
             reviewRoundsUsed: 1,
             reviewers: {
-              'reviewer-1': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
-              'reviewer-2': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
-              'reviewer-3': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
-              'reviewer-4': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
-              'reviewer-5': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
+              'reviewer-1': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'reviewer-2': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'reviewer-3': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'reviewer-4': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'reviewer-5': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
             },
             coderFixCycleRan: true,
             selectiveReReview: undefined,
@@ -1224,7 +1268,7 @@ describe('createFlowConfig', () => {
     // per source-target pair). The collapse logic is defensive for future multi-round iterations.
     // The threshold boundary (4 edges pass through) and expandedPairs bypass are tested above and below.
 
-    it('returns all edges without collapsed indicator when source-target pair is in expandedPairs', () => {
+    it('does not emit collapsed indicator when pair is below threshold (expandedPairs not relevant at current max of 2 edges per pair)', () => {
       const reviewers = makeReviewersWithReReview(2);
       const reviewerNames = Object.keys(reviewers);
       const status = createMockRunStatus({
@@ -1257,9 +1301,7 @@ describe('createFlowConfig', () => {
       const { edges } = createFlowConfig(status, expandedPairs);
 
       // No collapsed indicator for the expanded pair
-      const collapsedEdges = edges.filter(
-        (e) => e.id === `collapsed-orchestrator|reviewer-${firstReviewer}`,
-      );
+      const collapsedEdges = edges.filter((e) => e.id === `collapsed-orchestrator|reviewer-${firstReviewer}`);
       expect(collapsedEdges.length).toBe(0);
     });
   });
