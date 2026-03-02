@@ -210,6 +210,8 @@ When reviewing after a coder has responded to previous findings:
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
+You MUST include all fields in the return block. The orchestrator enforces strict parsing — omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+
 ```
 Phase: {parallelReview|holisticReview}
 Status: completed|failed

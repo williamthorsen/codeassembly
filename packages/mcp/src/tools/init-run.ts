@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -17,6 +18,7 @@ export interface InitRunInput {
 export interface InitRunResult {
   runDir: string;
   runId: string;
+  ticketId: string;
   timestamp: string;
 }
 
@@ -28,16 +30,27 @@ function generateRunId(projectSlug: string): string {
   return `${projectSlug}.${date}-${time}Z`;
 }
 
+/** Generate a ticket ID in the format `{YYYYMMDD}-{4 random hex}`. */
+function generateTicketId(): string {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const suffix = randomBytes(2).toString('hex');
+  return `${date}-${suffix}`;
+}
+
 /**
  * Initialize a new run: create the run directory, write run-index.json, create
  * an empty run-log.jsonl, and emit a `run_started` event.
+ *
+ * Runs are stored at `{projectRoot}/.ai/runs/{ticketId}/{runId}/`. When no
+ * ticket ID is provided, one is auto-generated with a timestamp-based format.
  */
 export async function initRun(input: InitRunInput): Promise<InitRunResult> {
-  const { projectSlug, ticketId, projectRoot, branch, task, pipeline, models, config } = input;
+  const { projectSlug, projectRoot, branch, task, pipeline, models, config } = input;
 
+  const resolvedTicketId = input.ticketId ?? generateTicketId();
   const runId = generateRunId(projectSlug);
   const timestamp = new Date().toISOString();
-  const runDir = join(projectRoot, '.ai', 'runs', runId);
+  const runDir = join(projectRoot, '.ai', 'runs', resolvedTicketId, runId);
 
   await mkdir(runDir, { recursive: true });
 
@@ -46,7 +59,7 @@ export async function initRun(input: InitRunInput): Promise<InitRunResult> {
     context: {
       runId,
       projectSlug,
-      ...(ticketId === undefined ? {} : { ticketId }),
+      ticketId: resolvedTicketId,
       projectRoot,
       branch,
       task,
@@ -72,5 +85,5 @@ export async function initRun(input: InitRunInput): Promise<InitRunResult> {
     throw new Error(`Failed to emit run_started event: ${emitResult.error ?? 'unknown error'}`);
   }
 
-  return { runDir, runId, timestamp };
+  return { runDir, runId, ticketId: resolvedTicketId, timestamp };
 }

@@ -137,6 +137,8 @@ Write the plan JSON file to the path provided in the task prompt. Format:
 
 After writing your artifact files, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
+You MUST include all fields in the return block. The orchestrator enforces strict parsing — omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+
 ```
 Phase: planning
 Status: completed|failed

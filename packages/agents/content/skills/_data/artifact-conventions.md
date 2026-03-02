@@ -30,7 +30,7 @@ Always present under `projects/`, even when `.ai/` is inside the project. Consta
 
 ### Ticket ID
 
-Always present under `tickets/` within the project directory. If no real ticket exists, auto-generate: `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}` (e.g., `20260221-2359Z-a3f2`).
+Always present under `tickets/` within the project directory. If no real ticket exists, auto-generate: `{YYYYMMDD}-{4 random hex}` (e.g., `20260221-a3f2`).
 
 ### Run directories
 
@@ -144,6 +144,8 @@ Example run directory (full orchestrated run with iterative review):
 Machine-readable metadata for orchestrated runs. Written and maintained exclusively by the orchestrator. Individual skills do not write to this file directly.
 
 ### Schema
+
+> **Note:** The following examples show v2 format. New orchestrated runs use v3 (event-sourced) -- see the [V3 format](#v3-format-event-sourced-runs) section below.
 
 **Initial write** (at run start):
 
@@ -443,7 +445,66 @@ Phase values use camelCase and match the keys in the `phases` object:
 
 ### Version field
 
-The `version` field (value: `2`) enables schema detection. Absent version implies v1 (`status.json` era). Future schema changes will increment this value.
+The `version` field distinguishes schema formats: absent = v1 (`status.json` era), `2` = v2 (inline state in `run-index.json`), `3` = v3 (event-sourced). New orchestrated runs use v3. Existing v2 runs remain valid.
+
+## V3 format: event-sourced runs
+
+V3 separates static run metadata from dynamic state. The `run-index.json` file contains only the header; all state transitions are recorded as events in a companion `run-log.jsonl` file.
+
+### V3 header schema
+
+`run-index.json` with `version: 3` contains only the header — no `phases`, `phaseDecisions`, `status`, or `completedAt` fields in `context`. `completedAt` is stamped at the top level by `complete_run`.
+
+Context fields: `runId`, `projectSlug`, `ticketId?`, `projectRoot`, `branch`, `task`, `startedAt`.
+
+Config fields: `externalPlan?`, `mergeBaseSha?`, `diffBase?`, `maxReviewRounds?`, `fixLowFindings?`, `mode?`, `model?`. Additional fields are preserved (loose schema).
+
+### Run-log.jsonl
+
+Companion file in the same run directory. Each line is a JSON object (JSONL format) representing one `RunEvent`. Events are append-only and timestamped with field `t` (ISO 8601, server-generated). Events are validated against the `runEventSchema` discriminated union on `event` field before being appended.
+
+### Event types
+
+All 13 valid event types and their required fields:
+
+| Event type             | Key fields                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `run_started`          | _(none beyond `t`, `event`)_                                                                              |
+| `run_completed`        | `status` (`completed`\|`failed`\|`needs_manual_review`)                                                   |
+| `run_failed`           | `status`, `reason?`                                                                                       |
+| `phase_decision`       | `phase` (string), `run` (boolean), `reason?`                                                              |
+| `phase_started`        | `phase` (one of: `architecture`\|`planning`\|`implementation`\|`review`\|`simplifier`\|`holistic`)        |
+| `phase_completed`      | `phase`, `status` (one of: `completed`\|`skipped`\|`failed`\|`in_progress`\|`approved`), `data?` (record) |
+| `reviewer_dispatched`  | `reviewer` (string)                                                                                       |
+| `reviewer_completed`   | `reviewer`, `status` (`completed`\|`skipped`\|`failed`), `criticality` (`none`\|`low`\|`medium`\|`high`)  |
+| `coder_fix_started`    | `iteration` (number)                                                                                      |
+| `coder_fix_completed`  | `iteration` (number)                                                                                      |
+| `re_review_dispatched` | `reviewers` (string array)                                                                                |
+| `re_review_completed`  | `criticalities` (record: reviewer name -> criticality)                                                    |
+| `artifact_written`     | `filename`, `role`, `roleType`, `agent`, `type`, `phase`, `iteration?`, `note?`                           |
+
+### Run directory layout (v3)
+
+```
+{projectRoot}/.ai/runs/{ticketId}/{runId}/
+  run-index.json    <- v3 header (written by init_run, completedAt stamped by complete_run)
+  run-log.jsonl     <- append-only event log (one JSON object per line)
+  {file-timestamp}_{role}_{artifact}.md   <- artifact files (unchanged naming convention)
+```
+
+Runs are always nested under a ticket ID directory. When no ticket ID is provided to `init_run`, one is auto-generated in the format `{YYYYMMDD}-{4 random hex}` (e.g., `20260302-a3f2`). The date prefix aids human navigation.
+
+### Run ID format (v3)
+
+`{projectSlug}.{yyyymmdd}-{hhmmss}Z` (generated by `init_run`). This differs from the v2 format `{yyyymmdd}-{hhmmss}Z-orchestrated`.
+
+### Event folding
+
+Full run state (phases, artifacts, review rounds, criticalities) is reconstructed by the `foldEvents` function from `run-log.jsonl`. The `get_run_state` MCP tool performs this reconstruction and returns a `CanonicalRunStatus`. Orchestrators should call `get_run_state` for cumulative decisions instead of maintaining state in conversation memory.
+
+### Backward compatibility
+
+V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ## Artifact types
 
