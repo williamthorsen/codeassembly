@@ -15,6 +15,7 @@ export function ReferenceEdge({
   targetY,
   sourcePosition,
   targetPosition,
+  data,
 }: EdgeProps<ReferenceEdgeType>): React.JSX.Element {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
@@ -50,7 +51,7 @@ export function ReferenceEdge({
           }}
           className="nodrag nopan"
         >
-          same agent
+          {data?.label ?? 'same agent'}
         </div>
       </EdgeLabelRenderer>
     </>

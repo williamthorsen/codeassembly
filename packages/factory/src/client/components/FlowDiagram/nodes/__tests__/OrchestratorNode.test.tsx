@@ -122,4 +122,18 @@ describe('OrchestratorNode', () => {
     const { container } = render(<OrchestratorNode {...createNodeProps()} />);
     expect(container.textContent).not.toContain('Round');
   });
+
+  it('does not render round counter when reviewRoundsUsed is present but maxReviewRounds is absent', () => {
+    const { container } = render(<OrchestratorNode {...createNodeProps({ reviewRoundsUsed: 1 })} />);
+    expect(container.textContent).not.toContain('Round');
+  });
+
+  it('renders criticality badge with fallback color for unknown criticality values', () => {
+    render(
+      <OrchestratorNode
+        {...createNodeProps({ reviewRoundsUsed: 1, maxReviewRounds: 3, aggregatedCriticality: 'unknown-value' })}
+      />,
+    );
+    expect(screen.getByText('unknown-value')).toBeInTheDocument();
+  });
 });
