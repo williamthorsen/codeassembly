@@ -42,12 +42,12 @@ body {
   width: 100%;
 }
 
-.canvas-container[data-view="factory"] {
+.canvas-container[data-view='factory'] {
   aspect-ratio: 2 / 1;
   min-width: 800px;
 }
 
-.canvas-container[data-view="flow"] {
+.canvas-container[data-view='flow'] {
   flex: 1;
   min-height: 600px;
 }
