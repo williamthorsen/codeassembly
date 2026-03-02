@@ -289,9 +289,68 @@ describe('createFlowConfig', () => {
       const { nodes } = createFlowConfig(status);
       const agentNodes = nodes.filter((n) => n.id.startsWith('agent-'));
 
-      expect(agentNodes.length).toBeGreaterThan(0);
+      // architecture, planning, and implementation agents are all expected
+      expect(agentNodes.length).toBe(3);
       for (const node of agentNodes) {
         expect(node.data.status).toBe('failed');
+      }
+    });
+  });
+
+  describe('needs_manual_review runs', () => {
+    it('does not create orchestrator on needs_manual_review runs', () => {
+      const status = createMockRunStatus({
+        status: 'needs_manual_review',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const orchestrator = nodes.find((n) => n.id === 'orchestrator');
+
+      expect(orchestrator).toBeUndefined();
+    });
+
+    it('derives phase node statuses from timestamps, not forced to failed', () => {
+      const status = createMockRunStatus({
+        status: 'needs_manual_review',
+        phases: {
+          ...emptyPhases(),
+          architecture: {
+            status: 'completed',
+            impactLevel: 'high',
+            artifact: 'arch.md',
+            startedAt: '2026-01-01T00:00:00Z',
+            completedAt: '2026-01-01T00:05:00Z',
+          },
+          planning: {
+            status: 'completed',
+            stepCount: 7,
+            artifacts: ['plan.md'],
+            startedAt: '2026-01-01T00:05:00Z',
+            completedAt: '2026-01-01T00:10:00Z',
+          },
+          implementation: {
+            status: 'completed',
+            artifact: 'code.md',
+            qualityGates: undefined,
+            startedAt: '2026-01-01T00:10:00Z',
+            completedAt: '2026-01-01T00:20:00Z',
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const agentNodes = nodes.filter((n) => n.id.startsWith('agent-'));
+
+      expect(agentNodes.length).toBeGreaterThan(0);
+      for (const node of agentNodes) {
+        // Timestamps indicate completed; status should not be forced to 'failed'
+        expect(node.data.status).toBe('completed');
       }
     });
   });
@@ -379,6 +438,107 @@ describe('createFlowConfig', () => {
       const coderFixEdge = edges.find((e) => e.id === 'dispatch-coder-fix');
 
       expect(coderFixEdge).toBeUndefined();
+    });
+  });
+
+  describe('reviewer status variants', () => {
+    it('assigns failed status to a reviewer with status failed', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'failed',
+                criticality: undefined,
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerNode = nodes.find((n) => n.id === 'reviewer-correctness-reviewer');
+
+      expect(reviewerNode).toBeDefined();
+      expect(reviewerNode?.data.status).toBe('failed');
+    });
+
+    it('assigns skipped status to a reviewer with status skipped', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'security-reviewer': {
+                ran: false,
+                status: 'skipped',
+                criticality: undefined,
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerNode = nodes.find((n) => n.id === 'reviewer-security-reviewer');
+
+      expect(reviewerNode).toBeDefined();
+      expect(reviewerNode?.data.status).toBe('skipped');
+    });
+
+    it('assigns working status to a reviewer with undefined status', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: createInProgressReviewPhases(),
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerNode = nodes.find((n) => n.id === 'reviewer-correctness-reviewer');
+
+      expect(reviewerNode).toBeDefined();
+      expect(reviewerNode?.data.status).toBe('working');
+    });
+  });
+
+  describe('empty reviewers', () => {
+    it('produces zero reviewer nodes when parallelReview has empty reviewers and no other extraction paths', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerNodes = nodes.filter((n) => n.id.startsWith('reviewer-'));
+
+      expect(reviewerNodes.length).toBe(0);
     });
   });
 

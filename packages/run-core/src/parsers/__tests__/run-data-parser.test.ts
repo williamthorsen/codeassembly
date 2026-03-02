@@ -1031,6 +1031,56 @@ describe('parseRunData', () => {
       expect(result.phases.architecture).toMatchObject({ status: 'completed', impactLevel: 'high' });
     });
 
+    it('logs corrupt JSON lines at error level', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const lines = [
+        JSON.stringify({ t: '2026-01-01T00:00:00Z', event: 'run_started' }),
+        '{ not valid json',
+        JSON.stringify({ t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' }),
+      ].join('\n');
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': lines,
+      });
+
+      await parseRunData('/runs/test-run');
+
+      expect(errorSpy).toHaveBeenCalledOnce();
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[run-data-parser] corrupt JSON at line index 1'),
+        expect.any(SyntaxError),
+      );
+
+      errorSpy.mockRestore();
+    });
+
+    it('logs unrecognized event types at warn level', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const logContent = jsonlLines(
+        { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+        { t: '2026-01-01T00:01:00Z', event: 'future_event_type', data: {} },
+        { t: '2026-01-01T00:02:00Z', event: 'run_completed', status: 'completed' },
+      );
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': logContent,
+      });
+
+      await parseRunData('/runs/test-run');
+
+      expect(warnSpy).toHaveBeenCalledOnce();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[run-data-parser] skipped unrecognized event at line index 1'),
+        expect.anything(),
+      );
+
+      warnSpy.mockRestore();
+    });
+
     it('includes file path in error for corrupt run-index.json JSON', async () => {
       mockFileContents({
         '/runs/test-run/run-index.json': '{ not valid json !!!',
