@@ -41,14 +41,13 @@ Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestra
 
 ### Resolving thresholds
 
-Resolution cascade for `approval_threshold` and `budget_threshold`:
+The wrapper skill (e.g., `orchestrate-dev`) resolves modes and applies the resolution cascade before invoking this engine. The engine receives already-resolved threshold values as explicit arguments. Within the engine, threshold resolution is:
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
 2. Legacy alias: `--fix-low` (sets both to `low`) or `--no-fix-low` (sets both to `medium`)
-3. Mode preset (if `--mode` specified by wrapper skill)
-4. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-5. Legacy preference: `orchestration.fix_low_findings` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml` (`true` maps to both thresholds `low`; `false` maps to both thresholds `medium`)
-6. Default: both `low`
+3. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
+4. Legacy preference: `orchestration.fix_low_findings` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml` (`true` maps to both thresholds `low`; `false` maps to both thresholds `medium`)
+5. Default: both `low`
 
 ### Resolving models
 

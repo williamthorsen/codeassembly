@@ -26,14 +26,16 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 
 Each mode is a preset bundle of settings. When `--mode` is specified, its preset values apply as defaults. Any setting can be individually overridden via explicit CLI arguments (e.g., `--mode=vibe --approval-threshold=medium`).
 
-| Setting              | `vibe`  | (default) | `strict` |
-| -------------------- | ------- | --------- | -------- |
-| architecture         | absent  | optional  | required |
-| planning             | absent  | optional  | required |
-| approval-threshold   | high    | low       | low      |
-| budget-threshold     | high    | low       | low      |
-| holistic_reviewer    | sonnet  | opus      | opus     |
-| max-review-rounds    | 1       | 3         | 4        |
+| Setting             | `vibe` | (default) | `strict` |
+| ------------------- | ------ | --------- | -------- |
+| architecture        | absent | optional  | required |
+| planning            | absent | optional  | required |
+| approval-threshold  | high   | low       | low      |
+| budget-threshold    | high   | low       | low      |
+| holistic_reviewer\* | sonnet | opus      | opus     |
+| max-review-rounds   | 1      | 3         | 4        |
+
+\* `holistic_reviewer` uses snake_case because it is a `--models` key (passed as `--models=holistic_reviewer:sonnet`), not a standalone argument. See the engine's [model resolution](../orchestrate/SKILL.md#resolving-models) for details.
 
 ### Resolution cascade
 
@@ -87,7 +89,7 @@ architecture (required) -> planning (required) -> implementation (required) -> r
 ## Process
 
 1. **Resolve mode**: if `--mode` is provided, look up the mode preset from the table above.
-2. **Apply overrides**: for each setting, apply the resolution cascade — explicit CLI arguments override mode presets, which override preferences, which override engine defaults.
+2. **Apply overrides**: for each setting, apply the resolution cascade — explicit CLI arguments override mode presets, which override preferences, which override engine defaults. For model-related settings (like `holistic_reviewer`), pass the resolved value to the engine via `--models` (e.g., `--models=holistic_reviewer:sonnet`).
 3. **Select pipeline**: use the pipeline table corresponding to the resolved mode.
 4. **Invoke the engine**: invoke the `orchestrate` skill with the selected pipeline specification and all resolved arguments. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table for the resolved mode **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute and in what order. No additional structured format is needed beyond this table.
 

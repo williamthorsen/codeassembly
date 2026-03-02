@@ -148,8 +148,7 @@ Before applying these rules, check the iteration budget. If N iterations have be
 - **criticality >= approval_threshold** AND no review rounds remain: exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then run selective re-review. These findings are opportunistic — worth fixing if budget allows.
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
-- **criticality < budget_threshold**: proceed to Phase 4a (report only, no fix attempt).
-- **`none`** (no actionable findings from any reviewer): proceed to Phase 4a (code-simplifier).
+- **criticality < budget_threshold**: proceed to Phase 4a (report only, no fix attempt). This includes `none` (no actionable findings from any reviewer).
 
 ### Consolidated coder fixes
 
@@ -210,7 +209,7 @@ Write run-index.json at every state transition within Phase 4:
 
 ## Phase 4a: Code simplifier
 
-After all reviewers converge (aggregated criticality is `none` or `low`, or after fix cycles complete), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
+After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
 
 Before dispatching code-simplifier, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
 
@@ -282,7 +281,7 @@ Extract `Criticality` using Task return parsing (see SKILL.md).
 
 - **`none`**: set `{review-status}` to `converged`.
 - **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
-- **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `needs_manual_review`.
+- **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then re-review using remaining budget (opportunistic).
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
 - **criticality < budget_threshold**: set `{review-status}` to `converged` (report only).
