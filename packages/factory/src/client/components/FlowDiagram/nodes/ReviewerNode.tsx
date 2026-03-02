@@ -22,10 +22,11 @@ function getCriticalityColor(criticality: string): string {
 export function ReviewerNode({ data }: NodeProps<Node<FlowNodeData>>): React.JSX.Element {
   const borderColor = ROLE_TYPE_COLORS.reviewer;
   const fillColor = ROLE_TYPE_LIGHT_FILLS.reviewer;
+  const className = data.dimmed === true ? 'flow-node flow-node--dimmed' : 'flow-node';
 
   return (
     <div
-      className="flow-node"
+      className={className}
       style={{
         width: 150,
         height: 64,

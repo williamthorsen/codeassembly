@@ -9,6 +9,29 @@
   box-sizing: border-box;
 }
 
+/* Dimmed state for selective re-review */
+
+.flow-node--dimmed {
+  opacity: 0.7;
+}
+
+/* Entering animation for staggered reviewer appearance */
+
+.flow-node--entering {
+  animation: flow-node-enter 0.3s ease-out forwards;
+}
+
+@keyframes flow-node-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Status dot */
 
 .flow-node__status-dot {

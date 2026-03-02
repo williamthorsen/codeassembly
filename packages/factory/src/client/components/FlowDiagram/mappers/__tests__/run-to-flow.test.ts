@@ -239,7 +239,8 @@ describe('createFlowConfig', () => {
       const coderShadow = nodes.find((n) => n.id === 'coder-shadow');
 
       expect(coderShadow).toBeDefined();
-      expect(coderShadow?.position.y).toBe(340);
+      // Dynamic y = 60 + reviewerCount * 80 + 40 = 60 + 1 * 80 + 40 = 180
+      expect(coderShadow?.position.y).toBe(180);
     });
 
     it('does not create coder shadow node when coderFixCycleRan is false', () => {
@@ -725,6 +726,434 @@ describe('createFlowConfig', () => {
       expect(reviewerNodes.length).toBe(2);
       expect(reviewerNodes[0]?.data.role).toBe('code-reviewer');
       expect(reviewerNodes[1]?.data.role).toBe('test-reviewer');
+    });
+  });
+
+  describe('reviewer dimming', () => {
+    it('dims reviewers not in selectiveReReview.reviewersDispatched when ran is true', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 2,
+            reviewers: {
+              'reviewer-a': {
+                ran: true,
+                status: 'completed',
+                criticality: 'medium',
+                reason: undefined,
+                reReviewCriticality: 'low',
+                reReviewError: undefined,
+              },
+              'reviewer-b': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: {
+              ran: true,
+              reviewersDispatched: ['reviewer-a'],
+              additionalFixCycleRan: false,
+            },
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerA = nodes.find((n) => n.id === 'reviewer-reviewer-a');
+      const reviewerB = nodes.find((n) => n.id === 'reviewer-reviewer-b');
+
+      expect(reviewerA).toBeDefined();
+      expect(reviewerA?.data.dimmed).not.toBe(true);
+      expect(reviewerB).toBeDefined();
+      expect(reviewerB?.data.dimmed).toBe(true);
+    });
+
+    it('does not dim any reviewer when selectiveReReview is undefined', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'reviewer-a': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerA = nodes.find((n) => n.id === 'reviewer-reviewer-a');
+
+      expect(reviewerA).toBeDefined();
+      expect(reviewerA?.data.dimmed).not.toBe(true);
+    });
+
+    it('does not dim any reviewer when selectiveReReview.ran is false', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'reviewer-a': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: {
+              ran: false,
+              reviewersDispatched: [],
+              additionalFixCycleRan: false,
+            },
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const reviewerA = nodes.find((n) => n.id === 'reviewer-reviewer-a');
+
+      expect(reviewerA).toBeDefined();
+      expect(reviewerA?.data.dimmed).not.toBe(true);
+    });
+  });
+
+  describe('re-review edges', () => {
+    it('emits re-review dispatch and return edges when selectiveReReview.ran is true', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 2,
+            reviewers: {
+              'reviewer-a': {
+                ran: true,
+                status: 'completed',
+                criticality: 'medium',
+                reason: undefined,
+                reReviewCriticality: 'low',
+                reReviewError: undefined,
+              },
+              'reviewer-b': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: {
+              ran: true,
+              reviewersDispatched: ['reviewer-a'],
+              additionalFixCycleRan: false,
+            },
+          },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+
+      // Round 1 edges for both reviewers
+      expect(edges.find((e) => e.id === 'dispatch-reviewer-reviewer-a')).toBeDefined();
+      expect(edges.find((e) => e.id === 'return-reviewer-reviewer-a')).toBeDefined();
+      expect(edges.find((e) => e.id === 'dispatch-reviewer-reviewer-b')).toBeDefined();
+      expect(edges.find((e) => e.id === 'return-reviewer-reviewer-b')).toBeDefined();
+
+      // Round 2 edges only for reviewer-a
+      const r2Dispatch = edges.find((e) => e.id === 'dispatch-reviewer-reviewer-a-r2');
+      const r2Return = edges.find((e) => e.id === 'return-reviewer-reviewer-a-r2');
+
+      expect(r2Dispatch).toBeDefined();
+      expect(r2Dispatch?.type).toBe('dispatch');
+      expect(r2Dispatch?.data?.iteration).toBe(2);
+
+      expect(r2Return).toBeDefined();
+      expect(r2Return?.type).toBe('return');
+      expect(r2Return?.data?.iteration).toBe(2);
+
+      // No round 2 edges for reviewer-b
+      expect(edges.find((e) => e.id === 'dispatch-reviewer-reviewer-b-r2')).toBeUndefined();
+      expect(edges.find((e) => e.id === 'return-reviewer-reviewer-b-r2')).toBeUndefined();
+    });
+  });
+
+  describe('coder fix return edge', () => {
+    it('emits return-coder-fix when coderFixCycleRan is true', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+      const returnEdge = edges.find((e) => e.id === 'return-coder-fix');
+
+      expect(returnEdge).toBeDefined();
+      expect(returnEdge?.source).toBe('coder-shadow');
+      expect(returnEdge?.target).toBe('orchestrator');
+      expect(returnEdge?.type).toBe('return');
+    });
+
+    it('does not emit return-coder-fix when coderFixCycleRan is false', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+      const returnEdge = edges.find((e) => e.id === 'return-coder-fix');
+
+      expect(returnEdge).toBeUndefined();
+    });
+  });
+
+  describe('orchestrator iteration data', () => {
+    it('populates reviewRoundsUsed, maxReviewRounds, and aggregatedCriticality when at review phase', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        maxReviewRounds: 3,
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            status: 'in_progress',
+            aggregatedCriticality: 'medium',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: undefined,
+                criticality: undefined,
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+            startedAt: '2026-01-01T00:30:00Z',
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const orchestrator = nodes.find((n) => n.id === 'orchestrator');
+
+      expect(orchestrator).toBeDefined();
+      expect(orchestrator?.data.reviewRoundsUsed).toBe(1);
+      expect(orchestrator?.data.maxReviewRounds).toBe(3);
+      expect(orchestrator?.data.aggregatedCriticality).toBe('medium');
+    });
+
+    it('does not populate iteration data when currentPhase is not review', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        maxReviewRounds: 3,
+        phases: emptyPhases(),
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const orchestrator = nodes.find((n) => n.id === 'orchestrator');
+
+      expect(orchestrator).toBeDefined();
+      expect(orchestrator?.data.reviewRoundsUsed).toBeUndefined();
+      expect(orchestrator?.data.maxReviewRounds).toBeUndefined();
+      expect(orchestrator?.data.aggregatedCriticality).toBeUndefined();
+    });
+  });
+
+  describe('dynamic coder shadow y-position', () => {
+    it('positions coder shadow at y=180 with 1 reviewer', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'reviewer-a': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const coderShadow = nodes.find((n) => n.id === 'coder-shadow');
+
+      expect(coderShadow).toBeDefined();
+      // y = 60 + 1 * 80 + 40 = 180
+      expect(coderShadow?.position.y).toBe(180);
+    });
+
+    it('positions coder shadow at y=500 with 5 reviewers', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'reviewer-1': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
+              'reviewer-2': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
+              'reviewer-3': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
+              'reviewer-4': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
+              'reviewer-5': { ran: true, status: 'completed', criticality: 'low', reason: undefined, reReviewCriticality: undefined, reReviewError: undefined },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { nodes } = createFlowConfig(status);
+      const coderShadow = nodes.find((n) => n.id === 'coder-shadow');
+
+      expect(coderShadow).toBeDefined();
+      // y = 60 + 5 * 80 + 40 = 500
+      expect(coderShadow?.position.y).toBe(500);
+    });
+  });
+
+  describe('reference edge', () => {
+    it('emits reference-coder-shadow when coderFixCycleRan is true', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+      const refEdge = edges.find((e) => e.id === 'reference-coder-shadow');
+
+      expect(refEdge).toBeDefined();
+      expect(refEdge?.source).toBe('coder-shadow');
+      expect(refEdge?.target).toBe('agent-implementation');
+      expect(refEdge?.type).toBe('reference');
+    });
+
+    it('does not emit reference-coder-shadow when coderFixCycleRan is false', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+      const refEdge = edges.find((e) => e.id === 'reference-coder-shadow');
+
+      expect(refEdge).toBeUndefined();
     });
   });
 });
