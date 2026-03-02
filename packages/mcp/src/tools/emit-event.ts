@@ -6,6 +6,10 @@ import { runEventSchema } from '@codeassembly/run-core';
 export interface EmitEventInput {
   runDir: string;
   event: unknown;
+  /** Optional server-side timestamp override. When provided, this value is
+   *  used instead of generating a new `Date`. Useful for coordinating a single
+   *  timestamp across multiple writes (e.g. event log + index header). */
+  timestamp?: string;
 }
 
 export interface EmitEventResult {
@@ -20,10 +24,11 @@ export interface EmitEventResult {
  * monotonicity and avoid client-provided timestamps.
  */
 export async function emitEvent(input: EmitEventInput): Promise<EmitEventResult> {
-  const { runDir, event } = input;
+  const { runDir, event, timestamp } = input;
 
-  // Inject timestamp if the event is an object
-  const timestamped = typeof event === 'object' && event !== null ? { ...event, t: new Date().toISOString() } : event;
+  // Inject server-side timestamp, using the provided override or generating one
+  const t = timestamp ?? new Date().toISOString();
+  const timestamped = typeof event === 'object' && event !== null ? { ...event, t } : event;
 
   const result = runEventSchema.safeParse(timestamped);
   if (!result.success) {
