@@ -1,4 +1,4 @@
-import type { Edge,Node } from '@xyflow/react';
+import type { Edge, Node } from '@xyflow/react';
 
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
@@ -156,11 +156,7 @@ function getPhaseColumn(phase: PhaseName): PhaseColumn {
 }
 
 /** Build phase agent nodes for each active phase. */
-function buildPhaseAgentNodes(
-  phases: Phases,
-  runStatus: string,
-  currentPhase?: PhaseName,
-): Node<FlowNodeData>[] {
+function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: PhaseName): Node<FlowNodeData>[] {
   const nodes: Node<FlowNodeData>[] = [];
 
   for (const phase of PHASE_NAMES) {
@@ -284,10 +280,7 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
 }
 
 /** Build the orchestrator node positioned at the appropriate column. */
-function buildOrchestratorNode(
-  status: CanonicalRunStatus,
-  currentPhase?: PhaseName,
-): Node<FlowNodeData>[] {
+function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseName): Node<FlowNodeData>[] {
   const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.summary];
   let column: PhaseColumn;
   let nodeStatus: FlowNodeData['status'];
@@ -375,11 +368,7 @@ function buildGhostNodes(
 }
 
 /** Build the orchestrator spine edges connecting consecutive phase columns. */
-function buildSpineEdges(
-  phases: Phases,
-  runStatus: string,
-  currentPhase?: PhaseName,
-): Edge[] {
+function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: PhaseName): Edge[] {
   const edges: Edge[] = [];
   const activePhases: PhaseName[] = [];
 
@@ -411,11 +400,7 @@ function buildSpineEdges(
 }
 
 /** Build dispatch and return edges between the orchestrator and phase agents. */
-function buildDispatchEdges(
-  phases: Phases,
-  runStatus: string,
-  currentPhase?: PhaseName,
-): Edge[] {
+function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: PhaseName): Edge[] {
   const edges: Edge[] = [];
 
   for (const phase of PHASE_NAMES) {
@@ -428,29 +413,32 @@ function buildDispatchEdges(
     const isCompleted = resolvePhaseNodeStatus(phase, phases, runStatus, currentPhase) === 'completed';
 
     // Dispatch edge: orchestrator -> agent
-    edges.push({
-      id: `dispatch-${phase}`,
-      source: 'orchestrator',
-      target: `agent-${phase}`,
-      type: 'default',
-      animated: !isCompleted,
-      style: {
-        stroke: '#777777',
-        strokeWidth: 1,
-        strokeDasharray: isCompleted ? undefined : '5 5',
+    edges.push(
+      {
+        id: `dispatch-${phase}`,
+        source: 'orchestrator',
+        target: `agent-${phase}`,
+        type: 'default',
+        animated: !isCompleted,
+        style: {
+          stroke: '#777777',
+          strokeWidth: 1,
+          strokeDasharray: isCompleted ? undefined : '5 5',
+        },
       },
-    }, {
-      id: `return-${phase}`,
-      source: `agent-${phase}`,
-      target: 'orchestrator',
-      type: 'default',
-      animated: false,
-      style: {
-        stroke: '#777777',
-        strokeWidth: 1,
-        strokeDasharray: isCompleted ? undefined : '5 5',
+      {
+        id: `return-${phase}`,
+        source: `agent-${phase}`,
+        target: 'orchestrator',
+        type: 'default',
+        animated: false,
+        style: {
+          stroke: '#777777',
+          strokeWidth: 1,
+          strokeDasharray: isCompleted ? undefined : '5 5',
+        },
       },
-    });
+    );
   }
 
   return edges;
@@ -468,29 +456,32 @@ function buildReviewerEdges(phases: Phases): Edge[] {
     const reviewerInfo = phases.parallelReview.reviewers[name];
     const isCompleted = reviewerInfo?.status === 'completed';
 
-    edges.push({
-      id: `dispatch-reviewer-${name}`,
-      source: 'orchestrator',
-      target: `reviewer-${name}`,
-      type: 'default',
-      animated: !isCompleted,
-      style: {
-        stroke: '#777777',
-        strokeWidth: 1,
-        strokeDasharray: isCompleted ? undefined : '5 5',
+    edges.push(
+      {
+        id: `dispatch-reviewer-${name}`,
+        source: 'orchestrator',
+        target: `reviewer-${name}`,
+        type: 'default',
+        animated: !isCompleted,
+        style: {
+          stroke: '#777777',
+          strokeWidth: 1,
+          strokeDasharray: isCompleted ? undefined : '5 5',
+        },
       },
-    }, {
-      id: `return-reviewer-${name}`,
-      source: `reviewer-${name}`,
-      target: 'orchestrator',
-      type: 'default',
-      animated: false,
-      style: {
-        stroke: '#777777',
-        strokeWidth: 1,
-        strokeDasharray: isCompleted ? undefined : '5 5',
+      {
+        id: `return-reviewer-${name}`,
+        source: `reviewer-${name}`,
+        target: 'orchestrator',
+        type: 'default',
+        animated: false,
+        style: {
+          stroke: '#777777',
+          strokeWidth: 1,
+          strokeDasharray: isCompleted ? undefined : '5 5',
+        },
       },
-    });
+    );
   }
 
   return edges;
@@ -546,12 +537,7 @@ export function createFlowConfig(status: CanonicalRunStatus): { nodes: Node<Flow
   const reviewerEdges = hasOrchestrator ? buildReviewerEdges(status.phases) : [];
   const coderFixEdges = hasOrchestrator ? buildCoderFixEdge(status.phases) : [];
 
-  const edges: Edge[] = [
-    ...spineEdges,
-    ...dispatchEdges,
-    ...reviewerEdges,
-    ...coderFixEdges,
-  ];
+  const edges: Edge[] = [...spineEdges, ...dispatchEdges, ...reviewerEdges, ...coderFixEdges];
 
   return { nodes, edges };
 }

@@ -1,4 +1,13 @@
-import { Background, BackgroundVariant, Controls, MiniMap, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState } from '@xyflow/react';
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  MiniMap,
+  ReactFlow,
+  ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
+} from '@xyflow/react';
 import React, { useEffect, useMemo } from 'react';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
@@ -24,13 +33,7 @@ function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
 
   return (
     <div className="flow-diagram">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        fitView
-      >
+      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} fitView>
         <Background variant={BackgroundVariant.Dots} />
         <Controls />
         <MiniMap />

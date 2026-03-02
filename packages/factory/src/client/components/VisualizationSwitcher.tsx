@@ -23,19 +23,11 @@ export function VisualizationSwitcher({ status }: VisualizationSwitcherProps): R
         >
           Factory
         </button>
-        <button
-          type="button"
-          className={activeView === 'flow' ? 'active' : ''}
-          onClick={() => setActiveView('flow')}
-        >
+        <button type="button" className={activeView === 'flow' ? 'active' : ''} onClick={() => setActiveView('flow')}>
           Flow
         </button>
       </div>
-      {activeView === 'factory' ? (
-        <GameCanvas status={status} />
-      ) : (
-        <FlowDiagram status={status} />
-      )}
+      {activeView === 'factory' ? <GameCanvas status={status} /> : <FlowDiagram status={status} />}
     </>
   );
 }

@@ -398,7 +398,10 @@ describe('createFlowConfig', () => {
       const { edges } = createFlowConfig(status);
 
       // Dispatch edges for architecture, planning, implementation, simplifier, holistic (not review — handled by reviewer edges)
-      const dispatchEdges = edges.filter((e) => e.id.startsWith('dispatch-') && !e.id.startsWith('dispatch-reviewer-') && !e.id.startsWith('dispatch-coder-'));
+      const dispatchEdges = edges.filter(
+        (e) =>
+          e.id.startsWith('dispatch-') && !e.id.startsWith('dispatch-reviewer-') && !e.id.startsWith('dispatch-coder-'),
+      );
       expect(dispatchEdges.length).toBe(5);
     });
 
