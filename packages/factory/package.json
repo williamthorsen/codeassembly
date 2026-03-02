@@ -12,6 +12,7 @@
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },
   "dependencies": {
+    "@codeassembly/run-core": "workspace:*",
     "cors": "2.8.6",
     "excalibur": "0.32.0",
     "express": "5.2.1",

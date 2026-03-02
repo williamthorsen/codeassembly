@@ -105,6 +105,9 @@ importers:
 
   packages/factory:
     dependencies:
+      '@codeassembly/run-core':
+        specifier: workspace:*
+        version: link:../run-core
       cors:
         specifier: 2.8.6
         version: 2.8.6
