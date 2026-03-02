@@ -88,8 +88,6 @@ describe('SpineEdge', () => {
 
     const path = container.querySelector('path[d="M0,0 L100,100"]');
     expect(path).not.toBeNull();
-    if (path instanceof SVGElement) {
-      expect(path.style.pointerEvents).toBe('none');
-    }
+    expect(path?.getAttribute('style')).toContain('pointer-events: none');
   });
 });

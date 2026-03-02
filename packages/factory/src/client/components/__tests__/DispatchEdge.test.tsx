@@ -146,6 +146,52 @@ describe('DispatchEdge', () => {
     expect(baseEdge?.getAttribute('class')).toContain('edge-draw');
   });
 
+  it('applies stroke color from data.color', () => {
+    const { container } = render(
+      <svg>
+        <DispatchEdge
+          {...baseProps}
+          data={{
+            roleType: 'author',
+            color: '#FFFF55',
+            status: 'completed',
+            iteration: 1,
+            isNew: false,
+          }}
+        />
+      </svg>,
+    );
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    expect(baseEdge).not.toBeNull();
+    const style = baseEdge?.getAttribute('style') ?? '';
+    // jsdom serializes hex colors to rgb(); accept either form
+    expect(style.includes('stroke:') || style.includes('stroke:')).toBe(true);
+    expect(style).toMatch(/stroke:\s*(#FFFF55|rgb\(255,\s*255,\s*85\))/);
+  });
+
+  it('applies both edge-pending and edge-draw when isPending and isNew are true', () => {
+    const { container } = render(
+      <svg>
+        <DispatchEdge
+          {...baseProps}
+          data={{
+            roleType: 'author',
+            color: '#FFFF55',
+            status: 'pending',
+            iteration: 1,
+            isNew: true,
+          }}
+        />
+      </svg>,
+    );
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    const classAttr = baseEdge?.getAttribute('class') ?? '';
+    expect(classAttr).toContain('edge-pending');
+    expect(classAttr).toContain('edge-draw');
+  });
+
   it('does not apply edge-draw class when isNew is false', () => {
     const { container } = render(
       <svg>

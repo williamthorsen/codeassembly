@@ -401,8 +401,12 @@ function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: Phase
 }
 
 /** Build dispatch and return edges between the orchestrator and phase agents. */
-function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: PhaseName): Edge<DispatchEdgeData>[] {
-  const edges: Edge<DispatchEdgeData>[] = [];
+function buildDispatchEdges(
+  phases: Phases,
+  runStatus: string,
+  currentPhase?: PhaseName,
+): Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> {
+  const edges: Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> = [];
 
   for (const phase of PHASE_NAMES) {
     if (phase === 'summary') continue;
@@ -435,13 +439,15 @@ function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: Ph
         id: `return-${phase}`,
         source: `agent-${phase}`,
         target: 'orchestrator',
-        type: 'dispatch',
+        type: 'return',
         data: {
           roleType,
           color,
           status: edgeStatus,
           iteration: 1,
           isNew: false,
+          criticality: undefined,
+          reReviewCriticality: undefined,
         },
       },
     );
@@ -485,7 +491,7 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
       id: `return-reviewer-${name}`,
       source: `reviewer-${name}`,
       target: 'orchestrator',
-      type: 'dispatch',
+      type: 'return',
       data: {
         roleType,
         color,

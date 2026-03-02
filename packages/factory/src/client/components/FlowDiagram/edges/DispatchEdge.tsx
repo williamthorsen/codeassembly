@@ -38,6 +38,7 @@ export function DispatchEdge({
     if (pathEl === null || !isNew) return;
     if (typeof pathEl.getTotalLength !== 'function') return;
     const length = pathEl.getTotalLength();
+    if (length === 0) return;
     pathEl.style.setProperty('--path-length', `${String(length)}px`);
   }, [isNew, edgePath]);
 

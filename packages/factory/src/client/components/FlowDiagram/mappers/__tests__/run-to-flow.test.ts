@@ -447,11 +447,28 @@ describe('createFlowConfig', () => {
       expect(reviewerDispatchEdges.length).toBe(2);
       expect(reviewerReturnEdges.length).toBe(2);
 
-      // Return edges carry criticality data
+      // Return edges use type 'return' and carry criticality data
       for (const edge of reviewerReturnEdges) {
-        expect(edge.type).toBe('dispatch');
+        expect(edge.type).toBe('return');
         expect(edge.data).toBeDefined();
         expect(edge.data?.criticality).toBe('low');
+      }
+    });
+
+    it('generates return edges with type return for non-reviewer phases', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const { edges } = createFlowConfig(status);
+
+      const returnEdges = edges.filter((e) => e.id.startsWith('return-') && !e.id.startsWith('return-reviewer-'));
+      expect(returnEdges.length).toBeGreaterThan(0);
+
+      for (const edge of returnEdges) {
+        expect(edge.type).toBe('return');
       }
     });
 

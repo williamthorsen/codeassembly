@@ -24,11 +24,7 @@ function DocumentIcon({ color }: { color: string }): React.JSX.Element {
 function GearIcon({ color }: { color: string }): React.JSX.Element {
   return (
     <g transform="translate(-6, -6)">
-      <path
-        d="M6,0 L8,2 L12,2 L10,4 L10,8 L8,6 L4,6 L4,8 L2,10 L0,8 L0,4 L2,2 L4,2 Z"
-        fill={color}
-        opacity={0.9}
-      />
+      <path d="M6,0 L8,2 L12,2 L10,4 L10,8 L8,6 L4,6 L4,8 L2,10 L0,8 L0,4 L2,2 L4,2 Z" fill={color} opacity={0.9} />
       <circle cx="6" cy="5" r="2" fill="white" opacity={0.5} />
     </g>
   );
@@ -48,12 +44,25 @@ export function PacketAnimation({
   onComplete,
 }: PacketAnimationProps): React.JSX.Element {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (onComplete === undefined) return;
 
     timeoutRef.current = setTimeout(() => {
-      onComplete();
+      if (!mountedRef.current) return;
+      try {
+        onComplete();
+      } catch {
+        // Swallow errors from the onComplete callback to prevent
+        // unhandled exceptions reaching the global error handler.
+      }
     }, duration);
 
     return () => {

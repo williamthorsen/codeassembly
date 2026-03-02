@@ -122,6 +122,76 @@ describe('ReturnEdge', () => {
     expect(badges[1]?.textContent).toBe('low');
   });
 
+  it('applies stroke color from data.color', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'completed',
+            iteration: 1,
+            isNew: false,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    expect(baseEdge).not.toBeNull();
+    const style = baseEdge?.getAttribute('style') ?? '';
+    // jsdom serializes hex colors to rgb(); accept either form
+    expect(style).toMatch(/stroke:\s*(#FF5555|rgb\(255,\s*85,\s*85\))/);
+  });
+
+  it('applies edge-draw class when isNew is true', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'completed',
+            iteration: 1,
+            isNew: true,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    expect(baseEdge?.getAttribute('class')).toContain('edge-draw');
+  });
+
+  it('does not apply edge-draw class when isNew is false', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'completed',
+            iteration: 1,
+            isNew: false,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    const classAttr = baseEdge?.getAttribute('class') ?? '';
+    expect(classAttr).not.toContain('edge-draw');
+  });
+
   it('applies edge-pending class when status is pending', () => {
     const { container } = render(
       <svg>

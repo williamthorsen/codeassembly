@@ -58,7 +58,12 @@ describe('PacketAnimation', () => {
       </svg>,
     );
 
-    // The gear icon uses a <path> element plus a circle
+    // The gear icon uses a distinctive <path> element for the gear shape
+    const gearPath = container.querySelector('g > g > path');
+    expect(gearPath).not.toBeNull();
+    expect(gearPath?.getAttribute('fill')).toBe('#5555FF');
+
+    // Also verify the inner circle exists
     const gearCircle = container.querySelector('circle');
     expect(gearCircle).not.toBeNull();
   });
@@ -93,6 +98,35 @@ describe('PacketAnimation', () => {
     vi.advanceTimersByTime(800);
 
     expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('resets timeout when duration changes and calls onComplete only once', () => {
+    const onComplete = vi.fn();
+
+    const { rerender } = render(
+      <svg>
+        <PacketAnimation pathD="M0,0 L100,100" duration={800} icon="dot" color="#FF5555" onComplete={onComplete} />
+      </svg>,
+    );
+
+    // Advance partway through the original duration
+    vi.advanceTimersByTime(200);
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Re-render with a shorter duration
+    rerender(
+      <svg>
+        <PacketAnimation pathD="M0,0 L100,100" duration={400} icon="dot" color="#FF5555" onComplete={onComplete} />
+      </svg>,
+    );
+
+    // Advance to after the new duration completes
+    vi.advanceTimersByTime(400);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    // Advance past what would have been the original 800ms — no second call
+    vi.advanceTimersByTime(400);
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   it('uses default duration of 800ms when not specified', () => {
