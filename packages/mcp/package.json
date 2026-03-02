@@ -1,0 +1,15 @@
+{
+  "name": "@codeassembly/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ws": "node --import tsx ../../scripts/run-workspace-script.ts",
+    "prepare": "pnpm run ws compile"
+  },
+  "dependencies": {
+    "@codeassembly/run-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.27.1",
+    "zod": "4.3.6"
+  }
+}
