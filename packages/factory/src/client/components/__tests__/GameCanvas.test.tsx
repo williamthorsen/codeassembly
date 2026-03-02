@@ -49,7 +49,7 @@ vi.mock('excalibur', () => {
 
   return {
     Engine: MockEngine,
-    DisplayMode: { FitScreen: 'FitScreen' },
+    DisplayMode: { FitContainer: 'FitContainer' },
   };
 });
 
@@ -114,6 +114,7 @@ describe('GameCanvas', () => {
       expect.objectContaining({
         width: 1200,
         height: 600,
+        displayMode: 'FitContainer',
       }),
     );
   });

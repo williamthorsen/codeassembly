@@ -228,11 +228,9 @@ export function App(): React.JSX.Element {
       </aside>
       <main className="main">
         {activeStatus && <StatusBar status={activeStatus} demoSlot={demoSlot} />}
-        <div className="canvas-container">
-          {isLoading && <p>Loading...</p>}
-          {error && <p>Error: {error.message}</p>}
-          {activeStatus && <VisualizationSwitcher status={activeStatus} />}
-        </div>
+        {isLoading && <p>Loading...</p>}
+        {error && <p>Error: {error.message}</p>}
+        {activeStatus && <VisualizationSwitcher status={activeStatus} />}
       </main>
     </div>
   );
