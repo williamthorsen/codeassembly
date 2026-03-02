@@ -12,6 +12,12 @@ import React, { useEffect, useMemo } from 'react';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { createFlowConfig } from './mappers/run-to-flow.js';
+import { CoderShadowNode } from './nodes/CoderShadowNode.js';
+import { OrchestratorNode } from './nodes/OrchestratorNode.js';
+import { PhaseAgentNode } from './nodes/PhaseAgentNode.js';
+import { PhaseGroupNode } from './nodes/PhaseGroupNode.js';
+import { ReviewerNode } from './nodes/ReviewerNode.js';
+import { SkippedPhaseNode } from './nodes/SkippedPhaseNode.js';
 
 import '@xyflow/react/dist/style.css';
 import './FlowDiagram.css';
@@ -23,6 +29,18 @@ interface FlowDiagramProps {
 function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
   const config = useMemo(() => createFlowConfig(status), [status]);
 
+  const nodeTypes = useMemo(
+    () => ({
+      orchestrator: OrchestratorNode,
+      phaseAgent: PhaseAgentNode,
+      reviewer: ReviewerNode,
+      coderShadow: CoderShadowNode,
+      skippedPhase: SkippedPhaseNode,
+      phaseGroup: PhaseGroupNode,
+    }),
+    [],
+  );
+
   const [nodes, setNodes, onNodesChange] = useNodesState(config.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(config.edges);
 
@@ -33,7 +51,7 @@ function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
 
   return (
     <div className="flow-diagram">
-      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} fitView>
+      <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} nodeTypes={nodeTypes} fitView>
         <Background variant={BackgroundVariant.Dots} />
         <Controls />
         <MiniMap />

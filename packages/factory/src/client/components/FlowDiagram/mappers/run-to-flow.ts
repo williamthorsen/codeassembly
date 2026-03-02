@@ -3,7 +3,7 @@ import type { Edge, Node } from '@xyflow/react';
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, ParallelReviewPhase, Phases } from '../../../../shared/types/canonical.js';
+import type { CanonicalRunStatus, ParallelReviewPhase, Phases, QualityGates } from '../../../../shared/types/canonical.js';
 
 export interface FlowNodeData extends Record<string, unknown> {
   role: string;
@@ -12,6 +12,18 @@ export interface FlowNodeData extends Record<string, unknown> {
   status: 'idle' | 'working' | 'completed' | 'failed' | 'skipped';
   phase: string;
   label: string;
+  // Orchestrator-specific
+  currentPhaseName?: string;
+  runStatus?: string;
+  // Reviewer-specific
+  criticality?: string;
+  reReviewCriticality?: string;
+  // Metadata badges for PhaseAgentNode
+  impactLevel?: string;
+  stepCount?: number;
+  qualityGates?: QualityGates | string;
+  // CoderShadowNode
+  fixIteration?: number;
 }
 
 interface PhaseColumn {
@@ -172,6 +184,7 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
 
     nodes.push({
       id: `agent-${phase}`,
+      type: 'phaseAgent',
       position: { x: column.x + column.width / 2 - 60, y: 100 },
       data: {
         role: PHASE_ROLE[phase],
@@ -180,6 +193,15 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
         status: nodeStatus,
         phase,
         label: PHASE_ROLE[phase],
+        ...(phase === 'architecture' && phases.architecture?.impactLevel !== undefined
+          ? { impactLevel: phases.architecture.impactLevel }
+          : {}),
+        ...(phase === 'planning' && phases.planning?.stepCount !== undefined
+          ? { stepCount: phases.planning.stepCount }
+          : {}),
+        ...(phase === 'implementation' && phases.implementation?.qualityGates !== undefined
+          ? { qualityGates: phases.implementation.qualityGates }
+          : {}),
       },
       style: {
         background: color,
@@ -210,8 +232,10 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
   const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.review];
 
   for (const [i, name] of reviewerNames.entries()) {
+    const reviewerInfo = phases.parallelReview.reviewers[name];
     nodes.push({
       id: `reviewer-${name}`,
+      type: 'reviewer',
       position: { x: reviewColumn.x + reviewColumn.width / 2 - 60, y: 60 + i * 80 },
       data: {
         role: name,
@@ -220,6 +244,10 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
         status: resolveReviewerStatus(phases.parallelReview, name),
         phase: 'review',
         label: name,
+        ...(reviewerInfo?.criticality === undefined ? {} : { criticality: reviewerInfo.criticality }),
+        ...(reviewerInfo?.reReviewCriticality === undefined
+          ? {}
+          : { reReviewCriticality: reviewerInfo.reReviewCriticality }),
       },
       style: {
         background: color,
@@ -256,6 +284,7 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
   return [
     {
       id: 'coder-shadow',
+      type: 'coderShadow',
       position: { x: reviewColumn.x + reviewColumn.width / 2 - 60, y: 340 },
       data: {
         role: 'coder (fix cycle)',
@@ -264,6 +293,7 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
         status: 'completed',
         phase: 'review',
         label: 'coder (fix)',
+        fixIteration: phases.parallelReview.reviewRoundsUsed,
       },
       style: {
         background: color,
@@ -300,6 +330,7 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
   return [
     {
       id: 'orchestrator',
+      type: 'orchestrator',
       position: { x: column.x + column.width / 2 - 60, y: 0 },
       data: {
         role: 'orchestrator',
@@ -308,6 +339,8 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
         status: nodeStatus,
         phase: currentPhase ?? 'summary',
         label: 'orchestrator',
+        currentPhaseName: currentPhase ?? 'summary',
+        runStatus: status.status,
       },
       style: {
         background: color,
@@ -341,6 +374,7 @@ function buildGhostNodes(
 
     nodes.push({
       id: `ghost-${phase}`,
+      type: 'skippedPhase',
       position: { x: column.x + column.width / 2 - 60, y: 100 },
       data: {
         role: PHASE_ROLE[phase],
