@@ -26,7 +26,7 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
       canvasElement: canvasRef.current,
       width: 1200,
       height: 600,
-      displayMode: DisplayMode.FitScreen,
+      displayMode: DisplayMode.FitContainer,
     });
 
     const scene = new FactoryScene(status, setHover);

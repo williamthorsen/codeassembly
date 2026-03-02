@@ -34,21 +34,28 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
+  min-width: 0;
 }
 
 .canvas-container {
+  width: 100%;
+}
+
+.canvas-container[data-view="factory"] {
+  aspect-ratio: 2 / 1;
+  min-width: 800px;
+}
+
+.canvas-container[data-view="flow"] {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
+  min-height: 0;
 }
 
 .viz-toggle {
   display: flex;
   gap: 4px;
-  padding: 8px 16px;
+  padding: 8px 16px 8px 8.33%;
   border-bottom: 1px solid #333333;
 }
 

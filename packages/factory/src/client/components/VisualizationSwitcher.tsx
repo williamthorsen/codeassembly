@@ -27,7 +27,9 @@ export function VisualizationSwitcher({ status }: VisualizationSwitcherProps): R
           Flow
         </button>
       </div>
-      {activeView === 'factory' ? <GameCanvas status={status} /> : <FlowDiagram status={status} />}
+      <div className="canvas-container" data-view={activeView}>
+        {activeView === 'factory' ? <GameCanvas status={status} /> : <FlowDiagram status={status} />}
+      </div>
     </>
   );
 }
