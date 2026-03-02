@@ -49,7 +49,7 @@ vi.mock('excalibur', () => {
 
   return {
     Engine: MockEngine,
-    DisplayMode: { FitScreen: 'FitScreen', FitContainer: 'FitContainer' },
+    DisplayMode: { FitContainer: 'FitContainer' },
   };
 });
 
