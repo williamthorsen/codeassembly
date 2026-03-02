@@ -21,7 +21,7 @@ Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestra
    | `implementation` | `required`  | Always runs                                        |
    | `review-cycle`   | `required`  | Always runs; loads `modules/review-cycle.md`       |
 
-   A phase not listed in the pipeline table is "absent from the pipeline" and is never executed. Pipeline phase names correspond to `phase_decision` events, with one exception: `review-cycle` is a module that manages its own sub-phases (`review`, `simplifier`, `holistic`) via `phase_decision` and `phase_started`/`phase_completed` events. The pipeline records `review-cycle`; the module expands it into sub-phase events at runtime.
+   A phase not listed in the pipeline table is "absent from the pipeline" and is never executed. Pipeline phase names correspond to `phase_decision` events, with one exception: `review-cycle` is a module that manages its own sub-phases via `phase_decision` events (`parallelReview`, `codeSimplifier`, `holisticReview`) and `phase_started`/`phase_completed` events (`review`, `simplifier`, `holistic`). The pipeline records `review-cycle`; the module expands it into sub-phase events at runtime.
 
    **Pipeline validation:** If an unknown phase name is found, emit a warning in the run summary and treat it as absent.
 
@@ -240,7 +240,7 @@ Call MCP tool emit_event with:
            reason: "{disposition and reason if applicable}" }
 ```
 
-For `review-cycle`, emit a single `phase_decision` event for the module. The module itself emits sub-phase decision events (`review`, `simplifier`, `holistic`) during its execution.
+For `review-cycle`, emit a single `phase_decision` event for the module. The module itself emits sub-phase `phase_decision` events (`parallelReview`, `codeSimplifier`, `holisticReview`) and `phase_started`/`phase_completed` events (`review`, `simplifier`, `holistic`) during its execution.
 
 The `summary` phase is not a pipeline phase — it is an inherent engine responsibility that always runs after all pipeline phases complete. It does not get a `phase_decision` event.
 
@@ -292,7 +292,7 @@ After all pipeline phases complete, always execute the summary phase (Phase 5). 
 
 To execute a module phase:
 
-1. **Read the module file**: read `modules/{module-name}.md` (relative to this skill's directory). If the module file cannot be read, emit `phase_completed` events with `status: "failed"` for the module's known sub-phases (for `review-cycle`: `review`, `simplifier`, `holistic`) and emit `phase_decision` events with `run: false` and `reason: "Module file could not be loaded"` for each sub-phase. Then proceed to the summary phase.
+1. **Read the module file**: read `modules/{module-name}.md` (relative to this skill's directory). If the module file cannot be read, emit `phase_decision` events with `run: false` and `reason: "Module file could not be loaded"` for each sub-phase (for `review-cycle`: `parallelReview`, `codeSimplifier`, `holisticReview`) and emit `phase_completed` events with `status: "failed"` for the module's known sub-phases (for `review-cycle`: `review`, `simplifier`, `holistic`). Then proceed to the summary phase.
 2. **Prepare context variables**: set all variables listed in the module's Inputs table. See the context preparation section for each module's requirements. If a required context variable cannot be resolved, set it to an empty string and record a warning in the run summary.
 3. **Follow module instructions**: execute the module's instructions as if they were inline in this file. The module uses `{run-dir}` for all MCP tool calls.
 4. **Capture exit state**: after the module completes, read the exit state variables it produces and use them for subsequent flow control. If an expected exit state variable is missing, treat it as module failure: emit `phase_completed` with `status: "failed"` for the relevant phase and proceed to the summary phase.
