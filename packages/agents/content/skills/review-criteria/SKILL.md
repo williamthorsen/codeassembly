@@ -33,14 +33,11 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Distinguish author work from legacy
 
-- Focus findings (F/W/T) only on code authored in the current change
-- Frame observations in pre-existing code as Legacy (L), not defects
+Focus findings (F/W/T) only on code authored in the current change — observations in pre-existing code belong in Legacy (L).
 
 ## Finding scheme (F/W/T/R/S/L)
 
-See [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for the canonical reference.
-
-Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
+Used by review-producing skills and agents for structured code review findings. Also documented in [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for human reference. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
 
 | ID     | Category       | Severity       | Merge-blocking?                                                    |
 | ------ | -------------- | -------------- | ------------------------------------------------------------------ |
