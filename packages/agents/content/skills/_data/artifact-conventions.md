@@ -467,30 +467,32 @@ Companion file in the same run directory. Each line is a JSON object (JSONL form
 
 All 13 valid event types and their required fields:
 
-| Event type | Key fields |
-|---|---|
-| `run_started` | _(none beyond `t`, `event`)_ |
-| `run_completed` | `status` (`completed`\|`failed`\|`needs_manual_review`) |
-| `run_failed` | `status`, `reason?` |
-| `phase_decision` | `phase` (string), `run` (boolean), `reason?` |
-| `phase_started` | `phase` (one of: `architecture`\|`planning`\|`implementation`\|`review`\|`simplifier`\|`holistic`) |
-| `phase_completed` | `phase`, `status` (one of: `completed`\|`skipped`\|`failed`\|`in_progress`\|`approved`), `data?` (record) |
-| `reviewer_dispatched` | `reviewer` (string) |
-| `reviewer_completed` | `reviewer`, `status` (`completed`\|`skipped`\|`failed`), `criticality` (`none`\|`low`\|`medium`\|`high`) |
-| `coder_fix_started` | `iteration` (number) |
-| `coder_fix_completed` | `iteration` (number) |
-| `re_review_dispatched` | `reviewers` (string array) |
-| `re_review_completed` | `criticalities` (record: reviewer name -> criticality) |
-| `artifact_written` | `filename`, `role`, `roleType`, `agent`, `type`, `phase`, `iteration?`, `note?` |
+| Event type             | Key fields                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------------- |
+| `run_started`          | _(none beyond `t`, `event`)_                                                                              |
+| `run_completed`        | `status` (`completed`\|`failed`\|`needs_manual_review`)                                                   |
+| `run_failed`           | `status`, `reason?`                                                                                       |
+| `phase_decision`       | `phase` (string), `run` (boolean), `reason?`                                                              |
+| `phase_started`        | `phase` (one of: `architecture`\|`planning`\|`implementation`\|`review`\|`simplifier`\|`holistic`)        |
+| `phase_completed`      | `phase`, `status` (one of: `completed`\|`skipped`\|`failed`\|`in_progress`\|`approved`), `data?` (record) |
+| `reviewer_dispatched`  | `reviewer` (string)                                                                                       |
+| `reviewer_completed`   | `reviewer`, `status` (`completed`\|`skipped`\|`failed`), `criticality` (`none`\|`low`\|`medium`\|`high`)  |
+| `coder_fix_started`    | `iteration` (number)                                                                                      |
+| `coder_fix_completed`  | `iteration` (number)                                                                                      |
+| `re_review_dispatched` | `reviewers` (string array)                                                                                |
+| `re_review_completed`  | `criticalities` (record: reviewer name -> criticality)                                                    |
+| `artifact_written`     | `filename`, `role`, `roleType`, `agent`, `type`, `phase`, `iteration?`, `note?`                           |
 
 ### Run directory layout (v3)
 
 ```
-{projectRoot}/.ai/runs/{runId}/
+{projectRoot}/.ai/runs/{ticketId}/{runId}/
   run-index.json    <- v3 header (written by init_run, completedAt stamped by complete_run)
   run-log.jsonl     <- append-only event log (one JSON object per line)
   {file-timestamp}_{role}_{artifact}.md   <- artifact files (unchanged naming convention)
 ```
+
+Runs are always nested under a ticket ID directory. When no ticket ID is provided to `init_run`, one is auto-generated in the format `{YYYYMMDD-HHMM}Z-{4 hex chars}` (e.g., `20260302-1859Z-a3f2`). The auto-generated format carries timestamp information for human navigation.
 
 ### Run ID format (v3)
 

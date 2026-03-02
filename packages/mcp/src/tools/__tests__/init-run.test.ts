@@ -12,7 +12,7 @@ describe('initRun', () => {
     return mkdtemp(join(tmpdir(), 'mcp-test-init-'));
   }
 
-  it('creates runDir and returns runId and timestamp', async () => {
+  it('creates runDir and returns runId, ticketId, and timestamp', async () => {
     const projectRoot = await createTmpDir();
     const result = await initRun({
       projectSlug: 'test-project',
@@ -23,7 +23,36 @@ describe('initRun', () => {
 
     expect(result.runId).toMatch(/^test-project\.\d{8}-\d{6}Z$/);
     expect(result.runDir).toContain('.ai/runs/');
+    expect(result.ticketId).toBeTruthy();
     expect(result.timestamp).toBeTruthy();
+  });
+
+  it('nests runDir under ticketId when provided', async () => {
+    const projectRoot = await createTmpDir();
+    const result = await initRun({
+      projectSlug: 'test-project',
+      ticketId: 'PROJ-42',
+      projectRoot,
+      branch: 'main',
+      task: 'implement feature',
+    });
+
+    expect(result.runDir).toContain('.ai/runs/PROJ-42/');
+    expect(result.ticketId).toBe('PROJ-42');
+  });
+
+  it('auto-generates ticketId and nests runDir under it when not provided', async () => {
+    const projectRoot = await createTmpDir();
+    const result = await initRun({
+      projectSlug: 'test-project',
+      projectRoot,
+      branch: 'main',
+      task: 'implement feature',
+    });
+
+    // Auto-generated format: {YYYYMMDD-HHMM}Z-{4 hex chars}
+    expect(result.ticketId).toMatch(/^\d{8}-\d{4}Z-[0-9a-f]{4}$/);
+    expect(result.runDir).toContain(`.ai/runs/${result.ticketId}/`);
   });
 
   it('writes a valid v3 run-index.json', async () => {
@@ -93,7 +122,7 @@ describe('initRun', () => {
     });
   });
 
-  it('omits ticketId from context when not provided', async () => {
+  it('auto-generates ticketId in run-index.json when not provided', async () => {
     const projectRoot = await createTmpDir();
     const result = await initRun({
       projectSlug: 'test-project',
@@ -104,7 +133,7 @@ describe('initRun', () => {
 
     const indexContent = await readFile(join(result.runDir, 'run-index.json'), 'utf8');
     const parsed: unknown = JSON.parse(indexContent);
-    expect(parsed).not.toHaveProperty('context.ticketId');
+    expect(parsed).toHaveProperty('context.ticketId', result.ticketId);
   });
 
   it('rejects when the project root cannot be written to', async () => {
