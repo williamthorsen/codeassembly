@@ -60,11 +60,6 @@
   color: #ffffff;
 }
 
-.criticality-critical {
-  background: #aa0000;
-  color: #ffffff;
-}
-
 .criticality-arrow {
   display: inline-block;
   margin: 0 2px;

@@ -1,6 +1,6 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../FlowDiagram/FlowDiagram.css', () => ({}));
 
@@ -43,7 +43,12 @@ const baseProps = {
 };
 
 describe('ReturnEdge', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
@@ -192,7 +197,7 @@ describe('ReturnEdge', () => {
     expect(classAttr).not.toContain('edge-draw');
   });
 
-  it('applies both edge-pending and edge-draw when isPending and isNew are true', () => {
+  it('applies only edge-draw when isPending and isNew during draw animation', () => {
     const { container } = render(
       <svg>
         <ReturnEdge
@@ -212,8 +217,38 @@ describe('ReturnEdge', () => {
 
     const baseEdge = container.querySelector('[data-testid="base-edge"]');
     const classAttr = baseEdge?.getAttribute('class') ?? '';
-    expect(classAttr).toContain('edge-pending');
+    // During draw, only edge-draw should be applied (not edge-pending)
     expect(classAttr).toContain('edge-draw');
+    expect(classAttr).not.toContain('edge-pending');
+  });
+
+  it('transitions to edge-pending after draw animation completes when isPending', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'pending',
+            iteration: 1,
+            isNew: true,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    // After draw animation completes (600ms)
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    const classAttr = baseEdge?.getAttribute('class') ?? '';
+    expect(classAttr).toContain('edge-pending');
+    expect(classAttr).not.toContain('edge-draw');
   });
 
   it('applies edge-pending class when status is pending', () => {
@@ -236,5 +271,67 @@ describe('ReturnEdge', () => {
 
     const baseEdge = container.querySelector('[data-testid="base-edge"]');
     expect(baseEdge?.getAttribute('class')).toContain('edge-pending');
+  });
+
+  it('renders PacketAnimation after draw animation completes when isNew', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'completed',
+            iteration: 1,
+            isNew: true,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    // Before draw completes, no packet
+    let animateMotion = container.querySelector('animateMotion');
+    expect(animateMotion).toBeNull();
+
+    // After draw animation completes (600ms)
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    animateMotion = container.querySelector('animateMotion');
+    expect(animateMotion).not.toBeNull();
+  });
+
+  it('removes PacketAnimation after packet completes', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'completed',
+            iteration: 1,
+            isNew: true,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    // After draw completes, packet appears
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(container.querySelector('animateMotion')).not.toBeNull();
+
+    // After packet completes (800ms default)
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(container.querySelector('animateMotion')).toBeNull();
   });
 });

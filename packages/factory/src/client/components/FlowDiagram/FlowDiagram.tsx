@@ -62,7 +62,6 @@ function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
 
   return (
     <div className="flow-diagram">
-<<<<<<< HEAD
       <ReactFlow
         nodes={nodes}
         edges={edges}

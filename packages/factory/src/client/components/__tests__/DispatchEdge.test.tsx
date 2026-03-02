@@ -1,6 +1,6 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../FlowDiagram/FlowDiagram.css', () => ({}));
 
@@ -41,7 +41,12 @@ const baseProps = {
 };
 
 describe('DispatchEdge', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
@@ -169,7 +174,7 @@ describe('DispatchEdge', () => {
     expect(style).toMatch(/stroke:\s*(#FFFF55|rgb\(255,\s*255,\s*85\))/);
   });
 
-  it('applies both edge-pending and edge-draw when isPending and isNew are true', () => {
+  it('applies only edge-draw when isPending and isNew during draw animation', () => {
     const { container } = render(
       <svg>
         <DispatchEdge
@@ -187,8 +192,36 @@ describe('DispatchEdge', () => {
 
     const baseEdge = container.querySelector('[data-testid="base-edge"]');
     const classAttr = baseEdge?.getAttribute('class') ?? '';
-    expect(classAttr).toContain('edge-pending');
+    // During draw, only edge-draw should be applied (not edge-pending)
     expect(classAttr).toContain('edge-draw');
+    expect(classAttr).not.toContain('edge-pending');
+  });
+
+  it('transitions to edge-pending after draw animation completes when isPending', () => {
+    const { container } = render(
+      <svg>
+        <DispatchEdge
+          {...baseProps}
+          data={{
+            roleType: 'author',
+            color: '#FFFF55',
+            status: 'pending',
+            iteration: 1,
+            isNew: true,
+          }}
+        />
+      </svg>,
+    );
+
+    // After draw animation completes (600ms)
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    const classAttr = baseEdge?.getAttribute('class') ?? '';
+    expect(classAttr).toContain('edge-pending');
+    expect(classAttr).not.toContain('edge-draw');
   });
 
   it('does not apply edge-draw class when isNew is false', () => {
@@ -210,5 +243,85 @@ describe('DispatchEdge', () => {
     const baseEdge = container.querySelector('[data-testid="base-edge"]');
     const classAttr = baseEdge?.getAttribute('class') ?? '';
     expect(classAttr).not.toContain('edge-draw');
+  });
+
+  it('renders PacketAnimation after draw animation completes when isNew', () => {
+    const { container } = render(
+      <svg>
+        <DispatchEdge
+          {...baseProps}
+          data={{
+            roleType: 'author',
+            color: '#FFFF55',
+            status: 'completed',
+            iteration: 1,
+            isNew: true,
+          }}
+        />
+      </svg>,
+    );
+
+    // Before draw completes, no packet
+    let animateMotion = container.querySelector('animateMotion');
+    expect(animateMotion).toBeNull();
+
+    // After draw animation completes (600ms)
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    animateMotion = container.querySelector('animateMotion');
+    expect(animateMotion).not.toBeNull();
+  });
+
+  it('removes PacketAnimation after packet completes', () => {
+    const { container } = render(
+      <svg>
+        <DispatchEdge
+          {...baseProps}
+          data={{
+            roleType: 'author',
+            color: '#FFFF55',
+            status: 'completed',
+            iteration: 1,
+            isNew: true,
+          }}
+        />
+      </svg>,
+    );
+
+    // After draw completes, packet appears
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(container.querySelector('animateMotion')).not.toBeNull();
+
+    // After packet completes (800ms default)
+    act(() => {
+      vi.advanceTimersByTime(800);
+    });
+    expect(container.querySelector('animateMotion')).toBeNull();
+  });
+
+  it('wraps content in a g element for CSS variable inheritance', () => {
+    const { container } = render(
+      <svg>
+        <DispatchEdge
+          {...baseProps}
+          data={{
+            roleType: 'author',
+            color: '#FFFF55',
+            status: 'completed',
+            iteration: 1,
+            isNew: true,
+          }}
+        />
+      </svg>,
+    );
+
+    // The wrapper <g> should exist, containing the hidden path and base edge
+    const wrapper = container.querySelector('g');
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.querySelector('[data-testid="base-edge"]')).not.toBeNull();
   });
 });
