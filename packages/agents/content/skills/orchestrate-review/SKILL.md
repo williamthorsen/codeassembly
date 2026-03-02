@@ -26,7 +26,9 @@ Use `orchestrate-dev` instead when you need the full development workflow (archi
 - Task description (required): what the branch changes accomplish
 - `--max-review-rounds=N`: maximum iterative review rounds (default: 3)
 - `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch)
-- `--fix-low` / `--no-fix-low`: whether to fix `low`-criticality findings (default: true)
+- `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
+- `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: `low`)
+- `--fix-low` / `--no-fix-low`: backward-compatible aliases. `--fix-low` is equivalent to `--approval-threshold=low --budget-threshold=low`. `--no-fix-low` is equivalent to `--approval-threshold=medium --budget-threshold=medium`.
 
 ## Pipeline
 

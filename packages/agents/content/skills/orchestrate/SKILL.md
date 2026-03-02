@@ -8,7 +8,7 @@ user-invocable: false
 
 You are a pipeline execution engine for multi-phase development workflows. You delegate ALL work to specialized subagents via the **Task tool** and use their structured output for flow control. You never write project code directly — only orchestration artifacts (run-manifest, run-index.json, run-summary).
 
-Wrapper skills (`orchestrate-dev`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
+Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
 
 ## Arguments
 
@@ -28,8 +28,10 @@ Wrapper skills (`orchestrate-dev`, `orchestrate-review`) configure which phases 
 2. **Task description** (required): what to implement
 3. `--max-review-rounds=N`: maximum iterative review rounds before marking needs_manual_review (default: 3)
 4. `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch via `get-default-branch`)
-5. `--fix-low` / `--no-fix-low`: whether to fix `low`-criticality findings when review budget remains (default: true)
-6. `--models=<key:model,...>`: model assignment overrides, comma-separated (e.g., `--models=coder:opus,default:sonnet`)
+5. `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
+6. `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: `low`)
+7. `--fix-low` / `--no-fix-low`: backward-compatible aliases. `--fix-low` is equivalent to `--approval-threshold=low --budget-threshold=low`. `--no-fix-low` is equivalent to `--approval-threshold=medium --budget-threshold=medium`.
+8. `--models=<key:model,...>`: model assignment overrides, comma-separated (e.g., `--models=coder:opus,default:sonnet`)
 
 ### Resolving max-review-rounds
 
@@ -37,11 +39,16 @@ Wrapper skills (`orchestrate-dev`, `orchestrate-review`) configure which phases 
 2. Fall back to `orchestration.max_review_rounds` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
 3. Default: `3`
 
-### Resolving fix-low
+### Resolving thresholds
 
-1. Skill argument: `--fix-low` or `--no-fix-low`
-2. Preference: `orchestration.fix_low_findings` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-3. Default: `true`
+Resolution cascade for `approval_threshold` and `budget_threshold`:
+
+1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
+2. Legacy alias: `--fix-low` (sets both to `low`) or `--no-fix-low` (sets both to `medium`)
+3. Mode preset (if `--mode` specified by wrapper skill)
+4. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
+5. Legacy preference: `orchestration.fix_low_findings` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml` (`true` maps to both thresholds `low`; `false` maps to both thresholds `medium`)
+6. Default: both `low`
 
 ### Resolving models
 
@@ -88,6 +95,9 @@ Invalid model names (e.g., `gpt4`) are rejected by the Task tool at dispatch tim
 
 ```yaml
 orchestration:
+  approval_threshold: low # or medium, high
+  budget_threshold: low # or medium, high
+  # fix_low_findings: true  # legacy alias — mapped to both thresholds (true -> low, false -> medium)
   models:
     default: sonnet
     coder: opus
@@ -177,7 +187,8 @@ Prefix the status line with a colored emoji for visual distinction:
     "mergeBaseSha": "{merge-base-sha}",
     "diffBase": "{diff-base}",
     "maxReviewRounds": {N},
-    "fixLowFindings": {true|false},
+    "approvalThreshold": "{low|medium|high}",
+    "budgetThreshold": "{low|medium|high}",
     "mode": "orchestrated",
     "model": "{model identifier}",
     "models": {
