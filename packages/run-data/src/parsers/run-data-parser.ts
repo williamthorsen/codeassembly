@@ -48,8 +48,7 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
       if (!isEnoent(error)) {
         throw error;
       }
-      // run-log.jsonl missing — fall back to v2 path
-      return parseRunIndexFromRaw(raw, indexPath);
+      throw new Error(`v3 run-index.json found at ${indexPath} but run-log.jsonl is missing`);
     }
 
     const v3Data = v3Result.data;

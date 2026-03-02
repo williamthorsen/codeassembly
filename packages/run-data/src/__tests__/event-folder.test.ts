@@ -330,7 +330,7 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview).toBeUndefined();
   });
 
-  it('coder_fix_completed is a no-op and does not mutate state', () => {
+  it('coder_fix_completed records completedAt on the iteration', () => {
     const header = createHeader();
     const events: RunEvent[] = [
       { t: '2026-01-01T00:03:00Z', event: 'phase_started', phase: 'review' },
@@ -339,12 +339,14 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    // parallelReview should remain in its initial state from phase_started
+    // parallelReview should remain in its initial state from phase_started (no coderFixCycleRan without coder_fix_started)
     expect(result.phases.parallelReview).toMatchObject({
       status: 'in_progress',
       coderFixCycleRan: false,
       reviewers: {},
     });
+    // But the iteration should have the completedAt timestamp
+    expect(result.phases.parallelReview?.iterations?.[0]?.coderFixCompletedAt).toBe('2026-01-01T00:04:00Z');
   });
 
   it('handles holisticReview phase via holistic event phase name', () => {
@@ -365,6 +367,146 @@ describe('foldEvents', () => {
     expect(result.phases.holisticReview).toMatchObject({
       status: 'completed',
       criticality: 'none',
+    });
+  });
+
+  // -- Phase startedAt/completedAt timestamps (S1) -----------------------------------
+
+  it('sets startedAt on phase_started for architecture', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [{ t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' }];
+
+    const result = foldEvents(header, events);
+
+    expect(result.phases.architecture?.startedAt).toBe('2026-01-01T00:01:00Z');
+  });
+
+  it('sets completedAt on phase_completed for architecture', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' },
+      {
+        t: '2026-01-01T00:02:00Z',
+        event: 'phase_completed',
+        phase: 'architecture',
+        status: 'completed',
+        data: { impactLevel: 'high' },
+      },
+    ];
+
+    const result = foldEvents(header, events);
+
+    expect(result.phases.architecture?.startedAt).toBe('2026-01-01T00:01:00Z');
+    expect(result.phases.architecture?.completedAt).toBe('2026-01-01T00:02:00Z');
+  });
+
+  it('sets startedAt/completedAt on all phase types', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'planning' },
+      { t: '2026-01-01T00:02:00Z', event: 'phase_completed', phase: 'planning', status: 'completed' },
+      { t: '2026-01-01T00:03:00Z', event: 'phase_started', phase: 'implementation' },
+      { t: '2026-01-01T00:04:00Z', event: 'phase_completed', phase: 'implementation', status: 'completed' },
+      { t: '2026-01-01T00:05:00Z', event: 'phase_started', phase: 'review' },
+      { t: '2026-01-01T00:06:00Z', event: 'phase_completed', phase: 'review', status: 'completed' },
+      { t: '2026-01-01T00:07:00Z', event: 'phase_started', phase: 'simplifier' },
+      { t: '2026-01-01T00:08:00Z', event: 'phase_completed', phase: 'simplifier', status: 'completed' },
+      { t: '2026-01-01T00:09:00Z', event: 'phase_started', phase: 'holistic' },
+      { t: '2026-01-01T00:10:00Z', event: 'phase_completed', phase: 'holistic', status: 'completed' },
+    ];
+
+    const result = foldEvents(header, events);
+
+    expect(result.phases.planning?.startedAt).toBe('2026-01-01T00:01:00Z');
+    expect(result.phases.planning?.completedAt).toBe('2026-01-01T00:02:00Z');
+    expect(result.phases.implementation?.startedAt).toBe('2026-01-01T00:03:00Z');
+    expect(result.phases.implementation?.completedAt).toBe('2026-01-01T00:04:00Z');
+    expect(result.phases.parallelReview?.startedAt).toBe('2026-01-01T00:05:00Z');
+    expect(result.phases.parallelReview?.completedAt).toBe('2026-01-01T00:06:00Z');
+    expect(result.phases.codeSimplifier?.startedAt).toBe('2026-01-01T00:07:00Z');
+    expect(result.phases.codeSimplifier?.completedAt).toBe('2026-01-01T00:08:00Z');
+    expect(result.phases.holisticReview?.startedAt).toBe('2026-01-01T00:09:00Z');
+    expect(result.phases.holisticReview?.completedAt).toBe('2026-01-01T00:10:00Z');
+  });
+
+  // -- ReviewIteration tracking (S2) -----------------------------------------------
+
+  it('builds review iteration from dispatched and completed events', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:03:00Z', event: 'phase_started', phase: 'review' },
+      { t: '2026-01-01T00:03:01Z', event: 'reviewer_dispatched', reviewer: 'code-reviewer' },
+      { t: '2026-01-01T00:03:02Z', event: 'reviewer_dispatched', reviewer: 'test-reviewer' },
+      {
+        t: '2026-01-01T00:03:30Z',
+        event: 'reviewer_completed',
+        reviewer: 'code-reviewer',
+        status: 'completed',
+        criticality: 'low',
+      },
+      {
+        t: '2026-01-01T00:03:35Z',
+        event: 'reviewer_completed',
+        reviewer: 'test-reviewer',
+        status: 'completed',
+        criticality: 'none',
+      },
+    ];
+
+    const result = foldEvents(header, events);
+
+    expect(result.phases.parallelReview?.iterations).toHaveLength(1);
+    expect(result.phases.parallelReview?.iterations?.[0]).toMatchObject({
+      reviewers: ['code-reviewer', 'test-reviewer'],
+      dispatchedAt: '2026-01-01T00:03:01Z',
+      reviewsCompletedAt: '2026-01-01T00:03:35Z',
+    });
+  });
+
+  it('builds full review iterations with coder fix and re-review', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:03:00Z', event: 'phase_started', phase: 'review' },
+      { t: '2026-01-01T00:03:01Z', event: 'reviewer_dispatched', reviewer: 'code-reviewer' },
+      { t: '2026-01-01T00:03:02Z', event: 'reviewer_dispatched', reviewer: 'test-reviewer' },
+      {
+        t: '2026-01-01T00:03:30Z',
+        event: 'reviewer_completed',
+        reviewer: 'code-reviewer',
+        status: 'completed',
+        criticality: 'medium',
+      },
+      {
+        t: '2026-01-01T00:03:35Z',
+        event: 'reviewer_completed',
+        reviewer: 'test-reviewer',
+        status: 'completed',
+        criticality: 'low',
+      },
+      { t: '2026-01-01T00:04:00Z', event: 'coder_fix_started', iteration: 1 },
+      { t: '2026-01-01T00:04:30Z', event: 'coder_fix_completed', iteration: 1 },
+      { t: '2026-01-01T00:05:00Z', event: 're_review_dispatched', reviewers: ['code-reviewer'] },
+      { t: '2026-01-01T00:05:30Z', event: 're_review_completed', criticalities: { 'code-reviewer': 'none' } },
+    ];
+
+    const result = foldEvents(header, events);
+    const iterations = result.phases.parallelReview?.iterations;
+
+    // First iteration: dispatch + reviews + coder fix
+    expect(iterations).toHaveLength(2);
+    expect(iterations?.[0]).toMatchObject({
+      reviewers: ['code-reviewer', 'test-reviewer'],
+      dispatchedAt: '2026-01-01T00:03:01Z',
+      reviewsCompletedAt: '2026-01-01T00:03:35Z',
+      coderFixStartedAt: '2026-01-01T00:04:00Z',
+      coderFixCompletedAt: '2026-01-01T00:04:30Z',
+    });
+
+    // Second iteration: re-review
+    expect(iterations?.[1]).toMatchObject({
+      reviewers: ['code-reviewer'],
+      dispatchedAt: '2026-01-01T00:05:00Z',
+      reviewsCompletedAt: '2026-01-01T00:05:30Z',
     });
   });
 

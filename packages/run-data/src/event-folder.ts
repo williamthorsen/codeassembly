@@ -6,9 +6,11 @@ import type {
   Criticality,
   HolisticReviewPhase,
   ImplementationPhase,
+  ParallelReviewPhase,
   PhaseStatus,
   PlanningPhase,
   QualityGates,
+  ReviewIteration,
 } from './types/canonical.js';
 import type { EventPhaseName, RunEvent, RunHeader } from './types/run-log.js';
 
@@ -115,11 +117,11 @@ function applyEvent(state: CanonicalRunStatus, event: RunEvent): void {
       break;
 
     case 'phase_started':
-      applyPhaseStarted(state, event.phase);
+      applyPhaseStarted(state, event.phase, event.t);
       break;
 
     case 'phase_completed':
-      applyPhaseCompleted(state, event.phase, event.status, event.data);
+      applyPhaseCompleted(state, event.phase, event.status, event.data, event.t);
       break;
 
     case 'reviewer_dispatched':
@@ -150,73 +152,135 @@ type ReviewEvent = Extract<
   }
 >;
 
+/** Ensure the iterations array has an entry at the given zero-based index and return it. */
+function ensureIteration(review: { iterations?: ReviewIteration[] }, index: number): ReviewIteration {
+  review.iterations ??= [];
+  let iteration = review.iterations[index];
+  if (!iteration) {
+    iteration = { reviewers: [] };
+    review.iterations[index] = iteration;
+  }
+  return iteration;
+}
+
+function applyReviewerDispatched(
+  review: ParallelReviewPhase,
+  event: Extract<ReviewEvent, { event: 'reviewer_dispatched' }>,
+): void {
+  review.reviewers[event.reviewer] = {
+    ran: true,
+    status: undefined,
+    criticality: undefined,
+    reason: undefined,
+    reReviewCriticality: undefined,
+    reReviewError: undefined,
+  };
+  const iter0 = ensureIteration(review, 0);
+  if (!iter0.reviewers.includes(event.reviewer)) {
+    iter0.reviewers.push(event.reviewer);
+  }
+  iter0.dispatchedAt ??= event.t;
+}
+
+function applyReviewerCompleted(
+  review: ParallelReviewPhase,
+  event: Extract<ReviewEvent, { event: 'reviewer_completed' }>,
+): void {
+  const entry = review.reviewers[event.reviewer];
+  if (entry) {
+    entry.status = event.status;
+    entry.criticality = event.criticality;
+  }
+  const firstIter = ensureIteration(review, 0);
+  firstIter.reviewsCompletedAt = event.t;
+}
+
+function applyReReviewDispatched(
+  review: ParallelReviewPhase,
+  event: Extract<ReviewEvent, { event: 're_review_dispatched' }>,
+): void {
+  review.selectiveReReview = {
+    ran: true,
+    reviewersDispatched: event.reviewers,
+    additionalFixCycleRan: false,
+  };
+  const iterations = review.iterations ?? [];
+  const nextIdx = iterations.length > 0 ? iterations.length : 1;
+  const reIter = ensureIteration(review, nextIdx);
+  reIter.reviewers = event.reviewers;
+  reIter.dispatchedAt = event.t;
+}
+
+function applyReReviewCompleted(
+  review: ParallelReviewPhase,
+  event: Extract<ReviewEvent, { event: 're_review_completed' }>,
+): void {
+  for (const [reviewer, crit] of Object.entries(event.criticalities)) {
+    const entry = review.reviewers[reviewer];
+    if (entry) {
+      entry.reReviewCriticality = crit;
+    }
+  }
+  const iterations = review.iterations;
+  if (iterations && iterations.length > 0) {
+    const lastIdx = iterations.length - 1;
+    const lastIter = ensureIteration(review, lastIdx);
+    lastIter.reviewsCompletedAt = event.t;
+  }
+}
+
 function applyReviewEvent(state: CanonicalRunStatus, event: ReviewEvent): void {
+  const review = state.phases.parallelReview;
+  if (!review) return;
+
   switch (event.event) {
     case 'reviewer_dispatched':
-      if (state.phases.parallelReview) {
-        state.phases.parallelReview.reviewers[event.reviewer] = {
-          ran: true,
-          status: undefined,
-          criticality: undefined,
-          reason: undefined,
-          reReviewCriticality: undefined,
-          reReviewError: undefined,
-        };
-      }
+      applyReviewerDispatched(review, event);
       break;
-
     case 'reviewer_completed':
-      if (state.phases.parallelReview) {
-        const entry = state.phases.parallelReview.reviewers[event.reviewer];
-        if (entry) {
-          entry.status = event.status;
-          entry.criticality = event.criticality;
-        }
-      }
+      applyReviewerCompleted(review, event);
       break;
-
     case 'coder_fix_started':
-      if (state.phases.parallelReview) {
-        state.phases.parallelReview.coderFixCycleRan = true;
-      }
+      review.coderFixCycleRan = true;
+      ensureIteration(review, event.iteration - 1).coderFixStartedAt = event.t;
       break;
-
     case 'coder_fix_completed':
+      ensureIteration(review, event.iteration - 1).coderFixCompletedAt = event.t;
       break;
-
     case 're_review_dispatched':
-      if (state.phases.parallelReview) {
-        state.phases.parallelReview.selectiveReReview = {
-          ran: true,
-          reviewersDispatched: event.reviewers,
-          additionalFixCycleRan: false,
-        };
-      }
+      applyReReviewDispatched(review, event);
       break;
-
     case 're_review_completed':
-      if (state.phases.parallelReview) {
-        for (const [reviewer, crit] of Object.entries(event.criticalities)) {
-          const entry = state.phases.parallelReview.reviewers[reviewer];
-          if (entry) {
-            entry.reReviewCriticality = crit;
-          }
-        }
-      }
+      applyReReviewCompleted(review, event);
       break;
   }
 }
 
-function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName): void {
+function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName, timestamp: string): void {
   switch (phase) {
     case 'architecture':
-      state.phases.architecture = { status: 'in_progress', impactLevel: undefined, artifact: undefined };
+      state.phases.architecture = {
+        status: 'in_progress',
+        impactLevel: undefined,
+        artifact: undefined,
+        startedAt: timestamp,
+      };
       break;
     case 'planning':
-      state.phases.planning = { status: 'in_progress', stepCount: undefined, artifacts: undefined };
+      state.phases.planning = {
+        status: 'in_progress',
+        stepCount: undefined,
+        artifacts: undefined,
+        startedAt: timestamp,
+      };
       break;
     case 'implementation':
-      state.phases.implementation = { status: 'in_progress', artifact: undefined, qualityGates: undefined };
+      state.phases.implementation = {
+        status: 'in_progress',
+        artifact: undefined,
+        qualityGates: undefined,
+        startedAt: timestamp,
+      };
       break;
     case 'review':
       state.phases.parallelReview = {
@@ -226,6 +290,8 @@ function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName): vo
         reviewers: {},
         coderFixCycleRan: false,
         selectiveReReview: undefined,
+        startedAt: timestamp,
+        iterations: [],
       };
       break;
     case 'simplifier':
@@ -235,6 +301,7 @@ function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName): vo
         coderFixCycleRan: false,
         artifact: undefined,
         status: 'in_progress',
+        startedAt: timestamp,
       };
       break;
     case 'holistic':
@@ -245,6 +312,7 @@ function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName): vo
         coderFixCycleRan: false,
         reviewRoundsUsed: 0,
         artifact: undefined,
+        startedAt: timestamp,
       };
       break;
   }
@@ -255,26 +323,31 @@ function applyPhaseCompleted(
   phase: EventPhaseName,
   status: PhaseStatus,
   data: Record<string, unknown> | undefined,
+  timestamp: string,
 ): void {
   switch (phase) {
     case 'architecture': {
       const existing = state.phases.architecture ?? { impactLevel: undefined, artifact: undefined, status };
       state.phases.architecture = mergeArchitecture(existing, status, data);
+      state.phases.architecture.completedAt = timestamp;
       break;
     }
     case 'planning': {
       const existing = state.phases.planning ?? { stepCount: undefined, artifacts: undefined, status };
       state.phases.planning = mergePlanning(existing, status, data);
+      state.phases.planning.completedAt = timestamp;
       break;
     }
     case 'implementation': {
       const existing = state.phases.implementation ?? { artifact: undefined, qualityGates: undefined, status };
       state.phases.implementation = mergeImplementation(existing, status, data);
+      state.phases.implementation.completedAt = timestamp;
       break;
     }
     case 'review':
       if (state.phases.parallelReview) {
         state.phases.parallelReview.status = status;
+        state.phases.parallelReview.completedAt = timestamp;
         if (data) {
           if (isCriticality(data.aggregatedCriticality)) {
             state.phases.parallelReview.aggregatedCriticality = data.aggregatedCriticality;
@@ -294,6 +367,7 @@ function applyPhaseCompleted(
         artifact: undefined,
       };
       state.phases.codeSimplifier = mergeCodeSimplifier(existing, status, data);
+      state.phases.codeSimplifier.completedAt = timestamp;
       break;
     }
     case 'holistic': {
@@ -306,6 +380,7 @@ function applyPhaseCompleted(
         status,
       };
       state.phases.holisticReview = mergeHolisticReview(existing, status, data);
+      state.phases.holisticReview.completedAt = timestamp;
       break;
     }
   }

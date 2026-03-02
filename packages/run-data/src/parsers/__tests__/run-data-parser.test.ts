@@ -962,14 +962,14 @@ describe('parseRunData', () => {
       expect(result.model).toBe('claude-opus-4-6');
     });
 
-    it('falls back to v2 parse when v3 header is present but run-log.jsonl is ENOENT', async () => {
-      // A v3 header without a run-log.jsonl causes the adapter to fall back to parseRunIndexFromRaw.
-      // A v3 header fails the v2 schema (version 3 !== 2), so this should throw.
+    it('throws descriptive error when v3 header is present but run-log.jsonl is ENOENT', async () => {
       mockFileContents({
         '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
       });
 
-      await expect(parseRunData('/runs/test-run')).rejects.toThrow('Invalid run-index.json');
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow(
+        'v3 run-index.json found at /runs/test-run/run-index.json but run-log.jsonl is missing',
+      );
     });
 
     it('handles empty log file (returns initial state)', async () => {
