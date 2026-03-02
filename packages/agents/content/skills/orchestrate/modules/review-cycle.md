@@ -10,7 +10,8 @@ The orchestrate engine must provide these context variables before entering this
 | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `{task}`                | Task description                                                                                            |
 | `{ticket-content}`      | GitHub issue body (empty string if unavailable)                                                             |
-| `{artifact-dir}`        | Full path to the run artifact directory                                                                     |
+| `{run-dir}`             | Run directory returned by `init_run`                                                                        |
+| `{file-timestamp}`      | Filename-format timestamp prefix (e.g., `20260302-185950Z`)                                                 |
 | `{merge-base-sha}`      | Concrete merge-base SHA for diffing                                                                         |
 | `{change-summary-path}` | Path to the most recent `coder_change-summary.md`                                                           |
 | `{max-review-rounds}`   | Maximum iterative review rounds before `needs_manual_review`                                                |
@@ -28,10 +29,7 @@ After this module completes, the orchestrate engine reads:
 
 ## Sub-phase tracking
 
-This module manages three sub-phases: `parallelReview`, `codeSimplifier`, and `holisticReview`. For each sub-phase, record **both** a `context.phaseDecisions` entry and a `context.phases` entry in run-index.json:
-
-- **`context.phaseDecisions`**: record before executing the sub-phase. Use `{ "run": true, "disposition": "executed" }` if the sub-phase will run, or `{ "run": false, "disposition": "skipped", "reason": "..." }` if it is skipped (e.g., Phase 4a and 4b are skipped when Phase 4 exits with `needs_manual_review`).
-- **`context.phases`**: record after the sub-phase completes, with the outcome data shown in each sub-phase section below.
+Sub-phase state is recorded via `emit_event` calls at the points described in each sub-phase section below. Use `{run-dir}` for all MCP tool calls.
 
 ## Phase 4: Parallel review (required, max N iterations)
 
@@ -69,7 +67,13 @@ orchestration:
 
 Before dispatching, compute the changed-file list once: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}`. Evaluate activation rules for each aspect reviewer.
 
-Before: write `context.phases.parallelReview` to run-index.json with `status: "in_progress"`, `startedAt: {ISO timestamp}`, and an initial `iterations` entry: `iterations[0]` with `reviewers: [{list of dispatched reviewer names}]` and `dispatchedAt: {ISO timestamp}`. Do not write `aggregatedCriticality` yet (unknown until batch completes). Write per-reviewer entries with `ran: true` and `startedAt: {ISO timestamp}`.
+Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "review" } }`. Then emit one `reviewer_dispatched` event per dispatched reviewer:
+
+```
+Call MCP tool emit_event with:
+  runDir: {run-dir}
+  event: { event: "reviewer_dispatched", reviewer: "{reviewer-name}" }
+```
 
 Send all activated Task calls in a single message so they run concurrently. Each agent examines the branch diff independently.
 
@@ -79,7 +83,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Task description: {task}
 >
-> {If planning phase ran: Implementation plan: Read `{artifact-dir}/{timestamp}_planner_orchestration-plan.md`}
+> {If planning phase ran: Implementation plan: Read `{run-dir}/{file-timestamp}_planner_orchestration-plan.md`}
 > {If `{change-summary-path}` is non-empty: Coder's change summary: Read `{change-summary-path}`}
 >
 > Files changed:
@@ -87,7 +91,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Diff base (merge-base SHA): `{merge-base-sha}`
 >
-> Write your review to: `{artifact-dir}/{timestamp}_reviewer_review.md`
+> Write your review to: `{run-dir}/{file-timestamp}_reviewer_review.md`
 
 Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 15`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
 
@@ -100,7 +104,7 @@ Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 15`,
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{artifact-dir}/{timestamp}_silent-failure-reviewer_silent-failure-review.md`
+> Write your findings to: `{run-dir}/{file-timestamp}_silent-failure-reviewer_silent-failure-review.md`
 
 Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {models.aspect_test_reviewer}` (if activated):
 
@@ -108,14 +112,14 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {
 >
 > Task description: {task}
 >
-> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{artifact-dir}/{timestamp}_orchestrator_ticket-requirements.md`}
+> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`}
 >
 > Files changed:
 > {changed-files}
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{artifact-dir}/{timestamp}_test-reviewer_test-review.md`
+> Write your findings to: `{run-dir}/{file-timestamp}_test-reviewer_test-review.md`
 
 Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {models.aspect_code_reviewer}`:
 
@@ -128,19 +132,32 @@ Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{artifact-dir}/{timestamp}_code-reviewer_code-review.md`
+> Write your findings to: `{run-dir}/{file-timestamp}_code-reviewer_code-review.md`
 
 ### Findings aggregation
 
-After all dispatched reviewers complete, aggregate findings from all sources into a consolidated set.
+After all dispatched reviewers complete, emit one `reviewer_completed` event per reviewer:
+
+```
+Call MCP tool emit_event with:
+  runDir: {run-dir}
+  event: { event: "reviewer_completed", reviewer: "{name}",
+           status: "completed"|"failed"|"skipped", criticality: "{level}" }
+```
+
+Then aggregate findings from all sources into a consolidated set.
 
 **Criticality aggregation:** For each reviewer, extract `Criticality` using Task return parsing (see SKILL.md). If extraction fails, treat that reviewer's criticality as `medium`. The **aggregated criticality** is the maximum across all active reviewers: `high` > `medium` > `low` > `none`. Skipped aspect reviewers do not contribute to aggregation.
 
 **Deduplication heuristics:** If multiple reviewers flag the same file and line range (within 3 lines) with similar descriptions, consolidate into a single finding attributed to all relevant reviewers. When in doubt, keep findings separate — false deduplication is worse than redundant findings. Read each reviewer's artifact file to access finding details for deduplication and the consolidated coder fix prompt.
 
-**Handling failures:** If an agent fails or times out, proceed with findings from the remaining agents and record the failure in run-index.json. Use `"status": "failed"` in the reviewer entry to distinguish from activation-skipped (`"status": "skipped"`) and successful (`"status": "completed"`) reviewers.
+**Handling failures:** If an agent fails or times out, proceed with findings from the remaining agents and emit `reviewer_completed` with `status: "failed"` for that reviewer.
+
+Call `register_artifact` for each reviewer's artifact file.
 
 ### Flow control
+
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state for the following decision — specifically the authoritative aggregated criticality and `reviewRoundsUsed`. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
 
 Before applying these rules, check the iteration budget. If N iterations have been reached, exit with `needs_manual_review` regardless of criticality. Otherwise, use the aggregated criticality and the two thresholds to determine next steps:
 
@@ -152,6 +169,8 @@ Before applying these rules, check the iteration budget. If N iterations have be
 
 ### Consolidated coder fixes
 
+Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_started", iteration: {N} } }`.
+
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
 
 > Address the review findings for the following task.
@@ -160,21 +179,27 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > The following reviewers identified issues. Prioritize critical/structural findings first.
 >
-> {If core reviewer had actionable findings: Core reviewer findings: Read `{artifact-dir}/{timestamp}_reviewer_review.md`}
+> {If core reviewer had actionable findings: Core reviewer findings: Read `{run-dir}/{file-timestamp}_reviewer_review.md`}
 >
-> {If silent-failure reviewer had actionable findings: Aspect silent-failure reviewer findings: Read `{artifact-dir}/{timestamp}_silent-failure-reviewer_silent-failure-review.md`}
+> {If silent-failure reviewer had actionable findings: Aspect silent-failure reviewer findings: Read `{run-dir}/{file-timestamp}_silent-failure-reviewer_silent-failure-review.md`}
 >
-> {If test reviewer had actionable findings: Aspect test reviewer findings: Read `{artifact-dir}/{timestamp}_test-reviewer_test-review.md`}
+> {If test reviewer had actionable findings: Aspect test reviewer findings: Read `{run-dir}/{file-timestamp}_test-reviewer_test-review.md`}
 >
-> {If code reviewer had actionable findings: Aspect code reviewer findings: Read `{artifact-dir}/{timestamp}_code-reviewer_code-review.md`}
+> {If code reviewer had actionable findings: Aspect code reviewer findings: Read `{run-dir}/{file-timestamp}_code-reviewer_code-review.md`}
 >
 > {Only include sections for reviewers that produced actionable findings.}
 >
-> Write your response to: `{artifact-dir}/{timestamp}_coder_change-summary.md`
+> Write your response to: `{run-dir}/{file-timestamp}_coder_change-summary.md`
+
+After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N} } }`. Call `register_artifact` for the coder's change-summary artifact.
 
 ### Selective re-review
 
-After the coder fix cycle, determine which reviewers' findings were addressed by examining the coder's change summary. Only re-dispatch reviewers whose findings the coder acted on — skip reviewers whose findings were already `none` or whose findings were deferred. Re-review is warranted whenever the coder acted on findings from one or more reviewers; the scope of re-review is limited to those reviewers.
+After the coder fix cycle, call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read per-reviewer criticality and determine which reviewers need re-review. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+
+Determine which reviewers' findings were addressed by examining the coder's change summary. Only re-dispatch reviewers whose findings the coder acted on — skip reviewers whose findings were already `none` or whose findings were deferred. Re-review is warranted whenever the coder acted on findings from one or more reviewers; the scope of re-review is limited to those reviewers.
+
+Before dispatching re-review: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_dispatched", reviewers: ["{name}", ...] } }`.
 
 If re-review is warranted, send re-review Task calls in a single message (parallel) using the same prompts, models, and turn budgets as the initial dispatch but adding context:
 
@@ -182,38 +207,39 @@ If re-review is warranted, send re-review Task calls in a single message (parall
 >
 > This is a re-review after fixes were applied. Previous findings: {summary of this reviewer's original findings}. Coder's change summary: Read {change-summary-path}. Focus on verifying fixes and checking for regressions — not repeating previously resolved issues.
 
-If a re-reviewer fails or times out, treat its original findings as unverified and include them in the aggregated criticality at their original severity. Record the failure in run-index.json.
+If a re-reviewer fails or times out, treat its original findings as unverified and include them in the aggregated criticality at their original severity. Emit `reviewer_completed` with `status: "failed"` for that reviewer.
 
-After re-reviews complete, aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
+After re-reviews complete: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... } } }`. Call `register_artifact` for each re-reviewer's artifact file.
+
+Aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
 
 ### Loop termination
+
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `reviewRoundsUsed` from state rather than relying on conversation-tracked iteration count. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
 
 - After N iterations unresolved (where N is the configured `max-review-rounds`): exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
 - Structural issues: may return to Planning once per run.
 
-### Incremental writes
-
-Write run-index.json at every state transition within Phase 4:
-
-**After the initial review batch completes:** update `context.phases.parallelReview` to add `iterations[0].reviewsCompletedAt: {ISO timestamp}` and the aggregated criticality. Write per-reviewer `completedAt`, `status`, and `criticality` for each reviewer entry.
-
-**Before dispatching a coder fix cycle:** update `context.phases.parallelReview.iterations[n-1].coderFixStartedAt: {ISO timestamp}` (where n is the current iteration number).
-
-**After a coder fix cycle completes:** update `iterations[n-1].coderFixCompletedAt: {ISO timestamp}`.
-
-**Before dispatching selective re-review:** add a new `iterations[n]` entry with `reviewers: [{list of re-dispatched reviewer names}]` and `dispatchedAt: {ISO timestamp}`. Update per-reviewer `startedAt` for re-dispatched reviewers.
-
-**After re-review completes:** update `iterations[n].reviewsCompletedAt: {ISO timestamp}` and per-reviewer `completedAt`, `status`, `criticality`, and `reReviewCriticality`.
-
-**At phase completion:** write final `status: "completed"` (or `"failed"` / `"needs_manual_review"`), `completedAt: {ISO timestamp}`, and top-level `aggregatedCriticality`, `reviewRoundsUsed`, `coderFixCycleRan`, and `selectiveReReview` summary fields. Record `context.phaseDecisions.parallelReview` with `{ "run": true, "disposition": "executed" }` (see [artifact-conventions.md](../../_data/artifact-conventions.md) for the full schema).
+At phase completion (converged or `needs_manual_review`): call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Emit `phase_decision` for `parallelReview` with `run: true`.
 
 ## Phase 4a: Code simplifier
 
-After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
+After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded via `emit_event` but should NOT block progression to Phase 4b or fail the run.
 
 Before dispatching code-simplifier, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
 
-Before: write `context.phases.codeSimplifier` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
+Emit `phase_decision` for `codeSimplifier` before Phase 4a executes:
+
+```
+Call MCP tool emit_event with:
+  runDir: {run-dir}
+  event: { event: "phase_decision", phase: "codeSimplifier", run: true|false,
+           reason: "{executed or skipped reason}" }
+```
+
+If Phase 4a will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "simplifier" } }`.
+
+If Phase 4a is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "skipped" } }`.
 
 Call Task with `subagent_type: pr-review-toolkit:code-simplifier`, `max_turns: 15`, `model: {models.code_simplifier}`:
 
@@ -228,9 +254,9 @@ Call Task with `subagent_type: pr-review-toolkit:code-simplifier`, `max_turns: 1
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{artifact-dir}/{timestamp}_code-simplifier_code-simplifier-review.md`
+> Write your findings to: `{run-dir}/{file-timestamp}_code-simplifier_code-simplifier-review.md`
 
-After: read the findings file. Code-simplifier findings are NOT re-reviewed by other agents. If code-simplifier produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, record the failure in run-index.json and proceed to Phase 4b.
+After: read the findings file. Code-simplifier findings are NOT re-reviewed by other agents. If code-simplifier produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
 
@@ -238,13 +264,13 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Task description: {task}
 >
-> Code-simplifier findings: Read `{artifact-dir}/{timestamp}_code-simplifier_code-simplifier-review.md`
+> Code-simplifier findings: Read `{run-dir}/{file-timestamp}_code-simplifier_code-simplifier-review.md`
 >
 > These are polish changes — the code has already passed all reviews. Apply simplifications that clearly improve readability without changing behavior.
 >
-> Write your response to: `{artifact-dir}/{timestamp}_coder_change-summary.md`
+> Write your response to: `{run-dir}/{file-timestamp}_coder_change-summary.md`
 
-After: record `context.phaseDecisions.codeSimplifier` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.codeSimplifier` in run-index.json with: `ran`, `actionableFindings`, `coderFixCycleRan`, `status: "completed"` (or `"failed"`), and `completedAt: {ISO timestamp}` (see [artifact-conventions.md](../../_data/artifact-conventions.md) for the full schema).
+After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure). Call `register_artifact` for the code-simplifier review and coder change-summary artifacts.
 
 ## Phase 4b: Final comprehensive review
 
@@ -252,7 +278,20 @@ After the parallel review and code-simplifier complete, perform one additional r
 
 The initial Phase 4b review always runs regardless of remaining budget. Phase 4b shares the review-round budget with Phase 4 only for subsequent fix-and-re-review cycles — rounds consumed in Phase 4 reduce the budget available for those cycles.
 
-Before: write `context.phases.holisticReview` to run-index.json with `status: "in_progress"` and `startedAt: {ISO timestamp}`.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to confirm whether Phase 4 exited `needs_manual_review` (which would skip Phase 4b) or converged. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+
+Emit `phase_decision` for `holisticReview` before Phase 4b executes:
+
+```
+Call MCP tool emit_event with:
+  runDir: {run-dir}
+  event: { event: "phase_decision", phase: "holisticReview", run: true|false,
+           reason: "{executed or skipped reason}" }
+```
+
+If Phase 4b will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`.
+
+If Phase 4b is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
 
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.holistic_reviewer}`:
 
@@ -260,7 +299,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Task description: {task}
 >
-> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{artifact-dir}/{timestamp}_orchestrator_ticket-requirements.md`}
+> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`}
 >
 > This is a holistic assessment. Evaluate the branch as a whole — not individual lines or functions.
 >
@@ -273,11 +312,15 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your review to: `{artifact-dir}/{timestamp}_reviewer_holistic-review.md`
+> Write your review to: `{run-dir}/{file-timestamp}_reviewer_holistic-review.md`
+
+Call `register_artifact` for the holistic review artifact.
 
 ### Flow control
 
 Extract `Criticality` using Task return parsing (see SKILL.md).
+
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read total `reviewRoundsUsed` across Phase 4 and 4b combined for the budget decision below. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
 
 - **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
 - **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
@@ -285,4 +328,4 @@ Extract `Criticality` using Task return parsing (see SKILL.md).
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
 - **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
 
-After: record `context.phaseDecisions.holisticReview` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.holisticReview` in run-index.json with `status: "completed"` (or `"failed"` / `"needs_manual_review"`), `completedAt: {ISO timestamp}`, and the holistic review outcome (criticality and whether a coder fix round was needed).
+After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
