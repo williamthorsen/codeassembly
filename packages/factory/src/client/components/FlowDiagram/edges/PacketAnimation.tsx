@@ -59,9 +59,8 @@ export function PacketAnimation({
       if (!mountedRef.current) return;
       try {
         onComplete();
-      } catch {
-        // Swallow errors from the onComplete callback to prevent
-        // unhandled exceptions reaching the global error handler.
+      } catch (error) {
+        console.error('[PacketAnimation] onComplete threw:', error);
       }
     }, duration);
 

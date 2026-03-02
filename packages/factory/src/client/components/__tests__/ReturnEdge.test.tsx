@@ -192,6 +192,30 @@ describe('ReturnEdge', () => {
     expect(classAttr).not.toContain('edge-draw');
   });
 
+  it('applies both edge-pending and edge-draw when isPending and isNew are true', () => {
+    const { container } = render(
+      <svg>
+        <ReturnEdge
+          {...baseProps}
+          data={{
+            roleType: 'reviewer',
+            color: '#FF5555',
+            status: 'pending',
+            iteration: 1,
+            isNew: true,
+            criticality: undefined,
+            reReviewCriticality: undefined,
+          }}
+        />
+      </svg>,
+    );
+
+    const baseEdge = container.querySelector('[data-testid="base-edge"]');
+    const classAttr = baseEdge?.getAttribute('class') ?? '';
+    expect(classAttr).toContain('edge-pending');
+    expect(classAttr).toContain('edge-draw');
+  });
+
   it('applies edge-pending class when status is pending', () => {
     const { container } = render(
       <svg>

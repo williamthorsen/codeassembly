@@ -166,7 +166,6 @@ describe('DispatchEdge', () => {
     expect(baseEdge).not.toBeNull();
     const style = baseEdge?.getAttribute('style') ?? '';
     // jsdom serializes hex colors to rgb(); accept either form
-    expect(style.includes('stroke:') || style.includes('stroke:')).toBe(true);
     expect(style).toMatch(/stroke:\s*(#FFFF55|rgb\(255,\s*255,\s*85\))/);
   });
 
