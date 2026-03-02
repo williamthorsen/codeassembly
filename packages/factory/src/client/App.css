@@ -45,6 +45,30 @@ body {
   padding: 16px;
 }
 
+.viz-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #333333;
+}
+
+.viz-toggle button {
+  background: transparent;
+  border: 1px solid #555555;
+  color: #aaaaaa;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.viz-toggle button.active {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
 .fetch-error {
   color: #ff5555;
   font-family: 'Courier New', monospace;
