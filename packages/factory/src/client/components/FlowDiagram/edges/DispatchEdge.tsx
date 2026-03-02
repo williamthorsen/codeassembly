@@ -42,9 +42,7 @@ export function DispatchEdge({
     pathEl.style.setProperty('--path-length', `${String(length)}px`);
   }, [isNew, edgePath]);
 
-  const classNames: string[] = [];
-  if (isPending) classNames.push('edge-pending');
-  if (isNew) classNames.push('edge-draw');
+  const className = [isPending && 'edge-pending', isNew && 'edge-draw'].filter(Boolean).join(' ') || undefined;
 
   return (
     <>
@@ -57,7 +55,7 @@ export function DispatchEdge({
           strokeWidth: 2,
           ...(isPending ? { strokeDasharray: '6 4' } : {}),
         }}
-        className={classNames.length > 0 ? classNames.join(' ') : undefined}
+        className={className}
         markerEnd={MarkerType.ArrowClosed}
         {...rest}
       />

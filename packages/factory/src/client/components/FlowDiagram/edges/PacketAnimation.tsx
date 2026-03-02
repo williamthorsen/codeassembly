@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 
 interface PacketAnimationProps {
   pathD: string;
@@ -43,31 +43,12 @@ export function PacketAnimation({
   color,
   onComplete,
 }: PacketAnimationProps): React.JSX.Element {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
   useEffect(() => {
     if (onComplete === undefined) return;
 
-    timeoutRef.current = setTimeout(() => {
-      if (!mountedRef.current) return;
-      try {
-        onComplete();
-      } catch (error) {
-        console.error('[PacketAnimation] onComplete threw:', error);
-      }
-    }, duration);
-
+    const id = setTimeout(onComplete, duration);
     return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
+      clearTimeout(id);
     };
   }, [duration, onComplete]);
 
