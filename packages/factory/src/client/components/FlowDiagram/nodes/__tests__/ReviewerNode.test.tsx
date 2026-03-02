@@ -66,10 +66,10 @@ describe('ReviewerNode', () => {
     // Arrow is rendered as &rarr; entity
     expect(container.textContent).toContain('\u2192');
     // Verify both badges carry their respective criticality data attributes
-    const badges = container.querySelectorAll('.flow-node__badge');
+    const badges = container.querySelectorAll<HTMLElement>('.flow-node__badge');
     expect(badges.length).toBe(2);
-    expect(badges[0]?.getAttribute('data-criticality')).toBe('medium');
-    expect(badges[1]?.getAttribute('data-criticality')).toBe('low');
+    expect(badges[0]?.dataset.criticality).toBe('medium');
+    expect(badges[1]?.dataset.criticality).toBe('low');
   });
 
   it('does not render badge row when criticality is undefined', () => {
@@ -86,36 +86,36 @@ describe('ReviewerNode', () => {
 
   it('sets data-criticality attribute for none criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'none' })} />);
-    const badge = container.querySelector('.flow-node__badge');
+    const badge = container.querySelector<HTMLElement>('.flow-node__badge');
     expect(badge).not.toBeNull();
-    expect(badge?.getAttribute('data-criticality')).toBe('none');
+    expect(badge?.dataset.criticality).toBe('none');
   });
 
   it('sets data-criticality attribute for low criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'low' })} />);
-    const badge = container.querySelector('.flow-node__badge');
+    const badge = container.querySelector<HTMLElement>('.flow-node__badge');
     expect(badge).not.toBeNull();
-    expect(badge?.getAttribute('data-criticality')).toBe('low');
+    expect(badge?.dataset.criticality).toBe('low');
   });
 
   it('sets data-criticality attribute for medium criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'medium' })} />);
-    const badge = container.querySelector('.flow-node__badge');
+    const badge = container.querySelector<HTMLElement>('.flow-node__badge');
     expect(badge).not.toBeNull();
-    expect(badge?.getAttribute('data-criticality')).toBe('medium');
+    expect(badge?.dataset.criticality).toBe('medium');
   });
 
   it('sets data-criticality attribute for high criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'high' })} />);
-    const badge = container.querySelector('.flow-node__badge');
+    const badge = container.querySelector<HTMLElement>('.flow-node__badge');
     expect(badge).not.toBeNull();
-    expect(badge?.getAttribute('data-criticality')).toBe('high');
+    expect(badge?.dataset.criticality).toBe('high');
   });
 
   it('sets data-criticality attribute for unknown criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'unknown-value' })} />);
-    const badge = container.querySelector('.flow-node__badge');
+    const badge = container.querySelector<HTMLElement>('.flow-node__badge');
     expect(badge).not.toBeNull();
-    expect(badge?.getAttribute('data-criticality')).toBe('unknown-value');
+    expect(badge?.dataset.criticality).toBe('unknown-value');
   });
 });
