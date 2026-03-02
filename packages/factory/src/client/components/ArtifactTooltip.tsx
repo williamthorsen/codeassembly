@@ -4,6 +4,8 @@ import type { ArtifactTooltipData } from '../game/mappers/run-to-scene.js';
 
 import './ArtifactTooltip.css';
 
+const TOOLTIP_OFFSET = 12;
+
 interface ArtifactTooltipProps {
   type: string;
   tooltip?: ArtifactTooltipData;
@@ -17,14 +19,12 @@ function formatTimestamp(iso: string): string {
 }
 
 export function ArtifactTooltip({ type, tooltip, pageX, pageY }: ArtifactTooltipProps): React.JSX.Element {
-  const offset = 12;
-
   if (tooltip === undefined) {
     return (
       <div
         role="tooltip"
         className="artifact-tooltip"
-        style={{ position: 'fixed', left: pageX + offset, top: pageY + offset }}
+        style={{ position: 'fixed', left: pageX + TOOLTIP_OFFSET, top: pageY + TOOLTIP_OFFSET }}
       >
         <div className="artifact-tooltip-row">
           <span className="artifact-tooltip-label">type: </span>
@@ -38,7 +38,7 @@ export function ArtifactTooltip({ type, tooltip, pageX, pageY }: ArtifactTooltip
     <div
       role="tooltip"
       className="artifact-tooltip"
-      style={{ position: 'fixed', left: pageX + offset, top: pageY + offset }}
+      style={{ position: 'fixed', left: pageX + TOOLTIP_OFFSET, top: pageY + TOOLTIP_OFFSET }}
     >
       <div className="artifact-tooltip-row">
         <span className="artifact-tooltip-label">file: </span>

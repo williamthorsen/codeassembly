@@ -84,9 +84,7 @@ describe('ArtifactTooltip', () => {
     );
 
     const tooltip = container.querySelector('[role="tooltip"]');
-    expect(tooltip).not.toBeNull();
     if (tooltip === null) throw new Error('Expected tooltip element to exist');
-    expect(tooltip).toBeInstanceOf(HTMLElement);
     if (!(tooltip instanceof HTMLElement)) throw new Error('Expected tooltip to be an HTMLElement');
 
     expect(tooltip.style.position).toBe('fixed');

@@ -13,6 +13,8 @@ import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.j
 import { computeWalkPath, type Waypoint } from '../layout/walk-path.js';
 import type { AgentConfig, ArtifactTooltipData, GateConfig, SceneConfig } from '../mappers/run-to-scene.js';
 import { createSceneConfig } from '../mappers/run-to-scene.js';
+import { diffAgents } from '../state/agent-differ.js';
+import { resolveAgentStates } from '../state/agent-state-resolver.js';
 
 export interface ArtifactHoverEvent {
   type: string;
@@ -22,8 +24,6 @@ export interface ArtifactHoverEvent {
 }
 
 export type OnArtifactHover = (event: ArtifactHoverEvent | null) => void;
-import { diffAgents } from '../state/agent-differ.js';
-import { resolveAgentStates } from '../state/agent-state-resolver.js';
 
 function delay(ms: number): Promise<void> {
   return new Promise<void>((resolve) => {
