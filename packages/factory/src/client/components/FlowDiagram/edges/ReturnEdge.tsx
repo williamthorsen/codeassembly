@@ -32,6 +32,7 @@ export function ReturnEdge({
     targetY,
     sourcePosition,
     targetPosition,
+    offset: data?.offset ?? 0,
   });
 
   const isPending = data?.status === 'pending';

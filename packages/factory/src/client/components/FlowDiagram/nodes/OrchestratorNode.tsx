@@ -7,6 +7,17 @@ import type { FlowNodeData } from '../mappers/run-to-flow.js';
 
 import './nodes.css';
 
+const CRITICALITY_COLORS: Record<string, string> = {
+  none: '#2da44e',
+  low: '#bf8700',
+  medium: '#cf222e',
+  high: '#8250df',
+};
+
+function getCriticalityColor(criticality: string): string {
+  return CRITICALITY_COLORS[criticality] ?? '#888888';
+}
+
 function getGlowClass(runStatus: string | undefined): string {
   if (runStatus === 'in_progress') return 'flow-node__glow--working';
   if (runStatus === 'completed') return 'flow-node__glow--completed';
@@ -57,6 +68,25 @@ export function OrchestratorNode({ data }: NodeProps<Node<FlowNodeData>>): React
       >
         <span className="flow-node__label">Orchestrator</span>
         {subLabel !== '' && <span className="flow-node__sublabel">{subLabel}</span>}
+        {data.reviewRoundsUsed !== undefined && data.maxReviewRounds !== undefined && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span className="flow-node__sublabel">
+              Round {data.reviewRoundsUsed}/{data.maxReviewRounds}
+            </span>
+            {data.aggregatedCriticality !== undefined && (
+              <span
+                className="flow-node__badge"
+                style={{
+                  background: getCriticalityColor(data.aggregatedCriticality),
+                  color: '#ffffff',
+                  fontSize: 9,
+                }}
+              >
+                {data.aggregatedCriticality}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       <Handle type="target" position={Position.Left} id={`spine-in-${data.phase}`} />
       <Handle type="source" position={Position.Right} id={`spine-out-${data.phase}`} />

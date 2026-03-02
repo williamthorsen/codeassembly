@@ -103,4 +103,37 @@ describe('OrchestratorNode', () => {
     // The sub-label element should not render
     expect(container.querySelector('.flow-node__sublabel')).toBeNull();
   });
+
+  it('renders round counter when reviewRoundsUsed and maxReviewRounds are present', () => {
+    render(<OrchestratorNode {...createNodeProps({ reviewRoundsUsed: 2, maxReviewRounds: 3 })} />);
+    expect(screen.getByText('Round 2/3')).toBeInTheDocument();
+  });
+
+  it('renders criticality badge when aggregatedCriticality is present', () => {
+    render(
+      <OrchestratorNode
+        {...createNodeProps({ reviewRoundsUsed: 1, maxReviewRounds: 3, aggregatedCriticality: 'medium' })}
+      />,
+    );
+    expect(screen.getByText('medium')).toBeInTheDocument();
+  });
+
+  it('does not render round counter when reviewRoundsUsed is absent', () => {
+    const { container } = render(<OrchestratorNode {...createNodeProps()} />);
+    expect(container.textContent).not.toContain('Round');
+  });
+
+  it('does not render round counter when reviewRoundsUsed is present but maxReviewRounds is absent', () => {
+    const { container } = render(<OrchestratorNode {...createNodeProps({ reviewRoundsUsed: 1 })} />);
+    expect(container.textContent).not.toContain('Round');
+  });
+
+  it('renders criticality badge with fallback color for unknown criticality values', () => {
+    render(
+      <OrchestratorNode
+        {...createNodeProps({ reviewRoundsUsed: 1, maxReviewRounds: 3, aggregatedCriticality: 'unknown-value' })}
+      />,
+    );
+    expect(screen.getByText('unknown-value')).toBeInTheDocument();
+  });
 });

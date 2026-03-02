@@ -9,6 +9,12 @@
   box-sizing: border-box;
 }
 
+/* Dimmed state for selective re-review */
+
+.flow-node--dimmed {
+  opacity: 0.7;
+}
+
 /* Status dot */
 
 .flow-node__status-dot {

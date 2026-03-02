@@ -118,4 +118,16 @@ describe('ReviewerNode', () => {
     expect(badge).not.toBeNull();
     expect(badge?.dataset.criticality).toBe('unknown-value');
   });
+
+  it('renders with flow-node--dimmed class when dimmed is true', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps({ dimmed: true })} />);
+    const outer = container.firstElementChild;
+    expect(outer?.classList.contains('flow-node--dimmed')).toBe(true);
+  });
+
+  it('does not render flow-node--dimmed class when dimmed is not set', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps()} />);
+    const outer = container.firstElementChild;
+    expect(outer?.classList.contains('flow-node--dimmed')).toBe(false);
+  });
 });

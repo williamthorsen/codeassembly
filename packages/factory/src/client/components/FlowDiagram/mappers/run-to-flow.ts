@@ -30,6 +30,12 @@ export interface FlowNodeData extends Record<string, unknown> {
   qualityGates?: QualityGates | string;
   // CoderShadowNode
   fixIteration?: number;
+  // Reviewer dimming (selective re-review)
+  dimmed?: boolean;
+  // Orchestrator iteration tracking
+  reviewRoundsUsed?: number;
+  maxReviewRounds?: number;
+  aggregatedCriticality?: string;
 }
 
 /** Data attached to dispatch edges (orchestrator -> agent and agent -> orchestrator). */
@@ -39,12 +45,18 @@ export interface DispatchEdgeData extends Record<string, unknown> {
   status: 'completed' | 'pending';
   iteration: number;
   isNew: boolean;
+  offset?: number;
 }
 
 /** Data attached to return edges (reviewer -> orchestrator), extending dispatch with criticality. */
 export interface ReturnEdgeData extends DispatchEdgeData {
   criticality: Criticality | undefined;
   reReviewCriticality: Criticality | undefined;
+}
+
+/** Data attached to reference edges (e.g. coder-shadow -> implementation coder). */
+export interface ReferenceEdgeData extends Record<string, unknown> {
+  label?: string;
 }
 
 /** Data attached to spine edges (orchestrator -> orchestrator between phases). */
@@ -240,8 +252,13 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
   const reviewerNames = extractReviewerNames(phases.parallelReview);
   if (reviewerNames.length === 0) return nodes;
 
+  const selectiveReReview = phases.parallelReview.selectiveReReview;
+  const isReReviewActive = selectiveReReview !== undefined && selectiveReReview.ran;
+  const reReviewSet = isReReviewActive ? new Set(selectiveReReview.reviewersDispatched) : undefined;
+
   for (const [i, name] of reviewerNames.entries()) {
     const reviewerInfo = phases.parallelReview.reviewers[name];
+    const isDimmed = reReviewSet !== undefined && !reReviewSet.has(name);
     nodes.push({
       id: `reviewer-${name}`,
       type: 'reviewer',
@@ -257,6 +274,7 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
         ...(reviewerInfo?.reReviewCriticality === undefined
           ? {}
           : { reReviewCriticality: reviewerInfo.reReviewCriticality }),
+        ...(isDimmed ? { dimmed: true } : {}),
       },
     });
   }
@@ -278,12 +296,14 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
   if (phases.parallelReview?.coderFixCycleRan !== true) return [];
 
   const reviewColumn = PHASE_COLUMNS.review;
+  const reviewerCount = extractReviewerNames(phases.parallelReview).length;
+  const shadowY = 60 + reviewerCount * 80 + 40;
 
   return [
     {
       id: 'coder-shadow',
       type: 'coderShadow',
-      position: { x: reviewColumn.x + reviewColumn.width / 2 - 60, y: 340 },
+      position: { x: reviewColumn.x + reviewColumn.width / 2 - 60, y: shadowY },
       data: {
         role: 'coder (fix cycle)',
         roleType: PHASE_ROLE_TYPE.implementation,
@@ -314,6 +334,19 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
     return [];
   }
 
+  // Thread review iteration data through when at review phase
+  const parallelReview = status.phases.parallelReview;
+  const reviewIterationData =
+    currentPhase === 'review' && isPresent(parallelReview)
+      ? {
+          reviewRoundsUsed: parallelReview.reviewRoundsUsed,
+          ...(status.maxReviewRounds === undefined ? {} : { maxReviewRounds: status.maxReviewRounds }),
+          ...(parallelReview.aggregatedCriticality === undefined
+            ? {}
+            : { aggregatedCriticality: parallelReview.aggregatedCriticality }),
+        }
+      : {};
+
   return [
     {
       id: 'orchestrator',
@@ -328,6 +361,7 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
         label: 'orchestrator',
         currentPhaseName: currentPhase ?? 'summary',
         runStatus: status.status,
+        ...reviewIterationData,
       },
     },
   ];
@@ -456,6 +490,25 @@ function buildDispatchEdges(
   return edges;
 }
 
+/**
+ * Compute an alternating offset for overlapping edges on the same source-target pair.
+ * Returns: 0, 12, -12, 24, -24, ... for count values 0, 1, 2, 3, 4, ...
+ */
+function computeEdgeOffset(count: number): number {
+  if (count === 0) return 0;
+  const magnitude = Math.ceil(count / 2) * 12;
+  return count % 2 === 1 ? magnitude : -magnitude;
+}
+
+/** Track and assign offsets for edges sharing the same source-target pair. */
+function trackEdgeOffset(offsetMap: Map<string, number>, source: string, target: string): number {
+  const key = `${source}|${target}`;
+  const count = offsetMap.get(key) ?? 0;
+  const offset = computeEdgeOffset(count);
+  offsetMap.set(key, count + 1);
+  return offset;
+}
+
 /** Build reviewer-specific dispatch and return edges. */
 function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> {
   const edges: Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> = [];
@@ -465,11 +518,15 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
   const reviewerNames = extractReviewerNames(phases.parallelReview);
   const roleType = PHASE_ROLE_TYPE.review;
   const color = ROLE_TYPE_COLORS[roleType];
+  const offsetMap = new Map<string, number>();
 
   for (const name of reviewerNames) {
     const reviewerInfo = phases.parallelReview.reviewers[name];
     const isCompleted = reviewerInfo?.status === 'completed';
     const edgeStatus: DispatchEdgeData['status'] = isCompleted ? 'completed' : 'pending';
+
+    const dispatchOffset = trackEdgeOffset(offsetMap, 'orchestrator', `reviewer-${name}`);
+    const returnOffset = trackEdgeOffset(offsetMap, `reviewer-${name}`, 'orchestrator');
 
     // Dispatch edge: orchestrator -> reviewer
     const dispatchEdge: Edge<DispatchEdgeData> = {
@@ -483,6 +540,7 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
         status: edgeStatus,
         iteration: 1,
         isNew: false,
+        ...(dispatchOffset === 0 ? {} : { offset: dispatchOffset }),
       },
     };
 
@@ -500,17 +558,64 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
         isNew: false,
         criticality: reviewerInfo?.criticality,
         reReviewCriticality: reviewerInfo?.reReviewCriticality,
+        ...(returnOffset === 0 ? {} : { offset: returnOffset }),
       },
     };
 
     edges.push(dispatchEdge, returnEdge);
   }
 
+  // Re-review edges: when selective re-review ran, emit additional dispatch/return per dispatched reviewer
+  const selectiveReReview = phases.parallelReview.selectiveReReview;
+  if (selectiveReReview !== undefined && selectiveReReview.ran) {
+    for (const name of selectiveReReview.reviewersDispatched) {
+      const reviewerInfo = phases.parallelReview.reviewers[name];
+      const reReviewCompleted = reviewerInfo?.reReviewCriticality !== undefined;
+      const reReviewStatus: DispatchEdgeData['status'] = reReviewCompleted ? 'completed' : 'pending';
+
+      const reDispatchOffset = trackEdgeOffset(offsetMap, 'orchestrator', `reviewer-${name}`);
+      const reReturnOffset = trackEdgeOffset(offsetMap, `reviewer-${name}`, 'orchestrator');
+
+      edges.push(
+        {
+          id: `dispatch-reviewer-${name}-r2`,
+          source: 'orchestrator',
+          target: `reviewer-${name}`,
+          type: 'dispatch',
+          data: {
+            roleType,
+            color,
+            status: reReviewStatus,
+            iteration: 2,
+            isNew: false,
+            ...(reDispatchOffset === 0 ? {} : { offset: reDispatchOffset }),
+          },
+        },
+        {
+          id: `return-reviewer-${name}-r2`,
+          source: `reviewer-${name}`,
+          target: 'orchestrator',
+          type: 'return',
+          data: {
+            roleType,
+            color,
+            status: reReviewStatus,
+            iteration: 2,
+            isNew: false,
+            criticality: reviewerInfo?.reReviewCriticality,
+            reReviewCriticality: undefined,
+            ...(reReturnOffset === 0 ? {} : { offset: reReturnOffset }),
+          },
+        },
+      );
+    }
+  }
+
   return edges;
 }
 
-/** Build coder fix edge when coderFixCycleRan is true. */
-function buildCoderFixEdge(phases: Phases): Edge<DispatchEdgeData>[] {
+/** Build coder fix edges when coderFixCycleRan is true (dispatch + return). */
+function buildCoderFixEdge(phases: Phases): Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> {
   if (phases.parallelReview?.coderFixCycleRan !== true) return [];
 
   const roleType = PHASE_ROLE_TYPE.implementation;
@@ -530,10 +635,31 @@ function buildCoderFixEdge(phases: Phases): Edge<DispatchEdgeData>[] {
         isNew: false,
       },
     },
+    {
+      id: 'return-coder-fix',
+      source: 'coder-shadow',
+      target: 'orchestrator',
+      type: 'return',
+      data: {
+        roleType,
+        color,
+        status: 'completed',
+        iteration: 1,
+        isNew: false,
+        criticality: undefined,
+        reReviewCriticality: undefined,
+      },
+    },
   ];
 }
 
-export function createFlowConfig(status: CanonicalRunStatus): { nodes: Node<FlowNodeData>[]; edges: Edge[] } {
+/** Threshold above which edge pairs are collapsed by default. */
+const EDGE_COLLAPSE_THRESHOLD = 4;
+
+export function createFlowConfig(
+  status: CanonicalRunStatus,
+  expandedPairs?: Set<string>,
+): { nodes: Node<FlowNodeData>[]; edges: Edge[] } {
   const currentPhase = findCurrentPhase(status.phases, status.phaseDecisions, status.status);
 
   const phaseAgentNodes = buildPhaseAgentNodes(status.phases, status.status, currentPhase);
@@ -562,8 +688,91 @@ export function createFlowConfig(status: CanonicalRunStatus): { nodes: Node<Flow
   const dispatchEdges = hasOrchestrator ? buildDispatchEdges(status.phases, status.status, currentPhase) : [];
   const reviewerEdges = hasOrchestrator ? buildReviewerEdges(status.phases) : [];
   const coderFixEdges = hasOrchestrator ? buildCoderFixEdge(status.phases) : [];
+  const referenceEdges = buildReferenceEdges(coderFixEdges);
 
-  const edges: Edge[] = [...spineEdges, ...dispatchEdges, ...reviewerEdges, ...coderFixEdges];
+  const allEdges: Edge[] = [...spineEdges, ...dispatchEdges, ...reviewerEdges, ...coderFixEdges, ...referenceEdges];
+  const edges = collapseEdges(allEdges, expandedPairs);
 
   return { nodes, edges };
+}
+
+/** Build reference edges (dashed links for visual grouping, no data flow). */
+function buildReferenceEdges(
+  coderFixEdges: Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>>,
+): Edge<ReferenceEdgeData>[] {
+  if (coderFixEdges.length === 0) return [];
+
+  return [
+    {
+      id: 'reference-coder-shadow',
+      source: 'coder-shadow',
+      target: 'agent-implementation',
+      type: 'reference',
+      data: { label: 'same agent' },
+    },
+  ];
+}
+
+/**
+ * Collapse high-density edge groups. When a source-target pair has more than
+ * `EDGE_COLLAPSE_THRESHOLD` edges, only the most recent 2 pairs are shown
+ * plus a `+N more` indicator edge, unless the pair is in `expandedPairs`.
+ */
+function collapseEdges(edges: Edge[], expandedPairs?: Set<string>): Edge[] {
+  // Group edges by source-target pair
+  const groups = new Map<string, Edge[]>();
+  const nonGroupable: Edge[] = [];
+
+  for (const edge of edges) {
+    // Only collapse dispatch/return edges (not spine, reference, etc.)
+    if (edge.type === 'dispatch' || edge.type === 'return') {
+      const key = `${edge.source}|${edge.target}`;
+      const group = groups.get(key);
+      if (group === undefined) {
+        groups.set(key, [edge]);
+      } else {
+        group.push(edge);
+      }
+    } else {
+      nonGroupable.push(edge);
+    }
+  }
+
+  const result: Edge[] = [...nonGroupable];
+
+  for (const [key, groupEdges] of groups) {
+    if (groupEdges.length <= EDGE_COLLAPSE_THRESHOLD || expandedPairs?.has(key) === true) {
+      result.push(...groupEdges);
+    } else {
+      // Show the most recent 2 edges (last 2), collapse the rest behind an indicator
+      const hiddenCount = groupEdges.length - 2;
+      const visibleEdges = groupEdges.slice(-2);
+      result.push(...visibleEdges);
+
+      // Add a "+N more" indicator edge
+      const firstEdge = groupEdges[0];
+      if (firstEdge !== undefined) {
+        result.push({
+          id: `collapsed-${key}`,
+          source: firstEdge.source,
+          target: firstEdge.target,
+          type: 'reference',
+          data: { label: `+${String(hiddenCount)} more` },
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Derive a stable key from reviewer names for detecting reviewer set changes.
+ * Used by `FlowDiagramInner` to reset expanded edge pairs state.
+ */
+export function deriveReviewerKey(status: CanonicalRunStatus): string {
+  if (!isPresent(status.phases.parallelReview)) return '';
+  const names = extractReviewerNames(status.phases.parallelReview);
+  // eslint-disable-next-line unicorn/no-array-sort -- toSorted() unavailable in configured Node range
+  return [...names].sort().join(',');
 }
