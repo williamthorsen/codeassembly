@@ -1,9 +1,14 @@
 import type { Edge, Node } from '@xyflow/react';
 
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
-import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
+import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, ParallelReviewPhase, Phases } from '../../../../shared/types/canonical.js';
+import type {
+  CanonicalRunStatus,
+  ParallelReviewPhase,
+  Phases,
+  QualityGates,
+} from '../../../../shared/types/canonical.js';
 
 export interface FlowNodeData extends Record<string, unknown> {
   role: string;
@@ -12,6 +17,18 @@ export interface FlowNodeData extends Record<string, unknown> {
   status: 'idle' | 'working' | 'completed' | 'failed' | 'skipped';
   phase: string;
   label: string;
+  // Orchestrator-specific
+  currentPhaseName?: string;
+  runStatus?: string;
+  // Reviewer-specific
+  criticality?: string;
+  reReviewCriticality?: string;
+  // Metadata badges for PhaseAgentNode
+  impactLevel?: string;
+  stepCount?: number;
+  qualityGates?: QualityGates | string;
+  // CoderShadowNode
+  fixIteration?: number;
 }
 
 interface PhaseColumn {
@@ -151,10 +168,6 @@ function extractReviewerNames(parallelReview: ParallelReviewPhase): string[] {
   return [];
 }
 
-function getPhaseColumn(phase: PhaseName): PhaseColumn {
-  return PHASE_COLUMNS[phase];
-}
-
 /** Build phase agent nodes for each active phase. */
 function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: PhaseName): Node<FlowNodeData>[] {
   const nodes: Node<FlowNodeData>[] = [];
@@ -165,13 +178,13 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
     // Skipped phases are handled by buildGhostNodes
     if (!shouldShowPhaseAgent(phase, phases, currentPhase)) continue;
 
-    const column = getPhaseColumn(phase);
+    const column = PHASE_COLUMNS[phase];
     const nodeStatus = resolvePhaseNodeStatus(phase, phases, runStatus, currentPhase);
     const roleType = PHASE_ROLE_TYPE[phase];
-    const color = ROLE_TYPE_COLORS[roleType];
 
     nodes.push({
       id: `agent-${phase}`,
+      type: 'phaseAgent',
       position: { x: column.x + column.width / 2 - 60, y: 100 },
       data: {
         role: PHASE_ROLE[phase],
@@ -180,16 +193,15 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
         status: nodeStatus,
         phase,
         label: PHASE_ROLE[phase],
-      },
-      style: {
-        background: color,
-        border: `2px solid ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
+        ...(phase === 'architecture' && phases.architecture?.impactLevel !== undefined
+          ? { impactLevel: phases.architecture.impactLevel }
+          : {}),
+        ...(phase === 'planning' && phases.planning?.stepCount !== undefined
+          ? { stepCount: phases.planning.stepCount }
+          : {}),
+        ...(phase === 'implementation' && phases.implementation?.qualityGates !== undefined
+          ? { qualityGates: phases.implementation.qualityGates }
+          : {}),
       },
     });
   }
@@ -200,18 +212,18 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
 /** Build reviewer nodes with vertical fan-out. */
 function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
   const nodes: Node<FlowNodeData>[] = [];
-  const reviewColumn = getPhaseColumn('review');
+  const reviewColumn = PHASE_COLUMNS.review;
 
   if (!isPresent(phases.parallelReview)) return nodes;
 
   const reviewerNames = extractReviewerNames(phases.parallelReview);
   if (reviewerNames.length === 0) return nodes;
 
-  const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.review];
-
   for (const [i, name] of reviewerNames.entries()) {
+    const reviewerInfo = phases.parallelReview.reviewers[name];
     nodes.push({
       id: `reviewer-${name}`,
+      type: 'reviewer',
       position: { x: reviewColumn.x + reviewColumn.width / 2 - 60, y: 60 + i * 80 },
       data: {
         role: name,
@@ -220,16 +232,10 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
         status: resolveReviewerStatus(phases.parallelReview, name),
         phase: 'review',
         label: name,
-      },
-      style: {
-        background: color,
-        border: `2px solid ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
+        ...(reviewerInfo?.criticality === undefined ? {} : { criticality: reviewerInfo.criticality }),
+        ...(reviewerInfo?.reReviewCriticality === undefined
+          ? {}
+          : { reReviewCriticality: reviewerInfo.reReviewCriticality }),
       },
     });
   }
@@ -250,12 +256,12 @@ function resolveReviewerStatus(parallelReview: ParallelReviewPhase, reviewerName
 function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
   if (phases.parallelReview?.coderFixCycleRan !== true) return [];
 
-  const reviewColumn = getPhaseColumn('review');
-  const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.implementation];
+  const reviewColumn = PHASE_COLUMNS.review;
 
   return [
     {
       id: 'coder-shadow',
+      type: 'coderShadow',
       position: { x: reviewColumn.x + reviewColumn.width / 2 - 60, y: 340 },
       data: {
         role: 'coder (fix cycle)',
@@ -264,16 +270,7 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
         status: 'completed',
         phase: 'review',
         label: 'coder (fix)',
-      },
-      style: {
-        background: color,
-        border: `2px dashed ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
+        fixIteration: phases.parallelReview.reviewRoundsUsed,
       },
     },
   ];
@@ -281,16 +278,15 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
 
 /** Build the orchestrator node positioned at the appropriate column. */
 function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseName): Node<FlowNodeData>[] {
-  const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.summary];
   let column: PhaseColumn;
   let nodeStatus: FlowNodeData['status'];
 
   if (status.status === 'completed') {
-    column = getPhaseColumn('summary');
+    column = PHASE_COLUMNS.summary;
     nodeStatus = 'completed';
   } else if (status.status === 'in_progress') {
     const phase = currentPhase ?? 'architecture';
-    column = getPhaseColumn(phase);
+    column = PHASE_COLUMNS[phase];
     nodeStatus = 'working';
   } else {
     // Failed or needs_manual_review -- no orchestrator
@@ -300,6 +296,7 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
   return [
     {
       id: 'orchestrator',
+      type: 'orchestrator',
       position: { x: column.x + column.width / 2 - 60, y: 0 },
       data: {
         role: 'orchestrator',
@@ -308,16 +305,8 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
         status: nodeStatus,
         phase: currentPhase ?? 'summary',
         label: 'orchestrator',
-      },
-      style: {
-        background: color,
-        border: `2px solid ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
+        currentPhaseName: currentPhase ?? 'summary',
+        runStatus: status.status,
       },
     },
   ];
@@ -337,10 +326,11 @@ function buildGhostNodes(
     const decision = phaseDecisions[phase];
     if (decision === undefined || decision.run) continue;
 
-    const column = getPhaseColumn(phase);
+    const column = PHASE_COLUMNS[phase];
 
     nodes.push({
       id: `ghost-${phase}`,
+      type: 'skippedPhase',
       position: { x: column.x + column.width / 2 - 60, y: 100 },
       data: {
         role: PHASE_ROLE[phase],
@@ -349,17 +339,6 @@ function buildGhostNodes(
         status: 'skipped',
         phase,
         label: `${PHASE_ROLE[phase]} (skipped)`,
-      },
-      style: {
-        background: 'transparent',
-        border: '2px dashed #555555',
-        borderRadius: 8,
-        padding: 10,
-        color: '#555555',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
-        opacity: 0.5,
       },
     });
   }
