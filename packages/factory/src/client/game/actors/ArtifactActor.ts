@@ -17,7 +17,12 @@ interface ArtifactActorCallbacks {
 }
 
 export class ArtifactActor extends Actor {
-  constructor(type: string, position: Vector, size?: { width: number; height: number }, callbacks?: ArtifactActorCallbacks) {
+  constructor(
+    type: string,
+    position: Vector,
+    size?: { width: number; height: number },
+    callbacks?: ArtifactActorCallbacks,
+  ) {
     const color = ARTIFACT_COLORS[type] ?? PALETTE.cyan;
     const { width, height } = size ?? { width: 12, height: 12 };
     super({

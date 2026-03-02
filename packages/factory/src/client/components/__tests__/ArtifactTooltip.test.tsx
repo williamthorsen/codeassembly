@@ -11,9 +11,7 @@ describe('ArtifactTooltip', () => {
   });
 
   it('renders with role="tooltip" for accessibility', () => {
-    const { container } = render(
-      <ArtifactTooltip type="code" pageX={100} pageY={200} />,
-    );
+    const { container } = render(<ArtifactTooltip type="code" pageX={100} pageY={200} />);
 
     const tooltip = container.querySelector('[role="tooltip"]');
     expect(tooltip).not.toBeNull();
@@ -45,9 +43,7 @@ describe('ArtifactTooltip', () => {
   });
 
   it('renders just the artifact type when tooltip is undefined', () => {
-    const { container } = render(
-      <ArtifactTooltip type="code" pageX={100} pageY={200} />,
-    );
+    const { container } = render(<ArtifactTooltip type="code" pageX={100} pageY={200} />);
 
     const text = container.textContent;
     expect(text).toContain('code');
@@ -79,9 +75,7 @@ describe('ArtifactTooltip', () => {
   });
 
   it('applies position: fixed with correct offset via inline style', () => {
-    const { container } = render(
-      <ArtifactTooltip type="code" pageX={100} pageY={200} />,
-    );
+    const { container } = render(<ArtifactTooltip type="code" pageX={100} pageY={200} />);
 
     const tooltip = container.querySelector('[role="tooltip"]');
     if (tooltip === null) throw new Error('Expected tooltip element to exist');

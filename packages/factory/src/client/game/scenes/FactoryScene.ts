@@ -102,20 +102,21 @@ export class FactoryScene extends Scene {
       const pos = this.layout.artifactPosition(artifact.stationIndex, artifact.indexAtStation);
       const onArtifactHover = this.onArtifactHover;
 
-      const callbacks = onArtifactHover === undefined
-        ? undefined
-        : {
-            onEnter: (pageX: number, pageY: number) => {
-              const event: ArtifactHoverEvent = { type: artifact.type, pageX, pageY };
-              if (artifact.tooltip !== undefined) {
-                event.tooltip = artifact.tooltip;
-              }
-              onArtifactHover(event);
-            },
-            onLeave: () => {
-              onArtifactHover(null);
-            },
-          };
+      const callbacks =
+        onArtifactHover === undefined
+          ? undefined
+          : {
+              onEnter: (pageX: number, pageY: number) => {
+                const event: ArtifactHoverEvent = { type: artifact.type, pageX, pageY };
+                if (artifact.tooltip !== undefined) {
+                  event.tooltip = artifact.tooltip;
+                }
+                onArtifactHover(event);
+              },
+              onLeave: () => {
+                onArtifactHover(null);
+              },
+            };
 
       this.add(new ArtifactActor(artifact.type, vec(pos.x, pos.y), this.layout.artifactSize, callbacks));
     }
