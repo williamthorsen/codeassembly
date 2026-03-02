@@ -336,9 +336,8 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
 
   // Thread review iteration data through when at review phase
   const parallelReview = status.phases.parallelReview;
-  const isReviewPhase = currentPhase === 'review' && isPresent(parallelReview);
   const reviewIterationData =
-    isReviewPhase && isPresent(parallelReview)
+    currentPhase === 'review' && isPresent(parallelReview)
       ? {
           reviewRoundsUsed: parallelReview.reviewRoundsUsed,
           ...(status.maxReviewRounds === undefined ? {} : { maxReviewRounds: status.maxReviewRounds }),

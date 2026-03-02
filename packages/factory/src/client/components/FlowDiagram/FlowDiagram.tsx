@@ -79,7 +79,7 @@ function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
     const currentReviewerCount = reviewerNodes.length;
     const isNewReviewPhase = prevReviewerCountRef.current === 0 && currentReviewerCount > 0;
 
-    if (isNewReviewPhase && currentReviewerCount > 0) {
+    if (isNewReviewPhase) {
       // Stagger reviewer nodes one at a time
       setNodes(nonReviewerNodes);
 
