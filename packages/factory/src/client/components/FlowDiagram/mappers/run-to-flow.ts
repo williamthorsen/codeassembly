@@ -245,10 +245,10 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
         status: resolveReviewerStatus(phases.parallelReview, name),
         phase: 'review',
         label: name,
-        ...(reviewerInfo?.criticality !== undefined ? { criticality: reviewerInfo.criticality } : {}),
-        ...(reviewerInfo?.reReviewCriticality !== undefined
-          ? { reReviewCriticality: reviewerInfo.reReviewCriticality }
-          : {}),
+        ...(reviewerInfo?.criticality === undefined ? {} : { criticality: reviewerInfo.criticality }),
+        ...(reviewerInfo?.reReviewCriticality === undefined
+          ? {}
+          : { reReviewCriticality: reviewerInfo.reReviewCriticality }),
       },
       style: {
         background: color,
