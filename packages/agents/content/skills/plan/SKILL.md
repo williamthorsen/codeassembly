@@ -65,7 +65,7 @@ If inside an active run (`run-index.json` exists in a parent directory):
 
 ### Ticket context
 
-1. Use `get-ticket-id` for the ticket ID. If none found, auto-generate: `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}`.
+1. Use `get-ticket-id` for the ticket ID. If none found, auto-generate: `{YYYYMMDD}-{4 random hex}`.
 2. Use `get-project-slug` for the project slug.
 3. Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`. If relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
 4. Save as ticket-level artifact: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/{timestamp}_{slug}_plan.md`

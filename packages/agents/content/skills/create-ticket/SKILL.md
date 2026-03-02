@@ -134,7 +134,7 @@ Plan artifact: `{saved plan path}`
 
 ### Fallback: no remote platform
 
-If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}` (e.g., `20260226-2130Z-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created.
+If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD}-{4 random hex}` (e.g., `20260226-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created.
 
 ## Completion
 

@@ -30,7 +30,7 @@ Always present under `projects/`, even when `.ai/` is inside the project. Consta
 
 ### Ticket ID
 
-Always present under `tickets/` within the project directory. If no real ticket exists, auto-generate: `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}` (e.g., `20260221-2359Z-a3f2`).
+Always present under `tickets/` within the project directory. If no real ticket exists, auto-generate: `{YYYYMMDD}-{4 random hex}` (e.g., `20260221-a3f2`).
 
 ### Run directories
 
@@ -492,7 +492,7 @@ All 13 valid event types and their required fields:
   {file-timestamp}_{role}_{artifact}.md   <- artifact files (unchanged naming convention)
 ```
 
-Runs are always nested under a ticket ID directory. When no ticket ID is provided to `init_run`, one is auto-generated in the format `{YYYYMMDD-HHMM}Z-{4 hex chars}` (e.g., `20260302-1859Z-a3f2`). The auto-generated format carries timestamp information for human navigation.
+Runs are always nested under a ticket ID directory. When no ticket ID is provided to `init_run`, one is auto-generated in the format `{YYYYMMDD}-{4 random hex}` (e.g., `20260302-a3f2`). The date prefix aids human navigation.
 
 ### Run ID format (v3)
 

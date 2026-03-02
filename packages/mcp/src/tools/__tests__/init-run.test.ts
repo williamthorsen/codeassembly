@@ -50,8 +50,8 @@ describe('initRun', () => {
       task: 'implement feature',
     });
 
-    // Auto-generated format: {YYYYMMDD-HHMM}Z-{4 hex chars}
-    expect(result.ticketId).toMatch(/^\d{8}-\d{4}Z-[0-9a-f]{4}$/);
+    // Auto-generated format: {YYYYMMDD}-{4 hex chars}
+    expect(result.ticketId).toMatch(/^\d{8}-[0-9a-f]{4}$/);
     expect(result.runDir).toContain(`.ai/runs/${result.ticketId}/`);
   });
 

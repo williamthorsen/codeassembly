@@ -30,13 +30,11 @@ function generateRunId(projectSlug: string): string {
   return `${projectSlug}.${date}-${time}Z`;
 }
 
-/** Generate a ticket ID in the format `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}`. */
+/** Generate a ticket ID in the format `{YYYYMMDD}-{4 random hex}`. */
 function generateTicketId(): string {
-  const iso = new Date().toISOString();
-  const date = iso.slice(0, 10).replace(/-/g, '');
-  const time = iso.slice(11, 16).replace(/:/g, '');
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const suffix = randomBytes(2).toString('hex');
-  return `${date}-${time}Z-${suffix}`;
+  return `${date}-${suffix}`;
 }
 
 /**

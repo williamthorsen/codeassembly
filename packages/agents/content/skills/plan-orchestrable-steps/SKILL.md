@@ -24,7 +24,7 @@ Before every Task call and after every phase completion, output a status line:
 ### 1. Resolve context
 
 1. Use `get-project-slug` to obtain the project slug.
-2. Use `get-ticket-id` to obtain the ticket ID. If no ticket ID is available, auto-generate one: `{YYYYMMDD-HHMM}Z-{4 random alphanumeric}`.
+2. Use `get-ticket-id` to obtain the ticket ID. If no ticket ID is available, auto-generate one: `{YYYYMMDD}-{4 random hex}`.
 3. **Resolve base directory**: Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`. If relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
 4. **Resolve artifact directory**: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/` — this is the ticket level, NOT inside a run directory. `orchestration-plan.json` is a ticket-level mutable artifact.
 5. `mkdir -p {artifact-dir}`
