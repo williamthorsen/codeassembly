@@ -128,6 +128,6 @@ describe('initRun', () => {
         branch: 'main',
         task: 'test task',
       }),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/ENOTDIR/);
   });
 });

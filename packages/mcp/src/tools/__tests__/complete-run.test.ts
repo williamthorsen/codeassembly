@@ -94,6 +94,6 @@ describe('completeRun', () => {
     // Create run-log.jsonl but not run-index.json
     await writeFile(join(dir, 'run-log.jsonl'), '');
 
-    await expect(completeRun({ runDir: dir, status: 'completed' })).rejects.toThrow();
+    await expect(completeRun({ runDir: dir, status: 'completed' })).rejects.toThrow(/ENOENT/);
   });
 });
