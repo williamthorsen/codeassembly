@@ -126,4 +126,89 @@ describe('PhaseAgentNode', () => {
     );
     expect(container.querySelector('.flow-node__badge')).toBeNull();
   });
+
+  it('renders passing quality gates in green', () => {
+    const { container } = render(
+      <PhaseAgentNode
+        {...createNodeProps({
+          phase: 'implementation',
+          role: 'coder',
+          roleType: 'author',
+          qualityGates: { typecheck: 'pass', lint: 'passed', tests: 'pass' },
+        })}
+      />,
+    );
+    const tc = screen.getByText('TC');
+    const li = screen.getByText('LI');
+    const te = screen.getByText('TE');
+    expect(tc.style.color).toBe('rgb(45, 164, 78)');
+    expect(li.style.color).toBe('rgb(45, 164, 78)');
+    expect(te.style.color).toBe('rgb(45, 164, 78)');
+    // Verify the container element exists
+    expect(container.querySelector('.flow-node__badge')).not.toBeNull();
+  });
+
+  it('renders failing quality gates in red', () => {
+    render(
+      <PhaseAgentNode
+        {...createNodeProps({
+          phase: 'implementation',
+          role: 'coder',
+          roleType: 'author',
+          qualityGates: { typecheck: 'fail', lint: 'fail', tests: 'fail' },
+        })}
+      />,
+    );
+    const tc = screen.getByText('TC');
+    const li = screen.getByText('LI');
+    const te = screen.getByText('TE');
+    expect(tc.style.color).toBe('rgb(207, 34, 46)');
+    expect(li.style.color).toBe('rgb(207, 34, 46)');
+    expect(te.style.color).toBe('rgb(207, 34, 46)');
+  });
+
+  it('renders undefined quality gates in gray', () => {
+    render(
+      <PhaseAgentNode
+        {...createNodeProps({
+          phase: 'implementation',
+          role: 'coder',
+          roleType: 'author',
+          qualityGates: { typecheck: undefined, lint: undefined, tests: undefined },
+        })}
+      />,
+    );
+    const tc = screen.getByText('TC');
+    const li = screen.getByText('LI');
+    const te = screen.getByText('TE');
+    expect(tc.style.color).toBe('rgb(153, 153, 153)');
+    expect(li.style.color).toBe('rgb(153, 153, 153)');
+    expect(te.style.color).toBe('rgb(153, 153, 153)');
+  });
+
+  it('does not render impactLevel badge when phase is planning', () => {
+    render(
+      <PhaseAgentNode
+        {...createNodeProps({
+          phase: 'planning',
+          role: 'planner',
+          roleType: 'planner',
+          impactLevel: 'high',
+        })}
+      />,
+    );
+    expect(screen.queryByText('high')).not.toBeInTheDocument();
+  });
+
+  it('does not render stepCount badge when phase is architecture', () => {
+    render(
+      <PhaseAgentNode
+        {...createNodeProps({
+          phase: 'architecture',
+          stepCount: 5,
+        })}
+      />,
+    );
+    expect(screen.queryByText('5 steps')).not.toBeInTheDocument();
+  });
 });

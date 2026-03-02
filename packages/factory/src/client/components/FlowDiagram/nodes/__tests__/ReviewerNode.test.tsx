@@ -78,4 +78,49 @@ describe('ReviewerNode', () => {
     const dot = container.querySelector('.flow-node__status-dot--working');
     expect(dot).not.toBeNull();
   });
+
+  it('applies correct background color for none criticality', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'none' })} />);
+    const badge = container.querySelector('.flow-node__badge');
+    expect(badge).not.toBeNull();
+    if (badge instanceof HTMLElement) {
+      expect(badge.style.background).toBe('rgb(45, 164, 78)');
+    }
+  });
+
+  it('applies correct background color for low criticality', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'low' })} />);
+    const badge = container.querySelector('.flow-node__badge');
+    expect(badge).not.toBeNull();
+    if (badge instanceof HTMLElement) {
+      expect(badge.style.background).toBe('rgb(191, 135, 0)');
+    }
+  });
+
+  it('applies correct background color for medium criticality', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'medium' })} />);
+    const badge = container.querySelector('.flow-node__badge');
+    expect(badge).not.toBeNull();
+    if (badge instanceof HTMLElement) {
+      expect(badge.style.background).toBe('rgb(207, 34, 46)');
+    }
+  });
+
+  it('applies correct background color for high criticality', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'high' })} />);
+    const badge = container.querySelector('.flow-node__badge');
+    expect(badge).not.toBeNull();
+    if (badge instanceof HTMLElement) {
+      expect(badge.style.background).toBe('rgb(130, 80, 223)');
+    }
+  });
+
+  it('applies fallback background color for unknown criticality', () => {
+    const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'unknown-value' })} />);
+    const badge = container.querySelector('.flow-node__badge');
+    expect(badge).not.toBeNull();
+    if (badge instanceof HTMLElement) {
+      expect(badge.style.background).toBe('rgb(136, 136, 136)');
+    }
+  });
 });

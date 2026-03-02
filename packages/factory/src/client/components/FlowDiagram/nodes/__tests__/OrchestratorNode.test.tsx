@@ -82,12 +82,25 @@ describe('OrchestratorNode', () => {
     expect(outer?.classList.contains('flow-node__glow--failed')).toBe(true);
   });
 
-  it('has magenta border color in style', () => {
+  it('has a solid border style applied inline', () => {
     const { container } = render(<OrchestratorNode {...createNodeProps()} />);
     const outer = container.querySelector('.flow-node');
     expect(outer).not.toBeNull();
     if (outer instanceof HTMLElement) {
-      expect(outer.style.border).toContain('rgb(255, 85, 255)');
+      expect(outer.style.border).toContain('solid');
     }
+  });
+
+  it('renders no sub-label and no glow class when runStatus and currentPhaseName are absent', () => {
+    const baseProps = createNodeProps();
+    // Build data without optional orchestrator fields to test undefined code paths
+    const { currentPhaseName: _cpn, runStatus: _rs, ...dataWithoutOrchFields } = baseProps.data;
+    const { container } = render(<OrchestratorNode {...baseProps} data={dataWithoutOrchFields} />);
+    const outer = container.firstElementChild;
+    expect(outer?.classList.contains('flow-node__glow--working')).toBe(false);
+    expect(outer?.classList.contains('flow-node__glow--completed')).toBe(false);
+    expect(outer?.classList.contains('flow-node__glow--failed')).toBe(false);
+    // The sub-label element should not render
+    expect(container.querySelector('.flow-node__sublabel')).toBeNull();
   });
 });

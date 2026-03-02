@@ -53,12 +53,12 @@ describe('CoderShadowNode', () => {
     expect(container.textContent).toContain('\u21BB');
   });
 
-  it('applies dashed border style', () => {
+  it('applies dashed border style via border shorthand', () => {
     const { container } = render(<CoderShadowNode {...createNodeProps()} />);
     const outer = container.querySelector('.flow-node');
     expect(outer).not.toBeNull();
     if (outer instanceof HTMLElement) {
-      expect(outer.style.borderStyle).toBe('dashed');
+      expect(outer.style.border).toContain('dashed');
     }
   });
 

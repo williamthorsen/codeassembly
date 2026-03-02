@@ -42,9 +42,10 @@ describe('PhaseGroupNode', () => {
     cleanup();
   });
 
-  it('renders the phase name as header text', () => {
-    render(<PhaseGroupNode {...createNodeProps()} />);
-    expect(screen.getByText('architecture')).toBeInTheDocument();
+  it('renders the phase name as header text, not the label', () => {
+    render(<PhaseGroupNode {...createNodeProps({ phase: 'planning', label: 'planning-group-label' })} />);
+    expect(screen.getByText('planning')).toBeInTheDocument();
+    expect(screen.queryByText('planning-group-label')).not.toBeInTheDocument();
   });
 
   it('shows Completed for completed status', () => {

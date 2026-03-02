@@ -18,8 +18,7 @@ export function CoderShadowNode({ data }: NodeProps<Node<FlowNodeData>>): React.
       style={{
         width: 160,
         height: 72,
-        border: `2px solid ${borderColor}`,
-        borderStyle: 'dashed',
+        border: `2px dashed ${borderColor}`,
         background: fillColor,
         display: 'flex',
         flexDirection: 'column',

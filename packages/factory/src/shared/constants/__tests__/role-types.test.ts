@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { PALETTE } from '../palette.js';
-import { PHASE_NAMES, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS, ROLE_TYPES } from '../role-types.js';
+import {
+  getRoleTypeColor,
+  getRoleTypeLightFill,
+  PHASE_NAMES,
+  PHASE_ROLE_TYPE,
+  ROLE_TYPE_COLORS,
+  ROLE_TYPE_LIGHT_FILLS,
+  ROLE_TYPES,
+} from '../role-types.js';
 
 describe('PHASE_ROLE_TYPE', () => {
   it('includes an entry for every phase in PHASE_NAMES', () => {
@@ -27,5 +35,55 @@ describe('ROLE_TYPE_COLORS', () => {
     for (const color of Object.values(ROLE_TYPE_COLORS)) {
       expect(paletteValues.has(color)).toBe(true);
     }
+  });
+});
+
+describe('ROLE_TYPE_LIGHT_FILLS', () => {
+  it('has an entry for every RoleType', () => {
+    for (const roleType of ROLE_TYPES) {
+      expect(ROLE_TYPE_LIGHT_FILLS[roleType]).toBeDefined();
+    }
+  });
+
+  it('has exactly one entry per RoleType', () => {
+    expect(Object.keys(ROLE_TYPE_LIGHT_FILLS)).toHaveLength(ROLE_TYPES.length);
+  });
+
+  it('assigns values that match the rgba(...) pattern', () => {
+    for (const fill of Object.values(ROLE_TYPE_LIGHT_FILLS)) {
+      expect(fill).toMatch(/^rgba\(\d+,\d+,\d+,[\d.]+\)$/);
+    }
+  });
+});
+
+describe('getRoleTypeColor', () => {
+  it('returns the correct color for each known role type', () => {
+    for (const roleType of ROLE_TYPES) {
+      expect(getRoleTypeColor(roleType)).toBe(ROLE_TYPE_COLORS[roleType]);
+    }
+  });
+
+  it('returns the default fallback for an unknown role type', () => {
+    expect(getRoleTypeColor('nonexistent')).toBe('#888888');
+  });
+
+  it('returns a custom fallback when provided', () => {
+    expect(getRoleTypeColor('nonexistent', '#abcdef')).toBe('#abcdef');
+  });
+});
+
+describe('getRoleTypeLightFill', () => {
+  it('returns the correct light fill for each known role type', () => {
+    for (const roleType of ROLE_TYPES) {
+      expect(getRoleTypeLightFill(roleType)).toBe(ROLE_TYPE_LIGHT_FILLS[roleType]);
+    }
+  });
+
+  it('returns the default fallback for an unknown role type', () => {
+    expect(getRoleTypeLightFill('nonexistent')).toBe('transparent');
+  });
+
+  it('returns a custom fallback when provided', () => {
+    expect(getRoleTypeLightFill('nonexistent', 'red')).toBe('red');
   });
 });
