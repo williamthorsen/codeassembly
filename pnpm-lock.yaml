@@ -155,7 +155,7 @@ importers:
         specifier: 28.1.0
         version: 28.1.0
 
-  packages/run-data:
+  packages/run-core:
     dependencies:
       zod:
         specifier: 4.3.6

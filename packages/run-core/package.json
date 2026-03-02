@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/run-data",
+  "name": "@codeassembly/run-core",
   "version": "0.1.0",
   "private": true,
   "type": "module",
