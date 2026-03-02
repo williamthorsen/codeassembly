@@ -8,10 +8,16 @@
       "source": "./src/index.ts",
       "import": "./dist/esm/index.js",
       "types": "./src/index.ts"
+    },
+    "./parsers": {
+      "source": "./src/parsers/run-data-parser.ts",
+      "import": "./dist/esm/parsers/run-data-parser.js",
+      "types": "./src/parsers/run-data-parser.ts"
     }
   },
   "main": "./dist/esm/index.js",
   "scripts": {
+    "build": "pnpm run ws compile",
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },
   "dependencies": {
