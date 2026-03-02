@@ -83,7 +83,7 @@ content/
 
 The skills implement a multi-phase agentic development pipeline. Entry points:
 
-- **`/orchestrate-dev`** — full workflow: architecture (optional) -> planning (optional) -> implementation -> review cycle
+- **`/orchestrate-dev`** — full workflow (default), lightweight (`--mode=vibe`), or thorough (`--mode=strict`)
 - **`/orchestrate-review`** — review-only workflow for manually written code
 
 The `orchestrate` skill is the internal pipeline engine. It:

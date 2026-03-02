@@ -6,16 +6,17 @@ Orchestrate the parallel review, code-simplifier, and holistic review phases as 
 
 The orchestrate engine must provide these context variables before entering this module:
 
-| Variable                | Description                                                          |
-| ----------------------- | -------------------------------------------------------------------- |
-| `{task}`                | Task description                                                     |
-| `{ticket-content}`      | GitHub issue body (empty string if unavailable)                      |
-| `{artifact-dir}`        | Full path to the run artifact directory                              |
-| `{merge-base-sha}`      | Concrete merge-base SHA for diffing                                  |
-| `{change-summary-path}` | Path to the most recent `coder_change-summary.md`                    |
-| `{max-review-rounds}`   | Maximum iterative review rounds before `needs_manual_review`         |
-| `{fix-low-findings}`    | Whether to fix `low`-criticality findings when review budget remains |
-| `{models}`              | Resolved model assignments map (see "Resolving models" in SKILL.md)  |
+| Variable                | Description                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `{task}`                | Task description                                                                                            |
+| `{ticket-content}`      | GitHub issue body (empty string if unavailable)                                                             |
+| `{artifact-dir}`        | Full path to the run artifact directory                                                                     |
+| `{merge-base-sha}`      | Concrete merge-base SHA for diffing                                                                         |
+| `{change-summary-path}` | Path to the most recent `coder_change-summary.md`                                                           |
+| `{max-review-rounds}`   | Maximum iterative review rounds before `needs_manual_review`                                                |
+| `{approval-threshold}`  | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                |
+| `{budget-threshold}`    | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`) |
+| `{models}`              | Resolved model assignments map (see "Resolving models" in SKILL.md)                                         |
 
 ## Exit state
 
@@ -141,13 +142,13 @@ After all dispatched reviewers complete, aggregate findings from all sources int
 
 ### Flow control
 
-Before applying these rules, check the iteration budget. If N iterations have been reached, exit with `needs_manual_review` regardless of criticality. Otherwise, use the aggregated criticality to determine next steps:
+Before applying these rules, check the iteration budget. If N iterations have been reached, exit with `needs_manual_review` regardless of criticality. Otherwise, use the aggregated criticality and the two thresholds to determine next steps:
 
-- **`none`** (no actionable findings from any reviewer): proceed to Phase 4a (code-simplifier).
-- **`low`**:
-  - If `fix_low_findings` is true AND review rounds remain: delegate fixes to coder, then run selective re-review.
-  - Otherwise: proceed to Phase 4a.
-- **`medium` or `high`**: delegate fixes to coder, then run selective re-review.
+- **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then run selective re-review. These findings must be fixed for code approval.
+- **criticality >= approval_threshold** AND no review rounds remain: exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
+- **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then run selective re-review. These findings are opportunistic — worth fixing if budget allows.
+- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
+- **criticality < budget_threshold**: proceed to Phase 4a (report only, no fix attempt). This includes `none` (no actionable findings from any reviewer).
 
 ### Consolidated coder fixes
 
@@ -183,7 +184,7 @@ If re-review is warranted, send re-review Task calls in a single message (parall
 
 If a re-reviewer fails or times out, treat its original findings as unverified and include them in the aggregated criticality at their original severity. Record the failure in run-index.json.
 
-After re-reviews complete, aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or `low` with `fix_low_findings` false) or the iteration budget is exhausted.
+After re-reviews complete, aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
 
 ### Loop termination
 
@@ -208,7 +209,7 @@ Write run-index.json at every state transition within Phase 4:
 
 ## Phase 4a: Code simplifier
 
-After all reviewers converge (aggregated criticality is `none` or `low`, or after fix cycles complete), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
+After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
 
 Before dispatching code-simplifier, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
 
@@ -278,12 +279,10 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 
 Extract `Criticality` using Task return parsing (see SKILL.md).
 
-- **`none`**: set `{review-status}` to `converged`.
-- **`low`**:
-  - If `fix_low_findings` is true AND review rounds remain: delegate fixes to coder, re-review using remaining budget.
-  - If `fix_low_findings` is true AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`.
-  - If `fix_low_findings` is false: set `{review-status}` to `converged`.
-- **`medium` or `high`** with review rounds remaining: delegate fixes to coder, then re-review using remaining budget — apply the same flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
-- **`medium` or `high`** with no review rounds remaining: delegate one coder fix round (no re-review), then set `{review-status}` to `needs_manual_review`.
+- **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
+- **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
+- **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then re-review using remaining budget (opportunistic).
+- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
+- **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
 
 After: record `context.phaseDecisions.holisticReview` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.holisticReview` in run-index.json with `status: "completed"` (or `"failed"` / `"needs_manual_review"`), `completedAt: {ISO timestamp}`, and the holistic review outcome (criticality and whether a coder fix round was needed).
