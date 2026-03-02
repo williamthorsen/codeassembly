@@ -533,10 +533,12 @@ describe('parseStatusFile', () => {
   });
 
   describe('error handling', () => {
-    it('throws on invalid JSON', async () => {
+    it('throws on invalid JSON with file path context', async () => {
       mockedReadFile.mockResolvedValue('not json');
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow();
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
+        /Failed to parse JSON at \/path\/to\/status\.json/,
+      );
     });
 
     it('throws on file read error (ENOENT)', async () => {
@@ -999,6 +1001,44 @@ describe('parseRunData', () => {
       const result = await parseRunData('/runs/test-run');
 
       expect(result.status).toBe('completed');
+    });
+
+    it('skips corrupt JSON line mid-stream and processes surrounding events', async () => {
+      const lines = [
+        JSON.stringify({ t: '2026-01-01T00:00:00Z', event: 'run_started' }),
+        '{ not valid json',
+        JSON.stringify({ t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' }),
+        JSON.stringify({
+          t: '2026-01-01T00:02:00Z',
+          event: 'phase_completed',
+          phase: 'architecture',
+          status: 'completed',
+          data: { impactLevel: 'high' },
+        }),
+        JSON.stringify({ t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' }),
+      ].join('\n');
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': lines,
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      // Events before and after the corrupt line are processed correctly
+      expect(result.status).toBe('completed');
+      expect(result.completedAt).toBe('2026-01-01T00:10:00Z');
+      expect(result.phases.architecture).toMatchObject({ status: 'completed', impactLevel: 'high' });
+    });
+
+    it('includes file path in error for corrupt run-index.json JSON', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': '{ not valid json !!!',
+      });
+
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow(
+        /Failed to parse JSON at \/runs\/test-run\/run-index\.json/,
+      );
     });
   });
 });

@@ -30,7 +30,12 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
   }
 
   // Parse the JSON (corrupt JSON propagates, no fallback)
-  const raw: unknown = JSON.parse(indexContent);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(indexContent);
+  } catch (error) {
+    throw new Error(`Failed to parse JSON at ${indexPath}: ${String(error)}`);
+  }
 
   // Try v3 first
   const v3Result = v3RunIndexSchema.safeParse(raw);
@@ -71,8 +76,16 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
       try {
         events.push(parseRunLogLine(line));
       } catch (error) {
-        // Forward-compat: skip unrecognized event types and malformed lines, but log for observability
-        console.warn(`[run-data-parser] skipped unparseable log line at index ${String(i)}:`, error);
+        if (error instanceof SyntaxError) {
+          // JSON.parse failed — indicates file corruption, not a forward-compat scenario
+          console.error(
+            `[run-data-parser] corrupt JSON at line index ${String(i)} in ${logPath} (possible file corruption):`,
+            error,
+          );
+        } else {
+          // Schema validation failed — likely an unrecognized event type (forward-compat)
+          console.warn(`[run-data-parser] skipped unrecognized event at line index ${String(i)} in ${logPath}:`, error);
+        }
       }
     }
 
@@ -85,7 +98,12 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
 
 export async function parseStatusFile(filePath: string): Promise<CanonicalRunStatus> {
   const content = await readFile(filePath, 'utf8');
-  const raw: unknown = JSON.parse(content);
+  let raw: unknown;
+  try {
+    raw = JSON.parse(content);
+  } catch (error) {
+    throw new Error(`Failed to parse JSON at ${filePath}: ${String(error)}`);
+  }
 
   if (!isValidStatusObject(raw)) {
     throw new Error(`Invalid status.json at ${filePath}`);
