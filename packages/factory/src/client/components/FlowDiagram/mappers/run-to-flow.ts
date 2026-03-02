@@ -1,10 +1,11 @@
 import type { Edge, Node } from '@xyflow/react';
 
-import type { PhaseName } from '../../../../shared/constants/role-types.js';
-import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
+import type { PhaseName, RoleType } from '../../../../shared/constants/role-types.js';
+import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../../shared/phase-inference.js';
 import type {
   CanonicalRunStatus,
+  Criticality,
   ParallelReviewPhase,
   Phases,
   QualityGates,
@@ -29,6 +30,26 @@ export interface FlowNodeData extends Record<string, unknown> {
   qualityGates?: QualityGates | string;
   // CoderShadowNode
   fixIteration?: number;
+}
+
+/** Data attached to dispatch edges (orchestrator -> agent and agent -> orchestrator). */
+export interface DispatchEdgeData extends Record<string, unknown> {
+  roleType: RoleType;
+  color: string;
+  status: 'completed' | 'pending';
+  iteration: number;
+  isNew: boolean;
+}
+
+/** Data attached to return edges (reviewer -> orchestrator), extending dispatch with criticality. */
+export interface ReturnEdgeData extends DispatchEdgeData {
+  criticality: Criticality | undefined;
+  reReviewCriticality: Criticality | undefined;
+}
+
+/** Data attached to spine edges (orchestrator -> orchestrator between phases). */
+export interface SpineEdgeData extends Record<string, unknown> {
+  status: 'completed' | 'pending';
 }
 
 interface PhaseColumn {
@@ -347,8 +368,8 @@ function buildGhostNodes(
 }
 
 /** Build the orchestrator spine edges connecting consecutive phase columns. */
-function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: PhaseName): Edge[] {
-  const edges: Edge[] = [];
+function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: PhaseName): Edge<SpineEdgeData>[] {
+  const edges: Edge<SpineEdgeData>[] = [];
   const activePhases: PhaseName[] = [];
 
   for (const phase of PHASE_NAMES) {
@@ -357,6 +378,8 @@ function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: Phase
       activePhases.push(phase);
     }
   }
+
+  const spineStatus: SpineEdgeData['status'] = runStatus === 'in_progress' ? 'pending' : 'completed';
 
   for (let i = 0; i < activePhases.length - 1; i++) {
     const source = activePhases[i];
@@ -369,9 +392,8 @@ function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: Phase
       target: 'orchestrator',
       sourceHandle: `spine-out-${source}`,
       targetHandle: `spine-in-${target}`,
-      type: 'default',
-      animated: runStatus === 'in_progress',
-      style: { stroke: '#555555', strokeWidth: 1 },
+      type: 'spine',
+      data: { status: spineStatus },
     });
   }
 
@@ -379,8 +401,12 @@ function buildSpineEdges(phases: Phases, runStatus: string, currentPhase?: Phase
 }
 
 /** Build dispatch and return edges between the orchestrator and phase agents. */
-function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: PhaseName): Edge[] {
-  const edges: Edge[] = [];
+function buildDispatchEdges(
+  phases: Phases,
+  runStatus: string,
+  currentPhase?: PhaseName,
+): Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> {
+  const edges: Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> = [];
 
   for (const phase of PHASE_NAMES) {
     if (phase === 'summary') continue;
@@ -390,6 +416,9 @@ function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: Ph
     if (phase === 'review') continue;
 
     const isCompleted = resolvePhaseNodeStatus(phase, phases, runStatus, currentPhase) === 'completed';
+    const roleType = PHASE_ROLE_TYPE[phase];
+    const color = ROLE_TYPE_COLORS[roleType];
+    const edgeStatus: DispatchEdgeData['status'] = isCompleted ? 'completed' : 'pending';
 
     // Dispatch edge: orchestrator -> agent
     edges.push(
@@ -397,24 +426,28 @@ function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: Ph
         id: `dispatch-${phase}`,
         source: 'orchestrator',
         target: `agent-${phase}`,
-        type: 'default',
-        animated: !isCompleted,
-        style: {
-          stroke: '#777777',
-          strokeWidth: 1,
-          strokeDasharray: isCompleted ? undefined : '5 5',
+        type: 'dispatch',
+        data: {
+          roleType,
+          color,
+          status: edgeStatus,
+          iteration: 1,
+          isNew: false,
         },
       },
       {
         id: `return-${phase}`,
         source: `agent-${phase}`,
         target: 'orchestrator',
-        type: 'default',
-        animated: false,
-        style: {
-          stroke: '#777777',
-          strokeWidth: 1,
-          strokeDasharray: isCompleted ? undefined : '5 5',
+        type: 'return',
+        data: {
+          roleType,
+          color,
+          status: edgeStatus,
+          iteration: 1,
+          isNew: false,
+          criticality: undefined,
+          reReviewCriticality: undefined,
         },
       },
     );
@@ -424,63 +457,77 @@ function buildDispatchEdges(phases: Phases, runStatus: string, currentPhase?: Ph
 }
 
 /** Build reviewer-specific dispatch and return edges. */
-function buildReviewerEdges(phases: Phases): Edge[] {
-  const edges: Edge[] = [];
+function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> {
+  const edges: Array<Edge<DispatchEdgeData> | Edge<ReturnEdgeData>> = [];
 
   if (!isPresent(phases.parallelReview)) return edges;
 
   const reviewerNames = extractReviewerNames(phases.parallelReview);
+  const roleType = PHASE_ROLE_TYPE.review;
+  const color = ROLE_TYPE_COLORS[roleType];
 
   for (const name of reviewerNames) {
     const reviewerInfo = phases.parallelReview.reviewers[name];
     const isCompleted = reviewerInfo?.status === 'completed';
+    const edgeStatus: DispatchEdgeData['status'] = isCompleted ? 'completed' : 'pending';
 
-    edges.push(
-      {
-        id: `dispatch-reviewer-${name}`,
-        source: 'orchestrator',
-        target: `reviewer-${name}`,
-        type: 'default',
-        animated: !isCompleted,
-        style: {
-          stroke: '#777777',
-          strokeWidth: 1,
-          strokeDasharray: isCompleted ? undefined : '5 5',
-        },
+    // Dispatch edge: orchestrator -> reviewer
+    const dispatchEdge: Edge<DispatchEdgeData> = {
+      id: `dispatch-reviewer-${name}`,
+      source: 'orchestrator',
+      target: `reviewer-${name}`,
+      type: 'dispatch',
+      data: {
+        roleType,
+        color,
+        status: edgeStatus,
+        iteration: 1,
+        isNew: false,
       },
-      {
-        id: `return-reviewer-${name}`,
-        source: `reviewer-${name}`,
-        target: 'orchestrator',
-        type: 'default',
-        animated: false,
-        style: {
-          stroke: '#777777',
-          strokeWidth: 1,
-          strokeDasharray: isCompleted ? undefined : '5 5',
-        },
+    };
+
+    // Return edge: reviewer -> orchestrator (with criticality)
+    const returnEdge: Edge<ReturnEdgeData> = {
+      id: `return-reviewer-${name}`,
+      source: `reviewer-${name}`,
+      target: 'orchestrator',
+      type: 'return',
+      data: {
+        roleType,
+        color,
+        status: edgeStatus,
+        iteration: 1,
+        isNew: false,
+        criticality: reviewerInfo?.criticality,
+        reReviewCriticality: reviewerInfo?.reReviewCriticality,
       },
-    );
+    };
+
+    edges.push(dispatchEdge, returnEdge);
   }
 
   return edges;
 }
 
 /** Build coder fix edge when coderFixCycleRan is true. */
-function buildCoderFixEdge(phases: Phases): Edge[] {
+function buildCoderFixEdge(phases: Phases): Edge<DispatchEdgeData>[] {
   if (phases.parallelReview?.coderFixCycleRan !== true) return [];
+
+  const roleType = PHASE_ROLE_TYPE.implementation;
+  const color = ROLE_TYPE_COLORS[roleType];
 
   return [
     {
       id: 'dispatch-coder-fix',
       source: 'orchestrator',
       target: 'coder-shadow',
-      type: 'default',
-      animated: false,
-      style: {
-        stroke: '#777777',
-        strokeWidth: 1,
-        strokeDasharray: '5 5',
+      type: 'dispatch',
+      data: {
+        roleType,
+        color,
+        status: 'completed',
+        iteration: 1,
+        isNew: false,
       },
     },
   ];

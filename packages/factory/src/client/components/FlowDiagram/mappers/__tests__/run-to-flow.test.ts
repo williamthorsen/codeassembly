@@ -403,6 +403,33 @@ describe('createFlowConfig', () => {
           e.id.startsWith('dispatch-') && !e.id.startsWith('dispatch-reviewer-') && !e.id.startsWith('dispatch-coder-'),
       );
       expect(dispatchEdges.length).toBe(5);
+
+      // Dispatch edges use type 'dispatch' and carry typed data
+      for (const edge of dispatchEdges) {
+        expect(edge.type).toBe('dispatch');
+        expect(edge.data).toBeDefined();
+        expect(typeof edge.data?.status).toBe('string');
+        expect(edge.data?.color).toBeDefined();
+        expect(edge.data?.roleType).toBeDefined();
+      }
+    });
+
+    it('generates spine edges with type spine and data', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const { edges } = createFlowConfig(status);
+      const spineEdges = edges.filter((e) => e.id.startsWith('spine-'));
+
+      expect(spineEdges.length).toBeGreaterThan(0);
+      for (const edge of spineEdges) {
+        expect(edge.type).toBe('spine');
+        expect(edge.data).toBeDefined();
+        expect(edge.data?.status).toBe('completed');
+      }
     });
 
     it('generates reviewer-specific edges for each reviewer', () => {
@@ -419,6 +446,64 @@ describe('createFlowConfig', () => {
 
       expect(reviewerDispatchEdges.length).toBe(2);
       expect(reviewerReturnEdges.length).toBe(2);
+
+      // Return edges use type 'return' and carry criticality data
+      for (const edge of reviewerReturnEdges) {
+        expect(edge.type).toBe('return');
+        expect(edge.data).toBeDefined();
+        expect(edge.data?.criticality).toBe('low');
+      }
+    });
+
+    it('generates return edges with type return for non-reviewer phases', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const { edges } = createFlowConfig(status);
+
+      const returnEdges = edges.filter((e) => e.id.startsWith('return-') && !e.id.startsWith('return-reviewer-'));
+      expect(returnEdges.length).toBeGreaterThan(0);
+
+      for (const edge of returnEdges) {
+        expect(edge.type).toBe('return');
+      }
+    });
+
+    it('generates pending status for in-progress dispatch edges', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: {
+            status: 'completed',
+            impactLevel: 'high',
+            artifact: 'arch.md',
+            startedAt: '2026-01-01T00:00:00Z',
+            completedAt: '2026-01-01T00:05:00Z',
+          },
+          planning: {
+            status: 'completed',
+            stepCount: 7,
+            artifacts: ['plan.md'],
+            startedAt: '2026-01-01T00:05:00Z',
+            completedAt: '2026-01-01T00:10:00Z',
+          },
+          implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+
+      // Implementation is current phase => pending
+      const implDispatch = edges.find((e) => e.id === 'dispatch-implementation');
+      expect(implDispatch?.data?.status).toBe('pending');
+
+      // Architecture has timestamps => completed
+      const archDispatch = edges.find((e) => e.id === 'dispatch-architecture');
+      expect(archDispatch?.data?.status).toBe('completed');
     });
 
     it('generates coder fix edge when coderFixCycleRan is true', () => {
