@@ -1146,6 +1146,53 @@ describe('createSceneConfig', () => {
       expect(tooltip).not.toHaveProperty('roleType');
       expect(tooltip).not.toHaveProperty('iteration');
     });
+
+    it('propagates note to tooltip when entry.note is defined (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+            note: 'Impact level: high',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+      const tooltip = config.artifacts[0]?.tooltip;
+
+      expect(tooltip).toBeDefined();
+      expect(tooltip?.note).toBe('Impact level: high');
+    });
+
+    it('does not include note in tooltip when entry.note is undefined (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+      const tooltip = config.artifacts[0]?.tooltip;
+
+      expect(tooltip).toBeDefined();
+      expect(tooltip).not.toHaveProperty('note');
+    });
   });
 
   describe('gates', () => {
