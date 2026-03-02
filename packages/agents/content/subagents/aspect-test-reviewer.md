@@ -7,6 +7,7 @@ skills:
   - anti-patterns
   - common-mistakes
   - get-default-branch
+  - review-criteria
 ---
 
 # Test aspect reviewer
@@ -60,45 +61,18 @@ Do NOT flag:
 
 Each finding must include:
 
-- **ID**: Sequential within category:
-
-| ID     | Category       | Severity       | Merge-blocking?                                                    |
-| ------ | -------------- | -------------- | ------------------------------------------------------------------ |
-| `F{n}` | FIXME          | critical       | Yes — must fix before merge                                        |
-| `W{n}` | Warning        | warning        | May block — questionable decisions requiring justification         |
-| `T{n}` | TODO           | todo           | No — should fix, can wait for next PR                              |
-| `R{n}` | Recommendation | recommendation | No — advisable but discretionary                                   |
-| `S{n}` | Suggestion     | suggestion     | No — optional improvement                                          |
-| `L{n}` | Legacy         | legacy         | No — observation in pre-existing code, not authored in this branch |
-
+- **ID**: sequential within category (F/W/T/R/S/L — see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
 - **Description**: what the issue is
 - **Recommendation**: what to do about it
 
-## Overall criticality levels
+## Criticality classification
 
-Classify the overall review into exactly one level:
+Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:
 
-### `none`
-
-- No source files requiring test coverage in the change, or no findings
-- Only S/R/L findings
-
-### `low`
-
-- W and/or T findings, but no F findings
-- Tests exist but have minor gaps
-
-### `medium`
-
-- 1-2 F findings that are straightforward to fix
-- OR many W findings that collectively indicate inadequate coverage
-
-### `high`
-
-- Multiple F findings
-- OR new critical functionality with no tests at all
-- OR tests that fundamentally don't test what they claim
+- `none`: No source files requiring test coverage in the change, or no findings
+- `low`: Tests exist but have minor gaps
+- `high`: New critical functionality with no tests, or tests that fundamentally don't test what they claim
 
 ## Output format
 

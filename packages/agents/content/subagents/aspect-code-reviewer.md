@@ -7,6 +7,7 @@ skills:
   - anti-patterns
   - common-mistakes
   - get-default-branch
+  - review-criteria
 ---
 
 # Code aspect reviewer
@@ -60,45 +61,18 @@ Do NOT flag:
 
 Each finding must include:
 
-- **ID**: Sequential within category:
-
-| ID     | Category       | Severity       | Merge-blocking?                                                    |
-| ------ | -------------- | -------------- | ------------------------------------------------------------------ |
-| `F{n}` | FIXME          | critical       | Yes — must fix before merge                                        |
-| `W{n}` | Warning        | warning        | May block — questionable decisions requiring justification         |
-| `T{n}` | TODO           | todo           | No — should fix, can wait for next PR                              |
-| `R{n}` | Recommendation | recommendation | No — advisable but discretionary                                   |
-| `S{n}` | Suggestion     | suggestion     | No — optional improvement                                          |
-| `L{n}` | Legacy         | legacy         | No — observation in pre-existing code, not authored in this branch |
-
+- **ID**: sequential within category (F/W/T/R/S/L — see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
 - **Description**: what the issue is
 - **Recommendation**: what to do about it
 
-## Overall criticality levels
+## Criticality classification
 
-Classify the overall review into exactly one level:
+Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:
 
-### `none`
-
-- No findings, or only S/R/L findings
-- Code complies with project guidelines and contains no bugs
-
-### `low`
-
-- W and/or T findings, but no F findings
-- Minor guideline deviations or potential issues
-
-### `medium`
-
-- 1-2 F findings that are straightforward to fix
-- OR many W findings that collectively indicate a quality concern
-
-### `high`
-
-- Multiple F findings
-- OR F findings that require significant rework
-- OR systematic guideline violations indicating the developer missed key conventions
+- `none`: Code complies with project guidelines and contains no bugs
+- `low`: Minor guideline deviations or potential issues
+- `high`: Systematic guideline violations indicating the developer missed key conventions
 
 ## Output format
 

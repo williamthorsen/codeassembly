@@ -40,84 +40,14 @@ You will receive:
 
 Each finding must include:
 
-- **ID**: Sequential within category:
-
-| ID     | Category       | Severity       | Merge-blocking?                                                    |
-| ------ | -------------- | -------------- | ------------------------------------------------------------------ |
-| `F{n}` | FIXME          | critical       | Yes — must fix before merge                                        |
-| `W{n}` | Warning        | warning        | May block — questionable decisions requiring justification         |
-| `T{n}` | TODO           | todo           | No — should fix, can wait for next PR                              |
-| `R{n}` | Recommendation | recommendation | No — advisable but discretionary                                   |
-| `S{n}` | Suggestion     | suggestion     | No — optional improvement                                          |
-| `L{n}` | Legacy         | legacy         | No — observation in pre-existing code, not authored in this branch |
-
+- **ID**: sequential within category (F/W/T/R/S/L — see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
 - **Description**: what the issue is
 - **Recommendation**: what to do about it
 
-### Category criteria
+## Criticality classification
 
-**FIXME (F)** — must fix before merge:
-
-- Bugs: incorrect logic, unhandled error paths, data loss risks
-- Security: injection, auth bypass, exposed secrets
-- Contract violations: breaking API changes, type unsafety
-- Test failures: tests that don't pass or don't test what they claim
-
-**Warning (W)** — questionable, may block merge:
-
-- Missing edge case handling that could cause runtime errors
-- Convention violations that affect maintainability
-- Decisions that seem wrong but may be intentional (require justification)
-
-**TODO (T)** — should fix, not in this PR:
-
-- Missing or inadequate tests for new functionality
-- Performance issues with measurable impact
-- Incomplete error handling that won't cause immediate failures
-
-**Recommendation (R)** — advisable but discretionary:
-
-- Better patterns available in the codebase
-- Opportunities to reduce complexity
-- Architectural improvements worth considering
-
-**Suggestion (S)** — optional improvement:
-
-- Better naming or code organization
-- Additional test cases for edge cases
-- Documentation improvements
-
-**Legacy (L)** — pre-existing code observation:
-
-- Issues in code not authored in this branch
-- Frame as future opportunities, not current defects
-- Never count against the review score
-
-## Overall criticality levels
-
-Classify the overall review into exactly one level:
-
-### `none`
-
-- No findings, or only S/R/L findings
-- Code is ready to merge
-
-### `low`
-
-- W and/or T findings, but no F findings
-- Code is acceptable to merge with optional follow-ups
-
-### `medium`
-
-- 1–2 F findings that are straightforward to fix
-- OR many W findings that collectively indicate a quality concern
-
-### `high`
-
-- Multiple F findings
-- OR F findings that require significant rework
-- OR structural issues that indicate the approach needs rethinking
+Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill.
 
 ## Output format
 
