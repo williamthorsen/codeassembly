@@ -35,3 +35,7 @@ architecture (optional) → planning (optional) → implementation (required) �
 ## Process
 
 Invoke the `orchestrate` skill with the pipeline specification above and pass through all arguments unchanged. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table above **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute and in what order. No additional structured format is needed beyond this table.
+
+## After the run
+
+The orchestrate engine automatically offers `/wrap-up` when the run-summary contains deferred items or insights (Phase 6). For sessions where the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `/wrap-up` manually.
