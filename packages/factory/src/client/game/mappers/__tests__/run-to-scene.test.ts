@@ -7,6 +7,7 @@ import {
   emptyPhases,
 } from '../../../../__test-helpers__/fixtures.js';
 import { PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
+import type { ParallelReviewPhase } from '../../../../shared/types/canonical.js';
 import { REVIEW_STATION_INDEX as LAYOUT_REVIEW_STATION_INDEX } from '../../layout/platform-layout.js';
 import { createSceneConfig, PHASE_NAMES, REVIEW_STATION_INDEX } from '../run-to-scene.js';
 
@@ -282,6 +283,141 @@ describe('createSceneConfig', () => {
       expect(reviewerAgents[0]?.stackOffset).toBe(0);
       expect(reviewerAgents[1]?.stackOffset).toBe(1);
       expect(reviewerAgents[2]?.stackOffset).toBe(2);
+    });
+
+    it('extracts reviewers from iterations[].perReviewer when flat reviewers is absent', () => {
+      // Object.assign merges the untyped perReviewer (Zod .loose() pass-through) at construction time
+      const iteration = Object.assign(
+        { reviewers: ['orchestrated-reviewer', 'aspect-test-reviewer'] },
+        {
+          perReviewer: {
+            'orchestrated-reviewer': { status: 'failed', criticality: 'medium' },
+            'aspect-test-reviewer': { status: 'completed', criticality: 'medium' },
+          },
+        },
+      );
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+            iterations: [iteration],
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.roleType === 'reviewer');
+      expect(reviewerAgents).toHaveLength(2);
+      expect(reviewerAgents[0]?.role).toBe('orchestrated-reviewer');
+      expect(reviewerAgents[1]?.role).toBe('aspect-test-reviewer');
+      expect(reviewerAgents[0]?.stackOffset).toBe(0);
+      expect(reviewerAgents[1]?.stackOffset).toBe(1);
+    });
+
+    it('extracts reviewers from top-level reviewerDetails when flat reviewers is absent', () => {
+      // Object.assign merges the untyped reviewerDetails (Zod .loose() pass-through) at construction time
+      const parallelReview = Object.assign(
+        {
+          aggregatedCriticality: 'low',
+          reviewRoundsUsed: 1,
+          reviewers: {},
+          coderFixCycleRan: false,
+          selectiveReReview: undefined,
+        } satisfies ParallelReviewPhase,
+        {
+          reviewerDetails: {
+            'code-reviewer': { status: 'completed', criticality: 'none' },
+            'test-reviewer': { status: 'completed', criticality: 'low' },
+            'silent-failure-reviewer': { status: 'completed', criticality: 'none' },
+          },
+        },
+      );
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: { ...emptyPhases(), parallelReview },
+      });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.roleType === 'reviewer');
+      expect(reviewerAgents).toHaveLength(3);
+      expect(reviewerAgents[0]?.role).toBe('code-reviewer');
+      expect(reviewerAgents[1]?.role).toBe('test-reviewer');
+      expect(reviewerAgents[2]?.role).toBe('silent-failure-reviewer');
+    });
+
+    it('falls back to generic reviewer when parallelReview has no known reviewer sub-properties', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: {
+          ...emptyPhases(),
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+        },
+      });
+
+      const config = createSceneConfig(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.roleType === 'reviewer');
+      expect(reviewerAgents).toHaveLength(1);
+      expect(reviewerAgents[0]?.role).toBe('reviewer');
+    });
+
+    it('computes correct orchestrator level from iterations[].perReviewer reviewers', () => {
+      // Object.assign merges the untyped perReviewer (Zod .loose() pass-through) at construction time
+      const iteration = Object.assign(
+        { reviewers: ['orchestrated-reviewer', 'aspect-test-reviewer', 'aspect-silent-failure-reviewer'] },
+        {
+          perReviewer: {
+            'orchestrated-reviewer': { status: 'failed', criticality: 'medium' },
+            'aspect-test-reviewer': { status: 'completed', criticality: 'medium' },
+            'aspect-silent-failure-reviewer': { status: 'completed', criticality: 'none' },
+          },
+        },
+      );
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {},
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+            iterations: [iteration],
+          },
+        },
+        phaseDecisions: {
+          simplifier: { run: false, reason: 'skipped' },
+          holistic: { run: false, reason: 'skipped' },
+        },
+      });
+
+      const config = createSceneConfig(status);
+      const orchestrator = config.agents.find((a) => a.role === 'orchestrator');
+
+      // 3 reviewers → orchestrator at level 2
+      expect(orchestrator?.stationIndex).toBe(3);
+      expect(orchestrator?.level).toBe(2);
     });
 
     it('does not create simplifier agent when codeSimplifier is undefined', () => {
