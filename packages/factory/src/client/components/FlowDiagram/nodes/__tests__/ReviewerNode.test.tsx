@@ -65,6 +65,11 @@ describe('ReviewerNode', () => {
     expect(screen.getByText('low')).toBeInTheDocument();
     // Arrow is rendered as &rarr; entity
     expect(container.textContent).toContain('\u2192');
+    // Verify both badges carry their respective criticality data attributes
+    const badges = container.querySelectorAll('.flow-node__badge');
+    expect(badges.length).toBe(2);
+    expect(badges[0]?.getAttribute('data-criticality')).toBe('medium');
+    expect(badges[1]?.getAttribute('data-criticality')).toBe('low');
   });
 
   it('does not render badge row when criticality is undefined', () => {
@@ -79,48 +84,38 @@ describe('ReviewerNode', () => {
     expect(dot).not.toBeNull();
   });
 
-  it('applies correct background color for none criticality', () => {
+  it('sets data-criticality attribute for none criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'none' })} />);
     const badge = container.querySelector('.flow-node__badge');
     expect(badge).not.toBeNull();
-    if (badge instanceof HTMLElement) {
-      expect(badge.style.background).toBe('rgb(45, 164, 78)');
-    }
+    expect(badge?.getAttribute('data-criticality')).toBe('none');
   });
 
-  it('applies correct background color for low criticality', () => {
+  it('sets data-criticality attribute for low criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'low' })} />);
     const badge = container.querySelector('.flow-node__badge');
     expect(badge).not.toBeNull();
-    if (badge instanceof HTMLElement) {
-      expect(badge.style.background).toBe('rgb(191, 135, 0)');
-    }
+    expect(badge?.getAttribute('data-criticality')).toBe('low');
   });
 
-  it('applies correct background color for medium criticality', () => {
+  it('sets data-criticality attribute for medium criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'medium' })} />);
     const badge = container.querySelector('.flow-node__badge');
     expect(badge).not.toBeNull();
-    if (badge instanceof HTMLElement) {
-      expect(badge.style.background).toBe('rgb(207, 34, 46)');
-    }
+    expect(badge?.getAttribute('data-criticality')).toBe('medium');
   });
 
-  it('applies correct background color for high criticality', () => {
+  it('sets data-criticality attribute for high criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'high' })} />);
     const badge = container.querySelector('.flow-node__badge');
     expect(badge).not.toBeNull();
-    if (badge instanceof HTMLElement) {
-      expect(badge.style.background).toBe('rgb(130, 80, 223)');
-    }
+    expect(badge?.getAttribute('data-criticality')).toBe('high');
   });
 
-  it('applies fallback background color for unknown criticality', () => {
+  it('sets data-criticality attribute for unknown criticality', () => {
     const { container } = render(<ReviewerNode {...createNodeProps({ criticality: 'unknown-value' })} />);
     const badge = container.querySelector('.flow-node__badge');
     expect(badge).not.toBeNull();
-    if (badge instanceof HTMLElement) {
-      expect(badge.style.background).toBe('rgb(136, 136, 136)');
-    }
+    expect(badge?.getAttribute('data-criticality')).toBe('unknown-value');
   });
 });

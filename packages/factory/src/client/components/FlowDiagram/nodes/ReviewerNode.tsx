@@ -49,6 +49,7 @@ export function ReviewerNode({ data }: NodeProps<Node<FlowNodeData>>): React.JSX
           {reReviewCriticality === undefined ? (
             <span
               className="flow-node__badge"
+              data-criticality={criticality}
               style={{ background: getCriticalityColor(criticality), color: '#ffffff' }}
             >
               {criticality}
@@ -57,6 +58,7 @@ export function ReviewerNode({ data }: NodeProps<Node<FlowNodeData>>): React.JSX
             <span>
               <span
                 className="flow-node__badge"
+                data-criticality={criticality}
                 style={{ background: getCriticalityColor(criticality), color: '#ffffff' }}
               >
                 {criticality}
@@ -64,6 +66,7 @@ export function ReviewerNode({ data }: NodeProps<Node<FlowNodeData>>): React.JSX
               <span style={{ margin: '0 4px', fontSize: 10 }}>&rarr;</span>
               <span
                 className="flow-node__badge"
+                data-criticality={reReviewCriticality}
                 style={{
                   background: getCriticalityColor(reReviewCriticality),
                   color: '#ffffff',

@@ -38,7 +38,7 @@ export function PhaseGroupNode({ data }: NodeProps<Node<FlowNodeData>>): React.J
         padding: 12,
       }}
     >
-      <span className="flow-node__label" style={{ color: headerColor, fontSize: 14 }}>
+      <span className="flow-node__label" data-role-type={data.roleType} style={{ color: headerColor, fontSize: 14 }}>
         {data.phase}
       </span>
       <span className="flow-node__sublabel">{getStatusLabel(data.status)}</span>

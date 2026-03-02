@@ -23,9 +23,10 @@ function renderQualityGates(gates: QualityGates): React.JSX.Element {
     <span className="flow-node__badge" style={{ background: '#e8e8e8', color: '#333333' }}>
       {items.map((item) => {
         const passed = item.value === 'pass' || item.value === 'passed';
-        const color = item.value === undefined ? '#999999' : (passed ? '#2da44e' : '#cf222e');
+        const status = item.value === undefined ? 'unknown' : passed ? 'pass' : 'fail';
+        const color = item.value === undefined ? '#999999' : passed ? '#2da44e' : '#cf222e';
         return (
-          <span key={item.label} style={{ color, marginRight: 4 }}>
+          <span key={item.label} data-gate-status={status} style={{ color, marginRight: 4 }}>
             {item.label}
           </span>
         );
@@ -66,7 +67,9 @@ export function PhaseAgentNode({ data }: NodeProps<Node<FlowNodeData>>): React.J
           {data.stepCount} steps
         </span>
       )}
-      {data.phase === 'implementation' && isQualityGatesObject(data.qualityGates) && renderQualityGates(data.qualityGates)}
+      {data.phase === 'implementation' &&
+        isQualityGatesObject(data.qualityGates) &&
+        renderQualityGates(data.qualityGates)}
       <Handle type="target" position={Position.Left} />
       <Handle type="source" position={Position.Right} />
     </div>

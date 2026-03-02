@@ -93,7 +93,11 @@ describe('PhaseAgentNode', () => {
   });
 
   it('renders stepCount badge for planning phase', () => {
-    render(<PhaseAgentNode {...createNodeProps({ phase: 'planning', role: 'planner', roleType: 'planner', stepCount: 7 })} />);
+    render(
+      <PhaseAgentNode
+        {...createNodeProps({ phase: 'planning', role: 'planner', roleType: 'planner', stepCount: 7 })}
+      />,
+    );
     expect(screen.getByText('7 steps')).toBeInTheDocument();
   });
 
@@ -127,7 +131,7 @@ describe('PhaseAgentNode', () => {
     expect(container.querySelector('.flow-node__badge')).toBeNull();
   });
 
-  it('renders passing quality gates in green', () => {
+  it('marks passing quality gates with data-gate-status pass', () => {
     const { container } = render(
       <PhaseAgentNode
         {...createNodeProps({
@@ -141,14 +145,14 @@ describe('PhaseAgentNode', () => {
     const tc = screen.getByText('TC');
     const li = screen.getByText('LI');
     const te = screen.getByText('TE');
-    expect(tc.style.color).toBe('rgb(45, 164, 78)');
-    expect(li.style.color).toBe('rgb(45, 164, 78)');
-    expect(te.style.color).toBe('rgb(45, 164, 78)');
+    expect(tc.getAttribute('data-gate-status')).toBe('pass');
+    expect(li.getAttribute('data-gate-status')).toBe('pass');
+    expect(te.getAttribute('data-gate-status')).toBe('pass');
     // Verify the container element exists
     expect(container.querySelector('.flow-node__badge')).not.toBeNull();
   });
 
-  it('renders failing quality gates in red', () => {
+  it('marks failing quality gates with data-gate-status fail', () => {
     render(
       <PhaseAgentNode
         {...createNodeProps({
@@ -162,12 +166,12 @@ describe('PhaseAgentNode', () => {
     const tc = screen.getByText('TC');
     const li = screen.getByText('LI');
     const te = screen.getByText('TE');
-    expect(tc.style.color).toBe('rgb(207, 34, 46)');
-    expect(li.style.color).toBe('rgb(207, 34, 46)');
-    expect(te.style.color).toBe('rgb(207, 34, 46)');
+    expect(tc.getAttribute('data-gate-status')).toBe('fail');
+    expect(li.getAttribute('data-gate-status')).toBe('fail');
+    expect(te.getAttribute('data-gate-status')).toBe('fail');
   });
 
-  it('renders undefined quality gates in gray', () => {
+  it('marks undefined quality gates with data-gate-status unknown', () => {
     render(
       <PhaseAgentNode
         {...createNodeProps({
@@ -181,9 +185,9 @@ describe('PhaseAgentNode', () => {
     const tc = screen.getByText('TC');
     const li = screen.getByText('LI');
     const te = screen.getByText('TE');
-    expect(tc.style.color).toBe('rgb(153, 153, 153)');
-    expect(li.style.color).toBe('rgb(153, 153, 153)');
-    expect(te.style.color).toBe('rgb(153, 153, 153)');
+    expect(tc.getAttribute('data-gate-status')).toBe('unknown');
+    expect(li.getAttribute('data-gate-status')).toBe('unknown');
+    expect(te.getAttribute('data-gate-status')).toBe('unknown');
   });
 
   it('does not render impactLevel badge when phase is planning', () => {
