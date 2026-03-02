@@ -533,10 +533,12 @@ describe('parseStatusFile', () => {
   });
 
   describe('error handling', () => {
-    it('throws on invalid JSON', async () => {
+    it('throws on invalid JSON with file path context', async () => {
       mockedReadFile.mockResolvedValue('not json');
 
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow();
+      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow(
+        /Failed to parse JSON at \/path\/to\/status\.json/,
+      );
     });
 
     it('throws on file read error (ENOENT)', async () => {
@@ -902,7 +904,9 @@ describe('parseRunData', () => {
       });
       mockedReadFile.mockClear();
 
-      await expect(parseRunData('/runs/test-run')).rejects.toThrow();
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow(
+        /Failed to parse JSON at \/runs\/test-run\/run-index\.json/,
+      );
       expect(mockedReadFile).toHaveBeenCalledTimes(1);
       expect(mockedReadFile).toHaveBeenCalledWith('/runs/test-run/run-index.json', 'utf8');
     });
@@ -965,7 +969,9 @@ describe('parseRunData', () => {
         '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
       });
 
-      await expect(parseRunData('/runs/test-run')).rejects.toThrow('run-log.jsonl is missing');
+      await expect(parseRunData('/runs/test-run')).rejects.toThrow(
+        'v3 run-index.json found at /runs/test-run/run-index.json but run-log.jsonl is missing',
+      );
     });
 
     it('handles empty log file (returns initial state)', async () => {
@@ -997,6 +1003,33 @@ describe('parseRunData', () => {
       const result = await parseRunData('/runs/test-run');
 
       expect(result.status).toBe('completed');
+    });
+
+    it('skips corrupt JSON line mid-stream and processes surrounding events', async () => {
+      const lines = [
+        JSON.stringify({ t: '2026-01-01T00:00:00Z', event: 'run_started' }),
+        '{ not valid json',
+        JSON.stringify({ t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' }),
+        JSON.stringify({
+          t: '2026-01-01T00:02:00Z',
+          event: 'phase_completed',
+          phase: 'architecture',
+          status: 'completed',
+          data: { impactLevel: 'high' },
+        }),
+        JSON.stringify({ t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' }),
+      ].join('\n');
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': lines,
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.status).toBe('completed');
+      expect(result.completedAt).toBe('2026-01-01T00:10:00Z');
+      expect(result.phases.architecture).toMatchObject({ status: 'completed', impactLevel: 'high' });
     });
   });
 });
