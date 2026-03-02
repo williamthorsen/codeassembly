@@ -11,6 +11,9 @@ import {
 import React, { useEffect, useMemo } from 'react';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
+import { DispatchEdge } from './edges/DispatchEdge.js';
+import { ReturnEdge } from './edges/ReturnEdge.js';
+import { SpineEdge } from './edges/SpineEdge.js';
 import { createFlowConfig } from './mappers/run-to-flow.js';
 import { CoderShadowNode } from './nodes/CoderShadowNode.js';
 import { OrchestratorNode } from './nodes/OrchestratorNode.js';
@@ -40,6 +43,15 @@ interface FlowDiagramProps {
 function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
   const config = useMemo(() => createFlowConfig(status), [status]);
 
+  const edgeTypes = useMemo(
+    () => ({
+      dispatch: DispatchEdge,
+      return: ReturnEdge,
+      spine: SpineEdge,
+    }),
+    [],
+  );
+
   const [nodes, setNodes, onNodesChange] = useNodesState(config.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(config.edges);
 
@@ -50,12 +62,14 @@ function FlowDiagramInner({ status }: FlowDiagramProps): React.JSX.Element {
 
   return (
     <div className="flow-diagram">
+<<<<<<< HEAD
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={NODE_TYPES}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        nodeTypes={NODE_TYPES}
         fitView
       >
         <Background variant={BackgroundVariant.Dots} />
