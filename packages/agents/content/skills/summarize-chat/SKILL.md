@@ -89,3 +89,7 @@ Example: `20250718-200926Z_fix-rating-change-does-not-trigger-flag-refresh.md`
 ## Completion
 
 Report the file path when done. That's all the user needs to know.
+
+## See also
+
+For comprehensive post-session housekeeping (creating tickets for deferred items, documenting discoveries, generating devlogs in addition to chat summaries), use `/wrap-up`.

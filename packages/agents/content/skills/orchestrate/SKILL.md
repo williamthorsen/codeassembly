@@ -437,6 +437,16 @@ After writing the artifact, present the same summary to the user in the conversa
 
 Finalize run-index.json with `completedAt` timestamp and final status.
 
+## Phase 6: Wrap-up (prompted, conditional)
+
+After the summary is presented and run-index.json is finalized, check whether the run-summary contains a non-empty `## Deferred items` or `## Insights` section. If either section is present and non-empty, invoke `/wrap-up` to offer post-run housekeeping.
+
+Like Phase 5, this is an inherent engine responsibility — not a pipeline phase. It does not appear in `context.phaseDecisions` or `context.phases`.
+
+The `/wrap-up` skill will assess the session (including the run-summary artifact), present a checklist of recommended actions (tickets for deferred items, documentation for discoveries), and wait for user confirmation before executing. This is the one exception to the autonomous execution constraint: the orchestrator pauses here for human input.
+
+If the run-summary has no deferred items and no insights, skip this phase silently.
+
 ## Output contract
 
 See [artifact-conventions.md](../_data/artifact-conventions.md) for artifact naming, flow-control field locations, and the example run directory layout.
@@ -464,7 +474,7 @@ All roles also return `Phase:`, `Status:`, and `Artifact:`.
 
 ## Constraints
 
-- Autonomous execution: follow flow control at every decision point without pausing for human input. Report outcomes in the summary.
+- Autonomous execution: follow flow control at every decision point without pausing for human input. Report outcomes in the summary. **Exception:** Phase 6 (wrap-up) pauses for user confirmation before creating tickets or artifacts.
 - All project code changes go through `orchestrated-coder`
 - All analysis goes through `orchestrated-architect`
 - Don't duplicate subagent work — trust their results
