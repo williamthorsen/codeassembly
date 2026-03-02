@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react';
 
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
-import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
+import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../../shared/phase-inference.js';
 import type {
   CanonicalRunStatus,
@@ -181,7 +181,6 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
     const column = PHASE_COLUMNS[phase];
     const nodeStatus = resolvePhaseNodeStatus(phase, phases, runStatus, currentPhase);
     const roleType = PHASE_ROLE_TYPE[phase];
-    const color = ROLE_TYPE_COLORS[roleType];
 
     nodes.push({
       id: `agent-${phase}`,
@@ -204,16 +203,6 @@ function buildPhaseAgentNodes(phases: Phases, runStatus: string, currentPhase?: 
           ? { qualityGates: phases.implementation.qualityGates }
           : {}),
       },
-      style: {
-        background: color,
-        border: `2px solid ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
-      },
     });
   }
 
@@ -229,8 +218,6 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
 
   const reviewerNames = extractReviewerNames(phases.parallelReview);
   if (reviewerNames.length === 0) return nodes;
-
-  const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.review];
 
   for (const [i, name] of reviewerNames.entries()) {
     const reviewerInfo = phases.parallelReview.reviewers[name];
@@ -249,16 +236,6 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
         ...(reviewerInfo?.reReviewCriticality === undefined
           ? {}
           : { reReviewCriticality: reviewerInfo.reReviewCriticality }),
-      },
-      style: {
-        background: color,
-        border: `2px solid ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
       },
     });
   }
@@ -280,7 +257,6 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
   if (phases.parallelReview?.coderFixCycleRan !== true) return [];
 
   const reviewColumn = PHASE_COLUMNS.review;
-  const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.implementation];
 
   return [
     {
@@ -296,23 +272,12 @@ function buildCoderShadowNode(phases: Phases): Node<FlowNodeData>[] {
         label: 'coder (fix)',
         fixIteration: phases.parallelReview.reviewRoundsUsed,
       },
-      style: {
-        background: color,
-        border: `2px dashed ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
-      },
     },
   ];
 }
 
 /** Build the orchestrator node positioned at the appropriate column. */
 function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseName): Node<FlowNodeData>[] {
-  const color = ROLE_TYPE_COLORS[PHASE_ROLE_TYPE.summary];
   let column: PhaseColumn;
   let nodeStatus: FlowNodeData['status'];
 
@@ -342,16 +307,6 @@ function buildOrchestratorNode(status: CanonicalRunStatus, currentPhase?: PhaseN
         label: 'orchestrator',
         currentPhaseName: currentPhase ?? 'summary',
         runStatus: status.status,
-      },
-      style: {
-        background: color,
-        border: `2px solid ${color}`,
-        borderRadius: 8,
-        padding: 10,
-        color: '#000000',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
       },
     },
   ];
@@ -384,17 +339,6 @@ function buildGhostNodes(
         status: 'skipped',
         phase,
         label: `${PHASE_ROLE[phase]} (skipped)`,
-      },
-      style: {
-        background: 'transparent',
-        border: '2px dashed #555555',
-        borderRadius: 8,
-        padding: 10,
-        color: '#555555',
-        fontWeight: 'bold',
-        width: 120,
-        textAlign: 'center' as const,
-        opacity: 0.5,
       },
     });
   }
