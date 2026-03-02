@@ -72,6 +72,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 
 - `none`: Code complies with project guidelines and contains no bugs
 - `low`: Minor guideline deviations or potential issues
+- `medium`: 1-2 straightforward guideline/bug findings, or many W findings collectively indicating a quality concern
 - `high`: Systematic guideline violations indicating the developer missed key conventions
 
 ## Output format

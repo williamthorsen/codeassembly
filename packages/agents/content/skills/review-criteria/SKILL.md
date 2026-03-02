@@ -38,7 +38,7 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Finding scheme (F/W/T/R/S/L)
 
-See [artifact conventions](_data/artifact-conventions.md#finding-scheme-fwtrsl) for the canonical reference.
+See [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for the canonical reference.
 
 Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
 

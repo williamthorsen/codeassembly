@@ -69,6 +69,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 
 - `none`: No error-handling code in the change, or no findings
 - `low`: Error handling is present but has minor issues
+- `medium`: 1-2 F findings that are straightforward to fix, or many W findings that collectively indicate a quality concern
 - `high`: Systematic error suppression that indicates a fundamental approach problem
 
 ## Output format

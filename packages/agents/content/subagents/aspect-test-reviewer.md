@@ -72,6 +72,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 
 - `none`: No source files requiring test coverage in the change, or no findings
 - `low`: Tests exist but have minor gaps
+- `medium`: 1-2 F findings that are straightforward to fix, or many W findings collectively indicating inadequate coverage
 - `high`: New critical functionality with no tests, or tests that fundamentally don't test what they claim
 
 ## Output format
