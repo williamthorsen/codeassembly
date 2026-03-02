@@ -6,10 +6,6 @@ import { describe, expect, it } from 'vitest';
 
 import { completeRun } from '../complete-run.js';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 describe('completeRun', () => {
   async function createRunDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'mcp-test-complete-'));
@@ -38,10 +34,7 @@ describe('completeRun', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
-    expect(isRecord(event)).toBe(true);
-    if (!isRecord(event)) return;
-    expect(event.event).toBe('run_completed');
-    expect(event.status).toBe('completed');
+    expect(event).toMatchObject({ event: 'run_completed', status: 'completed' });
   });
 
   it('stamps completedAt on run-index.json', async () => {
@@ -50,9 +43,7 @@ describe('completeRun', () => {
 
     const indexContent = await readFile(join(runDir, 'run-index.json'), 'utf8');
     const parsed: unknown = JSON.parse(indexContent);
-    expect(isRecord(parsed)).toBe(true);
-    if (!isRecord(parsed)) return;
-    expect(typeof parsed.completedAt).toBe('string');
+    expect(parsed).toMatchObject({ completedAt: expect.any(String) });
   });
 
   it('rejects in_progress status', async () => {
@@ -71,9 +62,7 @@ describe('completeRun', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
-    expect(isRecord(event)).toBe(true);
-    if (!isRecord(event)) return;
-    expect(event.status).toBe('failed');
+    expect(event).toMatchObject({ status: 'failed' });
   });
 
   it('accepts needs_manual_review status', async () => {
@@ -84,9 +73,7 @@ describe('completeRun', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
-    expect(isRecord(event)).toBe(true);
-    if (!isRecord(event)) return;
-    expect(event.status).toBe('needs_manual_review');
+    expect(event).toMatchObject({ status: 'needs_manual_review' });
   });
 
   it('rejects when run-index.json is missing', async () => {

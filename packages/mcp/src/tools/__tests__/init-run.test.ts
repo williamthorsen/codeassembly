@@ -7,10 +7,6 @@ import { describe, expect, it } from 'vitest';
 
 import { initRun } from '../init-run.js';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 describe('initRun', () => {
   async function createTmpDir(): Promise<string> {
     return mkdtemp(join(tmpdir(), 'mcp-test-init-'));
@@ -89,15 +85,12 @@ describe('initRun', () => {
 
     const indexContent = await readFile(join(result.runDir, 'run-index.json'), 'utf8');
     const parsed: unknown = JSON.parse(indexContent);
-    expect(isRecord(parsed)).toBe(true);
-    if (!isRecord(parsed)) return;
-
-    const config: unknown = parsed.config;
-    expect(isRecord(config)).toBe(true);
-    if (!isRecord(config)) return;
-
-    expect(config.pipeline).toEqual(['plan', 'implement', 'review']);
-    expect(config.models).toEqual({ primary: 'claude-opus-4-6' });
+    expect(parsed).toMatchObject({
+      config: {
+        pipeline: ['plan', 'implement', 'review'],
+        models: { primary: 'claude-opus-4-6' },
+      },
+    });
   });
 
   it('omits ticketId from context when not provided', async () => {
@@ -111,9 +104,7 @@ describe('initRun', () => {
 
     const indexContent = await readFile(join(result.runDir, 'run-index.json'), 'utf8');
     const parsed: unknown = JSON.parse(indexContent);
-    expect(isRecord(parsed)).toBe(true);
-    if (!isRecord(parsed)) return;
-    expect(parsed.context).not.toHaveProperty('ticketId');
+    expect(parsed).not.toHaveProperty('context.ticketId');
   });
 
   it('rejects when the project root cannot be written to', async () => {

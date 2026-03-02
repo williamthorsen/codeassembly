@@ -6,10 +6,6 @@ import { describe, expect, it } from 'vitest';
 
 import { emitEvent } from '../emit-event.js';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 describe('emitEvent', () => {
   async function createRunDir(): Promise<string> {
     const dir = await mkdtemp(join(tmpdir(), 'mcp-test-emit-'));
@@ -45,10 +41,7 @@ describe('emitEvent', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const parsed: unknown = JSON.parse(content.trim());
-    expect(isRecord(parsed)).toBe(true);
-    if (isRecord(parsed)) {
-      expect(typeof parsed.t).toBe('string');
-    }
+    expect(parsed).toMatchObject({ t: expect.any(String) });
   });
 
   it('overrides a client-provided t with the server timestamp', async () => {
@@ -61,11 +54,8 @@ describe('emitEvent', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const parsed: unknown = JSON.parse(content.trim());
-    expect(isRecord(parsed)).toBe(true);
-    if (isRecord(parsed)) {
-      expect(parsed.t).not.toBe(clientTimestamp);
-      expect(typeof parsed.t).toBe('string');
-    }
+    expect(parsed).toMatchObject({ t: expect.any(String) });
+    expect(parsed).not.toMatchObject({ t: clientTimestamp });
   });
 
   it('returns error for invalid events without writing', async () => {
