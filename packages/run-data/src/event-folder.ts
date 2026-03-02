@@ -107,9 +107,7 @@ function applyEvent(state: CanonicalRunStatus, event: RunEvent): void {
       break;
 
     case 'phase_decision':
-      if (state.phaseDecisions === undefined) {
-        state.phaseDecisions = {};
-      }
+      state.phaseDecisions ??= {};
       state.phaseDecisions[event.phase] = {
         run: event.run,
         reason: event.reason,
@@ -252,50 +250,31 @@ function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName): vo
   }
 }
 
-function toPhaseStatus(s: string): PhaseStatus {
-  switch (s) {
-    case 'completed':
-      return 'completed';
-    case 'skipped':
-      return 'skipped';
-    case 'failed':
-      return 'failed';
-    case 'in_progress':
-      return 'in_progress';
-    case 'approved':
-      return 'approved';
-    default:
-      return 'completed';
-  }
-}
-
 function applyPhaseCompleted(
   state: CanonicalRunStatus,
   phase: EventPhaseName,
   status: PhaseStatus,
   data: Record<string, unknown> | undefined,
 ): void {
-  const ps = toPhaseStatus(status);
-
   switch (phase) {
     case 'architecture': {
-      const existing = state.phases.architecture ?? { impactLevel: undefined, artifact: undefined, status: ps };
-      state.phases.architecture = mergeArchitecture(existing, ps, data);
+      const existing = state.phases.architecture ?? { impactLevel: undefined, artifact: undefined, status };
+      state.phases.architecture = mergeArchitecture(existing, status, data);
       break;
     }
     case 'planning': {
-      const existing = state.phases.planning ?? { stepCount: undefined, artifacts: undefined, status: ps };
-      state.phases.planning = mergePlanning(existing, ps, data);
+      const existing = state.phases.planning ?? { stepCount: undefined, artifacts: undefined, status };
+      state.phases.planning = mergePlanning(existing, status, data);
       break;
     }
     case 'implementation': {
-      const existing = state.phases.implementation ?? { artifact: undefined, qualityGates: undefined, status: ps };
-      state.phases.implementation = mergeImplementation(existing, ps, data);
+      const existing = state.phases.implementation ?? { artifact: undefined, qualityGates: undefined, status };
+      state.phases.implementation = mergeImplementation(existing, status, data);
       break;
     }
     case 'review':
       if (state.phases.parallelReview) {
-        state.phases.parallelReview.status = ps;
+        state.phases.parallelReview.status = status;
         if (data) {
           if (isCriticality(data.aggregatedCriticality)) {
             state.phases.parallelReview.aggregatedCriticality = data.aggregatedCriticality;
@@ -314,7 +293,7 @@ function applyPhaseCompleted(
         coderFixCycleRan: false,
         artifact: undefined,
       };
-      state.phases.codeSimplifier = mergeCodeSimplifier(existing, ps, data);
+      state.phases.codeSimplifier = mergeCodeSimplifier(existing, status, data);
       break;
     }
     case 'holistic': {
@@ -324,9 +303,9 @@ function applyPhaseCompleted(
         coderFixCycleRan: false,
         reviewRoundsUsed: 0,
         artifact: undefined,
-        status: ps,
+        status,
       };
-      state.phases.holisticReview = mergeHolisticReview(existing, ps, data);
+      state.phases.holisticReview = mergeHolisticReview(existing, status, data);
       break;
     }
   }
@@ -417,14 +396,9 @@ function applyArtifactWritten(
     type: event.type,
     phase: event.phase,
     createdAt: event.t,
+    ...(event.iteration !== undefined && { iteration: event.iteration }),
+    ...(event.note !== undefined && { note: event.note }),
   };
-
-  if (event.iteration !== undefined) {
-    artifact.iteration = event.iteration;
-  }
-  if (event.note !== undefined) {
-    artifact.note = event.note;
-  }
 
   if (!state.artifacts) {
     state.artifacts = [];
