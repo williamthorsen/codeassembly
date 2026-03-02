@@ -41,7 +41,7 @@
     "root:test": "vitest --config ./vitest.root.config.ts",
     "root:typecheck": "tsgo --noEmit",
     "test": "pnpm run root:test && pnpm --recursive run ws test",
-    "test:coverage": "pnpm --recursive run ws test:coverage",
+    "test:coverage": "pnpm run root:test && pnpm --recursive run ws test:coverage",
     "test:watch": "vitest --watch",
     "typecheck": "pnpm run typecheck:root && pnpm --recursive run ws typecheck",
     "typecheck:root": "tsgo --noEmit",
