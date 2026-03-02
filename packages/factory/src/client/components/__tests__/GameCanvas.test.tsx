@@ -209,11 +209,11 @@ describe('GameCanvas', () => {
 
       const callback = capturedHoverCallback;
       expect(callback).toBeDefined();
-      if (callback !== undefined) {
-        act(() => {
-          callback({ type: 'code', pageX: 100, pageY: 200 });
-        });
-      }
+      if (callback === undefined) throw new Error('Expected hover callback to be captured');
+
+      act(() => {
+        callback({ type: 'code', pageX: 100, pageY: 200 });
+      });
 
       const tooltip = container.querySelector('[role="tooltip"]');
       expect(tooltip).not.toBeNull();
@@ -225,19 +225,19 @@ describe('GameCanvas', () => {
 
       const callback = capturedHoverCallback;
       expect(callback).toBeDefined();
-      if (callback !== undefined) {
-        act(() => {
-          callback({ type: 'code', pageX: 100, pageY: 200 });
-        });
+      if (callback === undefined) throw new Error('Expected hover callback to be captured');
 
-        expect(container.querySelector('[role="tooltip"]')).not.toBeNull();
+      act(() => {
+        callback({ type: 'code', pageX: 100, pageY: 200 });
+      });
 
-        act(() => {
-          callback(null);
-        });
+      expect(container.querySelector('[role="tooltip"]')).not.toBeNull();
 
-        expect(container.querySelector('[role="tooltip"]')).toBeNull();
-      }
+      act(() => {
+        callback(null);
+      });
+
+      expect(container.querySelector('[role="tooltip"]')).toBeNull();
     });
   });
 });

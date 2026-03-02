@@ -161,11 +161,10 @@ describe('ArtifactActor', () => {
 
       const handler = lastActorHandlers.get('pointerenter');
       expect(handler).toBeDefined();
+      if (handler === undefined) throw new Error('Expected pointerenter handler to be registered');
 
-      if (handler !== undefined) {
-        const mockEvt = { pagePos: { x: 150, y: 250 } };
-        handler(mockEvt);
-      }
+      const mockEvt = { pagePos: { x: 150, y: 250 } };
+      handler(mockEvt);
 
       expect(onEnter).toHaveBeenCalledWith(150, 250);
     });
@@ -177,10 +176,9 @@ describe('ArtifactActor', () => {
 
       const handler = lastActorHandlers.get('pointerleave');
       expect(handler).toBeDefined();
+      if (handler === undefined) throw new Error('Expected pointerleave handler to be registered');
 
-      if (handler !== undefined) {
-        handler();
-      }
+      handler();
 
       expect(onLeave).toHaveBeenCalled();
     });

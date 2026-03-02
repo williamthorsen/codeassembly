@@ -56,6 +56,28 @@ describe('ArtifactTooltip', () => {
     expect(text).not.toContain('agent:');
   });
 
+  it('does not render the note field (reserved for future use)', () => {
+    const { container } = render(
+      <ArtifactTooltip
+        type="architecture"
+        tooltip={{
+          filename: 'arch.md',
+          role: 'architect',
+          agent: 'orchestrated-architect',
+          phase: 'architecture',
+          createdAt: '2026-01-15T10:30:00Z',
+          note: 'Architecture assessment with high impact',
+        }}
+        pageX={100}
+        pageY={200}
+      />,
+    );
+
+    const text = container.textContent;
+    expect(text).not.toContain('Architecture assessment with high impact');
+    expect(text).not.toContain('note:');
+  });
+
   it('applies position: fixed with correct offset via inline style', () => {
     const { container } = render(
       <ArtifactTooltip type="code" pageX={100} pageY={200} />,
@@ -63,10 +85,12 @@ describe('ArtifactTooltip', () => {
 
     const tooltip = container.querySelector('[role="tooltip"]');
     expect(tooltip).not.toBeNull();
-    if (tooltip !== null && tooltip instanceof HTMLElement) {
-      expect(tooltip.style.position).toBe('fixed');
-      expect(tooltip.style.left).toBe('112px');
-      expect(tooltip.style.top).toBe('212px');
-    }
+    if (tooltip === null) throw new Error('Expected tooltip element to exist');
+    expect(tooltip).toBeInstanceOf(HTMLElement);
+    if (!(tooltip instanceof HTMLElement)) throw new Error('Expected tooltip to be an HTMLElement');
+
+    expect(tooltip.style.position).toBe('fixed');
+    expect(tooltip.style.left).toBe('112px');
+    expect(tooltip.style.top).toBe('212px');
   });
 });

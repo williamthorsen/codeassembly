@@ -159,8 +159,20 @@ interface MockActorWithKind {
   agentKey?: string;
   role?: string;
   roleType?: string;
+  type?: string;
   position?: { x: number; y: number };
   callbacks?: unknown;
+}
+
+interface CallbackPair {
+  onEnter: (pageX: number, pageY: number) => void;
+  onLeave: () => void;
+}
+
+function isCallbackPair(value: unknown): value is CallbackPair {
+  if (typeof value !== 'object' || value === null) return false;
+  if (!('onEnter' in value) || !('onLeave' in value)) return false;
+  return typeof value.onEnter === 'function' && typeof value.onLeave === 'function';
 }
 
 function hasKind(value: unknown): value is MockActorWithKind {
@@ -1285,6 +1297,104 @@ describe('FactoryScene', () => {
         const actor = getActorFromCall(call);
         expect(actor.callbacks).toBeUndefined();
       }
+    });
+
+    it('onEnter callback emits ArtifactHoverEvent with tooltip data for entry-based artifacts', () => {
+      const onHover = vi.fn();
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+        artifacts: [
+          {
+            filename: 'arch-analysis.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-15T10:30:00Z',
+          },
+        ],
+      });
+      const scene = new FactoryScene(status, onHover);
+      scene.onInitialize();
+
+      const artifactCalls = mockSceneAdd.mock.calls.filter(
+        (call: unknown[]) => getActorFromCall(call).kind === 'artifact',
+      );
+      expect(artifactCalls.length).toBeGreaterThan(0);
+
+      const firstArtifact = getActorFromCall(artifactCalls[0] ?? []);
+      const callbacks = firstArtifact.callbacks;
+      expect(callbacks).toBeDefined();
+      if (!isCallbackPair(callbacks)) throw new Error('Expected callbacks with onEnter and onLeave');
+
+      callbacks.onEnter(200, 300);
+
+      expect(onHover).toHaveBeenCalledWith({
+        type: 'architecture',
+        pageX: 200,
+        pageY: 300,
+        tooltip: {
+          filename: 'arch-analysis.md',
+          role: 'architect',
+          agent: 'orchestrated-architect',
+          phase: 'architecture',
+          createdAt: '2026-01-15T10:30:00Z',
+        },
+      });
+    });
+
+    it('onEnter callback emits ArtifactHoverEvent without tooltip for fallback-path artifacts', () => {
+      const onHover = vi.fn();
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status, onHover);
+      scene.onInitialize();
+
+      const artifactCalls = mockSceneAdd.mock.calls.filter(
+        (call: unknown[]) => getActorFromCall(call).kind === 'artifact',
+      );
+      expect(artifactCalls.length).toBeGreaterThan(0);
+
+      const firstArtifact = getActorFromCall(artifactCalls[0] ?? []);
+      const callbacks = firstArtifact.callbacks;
+      expect(callbacks).toBeDefined();
+      if (!isCallbackPair(callbacks)) throw new Error('Expected callbacks with onEnter and onLeave');
+
+      callbacks.onEnter(100, 150);
+
+      expect(onHover).toHaveBeenCalledWith({
+        type: firstArtifact.type,
+        pageX: 100,
+        pageY: 150,
+      });
+    });
+
+    it('onLeave callback emits null to dismiss tooltip', () => {
+      const onHover = vi.fn();
+      const status = createMockRunStatus({
+        status: 'completed',
+        phases: createCompletedRunPhases(),
+      });
+      const scene = new FactoryScene(status, onHover);
+      scene.onInitialize();
+
+      const artifactCalls = mockSceneAdd.mock.calls.filter(
+        (call: unknown[]) => getActorFromCall(call).kind === 'artifact',
+      );
+      expect(artifactCalls.length).toBeGreaterThan(0);
+
+      const firstArtifact = getActorFromCall(artifactCalls[0] ?? []);
+      const callbacks = firstArtifact.callbacks;
+      expect(callbacks).toBeDefined();
+      if (!isCallbackPair(callbacks)) throw new Error('Expected callbacks with onEnter and onLeave');
+
+      callbacks.onLeave();
+
+      expect(onHover).toHaveBeenCalledWith(null);
     });
   });
 });
