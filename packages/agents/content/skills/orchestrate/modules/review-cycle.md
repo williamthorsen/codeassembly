@@ -31,6 +31,8 @@ After this module completes, the orchestrate engine reads:
 
 Sub-phase state is recorded via `emit_event` calls at the points described in each sub-phase section below. Use `{run-dir}` for all MCP tool calls.
 
+**`get_run_state` fallback policy:** If any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary. This applies to every `get_run_state` call in this module.
+
 ## Phase 4: Parallel review (required, max N iterations)
 
 Dispatch the core reviewer and all aspect reviewers in parallel on the same code snapshot. All reviewers examine the initial implementation simultaneously, then findings are aggregated for a single fix cycle.
@@ -166,7 +168,7 @@ Call `register_artifact` for each reviewer's artifact file.
 
 ### Flow control
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state for the following decision — specifically the authoritative aggregated criticality and `reviewRoundsUsed`. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state for the following decision — specifically the authoritative aggregated criticality and `reviewRoundsUsed`.
 
 Before applying these rules, check the iteration budget. If N iterations have been reached, exit with `needs_manual_review` regardless of criticality. Otherwise, use the aggregated criticality and the two thresholds to determine next steps:
 
@@ -204,7 +206,7 @@ After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "co
 
 ### Selective re-review
 
-After the coder fix cycle, call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read per-reviewer criticality and determine which reviewers need re-review. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+After the coder fix cycle, call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read per-reviewer criticality and determine which reviewers need re-review.
 
 Determine which reviewers' findings were addressed by examining the coder's change summary. Only re-dispatch reviewers whose findings the coder acted on — skip reviewers whose findings were already `none` or whose findings were deferred. Re-review is warranted whenever the coder acted on findings from one or more reviewers; the scope of re-review is limited to those reviewers.
 
@@ -224,7 +226,7 @@ Aggregate findings again using the same rules. If new actionable findings emerge
 
 ### Loop termination
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `reviewRoundsUsed` from state rather than relying on conversation-tracked iteration count. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `reviewRoundsUsed` from state rather than relying on conversation-tracked iteration count.
 
 - After N iterations unresolved (where N is the configured `max-review-rounds`): exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
 - Structural issues: may return to Planning once per run.
@@ -294,7 +296,7 @@ After the parallel review and code-simplifier complete, perform one additional r
 
 The initial Phase 4b review always runs regardless of remaining budget. Phase 4b shares the review-round budget with Phase 4 only for subsequent fix-and-re-review cycles — rounds consumed in Phase 4 reduce the budget available for those cycles.
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to confirm whether Phase 4 exited `needs_manual_review` (which would skip Phase 4b) or converged. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to confirm whether Phase 4 exited `needs_manual_review` (which would skip Phase 4b) or converged.
 
 Emit `phase_decision` for `holisticReview` before Phase 4b executes:
 
@@ -336,7 +338,7 @@ Call `register_artifact` for the holistic review artifact.
 
 Extract `Criticality` using Task return parsing (see SKILL.md).
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read total `reviewRoundsUsed` across Phase 4 and 4b combined for the budget decision below. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read total `reviewRoundsUsed` across Phase 4 and 4b combined for the budget decision below.
 
 - **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
 - **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.

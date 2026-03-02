@@ -145,6 +145,8 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
 
 ### Schema
 
+> **Note:** The following examples show v2 format. New orchestrated runs use v3 (event-sourced) -- see the [V3 format](#v3-format-event-sourced-runs) section below.
+
 **Initial write** (at run start):
 
 ```json
@@ -500,7 +502,7 @@ Full run state (phases, artifacts, review rounds, criticalities) is reconstructe
 
 ### Backward compatibility
 
-V2 and v1 `run-index.json` formats remain supported by the Factory consumer. The `version` field distinguishes formats: absent = v1, `2` = v2, `3` = v3.
+V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ## Artifact types
 

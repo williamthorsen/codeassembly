@@ -316,7 +316,7 @@ Pass the fully resolved models map to the module. The module uses `{models.revie
 
 ### review-cycle: resolving `{change-summary-path}`
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string. If `get_run_state` fails (MCP server unavailable), fall back to conversation-tracked artifact paths and record a warning in the run summary.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
 
 ## Phase 1: Architecture (optional)
 
@@ -482,6 +482,7 @@ Subagents include a structured return block at the end of their Task response. T
 - **Subagent failure**: emit `phase_completed` with `status: "failed"`, retry same phase once. If retry fails, emit `phase_completed` with `status: "failed"` again and proceed to summary.
 - **maxTurns exhausted**: record as `needs_manual_review`.
 - **Quality gate failure** (coder reports failing gates): treat as review finding at `critical` severity.
+- **`get_run_state` unavailable**: if any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
 
 ## Constraints
 
