@@ -1,7 +1,12 @@
 import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE } from '../../../shared/constants/role-types.js';
 import { findCurrentPhase, isPhasePresentInData } from '../../../shared/phase-inference.js';
-import type { ArtifactEntry, CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
+import type {
+  ArtifactEntry,
+  CanonicalRunStatus,
+  ParallelReviewPhase,
+  Phases,
+} from '../../../shared/types/canonical.js';
 
 export interface StationConfig {
   phase: string;
@@ -55,6 +60,11 @@ function isPresent<T>(value: T | null | undefined): value is T {
   return value !== undefined && value !== null;
 }
 
+/** Narrow an unknown value to a non-null object (safe for `Object.keys`). */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 function isPhaseActive(phase: PhaseName, phases: Phases, runStatus: string, currentPhase?: PhaseName): boolean {
   if (phase === currentPhase) return true;
   if (phase === 'summary') return runStatus === 'completed';
@@ -101,11 +111,66 @@ function findOrchestratorStation(phases: Phases, runStatus: string, currentPhase
   return undefined;
 }
 
+/**
+ * Extract reviewer names from any known parallelReview data shape.
+ *
+ * The orchestrate skill evolved its run-index.json format, producing three
+ * known shapes for the parallelReview phase:
+ *   1. Flat `reviewers` record (older runs) — keyed by reviewer name
+ *   2. `iterations[].perReviewer` records — keyed by reviewer name
+ *   3. Top-level `reviewerDetails` record — keyed by reviewer name
+ *
+ * Shapes 2 and 3 pass through Zod's `.partial().loose()` validation
+ * as untyped extra properties. Runtime access uses defensive type narrowing.
+ */
+function extractReviewerNames(parallelReview: ParallelReviewPhase): string[] {
+  // Shape 1: flat reviewers record (canonical typed shape)
+  const reviewers = parallelReview.reviewers;
+  if (isPresent(reviewers) && Object.keys(reviewers).length > 0) {
+    return Object.keys(reviewers);
+  }
+
+  // Shape 2: iterations[].perReviewer (passes through Zod .loose())
+  const iterations = parallelReview.iterations;
+  if (isPresent(iterations) && iterations.length > 0) {
+    const names = new Set<string>();
+    for (const iteration of iterations) {
+      // perReviewer is an untyped property that passes through Zod .loose()
+      if ('perReviewer' in iteration) {
+        const perReviewer: unknown = iteration.perReviewer;
+        if (isRecord(perReviewer)) {
+          for (const name of Object.keys(perReviewer)) {
+            names.add(name);
+          }
+        }
+      }
+      // Also collect from the typed reviewers: string[] array
+      if (Array.isArray(iteration.reviewers)) {
+        for (const name of iteration.reviewers) {
+          names.add(name);
+        }
+      }
+    }
+    if (names.size > 0) return Array.from(names);
+  }
+
+  // Shape 3: top-level reviewerDetails (passes through Zod .loose())
+  if ('reviewerDetails' in parallelReview) {
+    const reviewerDetails: unknown = parallelReview.reviewerDetails;
+    if (isRecord(reviewerDetails)) {
+      const keys = Object.keys(reviewerDetails);
+      if (keys.length > 0) return keys;
+    }
+  }
+
+  return [];
+}
+
 function buildReviewerAgents(phases: Phases): AgentConfig[] {
   if (isPresent(phases.parallelReview)) {
-    const reviewerEntries = Object.entries(phases.parallelReview.reviewers);
-    if (reviewerEntries.length > 0) {
-      return reviewerEntries.map(([name], i) => ({
+    const reviewerNames = extractReviewerNames(phases.parallelReview);
+    if (reviewerNames.length > 0) {
+      return reviewerNames.map((name, i) => ({
         role: name,
         roleType: PHASE_ROLE_TYPE.review,
         stationIndex: 3,
@@ -138,7 +203,8 @@ export const REVIEW_STATION_INDEX = 3;
  */
 function computeOrchestratorLevel(station: number, phases: Phases): number {
   if (station !== REVIEW_STATION_INDEX) return 0;
-  const reviewerCount = Object.keys(phases.parallelReview?.reviewers ?? {}).length;
+  if (!isPresent(phases.parallelReview)) return 0;
+  const reviewerCount = extractReviewerNames(phases.parallelReview).length;
   return reviewerCount > 1 ? reviewerCount - 1 : 0;
 }
 
