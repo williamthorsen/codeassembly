@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-const { mockActorConstructor } = vi.hoisted(() => {
+type EventHandler = (...args: unknown[]) => void;
+
+const { mockActorConstructor, lastActorHandlers } = vi.hoisted(() => {
   return {
     mockActorConstructor: vi.fn(),
+    lastActorHandlers: new Map<string, EventHandler>(),
   };
 });
 
@@ -12,6 +15,10 @@ vi.mock('excalibur', () => {
     constructor(config: Record<string, unknown>) {
       mockActorConstructor(config);
       this.config = config;
+      lastActorHandlers.clear();
+    }
+    on(event: string, handler: EventHandler) {
+      lastActorHandlers.set(event, handler);
     }
   }
 
@@ -138,5 +145,42 @@ describe('ArtifactActor', () => {
         color: Color.fromHex(PALETTE.darkCyan),
       }),
     );
+  });
+
+  describe('pointer events', () => {
+    it('does not register event listeners when callbacks is omitted', () => {
+      new ArtifactActor('code', vec(0, 0));
+
+      expect(lastActorHandlers.size).toBe(0);
+    });
+
+    it('fires onEnter with page coordinates on pointerenter', () => {
+      const onEnter = vi.fn();
+      const onLeave = vi.fn();
+      new ArtifactActor('code', vec(0, 0), undefined, { onEnter, onLeave });
+
+      const handler = lastActorHandlers.get('pointerenter');
+      expect(handler).toBeDefined();
+      if (handler === undefined) throw new Error('Expected pointerenter handler to be registered');
+
+      const mockEvt = { pagePos: { x: 150, y: 250 } };
+      handler(mockEvt);
+
+      expect(onEnter).toHaveBeenCalledWith(150, 250);
+    });
+
+    it('fires onLeave on pointerleave', () => {
+      const onEnter = vi.fn();
+      const onLeave = vi.fn();
+      new ArtifactActor('code', vec(0, 0), undefined, { onEnter, onLeave });
+
+      const handler = lastActorHandlers.get('pointerleave');
+      expect(handler).toBeDefined();
+      if (handler === undefined) throw new Error('Expected pointerleave handler to be registered');
+
+      handler();
+
+      expect(onLeave).toHaveBeenCalled();
+    });
   });
 });

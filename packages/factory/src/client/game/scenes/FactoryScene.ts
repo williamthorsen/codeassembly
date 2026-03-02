@@ -11,10 +11,19 @@ import { StationActor } from '../actors/StationActor.js';
 import type { LayoutResult } from '../layout/platform-layout.js';
 import { computeLayout, REVIEW_STATION_INDEX } from '../layout/platform-layout.js';
 import { computeWalkPath, type Waypoint } from '../layout/walk-path.js';
-import type { AgentConfig, GateConfig, SceneConfig } from '../mappers/run-to-scene.js';
+import type { AgentConfig, ArtifactTooltipData, GateConfig, SceneConfig } from '../mappers/run-to-scene.js';
 import { createSceneConfig } from '../mappers/run-to-scene.js';
 import { diffAgents } from '../state/agent-differ.js';
 import { resolveAgentStates } from '../state/agent-state-resolver.js';
+
+export interface ArtifactHoverEvent {
+  type: string;
+  tooltip?: ArtifactTooltipData;
+  pageX: number;
+  pageY: number;
+}
+
+export type OnArtifactHover = (event: ArtifactHoverEvent | null) => void;
 
 function delay(ms: number): Promise<void> {
   return new Promise<void>((resolve) => {
@@ -35,10 +44,12 @@ export class FactoryScene extends Scene {
   private prevGateConfigs: GateConfig[] = [];
   private status: CanonicalRunStatus;
   private layout: LayoutResult | undefined;
+  private onArtifactHover: OnArtifactHover | undefined;
 
-  constructor(status: CanonicalRunStatus) {
+  constructor(status: CanonicalRunStatus, onArtifactHover?: OnArtifactHover) {
     super();
     this.status = status;
+    this.onArtifactHover = onArtifactHover;
     this.backgroundColor = Color.fromHex(PALETTE.black);
   }
 
@@ -89,7 +100,25 @@ export class FactoryScene extends Scene {
 
     for (const artifact of config.artifacts) {
       const pos = this.layout.artifactPosition(artifact.stationIndex, artifact.indexAtStation);
-      this.add(new ArtifactActor(artifact.type, vec(pos.x, pos.y), this.layout.artifactSize));
+      const onArtifactHover = this.onArtifactHover;
+
+      const callbacks =
+        onArtifactHover === undefined
+          ? undefined
+          : {
+              onEnter: (pageX: number, pageY: number) => {
+                const event: ArtifactHoverEvent = { type: artifact.type, pageX, pageY };
+                if (artifact.tooltip !== undefined) {
+                  event.tooltip = artifact.tooltip;
+                }
+                onArtifactHover(event);
+              },
+              onLeave: () => {
+                onArtifactHover(null);
+              },
+            };
+
+      this.add(new ArtifactActor(artifact.type, vec(pos.x, pos.y), this.layout.artifactSize, callbacks));
     }
   }
 
