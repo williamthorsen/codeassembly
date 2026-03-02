@@ -3,6 +3,16 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 
 export const baseConfig = defineConfig({
   plugins: [tsconfigPaths()],
+  resolve: {
+    // Prefer "source" exports condition so workspace packages resolve from .ts source
+    // during testing, without requiring a prior build step.
+    conditions: ['source'],
+  },
+  ssr: {
+    resolve: {
+      conditions: ['source'],
+    },
+  },
   test: {
     coverage: {
       enabled: false, // don't check coverage unless the `--coverage` flag is passed

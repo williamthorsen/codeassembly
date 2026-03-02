@@ -1,5 +1,11 @@
 {
   "enabledPlugins": {
     "pixel-plugin@pixel-plugin": true
+  },
+  "mcpServers": {
+    "codeassembly": {
+      "command": "node",
+      "args": ["packages/mcp/dist/esm/cli.js"]
+    }
   }
 }
