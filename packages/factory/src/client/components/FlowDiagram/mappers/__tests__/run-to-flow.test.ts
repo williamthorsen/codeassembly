@@ -347,7 +347,7 @@ describe('createFlowConfig', () => {
       const { nodes } = createFlowConfig(status);
       const agentNodes = nodes.filter((n) => n.id.startsWith('agent-'));
 
-      expect(agentNodes.length).toBeGreaterThan(0);
+      expect(agentNodes.length).toBe(3);
       for (const node of agentNodes) {
         // Timestamps indicate completed; status should not be forced to 'failed'
         expect(node.data.status).toBe('completed');
