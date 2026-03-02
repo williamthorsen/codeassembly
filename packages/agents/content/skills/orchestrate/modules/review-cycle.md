@@ -6,17 +6,17 @@ Orchestrate the parallel review, code-simplifier, and holistic review phases as 
 
 The orchestrate engine must provide these context variables before entering this module:
 
-| Variable                | Description                                                          |
-| ----------------------- | -------------------------------------------------------------------- |
-| `{task}`                | Task description                                                     |
-| `{ticket-content}`      | GitHub issue body (empty string if unavailable)                      |
-| `{artifact-dir}`        | Full path to the run artifact directory                              |
-| `{merge-base-sha}`      | Concrete merge-base SHA for diffing                                  |
-| `{change-summary-path}` | Path to the most recent `coder_change-summary.md`                    |
-| `{max-review-rounds}`   | Maximum iterative review rounds before `needs_manual_review`         |
-| `{approval-threshold}`  | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`) |
+| Variable                | Description                                                                                                 |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `{task}`                | Task description                                                                                            |
+| `{ticket-content}`      | GitHub issue body (empty string if unavailable)                                                             |
+| `{artifact-dir}`        | Full path to the run artifact directory                                                                     |
+| `{merge-base-sha}`      | Concrete merge-base SHA for diffing                                                                         |
+| `{change-summary-path}` | Path to the most recent `coder_change-summary.md`                                                           |
+| `{max-review-rounds}`   | Maximum iterative review rounds before `needs_manual_review`                                                |
+| `{approval-threshold}`  | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                |
 | `{budget-threshold}`    | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`) |
-| `{models}`              | Resolved model assignments map (see "Resolving models" in SKILL.md)  |
+| `{models}`              | Resolved model assignments map (see "Resolving models" in SKILL.md)                                         |
 
 ## Exit state
 
@@ -209,7 +209,7 @@ Write run-index.json at every state transition within Phase 4:
 
 ## Phase 4a: Code simplifier
 
-After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
+After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded in run-index.json but should NOT block progression to Phase 4b or fail the run.
 
 Before dispatching code-simplifier, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
 
@@ -279,11 +279,10 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 
 Extract `Criticality` using Task return parsing (see SKILL.md).
 
-- **`none`**: set `{review-status}` to `converged`.
 - **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
 - **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then re-review using remaining budget (opportunistic).
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
-- **criticality < budget_threshold**: set `{review-status}` to `converged` (report only).
+- **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
 
 After: record `context.phaseDecisions.holisticReview` with `{ "run": true, "disposition": "executed" }` (or `{ "run": false, "disposition": "skipped", "reason": "Phase 4 exited with needs_manual_review" }` if skipped) and update `context.phases.holisticReview` in run-index.json with `status: "completed"` (or `"failed"` / `"needs_manual_review"`), `completedAt: {ISO timestamp}`, and the holistic review outcome (criticality and whether a coder fix round was needed).
