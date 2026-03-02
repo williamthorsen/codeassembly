@@ -216,6 +216,30 @@ describe('foldEvents', () => {
     });
   });
 
+  it('sets iteration and note on artifact when present in artifact_written', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      {
+        t: '2026-01-01T00:02:00Z',
+        event: 'artifact_written',
+        filename: 'fix-summary.md',
+        role: 'coder',
+        roleType: 'implementer',
+        agent: 'orchestrated-coder',
+        type: 'change-summary',
+        phase: 'review',
+        iteration: 2,
+        note: 'revised after review',
+      },
+    ];
+
+    const result = foldEvents(header, events);
+
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts?.[0]?.iteration).toBe(2);
+    expect(result.artifacts?.[0]?.note).toBe('revised after review');
+  });
+
   it('sets status and completedAt on run_completed', () => {
     const header = createHeader();
     const events: RunEvent[] = [{ t: '2026-01-01T01:00:00Z', event: 'run_completed', status: 'completed' }];
