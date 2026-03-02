@@ -75,8 +75,8 @@ describe('PhaseGroupNode', () => {
 
   it('applies role-type data attribute to header label', () => {
     const { container } = render(<PhaseGroupNode {...createNodeProps({ roleType: 'analyst' })} />);
-    const label = container.querySelector('.flow-node__label');
+    const label = container.querySelector<HTMLElement>('.flow-node__label');
     expect(label).not.toBeNull();
-    expect(label?.getAttribute('data-role-type')).toBe('analyst');
+    expect(label?.dataset.roleType).toBe('analyst');
   });
 });

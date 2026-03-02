@@ -145,9 +145,9 @@ describe('PhaseAgentNode', () => {
     const tc = screen.getByText('TC');
     const li = screen.getByText('LI');
     const te = screen.getByText('TE');
-    expect(tc.getAttribute('data-gate-status')).toBe('pass');
-    expect(li.getAttribute('data-gate-status')).toBe('pass');
-    expect(te.getAttribute('data-gate-status')).toBe('pass');
+    expect(tc.dataset.gateStatus).toBe('pass');
+    expect(li.dataset.gateStatus).toBe('pass');
+    expect(te.dataset.gateStatus).toBe('pass');
     // Verify the container element exists
     expect(container.querySelector('.flow-node__badge')).not.toBeNull();
   });
@@ -166,9 +166,9 @@ describe('PhaseAgentNode', () => {
     const tc = screen.getByText('TC');
     const li = screen.getByText('LI');
     const te = screen.getByText('TE');
-    expect(tc.getAttribute('data-gate-status')).toBe('fail');
-    expect(li.getAttribute('data-gate-status')).toBe('fail');
-    expect(te.getAttribute('data-gate-status')).toBe('fail');
+    expect(tc.dataset.gateStatus).toBe('fail');
+    expect(li.dataset.gateStatus).toBe('fail');
+    expect(te.dataset.gateStatus).toBe('fail');
   });
 
   it('marks undefined quality gates with data-gate-status unknown', () => {
@@ -185,9 +185,9 @@ describe('PhaseAgentNode', () => {
     const tc = screen.getByText('TC');
     const li = screen.getByText('LI');
     const te = screen.getByText('TE');
-    expect(tc.getAttribute('data-gate-status')).toBe('unknown');
-    expect(li.getAttribute('data-gate-status')).toBe('unknown');
-    expect(te.getAttribute('data-gate-status')).toBe('unknown');
+    expect(tc.dataset.gateStatus).toBe('unknown');
+    expect(li.dataset.gateStatus).toBe('unknown');
+    expect(te.dataset.gateStatus).toBe('unknown');
   });
 
   it('does not render impactLevel badge when phase is planning', () => {
