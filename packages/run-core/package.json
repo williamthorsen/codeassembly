@@ -1,0 +1,12 @@
+{
+  "name": "@codeassembly/run-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
+  },
+  "dependencies": {
+    "zod": "4.3.6"
+  }
+}
