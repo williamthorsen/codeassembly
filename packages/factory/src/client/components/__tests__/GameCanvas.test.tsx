@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
@@ -53,12 +53,15 @@ vi.mock('excalibur', () => {
   };
 });
 
+let capturedHoverCallback: ((event: unknown) => void) | undefined;
+
 vi.mock('../../game/scenes/FactoryScene.js', () => ({
   FactoryScene: class MockFactoryScene {
     status: CanonicalRunStatus;
     updateStatus = mockUpdateStatus;
-    constructor(status: CanonicalRunStatus) {
+    constructor(status: CanonicalRunStatus, onArtifactHover?: (event: unknown) => void) {
       this.status = status;
+      capturedHoverCallback = onArtifactHover;
     }
   },
 }));
@@ -68,6 +71,7 @@ vi.mock('../../game/sprites/agent-sprite-loader.js', () => ({
 }));
 
 vi.mock('../GameCanvas.css', () => ({}));
+vi.mock('../ArtifactTooltip.css', () => ({}));
 
 const { GameCanvas } = await import('../GameCanvas.js');
 const { FactoryScene } = await import('../../game/scenes/FactoryScene.js');
@@ -86,6 +90,7 @@ describe('GameCanvas', () => {
     mockEngineGoToScene.mockClear();
     mockUpdateStatus.mockClear();
     mockLoadAllSprites.mockClear();
+    capturedHoverCallback = undefined;
   });
 
   afterEach(() => {
@@ -195,5 +200,44 @@ describe('GameCanvas', () => {
     const scene = getAddedScene();
     expect(scene).toBeDefined();
     expect(scene).toBeInstanceOf(FactoryScene);
+  });
+
+  describe('artifact hover tooltip', () => {
+    it('renders tooltip when hover callback fires with a non-null event', () => {
+      const status = createMockRunStatus();
+      const { container } = render(<GameCanvas status={status} />);
+
+      const callback = capturedHoverCallback;
+      expect(callback).toBeDefined();
+      if (callback !== undefined) {
+        act(() => {
+          callback({ type: 'code', pageX: 100, pageY: 200 });
+        });
+      }
+
+      const tooltip = container.querySelector('[role="tooltip"]');
+      expect(tooltip).not.toBeNull();
+    });
+
+    it('removes tooltip when hover callback fires with null', () => {
+      const status = createMockRunStatus();
+      const { container } = render(<GameCanvas status={status} />);
+
+      const callback = capturedHoverCallback;
+      expect(callback).toBeDefined();
+      if (callback !== undefined) {
+        act(() => {
+          callback({ type: 'code', pageX: 100, pageY: 200 });
+        });
+
+        expect(container.querySelector('[role="tooltip"]')).not.toBeNull();
+
+        act(() => {
+          callback(null);
+        });
+
+        expect(container.querySelector('[role="tooltip"]')).toBeNull();
+      }
+    });
   });
 });

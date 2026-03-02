@@ -1,9 +1,11 @@
 import { DisplayMode, Engine } from 'excalibur';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
+import type { ArtifactHoverEvent } from '../game/scenes/FactoryScene.js';
 import { FactoryScene } from '../game/scenes/FactoryScene.js';
 import { loadAllSprites } from '../game/sprites/agent-sprite-loader.js';
+import { ArtifactTooltip } from './ArtifactTooltip.js';
 
 import './GameCanvas.css';
 
@@ -15,6 +17,7 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const initializedRef = useRef(false);
+  const [hover, setHover] = useState<ArtifactHoverEvent | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -26,7 +29,7 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
       displayMode: DisplayMode.FitScreen,
     });
 
-    const scene = new FactoryScene(status);
+    const scene = new FactoryScene(status, setHover);
     engine.addScene('factory', scene);
     void engine.goToScene('factory');
 
@@ -58,5 +61,17 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
     }
   }, [status]);
 
-  return <canvas ref={canvasRef} className="game-canvas" />;
+  return (
+    <>
+      <canvas ref={canvasRef} className="game-canvas" />
+      {hover !== null && (
+        <ArtifactTooltip
+          type={hover.type}
+          {...(hover.tooltip === undefined ? {} : { tooltip: hover.tooltip })}
+          pageX={hover.pageX}
+          pageY={hover.pageY}
+        />
+      )}
+    </>
+  );
 }

@@ -22,10 +22,20 @@ export interface AgentConfig {
   approaching?: boolean;
 }
 
+export interface ArtifactTooltipData {
+  filename: string;
+  role: string;
+  agent: string;
+  phase: string;
+  createdAt: string;
+  note?: string;
+}
+
 export interface ArtifactConfig {
   type: string;
   stationIndex: number;
   indexAtStation: number;
+  tooltip?: ArtifactTooltipData;
 }
 
 export interface SceneConfig {
@@ -274,10 +284,21 @@ function buildArtifactsFromEntries(entries: ReadonlyArray<ArtifactEntry>): Artif
   for (const entry of entries) {
     const station = PHASE_TO_STATION[entry.phase];
     if (station === undefined) continue;
+    const tooltip: ArtifactTooltipData = {
+      filename: entry.filename,
+      role: entry.role,
+      agent: entry.agent,
+      phase: entry.phase,
+      createdAt: entry.createdAt,
+    };
+    if (entry.note !== undefined) {
+      tooltip.note = entry.note;
+    }
     artifacts.push({
       type: entry.type,
       stationIndex: station,
       indexAtStation: nextIndexAtStation(counter, station),
+      tooltip,
     });
   }
 

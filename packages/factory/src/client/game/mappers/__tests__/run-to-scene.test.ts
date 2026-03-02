@@ -956,8 +956,8 @@ describe('createSceneConfig', () => {
 
       // Should use the top-level artifacts array, not phase fields
       expect(config.artifacts).toHaveLength(2);
-      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
-      expect(config.artifacts[1]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 0 });
+      expect(config.artifacts[0]).toEqual(expect.objectContaining({ type: 'architecture', stationIndex: 0, indexAtStation: 0 }));
+      expect(config.artifacts[1]).toEqual(expect.objectContaining({ type: 'plan', stationIndex: 1, indexAtStation: 0 }));
     });
 
     it('falls back to phase fields when status.artifacts is undefined', () => {
@@ -1015,9 +1015,9 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
 
       expect(config.artifacts).toHaveLength(3);
-      expect(config.artifacts[0]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 0 });
-      expect(config.artifacts[1]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 1 });
-      expect(config.artifacts[2]).toEqual({ type: 'plan', stationIndex: 1, indexAtStation: 2 });
+      expect(config.artifacts[0]).toEqual(expect.objectContaining({ type: 'plan', stationIndex: 1, indexAtStation: 0 }));
+      expect(config.artifacts[1]).toEqual(expect.objectContaining({ type: 'plan', stationIndex: 1, indexAtStation: 1 }));
+      expect(config.artifacts[2]).toEqual(expect.objectContaining({ type: 'plan', stationIndex: 1, indexAtStation: 2 }));
     });
 
     it('maps codeSimplifier phase alias to station 4 (primary path)', () => {
@@ -1039,7 +1039,7 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
 
       expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]).toEqual({ type: 'simplifier', stationIndex: 4, indexAtStation: 0 });
+      expect(config.artifacts[0]).toEqual(expect.objectContaining({ type: 'simplifier', stationIndex: 4, indexAtStation: 0 }));
     });
 
     it('maps holisticReview phase alias to station 5 (primary path)', () => {
@@ -1061,7 +1061,7 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
 
       expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]).toEqual({ type: 'holistic', stationIndex: 5, indexAtStation: 0 });
+      expect(config.artifacts[0]).toEqual(expect.objectContaining({ type: 'holistic', stationIndex: 5, indexAtStation: 0 }));
     });
 
     it('skips entries with unknown phases (primary path)', () => {
@@ -1092,7 +1092,59 @@ describe('createSceneConfig', () => {
       const config = createSceneConfig(status);
 
       expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]).toEqual({ type: 'architecture', stationIndex: 0, indexAtStation: 0 });
+      expect(config.artifacts[0]).toEqual(expect.objectContaining({ type: 'architecture', stationIndex: 0, indexAtStation: 0 }));
+    });
+
+    it('populates tooltip data from ArtifactEntry fields (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+
+      expect(config.artifacts[0]?.tooltip).toEqual({
+        filename: 'arch.md',
+        role: 'architect',
+        agent: 'architect',
+        phase: 'architecture',
+        createdAt: '2026-01-01T00:10:00Z',
+      });
+    });
+
+    it('does not include roleType or iteration in tooltip data (primary path)', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        artifacts: [
+          {
+            filename: 'code.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:30:00Z',
+            iteration: 2,
+          },
+        ],
+      });
+
+      const config = createSceneConfig(status);
+      const tooltip = config.artifacts[0]?.tooltip;
+
+      expect(tooltip).toBeDefined();
+      expect(tooltip).not.toHaveProperty('roleType');
+      expect(tooltip).not.toHaveProperty('iteration');
     });
   });
 
