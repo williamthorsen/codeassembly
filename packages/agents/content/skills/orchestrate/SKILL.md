@@ -408,25 +408,25 @@ Write run-summary artifact to `{artifact-dir}/{timestamp}_orchestrator_run-summa
 
 ## Insights
 
-{Notable observations that emerged during the run. Include only items worth preserving — omit this section entirely if nothing notable emerged.}
+{Notable observations that emerged during the run. Include only items worth preserving — omit this section entirely if nothing notable emerged.
 
-{Examples of what belongs here:}
-{- Architectural patterns discovered or validated}
-{- Design trade-offs surfaced during review}
-{- Conventions or project-specific patterns learned}
-{- Surprising findings from reviewers that revealed something non-obvious}
-{- Technical debt or risks identified but not in scope to address}
+Examples of what belongs here:
+
+- Architectural patterns discovered or validated
+- Design trade-offs surfaced during review
+- Conventions or project-specific patterns learned
+- Surprising findings from reviewers that revealed something non-obvious
+- Technical debt or risks identified but not in scope to address}
 
 ## Deferred items
 
-{Items intentionally not addressed during this run, with rationale for each.}
+{Items intentionally not addressed during this run, with rationale for each. Omit this section entirely if nothing was deferred.
 
-{Include:}
-{- Deviations from reference plan (when external plan was provided)}
-{- Acceptance criteria from the ticket that were intentionally not addressed}
-{- Any other intentional omissions}
+Include:
 
-{Omit this section if nothing was deferred.}
+- Deviations from reference plan (when external plan was provided)
+- Acceptance criteria from the ticket that were intentionally not addressed
+- Any other intentional omissions}
 
 ## Files changed
 
