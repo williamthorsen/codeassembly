@@ -295,6 +295,22 @@ describe('createFlowConfig', () => {
         expect(node.data.status).toBe('failed');
       }
     });
+
+    it('generates no edges on a failed run because orchestrator node is absent', () => {
+      const status = createMockRunStatus({
+        status: 'failed',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'failed', artifact: undefined, qualityGates: undefined },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+
+      expect(edges.length).toBe(0);
+    });
   });
 
   describe('needs_manual_review runs', () => {
@@ -352,6 +368,22 @@ describe('createFlowConfig', () => {
         // Timestamps indicate completed; status should not be forced to 'failed'
         expect(node.data.status).toBe('completed');
       }
+    });
+
+    it('generates no edges on a needs_manual_review run because orchestrator node is absent', () => {
+      const status = createMockRunStatus({
+        status: 'needs_manual_review',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+      });
+
+      const { edges } = createFlowConfig(status);
+
+      expect(edges.length).toBe(0);
     });
   });
 

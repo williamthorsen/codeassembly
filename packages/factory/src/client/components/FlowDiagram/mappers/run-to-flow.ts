@@ -536,10 +536,15 @@ export function createFlowConfig(status: CanonicalRunStatus): { nodes: Node<Flow
     ...ghostNodes,
   ];
 
-  const spineEdges = buildSpineEdges(status.phases, status.status, currentPhase);
-  const dispatchEdges = buildDispatchEdges(status.phases, status.status, currentPhase);
-  const reviewerEdges = buildReviewerEdges(status.phases);
-  const coderFixEdges = buildCoderFixEdge(status.phases);
+  // Edges referencing the orchestrator node are only valid when the orchestrator
+  // node exists. For failed/needs_manual_review runs, buildOrchestratorNode
+  // returns no nodes, so we skip all orchestrator-referencing edges.
+  const hasOrchestrator = orchestratorNodes.length > 0;
+
+  const spineEdges = hasOrchestrator ? buildSpineEdges(status.phases, status.status, currentPhase) : [];
+  const dispatchEdges = hasOrchestrator ? buildDispatchEdges(status.phases, status.status, currentPhase) : [];
+  const reviewerEdges = hasOrchestrator ? buildReviewerEdges(status.phases) : [];
+  const coderFixEdges = hasOrchestrator ? buildCoderFixEdge(status.phases) : [];
 
   const edges: Edge[] = [
     ...spineEdges,
