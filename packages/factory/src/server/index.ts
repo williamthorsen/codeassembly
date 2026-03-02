@@ -35,7 +35,7 @@ app.use(errorHandler);
 
 // Start server
 app.listen(port, () => {
-  console.info(`Artifactory API listening on port ${port}`);
+  console.info(`CodeAssembly API listening on port ${port}`);
   console.info('Scanning projects...');
 
   async function scanOnStartup() {

@@ -17,7 +17,7 @@ const currentFormatFixture = {
   ticketId: '20260225-1239Z-os6e',
   projectRoot: '/Users/william/repos/projects/factory',
   branch: 'art-1_app_feat-mvp-visualizer',
-  task: 'Build the Artifactory Foundation',
+  task: 'Build the CodeAssembly Factory foundation',
   startedAt: '2026-02-25T13:23:00Z',
   status: 'in_progress',
   externalPlan: true,

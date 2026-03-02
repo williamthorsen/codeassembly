@@ -207,7 +207,7 @@ export function App(): React.JSX.Element {
   return (
     <div className="app">
       <aside className="sidebar">
-        <h1>Artifactory</h1>
+        <h1>Code Assembly Factory</h1>
         {fetchError && <div className="fetch-error">{fetchError}</div>}
         <RunSelector
           index={index}
