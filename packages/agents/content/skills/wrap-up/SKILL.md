@@ -1,14 +1,35 @@
 ---
 name: wrap-up
-description: Post-session housekeeping — create tickets for deferred items, document discoveries, generate devlogs, and summarize conversations
+description: Post-session housekeeping — create tickets for deferred items, record insights, and generate devlogs
 user-invocable: true
 ---
 
 # Wrap up
 
-Post-session housekeeping. Assess what happened during the session, present a checklist of recommended actions, and delegate to existing skills after user confirmation.
+Post-session housekeeping. Assess what happened during the session, present an inventory of addressable items with a numbered action menu, and delegate to existing skills after user confirmation.
 
 This skill is context-adaptive: it detects the session type and adjusts its recommendations, but the user always confirms before anything executes.
+
+## Item vocabulary
+
+Items in the wrap-up output use spelled-out prefixes followed by a short ID. The prefix tells the developer the nature of the work at a glance. The ID provides a handle for referencing the item in instructions.
+
+| Prefix           | ID pattern | Meaning                                        |
+| ---------------- | ---------- | ---------------------------------------------- |
+| `fixme`          | `F{n}`     | Must fix — bugs, security issues, breakage     |
+| `warning`        | `W{n}`     | Questionable — may need action, needs judgment |
+| `todo`           | `T{n}`     | Should do — not urgent, can wait               |
+| `recommendation` | `R{n}`     | Advisable — discretionary improvement          |
+| `suggestion`     | `S{n}`     | Optional — nice-to-have                        |
+| `legacy`         | `L{n}`     | Pre-existing — noticed in old code             |
+| `insight`        | `I{n}`     | Knowledge — pattern, gotcha, or learning       |
+
+This vocabulary is consistent with the F/T/W/R/S/L classification used by review agents. The `insight` prefix extends it for knowledge items that aren't defects.
+
+### Numbering rules
+
+- **Fresh numbering per wrap-up.** IDs are assigned sequentially within each prefix, regardless of what IDs existed in source artifacts. `F1` in the wrap-up may correspond to `F3` in a review — the wrap-up is its own namespace.
+- Items may originate from orchestration runs, conversation, review artifacts, or casual observation. Fresh numbering unifies all sources.
 
 ## Process
 
@@ -35,7 +56,7 @@ Deferred items are things that were identified during the session but intentiona
 
 **Structured sources** (high confidence):
 
-- **Run-summary artifact**: if an orchestrated run was detected, read the most recent `*_orchestrator_run-summary.md` in the run directory. Extract items from the `## Deferred items` section. Each item becomes a checklist entry.
+- **Run-summary artifact**: if an orchestrated run was detected, read the most recent `*_orchestrator_run-summary.md` in the run directory. Extract items from the `## Deferred items` section. Each item becomes an inventory entry.
 - **Review artifacts**: extract unresolved T (TODO) and R (Recommendation) findings from review artifacts that were not addressed in subsequent coder responses.
 
 **Conversation scanning** (heuristic — may produce false positives):
@@ -55,9 +76,20 @@ Scan the conversation for items that were explicitly deferred. Look for phrases 
 
 For each match, extract a short description of what was deferred and why (if stated). Discard matches that are clearly not actionable (e.g., general discussion about priorities).
 
-#### 1c. Scan for discoveries
+#### 1b-ii. Classify deferred items
 
-Discoveries are notable observations worth preserving — patterns learned, surprising findings, or insights that would benefit future work.
+For each deferred item found, assign a prefix from the item vocabulary based on the nature of the work:
+
+- Items from **review artifacts** retain their original classification (F/W/T/R/S). If the source used F/W/T/R/S/L IDs, map to the corresponding prefix but assign a fresh number.
+- Items from **run-summary** `## Deferred items` section: read the item description and classify based on severity. Work explicitly deferred by the architect/planner is typically `todo`. Bugs or failures are `fixme`. Improvements are `recommendation` or `suggestion`.
+- Items from **conversation scanning**: classify based on the context in which they were deferred. "We should fix X" → `fixme` or `todo`. "It would be nice to Y" → `suggestion`. "Consider Z approach" → `recommendation`.
+- **Legacy items** (pre-existing issues not authored in this branch) get the `legacy` prefix and are collected into a separate section. These come from review artifacts classified as L, or from conversation observations about old code.
+
+Record the source attribution for each item (e.g., "run-summary", "holistic review", "conversation").
+
+#### 1c. Scan for insights
+
+Insights are notable observations worth preserving — patterns learned, surprising findings, or knowledge that would benefit future work.
 
 Scan the conversation for:
 
@@ -69,6 +101,13 @@ Scan the conversation for:
 
 Look for language like: "interesting", "discovered", "realized", "turns out", "surprisingly", "TIL", "worth noting", "insight", "lesson", "gotcha", "caveat".
 
+For each insight found, assign an `I{n}` ID (sequentially: I1, I2, ...) and suggest a destination:
+
+- `ticket comment` — if the insight relates to the current ticket's work
+- `devlog` — if the insight is general knowledge not specific to one ticket
+
+If no ticket is available (from `get-branch-context`), default all destinations to `devlog`.
+
 #### 1d. Check code state
 
 Run `git status` and `git log --oneline {default-branch}..HEAD` to understand:
@@ -77,78 +116,126 @@ Run `git status` and `git log --oneline {default-branch}..HEAD` to understand:
 - How many commits are on the branch?
 - Has a change summary already been generated? (Check for `*_change-summary.md` artifacts.)
 
-### Phase 2: Checklist presentation
+### Phase 2: Inventory and action menu
 
-Present the user with a tailored checklist grouped by category. Only include categories where at least one item was found.
+Present the user with an inventory of addressable items and a numbered action menu. Only include sections that have at least one item.
+
+#### Output format
 
 ```
 ## Session wrap-up
 
-{Session type detected}: {brief description of what was done}
+{Brief narrative of what was done during the session.}
 
-### Deferred items → tickets
-- [ ] "{item description}" — {source: run-summary / conversation / review finding}
-- [ ] "{item description}" — {source}
+### Findings
 
-### Discoveries → documentation
-- [ ] {discovery description} — record as {ticket comment / devlog entry}
+  {prefix} {ID}    {description}
+                    *source: {origin}*
 
-### Session artifacts
-- [ ] Create devlog for this session's work
-- [ ] Summarize conversation
+### Legacy
 
-### Code hygiene
-- [ ] Summarize changes (for PR preparation)
+  legacy {ID}      {description}
+                    *source: {origin}*
 
-Adjust this list and confirm when ready. 🤔
+### Insights
+
+  insight {ID}     {description}
+                    *destination: {target}*
+
+### Actions
+
+  1. {action} ({item references})
+  2. {action} ({item references})
+  ...
+
+What would you like to do? Reply with numbers, or adjust: "all", "1, 3", "skip"
 ```
 
-**Defaults by session type:**
+#### Formatting rules
 
-| Session type         | Deferred items            | Discoveries | Devlog   | Chat summary | Change summary                |
-| -------------------- | ------------------------- | ----------- | -------- | ------------ | ----------------------------- |
-| Orchestrated         | Yes (from run-summary)    | Yes         | Yes      | No           | Only if not already generated |
-| Interactive dev      | Yes (from conversation)   | Yes         | Yes      | No           | Yes                           |
-| Research/exploration | Rarely                    | Yes         | Optional | Yes          | No                            |
-| Review               | Yes (unresolved findings) | Yes         | No       | No           | No                            |
+- Each item's description may wrap across multiple lines, indented to align with the first line of the description (not the prefix).
+- The `*source:*` and `*destination:*` lines are italicized — this visual separation makes items easier to parse.
+- Items within a section are separated by a blank line for readability.
 
-These are defaults. Always include any category where items were actually found, regardless of session type.
+#### Standard actions
 
-**Wait for the user to confirm, adjust, or skip.** Do not proceed until the user responds.
+The actions menu is built dynamically based on which sections are populated:
+
+| Action                          | Offered when               | Skill/tool invoked    |
+| ------------------------------- | -------------------------- | --------------------- |
+| Create tickets for findings     | Findings section non-empty | `/create-ticket`      |
+| Create tickets for legacy items | Legacy section non-empty   | `/create-ticket`      |
+| Record insights                 | Insights section non-empty | varies by destination |
+| Save session devlog             | Always (unless trivial)    | `/create-devlog`      |
+
+Actions are numbered sequentially starting from 1. Only include actions that apply.
+
+#### Defaults by session type
+
+| Session type         | Findings                  | Legacy | Insights | Devlog   |
+| -------------------- | ------------------------- | ------ | -------- | -------- |
+| Orchestrated         | Yes (from run-summary)    | Yes    | Yes      | Yes      |
+| Interactive dev      | Yes (from conversation)   | Yes    | Yes      | Yes      |
+| Research/exploration | Rarely                    | Rarely | Yes      | Optional |
+| Review               | Yes (unresolved findings) | Yes    | Yes      | No       |
+
+These are defaults. Always include any section where items were actually found, regardless of session type.
+
+**Wait for the user to respond before proceeding.** Do not execute any actions until the user confirms.
 
 ### Phase 3: Execution
 
-Execute each confirmed item by delegating to the appropriate skill. Process items in this order:
+Parse the user's response and execute confirmed actions.
 
-| Category                   | Skill to invoke                                | Notes                                                                                                                                                                                                               |
-| -------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Deferred item → ticket     | `/create-ticket`                               | One invocation per ticket. Use the deferred item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests).                                |
-| Discovery → ticket comment | `gh issue comment {number} --body "{comment}"` | Post to the current ticket (from `get-branch-context`). Format: brief context + the discovery. If no ticket is available (`ticket_id` is null), skip this action and route the discovery to a devlog entry instead. |
-| Discovery → devlog         | `/create-devlog`                               | `/create-devlog` accepts: no arguments (last commit), `<n>` (last N commits), or `working-tree` (uncommitted changes). Use `working-tree` if uncommitted changes exist, otherwise pass the branch's commit count.   |
-| Devlog                     | `/create-devlog`                               | Same as above.                                                                                                                                                                                                      |
-| Chat summary               | `/summarize-chat`                              | No arguments needed.                                                                                                                                                                                                |
-| Change summary             | `/summarize-change`                            | No arguments needed.                                                                                                                                                                                                |
+#### Response parsing
 
-**Between each delegation**, briefly report the result (ticket URL, artifact path) before proceeding to the next item.
+The user may respond with:
 
-### Phase 4: Summary
+- **Numbers only:** `"1, 3"` or `"all"` or `"skip"` — execute the referenced actions as-is
+- **Per-item adjustments:** `"1 but combine F1+F2"` — execute the action with modifications
+- **Exclusions:** `"all except I2"` — execute everything, omitting specific items
+- **Custom instructions:** free-form text — interpret and confirm before executing
 
-After all items are processed, present a concise report:
+If the response is ambiguous, ask for clarification before executing.
+
+#### Execution order
+
+Process confirmed actions in this order:
+
+1. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
+2. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
+3. **Record insights** — route each insight to its destination:
+   - `ticket comment`: post via `gh issue comment {number} --body "{insight}"` (ticket number from `get-branch-context`). If no ticket is available, fall back to devlog.
+   - `devlog`: include in the session devlog (action 4).
+4. **Save session devlog** — invoke `/create-devlog`. Include any insights routed to devlog.
+
+**Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.
+
+#### Idempotent safety
+
+Before creating a ticket, check if an issue with a similar title already exists: `gh issue list --search "{keywords}"`. If a match is found, report it and skip creation.
+
+### Phase 4: Results
+
+After all actions are processed, present a concise report:
 
 ```
 ## Wrap-up complete
 
 ### Tickets created
-- {ticket-id}: "{title}" — {URL}
+- {ticket-id}: {prefix} {item-ID} "{title}" — {URL or file path}
 
-### Artifacts saved
-- {artifact type}: {file path}
+### Insights recorded
+- {item-ID}: {destination} — {confirmation}
+
+### Devlog
+- {artifact path}
 
 ### Skipped
-- {item} — {reason}
+- {item-ID}: {reason}
 ```
 
-Omit empty sections.
+Omit empty sections. Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
 
 ## Ticket title conventions
 
@@ -160,8 +247,9 @@ When creating tickets for deferred items, follow the conventions from the issue 
 
 ## Constraints
 
-- **Never auto-execute** — always present the checklist and wait for user confirmation
+- **Never auto-execute** — always present the inventory and action menu, wait for user confirmation
 - **Delegate, don't duplicate** — every action goes through an existing skill or a direct `gh` CLI call
-- **Idempotent-safe** — before creating a ticket, check if an issue with a similar title already exists (`gh issue list --search "{keywords}"`)
-- **Conversation is primary source** — deferred items and discoveries live in the dialogue, not just in git state
+- **Idempotent-safe** — before creating a ticket, check if an issue with a similar title already exists
+- **Conversation is primary source** — deferred items and insights live in the dialogue, not just in git state
 - **Graceful when empty** — if the assessment finds nothing actionable, say so and end: "No wrap-up items identified for this session."
+- **Fresh numbering** — always assign new sequential IDs within the wrap-up; never carry forward IDs from source artifacts
