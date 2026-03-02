@@ -4,10 +4,10 @@ import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
 import { DemoControlPanel } from './components/DemoControlPanel.js';
 import { DemoStatusLight } from './components/DemoStatusLight.js';
-import { GameCanvas } from './components/GameCanvas.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
 import { StatusBar } from './components/StatusBar.js';
+import { VisualizationSwitcher } from './components/VisualizationSwitcher.js';
 import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
 import { useDemoMode } from './hooks/useDemoMode.js';
@@ -231,7 +231,7 @@ export function App(): React.JSX.Element {
         <div className="canvas-container">
           {isLoading && <p>Loading...</p>}
           {error && <p>Error: {error.message}</p>}
-          {activeStatus && <GameCanvas status={activeStatus} />}
+          {activeStatus && <VisualizationSwitcher status={activeStatus} />}
         </div>
       </main>
     </div>
