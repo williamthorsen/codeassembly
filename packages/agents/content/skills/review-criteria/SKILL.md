@@ -1,6 +1,6 @@
 ---
 name: review-criteria
-description: Evaluation criteria for code review — what to examine and what to skip
+description: Evaluation criteria and finding classification for code review
 user-invocable: false
 ---
 
@@ -33,5 +33,69 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Distinguish author work from legacy
 
-- Focus findings (F/W/T) only on code authored in the current change
-- Frame observations in pre-existing code as Legacy (L), not defects
+Focus findings (F/W/T) only on code authored in the current change — observations in pre-existing code belong in Legacy (L).
+
+## Finding scheme (F/W/T/R/S/L)
+
+Used by review-producing skills and agents for structured code review findings. Also documented in [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for human reference. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
+
+| ID     | Category       | Severity       | Merge-blocking?                                                    |
+| ------ | -------------- | -------------- | ------------------------------------------------------------------ |
+| `F{n}` | FIXME          | critical       | Yes — must fix before merge                                        |
+| `W{n}` | Warning        | warning        | May block — questionable decisions requiring justification         |
+| `T{n}` | TODO           | todo           | No — should fix, can wait for next PR                              |
+| `R{n}` | Recommendation | recommendation | No — advisable but discretionary                                   |
+| `S{n}` | Suggestion     | suggestion     | No — optional improvement                                          |
+| `L{n}` | Legacy         | legacy         | No — observation in pre-existing code, not authored in this branch |
+
+### Category criteria
+
+**FIXME (F)** — must fix before merge:
+
+- Bugs: incorrect logic, unhandled error paths, data loss risks
+- Security: injection, auth bypass, exposed secrets
+- Contract violations: breaking API changes, type unsafety
+- Test failures: tests that don't pass or don't test what they claim
+
+**Warning (W)** — questionable, may block merge:
+
+- Missing edge case handling that could cause runtime errors
+- Convention violations that affect maintainability
+- Decisions that seem wrong but may be intentional (require justification)
+
+**TODO (T)** — should fix, not in this PR:
+
+- Missing or inadequate tests for new functionality
+- Performance issues with measurable impact
+- Incomplete error handling that won't cause immediate failures
+
+**Recommendation (R)** — advisable but discretionary:
+
+- Better patterns available in the codebase
+- Opportunities to reduce complexity
+- Architectural improvements worth considering
+
+**Suggestion (S)** — optional improvement:
+
+- Better naming or code organization
+- Additional test cases for edge cases
+- Documentation improvements
+
+**Legacy (L)** — pre-existing code observation:
+
+- Issues in code not authored in this branch
+- Frame as future opportunities, not current defects
+- Never count against the review score
+
+### Overall criticality mapping
+
+| Findings present                   | Criticality | Meaning                                      |
+| ---------------------------------- | ----------- | -------------------------------------------- |
+| None, or only S/R/L                | `none`      | Ready to merge                               |
+| W and/or T, but no F               | `low`       | Acceptable to merge with optional follow-ups |
+| 1–2 F (straightforward), or many W | `medium`    | Needs fixes but approach is sound            |
+| Multiple F, or structural issues   | `high`      | Needs significant rework                     |
+
+### Re-review severity escalation
+
+`S → R → T → W → F`. L findings are never escalated.
