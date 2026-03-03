@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import yaml from 'js-yaml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.js';
@@ -238,7 +239,7 @@ describe('installCommand', () => {
     expect(skillsContents).not.toContain('_data');
   });
 
-  it('should generate prompts.yml for rovodev', async () => {
+  it('should generate prompts.yml for rovodev with valid YAML structure', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -249,13 +250,60 @@ describe('installCommand', () => {
     expect(existsSync(promptsPath)).toBe(true);
 
     const content = await readFile(promptsPath, 'utf8');
+
+    // Parse as YAML to verify structural validity
+    const parsed: unknown = yaml.load(content);
+    expect(parsed).toBeDefined();
+    expect(typeof parsed).toBe('object');
+    expect(parsed !== null).toBe(true);
+
+    // Narrow to record shape at runtime to satisfy no-type-assertions lint rule
+    if (typeof parsed !== 'object' || parsed === null || !('prompts' in parsed)) {
+      throw new Error('Expected parsed YAML to have a prompts key');
+    }
+    const doc = parsed;
+    expect(Array.isArray(doc.prompts)).toBe(true);
+    if (!Array.isArray(doc.prompts)) {
+      throw new TypeError('Expected prompts to be an array');
+    }
+    const prompts: Array<unknown> = doc.prompts;
+    expect(prompts.length).toBeGreaterThan(0);
+
+    // Verify each entry has the expected shape
+    for (const entry of prompts) {
+      if (typeof entry !== 'object' || entry === null) {
+        throw new Error('Expected each prompt entry to be an object');
+      }
+      if (!('name' in entry) || !('description' in entry) || !('content_file' in entry)) {
+        throw new Error('Expected each prompt entry to have name, description, and content_file');
+      }
+      expect(typeof entry.name).toBe('string');
+      expect(typeof entry.description).toBe('string');
+      expect(typeof entry.content_file).toBe('string');
+    }
+
+    // Extract skill names for filtering assertions
+    const skillNames = prompts.map((e) => {
+      if (typeof e !== 'object' || e === null || !('name' in e)) {
+        throw new Error('Expected prompt entry with name');
+      }
+      return e.name;
+    });
+
     // systematic-debugging has no user-invocable field (default = included)
-    expect(content).toContain('systematic-debugging');
+    expect(skillNames).toContain('systematic-debugging');
     // brainstorming has user-invocable: false (should be excluded)
-    expect(content).not.toContain('brainstorming');
-    // Verify YAML structure
-    expect(content).toMatch(/^prompts:\n/);
-    expect(content).toContain('content_file:');
+    expect(skillNames).not.toContain('brainstorming');
+
+    // Shared skills with user-invocable: false should be excluded
+    expect(skillNames).not.toContain('anti-patterns');
+    expect(skillNames).not.toContain('common-mistakes');
+    expect(skillNames).not.toContain('collaboration');
+    expect(skillNames).not.toContain('orchestrate');
+
+    // Shared skills with user-invocable: true should be included
+    expect(skillNames).toContain('orchestrate-dev');
+    expect(skillNames).toContain('create-pr');
   });
 
   it('should track prompts.yml in the manifest for rovodev', async () => {
@@ -283,6 +331,116 @@ describe('installCommand', () => {
     await installCommand(makeOptions({ platform: 'claude' }), tempDir);
 
     const promptsPath = path.join(claudeHome, 'prompts.yml');
+    expect(existsSync(promptsPath)).toBe(false);
+  });
+
+  it('should skip modified shared skill on re-install without --force (rovodev)', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    // First install to establish manifest
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Modify a subagent file after installation (subagents are single files with
+    // content hashes, so drift detection works reliably)
+    const agentPath = path.join(rovodevHome, 'subagents', 'orchestrated-coder.md');
+    const originalContent = await readFile(agentPath, 'utf8');
+    const modifiedContent = originalContent + '\n<!-- user modification -->\n';
+    await writeFile(agentPath, modifiedContent, 'utf8');
+
+    // Re-install without --force
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Modified file should be preserved (not overwritten)
+    const afterReinstall = await readFile(agentPath, 'utf8');
+    expect(afterReinstall).toBe(modifiedContent);
+  });
+
+  it('should overwrite modified subagent on re-install with --force (rovodev)', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    // First install to establish manifest
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Modify a subagent file after installation
+    const agentPath = path.join(rovodevHome, 'subagents', 'orchestrated-coder.md');
+    const originalContent = await readFile(agentPath, 'utf8');
+    const modifiedContent = originalContent + '\n<!-- user modification -->\n';
+    await writeFile(agentPath, modifiedContent, 'utf8');
+
+    // Re-install with --force
+    await installCommand(makeOptions({ platform: 'rovodev', force: true }), tempDir);
+
+    // Modified file should be overwritten back to the managed content
+    const afterReinstall = await readFile(agentPath, 'utf8');
+    expect(afterReinstall).not.toBe(modifiedContent);
+  });
+
+  it('should skip modified prompts.yml on re-install without --force', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    // First install to establish manifest
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Modify prompts.yml after installation
+    const promptsPath = path.join(rovodevHome, 'prompts.yml');
+    const originalContent = await readFile(promptsPath, 'utf8');
+    const modifiedContent = originalContent + '# user modification\n';
+    await writeFile(promptsPath, modifiedContent, 'utf8');
+
+    // Re-install without --force
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Modified file should be preserved (not overwritten)
+    const afterReinstall = await readFile(promptsPath, 'utf8');
+    expect(afterReinstall).toBe(modifiedContent);
+  });
+
+  it('should regenerate modified prompts.yml on re-install with --force', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    // First install to establish manifest
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Modify prompts.yml after installation
+    const promptsPath = path.join(rovodevHome, 'prompts.yml');
+    const originalContent = await readFile(promptsPath, 'utf8');
+    const modifiedContent = originalContent + '# user modification\n';
+    await writeFile(promptsPath, modifiedContent, 'utf8');
+
+    // Re-install with --force
+    await installCommand(makeOptions({ platform: 'rovodev', force: true }), tempDir);
+
+    // Modified file should be overwritten (regenerated)
+    const afterReinstall = await readFile(promptsPath, 'utf8');
+    expect(afterReinstall).not.toBe(modifiedContent);
+    expect(afterReinstall).toBe(originalContent);
+  });
+
+  it('should install rovodev in dry-run mode without writing prompts.yml or manifest', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'rovodev', dryRun: true }), tempDir);
+
+    // Manifest should not have been created
+    const manifestPath = getManifestPath(tempDir);
+    expect(existsSync(manifestPath)).toBe(false);
+
+    // Skills directory should be empty (nothing was installed)
+    const skillsContents = await readdir(path.join(rovodevHome, 'skills'));
+    expect(skillsContents).toHaveLength(0);
+
+    // prompts.yml should not have been created
+    const promptsPath = path.join(rovodevHome, 'prompts.yml');
     expect(existsSync(promptsPath)).toBe(false);
   });
 

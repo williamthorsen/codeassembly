@@ -293,6 +293,16 @@ async function generatePromptsYml(
 ): Promise<ManifestEntry | undefined> {
   const relativePath = 'prompts.yml';
 
+  // Short-circuit in dry-run mode: no filesystem reads needed
+  if (options.dryRun) {
+    console.info(`    [generate] ${relativePath}`);
+    return {
+      relativePath,
+      contentHash: 'dry-run',
+      linked: false,
+    };
+  }
+
   // Gather skill metadata from installed skills directory
   let skillDirEntries: ReadonlyArray<string>;
   try {
@@ -301,6 +311,7 @@ async function generatePromptsYml(
     if (!isEnoent(error)) {
       throw error;
     }
+    console.warn(`  Warning: skills directory not found, skipping prompts.yml generation: ${paths.skillsDir}`);
     return undefined;
   }
 
@@ -354,30 +365,26 @@ async function generatePromptsYml(
     });
   }
 
-  // Build YAML content with deterministic template literals
+  // Build YAML content with deterministic template literals.
+  // Description values are single-quoted with internal single quotes escaped (doubled)
+  // to prevent YAML-special characters from producing invalid output.
   const yamlLines = ['prompts:'];
   for (const entry of promptEntries) {
-    yamlLines.push(`  - name: '${entry.name}'`, `    description: ${entry.description}`, `    content_file: ${entry.contentFile}`);
+    const escapedDescription = entry.description.replaceAll("'", "''");
+    yamlLines.push(
+      `  - name: '${entry.name}'`,
+      `    description: '${escapedDescription}'`,
+      `    content_file: ${entry.contentFile}`,
+    );
   }
   const yamlContent = yamlLines.join('\n') + '\n';
 
-  if (options.dryRun) {
-    const action = 'generate';
-    console.info(`    [${action}] ${relativePath}`);
-    return {
-      relativePath,
-      contentHash: 'dry-run',
-      linked: false,
-    };
-  }
-
-  // Check for user modifications before overwriting
+  // Check for user modifications before overwriting.
+  // Files at 'current' drift are always regenerated to pick up any newly added skills.
   const existingEntry = existingByPath.get(relativePath);
   if (existingEntry && !options.force) {
     const drift = await detectDrift(existingEntry, paths.platformHome);
-    if (drift === 'current') {
-      // Regenerate to pick up any new skills, but check if content actually changed
-    } else if (drift === 'modified') {
+    if (drift === 'modified') {
       console.warn(`  Skipping modified item: ${relativePath}`);
       return existingEntry;
     }
