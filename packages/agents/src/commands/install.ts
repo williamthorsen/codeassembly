@@ -159,6 +159,7 @@ async function installSkills(
     if (!isEnoent(error)) {
       throw error;
     }
+    console.warn(`  Warning: no platform-specific skills directory found for ${platformId}: ${platformSkillsSrcDir}`);
     platformDirEntries = [];
   }
 
@@ -344,12 +345,11 @@ async function generatePromptsYml(
       }
       if (line.startsWith('description:')) {
         description = line.slice('description:'.length).trim();
-        // Strip surrounding quotes if present
-        if (
-          (description.startsWith("'") && description.endsWith("'")) ||
-          (description.startsWith('"') && description.endsWith('"'))
-        ) {
-          description = description.slice(1, -1);
+        // Strip surrounding quotes if present and unescape internal escapes
+        if (description.startsWith("'") && description.endsWith("'")) {
+          description = description.slice(1, -1).replaceAll("''", "'");
+        } else if (description.startsWith('"') && description.endsWith('"')) {
+          description = description.slice(1, -1).replaceAll(String.raw`\"`, '"');
         }
       }
     }

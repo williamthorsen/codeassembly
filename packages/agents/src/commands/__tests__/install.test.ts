@@ -377,6 +377,7 @@ describe('installCommand', () => {
     // Modified file should be overwritten back to the managed content
     const afterReinstall = await readFile(agentPath, 'utf8');
     expect(afterReinstall).not.toBe(modifiedContent);
+    expect(afterReinstall).toBe(originalContent);
   });
 
   it('should skip modified prompts.yml on re-install without --force', async () => {
@@ -463,5 +464,71 @@ describe('installCommand', () => {
     const reviewPermEntry = claudeManifest?.entries.find((e) => e.relativePath === 'skills/review-permissions');
     expect(reviewPermEntry).toBeDefined();
     expect(reviewPermEntry?.linked).toBe(true);
+  });
+
+  it('should strip surrounding quotes from skill descriptions in prompts.yml', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    // First install to create the initial prompts.yml and manifest
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    // Write a synthetic skill with a single-quoted description containing an escaped apostrophe.
+    // This exercises the quote-stripping code path in generatePromptsYml.
+    const syntheticSkillDir = path.join(rovodevHome, 'skills', 'synthetic-quoted');
+    await mkdir(syntheticSkillDir, { recursive: true });
+    await writeFile(
+      path.join(syntheticSkillDir, 'SKILL.md'),
+      "---\nname: synthetic-quoted\ndescription: 'A skill with an apostrophe: it''s useful'\nuser-invocable: true\n---\n\n# Synthetic quoted skill\n\nTest content.\n",
+      'utf8',
+    );
+
+    // Also write a skill with double-quoted description
+    const doubleQuotedSkillDir = path.join(rovodevHome, 'skills', 'synthetic-double-quoted');
+    await mkdir(doubleQuotedSkillDir, { recursive: true });
+    await writeFile(
+      path.join(doubleQuotedSkillDir, 'SKILL.md'),
+      '---\nname: synthetic-double-quoted\ndescription: "A double-quoted description"\nuser-invocable: true\n---\n\n# Synthetic double-quoted skill\n\nTest content.\n',
+      'utf8',
+    );
+
+    // Re-install with --force to regenerate prompts.yml with the new skills
+    await installCommand(makeOptions({ platform: 'rovodev', force: true }), tempDir);
+
+    const promptsPath = path.join(rovodevHome, 'prompts.yml');
+    const content = await readFile(promptsPath, 'utf8');
+
+    // Parse as YAML and find the synthetic entries
+    const parsed: unknown = yaml.load(content);
+    if (typeof parsed !== 'object' || parsed === null || !('prompts' in parsed)) {
+      throw new Error('Expected parsed YAML to have a prompts key');
+    }
+    const doc = parsed;
+    if (!Array.isArray(doc.prompts)) {
+      throw new TypeError('Expected prompts to be an array');
+    }
+    const prompts: Array<unknown> = doc.prompts;
+
+    // Find the single-quoted synthetic skill entry
+    const singleQuotedEntry = prompts.find(
+      (e) => typeof e === 'object' && e !== null && 'name' in e && e.name === 'synthetic-quoted',
+    );
+    if (typeof singleQuotedEntry !== 'object' || singleQuotedEntry === null || !('description' in singleQuotedEntry)) {
+      throw new Error('Expected synthetic-quoted entry with description');
+    }
+    // The surrounding quotes should be stripped and the escaped apostrophe should be present
+    // (YAML parsing handles the '' -> ' unescaping in the final output)
+    expect(singleQuotedEntry.description).toBe("A skill with an apostrophe: it's useful");
+
+    // Find the double-quoted synthetic skill entry
+    const doubleQuotedEntry = prompts.find(
+      (e) => typeof e === 'object' && e !== null && 'name' in e && e.name === 'synthetic-double-quoted',
+    );
+    if (typeof doubleQuotedEntry !== 'object' || doubleQuotedEntry === null || !('description' in doubleQuotedEntry)) {
+      throw new Error('Expected synthetic-double-quoted entry with description');
+    }
+    // The surrounding double quotes should be stripped
+    expect(doubleQuotedEntry.description).toBe('A double-quoted description');
   });
 });
