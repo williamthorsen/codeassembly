@@ -15,7 +15,7 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 ## Arguments
 
 - Task description (required): what to implement
-- `--mode=<vibe|strict>`: select a mode preset (default: no mode, preserving current behavior)
+- `--mode=<vibe|lite|strict>`: select a mode preset (default: no mode, preserving current behavior)
 - `--max-review-rounds=N`: maximum iterative review rounds (default: 3)
 - `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch)
 - `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
@@ -26,14 +26,14 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 
 Each mode is a preset bundle of settings. When `--mode` is specified, its preset values apply as defaults. Any setting can be individually overridden via explicit CLI arguments (e.g., `--mode=vibe --approval-threshold=medium`).
 
-| Setting             | `vibe` | (default) | `strict` |
-| ------------------- | ------ | --------- | -------- |
-| architecture        | absent | optional  | required |
-| planning            | absent | optional  | required |
-| approval-threshold  | high   | low       | low      |
-| budget-threshold    | high   | low       | low      |
-| holistic_reviewer\* | sonnet | opus      | opus     |
-| max-review-rounds   | 1      | 3         | 4        |
+| Setting             | `vibe` | `lite` | (default) | `strict` |
+| ------------------- | ------ | ------ | --------- | -------- |
+| architecture        | absent | absent | optional  | required |
+| planning            | absent | absent | optional  | required |
+| approval-threshold  | high   | low    | low       | low      |
+| budget-threshold    | high   | low    | low       | low      |
+| holistic_reviewer\* | sonnet | sonnet | opus      | opus     |
+| max-review-rounds   | 1      | 2      | 3         | 4        |
 
 \* `holistic_reviewer` uses snake_case because it is a `--models` key (passed as `--models=holistic_reviewer:sonnet`), not a standalone argument. See the engine's [model resolution](../orchestrate/SKILL.md#resolving-models) for details.
 
@@ -63,6 +63,17 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 | `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
 
 **`--mode=vibe`**:
+
+```
+implementation (required) -> review-cycle (required)
+```
+
+| Phase            | Requirement | Description                                       |
+| ---------------- | ----------- | ------------------------------------------------- |
+| `implementation` | `required`  | Write code                                        |
+| `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
+
+**`--mode=lite`**:
 
 ```
 implementation (required) -> review-cycle (required)
