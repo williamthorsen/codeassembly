@@ -78,6 +78,25 @@ describe('useVisualizationParam', () => {
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
   });
 
+  it('setActiveView("factory") removes the visualization param while preserving other params', () => {
+    globalThis.history.replaceState(
+      null,
+      '',
+      '/?project=alpha&ticket=T-1&run=run-a&visualization=flow',
+    );
+    replaceStateSpy.mockClear();
+
+    const { result } = renderHook(() => useVisualizationParam());
+
+    result.current[1]('factory');
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      null,
+      '',
+      '/?project=alpha&ticket=T-1&run=run-a',
+    );
+  });
+
   it('preserves other query params when updating the visualization param', () => {
     globalThis.history.replaceState(null, '', '/?project=alpha&ticket=T-1&run=run-a');
     replaceStateSpy.mockClear();
