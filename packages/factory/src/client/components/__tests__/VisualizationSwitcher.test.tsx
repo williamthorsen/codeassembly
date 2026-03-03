@@ -3,17 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
 
-vi.mock('../GameCanvas.js', () => ({
-  GameCanvas: function MockGameCanvas() {
-    return <div data-testid="game-canvas" />;
-  },
-}));
+vi.mock('../GameCanvas.js', async () => {
+  const { MockGameCanvas } = await import('../../../__test-helpers__/mock-visualization-components.js');
+  return { GameCanvas: MockGameCanvas };
+});
 
-vi.mock('../FlowDiagram/FlowDiagram.js', () => ({
-  FlowDiagram: function MockFlowDiagram() {
-    return <div data-testid="flow-diagram" />;
-  },
-}));
+vi.mock('../FlowDiagram/FlowDiagram.js', async () => {
+  const { MockFlowDiagram } = await import('../../../__test-helpers__/mock-visualization-components.js');
+  return { FlowDiagram: MockFlowDiagram };
+});
 
 const { VisualizationSwitcher } = await import('../VisualizationSwitcher.js');
 
@@ -115,5 +113,21 @@ describe('VisualizationSwitcher', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Factory' }));
 
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
+  });
+
+  it('forwards status to GameCanvas in factory view', () => {
+    const status = createMockRunStatus({ runId: 'forwarding-test-factory' });
+    render(<VisualizationSwitcher status={status} />);
+
+    expect(screen.getByTestId('game-canvas').dataset.runId).toBe('forwarding-test-factory');
+  });
+
+  it('forwards status to FlowDiagram in flow view', () => {
+    const status = createMockRunStatus({ runId: 'forwarding-test-flow' });
+    render(<VisualizationSwitcher status={status} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Flow' }));
+
+    expect(screen.getByTestId('flow-diagram').dataset.runId).toBe('forwarding-test-flow');
   });
 });
