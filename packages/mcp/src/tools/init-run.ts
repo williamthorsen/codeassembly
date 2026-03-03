@@ -59,10 +59,9 @@ export function sanitizeTicketId(ticketId: string): string {
  * Caller-supplied ticket IDs are sanitized (leading `#` stripped) before use.
  */
 export async function initRun(input: InitRunInput): Promise<InitRunResult> {
-  const { projectSlug, projectRoot, branch, task, pipeline, models, config } = input;
+  const { ticketId, projectSlug, projectRoot, branch, task, pipeline, models, config } = input;
 
-  // Auto-generated IDs bypass sanitization (they never contain `#`).
-  const resolvedTicketId = input.ticketId === undefined ? generateTicketId() : sanitizeTicketId(input.ticketId);
+  const resolvedTicketId = ticketId === undefined ? generateTicketId() : sanitizeTicketId(ticketId);
   const runId = generateRunId();
   const timestamp = new Date().toISOString();
   const runDir = join(projectRoot, '.ai', 'projects', projectSlug, 'tickets', resolvedTicketId, runId);
