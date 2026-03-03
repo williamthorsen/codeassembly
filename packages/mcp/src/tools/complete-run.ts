@@ -49,7 +49,7 @@ export async function completeRun(input: CompleteRunInput): Promise<CompleteRunR
   // Emit run_failed for failed status, run_completed otherwise
   const event =
     validStatus === 'failed'
-      ? { event: 'run_failed', status: validStatus, ...(reason === undefined ? {} : { reason }) }
+      ? { event: 'run_failed', status: validStatus, reason }
       : { event: 'run_completed', status: validStatus };
 
   const emitResult = await emitEvent({
