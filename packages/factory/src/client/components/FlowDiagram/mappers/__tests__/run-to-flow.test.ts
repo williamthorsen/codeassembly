@@ -740,15 +740,13 @@ describe('createFlowConfig', () => {
           },
         },
       );
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- simulating V2 runtime data where reviewers is undefined despite TypeScript type
-      const parallelReview = {
+      const parallelReview: ParallelReviewPhase = {
         aggregatedCriticality: 'low',
         reviewRoundsUsed: 1,
-        reviewers: undefined,
         coderFixCycleRan: false,
         selectiveReReview: undefined,
         iterations: [iteration],
-      } as unknown as ParallelReviewPhase;
+      };
 
       const status = createMockRunStatus({
         status: 'completed',
@@ -771,22 +769,18 @@ describe('createFlowConfig', () => {
     });
 
     it('does not crash when reviewers is undefined and names come from reviewerDetails', () => {
-      const parallelReview = Object.assign(
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- simulating V2 runtime data where reviewers is undefined despite TypeScript type
-        {
-          aggregatedCriticality: 'low',
-          reviewRoundsUsed: 1,
-          reviewers: undefined,
-          coderFixCycleRan: false,
-          selectiveReReview: undefined,
-        } as unknown as ParallelReviewPhase,
-        {
-          reviewerDetails: {
-            'code-reviewer': { status: 'completed', criticality: 'none' },
-            'test-reviewer': { status: 'completed', criticality: 'low' },
-          },
+      const base: ParallelReviewPhase = {
+        aggregatedCriticality: 'low',
+        reviewRoundsUsed: 1,
+        coderFixCycleRan: false,
+        selectiveReReview: undefined,
+      };
+      const parallelReview = Object.assign(base, {
+        reviewerDetails: {
+          'code-reviewer': { status: 'completed', criticality: 'none' },
+          'test-reviewer': { status: 'completed', criticality: 'low' },
         },
-      );
+      });
 
       const status = createMockRunStatus({
         status: 'completed',

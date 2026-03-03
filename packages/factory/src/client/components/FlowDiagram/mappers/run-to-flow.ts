@@ -9,7 +9,6 @@ import type {
   ParallelReviewPhase,
   Phases,
   QualityGates,
-  ReviewerInfo,
 } from '../../../../shared/types/canonical.js';
 
 export interface FlowNodeData extends Record<string, unknown> {
@@ -91,20 +90,6 @@ function isPresent<T>(value: T | null | undefined): value is T {
 /** Narrow an unknown value to a non-null object (safe for `Object.keys`). */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
-}
-
-/**
- * Safely look up a reviewer by name from the parallelReview phase.
- *
- * The TypeScript type declares `reviewers` as `Record<string, ReviewerInfo>`,
- * but V2 run data parsed through Zod `.partial().loose()` can produce
- * `undefined` at runtime. This helper widens to `unknown` first so that
- * the runtime guard is not flagged by `no-unnecessary-condition`.
- */
-function lookupReviewer(parallelReview: ParallelReviewPhase, name: string): ReviewerInfo | undefined {
-  const reviewers: unknown = parallelReview.reviewers;
-  if (!isRecord(reviewers)) return undefined;
-  return reviewers[name] as ReviewerInfo | undefined; // eslint-disable-line @typescript-eslint/consistent-type-assertions -- narrowing from runtime-untyped Zod .loose() data
 }
 
 /** Check whether a phase should produce an agent based on existing data or inference. */
@@ -272,7 +257,7 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
   const reReviewSet = isReReviewActive ? new Set(selectiveReReview.reviewersDispatched) : undefined;
 
   for (const [i, name] of reviewerNames.entries()) {
-    const reviewerInfo = lookupReviewer(phases.parallelReview, name);
+    const reviewerInfo = phases.parallelReview.reviewers?.[name];
     const isDimmed = reReviewSet !== undefined && !reReviewSet.has(name);
     nodes.push({
       id: `reviewer-${name}`,
@@ -298,7 +283,7 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
 }
 
 function resolveReviewerStatus(parallelReview: ParallelReviewPhase, reviewerName: string): FlowNodeData['status'] {
-  const reviewerInfo = lookupReviewer(parallelReview, reviewerName);
+  const reviewerInfo = parallelReview.reviewers?.[reviewerName];
   if (reviewerInfo === undefined) return 'idle';
   if (reviewerInfo.status === 'completed') return 'completed';
   if (reviewerInfo.status === 'failed') return 'failed';
@@ -536,7 +521,7 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
   const offsetMap = new Map<string, number>();
 
   for (const name of reviewerNames) {
-    const reviewerInfo = lookupReviewer(phases.parallelReview, name);
+    const reviewerInfo = phases.parallelReview.reviewers?.[name];
     const isCompleted = reviewerInfo?.status === 'completed';
     const edgeStatus: DispatchEdgeData['status'] = isCompleted ? 'completed' : 'pending';
 
@@ -584,7 +569,7 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
   const selectiveReReview = phases.parallelReview.selectiveReReview;
   if (selectiveReReview !== undefined && selectiveReReview.ran) {
     for (const name of selectiveReReview.reviewersDispatched) {
-      const reviewerInfo = lookupReviewer(phases.parallelReview, name);
+      const reviewerInfo = phases.parallelReview.reviewers?.[name];
       const reReviewCompleted = reviewerInfo?.reReviewCriticality !== undefined;
       const reReviewStatus: DispatchEdgeData['status'] = reReviewCompleted ? 'completed' : 'pending';
 
