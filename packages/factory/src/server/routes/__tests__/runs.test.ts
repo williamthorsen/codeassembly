@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProjectIndex } from '../../../shared/types/api.js';
+import { silencedConsole } from '../../../test-utils.js';
 import { createRunsRouter } from '../runs.js';
 import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
@@ -114,6 +115,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 on non-ENOENT errors', async () => {
+      using _silent = silencedConsole();
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId');
@@ -160,6 +162,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 when readdir fails', async () => {
+      using _silent = silencedConsole();
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
@@ -173,6 +176,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 when readdir fails with ENOENT (directory removed after index lookup)', async () => {
+      using _silent = silencedConsole();
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts');
@@ -228,6 +232,7 @@ describe('createRunsRouter', () => {
     });
 
     it('returns 500 on non-ENOENT read errors', async () => {
+      using _silent = silencedConsole();
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createMockRunStatus } from '../../__test-helpers__/fixtures.js';
 import type { FlatRunInfo, ProjectIndex } from '../../shared/types/api.js';
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
+import { silencedConsole } from '../../test-utils.js';
 
 const {
   mockUseRunStatus,
@@ -284,6 +285,7 @@ describe('App', () => {
   });
 
   it('handles fetchProjects error', async () => {
+    using _silent = silencedConsole();
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
     mockFetchProjects.mockRejectedValue(new Error('Server down'));
 
@@ -312,6 +314,7 @@ describe('App', () => {
   });
 
   it('handles fetchProjects rejection with non-Error value', async () => {
+    using _silent = silencedConsole();
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
     mockFetchProjects.mockRejectedValue('connection refused');
 
