@@ -13,7 +13,6 @@ import {
   getStringField,
   isErrorResult,
   parseAndGetString,
-  parseJson,
   parseJsonlLine,
   parseToolResult,
   toRecord,
@@ -187,7 +186,7 @@ describe('full lifecycle via protocol', () => {
 
     // Read and validate run-index.json
     const indexContent = await readFile(join(resultRunDir, 'run-index.json'), 'utf8');
-    const rawIndex = parseJson(indexContent);
+    const rawIndex: unknown = JSON.parse(indexContent);
 
     const parsed = v3RunIndexSchema.safeParse(rawIndex);
     if (!parsed.success) throw new Error('v3RunIndexSchema validation failed');
@@ -255,7 +254,6 @@ describe('full lifecycle via protocol', () => {
     for (const line of lines) {
       const record = parseJsonlLine(line);
       expect(record.t).toBeDefined();
-      if (typeof record.t !== 'string') throw new Error('Expected t to be a string');
       expect(record.t).toMatch(isoPattern);
       if (typeof record.event === 'string') {
         eventNames.push(record.event);
@@ -325,11 +323,7 @@ describe('review cycle events - all 13 event types', () => {
     });
 
     // 6-8. reviewer_dispatched x3
-    for (const reviewer of [
-      'aspect-code-reviewer',
-      'aspect-silent-failure-reviewer',
-      'aspect-test-reviewer',
-    ]) {
+    for (const reviewer of ['aspect-code-reviewer', 'aspect-silent-failure-reviewer', 'aspect-test-reviewer']) {
       await client.callTool({
         name: 'emit_event',
         arguments: {

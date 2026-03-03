@@ -1,19 +1,13 @@
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 /** Type guard: narrows unknown to Record<string, unknown>. */
-export function isRecord(value: unknown): value is Record<string, unknown> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Narrow unknown to Record<string, unknown> or throw. */
 export function toRecord(value: unknown, label: string): Record<string, unknown> {
   if (!isRecord(value)) throw new Error(`Expected ${label} to be an object`);
-  return value;
-}
-
-/** Parse a JSON string and return the value typed as unknown. */
-export function parseJson(text: string): unknown {
-  const value: unknown = JSON.parse(text);
   return value;
 }
 
@@ -34,7 +28,8 @@ export function parseToolResult(result: Awaited<ReturnType<Client['callTool']>>)
   if (firstRecord.type !== 'text') throw new Error('Expected text content');
   const text = firstRecord.text;
   if (typeof text !== 'string') throw new Error('Expected text to be a string');
-  return parseJson(text);
+  const parsed: unknown = JSON.parse(text);
+  return parsed;
 }
 
 /**
@@ -57,5 +52,6 @@ export function parseAndGetString(result: Awaited<ReturnType<Client['callTool']>
 
 /** Parse a JSONL line into a Record<string, unknown>. */
 export function parseJsonlLine(line: string): Record<string, unknown> {
-  return toRecord(parseJson(line), 'JSONL line');
+  const parsed: unknown = JSON.parse(line);
+  return toRecord(parsed, 'JSONL line');
 }
