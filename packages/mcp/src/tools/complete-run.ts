@@ -13,6 +13,7 @@ export type CompletionStatus = z.infer<typeof completionStatusSchema>;
 export interface CompleteRunInput {
   runDir: string;
   status: string;
+  reason?: string | undefined;
 }
 
 export interface CompleteRunResult {
@@ -21,11 +22,16 @@ export interface CompleteRunResult {
 }
 
 /**
- * Complete a run: emit a `run_completed` event and stamp `completedAt` on the
- * run-index.json header for fast discovery without reading the JSONL log.
+ * Complete a run: emit a `run_completed` or `run_failed` event (based on the
+ * status) and stamp `completedAt` on the run-index.json header for fast
+ * discovery without reading the JSONL log.
+ *
+ * When `status` is `'failed'`, a `run_failed` event is emitted instead of
+ * `run_completed`. The optional `reason` field is included in the `run_failed`
+ * event; it is ignored for other statuses.
  */
 export async function completeRun(input: CompleteRunInput): Promise<CompleteRunResult> {
-  const { runDir, status } = input;
+  const { runDir, status, reason } = input;
 
   const statusResult = completionStatusSchema.safeParse(status);
   if (!statusResult.success) {
@@ -40,10 +46,15 @@ export async function completeRun(input: CompleteRunInput): Promise<CompleteRunR
   // Capture timestamp once so the event and the index header are consistent
   const now = new Date().toISOString();
 
-  // Emit run_completed event
+  // Emit run_failed for failed status, run_completed otherwise
+  const event =
+    validStatus === 'failed'
+      ? { event: 'run_failed', status: validStatus, ...(reason === undefined ? {} : { reason }) }
+      : { event: 'run_completed', status: validStatus };
+
   const emitResult = await emitEvent({
     runDir,
-    event: { event: 'run_completed', status: validStatus },
+    event,
     timestamp: now,
   });
 
