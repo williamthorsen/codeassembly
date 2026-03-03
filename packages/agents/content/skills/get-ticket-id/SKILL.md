@@ -52,6 +52,32 @@ When a bare number is found, read `project.ticket_prefix` from `.agents/preferen
 | `147/feat/foo` | `MAC-`          | `MAC-147`          |
 | `42`           | _(none)_        | `42`               |
 
+```bash
+branch_name="${1:-$(git branch --show-current)}"
+
+# Try Jira-style first
+ticket_id=$(echo "$branch_name" | grep -oE '^[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1)
+
+# Fall back to bare numeric
+if [ -z "$ticket_id" ]; then
+  bare_number=$(echo "$branch_name" | grep -oE '^[0-9]+' | head -1)
+  if [ -n "$bare_number" ]; then
+    # Read ticket_prefix from preferences (yq or manual YAML parsing)
+    prefix=$(grep 'ticket_prefix:' .agents/preferences.yaml 2>/dev/null \
+      | head -1 | sed "s/.*ticket_prefix:[[:space:]]*['\"]\\{0,1\\}\\([^'\"]*\\)['\"]\\{0,1\\}/\\1/")
+    if [ "$prefix" = "#" ]; then
+      ticket_id="$bare_number"
+    elif [ -n "$prefix" ]; then
+      ticket_id="${prefix}${bare_number}"
+    else
+      ticket_id="$bare_number"
+    fi
+  fi
+fi
+
+echo "$ticket_id"
+```
+
 ### From current context (default)
 
 | Branch ticket | Commit ticket | Action                                      |

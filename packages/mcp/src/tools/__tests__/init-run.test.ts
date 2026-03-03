@@ -187,4 +187,8 @@ describe('sanitizeTicketId', () => {
   it('throws when the ticket ID reduces to an empty string', () => {
     expect(() => sanitizeTicketId('#')).toThrow('Invalid ticket ID: "#" reduces to empty string after sanitization');
   });
+
+  it('throws when the ticket ID is an empty string', () => {
+    expect(() => sanitizeTicketId('')).toThrow('Invalid ticket ID: "" reduces to empty string after sanitization');
+  });
 });

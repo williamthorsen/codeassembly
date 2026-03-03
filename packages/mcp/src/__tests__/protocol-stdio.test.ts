@@ -43,9 +43,11 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
       // Verify no error
       expect(isErrorResult(result)).toBe(false);
 
-      // Parse and verify runId using shared helpers
+      // Parse and verify runId and runDir path structure using shared helpers
       const runId = parseAndGetString(result, 'runId');
       expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
+      const resultRunDir = parseAndGetString(result, 'runDir');
+      expect(resultRunDir).toContain('.ai/projects/smoke-test/tickets/');
     } finally {
       await client.close();
     }

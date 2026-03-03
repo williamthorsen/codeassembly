@@ -98,6 +98,7 @@ describe('full lifecycle via protocol', () => {
     const runId = getStringField(initData, 'runId');
     const resultRunDir = getStringField(initData, 'runDir');
     expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
+    expect(resultRunDir).toContain('.ai/projects/protocol-test/tickets/PROTO-1/');
 
     // 2. emit phase_started(architecture)
     const phaseStartResult = await client.callTool({
