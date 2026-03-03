@@ -23,7 +23,7 @@ describe('lifecycle integration', () => {
       task: 'test the full lifecycle',
     });
 
-    expect(initResult.runId).toMatch(/^lifecycle-test\.\d{8}-\d{6}Z$/);
+    expect(initResult.runId).toMatch(/^\d{8}-\d{6}Z$/);
     const { runDir } = initResult;
 
     // Step 2: Emit phase events

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { v3RunIndexSchema } from '@codeassembly/run-core';
 import { describe, expect, it } from 'vitest';
 
-import { initRun } from '../init-run.js';
+import { initRun, sanitizeTicketId } from '../init-run.js';
 
 describe('initRun', () => {
   async function createTmpDir(): Promise<string> {
@@ -21,8 +21,8 @@ describe('initRun', () => {
       task: 'implement feature',
     });
 
-    expect(result.runId).toMatch(/^test-project\.\d{8}-\d{6}Z$/);
-    expect(result.runDir).toContain('.ai/runs/');
+    expect(result.runId).toMatch(/^\d{8}-\d{6}Z$/);
+    expect(result.runDir).toContain('.ai/projects/test-project/tickets/');
     expect(result.ticketId).toBeTruthy();
     expect(result.timestamp).toBeTruthy();
   });
@@ -37,7 +37,7 @@ describe('initRun', () => {
       task: 'implement feature',
     });
 
-    expect(result.runDir).toContain('.ai/runs/PROJ-42/');
+    expect(result.runDir).toContain('.ai/projects/test-project/tickets/PROJ-42/');
     expect(result.ticketId).toBe('PROJ-42');
   });
 
@@ -52,7 +52,7 @@ describe('initRun', () => {
 
     // Auto-generated format: {YYYYMMDD}-{4 hex chars}
     expect(result.ticketId).toMatch(/^\d{8}-[0-9a-f]{4}$/);
-    expect(result.runDir).toContain(`.ai/runs/${result.ticketId}/`);
+    expect(result.runDir).toContain(`.ai/projects/test-project/tickets/${result.ticketId}/`);
   });
 
   it('writes a valid v3 run-index.json', async () => {
@@ -136,6 +136,25 @@ describe('initRun', () => {
     expect(parsed).toHaveProperty('context.ticketId', result.ticketId);
   });
 
+  it('sanitizes ticket IDs with leading # before use in paths', async () => {
+    const projectRoot = await createTmpDir();
+    const result = await initRun({
+      projectSlug: 'test-project',
+      ticketId: '#152',
+      projectRoot,
+      branch: '152',
+      task: 'fix artifact logging',
+    });
+
+    expect(result.runDir).toContain('tickets/152/');
+    expect(result.runDir).not.toContain('#');
+    expect(result.ticketId).toBe('152');
+
+    const indexContent = await readFile(join(result.runDir, 'run-index.json'), 'utf8');
+    const parsed: unknown = JSON.parse(indexContent);
+    expect(parsed).toHaveProperty('context.ticketId', '152');
+  });
+
   it('rejects when the project root cannot be written to', async () => {
     // Create a regular file where mkdir expects to create a directory, causing ENOTDIR
     const blocker = join(tmpdir(), 'mcp-test-blocker-' + Date.now().toString());
@@ -149,5 +168,23 @@ describe('initRun', () => {
         task: 'test task',
       }),
     ).rejects.toThrow(/ENOTDIR/);
+  });
+});
+
+describe('sanitizeTicketId', () => {
+  it('strips a single leading # from ticket IDs', () => {
+    expect(sanitizeTicketId('#152')).toBe('152');
+  });
+
+  it('strips multiple leading # characters', () => {
+    expect(sanitizeTicketId('##152')).toBe('152');
+  });
+
+  it('returns Jira-style ticket IDs unchanged', () => {
+    expect(sanitizeTicketId('PROJ-42')).toBe('PROJ-42');
+  });
+
+  it('throws when the ticket ID reduces to an empty string', () => {
+    expect(() => sanitizeTicketId('#')).toThrow('Invalid ticket ID: "#" reduces to empty string after sanitization');
   });
 });

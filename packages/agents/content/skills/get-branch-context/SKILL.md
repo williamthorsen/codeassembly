@@ -78,7 +78,8 @@ Extract the ticket ID from the **start** of the branch name using these rules:
 5. The ticket ID pattern ends at the first `/` or `_` separator, or at the end of the branch name if it is the entire branch name. Do not continue matching past the first separator or into hyphenated descriptions. For example, `MAC-147-some-description` extracts `MAC-147` (the match stops before the second hyphen because `-s` does not continue the digits pattern), and `MAC-147/feat/foo` extracts `MAC-147`.
 6. If no prefixed ticket ID is found, check for a **bare issue number**: one or more digits anchored to the start of the branch name, terminated by `/`, `_`, or `-`, or at the end of the branch name if it is the entire name. Examples: `147/feat/something` → `147`, `42_fix_login` → `42`, `99` → `99`. Do not match digits that appear after non-digit characters.
 7. If a bare issue number is found, read `project.ticket_prefix` from `.agents/preferences.yaml`:
-   - If a prefix is configured: ticket ID = `{ticket_prefix}{number}` (e.g., prefix `MAC-` + number `147` → `MAC-147`).
+   - If `ticket_prefix` is `#` (a GitHub display prefix): return the **bare number only**. The `#` character is a display convention, not an identifier component, and must not appear in file paths.
+   - If a Jira-style prefix is configured (e.g., `MAC-`): ticket ID = `{ticket_prefix}{number}` (e.g., prefix `MAC-` + number `147` → `MAC-147`).
    - If no prefix is configured: ticket ID = the number alone (e.g., `147`).
 8. If neither a prefixed ticket ID nor a bare issue number is found, the ticket ID is `null`.
 
@@ -336,6 +337,29 @@ Preferences: no `project.ticket_prefix` configured
   "default_branch": "origin/main",
   "branch_name": "42_fix_login-redirect",
   "created_at": "2026-02-28T00:00:00Z"
+}
+```
+
+#### 11. Bare issue number with `#` display prefix
+
+Branch: `152`
+Preferences: `project.ticket_prefix: '#'`
+
+**Derivation trace:**
+
+1. Ticket ID: No `[A-Z]{2,}-[0-9]+` match at start (begins with digits). No prefixed ticket ID.
+2. Bare issue number check: `152` found at start, at end of branch name.
+3. Read `project.ticket_prefix` from preferences: `#`.
+4. Prefix is `#` (display-only convention). Return bare number: `152`.
+5. After stripping the ticket ID, nothing remains. Description is empty.
+
+```json
+{
+  "ticket_id": "152",
+  "project_slug": "codeassembly",
+  "default_branch": "origin/main",
+  "branch_name": "152",
+  "created_at": "2026-03-03T00:00:00Z"
 }
 ```
 

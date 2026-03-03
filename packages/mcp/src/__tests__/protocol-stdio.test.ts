@@ -45,7 +45,7 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
 
       // Parse and verify runId using shared helpers
       const runId = parseAndGetString(result, 'runId');
-      expect(runId).toMatch(/^smoke-test\.\d{8}-\d{6}Z$/);
+      expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
     } finally {
       await client.close();
     }
