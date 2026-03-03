@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
 
@@ -20,10 +20,13 @@ const { VisualizationSwitcher } = await import('../VisualizationSwitcher.js');
 describe('VisualizationSwitcher', () => {
   const replaceStateSpy = vi.spyOn(globalThis.history, 'replaceState');
 
-  afterEach(() => {
-    cleanup();
+  beforeEach(() => {
     globalThis.history.replaceState(null, '', '/');
     replaceStateSpy.mockClear();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('renders factory view by default with data-view="factory"', () => {

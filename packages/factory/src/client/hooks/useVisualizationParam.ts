@@ -3,11 +3,18 @@ import { useCallback, useState } from 'react';
 export type ActiveView = 'factory' | 'flow';
 
 const PARAM_KEY = 'visualization';
-const VALID_VALUES = new Set<string>(['factory', 'flow']);
 const DEFAULT_VALUE: ActiveView = 'factory';
 
-function isValidActiveView(value: string | null): value is ActiveView {
-  return value !== null && VALID_VALUES.has(value);
+// Replace the current history entry, ignoring failures in restricted environments
+// such as sandboxed iframes.
+function safeReplaceUrl(params: URLSearchParams): void {
+  const search = params.toString();
+  const url = search ? `${globalThis.location.pathname}?${search}` : globalThis.location.pathname;
+  try {
+    globalThis.history.replaceState(null, '', url);
+  } catch {
+    // Ignore.
+  }
 }
 
 export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void] {
@@ -15,7 +22,7 @@ export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void
     const params = new URLSearchParams(globalThis.location.search);
     const raw = params.get(PARAM_KEY);
 
-    if (isValidActiveView(raw)) {
+    if (raw === 'factory' || raw === 'flow') {
       return raw;
     }
 
@@ -24,14 +31,7 @@ export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void
     // the URL is cleaned before the first render, avoiding a flash of an invalid param.
     if (raw !== null) {
       params.delete(PARAM_KEY);
-      const search = params.toString();
-      const url = search ? `${globalThis.location.pathname}?${search}` : globalThis.location.pathname;
-      try {
-        globalThis.history.replaceState(null, '', url);
-      } catch {
-        // Ignore — URL cleanup is best-effort; restricted environments (sandboxed iframes)
-        // may disallow history manipulation.
-      }
+      safeReplaceUrl(params);
     }
 
     return DEFAULT_VALUE;
@@ -46,15 +46,7 @@ export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void
       params.set(PARAM_KEY, view);
     }
 
-    const search = params.toString();
-    const url = search ? `${globalThis.location.pathname}?${search}` : globalThis.location.pathname;
-
-    try {
-      globalThis.history.replaceState(null, '', url);
-    } catch {
-      // Ignore — URL persistence is best-effort in restricted environments.
-    }
-
+    safeReplaceUrl(params);
     setActiveViewState(view);
   }, []);
 
