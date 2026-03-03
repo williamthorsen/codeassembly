@@ -16,7 +16,7 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
   it('spawns MCP server subprocess and calls init_run successfully', async () => {
     const transport = new StdioClientTransport({
       command: process.execPath,
-      args: ['--import', 'tsx/esm', cliPath],
+      args: ['--import', 'tsx/esm', '--conditions', 'source', cliPath],
     });
 
     const client = new Client({ name: 'smoke-test', version: '0.0.1' });
