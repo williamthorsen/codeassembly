@@ -94,6 +94,7 @@ Invalid model names (e.g., `gpt4`) are rejected by the Task tool at dispatch tim
 
 ```yaml
 orchestration:
+  mcp_policy: prompt # required | optional | prompt (default: prompt)
   approval_threshold: low # or medium, high
   budget_threshold: low # or medium, high
   # fix_low_findings: true  # legacy alias — mapped to both thresholds (true -> low, false -> medium)
@@ -104,6 +105,21 @@ orchestration:
 ```
 
 Keys with engine defaults (`coder`, `holistic_reviewer`) ignore `default` — override them explicitly to change their models.
+
+### Resolving MCP policy
+
+Resolution cascade:
+
+1. Preference: `orchestration.mcp_policy` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
+2. Default: `prompt`
+
+`mcp_policy` is not a CLI argument — it is resolved from preferences only.
+
+| Value      | Behavior when MCP is unavailable                                                                                                                    |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `required` | Abort immediately with a message explaining that MCP is unavailable and the policy requires it                                                      |
+| `optional` | Print a one-line notice ("MCP unavailable — continuing without tracking") and continue without MCP                                                  |
+| `prompt`   | Ask the developer before continuing (default). The prompt explains that no run-index.json, run-log.jsonl, or Factory visualization will be produced |
 
 ## Visibility
 
@@ -138,7 +154,7 @@ Prefix the status line with a colored emoji for visual distinction:
 1. **Get context**: Use `get-project-slug` and `get-ticket-id`. Resolve the diff base: use `--diff-base` if provided, otherwise use `get-default-branch`. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` — this concrete SHA is what you pass to all downstream agents. The ticket ID is optional — if unavailable, `init_run` will auto-generate one.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
 3. **Detect external plan**: Determine whether the task description contains an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content for use in downstream prompts. Otherwise, set `{externalPlan}` to `false`. This detection must happen before `init_run` so the flag is recorded correctly in the run header.
-4. **Initialize run via MCP**: Call MCP tool `init_run` with:
+4. **Initialize run via MCP**: Attempt to call MCP tool `init_run` with:
 
    ```
    projectSlug: {slug}
@@ -159,9 +175,27 @@ Prefix the status line with a colored emoji for visual distinction:
    }
    ```
 
-   Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Derive the filename-format prefix from the returned ISO timestamp: strip punctuation to produce `YYYYMMDD-HHMMSSZ` format (e.g., `2026-03-02T18:59:50.000Z` becomes `20260302-185950Z`). Store as `{file-timestamp}` for use in artifact filenames.
+   **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Derive the filename-format prefix from the returned ISO timestamp: strip punctuation to produce `YYYYMMDD-HHMMSSZ` format (e.g., `2026-03-02T18:59:50.000Z` becomes `20260302-185950Z`). Store as `{file-timestamp}` for use in artifact filenames.
 
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
+
+   **Failure — MCP unavailable** (tool not found / server not connected): Resolve `mcp_policy` (see "Resolving MCP policy" above) and apply the policy:
+   - `required`: abort with a clear message explaining that MCP is unavailable and the policy requires it.
+   - `prompt`: ask the developer: "MCP server is unavailable — no run-index.json, run-log.jsonl, or Factory visualization will be produced. Continue without MCP tracking? (yes / no)". Abort if the developer declines; continue on confirmation.
+   - `optional`: print one-line notice "MCP unavailable — continuing without tracking" and proceed.
+
+   **Fallback local context generation** (when policy permits continuing without MCP):
+   - Resolve `{base-dir}` from `artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, then default to `~/.ai`.
+   - Generate `{timestamp}` as current UTC time in ISO 8601.
+   - Derive `{file-timestamp}` by stripping punctuation: `YYYYMMDD-HHMMSSZ` format.
+   - Use `{ticket-id}` from step 1 if available, otherwise generate as `{YYYYMMDD}-{4 random hex chars}`.
+   - Set `{runId}` = `{file-timestamp}-orchestrated`.
+   - Set `{run-dir}` = `{base-dir}/projects/{project-slug}/tickets/{ticket-id}/{runId}`.
+   - Create `{run-dir}` via `mkdir -p`.
+   - Set `{mcp-available}` = `false`.
+   - Do NOT write `run-index.json` or `run-log.jsonl` — the MCP server creates these; the fallback does not replicate them.
+
+   **Runtime errors** (non-MCP failures such as bad arguments or disk errors): abort immediately — these are not MCP policy issues.
 
 5. **Write run-manifest artifact** to `{run-dir}/{file-timestamp}_orchestrator_run-manifest.md`:
 
@@ -220,6 +254,14 @@ phase: initialization
    ```
 
 8. **Register all subsequent artifacts**: For every artifact file written during the run, call MCP tool `register_artifact` immediately after writing the file. Required fields: `runDir`, `filename`, `role`, `roleType`, `agent`, `type`, `phase`. Optional fields: `iteration` (for review phase artifacts), `note` (free-text context). Use the [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy) defined in artifact-conventions.md to populate the `roleType` field for each artifact entry. Quick reference: orchestrator -> `orchestrator`, architect -> `analyst`, planner -> `planner`, coder -> `author`, all reviewers -> `reviewer`. See [artifact entry fields](../_data/artifact-conventions.md#artifact-entry-fields) for the full field reference.
+
+### MCP call policy
+
+When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. No per-call-site guards are needed — this one policy governs every call site in this file and in loaded modules.
+
+`get_run_state` retains its existing conversation-tracked fallback (see "Error handling" and `review-cycle.md` fallback policy note).
+
+**Mid-run disconnection:** If an individual MCP call fails after a successful `init_run`, log a warning in the run summary and set `{mcp-available}` = `false` for all remaining calls. Do not abort mid-run. `run-index.json` may be left in a partial state — this is a known limitation.
 
 ## Phase decisions
 
@@ -317,6 +359,8 @@ Pass the fully resolved models map to the module. The module uses `{models.revie
 ### review-cycle: resolving `{change-summary-path}`
 
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
+
+When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by timestamp, so the last entry in sorted order is the most recent). If no match is found, set `{change-summary-path}` to an empty string.
 
 ## Phase 1: Architecture (optional)
 
@@ -456,7 +500,7 @@ After the summary is presented and `complete_run` has been called, check whether
 
 Like Phase 5, this is an inherent engine responsibility — not a pipeline phase. It does not get `phase_decision` or `phase_started`/`phase_completed` events.
 
-The `/wrap-up` skill will assess the session (including the run-summary artifact), present a checklist of recommended actions (tickets for deferred items, documentation for discoveries), and wait for user confirmation before executing. This is the one exception to the autonomous execution constraint: the orchestrator pauses here for human input.
+The `/wrap-up` skill will assess the session (including the run-summary artifact), present a checklist of recommended actions (tickets for deferred items, documentation for discoveries), and wait for user confirmation before executing. This is one of two exceptions to the autonomous execution constraint: the orchestrator pauses here for human input (the other is the MCP availability check in step 4 of run initialization when `mcp_policy` is `prompt`).
 
 If the run-summary has no deferred items and no insights, skip this phase silently.
 
@@ -483,10 +527,12 @@ Subagents include a structured return block at the end of their Task response. T
 - **maxTurns exhausted**: record as `needs_manual_review`.
 - **Quality gate failure** (coder reports failing gates): treat as review finding at `critical` severity.
 - **`get_run_state` unavailable**: if any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
+- **MCP server unavailable at `init_run`**: handled by the step 4 availability guard — the resolved `mcp_policy` determines whether to abort, prompt the developer, or continue without MCP tracking.
+- **MCP server disconnects mid-run**: log a warning in the run summary and set `{mcp-available}` = `false` for all remaining calls. Do not abort. `run-index.json` may be left in a partial state; `complete_run` will be skipped.
 
 ## Constraints
 
-- Autonomous execution: follow flow control at every decision point without pausing for human input. Report outcomes in the summary. **Exception:** Phase 6 (wrap-up) pauses for user confirmation before creating tickets or artifacts.
+- Autonomous execution: follow flow control at every decision point without pausing for human input. Report outcomes in the summary. **Exceptions:** (1) Phase 6 (wrap-up) pauses for user confirmation before creating tickets or artifacts. (2) MCP availability check (step 4 of run initialization) pauses for developer input when `mcp_policy` is `prompt`.
 - All project code changes go through `orchestrated-coder`
 - All analysis goes through `orchestrated-architect`
 - Don't duplicate subagent work — trust their results
