@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { silencedConsole } from '../../../test-utils.js';
 import { SettingsStore } from '../settings-store.js';
 
 describe('SettingsStore', () => {
@@ -68,6 +69,7 @@ describe('SettingsStore', () => {
     });
 
     it('returns defaults for invalid JSON', async () => {
+      using _silent = silencedConsole();
       const store = new SettingsStore(tempDir);
       // Write valid first to create the directory, then overwrite with invalid JSON
       await store.save({ dismissedRuns: {} });
@@ -79,6 +81,7 @@ describe('SettingsStore', () => {
     });
 
     it('returns defaults for invalid schema', async () => {
+      using _silent = silencedConsole();
       const store = new SettingsStore(tempDir);
       await store.save({ dismissedRuns: {} });
       const { writeFile: write } = await import('node:fs/promises');

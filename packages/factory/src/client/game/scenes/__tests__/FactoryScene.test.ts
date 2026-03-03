@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCompletedRunPhases, createMockRunStatus, emptyPhases } from '../../../../__test-helpers__/fixtures.js';
+import { silencedConsole } from '../../../../test-utils.js';
 import { createSceneConfig } from '../../mappers/run-to-scene.js';
 
 const {
@@ -838,6 +839,7 @@ describe('FactoryScene', () => {
     });
 
     it('hides artifact indicator even when walkPath rejects', async () => {
+      using _silent = silencedConsole();
       mockWalkPath.mockImplementationOnce(() => Promise.reject(new Error('walk failed')));
 
       const status = createMockRunStatus({

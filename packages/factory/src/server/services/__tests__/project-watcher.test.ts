@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { silencedConsole } from '../../../test-utils.js';
 import { ProjectWatcher } from '../project-watcher.js';
 
 // Mock fs.watch
@@ -48,6 +49,7 @@ describe('ProjectWatcher', () => {
   });
 
   it('calls fs.watch with recursive option on start()', () => {
+    using _silent = silencedConsole();
     const scanner = createMockScanner();
     const watcher = new ProjectWatcher(scanner);
 
@@ -59,6 +61,7 @@ describe('ProjectWatcher', () => {
   });
 
   it('triggers scanner.scan() after debounce delay on change event', async () => {
+    using _silent = silencedConsole();
     const scanner = createMockScanner();
     const watcher = new ProjectWatcher(scanner);
 
@@ -79,6 +82,7 @@ describe('ProjectWatcher', () => {
   });
 
   it('debounces rapid changes into a single scan', async () => {
+    using _silent = silencedConsole();
     const scanner = createMockScanner();
     const watcher = new ProjectWatcher(scanner);
 
@@ -102,6 +106,7 @@ describe('ProjectWatcher', () => {
   });
 
   it('closes the watcher on stop()', () => {
+    using _silent = silencedConsole();
     const scanner = createMockScanner();
     const watcher = new ProjectWatcher(scanner);
 
@@ -121,9 +126,9 @@ describe('ProjectWatcher', () => {
   });
 
   it('logs error and continues when scanner.scan() rejects', async () => {
+    using silent = silencedConsole();
     const scanner = createMockScanner();
     vi.mocked(scanner.scan).mockRejectedValueOnce(new Error('scan failed'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const watcher = new ProjectWatcher(scanner);
     watcher.start();
@@ -133,9 +138,8 @@ describe('ProjectWatcher', () => {
 
     await vi.advanceTimersByTimeAsync(1000);
 
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('rescan'), expect.any(Error));
+    expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('rescan'), expect.any(Error));
 
-    consoleSpy.mockRestore();
     watcher.stop();
   });
 });

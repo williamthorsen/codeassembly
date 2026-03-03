@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
+import { silencedConsole } from '../../../test-utils.js';
 import { ProjectScanner } from '../project-scanner.js';
 
 const { mockedReaddir, mockedStat, mockedParseRunData } = vi.hoisted(() => ({
@@ -140,6 +141,7 @@ describe('ProjectScanner', () => {
 
   // Error recovery: graceful degradation — returns an empty index rather than throwing
   it('handles missing base directory gracefully', async () => {
+    using _silent = silencedConsole();
     const scanner = new ProjectScanner('/nonexistent');
 
     mockedReaddir.mockRejectedValueOnce(new Error('ENOENT'));
@@ -210,6 +212,7 @@ describe('ProjectScanner', () => {
 
   // Error recovery: skip-and-continue — invalid runs are skipped, valid siblings still collected
   it('skips runs with invalid status.json and continues scanning other runs', async () => {
+    using _silent = silencedConsole();
     const scanner = new ProjectScanner('/test/projects');
 
     mockReaddirResult(['proj']);
