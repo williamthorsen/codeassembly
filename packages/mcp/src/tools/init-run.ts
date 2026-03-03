@@ -22,12 +22,12 @@ export interface InitRunResult {
   timestamp: string;
 }
 
-/** Generate a run ID in the format `{projectSlug}.{yyyymmdd}-{hhmmss}Z`. */
-function generateRunId(projectSlug: string): string {
+/** Generate a run ID in the format `{yyyymmdd}-{hhmmss}Z`. */
+function generateRunId(): string {
   const iso = new Date().toISOString();
   const date = iso.slice(0, 10).replace(/-/g, '');
   const time = iso.slice(11, 19).replace(/:/g, '');
-  return `${projectSlug}.${date}-${time}Z`;
+  return `${date}-${time}Z`;
 }
 
 /** Generate a ticket ID in the format `{YYYYMMDD}-{4 random hex}`. */
@@ -38,19 +38,33 @@ function generateTicketId(): string {
 }
 
 /**
+ * Sanitize a caller-supplied ticket ID for use in file paths.
+ * Strips leading `#` characters (a display convention, not part of the identifier).
+ * Throws if the result is empty.
+ */
+export function sanitizeTicketId(ticketId: string): string {
+  const sanitized = ticketId.replace(/^#+/, '');
+  if (sanitized === '') {
+    throw new Error(`Invalid ticket ID: "${ticketId}" reduces to empty string after sanitization`);
+  }
+  return sanitized;
+}
+
+/**
  * Initialize a new run: create the run directory, write run-index.json, create
  * an empty run-log.jsonl, and emit a `run_started` event.
  *
- * Runs are stored at `{projectRoot}/.ai/runs/{ticketId}/{runId}/`. When no
- * ticket ID is provided, one is auto-generated with a timestamp-based format.
+ * Runs are stored at `{projectRoot}/.ai/projects/{projectSlug}/tickets/{ticketId}/{runId}/`.
+ * When no ticket ID is provided, one is auto-generated with a timestamp-based format.
+ * Caller-supplied ticket IDs are sanitized (leading `#` stripped) before use.
  */
 export async function initRun(input: InitRunInput): Promise<InitRunResult> {
-  const { projectSlug, projectRoot, branch, task, pipeline, models, config } = input;
+  const { ticketId, projectSlug, projectRoot, branch, task, pipeline, models, config } = input;
 
-  const resolvedTicketId = input.ticketId ?? generateTicketId();
-  const runId = generateRunId(projectSlug);
+  const resolvedTicketId = ticketId === undefined ? generateTicketId() : sanitizeTicketId(ticketId);
+  const runId = generateRunId();
   const timestamp = new Date().toISOString();
-  const runDir = join(projectRoot, '.ai', 'runs', resolvedTicketId, runId);
+  const runDir = join(projectRoot, '.ai', 'projects', projectSlug, 'tickets', resolvedTicketId, runId);
 
   await mkdir(runDir, { recursive: true });
 
