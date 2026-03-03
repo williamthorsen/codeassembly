@@ -63,6 +63,7 @@ describe('completeRun', () => {
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
     expect(event).toMatchObject({ event: 'run_failed', status: 'failed' });
+    expect(event).not.toHaveProperty('reason');
   });
 
   it('includes reason in run_failed event', async () => {
@@ -96,7 +97,7 @@ describe('completeRun', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
-    expect(event).toMatchObject({ status: 'needs_manual_review' });
+    expect(event).toMatchObject({ event: 'run_completed', status: 'needs_manual_review' });
   });
 
   it('rejects when run-index.json is missing', async () => {
