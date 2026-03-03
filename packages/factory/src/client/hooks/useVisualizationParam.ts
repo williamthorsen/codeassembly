@@ -26,7 +26,12 @@ export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void
       params.delete(PARAM_KEY);
       const search = params.toString();
       const url = search ? `${globalThis.location.pathname}?${search}` : globalThis.location.pathname;
-      globalThis.history.replaceState(null, '', url);
+      try {
+        globalThis.history.replaceState(null, '', url);
+      } catch {
+        // Ignore — URL cleanup is best-effort; restricted environments (sandboxed iframes)
+        // may disallow history manipulation.
+      }
     }
 
     return DEFAULT_VALUE;
@@ -43,7 +48,13 @@ export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void
 
     const search = params.toString();
     const url = search ? `${globalThis.location.pathname}?${search}` : globalThis.location.pathname;
-    globalThis.history.replaceState(null, '', url);
+
+    try {
+      globalThis.history.replaceState(null, '', url);
+    } catch {
+      // Ignore — URL persistence is best-effort in restricted environments.
+    }
+
     setActiveViewState(view);
   }, []);
 

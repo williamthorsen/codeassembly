@@ -102,4 +102,15 @@ describe('VisualizationSwitcher', () => {
 
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=flow');
   });
+
+  it('removes URL param when the Factory button is clicked from flow view', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=flow');
+    const status = createMockRunStatus();
+    render(<VisualizationSwitcher status={status} />);
+    replaceStateSpy.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Factory' }));
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
+  });
 });

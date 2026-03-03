@@ -21,12 +21,14 @@ describe('useVisualizationParam', () => {
     expect(result.current[0]).toBe('factory');
   });
 
-  it('returns "factory" when URL has visualization=factory', () => {
+  it('returns "factory" when URL has visualization=factory and does not call replaceState', () => {
     globalThis.history.replaceState(null, '', '/?visualization=factory');
+    replaceStateSpy.mockClear();
 
     const { result } = renderHook(() => useVisualizationParam());
 
     expect(result.current[0]).toBe('factory');
+    expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 
   it('returns "flow" when URL has visualization=flow', () => {
@@ -45,6 +47,16 @@ describe('useVisualizationParam', () => {
 
     expect(result.current[0]).toBe('factory');
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
+  });
+
+  it('strips invalid value from URL on mount while preserving other params', () => {
+    globalThis.history.replaceState(null, '', '/?project=alpha&ticket=T-1&visualization=unknown');
+    replaceStateSpy.mockClear();
+
+    const { result } = renderHook(() => useVisualizationParam());
+
+    expect(result.current[0]).toBe('factory');
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?project=alpha&ticket=T-1');
   });
 
   it('setActiveView("flow") updates URL to include visualization=flow', () => {
