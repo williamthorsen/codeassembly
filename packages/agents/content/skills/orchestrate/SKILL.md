@@ -189,8 +189,8 @@ Prefix the status line with a colored emoji for visual distinction:
    - Generate `{timestamp}` as current UTC time in ISO 8601.
    - Derive `{file-timestamp}` by stripping punctuation: `YYYYMMDD-HHMMSSZ` format.
    - Use `{ticket-id}` from step 1 if available, otherwise generate as `{YYYYMMDD}-{4 random hex chars}`.
-   - Set `{runId}` = `{file-timestamp}-orchestrated`.
-   - Set `{run-dir}` = `{base-dir}/projects/{project-slug}/tickets/{ticket-id}/{runId}`.
+   - Set `{run-id}` = `{file-timestamp}-orchestrated`.
+   - Set `{run-dir}` = `{base-dir}/projects/{project-slug}/tickets/{ticket-id}/{run-id}`.
    - Create `{run-dir}` via `mkdir -p`.
    - Set `{mcp-available}` = `false`.
    - Do NOT write `run-index.json` or `run-log.jsonl` — the MCP server creates these; the fallback does not replicate them.
