@@ -729,6 +729,80 @@ describe('createFlowConfig', () => {
     });
   });
 
+  describe('V2 data with undefined reviewers', () => {
+    it('does not crash when reviewers is undefined and names come from iterations[].perReviewer', () => {
+      const iteration = Object.assign(
+        { reviewers: ['orchestrated-reviewer', 'aspect-test-reviewer'] },
+        {
+          perReviewer: {
+            'orchestrated-reviewer': { status: 'failed', criticality: 'medium' },
+            'aspect-test-reviewer': { status: 'completed', criticality: 'medium' },
+          },
+        },
+      );
+      const parallelReview: ParallelReviewPhase = {
+        aggregatedCriticality: 'low',
+        reviewRoundsUsed: 1,
+        coderFixCycleRan: false,
+        selectiveReReview: undefined,
+        iterations: [iteration],
+      };
+
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: { ...emptyPhases(), parallelReview },
+      });
+
+      const { nodes, edges } = createFlowConfig(status);
+      const reviewerNodes = nodes.filter((n) => n.id.startsWith('reviewer-'));
+
+      expect(reviewerNodes.length).toBe(2);
+      expect(reviewerNodes[0]?.data.status).toBe('idle');
+      expect(reviewerNodes[1]?.data.status).toBe('idle');
+
+      // Dispatch + return edges for each reviewer
+      const dispatchEdges = edges.filter((e) => e.id.startsWith('dispatch-reviewer-'));
+      const returnEdges = edges.filter((e) => e.id.startsWith('return-reviewer-'));
+      expect(dispatchEdges.length).toBe(2);
+      expect(returnEdges.length).toBe(2);
+    });
+
+    it('does not crash when reviewers is undefined and names come from reviewerDetails', () => {
+      const base: ParallelReviewPhase = {
+        aggregatedCriticality: 'low',
+        reviewRoundsUsed: 1,
+        coderFixCycleRan: false,
+        selectiveReReview: undefined,
+      };
+      const parallelReview = Object.assign(base, {
+        reviewerDetails: {
+          'code-reviewer': { status: 'completed', criticality: 'none' },
+          'test-reviewer': { status: 'completed', criticality: 'low' },
+        },
+      });
+
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: { ...emptyPhases(), parallelReview },
+      });
+
+      const { nodes, edges } = createFlowConfig(status);
+      const reviewerNodes = nodes.filter((n) => n.id.startsWith('reviewer-'));
+
+      expect(reviewerNodes.length).toBe(2);
+      expect(reviewerNodes[0]?.data.status).toBe('idle');
+      expect(reviewerNodes[1]?.data.status).toBe('idle');
+
+      // Dispatch + return edges for each reviewer
+      const dispatchEdges = edges.filter((e) => e.id.startsWith('dispatch-reviewer-'));
+      const returnEdges = edges.filter((e) => e.id.startsWith('return-reviewer-'));
+      expect(dispatchEdges.length).toBe(2);
+      expect(returnEdges.length).toBe(2);
+    });
+  });
+
   describe('reviewer dimming', () => {
     it('dims reviewers not in selectiveReReview.reviewersDispatched when ran is true', () => {
       const status = createMockRunStatus({

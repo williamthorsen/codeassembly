@@ -106,12 +106,12 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']).toMatchObject({
       ran: true,
       status: undefined,
       criticality: undefined,
     });
-    expect(result.phases.parallelReview?.reviewers['test-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['test-reviewer']).toMatchObject({
       ran: true,
     });
   });
@@ -132,7 +132,7 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']).toMatchObject({
       status: 'completed',
       criticality: 'low',
     });
@@ -185,8 +185,8 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']?.reReviewCriticality).toBe('none');
-    expect(result.phases.parallelReview?.reviewers['test-reviewer']?.reReviewCriticality).toBe('low');
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']?.reReviewCriticality).toBe('none');
+    expect(result.phases.parallelReview?.reviewers?.['test-reviewer']?.reReviewCriticality).toBe('low');
   });
 
   it('appends artifacts on artifact_written', () => {
@@ -644,9 +644,9 @@ describe('foldEvents', () => {
     const result = foldEvents(header, events);
 
     // Known reviewer is updated
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']?.reReviewCriticality).toBe('low');
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']?.reReviewCriticality).toBe('low');
     // Unknown reviewer is not added to the reviewers map
-    expect(result.phases.parallelReview?.reviewers['unknown-reviewer']).toBeUndefined();
+    expect(result.phases.parallelReview?.reviewers?.['unknown-reviewer']).toBeUndefined();
   });
 
   // -- Full event sequence integration test (F1) ----------------------------------------
@@ -834,13 +834,13 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview?.aggregatedCriticality).toBe('none');
     expect(result.phases.parallelReview?.reviewRoundsUsed).toBe(2);
     expect(result.phases.parallelReview?.coderFixCycleRan).toBe(true);
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']).toMatchObject({
       ran: true,
       status: 'completed',
       criticality: 'low',
       reReviewCriticality: 'none',
     });
-    expect(result.phases.parallelReview?.reviewers['test-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['test-reviewer']).toMatchObject({
       ran: true,
       status: 'completed',
       criticality: 'medium',

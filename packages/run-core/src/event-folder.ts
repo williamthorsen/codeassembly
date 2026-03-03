@@ -167,6 +167,7 @@ function applyReviewerDispatched(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 'reviewer_dispatched' }>,
 ): void {
+  review.reviewers ??= {};
   review.reviewers[event.reviewer] = {
     ran: true,
     status: undefined,
@@ -186,7 +187,7 @@ function applyReviewerCompleted(
   review: ParallelReviewPhase,
   event: Extract<ReviewEvent, { event: 'reviewer_completed' }>,
 ): void {
-  const entry = review.reviewers[event.reviewer];
+  const entry = review.reviewers?.[event.reviewer];
   if (entry) {
     entry.status = event.status;
     entry.criticality = event.criticality;
@@ -216,7 +217,7 @@ function applyReReviewCompleted(
   event: Extract<ReviewEvent, { event: 're_review_completed' }>,
 ): void {
   for (const [reviewer, crit] of Object.entries(event.criticalities)) {
-    const entry = review.reviewers[reviewer];
+    const entry = review.reviewers?.[reviewer];
     if (entry) {
       entry.reReviewCriticality = crit;
     }

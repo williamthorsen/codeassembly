@@ -93,7 +93,7 @@ export interface ReviewIteration {
 export interface ParallelReviewPhase {
   aggregatedCriticality: Criticality | undefined;
   reviewRoundsUsed: number;
-  reviewers: Record<string, ReviewerInfo>;
+  reviewers?: Record<string, ReviewerInfo>;
   coderFixCycleRan: boolean;
   selectiveReReview: SelectiveReReview | undefined;
   status?: PhaseStatus;

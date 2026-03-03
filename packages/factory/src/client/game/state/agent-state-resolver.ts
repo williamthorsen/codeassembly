@@ -30,7 +30,9 @@ const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
       if (phases.parallelReview.status !== undefined) {
         return phases.parallelReview.status;
       }
-      const hasRunningReviewer = Object.values(phases.parallelReview.reviewers).some((r) => r.status === undefined);
+      const hasRunningReviewer = Object.values(phases.parallelReview.reviewers ?? {}).some(
+        (r) => r.status === undefined,
+      );
       return hasRunningReviewer ? 'in_progress' : 'completed';
     }
     return phases.review?.status;

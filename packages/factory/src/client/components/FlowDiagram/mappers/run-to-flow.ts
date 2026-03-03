@@ -257,7 +257,7 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
   const reReviewSet = isReReviewActive ? new Set(selectiveReReview.reviewersDispatched) : undefined;
 
   for (const [i, name] of reviewerNames.entries()) {
-    const reviewerInfo = phases.parallelReview.reviewers[name];
+    const reviewerInfo = phases.parallelReview.reviewers?.[name];
     const isDimmed = reReviewSet !== undefined && !reReviewSet.has(name);
     nodes.push({
       id: `reviewer-${name}`,
@@ -283,7 +283,7 @@ function buildReviewerNodes(phases: Phases): Node<FlowNodeData>[] {
 }
 
 function resolveReviewerStatus(parallelReview: ParallelReviewPhase, reviewerName: string): FlowNodeData['status'] {
-  const reviewerInfo = parallelReview.reviewers[reviewerName];
+  const reviewerInfo = parallelReview.reviewers?.[reviewerName];
   if (reviewerInfo === undefined) return 'idle';
   if (reviewerInfo.status === 'completed') return 'completed';
   if (reviewerInfo.status === 'failed') return 'failed';
@@ -521,7 +521,7 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
   const offsetMap = new Map<string, number>();
 
   for (const name of reviewerNames) {
-    const reviewerInfo = phases.parallelReview.reviewers[name];
+    const reviewerInfo = phases.parallelReview.reviewers?.[name];
     const isCompleted = reviewerInfo?.status === 'completed';
     const edgeStatus: DispatchEdgeData['status'] = isCompleted ? 'completed' : 'pending';
 
@@ -569,7 +569,7 @@ function buildReviewerEdges(phases: Phases): Array<Edge<DispatchEdgeData> | Edge
   const selectiveReReview = phases.parallelReview.selectiveReReview;
   if (selectiveReReview !== undefined && selectiveReReview.ran) {
     for (const name of selectiveReReview.reviewersDispatched) {
-      const reviewerInfo = phases.parallelReview.reviewers[name];
+      const reviewerInfo = phases.parallelReview.reviewers?.[name];
       const reReviewCompleted = reviewerInfo?.reReviewCriticality !== undefined;
       const reReviewStatus: DispatchEdgeData['status'] = reReviewCompleted ? 'completed' : 'pending';
 

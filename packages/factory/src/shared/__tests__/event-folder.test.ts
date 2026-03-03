@@ -106,12 +106,12 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']).toMatchObject({
       ran: true,
       status: undefined,
       criticality: undefined,
     });
-    expect(result.phases.parallelReview?.reviewers['test-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['test-reviewer']).toMatchObject({
       ran: true,
     });
   });
@@ -132,7 +132,7 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']).toMatchObject({
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']).toMatchObject({
       status: 'completed',
       criticality: 'low',
     });
@@ -185,8 +185,8 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.phases.parallelReview?.reviewers['code-reviewer']?.reReviewCriticality).toBe('none');
-    expect(result.phases.parallelReview?.reviewers['test-reviewer']?.reReviewCriticality).toBe('low');
+    expect(result.phases.parallelReview?.reviewers?.['code-reviewer']?.reReviewCriticality).toBe('none');
+    expect(result.phases.parallelReview?.reviewers?.['test-reviewer']?.reReviewCriticality).toBe('low');
   });
 
   it('appends artifacts on artifact_written', () => {
