@@ -1,6 +1,6 @@
 ---
 name: wrap-up
-description: Post-session housekeeping — create tickets for deferred items, record insights, and generate devlogs
+description: Post-session housekeeping — create tickets for deferred items, post insights, and generate devlogs
 user-invocable: true
 ---
 
@@ -125,7 +125,15 @@ Present the user with an inventory of addressable items and a numbered action me
 ```
 ## Session wrap-up
 
-{Brief narrative of what was done during the session.}
+{Summary of what was built or changed — the outcome, not the process.
+
+Derive from session type:
+- **Orchestrated**: paraphrase the "What was built" section of the run-summary
+- **Interactive dev**: summarize the actual code changes (`git diff` against the default branch)
+- **Review**: summarize what was reviewed and the key outcomes (approved, changes requested, etc.)
+- **Research/exploration**: summarize what was explored and key findings
+
+Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or carries a lesson for future runs — e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge — mention it briefly after the outcome summary.}
 
 ### Findings
 
@@ -161,23 +169,25 @@ What would you like to do? Reply with numbers, or adjust: "all", "1, 3", "skip"
 
 The actions menu is built dynamically based on which sections are populated:
 
-| Action                          | Offered when               | Skill/tool invoked    |
-| ------------------------------- | -------------------------- | --------------------- |
-| Create tickets for findings     | Findings section non-empty | `/create-ticket`      |
-| Create tickets for legacy items | Legacy section non-empty   | `/create-ticket`      |
-| Record insights                 | Insights section non-empty | varies by destination |
-| Save session devlog             | Always (unless trivial)    | `/create-devlog`      |
+| Action                          | Offered when                               | Skill/tool invoked |
+| ------------------------------- | ------------------------------------------ | ------------------ |
+| Create tickets for findings     | Findings section non-empty                 | `/create-ticket`   |
+| Create tickets for legacy items | Legacy section non-empty                   | `/create-ticket`   |
+| Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment` |
+| Save session devlog             | Always (unless trivial)                    | `/create-devlog`   |
+
+**Insight routing.** Each insight's destination determines where it appears in the action menu. Insights destined for `ticket comment` become part of the "Post insights to ticket" action — this action is independent and posts directly via `gh issue comment`. Insights destined for `devlog` are folded into the "Save session devlog" action and included automatically in the devlog content. This means devlog-bound insights only appear if the devlog action is selected, which is the correct dependency.
 
 Actions are numbered sequentially starting from 1. Only include actions that apply.
 
 #### Defaults by session type
 
-| Session type         | Findings                  | Legacy | Insights | Devlog   |
-| -------------------- | ------------------------- | ------ | -------- | -------- |
-| Orchestrated         | Yes (from run-summary)    | Yes    | Yes      | Yes      |
-| Interactive dev      | Yes (from conversation)   | Yes    | Yes      | Yes      |
-| Research/exploration | Rarely                    | Rarely | Yes      | Optional |
-| Review               | Yes (unresolved findings) | Yes    | Yes      | No       |
+| Session type         | Findings                  | Legacy | Ticket insights | Devlog   |
+| -------------------- | ------------------------- | ------ | --------------- | -------- |
+| Orchestrated         | Yes (from run-summary)    | Yes    | If applicable   | Yes      |
+| Interactive dev      | Yes (from conversation)   | Yes    | If applicable   | Yes      |
+| Research/exploration | Rarely                    | Rarely | If applicable   | Optional |
+| Review               | Yes (unresolved findings) | Yes    | If applicable   | No       |
 
 These are defaults. Always include any section where items were actually found, regardless of session type.
 
@@ -204,10 +214,8 @@ Process confirmed actions in this order:
 
 1. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
 2. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
-3. **Record insights** — route each insight to its destination:
-   - `ticket comment`: post via `gh issue comment {number} --body "{insight}"` (ticket number from `get-branch-context`). If no ticket is available, fall back to devlog.
-   - `devlog`: include in the session devlog (action 4).
-4. **Save session devlog** — invoke `/create-devlog`. Include any insights routed to devlog.
+3. **Post insights to ticket** — post each `ticket comment` insight via `gh issue comment {number} --body "{insight}"` (ticket number from `get-branch-context`). If no ticket is available, re-route to devlog.
+4. **Save session devlog** — invoke `/create-devlog`. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 **Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.
 
@@ -226,7 +234,8 @@ After all actions are processed, present a concise report:
 - {ticket-id}: {prefix} {item-ID} "{title}" — {URL or file path}
 
 ### Insights recorded
-- {item-ID}: {destination} — {confirmation}
+- {item-ID}: posted to #{number}
+- {item-ID}: included in devlog
 
 ### Devlog
 - {artifact path}
