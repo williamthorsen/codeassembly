@@ -18,8 +18,12 @@ vi.mock('../FlowDiagram/FlowDiagram.js', () => ({
 const { VisualizationSwitcher } = await import('../VisualizationSwitcher.js');
 
 describe('VisualizationSwitcher', () => {
+  const replaceStateSpy = vi.spyOn(globalThis.history, 'replaceState');
+
   afterEach(() => {
     cleanup();
+    globalThis.history.replaceState(null, '', '/');
+    replaceStateSpy.mockClear();
   });
 
   it('renders factory view by default with data-view="factory"', () => {
@@ -75,5 +79,27 @@ describe('VisualizationSwitcher', () => {
     fireEvent.click(flowButton);
     expect(flowButton.className).toContain('active');
     expect(factoryButton.className).not.toContain('active');
+  });
+
+  it('renders in flow view when URL has visualization=flow', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=flow');
+
+    const status = createMockRunStatus();
+    const { container } = render(<VisualizationSwitcher status={status} />);
+
+    const canvasContainer = container.querySelector<HTMLDivElement>('.canvas-container');
+    expect(canvasContainer?.dataset.view).toBe('flow');
+    expect(screen.getByTestId('flow-diagram')).toBeInTheDocument();
+    expect(screen.queryByTestId('game-canvas')).toBeNull();
+  });
+
+  it('updates URL param when the Flow button is clicked', () => {
+    const status = createMockRunStatus();
+    render(<VisualizationSwitcher status={status} />);
+    replaceStateSpy.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Flow' }));
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=flow');
   });
 });
