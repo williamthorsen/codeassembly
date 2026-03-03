@@ -7,7 +7,7 @@ integrations:
     enabled: false
 project:
   slug: codeassembly
-  ticket_prefix: CODY-
+  ticket_prefix: '#' # ignored in file names
 repository:
   default_remote:
     - name: origin
