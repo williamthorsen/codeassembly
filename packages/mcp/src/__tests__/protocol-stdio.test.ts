@@ -7,13 +7,10 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { describe, expect, it } from 'vitest';
 
+import { isRecord } from './helpers.js';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(__dirname, '../cli.ts');
-
-/** Type guard: narrows unknown to Record<string, unknown>. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 describe('stdio transport smoke test', { timeout: 20_000 }, () => {
   it('spawns MCP server subprocess and calls init_run successfully', async () => {
@@ -23,9 +20,10 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
     });
 
     const client = new Client({ name: 'smoke-test', version: '0.0.1' });
-    await client.connect(transport);
 
     try {
+      await client.connect(transport);
+
       // Verify tool discovery
       const tools = await client.listTools();
       expect(tools.tools).toHaveLength(5);

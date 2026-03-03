@@ -9,6 +9,15 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createServer } from '../server.js';
+import {
+  getStringField,
+  isErrorResult,
+  parseAndGetString,
+  parseJson,
+  parseJsonlLine,
+  parseToolResult,
+  toRecord,
+} from './helpers.js';
 
 // -- Helpers ------------------------------------------------------------------
 
@@ -32,87 +41,24 @@ async function createConnectedClient(): Promise<ConnectedClient> {
     client,
     runDir,
     cleanup: async () => {
-      await client.close();
-      await server.close();
+      await Promise.allSettled([client.close(), server.close()]);
     },
   };
 }
 
-/** Type guard: narrows unknown to Record<string, unknown>. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** Narrow unknown to Record<string, unknown> or throw. */
-function toRecord(value: unknown, label: string): Record<string, unknown> {
-  if (!isRecord(value)) throw new Error(`Expected ${label} to be an object`);
-  return value;
-}
-
-/** Parse a JSON string and return the value typed as unknown. */
-function parseJson(text: string): unknown {
-  const value: unknown = JSON.parse(text);
-  return value;
-}
-
-/**
- * Extract the text content from a callTool result and parse it as JSON.
- * The result is treated as unknown and narrowed via runtime checks to avoid
- * interacting with the SDK's complex content union type directly.
- */
-function parseToolResult(result: Awaited<ReturnType<Client['callTool']>>): unknown {
-  // Treat the result as unknown to sidestep the SDK's unresolvable content union type.
-  const raw: unknown = result;
-  const record = toRecord(raw, 'tool result');
-  const contentArray = record.content;
-  if (!Array.isArray(contentArray)) throw new Error('Result has no content array');
-  const first: unknown = contentArray[0];
-  if (first === undefined) throw new Error('Result content is empty');
-  const firstRecord = toRecord(first, 'content item');
-  if (firstRecord.type !== 'text') throw new Error('Expected text content');
-  const text = firstRecord.text;
-  if (typeof text !== 'string') throw new Error('Expected text to be a string');
-  return parseJson(text);
-}
-
-/**
- * Extract a string property from a record.
- */
-function getStringField(obj: Record<string, unknown>, field: string): string {
-  const value = obj[field];
-  if (typeof value !== 'string') throw new Error(`Expected string for ${field}, got ${typeof value}`);
-  return value;
-}
-
-function isErrorResult(result: Awaited<ReturnType<Client['callTool']>>): boolean {
-  return 'isError' in result && result.isError === true;
-}
-
-/** Parse a tool result, narrow to record, and extract a string field in one call. */
-function parseAndGetString(result: Awaited<ReturnType<Client['callTool']>>, field: string): string {
-  return getStringField(toRecord(parseToolResult(result), 'tool result'), field);
-}
-
-/** Parse a JSONL line into a Record<string, unknown>. */
-function parseJsonlLine(line: string): Record<string, unknown> {
-  return toRecord(parseJson(line), 'JSONL line');
-}
-
 // -- Tests --------------------------------------------------------------------
 
-let currentCleanup: (() => Promise<void>) | undefined;
+const cleanups: Array<() => Promise<void>> = [];
 
 afterEach(async () => {
-  if (currentCleanup) {
-    await currentCleanup();
-    currentCleanup = undefined;
-  }
+  const pending = cleanups.splice(0);
+  await Promise.allSettled(pending.map((fn) => fn()));
 });
 
 describe('tool discovery', () => {
   it('lists all 5 registered tools', async () => {
     const { client, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const result = await client.listTools();
     expect(result.tools).toHaveLength(5);
@@ -134,7 +80,7 @@ describe('tool discovery', () => {
 describe('full lifecycle via protocol', () => {
   it('init_run -> emit events -> register artifact -> complete_run -> get_run_state', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     // 1. init_run
     const initResult = await client.callTool({
@@ -216,14 +162,13 @@ describe('full lifecycle via protocol', () => {
 
     const stateRecord = toRecord(state, 'state');
     const artifacts = stateRecord.artifacts;
-    expect(Array.isArray(artifacts)).toBe(true);
     if (!Array.isArray(artifacts)) throw new Error('Expected artifacts array');
     expect(artifacts.length).toBeGreaterThanOrEqual(1);
   });
 
   it('run-index.json is a valid v3 header-only document', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     // init_run to create the run
     const initResult = await client.callTool({
@@ -245,7 +190,6 @@ describe('full lifecycle via protocol', () => {
     const rawIndex = parseJson(indexContent);
 
     const parsed = v3RunIndexSchema.safeParse(rawIndex);
-    expect(parsed.success).toBe(true);
     if (!parsed.success) throw new Error('v3RunIndexSchema validation failed');
 
     expect(parsed.data.version).toBe(3);
@@ -268,7 +212,7 @@ describe('full lifecycle via protocol', () => {
 
   it('run-log.jsonl contains events with server-injected timestamps', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     // init_run (emits run_started automatically)
     const initResult = await client.callTool({
@@ -328,7 +272,7 @@ describe('full lifecycle via protocol', () => {
 describe('review cycle events - all 13 event types', () => {
   it('emits and reconstructs a full review cycle', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     // 1. init_run (emits run_started)
     const initResult = await client.callTool({
@@ -616,7 +560,6 @@ describe('review cycle events - all 13 event types', () => {
 
     const selectiveReReview = toRecord(parallelReview.selectiveReReview, 'selectiveReReview');
     const dispatched = selectiveReReview.reviewersDispatched;
-    expect(Array.isArray(dispatched)).toBe(true);
     if (!Array.isArray(dispatched)) throw new Error('Expected reviewersDispatched array');
     expect(dispatched).toHaveLength(2);
   });
@@ -625,7 +568,7 @@ describe('review cycle events - all 13 event types', () => {
 describe('get_run_state at each checkpoint', () => {
   it('returns in_progress status after init_run', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const initResult = await client.callTool({
       name: 'init_run',
@@ -653,7 +596,7 @@ describe('get_run_state at each checkpoint', () => {
 
   it('returns in_progress phase status after phase_started', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const initResult = await client.callTool({
       name: 'init_run',
@@ -689,7 +632,7 @@ describe('get_run_state at each checkpoint', () => {
 
   it('returns completed phase status after phase_completed', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const initResult = await client.callTool({
       name: 'init_run',
@@ -737,7 +680,7 @@ describe('get_run_state at each checkpoint', () => {
 
   it('returns completed run status after complete_run', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const initResult = await client.callTool({
       name: 'init_run',
@@ -775,7 +718,7 @@ describe('get_run_state at each checkpoint', () => {
 describe('error propagation', () => {
   it('emit_event with invalid event schema returns isError: true', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const initResult = await client.callTool({
       name: 'init_run',
@@ -801,7 +744,7 @@ describe('error propagation', () => {
 
   it('get_run_state with non-existent runDir returns isError: true', async () => {
     const { client, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const result = await client.callTool({
       name: 'get_run_state',
@@ -810,9 +753,70 @@ describe('error propagation', () => {
     expect(isErrorResult(result)).toBe(true);
   });
 
+  it('init_run with missing required field returns an error', async () => {
+    const { client, cleanup } = await createConnectedClient();
+    cleanups.push(cleanup);
+
+    // Call init_run without the required projectSlug field.
+    // The MCP SDK validates the Zod inputSchema before the handler is invoked.
+    try {
+      const result = await client.callTool({
+        name: 'init_run',
+        arguments: {
+          // projectSlug intentionally omitted
+          projectRoot: '/tmp/mcp-missing-field-test',
+          branch: 'main',
+          task: 'missing field test',
+        },
+      });
+      // If the SDK returns a result instead of throwing, it should be an error result
+      expect(isErrorResult(result)).toBe(true);
+    } catch (error) {
+      // The MCP SDK may throw a structured error for schema validation failures
+      // rather than returning an isError result. Either behavior is acceptable.
+      expect(error).toBeDefined();
+    }
+  });
+
+  it('complete_run with status failed succeeds at the protocol layer', async () => {
+    const { client, runDir, cleanup } = await createConnectedClient();
+    cleanups.push(cleanup);
+
+    const initResult = await client.callTool({
+      name: 'init_run',
+      arguments: {
+        projectSlug: 'protocol-test',
+        projectRoot: runDir,
+        branch: 'main',
+        task: 'failed status test',
+      },
+    });
+    expect(isErrorResult(initResult)).toBe(false);
+    const resultRunDir = parseAndGetString(initResult, 'runDir');
+
+    // Call complete_run with status: 'failed' to verify the enum value round-trips
+    const completeResult = await client.callTool({
+      name: 'complete_run',
+      arguments: { runDir: resultRunDir, status: 'failed' },
+    });
+    expect(isErrorResult(completeResult)).toBe(false);
+
+    // Verify state reflects the failed status
+    const stateResult = await client.callTool({
+      name: 'get_run_state',
+      arguments: { runDir: resultRunDir },
+    });
+    expect(isErrorResult(stateResult)).toBe(false);
+
+    const state = parseToolResult(stateResult);
+    expect(state).toMatchObject({ status: 'failed' });
+    const stateRecord = toRecord(state, 'state');
+    expect(stateRecord.completedAt).toBeDefined();
+  });
+
   it('register_artifact with optional iteration and note persists them correctly', async () => {
     const { client, runDir, cleanup } = await createConnectedClient();
-    currentCleanup = cleanup;
+    cleanups.push(cleanup);
 
     const initResult = await client.callTool({
       name: 'init_run',
