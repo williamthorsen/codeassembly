@@ -61,6 +61,12 @@ content/
       commit-format.md             # Commit title format specification
       git-commands.md              # Git command reference
       work-types.md                # Commit work-type taxonomy
+    _platforms/                    # Platform-specific skills (not installed to all platforms)
+      claude/                      # Skills installed only to Claude Code
+        {skill-name}/SKILL.md
+      rovodev/                     # Skills installed only to Rovo Dev
+        {skill-name}/SKILL.md
+        {skill-name}/              # Multi-file skills with supporting documents
     {skill-name}/SKILL.md          # Each skill is a directory with a single SKILL.md file
     orchestrate/                   # Multi-file skill with sub-modules
       SKILL.md
@@ -78,6 +84,8 @@ content/
 **Subagent frontmatter:** `name`, `description`, `tools` (allowed tools), `maxTurns`, `skills` (injected skill references).
 
 **Platform overlay mechanism:** `claude.yml` and `rovodev.yml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
+
+**Platform-specific skills:** Directories prefixed with `_` under `skills/` (e.g., `_data`, `_platforms`) are not regular skills and are not installed directly. Skills in `_platforms/{platformId}/` are installed only when the install target matches that platform. For Rovo Dev, the CLI also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
 
 #### The orchestration system
 
