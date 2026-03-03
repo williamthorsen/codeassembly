@@ -54,7 +54,7 @@ describe('completeRun', () => {
     expect(result.error).toContain('must be one of');
   });
 
-  it('accepts failed status', async () => {
+  it('emits run_failed event when status is failed', async () => {
     const runDir = await createRunDir();
     const result = await completeRun({ runDir, status: 'failed' });
 
@@ -62,7 +62,31 @@ describe('completeRun', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
-    expect(event).toMatchObject({ status: 'failed' });
+    expect(event).toMatchObject({ event: 'run_failed', status: 'failed' });
+    expect(event).not.toHaveProperty('reason');
+  });
+
+  it('includes reason in run_failed event', async () => {
+    const runDir = await createRunDir();
+    const result = await completeRun({ runDir, status: 'failed', reason: 'TypeScript compilation errors' });
+
+    expect(result.success).toBe(true);
+
+    const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
+    const event: unknown = JSON.parse(content.trim());
+    expect(event).toMatchObject({ event: 'run_failed', status: 'failed', reason: 'TypeScript compilation errors' });
+  });
+
+  it('ignores reason when status is not failed', async () => {
+    const runDir = await createRunDir();
+    const result = await completeRun({ runDir, status: 'completed', reason: 'should be ignored' });
+
+    expect(result.success).toBe(true);
+
+    const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
+    const event: unknown = JSON.parse(content.trim());
+    expect(event).toMatchObject({ event: 'run_completed', status: 'completed' });
+    expect(event).not.toHaveProperty('reason');
   });
 
   it('accepts needs_manual_review status', async () => {
@@ -73,7 +97,7 @@ describe('completeRun', () => {
 
     const content = await readFile(join(runDir, 'run-log.jsonl'), 'utf8');
     const event: unknown = JSON.parse(content.trim());
-    expect(event).toMatchObject({ status: 'needs_manual_review' });
+    expect(event).toMatchObject({ event: 'run_completed', status: 'needs_manual_review' });
   });
 
   it('rejects when run-index.json is missing', async () => {

@@ -448,7 +448,7 @@ Include:
 
 After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content — do not abbreviate or omit sections.
 
-Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review" }`. This emits a `run_completed` event and stamps `completedAt` on the run-index.json header. The `status` field within the event carries the actual outcome (`completed`, `failed`, or `needs_manual_review`).
+Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
 
 ## Phase 6: Wrap-up (prompted, conditional)
 

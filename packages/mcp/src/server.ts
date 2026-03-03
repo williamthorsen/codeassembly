@@ -91,10 +91,12 @@ export function createServer(): McpServer {
   server.registerTool(
     'complete_run',
     {
-      description: 'Complete a run: emit run_completed event and stamp completedAt on run-index.json.',
+      description:
+        'Complete a run: emit run_completed (or run_failed when status is failed) event and stamp completedAt on run-index.json.',
       inputSchema: {
         runDir: z.string(),
         status: z.enum(['completed', 'failed', 'needs_manual_review']),
+        reason: z.string().optional(),
       },
     },
     async (args) => {
