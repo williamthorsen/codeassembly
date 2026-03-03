@@ -113,41 +113,15 @@ async function installSkills(
     if (entry.startsWith('_')) {
       continue;
     }
-
-    const srcPath = path.join(skillsSrcDir, entry);
-    const destPath = path.join(skillsDestDir, entry);
-    const relativePath = `skills/${entry}`;
-
-    if (options.dryRun) {
-      const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${relativePath}`);
-      entries.push({
-        relativePath,
-        contentHash: 'dry-run',
-        linked: options.link,
-      });
-      continue;
-    }
-
-    // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(relativePath);
-    if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, platformHome);
-      if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ${relativePath}`);
-        entries.push(existingEntry);
-        continue;
-      }
-    }
-
-    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
-
-    const stats = await stat(srcPath);
-    entries.push({
-      relativePath,
-      contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
-      linked: options.link,
-    });
+    const result = await installSkillEntry(
+      path.join(skillsSrcDir, entry),
+      path.join(skillsDestDir, entry),
+      `skills/${entry}`,
+      platformHome,
+      existingByPath,
+      options,
+    );
+    entries.push(result);
   }
 
   // Install platform-specific skills from _platforms/{platformId}/
@@ -164,43 +138,60 @@ async function installSkills(
   }
 
   for (const entry of platformDirEntries) {
-    const srcPath = path.join(platformSkillsSrcDir, entry);
-    const destPath = path.join(skillsDestDir, entry);
-    const relativePath = `skills/${entry}`;
-
-    if (options.dryRun) {
-      const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${relativePath} (platform-specific)`);
-      entries.push({
-        relativePath,
-        contentHash: 'dry-run',
-        linked: options.link,
-      });
-      continue;
-    }
-
-    // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(relativePath);
-    if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, platformHome);
-      if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ${relativePath}`);
-        entries.push(existingEntry);
-        continue;
-      }
-    }
-
-    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
-
-    const stats = await stat(srcPath);
-    entries.push({
-      relativePath,
-      contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
-      linked: options.link,
-    });
+    const result = await installSkillEntry(
+      path.join(platformSkillsSrcDir, entry),
+      path.join(skillsDestDir, entry),
+      `skills/${entry}`,
+      platformHome,
+      existingByPath,
+      options,
+      '(platform-specific)',
+    );
+    entries.push(result);
   }
 
   return entries;
+}
+
+/**
+ * Installs a single skill entry (directory or file) from source to destination.
+ * Handles dry-run mode, drift detection for previously installed items, and
+ * copy/link based on install options. Used by `installSkills` for both shared
+ * and platform-specific skill entries.
+ */
+async function installSkillEntry(
+  srcPath: string,
+  destPath: string,
+  relativePath: string,
+  platformHome: string,
+  existingByPath: ReadonlyMap<string, ManifestEntry>,
+  options: InstallOptions,
+  label = '',
+): Promise<ManifestEntry> {
+  if (options.dryRun) {
+    const action = options.link ? 'link' : 'copy';
+    console.info(`    [${action}] ${relativePath}${label ? ` ${label}` : ''}`);
+    return { relativePath, contentHash: 'dry-run', linked: options.link };
+  }
+
+  // Check for user modifications before overwriting
+  const existingEntry = existingByPath.get(relativePath);
+  if (existingEntry && !options.force) {
+    const drift = await detectDrift(existingEntry, platformHome);
+    if (drift === 'modified') {
+      console.warn(`  Skipping modified item: ${relativePath}`);
+      return existingEntry;
+    }
+  }
+
+  await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+  const stats = await stat(srcPath);
+  return {
+    relativePath,
+    contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
+    linked: options.link,
+  };
 }
 
 /**

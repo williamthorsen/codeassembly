@@ -73,9 +73,7 @@ describe('installCommand', () => {
     const allSkillEntries = await readdir(path.join(contentDir, 'skills'));
     const sharedSkillCount = allSkillEntries.filter((e) => !e.startsWith('_')).length;
     const platformSkillsDir = path.join(contentDir, 'skills', '_platforms', 'claude');
-    const platformSkillCount = existsSync(platformSkillsDir)
-      ? (await readdir(platformSkillsDir)).length
-      : 0;
+    const platformSkillCount = existsSync(platformSkillsDir) ? (await readdir(platformSkillsDir)).length : 0;
     const expectedSkillCount = sharedSkillCount + platformSkillCount;
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
     expect(skillsContents.length).toBe(expectedSkillCount);
