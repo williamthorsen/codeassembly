@@ -7,7 +7,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { describe, expect, it } from 'vitest';
 
-import { isRecord } from './helpers.js';
+import { isErrorResult, parseAndGetString } from './helpers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(__dirname, '../cli.ts');
@@ -41,22 +41,10 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
       });
 
       // Verify no error
-      const hasError = 'isError' in result && result.isError === true;
-      expect(hasError).toBe(false);
+      expect(isErrorResult(result)).toBe(false);
 
-      // Parse and verify runId by treating result as unknown to sidestep
-      // the SDK's complex content union type
-      const raw: unknown = result;
-      if (!isRecord(raw)) throw new Error('Expected result to be an object');
-      const contentArray = raw.content;
-      if (!Array.isArray(contentArray)) throw new Error('Expected content array');
-      const firstContent: unknown = contentArray[0];
-      if (!isRecord(firstContent)) throw new Error('Expected content item to be an object');
-      if (typeof firstContent.text !== 'string') throw new Error('Expected text to be a string');
-      const parsed: unknown = JSON.parse(firstContent.text);
-      if (!isRecord(parsed)) throw new Error('Expected parsed result to be an object');
-      const runId = parsed.runId;
-      if (typeof runId !== 'string') throw new Error('Expected runId to be a string');
+      // Parse and verify runId using shared helpers
+      const runId = parseAndGetString(result, 'runId');
       expect(runId).toMatch(/^smoke-test\.\d{8}-\d{6}Z$/);
     } finally {
       await client.close();

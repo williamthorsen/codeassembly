@@ -759,23 +759,16 @@ describe('error propagation', () => {
 
     // Call init_run without the required projectSlug field.
     // The MCP SDK validates the Zod inputSchema before the handler is invoked.
-    try {
-      const result = await client.callTool({
-        name: 'init_run',
-        arguments: {
-          // projectSlug intentionally omitted
-          projectRoot: '/tmp/mcp-missing-field-test',
-          branch: 'main',
-          task: 'missing field test',
-        },
-      });
-      // If the SDK returns a result instead of throwing, it should be an error result
-      expect(isErrorResult(result)).toBe(true);
-    } catch (error) {
-      // The MCP SDK may throw a structured error for schema validation failures
-      // rather than returning an isError result. Either behavior is acceptable.
-      expect(error).toBeDefined();
-    }
+    const result = await client.callTool({
+      name: 'init_run',
+      arguments: {
+        // projectSlug intentionally omitted
+        projectRoot: '/tmp/mcp-missing-field-test',
+        branch: 'main',
+        task: 'missing field test',
+      },
+    });
+    expect(isErrorResult(result)).toBe(true);
   });
 
   it('complete_run with status failed succeeds at the protocol layer', async () => {
