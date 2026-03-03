@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
 
@@ -18,6 +18,13 @@ vi.mock('../FlowDiagram/FlowDiagram.js', () => ({
 const { VisualizationSwitcher } = await import('../VisualizationSwitcher.js');
 
 describe('VisualizationSwitcher', () => {
+  const replaceStateSpy = vi.spyOn(globalThis.history, 'replaceState');
+
+  beforeEach(() => {
+    globalThis.history.replaceState(null, '', '/');
+    replaceStateSpy.mockClear();
+  });
+
   afterEach(() => {
     cleanup();
   });
@@ -75,5 +82,38 @@ describe('VisualizationSwitcher', () => {
     fireEvent.click(flowButton);
     expect(flowButton.className).toContain('active');
     expect(factoryButton.className).not.toContain('active');
+  });
+
+  it('renders in flow view when URL has visualization=flow', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=flow');
+
+    const status = createMockRunStatus();
+    const { container } = render(<VisualizationSwitcher status={status} />);
+
+    const canvasContainer = container.querySelector<HTMLDivElement>('.canvas-container');
+    expect(canvasContainer?.dataset.view).toBe('flow');
+    expect(screen.getByTestId('flow-diagram')).toBeInTheDocument();
+    expect(screen.queryByTestId('game-canvas')).toBeNull();
+  });
+
+  it('updates URL param when the Flow button is clicked', () => {
+    const status = createMockRunStatus();
+    render(<VisualizationSwitcher status={status} />);
+    replaceStateSpy.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Flow' }));
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=flow');
+  });
+
+  it('removes URL param when the Factory button is clicked from flow view', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=flow');
+    const status = createMockRunStatus();
+    render(<VisualizationSwitcher status={status} />);
+    replaceStateSpy.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Factory' }));
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
   });
 });

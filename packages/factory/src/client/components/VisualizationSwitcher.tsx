@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
+import { useVisualizationParam } from '../hooks/useVisualizationParam.js';
 import { FlowDiagram } from './FlowDiagram/FlowDiagram.js';
 import { GameCanvas } from './GameCanvas.js';
-
-type ActiveView = 'factory' | 'flow';
 
 interface VisualizationSwitcherProps {
   status: CanonicalRunStatus;
 }
 
 export function VisualizationSwitcher({ status }: VisualizationSwitcherProps): React.JSX.Element {
-  const [activeView, setActiveView] = useState<ActiveView>('factory');
+  const [activeView, setActiveView] = useVisualizationParam();
 
   return (
     <>
