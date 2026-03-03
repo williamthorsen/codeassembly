@@ -67,9 +67,15 @@ describe('installCommand', () => {
 
     await installCommand(makeOptions(), tempDir);
 
-    // Check that skills were installed — count should match source content
+    // Check that skills were installed — count should match shared + platform-specific
     const contentDir = resolveContentDir();
-    const expectedSkillCount = (await readdir(path.join(contentDir, 'skills'))).length;
+    const allSkillEntries = await readdir(path.join(contentDir, 'skills'));
+    const sharedSkillCount = allSkillEntries.filter((e) => !e.startsWith('_')).length;
+    const platformSkillsDir = path.join(contentDir, 'skills', '_platforms', 'claude');
+    const platformSkillCount = existsSync(platformSkillsDir)
+      ? (await readdir(platformSkillsDir)).length
+      : 0;
+    const expectedSkillCount = sharedSkillCount + platformSkillCount;
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
     expect(skillsContents.length).toBe(expectedSkillCount);
 
@@ -188,5 +194,116 @@ describe('installCommand', () => {
     const subagentFilePath = path.join(claudeHome, firstSubagentEntry.relativePath);
     const subagentStats = lstatSync(subagentFilePath);
     expect(subagentStats.isSymbolicLink()).toBe(false);
+  });
+
+  it('should install claude-specific skills and exclude rovodev-specific skills', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+
+    const skillsContents = await readdir(path.join(claudeHome, 'skills'));
+    // Claude gets review-permissions (claude-specific)
+    expect(skillsContents).toContain('review-permissions');
+    // Claude does NOT get rovodev-specific skills
+    expect(skillsContents).not.toContain('brainstorming');
+    expect(skillsContents).not.toContain('systematic-debugging');
+  });
+
+  it('should install rovodev-specific skills and exclude claude-specific skills', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    const skillsContents = await readdir(path.join(rovodevHome, 'skills'));
+    // Rovodev gets brainstorming and systematic-debugging (rovodev-specific)
+    expect(skillsContents).toContain('brainstorming');
+    expect(skillsContents).toContain('systematic-debugging');
+    // Rovodev does NOT get claude-specific skills
+    expect(skillsContents).not.toContain('review-permissions');
+  });
+
+  it('should not install _platforms directory into target skills', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+
+    const skillsContents = await readdir(path.join(claudeHome, 'skills'));
+    expect(skillsContents).not.toContain('_platforms');
+    expect(skillsContents).not.toContain('_data');
+  });
+
+  it('should generate prompts.yml for rovodev', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    const promptsPath = path.join(rovodevHome, 'prompts.yml');
+    expect(existsSync(promptsPath)).toBe(true);
+
+    const content = await readFile(promptsPath, 'utf8');
+    // systematic-debugging has no user-invocable field (default = included)
+    expect(content).toContain('systematic-debugging');
+    // brainstorming has user-invocable: false (should be excluded)
+    expect(content).not.toContain('brainstorming');
+    // Verify YAML structure
+    expect(content).toMatch(/^prompts:\n/);
+    expect(content).toContain('content_file:');
+  });
+
+  it('should track prompts.yml in the manifest for rovodev', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const rovodevManifest = manifest.platforms.rovodev;
+    expect(rovodevManifest).toBeDefined();
+
+    const promptsEntry = rovodevManifest?.entries.find((e) => e.relativePath === 'prompts.yml');
+    expect(promptsEntry).toBeDefined();
+    expect(promptsEntry?.linked).toBe(false);
+    expect(promptsEntry?.contentHash).toMatch(/^sha256:/);
+  });
+
+  it('should NOT generate prompts.yml for claude', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+
+    const promptsPath = path.join(claudeHome, 'prompts.yml');
+    expect(existsSync(promptsPath)).toBe(false);
+  });
+
+  it('should install platform-specific skills as symlinks in link mode', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions({ platform: 'claude', link: true }), tempDir);
+
+    // Verify review-permissions (claude platform-specific) is installed as a symlink
+    const reviewPermissionsPath = path.join(claudeHome, 'skills', 'review-permissions');
+    const stats = lstatSync(reviewPermissionsPath);
+    expect(stats.isSymbolicLink()).toBe(true);
+
+    // Verify the manifest records it as linked
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const claudeManifest = manifest.platforms.claude;
+    expect(claudeManifest).toBeDefined();
+    const reviewPermEntry = claudeManifest?.entries.find((e) => e.relativePath === 'skills/review-permissions');
+    expect(reviewPermEntry).toBeDefined();
+    expect(reviewPermEntry?.linked).toBe(true);
   });
 });

@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.js';
-import { mergeFrontmatter } from '../lib/frontmatter-merger.js';
+import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.js';
 import { checkSymlinkSafety, copyItem, linkItem } from '../lib/installer.js';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
@@ -38,13 +38,28 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
 
     const entries: Array<ManifestEntry> = [];
 
-    // Install skills
-    const skillEntries = await installSkills(contentDir, paths.skillsDir, paths.platformHome, existingByPath, options);
+    // Install skills (shared + platform-specific)
+    const skillEntries = await installSkills(
+      contentDir,
+      paths.skillsDir,
+      paths.platformHome,
+      existingByPath,
+      options,
+      platformId,
+    );
     entries.push(...skillEntries);
 
     // Install subagents with merged frontmatter
     const subagentEntries = await installSubagents(contentDir, paths, platformId, existingByPath, options);
     entries.push(...subagentEntries);
+
+    // Generate prompts.yml for Rovo Dev (skill discovery file)
+    if (platformId === 'rovodev') {
+      const promptsEntry = await generatePromptsYml(paths, existingByPath, options);
+      if (promptsEntry) {
+        entries.push(promptsEntry);
+      }
+    }
 
     if (options.dryRun) {
       console.info(`  [dry-run] Would install ${entries.length} items:`);
@@ -74,6 +89,10 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
 
 /**
  * Installs skill directories from content/skills/ into the target skills directory.
+ * Shared skills (top-level entries) are installed for all platforms. Platform-specific
+ * skills from `_platforms/{platformId}/` are installed only for the matching platform.
+ * Entries starting with `_` (e.g., `_data`, `_platforms`) are skipped from the main loop.
+ *
  * If a previously installed item has been modified by the user, it is skipped unless
  * `--force` is set, mirroring the uninstall command's drift-checking behavior.
  */
@@ -83,12 +102,18 @@ async function installSkills(
   platformHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
+  platformId: PlatformId,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const skillsSrcDir = path.join(contentDir, 'skills');
   const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
+  // Install shared skills (skip underscore-prefixed directories: _data, _platforms)
   for (const entry of dirEntries) {
+    if (entry.startsWith('_')) {
+      continue;
+    }
+
     const srcPath = path.join(skillsSrcDir, entry);
     const destPath = path.join(skillsDestDir, entry);
     const relativePath = `skills/${entry}`;
@@ -96,6 +121,55 @@ async function installSkills(
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';
       console.info(`    [${action}] ${relativePath}`);
+      entries.push({
+        relativePath,
+        contentHash: 'dry-run',
+        linked: options.link,
+      });
+      continue;
+    }
+
+    // Check for user modifications before overwriting
+    const existingEntry = existingByPath.get(relativePath);
+    if (existingEntry && !options.force) {
+      const drift = await detectDrift(existingEntry, platformHome);
+      if (drift === 'modified') {
+        console.warn(`  Skipping modified item: ${relativePath}`);
+        entries.push(existingEntry);
+        continue;
+      }
+    }
+
+    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+    const stats = await stat(srcPath);
+    entries.push({
+      relativePath,
+      contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
+      linked: options.link,
+    });
+  }
+
+  // Install platform-specific skills from _platforms/{platformId}/
+  const platformSkillsSrcDir = path.join(skillsSrcDir, '_platforms', platformId);
+  let platformDirEntries: ReadonlyArray<string>;
+  try {
+    platformDirEntries = await readdir(platformSkillsSrcDir);
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    platformDirEntries = [];
+  }
+
+  for (const entry of platformDirEntries) {
+    const srcPath = path.join(platformSkillsSrcDir, entry);
+    const destPath = path.join(skillsDestDir, entry);
+    const relativePath = `skills/${entry}`;
+
+    if (options.dryRun) {
+      const action = options.link ? 'link' : 'copy';
+      console.info(`    [${action}] ${relativePath} (platform-specific)`);
       entries.push({
         relativePath,
         contentHash: 'dry-run',
@@ -204,6 +278,123 @@ async function installSubagents(
   }
 
   return entries;
+}
+
+/**
+ * Generates `prompts.yml` for Rovo Dev, which is the skill discovery file that lists
+ * all user-invocable skills. Skills with `user-invocable: false` are excluded.
+ *
+ * The file is written to `{platformHome}/prompts.yml` and tracked in the manifest.
+ */
+async function generatePromptsYml(
+  paths: { platformHome: string; skillsDir: string },
+  existingByPath: ReadonlyMap<string, ManifestEntry>,
+  options: InstallOptions,
+): Promise<ManifestEntry | undefined> {
+  const relativePath = 'prompts.yml';
+
+  // Gather skill metadata from installed skills directory
+  let skillDirEntries: ReadonlyArray<string>;
+  try {
+    skillDirEntries = await readdir(paths.skillsDir);
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    return undefined;
+  }
+
+  // eslint-disable-next-line n/no-unsupported-features/es-syntax -- project requires Node 22+
+  const sortedSkillNames = [...skillDirEntries].toSorted();
+
+  const promptEntries: Array<{ name: string; description: string; contentFile: string }> = [];
+
+  for (const skillName of sortedSkillNames) {
+    const skillMdPath = path.join(paths.skillsDir, skillName, 'SKILL.md');
+    let skillContent: string;
+    try {
+      skillContent = await readFile(skillMdPath, 'utf8');
+    } catch (error: unknown) {
+      if (!isEnoent(error)) {
+        throw error;
+      }
+      continue;
+    }
+
+    const { lines } = parseFrontmatter(skillContent);
+
+    // Extract user-invocable and description from frontmatter lines
+    let userInvocable = true; // Default: included unless explicitly false
+    let description = '';
+    for (const line of lines) {
+      if (line.startsWith('user-invocable:')) {
+        const value = line.slice('user-invocable:'.length).trim();
+        userInvocable = value !== 'false';
+      }
+      if (line.startsWith('description:')) {
+        description = line.slice('description:'.length).trim();
+        // Strip surrounding quotes if present
+        if (
+          (description.startsWith("'") && description.endsWith("'")) ||
+          (description.startsWith('"') && description.endsWith('"'))
+        ) {
+          description = description.slice(1, -1);
+        }
+      }
+    }
+
+    if (!userInvocable) {
+      continue;
+    }
+
+    promptEntries.push({
+      name: skillName,
+      description,
+      contentFile: `skills/${skillName}/SKILL.md`,
+    });
+  }
+
+  // Build YAML content with deterministic template literals
+  const yamlLines = ['prompts:'];
+  for (const entry of promptEntries) {
+    yamlLines.push(`  - name: '${entry.name}'`, `    description: ${entry.description}`, `    content_file: ${entry.contentFile}`);
+  }
+  const yamlContent = yamlLines.join('\n') + '\n';
+
+  if (options.dryRun) {
+    const action = 'generate';
+    console.info(`    [${action}] ${relativePath}`);
+    return {
+      relativePath,
+      contentHash: 'dry-run',
+      linked: false,
+    };
+  }
+
+  // Check for user modifications before overwriting
+  const existingEntry = existingByPath.get(relativePath);
+  if (existingEntry && !options.force) {
+    const drift = await detectDrift(existingEntry, paths.platformHome);
+    if (drift === 'current') {
+      // Regenerate to pick up any new skills, but check if content actually changed
+    } else if (drift === 'modified') {
+      console.warn(`  Skipping modified item: ${relativePath}`);
+      return existingEntry;
+    }
+  }
+
+  // Ensure platform home directory exists
+  await mkdir(paths.platformHome, { recursive: true });
+
+  const destPath = path.join(paths.platformHome, relativePath);
+  await writeFile(destPath, yamlContent, 'utf8');
+
+  const hash = await computeContentHash(destPath);
+  return {
+    relativePath,
+    contentHash: hash,
+    linked: false,
+  };
 }
 
 /**

@@ -23,6 +23,7 @@ export default [
       'packages/cdk/.*/**/*',
       // 'packages/cdk/src/bin/**/*',
       'packages/**/.next/**/*',
+      '**/content/skills/_platforms/**',
     ],
   },
   {
