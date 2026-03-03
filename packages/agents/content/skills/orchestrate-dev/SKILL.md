@@ -62,7 +62,7 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 | `implementation` | `required`  | Write code                                        |
 | `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
 
-**`--mode=vibe`**:
+**`--mode=vibe` and `--mode=lite`**:
 
 ```
 implementation (required) -> review-cycle (required)
@@ -73,16 +73,7 @@ implementation (required) -> review-cycle (required)
 | `implementation` | `required`  | Write code                                        |
 | `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
 
-**`--mode=lite`**:
-
-```
-implementation (required) -> review-cycle (required)
-```
-
-| Phase            | Requirement | Description                                       |
-| ---------------- | ----------- | ------------------------------------------------- |
-| `implementation` | `required`  | Write code                                        |
-| `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
+Both modes skip architecture and planning. They differ in review strictness -- see the mode preset table above.
 
 **`--mode=strict`**:
 
