@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { emitEvent } from './emit-event.js';
+import { resolveBaseDir } from './resolve-base-dir.js';
 
 export interface InitRunInput {
   projectSlug: string;
@@ -13,6 +14,7 @@ export interface InitRunInput {
   pipeline?: unknown;
   models?: unknown;
   config?: Record<string, unknown> | undefined;
+  baseDir?: string | undefined;
 }
 
 export interface InitRunResult {
@@ -54,17 +56,20 @@ export function sanitizeTicketId(ticketId: string): string {
  * Initialize a new run: create the run directory, write run-index.json, create
  * an empty run-log.jsonl, and emit a `run_started` event.
  *
- * Runs are stored at `{projectRoot}/.ai/projects/{projectSlug}/tickets/{ticketId}/{runId}/`.
+ * The artifact base directory is resolved from preferences (defaulting to `~/.ai`)
+ * with an optional `baseDir` override. Runs are stored at
+ * `{artifactBase}/projects/{projectSlug}/tickets/{ticketId}/{runId}/`.
  * When no ticket ID is provided, one is auto-generated with a timestamp-based format.
  * Caller-supplied ticket IDs are sanitized (leading `#` stripped) before use.
  */
 export async function initRun(input: InitRunInput): Promise<InitRunResult> {
-  const { ticketId, projectSlug, projectRoot, branch, task, pipeline, models, config } = input;
+  const { ticketId, projectSlug, projectRoot, branch, task, pipeline, models, config, baseDir } = input;
 
   const resolvedTicketId = ticketId === undefined ? generateTicketId() : sanitizeTicketId(ticketId);
   const runId = generateRunId();
   const timestamp = new Date().toISOString();
-  const runDir = join(projectRoot, '.ai', 'projects', projectSlug, 'tickets', resolvedTicketId, runId);
+  const artifactBase = await resolveBaseDir(projectRoot, baseDir);
+  const runDir = join(artifactBase, 'projects', projectSlug, 'tickets', resolvedTicketId, runId);
 
   await mkdir(runDir, { recursive: true });
 

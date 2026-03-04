@@ -19,6 +19,7 @@ describe('lifecycle integration', () => {
       projectSlug: 'lifecycle-test',
       ticketId: 'TEST-1',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'feature/lifecycle',
       task: 'test the full lifecycle',
     });

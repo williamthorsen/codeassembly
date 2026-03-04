@@ -486,7 +486,7 @@ All 13 valid event types and their required fields:
 ### Run directory layout (v3)
 
 ```
-{projectRoot}/.ai/projects/{projectSlug}/tickets/{ticketId}/{runId}/
+{base_dir}/projects/{projectSlug}/tickets/{ticketId}/{runId}/
   run-index.json    <- v3 header (written by init_run, completedAt stamped by complete_run)
   run-log.jsonl     <- append-only event log (one JSON object per line)
   {file-timestamp}_{role}_{artifact}.md   <- artifact files (unchanged naming convention)

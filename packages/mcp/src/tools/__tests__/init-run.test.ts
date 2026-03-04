@@ -17,12 +17,13 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'implement feature',
     });
 
     expect(result.runId).toMatch(/^\d{8}-\d{6}Z$/);
-    expect(result.runDir).toContain('.ai/projects/test-project/tickets/');
+    expect(result.runDir).toContain('projects/test-project/tickets/');
     expect(result.ticketId).toBeTruthy();
     expect(result.timestamp).toBeTruthy();
   });
@@ -33,11 +34,12 @@ describe('initRun', () => {
       projectSlug: 'test-project',
       ticketId: 'PROJ-42',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'implement feature',
     });
 
-    expect(result.runDir).toContain('.ai/projects/test-project/tickets/PROJ-42/');
+    expect(result.runDir).toContain('projects/test-project/tickets/PROJ-42/');
     expect(result.ticketId).toBe('PROJ-42');
   });
 
@@ -46,13 +48,14 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'implement feature',
     });
 
     // Auto-generated format: {YYYYMMDD}-{4 hex chars}
     expect(result.ticketId).toMatch(/^\d{8}-[0-9a-f]{4}$/);
-    expect(result.runDir).toContain(`.ai/projects/test-project/tickets/${result.ticketId}/`);
+    expect(result.runDir).toContain(`projects/test-project/tickets/${result.ticketId}/`);
   });
 
   it('writes a valid v3 run-index.json', async () => {
@@ -61,6 +64,7 @@ describe('initRun', () => {
       projectSlug: 'test-project',
       ticketId: 'PROJ-42',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'feature/test',
       task: 'add tests',
     });
@@ -86,6 +90,7 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'test task',
     });
@@ -106,6 +111,7 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'test task',
       pipeline: ['plan', 'implement', 'review'],
@@ -127,6 +133,7 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'test task',
     });
@@ -142,6 +149,7 @@ describe('initRun', () => {
       projectSlug: 'test-project',
       ticketId: '#152',
       projectRoot,
+      baseDir: projectRoot,
       branch: '152',
       task: 'fix artifact logging',
     });
@@ -164,6 +172,7 @@ describe('initRun', () => {
       initRun({
         projectSlug: 'test-project',
         projectRoot: blocker,
+        baseDir: blocker,
         branch: 'main',
         task: 'test task',
       }),

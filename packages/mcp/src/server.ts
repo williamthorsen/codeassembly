@@ -53,6 +53,7 @@ export function createServer(): McpServer {
         branch: z.string(),
         task: z.string(),
         ticketId: z.string().optional(),
+        baseDir: z.string().optional(),
         pipeline: z.unknown().optional(),
         models: z.unknown().optional(),
         config: z.record(z.string(), z.unknown()).optional(),
