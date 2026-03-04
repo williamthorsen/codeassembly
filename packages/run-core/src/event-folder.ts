@@ -66,6 +66,7 @@ export function foldEvents(header: RunHeader, events: ReadonlyArray<RunEvent>): 
     startedAt: header.startedAt,
     completedAt: undefined,
     status: 'in_progress',
+    reason: undefined,
     externalPlan: header.externalPlan,
     mergeBaseSha: header.mergeBaseSha,
     diffBase: header.diffBase,
@@ -106,6 +107,7 @@ function applyEvent(state: CanonicalRunStatus, event: RunEvent): void {
     case 'run_failed':
       state.status = event.status;
       state.completedAt = event.t;
+      state.reason = event.reason;
       break;
 
     case 'phase_decision':

@@ -19,6 +19,7 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
     startedAt: '2026-01-01T00:00:00Z',
     completedAt: undefined,
     status: 'completed',
+    reason: undefined,
     externalPlan: false,
     mergeBaseSha: undefined,
     diffBase: undefined,
@@ -106,5 +107,27 @@ describe('StatusBar', () => {
     render(<StatusBar status={status} />);
 
     expect(screen.getByText('0s')).toBeInTheDocument();
+  });
+
+  it('displays failure reason when status is failed and reason is present', () => {
+    const status = createMockStatus({
+      status: 'failed',
+      reason: 'quality gates failed',
+    });
+
+    render(<StatusBar status={status} />);
+
+    expect(screen.getByText('quality gates failed')).toBeInTheDocument();
+  });
+
+  it('does not display reason when reason is undefined', () => {
+    const status = createMockStatus({
+      status: 'failed',
+      reason: undefined,
+    });
+
+    const { container } = render(<StatusBar status={status} />);
+
+    expect(container.textContent).not.toContain('Reason:');
   });
 });

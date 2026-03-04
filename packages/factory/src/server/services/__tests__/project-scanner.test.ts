@@ -44,6 +44,7 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
     startedAt: '2026-01-01T00:00:00Z',
     completedAt: undefined,
     status: 'completed',
+    reason: undefined,
     externalPlan: false,
     mergeBaseSha: undefined,
     diffBase: undefined,
