@@ -9,7 +9,6 @@ The orchestrate engine must provide these context variables before entering this
 | Variable                     | Description                                                                                                 |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `{task}`                     | Task description                                                                                            |
-| `{ticket-content}`           | GitHub issue body (empty string if unavailable)                                                             |
 | `{run-dir}`                  | Run directory returned by `init_run`                                                                        |
 | `{seq}`                      | Current artifact sequence counter (continue incrementing from this value)                                   |
 | `{ticket-requirements-path}` | Full path to ticket-requirements artifact (empty string if unavailable)                                     |
@@ -83,7 +82,7 @@ Call MCP tool emit_event with:
 
 Send all activated Task calls in a single message so they run concurrently. Each agent examines the branch diff independently.
 
-Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer. Assign sequence numbers in this order: core reviewer, silent-failure reviewer (if activated), test reviewer (if activated), code reviewer. Skipped reviewers do not consume a sequence number. Store each write target path as its named variable and increment `{seq}` only for activated reviewers. Pre-assigned named path variables: `{core-review-path}`, `{sf-review-path}` (if activated), `{test-review-path}` (if activated), `{code-review-path}`.
+Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer using these names and this order: `{core-review-path}` (core reviewer, always), `{sf-review-path}` (silent-failure reviewer, if activated), `{test-review-path}` (test reviewer, if activated), `{code-review-path}` (code reviewer, always). Skipped reviewers do not consume a sequence number; increment `{seq}` only for activated reviewers.
 
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.reviewer}`:
 

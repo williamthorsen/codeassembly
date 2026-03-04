@@ -14,7 +14,7 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/.
         │   └── {ticket-id}/
         │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts
         │       └── {run-id}/                                 ← review run directory
-        │           ├── {NN}_{role}_{artifact}.md            ← orchestrated runs
+        │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md

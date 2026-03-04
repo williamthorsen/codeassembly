@@ -200,13 +200,13 @@ Prefix the status line with a colored emoji for visual distinction:
 
    **Runtime errors** (non-MCP failures such as bad arguments or disk errors): abort immediately — these are not MCP policy issues.
 
-   ### Artifact sequencing
+### Artifact sequencing
 
-   Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`), construct the filename as `{NN}_{role}_{artifact}.md`, store the full path as a named variable (e.g., `{run-manifest-path}`, `{architecture-path}`), then increment `{seq}`.
+Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`), construct the filename as `{NN}_{role}_{artifact}.md`, store the full path as a named variable (e.g., `{run-manifest-path}`, `{architecture-path}`), then increment `{seq}`.
 
-   - **Multi-format pairs** (`.md` / `.json`): both files share the same sequence number. Increment `{seq}` once for the pair.
-   - **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
-   - **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
+- **Multi-format pairs** (`.md` / `.json`): both files share the same sequence number. Increment `{seq}` once for the pair.
+- **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
+- **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
 5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`:
 
