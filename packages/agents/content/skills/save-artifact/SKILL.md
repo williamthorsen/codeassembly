@@ -41,6 +41,8 @@ Run artifacts are saved by the skills that produce them (`review-change`, `respo
 - `change-summary` — Branch change summary for PRs
 - `orchestration-plan` — Orchestration plan for the orchestrate engine
 - `plan` — Implementation plan document
+- `plan-review` — Plan review findings (completeness and correctness analysis)
+- `plan-v2` — Refined implementation plan after review and revision
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
