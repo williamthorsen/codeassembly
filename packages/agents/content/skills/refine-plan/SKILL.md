@@ -24,7 +24,7 @@ Before every Task call and after every phase completion, output a status line:
 
 ### 1. Validate inputs and resolve context
 
-1. Verify the plan file exists (Read). If not found, report an error and stop.
+1. Read the plan file. If not found, report an error and stop.
 2. Resolve the ticket source:
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
@@ -40,11 +40,10 @@ Before every Task call and after every phase completion, output a status line:
 
 ### 2. Detect plan format
 
-1. Read the plan file content.
-2. Detect format:
+1. Using the plan content already read in step 1, detect format:
    - If the plan contains a JSON companion file (same base name with `.json` extension), it is an `orchestration` format plan.
    - Otherwise, it is a `prose` format plan.
-3. Record the format for passing to the reviewer.
+2. Record the format for passing to the reviewer.
 
 ### 3. Dispatch plan-reviewer
 
@@ -69,6 +68,7 @@ Call Task with `subagent_type: plan-reviewer`, `max_turns: 30`:
 > **Output path:** {review_output_path}
 
 Parse the return block:
+
 - `Status`: must be `completed`
 - `AutoResolvable`: integer count of auto-resolvable findings
 - `UserQuestions`: integer count of findings requiring user input
@@ -80,6 +80,7 @@ Parse the return block:
 Evaluate the finding counts:
 
 - **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement and stop.
+
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
     Review: {review_output_path}
@@ -123,6 +124,7 @@ Call Task with `subagent_type: plan-reviser`, `max_turns: 30`:
 > **Output path:** {revision_output_path}
 
 Parse the return block:
+
 - `Status`: must be `completed`
 - `Artifact`: path to the refined plan
 
@@ -138,11 +140,7 @@ Plan refined:
 
 ## Edge cases
 
-- **Plan file not found**: report error and stop. Do not attempt to search for alternatives.
 - **Ticket URL unreachable**: report error with the URL and suggest verifying access (e.g., `gh auth status` for GitHub URLs).
-- **Reviewer finds 0 findings**: skip the reviser entirely. Report the plan is ready.
-- **Reviewer finds only auto-resolvable findings**: skip user interaction. Proceed directly to the reviser.
-- **Reviewer or reviser fails** (Status != completed): report the failure and stop. Do not retry.
 
 ## Constraints
 

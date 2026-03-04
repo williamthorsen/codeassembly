@@ -26,7 +26,7 @@ You will receive:
 ## Process
 
 1. **Read the plan**: read the full plan file. If orchestration format, also check for a `.json` companion.
-2. **Read the ticket**: understand the requirements the plan must satisfy.
+2. **Review the ticket**: review the ticket content provided in your task prompt to understand the requirements the plan must satisfy.
 3. **Explore the codebase**: use Glob, Grep, and Read to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
 4. **Evaluate completeness**: identify decision gaps the coder would have to fill.
 5. **Evaluate correctness**: identify factual errors and structural issues.
@@ -47,18 +47,18 @@ Each finding is tagged with a resolution type:
 
 ### Completeness criteria (C findings)
 
-| Focus | Check | Resolution |
-|---|---|---|
-| UX specification | Interactions, layouts, states, user flows specified? | `user` -- UX decisions are preference-based |
-| Technical decisions | Patterns, data structures, API shapes specified? | `auto` if codebase pattern applies; `user` if ambiguous |
-| Behavioral specification | Edge cases, defaults, failure modes specified? | `auto` if conventions dictate; `user` if domain-specific |
+| Focus                    | Check                                                | Resolution                                               |
+| ------------------------ | ---------------------------------------------------- | -------------------------------------------------------- |
+| UX specification         | Interactions, layouts, states, user flows specified? | `user` -- UX decisions are preference-based              |
+| Technical decisions      | Patterns, data structures, API shapes specified?     | `auto` if codebase pattern applies; `user` if ambiguous  |
+| Behavioral specification | Edge cases, defaults, failure modes specified?       | `auto` if conventions dictate; `user` if domain-specific |
 
 ### Correctness criteria (X findings)
 
-| Focus | Check | Resolution |
-|---|---|---|
-| Factual accuracy | Referenced files, utilities, APIs exist? | `auto` |
-| Structural soundness | Dependencies ordered? Steps scoped correctly? | `auto` |
+| Focus                     | Check                                                             | Resolution                                            |
+| ------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
+| Factual accuracy          | Referenced files, utilities, APIs exist?                          | `auto`                                                |
+| Structural soundness      | Dependencies ordered? Steps scoped correctly?                     | `auto`                                                |
 | Requirements traceability | Every requirement has a step? Every step traces to a requirement? | `user` if intentionally omitted; `auto` if overlooked |
 
 ## Output format
@@ -71,37 +71,45 @@ Write the review to the output path provided in your task prompt.
 # Plan review
 
 ## Summary
+
 {1-3 sentence assessment of the plan's readiness for implementation}
 **Findings:** {total} ({auto count} auto-resolvable, {user count} require user input)
 
 ## Auto-resolvable findings
+
 ### X1: {title}
+
 - **Focus:** Factual accuracy
 - **Description:** {what is wrong}
 - **Evidence:** {file path or codebase pattern that contradicts the plan}
 
 ### C1: {title}
+
 - **Focus:** Technical decisions
 - **Description:** {what is missing}
 - **Evidence:** {codebase pattern that resolves this}
 
 ## Decision gaps
+
 ### C2: {title}
+
 - **Focus:** UX specification
 - **Description:** {what is missing}
 - **Evidence:** {context from the plan or requirements}
 - **Question:** {specific question for the user}
 
 ### X2: {title}
+
 - **Focus:** Requirements traceability
 - **Description:** {what is missing or intentionally omitted}
 - **Evidence:** {context}
 - **Question:** {specific question for the user}
 
 ## Requirements coverage
-| Requirement | Plan step | Status |
-|---|---|---|
-| {requirement} | Step {N} | Covered / Gap / Partial |
+
+| Requirement   | Plan step | Status                  |
+| ------------- | --------- | ----------------------- |
+| {requirement} | Step {N}  | Covered / Gap / Partial |
 ```
 
 If there are no auto-resolvable findings, omit the "Auto-resolvable findings" section entirely. If there are no decision gaps, omit the "Decision gaps" section entirely.
@@ -112,13 +120,15 @@ If the plan has no findings at all, write:
 # Plan review
 
 ## Summary
+
 {Brief confirmation of what was reviewed and why the plan is ready for implementation}
 **Findings:** 0
 
 ## Requirements coverage
-| Requirement | Plan step | Status |
-|---|---|---|
-| {requirement} | Step {N} | Covered |
+
+| Requirement   | Plan step | Status  |
+| ------------- | --------- | ------- |
+| {requirement} | Step {N}  | Covered |
 ```
 
 ## Principles
