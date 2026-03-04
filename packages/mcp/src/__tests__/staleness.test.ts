@@ -83,6 +83,15 @@ describe('isBuildStale', () => {
     expect(await isBuildStale(compiledFileUrl)).toBe(false);
   });
 
+  it('returns false when source and dist have equal timestamps', async () => {
+    const now = Date.now();
+    const compiledFileUrl = await createFakePackage({
+      srcMtimeMs: now,
+      distMtimeMs: now,
+    });
+    expect(await isBuildStale(compiledFileUrl)).toBe(false);
+  });
+
   it('returns false when src/ directory is missing (published package)', async () => {
     const now = Date.now();
     const compiledFileUrl = await createFakePackage({
@@ -223,6 +232,29 @@ describe('stale build warning delivery', () => {
       });
       const text2 = getFirstTextContent(result2);
       expect(text2).not.toMatch(/\u26A0\uFE0F MCP server build is stale/);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it('prepends warning to error responses when build is stale', async () => {
+    mockIsBuildStale.mockResolvedValue(true);
+    const { client, cleanup } = await createClientWithMockedStaleness();
+
+    try {
+      // Call a tool that will fail (nonexistent runDir triggers readFile error)
+      const result = await client.callTool({
+        name: 'get_run_state',
+        arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
+      });
+
+      // Verify the result is an error
+      const record = toRecord(result, 'tool result');
+      expect(record.isError).toBe(true);
+
+      // Verify the warning is still prepended to the error text
+      const text = getFirstTextContent(result);
+      expect(text).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
     } finally {
       await cleanup();
     }

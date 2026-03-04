@@ -2,6 +2,11 @@ import { readdir, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** Type guard: checks whether an error is a Node.js ENOENT (file not found). */
+function isEnoent(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && err.code === 'ENOENT';
+}
+
 /**
  * Recursively walk `dir` looking for any `.ts` file with `mtimeMs > referenceMs`.
  * Short-circuits on first match.
@@ -35,6 +40,12 @@ async function hasNewerFile(dir: string, referenceMs: number): Promise<boolean> 
  * - `cli.js` can't be stat'd
  * - Any error occurs (fail-safe)
  *
+ * When loaded from the source tree (e.g. via `tsx` in dev/test mode),
+ * `import.meta.url` points to `src/staleness.ts`. The two-level `../..`
+ * navigation then resolves above the package root, so `src/` is not found
+ * and the function correctly returns `false` -- `tsx` always serves fresh
+ * compiled output, so there is no stale build to warn about.
+ *
  * @param compiledFileUrl - URL of a file inside `dist/esm/`. Defaults to `import.meta.url`.
  *   The optional parameter makes this testable without mocking `import.meta.url`.
  */
@@ -44,11 +55,14 @@ export async function isBuildStale(compiledFileUrl?: string): Promise<boolean> {
     const packageRoot = resolve(dirname(compiledFilePath), '../..');
     const srcDir = join(packageRoot, 'src');
 
-    // If src/ doesn't exist, this is a published package -- not stale
+    // If src/ doesn't exist, this is a published package -- not stale.
+    // Only ENOENT is expected; other errors (e.g. EACCES) are rethrown
+    // so the outer catch can handle them with its fail-safe.
     try {
       await stat(srcDir);
-    } catch {
-      return false;
+    } catch (error: unknown) {
+      if (isEnoent(error)) return false;
+      throw error;
     }
 
     // Get the reference mtime from the sentinel file

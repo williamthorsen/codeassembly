@@ -16,12 +16,20 @@ const STALE_BUILD_WARNING =
 /**
  * If the build is stale and the warning hasn't been shown yet, prepend a one-time
  * staleness warning to the given text. Returns the original text otherwise.
+ *
+ * Sets `hasWarned` eagerly before the async staleness check to prevent concurrent
+ * tool calls from both passing the guard and emitting duplicate warnings.
  */
 async function maybeAddStaleWarning(text: string): Promise<string> {
   if (hasWarned) return text;
-  if (!(await isBuildStale())) return text;
   hasWarned = true;
-  return STALE_BUILD_WARNING + text;
+  try {
+    if (!(await isBuildStale())) return text;
+    return STALE_BUILD_WARNING + text;
+  } catch {
+    // Belt-and-suspenders: never let staleness detection break tool execution.
+    return text;
+  }
 }
 
 /**
