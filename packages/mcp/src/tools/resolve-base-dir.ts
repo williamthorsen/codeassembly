@@ -20,9 +20,6 @@ function expandTilde(value: string, home: string): string {
   return value;
 }
 
-/**
- * Resolve a base_dir value: expand `~`, then treat absolute as-is, relative from projectRoot.
- */
 function resolveValue(value: string, projectRoot: string, home: string): string {
   const expanded = expandTilde(value, home);
   return isAbsolute(expanded) ? expanded : resolve(projectRoot, expanded);
@@ -51,7 +48,7 @@ async function readBaseDirFromYaml(filePath: string): Promise<string | undefined
     }
     return baseDir;
   } catch (error: unknown) {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+    if (isRecord(error) && error.code === 'ENOENT') {
       return undefined;
     }
     process.stderr.write(
