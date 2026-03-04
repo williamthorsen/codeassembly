@@ -214,15 +214,8 @@ describe('parseStatusFile', () => {
 
       expect(result.mode).toBeUndefined();
       expect(result.model).toBeUndefined();
-      expect(result.artifacts).toBeUndefined();
-    });
-
-    it('sets reason to undefined in v1 parsed result', async () => {
-      mockJson(currentFormatFixture);
-
-      const result = await parseStatusFile('/path/to/status.json');
-
       expect(result.reason).toBeUndefined();
+      expect(result.artifacts).toBeUndefined();
     });
   });
 
@@ -621,6 +614,7 @@ describe('parseRunData', () => {
       expect(result.completedAt).toBe('2026-02-26T15:30:00Z');
       expect(result.mode).toBe('orchestrated');
       expect(result.model).toBe('claude-opus-4-6');
+      expect(result.reason).toBeUndefined();
     });
 
     it('flattens nested context and config to top-level fields', async () => {
@@ -640,16 +634,6 @@ describe('parseRunData', () => {
         architecture: { run: true, reason: 'New format support' },
         planning: { run: true, reason: 'Multi-step implementation' },
       });
-    });
-
-    it('sets reason to undefined in v2 parsed result', async () => {
-      mockFileContents({
-        '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
-      });
-
-      const result = await parseRunData('/runs/test-run');
-
-      expect(result.reason).toBeUndefined();
     });
 
     it('passes through artifacts array', async () => {

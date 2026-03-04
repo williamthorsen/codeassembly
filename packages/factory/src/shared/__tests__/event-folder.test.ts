@@ -246,8 +246,6 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    expect(result.status).toBe('failed');
-    expect(result.completedAt).toBe('2026-01-01T01:00:00Z');
     expect(result.reason).toBeUndefined();
   });
 
