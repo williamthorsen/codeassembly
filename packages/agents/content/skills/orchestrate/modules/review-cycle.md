@@ -18,6 +18,7 @@ The orchestrate engine must provide these context variables before entering this
 | `{approval-threshold}`  | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                |
 | `{budget-threshold}`    | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`) |
 | `{models}`              | Resolved model assignments map (see "Resolving models" in SKILL.md)                                         |
+| `{mcp-available}`       | `true` when MCP tools are available; `false` when the engine is running without MCP                         |
 
 ## Exit state
 
