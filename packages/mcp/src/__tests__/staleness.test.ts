@@ -187,16 +187,20 @@ describe('stale build warning delivery', () => {
     };
   }
 
-  function getFirstTextContent(result: Awaited<ReturnType<Client['callTool']>>): string {
+  function getContentItems(result: Awaited<ReturnType<Client['callTool']>>): Array<Record<string, unknown>> {
     const record = toRecord(result, 'tool result');
     const content = record.content;
     if (!Array.isArray(content)) throw new Error('Expected content array');
-    const first: unknown = content[0];
-    if (first === undefined) throw new Error('Expected at least one content item');
-    return getStringField(toRecord(first, 'content item'), 'text');
+    return content.map((item: unknown, i: number) => toRecord(item, `content item ${i.toString()}`));
   }
 
-  it('prepends warning when build is stale', async () => {
+  function itemAt(items: Array<Record<string, unknown>>, index: number): Record<string, unknown> {
+    const item = items[index];
+    if (item === undefined) throw new Error(`Expected content item at index ${index.toString()}`);
+    return item;
+  }
+
+  it('adds warning as separate content item when build is stale', async () => {
     mockIsBuildStale.mockResolvedValue(true);
     const { client, cleanup } = await createClientWithMockedStaleness();
 
@@ -205,8 +209,11 @@ describe('stale build warning delivery', () => {
         name: 'get_run_state',
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
       });
-      const text = getFirstTextContent(result);
-      expect(text).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      const items = getContentItems(result);
+      expect(items.length).toBeGreaterThanOrEqual(2);
+      expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      // Data content remains in a separate item — not corrupted by the warning
+      expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u26A0\uFE0F/);
     } finally {
       await cleanup();
     }
@@ -217,27 +224,29 @@ describe('stale build warning delivery', () => {
     const { client, cleanup } = await createClientWithMockedStaleness();
 
     try {
-      // First call - should have warning
+      // First call - should have warning as separate content item
       const result1 = await client.callTool({
         name: 'get_run_state',
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
       });
-      const text1 = getFirstTextContent(result1);
-      expect(text1).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      const items1 = getContentItems(result1);
+      expect(items1.length).toBeGreaterThanOrEqual(2);
+      expect(getStringField(itemAt(items1, 0), 'text')).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
 
-      // Second call - should NOT have warning
+      // Second call - should NOT have warning (single content item)
       const result2 = await client.callTool({
         name: 'get_run_state',
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
       });
-      const text2 = getFirstTextContent(result2);
-      expect(text2).not.toMatch(/\u26A0\uFE0F MCP server build is stale/);
+      const items2 = getContentItems(result2);
+      expect(items2).toHaveLength(1);
+      expect(getStringField(itemAt(items2, 0), 'text')).not.toMatch(/\u26A0\uFE0F/);
     } finally {
       await cleanup();
     }
   });
 
-  it('prepends warning to error responses when build is stale', async () => {
+  it('adds warning to error responses when build is stale', async () => {
     mockIsBuildStale.mockResolvedValue(true);
     const { client, cleanup } = await createClientWithMockedStaleness();
 
@@ -248,13 +257,15 @@ describe('stale build warning delivery', () => {
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
       });
 
-      // Verify the result is an error
+      // Verify the result is an error with warning as separate content item
       const record = toRecord(result, 'tool result');
       expect(record.isError).toBe(true);
 
-      // Verify the warning is still prepended to the error text
-      const text = getFirstTextContent(result);
-      expect(text).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      const items = getContentItems(result);
+      expect(items.length).toBeGreaterThanOrEqual(2);
+      expect(getStringField(itemAt(items, 0), 'text')).toMatch(/^\u26A0\uFE0F MCP server build is stale/);
+      // Error text is in a separate item, not mixed with the warning
+      expect(getStringField(itemAt(items, 1), 'text')).not.toMatch(/\u26A0\uFE0F/);
     } finally {
       await cleanup();
     }
@@ -269,8 +280,9 @@ describe('stale build warning delivery', () => {
         name: 'get_run_state',
         arguments: { runDir: '/tmp/nonexistent-' + Date.now().toString() },
       });
-      const text = getFirstTextContent(result);
-      expect(text).not.toMatch(/\u26A0\uFE0F MCP server build is stale/);
+      const items = getContentItems(result);
+      expect(items).toHaveLength(1);
+      expect(getStringField(itemAt(items, 0), 'text')).not.toMatch(/\u26A0\uFE0F/);
     } finally {
       await cleanup();
     }

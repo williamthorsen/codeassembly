@@ -14,21 +14,24 @@ const STALE_BUILD_WARNING =
   '\u26A0\uFE0F MCP server build is stale \u2014 source files are newer than compiled output. Run `pnpm run ws compile` in packages/mcp/ to rebuild.\n\n';
 
 /**
- * If the build is stale and the warning hasn't been shown yet, prepend a one-time
- * staleness warning to the given text. Returns the original text otherwise.
+ * If the build is stale and the warning hasn't been shown yet, return a content
+ * item with the staleness warning. Returns an empty array otherwise.
+ *
+ * The warning is a separate content item so that data content (typically JSON)
+ * remains parseable by programmatic consumers.
  *
  * Sets `hasWarned` eagerly before the async staleness check to prevent concurrent
  * tool calls from both passing the guard and emitting duplicate warnings.
  */
-async function maybeAddStaleWarning(text: string): Promise<string> {
-  if (hasWarned) return text;
+async function getStaleWarningContent(): Promise<Array<{ type: 'text'; text: string }>> {
+  if (hasWarned) return [];
   hasWarned = true;
   try {
-    if (!(await isBuildStale())) return text;
-    return STALE_BUILD_WARNING + text;
+    if (!(await isBuildStale())) return [];
+    return [{ type: 'text', text: STALE_BUILD_WARNING }];
   } catch {
     // Belt-and-suspenders: never let staleness detection break tool execution.
-    return text;
+    return [];
   }
 }
 
@@ -56,11 +59,12 @@ export function createServer(): McpServer {
       },
     },
     async (args) => {
+      const warning = await getStaleWarningContent();
       try {
         const result = await initRun(args);
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(JSON.stringify(result)) }] };
+        return { content: [...warning, { type: 'text', text: JSON.stringify(result) }] };
       } catch (error) {
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(String(error)) }], isError: true };
+        return { content: [...warning, { type: 'text', text: String(error) }], isError: true };
       }
     },
   );
@@ -76,14 +80,15 @@ export function createServer(): McpServer {
       },
     },
     async (args) => {
+      const warning = await getStaleWarningContent();
       try {
         const result = await emitEvent(args);
         return {
-          content: [{ type: 'text', text: await maybeAddStaleWarning(JSON.stringify(result)) }],
+          content: [...warning, { type: 'text', text: JSON.stringify(result) }],
           isError: !result.success,
         };
       } catch (error) {
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(String(error)) }], isError: true };
+        return { content: [...warning, { type: 'text', text: String(error) }], isError: true };
       }
     },
   );
@@ -106,14 +111,15 @@ export function createServer(): McpServer {
       },
     },
     async (args) => {
+      const warning = await getStaleWarningContent();
       try {
         const result = await registerArtifact(args);
         return {
-          content: [{ type: 'text', text: await maybeAddStaleWarning(JSON.stringify(result)) }],
+          content: [...warning, { type: 'text', text: JSON.stringify(result) }],
           isError: !result.success,
         };
       } catch (error) {
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(String(error)) }], isError: true };
+        return { content: [...warning, { type: 'text', text: String(error) }], isError: true };
       }
     },
   );
@@ -131,14 +137,15 @@ export function createServer(): McpServer {
       },
     },
     async (args) => {
+      const warning = await getStaleWarningContent();
       try {
         const result = await completeRun(args);
         return {
-          content: [{ type: 'text', text: await maybeAddStaleWarning(JSON.stringify(result)) }],
+          content: [...warning, { type: 'text', text: JSON.stringify(result) }],
           isError: !result.success,
         };
       } catch (error) {
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(String(error)) }], isError: true };
+        return { content: [...warning, { type: 'text', text: String(error) }], isError: true };
       }
     },
   );
@@ -153,11 +160,12 @@ export function createServer(): McpServer {
       },
     },
     async (args) => {
+      const warning = await getStaleWarningContent();
       try {
         const result = await getRunState(args);
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(JSON.stringify(result)) }] };
+        return { content: [...warning, { type: 'text', text: JSON.stringify(result) }] };
       } catch (error) {
-        return { content: [{ type: 'text', text: await maybeAddStaleWarning(String(error)) }], isError: true };
+        return { content: [...warning, { type: 'text', text: String(error) }], isError: true };
       }
     },
   );
