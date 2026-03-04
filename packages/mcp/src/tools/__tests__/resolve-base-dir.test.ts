@@ -117,15 +117,26 @@ describe('resolveBaseDir', () => {
     expect(result).toBe(join(fakeHome, 'custom-dir'));
   });
 
-  it('handles malformed YAML gracefully — skips silently and falls back', async () => {
+  it('handles malformed YAML gracefully — warns on stderr and falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('mcp-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
-    await writeFile(join(agentsDir, 'preferences.yaml'), ':: invalid yaml {{{\n');
+    // Use YAML that causes js-yaml to throw a YAMLException (unclosed flow sequence)
+    await writeFile(join(agentsDir, 'preferences.yaml'), 'key: [unclosed\n');
 
-    const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
-    expect(result).toBe(join(fakeHome, '.ai'));
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
+      expect(result).toBe(join(fakeHome, '.ai'));
+      expect(stderrSpy).toHaveBeenCalledOnce();
+      const callArg = stderrSpy.mock.calls[0]?.[0];
+      if (typeof callArg !== 'string') throw new Error('Expected stderr.write to receive a string');
+      expect(callArg).toContain('Warning: failed to read preferences file');
+      expect(callArg).toContain('preferences.yaml');
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 
   it('handles a preferences file with no artifacts key — falls back', async () => {

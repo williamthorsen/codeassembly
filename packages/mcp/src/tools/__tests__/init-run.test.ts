@@ -1,9 +1,9 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { homedir, tmpdir } from 'node:os';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { v3RunIndexSchema } from '@codeassembly/run-core';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { initRun, sanitizeTicketId } from '../init-run.js';
 
@@ -163,22 +163,32 @@ describe('initRun', () => {
     expect(parsed).toHaveProperty('context.ticketId', '152');
   });
 
-  it('resolves artifact base directory from preferences cascade when baseDir is omitted', async () => {
+  it('delegates to resolveBaseDir when baseDir is omitted', async () => {
     const projectRoot = await createTmpDir();
-    const result = await initRun({
-      projectSlug: 'test-project',
-      projectRoot,
-      branch: 'main',
-      task: 'test cascade wiring',
-    });
+    const fakeBase = await createTmpDir();
 
-    // With no preferences files in the temp projectRoot and no baseDir override,
-    // resolveBaseDir falls back to {homedir}/.ai
-    const expectedPrefix = join(homedir(), '.ai', 'projects', 'test-project', 'tickets');
-    expect(result.runDir).toContain(expectedPrefix);
+    // Mock resolveBaseDir to return a controlled path, making this test hermetic
+    const resolveBaseDirModule = await import('../resolve-base-dir.js');
+    const spy = vi.spyOn(resolveBaseDirModule, 'resolveBaseDir').mockResolvedValueOnce(fakeBase);
 
-    // Clean up the created run directory to avoid polluting the home directory
-    await rm(result.runDir, { recursive: true, force: true });
+    try {
+      const result = await initRun({
+        projectSlug: 'test-project',
+        projectRoot,
+        branch: 'main',
+        task: 'test cascade wiring',
+      });
+
+      // Verify resolveBaseDir was called with projectRoot and undefined baseDir
+      expect(spy).toHaveBeenCalledOnce();
+      expect(spy).toHaveBeenCalledWith(projectRoot, undefined);
+
+      // Verify the run directory was created under the mocked base directory
+      const expectedPrefix = join(fakeBase, 'projects', 'test-project', 'tickets');
+      expect(result.runDir).toContain(expectedPrefix);
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('rejects when the project root cannot be written to', async () => {
