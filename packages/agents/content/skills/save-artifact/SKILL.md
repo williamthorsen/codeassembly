@@ -22,11 +22,24 @@ Save AI-generated files with standardized naming conventions.
 
 ### Run artifacts (review workflow)
 
+**Interactive runs:**
+
 ```text
 {timestamp}_{role}_{artifact}.md
 ```
 
 - **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
+
+**Orchestrated runs:**
+
+```text
+{NN}_{role}_{artifact}.md
+```
+
+- **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`). The sequence counter is managed exclusively by the orchestrate engine — individual skills do not manage sequence numbers in orchestrated runs.
+
+**Common fields (both formats):**
+
 - **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType` (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`). See [artifact-conventions.md](_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](_data/artifact-conventions.md#roletype-taxonomy).
 - **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](_data/artifact-conventions.md#artifact-types) for the complete artifact type list.
 

@@ -6,27 +6,30 @@ Orchestrate the parallel review, code-simplifier, and holistic review phases as 
 
 The orchestrate engine must provide these context variables before entering this module:
 
-| Variable                | Description                                                                                                 |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `{task}`                | Task description                                                                                            |
-| `{ticket-content}`      | GitHub issue body (empty string if unavailable)                                                             |
-| `{run-dir}`             | Run directory returned by `init_run`                                                                        |
-| `{file-timestamp}`      | Filename-format timestamp prefix (e.g., `20260302-185950Z`)                                                 |
-| `{merge-base-sha}`      | Concrete merge-base SHA for diffing                                                                         |
-| `{change-summary-path}` | Path to the most recent `coder_change-summary.md`                                                           |
-| `{max-review-rounds}`   | Maximum iterative review rounds before `needs_manual_review`                                                |
-| `{approval-threshold}`  | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                |
-| `{budget-threshold}`    | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`) |
-| `{models}`              | Resolved model assignments map (see "Resolving models" in SKILL.md)                                         |
-| `{mcp-available}`       | `true` when MCP tools are available; `false` when the engine is running without MCP                         |
+| Variable                     | Description                                                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `{task}`                     | Task description                                                                                            |
+| `{ticket-content}`           | GitHub issue body (empty string if unavailable)                                                             |
+| `{run-dir}`                  | Run directory returned by `init_run`                                                                        |
+| `{seq}`                      | Current artifact sequence counter (continue incrementing from this value)                                   |
+| `{ticket-requirements-path}` | Full path to ticket-requirements artifact (empty string if unavailable)                                     |
+| `{plan-md-path}`             | Full path to orchestration-plan.md artifact (empty string if planning was skipped)                          |
+| `{merge-base-sha}`           | Concrete merge-base SHA for diffing                                                                         |
+| `{change-summary-path}`      | Path to the most recent `coder_change-summary.md`                                                           |
+| `{max-review-rounds}`        | Maximum iterative review rounds before `needs_manual_review`                                                |
+| `{approval-threshold}`       | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                |
+| `{budget-threshold}`         | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`) |
+| `{models}`                   | Resolved model assignments map (see "Resolving models" in SKILL.md)                                         |
+| `{mcp-available}`            | `true` when MCP tools are available; `false` when the engine is running without MCP                         |
 
 ## Exit state
 
 After this module completes, the orchestrate engine reads:
 
-| Variable          | Values                               | Description                         |
-| ----------------- | ------------------------------------ | ----------------------------------- |
-| `{review-status}` | `converged` \| `needs_manual_review` | Overall outcome of the review cycle |
+| Variable          | Values                               | Description                          |
+| ----------------- | ------------------------------------ | ------------------------------------ |
+| `{review-status}` | `converged` \| `needs_manual_review` | Overall outcome of the review cycle  |
+| `{seq}`           | integer                              | Updated artifact sequence counter    |
 
 ## Sub-phase tracking
 
@@ -80,13 +83,15 @@ Call MCP tool emit_event with:
 
 Send all activated Task calls in a single message so they run concurrently. Each agent examines the branch diff independently.
 
+Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer. Assign sequence numbers in this order: core reviewer, silent-failure reviewer (if activated), test reviewer (if activated), code reviewer. Skipped reviewers do not consume a sequence number. Store each write target path as its named variable and increment `{seq}` only for activated reviewers.
+
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.reviewer}`:
 
 > Review the code changes for the following task.
 >
 > Task description: {task}
 >
-> {If planning phase ran: Implementation plan: Read `{run-dir}/{file-timestamp}_planner_orchestration-plan.md`}
+> {If `{plan-md-path}` is non-empty: Implementation plan: Read `{plan-md-path}`}
 > {If `{change-summary-path}` is non-empty: Coder's change summary: Read `{change-summary-path}`}
 >
 > Files changed:
@@ -94,7 +99,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Diff base (merge-base SHA): `{merge-base-sha}`
 >
-> Write your review to: `{run-dir}/{file-timestamp}_reviewer_review.md`
+> Write your review to: `{run-dir}/{NN}_reviewer_review.md`
 
 Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 15`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
 
@@ -107,7 +112,7 @@ Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 15`,
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{run-dir}/{file-timestamp}_silent-failure-reviewer_silent-failure-review.md`
+> Write your findings to: `{run-dir}/{NN}_silent-failure-reviewer_silent-failure-review.md`
 
 Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {models.aspect_test_reviewer}` (if activated):
 
@@ -115,14 +120,14 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {
 >
 > Task description: {task}
 >
-> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`}
+> {If `{ticket-requirements-path}` is non-empty: Ticket requirements: Read `{ticket-requirements-path}`}
 >
 > Files changed:
 > {changed-files}
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{run-dir}/{file-timestamp}_test-reviewer_test-review.md`
+> Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`
 
 Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {models.aspect_code_reviewer}`:
 
@@ -135,7 +140,9 @@ Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{run-dir}/{file-timestamp}_code-reviewer_code-review.md`
+> Write your findings to: `{run-dir}/{NN}_code-reviewer_code-review.md`
+
+Named path variables from dispatch: `{core-review-path}`, `{sf-review-path}` (if activated), `{test-review-path}` (if activated), `{code-review-path}`.
 
 ### Findings aggregation
 
@@ -191,19 +198,19 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > The following reviewers identified issues. Prioritize critical/structural findings first.
 >
-> {If core reviewer had actionable findings: Core reviewer findings: Read `{run-dir}/{file-timestamp}_reviewer_review.md`}
+> {If core reviewer had actionable findings: Core reviewer findings: Read `{core-review-path}`}
 >
-> {If silent-failure reviewer had actionable findings: Aspect silent-failure reviewer findings: Read `{run-dir}/{file-timestamp}_silent-failure-reviewer_silent-failure-review.md`}
+> {If silent-failure reviewer had actionable findings: Aspect silent-failure reviewer findings: Read `{sf-review-path}`}
 >
-> {If test reviewer had actionable findings: Aspect test reviewer findings: Read `{run-dir}/{file-timestamp}_test-reviewer_test-review.md`}
+> {If test reviewer had actionable findings: Aspect test reviewer findings: Read `{test-review-path}`}
 >
-> {If code reviewer had actionable findings: Aspect code reviewer findings: Read `{run-dir}/{file-timestamp}_code-reviewer_code-review.md`}
+> {If code reviewer had actionable findings: Aspect code reviewer findings: Read `{code-review-path}`}
 >
 > {Only include sections for reviewers that produced actionable findings.}
 >
-> Write your response to: `{run-dir}/{file-timestamp}_coder_change-summary.md`
+> Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N} } }`. Call `register_artifact` for the coder's change-summary artifact.
+After: update `{change-summary-path}` to the new file; increment `{seq}`. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N} } }`. Call `register_artifact` for the coder's change-summary artifact.
 
 ### Selective re-review
 
@@ -213,7 +220,9 @@ Determine which reviewers' findings were addressed by examining the coder's chan
 
 Before dispatching re-review: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_dispatched", reviewers: ["{name}", ...] } }`.
 
-If re-review is warranted, send re-review Task calls in a single message (parallel) using the same prompts, models, and turn budgets as the initial dispatch but adding context:
+If re-review is warranted, assign new `{NN}` values for each re-dispatched reviewer (same sequencing rules as initial dispatch — only activated reviewers consume sequence numbers). Update the named path variables (`{core-review-path}`, `{sf-review-path}`, `{test-review-path}`, `{code-review-path}`) to point to the new artifact files. Old review files are preserved on disk.
+
+Send re-review Task calls in a single message (parallel) using the same prompts, models, and turn budgets as the initial dispatch but adding context:
 
 > {Same prompt as initial dispatch, with this addition:}
 >
@@ -273,9 +282,9 @@ Call Task with `subagent_type: pr-review-toolkit:code-simplifier`, `max_turns: 1
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{run-dir}/{file-timestamp}_code-simplifier_code-simplifier-review.md`
+> Write your findings to: `{run-dir}/{NN}_code-simplifier_code-simplifier-review.md`
 
-After: read the findings file. Code-simplifier findings are NOT re-reviewed by other agents. If code-simplifier produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
+After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Read the findings file. Code-simplifier findings are NOT re-reviewed by other agents. If code-simplifier produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
 
@@ -283,13 +292,13 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Task description: {task}
 >
-> Code-simplifier findings: Read `{run-dir}/{file-timestamp}_code-simplifier_code-simplifier-review.md`
+> Code-simplifier findings: Read `{simplifier-review-path}`
 >
 > These are polish changes — the code has already passed all reviews. Apply simplifications that clearly improve readability without changing behavior.
 >
-> Write your response to: `{run-dir}/{file-timestamp}_coder_change-summary.md`
+> Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure). Call `register_artifact` for the code-simplifier review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
+After: if a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure). Call `register_artifact` for the code-simplifier review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
 
 ## Phase 4b: Final comprehensive review
 
@@ -318,7 +327,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Task description: {task}
 >
-> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`}
+> {If `{ticket-requirements-path}` is non-empty: Ticket requirements: Read `{ticket-requirements-path}`}
 >
 > This is a holistic assessment. Evaluate the branch as a whole — not individual lines or functions.
 >
@@ -331,9 +340,9 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your review to: `{run-dir}/{file-timestamp}_reviewer_holistic-review.md`
+> Write your review to: `{run-dir}/{NN}_reviewer_holistic-review.md`
 
-Call `register_artifact` for the holistic review artifact.
+Store the full path as `{holistic-review-path}`; increment `{seq}`. Call `register_artifact` for the holistic review artifact.
 
 ### Flow control
 
