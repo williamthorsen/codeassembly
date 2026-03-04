@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { v3RunIndexSchema } from '@codeassembly/run-core';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { initRun, sanitizeTicketId } from '../init-run.js';
 
@@ -17,12 +17,13 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'implement feature',
     });
 
     expect(result.runId).toMatch(/^\d{8}-\d{6}Z$/);
-    expect(result.runDir).toContain('.ai/projects/test-project/tickets/');
+    expect(result.runDir).toContain('projects/test-project/tickets/');
     expect(result.ticketId).toBeTruthy();
     expect(result.timestamp).toBeTruthy();
   });
@@ -33,11 +34,12 @@ describe('initRun', () => {
       projectSlug: 'test-project',
       ticketId: 'PROJ-42',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'implement feature',
     });
 
-    expect(result.runDir).toContain('.ai/projects/test-project/tickets/PROJ-42/');
+    expect(result.runDir).toContain('projects/test-project/tickets/PROJ-42/');
     expect(result.ticketId).toBe('PROJ-42');
   });
 
@@ -46,13 +48,14 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'implement feature',
     });
 
     // Auto-generated format: {YYYYMMDD}-{4 hex chars}
     expect(result.ticketId).toMatch(/^\d{8}-[0-9a-f]{4}$/);
-    expect(result.runDir).toContain(`.ai/projects/test-project/tickets/${result.ticketId}/`);
+    expect(result.runDir).toContain(`projects/test-project/tickets/${result.ticketId}/`);
   });
 
   it('writes a valid v3 run-index.json', async () => {
@@ -61,6 +64,7 @@ describe('initRun', () => {
       projectSlug: 'test-project',
       ticketId: 'PROJ-42',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'feature/test',
       task: 'add tests',
     });
@@ -86,6 +90,7 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'test task',
     });
@@ -106,6 +111,7 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'test task',
       pipeline: ['plan', 'implement', 'review'],
@@ -127,6 +133,7 @@ describe('initRun', () => {
     const result = await initRun({
       projectSlug: 'test-project',
       projectRoot,
+      baseDir: projectRoot,
       branch: 'main',
       task: 'test task',
     });
@@ -142,6 +149,7 @@ describe('initRun', () => {
       projectSlug: 'test-project',
       ticketId: '#152',
       projectRoot,
+      baseDir: projectRoot,
       branch: '152',
       task: 'fix artifact logging',
     });
@@ -155,6 +163,34 @@ describe('initRun', () => {
     expect(parsed).toHaveProperty('context.ticketId', '152');
   });
 
+  it('delegates to resolveBaseDir when baseDir is omitted', async () => {
+    const projectRoot = await createTmpDir();
+    const fakeBase = await createTmpDir();
+
+    // Mock resolveBaseDir to return a controlled path, making this test hermetic
+    const resolveBaseDirModule = await import('../resolve-base-dir.js');
+    const spy = vi.spyOn(resolveBaseDirModule, 'resolveBaseDir').mockResolvedValueOnce(fakeBase);
+
+    try {
+      const result = await initRun({
+        projectSlug: 'test-project',
+        projectRoot,
+        branch: 'main',
+        task: 'test cascade wiring',
+      });
+
+      // Verify resolveBaseDir was called with projectRoot and undefined baseDir
+      expect(spy).toHaveBeenCalledOnce();
+      expect(spy).toHaveBeenCalledWith(projectRoot, undefined);
+
+      // Verify the run directory was created under the mocked base directory
+      const expectedPrefix = join(fakeBase, 'projects', 'test-project', 'tickets');
+      expect(result.runDir).toContain(expectedPrefix);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('rejects when the project root cannot be written to', async () => {
     // Create a regular file where mkdir expects to create a directory, causing ENOTDIR
     const blocker = join(tmpdir(), 'mcp-test-blocker-' + Date.now().toString());
@@ -164,6 +200,7 @@ describe('initRun', () => {
       initRun({
         projectSlug: 'test-project',
         projectRoot: blocker,
+        baseDir: blocker,
         branch: 'main',
         task: 'test task',
       }),
