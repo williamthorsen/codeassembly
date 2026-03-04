@@ -137,6 +137,7 @@ function normalizeV1(raw: V1StatusObject): CanonicalRunStatus {
   return {
     ...rest,
     completedAt: completedAt ?? undefined,
+    reason: undefined,
     mode: undefined,
     model: undefined,
     phaseDecisions: phaseDecision,
@@ -198,6 +199,7 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
     startedAt: context.startedAt,
     completedAt: context.completedAt ?? undefined,
     status: context.status,
+    reason: undefined,
     externalPlan: config.externalPlan,
     mergeBaseSha: config.mergeBaseSha,
     diffBase: config.diffBase,

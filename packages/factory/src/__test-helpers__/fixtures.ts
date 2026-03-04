@@ -23,6 +23,7 @@ export function createMockRunStatus(overrides: Partial<CanonicalRunStatus> = {})
     startedAt: '2026-01-01T00:00:00Z',
     completedAt: undefined,
     status: 'in_progress',
+    reason: undefined,
     externalPlan: false,
     mergeBaseSha: undefined,
     diffBase: undefined,

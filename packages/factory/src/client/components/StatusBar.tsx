@@ -31,6 +31,11 @@ export function StatusBar({ status, demoSlot }: StatusBarProps): React.JSX.Eleme
       <span className="status-item">
         <strong>Status:</strong> {status.status}
       </span>
+      {status.reason !== undefined && (
+        <span className="status-item">
+          <strong>Reason:</strong> {status.reason}
+        </span>
+      )}
       {duration !== null && (
         <span className="status-item">
           <strong>Duration:</strong> {duration}s

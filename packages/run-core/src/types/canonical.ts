@@ -25,6 +25,7 @@ export interface CanonicalRunStatus {
   startedAt: string;
   completedAt: string | undefined;
   status: RunStatus;
+  reason: string | undefined;
   externalPlan: boolean | undefined;
   mergeBaseSha: string | undefined;
   diffBase: string | undefined;

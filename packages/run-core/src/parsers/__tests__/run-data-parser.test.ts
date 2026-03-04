@@ -214,6 +214,7 @@ describe('parseStatusFile', () => {
 
       expect(result.mode).toBeUndefined();
       expect(result.model).toBeUndefined();
+      expect(result.reason).toBeUndefined();
       expect(result.artifacts).toBeUndefined();
     });
   });
@@ -613,6 +614,7 @@ describe('parseRunData', () => {
       expect(result.completedAt).toBe('2026-02-26T15:30:00Z');
       expect(result.mode).toBe('orchestrated');
       expect(result.model).toBe('claude-opus-4-6');
+      expect(result.reason).toBeUndefined();
     });
 
     it('flattens nested context and config to top-level fields', async () => {
@@ -960,6 +962,29 @@ describe('parseRunData', () => {
       expect(result.phases.architecture).toMatchObject({ status: 'completed', impactLevel: 'high' });
       expect(result.mode).toBe('orchestrated');
       expect(result.model).toBe('claude-opus-4-6');
+    });
+
+    it('propagates reason from run_failed event in JSONL', async () => {
+      const logContent = jsonlLines(
+        { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+        { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'implementation' },
+        {
+          t: '2026-01-01T00:02:00Z',
+          event: 'run_failed',
+          status: 'failed',
+          reason: 'quality gates failed',
+        },
+      );
+
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+        '/runs/test-run/run-log.jsonl': logContent,
+      });
+
+      const result = await parseRunData('/runs/test-run');
+
+      expect(result.status).toBe('failed');
+      expect(result.reason).toBe('quality gates failed');
     });
 
     it('throws descriptive error when v3 header is present but run-log.jsonl is ENOENT', async () => {

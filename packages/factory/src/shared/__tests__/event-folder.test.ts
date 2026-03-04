@@ -33,6 +33,7 @@ describe('foldEvents', () => {
     expect(result.phaseDecisions).toEqual({});
     expect(result.artifacts).toEqual([]);
     expect(result.completedAt).toBeUndefined();
+    expect(result.reason).toBeUndefined();
   });
 
   it('accumulates phase_decision events', () => {
@@ -236,6 +237,16 @@ describe('foldEvents', () => {
 
     expect(result.status).toBe('failed');
     expect(result.completedAt).toBe('2026-01-01T01:00:00Z');
+    expect(result.reason).toBe('coder crashed');
+  });
+
+  it('sets reason to undefined on run_failed without reason', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [{ t: '2026-01-01T01:00:00Z', event: 'run_failed', status: 'failed' }];
+
+    const result = foldEvents(header, events);
+
+    expect(result.reason).toBeUndefined();
   });
 
   it('fold-to-cursor produces partial state from event prefix', () => {
