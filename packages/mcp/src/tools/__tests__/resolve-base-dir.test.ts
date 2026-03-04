@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { resolveBaseDir } from '../resolve-base-dir.js';
 
@@ -110,6 +110,13 @@ describe('resolveBaseDir', () => {
     expect(result).toBe(join(projectRoot, 'relative/dir'));
   });
 
+  it('expands tilde in explicit baseDir parameter', async () => {
+    const projectRoot = await createTmpDir();
+    const fakeHome = await createTmpDir('mcp-test-home-');
+    const result = await resolveBaseDir(projectRoot, '~/custom-dir', { home: fakeHome });
+    expect(result).toBe(join(fakeHome, 'custom-dir'));
+  });
+
   it('handles malformed YAML gracefully — skips silently and falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('mcp-test-home-');
@@ -152,5 +159,28 @@ describe('resolveBaseDir', () => {
 
     const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
     expect(result).toBe(join(fakeHome, '.ai'));
+  });
+
+  it('warns on stderr for non-ENOENT I/O errors and falls back to default', async () => {
+    const projectRoot = await createTmpDir();
+    const fakeHome = await createTmpDir('mcp-test-home-');
+
+    // Create preferences.yaml as a directory — reading it throws EISDIR, not ENOENT
+    const agentsDir = join(projectRoot, '.agents');
+    await mkdir(agentsDir, { recursive: true });
+    await mkdir(join(agentsDir, 'preferences.yaml'), { recursive: true });
+
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
+      expect(result).toBe(join(fakeHome, '.ai'));
+      expect(stderrSpy).toHaveBeenCalledOnce();
+      const callArg = stderrSpy.mock.calls[0]?.[0];
+      if (typeof callArg !== 'string') throw new Error('Expected stderr.write to receive a string');
+      expect(callArg).toContain('Warning: failed to read preferences file');
+      expect(callArg).toContain('preferences.yaml');
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 });

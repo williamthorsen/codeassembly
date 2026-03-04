@@ -31,7 +31,8 @@ function resolveValue(value: string, projectRoot: string, home: string): string 
 /**
  * Read `artifacts.base_dir` from a YAML preferences file.
  * Returns the value if it exists and is a string, or `undefined` otherwise.
- * Missing or malformed files are silently skipped.
+ * Missing files (ENOENT) are silently skipped. Other I/O errors (e.g., EACCES)
+ * emit a warning to stderr and fall back to `undefined`.
  */
 async function readBaseDirFromYaml(filePath: string): Promise<string | undefined> {
   try {
@@ -49,12 +50,18 @@ async function readBaseDirFromYaml(filePath: string): Promise<string | undefined
       return undefined;
     }
     return baseDir;
-  } catch {
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+      return undefined;
+    }
+    process.stderr.write(
+      `Warning: failed to read preferences file ${filePath}: ${error instanceof Error ? error.message : String(error)}\n`,
+    );
     return undefined;
   }
 }
 
-export interface ResolvBaseDirOptions {
+export interface ResolveBaseDirOptions {
   /** Override the home directory (used for testing). */
   home?: string | undefined;
 }
@@ -70,7 +77,7 @@ export interface ResolvBaseDirOptions {
 export async function resolveBaseDir(
   projectRoot: string,
   baseDir?: string,
-  options?: ResolvBaseDirOptions,
+  options?: ResolveBaseDirOptions,
 ): Promise<string> {
   const home = options?.home ?? homedir();
 

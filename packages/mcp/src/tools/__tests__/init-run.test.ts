@@ -1,5 +1,5 @@
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { v3RunIndexSchema } from '@codeassembly/run-core';
@@ -161,6 +161,24 @@ describe('initRun', () => {
     const indexContent = await readFile(join(result.runDir, 'run-index.json'), 'utf8');
     const parsed: unknown = JSON.parse(indexContent);
     expect(parsed).toHaveProperty('context.ticketId', '152');
+  });
+
+  it('resolves artifact base directory from preferences cascade when baseDir is omitted', async () => {
+    const projectRoot = await createTmpDir();
+    const result = await initRun({
+      projectSlug: 'test-project',
+      projectRoot,
+      branch: 'main',
+      task: 'test cascade wiring',
+    });
+
+    // With no preferences files in the temp projectRoot and no baseDir override,
+    // resolveBaseDir falls back to {homedir}/.ai
+    const expectedPrefix = join(homedir(), '.ai', 'projects', 'test-project', 'tickets');
+    expect(result.runDir).toContain(expectedPrefix);
+
+    // Clean up the created run directory to avoid polluting the home directory
+    await rm(result.runDir, { recursive: true, force: true });
   });
 
   it('rejects when the project root cannot be written to', async () => {

@@ -162,7 +162,6 @@ Prefix the status line with a colored emoji for visual distinction:
    branch: {branch}
    task: {task description}
    ticketId: {ticket-id} (optional — auto-generated if not provided)
-   baseDir: {base-dir} (optional — explicit override for artifact base directory)
    pipeline: [{phase names from wrapper pipeline specification}]
    models: {resolved models map}
    config: {
@@ -176,7 +175,7 @@ Prefix the status line with a colored emoji for visual distinction:
    }
    ```
 
-   The `baseDir` parameter is an optional override for the artifact base directory. When omitted, `init_run` resolves the base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/.ai`). The skill does not need to pass `baseDir` under normal circumstances.
+   When omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/.ai`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
 
    **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Derive the filename-format prefix from the returned ISO timestamp: strip punctuation to produce `YYYYMMDD-HHMMSSZ` format (e.g., `2026-03-02T18:59:50.000Z` becomes `20260302-185950Z`). Store as `{file-timestamp}` for use in artifact filenames.
 
