@@ -14,7 +14,7 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/.
         │   └── {ticket-id}/
         │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts
         │       └── {run-id}/                                 ← review run directory
-        │           ├── {timestamp}_{role}_{artifact}.md
+        │           ├── {NN}_{role}_{artifact}.md            ← orchestrated runs
         │           └── ...
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md
@@ -38,7 +38,8 @@ Run directories group artifacts from a review workflow cycle:
 
 ```
 projects/{project-slug}/tickets/{ticket-id}/{run-id}/
-  {timestamp}_{role}_{artifact}.md
+  {NN}_{role}_{artifact}.md              ← orchestrated runs (sequential counter)
+  {timestamp}_{role}_{artifact}.md       ← interactive runs (timestamp prefix)
 ```
 
 **Run ID format:** `{timestamp}-{mode}`
