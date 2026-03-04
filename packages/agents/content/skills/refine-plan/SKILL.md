@@ -87,13 +87,13 @@ Evaluate the finding counts:
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): skip user interaction. Proceed to step 5 with empty user answers.
 
-- **User questions present** (UserQuestions > 0): read the review artifact. Extract the "Decision gaps" section. Present each decision gap as a numbered question:
+- **User questions present** (UserQuestions > 0): read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question as a numbered item:
 
   ```
   The plan review identified {UserQuestions} question(s) that need your input:
 
   1. **C1: {title}** -- {question text}
-  2. **C2: {title}** -- {question text}
+  2. **X2: {title}** -- {question text}
   ...
 
   Please answer these questions. You can respond with numbered answers (e.g., "1. Use toast notifications, 2. Follow the existing pattern in...") or as free-form text.
