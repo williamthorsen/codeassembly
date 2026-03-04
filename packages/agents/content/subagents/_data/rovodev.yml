@@ -10,3 +10,7 @@ aspect-code-reviewer: {} # inherits _defaults
 aspect-silent-failure-reviewer: {} # inherits _defaults
 
 aspect-test-reviewer: {} # inherits _defaults
+
+plan-reviewer: {} # inherits _defaults
+
+plan-reviser: {} # inherits _defaults

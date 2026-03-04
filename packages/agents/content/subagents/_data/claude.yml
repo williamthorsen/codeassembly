@@ -26,3 +26,9 @@ aspect-test-reviewer:
 
 planner:
   model: sonnet
+
+plan-reviewer:
+  model: sonnet
+
+plan-reviser:
+  model: sonnet
