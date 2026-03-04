@@ -14,7 +14,7 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/.
         │   └── {ticket-id}/
         │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts
         │       └── {run-id}/                                 ← review run directory
-        │           ├── {timestamp}_{role}_{artifact}.md
+        │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md
@@ -38,7 +38,8 @@ Run directories group artifacts from a review workflow cycle:
 
 ```
 projects/{project-slug}/tickets/{ticket-id}/{run-id}/
-  {timestamp}_{role}_{artifact}.md
+  {NN}_{role}_{artifact}.md              ← orchestrated runs (sequential counter)
+  {timestamp}_{role}_{artifact}.md       ← interactive runs (timestamp prefix)
 ```
 
 **Run ID format:** `{timestamp}-{mode}`
@@ -103,10 +104,10 @@ Non-ticket paths are relative to the project directory. Category names remain co
 ### Run artifacts (review workflow)
 
 ```
-{timestamp}_{role}_{artifact}.md
+{NN}_{role}_{artifact}.md
 ```
 
-- **timestamp**: UTC, `YYYYMMDD-HHMMSSZ` format
+- **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`)
 - **role**: `architect`, `coder`, `code-reviewer`, `code-simplifier`, `orchestrator`, `planner`, `reviewer`, `silent-failure-reviewer`, `test-reviewer` (extensible — this is a common roles list, not exhaustive)
 - **artifact**: What the document is — `architecture`, `change-summary`, `code-review`, `code-simplifier-review`, `orchestration-plan`, `plan`, `review`, `run-manifest`, `run-summary`, `silent-failure-review`, `test-review`
 
@@ -114,29 +115,30 @@ Underscore separates all structural parts. Hyphens are free for use within any p
 
 Each role has a **roleType** classifying its workflow function. See the [roleType taxonomy](#roletype-taxonomy) in the run-index.json section below.
 
-The first artifact's timestamp matches the run directory timestamp. This intentional redundancy makes files independently interpretable if moved or referenced from elsewhere.
+Artifact ordering is explicit via the sequence number. Timing is captured in the `artifact_written` event's `t` field in `run-log.jsonl`, not the filename.
 
 Example run directory (full orchestrated run with iterative review):
 
 ```
 .ai/projects/williamthorsen-configs-macos/tickets/MAC-68/20260221-034100Z-orchestrated/
   run-index.json
-  20260221-034100Z_orchestrator_run-manifest.md                      # initialization
-  20260221-034200Z_architect_architecture.md                         # Phase 1: architecture
-  20260221-034300Z_planner_orchestration-plan.md                     # Phase 2: planning
-  20260221-034300Z_planner_orchestration-plan.json                   # Phase 2: planning (JSON)
-  20260221-034500Z_coder_change-summary.md                           # Phase 3: implementation
-  20260221-034700Z_reviewer_review.md                                # Phase 4: parallel review (iteration 1)
-  20260221-034700Z_silent-failure-reviewer_silent-failure-review.md   # Phase 4: parallel review (iteration 1)
-  20260221-034700Z_test-reviewer_test-review.md                      # Phase 4: parallel review (iteration 1)
-  20260221-034700Z_code-reviewer_code-review.md                      # Phase 4: parallel review (iteration 1)
-  20260221-040000Z_coder_change-summary.md                           # Phase 4: coder fix cycle
-  20260221-041000Z_reviewer_review.md                                # Phase 4: selective re-review (iteration 2)
-  20260221-041000Z_code-reviewer_code-review.md                      # Phase 4: selective re-review (iteration 2)
-  20260221-042000Z_code-simplifier_code-simplifier-review.md         # Phase 4a: code simplifier
-  20260221-042200Z_coder_change-summary.md                           # Phase 4a: coder fix cycle
-  20260221-042500Z_reviewer_holistic-review.md                       # Phase 4b: holistic review
-  20260221-043000Z_orchestrator_run-summary.md                       # Phase 5: summary
+  01_orchestrator_run-manifest.md                       # initialization
+  02_orchestrator_ticket-requirements.md                # initialization (optional)
+  03_architect_architecture.md                          # Phase 1 (optional)
+  04_planner_orchestration-plan.md                      # Phase 2 (optional)
+  04_planner_orchestration-plan.json                    # Phase 2 (same seq — same artifact, two formats)
+  05_coder_change-summary.md                            # Phase 3
+  06_reviewer_review.md                                 # Phase 4: iteration 1
+  07_silent-failure-reviewer_silent-failure-review.md   # Phase 4: iteration 1
+  08_test-reviewer_test-review.md                       # Phase 4: iteration 1
+  09_code-reviewer_code-review.md                       # Phase 4: iteration 1
+  10_coder_change-summary.md                            # Phase 4: coder fix
+  11_reviewer_review.md                                 # Phase 4: re-review (iteration 2)
+  12_code-reviewer_code-review.md                       # Phase 4: re-review (iteration 2)
+  13_code-simplifier_code-simplifier-review.md          # Phase 4a
+  14_coder_change-summary.md                            # Phase 4a: coder fix
+  15_reviewer_holistic-review.md                        # Phase 4b
+  16_orchestrator_run-summary.md                        # Phase 5
 ```
 
 ## run-index.json
@@ -298,7 +300,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
   },
   "artifacts": [
     {
-      "filename": "20260221-034100Z_orchestrator_run-manifest.md",
+      "filename": "01_orchestrator_run-manifest.md",
       "role": "orchestrator",
       "roleType": "orchestrator",
       "agent": "orchestrator",
@@ -307,7 +309,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "createdAt": "2026-02-21T03:41:00Z"
     },
     {
-      "filename": "20260221-034200Z_architect_architecture.md",
+      "filename": "02_architect_architecture.md",
       "role": "architect",
       "roleType": "analyst",
       "agent": "orchestrated-architect",
@@ -316,7 +318,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "createdAt": "2026-02-21T03:42:00Z"
     },
     {
-      "filename": "20260221-034300Z_planner_orchestration-plan.md",
+      "filename": "03_planner_orchestration-plan.md",
       "role": "planner",
       "roleType": "planner",
       "agent": "orchestrated-planner",
@@ -325,7 +327,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "createdAt": "2026-02-21T03:43:00Z"
     },
     {
-      "filename": "20260221-034500Z_coder_change-summary.md",
+      "filename": "04_coder_change-summary.md",
       "role": "coder",
       "roleType": "author",
       "agent": "orchestrated-coder",
@@ -334,7 +336,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "createdAt": "2026-02-21T03:45:00Z"
     },
     {
-      "filename": "20260221-034700Z_reviewer_review.md",
+      "filename": "05_reviewer_review.md",
       "role": "reviewer",
       "roleType": "reviewer",
       "agent": "orchestrated-reviewer",
@@ -344,7 +346,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "iteration": 1
     },
     {
-      "filename": "20260221-034700Z_silent-failure-reviewer_silent-failure-review.md",
+      "filename": "06_silent-failure-reviewer_silent-failure-review.md",
       "role": "silent-failure-reviewer",
       "roleType": "reviewer",
       "agent": "aspect-silent-failure-reviewer",
@@ -354,7 +356,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "iteration": 1
     },
     {
-      "filename": "20260221-034700Z_code-reviewer_code-review.md",
+      "filename": "07_code-reviewer_code-review.md",
       "role": "code-reviewer",
       "roleType": "reviewer",
       "agent": "aspect-code-reviewer",
@@ -364,7 +366,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "iteration": 1
     },
     {
-      "filename": "20260221-040000Z_coder_change-summary.md",
+      "filename": "08_coder_change-summary.md",
       "role": "coder",
       "roleType": "author",
       "agent": "orchestrated-coder",
@@ -374,7 +376,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "note": "Addresses aggregated findings from iteration 1"
     },
     {
-      "filename": "20260221-041500Z_reviewer_review.md",
+      "filename": "09_reviewer_review.md",
       "role": "reviewer",
       "roleType": "reviewer",
       "agent": "orchestrated-reviewer",
@@ -384,7 +386,7 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
       "iteration": 2
     },
     {
-      "filename": "20260221-041600Z_orchestrator_run-summary.md",
+      "filename": "10_orchestrator_run-summary.md",
       "role": "orchestrator",
       "roleType": "orchestrator",
       "agent": "orchestrator",
@@ -489,7 +491,7 @@ All 13 valid event types and their required fields:
 {base_dir}/projects/{projectSlug}/tickets/{ticketId}/{runId}/
   run-index.json    <- v3 header (written by init_run, completedAt stamped by complete_run)
   run-log.jsonl     <- append-only event log (one JSON object per line)
-  {file-timestamp}_{role}_{artifact}.md   <- artifact files (unchanged naming convention)
+  {NN}_{role}_{artifact}.md   <- artifact files (orchestrated runs use sequential counters)
 ```
 
 Runs are always nested under a ticket ID directory. When no ticket ID is provided to `init_run`, one is auto-generated in the format `{YYYYMMDD}-{4 random hex}` (e.g., `20260302-a3f2`). The date prefix aids human navigation. Caller-supplied ticket IDs with a leading `#` are sanitized to bare numbers before use in file paths (e.g., `#152` becomes `152`).

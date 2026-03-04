@@ -177,7 +177,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    When omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/.ai`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
 
-   **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Derive the filename-format prefix from the returned ISO timestamp: strip punctuation to produce `YYYYMMDD-HHMMSSZ` format (e.g., `2026-03-02T18:59:50.000Z` becomes `20260302-185950Z`). Store as `{file-timestamp}` for use in artifact filenames.
+   **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Initialize `{seq} = 1`.
 
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
 
@@ -189,17 +189,26 @@ Prefix the status line with a colored emoji for visual distinction:
    **Fallback local context generation** (when policy permits continuing without MCP):
    - Resolve `{base-dir}` from `artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, then default to `~/.ai`.
    - Generate `{timestamp}` as current UTC time in ISO 8601.
-   - Derive `{file-timestamp}` by stripping punctuation: `YYYYMMDD-HHMMSSZ` format.
+   - Derive a local timestamp prefix by stripping punctuation from `{timestamp}`: `YYYYMMDD-HHMMSSZ` format.
    - Use `{ticket-id}` from step 1 if available, otherwise generate as `{YYYYMMDD}-{4 random hex chars}`.
-   - Set `{run-id}` = `{file-timestamp}-orchestrated`.
+   - Set `{run-id}` = `{local-timestamp-prefix}-orchestrated`.
    - Set `{run-dir}` = `{base-dir}/projects/{project-slug}/tickets/{ticket-id}/{run-id}`.
    - Create `{run-dir}` via `mkdir -p`.
    - Set `{mcp-available}` = `false`.
+   - Initialize `{seq} = 1`.
    - Do NOT write `run-index.json` or `run-log.jsonl` — the MCP server creates these; the fallback does not replicate them.
 
    **Runtime errors** (non-MCP failures such as bad arguments or disk errors): abort immediately — these are not MCP policy issues.
 
-5. **Write run-manifest artifact** to `{run-dir}/{file-timestamp}_orchestrator_run-manifest.md`:
+### Artifact sequencing
+
+Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`), construct the filename as `{NN}_{role}_{artifact}.md`, store the full path as a named variable (e.g., `{run-manifest-path}`, `{architecture-path}`), then increment `{seq}`.
+
+- **Multi-format pairs** (`.md` / `.json`): both files share the same sequence number. Increment `{seq}` once for the pair.
+- **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
+- **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
+
+5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`:
 
 ```markdown
 # Run manifest
@@ -223,7 +232,7 @@ After writing, call MCP tool `register_artifact` with:
 
 ```
 runDir: {run-dir}
-filename: {file-timestamp}_orchestrator_run-manifest.md
+filename: {NN}_orchestrator_run-manifest.md
 role: orchestrator
 roleType: orchestrator
 agent: orchestrator
@@ -231,11 +240,13 @@ type: run-manifest
 phase: initialization
 ```
 
-6. **Write ticket content artifact** (if available): If `{ticket-content}` is non-empty, write to `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`. Then call MCP tool `register_artifact` with:
+Store the full path as `{run-manifest-path}`; increment `{seq}`.
+
+6. **Write ticket content artifact** (if available): If `{ticket-content}` is non-empty, write to `{run-dir}/{NN}_orchestrator_ticket-requirements.md`. Then call MCP tool `register_artifact` with:
 
    ```
    runDir: {run-dir}
-   filename: {file-timestamp}_orchestrator_ticket-requirements.md
+   filename: {NN}_orchestrator_ticket-requirements.md
    role: orchestrator
    roleType: orchestrator
    agent: orchestrator
@@ -243,17 +254,21 @@ phase: initialization
    phase: initialization
    ```
 
-7. **Write external plan artifact** (if present): If an external plan was extracted in step 3, write to `{run-dir}/{file-timestamp}_orchestrator_external-plan.md`. Then call MCP tool `register_artifact` with:
+   Store the full path as `{ticket-requirements-path}`; increment `{seq}`. If not written, set `{ticket-requirements-path}` to an empty string.
+
+7. **Write external plan artifact** (if present): If an external plan was extracted in step 3, write to `{run-dir}/{NN}_orchestrator_external-plan.md`. Then call MCP tool `register_artifact` with:
 
    ```
    runDir: {run-dir}
-   filename: {file-timestamp}_orchestrator_external-plan.md
+   filename: {NN}_orchestrator_external-plan.md
    role: orchestrator
    roleType: orchestrator
    agent: orchestrator
    type: external-plan
    phase: initialization
    ```
+
+   Store the full path as `{external-plan-path}`; increment `{seq}`. If not written, set `{external-plan-path}` to an empty string.
 
 8. **Register all subsequent artifacts**: For every artifact file written during the run, call MCP tool `register_artifact` immediately after writing the file. Required fields: `runDir`, `filename`, `role`, `roleType`, `agent`, `type`, `phase`. Optional fields: `iteration` (for review phase artifacts), `note` (free-text context). Use the [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy) defined in artifact-conventions.md to populate the `roleType` field for each artifact entry. Quick reference: orchestrator -> `orchestrator`, architect -> `analyst`, planner -> `planner`, coder -> `author`, all reviewers -> `reviewer`. See [artifact entry fields](../_data/artifact-conventions.md#artifact-entry-fields) for the full field reference.
 
@@ -354,6 +369,14 @@ To execute a module phase:
 
 Before entering each module, prepare all variables listed in the module's Inputs table. See `modules/review-cycle.md` for the full list.
 
+### review-cycle: variables from the engine
+
+Pass the following engine-managed variables to the module:
+
+- `{seq}` — current artifact sequence counter (the module continues incrementing from this value)
+- `{ticket-requirements-path}` — full path to ticket-requirements artifact (empty string if unavailable)
+- `{plan-md-path}` — full path to orchestration-plan.md artifact (empty string if planning was skipped)
+
 ### review-cycle: resolving `{models}`
 
 Pass the fully resolved models map to the module. The module uses `{models.reviewer}`, `{models.coder}`, `{models.holistic_reviewer}`, etc. to set the `model` parameter on each Task call. Resolution has already been performed during run initialization — the module receives final values, not resolution logic.
@@ -362,7 +385,7 @@ Pass the fully resolved models map to the module. The module uses `{models.revie
 
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
 
-When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by timestamp, so the last entry in sorted order is the most recent). If no match is found, set `{change-summary-path}` to an empty string.
+When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by sequence number, so the last entry in sorted order is the most recent). If no match is found, set `{change-summary-path}` to an empty string.
 
 ## Phase 1: Architecture (optional)
 
@@ -374,13 +397,13 @@ Call Task with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model:
 >
 > Task description: {task}
 >
-> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`}
+> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{ticket-requirements-path}`}
 >
-> {If `config.externalPlan` is true: External plan (validate assumptions): Read `{run-dir}/{file-timestamp}_orchestrator_external-plan.md`}
+> {If `config.externalPlan` is true: External plan (validate assumptions): Read `{external-plan-path}`}
 >
-> Write your analysis to: `{run-dir}/{file-timestamp}_architect_architecture.md`
+> Write your analysis to: `{run-dir}/{NN}_architect_architecture.md`
 
-After: extract `Impact` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
+After: store the full path as `{architecture-path}`; increment `{seq}`. Extract `Impact` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
 
 ## Phase 2: Planning (optional)
 
@@ -392,15 +415,15 @@ Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {
 >
 > Task description: {task}
 >
-> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{run-dir}/{file-timestamp}_orchestrator_ticket-requirements.md`}
+> {If `{ticket-content}` is non-empty: Ticket requirements: Read `{ticket-requirements-path}`}
 >
-> {If `config.externalPlan` is true: Reference plan (validate before adopting): Read `{run-dir}/{file-timestamp}_orchestrator_external-plan.md`}
+> {If `config.externalPlan` is true: Reference plan (validate before adopting): Read `{external-plan-path}`}
 >
-> {If architecture ran and impact > `none`: Architectural guidance: Read `{run-dir}/{file-timestamp}_architect_architecture.md`}
+> {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
-> Write plan files to: `{run-dir}/{file-timestamp}_planner_orchestration-plan.md` and `{run-dir}/{file-timestamp}_planner_orchestration-plan.json`
+> Write plan files to: `{run-dir}/{NN}_planner_orchestration-plan.md` and `{run-dir}/{NN}_planner_orchestration-plan.json`
 
-After: extract `Steps` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", data: { stepCount: {N} } } }` (or `status: "failed"` on failure). Call `register_artifact` for the plan artifacts.
+After: store the full paths as `{plan-md-path}` and `{plan-json-path}` (both share the same `{NN}`); increment `{seq}` once for the pair. Extract `Steps` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", data: { stepCount: {N} } } }` (or `status: "failed"` on failure). Call `register_artifact` for the plan artifacts.
 
 ## Phase 3: Implementation (required)
 
@@ -412,27 +435,29 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Task description: {task}
 >
-> {If planning phase ran: Implementation plan: Read `{run-dir}/{file-timestamp}_planner_orchestration-plan.md`}
-> {If architecture ran and impact > `none`: Architectural guidance: Read `{run-dir}/{file-timestamp}_architect_architecture.md`}
+> {If planning phase ran: Implementation plan: Read `{plan-md-path}`}
+> {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
-> Write your response to: `{run-dir}/{file-timestamp}_coder_change-summary.md`
+> Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
 Pass all plan steps at once — the coder decides execution order.
 
-After: extract `Status` and `QualityGates` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure). Call `register_artifact` for the change-summary artifact.
+After: store the full path as `{change-summary-path}`; increment `{seq}`. Extract `Status` and `QualityGates` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure). Call `register_artifact` for the change-summary artifact.
 
 ## Review cycle (module)
 
 When the pipeline includes `review-cycle`, prepare context variables (see context preparation section) and invoke `modules/review-cycle.md`. The module manages Phase 4 (parallel review), Phase 4a (code-simplifier), and Phase 4b (holistic review) internally.
 
-After the module completes, read `{review-status}` to determine the run's final status:
+After the module completes, read `{review-status}` and `{seq}` from the module's exit state. Use `{review-status}` to determine the run's final status:
 
 - `converged` → status: `completed`
 - `needs_manual_review` → status: `needs_manual_review`
 
+Use `{seq}` to continue artifact sequencing for the Phase 5 run-summary artifact.
+
 ## Phase 5: Summary (always)
 
-Write run-summary artifact to `{run-dir}/{file-timestamp}_orchestrator_run-summary.md`:
+Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
 
 ```markdown
 # Orchestration summary
