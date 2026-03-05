@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Catwalk Factory Prototype</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #111;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="controls"
+      style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 8px 16px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font: 13px monospace;
+        color: #ccc;
+        z-index: 10;
+      "
+    >
+      <label
+        >Mode:
+        <select id="mode-select">
+          <option value="simple">simple</option>
+          <option value="vibe">vibe</option>
+          <option value="lite">lite</option>
+          <option value="default" selected>default</option>
+          <option value="strict">strict</option>
+        </select>
+      </label>
+      <button id="btn-restart" style="padding: 4px 12px; cursor: pointer">⟲ Restart</button>
+      <button id="btn-pause" style="padding: 4px 12px; cursor: pointer">⏸ Pause</button>
+      <label
+        >Speed:
+        <select id="speed-select">
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+        </select>
+      </label>
+      <label style="margin-left: 8px"> <input type="checkbox" id="compact-toggle" /> Hide absent </label>
+    </div>
+    <canvas id="c"></canvas>
+    <script type="module">
+      import {
+        PLATFORM_W,
+        CANVAS_H,
+        CATWALK_Y,
+        GROUND_Y,
+        CHUTE_TOP,
+        CHUTE_BOT,
+        AGENT_RADIUS,
+        ORCH_RADIUS,
+        ART_W,
+        ART_H,
+        GATE_W,
+        ORCH_COLOR,
+        PHASES,
+        SCENARIOS,
+        verdictIcon,
+        stationX,
+        agentX,
+        setStationPositions,
+        computeCompactPositions,
+        visibleStationRange,
+      } from './scenarios.js';
+
+      import { createEngine, initScenarioPhases } from './engine.js';
+
+      // § PLAYBACK CONTROLS
+
+      const playback = {
+        speedMultiplier: 1,
+        paused: false,
+        pauseResolve: null,
+      };
+
+      // § STATE
+
+      const state = {
+        orch: {
+          x: stationX(0),
+          y: CATWALK_Y,
+          working: false,
+          code: null,
+          transient: [],
+        },
+        agents: {},
+        agentVerdicts: {},
+        gates: Array.from({ length: PHASES.length - 1 }, () => ({ open: false, size: 1.0 })),
+        flyingArtifacts: [],
+        stationRecords: PHASES.map(() => []),
+        stationInputs: PHASES.map(() => []),
+        agentRecords: {},
+        inputs: [],
+        reviewRound: { current: 0, total: 0, visible: false },
+        currentPhase: -1,
+        phaseDisplay: { text: '', alpha: 0 },
+        completed: false,
+        clock: { elapsed: 0, targetDuration: 0, visible: false },
+        absentStations: new Set(),
+        hideAbsent: false,
+      };
+
+      for (const phase of PHASES) {
+        for (const agentLabel of phase.agents) {
+          state.agents[agentLabel] = 'idle';
+        }
+      }
+
+      // § RENDERING
+
+      function drawCatwalk(ctx) {
+        const x1 = visibleStationRange().first - 75; // left edge of INPUTS artifacts
+        const x2 = PLATFORM_W - 20; // right edge of clock
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = ORCH_COLOR;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x1, CATWALK_Y);
+        ctx.lineTo(x2, CATWALK_Y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawGroundFloor(ctx) {
+        const x1 = visibleStationRange().first - 75;
+        const x2 = PLATFORM_W - 20;
+        ctx.save();
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x1, GROUND_Y + 42);
+        ctx.lineTo(x2, GROUND_Y + 42);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawChute(ctx, x) {
+        ctx.save();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x, CHUTE_TOP);
+        ctx.lineTo(x, CHUTE_BOT);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      function drawStation(ctx, index, phase, dimmed) {
+        const cx = stationX(index);
+        ctx.save();
+        ctx.globalAlpha = dimmed ? 0.3 : 1.0;
+        ctx.fillStyle = phase.color;
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(phase.name, cx, GROUND_Y + 24);
+        ctx.restore();
+      }
+
+      function drawAgent(ctx, x, y, label, color, agentState) {
+        ctx.save();
+        let radius = AGENT_RADIUS;
+        if (agentState === 'idle') {
+          ctx.globalAlpha = 0.3;
+        } else if (agentState === 'resting') {
+          ctx.globalAlpha = 0.6;
+        } else if (agentState === 'working') {
+          radius = AGENT_RADIUS + 2 * Math.sin(performance.now() / 150);
+          ctx.globalAlpha = 1.0;
+        } else {
+          ctx.globalAlpha = 1.0;
+        }
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#111';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, x, y);
+        ctx.restore();
+      }
+
+      function drawVerdict(ctx, x, y, verdict) {
+        var icon = verdictIcon(verdict.criticality);
+        if (!icon) return;
+        ctx.save();
+        ctx.globalAlpha = verdict.dismissed ? 0.35 : 1.0;
+        ctx.fillStyle = icon.color;
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(icon.glyph, x, y - AGENT_RADIUS - 4);
+        ctx.restore();
+      }
+
+      function drawOrchestrator(ctx, x, y) {
+        const w = ORCH_RADIUS * 2.2;
+        const h = ORCH_RADIUS * 1.6;
+        const r = 4;
+        ctx.save();
+        ctx.fillStyle = ORCH_COLOR;
+        ctx.beginPath();
+        ctx.moveTo(x - w / 2 + r, y - h / 2);
+        ctx.lineTo(x + w / 2 - r, y - h / 2);
+        ctx.arcTo(x + w / 2, y - h / 2, x + w / 2, y - h / 2 + r, r);
+        ctx.lineTo(x + w / 2, y + h / 2 - r);
+        ctx.arcTo(x + w / 2, y + h / 2, x + w / 2 - r, y + h / 2, r);
+        ctx.lineTo(x - w / 2 + r, y + h / 2);
+        ctx.arcTo(x - w / 2, y + h / 2, x - w / 2, y + h / 2 - r, r);
+        ctx.lineTo(x - w / 2, y - h / 2 + r);
+        ctx.arcTo(x - w / 2, y - h / 2, x - w / 2 + r, y - h / 2, r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#111';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('ORCH', x, y);
+        ctx.restore();
+      }
+
+      function drawGate(ctx, x, gate) {
+        if (gate.size <= 0.01) return;
+        const h = ORCH_RADIUS * 1.6 * gate.size;
+        const w = GATE_W * gate.size;
+        ctx.save();
+        ctx.globalAlpha = 0.85 * gate.size;
+        ctx.fillStyle = ORCH_COLOR;
+        ctx.fillRect(x - w / 2, CATWALK_Y - h / 2, w, h);
+        ctx.restore();
+      }
+
+      function drawArtifact(ctx, x, y, label, color, alpha, h, w, outline) {
+        if (alpha === undefined) alpha = 1.0;
+        if (h === undefined) h = ART_H;
+        if (w === undefined) w = ART_W;
+        const r = 3;
+        const hw = w / 2;
+        const hh = h / 2;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.moveTo(x - hw + r, y - hh);
+        ctx.lineTo(x + hw - r, y - hh);
+        ctx.arcTo(x + hw, y - hh, x + hw, y - hh + r, r);
+        ctx.lineTo(x + hw, y + hh - r);
+        ctx.arcTo(x + hw, y + hh, x + hw - r, y + hh, r);
+        ctx.lineTo(x - hw + r, y + hh);
+        ctx.arcTo(x - hw, y + hh, x - hw, y + hh - r, r);
+        ctx.lineTo(x - hw, y - hh + r);
+        ctx.arcTo(x - hw, y - hh, x - hw + r, y - hh, r);
+        ctx.closePath();
+        if (outline) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = color;
+          ctx.fill();
+        }
+        ctx.globalAlpha = Math.max(alpha, 0.55);
+        ctx.fillStyle = outline ? color : '#222';
+        var fontSize = w > ART_W ? Math.min(Math.round(h * 0.45), 12) : 8;
+        ctx.font = 'bold ' + fontSize + 'px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, x, y);
+        ctx.restore();
+      }
+
+      function drawProgressBar(ctx, currentPhase) {
+        const barY = 40;
+        const segW = 30;
+        const segH = 6;
+        const gap = 3;
+
+        // Build list of phase indices to render
+        const visiblePhases = [];
+        for (let i = 0; i < PHASES.length; i++) {
+          if (state.hideAbsent && state.absentStations.has(i)) continue;
+          visiblePhases.push(i);
+        }
+
+        const totalW = visiblePhases.length * segW + (visiblePhases.length - 1) * gap;
+        const startX = PLATFORM_W / 2 - totalW / 2;
+
+        for (let vi = 0; vi < visiblePhases.length; vi++) {
+          const i = visiblePhases[vi];
+          const sx = startX + vi * (segW + gap);
+          ctx.save();
+          if (i < currentPhase) {
+            ctx.fillStyle = PHASES[i].color;
+            ctx.globalAlpha = 0.8;
+          } else if (i === currentPhase) {
+            ctx.fillStyle = PHASES[i].color;
+            ctx.globalAlpha = 0.5 + 0.3 * Math.sin(performance.now() / 300);
+          } else {
+            ctx.fillStyle = '#333';
+            ctx.globalAlpha = 0.5;
+          }
+          ctx.fillRect(sx, barY, segW, segH);
+          ctx.restore();
+        }
+      }
+
+      function drawRoundCounter(ctx, current, total) {
+        ctx.save();
+        ctx.fillStyle = '#FF5555';
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Review round ' + current + '/' + total, PLATFORM_W / 2, 24);
+        ctx.restore();
+      }
+
+      function drawClock(ctx) {
+        if (!state.clock.visible) return;
+        const elapsed = Math.min(state.clock.elapsed, state.clock.targetDuration);
+        const mins = Math.floor(elapsed / 60);
+        const secs = Math.floor(elapsed % 60);
+        const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+        ctx.save();
+        ctx.fillStyle = '#888';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText(timeStr, PLATFORM_W - 20, 30);
+
+        const targetMins = Math.floor(state.clock.targetDuration / 60);
+        const targetSecs = Math.floor(state.clock.targetDuration % 60);
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#555';
+        ctx.fillText(
+          '/ ' + String(targetMins).padStart(2, '0') + ':' + String(targetSecs).padStart(2, '0'),
+          PLATFORM_W - 20,
+          48,
+        );
+        ctx.restore();
+      }
+
+      function render(ctx) {
+        // Progress bar + clock at top
+        if (state.currentPhase >= 0) {
+          drawProgressBar(ctx, state.completed ? PHASES.length : state.currentPhase);
+        }
+        drawClock(ctx);
+
+        drawCatwalk(ctx);
+        drawGroundFloor(ctx);
+
+        // Draw stations, chutes, agents
+        for (let i = 0; i < PHASES.length; i++) {
+          const phase = PHASES[i];
+          const agents = phase.agents;
+          const isAbsent = state.absentStations.has(i);
+
+          // Skip entirely in compact mode
+          if (isAbsent && state.hideAbsent) continue;
+
+          // Chutes (dimmed for absent)
+          if (isAbsent) {
+            // Single dimmed chute for absent stations
+            ctx.save();
+            ctx.globalAlpha = 0.15;
+            drawChute(ctx, stationX(i));
+            ctx.restore();
+          } else if (agents.length <= 1) {
+            drawChute(ctx, stationX(i));
+          } else {
+            for (let a = 0; a < agents.length; a++) {
+              drawChute(ctx, agentX(i, a, agents.length));
+            }
+          }
+
+          // Station label (dimmed for absent)
+          drawStation(ctx, i, phase, isAbsent);
+
+          // Agents + verdict icons — skip drawing for absent stations
+          if (!isAbsent) {
+            if (agents.length <= 1) {
+              if (agents.length === 1) {
+                const agentState = state.agents[agents[0]] || 'idle';
+                drawAgent(ctx, stationX(i), GROUND_Y, agents[0], phase.color, agentState);
+                if (state.agentVerdicts[agents[0]] !== undefined) {
+                  drawVerdict(ctx, stationX(i), GROUND_Y, state.agentVerdicts[agents[0]]);
+                }
+              }
+            } else {
+              for (let a = 0; a < agents.length; a++) {
+                const ax = agentX(i, a, agents.length);
+                const agentState = state.agents[agents[a]] || 'idle';
+                drawAgent(ctx, ax, GROUND_Y, agents[a], phase.color, agentState);
+                if (state.agentVerdicts[agents[a]] !== undefined) {
+                  drawVerdict(ctx, ax, GROUND_Y, state.agentVerdicts[agents[a]]);
+                }
+              }
+            }
+          }
+
+          // Station inputs + divider + records (below ground floor line)
+          const inputs = state.stationInputs[i];
+          const records = state.stationRecords[i];
+
+          // Determine the x anchor for the divider (left edge of output area)
+          const outputAnchorX = agents.length > 1 ? agentX(i, 0, agents.length) : stationX(i);
+          const dividerX = outputAnchorX - ART_W / 2 - 6;
+          const inputCenterX = dividerX - ART_W / 2 - 5;
+
+          // Draw station inputs to the left of the divider
+          for (let r = 0; r < inputs.length; r++) {
+            const inp = inputs[r];
+            const ry = GROUND_Y + 56 + r * (ART_H + 4);
+            drawArtifact(ctx, inputCenterX, ry, inp.label, inp.color, 1.0, undefined, undefined, inp.outline);
+          }
+
+          // Check if any agent has records (reviews) for this station
+          const hasAgentRecords =
+            !isAbsent &&
+            agents.some(function (a) {
+              return (state.agentRecords[a] || []).length > 0;
+            });
+
+          // Draw thin grey divider if either side has content
+          if (inputs.length > 0 && (records.length > 0 || hasAgentRecords)) {
+            let rightCount = records.length;
+            if (hasAgentRecords) {
+              for (let a = 0; a < agents.length; a++) {
+                rightCount = Math.max(rightCount, (state.agentRecords[agents[a]] || []).length);
+              }
+            }
+            const maxItems = Math.max(inputs.length, rightCount, 1);
+            const lineTop = GROUND_Y + 48;
+            const lineBot = GROUND_Y + 56 + (maxItems - 1) * (ART_H + 4) + ART_H;
+            ctx.save();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(dividerX, lineTop);
+            ctx.lineTo(dividerX, lineBot);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Station records to the right of the divider
+          for (let r = 0; r < records.length; r++) {
+            const rec = records[r];
+            const ry = GROUND_Y + 56 + r * (ART_H + 4);
+            const isNewest = r === records.length - 1;
+            const recAlpha = i === 6 ? 1.0 : isNewest ? 0.9 : 0.35;
+            drawArtifact(ctx, stationX(i), ry, rec.label, rec.color, recAlpha);
+          }
+
+          // Per-agent records (individual reviews stacked below each agent)
+          if (!isAbsent) {
+            for (let a = 0; a < agents.length; a++) {
+              const ax = agentX(i, a, agents.length);
+              const agentRecs = state.agentRecords[agents[a]] || [];
+              for (let r = 0; r < agentRecs.length; r++) {
+                const rec = agentRecs[r];
+                const ry = GROUND_Y + 56 + r * (ART_H + 4);
+                const isNewest = r === agentRecs.length - 1;
+                drawArtifact(ctx, ax, ry, rec.label, rec.color, isNewest ? 0.9 : 0.35);
+              }
+            }
+          }
+        }
+
+        // Gates between adjacent stations
+        for (let i = 0; i < PHASES.length - 1; i++) {
+          if (state.hideAbsent && (state.absentStations.has(i) || state.absentStations.has(i + 1))) continue;
+          const gx = (stationX(i) + stationX(i + 1)) / 2;
+          drawGate(ctx, gx, state.gates[i]);
+        }
+
+        // Flying artifacts
+        for (const art of state.flyingArtifacts) {
+          drawArtifact(ctx, art.x, art.y, art.label, art.color, art.alpha);
+        }
+
+        // Persistent inputs at left edge
+        if (state.inputs.length > 0) {
+          const inputX = visibleStationRange().first - 55;
+          const baseY = CATWALK_Y - 20;
+          ctx.save();
+          ctx.fillStyle = '#888';
+          ctx.font = '9px monospace';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText('INPUTS', inputX - ART_W / 2, baseY - state.inputs.length * (ART_H + 4) - 2);
+          ctx.restore();
+          for (let i = 0; i < state.inputs.length; i++) {
+            const inp = state.inputs[i];
+            const iy = baseY - (state.inputs.length - 1 - i) * (ART_H + 4);
+            drawArtifact(ctx, inputX, iy, inp.label, inp.color);
+          }
+        }
+
+        // Orchestrator on mobile platform
+        const orchHW = (ORCH_RADIUS * 2.2) / 2;
+        const platGap = 5;
+
+        // Platform rail — shows transient artifacts the orch is carrying
+        const carried = state.orch.transient;
+        if (carried.length > 0) {
+          const railRight = state.orch.x + orchHW + 4;
+          let railLeft = state.orch.x - orchHW - platGap;
+          for (let i = 0; i < carried.length; i++) {
+            railLeft -= ART_W + (i < carried.length - 1 ? platGap : 0);
+          }
+          railLeft -= 4;
+          const railY = state.orch.y + ORCH_RADIUS * 0.8 + 3;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(railLeft, railY);
+          ctx.lineTo(railRight, railY);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Orchestrator with optional working glow
+        if (state.orch.working) {
+          ctx.save();
+          ctx.shadowColor = ORCH_COLOR;
+          ctx.shadowBlur = 12 + 4 * Math.sin(performance.now() / 200);
+          drawOrchestrator(ctx, state.orch.x, state.orch.y);
+          ctx.restore();
+        } else {
+          drawOrchestrator(ctx, state.orch.x, state.orch.y);
+        }
+
+        // Code badge hanging below orchestrator
+        if (state.orch.code) {
+          drawArtifact(ctx, state.orch.x, state.orch.y + 28, state.orch.code.label, state.orch.code.color, 1, 24, 64);
+        }
+
+        // Carried items on the platform rail (trailing left)
+        if (carried.length > 0) {
+          let artPlatX = state.orch.x - orchHW - platGap - ART_W / 2;
+          for (const item of carried) {
+            drawArtifact(ctx, artPlatX, state.orch.y, item.label, item.color, item.alpha != null ? item.alpha : 1);
+            artPlatX -= ART_W + platGap;
+          }
+        }
+
+        // Status text at top, above progress bar
+        const statusY = 24;
+        if (state.completed) {
+          ctx.save();
+          ctx.fillStyle = '#55FF55';
+          ctx.font = 'bold 14px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('\u2713 RUN COMPLETE', PLATFORM_W / 2, statusY);
+          ctx.restore();
+        } else if (state.reviewRound.visible) {
+          drawRoundCounter(ctx, state.reviewRound.current, state.reviewRound.total);
+        } else if (state.phaseDisplay.alpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = state.phaseDisplay.alpha;
+          ctx.fillStyle = state.currentPhase >= 0 ? PHASES[state.currentPhase].color : ORCH_COLOR;
+          ctx.font = 'bold 14px monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(state.phaseDisplay.text, PLATFORM_W / 2, statusY);
+          ctx.restore();
+        }
+      }
+
+      // § MAIN LOOP
+
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      function getScale() {
+        return Math.min(canvas.width / PLATFORM_W, canvas.height / CANVAS_H);
+      }
+
+      function frame() {
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const scale = getScale();
+        const offsetX = (canvas.width - PLATFORM_W * scale) / 2;
+        const offsetY = (canvas.height - CANVAS_H * scale) / 2;
+
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+        render(ctx);
+        ctx.restore();
+
+        requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+
+      // § EVENT HANDLERS
+
+      document.getElementById('speed-select').addEventListener('change', function (e) {
+        playback.speedMultiplier = parseFloat(e.target.value);
+      });
+
+      document.getElementById('btn-pause').addEventListener('click', function () {
+        playback.paused = !playback.paused;
+        document.getElementById('btn-pause').textContent = playback.paused ? '▶ Play' : '⏸ Pause';
+        if (!playback.paused && playback.pauseResolve) {
+          playback.pauseResolve();
+        }
+      });
+
+      document.getElementById('btn-restart').addEventListener('click', function () {
+        location.reload();
+      });
+
+      document.getElementById('mode-select').addEventListener('change', function (e) {
+        const url = new URL(location.href);
+        url.searchParams.set('mode', e.target.value);
+        url.searchParams.set('speed', playback.speedMultiplier);
+        if (state.hideAbsent) url.searchParams.set('compact', '1');
+        else url.searchParams.delete('compact');
+        location.href = url.toString();
+      });
+
+      document.getElementById('compact-toggle').addEventListener('change', function () {
+        const url = new URL(location.href);
+        if (this.checked) url.searchParams.set('compact', '1');
+        else url.searchParams.delete('compact');
+        url.searchParams.set('speed', playback.speedMultiplier);
+        location.href = url.toString();
+      });
+
+      // § MODE SELECTION + LAUNCH
+
+      const params = new URLSearchParams(location.search);
+      const selectedMode = params.get('mode') || 'default';
+      const modeSelect = document.getElementById('mode-select');
+      if (modeSelect) modeSelect.value = selectedMode;
+
+      const savedSpeed = parseFloat(params.get('speed'));
+      if (savedSpeed && [0.5, 1, 2, 4].indexOf(savedSpeed) !== -1) {
+        playback.speedMultiplier = savedSpeed;
+        document.getElementById('speed-select').value = String(savedSpeed);
+      }
+
+      const scenario = SCENARIOS[selectedMode] || SCENARIOS['default'];
+
+      // Apply per-scenario agent overrides (before compact layout reads PHASES)
+      initScenarioPhases(scenario);
+
+      // Apply compact layout if requested
+      state.hideAbsent = params.get('compact') === '1';
+      document.getElementById('compact-toggle').checked = state.hideAbsent;
+      if (state.hideAbsent) {
+        var compact = computeCompactPositions(scenario);
+        if (compact) setStationPositions(compact.positions, compact.platformW);
+      }
+      state.orch.x = visibleStationRange().first;
+
+      const { playScenario } = createEngine(state, playback);
+      playScenario(scenario);
+    </script>
+  </body>
+</html>
