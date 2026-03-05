@@ -6,6 +6,7 @@ import { CatwalkCanvas } from './CatwalkCanvas.js';
 import { FlowDiagram } from './FlowDiagram/FlowDiagram.js';
 import { GameCanvas } from './GameCanvas.js';
 
+/** Returns the canvas component corresponding to the selected visualization view. */
 function renderVisualization(view: ActiveView, status: CanonicalRunStatus): React.JSX.Element {
   switch (view) {
     case 'factory':
@@ -13,7 +14,7 @@ function renderVisualization(view: ActiveView, status: CanonicalRunStatus): Reac
     case 'flow':
       return <FlowDiagram status={status} />;
     case 'catwalk':
-      return <CatwalkCanvas />;
+      return <CatwalkCanvas status={status} />;
   }
 }
 
@@ -21,6 +22,7 @@ interface VisualizationSwitcherProps {
   status: CanonicalRunStatus;
 }
 
+/** Provides a toggle bar for switching between visualization views, rendering the active canvas below. */
 export function VisualizationSwitcher({ status }: VisualizationSwitcherProps): React.JSX.Element {
   const [activeView, setActiveView] = useVisualizationParam();
 

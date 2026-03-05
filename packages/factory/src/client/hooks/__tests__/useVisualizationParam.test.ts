@@ -15,20 +15,28 @@ describe('useVisualizationParam', () => {
     globalThis.history.replaceState(null, '', '/');
   });
 
-  it('returns "factory" when URL has no visualization param', () => {
+  it('returns "catwalk" when URL has no visualization param', () => {
     const { result } = renderHook(() => useVisualizationParam());
 
-    expect(result.current[0]).toBe('factory');
+    expect(result.current[0]).toBe('catwalk');
   });
 
-  it('returns "factory" when URL has visualization=factory and does not call replaceState', () => {
-    globalThis.history.replaceState(null, '', '/?visualization=factory');
+  it('returns "catwalk" when URL has visualization=catwalk and does not call replaceState', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=catwalk');
     replaceStateSpy.mockClear();
 
     const { result } = renderHook(() => useVisualizationParam());
 
-    expect(result.current[0]).toBe('factory');
+    expect(result.current[0]).toBe('catwalk');
     expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns "factory" when URL has visualization=factory', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=factory');
+
+    const { result } = renderHook(() => useVisualizationParam());
+
+    expect(result.current[0]).toBe('factory');
   });
 
   it('returns "flow" when URL has visualization=flow', () => {
@@ -39,21 +47,13 @@ describe('useVisualizationParam', () => {
     expect(result.current[0]).toBe('flow');
   });
 
-  it('returns "catwalk" when URL has visualization=catwalk', () => {
-    globalThis.history.replaceState(null, '', '/?visualization=catwalk');
-
-    const { result } = renderHook(() => useVisualizationParam());
-
-    expect(result.current[0]).toBe('catwalk');
-  });
-
-  it('strips invalid value from URL on mount and returns "factory"', () => {
+  it('strips invalid value from URL on mount and returns "catwalk"', () => {
     globalThis.history.replaceState(null, '', '/?visualization=unknown');
     replaceStateSpy.mockClear();
 
     const { result } = renderHook(() => useVisualizationParam());
 
-    expect(result.current[0]).toBe('factory');
+    expect(result.current[0]).toBe('catwalk');
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
   });
 
@@ -63,7 +63,7 @@ describe('useVisualizationParam', () => {
 
     const { result } = renderHook(() => useVisualizationParam());
 
-    expect(result.current[0]).toBe('factory');
+    expect(result.current[0]).toBe('catwalk');
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?project=alpha&ticket=T-1');
   });
 
@@ -75,32 +75,32 @@ describe('useVisualizationParam', () => {
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=flow');
   });
 
-  it('setActiveView("catwalk") updates URL to include visualization=catwalk', () => {
+  it('setActiveView("factory") updates URL to include visualization=factory', () => {
     const { result } = renderHook(() => useVisualizationParam());
 
-    result.current[1]('catwalk');
+    result.current[1]('factory');
 
-    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=catwalk');
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=factory');
   });
 
-  it('setActiveView("factory") removes the visualization param from URL', () => {
+  it('setActiveView("catwalk") removes the visualization param from URL', () => {
     globalThis.history.replaceState(null, '', '/?visualization=flow');
     replaceStateSpy.mockClear();
 
     const { result } = renderHook(() => useVisualizationParam());
 
-    result.current[1]('factory');
+    result.current[1]('catwalk');
 
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/');
   });
 
-  it('setActiveView("factory") removes the visualization param while preserving other params', () => {
+  it('setActiveView("catwalk") removes the visualization param while preserving other params', () => {
     globalThis.history.replaceState(null, '', '/?project=alpha&ticket=T-1&run=run-a&visualization=flow');
     replaceStateSpy.mockClear();
 
     const { result } = renderHook(() => useVisualizationParam());
 
-    result.current[1]('factory');
+    result.current[1]('catwalk');
 
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?project=alpha&ticket=T-1&run=run-a');
   });

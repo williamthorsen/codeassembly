@@ -243,6 +243,28 @@ packages/factory/src/
 - TypeScript strict mode
 - Optional strict linting with `@williamthorsen/strict-lint`
 
+## Code descriptions
+
+Every non-trivial function, method, class, and component must have a `/** ... */` description. One sentence is the target, but longer descriptions are fine when more explanation helps. Do not use JSDoc tags (`@param`, `@returns`, `@throws`, etc.) — the type signature already communicates parameter and return types. Describe _what_ the code does and _why_, not _how_.
+
+Trivial code (simple getters, one-line helpers whose name fully describes their behavior) may omit the description.
+
+```typescript
+/** Resolves agent colors from role types using the CGA-16 palette. */
+function resolveAgentColor(roleType: RoleType): string {
+```
+
+Not:
+
+```typescript
+/**
+ * Resolves agent colors from role types using the CGA-16 palette.
+ * @param roleType - The role type to look up
+ * @returns The hex color string for the role type
+ */
+function resolveAgentColor(roleType: RoleType): string {
+```
+
 ## Skills
 
 Always invoke the `typescript-conventions` skill before writing or modifying TypeScript code.

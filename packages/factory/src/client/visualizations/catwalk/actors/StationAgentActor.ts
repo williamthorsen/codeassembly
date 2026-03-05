@@ -1,11 +1,7 @@
 import { Actor, BaseAlign, Circle, Color, Font, GraphicsGroup, Text, TextAlign, vec, type Vector } from 'excalibur';
 
 import { AGENT_RADIUS } from '../constants/dimensions.js';
-
-// TODO(#179): Replace with import from '../types.js' once #179 is merged.
-// The type already exists in game/sprites/sprite-definitions.ts but importing
-// from there would couple the catwalk visualization to the unrelated game subtree.
-type AgentAnimationState = 'idle' | 'working' | 'walking' | 'resting' | 'celebrating' | 'concerned';
+import type { AgentAnimationState } from '../types.js';
 
 export interface StationAgentActorConfig {
   id: string;
@@ -14,6 +10,7 @@ export interface StationAgentActorConfig {
   state: AgentAnimationState;
 }
 
+/** Maps an agent animation state to a visual opacity so idle/resting agents appear dimmed. */
 function opacityForState(state: AgentAnimationState): number {
   switch (state) {
     case 'idle':
@@ -32,6 +29,7 @@ function opacityForState(state: AgentAnimationState): number {
   }
 }
 
+/** Renders a station-bound agent as a colored circle with a role label, dimmed by animation state. */
 export class StationAgentActor extends Actor {
   constructor(config: StationAgentActorConfig, position: Vector) {
     super({ pos: position });

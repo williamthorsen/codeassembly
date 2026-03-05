@@ -3,10 +3,9 @@ import { useCallback, useState } from 'react';
 export type ActiveView = 'factory' | 'flow' | 'catwalk';
 
 const PARAM_KEY = 'visualization';
-const DEFAULT_VALUE: ActiveView = 'factory';
+const DEFAULT_VALUE: ActiveView = 'catwalk';
 
-// Replace the current history entry, ignoring failures in restricted environments
-// such as sandboxed iframes.
+/** Replaces the current history entry, ignoring failures in restricted environments such as sandboxed iframes. */
 function safeReplaceUrl(params: URLSearchParams): void {
   const search = params.toString();
   const url = search ? `${globalThis.location.pathname}?${search}` : globalThis.location.pathname;
@@ -17,6 +16,7 @@ function safeReplaceUrl(params: URLSearchParams): void {
   }
 }
 
+/** Syncs the active visualization view with the `?visualization` URL search parameter. */
 export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void] {
   const [activeView, setActiveViewState] = useState<ActiveView>(() => {
     const params = new URLSearchParams(globalThis.location.search);

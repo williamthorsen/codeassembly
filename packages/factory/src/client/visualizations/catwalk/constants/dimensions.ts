@@ -2,6 +2,10 @@
 export const CANVAS_W = 1400;
 export const CANVAS_H = 540;
 
+// Engine viewport dimensions (used by both CatwalkScene and CatwalkCanvas)
+export const ENGINE_WIDTH = 1200;
+export const ENGINE_HEIGHT = 600;
+
 // Vertical positions
 export const CATWALK_Y = 100;
 export const GROUND_Y = 340;
