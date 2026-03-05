@@ -127,6 +127,10 @@ function layoutStations(
 export function computeCatwalkLayout(config: CatwalkLayoutConfig): CatwalkLayoutResult {
   const { stations, compact } = config;
 
+  if (stations.length === 0) {
+    throw new RangeError('At least one station is required');
+  }
+
   // Step 1: Resolve visible station indices
   const visibleIndices: number[] = [];
   if (compact === true) {

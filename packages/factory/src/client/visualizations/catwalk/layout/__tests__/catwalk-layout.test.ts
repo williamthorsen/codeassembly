@@ -181,8 +181,11 @@ describe('computeCatwalkLayout', () => {
       expect(chute.topX).toBe(agentPos.x);
     });
 
-    it('runs downward (CHUTE_BOT > CHUTE_TOP)', () => {
-      expect(CHUTE_BOT).toBeGreaterThan(CHUTE_TOP);
+    it('runs downward (botY > topY)', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const chute = layout.chuteEndpoints(0, 0, 1);
+
+      expect(chute.botY).toBeGreaterThan(chute.topY);
     });
   });
 
@@ -488,6 +491,31 @@ describe('computeCatwalkLayout', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
       expect(() => layout.stationX(defaultStations.length)).toThrow(RangeError);
+    });
+
+    it('throws RangeError for empty stations array', () => {
+      expect(() => computeCatwalkLayout({ stations: [] })).toThrow(RangeError);
+    });
+  });
+
+  describe('17. gatePosition between absent and visible station in compact mode', () => {
+    const compactConfig: CatwalkLayoutConfig = {
+      stations: [
+        { agentCount: 1, absent: true },
+        { agentCount: 1 },
+        { agentCount: 1 },
+      ],
+      compact: true,
+    };
+
+    it('returns the midpoint using the off-screen ABSENT_X for the absent station', () => {
+      const layout = computeCatwalkLayout(compactConfig);
+      const absentStationX = layout.stationX(0);
+      const visibleStationX = layout.stationX(1);
+      const gate = layout.gatePosition(0, 1);
+
+      expect(absentStationX).toBe(ABSENT_X);
+      expect(gate.x).toBe((absentStationX + visibleStationX) / 2);
     });
   });
 });
