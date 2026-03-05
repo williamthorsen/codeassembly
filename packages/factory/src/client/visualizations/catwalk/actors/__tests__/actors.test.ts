@@ -210,13 +210,25 @@ describe('ArtifactActor', () => {
     expect(() => new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0))).not.toThrow();
   });
 
-  it('calls graphics.use() with a GraphicsGroup containing members', () => {
+  it('calls graphics.use() with a GraphicsGroup containing a rect and a label member', () => {
     new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0));
 
     expect(mockGraphicsUse).toHaveBeenCalledTimes(1);
-    expect(mockGraphicsUse).toHaveBeenCalledWith(
+
+    const call = mockGraphicsUse.mock.calls[0];
+    if (!call) {
+      throw new TypeError('Expected graphics.use to have been called');
+    }
+
+    const group: unknown = call[0];
+    expect(group).toEqual(
       expect.objectContaining({
-        options: expect.objectContaining({ members: expect.arrayContaining([]) }),
+        options: expect.objectContaining({
+          members: [
+            expect.objectContaining({ graphic: expect.anything(), offset: expect.anything() }),
+            expect.objectContaining({ graphic: expect.anything(), offset: expect.anything() }),
+          ],
+        }),
       }),
     );
   });
