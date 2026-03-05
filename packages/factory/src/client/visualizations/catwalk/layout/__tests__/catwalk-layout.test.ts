@@ -11,11 +11,7 @@ import {
   LAYOUT_MARGIN,
   STATION_GAP,
 } from '../../constants/dimensions.js';
-import {
-  type CatwalkLayoutConfig,
-  computeCatwalkLayout,
-  type StationLayoutEntry,
-} from '../catwalk-layout.js';
+import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry } from '../catwalk-layout.js';
 
 // Derived constants (matching the module's internal values) for relational assertions
 const AGENT_SPACING = AGENT_RADIUS * 2 + 20;
@@ -26,16 +22,16 @@ const GROUND_LINE_OFFSET = 42;
 const ABSENT_X = -200;
 const PLATFORM_RIGHT_INSET = 20;
 
-/** Compute the left extent for a station with the given agent count. */
-function leftExtentOf(agentCount: number): number {
-  const effective = Math.max(agentCount, 1);
-  return ((effective - 1) * AGENT_SPACING) / 2 + INPUT_OVERHANG;
+function agentHalfWidth(agentCount: number): number {
+  return ((Math.max(agentCount, 1) - 1) * AGENT_SPACING) / 2;
 }
 
-/** Compute the right extent for a station with the given agent count. */
+function leftExtentOf(agentCount: number): number {
+  return agentHalfWidth(agentCount) + INPUT_OVERHANG;
+}
+
 function rightExtentOf(agentCount: number): number {
-  const effective = Math.max(agentCount, 1);
-  return ((effective - 1) * AGENT_SPACING) / 2 + OUTPUT_OVERHANG;
+  return agentHalfWidth(agentCount) + OUTPUT_OVERHANG;
 }
 
 // Standard 7-station configuration used across multiple test cases
@@ -277,11 +273,11 @@ describe('computeCatwalkLayout', () => {
       stations: [
         { agentCount: 1, absent: true }, // architecture - absent
         { agentCount: 1, absent: true }, // planning - absent
-        { agentCount: 1 },              // implementation
-        { agentCount: 4 },              // review
-        { agentCount: 1 },              // simplifier
-        { agentCount: 1 },              // holistic
-        { agentCount: 0 },              // summary
+        { agentCount: 1 }, // implementation
+        { agentCount: 4 }, // review
+        { agentCount: 1 }, // simplifier
+        { agentCount: 1 }, // holistic
+        { agentCount: 0 }, // summary
       ],
       compact: true,
     };
@@ -500,11 +496,7 @@ describe('computeCatwalkLayout', () => {
 
   describe('17. gatePosition between absent and visible station in compact mode', () => {
     const compactConfig: CatwalkLayoutConfig = {
-      stations: [
-        { agentCount: 1, absent: true },
-        { agentCount: 1 },
-        { agentCount: 1 },
-      ],
+      stations: [{ agentCount: 1, absent: true }, { agentCount: 1 }, { agentCount: 1 }],
       compact: true,
     };
 
