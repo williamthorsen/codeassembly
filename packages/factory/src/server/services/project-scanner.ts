@@ -2,9 +2,18 @@ import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import type { RunDataParseErrorCategory } from '@codeassembly/run-core';
+import { RunDataParseError } from '@codeassembly/run-core';
+
 import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.js';
 import { parseRunData } from '../adapters/status-adapter.js';
 import { isEnoent } from '../type-guards.js';
+
+const PARSE_ERROR_SUGGESTIONS: Record<RunDataParseErrorCategory, string> = {
+  corrupt_json: 'Check for syntax errors or delete and regenerate the file',
+  invalid_schema: 'The file may be from an incompatible version; delete the run directory to clear it',
+  missing_companion: 'The run may have been interrupted; delete the run directory to clear it',
+};
 
 export class ProjectScanner {
   private basePath: string;
@@ -138,8 +147,17 @@ export class ProjectScanner {
           });
         } catch (error) {
           if (isEnoent(error)) {
+            console.warn(
+              `[project-scanner] Skipping ${slug}/${ticketId}/${runId}: no run-index.json or status.json found — the run directory may be empty or incomplete; delete it to clear this warning`,
+            );
             continue;
           }
+          if (error instanceof RunDataParseError) {
+            const suggestion = PARSE_ERROR_SUGGESTIONS[error.category];
+            console.warn(`[project-scanner] Skipping ${slug}/${ticketId}/${runId}: ${error.message} — ${suggestion}`);
+            continue;
+          }
+          // Non-parse errors are truly unexpected (permissions, I/O failures)
           console.error(`Error parsing run data for ${slug}/${ticketId}/${runId}:`, error);
           continue;
         }

@@ -66,6 +66,10 @@ export { parseRunLogLine, runEventSchema, v3RunIndexSchema } from './schemas/run
 // Schemas — status.json (v1)
 export { v1StatusSchema } from './schemas/status-json-schema.js';
 
+// Errors — structured parse error class
+export type { RunDataParseErrorCategory } from './run-data-parse-error.js';
+export { RunDataParseError } from './run-data-parse-error.js';
+
 // Event folder — reconstruct CanonicalRunStatus from header + events
 export { foldEvents } from './event-folder.js';
 
