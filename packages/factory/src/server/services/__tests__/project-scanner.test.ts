@@ -213,42 +213,61 @@ describe('ProjectScanner', () => {
   });
 
   // Error recovery: skip-and-continue — invalid runs are skipped, valid siblings still collected
-  it('logs warning and skips RunDataParseError runs while continuing to scan siblings', async () => {
-    using silent = silencedConsole();
-    const scanner = new ProjectScanner('/test/projects');
+  it.each([
+    {
+      category: 'invalid_schema' as const,
+      message: 'Invalid run-index.json at /test/path',
+      expectedSuggestion: 'incompatible version',
+    },
+    {
+      category: 'corrupt_json' as const,
+      message: 'Failed to parse JSON at /test/path',
+      expectedSuggestion: 'Check for syntax errors',
+    },
+    {
+      category: 'missing_companion' as const,
+      message: 'v3 run-index.json found but run-log.jsonl is missing',
+      expectedSuggestion: 'run may have been interrupted',
+    },
+  ])(
+    'logs warning with suggestion for $category errors and skips the run',
+    async ({ category, message, expectedSuggestion }) => {
+      using silent = silencedConsole();
+      const scanner = new ProjectScanner('/test/projects');
 
-    mockReaddirResult(['proj']);
-    mockStatDirectory();
-    mockReaddirResult(['tickets']);
-    mockReaddirResult(['TICKET-1']);
-    mockStatDirectory(); // stat for TICKET-1 directory
-    mockReaddirResult(['bad-run', 'good-run']);
-    mockStatDirectory(); // stat for bad-run directory
-    mockStatDirectory(); // stat for good-run directory
+      mockReaddirResult(['proj']);
+      mockStatDirectory();
+      mockReaddirResult(['tickets']);
+      mockReaddirResult(['TICKET-1']);
+      mockStatDirectory(); // stat for TICKET-1 directory
+      mockReaddirResult(['bad-run', 'good-run']);
+      mockStatDirectory(); // stat for bad-run directory
+      mockStatDirectory(); // stat for good-run directory
 
-    mockedParseRunData.mockRejectedValueOnce(
-      new RunDataParseError('Invalid run-index.json at /test/path', 'invalid_schema', '/test/path'),
-    );
-    mockedParseRunData.mockResolvedValueOnce(
-      createMockStatus({
-        runId: 'good-run',
-        startedAt: '2026-03-01T00:00:00Z',
-      }),
-    );
+      mockedParseRunData.mockRejectedValueOnce(new RunDataParseError(message, category, '/test/path'));
+      mockedParseRunData.mockResolvedValueOnce(
+        createMockStatus({
+          runId: 'good-run',
+          startedAt: '2026-03-01T00:00:00Z',
+        }),
+      );
 
-    const result = await scanner.scan();
+      const result = await scanner.scan();
 
-    expect(result.projects).toHaveLength(1);
-    const runs = result.projects[0]?.tickets[0]?.runs;
-    expect(runs).toHaveLength(1);
-    expect(runs?.[0]?.runId).toBe('good-run');
+      expect(result.projects).toHaveLength(1);
+      const runs = result.projects[0]?.tickets[0]?.runs;
+      expect(runs).toHaveLength(1);
+      expect(runs?.[0]?.runId).toBe('good-run');
 
-    expect(silent.warn).toHaveBeenCalledOnce();
-    expect(silent.warn).toHaveBeenCalledWith(
-      expect.stringContaining('[project-scanner] Skipping proj/TICKET-1/bad-run:'),
-    );
-    expect(silent.error).not.toHaveBeenCalled();
-  });
+      expect(silent.warn).toHaveBeenCalledOnce();
+      expect(silent.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[project-scanner] Skipping proj/TICKET-1/bad-run:'),
+      );
+      expect(silent.warn).toHaveBeenCalledWith(expect.stringContaining(message));
+      expect(silent.warn).toHaveBeenCalledWith(expect.stringContaining(expectedSuggestion));
+      expect(silent.error).not.toHaveBeenCalled();
+    },
+  );
 
   it('logs error for non-RunDataParseError exceptions during run parsing', async () => {
     using silent = silencedConsole();
@@ -284,6 +303,45 @@ describe('ProjectScanner', () => {
       expect.any(Error),
     );
     expect(silent.warn).not.toHaveBeenCalled();
+  });
+
+  // Error recovery: ENOENT from run directories with no recognized log files
+  it('logs warning and skips run directories where neither run-index.json nor status.json exists', async () => {
+    using silent = silencedConsole();
+    const scanner = new ProjectScanner('/test/projects');
+
+    mockReaddirResult(['proj']);
+    mockStatDirectory();
+    mockReaddirResult(['tickets']);
+    mockReaddirResult(['TICKET-1']);
+    mockStatDirectory(); // stat for TICKET-1 directory
+    mockReaddirResult(['empty-run', 'good-run']);
+    mockStatDirectory(); // stat for empty-run directory
+    mockStatDirectory(); // stat for good-run directory
+
+    const enoentError = new Error('ENOENT: no such file or directory');
+    Object.assign(enoentError, { code: 'ENOENT' });
+    mockedParseRunData.mockRejectedValueOnce(enoentError);
+    mockedParseRunData.mockResolvedValueOnce(
+      createMockStatus({
+        runId: 'good-run',
+        startedAt: '2026-03-01T00:00:00Z',
+      }),
+    );
+
+    const result = await scanner.scan();
+
+    expect(result.projects).toHaveLength(1);
+    const runs = result.projects[0]?.tickets[0]?.runs;
+    expect(runs).toHaveLength(1);
+    expect(runs?.[0]?.runId).toBe('good-run');
+
+    expect(silent.warn).toHaveBeenCalledOnce();
+    expect(silent.warn).toHaveBeenCalledWith(
+      expect.stringContaining('[project-scanner] Skipping proj/TICKET-1/empty-run:'),
+    );
+    expect(silent.warn).toHaveBeenCalledWith(expect.stringContaining('no run-index.json or status.json found'));
+    expect(silent.error).not.toHaveBeenCalled();
   });
 
   it('does not scan direct entries when tickets/ directory exists', async () => {

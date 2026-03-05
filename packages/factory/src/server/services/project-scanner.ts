@@ -147,13 +147,14 @@ export class ProjectScanner {
           });
         } catch (error) {
           if (isEnoent(error)) {
+            console.warn(
+              `[project-scanner] Skipping ${slug}/${ticketId}/${runId}: no run-index.json or status.json found — the run directory may be empty or incomplete; delete it to clear this warning`,
+            );
             continue;
           }
           if (error instanceof RunDataParseError) {
             const suggestion = PARSE_ERROR_SUGGESTIONS[error.category];
-            console.warn(
-              `[project-scanner] Skipping ${slug}/${ticketId}/${runId}: ${error.message} — ${suggestion}`,
-            );
+            console.warn(`[project-scanner] Skipping ${slug}/${ticketId}/${runId}: ${error.message} — ${suggestion}`);
             continue;
           }
           // Non-parse errors are truly unexpected (permissions, I/O failures)
