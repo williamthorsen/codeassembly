@@ -96,8 +96,8 @@ function layoutStations(phaseIndices) {
 
   var leftExtents = [];
   var rightExtents = [];
-  for (var k = 0; k < phaseIndices.length; k++) {
-    var agentCount = Math.max(PHASES[phaseIndices[k]].agents.length, 1);
+  for (const phaseIndex of phaseIndices) {
+    var agentCount = Math.max(PHASES[phaseIndex].agents.length, 1);
     var agentHW = ((agentCount - 1) * agentSpacing) / 2;
     leftExtents.push(agentHW + inputOverhang);
     rightExtents.push(agentHW + outputOverhang);
@@ -107,7 +107,7 @@ function layoutStations(phaseIndices) {
   for (var i = 1; i < phaseIndices.length; i++) {
     positions.push(Math.round(positions[i - 1] + rightExtents[i - 1] + STATION_GAP + leftExtents[i]));
   }
-  var platformW = positions[positions.length - 1] + rightExtents[rightExtents.length - 1] + LAYOUT_MARGIN;
+  var platformW = positions.at(-1) + rightExtents.at(-1) + LAYOUT_MARGIN;
   return { positions: positions, platformW: platformW };
 }
 
@@ -134,9 +134,9 @@ export function computeCompactPositions(scenario) {
   if (visible.length === PHASES.length) return null;
 
   var result = layoutStations(visible);
-  var positions = new Array(PHASES.length).fill(-200);
-  for (var j = 0; j < visible.length; j++) {
-    positions[visible[j]] = result.positions[j];
+  var positions = Array.from({ length: PHASES.length }).fill(-200);
+  for (const [j, element] of visible.entries()) {
+    positions[element] = result.positions[j];
   }
   return { positions: positions, platformW: result.platformW };
 }
@@ -159,8 +159,8 @@ export function setPhaseAgents(stationIndex, agents) {
 
 // Restore all phases to their original agent lists. Recomputes positions.
 export function resetPhaseAgents() {
-  for (var i = 0; i < PHASES.length; i++) {
-    PHASES[i].agents = DEFAULT_PHASE_AGENTS[i].slice();
+  for (const [i, PHASE] of PHASES.entries()) {
+    PHASE.agents = DEFAULT_PHASE_AGENTS[i].slice();
   }
   STATION_X = computeDefaultPositions();
   DEFAULT_STATION_X = STATION_X.slice();
@@ -192,14 +192,14 @@ export function setStationPositions(positions, platformW) {
 // In compact mode absent stations are at -200; this skips them.
 export function visibleStationRange() {
   var first = STATION_X[0],
-    last = STATION_X[STATION_X.length - 1];
-  for (var i = 0; i < STATION_X.length; i++) {
-    if (STATION_X[i] >= 0) {
-      first = STATION_X[i];
+    last = STATION_X.at(-1);
+  for (const x of STATION_X) {
+    if (x >= 0) {
+      first = x;
       break;
     }
   }
-  for (var i = STATION_X.length - 1; i >= 0; i--) {
+  for (let i = STATION_X.length - 1; i >= 0; i--) {
     if (STATION_X[i] >= 0) {
       last = STATION_X[i];
       break;

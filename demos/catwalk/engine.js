@@ -1,20 +1,21 @@
+/* global requestAnimationFrame */
+
 import {
-  PHASES,
-  ARTIFACT_COLORS,
-  WALK_SPEED,
-  CHUTE_DURATION,
-  WORK_DURATION,
-  PAUSE_DURATION,
-  CATWALK_Y,
-  GROUND_Y,
-  CHUTE_TOP,
-  CHUTE_BOT,
-  stationX,
   agentX,
+  ARTIFACT_COLORS,
+  CHUTE_BOT,
+  CHUTE_DURATION,
+  CHUTE_TOP,
   computeStepWeight,
   computeTotalWeight,
+  GROUND_Y,
+  PAUSE_DURATION,
+  PHASES,
   resetPhaseAgents,
   setPhaseAgents,
+  stationX,
+  WALK_SPEED,
+  WORK_DURATION,
 } from './scenarios.js';
 
 // Apply per-scenario agent overrides before layout computation.
@@ -35,7 +36,7 @@ function lerp(a, b, t) {
 }
 
 function easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
 
 // § ENGINE FACTORY — closes over state and playback
@@ -112,7 +113,7 @@ export function createEngine(state, playback) {
     return animateProp(art, 'alpha', 1, WORK_DURATION).then(function () {
       const idx = state.flyingArtifacts.indexOf(art);
       if (idx !== -1) state.flyingArtifacts.splice(idx, 1);
-      const recordLabel = version !== undefined ? label + ' v' + version : label;
+      const recordLabel = version === undefined ? label : label + ' v' + version;
       state.stationRecords[stationIndex].push({
         label: recordLabel,
         color: color,
@@ -294,9 +295,9 @@ export function createEngine(state, playback) {
         // Coder produces next version
         codeVersionRef.version++;
         const newLabel = 'code v' + codeVersionRef.version;
-        state.agents['coder'] = 'working';
+        state.agents.coder = 'working';
         await materialize(2, 'code', ARTIFACT_COLORS.code, codeVersionRef.version);
-        state.agents['coder'] = 'resting';
+        state.agents.coder = 'resting';
         await wait(PAUSE_DURATION);
         await chuteAscend(stationX(2), newLabel, ARTIFACT_COLORS.code);
         state.orch.code = { label: newLabel, color: ARTIFACT_COLORS.code };
@@ -339,9 +340,9 @@ export function createEngine(state, playback) {
 
     codeVersionRef.version++;
     const newLabel = 'code v' + codeVersionRef.version;
-    state.agents['coder'] = 'working';
+    state.agents.coder = 'working';
     await materialize(targetStation, 'code', ARTIFACT_COLORS.code, codeVersionRef.version);
-    state.agents['coder'] = 'resting';
+    state.agents.coder = 'resting';
     await wait(PAUSE_DURATION);
     await chuteAscend(stationX(targetStation), newLabel, ARTIFACT_COLORS.code);
     state.orch.code = { label: newLabel, color: ARTIFACT_COLORS.code };
@@ -397,7 +398,7 @@ export function createEngine(state, playback) {
 
     for (let i = 0; i < state.gates.length; i++) {
       const shouldOpen = absentStations.has(i) || absentStations.has(i + 1);
-      state.gates[i] = { open: shouldOpen, size: shouldOpen ? 0 : 1.0 };
+      state.gates[i] = { open: shouldOpen, size: shouldOpen ? 0 : 1 };
     }
   }
 
@@ -432,7 +433,7 @@ export function createEngine(state, playback) {
           await skipStation(step.station);
           break;
 
-        case 'threeBeat': {
+        case 'threeBeat':
           state.currentPhase = step.station;
           await showPhaseLabel(PHASES[step.station].name);
 
@@ -452,7 +453,6 @@ export function createEngine(state, playback) {
             }
           }
           break;
-        }
 
         case 'twoBeat': {
           state.currentPhase = step.station;
@@ -463,8 +463,10 @@ export function createEngine(state, playback) {
             color: ARTIFACT_COLORS.code,
           };
 
-          state.stationInputs[step.station].push({ label: 'reqs', color: ARTIFACT_COLORS.reqs });
-          state.stationInputs[step.station].push({ label: dispatch.label, color: dispatch.color });
+          state.stationInputs[step.station].push(
+            { label: 'reqs', color: ARTIFACT_COLORS.reqs },
+            { label: dispatch.label, color: dispatch.color },
+          );
           await twoBeat(step.station, step.agent, dispatch, step.produce);
           if (step.verdict !== undefined) {
             setVerdict(step.agent, step.verdict, step.verdictDismissed);
