@@ -96,6 +96,18 @@ vi.mock('../../actors/index.js', () => ({
 }));
 
 const { CatwalkScene } = await import('../CatwalkScene.js');
+const { OrchestratorActor, ChuteActor } = await import('../../actors/index.js');
+
+/** Type guard for objects that have a `config` property (all mock actors do). */
+function hasConfig(value: unknown): value is { config: unknown } {
+  return typeof value === 'object' && value !== null && 'config' in value;
+}
+
+/** Type guard for dimmed config shape used by ChuteActor. */
+function isDimmedConfig(value: unknown): value is { dimmed: boolean } {
+  if (typeof value !== 'object' || value === null || !('dimmed' in value)) return false;
+  return typeof value.dimmed === 'boolean';
+}
 
 describe('CatwalkScene', () => {
   it('sets the background color to #111111', () => {
@@ -111,8 +123,8 @@ describe('CatwalkScene', () => {
 
     scene.onInitialize();
 
-    // Scene should have entities added (rail, ground line, stations, agents, etc.)
-    expect(scene.entities.length).toBeGreaterThan(0);
+    // 1 rail + 1 ground + 7 stations + 6 chutes + 6 agents + 1 orchestrator + 6 gates = 28
+    expect(scene.entities.length).toBe(28);
   });
 
   it('clears and rebuilds on updateStatus', () => {
@@ -122,13 +134,11 @@ describe('CatwalkScene', () => {
 
     const initialCount = scene.entities.length;
 
-    const updatedStatus = createMockRunStatus({ runId: 'new-run', status: 'completed' });
-    scene.updateStatus(updatedStatus);
+    // Rebuild with same fixture shape so entity count is deterministic
+    scene.updateStatus(status);
 
-    // After update, should have entities again (rebuilt)
-    expect(scene.entities.length).toBeGreaterThan(0);
-    // Entity count may differ based on status, but scene is populated
-    expect(scene.entities.length).toBeGreaterThanOrEqual(initialCount - 2);
+    // After clearing and rebuilding with the same status, entity count must match exactly
+    expect(scene.entities.length).toBe(initialCount);
   });
 
   it('fits camera to content bounds', () => {
@@ -136,10 +146,43 @@ describe('CatwalkScene', () => {
     const scene = new CatwalkScene(status);
     scene.onInitialize();
 
-    // Camera should be positioned at the center of the content
-    expect(scene.camera.pos.x).toBeGreaterThan(0);
-    expect(scene.camera.pos.y).toBeGreaterThan(0);
+    // Camera should be centered on the layout content (not at the default 0,0)
+    expect(scene.camera.pos.x).toBeGreaterThan(100);
+    expect(scene.camera.pos.y).toBeGreaterThan(100);
+    // Zoom must be capped at 1 (content fits without magnification)
     expect(scene.camera.zoom).toBeGreaterThan(0);
     expect(scene.camera.zoom).toBeLessThanOrEqual(1);
+  });
+
+  it('does not add an orchestrator when stationIndex is negative', () => {
+    // A failed run with no current phase yields stationIndex = -1
+    const status = createMockRunStatus({ status: 'failed' });
+    const scene = new CatwalkScene(status);
+    scene.onInitialize();
+
+    const hasOrchestrator = scene.entities.some((e) => e instanceof OrchestratorActor);
+
+    expect(hasOrchestrator).toBe(false);
+  });
+
+  it('passes dimmed=true to chutes at absent stations', () => {
+    const status = createMockRunStatus({
+      status: 'in_progress',
+      phaseDecisions: {
+        architecture: { run: false, reason: 'skipped' },
+      },
+    });
+    const scene = new CatwalkScene(status);
+    scene.onInitialize();
+
+    const chutes = scene.entities.filter((e): e is InstanceType<typeof ChuteActor> => e instanceof ChuteActor);
+
+    // The architecture station (index 0) has one agent whose chute should be dimmed
+    const dimmedChutes = chutes.filter((c) => hasConfig(c) && isDimmedConfig(c.config) && c.config.dimmed);
+    expect(dimmedChutes.length).toBeGreaterThan(0);
+
+    // Non-absent stations should have dimmed=false
+    const nonDimmedChutes = chutes.filter((c) => hasConfig(c) && isDimmedConfig(c.config) && !c.config.dimmed);
+    expect(nonDimmedChutes.length).toBeGreaterThan(0);
   });
 });

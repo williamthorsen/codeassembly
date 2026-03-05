@@ -10,7 +10,7 @@ import {
   OrchestratorActor,
   StationAgentActor,
 } from '../actors/index.js';
-import { ART_H, GROUND_Y } from '../constants/dimensions.js';
+import { ART_H, ENGINE_HEIGHT, ENGINE_WIDTH, GROUND_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
 import type { CatwalkSceneConfig } from '../types.js';
@@ -24,9 +24,6 @@ const GROUND_LINE_COLOR = '#444444';
 
 const ARTIFACT_Y_OFFSET = 20;
 const ARTIFACT_Y_SPACING = 4;
-
-const ENGINE_WIDTH = 1200;
-const ENGINE_HEIGHT = 600;
 
 export class CatwalkScene extends Scene {
   private status: CanonicalRunStatus;
@@ -111,8 +108,10 @@ export class CatwalkScene extends Scene {
   }
 
   private addChutes(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
+    const agentCountByStation = buildAgentCountByStation(config);
+
     for (const agent of config.agents) {
-      const agentCountAtStation = config.agents.filter((a) => a.stationIndex === agent.stationIndex).length;
+      const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
       const endpoints = layout.chuteEndpoints(agent.stationIndex, agent.slotIndex, agentCountAtStation);
       const station = config.stations[agent.stationIndex];
       const dimmed = station?.absent === true;
@@ -121,8 +120,10 @@ export class CatwalkScene extends Scene {
   }
 
   private addAgents(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
+    const agentCountByStation = buildAgentCountByStation(config);
+
     for (const agent of config.agents) {
-      const agentCountAtStation = config.agents.filter((a) => a.stationIndex === agent.stationIndex).length;
+      const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
       const pos = layout.agentPosition(agent.stationIndex, agent.slotIndex, agentCountAtStation);
       const stationAgentActor = new StationAgentActor(
         { id: agent.id, role: agent.role, color: ROLE_TYPE_COLORS[agent.roleType], state: agent.state },
@@ -184,6 +185,15 @@ export class CatwalkScene extends Scene {
     this.camera.zoom = Math.min(zoomX, zoomY, 1);
     this.camera.pos = vec((minX + maxX) / 2, (minY + maxY) / 2);
   }
+}
+
+/** Build a lookup map of station index to agent count for O(1) per-agent lookups. */
+function buildAgentCountByStation(config: CatwalkSceneConfig): Map<number, number> {
+  const counts = new Map<number, number>();
+  for (const agent of config.agents) {
+    counts.set(agent.stationIndex, (counts.get(agent.stationIndex) ?? 0) + 1);
+  }
+  return counts;
 }
 
 /** Build station layout entries from the scene config, computing agent counts per station. */
