@@ -1,15 +1,4 @@
-import {
-  Actor,
-  BaseAlign,
-  Color,
-  Font,
-  GraphicsGroup,
-  Rectangle,
-  Text,
-  TextAlign,
-  vec,
-  type Vector,
-} from 'excalibur';
+import { Actor, BaseAlign, Color, Font, GraphicsGroup, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
 import { ART_H, ART_W } from '../constants/dimensions.js';
 
@@ -51,7 +40,13 @@ export class ArtifactActor extends Actor {
     this.graphics.use(group);
   }
 
+  /**
+   * No-op for M1. Artifact appearance is fixed at construction.
+   *
+   * When reactive updates are wired up, this method should reconstruct the
+   * graphics so label and color changes take effect.
+   */
   updateConfig(_config: ArtifactActorConfig): void {
-    // Artifact appearance is fixed at construction; nothing to update.
+    // Intentionally empty.
   }
 }
