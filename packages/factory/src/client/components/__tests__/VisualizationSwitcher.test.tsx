@@ -171,6 +171,21 @@ describe('VisualizationSwitcher', () => {
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=catwalk');
   });
 
+  it('switches back to factory view when "Factory" button is clicked from catwalk view', () => {
+    const status = createMockRunStatus();
+    const { container } = render(<VisualizationSwitcher status={status} />);
+
+    // Switch to catwalk first
+    fireEvent.click(screen.getByRole('button', { name: 'Catwalk' }));
+    expect(container.querySelector<HTMLDivElement>('.canvas-container')?.dataset.view).toBe('catwalk');
+
+    // Switch back to factory
+    fireEvent.click(screen.getByRole('button', { name: 'Factory' }));
+    expect(container.querySelector<HTMLDivElement>('.canvas-container')?.dataset.view).toBe('factory');
+    expect(screen.getByTestId('game-canvas')).toBeInTheDocument();
+    expect(screen.queryByTestId('catwalk-canvas')).toBeNull();
+  });
+
   it('marks the "Catwalk" button with the "active" class when active', () => {
     const status = createMockRunStatus();
     render(<VisualizationSwitcher status={status} />);

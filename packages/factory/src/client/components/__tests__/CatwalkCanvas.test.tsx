@@ -1,21 +1,17 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  mockEngineConstructor,
-  mockEngineStart,
-  mockEngineStop,
-  mockEngineAddScene,
-  mockEngineGoToScene,
-} = vi.hoisted(() => {
-  return {
-    mockEngineConstructor: vi.fn(),
-    mockEngineStart: vi.fn(),
-    mockEngineStop: vi.fn(),
-    mockEngineAddScene: vi.fn(),
-    mockEngineGoToScene: vi.fn(),
-  };
-});
+const { mockEngineConstructor, mockEngineStart, mockEngineStop, mockEngineAddScene, mockEngineGoToScene } = vi.hoisted(
+  () => {
+    return {
+      mockEngineConstructor: vi.fn(),
+      mockEngineStart: vi.fn(),
+      mockEngineStop: vi.fn(),
+      mockEngineAddScene: vi.fn(),
+      mockEngineGoToScene: vi.fn(),
+    };
+  },
+);
 
 vi.mock('excalibur', () => {
   class MockEngine {
@@ -81,6 +77,7 @@ describe('CatwalkCanvas', () => {
     expect(mockEngineConstructor).toHaveBeenCalledTimes(1);
     expect(mockEngineConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
+        canvasElement: expect.any(HTMLCanvasElement),
         width: 1200,
         height: 600,
         displayMode: 'FitContainer',

@@ -20,7 +20,9 @@ export function CatwalkCanvas(): React.JSX.Element {
 
     const scene = new CatwalkScene();
     engine.addScene('catwalk', scene);
-    void engine.goToScene('catwalk');
+    void engine.goToScene('catwalk').catch((error: unknown) => {
+      console.error('Failed to navigate to catwalk scene:', error);
+    });
 
     void engine.start().catch((error: unknown) => {
       console.error('Failed to start Excalibur engine:', error);
