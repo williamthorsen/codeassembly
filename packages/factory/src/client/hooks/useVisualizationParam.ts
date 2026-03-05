@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-export type ActiveView = 'factory' | 'flow';
+export type ActiveView = 'factory' | 'flow' | 'catwalk';
 
 const PARAM_KEY = 'visualization';
 const DEFAULT_VALUE: ActiveView = 'factory';
@@ -22,7 +22,7 @@ export function useVisualizationParam(): [ActiveView, (view: ActiveView) => void
     const params = new URLSearchParams(globalThis.location.search);
     const raw = params.get(PARAM_KEY);
 
-    if (raw === 'factory' || raw === 'flow') {
+    if (raw === 'factory' || raw === 'flow' || raw === 'catwalk') {
       return raw;
     }
 

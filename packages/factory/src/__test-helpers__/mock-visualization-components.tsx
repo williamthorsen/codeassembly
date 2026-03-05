@@ -13,3 +13,7 @@ export function MockGameCanvas({ status }: VisualizationProps): React.JSX.Elemen
 export function MockFlowDiagram({ status }: VisualizationProps): React.JSX.Element {
   return <div data-testid="flow-diagram" data-run-id={status.runId} />;
 }
+
+export function MockCatwalkCanvas(): React.JSX.Element {
+  return <div data-testid="catwalk-canvas" />;
+}
