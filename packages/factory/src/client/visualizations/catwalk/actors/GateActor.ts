@@ -20,12 +20,11 @@ export class GateActor extends Actor {
     });
 
     this.graphics.use(rect);
-    this.graphics.opacity = config.open ? 0 : 0.85;
+    this.graphics.opacity = 0.85;
     this.graphics.isVisible = !config.open;
   }
 
   updateConfig(config: GateActorConfig): void {
-    this.graphics.opacity = config.open ? 0 : 0.85;
     this.graphics.isVisible = !config.open;
   }
 }

@@ -140,10 +140,7 @@ describe('StationAgentActor', () => {
   });
 
   it('sets opacity to 1.0 for celebrating state', () => {
-    const actor = new StationAgentActor(
-      { id: 'a', role: 'arch', color: '#5555FF', state: 'celebrating' },
-      vec(0, 0),
-    );
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'celebrating' }, vec(0, 0));
 
     expect(actor.graphics.opacity).toBe(1);
   });
@@ -252,24 +249,21 @@ describe('GateActor', () => {
     expect(actor.graphics.isVisible).toBe(true);
   });
 
-  it('sets opacity to 0 and isVisible to false when open is true', () => {
+  it('sets isVisible to false when open is true', () => {
     const actor = new GateActor({ open: true }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0);
+    expect(actor.graphics.opacity).toBe(0.85);
     expect(actor.graphics.isVisible).toBe(false);
   });
 
-  it('updateConfig toggles opacity and isVisible', () => {
+  it('updateConfig toggles isVisible', () => {
     const actor = new GateActor({ open: false }, vec(0, 0));
-    expect(actor.graphics.opacity).toBe(0.85);
     expect(actor.graphics.isVisible).toBe(true);
 
     actor.updateConfig({ open: true });
-    expect(actor.graphics.opacity).toBe(0);
     expect(actor.graphics.isVisible).toBe(false);
 
     actor.updateConfig({ open: false });
-    expect(actor.graphics.opacity).toBe(0.85);
     expect(actor.graphics.isVisible).toBe(true);
   });
 });

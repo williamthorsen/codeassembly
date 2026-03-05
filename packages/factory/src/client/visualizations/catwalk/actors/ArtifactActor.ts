@@ -52,6 +52,6 @@ export class ArtifactActor extends Actor {
   }
 
   updateConfig(_config: ArtifactActorConfig): void {
-    // No-op for M1
+    // Artifact appearance is fixed at construction; nothing to update.
   }
 }
