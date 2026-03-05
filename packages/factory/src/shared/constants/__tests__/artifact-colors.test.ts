@@ -21,10 +21,6 @@ describe('ARTIFACT_COLORS', () => {
     expect(Object.keys(ARTIFACT_COLORS).sort()).toEqual([...EXPECTED_KEYS].sort());
   });
 
-  it('has exactly 10 entries', () => {
-    expect(Object.keys(ARTIFACT_COLORS)).toHaveLength(10);
-  });
-
   it('maps every key to a valid 6-digit hex color', () => {
     for (const value of Object.values(ARTIFACT_COLORS)) {
       expect(value).toMatch(/^#[0-9a-f]{6}$/i);

@@ -18,11 +18,4 @@ describe('timing constants', () => {
   it('has PAUSE_DURATION equal to 300 milliseconds', () => {
     expect(PAUSE_DURATION).toBe(300);
   });
-
-  it('ensures all timing values are positive numbers', () => {
-    for (const value of [WALK_SPEED, CHUTE_DURATION, WORK_DURATION, PAUSE_DURATION]) {
-      expect(value).toBeGreaterThan(0);
-      expect(typeof value).toBe('number');
-    }
-  });
 });

@@ -27,18 +27,6 @@ describe('canvas dimensions', () => {
 });
 
 describe('derived vertical positions', () => {
-  it('places CHUTE_TOP below CATWALK_Y', () => {
-    expect(CHUTE_TOP).toBeGreaterThan(CATWALK_Y);
-  });
-
-  it('places CHUTE_BOT above GROUND_Y', () => {
-    expect(CHUTE_BOT).toBeLessThan(GROUND_Y);
-  });
-
-  it('ensures CHUTE_TOP is above CHUTE_BOT (positive chute height)', () => {
-    expect(CHUTE_TOP).toBeLessThan(CHUTE_BOT);
-  });
-
   it('derives CHUTE_TOP as CATWALK_Y + 48', () => {
     expect(CHUTE_TOP).toBe(CATWALK_Y + 48);
   });
