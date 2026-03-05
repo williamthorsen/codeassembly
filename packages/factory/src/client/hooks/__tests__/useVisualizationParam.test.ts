@@ -39,6 +39,14 @@ describe('useVisualizationParam', () => {
     expect(result.current[0]).toBe('flow');
   });
 
+  it('returns "catwalk" when URL has visualization=catwalk', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=catwalk');
+
+    const { result } = renderHook(() => useVisualizationParam());
+
+    expect(result.current[0]).toBe('catwalk');
+  });
+
   it('strips invalid value from URL on mount and returns "factory"', () => {
     globalThis.history.replaceState(null, '', '/?visualization=unknown');
     replaceStateSpy.mockClear();
@@ -65,6 +73,14 @@ describe('useVisualizationParam', () => {
     result.current[1]('flow');
 
     expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=flow');
+  });
+
+  it('setActiveView("catwalk") updates URL to include visualization=catwalk', () => {
+    const { result } = renderHook(() => useVisualizationParam());
+
+    result.current[1]('catwalk');
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=catwalk');
   });
 
   it('setActiveView("factory") removes the visualization param from URL', () => {

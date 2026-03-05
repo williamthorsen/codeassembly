@@ -13,6 +13,11 @@ vi.mock('../FlowDiagram/FlowDiagram.js', async () => {
   return { FlowDiagram: MockFlowDiagram };
 });
 
+vi.mock('../CatwalkCanvas.js', async () => {
+  const { MockCatwalkCanvas } = await import('../../../__test-helpers__/mock-visualization-components.js');
+  return { CatwalkCanvas: MockCatwalkCanvas };
+});
+
 const { VisualizationSwitcher } = await import('../VisualizationSwitcher.js');
 
 describe('VisualizationSwitcher', () => {
@@ -129,5 +134,54 @@ describe('VisualizationSwitcher', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Flow' }));
 
     expect(screen.getByTestId('flow-diagram').dataset.runId).toBe('forwarding-test-flow');
+  });
+
+  it('switches to catwalk view when "Catwalk" button is clicked', () => {
+    const status = createMockRunStatus();
+    const { container } = render(<VisualizationSwitcher status={status} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Catwalk' }));
+
+    const canvasContainer = container.querySelector<HTMLDivElement>('.canvas-container');
+    expect(canvasContainer?.dataset.view).toBe('catwalk');
+    expect(screen.getByTestId('catwalk-canvas')).toBeInTheDocument();
+    expect(screen.queryByTestId('game-canvas')).toBeNull();
+    expect(screen.queryByTestId('flow-diagram')).toBeNull();
+  });
+
+  it('renders in catwalk view when URL has visualization=catwalk', () => {
+    globalThis.history.replaceState(null, '', '/?visualization=catwalk');
+
+    const status = createMockRunStatus();
+    const { container } = render(<VisualizationSwitcher status={status} />);
+
+    const canvasContainer = container.querySelector<HTMLDivElement>('.canvas-container');
+    expect(canvasContainer?.dataset.view).toBe('catwalk');
+    expect(screen.getByTestId('catwalk-canvas')).toBeInTheDocument();
+    expect(screen.queryByTestId('game-canvas')).toBeNull();
+  });
+
+  it('updates URL param when "Catwalk" button is clicked', () => {
+    const status = createMockRunStatus();
+    render(<VisualizationSwitcher status={status} />);
+    replaceStateSpy.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Catwalk' }));
+
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/?visualization=catwalk');
+  });
+
+  it('marks the "Catwalk" button with the "active" class when active', () => {
+    const status = createMockRunStatus();
+    render(<VisualizationSwitcher status={status} />);
+
+    const catwalkButton = screen.getByRole('button', { name: 'Catwalk' });
+    expect(catwalkButton.className).not.toContain('active');
+
+    fireEvent.click(catwalkButton);
+    expect(catwalkButton.className).toContain('active');
+
+    const factoryButton = screen.getByRole('button', { name: 'Factory' });
+    expect(factoryButton.className).not.toContain('active');
   });
 });
