@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { foldEvents } from '../event-folder.js';
+import { RunDataParseError } from '../run-data-parse-error.js';
 import { v2RunIndexSchema } from '../schemas/run-index-schema.js';
 import { parseRunLogLine, v3RunIndexSchema } from '../schemas/run-log-schema.js';
 import { v1StatusSchema } from '../schemas/status-json-schema.js';
@@ -34,7 +35,8 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
   try {
     raw = JSON.parse(indexContent);
   } catch (error) {
-    throw new Error(`Failed to parse JSON at ${indexPath}: ${String(error)}`);
+    const message = `Failed to parse JSON at ${indexPath}: ${String(error)}`;
+    throw new RunDataParseError(message, 'corrupt_json', indexPath);
   }
 
   // Try v3 first
@@ -48,7 +50,8 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
       if (!isEnoent(error)) {
         throw error;
       }
-      throw new Error(`v3 run-index.json found at ${indexPath} but run-log.jsonl is missing`);
+      const message = `v3 run-index.json found at ${indexPath} but run-log.jsonl is missing`;
+      throw new RunDataParseError(message, 'missing_companion', indexPath);
     }
 
     const v3Data = v3Result.data;
@@ -101,13 +104,11 @@ export async function parseStatusFile(filePath: string): Promise<CanonicalRunSta
   try {
     raw = JSON.parse(content);
   } catch (error) {
-    throw new Error(`Failed to parse JSON at ${filePath}: ${String(error)}`);
+    const message = `Failed to parse JSON at ${filePath}: ${String(error)}`;
+    throw new RunDataParseError(message, 'corrupt_json', filePath);
   }
 
-  if (!isValidStatusObject(raw)) {
-    throw new Error(`Invalid status.json at ${filePath}`);
-  }
-
+  assertValidStatusObject(raw, filePath);
   return normalizeV1(raw);
 }
 
@@ -179,10 +180,7 @@ interface V2Config {
 }
 
 function parseRunIndexFromRaw(raw: unknown, filePath: string): CanonicalRunStatus {
-  if (!isValidRunIndex(raw)) {
-    throw new Error(`Invalid run-index.json at ${filePath}`);
-  }
-
+  assertValidRunIndex(raw, filePath);
   return normalizeV2(raw);
 }
 
@@ -213,12 +211,28 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
   };
 }
 
-// -- validation via Zod schemas ----------------------------------------------
+// -- validation via Zod schemas with issue capture ---------------------------
 
-function isValidRunIndex(raw: unknown): raw is V2RunIndex {
-  return v2RunIndexSchema.safeParse(raw).success;
+/**
+ * Asserts that `raw` matches the v2 run-index schema.
+ * Throws `RunDataParseError` with Zod issues on failure.
+ */
+function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2RunIndex {
+  const result = v2RunIndexSchema.safeParse(raw);
+  if (!result.success) {
+    const message = `Invalid run-index.json at ${filePath}`;
+    throw new RunDataParseError(message, 'invalid_schema', filePath, result.error.issues);
+  }
 }
 
-function isValidStatusObject(raw: unknown): raw is V1StatusObject {
-  return v1StatusSchema.safeParse(raw).success;
+/**
+ * Asserts that `raw` matches the v1 status schema.
+ * Throws `RunDataParseError` with Zod issues on failure.
+ */
+function assertValidStatusObject(raw: unknown, filePath: string): asserts raw is V1StatusObject {
+  const result = v1StatusSchema.safeParse(raw);
+  if (!result.success) {
+    const message = `Invalid status.json at ${filePath}`;
+    throw new RunDataParseError(message, 'invalid_schema', filePath, result.error.issues);
+  }
 }

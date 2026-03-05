@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { RunDataParseError } from '../../run-data-parse-error.js';
 import { parseRunData, parseStatusFile } from '../run-data-parser.js';
 
 const { mockedReadFile } = vi.hoisted(() => ({
@@ -596,6 +597,34 @@ describe('parseStatusFile', () => {
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
   });
+
+  describe('RunDataParseError metadata', () => {
+    it('throws RunDataParseError with corrupt_json category for invalid JSON', async () => {
+      mockedReadFile.mockResolvedValue('not json');
+
+      const error = await parseStatusFile('/path/to/status.json').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      expect(error).toBeInstanceOf(Error);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('corrupt_json');
+      expect(error.filePath).toBe('/path/to/status.json');
+      expect(error.zodIssues).toBeUndefined();
+    });
+
+    it('throws RunDataParseError with invalid_schema category and zodIssues for schema failures', async () => {
+      mockedReadFile.mockResolvedValue('{}');
+
+      const error = await parseStatusFile('/path/to/status.json').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('invalid_schema');
+      expect(error.filePath).toBe('/path/to/status.json');
+      expect(error.zodIssues).toBeDefined();
+      expect(error.zodIssues?.length).toBeGreaterThan(0);
+    });
+  });
 });
 
 describe('parseRunData', () => {
@@ -1114,6 +1143,92 @@ describe('parseRunData', () => {
       await expect(parseRunData('/runs/test-run')).rejects.toThrow(
         /Failed to parse JSON at \/runs\/test-run\/run-index\.json/,
       );
+    });
+  });
+
+  describe('RunDataParseError metadata', () => {
+    it('throws RunDataParseError with corrupt_json for invalid run-index.json JSON', async () => {
+      mockFileContents({
+        '/runs/test-run/run-index.json': '{ not valid json !!!',
+      });
+
+      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('corrupt_json');
+      expect(error.filePath).toBe('/runs/test-run/run-index.json');
+    });
+
+    it('throws RunDataParseError with invalid_schema for invalid v2 run-index.json', async () => {
+      const invalid = { ...minimalV2(), version: 1 };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(invalid),
+      });
+
+      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('invalid_schema');
+      expect(error.filePath).toBe('/runs/test-run/run-index.json');
+      expect(error.zodIssues).toBeDefined();
+      expect(error.zodIssues?.length).toBeGreaterThan(0);
+    });
+
+    it('throws RunDataParseError with missing_companion when v3 run-log.jsonl is absent', async () => {
+      const v3Header = {
+        version: 3,
+        context: {
+          runId: 'v3-test-run',
+          projectSlug: 'test',
+          projectRoot: '/test',
+          branch: 'main',
+          task: 'test task',
+          startedAt: '2026-01-01T00:00:00Z',
+        },
+        config: {
+          mode: 'orchestrated',
+          model: 'claude-opus-4-6',
+        },
+      };
+      mockFileContents({
+        '/runs/test-run/run-index.json': JSON.stringify(v3Header),
+      });
+
+      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('missing_companion');
+      expect(error.filePath).toBe('/runs/test-run/run-index.json');
+    });
+
+    it('throws RunDataParseError with corrupt_json for invalid status.json JSON (v1 fallback)', async () => {
+      mockFileContents({
+        '/runs/test-run/status.json': 'not json at all',
+      });
+
+      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('corrupt_json');
+      expect(error.filePath).toBe('/runs/test-run/status.json');
+    });
+
+    it('throws RunDataParseError with invalid_schema for invalid status.json schema (v1 fallback)', async () => {
+      mockFileContents({
+        '/runs/test-run/status.json': JSON.stringify({ runId: 'only-one-field' }),
+      });
+
+      const error = await parseRunData('/runs/test-run').catch((error_: unknown) => error_);
+
+      expect(error).toBeInstanceOf(RunDataParseError);
+      if (!(error instanceof RunDataParseError)) return;
+      expect(error.category).toBe('invalid_schema');
+      expect(error.filePath).toBe('/runs/test-run/status.json');
+      expect(error.zodIssues).toBeDefined();
     });
   });
 });

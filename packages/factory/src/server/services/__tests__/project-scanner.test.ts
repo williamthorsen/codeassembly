@@ -1,6 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+import { RunDataParseError } from '@codeassembly/run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
@@ -212,8 +213,8 @@ describe('ProjectScanner', () => {
   });
 
   // Error recovery: skip-and-continue — invalid runs are skipped, valid siblings still collected
-  it('skips runs with invalid status.json and continues scanning other runs', async () => {
-    using _silent = silencedConsole();
+  it('logs warning and skips RunDataParseError runs while continuing to scan siblings', async () => {
+    using silent = silencedConsole();
     const scanner = new ProjectScanner('/test/projects');
 
     mockReaddirResult(['proj']);
@@ -225,7 +226,9 @@ describe('ProjectScanner', () => {
     mockStatDirectory(); // stat for bad-run directory
     mockStatDirectory(); // stat for good-run directory
 
-    mockedParseRunData.mockRejectedValueOnce(new Error('Invalid JSON'));
+    mockedParseRunData.mockRejectedValueOnce(
+      new RunDataParseError('Invalid run-index.json at /test/path', 'invalid_schema', '/test/path'),
+    );
     mockedParseRunData.mockResolvedValueOnce(
       createMockStatus({
         runId: 'good-run',
@@ -239,6 +242,48 @@ describe('ProjectScanner', () => {
     const runs = result.projects[0]?.tickets[0]?.runs;
     expect(runs).toHaveLength(1);
     expect(runs?.[0]?.runId).toBe('good-run');
+
+    expect(silent.warn).toHaveBeenCalledOnce();
+    expect(silent.warn).toHaveBeenCalledWith(
+      expect.stringContaining('[project-scanner] Skipping proj/TICKET-1/bad-run:'),
+    );
+    expect(silent.error).not.toHaveBeenCalled();
+  });
+
+  it('logs error for non-RunDataParseError exceptions during run parsing', async () => {
+    using silent = silencedConsole();
+    const scanner = new ProjectScanner('/test/projects');
+
+    mockReaddirResult(['proj']);
+    mockStatDirectory();
+    mockReaddirResult(['tickets']);
+    mockReaddirResult(['TICKET-1']);
+    mockStatDirectory(); // stat for TICKET-1 directory
+    mockReaddirResult(['bad-run', 'good-run']);
+    mockStatDirectory(); // stat for bad-run directory
+    mockStatDirectory(); // stat for good-run directory
+
+    mockedParseRunData.mockRejectedValueOnce(new Error('Permission denied'));
+    mockedParseRunData.mockResolvedValueOnce(
+      createMockStatus({
+        runId: 'good-run',
+        startedAt: '2026-03-01T00:00:00Z',
+      }),
+    );
+
+    const result = await scanner.scan();
+
+    expect(result.projects).toHaveLength(1);
+    const runs = result.projects[0]?.tickets[0]?.runs;
+    expect(runs).toHaveLength(1);
+    expect(runs?.[0]?.runId).toBe('good-run');
+
+    expect(silent.error).toHaveBeenCalledOnce();
+    expect(silent.error).toHaveBeenCalledWith(
+      expect.stringContaining('Error parsing run data for proj/TICKET-1/bad-run:'),
+      expect.any(Error),
+    );
+    expect(silent.warn).not.toHaveBeenCalled();
   });
 
   it('does not scan direct entries when tickets/ directory exists', async () => {
