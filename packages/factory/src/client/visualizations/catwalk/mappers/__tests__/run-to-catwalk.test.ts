@@ -68,8 +68,9 @@ describe('mapRunToCatwalk', () => {
         expect(reviewer.state).toBe('working');
       }
 
-      // Orchestrator at station 3 (review)
+      // Orchestrator at station 3 (review), not working (review data is present)
       expect(config.orchestrator.stationIndex).toBe(3);
+      expect(config.orchestrator.working).toBe(false);
 
       // Gates 0, 1, 2 should be open (architecture, planning, implementation evaluated)
       expect(config.gates[0]?.open).toBe(true);
@@ -257,6 +258,32 @@ describe('mapRunToCatwalk', () => {
       expect(reviewerAgents).toHaveLength(2);
       expect(reviewerAgents[0]?.role).toBe('alpha-reviewer');
       expect(reviewerAgents[1]?.role).toBe('beta-reviewer');
+    });
+
+    it('extracts reviewer names from Shape 2 string-array reviewers (iterations[].reviewers)', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: undefined,
+            reviewRoundsUsed: 1,
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+            iterations: [{ reviewers: ['name-a', 'name-b'] }],
+          },
+        },
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      const reviewerAgents = config.agents.filter((a) => a.id.startsWith('reviewer-'));
+      expect(reviewerAgents).toHaveLength(2);
+      expect(reviewerAgents[0]?.role).toBe('name-a');
+      expect(reviewerAgents[1]?.role).toBe('name-b');
     });
 
     it('extracts reviewer names from Shape 3 (top-level reviewerDetails)', () => {
