@@ -172,6 +172,7 @@ export function computeCatwalkLayout(config: CatwalkLayoutConfig): CatwalkLayout
     }
     // Map visible positions back to original indices
     for (const [k, originalIndex] of visibleIndices.entries()) {
+      // Safe: k is the enumeration index from visibleIndices.entries(), so k < positions.length
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       stationPositions[originalIndex] = positions[k]!;
     }
