@@ -6,7 +6,7 @@ import {
   createMockRunStatus,
   emptyPhases,
 } from '../../../../../__test-helpers__/fixtures.js';
-import { PALETTE } from '../../../../../shared/constants/palette.js';
+import { ARTIFACT_COLORS } from '../../../../../shared/constants/artifact-colors.js';
 import { mapRunToCatwalk } from '../run-to-catwalk.js';
 
 describe('mapRunToCatwalk', () => {
@@ -385,19 +385,19 @@ describe('mapRunToCatwalk', () => {
       // Architecture artifact at station 0
       expect(config.artifacts[0]?.stationIndex).toBe(0);
       expect(config.artifacts[0]?.label).toBe('architecture');
-      expect(config.artifacts[0]?.color).toBe(PALETTE.blue);
+      expect(config.artifacts[0]?.color).toBe(ARTIFACT_COLORS.arch);
       expect(config.artifacts[0]?.slot).toBe('output');
 
       // Planning artifact at station 1
       expect(config.artifacts[1]?.stationIndex).toBe(1);
       expect(config.artifacts[1]?.label).toBe('plan');
-      expect(config.artifacts[1]?.color).toBe(PALETTE.green);
+      expect(config.artifacts[1]?.color).toBe(ARTIFACT_COLORS.plan);
       expect(config.artifacts[1]?.slot).toBe('output');
 
       // Code artifact at station 2 with version from iteration
       expect(config.artifacts[2]?.stationIndex).toBe(2);
       expect(config.artifacts[2]?.label).toBe('code');
-      expect(config.artifacts[2]?.color).toBe(PALETTE.yellow);
+      expect(config.artifacts[2]?.color).toBe(ARTIFACT_COLORS.code);
       expect(config.artifacts[2]?.slot).toBe('output');
       expect(config.artifacts[2]?.version).toBe(2);
     });
@@ -422,7 +422,7 @@ describe('mapRunToCatwalk', () => {
       const config = mapRunToCatwalk(status);
 
       expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]?.color).toBe(PALETTE.cyan);
+      expect(config.artifacts[0]?.color).toBe(ARTIFACT_COLORS.code);
     });
 
     it('skips artifacts with unknown phase', () => {

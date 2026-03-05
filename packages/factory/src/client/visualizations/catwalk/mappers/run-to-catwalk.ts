@@ -1,4 +1,4 @@
-import { PALETTE } from '../../../../shared/constants/palette.js';
+import { ARTIFACT_COLORS } from '../../../../shared/constants/artifact-colors.js';
 import type { PhaseName } from '../../../../shared/constants/role-types.js';
 import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import {
@@ -19,20 +19,20 @@ import type {
   StationConfig,
 } from '../types.js';
 
-/**
- * Artifact type to color mapping. Intentionally duplicated from
- * `ArtifactActor.ts` so that the catwalk mapper has no dependency
- * on the Excalibur game layer. When issue #177 lands with shared
- * constants, replace with the shared import.
- */
-const ARTIFACT_COLORS: Record<string, string> = {
-  architecture: PALETTE.blue,
-  plan: PALETTE.green,
-  code: PALETTE.yellow,
-  review: PALETTE.red,
-  simplifier: PALETTE.darkMagenta,
-  holistic: PALETTE.darkCyan,
+/** Maps run-index artifact type names to shared ARTIFACT_COLORS keys. */
+const ARTIFACT_TYPE_COLOR_KEY: Record<string, keyof typeof ARTIFACT_COLORS> = {
+  architecture: 'arch',
+  plan: 'plan',
+  code: 'code',
+  review: 'review',
+  simplifier: 'clean',
+  holistic: 'holi',
 };
+
+function lookupArtifactColor(type: string): string {
+  const key = ARTIFACT_TYPE_COLOR_KEY[type];
+  return key === undefined ? ARTIFACT_COLORS.code : ARTIFACT_COLORS[key];
+}
 
 /**
  * Map from phase names (both visualization-layer PHASE_NAMES aliases and
@@ -333,7 +333,7 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
     artifacts.push({
       stationIndex,
       label: entry.type,
-      color: ARTIFACT_COLORS[entry.type] ?? PALETTE.cyan,
+      color: lookupArtifactColor(entry.type),
       slot: 'output',
       ...(entry.iteration === undefined ? {} : { version: entry.iteration }),
     });
