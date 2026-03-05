@@ -154,6 +154,12 @@ describe('StationAgentActor', () => {
     expect(actor.graphics.opacity).toBe(1);
   });
 
+  it('sets opacity to 1.0 for walking state', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'walking' }, vec(0, 0));
+
+    expect(actor.graphics.opacity).toBe(1);
+  });
+
   it('updateConfig toggles opacity by state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
     expect(actor.graphics.opacity).toBe(0.3);
@@ -204,10 +210,21 @@ describe('ArtifactActor', () => {
     expect(() => new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0))).not.toThrow();
   });
 
-  it('calls graphics.use()', () => {
+  it('calls graphics.use() with a GraphicsGroup containing members', () => {
     new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0));
 
     expect(mockGraphicsUse).toHaveBeenCalledTimes(1);
+    expect(mockGraphicsUse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({ members: expect.arrayContaining([]) }),
+      }),
+    );
+  });
+
+  it('updateConfig can be called without error', () => {
+    const actor = new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0));
+
+    expect(() => actor.updateConfig({ label: 'updated', color: '#FF0000' })).not.toThrow();
   });
 });
 
@@ -248,6 +265,7 @@ describe('GateActor', () => {
 describe('ChuteActor', () => {
   beforeEach(() => {
     mockGraphicsUse.mockClear();
+    mockActorConstructor.mockClear();
   });
 
   it('sets opacity to 0.5 when dimmed is false', () => {
@@ -271,5 +289,13 @@ describe('ChuteActor', () => {
 
     actor.updateConfig({ dimmed: false });
     expect(actor.graphics.opacity).toBe(0.5);
+  });
+
+  it('computes position as midpoint between top and bottom endpoints', () => {
+    new ChuteActor({ dimmed: false }, { topX: 100, topY: 148, botX: 100, botY: 320 });
+
+    expect(mockActorConstructor).toHaveBeenCalledWith({
+      pos: { x: 100, y: 234 },
+    });
   });
 });
