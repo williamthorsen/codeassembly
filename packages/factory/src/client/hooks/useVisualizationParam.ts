@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 export type ActiveView = 'factory' | 'flow' | 'catwalk';
 
 const PARAM_KEY = 'visualization';
-const DEFAULT_VALUE: ActiveView = 'factory';
+const DEFAULT_VALUE: ActiveView = 'catwalk';
 
 // Replace the current history entry, ignoring failures in restricted environments
 // such as sandboxed iframes.

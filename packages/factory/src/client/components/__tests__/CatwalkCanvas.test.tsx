@@ -1,6 +1,8 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createMockRunStatus } from '../../../__test-helpers__/fixtures.js';
+
 const { mockEngineConstructor, mockEngineStart, mockEngineStop, mockEngineAddScene, mockEngineGoToScene } = vi.hoisted(
   () => {
     return {
@@ -65,14 +67,16 @@ describe('CatwalkCanvas', () => {
   });
 
   it('renders a canvas element', () => {
-    const { container } = render(<CatwalkCanvas />);
+    const status = createMockRunStatus();
+    const { container } = render(<CatwalkCanvas status={status} />);
 
     const canvas = container.querySelector('canvas');
     expect(canvas).not.toBeNull();
   });
 
   it('creates an Excalibur engine on mount', () => {
-    render(<CatwalkCanvas />);
+    const status = createMockRunStatus();
+    render(<CatwalkCanvas status={status} />);
 
     expect(mockEngineConstructor).toHaveBeenCalledTimes(1);
     expect(mockEngineConstructor).toHaveBeenCalledWith(
@@ -86,20 +90,23 @@ describe('CatwalkCanvas', () => {
   });
 
   it('adds a CatwalkScene and navigates to it', () => {
-    render(<CatwalkCanvas />);
+    const status = createMockRunStatus();
+    render(<CatwalkCanvas status={status} />);
 
     expect(mockEngineAddScene).toHaveBeenCalledWith('catwalk', expect.any(CatwalkScene));
     expect(mockEngineGoToScene).toHaveBeenCalledWith('catwalk');
   });
 
   it('starts the engine on mount', () => {
-    render(<CatwalkCanvas />);
+    const status = createMockRunStatus();
+    render(<CatwalkCanvas status={status} />);
 
     expect(mockEngineStart).toHaveBeenCalledTimes(1);
   });
 
   it('stops the engine on unmount', () => {
-    const { unmount } = render(<CatwalkCanvas />);
+    const status = createMockRunStatus();
+    const { unmount } = render(<CatwalkCanvas status={status} />);
 
     unmount();
 

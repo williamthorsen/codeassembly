@@ -14,6 +14,6 @@ export function MockFlowDiagram({ status }: VisualizationProps): React.JSX.Eleme
   return <div data-testid="flow-diagram" data-run-id={status.runId} />;
 }
 
-export function MockCatwalkCanvas(): React.JSX.Element {
-  return <div data-testid="catwalk-canvas" />;
+export function MockCatwalkCanvas({ status }: VisualizationProps): React.JSX.Element {
+  return <div data-testid="catwalk-canvas" data-run-id={status.runId} />;
 }

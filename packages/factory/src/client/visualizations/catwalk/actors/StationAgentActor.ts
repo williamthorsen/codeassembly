@@ -1,11 +1,7 @@
 import { Actor, BaseAlign, Circle, Color, Font, GraphicsGroup, Text, TextAlign, vec, type Vector } from 'excalibur';
 
 import { AGENT_RADIUS } from '../constants/dimensions.js';
-
-// TODO(#179): Replace with import from '../types.js' once #179 is merged.
-// The type already exists in game/sprites/sprite-definitions.ts but importing
-// from there would couple the catwalk visualization to the unrelated game subtree.
-type AgentAnimationState = 'idle' | 'working' | 'walking' | 'resting' | 'celebrating' | 'concerned';
+import type { AgentAnimationState } from '../types.js';
 
 export interface StationAgentActorConfig {
   id: string;

@@ -13,7 +13,7 @@ function renderVisualization(view: ActiveView, status: CanonicalRunStatus): Reac
     case 'flow':
       return <FlowDiagram status={status} />;
     case 'catwalk':
-      return <CatwalkCanvas />;
+      return <CatwalkCanvas status={status} />;
   }
 }
 

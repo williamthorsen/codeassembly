@@ -11,6 +11,7 @@ const {
   mockRunSelector,
   mockStatusBar,
   mockGameCanvas,
+  mockCatwalkCanvas,
   mockFetchProjects,
   mockFlattenProjectIndex,
   mockUseDismissedRuns,
@@ -22,6 +23,7 @@ const {
     mockRunSelector: vi.fn(),
     mockStatusBar: vi.fn(),
     mockGameCanvas: vi.fn(),
+    mockCatwalkCanvas: vi.fn(),
     mockFetchProjects: vi.fn<() => Promise<ProjectIndex>>(),
     mockFlattenProjectIndex: vi.fn<(index: ProjectIndex | null) => FlatRunInfo[]>(),
     mockUseDismissedRuns: vi.fn(),
@@ -44,6 +46,10 @@ vi.mock('../components/StatusBar.js', () => ({
 
 vi.mock('../components/GameCanvas.js', () => ({
   GameCanvas: mockGameCanvas,
+}));
+
+vi.mock('../components/CatwalkCanvas.js', () => ({
+  CatwalkCanvas: mockCatwalkCanvas,
 }));
 
 vi.mock('../api/client.js', () => ({
@@ -124,6 +130,9 @@ describe('App', () => {
     mockGameCanvas.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
       <div data-testid="game-canvas">{status.runId}</div>
     ));
+    mockCatwalkCanvas.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
+      <div data-testid="catwalk-canvas">{status.runId}</div>
+    ));
     mockRunList.mockImplementation(() => <div data-testid="run-list" />);
   });
 
@@ -152,7 +161,7 @@ describe('App', () => {
     expect(view.queryByTestId('status-bar')).not.toBeInTheDocument();
   });
 
-  it('renders StatusBar and GameCanvas when runStatus exists', () => {
+  it('renders StatusBar and visualization when runStatus exists', () => {
     const status = createMockRunStatus({ runId: 'run-42' });
     mockUseRunStatus.mockReturnValue({ data: status, isLoading: false, error: null });
 
@@ -160,7 +169,8 @@ describe('App', () => {
     const view = within(container);
 
     expect(view.getByTestId('status-bar')).toHaveTextContent('run-42');
-    expect(view.getByTestId('game-canvas')).toHaveTextContent('run-42');
+    // Default view is catwalk
+    expect(view.getByTestId('catwalk-canvas')).toHaveTextContent('run-42');
     expect(view.queryByText('Loading...')).not.toBeInTheDocument();
   });
 
