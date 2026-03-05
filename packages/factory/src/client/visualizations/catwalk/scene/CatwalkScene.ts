@@ -25,6 +25,7 @@ const GROUND_LINE_COLOR = '#444444';
 const ARTIFACT_Y_OFFSET = 20;
 const ARTIFACT_Y_SPACING = 4;
 
+/** Excalibur scene that renders an orchestration run as a catwalk with stations, agents, gates, chutes, and artifacts. */
 export class CatwalkScene extends Scene {
   private status: CanonicalRunStatus;
   private layout: CatwalkLayoutResult | undefined;
@@ -40,6 +41,7 @@ export class CatwalkScene extends Scene {
     this.fitCamera();
   }
 
+  /** Tears down and rebuilds the entire scene to reflect a new run status snapshot. */
   updateStatus(status: CanonicalRunStatus): void {
     this.status = status;
     this.clear();
@@ -47,6 +49,7 @@ export class CatwalkScene extends Scene {
     this.fitCamera();
   }
 
+  /** Converts the current run status to a scene config, computes layout, and adds all actors. */
   private buildScene(): void {
     const config = mapRunToCatwalk(this.status);
     const layoutEntries = buildLayoutEntries(config);
@@ -63,6 +66,7 @@ export class CatwalkScene extends Scene {
     this.addArtifacts(config, layout);
   }
 
+  /** Draws the horizontal gold rail along the catwalk where the orchestrator travels. */
   private drawCatwalkRail(layout: CatwalkLayoutResult): void {
     const { x1, x2, y } = layout.railEndpoints();
     const width = x2 - x1;
@@ -80,6 +84,7 @@ export class CatwalkScene extends Scene {
     this.add(rail);
   }
 
+  /** Draws the horizontal ground line beneath the agent stations. */
   private drawGroundLine(layout: CatwalkLayoutResult): void {
     const { x1, x2, y } = layout.groundEndpoints();
     const width = x2 - x1;
@@ -96,6 +101,7 @@ export class CatwalkScene extends Scene {
     this.add(ground);
   }
 
+  /** Places a labeled station marker below the ground line for each workflow phase. */
   private addStations(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     for (const [i, station] of config.stations.entries()) {
       const x = layout.stationX(i);
@@ -107,6 +113,7 @@ export class CatwalkScene extends Scene {
     }
   }
 
+  /** Adds vertical chute lines connecting the catwalk rail to each agent position. */
   private addChutes(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
 
@@ -119,6 +126,7 @@ export class CatwalkScene extends Scene {
     }
   }
 
+  /** Places agent actors at their computed station positions with role-based colors. */
   private addAgents(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
 
@@ -133,17 +141,16 @@ export class CatwalkScene extends Scene {
     }
   }
 
+  /** Places the orchestrator actor on the catwalk rail at the current phase station. */
   private addOrchestrator(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     if (config.orchestrator.stationIndex < 0) return;
 
     const pos = layout.orchestratorPosition(config.orchestrator.stationIndex);
-    const orchestratorActor = new OrchestratorActor(
-      { working: config.orchestrator.working },
-      vec(pos.x, pos.y),
-    );
+    const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
     this.add(orchestratorActor);
   }
 
+  /** Places gate actors between adjacent stations to indicate phase transition progress. */
   private addGates(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     for (const gate of config.gates) {
       const [left, right] = gate.betweenStations;
@@ -153,6 +160,7 @@ export class CatwalkScene extends Scene {
     }
   }
 
+  /** Stacks artifact actors vertically below the ground line at their producing station. */
   private addArtifacts(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     // Group artifacts by station for vertical stacking
     const byStation = new Map<number, number>();
@@ -165,14 +173,12 @@ export class CatwalkScene extends Scene {
       const groundEndpoints = layout.groundEndpoints();
       const y = groundEndpoints.y + ARTIFACT_Y_OFFSET + indexAtStation * (ART_H + ARTIFACT_Y_SPACING);
 
-      const artifactActor = new ArtifactActor(
-        { label: artifact.label, color: artifact.color },
-        vec(stationX, y),
-      );
+      const artifactActor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(stationX, y));
       this.add(artifactActor);
     }
   }
 
+  /** Adjusts the camera zoom and position so the entire scene content fits within the viewport. */
   private fitCamera(): void {
     if (this.layout === undefined) return;
 

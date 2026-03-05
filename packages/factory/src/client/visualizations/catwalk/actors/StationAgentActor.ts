@@ -10,6 +10,7 @@ export interface StationAgentActorConfig {
   state: AgentAnimationState;
 }
 
+/** Maps an agent animation state to a visual opacity so idle/resting agents appear dimmed. */
 function opacityForState(state: AgentAnimationState): number {
   switch (state) {
     case 'idle':
@@ -28,6 +29,7 @@ function opacityForState(state: AgentAnimationState): number {
   }
 }
 
+/** Renders a station-bound agent as a colored circle with a role label, dimmed by animation state. */
 export class StationAgentActor extends Actor {
   constructor(config: StationAgentActorConfig, position: Vector) {
     super({ pos: position });

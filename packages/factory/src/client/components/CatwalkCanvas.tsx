@@ -11,6 +11,7 @@ interface CatwalkCanvasProps {
   status: CanonicalRunStatus;
 }
 
+/** Renders the catwalk visualization by managing an Excalibur engine lifecycle tied to a canvas element. */
 export function CatwalkCanvas({ status }: CatwalkCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
