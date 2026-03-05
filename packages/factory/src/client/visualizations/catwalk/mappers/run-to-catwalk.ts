@@ -7,11 +7,7 @@ import {
   isPhaseEvaluated,
   isPhasePresentInData,
 } from '../../../../shared/phase-inference.js';
-import type {
-  CanonicalRunStatus,
-  ParallelReviewPhase,
-  Phases,
-} from '../../../../shared/types/canonical.js';
+import type { CanonicalRunStatus, ParallelReviewPhase, Phases } from '../../../../shared/types/canonical.js';
 import type {
   AgentAnimationState,
   AgentConfig,
@@ -164,9 +160,7 @@ const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
 // Sub-function A: stations
 // ---------------------------------------------------------------------------
 
-function buildStations(
-  status: CanonicalRunStatus,
-): StationConfig[] {
+function buildStations(status: CanonicalRunStatus): StationConfig[] {
   return PHASE_NAMES.map((phase) => {
     const decision = findPhaseDecision(phase, status.phaseDecisions);
     const isAbsent = decision?.run === false;
@@ -184,10 +178,7 @@ function buildStations(
 // Sub-function B: orchestrator
 // ---------------------------------------------------------------------------
 
-function buildOrchestrator(
-  status: CanonicalRunStatus,
-  currentPhase: PhaseName | undefined,
-): OrchestratorConfig {
+function buildOrchestrator(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): OrchestratorConfig {
   let stationIndex: number;
 
   if (status.status === 'completed') {
@@ -243,10 +234,7 @@ function resolveAgentState(
 // Sub-function C: agents
 // ---------------------------------------------------------------------------
 
-function buildAgents(
-  status: CanonicalRunStatus,
-  currentPhase: PhaseName | undefined,
-): AgentConfig[] {
+function buildAgents(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): AgentConfig[] {
   const agents: AgentConfig[] = [];
 
   for (const phase of PHASE_NAMES) {
@@ -273,51 +261,30 @@ function buildAgents(
   return agents;
 }
 
-function buildReviewerAgents(
-  status: CanonicalRunStatus,
-  currentPhase: PhaseName | undefined,
-): AgentConfig[] {
+/** Build a single fallback reviewer agent when no reviewer names are available. */
+function defaultReviewerAgent(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): AgentConfig[] {
+  return [
+    {
+      id: 'reviewer-0',
+      role: 'reviewer',
+      roleType: PHASE_ROLE_TYPE.review,
+      stationIndex: 3,
+      slotIndex: 0,
+      state: resolveAgentState('review', status, currentPhase),
+    },
+  ];
+}
+
+function buildReviewerAgents(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): AgentConfig[] {
   const parallelReview = status.phases.parallelReview;
 
-  // Review is current but no parallelReview data yet: emit a single generic reviewer
-  if (currentPhase === 'review' && !isPresent(parallelReview)) {
-    return [
-      {
-        id: 'reviewer-0',
-        role: 'reviewer',
-        roleType: PHASE_ROLE_TYPE.review,
-        stationIndex: 3,
-        slotIndex: 0,
-        state: resolveAgentState('review', status, currentPhase),
-      },
-    ];
-  }
-
   if (!isPresent(parallelReview)) {
-    return [
-      {
-        id: 'reviewer-0',
-        role: 'reviewer',
-        roleType: PHASE_ROLE_TYPE.review,
-        stationIndex: 3,
-        slotIndex: 0,
-        state: resolveAgentState('review', status, currentPhase),
-      },
-    ];
+    return defaultReviewerAgent(status, currentPhase);
   }
 
   const names = extractReviewerNames(parallelReview);
   if (names.length === 0) {
-    return [
-      {
-        id: 'reviewer-0',
-        role: 'reviewer',
-        roleType: PHASE_ROLE_TYPE.review,
-        stationIndex: 3,
-        slotIndex: 0,
-        state: resolveAgentState('review', status, currentPhase),
-      },
-    ];
+    return defaultReviewerAgent(status, currentPhase);
   }
 
   return names.map((name, i) => ({
