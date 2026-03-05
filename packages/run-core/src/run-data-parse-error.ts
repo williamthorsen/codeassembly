@@ -14,12 +14,7 @@ export class RunDataParseError extends Error {
   readonly filePath: string;
   readonly zodIssues: core.$ZodIssue[] | undefined;
 
-  constructor(
-    message: string,
-    category: RunDataParseErrorCategory,
-    filePath: string,
-    zodIssues?: core.$ZodIssue[],
-  ) {
+  constructor(message: string, category: RunDataParseErrorCategory, filePath: string, zodIssues?: core.$ZodIssue[]) {
     super(message);
     this.name = 'RunDataParseError';
     this.category = category;

@@ -95,7 +95,8 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
   }
 
   // Try v2
-  return parseRunIndexFromRaw(raw, indexPath);
+  assertValidRunIndex(raw, indexPath);
+  return normalizeV2(raw);
 }
 
 export async function parseStatusFile(filePath: string): Promise<CanonicalRunStatus> {
@@ -179,11 +180,6 @@ interface V2Config {
   model: string | undefined;
 }
 
-function parseRunIndexFromRaw(raw: unknown, filePath: string): CanonicalRunStatus {
-  assertValidRunIndex(raw, filePath);
-  return normalizeV2(raw);
-}
-
 function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
   const { context, config } = raw;
 
@@ -213,10 +209,6 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
 
 // -- validation via Zod schemas with issue capture ---------------------------
 
-/**
- * Asserts that `raw` matches the v2 run-index schema.
- * Throws `RunDataParseError` with Zod issues on failure.
- */
 function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2RunIndex {
   const result = v2RunIndexSchema.safeParse(raw);
   if (!result.success) {
@@ -225,10 +217,6 @@ function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2R
   }
 }
 
-/**
- * Asserts that `raw` matches the v1 status schema.
- * Throws `RunDataParseError` with Zod issues on failure.
- */
 function assertValidStatusObject(raw: unknown, filePath: string): asserts raw is V1StatusObject {
   const result = v1StatusSchema.safeParse(raw);
   if (!result.success) {

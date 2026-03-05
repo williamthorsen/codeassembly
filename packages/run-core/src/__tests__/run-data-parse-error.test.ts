@@ -5,20 +5,19 @@ import type { RunDataParseErrorCategory } from '../run-data-parse-error.js';
 import { RunDataParseError } from '../run-data-parse-error.js';
 
 describe('RunDataParseError', () => {
-  it('is an instance of Error', () => {
+  it('extends Error with the correct name', () => {
     const error = new RunDataParseError('test', 'corrupt_json', '/path/to/file.json');
 
     expect(error).toBeInstanceOf(Error);
-  });
-
-  it('has name set to RunDataParseError', () => {
-    const error = new RunDataParseError('test', 'corrupt_json', '/path/to/file.json');
-
     expect(error.name).toBe('RunDataParseError');
   });
 
   it('preserves the message', () => {
-    const error = new RunDataParseError('Failed to parse JSON at /path/to/file.json', 'corrupt_json', '/path/to/file.json');
+    const error = new RunDataParseError(
+      'Failed to parse JSON at /path/to/file.json',
+      'corrupt_json',
+      '/path/to/file.json',
+    );
 
     expect(error.message).toBe('Failed to parse JSON at /path/to/file.json');
   });
