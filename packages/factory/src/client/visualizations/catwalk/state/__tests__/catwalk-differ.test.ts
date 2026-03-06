@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AgentConfig, GateConfig, OrchestratorConfig, StationArtifactConfig } from '../../types.js';
-import { diffAgents, diffArtifacts, diffGates, diffOrchestrator } from '../catwalk-differ.js';
+import type {
+  AgentConfig,
+  CatwalkSceneConfig,
+  GateConfig,
+  OrchestratorConfig,
+  StationArtifactConfig,
+  StationConfig,
+} from '../../types.js';
+import { diffAgents, diffArtifacts, diffCatwalkConfig, diffGates, diffOrchestrator } from '../catwalk-differ.js';
 
 /** Minimal orchestrator config factory. */
 function orchestrator(overrides: Partial<OrchestratorConfig> = {}): OrchestratorConfig {
@@ -252,5 +259,98 @@ describe('diffArtifacts', () => {
     const diff = diffArtifacts(prev, next);
 
     expect(diff.added).toEqual([]);
+  });
+});
+
+/** Minimal station config factory. */
+function station(phase: StationConfig['phase']): StationConfig {
+  return { phase, label: phase, color: '#888', absent: false, skipped: false };
+}
+
+/** Minimal full scene config factory. */
+function sceneConfig(overrides: Partial<CatwalkSceneConfig> = {}): CatwalkSceneConfig {
+  return {
+    orchestrator: orchestrator(),
+    stations: [station('architecture'), station('planning')],
+    agents: [agent('arch')],
+    gates: [gate(0, 1, false)],
+    artifacts: [],
+    ...overrides,
+  };
+}
+
+describe('diffCatwalkConfig', () => {
+  it('returns hasChanges false when configs are identical', () => {
+    const config = sceneConfig();
+    const diff = diffCatwalkConfig(config, config);
+
+    expect(diff.hasChanges).toBe(false);
+    expect(diff.orchestrator.moved).toBeNull();
+    expect(diff.orchestrator.workingChanged).toBeNull();
+    expect(diff.agents.stateChanged).toEqual([]);
+    expect(diff.agents.added).toEqual([]);
+    expect(diff.agents.removed).toEqual([]);
+    expect(diff.gates.opened).toEqual([]);
+    expect(diff.artifacts.added).toEqual([]);
+  });
+
+  it('returns hasChanges true when orchestrator moved', () => {
+    const prev = sceneConfig({ orchestrator: orchestrator({ stationIndex: 0 }) });
+    const next = sceneConfig({ orchestrator: orchestrator({ stationIndex: 1 }) });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.orchestrator.moved).toEqual({ from: 0, to: 1 });
+  });
+
+  it('returns hasChanges true when an agent state changes', () => {
+    const prev = sceneConfig({ agents: [agent('arch', { state: 'working' })] });
+    const next = sceneConfig({ agents: [agent('arch', { state: 'resting' })] });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.agents.stateChanged).toHaveLength(1);
+  });
+
+  it('returns hasChanges true when a gate opens', () => {
+    const prev = sceneConfig({ gates: [gate(0, 1, false)] });
+    const next = sceneConfig({ gates: [gate(0, 1, true)] });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.gates.opened).toHaveLength(1);
+  });
+
+  it('returns hasChanges true when an artifact is added', () => {
+    const newArtifact = artifact(0, 'architecture');
+    const prev = sceneConfig({ artifacts: [] });
+    const next = sceneConfig({ artifacts: [newArtifact] });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.artifacts.added).toEqual([newArtifact]);
+  });
+
+  it('detects changes across all sub-diffs simultaneously', () => {
+    const prev = sceneConfig({
+      orchestrator: orchestrator({ stationIndex: 0, working: true }),
+      agents: [agent('arch', { state: 'working' })],
+      gates: [gate(0, 1, false)],
+      artifacts: [],
+    });
+    const next = sceneConfig({
+      orchestrator: orchestrator({ stationIndex: 1, working: false }),
+      agents: [agent('arch', { state: 'resting' })],
+      gates: [gate(0, 1, true)],
+      artifacts: [artifact(0, 'architecture')],
+    });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.orchestrator.moved).not.toBeNull();
+    expect(diff.orchestrator.workingChanged).not.toBeNull();
+    expect(diff.agents.stateChanged).toHaveLength(1);
+    expect(diff.gates.opened).toHaveLength(1);
+    expect(diff.artifacts.added).toHaveLength(1);
   });
 });

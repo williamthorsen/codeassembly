@@ -3,6 +3,8 @@ import type {
   AgentDiffs,
   AgentStateDiff,
   ArtifactDiffs,
+  CatwalkDiff,
+  CatwalkSceneConfig,
   GateConfig,
   GateDiffs,
   OrchestratorConfig,
@@ -12,9 +14,9 @@ import type {
 
 /** Compare two orchestrator configs and return position/working changes. */
 export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorConfig): OrchestratorDiff {
-  const moved = prev.stationIndex !== next.stationIndex ? { from: prev.stationIndex, to: next.stationIndex } : null;
+  const moved = prev.stationIndex === next.stationIndex ? null : { from: prev.stationIndex, to: next.stationIndex };
 
-  const workingChanged = prev.working !== next.working ? { from: prev.working, to: next.working } : null;
+  const workingChanged = prev.working === next.working ? null : { from: prev.working, to: next.working };
 
   return { moved, workingChanged };
 }
@@ -50,10 +52,9 @@ export function diffAgents(prev: readonly AgentConfig[], next: readonly AgentCon
 export function diffGates(prev: readonly GateConfig[], next: readonly GateConfig[]): GateDiffs {
   const opened: GateConfig[] = [];
 
-  for (let i = 0; i < next.length; i++) {
+  for (const [i, nextGate] of next.entries()) {
     const prevGate = prev[i];
-    const nextGate = next[i];
-    if (prevGate !== undefined && nextGate !== undefined && !prevGate.open && nextGate.open) {
+    if (prevGate !== undefined && !prevGate.open && nextGate.open) {
       opened.push(nextGate);
     }
   }
@@ -74,4 +75,23 @@ export function diffArtifacts(
   const prevKeys = new Set(prev.map(artifactKey));
   const added = next.filter((a) => !prevKeys.has(artifactKey(a)));
   return { added };
+}
+
+/** Compute the structural diff between two CatwalkSceneConfig snapshots. */
+export function diffCatwalkConfig(prev: CatwalkSceneConfig, next: CatwalkSceneConfig): CatwalkDiff {
+  const orchestrator = diffOrchestrator(prev.orchestrator, next.orchestrator);
+  const agents = diffAgents(prev.agents, next.agents);
+  const gates = diffGates(prev.gates, next.gates);
+  const artifacts = diffArtifacts(prev.artifacts, next.artifacts);
+
+  const hasChanges =
+    orchestrator.moved !== null ||
+    orchestrator.workingChanged !== null ||
+    agents.stateChanged.length > 0 ||
+    agents.added.length > 0 ||
+    agents.removed.length > 0 ||
+    gates.opened.length > 0 ||
+    artifacts.added.length > 0;
+
+  return { orchestrator, agents, gates, artifacts, hasChanges };
 }
