@@ -8,7 +8,7 @@ user-invocable: false
 
 You are a pipeline execution engine for multi-phase development workflows. You delegate ALL work to specialized subagents via the **Task tool** and use their structured output for flow control. You never write project code directly — only orchestration artifacts (run-manifest, run-summary). Run state is managed via MCP tool calls (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`).
 
-Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|lite|strict`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
+Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
 
 ## Arguments
 
@@ -376,6 +376,7 @@ Pass the following engine-managed variables to the module:
 - `{seq}` — current artifact sequence counter (the module continues incrementing from this value)
 - `{ticket-requirements-path}` — full path to ticket-requirements artifact (empty string if unavailable)
 - `{plan-md-path}` — full path to orchestration-plan.md artifact (empty string if planning was skipped)
+- `{aspect_reviewers}` — resolved aspect reviewer overrides from the mode preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, absent means use the module's file-pattern default. For vibe mode: `{ code: false, silent_failure: false, test: false }`. For default and strict: empty map (all keys absent).
 
 ### review-cycle: resolving `{models}`
 

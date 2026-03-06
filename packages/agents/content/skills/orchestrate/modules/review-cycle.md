@@ -6,20 +6,21 @@ Orchestrate the parallel review, code-simplifier, and holistic review phases as 
 
 The orchestrate engine must provide these context variables before entering this module:
 
-| Variable                     | Description                                                                                                 |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `{task}`                     | Task description                                                                                            |
-| `{run-dir}`                  | Run directory returned by `init_run`                                                                        |
-| `{seq}`                      | Current artifact sequence counter (continue incrementing from this value)                                   |
-| `{ticket-requirements-path}` | Full path to ticket-requirements artifact (empty string if unavailable)                                     |
-| `{plan-md-path}`             | Full path to orchestration-plan.md artifact (empty string if planning was skipped)                          |
-| `{merge-base-sha}`           | Concrete merge-base SHA for diffing                                                                         |
-| `{change-summary-path}`      | Path to the most recent `coder_change-summary.md`                                                           |
-| `{max-review-rounds}`        | Maximum iterative review rounds before `needs_manual_review`                                                |
-| `{approval-threshold}`       | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                |
-| `{budget-threshold}`         | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`) |
-| `{models}`                   | Resolved model assignments map (see "Resolving models" in SKILL.md)                                         |
-| `{mcp-available}`            | `true` when MCP tools are available; `false` when the engine is running without MCP                         |
+| Variable                     | Description                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `{task}`                     | Task description                                                                                                    |
+| `{run-dir}`                  | Run directory returned by `init_run`                                                                                |
+| `{seq}`                      | Current artifact sequence counter (continue incrementing from this value)                                           |
+| `{ticket-requirements-path}` | Full path to ticket-requirements artifact (empty string if unavailable)                                             |
+| `{plan-md-path}`             | Full path to orchestration-plan.md artifact (empty string if planning was skipped)                                  |
+| `{merge-base-sha}`           | Concrete merge-base SHA for diffing                                                                                 |
+| `{change-summary-path}`      | Path to the most recent `coder_change-summary.md`                                                                   |
+| `{max-review-rounds}`        | Maximum iterative review rounds before `needs_manual_review`                                                        |
+| `{approval-threshold}`       | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                        |
+| `{budget-threshold}`         | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`)         |
+| `{models}`                   | Resolved model assignments map (see "Resolving models" in SKILL.md)                                                 |
+| `{mcp-available}`            | `true` when MCP tools are available; `false` when the engine is running without MCP                                 |
+| `{aspect_reviewers}`         | Aspect reviewer overrides from mode preset. Per-aspect: `false` = never activate, absent = use file-pattern default |
 
 ## Exit state
 
@@ -42,31 +43,16 @@ Dispatch the core reviewer and all aspect reviewers in parallel on the same code
 
 ### Aspect reviewer activation
 
-Before dispatching aspect reviewers, determine which ones are relevant to the change. The core reviewer (`orchestrated-reviewer`) always runs. Each aspect reviewer activates based on the changed-file list:
+Before dispatching aspect reviewers, determine which ones are relevant to the change. The core reviewer (`orchestrated-reviewer`) always runs. Each aspect reviewer's activation is resolved in two steps:
 
-| Aspect reviewer                  | Activates when                                                                                                  | Skip reason                     |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `aspect-code-reviewer`           | Always                                                                                                          | -                               |
-| `aspect-silent-failure-reviewer` | Changed files include source code (`.ts`, `.js`, `.tsx`, `.jsx`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.zsh`)   | No source files changed         |
-| `aspect-test-reviewer`           | Changed files include source code (same extensions as above) or test files (`*.test.*`, `*.spec.*`, `*_test.*`) | No source or test files changed |
+1. **Check `{aspect_reviewers}` override**: if the reviewer has an explicit `false` in the `{aspect_reviewers}` map, skip it.
+2. **Apply file-pattern default**: if no override exists (key absent from `{aspect_reviewers}`), activate based on the changed-file list:
 
-If `orchestration.aspect_reviewers` is configured in `.agents/preferences.yaml` or `~/.agents/preferences.yaml`, use it to override activation. Possible values per aspect:
-
-- `true` — always activate (ignore file-pattern check)
-- `false` — never activate
-- absent — use default file-pattern activation above
-
-If no `orchestration.aspect_reviewers` configuration exists, all aspects use their default activation logic (backward-compatible).
-
-Example configuration in `.agents/preferences.yaml`:
-
-```yaml
-orchestration:
-  aspect_reviewers:
-    code: true # always activate (ignore file-pattern check)
-    silent_failure: false # never activate
-    # test: absent — uses default file-pattern activation
-```
+| Aspect reviewer                                          | File-pattern default                                                                                            | Skip reason                     |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `aspect-code-reviewer` (key: `code`)                     | Always                                                                                                          | -                               |
+| `aspect-silent-failure-reviewer` (key: `silent_failure`) | Changed files include source code (`.ts`, `.js`, `.tsx`, `.jsx`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.zsh`)   | No source files changed         |
+| `aspect-test-reviewer` (key: `test`)                     | Changed files include source code (same extensions as above) or test files (`*.test.*`, `*.spec.*`, `*_test.*`) | No source or test files changed |
 
 ### Dispatch
 
@@ -82,7 +68,7 @@ Call MCP tool emit_event with:
 
 Send all activated Task calls in a single message so they run concurrently. Each agent examines the branch diff independently.
 
-Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer using these names and this order: `{core-review-path}` (core reviewer, always), `{sf-review-path}` (silent-failure reviewer, if activated), `{test-review-path}` (test reviewer, if activated), `{code-review-path}` (code reviewer, always). Skipped reviewers do not consume a sequence number; increment `{seq}` only for activated reviewers.
+Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer using these names and this order: `{core-review-path}` (core reviewer, always), `{sf-review-path}` (silent-failure reviewer, if activated), `{test-review-path}` (test reviewer, if activated), `{code-review-path}` (code reviewer, if activated). Skipped reviewers do not consume a sequence number; increment `{seq}` only for activated reviewers.
 
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.reviewer}`:
 
@@ -128,7 +114,7 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {
 >
 > Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`
 
-Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {models.aspect_code_reviewer}`:
+Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {models.aspect_code_reviewer}` (if activated):
 
 > Review the code changes on this branch for CLAUDE.md compliance, bugs, and logic errors.
 >
