@@ -1,4 +1,12 @@
-import type { AgentConfig, AgentDiffs, AgentStateDiff, OrchestratorConfig, OrchestratorDiff } from '../types.js';
+import type {
+  AgentConfig,
+  AgentDiffs,
+  AgentStateDiff,
+  GateConfig,
+  GateDiffs,
+  OrchestratorConfig,
+  OrchestratorDiff,
+} from '../types.js';
 
 /** Compare two orchestrator configs and return position/working changes. */
 export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorConfig): OrchestratorDiff {
@@ -34,4 +42,19 @@ export function diffAgents(prev: readonly AgentConfig[], next: readonly AgentCon
   }
 
   return { stateChanged, added, removed };
+}
+
+/** Compare two gate arrays by index, detecting gates that transitioned from closed to open. */
+export function diffGates(prev: readonly GateConfig[], next: readonly GateConfig[]): GateDiffs {
+  const opened: GateConfig[] = [];
+
+  for (let i = 0; i < next.length; i++) {
+    const prevGate = prev[i];
+    const nextGate = next[i];
+    if (prevGate !== undefined && nextGate !== undefined && !prevGate.open && nextGate.open) {
+      opened.push(nextGate);
+    }
+  }
+
+  return { opened };
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AgentConfig, OrchestratorConfig } from '../../types.js';
-import { diffAgents, diffOrchestrator } from '../catwalk-differ.js';
+import type { AgentConfig, GateConfig, OrchestratorConfig } from '../../types.js';
+import { diffAgents, diffGates, diffOrchestrator } from '../catwalk-differ.js';
 
 /** Minimal orchestrator config factory. */
 function orchestrator(overrides: Partial<OrchestratorConfig> = {}): OrchestratorConfig {
@@ -151,5 +151,45 @@ describe('diffAgents', () => {
     expect(diff.stateChanged).toEqual([]);
     expect(diff.added).toEqual([]);
     expect(diff.removed).toEqual([]);
+  });
+});
+
+/** Minimal gate config factory. */
+function gate(left: number, right: number, open = false): GateConfig {
+  return { betweenStations: [left, right], open };
+}
+
+describe('diffGates', () => {
+  it('returns empty array when nothing changed', () => {
+    const gates = [gate(0, 1, false), gate(1, 2, true)];
+    const diff = diffGates(gates, gates);
+
+    expect(diff.opened).toEqual([]);
+  });
+
+  it('detects a single gate opened', () => {
+    const prev = [gate(0, 1, false), gate(1, 2, false)];
+    const next = [gate(0, 1, true), gate(1, 2, false)];
+    const diff = diffGates(prev, next);
+
+    expect(diff.opened).toEqual([{ betweenStations: [0, 1], open: true }]);
+  });
+
+  it('detects multiple gates opened', () => {
+    const prev = [gate(0, 1, false), gate(1, 2, false), gate(2, 3, false)];
+    const next = [gate(0, 1, true), gate(1, 2, true), gate(2, 3, false)];
+    const diff = diffGates(prev, next);
+
+    expect(diff.opened).toHaveLength(2);
+    expect(diff.opened[0]?.betweenStations).toEqual([0, 1]);
+    expect(diff.opened[1]?.betweenStations).toEqual([1, 2]);
+  });
+
+  it('ignores gates that were already open', () => {
+    const prev = [gate(0, 1, true), gate(1, 2, true)];
+    const next = [gate(0, 1, true), gate(1, 2, true)];
+    const diff = diffGates(prev, next);
+
+    expect(diff.opened).toEqual([]);
   });
 });
