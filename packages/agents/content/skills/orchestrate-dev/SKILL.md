@@ -15,7 +15,7 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 ## Arguments
 
 - Task description (required): what to implement
-- `--mode=<vibe|lite|strict>`: select a mode preset (default: no mode, preserving current behavior)
+- `--mode=<vibe|strict>`: select a mode preset (default: no mode, preserving current behavior)
 - `--max-review-rounds=N`: maximum iterative review rounds (default: 3)
 - `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch)
 - `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
@@ -26,14 +26,15 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 
 Each mode is a preset bundle of settings. When `--mode` is specified, its preset values apply as defaults. Any setting can be individually overridden via explicit CLI arguments (e.g., `--mode=vibe --approval-threshold=medium`).
 
-| Setting             | `vibe` | `lite` | (default) | `strict` |
-| ------------------- | ------ | ------ | --------- | -------- |
-| architecture        | absent | absent | optional  | required |
-| planning            | absent | absent | optional  | required |
-| approval-threshold  | high   | low    | low       | low      |
-| budget-threshold    | high   | low    | low       | low      |
-| holistic_reviewer\* | sonnet | sonnet | opus      | opus     |
-| max-review-rounds   | 1      | 2      | 3         | 4        |
+| Setting             | `vibe`      | (default) | `strict` |
+| ------------------- | ----------- | --------- | -------- |
+| architecture        | excluded    | optional  | required |
+| planning            | excluded    | optional  | required |
+| aspect_reviewers    | all `false` | —         | —        |
+| approval-threshold  | high        | low       | low      |
+| budget-threshold    | high        | low       | low      |
+| holistic_reviewer\* | sonnet      | opus      | opus     |
+| max-review-rounds   | 1           | 3         | 4        |
 
 \* `holistic_reviewer` uses snake_case because it is a `--models` key (passed as `--models=holistic_reviewer:sonnet`), not a standalone argument. See the engine's [model resolution](../orchestrate/SKILL.md#resolving-models) for details.
 
@@ -46,6 +47,8 @@ For all mode-affected settings, values are resolved in this order (highest prior
 3. `orchestration.<key>` in preferences.yaml
 4. Legacy alias (`fix_low_findings` mapped to thresholds)
 5. Engine default
+
+\* `aspect_reviewers` is resolved from the mode preset only (step 2). It has no CLI argument, no preferences.yaml lookup, and no engine default. When no mode is specified, the engine receives an empty map and all aspect reviewers fall through to file-pattern defaults (see `review-cycle.md`).
 
 ### Pipeline per mode
 
@@ -62,7 +65,7 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 | `implementation` | `required`  | Write code                                        |
 | `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
 
-**`--mode=vibe` and `--mode=lite`**:
+**`--mode=vibe`**:
 
 ```
 implementation (required) -> review-cycle (required)
@@ -73,7 +76,7 @@ implementation (required) -> review-cycle (required)
 | `implementation` | `required`  | Write code                                        |
 | `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
 
-Both modes skip architecture and planning. They differ in review strictness -- see the mode preset table above.
+Vibe mode skips architecture and planning and deactivates all aspect reviewers — only the core reviewer runs. See the mode preset table above.
 
 **`--mode=strict`**:
 
