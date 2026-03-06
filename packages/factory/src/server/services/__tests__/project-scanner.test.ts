@@ -346,6 +346,38 @@ describe('ProjectScanner', () => {
     expect(silent.error).not.toHaveBeenCalled();
   });
 
+  it('silently skips interactive run directories without logging a warning', async () => {
+    using silent = silencedConsole();
+    const scanner = new ProjectScanner('/test/projects');
+
+    mockReaddirResult(['proj']);
+    mockStatDirectory();
+    mockReaddirResult(['tickets']);
+    mockReaddirResult(['TICKET-1']);
+    mockStatDirectory(); // stat for TICKET-1 directory
+    mockReaddirResult(['20260224-1030Z-interactive', 'good-run']);
+    // No stat call for the interactive directory — it's skipped before stat
+    mockStatDirectory(); // stat for good-run directory
+
+    mockedParseRunData.mockResolvedValueOnce(
+      createMockStatus({
+        runId: 'good-run',
+        startedAt: '2026-03-01T00:00:00Z',
+      }),
+    );
+
+    const result = await scanner.scan();
+
+    expect(result.projects).toHaveLength(1);
+    const runs = result.projects[0]?.tickets[0]?.runs;
+    expect(runs).toHaveLength(1);
+    expect(runs?.[0]?.runId).toBe('good-run');
+
+    expect(mockedParseRunData).toHaveBeenCalledOnce();
+    expect(silent.warn).not.toHaveBeenCalled();
+    expect(silent.error).not.toHaveBeenCalled();
+  });
+
   it('does not scan direct entries when tickets/ directory exists', async () => {
     const scanner = new ProjectScanner('/test/projects');
 

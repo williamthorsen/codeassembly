@@ -131,6 +131,7 @@ export class ProjectScanner {
 
       for (const runId of runDirs) {
         if (runId.startsWith('.')) continue;
+        if (runId.endsWith('-interactive')) continue;
         const runPath = join(ticketPath, runId);
 
         try {
