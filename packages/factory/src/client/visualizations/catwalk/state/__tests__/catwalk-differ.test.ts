@@ -47,6 +47,14 @@ describe('diffOrchestrator', () => {
     expect(diff.moved).toEqual({ from: 5, to: 6 });
   });
 
+  it('detects backward movement symmetrically', () => {
+    const prev = orchestrator({ stationIndex: 3 });
+    const next = orchestrator({ stationIndex: 1 });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.moved).toEqual({ from: 3, to: 1 });
+  });
+
   it('detects working toggled on', () => {
     const prev = orchestrator({ working: false });
     const next = orchestrator({ working: true });
@@ -199,6 +207,22 @@ describe('diffGates', () => {
 
     expect(diff.opened).toEqual([]);
   });
+
+  it('does not report a gate closing (open to closed) as opened', () => {
+    const prev = [gate(0, 1, true)];
+    const next = [gate(0, 1, false)];
+    const diff = diffGates(prev, next);
+
+    expect(diff.opened).toEqual([]);
+  });
+
+  it('skips gates at new indices — a gate added by a phase change has no prior state to diff', () => {
+    const prev: GateConfig[] = [];
+    const next = [gate(0, 1, true)];
+    const diff = diffGates(prev, next);
+
+    expect(diff.opened).toEqual([]);
+  });
 });
 
 /** Minimal station artifact config factory. */
@@ -259,6 +283,16 @@ describe('diffArtifacts', () => {
     const diff = diffArtifacts(prev, next);
 
     expect(diff.added).toEqual([]);
+  });
+
+  it('distinguishes artifacts at the same station with same label but different slots', () => {
+    const outputArtifact = artifact(0, 'code', { slot: 'output' });
+    const inputArtifact = artifact(0, 'code', { slot: 'input' });
+    const prev = [outputArtifact];
+    const next = [outputArtifact, inputArtifact];
+    const diff = diffArtifacts(prev, next);
+
+    expect(diff.added).toEqual([inputArtifact]);
   });
 });
 
