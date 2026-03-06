@@ -17,7 +17,9 @@ function createHeader(): RunHeader {
     mergeBaseSha: undefined,
     diffBase: undefined,
     maxReviewRounds: undefined,
-    fixLowFindings: undefined,
+    effort: undefined,
+    approvalThreshold: undefined,
+    budgetThreshold: undefined,
     mode: undefined,
     model: undefined,
   };

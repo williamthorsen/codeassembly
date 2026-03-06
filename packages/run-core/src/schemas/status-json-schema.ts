@@ -24,7 +24,6 @@ export const v1StatusSchema = z.object({
   mergeBaseSha: z.string().optional(),
   diffBase: z.string().optional(),
   maxReviewRounds: z.number().optional(),
-  fixLowFindings: z.boolean().optional(),
   phases: phasesSchema,
   phaseDecision: phaseDecisionMapSchema,
 });

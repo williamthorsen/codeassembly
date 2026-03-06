@@ -341,7 +341,6 @@ describe('v2ConfigSchema', () => {
       mergeBaseSha: 'abc',
       diffBase: 'origin/main',
       maxReviewRounds: 3,
-      fixLowFindings: false,
       mode: 'orchestrated',
       model: 'claude-opus-4-6',
     };

@@ -39,14 +39,14 @@ Focus findings (F/W/T) only on code authored in the current change — observati
 
 Used by review-producing skills and agents for structured code review findings. Also documented in [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for human reference. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
 
-| ID     | Category       | Severity       | Merge-blocking?                                                    |
-| ------ | -------------- | -------------- | ------------------------------------------------------------------ |
-| `F{n}` | FIXME          | critical       | Yes — must fix before merge                                        |
-| `W{n}` | Warning        | warning        | May block — questionable decisions requiring justification         |
-| `T{n}` | TODO           | todo           | No — should fix, can wait for next PR                              |
-| `R{n}` | Recommendation | recommendation | No — advisable but discretionary                                   |
-| `S{n}` | Suggestion     | suggestion     | No — optional improvement                                          |
-| `L{n}` | Legacy         | legacy         | No — observation in pre-existing code, not authored in this branch |
+| ID     | Category       | Criticality | Merge-blocking?            |
+| ------ | -------------- | ----------- | -------------------------- |
+| `F{n}` | FIXME          | `high`      | Always                     |
+| `W{n}` | Warning        | `medium`    | Unless justified           |
+| `T{n}` | TODO           | `low`       | Never (ticket if deferred) |
+| `R{n}` | Recommendation | `low`       | Never (note if deferred)   |
+| `S{n}` | Suggestion     | `none`      | Never (piggyback only)     |
+| `L{n}` | Legacy         | excluded    | Never                      |
 
 ### Category criteria
 
@@ -89,12 +89,12 @@ Used by review-producing skills and agents for structured code review findings. 
 
 ### Overall criticality mapping
 
-| Findings present                   | Criticality | Meaning                                      |
-| ---------------------------------- | ----------- | -------------------------------------------- |
-| None, or only S/R/L                | `none`      | Ready to merge                               |
-| W and/or T, but no F               | `low`       | Acceptable to merge with optional follow-ups |
-| 1–2 F (straightforward), or many W | `medium`    | Needs fixes but approach is sound            |
-| Multiple F, or structural issues   | `high`      | Needs significant rework                     |
+| Highest finding present | Criticality | Meaning                    |
+| ----------------------- | ----------- | -------------------------- |
+| None, or only S/L       | `none`      | No actionable findings     |
+| T and/or R (no W/F)     | `low`       | Deferrable items available |
+| W (no F)                | `medium`    | Real issues to address     |
+| F                       | `high`      | Must fix before merge      |
 
 ### Re-review severity escalation
 

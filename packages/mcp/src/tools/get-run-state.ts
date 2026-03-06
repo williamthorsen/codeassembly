@@ -44,7 +44,9 @@ export async function getRunState(input: GetRunStateInput): Promise<CanonicalRun
     mergeBaseSha: v3Data.config.mergeBaseSha,
     diffBase: v3Data.config.diffBase,
     maxReviewRounds: v3Data.config.maxReviewRounds,
-    fixLowFindings: v3Data.config.fixLowFindings,
+    effort: v3Data.config.effort,
+    approvalThreshold: v3Data.config.approvalThreshold,
+    budgetThreshold: v3Data.config.budgetThreshold,
     mode: v3Data.config.mode,
     model: v3Data.config.model,
   };

@@ -303,6 +303,24 @@ describe('v3RunIndexSchema', () => {
     }
   });
 
+  it('accepts effort, approvalThreshold, and budgetThreshold in v3 config', () => {
+    const fixture = {
+      ...minimalV3(),
+      config: {
+        effort: 'high',
+        approvalThreshold: 'low',
+        budgetThreshold: 'low',
+      },
+    };
+    const result = v3RunIndexSchema.safeParse(fixture);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.config.effort).toBe('high');
+      expect(result.data.config.approvalThreshold).toBe('low');
+      expect(result.data.config.budgetThreshold).toBe('low');
+    }
+  });
+
   it('accepts optional config fields (mode, model, externalPlan)', () => {
     const fixture = {
       ...minimalV3(),
@@ -313,7 +331,6 @@ describe('v3RunIndexSchema', () => {
         mergeBaseSha: 'abc123',
         diffBase: 'origin/main',
         maxReviewRounds: 3,
-        fixLowFindings: true,
       },
     };
     const result = v3RunIndexSchema.safeParse(fixture);

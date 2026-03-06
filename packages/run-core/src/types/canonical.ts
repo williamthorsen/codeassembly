@@ -30,7 +30,9 @@ export interface CanonicalRunStatus {
   mergeBaseSha: string | undefined;
   diffBase: string | undefined;
   maxReviewRounds: number | undefined;
-  fixLowFindings: boolean | undefined;
+  effort: string | undefined;
+  approvalThreshold: string | undefined;
+  budgetThreshold: string | undefined;
   mode: string | undefined;
   model: string | undefined;
   phases: Phases;

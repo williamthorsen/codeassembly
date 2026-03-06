@@ -341,11 +341,37 @@ describe('v2ConfigSchema', () => {
       mergeBaseSha: 'abc',
       diffBase: 'origin/main',
       maxReviewRounds: 3,
-      fixLowFindings: false,
       mode: 'orchestrated',
       model: 'claude-opus-4-6',
     };
     expect(v2ConfigSchema.safeParse(config).success).toBe(true);
+  });
+
+  it('accepts effort, approvalThreshold, and budgetThreshold as optional strings', () => {
+    const config = {
+      effort: 'medium',
+      approvalThreshold: 'medium',
+      budgetThreshold: 'medium',
+    };
+    const result = v2ConfigSchema.safeParse(config);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.effort).toBe('medium');
+      expect(result.data.approvalThreshold).toBe('medium');
+      expect(result.data.budgetThreshold).toBe('medium');
+    }
+  });
+
+  it('rejects non-string effort', () => {
+    expect(v2ConfigSchema.safeParse({ effort: 42 }).success).toBe(false);
+  });
+
+  it('rejects non-string approvalThreshold', () => {
+    expect(v2ConfigSchema.safeParse({ approvalThreshold: true }).success).toBe(false);
+  });
+
+  it('rejects non-string budgetThreshold', () => {
+    expect(v2ConfigSchema.safeParse({ budgetThreshold: 123 }).success).toBe(false);
   });
 
   it('rejects non-boolean externalPlan', () => {

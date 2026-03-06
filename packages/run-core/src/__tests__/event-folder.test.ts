@@ -16,7 +16,9 @@ function createHeader(overrides: Partial<RunHeader> = {}): RunHeader {
     mergeBaseSha: undefined,
     diffBase: undefined,
     maxReviewRounds: undefined,
-    fixLowFindings: undefined,
+    effort: undefined,
+    approvalThreshold: undefined,
+    budgetThreshold: undefined,
     mode: undefined,
     model: undefined,
     ...overrides,
@@ -671,7 +673,6 @@ describe('foldEvents', () => {
       model: 'claude-opus-4-6',
       externalPlan: true,
       maxReviewRounds: 3,
-      fixLowFindings: true,
     });
 
     const events: RunEvent[] = [
@@ -804,7 +805,6 @@ describe('foldEvents', () => {
     expect(result.model).toBe('claude-opus-4-6');
     expect(result.externalPlan).toBe(true);
     expect(result.maxReviewRounds).toBe(3);
-    expect(result.fixLowFindings).toBe(true);
 
     // Run status
     expect(result.status).toBe('completed');

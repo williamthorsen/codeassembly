@@ -67,7 +67,9 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
       mergeBaseSha: v3Data.config.mergeBaseSha,
       diffBase: v3Data.config.diffBase,
       maxReviewRounds: v3Data.config.maxReviewRounds,
-      fixLowFindings: v3Data.config.fixLowFindings,
+      effort: v3Data.config.effort,
+      approvalThreshold: v3Data.config.approvalThreshold,
+      budgetThreshold: v3Data.config.budgetThreshold,
       mode: v3Data.config.mode,
       model: v3Data.config.model,
     };
@@ -129,7 +131,6 @@ interface V1StatusObject {
   mergeBaseSha: string | undefined;
   diffBase: string | undefined;
   maxReviewRounds: number | undefined;
-  fixLowFindings: boolean | undefined;
   phases: Phases;
   phaseDecision: Record<string, PhaseDecision> | undefined;
 }
@@ -140,6 +141,9 @@ function normalizeV1(raw: V1StatusObject): CanonicalRunStatus {
     ...rest,
     completedAt: completedAt ?? undefined,
     reason: undefined,
+    effort: undefined,
+    approvalThreshold: undefined,
+    budgetThreshold: undefined,
     mode: undefined,
     model: undefined,
     phaseDecisions: phaseDecision,
@@ -175,7 +179,9 @@ interface V2Config {
   mergeBaseSha: string | undefined;
   diffBase: string | undefined;
   maxReviewRounds: number | undefined;
-  fixLowFindings: boolean | undefined;
+  effort: string | undefined;
+  approvalThreshold: string | undefined;
+  budgetThreshold: string | undefined;
   mode: string | undefined;
   model: string | undefined;
 }
@@ -198,7 +204,9 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
     mergeBaseSha: config.mergeBaseSha,
     diffBase: config.diffBase,
     maxReviewRounds: config.maxReviewRounds,
-    fixLowFindings: config.fixLowFindings,
+    effort: config.effort,
+    approvalThreshold: config.approvalThreshold,
+    budgetThreshold: config.budgetThreshold,
     mode: config.mode,
     model: config.model,
     phases: context.phases,

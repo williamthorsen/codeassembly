@@ -34,7 +34,6 @@ describe('v1StatusSchema', () => {
         mergeBaseSha: 'abc123',
         diffBase: 'origin/main',
         maxReviewRounds: 3,
-        fixLowFindings: false,
         phaseDecision: {
           architecture: { run: true, reason: 'Required' },
         },
@@ -129,10 +128,6 @@ describe('v1StatusSchema', () => {
 
     it('rejects non-number maxReviewRounds', () => {
       expect(v1StatusSchema.safeParse({ ...minimalValid(), maxReviewRounds: '3' }).success).toBe(false);
-    });
-
-    it('rejects non-boolean fixLowFindings', () => {
-      expect(v1StatusSchema.safeParse({ ...minimalValid(), fixLowFindings: 'true' }).success).toBe(false);
     });
   });
 
