@@ -6,7 +6,7 @@ import { isObject } from '@williamthorsen/toolbelt.objects';
 import packageJson from '../package.json' with { type: 'json' };
 
 type PackageJson = typeof packageJson & {
-  pnpm?: { overrides: Record<string, string> };
+  pnpm?: { overrides?: Record<string, string> };
 };
 
 function isStringRecord(value: unknown): value is Record<string, string> {

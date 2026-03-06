@@ -30,6 +30,7 @@
     "fmt:check": "sh -c 'prettier --check \"${@:-.}\"' --",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "tsx scripts/report-overrides.ts",
+    "prepare": "lefthook install",
     "lint": "pnpm run root:lint && pnpm --recursive run ws lint",
     "lint:check": "pnpm run root:lint:check && pnpm --recursive run ws lint:check",
     "lint:strict": "pnpm --recursive run ws lint:strict",
@@ -71,6 +72,7 @@
     "eslint-plugin-testing-library": "7.16.0",
     "glob": "13.0.6",
     "js-yaml": "4.1.1",
+    "lefthook": "2.1.2",
     "prettier": "3.8.1",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
@@ -78,6 +80,11 @@
     "vite": "7.3.1",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.0.18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "lefthook"
+    ]
   },
   "packageManager": "pnpm@10.30.3",
   "engines": {
