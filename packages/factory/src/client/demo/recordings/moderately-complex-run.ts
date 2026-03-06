@@ -12,7 +12,9 @@ const header: RunHeader = {
   mergeBaseSha: 'abc1234',
   diffBase: 'main',
   maxReviewRounds: 3,
-  fixLowFindings: true,
+  effort: undefined,
+  approvalThreshold: undefined,
+  budgetThreshold: undefined,
   mode: 'orchestrated',
   model: 'claude-opus-4-6',
 };

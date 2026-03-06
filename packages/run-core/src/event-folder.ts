@@ -71,7 +71,9 @@ export function foldEvents(header: RunHeader, events: ReadonlyArray<RunEvent>): 
     mergeBaseSha: header.mergeBaseSha,
     diffBase: header.diffBase,
     maxReviewRounds: header.maxReviewRounds,
-    fixLowFindings: header.fixLowFindings,
+    effort: header.effort,
+    approvalThreshold: header.approvalThreshold,
+    budgetThreshold: header.budgetThreshold,
     mode: header.mode,
     model: header.model,
     phases: {

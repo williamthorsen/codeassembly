@@ -173,7 +173,9 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
     "mergeBaseSha": "abc1234",
     "diffBase": "main",
     "maxReviewRounds": 3,
-    "fixLowFindings": true,
+    "effort": "medium",
+    "approvalThreshold": "medium",
+    "budgetThreshold": "medium",
     "mode": "orchestrated",
     "model": "claude-opus-4-6"
   },
@@ -294,7 +296,9 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
     "mergeBaseSha": "abc1234",
     "diffBase": "main",
     "maxReviewRounds": 3,
-    "fixLowFindings": true,
+    "effort": "medium",
+    "approvalThreshold": "medium",
+    "budgetThreshold": "medium",
     "mode": "orchestrated",
     "model": "claude-opus-4-6"
   },
@@ -459,7 +463,7 @@ V3 separates static run metadata from dynamic state. The `run-index.json` file c
 
 Context fields: `runId`, `projectSlug`, `ticketId?`, `projectRoot`, `branch`, `task`, `startedAt`.
 
-Config fields: `externalPlan?`, `mergeBaseSha?`, `diffBase?`, `maxReviewRounds?`, `fixLowFindings?`, `mode?`, `model?`. Additional fields are preserved (loose schema).
+Config fields: `externalPlan?`, `mergeBaseSha?`, `diffBase?`, `maxReviewRounds?`, `effort?`, `approvalThreshold?`, `budgetThreshold?`, `mode?`, `model?`. Additional fields are preserved (loose schema).
 
 ### Run-log.jsonl
 
@@ -589,14 +593,14 @@ A role can only disposition findings directed at it or its own prior findings. T
 
 Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
 
-| ID     | Category       | Severity       | Merge-blocking?                                                    |
-| ------ | -------------- | -------------- | ------------------------------------------------------------------ |
-| `F{n}` | FIXME          | critical       | Yes — must fix before merge                                        |
-| `W{n}` | Warning        | warning        | May block — questionable decisions requiring justification         |
-| `T{n}` | TODO           | todo           | No — should fix, can wait for next PR                              |
-| `R{n}` | Recommendation | recommendation | No — advisable but discretionary                                   |
-| `S{n}` | Suggestion     | suggestion     | No — optional improvement                                          |
-| `L{n}` | Legacy         | legacy         | No — observation in pre-existing code, not authored in this branch |
+| ID     | Category       | Criticality | Merge-blocking?            |
+| ------ | -------------- | ----------- | -------------------------- |
+| `F{n}` | FIXME          | `high`      | Always                     |
+| `W{n}` | Warning        | `medium`    | Unless justified           |
+| `T{n}` | TODO           | `low`       | Never (ticket if deferred) |
+| `R{n}` | Recommendation | `low`       | Never (note if deferred)   |
+| `S{n}` | Suggestion     | `none`      | Never (piggyback only)     |
+| `L{n}` | Legacy         | excluded    | Never                      |
 
 ### Category criteria
 
@@ -639,12 +643,12 @@ Used by review-producing skills and agents for structured code review findings. 
 
 ### Overall criticality mapping
 
-| Findings present                   | Criticality | Meaning                                      |
-| ---------------------------------- | ----------- | -------------------------------------------- |
-| None, or only S/R/L                | `none`      | Ready to merge                               |
-| W and/or T, but no F               | `low`       | Acceptable to merge with optional follow-ups |
-| 1–2 F (straightforward), or many W | `medium`    | Needs fixes but approach is sound            |
-| Multiple F, or structural issues   | `high`      | Needs significant rework                     |
+| Highest finding present | Criticality | Meaning                    |
+| ----------------------- | ----------- | -------------------------- |
+| None, or only S/L       | `none`      | No actionable findings     |
+| T and/or R (no W/F)     | `low`       | Deferrable items available |
+| W (no F)                | `medium`    | Real issues to address     |
+| F                       | `high`      | Must fix before merge      |
 
 ### Re-review severity escalation
 
@@ -674,7 +678,7 @@ Every level degrades gracefully:
 
 - **New `version` field** (value: `2`). Enables schema detection; absent version = v1.
 - **`context` section** groups: `runId`, `projectSlug`, `ticketId`, `projectRoot`, `branch`, `task`, `startedAt`, `completedAt`, `status`, `phases`, `phaseDecisions`.
-- **`config` section** groups: `externalPlan`, `mergeBaseSha` (new), `diffBase` (new), `maxReviewRounds` (new), `fixLowFindings` (new), `mode`, `model`.
+- **`config` section** groups: `externalPlan`, `mergeBaseSha` (new), `diffBase` (new), `maxReviewRounds` (new), `effort` (new), `approvalThreshold` (new), `budgetThreshold` (new), `mode`, `model`.
 - **`phaseDecision` → `context.phaseDecisions`** (now keyed by phase name, each value is a `{ run, reason? }` object). Each entry now includes an optional `disposition` field (`executed` | `skipped` | `absent`).
 - **New `pipeline` field in `config`**. Ordered list of phase names from the wrapper skill's pipeline specification (e.g., `["architecture", "planning", "implementation", "review-cycle"]`). Records which phases were configured for the run (intent, not outcome). The `review-cycle` pipeline entry is a module that expands into sub-phase keys (`parallelReview`, `codeSimplifier`, `holisticReview`) in `context.phaseDecisions` and `context.phases` at runtime.
 - **New `artifacts` array**. Each entry includes `roleType` for workflow-function classification. See [artifact entry fields](#artifact-entry-fields) for the full schema.

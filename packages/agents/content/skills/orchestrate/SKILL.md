@@ -8,7 +8,7 @@ user-invocable: false
 
 You are a pipeline execution engine for multi-phase development workflows. You delegate ALL work to specialized subagents via the **Task tool** and use their structured output for flow control. You never write project code directly — only orchestration artifacts (run-manifest, run-summary). Run state is managed via MCP tool calls (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`).
 
-Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
+Wrapper skills (`orchestrate-dev` with optional `--effort=low|medium|high`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
 
 ## Arguments
 
@@ -30,8 +30,7 @@ Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestra
 4. `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch via `get-default-branch`)
 5. `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
 6. `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: `low`)
-7. `--fix-low` / `--no-fix-low`: backward-compatible aliases. `--fix-low` is equivalent to `--approval-threshold=low --budget-threshold=low`. `--no-fix-low` is equivalent to `--approval-threshold=medium --budget-threshold=medium`.
-8. `--models=<key:model,...>`: model assignment overrides, comma-separated (e.g., `--models=coder:opus,default:sonnet`)
+7. `--models=<key:model,...>`: model assignment overrides, comma-separated (e.g., `--models=coder:opus,default:sonnet`)
 
 ### Resolving max-review-rounds
 
@@ -41,13 +40,11 @@ Wrapper skills (`orchestrate-dev` with optional `--mode=vibe|strict`, `orchestra
 
 ### Resolving thresholds
 
-The wrapper skill (e.g., `orchestrate-dev`) resolves modes and applies the resolution cascade before invoking this engine. The engine receives already-resolved threshold values as explicit arguments. Within the engine, threshold resolution is:
+The wrapper skill (e.g., `orchestrate-dev`) resolves effort presets and applies the resolution cascade before invoking this engine. The engine receives already-resolved threshold values as explicit arguments. Within the engine, threshold resolution is:
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
-2. Legacy alias: `--fix-low` (sets both to `low`) or `--no-fix-low` (sets both to `medium`)
-3. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-4. Legacy preference: `orchestration.fix_low_findings` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml` (`true` maps to both thresholds `low`; `false` maps to both thresholds `medium`)
-5. Default: both `low`
+2. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
+3. Default: both `low`
 
 ### Resolving models
 
@@ -97,7 +94,6 @@ orchestration:
   mcp_policy: prompt # required | optional | prompt (default: prompt)
   approval_threshold: low # or medium, high
   budget_threshold: low # or medium, high
-  # fix_low_findings: true  # legacy alias — mapped to both thresholds (true -> low, false -> medium)
   models:
     default: sonnet
     coder: opus
@@ -171,6 +167,7 @@ Prefix the status line with a colored emoji for visual distinction:
      maxReviewRounds: {N},
      approvalThreshold: {value},
      budgetThreshold: {value},
+     effort: {effort-level},
      mode: "orchestrated"
    }
    ```
@@ -376,7 +373,7 @@ Pass the following engine-managed variables to the module:
 - `{seq}` — current artifact sequence counter (the module continues incrementing from this value)
 - `{ticket-requirements-path}` — full path to ticket-requirements artifact (empty string if unavailable)
 - `{plan-md-path}` — full path to orchestration-plan.md artifact (empty string if planning was skipped)
-- `{aspect_reviewers}` — resolved aspect reviewer overrides from the mode preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, absent means use the module's file-pattern default. For vibe mode: `{ code: false, silent_failure: false, test: false }`. For default and strict: empty map (all keys absent).
+- `{aspect_reviewers}` — resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
 
 ### review-cycle: resolving `{models}`
 

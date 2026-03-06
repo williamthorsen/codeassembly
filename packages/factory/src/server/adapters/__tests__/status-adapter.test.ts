@@ -25,7 +25,6 @@ const currentFormatFixture = {
   mergeBaseSha: '7302522b',
   diffBase: 'origin/next',
   maxReviewRounds: 3,
-  fixLowFindings: true,
   phases: {
     architecture: {
       status: 'completed',
@@ -102,7 +101,6 @@ const v2Fixture = {
     mergeBaseSha: 'abc123',
     diffBase: 'origin/main',
     maxReviewRounds: 2,
-    fixLowFindings: false,
     mode: 'orchestrated',
     model: 'claude-opus-4-6',
   },
@@ -267,7 +265,6 @@ describe('parseStatusFile', () => {
       expect(result.mergeBaseSha).toBeUndefined();
       expect(result.diffBase).toBeUndefined();
       expect(result.maxReviewRounds).toBeUndefined();
-      expect(result.fixLowFindings).toBeUndefined();
       expect(result.phaseDecisions).toBeUndefined();
     });
   });
@@ -341,12 +338,6 @@ describe('parseStatusFile', () => {
 
     it('rejects non-number maxReviewRounds', async () => {
       mockJson({ ...minimalValid(), maxReviewRounds: '3' });
-
-      await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
-    });
-
-    it('rejects non-boolean fixLowFindings', async () => {
-      mockJson({ ...minimalValid(), fixLowFindings: 'true' });
 
       await expect(parseStatusFile('/path/to/status.json')).rejects.toThrow('Invalid status.json');
     });
@@ -627,7 +618,6 @@ describe('parseRunData', () => {
       expect(result.mergeBaseSha).toBe('abc123');
       expect(result.diffBase).toBe('origin/main');
       expect(result.maxReviewRounds).toBe(2);
-      expect(result.fixLowFindings).toBe(false);
       expect(result.phases.architecture?.status).toBe('completed');
       expect(result.phaseDecisions).toEqual({
         architecture: { run: true, reason: 'New format support' },

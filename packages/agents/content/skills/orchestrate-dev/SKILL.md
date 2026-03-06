@@ -8,51 +8,73 @@ user-invocable: true
 
 Run a full development workflow by invoking the `orchestrate` engine with the complete pipeline.
 
-<!-- TODO: remove migration note after transition -->
-
-> **Migration note:** This skill replaces the legacy `/orchestrate` command for development workflows. The `/orchestrate` skill is now an internal engine and is not user-invocable. Use `/orchestrate-dev` for new development work.
-
 ## Arguments
 
 - Task description (required): what to implement
-- `--mode=<vibe|strict>`: select a mode preset (default: no mode, preserving current behavior)
-- `--max-review-rounds=N`: maximum iterative review rounds (default: 3)
+- `--effort=<low|medium|high>`: select an effort level (default: `medium`)
+- `--max-review-rounds=N`: maximum iterative review rounds (default: from effort preset)
 - `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch)
-- `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
-- `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: `low`)
-- `--fix-low` / `--no-fix-low`: backward-compatible aliases. `--fix-low` is equivalent to `--approval-threshold=low --budget-threshold=low`. `--no-fix-low` is equivalent to `--approval-threshold=medium --budget-threshold=medium`.
+- `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: from effort preset)
+- `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: from effort preset)
+- `--architecture=<required|optional|absent>`: override architecture phase requirement (default: `optional`)
+- `--planning=<required|optional|absent>`: override planning phase requirement (default: `optional`)
+- `--models=<key:model,...>`: model assignment overrides (e.g., `--models=coder:sonnet`)
 
-## Mode presets
+### Deprecated arguments
 
-Each mode is a preset bundle of settings. When `--mode` is specified, its preset values apply as defaults. Any setting can be individually overridden via explicit CLI arguments (e.g., `--mode=vibe --approval-threshold=medium`).
+- `--mode=<vibe|lite|strict>`: deprecated. Use `--effort` instead. If both `--mode` and `--effort` are specified, `--effort` takes precedence. If only `--mode` is specified, map: `vibe` → `low`, `lite` → `medium`, `strict` → `high`.
 
-| Setting             | `vibe`      | (default) | `strict` |
-| ------------------- | ----------- | --------- | -------- |
-| architecture        | excluded    | optional  | required |
-| planning            | excluded    | optional  | required |
-| aspect_reviewers    | all `false` | —         | —        |
-| approval-threshold  | high        | low       | low      |
-| budget-threshold    | high        | low       | low      |
-| holistic_reviewer\* | sonnet      | opus      | opus     |
-| max-review-rounds   | 1           | 3         | 4        |
+## Effort presets
 
-\* `holistic_reviewer` uses snake_case because it is a `--models` key (passed as `--models=holistic_reviewer:sonnet`), not a standalone argument. See the engine's [model resolution](../orchestrate/SKILL.md#resolving-models) for details.
+Effort defines a ceiling on permitted investment. The orchestrator right-sizes to the task; the effort level determines how far it is allowed to go. Each effort level is a preset bundle of settings. Any setting can be individually overridden via explicit CLI arguments (e.g., `--effort=low --architecture=required`).
+
+| Setting            | `low`    | `medium` (default) | `high`   |
+| ------------------ | -------- | ------------------ | -------- |
+| approval-threshold | `high`   | `medium`           | `low`    |
+| budget-threshold   | `high`   | `medium`           | `low`    |
+| max-review-rounds  | 2        | 3                  | 4        |
+| aspect-reviewers   | disabled | auto               | always   |
+| architecture       | optional | optional           | optional |
+| planning           | optional | optional           | optional |
+
+The rule: effort level inverts to threshold level; review infrastructure scales proportionally. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
+
+### Effort x findings
+
+How findings are handled at each effort level (see [review-criteria](../review-criteria/SKILL.md) for the finding scheme):
+
+| Category           | Low effort | Medium effort   | High effort     |
+| ------------------ | ---------- | --------------- | --------------- |
+| F (FIXME)          | Fix        | Fix             | Fix             |
+| W (Warning)        | Tolerate   | Fix             | Fix             |
+| T (TODO)           | Ignore     | Ticket, defer   | Address now     |
+| R (Recommendation) | Ignore     | Note in summary | Adopt or reject |
+| S (Suggestion)     | Ignore     | Piggyback       | Piggyback       |
 
 ### Resolution cascade
 
-For all mode-affected settings, values are resolved in this order (highest priority first):
+For all effort-affected settings, values resolve in this order (highest priority first):
 
 1. Explicit CLI argument
-2. Mode preset (if `--mode` specified)
+2. Effort preset (if `--effort` specified; `medium` if omitted)
 3. `orchestration.<key>` in preferences.yaml
-4. Legacy alias (`fix_low_findings` mapped to thresholds)
-5. Engine default
+4. Engine default
 
-\* `aspect_reviewers` is resolved from the mode preset only (step 2). It has no CLI argument, no preferences.yaml lookup, and no engine default. When no mode is specified, the engine receives an empty map and all aspect reviewers fall through to file-pattern defaults (see `review-cycle.md`).
+### Piggybacking rule
 
-### Pipeline per mode
+Universal coder behavior, not effort-specific: during any fix cycle, also address none-severity suggestions in files already being modified. Do not seek out suggestions in untouched files. Thresholds control whether to initiate fix cycles; piggybacking controls what happens within one.
 
-**Default** (no `--mode`):
+### Deferred-item handling
+
+When findings are below the effort's approval threshold:
+
+- **T (TODO) deferred**: wrap-up creates a ticket. Tracked debt, not forgotten.
+- **R (Recommendation) deferred**: noted in run summary. Discretionary, no ticket.
+- **S (Suggestion) deferred**: not tracked. Ephemeral.
+
+## Pipeline
+
+All effort levels use the same pipeline. Architecture and planning requirements can be overridden via CLI arguments.
 
 ```
 architecture (optional) -> planning (optional) -> implementation (required) -> review-cycle (required)
@@ -65,38 +87,13 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 | `implementation` | `required`  | Write code                                        |
 | `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
 
-**`--mode=vibe`**:
-
-```
-implementation (required) -> review-cycle (required)
-```
-
-| Phase            | Requirement | Description                                       |
-| ---------------- | ----------- | ------------------------------------------------- |
-| `implementation` | `required`  | Write code                                        |
-| `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
-
-Vibe mode skips architecture and planning and deactivates all aspect reviewers — only the core reviewer runs. See the mode preset table above.
-
-**`--mode=strict`**:
-
-```
-architecture (required) -> planning (required) -> implementation (required) -> review-cycle (required)
-```
-
-| Phase            | Requirement | Description                                       |
-| ---------------- | ----------- | ------------------------------------------------- |
-| `architecture`   | `required`  | Assess impact; always runs                        |
-| `planning`       | `required`  | Create implementation plan; always runs           |
-| `implementation` | `required`  | Write code                                        |
-| `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
-
 ## Process
 
-1. **Resolve mode**: if `--mode` is provided, look up the mode preset from the table above.
-2. **Apply overrides**: for each setting, apply the resolution cascade — explicit CLI arguments override mode presets, which override preferences, which override engine defaults. For model-related settings (like `holistic_reviewer`), pass the resolved value to the engine via `--models` (e.g., `--models=holistic_reviewer:sonnet`).
-3. **Select pipeline**: use the pipeline table corresponding to the resolved mode.
-4. **Invoke the engine**: invoke the `orchestrate` skill with the selected pipeline specification and all resolved arguments. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table for the resolved mode **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute and in what order. No additional structured format is needed beyond this table.
+1. **Resolve effort**: if `--effort` is provided, look up the effort preset from the table above. If `--mode` is provided without `--effort`, map to effort level (`vibe` → `low`, `lite` → `medium`, `strict` → `high`). Default: `medium`.
+2. **Apply overrides**: for each setting, apply the resolution cascade — explicit CLI arguments override effort presets, which override preferences, which override engine defaults.
+3. **Resolve aspect reviewers**: based on the effort preset's `aspect-reviewers` setting (`disabled`, `auto`, or `always`), set the `orchestration.aspect_reviewers` configuration. `disabled` sets all aspects to `false`. `always` sets all aspects to `true`. `auto` omits the configuration (engine uses default file-pattern activation).
+4. **Build pipeline**: apply any `--architecture` or `--planning` overrides to the pipeline table. If not overridden, use `optional` for both.
+5. **Invoke the engine**: invoke the `orchestrate` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) directly.
 
 ## After the run
 

@@ -50,7 +50,9 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
     mergeBaseSha: undefined,
     diffBase: undefined,
     maxReviewRounds: undefined,
-    fixLowFindings: undefined,
+    effort: undefined,
+    approvalThreshold: undefined,
+    budgetThreshold: undefined,
     phases: {
       architecture: undefined,
       planning: undefined,

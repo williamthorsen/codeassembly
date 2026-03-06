@@ -87,7 +87,9 @@ export const v2ConfigSchema = z
     mergeBaseSha: z.string().optional(),
     diffBase: z.string().optional(),
     maxReviewRounds: z.number().optional(),
-    fixLowFindings: z.boolean().optional(),
+    effort: z.string().optional(),
+    approvalThreshold: z.string().optional(),
+    budgetThreshold: z.string().optional(),
     mode: z.string().optional(),
     model: z.string().optional(),
   })
