@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AgentConfig, GateConfig, OrchestratorConfig } from '../../types.js';
-import { diffAgents, diffGates, diffOrchestrator } from '../catwalk-differ.js';
+import type { AgentConfig, GateConfig, OrchestratorConfig, StationArtifactConfig } from '../../types.js';
+import { diffAgents, diffArtifacts, diffGates, diffOrchestrator } from '../catwalk-differ.js';
 
 /** Minimal orchestrator config factory. */
 function orchestrator(overrides: Partial<OrchestratorConfig> = {}): OrchestratorConfig {
@@ -191,5 +191,66 @@ describe('diffGates', () => {
     const diff = diffGates(prev, next);
 
     expect(diff.opened).toEqual([]);
+  });
+});
+
+/** Minimal station artifact config factory. */
+function artifact(
+  stationIndex: number,
+  label: string,
+  overrides: Partial<StationArtifactConfig> = {},
+): StationArtifactConfig {
+  return {
+    stationIndex,
+    label,
+    color: '#ffffff',
+    slot: 'output',
+    ...overrides,
+  };
+}
+
+describe('diffArtifacts', () => {
+  it('returns empty array when nothing changed', () => {
+    const artifacts = [artifact(0, 'architecture')];
+    const diff = diffArtifacts(artifacts, artifacts);
+
+    expect(diff.added).toEqual([]);
+  });
+
+  it('detects a single artifact added', () => {
+    const prev: StationArtifactConfig[] = [];
+    const newArtifact = artifact(0, 'architecture');
+    const next = [newArtifact];
+    const diff = diffArtifacts(prev, next);
+
+    expect(diff.added).toEqual([newArtifact]);
+  });
+
+  it('detects multiple artifacts added at different stations', () => {
+    const prev = [artifact(0, 'architecture')];
+    const planArtifact = artifact(1, 'plan');
+    const codeArtifact = artifact(2, 'code');
+    const next = [artifact(0, 'architecture'), planArtifact, codeArtifact];
+    const diff = diffArtifacts(prev, next);
+
+    expect(diff.added).toHaveLength(2);
+    expect(diff.added).toEqual([planArtifact, codeArtifact]);
+  });
+
+  it('detects artifact with version bump as new', () => {
+    const prev = [artifact(2, 'code', { version: 1 })];
+    const v2Artifact = artifact(2, 'code', { version: 2 });
+    const next = [artifact(2, 'code', { version: 1 }), v2Artifact];
+    const diff = diffArtifacts(prev, next);
+
+    expect(diff.added).toEqual([v2Artifact]);
+  });
+
+  it('treats artifacts without version as version 0 for identity', () => {
+    const prev = [artifact(0, 'architecture')];
+    const next = [artifact(0, 'architecture')];
+    const diff = diffArtifacts(prev, next);
+
+    expect(diff.added).toEqual([]);
   });
 });

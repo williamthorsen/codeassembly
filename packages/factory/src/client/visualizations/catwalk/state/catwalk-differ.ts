@@ -2,10 +2,12 @@ import type {
   AgentConfig,
   AgentDiffs,
   AgentStateDiff,
+  ArtifactDiffs,
   GateConfig,
   GateDiffs,
   OrchestratorConfig,
   OrchestratorDiff,
+  StationArtifactConfig,
 } from '../types.js';
 
 /** Compare two orchestrator configs and return position/working changes. */
@@ -57,4 +59,19 @@ export function diffGates(prev: readonly GateConfig[], next: readonly GateConfig
   }
 
   return { opened };
+}
+
+/** Build a composite identity key for an artifact (artifacts lack a single stable id). */
+function artifactKey(a: StationArtifactConfig): string {
+  return `${String(a.stationIndex)}:${a.label}:${String(a.version ?? 0)}`;
+}
+
+/** Compare two artifact arrays, detecting newly added artifacts by composite key. */
+export function diffArtifacts(
+  prev: readonly StationArtifactConfig[],
+  next: readonly StationArtifactConfig[],
+): ArtifactDiffs {
+  const prevKeys = new Set(prev.map(artifactKey));
+  const added = next.filter((a) => !prevKeys.has(artifactKey(a)));
+  return { added };
 }
