@@ -56,3 +56,40 @@ export interface CarriedArtifactConfig {
   label: string;
   color: string;
 }
+
+// ---------------------------------------------------------------------------
+// Diff types — produced by catwalk-differ.ts
+// ---------------------------------------------------------------------------
+
+export interface OrchestratorDiff {
+  moved: { from: number; to: number } | null;
+  workingChanged: { from: boolean; to: boolean } | null;
+}
+
+export interface AgentStateDiff {
+  agentId: string;
+  from: AgentAnimationState;
+  to: AgentAnimationState;
+}
+
+export interface AgentDiffs {
+  stateChanged: AgentStateDiff[];
+  added: AgentConfig[];
+  removed: AgentConfig[];
+}
+
+export interface GateDiffs {
+  opened: GateConfig[];
+}
+
+export interface ArtifactDiffs {
+  added: StationArtifactConfig[];
+}
+
+export interface CatwalkDiff {
+  orchestrator: OrchestratorDiff;
+  agents: AgentDiffs;
+  gates: GateDiffs;
+  artifacts: ArtifactDiffs;
+  hasChanges: boolean;
+}
