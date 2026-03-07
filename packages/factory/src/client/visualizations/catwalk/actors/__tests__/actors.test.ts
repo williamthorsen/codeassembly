@@ -230,17 +230,23 @@ describe('StationAgentActor', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
     actor.animateToState('resting');
 
+    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+
+    // After leaving working, onPreUpdate should not override the resting opacity.
+    // Set opacity to the resting value to simulate fade completion, then verify
+    // that onPreUpdate does not change it (pulse is disabled).
+    actor.graphics.opacity = 0.6;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    // After leaving working, onPreUpdate should not override opacity
-    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+    expect(actor.graphics.opacity).toBe(0.6);
   });
 
   it('fadeIn sets opacity to 0 then fades to state-appropriate opacity', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'resting' }, vec(0, 0));
     actor.fadeIn();
 
-    // Opacity should be set to 0 first, then fade called
+    // Opacity should be synchronously set to 0 before fade is called
+    expect(actor.graphics.opacity).toBe(0);
     expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
   });
 
@@ -323,6 +329,8 @@ describe('ArtifactActor', () => {
     const actor = new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0));
     actor.fadeIn();
 
+    // Opacity should be synchronously set to 0 before fade is called
+    expect(actor.graphics.opacity).toBe(0);
     expect(actor.actions.fade).toHaveBeenCalledWith(1, expect.any(Number));
   });
 });

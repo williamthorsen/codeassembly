@@ -13,8 +13,8 @@ import {
 import { ART_H, ENGINE_HEIGHT, ENGINE_WIDTH, GROUND_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
-import { diffCatwalkConfig } from '../state/catwalk-differ.js';
-import type { CatwalkDiff, CatwalkSceneConfig, StationArtifactConfig } from '../types.js';
+import { artifactKey, diffCatwalkConfig } from '../state/catwalk-differ.js';
+import type { CatwalkDiff, CatwalkSceneConfig } from '../types.js';
 
 const RAIL_HEIGHT = 3;
 const RAIL_OPACITY = 0.6;
@@ -25,11 +25,6 @@ const GROUND_LINE_COLOR = '#444444';
 
 const ARTIFACT_Y_OFFSET = 20;
 const ARTIFACT_Y_SPACING = 4;
-
-/** Composite identity key for an artifact — mirrors the logic in catwalk-differ.ts. */
-function artifactKey(a: StationArtifactConfig): string {
-  return `${String(a.stationIndex)}:${a.label}:${a.slot}:${String(a.version ?? 0)}`;
-}
 
 /** Excalibur scene that renders an orchestration run as a catwalk with stations, agents, gates, chutes, and artifacts. */
 export class CatwalkScene extends Scene {
@@ -42,6 +37,7 @@ export class CatwalkScene extends Scene {
   private agentRefs = new Map<string, StationAgentActor>();
   private gateRefs = new Map<string, GateActor>();
   private artifactKeySet = new Set<string>();
+  private artifactCountByStation = new Map<number, number>();
 
   constructor(status: CanonicalRunStatus) {
     super();
@@ -128,15 +124,14 @@ export class CatwalkScene extends Scene {
       }
     }
 
-    // Artifacts — fade in newly added artifacts
-    const byStation = new Map<number, number>();
+    // Artifacts — fade in newly added artifacts, stacking below any already present
     for (const artifact of diff.artifacts.added) {
       const key = artifactKey(artifact);
       if (this.artifactKeySet.has(key)) continue;
       this.artifactKeySet.add(key);
 
-      const indexAtStation = byStation.get(artifact.stationIndex) ?? 0;
-      byStation.set(artifact.stationIndex, indexAtStation + 1);
+      const indexAtStation = this.artifactCountByStation.get(artifact.stationIndex) ?? 0;
+      this.artifactCountByStation.set(artifact.stationIndex, indexAtStation + 1);
 
       const stationX = layout.stationX(artifact.stationIndex);
       const groundEndpoints = layout.groundEndpoints();
@@ -269,16 +264,14 @@ export class CatwalkScene extends Scene {
   }
 
   /** Stacks artifact actors vertically below the ground line at their producing station.
-   *  Populates artifactKeySet registry. */
+   *  Populates artifactKeySet and artifactCountByStation registries. */
   private addArtifacts(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
-    const byStation = new Map<number, number>();
-
     for (const artifact of config.artifacts) {
       const key = artifactKey(artifact);
       this.artifactKeySet.add(key);
 
-      const indexAtStation = byStation.get(artifact.stationIndex) ?? 0;
-      byStation.set(artifact.stationIndex, indexAtStation + 1);
+      const indexAtStation = this.artifactCountByStation.get(artifact.stationIndex) ?? 0;
+      this.artifactCountByStation.set(artifact.stationIndex, indexAtStation + 1);
 
       const stationX = layout.stationX(artifact.stationIndex);
       const groundEndpoints = layout.groundEndpoints();

@@ -83,8 +83,8 @@ export class StationAgentActor extends Actor {
   animateToState(state: AgentAnimationState): void {
     this._state = state;
     this._pulsing = state === 'working';
+    this._elapsed = 0;
     if (!this._pulsing) {
-      this._elapsed = 0;
       this.actions.fade(opacityForState(state), PAUSE_DURATION);
     }
   }
