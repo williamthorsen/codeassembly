@@ -144,7 +144,8 @@ describe('discoverRunDirectories', () => {
     expect(result).toEqual([]);
   });
 
-  it('returns empty array when base directory does not exist', async () => {
+  it('returns empty array and warns when base directory does not exist', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const error = new Error('ENOENT');
     Object.assign(error, { code: 'ENOENT' });
     mockedReaddir.mockRejectedValueOnce(error);
@@ -152,6 +153,61 @@ describe('discoverRunDirectories', () => {
     const result = await discoverRunDirectories('/nonexistent');
 
     expect(result).toEqual([]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Could not read base path'),
+      expect.stringContaining('ENOENT'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('warns and skips when a project directory cannot be read', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockReaddirResult(['proj']);
+    mockStatDirectory();
+    // readdir for /base/proj fails
+    mockedReaddir.mockRejectedValueOnce(new Error('EACCES'));
+
+    const result = await discoverRunDirectories('/base');
+
+    expect(result).toEqual([]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Could not read directory'),
+      expect.stringContaining('EACCES'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('warns when stat fails with non-ENOENT error', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockReaddirResult(['proj']);
+    // stat for /base/proj fails with EACCES
+    const error = new Error('Permission denied');
+    Object.assign(error, { code: 'EACCES' });
+    mockedStat.mockRejectedValueOnce(error);
+
+    const result = await discoverRunDirectories('/base');
+
+    expect(result).toEqual([]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Could not stat'),
+      expect.stringContaining('Permission denied'),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('does not warn when stat fails with ENOENT', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockReaddirResult(['proj']);
+    // stat for /base/proj fails with ENOENT (path vanished between readdir and stat)
+    const error = new Error('ENOENT');
+    Object.assign(error, { code: 'ENOENT' });
+    mockedStat.mockRejectedValueOnce(error);
+
+    const result = await discoverRunDirectories('/base');
+
+    expect(result).toEqual([]);
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
   });
 
   it('discovers multiple runs across multiple projects and tickets', async () => {

@@ -1,12 +1,16 @@
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { isEnoent } from '../type-guards.js';
+
 export interface RunDirectoryEntry {
   projectSlug: string;
   ticketId: string;
   runId: string;
   runPath: string;
 }
+
+const TAG = '[run-directory-scanner]';
 
 /** Walks the project hierarchy and returns all candidate run directory entries. */
 export async function discoverRunDirectories(basePath: string): Promise<RunDirectoryEntry[]> {
@@ -15,7 +19,8 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
   let projectDirs: string[];
   try {
     projectDirs = await readdir(basePath);
-  } catch {
+  } catch (error) {
+    console.warn(`${TAG} Could not read base path "${basePath}":`, errorMessage(error));
     return [];
   }
 
@@ -25,7 +30,7 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
     const projectPath = join(basePath, slug);
     if (!(await isDirectory(projectPath))) continue;
 
-    const projectEntries = await readdir(projectPath).catch(() => emptyStringArray());
+    const projectEntries = await readdirSafe(projectPath);
     const ticketsDir = projectEntries.includes('tickets');
 
     if (ticketsDir) {
@@ -42,7 +47,7 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
 
 async function scanTicketsDir(ticketsPath: string, slug: string): Promise<RunDirectoryEntry[]> {
   const entries: RunDirectoryEntry[] = [];
-  const ticketDirs = await readdir(ticketsPath).catch(() => emptyStringArray());
+  const ticketDirs = await readdirSafe(ticketsPath);
 
   for (const ticketId of ticketDirs) {
     if (ticketId.startsWith('.')) continue;
@@ -73,7 +78,7 @@ async function scanDirectEntries(
 
 async function scanRunsInTicket(ticketPath: string, slug: string, ticketId: string): Promise<RunDirectoryEntry[]> {
   const entries: RunDirectoryEntry[] = [];
-  const runDirs = await readdir(ticketPath).catch(() => emptyStringArray());
+  const runDirs = await readdirSafe(ticketPath);
 
   for (const runId of runDirs) {
     if (runId.startsWith('.')) continue;
@@ -86,15 +91,29 @@ async function scanRunsInTicket(ticketPath: string, slug: string, ticketId: stri
   return entries;
 }
 
-function emptyStringArray(): string[] {
-  return [];
+/** Reads a directory, returning an empty array and logging a warning on failure. */
+async function readdirSafe(dirPath: string): Promise<string[]> {
+  try {
+    return await readdir(dirPath);
+  } catch (error) {
+    console.warn(`${TAG} Could not read directory "${dirPath}":`, errorMessage(error));
+    return [];
+  }
 }
 
+/** Returns false for missing paths and logs a warning for non-ENOENT errors. */
 async function isDirectory(path: string): Promise<boolean> {
   try {
     const s = await stat(path);
     return s.isDirectory();
-  } catch {
+  } catch (error) {
+    if (!isEnoent(error)) {
+      console.warn(`${TAG} Could not stat "${path}":`, errorMessage(error));
+    }
     return false;
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

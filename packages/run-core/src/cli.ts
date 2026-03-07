@@ -136,16 +136,30 @@ async function archiveRuns(invalid: InvalidEntry[], basePath: string): Promise<v
     return;
   }
 
+  let succeeded = 0;
+  let failed = 0;
+
   for (const { entry } of invalid) {
     const archivePath = resolveArchivePath(entry, basePath);
-    await mkdir(dirname(archivePath), { recursive: true });
-    await rename(entry.runPath, archivePath);
     const relSource = relative(basePath, entry.runPath);
     const relDest = relative(basePath, archivePath);
-    console.info(`  Moved ${relSource} -> ${relDest}`);
+
+    try {
+      await mkdir(dirname(archivePath), { recursive: true });
+      await rename(entry.runPath, archivePath);
+      console.info(`  Moved ${relSource} -> ${relDest}`);
+      succeeded++;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`  Failed to move ${relSource}: ${message}`);
+      failed++;
+    }
   }
 
-  console.info(`\nArchived ${String(invalid.length)} ${invalid.length === 1 ? 'directory' : 'directories'}.`);
+  console.info(`\nArchived ${String(succeeded)} ${succeeded === 1 ? 'directory' : 'directories'}.`);
+  if (failed > 0) {
+    console.error(`Failed to archive ${String(failed)} ${failed === 1 ? 'directory' : 'directories'}.`);
+  }
 }
 
 async function runCheck(basePath: string): Promise<void> {
