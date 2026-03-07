@@ -50,6 +50,7 @@ vi.mock('excalibur', () => {
 });
 
 const { loadAllCatwalkSprites, getAnimation, clearCatwalkSpriteCache } = await import('../catwalk-sprite-loader.js');
+const { SPRITE_SHEET_URLS } = await import('../sprite-sheet-urls.js');
 
 describe('catwalk-sprite-loader', () => {
   beforeEach(() => {
@@ -75,9 +76,26 @@ describe('catwalk-sprite-loader', () => {
       expect(mockImageSourceLoad).toHaveBeenCalledTimes(2);
     });
 
+    it('passes the correct URL for each sprite type', async () => {
+      await loadAllCatwalkSprites();
+
+      expect(mockImageSourceConstructor).toHaveBeenCalledWith(SPRITE_SHEET_URLS.subagent, expect.anything());
+      expect(mockImageSourceConstructor).toHaveBeenCalledWith(SPRITE_SHEET_URLS.orchestrator, expect.anything());
+    });
+
     it('is idempotent (second call is a no-op)', async () => {
       await loadAllCatwalkSprites();
       await loadAllCatwalkSprites();
+
+      expect(mockImageSourceConstructor).toHaveBeenCalledTimes(2);
+      expect(mockImageSourceLoad).toHaveBeenCalledTimes(2);
+    });
+
+    it('deduplicates concurrent calls via in-flight promise guard', async () => {
+      const first = loadAllCatwalkSprites();
+      const second = loadAllCatwalkSprites();
+
+      await Promise.all([first, second]);
 
       expect(mockImageSourceConstructor).toHaveBeenCalledTimes(2);
       expect(mockImageSourceLoad).toHaveBeenCalledTimes(2);
@@ -99,6 +117,15 @@ describe('catwalk-sprite-loader', () => {
   describe('getAnimation', () => {
     it('throws if called before loading', () => {
       expect(() => getAnimation('subagent', 'idle')).toThrow('Catwalk sprites have not been loaded');
+    });
+
+    it('works synchronously after calling loadAllCatwalkSprites (before await)', () => {
+      // The cache is populated synchronously, so getAnimation is safe to call
+      // immediately without awaiting the load promise
+      loadAllCatwalkSprites().catch(() => undefined);
+
+      expect(() => getAnimation('subagent', 'idle')).not.toThrow();
+      expect(getAnimation('subagent', 'idle')).toBeDefined();
     });
 
     it('returns an animation for each sprite type and state', async () => {

@@ -29,6 +29,7 @@ import { type CatwalkSpriteType, SPRITE_SHEET_URLS } from './sprite-sheet-urls.j
 const SPRITE_TYPES: readonly CatwalkSpriteType[] = ['subagent', 'orchestrator'];
 
 let animationCache: Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>> | undefined;
+let loadPromise: Promise<void> | undefined;
 
 /** Resolves frame coordinates and timing for the given animation state. */
 function frameConfigForState(state: AgentAnimationState): {
@@ -89,9 +90,14 @@ function buildAnimationsForSheet(spriteSheet: SpriteSheet): Map<AgentAnimationSt
   return map;
 }
 
-/** Load all catwalk sprite sheets and cache animations for each sprite type and state. */
-export async function loadAllCatwalkSprites(): Promise<void> {
-  if (animationCache !== undefined) return;
+/** Build sprite sheets and animation objects synchronously, then load image data asynchronously.
+ *
+ * The animation cache is populated before `await`, so `getAnimation()` is safe to call
+ * immediately after invoking this function -- matching the `agent-sprite-loader` pattern
+ * where `SpriteSheet.fromImageSource` and animation creation are synchronous operations. */
+export function loadAllCatwalkSprites(): Promise<void> {
+  if (animationCache !== undefined) return Promise.resolve();
+  if (loadPromise !== undefined) return loadPromise;
 
   const cache = new Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>>();
   const imageSources: ImageSource[] = [];
@@ -114,9 +120,11 @@ export async function loadAllCatwalkSprites(): Promise<void> {
     cache.set(spriteType, buildAnimationsForSheet(spriteSheet));
   }
 
-  await Promise.all(imageSources.map((source) => source.load()));
-
+  // Populate cache synchronously so getAnimation() works immediately
   animationCache = cache;
+
+  loadPromise = loadImageSources(imageSources);
+  return loadPromise;
 }
 
 /** Return the cached animation for the given sprite type and state. Throws if sprites have not been loaded. */
@@ -138,7 +146,13 @@ export function getAnimation(spriteType: CatwalkSpriteType, state: AgentAnimatio
   return animation;
 }
 
+/** Load image data for all image sources. */
+async function loadImageSources(imageSources: ImageSource[]): Promise<void> {
+  await Promise.all(imageSources.map((source) => source.load()));
+}
+
 /** Clear the catwalk sprite cache, allowing sprites to be reloaded. Useful for tests. */
 export function clearCatwalkSpriteCache(): void {
   animationCache = undefined;
+  loadPromise = undefined;
 }

@@ -47,7 +47,12 @@ export class CatwalkScene extends Scene {
   }
 
   override onInitialize(): void {
-    void loadAllCatwalkSprites();
+    // loadAllCatwalkSprites populates the animation cache synchronously,
+    // so buildScene can safely call getAnimation() immediately.
+    // The returned promise resolves once image data finishes loading.
+    loadAllCatwalkSprites().catch((error: unknown) => {
+      console.error('Failed to load catwalk sprites:', error);
+    });
     this.buildScene();
     this.fitCamera();
   }

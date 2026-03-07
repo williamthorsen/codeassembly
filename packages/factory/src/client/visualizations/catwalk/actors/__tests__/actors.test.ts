@@ -72,6 +72,7 @@ vi.mock('excalibur', () => {
 
   const MockTextAlign = { Center: 'center', Left: 'left' };
   const MockBaseAlign = { Middle: 'middle', Top: 'top' };
+  const MockAnimationStrategy = { PingPong: 'ping-pong', Loop: 'loop', Freeze: 'freeze' };
 
   return {
     Actor: MockActor,
@@ -83,6 +84,7 @@ vi.mock('excalibur', () => {
     GraphicsGroup: MockGraphicsGroup,
     TextAlign: MockTextAlign,
     BaseAlign: MockBaseAlign,
+    AnimationStrategy: MockAnimationStrategy,
     vec: (x: number, y: number) => ({ x, y }),
   };
 });
@@ -157,13 +159,31 @@ describe('OrchestratorActor', () => {
     expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
   });
 
-  it('calls graphics.use on updateConfig', () => {
+  it('setWorking calls graphics.use to update the sprite', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
     mockGraphicsUse.mockClear();
 
-    actor.updateConfig({ working: false });
+    actor.setWorking(false);
 
     expect(mockGraphicsUse).toHaveBeenCalled();
+  });
+
+  it('setWorking(false) calls getAnimation with idle state', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.setWorking(false);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
+  });
+
+  it('setWorking(true) calls getAnimation with working state', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.setWorking(true);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
   });
 });
 
@@ -275,6 +295,40 @@ describe('StationAgentActor', () => {
     new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
 
     expect(mockGraphicsUse).toHaveBeenCalledTimes(1);
+  });
+
+  it('animateToState calls graphics.use to re-render the sprite', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
+    mockGraphicsUse.mockClear();
+
+    actor.animateToState('working');
+
+    expect(mockGraphicsUse).toHaveBeenCalled();
+  });
+
+  it('applies the config color to the accent bar', () => {
+    const color = '#FF00AA';
+    new StationAgentActor({ id: 'a', role: 'arch', color, state: 'working' }, vec(0, 0));
+
+    const call = mockGraphicsUse.mock.calls[0];
+    if (!call) throw new TypeError('Expected graphics.use to have been called');
+
+    // The GraphicsGroup is the first argument; verify the accent bar (second member) uses the config color
+    expect(call[0]).toEqual(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          members: expect.arrayContaining([
+            expect.objectContaining({
+              graphic: expect.objectContaining({
+                options: expect.objectContaining({
+                  color: expect.objectContaining({ hex: color }),
+                }),
+              }),
+            }),
+          ]),
+        }),
+      }),
+    );
   });
 });
 

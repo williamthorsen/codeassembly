@@ -12,4 +12,8 @@ describe('SPRITE_SHEET_URLS', () => {
     expect(typeof SPRITE_SHEET_URLS.orchestrator).toBe('string');
     expect(SPRITE_SHEET_URLS.orchestrator.length).toBeGreaterThan(0);
   });
+
+  it('exports distinct URLs for subagent and orchestrator', () => {
+    expect(SPRITE_SHEET_URLS.subagent).not.toBe(SPRITE_SHEET_URLS.orchestrator);
+  });
 });

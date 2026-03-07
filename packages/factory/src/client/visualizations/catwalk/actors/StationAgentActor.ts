@@ -1,13 +1,12 @@
 import { Actor, Color, GraphicsGroup, Rectangle, vec, type Vector } from 'excalibur';
 
+import { SPRITE_SIZE } from '../../../game/sprites/sprite-definitions.js';
 import { AGENT_PULSE_MAX, AGENT_PULSE_MIN, DEACTIVATED_OPACITY, PULSE_FREQUENCY } from '../constants/animation.js';
-import { AGENT_RADIUS } from '../constants/dimensions.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { AgentAnimationState } from '../types.js';
 
 const ACCENT_BAR_HEIGHT = 4;
-const SPRITE_SIZE = AGENT_RADIUS * 2;
 
 export interface StationAgentActorConfig {
   id: string;

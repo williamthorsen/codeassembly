@@ -2,8 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus, emptyPhases } from '../../../../../__test-helpers__/fixtures.js';
 
+const { mockLoadAllCatwalkSprites } = vi.hoisted(() => ({
+  mockLoadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
-  loadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),
+  loadAllCatwalkSprites: mockLoadAllCatwalkSprites,
   getAnimation: vi.fn().mockReturnValue({ type: 'animation' }),
 }));
 
@@ -150,6 +154,15 @@ describe('CatwalkScene', () => {
     const scene = new CatwalkScene(status);
 
     expect(scene.backgroundColor).toEqual(expect.objectContaining({ hex: '#1a1a2e' }));
+  });
+
+  it('calls loadAllCatwalkSprites on initialize', () => {
+    const status = createMockRunStatus({ status: 'in_progress' });
+    const scene = new CatwalkScene(status);
+
+    scene.onInitialize();
+
+    expect(mockLoadAllCatwalkSprites).toHaveBeenCalledOnce();
   });
 
   it('builds actors on initialize', () => {
