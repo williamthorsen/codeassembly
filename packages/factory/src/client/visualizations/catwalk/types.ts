@@ -5,7 +5,14 @@ import type { PhaseName, RoleType } from '../../../shared/constants/role-types.j
  * `sprite-definitions.ts` so that the catwalk mapper has no dependency
  * on the Excalibur game layer.
  */
-export type AgentAnimationState = 'idle' | 'working' | 'walking' | 'resting' | 'celebrating' | 'concerned';
+export type AgentAnimationState =
+  | 'idle'
+  | 'working'
+  | 'walking'
+  | 'resting'
+  | 'celebrating'
+  | 'concerned'
+  | 'deactivated';
 
 export interface CatwalkSceneConfig {
   orchestrator: OrchestratorConfig;
