@@ -29,7 +29,6 @@ import { type CatwalkSpriteType, SPRITE_SHEET_URLS } from './sprite-sheet-urls.j
 const SPRITE_TYPES: readonly CatwalkSpriteType[] = ['subagent', 'orchestrator'];
 
 let animationCache: Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>> | undefined;
-let loadPromise: Promise<void> | undefined;
 
 /** Resolves frame coordinates and timing for the given animation state. */
 function frameConfigForState(state: AgentAnimationState): {
@@ -97,7 +96,6 @@ function buildAnimationsForSheet(spriteSheet: SpriteSheet): Map<AgentAnimationSt
  * where `SpriteSheet.fromImageSource` and animation creation are synchronous operations. */
 export function loadAllCatwalkSprites(): Promise<void> {
   if (animationCache !== undefined) return Promise.resolve();
-  if (loadPromise !== undefined) return loadPromise;
 
   const cache = new Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>>();
   const imageSources: ImageSource[] = [];
@@ -120,11 +118,15 @@ export function loadAllCatwalkSprites(): Promise<void> {
     cache.set(spriteType, buildAnimationsForSheet(spriteSheet));
   }
 
-  // Populate cache synchronously so getAnimation() works immediately
+  // Populate cache synchronously so getAnimation() works immediately.
+  // Concurrent callers are deduplicated by the animationCache check above.
   animationCache = cache;
 
-  loadPromise = loadImageSources(imageSources);
-  return loadPromise;
+  return loadImageSources(imageSources).catch((error: unknown) => {
+    // Reset cache so a subsequent call can retry the load
+    animationCache = undefined;
+    throw error;
+  });
 }
 
 /** Return the cached animation for the given sprite type and state. Throws if sprites have not been loaded. */
@@ -154,5 +156,4 @@ async function loadImageSources(imageSources: ImageSource[]): Promise<void> {
 /** Clear the catwalk sprite cache, allowing sprites to be reloaded. Useful for tests. */
 export function clearCatwalkSpriteCache(): void {
   animationCache = undefined;
-  loadPromise = undefined;
 }

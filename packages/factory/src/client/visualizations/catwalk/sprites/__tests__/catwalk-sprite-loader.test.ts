@@ -91,7 +91,7 @@ describe('catwalk-sprite-loader', () => {
       expect(mockImageSourceLoad).toHaveBeenCalledTimes(2);
     });
 
-    it('deduplicates concurrent calls via in-flight promise guard', async () => {
+    it('deduplicates concurrent calls (cache populated synchronously)', async () => {
       const first = loadAllCatwalkSprites();
       const second = loadAllCatwalkSprites();
 
@@ -111,6 +111,21 @@ describe('catwalk-sprite-loader', () => {
       await loadAllCatwalkSprites();
 
       expect(mockAnimationFromCoords).toHaveBeenCalledTimes(12);
+    });
+
+    it('resets cache on load failure so subsequent calls can retry', async () => {
+      mockImageSourceLoad.mockRejectedValueOnce(new Error('network error'));
+
+      await expect(loadAllCatwalkSprites()).rejects.toThrow('network error');
+      expect(() => getAnimation('subagent', 'idle')).toThrow('Catwalk sprites have not been loaded');
+
+      // Retry succeeds
+      mockImageSourceLoad.mockResolvedValue(undefined);
+      await loadAllCatwalkSprites();
+
+      expect(getAnimation('subagent', 'idle')).toBeDefined();
+      // 2 calls for the failed attempt + 2 for the retry = 4 ImageSource constructions
+      expect(mockImageSourceConstructor).toHaveBeenCalledTimes(4);
     });
   });
 
