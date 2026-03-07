@@ -73,18 +73,13 @@ export class StationAgentActor extends Actor {
     this.graphics.opacity = opacityForState(config.state);
   }
 
-  updateConfig(config: StationAgentActorConfig): void {
-    this._state = config.state;
-    this._pulsing = config.state === 'working';
-    this.graphics.opacity = opacityForState(config.state);
-  }
-
   /** Animate a transition to a new state with opacity fade and optional pulse. */
   animateToState(state: AgentAnimationState): void {
     this._state = state;
     this._pulsing = state === 'working';
-    this._elapsed = 0;
-    if (!this._pulsing) {
+    if (this._pulsing) {
+      this._elapsed = 0;
+    } else {
       this.actions.fade(opacityForState(state), PAUSE_DURATION);
     }
   }

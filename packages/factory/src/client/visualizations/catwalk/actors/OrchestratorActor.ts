@@ -51,11 +51,6 @@ export class OrchestratorActor extends Actor {
     this.graphics.opacity = config.working ? ORCH_PULSE_MAX : ORCH_IDLE_OPACITY;
   }
 
-  updateConfig(config: OrchestratorActorConfig): void {
-    this._working = config.working;
-    this.graphics.opacity = config.working ? ORCH_PULSE_MAX : ORCH_IDLE_OPACITY;
-  }
-
   /** Slide the orchestrator to a new position along the catwalk rail. */
   animateMoveTo(pos: Vector): void {
     this.actions.moveTo(pos, WALK_SPEED);

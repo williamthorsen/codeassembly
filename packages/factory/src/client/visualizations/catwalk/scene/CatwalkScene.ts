@@ -117,7 +117,7 @@ export class CatwalkScene extends Scene {
 
     // Gates — animate open (closed-to-open transitions only)
     for (const gate of diff.gates.opened) {
-      const key = `${String(gate.betweenStations[0])}:${String(gate.betweenStations[1])}`;
+      const key = `${gate.betweenStations[0]}:${gate.betweenStations[1]}`;
       const actor = this.gateRefs.get(key);
       if (actor !== undefined) {
         actor.animateOpen();
@@ -259,7 +259,7 @@ export class CatwalkScene extends Scene {
       const pos = layout.gatePosition(left, right);
       const gateActor = new GateActor({ open: gate.open }, vec(pos.x, pos.y));
       this.add(gateActor);
-      this.gateRefs.set(`${String(left)}:${String(right)}`, gateActor);
+      this.gateRefs.set(`${left}:${right}`, gateActor);
     }
   }
 
@@ -308,11 +308,9 @@ function buildAgentCountByStation(config: CatwalkSceneConfig): Map<number, numbe
 
 /** Build station layout entries from the scene config, computing agent counts per station. */
 function buildLayoutEntries(config: CatwalkSceneConfig): StationLayoutEntry[] {
-  return config.stations.map((station, index) => {
-    const agentCount = config.agents.filter((a) => a.stationIndex === index).length;
-    return {
-      agentCount,
-      ...(station.absent ? { absent: true } : {}),
-    };
-  });
+  const agentCountByStation = buildAgentCountByStation(config);
+  return config.stations.map((station, index) => ({
+    agentCount: agentCountByStation.get(index) ?? 0,
+    ...(station.absent ? { absent: true } : {}),
+  }));
 }

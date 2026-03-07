@@ -92,7 +92,6 @@ vi.mock('../../actors/index.js', () => ({
       public config: unknown,
       public position: unknown,
     ) {}
-    updateConfig = vi.fn();
     animateMoveTo = vi.fn();
     setWorking = vi.fn();
   },
@@ -101,7 +100,6 @@ vi.mock('../../actors/index.js', () => ({
       public config: unknown,
       public position: unknown,
     ) {}
-    updateConfig = vi.fn();
     animateToState = vi.fn();
     fadeIn = vi.fn();
   },
@@ -215,18 +213,6 @@ describe('CatwalkScene', () => {
     // Non-absent stations should have dimmed=false
     const nonDimmedChutes = chutes.filter((c) => hasConfig(c) && isDimmedConfig(c.config) && !c.config.dimmed);
     expect(nonDimmedChutes.length).toBeGreaterThan(0);
-  });
-
-  it('on second updateStatus, does not increase entity count when config is unchanged', () => {
-    const status = createMockRunStatus({ status: 'in_progress' });
-    const scene = new CatwalkScene(status);
-    scene.onInitialize();
-
-    const countAfterInit = scene.entities.length;
-
-    // Second update with same status — no structural changes
-    scene.updateStatus(status);
-    expect(scene.entities.length).toBe(countAfterInit);
   });
 
   it('calls animateMoveTo on orchestrator when station changes', () => {

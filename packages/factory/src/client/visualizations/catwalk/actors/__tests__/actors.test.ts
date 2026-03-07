@@ -111,17 +111,6 @@ describe('OrchestratorActor', () => {
     expect(actor.graphics.opacity).toBe(0.8);
   });
 
-  it('updateConfig toggles opacity', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
-    expect(actor.graphics.opacity).toBe(1);
-
-    actor.updateConfig({ working: false });
-    expect(actor.graphics.opacity).toBe(0.8);
-
-    actor.updateConfig({ working: true });
-    expect(actor.graphics.opacity).toBe(1);
-  });
-
   it('animateMoveTo calls actions.moveTo with position and walk speed', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 100));
     actor.animateMoveTo(vec(200, 100));
@@ -195,17 +184,6 @@ describe('StationAgentActor', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'deactivated' }, vec(0, 0));
 
     expect(actor.graphics.opacity).toBe(0.15);
-  });
-
-  it('updateConfig toggles opacity by state', () => {
-    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
-    expect(actor.graphics.opacity).toBe(0.3);
-
-    actor.updateConfig({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' });
-    expect(actor.graphics.opacity).toBe(1);
-
-    actor.updateConfig({ id: 'a', role: 'arch', color: '#5555FF', state: 'resting' });
-    expect(actor.graphics.opacity).toBe(0.6);
   });
 
   it('animateToState fades to target opacity via actions.fade', () => {

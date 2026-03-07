@@ -64,7 +64,7 @@ export function diffGates(prev: readonly GateConfig[], next: readonly GateConfig
 
 /** Build a composite identity key for an artifact (artifacts lack a single stable id). */
 export function artifactKey(a: StationArtifactConfig): string {
-  return `${String(a.stationIndex)}:${a.label}:${a.slot}:${String(a.version ?? 0)}`;
+  return `${a.stationIndex}:${a.label}:${a.slot}:${a.version ?? 0}`;
 }
 
 /** Compare two artifact arrays, detecting newly added artifacts by composite key. */
