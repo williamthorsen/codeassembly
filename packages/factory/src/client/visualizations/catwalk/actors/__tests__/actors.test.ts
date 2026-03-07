@@ -345,6 +345,16 @@ describe('GateActor', () => {
     actor.updateConfig({ open: false });
     expect(actor.graphics.isVisible).toBe(true);
   });
+
+  it('animateOpen scales Y to 0 via actions.scaleTo', () => {
+    const actor = new GateActor({ open: false }, vec(100, 100));
+    actor.animateOpen();
+
+    expect(actor.actions.scaleTo).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 1, y: 0 }),
+      expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
+    );
+  });
 });
 
 describe('ChuteActor', () => {
