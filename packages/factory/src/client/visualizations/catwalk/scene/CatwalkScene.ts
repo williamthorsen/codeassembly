@@ -13,7 +13,8 @@ import {
 import { ART_H, ENGINE_HEIGHT, ENGINE_WIDTH, GROUND_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
-import type { CatwalkSceneConfig } from '../types.js';
+import { diffCatwalkConfig } from '../state/catwalk-differ.js';
+import type { CatwalkDiff, CatwalkSceneConfig, StationArtifactConfig } from '../types.js';
 
 const RAIL_HEIGHT = 3;
 const RAIL_OPACITY = 0.6;
@@ -25,10 +26,22 @@ const GROUND_LINE_COLOR = '#444444';
 const ARTIFACT_Y_OFFSET = 20;
 const ARTIFACT_Y_SPACING = 4;
 
+/** Composite identity key for an artifact — mirrors the logic in catwalk-differ.ts. */
+function artifactKey(a: StationArtifactConfig): string {
+  return `${String(a.stationIndex)}:${a.label}:${a.slot}:${String(a.version ?? 0)}`;
+}
+
 /** Excalibur scene that renders an orchestration run as a catwalk with stations, agents, gates, chutes, and artifacts. */
 export class CatwalkScene extends Scene {
   private status: CanonicalRunStatus;
   private layout: CatwalkLayoutResult | undefined;
+  private prevConfig: CatwalkSceneConfig | undefined;
+
+  // Actor registry — populated by buildScene(), updated by applyDiff()
+  private orchestratorRef: OrchestratorActor | undefined;
+  private agentRefs = new Map<string, StationAgentActor>();
+  private gateRefs = new Map<string, GateActor>();
+  private artifactKeySet = new Set<string>();
 
   constructor(status: CanonicalRunStatus) {
     super();
@@ -41,11 +54,99 @@ export class CatwalkScene extends Scene {
     this.fitCamera();
   }
 
-  /** Tears down and rebuilds the entire scene to reflect a new run status snapshot. */
+  /** Apply diff-driven animations on subsequent calls; full rebuild on the first call. */
   updateStatus(status: CanonicalRunStatus): void {
     this.status = status;
-    this.clear();
-    this.buildScene();
+    const nextConfig = mapRunToCatwalk(status);
+
+    if (this.prevConfig !== undefined) {
+      const diff = diffCatwalkConfig(this.prevConfig, nextConfig);
+      if (diff.hasChanges) {
+        const layoutEntries = buildLayoutEntries(nextConfig);
+        const layout = computeCatwalkLayout({ stations: layoutEntries });
+        this.layout = layout;
+        this.applyDiff(diff, nextConfig, layout);
+      }
+      this.prevConfig = nextConfig;
+    } else {
+      this.clear();
+      this.buildScene();
+      this.fitCamera();
+    }
+  }
+
+  /** Dispatch animations to actors based on the computed diff. */
+  private applyDiff(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
+    // Orchestrator position
+    if (diff.orchestrator.moved !== null && this.orchestratorRef !== undefined) {
+      const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
+      this.orchestratorRef.animateMoveTo(vec(pos.x, pos.y));
+    }
+    // Orchestrator working state
+    if (diff.orchestrator.workingChanged !== null && this.orchestratorRef !== undefined) {
+      this.orchestratorRef.setWorking(diff.orchestrator.workingChanged.to);
+    }
+
+    // Agent state changes
+    for (const change of diff.agents.stateChanged) {
+      const actor = this.agentRefs.get(change.agentId);
+      if (actor !== undefined) {
+        actor.animateToState(change.to);
+      }
+    }
+
+    // Added agents — fade in from invisible
+    const agentCountByStation = buildAgentCountByStation(config);
+    for (const agent of diff.agents.added) {
+      const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
+      const pos = layout.agentPosition(agent.stationIndex, agent.slotIndex, agentCountAtStation);
+      const actor = new StationAgentActor(
+        { id: agent.id, role: agent.role, color: ROLE_TYPE_COLORS[agent.roleType], state: agent.state },
+        vec(pos.x, pos.y),
+      );
+      actor.fadeIn();
+      this.add(actor);
+      this.agentRefs.set(agent.id, actor);
+    }
+
+    // Removed agents — deactivated visual state; removed from registry so future
+    // state changes cannot reach them. Actors remain in scene.entities for visual history.
+    for (const agent of diff.agents.removed) {
+      const actor = this.agentRefs.get(agent.id);
+      if (actor !== undefined) {
+        actor.animateToState('deactivated');
+        this.agentRefs.delete(agent.id);
+      }
+    }
+
+    // Gates — animate open (closed-to-open transitions only)
+    for (const gate of diff.gates.opened) {
+      const key = `${String(gate.betweenStations[0])}:${String(gate.betweenStations[1])}`;
+      const actor = this.gateRefs.get(key);
+      if (actor !== undefined) {
+        actor.animateOpen();
+      }
+    }
+
+    // Artifacts — fade in newly added artifacts
+    const byStation = new Map<number, number>();
+    for (const artifact of diff.artifacts.added) {
+      const key = artifactKey(artifact);
+      if (this.artifactKeySet.has(key)) continue;
+      this.artifactKeySet.add(key);
+
+      const indexAtStation = byStation.get(artifact.stationIndex) ?? 0;
+      byStation.set(artifact.stationIndex, indexAtStation + 1);
+
+      const stationX = layout.stationX(artifact.stationIndex);
+      const groundEndpoints = layout.groundEndpoints();
+      const y = groundEndpoints.y + ARTIFACT_Y_OFFSET + indexAtStation * (ART_H + ARTIFACT_Y_SPACING);
+
+      const actor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(stationX, y));
+      actor.fadeIn();
+      this.add(actor);
+    }
+
     this.fitCamera();
   }
 
@@ -55,6 +156,7 @@ export class CatwalkScene extends Scene {
     const layoutEntries = buildLayoutEntries(config);
     const layout = computeCatwalkLayout({ stations: layoutEntries });
     this.layout = layout;
+    this.prevConfig = config;
 
     this.drawCatwalkRail(layout);
     this.drawGroundLine(layout);
@@ -126,7 +228,8 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Places agent actors at their computed station positions with role-based colors. */
+  /** Places agent actors at their computed station positions with role-based colors.
+   *  Populates agentRefs registry. */
   private addAgents(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
 
@@ -138,34 +241,42 @@ export class CatwalkScene extends Scene {
         vec(pos.x, pos.y),
       );
       this.add(stationAgentActor);
+      this.agentRefs.set(agent.id, stationAgentActor);
     }
   }
 
-  /** Places the orchestrator actor on the catwalk rail at the current phase station. */
+  /** Places the orchestrator actor on the catwalk rail at the current phase station.
+   *  Populates orchestratorRef registry. */
   private addOrchestrator(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     if (config.orchestrator.stationIndex < 0) return;
 
     const pos = layout.orchestratorPosition(config.orchestrator.stationIndex);
     const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
     this.add(orchestratorActor);
+    this.orchestratorRef = orchestratorActor;
   }
 
-  /** Places gate actors between adjacent stations to indicate phase transition progress. */
+  /** Places gate actors between adjacent stations to indicate phase transition progress.
+   *  Populates gateRefs registry. */
   private addGates(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     for (const gate of config.gates) {
       const [left, right] = gate.betweenStations;
       const pos = layout.gatePosition(left, right);
       const gateActor = new GateActor({ open: gate.open }, vec(pos.x, pos.y));
       this.add(gateActor);
+      this.gateRefs.set(`${String(left)}:${String(right)}`, gateActor);
     }
   }
 
-  /** Stacks artifact actors vertically below the ground line at their producing station. */
+  /** Stacks artifact actors vertically below the ground line at their producing station.
+   *  Populates artifactKeySet registry. */
   private addArtifacts(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
-    // Group artifacts by station for vertical stacking
     const byStation = new Map<number, number>();
 
     for (const artifact of config.artifacts) {
+      const key = artifactKey(artifact);
+      this.artifactKeySet.add(key);
+
       const indexAtStation = byStation.get(artifact.stationIndex) ?? 0;
       byStation.set(artifact.stationIndex, indexAtStation + 1);
 

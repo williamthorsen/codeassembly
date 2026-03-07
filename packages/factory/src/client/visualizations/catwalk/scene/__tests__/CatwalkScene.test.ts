@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus } from '../../../../../__test-helpers__/fixtures.js';
+import { createMockRunStatus, emptyPhases } from '../../../../../__test-helpers__/fixtures.js';
 
 vi.mock('excalibur', () => {
   class MockScene {
@@ -62,36 +62,48 @@ vi.mock('../../actors/index.js', () => ({
       public config: unknown,
       public position: unknown,
     ) {}
+    updateConfig = vi.fn();
+    fadeIn = vi.fn();
   },
   CatwalkStationActor: class MockCatwalkStationActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+    updateConfig = vi.fn();
   },
   ChuteActor: class MockChuteActor {
     constructor(
       public config: unknown,
       public endpoints: unknown,
     ) {}
+    updateConfig = vi.fn();
   },
   GateActor: class MockGateActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+    updateConfig = vi.fn();
+    animateOpen = vi.fn();
   },
   OrchestratorActor: class MockOrchestratorActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+    updateConfig = vi.fn();
+    animateMoveTo = vi.fn();
+    setWorking = vi.fn();
   },
   StationAgentActor: class MockStationAgentActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+    updateConfig = vi.fn();
+    animateToState = vi.fn();
+    fadeIn = vi.fn();
   },
 }));
 
@@ -127,17 +139,16 @@ describe('CatwalkScene', () => {
     expect(scene.entities.length).toBe(28);
   });
 
-  it('clears and rebuilds on updateStatus', () => {
+  it('preserves entity count on updateStatus when config is unchanged', () => {
     const status = createMockRunStatus({ status: 'in_progress' });
     const scene = new CatwalkScene(status);
     scene.onInitialize();
 
     const initialCount = scene.entities.length;
 
-    // Rebuild with same fixture shape so entity count is deterministic
     scene.updateStatus(status);
 
-    // After clearing and rebuilding with the same status, entity count must match exactly
+    // No structural changes, so entity count must remain the same
     expect(scene.entities.length).toBe(initialCount);
   });
 
@@ -184,5 +195,47 @@ describe('CatwalkScene', () => {
     // Non-absent stations should have dimmed=false
     const nonDimmedChutes = chutes.filter((c) => hasConfig(c) && isDimmedConfig(c.config) && !c.config.dimmed);
     expect(nonDimmedChutes.length).toBeGreaterThan(0);
+  });
+
+  it('on second updateStatus, does not increase entity count when config is unchanged', () => {
+    const status = createMockRunStatus({ status: 'in_progress' });
+    const scene = new CatwalkScene(status);
+    scene.onInitialize();
+
+    const countAfterInit = scene.entities.length;
+
+    // Second update with same status — no structural changes
+    scene.updateStatus(status);
+    expect(scene.entities.length).toBe(countAfterInit);
+  });
+
+  it('calls animateMoveTo on orchestrator when station changes', () => {
+    // Architecture not yet completed — orchestrator inferred at station 0 (architecture)
+    const status1 = createMockRunStatus({
+      status: 'in_progress',
+      phases: emptyPhases(),
+    });
+    const scene = new CatwalkScene(status1);
+    scene.onInitialize();
+
+    // Architecture completed — orchestrator advances to station 1 (planning)
+    const status2 = createMockRunStatus({
+      status: 'in_progress',
+      phases: {
+        ...emptyPhases(),
+        architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+      },
+    });
+    scene.updateStatus(status2);
+
+    // The orchestrator should have animateMoveTo called
+    const orchestrators = scene.entities.filter(
+      (e): e is InstanceType<typeof OrchestratorActor> => e instanceof OrchestratorActor,
+    );
+    expect(orchestrators.length).toBe(1);
+    const orch = orchestrators[0];
+    if (orch !== undefined && 'animateMoveTo' in orch) {
+      expect(orch.animateMoveTo).toHaveBeenCalled();
+    }
   });
 });
