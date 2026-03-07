@@ -6,13 +6,9 @@ import { RunDataParseError } from '../run-data-parse-error.js';
 import { v2RunIndexSchema } from '../schemas/run-index-schema.js';
 import { parseRunLogLine, v3RunIndexSchema } from '../schemas/run-log-schema.js';
 import { v1StatusSchema } from '../schemas/status-json-schema.js';
+import { isEnoent } from '../type-guards.js';
 import type { ArtifactEntry, CanonicalRunStatus, PhaseDecision, Phases, RunStatus } from '../types/canonical.js';
 import type { RunEvent, RunHeader } from '../types/run-log.js';
-
-/** Check whether an error is an ENOENT filesystem error. */
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
-}
 
 /** Try v3 (header + log) first, then v2 (run-index.json), fall back to v1 (status.json). */
 export async function parseRunData(runPath: string): Promise<CanonicalRunStatus> {

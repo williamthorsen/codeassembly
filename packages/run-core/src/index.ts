@@ -73,6 +73,9 @@ export { RunDataParseError } from './run-data-parse-error.js';
 // Event folder — reconstruct CanonicalRunStatus from header + events
 export { foldEvents } from './event-folder.js';
 
+// Type guards
+export { isEnoent } from './type-guards.js';
+
 // Parsers are NOT exported from the root entry point because they use Node.js
 // APIs (node:fs/promises, node:path) that are incompatible with browser builds.
 // Import parsers from '@codeassembly/run-core/parsers' instead.
