@@ -1,5 +1,6 @@
 import { Actor, BaseAlign, Circle, Color, Font, GraphicsGroup, Text, TextAlign, vec, type Vector } from 'excalibur';
 
+import { DEACTIVATED_OPACITY } from '../constants/animation.js';
 import { AGENT_RADIUS } from '../constants/dimensions.js';
 import type { AgentAnimationState } from '../types.js';
 
@@ -18,7 +19,7 @@ function opacityForState(state: AgentAnimationState): number {
     case 'resting':
       return 0.6;
     case 'deactivated':
-      return 0.15;
+      return DEACTIVATED_OPACITY;
     case 'working':
     case 'walking':
     case 'celebrating':
