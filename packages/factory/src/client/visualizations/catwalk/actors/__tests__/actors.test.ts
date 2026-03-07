@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockActorConstructor, mockGraphicsUse } = vi.hoisted(() => {
+const { mockActorConstructor, mockGraphicsUse, mockGetAnimation } = vi.hoisted(() => {
   return {
     mockActorConstructor: vi.fn(),
     mockGraphicsUse: vi.fn(),
+    mockGetAnimation: vi.fn(),
   };
 });
 
@@ -86,6 +87,10 @@ vi.mock('excalibur', () => {
   };
 });
 
+vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
+  getAnimation: mockGetAnimation,
+}));
+
 const { OrchestratorActor } = await import('../OrchestratorActor.js');
 const { StationAgentActor } = await import('../StationAgentActor.js');
 const { CatwalkStationActor } = await import('../CatwalkStationActor.js');
@@ -97,6 +102,8 @@ const { vec } = await import('excalibur');
 describe('OrchestratorActor', () => {
   beforeEach(() => {
     mockGraphicsUse.mockClear();
+    mockGetAnimation.mockClear();
+    mockGetAnimation.mockReturnValue({ type: 'animation' });
   });
 
   it('sets opacity to 1.0 when working is true', () => {
@@ -137,11 +144,34 @@ describe('OrchestratorActor', () => {
     actor.onPreUpdate(undefined as never, 0);
     expect(actor.graphics.opacity).toBe(0.8);
   });
+
+  it('calls getAnimation with orchestrator type and working state', () => {
+    new OrchestratorActor({ working: true }, vec(0, 0));
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+  });
+
+  it('calls getAnimation with orchestrator type and idle state when not working', () => {
+    new OrchestratorActor({ working: false }, vec(0, 0));
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
+  });
+
+  it('calls graphics.use on updateConfig', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    mockGraphicsUse.mockClear();
+
+    actor.updateConfig({ working: false });
+
+    expect(mockGraphicsUse).toHaveBeenCalled();
+  });
 });
 
 describe('StationAgentActor', () => {
   beforeEach(() => {
     mockGraphicsUse.mockClear();
+    mockGetAnimation.mockClear();
+    mockGetAnimation.mockReturnValue({ type: 'animation' });
   });
 
   it('sets opacity to 0.3 for idle state', () => {
@@ -233,6 +263,18 @@ describe('StationAgentActor', () => {
     actor.animateToState('deactivated');
 
     expect(actor.actions.fade).toHaveBeenCalledWith(0.15, expect.any(Number));
+  });
+
+  it('calls getAnimation with subagent type and the given state', () => {
+    new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('subagent', 'working');
+  });
+
+  it('calls graphics.use with a GraphicsGroup on construction', () => {
+    new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
+
+    expect(mockGraphicsUse).toHaveBeenCalledTimes(1);
   });
 });
 

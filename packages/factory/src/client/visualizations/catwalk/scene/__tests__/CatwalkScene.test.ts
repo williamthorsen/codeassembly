@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus, emptyPhases } from '../../../../../__test-helpers__/fixtures.js';
 
+vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
+  loadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),
+  getAnimation: vi.fn().mockReturnValue({ type: 'animation' }),
+}));
+
 vi.mock('excalibur', () => {
   class MockScene {
     backgroundColor: unknown;
@@ -140,11 +145,11 @@ function hasPosition(value: unknown): value is { position: { x: number; y: numbe
 }
 
 describe('CatwalkScene', () => {
-  it('sets the background color to #111111', () => {
+  it('sets the background color to #1a1a2e', () => {
     const status = createMockRunStatus();
     const scene = new CatwalkScene(status);
 
-    expect(scene.backgroundColor).toEqual(expect.objectContaining({ hex: '#111111' }));
+    expect(scene.backgroundColor).toEqual(expect.objectContaining({ hex: '#1a1a2e' }));
   });
 
   it('builds actors on initialize', () => {
