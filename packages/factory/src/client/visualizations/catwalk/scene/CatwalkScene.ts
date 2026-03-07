@@ -59,7 +59,11 @@ export class CatwalkScene extends Scene {
     this.status = status;
     const nextConfig = mapRunToCatwalk(status);
 
-    if (this.prevConfig !== undefined) {
+    if (this.prevConfig === undefined) {
+      this.clear();
+      this.buildScene();
+      this.fitCamera();
+    } else {
       const diff = diffCatwalkConfig(this.prevConfig, nextConfig);
       if (diff.hasChanges) {
         const layoutEntries = buildLayoutEntries(nextConfig);
@@ -68,10 +72,6 @@ export class CatwalkScene extends Scene {
         this.applyDiff(diff, nextConfig, layout);
       }
       this.prevConfig = nextConfig;
-    } else {
-      this.clear();
-      this.buildScene();
-      this.fitCamera();
     }
   }
 

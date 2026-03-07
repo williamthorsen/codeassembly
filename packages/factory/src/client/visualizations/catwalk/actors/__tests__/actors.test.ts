@@ -134,15 +134,17 @@ describe('OrchestratorActor', () => {
     actor.setWorking(true);
 
     // Simulate onPreUpdate — opacity should differ from static value
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
     expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.6);
-    expect(actor.graphics.opacity).toBeLessThanOrEqual(1.0);
+    expect(actor.graphics.opacity).toBeLessThanOrEqual(1);
   });
 
   it('setWorking(false) disables pulse and sets idle opacity', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
     actor.setWorking(false);
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 0);
     expect(actor.graphics.opacity).toBe(0.8);
   });
@@ -218,15 +220,17 @@ describe('StationAgentActor', () => {
     actor.animateToState('working');
 
     // Simulate onPreUpdate
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
     expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.7);
-    expect(actor.graphics.opacity).toBeLessThanOrEqual(1.0);
+    expect(actor.graphics.opacity).toBeLessThanOrEqual(1);
   });
 
   it('animateToState disables pulse when leaving working', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
     actor.animateToState('resting');
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
     // After leaving working, onPreUpdate should not override opacity
     expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
