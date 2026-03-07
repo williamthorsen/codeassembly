@@ -57,6 +57,9 @@ function frameConfigForState(state: AgentAnimationState): {
       };
     case 'resting':
       return { frameCoordinates: RESTING_FRAME_COORDINATES, duration: RESTING_DURATION, strategy: RESTING_STRATEGY };
+    case 'deactivated':
+      // Deactivated agents reuse the idle animation; opacity is handled by the actor.
+      return { frameCoordinates: IDLE_FRAME_COORDINATES, duration: IDLE_DURATION, strategy: IDLE_STRATEGY };
     default: {
       const _exhaustive: never = state;
       return _exhaustive;
@@ -71,6 +74,7 @@ const ALL_STATES: readonly AgentAnimationState[] = [
   'celebrating',
   'concerned',
   'resting',
+  'deactivated',
 ];
 
 /** Build animation objects for every state from the given sprite sheet. */

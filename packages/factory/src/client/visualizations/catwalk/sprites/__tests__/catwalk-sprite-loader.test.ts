@@ -107,10 +107,10 @@ describe('catwalk-sprite-loader', () => {
       expect(mockSpriteSheetFromImageSource).toHaveBeenCalledTimes(2);
     });
 
-    it('creates animations for all 6 states x 2 sprite types = 12 animations', async () => {
+    it('creates animations for all 7 states x 2 sprite types = 14 animations', async () => {
       await loadAllCatwalkSprites();
 
-      expect(mockAnimationFromCoords).toHaveBeenCalledTimes(12);
+      expect(mockAnimationFromCoords).toHaveBeenCalledTimes(14);
     });
 
     it('resets cache on load failure so subsequent calls can retry', async () => {
