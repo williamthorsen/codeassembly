@@ -94,8 +94,8 @@ function buildAnimationsForSheet(spriteSheet: SpriteSheet): Map<AgentAnimationSt
  * The animation cache is populated before `await`, so `getAnimation()` is safe to call
  * immediately after invoking this function -- matching the `agent-sprite-loader` pattern
  * where `SpriteSheet.fromImageSource` and animation creation are synchronous operations. */
-export function loadAllCatwalkSprites(): Promise<void> {
-  if (animationCache !== undefined) return Promise.resolve();
+export async function loadAllCatwalkSprites(): Promise<void> {
+  if (animationCache !== undefined) return;
 
   const cache = new Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>>();
   const imageSources: ImageSource[] = [];
@@ -122,11 +122,13 @@ export function loadAllCatwalkSprites(): Promise<void> {
   // Concurrent callers are deduplicated by the animationCache check above.
   animationCache = cache;
 
-  return loadImageSources(imageSources).catch((error: unknown) => {
+  try {
+    await Promise.all(imageSources.map((source) => source.load()));
+  } catch (error: unknown) {
     // Reset cache so a subsequent call can retry the load
     animationCache = undefined;
     throw error;
-  });
+  }
 }
 
 /** Return the cached animation for the given sprite type and state. Throws if sprites have not been loaded. */
@@ -146,11 +148,6 @@ export function getAnimation(spriteType: CatwalkSpriteType, state: AgentAnimatio
   }
 
   return animation;
-}
-
-/** Load image data for all image sources. */
-async function loadImageSources(imageSources: ImageSource[]): Promise<void> {
-  await Promise.all(imageSources.map((source) => source.load()));
 }
 
 /** Clear the catwalk sprite cache, allowing sprites to be reloaded. Useful for tests. */

@@ -35,13 +35,6 @@ vi.mock('excalibur', () => {
     }
   }
 
-  class MockCircle {
-    options: Record<string, unknown>;
-    constructor(options: Record<string, unknown>) {
-      this.options = options;
-    }
-  }
-
   class MockRectangle {
     options: Record<string, unknown>;
     constructor(options: Record<string, unknown>) {
@@ -77,7 +70,6 @@ vi.mock('excalibur', () => {
   return {
     Actor: MockActor,
     Color: MockColor,
-    Circle: MockCircle,
     Rectangle: MockRectangle,
     Text: MockText,
     Font: MockFont,
