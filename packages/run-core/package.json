@@ -13,6 +13,11 @@
       "source": "./src/parsers/run-data-parser.ts",
       "import": "./dist/esm/parsers/run-data-parser.js",
       "types": "./src/parsers/run-data-parser.ts"
+    },
+    "./scanners": {
+      "source": "./src/scanners/index.ts",
+      "import": "./dist/esm/scanners/index.js",
+      "types": "./src/scanners/index.ts"
     }
   },
   "main": "./dist/esm/index.js",
