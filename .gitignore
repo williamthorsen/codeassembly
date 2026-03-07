@@ -9,6 +9,9 @@
 .vscode/*
 !.vscode/extensions.json
 
+# Agents
+docs/plans/
+
 # Credentials
 *.pem
 
