@@ -37,6 +37,7 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
           projectRoot: tmpDir,
           branch: 'main',
           task: 'smoke test',
+          baseDir: tmpDir,
         },
       });
 
@@ -47,7 +48,7 @@ describe('stdio transport smoke test', { timeout: 20_000 }, () => {
       const runId = parseAndGetString(result, 'runId');
       expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
       const resultRunDir = parseAndGetString(result, 'runDir');
-      expect(resultRunDir).toContain('.ai/projects/smoke-test/tickets/');
+      expect(resultRunDir).toContain('projects/smoke-test/tickets/');
     } finally {
       await client.close();
     }

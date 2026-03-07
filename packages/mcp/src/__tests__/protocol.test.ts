@@ -89,6 +89,7 @@ describe('full lifecycle via protocol', () => {
         branch: 'feature/protocol',
         task: 'protocol integration test',
         ticketId: 'PROTO-1',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -97,7 +98,7 @@ describe('full lifecycle via protocol', () => {
     const runId = getStringField(initData, 'runId');
     const resultRunDir = getStringField(initData, 'runDir');
     expect(runId).toMatch(/^\d{8}-\d{6}Z$/);
-    expect(resultRunDir).toContain('.ai/projects/protocol-test/tickets/PROTO-1/');
+    expect(resultRunDir).toContain('projects/protocol-test/tickets/PROTO-1/');
 
     // 2. emit phase_started(architecture)
     const phaseStartResult = await client.callTool({
@@ -178,6 +179,7 @@ describe('full lifecycle via protocol', () => {
         branch: 'main',
         task: 'v3 header check',
         ticketId: 'PROTO-2',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -221,6 +223,7 @@ describe('full lifecycle via protocol', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'timestamp check',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -281,6 +284,7 @@ describe('review cycle events - all 13 event types', () => {
         branch: 'feature/review',
         task: 'review cycle test',
         ticketId: 'PROTO-3',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -468,6 +472,7 @@ describe('review cycle events - all 13 event types', () => {
         projectRoot: failedRunDir,
         branch: 'main',
         task: 'failure test',
+        baseDir: failedRunDir,
       },
     });
     expect(isErrorResult(failInitResult)).toBe(false);
@@ -571,6 +576,7 @@ describe('get_run_state at each checkpoint', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'checkpoint test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -599,6 +605,7 @@ describe('get_run_state at each checkpoint', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'checkpoint test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -635,6 +642,7 @@ describe('get_run_state at each checkpoint', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'checkpoint test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -683,6 +691,7 @@ describe('get_run_state at each checkpoint', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'checkpoint test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -721,6 +730,7 @@ describe('error propagation', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'error test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -776,6 +786,7 @@ describe('error propagation', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'failed status test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
@@ -812,6 +823,7 @@ describe('error propagation', () => {
         projectRoot: runDir,
         branch: 'main',
         task: 'artifact optional fields test',
+        baseDir: runDir,
       },
     });
     expect(isErrorResult(initResult)).toBe(false);
