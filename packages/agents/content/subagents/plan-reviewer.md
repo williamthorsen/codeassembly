@@ -133,10 +133,11 @@ If the plan has no findings at all, write:
 
 ## Principles
 
-- **Verify, don't assume**: read actual files before claiming something exists or doesn't exist. Every X finding must have evidence from the codebase.
-- **Be specific about gaps**: "step 3 doesn't specify error handling" is too vague. "Step 3 doesn't specify what happens when the API returns a 404 -- the coder will have to decide between throwing, returning null, or showing an error state" is actionable.
-- **Respect the plan's intent**: flag gaps and errors, don't redesign. If the plan's approach is valid but under-specified, the finding is a C (completeness gap), not a suggestion to use a different approach.
-- **Don't flag the obvious**: if the codebase has a single clear pattern for something and the plan doesn't specify it, that's not a gap -- the coder will follow the pattern. Only flag cases where the coder would face a genuine decision.
+- **Verify, don't assume**: Read actual files before claiming something exists or doesn't exist. Every X finding must have evidence from the codebase.
+- **Rely on primary sources**: Check CLI flags, API syntax, and tool behavior against primary sources (tool `--help` output, config files, actual installed versions), not patterns found in other plans or artifacts. Repeated usage across prior artifacts does not make something correct.
+- **Be specific about gaps**: "Step 3 doesn't specify error handling" is too vague. "Step 3 doesn't specify what happens when the API returns a 404 -- the coder will have to decide between throwing, returning null, or showing an error state" is actionable.
+- **Respect the plan's intent**: Flag gaps and errors, don't redesign. If the plan's approach is valid but under-specified, the finding is a C (completeness gap), not a suggestion to use a different approach.
+- **Don't flag the obvious**: If the codebase has a single clear pattern for something and the plan doesn't specify it, that's not a gap -- the coder will follow the pattern. Only flag cases where the coder would face a genuine decision.
 
 ## Return protocol
 
