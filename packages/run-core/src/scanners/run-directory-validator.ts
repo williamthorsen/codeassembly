@@ -1,7 +1,7 @@
-import type { CanonicalRunStatus } from '../types/canonical.js';
+import { parseRunData } from '../parsers/run-data-parser.js';
 import { RunDataParseError } from '../run-data-parse-error.js';
 import { isEnoent } from '../type-guards.js';
-import { parseRunData } from '../parsers/run-data-parser.js';
+import type { CanonicalRunStatus } from '../types/canonical.js';
 
 export type InvalidRunReason = 'missing run-index.json' | 'missing run-log.jsonl' | 'corrupt JSON' | 'invalid schema';
 

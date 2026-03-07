@@ -25,7 +25,7 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
     const projectPath = join(basePath, slug);
     if (!(await isDirectory(projectPath))) continue;
 
-    const projectEntries = await readdir(projectPath).catch(() => [] as string[]);
+    const projectEntries = await readdir(projectPath).catch(() => emptyStringArray());
     const ticketsDir = projectEntries.includes('tickets');
 
     if (ticketsDir) {
@@ -42,7 +42,7 @@ export async function discoverRunDirectories(basePath: string): Promise<RunDirec
 
 async function scanTicketsDir(ticketsPath: string, slug: string): Promise<RunDirectoryEntry[]> {
   const entries: RunDirectoryEntry[] = [];
-  const ticketDirs = await readdir(ticketsPath).catch(() => [] as string[]);
+  const ticketDirs = await readdir(ticketsPath).catch(() => emptyStringArray());
 
   for (const ticketId of ticketDirs) {
     if (ticketId.startsWith('.')) continue;
@@ -73,7 +73,7 @@ async function scanDirectEntries(
 
 async function scanRunsInTicket(ticketPath: string, slug: string, ticketId: string): Promise<RunDirectoryEntry[]> {
   const entries: RunDirectoryEntry[] = [];
-  const runDirs = await readdir(ticketPath).catch(() => [] as string[]);
+  const runDirs = await readdir(ticketPath).catch(() => emptyStringArray());
 
   for (const runId of runDirs) {
     if (runId.startsWith('.')) continue;
@@ -84,6 +84,10 @@ async function scanRunsInTicket(ticketPath: string, slug: string, ticketId: stri
   }
 
   return entries;
+}
+
+function emptyStringArray(): string[] {
+  return [];
 }
 
 async function isDirectory(path: string): Promise<boolean> {

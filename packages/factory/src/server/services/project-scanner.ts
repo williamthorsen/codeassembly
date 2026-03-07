@@ -1,19 +1,10 @@
-import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import type { RunDataParseErrorCategory } from '@codeassembly/run-core';
-import { RunDataParseError } from '@codeassembly/run-core';
+import { discoverRunDirectories, validateRunDirectory } from '@codeassembly/run-core/scanners';
 
+import { factoryConfig } from '../../config.js';
 import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.js';
-import { parseRunData } from '../adapters/status-adapter.js';
-import { isEnoent } from '../type-guards.js';
-
-const PARSE_ERROR_SUGGESTIONS: Record<RunDataParseErrorCategory, string> = {
-  corrupt_json: 'Check for syntax errors or delete and regenerate the file',
-  invalid_schema: 'The file may be from an incompatible version; delete the run directory to clear it',
-  missing_companion: 'The run may have been interrupted; delete the run directory to clear it',
-};
 
 export class ProjectScanner {
   private basePath: string;
@@ -24,153 +15,60 @@ export class ProjectScanner {
   }
 
   async scan(): Promise<ProjectIndex> {
-    const projects: ProjectInfo[] = [];
+    const entries = await discoverRunDirectories(this.basePath);
 
-    try {
-      const projectDirs = await readdir(this.basePath);
-
-      for (const slug of projectDirs) {
-        if (slug.startsWith('.')) continue;
-
-        const projectPath = join(this.basePath, slug);
-        try {
-          const projectStat = await stat(projectPath);
-          if (!projectStat.isDirectory()) continue;
-
-          const tickets = await this.scanProject(projectPath, slug);
-          if (tickets.length > 0) {
-            projects.push({ slug, tickets });
-          }
-        } catch (error) {
-          console.error(`Error scanning project ${slug}:`, error);
-          continue;
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to scan projects directory ${this.basePath}:`, error);
-    }
-
-    this.index = { projects };
-    return this.index;
-  }
-
-  private async scanProject(projectPath: string, slug: string): Promise<TicketInfo[]> {
-    try {
-      const entries = await readdir(projectPath);
-
-      // Pattern 1: tickets/{ticket-id}/{run-id}
-      // Pattern 2: {ticket-id}/{run-id} (direct entries, no tickets/ directory)
-      // Only one pattern is used per project to avoid duplicate ticket entries.
-      if (entries.includes('tickets')) {
-        return await this.scanTicketsDirectory(projectPath, slug);
-      }
-      return await this.scanDirectEntries(entries, projectPath, slug);
-    } catch (error) {
-      console.error(`Error reading project directory ${slug}:`, error);
-      return [];
-    }
-  }
-
-  private async scanTicketsDirectory(projectPath: string, slug: string): Promise<TicketInfo[]> {
-    const tickets: TicketInfo[] = [];
-    const ticketsPath = join(projectPath, 'tickets');
-
-    try {
-      const ticketDirs = await readdir(ticketsPath);
-
-      for (const ticketId of ticketDirs) {
-        if (ticketId.startsWith('.')) continue;
-        const ticketPath = join(ticketsPath, ticketId);
-        try {
-          const ticketStat = await stat(ticketPath);
-          if (!ticketStat.isDirectory()) continue;
-        } catch (error) {
-          console.debug(`Skipping non-directory ticket entry ${ticketId}:`, error);
-          continue;
-        }
-        const runs = await this.scanTicket(ticketPath, slug, ticketId);
-        if (runs.length > 0) {
-          tickets.push({ ticketId, runs });
-        }
-      }
-    } catch (error) {
-      console.error(`Error scanning tickets directory for ${slug}:`, error);
-    }
-
-    return tickets;
-  }
-
-  private async scanDirectEntries(entries: string[], projectPath: string, slug: string): Promise<TicketInfo[]> {
-    const tickets: TicketInfo[] = [];
+    const projectMap = new Map<string, Map<string, RunInfo[]>>();
 
     for (const entry of entries) {
-      if (entry.startsWith('.')) continue;
-      const entryPath = join(projectPath, entry);
       try {
-        const entryStat = await stat(entryPath);
-        if (!entryStat.isDirectory()) continue;
-
-        const runs = await this.scanTicket(entryPath, slug, entry);
-        if (runs.length > 0) {
-          tickets.push({ ticketId: entry, runs });
+        const result = await validateRunDirectory(entry.runPath);
+        if (!result.valid) {
+          if (factoryConfig.logInvalidRuns) {
+            console.warn(
+              `[project-scanner] Skipping ${entry.projectSlug}/${entry.ticketId}/${entry.runId}: ${result.reason}`,
+            );
+          }
+          continue;
         }
+
+        const run: RunInfo = {
+          runId: entry.runId,
+          path: entry.runPath,
+          status: result.status.status,
+          startedAt: result.status.startedAt,
+          completedAt: result.status.completedAt,
+        };
+
+        let ticketMap = projectMap.get(entry.projectSlug);
+        if (!ticketMap) {
+          ticketMap = new Map<string, RunInfo[]>();
+          projectMap.set(entry.projectSlug, ticketMap);
+        }
+
+        let runs = ticketMap.get(entry.ticketId);
+        if (!runs) {
+          runs = [];
+          ticketMap.set(entry.ticketId, runs);
+        }
+        runs.push(run);
       } catch (error) {
-        console.error(`Error scanning potential ticket directory ${entry} in ${slug}:`, error);
+        console.error(`Error parsing run data for ${entry.projectSlug}/${entry.ticketId}/${entry.runId}:`, error);
         continue;
       }
     }
 
-    return tickets;
-  }
-
-  private async scanTicket(ticketPath: string, slug: string, ticketId: string): Promise<RunInfo[]> {
-    const runs: RunInfo[] = [];
-
-    try {
-      const runDirs = await readdir(ticketPath);
-
-      for (const runId of runDirs) {
-        if (runId.startsWith('.')) continue;
-        if (runId.endsWith('-interactive')) continue;
-        const runPath = join(ticketPath, runId);
-
-        try {
-          const runStat = await stat(runPath);
-          if (!runStat.isDirectory()) continue;
-
-          const status = await parseRunData(runPath);
-          runs.push({
-            runId,
-            path: runPath,
-            status: status.status,
-            startedAt: status.startedAt,
-            completedAt: status.completedAt,
-          });
-        } catch (error) {
-          if (isEnoent(error)) {
-            console.warn(
-              `[project-scanner] Skipping ${slug}/${ticketId}/${runId}: no run-index.json or status.json found — the run directory may be empty or incomplete; delete it to clear this warning`,
-            );
-            continue;
-          }
-          if (error instanceof RunDataParseError) {
-            const suggestion = PARSE_ERROR_SUGGESTIONS[error.category];
-            console.warn(`[project-scanner] Skipping ${slug}/${ticketId}/${runId}: ${error.message} — ${suggestion}`);
-            continue;
-          }
-          // Non-parse errors are truly unexpected (permissions, I/O failures)
-          console.error(`Error parsing run data for ${slug}/${ticketId}/${runId}:`, error);
-          continue;
-        }
+    const projects: ProjectInfo[] = [];
+    for (const [slug, ticketMap] of projectMap) {
+      const tickets: TicketInfo[] = [];
+      for (const [ticketId, runs] of ticketMap) {
+        runs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+        tickets.push({ ticketId, runs });
       }
-    } catch (error) {
-      console.error(`Failed to scan ticket directory ${ticketPath}:`, error);
-      return [];
+      projects.push({ slug, tickets });
     }
 
-    // Sort runs by startedAt descending (most recent first)
-    runs.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
-    return runs;
+    this.index = { projects };
+    return this.index;
   }
 
   getBasePath(): string {
