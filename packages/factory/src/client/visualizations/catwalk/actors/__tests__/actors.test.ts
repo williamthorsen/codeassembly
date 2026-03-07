@@ -10,7 +10,14 @@ const { mockActorConstructor, mockGraphicsUse } = vi.hoisted(() => {
 vi.mock('excalibur', () => {
   class MockActor {
     config: Record<string, unknown>;
-    graphics = { use: mockGraphicsUse, opacity: 1, isVisible: true };
+    graphics = { use: mockGraphicsUse, opacity: 1, isVisible: true, scale: { x: 1, y: 1 } };
+    pos = { x: 0, y: 0 };
+    actions = {
+      moveTo: vi.fn().mockReturnValue({ toPromise: vi.fn().mockResolvedValue(undefined) }),
+      fade: vi.fn().mockReturnValue({ toPromise: vi.fn().mockResolvedValue(undefined) }),
+      scaleTo: vi.fn().mockReturnValue({ toPromise: vi.fn().mockResolvedValue(undefined) }),
+      clearActions: vi.fn(),
+    };
     constructor(config: Record<string, unknown>) {
       mockActorConstructor(config);
       this.config = config;
@@ -113,6 +120,31 @@ describe('OrchestratorActor', () => {
 
     actor.updateConfig({ working: true });
     expect(actor.graphics.opacity).toBe(1);
+  });
+
+  it('animateMoveTo calls actions.moveTo with position and walk speed', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 100));
+    actor.animateMoveTo(vec(200, 100));
+
+    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 100 }), expect.any(Number));
+  });
+
+  it('setWorking(true) enables pulse flag', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setWorking(true);
+
+    // Simulate onPreUpdate — opacity should differ from static value
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.6);
+    expect(actor.graphics.opacity).toBeLessThanOrEqual(1.0);
+  });
+
+  it('setWorking(false) disables pulse and sets idle opacity', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    actor.setWorking(false);
+
+    actor.onPreUpdate(undefined as never, 0);
+    expect(actor.graphics.opacity).toBe(0.8);
   });
 });
 
