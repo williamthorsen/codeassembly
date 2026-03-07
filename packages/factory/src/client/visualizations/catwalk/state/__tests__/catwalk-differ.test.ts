@@ -158,6 +158,14 @@ describe('diffAgents', () => {
     expect(diff.removed[0]?.id).toBe('reviewer-0');
   });
 
+  it('returns empty arrays when both inputs are empty', () => {
+    const diff = diffAgents([], []);
+
+    expect(diff.stateChanged).toEqual([]);
+    expect(diff.added).toEqual([]);
+    expect(diff.removed).toEqual([]);
+  });
+
   it('ignores slotIndex changes when state is unchanged', () => {
     const prev = [agent('reviewer-0', { slotIndex: 0, state: 'working' })];
     const next = [agent('reviewer-0', { slotIndex: 1, state: 'working' })];
@@ -344,6 +352,24 @@ describe('diffCatwalkConfig', () => {
 
     expect(diff.hasChanges).toBe(true);
     expect(diff.agents.stateChanged).toHaveLength(1);
+  });
+
+  it('returns hasChanges true when an agent is added', () => {
+    const prev = sceneConfig();
+    const next = sceneConfig({ agents: [agent('arch'), agent('reviewer-0', { stationIndex: 3 })] });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.agents.added).toHaveLength(1);
+  });
+
+  it('returns hasChanges true when an agent is removed', () => {
+    const prev = sceneConfig({ agents: [agent('arch'), agent('reviewer-0', { stationIndex: 3 })] });
+    const next = sceneConfig();
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.agents.removed).toHaveLength(1);
   });
 
   it('returns hasChanges true when a gate opens', () => {
