@@ -205,6 +205,47 @@ describe('StationAgentActor', () => {
     actor.updateConfig({ id: 'a', role: 'arch', color: '#5555FF', state: 'resting' });
     expect(actor.graphics.opacity).toBe(0.6);
   });
+
+  it('animateToState fades to target opacity via actions.fade', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
+    actor.animateToState('resting');
+
+    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+  });
+
+  it('animateToState enables pulse when transitioning to working', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
+    actor.animateToState('working');
+
+    // Simulate onPreUpdate
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.7);
+    expect(actor.graphics.opacity).toBeLessThanOrEqual(1.0);
+  });
+
+  it('animateToState disables pulse when leaving working', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
+    actor.animateToState('resting');
+
+    actor.onPreUpdate(undefined as never, 500);
+    // After leaving working, onPreUpdate should not override opacity
+    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+  });
+
+  it('fadeIn sets opacity to 0 then fades to state-appropriate opacity', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'resting' }, vec(0, 0));
+    actor.fadeIn();
+
+    // Opacity should be set to 0 first, then fade called
+    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+  });
+
+  it('animateToState to deactivated fades to DEACTIVATED_OPACITY', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
+    actor.animateToState('deactivated');
+
+    expect(actor.actions.fade).toHaveBeenCalledWith(0.15, expect.any(Number));
+  });
 });
 
 describe('CatwalkStationActor', () => {

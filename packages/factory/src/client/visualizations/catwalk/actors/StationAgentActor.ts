@@ -1,7 +1,8 @@
 import { Actor, BaseAlign, Circle, Color, Font, GraphicsGroup, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import { DEACTIVATED_OPACITY } from '../constants/animation.js';
+import { AGENT_PULSE_MAX, AGENT_PULSE_MIN, DEACTIVATED_OPACITY, PULSE_FREQUENCY } from '../constants/animation.js';
 import { AGENT_RADIUS } from '../constants/dimensions.js';
+import { PAUSE_DURATION } from '../constants/timing.js';
 import type { AgentAnimationState } from '../types.js';
 
 export interface StationAgentActorConfig {
@@ -34,8 +35,14 @@ function opacityForState(state: AgentAnimationState): number {
 
 /** Renders a station-bound agent as a colored circle with a role label, dimmed by animation state. */
 export class StationAgentActor extends Actor {
+  private _state: AgentAnimationState;
+  private _pulsing = false;
+  private _elapsed = 0;
+
   constructor(config: StationAgentActorConfig, position: Vector) {
     super({ pos: position });
+    this._state = config.state;
+    this._pulsing = config.state === 'working';
 
     const circle = new Circle({
       radius: AGENT_RADIUS,
@@ -67,6 +74,31 @@ export class StationAgentActor extends Actor {
   }
 
   updateConfig(config: StationAgentActorConfig): void {
+    this._state = config.state;
+    this._pulsing = config.state === 'working';
     this.graphics.opacity = opacityForState(config.state);
+  }
+
+  /** Animate a transition to a new state with opacity fade and optional pulse. */
+  animateToState(state: AgentAnimationState): void {
+    this._state = state;
+    this._pulsing = state === 'working';
+    if (!this._pulsing) {
+      this._elapsed = 0;
+      this.actions.fade(opacityForState(state), PAUSE_DURATION);
+    }
+  }
+
+  /** Fade in from invisible to state-appropriate opacity. */
+  fadeIn(): void {
+    this.graphics.opacity = 0;
+    this.actions.fade(opacityForState(this._state), PAUSE_DURATION);
+  }
+
+  override onPreUpdate(_engine: unknown, deltaMs: number): void {
+    if (!this._pulsing) return;
+    this._elapsed += deltaMs;
+    const t = Math.sin((this._elapsed * PULSE_FREQUENCY * Math.PI * 2) / 1000);
+    this.graphics.opacity = AGENT_PULSE_MIN + ((AGENT_PULSE_MAX - AGENT_PULSE_MIN) * (t + 1)) / 2;
   }
 }
