@@ -157,6 +157,12 @@ describe('StationAgentActor', () => {
     expect(actor.graphics.opacity).toBe(1);
   });
 
+  it('sets opacity to DEACTIVATED_OPACITY for deactivated state', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'deactivated' }, vec(0, 0));
+
+    expect(actor.graphics.opacity).toBe(0.15);
+  });
+
   it('updateConfig toggles opacity by state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
     expect(actor.graphics.opacity).toBe(0.3);

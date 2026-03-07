@@ -17,6 +17,8 @@ function opacityForState(state: AgentAnimationState): number {
       return 0.3;
     case 'resting':
       return 0.6;
+    case 'deactivated':
+      return 0.15;
     case 'working':
     case 'walking':
     case 'celebrating':
