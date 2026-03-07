@@ -314,6 +314,13 @@ describe('ArtifactActor', () => {
 
     expect(() => actor.updateConfig({ label: 'updated', color: '#FF0000' })).not.toThrow();
   });
+
+  it('fadeIn sets opacity to 0 then calls actions.fade to 1', () => {
+    const actor = new ArtifactActor({ label: 'plan', color: '#AAFFAA' }, vec(0, 0));
+    actor.fadeIn();
+
+    expect(actor.actions.fade).toHaveBeenCalledWith(1, expect.any(Number));
+  });
 });
 
 describe('GateActor', () => {

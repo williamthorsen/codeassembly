@@ -1,12 +1,14 @@
 import { Actor, BaseAlign, Color, Font, GraphicsGroup, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
 import { ART_H, ART_W } from '../constants/dimensions.js';
+import { PAUSE_DURATION } from '../constants/timing.js';
 
 export interface ArtifactActorConfig {
   label: string;
   color: string;
 }
 
+/** Renders an artifact as a small colored rectangle with a label, supporting fade-in animation. */
 export class ArtifactActor extends Actor {
   constructor(config: ArtifactActorConfig, position: Vector) {
     super({ pos: position });
@@ -48,5 +50,11 @@ export class ArtifactActor extends Actor {
    */
   updateConfig(_config: ArtifactActorConfig): void {
     // Intentionally empty.
+  }
+
+  /** Fade in from invisible. */
+  fadeIn(): void {
+    this.graphics.opacity = 0;
+    this.actions.fade(1, PAUSE_DURATION);
   }
 }
