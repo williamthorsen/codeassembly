@@ -21,6 +21,9 @@
     }
   },
   "main": "./dist/esm/index.js",
+  "bin": {
+    "codeassembly-runs": "dist/esm/cli.js"
+  },
   "scripts": {
     "build": "pnpm run ws compile",
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
