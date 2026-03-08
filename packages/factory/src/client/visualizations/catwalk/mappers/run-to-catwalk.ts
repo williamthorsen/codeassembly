@@ -220,13 +220,7 @@ function buildCarriedArtifacts(
   // Find the most recent output artifacts from previous stations
   // Scan stations in reverse from the orchestrator's current position
   for (let i = stationIndex - 1; i >= 0; i--) {
-    const phase = PHASE_NAMES[i];
-    if (phase === undefined) continue;
-
-    const stationArtifacts = status.artifacts.filter((a) => {
-      const idx = PHASE_TO_STATION[a.phase];
-      return idx === i;
-    });
+    const stationArtifacts = status.artifacts.filter((a) => PHASE_TO_STATION[a.phase] === i);
 
     if (stationArtifacts.length > 0) {
       return stationArtifacts.map((a) => ({

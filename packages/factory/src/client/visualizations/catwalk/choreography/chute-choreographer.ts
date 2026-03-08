@@ -5,7 +5,7 @@ import { FlyingArtifactActor } from '../actors/FlyingArtifactActor.js';
 import type { GateActor } from '../actors/GateActor.js';
 import type { OrchestratorActor } from '../actors/OrchestratorActor.js';
 import type { StationAgentActor } from '../actors/StationAgentActor.js';
-import type { CatwalkLayoutResult, ChuteEndpoints } from '../layout/catwalk-layout.js';
+import type { CatwalkLayoutResult } from '../layout/catwalk-layout.js';
 import type { CatwalkDiff, StationArtifactConfig } from '../types.js';
 
 /** Callbacks that the scene provides so the choreographer can spawn temporary actors and add artifacts. */
@@ -23,9 +23,10 @@ export interface SceneRefs {
  * ascend -> pick up -> walk -> descend. Otherwise falls back to immediate application.
  */
 export async function choreograph(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): Promise<void> {
-  const isDelivery = diff.orchestrator.moved !== null && diff.artifacts.added.length > 0;
+  const isDelivery =
+    diff.orchestrator.moved !== null && diff.artifacts.added.length > 0 && refs.orchestrator !== undefined;
 
-  if (isDelivery && refs.orchestrator !== undefined && diff.orchestrator.moved !== null) {
+  if (isDelivery) {
     await choreographDelivery(diff, layout, refs);
   } else {
     applyImmediate(diff, layout, refs);
@@ -61,7 +62,8 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   // Step 1: Ascend -- flying artifacts rise up the origin chute
   const ascendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    const endpoints = findStationChuteEndpoints(originStation, layout);
+    // slot 0, agentCount 1 = center of station
+    const endpoints = layout.chuteEndpoints(originStation, 0, 1);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'ascend');
     refs.addActor(flyer);
     ascendPromises.push(flyer.ascend().catch(noop));
@@ -80,7 +82,8 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   // Step 4: Descend -- flying artifacts drop down the origin chute (where the artifact lands)
   const descendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    const endpoints = findStationChuteEndpoints(originStation, layout);
+    // slot 0, agentCount 1 = center of station
+    const endpoints = layout.chuteEndpoints(originStation, 0, 1);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
     descendPromises.push(flyer.descend().catch(noop));
@@ -157,11 +160,6 @@ function applyGateChanges(diff: CatwalkDiff, refs: SceneRefs): void {
       actor.animateOpen();
     }
   }
-}
-
-/** Compute chute endpoints for the center of a station (slot 0, agent count 1). */
-function findStationChuteEndpoints(stationIndex: number, layout: CatwalkLayoutResult): ChuteEndpoints {
-  return layout.chuteEndpoints(stationIndex, 0, 1);
 }
 
 /** No-op catch handler for actor animation promises that may reject if the actor is killed mid-animation. */
