@@ -6,7 +6,7 @@ import type { GateActor } from '../actors/GateActor.js';
 import type { OrchestratorActor } from '../actors/OrchestratorActor.js';
 import type { StationAgentActor } from '../actors/StationAgentActor.js';
 import type { CatwalkLayoutResult, ChuteEndpoints } from '../layout/catwalk-layout.js';
-import type { CatwalkDiff, CatwalkSceneConfig, StationArtifactConfig } from '../types.js';
+import type { CatwalkDiff, StationArtifactConfig } from '../types.js';
 
 /** Callbacks that the scene provides so the choreographer can spawn temporary actors and add artifacts. */
 export interface SceneRefs {
@@ -22,28 +22,18 @@ export interface SceneRefs {
  * When the orchestrator moves AND new artifacts are present, choreographs a delivery sequence:
  * ascend -> pick up -> walk -> descend. Otherwise falls back to immediate application.
  */
-export async function choreograph(
-  diff: CatwalkDiff,
-  config: CatwalkSceneConfig,
-  layout: CatwalkLayoutResult,
-  refs: SceneRefs,
-): Promise<void> {
+export async function choreograph(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): Promise<void> {
   const isDelivery = diff.orchestrator.moved !== null && diff.artifacts.added.length > 0;
 
   if (isDelivery && refs.orchestrator !== undefined && diff.orchestrator.moved !== null) {
-    await choreographDelivery(diff, config, layout, refs);
+    await choreographDelivery(diff, layout, refs);
   } else {
     applyImmediate(diff, layout, refs);
   }
 }
 
 /** Execute the sequenced delivery animation: ascend -> pick up -> walk -> descend -> land. */
-async function choreographDelivery(
-  diff: CatwalkDiff,
-  _config: CatwalkSceneConfig,
-  layout: CatwalkLayoutResult,
-  refs: SceneRefs,
-): Promise<void> {
+async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): Promise<void> {
   const orchestrator = refs.orchestrator;
   if (orchestrator === undefined || diff.orchestrator.moved === null) return;
 
@@ -55,21 +45,17 @@ async function choreographDelivery(
   const originArtifacts = diff.artifacts.added.filter((a) => a.stationIndex === originStation);
   const otherArtifacts = diff.artifacts.added.filter((a) => a.stationIndex !== originStation);
 
-  // Apply non-delivery changes immediately (agent states, gates, non-origin artifacts)
+  // Apply non-delivery changes immediately (agent states, gates, badge, working, non-origin artifacts)
   applyAgentChanges(diff, refs);
   applyGateChanges(diff, refs);
-  for (const artifact of otherArtifacts) {
-    refs.addArtifact(artifact, layout);
-  }
-
-  // Apply code badge immediately
   if (diff.orchestrator.codeBadgeChanged !== null) {
     orchestrator.setCodeBadge(diff.orchestrator.codeBadgeChanged.to);
   }
-
-  // Apply working state immediately
   if (diff.orchestrator.workingChanged !== null) {
     orchestrator.setWorking(diff.orchestrator.workingChanged.to);
+  }
+  for (const artifact of otherArtifacts) {
+    refs.addArtifact(artifact, layout);
   }
 
   // Step 1: Ascend -- flying artifacts rise up the origin chute
@@ -91,10 +77,10 @@ async function choreographDelivery(
   const destPos = layout.orchestratorPosition(destStation);
   await orchestrator.animateMoveTo(vec(destPos.x, destPos.y)).catch(noop);
 
-  // Step 4: Descend -- flying artifacts drop down the destination chute
+  // Step 4: Descend -- flying artifacts drop down the origin chute (where the artifact lands)
   const descendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    const endpoints = findStationChuteEndpoints(destStation, layout);
+    const endpoints = findStationChuteEndpoints(originStation, layout);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
     descendPromises.push(flyer.descend().catch(noop));

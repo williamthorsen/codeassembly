@@ -98,7 +98,7 @@ export class CatwalkScene extends Scene {
     const refs = this.buildSceneRefs();
     this.choreographyInProgress = true;
 
-    choreograph(diff, config, layout, refs)
+    choreograph(diff, layout, refs)
       .then(() => {
         this.choreographyInProgress = false;
         this.fitCamera();
@@ -111,9 +111,16 @@ export class CatwalkScene extends Scene {
         }
         return;
       })
-      .catch(() => {
-        // Guard against errors during choreography
+      .catch((error: unknown) => {
+        console.error('Choreography error:', error);
         this.choreographyInProgress = false;
+
+        // Apply any buffered diff so the scene does not get stuck
+        if (this.pendingDiff !== undefined) {
+          const pending = this.pendingDiff;
+          this.pendingDiff = undefined;
+          this.applyDiff(pending.diff, pending.config, pending.layout);
+        }
       });
   }
 
@@ -268,6 +275,8 @@ export class CatwalkScene extends Scene {
 
     const pos = layout.orchestratorPosition(config.orchestrator.stationIndex);
     const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
+    orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
+    orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
     this.add(orchestratorActor);
     this.orchestratorRef = orchestratorActor;
   }

@@ -216,9 +216,12 @@ describe('OrchestratorActor', () => {
 
     actor.setCarriedArtifacts([]);
 
-    // The child should have been killed (kill is a vi.fn on the mock)
+    // The child should have been killed
     expect(addedChild).toBeDefined();
     expect(addedChild).toHaveProperty('kill');
+    if (addedChild !== undefined && 'kill' in addedChild) {
+      expect(addedChild.kill).toHaveBeenCalled();
+    }
   });
 
   it('setCarriedArtifacts creates one trailing child per artifact', () => {
@@ -241,9 +244,12 @@ describe('OrchestratorActor', () => {
       { label: 'review', color: '#ffc9c9' },
     ]);
 
-    // First child should have kill as a function (mock verification)
+    // First child should have been killed before adding new ones
     expect(firstChild).toBeDefined();
     expect(firstChild).toHaveProperty('kill');
+    if (firstChild !== undefined && 'kill' in firstChild) {
+      expect(firstChild.kill).toHaveBeenCalled();
+    }
   });
 
   it('setCodeBadge(null) kills the badge child', () => {
@@ -253,9 +259,12 @@ describe('OrchestratorActor', () => {
 
     actor.setCodeBadge(null);
 
-    // The badge child should have kill as a function (mock verification)
+    // The badge child should have been killed
     expect(badgeChild).toBeDefined();
     expect(badgeChild).toHaveProperty('kill');
+    if (badgeChild !== undefined && 'kill' in badgeChild) {
+      expect(badgeChild.kill).toHaveBeenCalled();
+    }
   });
 
   it('setCodeBadge with config adds a badge child', () => {
@@ -272,9 +281,12 @@ describe('OrchestratorActor', () => {
 
     actor.setCodeBadge({ label: 'v3', color: '#ff6600' });
 
-    // First badge should have kill as a function (mock verification)
+    // First badge should have been killed before adding new one
     expect(firstBadge).toBeDefined();
     expect(firstBadge).toHaveProperty('kill');
+    if (firstBadge !== undefined && 'kill' in firstBadge) {
+      expect(firstBadge.kill).toHaveBeenCalled();
+    }
   });
 });
 

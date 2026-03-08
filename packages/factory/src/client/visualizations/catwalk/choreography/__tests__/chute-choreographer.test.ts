@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { CatwalkLayoutResult, ChuteEndpoints, Position } from '../../layout/catwalk-layout.js';
-import type { CatwalkDiff, CatwalkSceneConfig, OrchestratorDiff, StationArtifactConfig } from '../../types.js';
+import type { CatwalkDiff, OrchestratorDiff, StationArtifactConfig } from '../../types.js';
 import type { SceneRefs } from '../chute-choreographer.js';
 
 vi.mock('excalibur', () => {
@@ -105,21 +105,6 @@ function catwalkDiff(overrides: Partial<CatwalkDiff> = {}): CatwalkDiff {
   };
 }
 
-/** Create a minimal CatwalkSceneConfig. */
-function sceneConfig(): CatwalkSceneConfig {
-  return {
-    orchestrator: { stationIndex: 0, working: false, carriedArtifacts: [], codeBadge: null },
-    stations: [
-      { phase: 'architecture', label: 'Arch', color: '#aaa', absent: false, skipped: false },
-      { phase: 'planning', label: 'Plan', color: '#bbb', absent: false, skipped: false },
-      { phase: 'implementation', label: 'Code', color: '#ccc', absent: false, skipped: false },
-    ],
-    agents: [],
-    gates: [],
-    artifacts: [],
-  };
-}
-
 /** Create a mock layout that returns predictable positions. */
 function mockLayout(): CatwalkLayoutResult {
   const stationPositions = [100, 300, 500];
@@ -191,7 +176,7 @@ describe('choreograph', () => {
       const refs = mockRefs();
       const layout = mockLayout();
 
-      await choreograph(diff, sceneConfig(), layout, refs);
+      await choreograph(diff, layout, refs);
 
       expect(refs.orchestrator?.animateMoveTo).toHaveBeenCalled();
     });
@@ -202,7 +187,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(refs.orchestrator?.setWorking).toHaveBeenCalledWith(true);
     });
@@ -214,7 +199,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(refs.orchestrator?.setCarriedArtifacts).toHaveBeenCalledWith(carried);
     });
@@ -226,7 +211,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(refs.orchestrator?.setCodeBadge).toHaveBeenCalledWith(badge);
     });
@@ -244,7 +229,7 @@ describe('choreograph', () => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test mock
       const refs = mockRefs({ agents: agents as unknown as SceneRefs['agents'] });
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(mockAgent.animateToState).toHaveBeenCalledWith('resting');
     });
@@ -258,7 +243,7 @@ describe('choreograph', () => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test mock
       const refs = mockRefs({ gates: gates as unknown as SceneRefs['gates'] });
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(mockGate.animateOpen).toHaveBeenCalled();
     });
@@ -275,7 +260,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(refs.addedArtifacts).toHaveLength(1);
       expect(refs.addedArtifacts[0]).toBe(artifact);
@@ -296,7 +281,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       // Two flying actors should have been added: one ascend + one descend
       expect(refs.addedActors.length).toBe(2);
@@ -313,7 +298,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       // setCarriedArtifacts should be called twice: once to pick up, once to clear
       expect(refs.orchestrator?.setCarriedArtifacts).toHaveBeenCalledTimes(2);
@@ -328,7 +313,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       expect(refs.orchestrator?.animateMoveTo).toHaveBeenCalled();
     });
@@ -346,7 +331,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       // The origin artifact should be added as a landed artifact
       expect(refs.addedArtifacts).toContain(artifact);
@@ -371,11 +356,119 @@ describe('choreograph', () => {
       });
       const refs = mockRefs();
 
-      await choreograph(diff, sceneConfig(), mockLayout(), refs);
+      await choreograph(diff, mockLayout(), refs);
 
       // Both artifacts should end up in addedArtifacts
       expect(refs.addedArtifacts).toContain(originArtifact);
       expect(refs.addedArtifacts).toContain(otherArtifact);
+    });
+
+    it('clears carried artifacts unconditionally at step 5 even when carriedChanged is null', async () => {
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({
+          moved: { from: 0, to: 1 },
+          carriedChanged: null,
+        }),
+        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+      const refs = mockRefs();
+
+      await choreograph(diff, mockLayout(), refs);
+
+      // Even without a carriedChanged diff, step 5 should unconditionally clear
+      expect(refs.orchestrator?.setCarriedArtifacts).toHaveBeenCalledTimes(1);
+      expect(refs.orchestrator?.setCarriedArtifacts).toHaveBeenCalledWith([]);
+    });
+
+    it('sequences ascend before walk and walk before descend', async () => {
+      const callLog: string[] = [];
+
+      // Helper to flush all microtasks
+      async function flushMicrotasks(): Promise<void> {
+        for (let i = 0; i < 10; i++) {
+          await Promise.resolve();
+        }
+      }
+
+      // Create deferred promises so we can control resolution order
+      let resolveAscend: (() => void) | undefined;
+      const ascendPromise = new Promise<void>((resolve) => {
+        resolveAscend = resolve;
+      });
+      let resolveWalk: (() => void) | undefined;
+      const walkPromise = new Promise<void>((resolve) => {
+        resolveWalk = resolve;
+      });
+
+      const orchestrator = {
+        animateMoveTo: vi.fn().mockImplementation(async () => {
+          callLog.push('walk-start');
+          await walkPromise;
+          callLog.push('walk-end');
+        }),
+        setWorking: vi.fn(),
+        setCarriedArtifacts: vi.fn(),
+        setCodeBadge: vi.fn(),
+      };
+
+      const addedActors: unknown[] = [];
+      const refs = mockRefs({
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Test mock matches OrchestratorActor interface
+        orchestrator: orchestrator as unknown as SceneRefs['orchestrator'],
+        addActor: (actor: unknown) => {
+          addedActors.push(actor);
+          // Patch the flying actor's ascend/descend to use our deferred promises.
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Accessing mock FlyingArtifactActor methods
+          const flyingActor = actor as Record<string, unknown>;
+          if (typeof flyingActor.ascend === 'function') {
+            flyingActor.ascend = async () => {
+              callLog.push('ascend-start');
+              await ascendPromise;
+              callLog.push('ascend-end');
+            };
+          }
+          if (typeof flyingActor.descend === 'function') {
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Accessing mock FlyingArtifactActor methods
+            const originalDescend = flyingActor.descend as () => Promise<void>;
+            flyingActor.descend = async () => {
+              callLog.push('descend-start');
+              await originalDescend.call(flyingActor);
+              callLog.push('descend-end');
+            };
+          }
+        },
+      });
+
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+
+      const choreographPromise = choreograph(diff, mockLayout(), refs);
+
+      // Let microtasks settle -- ascend should have started but walk should not yet
+      await flushMicrotasks();
+      expect(callLog).toContain('ascend-start');
+      expect(callLog).not.toContain('walk-start');
+
+      // Resolve ascend
+      if (resolveAscend !== undefined) resolveAscend();
+      await flushMicrotasks();
+
+      // Walk should now have started but descend should not yet
+      expect(callLog).toContain('walk-start');
+      expect(callLog).not.toContain('descend-start');
+
+      // Resolve walk
+      if (resolveWalk !== undefined) resolveWalk();
+      await choreographPromise;
+
+      // All steps should have completed in order
+      const ascendStartIdx = callLog.indexOf('ascend-start');
+      const walkStartIdx = callLog.indexOf('walk-start');
+      const descendStartIdx = callLog.indexOf('descend-start');
+      expect(ascendStartIdx).toBeLessThan(walkStartIdx);
+      expect(walkStartIdx).toBeLessThan(descendStartIdx);
     });
   });
 
@@ -386,7 +479,7 @@ describe('choreograph', () => {
       });
       const refs = mockRefs({ orchestrator: undefined });
 
-      await expect(choreograph(diff, sceneConfig(), mockLayout(), refs)).resolves.toBeUndefined();
+      await expect(choreograph(diff, mockLayout(), refs)).resolves.toBeUndefined();
     });
   });
 });
