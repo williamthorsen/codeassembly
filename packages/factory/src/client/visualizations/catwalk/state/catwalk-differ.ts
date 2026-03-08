@@ -12,13 +12,22 @@ import type {
   StationArtifactConfig,
 } from '../types.js';
 
-/** Compare two orchestrator configs and return position/working changes. */
+/** Compare two orchestrator configs and return position/working/carried/badge changes. */
 export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorConfig): OrchestratorDiff {
   const moved = prev.stationIndex === next.stationIndex ? null : { from: prev.stationIndex, to: next.stationIndex };
 
   const workingChanged = prev.working === next.working ? null : { from: prev.working, to: next.working };
 
-  return { moved, workingChanged };
+  const prevCarried = JSON.stringify(prev.carriedArtifacts);
+  const nextCarried = JSON.stringify(next.carriedArtifacts);
+  const carriedChanged =
+    prevCarried === nextCarried ? null : { from: prev.carriedArtifacts, to: next.carriedArtifacts };
+
+  const prevBadge = prev.codeBadge === null ? null : `${prev.codeBadge.label}:${prev.codeBadge.color}`;
+  const nextBadge = next.codeBadge === null ? null : `${next.codeBadge.label}:${next.codeBadge.color}`;
+  const codeBadgeChanged = prevBadge === nextBadge ? null : { from: prev.codeBadge, to: next.codeBadge };
+
+  return { moved, workingChanged, carriedChanged, codeBadgeChanged };
 }
 
 /** Compare two agent arrays by id, detecting state changes, additions, and removals. */
@@ -87,6 +96,8 @@ export function diffCatwalkConfig(prev: CatwalkSceneConfig, next: CatwalkSceneCo
   const hasChanges =
     orchestrator.moved !== null ||
     orchestrator.workingChanged !== null ||
+    orchestrator.carriedChanged !== null ||
+    orchestrator.codeBadgeChanged !== null ||
     agents.stateChanged.length > 0 ||
     agents.added.length > 0 ||
     agents.removed.length > 0 ||
