@@ -145,6 +145,95 @@ describe('parseRunLogLine', () => {
     });
   });
 
+  it('parses reviewer_completed with optional usage metrics', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:05:00Z',
+      event: 'reviewer_completed',
+      reviewer: 'code-reviewer',
+      status: 'completed',
+      criticality: 'low',
+      tokens: 45000,
+      toolUses: 12,
+      durationMs: 30000,
+    });
+    const result = parseRunLogLine(line);
+    expect(result).toMatchObject({
+      event: 'reviewer_completed',
+      tokens: 45000,
+      toolUses: 12,
+      durationMs: 30000,
+    });
+  });
+
+  it('parses reviewer_completed without usage metrics (backward compatible)', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:05:00Z',
+      event: 'reviewer_completed',
+      reviewer: 'code-reviewer',
+      status: 'completed',
+      criticality: 'low',
+    });
+    const result = parseRunLogLine(line);
+    expect(result.event).toBe('reviewer_completed');
+    if (result.event === 'reviewer_completed') {
+      expect(result.tokens).toBeUndefined();
+    }
+  });
+
+  it('parses coder_fix_completed with optional usage metrics', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:07:00Z',
+      event: 'coder_fix_completed',
+      iteration: 1,
+      tokens: 80000,
+      toolUses: 25,
+      durationMs: 120000,
+    });
+    const result = parseRunLogLine(line);
+    expect(result).toMatchObject({
+      event: 'coder_fix_completed',
+      tokens: 80000,
+      toolUses: 25,
+      durationMs: 120000,
+    });
+  });
+
+  it('parses re_review_completed with optional usage metrics', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:09:00Z',
+      event: 're_review_completed',
+      criticalities: { 'code-reviewer': 'none' },
+      tokens: 29000,
+      toolUses: 8,
+      durationMs: 25000,
+    });
+    const result = parseRunLogLine(line);
+    expect(result).toMatchObject({
+      event: 're_review_completed',
+      tokens: 29000,
+    });
+  });
+
+  it('parses phase_completed with optional usage metrics', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:02:00Z',
+      event: 'phase_completed',
+      phase: 'implementation',
+      status: 'completed',
+      data: { qualityGates: 'passed' },
+      tokens: 150000,
+      toolUses: 40,
+      durationMs: 300000,
+    });
+    const result = parseRunLogLine(line);
+    expect(result).toMatchObject({
+      event: 'phase_completed',
+      tokens: 150000,
+      toolUses: 40,
+      durationMs: 300000,
+    });
+  });
+
   it('throws on invalid JSON', () => {
     expect(() => parseRunLogLine('not json!')).toThrow();
   });
