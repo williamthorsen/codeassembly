@@ -69,23 +69,27 @@ Invalid model names (e.g., `gpt4`) are rejected by the Task tool at dispatch tim
 | `default`           | `sonnet` |
 | `coder`             | `opus`   |
 | `holistic_reviewer` | `opus`   |
+| `savings_analyzer`  | `haiku`  |
 
 #### Available keys
 
-| Key                              | Maps to                                          |
-| -------------------------------- | ------------------------------------------------ |
-| `default`                        | All agents unless a specific key overrides       |
-| `architect`                      | orchestrated-architect (Phase 1)                 |
-| `planner`                        | orchestrated-planner (Phase 2)                   |
-| `coder`                          | orchestrated-coder (all invocations, all phases) |
-| `reviewer`                       | orchestrated-reviewer core (Phase 4)             |
-| `aspect_code_reviewer`           | aspect-code-reviewer (Phase 4)                   |
-| `aspect_silent_failure_reviewer` | aspect-silent-failure-reviewer (Phase 4)         |
-| `aspect_test_reviewer`           | aspect-test-reviewer (Phase 4)                   |
-| `code_simplifier`                | code-simplifier (Phase 4a)                       |
-| `holistic_reviewer`              | orchestrated-reviewer holistic (Phase 4b)        |
+| Key                              | Maps to                                           |
+| -------------------------------- | ------------------------------------------------- |
+| `default`                        | All agents unless a specific key overrides        |
+| `architect`                      | orchestrated-architect (Phase 1)                  |
+| `planner`                        | orchestrated-planner (Phase 2)                    |
+| `coder`                          | orchestrated-coder (all invocations, all phases)  |
+| `reviewer`                       | orchestrated-reviewer core (Phase 4)              |
+| `aspect_code_reviewer`           | aspect-code-reviewer (Phase 4)                    |
+| `aspect_silent_failure_reviewer` | aspect-silent-failure-reviewer (Phase 4)          |
+| `aspect_test_reviewer`           | aspect-test-reviewer (Phase 4)                    |
+| `code_simplifier`                | code-simplifier (Phase 4a)                        |
+| `holistic_reviewer`              | orchestrated-reviewer holistic (Phase 4b)         |
+| `savings_analyzer`               | savings-analyzer (Phase 5, parallel with summary) |
 
 > **Note:** The `coder` engine default ensures it never falls back to the `default` key. This is intentional — the coder runs in Phases 3, 4, 4a, and 4b, and its model must be consistent across all invocations. To change the coder's model, override the `coder` key explicitly (e.g., `--models=coder:sonnet`); setting `default` alone does not affect it.
+>
+> The `savings_analyzer` engine default (`haiku`) also ignores the `default` key. This is intentional — the savings analyzer is a cost-optimization tool and should always run on the lowest-cost model. To change its model, override the `savings_analyzer` key explicitly (e.g., `--models=savings_analyzer:sonnet`); setting `default` alone does not affect it.
 
 #### Example preferences
 
@@ -100,7 +104,7 @@ orchestration:
     holistic_reviewer: opus
 ```
 
-Keys with engine defaults (`coder`, `holistic_reviewer`) ignore `default` — override them explicitly to change their models.
+Keys with engine defaults (`coder`, `holistic_reviewer`, `savings_analyzer`) ignore `default` — override them explicitly to change their models.
 
 ### Resolving MCP policy
 
@@ -455,6 +459,15 @@ Use `{seq}` to continue artifact sequencing for the Phase 5 run-summary artifact
 
 ## Phase 5: Summary (always)
 
+Before writing the run-summary, dispatch the savings-analyzer subagent as a background Task (do not await it -- issue the Task call and immediately proceed to write the run-summary inline):
+
+- `subagent_type: savings-analyzer`
+- `max_turns: 15`
+- `model: {models.savings_analyzer}` (resolved from the `savings_analyzer` key, defaults to `haiku`)
+- `prompt:` Provide the run directory path (`{run-dir}`) and the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number). The subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory.
+
+Issue the savings-analyzer Task call and immediately proceed to write the run-summary inline (do not wait for the Task to complete before continuing). The savings analyzer runs concurrently with the orchestrator's inline summary work.
+
 Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
 
 ```markdown
@@ -518,6 +531,18 @@ Include:
 After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content — do not abbreviate or omit sections.
 
 Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
+
+After the savings-analyzer Task completes (it will complete asynchronously while or after the orchestrator finishes the run-summary), call `register_artifact` with:
+
+```
+runDir: {run-dir}
+filename: {NN+1}_analyst_savings-analysis.md
+role: analyst
+roleType: analyst
+agent: savings-analyzer
+type: savings-analysis
+phase: summary
+```
 
 ## Phase 6: Wrap-up (prompted, conditional)
 
