@@ -1,7 +1,7 @@
 import { Actor, Color, GraphicsGroup, Rectangle, vec, type Vector } from 'excalibur';
 
 import { SPRITE_SIZE } from '../../../game/sprites/sprite-definitions.js';
-import { AGENT_PULSE_MAX, AGENT_PULSE_MIN, DEACTIVATED_OPACITY, PULSE_FREQUENCY } from '../constants/animation.js';
+import { DEACTIVATED_OPACITY, PULSE_FREQUENCY, SCALE_PULSE_MAX, SCALE_PULSE_MIN } from '../constants/animation.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { AgentAnimationState } from '../types.js';
@@ -60,7 +60,9 @@ export class StationAgentActor extends Actor {
     this.applyGraphics({ ...this._config, state });
     if (this._pulsing) {
       this._elapsed = 0;
+      this.actions.fade(1, PAUSE_DURATION);
     } else {
+      this.scale = vec(1, 1);
       this.actions.fade(opacityForState(state), PAUSE_DURATION);
     }
   }
@@ -75,7 +77,8 @@ export class StationAgentActor extends Actor {
     if (!this._pulsing) return;
     this._elapsed += deltaMs;
     const t = Math.sin((this._elapsed * PULSE_FREQUENCY * Math.PI * 2) / 1000);
-    this.graphics.opacity = AGENT_PULSE_MIN + ((AGENT_PULSE_MAX - AGENT_PULSE_MIN) * (t + 1)) / 2;
+    const s = SCALE_PULSE_MIN + ((SCALE_PULSE_MAX - SCALE_PULSE_MIN) * (t + 1)) / 2;
+    this.scale = vec(s, s);
   }
 
   /** Builds a GraphicsGroup with the sprite animation and an accent bar, and applies it. */

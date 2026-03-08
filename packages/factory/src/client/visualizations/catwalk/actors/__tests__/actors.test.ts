@@ -11,6 +11,7 @@ const { mockActorConstructor, mockGraphicsUse, mockGetAnimation } = vi.hoisted((
 vi.mock('excalibur', () => {
   class MockActor {
     config: Record<string, unknown>;
+    scale = { x: 1, y: 1 };
     graphics = { use: mockGraphicsUse, opacity: 1, isVisible: true, scale: { x: 1, y: 1 } };
     pos = { x: 0, y: 0 };
     actions = {
@@ -123,11 +124,12 @@ describe('OrchestratorActor', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 0));
     actor.setWorking(true);
 
-    // Simulate onPreUpdate — opacity should differ from static value
+    // Simulate onPreUpdate — scale should pulse within range
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.6);
-    expect(actor.graphics.opacity).toBeLessThanOrEqual(1);
+    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
+    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
+    expect(actor.scale.y).toBe(actor.scale.x);
   });
 
   it('setWorking(false) disables pulse and sets idle opacity', () => {
@@ -137,6 +139,7 @@ describe('OrchestratorActor', () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 0);
     expect(actor.graphics.opacity).toBe(0.8);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
   it('calls getAnimation with orchestrator type and working state', () => {
@@ -239,11 +242,12 @@ describe('StationAgentActor', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
     actor.animateToState('working');
 
-    // Simulate onPreUpdate
+    // Simulate onPreUpdate — scale should pulse within range
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.7);
-    expect(actor.graphics.opacity).toBeLessThanOrEqual(1);
+    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
+    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
+    expect(actor.scale.y).toBe(actor.scale.x);
   });
 
   it('animateToState disables pulse when leaving working', () => {
@@ -251,14 +255,12 @@ describe('StationAgentActor', () => {
     actor.animateToState('resting');
 
     expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
 
-    // After leaving working, onPreUpdate should not override the resting opacity.
-    // Set opacity to the resting value to simulate fade completion, then verify
-    // that onPreUpdate does not change it (pulse is disabled).
-    actor.graphics.opacity = 0.6;
+    // After leaving working, onPreUpdate should not change scale (pulse is disabled).
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBe(0.6);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
   it('fadeIn sets opacity to 0 then fades to state-appropriate opacity', () => {

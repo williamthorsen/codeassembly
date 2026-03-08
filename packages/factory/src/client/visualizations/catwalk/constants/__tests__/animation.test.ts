@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  AGENT_PULSE_MAX,
-  AGENT_PULSE_MIN,
   DEACTIVATED_OPACITY,
   ORCH_IDLE_OPACITY,
-  ORCH_PULSE_MAX,
-  ORCH_PULSE_MIN,
   PULSE_FREQUENCY,
+  SCALE_PULSE_MAX,
+  SCALE_PULSE_MIN,
 } from '../animation.js';
 
 describe('animation constants', () => {
@@ -16,16 +14,9 @@ describe('animation constants', () => {
     expect(DEACTIVATED_OPACITY).toBeLessThan(1);
   });
 
-  it('exports orchestrator pulse range where min < max', () => {
-    expect(ORCH_PULSE_MIN).toBeLessThan(ORCH_PULSE_MAX);
-    expect(ORCH_PULSE_MIN).toBeGreaterThan(0);
-    expect(ORCH_PULSE_MAX).toBeLessThanOrEqual(1);
-  });
-
-  it('exports agent pulse range where min < max', () => {
-    expect(AGENT_PULSE_MIN).toBeLessThan(AGENT_PULSE_MAX);
-    expect(AGENT_PULSE_MIN).toBeGreaterThan(0);
-    expect(AGENT_PULSE_MAX).toBeLessThanOrEqual(1);
+  it('exports scale pulse range where min >= 1 and min < max', () => {
+    expect(SCALE_PULSE_MIN).toBeGreaterThanOrEqual(1);
+    expect(SCALE_PULSE_MIN).toBeLessThan(SCALE_PULSE_MAX);
   });
 
   it('exports PULSE_FREQUENCY as a positive number', () => {
