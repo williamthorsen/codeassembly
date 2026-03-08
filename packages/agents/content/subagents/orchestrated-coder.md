@@ -126,7 +126,7 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 You have **80 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
 
 <HARD-GATE>
-**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — implementation that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, commit your current progress and write your change summary with what was completed and what remains.
 </HARD-GATE>
 
 ## Orchestrator return protocol
