@@ -62,6 +62,14 @@ After the plan content, append a changes summary:
 - **Verify corrections**: for auto-resolvable findings, read the actual codebase to confirm your correction is accurate. Don't replace one error with another.
 - **Complete document**: the output must be a full, self-contained plan. A reader should not need to reference the original plan or the review to understand it.
 
+## Turn budget
+
+You have **30 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
+
 ## Return protocol
 
 After writing your refined plan artifact, end your final response with a structured return block:

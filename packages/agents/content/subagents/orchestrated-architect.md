@@ -115,6 +115,14 @@ If the plan's assumptions all check out, omit this section.
 - **Be concise.** Downstream agents need actionable guidance, not essays. Every sentence should inform a decision.
 - **Err toward lower impact.** If you're unsure between two levels, choose the lower one. Over-classifying creates unnecessary process overhead.
 
+## Turn budget
+
+You have **30 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
+
 ## Orchestrator return protocol
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.

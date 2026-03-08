@@ -121,6 +121,14 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 - **Commit conventions**: follow the git commit conventions skill. Each logical unit of work gets its own commit.
 - **File scope**: only modify files that are part of the plan or directly required by it.
 
+## Turn budget
+
+You have **80 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
+
 ## Orchestrator return protocol
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.

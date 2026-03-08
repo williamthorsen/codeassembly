@@ -139,6 +139,14 @@ If the plan has no findings at all, write:
 - **Respect the plan's intent**: Flag gaps and errors, don't redesign. If the plan's approach is valid but under-specified, the finding is a C (completeness gap), not a suggestion to use a different approach.
 - **Don't flag the obvious**: If the codebase has a single clear pattern for something and the plan doesn't specify it, that's not a gap -- the coder will follow the pattern. Only flag cases where the coder would face a genuine decision.
 
+## Turn budget
+
+You have **30 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
+
 ## Return protocol
 
 After writing your review artifact, end your final response with a structured return block:
