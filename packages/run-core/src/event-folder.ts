@@ -245,15 +245,13 @@ function applyReReviewCompleted(
       entry.reReviewCriticality = crit;
     }
   }
-  const iterations = review.iterations;
-  if (iterations && iterations.length > 0) {
-    const lastIdx = iterations.length - 1;
-    const lastIter = ensureIteration(review, lastIdx);
-    lastIter.reviewsCompletedAt = event.t;
-    const usage = extractUsage(event);
-    if (usage) {
-      lastIter.reReviewUsage = usage;
-    }
+  const iterations = review.iterations ?? [];
+  const lastIdx = iterations.length > 0 ? iterations.length - 1 : 0;
+  const lastIter = ensureIteration(review, lastIdx);
+  lastIter.reviewsCompletedAt = event.t;
+  const usage = extractUsage(event);
+  if (usage) {
+    lastIter.reReviewUsage = usage;
   }
 }
 

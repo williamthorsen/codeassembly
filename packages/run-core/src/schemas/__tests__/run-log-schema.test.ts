@@ -175,9 +175,9 @@ describe('parseRunLogLine', () => {
     });
     const result = parseRunLogLine(line);
     expect(result.event).toBe('reviewer_completed');
-    if (result.event === 'reviewer_completed') {
-      expect(result.tokens).toBeUndefined();
-    }
+    expect(result).not.toHaveProperty('tokens');
+    expect(result).not.toHaveProperty('toolUses');
+    expect(result).not.toHaveProperty('durationMs');
   });
 
   it('parses coder_fix_completed with optional usage metrics', () => {
@@ -211,6 +211,8 @@ describe('parseRunLogLine', () => {
     expect(result).toMatchObject({
       event: 're_review_completed',
       tokens: 29_000,
+      toolUses: 8,
+      durationMs: 25_000,
     });
   });
 

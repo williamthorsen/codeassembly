@@ -459,14 +459,12 @@ Use `{seq}` to continue artifact sequencing for the Phase 5 run-summary artifact
 
 ## Phase 5: Summary (always)
 
-Before writing the run-summary, dispatch the savings-analyzer subagent as a background Task (do not await it -- issue the Task call and immediately proceed to write the run-summary inline):
+Dispatch the savings-analyzer subagent as a background Task and immediately proceed to write the run-summary inline (do not wait for the Task to complete before continuing). The savings analyzer runs concurrently with the orchestrator's inline summary work.
 
 - `subagent_type: savings-analyzer`
 - `max_turns: 15`
 - `model: {models.savings_analyzer}` (resolved from the `savings_analyzer` key, defaults to `haiku`)
 - `prompt:` Provide the run directory path (`{run-dir}`) and the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number). The subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory.
-
-Issue the savings-analyzer Task call and immediately proceed to write the run-summary inline (do not wait for the Task to complete before continuing). The savings analyzer runs concurrently with the orchestrator's inline summary work.
 
 Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
 
@@ -530,9 +528,7 @@ Include:
 
 After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content — do not abbreviate or omit sections.
 
-Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
-
-After the savings-analyzer Task completes (it will complete asynchronously while or after the orchestrator finishes the run-summary), call `register_artifact` with:
+After the savings-analyzer Task completes (it runs concurrently and will finish while or after the run-summary is written), call `register_artifact` with:
 
 ```
 runDir: {run-dir}
@@ -543,6 +539,8 @@ agent: savings-analyzer
 type: savings-analysis
 phase: summary
 ```
+
+Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
 
 ## Phase 6: Wrap-up (prompted, conditional)
 
