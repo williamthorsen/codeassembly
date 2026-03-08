@@ -87,10 +87,12 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   }
   await Promise.all(descendPromises);
 
-  // Step 5: Clear carried artifacts and land artifacts at destination
-  orchestrator.setCarriedArtifacts([]);
-  for (const artifact of originArtifacts) {
-    refs.addArtifact(artifact, layout);
+  // Step 5: Clear carried artifacts and land artifacts at origin station
+  if (originArtifacts.length > 0) {
+    orchestrator.setCarriedArtifacts([]);
+    for (const artifact of originArtifacts) {
+      refs.addArtifact(artifact, layout);
+    }
   }
 }
 
