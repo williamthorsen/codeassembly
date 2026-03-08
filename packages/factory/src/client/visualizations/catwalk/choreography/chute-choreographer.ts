@@ -79,11 +79,11 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   const destPos = layout.orchestratorPosition(destStation);
   await orchestrator.animateMoveTo(vec(destPos.x, destPos.y)).catch(noop);
 
-  // Step 4: Descend -- flying artifacts drop down the origin chute (where the artifact lands)
+  // Step 4: Descend -- flying artifacts drop down the destination chute per ticket spec
   const descendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
     // slot 0, agentCount 1 = center of station
-    const endpoints = layout.chuteEndpoints(originStation, 0, 1);
+    const endpoints = layout.chuteEndpoints(destStation, 0, 1);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
     descendPromises.push(flyer.descend().catch(noop));

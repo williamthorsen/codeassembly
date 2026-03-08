@@ -86,7 +86,11 @@ export class CatwalkScene extends Scene {
   /** Dispatch animations to actors via the choreographer. Buffers if a choreography is in progress. */
   private applyDiff(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     if (this.choreographyInProgress) {
-      // Buffer the latest diff; when the current choreography finishes, it will be applied
+      // Buffer the latest diff; when the current choreography finishes, it will be applied.
+      // Known limitation: only the most recent pending diff is kept. If multiple diffs arrive
+      // during one choreography, intermediate diffs are dropped. This is acceptable because
+      // the final config always reflects ground truth, and the next diff will reconcile
+      // the scene to the correct state.
       this.pendingDiff = { diff, config, layout };
       return;
     }

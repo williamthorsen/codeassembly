@@ -287,6 +287,33 @@ describe('choreograph', () => {
       expect(refs.addedActors.length).toBe(2);
     });
 
+    it('uses origin chute endpoints for ascend and destination chute endpoints for descend', async () => {
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+      const refs = mockRefs();
+      const layout = mockLayout();
+
+      await choreograph(diff, layout, refs);
+
+      // Two flying actors: ascend (station 0, x=100) then descend (station 1, x=300)
+      expect(refs.addedActors.length).toBe(2);
+      const [ascendActor, descendActor] = refs.addedActors;
+
+      // The mock Actor stores constructor args in config.pos (a { x, y } vector).
+      // FlyingArtifactActor passes `pos: startPos` where startPos is derived from chute endpoints.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
+      const ascendConfig = (ascendActor as { config: { pos: { x: number; y: number } } }).config;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
+      const descendConfig = (descendActor as { config: { pos: { x: number; y: number } } }).config;
+
+      // Ascend starts at bottom of origin station's chute (station 0 -> botX=100)
+      expect(ascendConfig.pos.x).toBe(100);
+      // Descend starts at top of destination station's chute (station 1 -> topX=300)
+      expect(descendConfig.pos.x).toBe(300);
+    });
+
     it('calls setCarriedArtifacts during delivery when carriedChanged is set', async () => {
       const carried = [{ label: 'arch', color: '#a5d8ff' }];
       const diff = catwalkDiff({
