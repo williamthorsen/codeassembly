@@ -11,6 +11,7 @@ import type {
   PlanningPhase,
   QualityGates,
   ReviewIteration,
+  UsageMetrics,
 } from './types/canonical.js';
 import type { EventPhaseName, RunEvent, RunHeader } from './types/run-log.js';
 
@@ -36,6 +37,20 @@ function isQualityGatesRecord(value: Record<string, unknown>): value is QualityG
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Build a UsageMetrics object from an event's optional usage fields, or return undefined if none are present. */
+function extractUsage(event: {
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
+}): UsageMetrics | undefined {
+  if (event.tokens === undefined && event.toolUses === undefined && event.durationMs === undefined) return undefined;
+  return {
+    ...(event.tokens !== undefined && { tokens: event.tokens }),
+    ...(event.toolUses !== undefined && { toolUses: event.toolUses }),
+    ...(event.durationMs !== undefined && { durationMs: event.durationMs }),
+  };
 }
 
 /** Extract qualityGates from data, falling back to existing value. */
@@ -125,7 +140,7 @@ function applyEvent(state: CanonicalRunStatus, event: RunEvent): void {
       break;
 
     case 'phase_completed':
-      applyPhaseCompleted(state, event.phase, event.status, event.data, event.t);
+      applyPhaseCompleted(state, event);
       break;
 
     case 'reviewer_dispatched':
@@ -195,6 +210,10 @@ function applyReviewerCompleted(
   if (entry) {
     entry.status = event.status;
     entry.criticality = event.criticality;
+    const usage = extractUsage(event);
+    if (usage) {
+      entry.usage = usage;
+    }
   }
   const firstIter = ensureIteration(review, 0);
   firstIter.reviewsCompletedAt = event.t;
@@ -231,6 +250,10 @@ function applyReReviewCompleted(
     const lastIdx = iterations.length - 1;
     const lastIter = ensureIteration(review, lastIdx);
     lastIter.reviewsCompletedAt = event.t;
+    const usage = extractUsage(event);
+    if (usage) {
+      lastIter.reReviewUsage = usage;
+    }
   }
 }
 
@@ -249,9 +272,15 @@ function applyReviewEvent(state: CanonicalRunStatus, event: ReviewEvent): void {
       review.coderFixCycleRan = true;
       ensureIteration(review, event.iteration - 1).coderFixStartedAt = event.t;
       break;
-    case 'coder_fix_completed':
-      ensureIteration(review, event.iteration - 1).coderFixCompletedAt = event.t;
+    case 'coder_fix_completed': {
+      const iter = ensureIteration(review, event.iteration - 1);
+      iter.coderFixCompletedAt = event.t;
+      const usage = extractUsage(event);
+      if (usage) {
+        iter.usage = usage;
+      }
       break;
+    }
     case 're_review_dispatched':
       applyReReviewDispatched(review, event);
       break;
@@ -323,44 +352,55 @@ function applyPhaseStarted(state: CanonicalRunStatus, phase: EventPhaseName, tim
   }
 }
 
-function applyPhaseCompleted(
-  state: CanonicalRunStatus,
-  phase: EventPhaseName,
+function applyReviewPhaseCompleted(
+  review: ParallelReviewPhase,
   status: PhaseStatus,
   data: Record<string, unknown> | undefined,
   timestamp: string,
+  usage: UsageMetrics | undefined,
 ): void {
+  review.status = status;
+  review.completedAt = timestamp;
+  if (usage) review.usage = usage;
+  if (data) {
+    if (isCriticality(data.aggregatedCriticality)) {
+      review.aggregatedCriticality = data.aggregatedCriticality;
+    }
+    if (typeof data.reviewRoundsUsed === 'number') {
+      review.reviewRoundsUsed = data.reviewRoundsUsed;
+    }
+  }
+}
+
+function applyPhaseCompleted(state: CanonicalRunStatus, event: Extract<RunEvent, { event: 'phase_completed' }>): void {
+  const { phase, status, data, t: timestamp } = event;
+  const usage = extractUsage(event);
+
   switch (phase) {
     case 'architecture': {
       const existing = state.phases.architecture ?? { impactLevel: undefined, artifact: undefined, status };
       state.phases.architecture = mergeArchitecture(existing, status, data);
       state.phases.architecture.completedAt = timestamp;
+      if (usage) state.phases.architecture.usage = usage;
       break;
     }
     case 'planning': {
       const existing = state.phases.planning ?? { stepCount: undefined, artifacts: undefined, status };
       state.phases.planning = mergePlanning(existing, status, data);
       state.phases.planning.completedAt = timestamp;
+      if (usage) state.phases.planning.usage = usage;
       break;
     }
     case 'implementation': {
       const existing = state.phases.implementation ?? { artifact: undefined, qualityGates: undefined, status };
       state.phases.implementation = mergeImplementation(existing, status, data);
       state.phases.implementation.completedAt = timestamp;
+      if (usage) state.phases.implementation.usage = usage;
       break;
     }
     case 'review':
       if (state.phases.parallelReview) {
-        state.phases.parallelReview.status = status;
-        state.phases.parallelReview.completedAt = timestamp;
-        if (data) {
-          if (isCriticality(data.aggregatedCriticality)) {
-            state.phases.parallelReview.aggregatedCriticality = data.aggregatedCriticality;
-          }
-          if (typeof data.reviewRoundsUsed === 'number') {
-            state.phases.parallelReview.reviewRoundsUsed = data.reviewRoundsUsed;
-          }
-        }
+        applyReviewPhaseCompleted(state.phases.parallelReview, status, data, timestamp, usage);
       }
       break;
 
@@ -373,6 +413,7 @@ function applyPhaseCompleted(
       };
       state.phases.codeSimplifier = mergeCodeSimplifier(existing, status, data);
       state.phases.codeSimplifier.completedAt = timestamp;
+      if (usage) state.phases.codeSimplifier.usage = usage;
       break;
     }
     case 'holistic': {
@@ -386,6 +427,7 @@ function applyPhaseCompleted(
       };
       state.phases.holisticReview = mergeHolisticReview(existing, status, data);
       state.phases.holisticReview.completedAt = timestamp;
+      if (usage) state.phases.holisticReview.usage = usage;
       break;
     }
   }

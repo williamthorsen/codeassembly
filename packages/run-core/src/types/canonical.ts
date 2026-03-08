@@ -3,6 +3,13 @@ export type Criticality = 'none' | 'low' | 'medium' | 'high';
 export type ReviewerStatus = 'completed' | 'skipped' | 'failed';
 export type PhaseStatus = 'completed' | 'skipped' | 'failed' | 'in_progress' | 'approved';
 
+/** Optional resource-usage metrics captured from subagent results. */
+export interface UsageMetrics {
+  tokens?: number;
+  toolUses?: number;
+  durationMs?: number;
+}
+
 export interface ArtifactEntry {
   filename: string;
   role: string;
@@ -61,6 +68,7 @@ export interface ArchitecturePhase {
   artifact: string | undefined;
   startedAt?: string;
   completedAt?: string;
+  usage?: UsageMetrics;
 }
 
 export interface PlanningPhase {
@@ -69,6 +77,7 @@ export interface PlanningPhase {
   artifacts: string[] | undefined;
   startedAt?: string;
   completedAt?: string;
+  usage?: UsageMetrics;
 }
 
 export interface ImplementationPhase {
@@ -77,6 +86,7 @@ export interface ImplementationPhase {
   qualityGates: string | QualityGates | undefined;
   startedAt?: string;
   completedAt?: string;
+  usage?: UsageMetrics;
 }
 
 export interface QualityGates {
@@ -91,6 +101,8 @@ export interface ReviewIteration {
   reviewsCompletedAt?: string;
   coderFixStartedAt?: string;
   coderFixCompletedAt?: string;
+  usage?: UsageMetrics;
+  reReviewUsage?: UsageMetrics;
 }
 
 export interface ParallelReviewPhase {
@@ -103,6 +115,7 @@ export interface ParallelReviewPhase {
   startedAt?: string;
   completedAt?: string;
   iterations?: ReviewIteration[];
+  usage?: UsageMetrics;
 }
 
 export interface ReviewerInfo {
@@ -114,6 +127,7 @@ export interface ReviewerInfo {
   reReviewError: string | undefined;
   startedAt?: string;
   completedAt?: string;
+  usage?: UsageMetrics;
 }
 
 export interface SelectiveReReview {
@@ -130,6 +144,7 @@ export interface CodeSimplifierPhase {
   status?: PhaseStatus;
   startedAt?: string;
   completedAt?: string;
+  usage?: UsageMetrics;
 }
 
 export interface HolisticReviewPhase {
@@ -141,6 +156,7 @@ export interface HolisticReviewPhase {
   artifact: string | undefined;
   startedAt?: string;
   completedAt?: string;
+  usage?: UsageMetrics;
 }
 
 export interface LegacyReviewPhase {

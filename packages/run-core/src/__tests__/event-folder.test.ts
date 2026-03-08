@@ -662,6 +662,120 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview?.reviewers?.['unknown-reviewer']).toBeUndefined();
   });
 
+  // -- Usage metrics folding ---------------------------------------------------------------
+
+  it('folds usage metrics from reviewer_completed into ReviewerInfo', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'review' },
+      { t: '2026-01-01T00:01:01Z', event: 'reviewer_dispatched', reviewer: 'test-reviewer' },
+      {
+        t: '2026-01-01T00:02:00Z',
+        event: 'reviewer_completed',
+        reviewer: 'test-reviewer',
+        status: 'completed',
+        criticality: 'low',
+        tokens: 45_000,
+        toolUses: 12,
+        durationMs: 30_000,
+      },
+    ];
+    const state = foldEvents(header, events);
+    expect(state.phases.parallelReview?.reviewers?.['test-reviewer']?.usage).toEqual({
+      tokens: 45_000,
+      toolUses: 12,
+      durationMs: 30_000,
+    });
+  });
+
+  it('folds usage metrics from coder_fix_completed into ReviewIteration', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'review' },
+      { t: '2026-01-01T00:01:01Z', event: 'reviewer_dispatched', reviewer: 'test-reviewer' },
+      {
+        t: '2026-01-01T00:02:00Z',
+        event: 'reviewer_completed',
+        reviewer: 'test-reviewer',
+        status: 'completed',
+        criticality: 'low',
+      },
+      { t: '2026-01-01T00:03:00Z', event: 'coder_fix_started', iteration: 1 },
+      {
+        t: '2026-01-01T00:05:00Z',
+        event: 'coder_fix_completed',
+        iteration: 1,
+        tokens: 80_000,
+        toolUses: 25,
+        durationMs: 120_000,
+      },
+    ];
+    const state = foldEvents(header, events);
+    expect(state.phases.parallelReview?.iterations?.[0]?.usage).toEqual({
+      tokens: 80_000,
+      toolUses: 25,
+      durationMs: 120_000,
+    });
+  });
+
+  it('folds usage metrics from re_review_completed into ReviewIteration', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'review' },
+      { t: '2026-01-01T00:01:01Z', event: 'reviewer_dispatched', reviewer: 'test-reviewer' },
+      {
+        t: '2026-01-01T00:02:00Z',
+        event: 'reviewer_completed',
+        reviewer: 'test-reviewer',
+        status: 'completed',
+        criticality: 'low',
+      },
+      { t: '2026-01-01T00:03:00Z', event: 're_review_dispatched', reviewers: ['test-reviewer'] },
+      {
+        t: '2026-01-01T00:04:00Z',
+        event: 're_review_completed',
+        criticalities: { 'test-reviewer': 'none' },
+        tokens: 29_000,
+        toolUses: 8,
+        durationMs: 25_000,
+      },
+    ];
+    const state = foldEvents(header, events);
+    // re_review_dispatched creates iteration at index 1; re_review_completed targets the last iteration
+    expect(state.phases.parallelReview?.iterations?.[1]?.reReviewUsage).toEqual({
+      tokens: 29_000,
+      toolUses: 8,
+      durationMs: 25_000,
+    });
+  });
+
+  it('folds usage metrics from phase_completed into phase object', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'implementation' },
+      {
+        t: '2026-01-01T00:06:00Z',
+        event: 'phase_completed',
+        phase: 'implementation',
+        status: 'completed',
+        data: { qualityGates: 'passed' },
+        tokens: 150_000,
+        toolUses: 40,
+        durationMs: 300_000,
+      },
+    ];
+    const state = foldEvents(header, events);
+    expect(state.phases.implementation?.usage).toEqual({
+      tokens: 150_000,
+      toolUses: 40,
+      durationMs: 300_000,
+    });
+  });
+
   // -- Full event sequence integration test (F1) ----------------------------------------
 
   it('produces correct CanonicalRunStatus from a full event sequence', () => {

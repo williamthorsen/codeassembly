@@ -152,16 +152,16 @@ describe('parseRunLogLine', () => {
       reviewer: 'code-reviewer',
       status: 'completed',
       criticality: 'low',
-      tokens: 45000,
+      tokens: 45_000,
       toolUses: 12,
-      durationMs: 30000,
+      durationMs: 30_000,
     });
     const result = parseRunLogLine(line);
     expect(result).toMatchObject({
       event: 'reviewer_completed',
-      tokens: 45000,
+      tokens: 45_000,
       toolUses: 12,
-      durationMs: 30000,
+      durationMs: 30_000,
     });
   });
 
@@ -185,16 +185,16 @@ describe('parseRunLogLine', () => {
       t: '2026-01-01T00:07:00Z',
       event: 'coder_fix_completed',
       iteration: 1,
-      tokens: 80000,
+      tokens: 80_000,
       toolUses: 25,
-      durationMs: 120000,
+      durationMs: 120_000,
     });
     const result = parseRunLogLine(line);
     expect(result).toMatchObject({
       event: 'coder_fix_completed',
-      tokens: 80000,
+      tokens: 80_000,
       toolUses: 25,
-      durationMs: 120000,
+      durationMs: 120_000,
     });
   });
 
@@ -203,14 +203,14 @@ describe('parseRunLogLine', () => {
       t: '2026-01-01T00:09:00Z',
       event: 're_review_completed',
       criticalities: { 'code-reviewer': 'none' },
-      tokens: 29000,
+      tokens: 29_000,
       toolUses: 8,
-      durationMs: 25000,
+      durationMs: 25_000,
     });
     const result = parseRunLogLine(line);
     expect(result).toMatchObject({
       event: 're_review_completed',
-      tokens: 29000,
+      tokens: 29_000,
     });
   });
 
@@ -221,16 +221,16 @@ describe('parseRunLogLine', () => {
       phase: 'implementation',
       status: 'completed',
       data: { qualityGates: 'passed' },
-      tokens: 150000,
+      tokens: 150_000,
       toolUses: 40,
-      durationMs: 300000,
+      durationMs: 300_000,
     });
     const result = parseRunLogLine(line);
     expect(result).toMatchObject({
       event: 'phase_completed',
-      tokens: 150000,
+      tokens: 150_000,
       toolUses: 40,
-      durationMs: 300000,
+      durationMs: 300_000,
     });
   });
 
