@@ -18,6 +18,11 @@
       "source": "./src/scanners/index.ts",
       "import": "./dist/esm/scanners/index.js",
       "types": "./src/scanners/index.ts"
+    },
+    "./config": {
+      "source": "./src/config.ts",
+      "import": "./dist/esm/config.js",
+      "types": "./src/config.ts"
     }
   },
   "main": "./dist/esm/index.js",
@@ -29,6 +34,10 @@
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },
   "dependencies": {
+    "js-yaml": "4.1.1",
     "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "4.0.9"
   }
 }

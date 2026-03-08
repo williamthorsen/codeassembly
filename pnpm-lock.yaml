@@ -172,6 +172,12 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.27.1
         version: 1.27.1(zod@4.3.6)
+      zod:
+        specifier: 4.3.6
+        version: 4.3.6
+
+  packages/run-core:
+    dependencies:
       js-yaml:
         specifier: 4.1.1
         version: 4.1.1
@@ -182,12 +188,6 @@ importers:
       '@types/js-yaml':
         specifier: 4.0.9
         version: 4.0.9
-
-  packages/run-core:
-    dependencies:
-      zod:
-        specifier: 4.3.6
-        version: 4.3.6
 
 packages:
 

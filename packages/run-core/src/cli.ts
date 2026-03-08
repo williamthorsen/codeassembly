@@ -1,11 +1,11 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { mkdir, rename } from 'node:fs/promises';
-import { homedir } from 'node:os';
 import { dirname, join, relative } from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
+import { resolveProjectsDir } from './resolve-projects-dir.js';
 import { discoverRunDirectories, validateRunDirectory } from './scanners/index.js';
 import type { RunDirectoryEntry } from './scanners/run-directory-scanner.js';
 
@@ -25,12 +25,12 @@ function parseFlag(arg: string): 'help' | 'path' | null {
 
 function parseArgs(argv: ReadonlyArray<string>): {
   command: string;
-  basePath: string;
+  basePath: string | undefined;
   help: boolean;
 } {
   const args = argv.slice(2);
   let command = '';
-  let basePath = process.env.AI_PROJECTS_PATH ?? join(homedir(), '.ai', 'projects');
+  let basePath: string | undefined;
   let help = false;
 
   for (let i = 0; i < args.length; i++) {
@@ -73,7 +73,7 @@ Commands:
   archive     List and offer to move invalid run directories
 
 Options:
-  --path <dir>   Base projects directory (default: AI_PROJECTS_PATH or ~/.ai/projects)
+  --path <dir>   Base projects directory (default: preferences cascade or ~/.ai/projects)
   --help, -h     Show this help message`);
 }
 
@@ -177,12 +177,14 @@ async function runArchive(basePath: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const { command, basePath, help } = parseArgs(process.argv);
+  const { command, basePath: explicitPath, help } = parseArgs(process.argv);
 
   if (help) {
     printUsage();
     process.exit(0);
   }
+
+  const basePath = explicitPath ?? (await resolveProjectsDir(process.cwd()));
 
   if (command === 'check') {
     await runCheck(basePath);

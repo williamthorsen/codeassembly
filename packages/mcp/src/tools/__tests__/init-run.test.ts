@@ -168,7 +168,7 @@ describe('initRun', () => {
     const fakeBase = await createTmpDir();
 
     // Mock resolveBaseDir to return a controlled path, making this test hermetic
-    const resolveBaseDirModule = await import('../resolve-base-dir.js');
+    const resolveBaseDirModule = await import('@codeassembly/run-core/config');
     const spy = vi.spyOn(resolveBaseDirModule, 'resolveBaseDir').mockResolvedValueOnce(fakeBase);
 
     try {

@@ -7,20 +7,20 @@ import { describe, expect, it, vi } from 'vitest';
 import { resolveBaseDir } from '../resolve-base-dir.js';
 
 describe('resolveBaseDir', () => {
-  async function createTmpDir(prefix = 'mcp-test-resolve-'): Promise<string> {
+  async function createTmpDir(prefix = 'run-core-test-resolve-'): Promise<string> {
     return mkdtemp(join(tmpdir(), prefix));
   }
 
   it('returns {home}/.ai when no preferences files exist and no baseDir is passed', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
     expect(result).toBe(join(fakeHome, '.ai'));
   });
 
   it('reads artifacts.base_dir from project-level preferences', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: /custom/artifacts\n');
@@ -31,7 +31,7 @@ describe('resolveBaseDir', () => {
 
   it('reads artifacts.base_dir from global preferences when project-level is absent', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const globalAgentsDir = join(fakeHome, '.agents');
     await mkdir(globalAgentsDir, { recursive: true });
     await writeFile(join(globalAgentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: /global/artifacts\n');
@@ -42,7 +42,7 @@ describe('resolveBaseDir', () => {
 
   it('project-level preference takes priority over global preference', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
 
     // Create project-level preferences
     const projectAgentsDir = join(projectRoot, '.agents');
@@ -60,7 +60,7 @@ describe('resolveBaseDir', () => {
 
   it('resolves relative base_dir values from projectRoot', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: .ai\n');
@@ -71,7 +71,7 @@ describe('resolveBaseDir', () => {
 
   it('uses absolute base_dir values as-is', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: /absolute/path\n');
@@ -82,7 +82,7 @@ describe('resolveBaseDir', () => {
 
   it('expands tilde in base_dir values from preferences', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: ~/.ai\n');
@@ -93,7 +93,7 @@ describe('resolveBaseDir', () => {
 
   it('explicit baseDir parameter overrides preferences (absolute)', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     // Create a project-level preference that should be ignored
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
@@ -105,21 +105,21 @@ describe('resolveBaseDir', () => {
 
   it('explicit baseDir parameter is resolved from projectRoot when relative', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const result = await resolveBaseDir(projectRoot, 'relative/dir', { home: fakeHome });
     expect(result).toBe(join(projectRoot, 'relative/dir'));
   });
 
   it('expands tilde in explicit baseDir parameter', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const result = await resolveBaseDir(projectRoot, '~/custom-dir', { home: fakeHome });
     expect(result).toBe(join(fakeHome, 'custom-dir'));
   });
 
   it('handles malformed YAML gracefully — warns on stderr and falls back', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     // Use YAML that causes js-yaml to throw a YAMLException (unclosed flow sequence)
@@ -141,7 +141,7 @@ describe('resolveBaseDir', () => {
 
   it('handles a preferences file with no artifacts key — falls back', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'orchestration:\n  max_review_rounds: 5\n');
@@ -152,7 +152,7 @@ describe('resolveBaseDir', () => {
 
   it('handles a preferences file where artifacts is not an object — falls back', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts: just-a-string\n');
@@ -163,7 +163,7 @@ describe('resolveBaseDir', () => {
 
   it('handles a preferences file where artifacts.base_dir is not a string — falls back', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
     await writeFile(join(agentsDir, 'preferences.yaml'), 'artifacts:\n  base_dir: 42\n');
@@ -174,7 +174,7 @@ describe('resolveBaseDir', () => {
 
   it('warns on stderr for non-ENOENT I/O errors and falls back to default', async () => {
     const projectRoot = await createTmpDir();
-    const fakeHome = await createTmpDir('mcp-test-home-');
+    const fakeHome = await createTmpDir('run-core-test-home-');
 
     // Create preferences.yaml as a directory — reading it throws EISDIR, not ENOENT
     const agentsDir = join(projectRoot, '.agents');

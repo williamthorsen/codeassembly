@@ -84,7 +84,10 @@
   "packageManager": "pnpm@10.30.3",
   "pnpm": {
     "onlyBuiltDependencies": [
-      "lefthook"
+      "@tailwindcss/oxide",
+      "esbuild",
+      "sharp",
+      "svelte-preprocess"
     ]
   },
   "engines": {

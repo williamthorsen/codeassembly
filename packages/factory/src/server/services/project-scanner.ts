@@ -1,6 +1,3 @@
-import { homedir } from 'node:os';
-import { join } from 'node:path';
-
 import { discoverRunDirectories, validateRunDirectory } from '@codeassembly/run-core/scanners';
 
 import { factoryConfig } from '../../config.js';
@@ -10,8 +7,8 @@ export class ProjectScanner {
   private basePath: string;
   private index: ProjectIndex | null = null;
 
-  constructor(basePath?: string) {
-    this.basePath = basePath ?? process.env.AI_PROJECTS_PATH ?? join(homedir(), '.ai', 'projects');
+  constructor(basePath: string) {
+    this.basePath = basePath;
   }
 
   async scan(): Promise<ProjectIndex> {

@@ -1,3 +1,4 @@
+import { resolveProjectsDir } from '@codeassembly/run-core/config';
 import cors from 'cors';
 import type { ErrorRequestHandler } from 'express';
 import express from 'express';
@@ -9,15 +10,23 @@ import { ProjectScanner } from './services/project-scanner.js';
 import { ProjectWatcher } from './services/project-watcher.js';
 import { SettingsStore } from './services/settings-store.js';
 
-const app = express();
 const port = 5181;
+
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+};
+
+const projectsDir = await resolveProjectsDir(process.cwd());
+
+const app = express();
 
 // Middleware
 app.use(cors({ origin: 'http://localhost:5180' }));
 app.use(express.json());
 
 // Initialize scanner and watcher
-const scanner = new ProjectScanner();
+const scanner = new ProjectScanner(projectsDir);
 const watcher = new ProjectWatcher(scanner);
 const settingsStore = new SettingsStore();
 
@@ -26,11 +35,6 @@ app.use('/api/projects', createProjectsRouter(scanner));
 app.use('/api/runs', createRunsRouter(scanner));
 app.use('/api/settings', createSettingsRouter(settingsStore));
 
-// Error handling with proper types
-const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-};
 app.use(errorHandler);
 
 // Start server
