@@ -51,8 +51,16 @@ describe('entity sizing', () => {
     expect(AGENT_RADIUS).toBeGreaterThan(0);
   });
 
-  it('has ORCH_RADIUS greater than AGENT_RADIUS', () => {
-    expect(ORCH_RADIUS).toBeGreaterThan(AGENT_RADIUS);
+  it('has AGENT_RADIUS equal to half the sprite size (16)', () => {
+    expect(AGENT_RADIUS).toBe(16);
+  });
+
+  it('has ORCH_RADIUS equal to half the sprite size (16)', () => {
+    expect(ORCH_RADIUS).toBe(16);
+  });
+
+  it('has ORCH_RADIUS greater than or equal to AGENT_RADIUS', () => {
+    expect(ORCH_RADIUS).toBeGreaterThanOrEqual(AGENT_RADIUS);
   });
 
   it('has positive artifact dimensions', () => {

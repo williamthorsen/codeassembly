@@ -2,6 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createMockRunStatus, emptyPhases } from '../../../../../__test-helpers__/fixtures.js';
 
+const { mockLoadAllCatwalkSprites } = vi.hoisted(() => ({
+  mockLoadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
+  loadAllCatwalkSprites: mockLoadAllCatwalkSprites,
+  getAnimation: vi.fn().mockReturnValue({ type: 'animation' }),
+}));
+
 vi.mock('excalibur', () => {
   class MockScene {
     backgroundColor: unknown;
@@ -140,11 +149,20 @@ function hasPosition(value: unknown): value is { position: { x: number; y: numbe
 }
 
 describe('CatwalkScene', () => {
-  it('sets the background color to #111111', () => {
+  it('sets the background color to #1a1a2e', () => {
     const status = createMockRunStatus();
     const scene = new CatwalkScene(status);
 
-    expect(scene.backgroundColor).toEqual(expect.objectContaining({ hex: '#111111' }));
+    expect(scene.backgroundColor).toEqual(expect.objectContaining({ hex: '#1a1a2e' }));
+  });
+
+  it('calls loadAllCatwalkSprites on initialize', () => {
+    const status = createMockRunStatus({ status: 'in_progress' });
+    const scene = new CatwalkScene(status);
+
+    scene.onInitialize();
+
+    expect(mockLoadAllCatwalkSprites).toHaveBeenCalledOnce();
   });
 
   it('builds actors on initialize', () => {

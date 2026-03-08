@@ -13,6 +13,7 @@ import {
 import { ART_H, ENGINE_HEIGHT, ENGINE_WIDTH, GROUND_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
+import { loadAllCatwalkSprites } from '../sprites/catwalk-sprite-loader.js';
 import { artifactKey, diffCatwalkConfig } from '../state/catwalk-differ.js';
 import type { CatwalkDiff, CatwalkSceneConfig } from '../types.js';
 
@@ -42,10 +43,16 @@ export class CatwalkScene extends Scene {
   constructor(status: CanonicalRunStatus) {
     super();
     this.status = status;
-    this.backgroundColor = Color.fromHex('#111111');
+    this.backgroundColor = Color.fromHex('#1a1a2e');
   }
 
   override onInitialize(): void {
+    // loadAllCatwalkSprites populates the animation cache synchronously,
+    // so buildScene can safely call getAnimation() immediately.
+    // The returned promise resolves once image data finishes loading.
+    loadAllCatwalkSprites().catch((error: unknown) => {
+      console.error('Failed to load catwalk sprites:', error);
+    });
     this.buildScene();
     this.fitCamera();
   }

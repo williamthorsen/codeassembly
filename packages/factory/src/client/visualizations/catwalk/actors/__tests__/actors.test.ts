@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockActorConstructor, mockGraphicsUse } = vi.hoisted(() => {
+const { mockActorConstructor, mockGraphicsUse, mockGetAnimation } = vi.hoisted(() => {
   return {
     mockActorConstructor: vi.fn(),
     mockGraphicsUse: vi.fn(),
+    mockGetAnimation: vi.fn(),
   };
 });
 
@@ -31,13 +32,6 @@ vi.mock('excalibur', () => {
     }
     static fromHex(hex: string) {
       return new MockColor(hex);
-    }
-  }
-
-  class MockCircle {
-    options: Record<string, unknown>;
-    constructor(options: Record<string, unknown>) {
-      this.options = options;
     }
   }
 
@@ -71,20 +65,25 @@ vi.mock('excalibur', () => {
 
   const MockTextAlign = { Center: 'center', Left: 'left' };
   const MockBaseAlign = { Middle: 'middle', Top: 'top' };
+  const MockAnimationStrategy = { PingPong: 'ping-pong', Loop: 'loop', Freeze: 'freeze' };
 
   return {
     Actor: MockActor,
     Color: MockColor,
-    Circle: MockCircle,
     Rectangle: MockRectangle,
     Text: MockText,
     Font: MockFont,
     GraphicsGroup: MockGraphicsGroup,
     TextAlign: MockTextAlign,
     BaseAlign: MockBaseAlign,
+    AnimationStrategy: MockAnimationStrategy,
     vec: (x: number, y: number) => ({ x, y }),
   };
 });
+
+vi.mock('../../sprites/catwalk-sprite-loader.js', () => ({
+  getAnimation: mockGetAnimation,
+}));
 
 const { OrchestratorActor } = await import('../OrchestratorActor.js');
 const { StationAgentActor } = await import('../StationAgentActor.js');
@@ -97,6 +96,8 @@ const { vec } = await import('excalibur');
 describe('OrchestratorActor', () => {
   beforeEach(() => {
     mockGraphicsUse.mockClear();
+    mockGetAnimation.mockClear();
+    mockGetAnimation.mockReturnValue({ type: 'animation' });
   });
 
   it('sets opacity to 1.0 when working is true', () => {
@@ -137,11 +138,52 @@ describe('OrchestratorActor', () => {
     actor.onPreUpdate(undefined as never, 0);
     expect(actor.graphics.opacity).toBe(0.8);
   });
+
+  it('calls getAnimation with orchestrator type and working state', () => {
+    new OrchestratorActor({ working: true }, vec(0, 0));
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+  });
+
+  it('calls getAnimation with orchestrator type and idle state when not working', () => {
+    new OrchestratorActor({ working: false }, vec(0, 0));
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
+  });
+
+  it('setWorking calls graphics.use to update the sprite', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    mockGraphicsUse.mockClear();
+
+    actor.setWorking(false);
+
+    expect(mockGraphicsUse).toHaveBeenCalled();
+  });
+
+  it('setWorking(false) calls getAnimation with idle state', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.setWorking(false);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
+  });
+
+  it('setWorking(true) calls getAnimation with working state', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.setWorking(true);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+  });
 });
 
 describe('StationAgentActor', () => {
   beforeEach(() => {
     mockGraphicsUse.mockClear();
+    mockGetAnimation.mockClear();
+    mockGetAnimation.mockReturnValue({ type: 'animation' });
   });
 
   it('sets opacity to 0.3 for idle state', () => {
@@ -233,6 +275,52 @@ describe('StationAgentActor', () => {
     actor.animateToState('deactivated');
 
     expect(actor.actions.fade).toHaveBeenCalledWith(0.15, expect.any(Number));
+  });
+
+  it('calls getAnimation with subagent type and the given state', () => {
+    new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('subagent', 'working');
+  });
+
+  it('calls graphics.use with a GraphicsGroup on construction', () => {
+    new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
+
+    expect(mockGraphicsUse).toHaveBeenCalledTimes(1);
+  });
+
+  it('animateToState calls graphics.use to re-render the sprite', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
+    mockGraphicsUse.mockClear();
+
+    actor.animateToState('working');
+
+    expect(mockGraphicsUse).toHaveBeenCalled();
+  });
+
+  it('applies the config color to the accent bar', () => {
+    const color = '#FF00AA';
+    new StationAgentActor({ id: 'a', role: 'arch', color, state: 'working' }, vec(0, 0));
+
+    const call = mockGraphicsUse.mock.calls[0];
+    if (!call) throw new TypeError('Expected graphics.use to have been called');
+
+    // The GraphicsGroup is the first argument; verify the accent bar (second member) uses the config color
+    expect(call[0]).toEqual(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          members: expect.arrayContaining([
+            expect.objectContaining({
+              graphic: expect.objectContaining({
+                options: expect.objectContaining({
+                  color: expect.objectContaining({ hex: color }),
+                }),
+              }),
+            }),
+          ]),
+        }),
+      }),
+    );
   });
 });
 

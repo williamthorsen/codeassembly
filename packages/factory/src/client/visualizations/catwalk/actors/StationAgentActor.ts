@@ -1,9 +1,12 @@
-import { Actor, BaseAlign, Circle, Color, Font, GraphicsGroup, Text, TextAlign, vec, type Vector } from 'excalibur';
+import { Actor, Color, GraphicsGroup, Rectangle, vec, type Vector } from 'excalibur';
 
+import { SPRITE_SIZE } from '../../../game/sprites/sprite-definitions.js';
 import { AGENT_PULSE_MAX, AGENT_PULSE_MIN, DEACTIVATED_OPACITY, PULSE_FREQUENCY } from '../constants/animation.js';
-import { AGENT_RADIUS } from '../constants/dimensions.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
+import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { AgentAnimationState } from '../types.js';
+
+const ACCENT_BAR_HEIGHT = 4;
 
 export interface StationAgentActorConfig {
   id: string;
@@ -33,43 +36,20 @@ function opacityForState(state: AgentAnimationState): number {
   }
 }
 
-/** Renders a station-bound agent as a colored circle with a role label, dimmed by animation state. */
+/** Renders a station-bound agent as an animated sprite with a colored accent bar, dimmed by animation state. */
 export class StationAgentActor extends Actor {
   private _state: AgentAnimationState;
+  private _config: StationAgentActorConfig;
   private _pulsing = false;
   private _elapsed = 0;
 
   constructor(config: StationAgentActorConfig, position: Vector) {
     super({ pos: position });
     this._state = config.state;
+    this._config = config;
     this._pulsing = config.state === 'working';
 
-    const circle = new Circle({
-      radius: AGENT_RADIUS,
-      color: Color.fromHex(config.color),
-    });
-
-    const label = new Text({
-      text: config.role,
-      color: Color.fromHex('#111111'),
-      font: new Font({
-        size: 9,
-        bold: true,
-        family: 'monospace',
-        textAlign: TextAlign.Center,
-        baseAlign: BaseAlign.Middle,
-      }),
-    });
-
-    const group = new GraphicsGroup({
-      useAnchor: false,
-      members: [
-        { graphic: circle, offset: vec(0, 0) },
-        { graphic: label, offset: vec(AGENT_RADIUS, AGENT_RADIUS), useBounds: false },
-      ],
-    });
-
-    this.graphics.use(group);
+    this.applyGraphics(config);
     this.graphics.opacity = opacityForState(config.state);
   }
 
@@ -77,6 +57,7 @@ export class StationAgentActor extends Actor {
   animateToState(state: AgentAnimationState): void {
     this._state = state;
     this._pulsing = state === 'working';
+    this.applyGraphics({ ...this._config, state });
     if (this._pulsing) {
       this._elapsed = 0;
     } else {
@@ -95,5 +76,26 @@ export class StationAgentActor extends Actor {
     this._elapsed += deltaMs;
     const t = Math.sin((this._elapsed * PULSE_FREQUENCY * Math.PI * 2) / 1000);
     this.graphics.opacity = AGENT_PULSE_MIN + ((AGENT_PULSE_MAX - AGENT_PULSE_MIN) * (t + 1)) / 2;
+  }
+
+  /** Builds a GraphicsGroup with the sprite animation and an accent bar, and applies it. */
+  private applyGraphics(config: StationAgentActorConfig): void {
+    const animation = getAnimation('subagent', config.state);
+
+    const accentBar = new Rectangle({
+      width: SPRITE_SIZE,
+      height: ACCENT_BAR_HEIGHT,
+      color: Color.fromHex(config.color),
+    });
+
+    const group = new GraphicsGroup({
+      useAnchor: false,
+      members: [
+        { graphic: animation, offset: vec(0, 0) },
+        { graphic: accentBar, offset: vec(0, SPRITE_SIZE) },
+      ],
+    });
+
+    this.graphics.use(group);
   }
 }
