@@ -14,9 +14,10 @@ describe('animation constants', () => {
     expect(DEACTIVATED_OPACITY).toBeLessThan(1);
   });
 
-  it('exports scale pulse range where min >= 1 and min < max', () => {
+  it('exports scale pulse range where min >= 1 and min < max <= 1.2', () => {
     expect(SCALE_PULSE_MIN).toBeGreaterThanOrEqual(1);
     expect(SCALE_PULSE_MIN).toBeLessThan(SCALE_PULSE_MAX);
+    expect(SCALE_PULSE_MAX).toBeLessThanOrEqual(1.2);
   });
 
   it('exports PULSE_FREQUENCY as a positive number', () => {

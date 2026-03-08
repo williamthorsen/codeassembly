@@ -120,9 +120,13 @@ describe('OrchestratorActor', () => {
     expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 100 }), expect.any(Number));
   });
 
-  it('setWorking(true) enables pulse flag', () => {
+  it('setWorking(true) enables pulse flag and restores full opacity', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    expect(actor.graphics.opacity).toBe(0.8);
+
     actor.setWorking(true);
+
+    expect(actor.graphics.opacity).toBe(1);
 
     // Simulate onPreUpdate — scale should pulse within range
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
@@ -207,6 +211,16 @@ describe('StationAgentActor', () => {
     expect(actor.graphics.opacity).toBe(1);
   });
 
+  it('pulses scale when constructed with working state', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
+    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
+    expect(actor.scale.y).toBe(actor.scale.x);
+  });
+
   it('sets opacity to 1.0 for celebrating state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'celebrating' }, vec(0, 0));
 
@@ -241,6 +255,8 @@ describe('StationAgentActor', () => {
   it('animateToState enables pulse when transitioning to working', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
     actor.animateToState('working');
+
+    expect(actor.actions.fade).toHaveBeenCalledWith(1, expect.any(Number));
 
     // Simulate onPreUpdate — scale should pulse within range
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
