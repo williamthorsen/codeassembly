@@ -1,7 +1,7 @@
 ---
 name: savings-analyzer
 description: Analyze an orchestrated run for token waste, unnecessary work, and resource misallocation. Outputs a structured savings analysis artifact.
-tools: [Read, Glob, Bash, Write]
+tools: [Read, Glob, Write]
 maxTurns: 15
 ---
 

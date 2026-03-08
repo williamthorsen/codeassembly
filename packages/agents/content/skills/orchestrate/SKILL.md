@@ -142,6 +142,7 @@ Prefix the status line with a colored emoji for visual distinction:
 | `pr-review-toolkit:pr-test-analyzer`      | 🔬    |
 | `pr-review-toolkit:code-reviewer`         | 🔎    |
 | `pr-review-toolkit:code-simplifier`       | 🙃    |
+| `savings-analyzer`                        | 💰    |
 
 **Example:**
 
