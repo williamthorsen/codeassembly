@@ -60,6 +60,7 @@ export class StationAgentActor extends Actor {
     this.applyGraphics({ ...this._config, state });
     if (this._pulsing) {
       this._elapsed = 0;
+      // Fade ensures opacity reaches 1 even when transitioning from a dimmed state (e.g., idle at 0.3).
       this.actions.fade(1, PAUSE_DURATION);
     } else {
       this.scale = vec(1, 1);

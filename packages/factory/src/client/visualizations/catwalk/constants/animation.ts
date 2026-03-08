@@ -4,8 +4,10 @@ export const DEACTIVATED_OPACITY = 0.15;
 /** Orchestrator opacity when not working. */
 export const ORCH_IDLE_OPACITY = 0.8;
 
-/** Scale pulse range shared by all actors in working state. */
+/** Minimum scale for all actors during working pulse (resting baseline). */
 export const SCALE_PULSE_MIN = 1;
+
+/** Maximum scale for all actors during working pulse. */
 export const SCALE_PULSE_MAX = 1.08;
 
 /** Pulse oscillation frequency in cycles per second. */

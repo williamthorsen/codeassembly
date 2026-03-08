@@ -32,11 +32,10 @@ export class OrchestratorActor extends Actor {
     this._working = working;
     const animation = getAnimation('orchestrator', working ? 'working' : 'idle');
     this.graphics.use(animation);
+    this._elapsed = 0;
     if (working) {
-      this._elapsed = 0;
       this.graphics.opacity = 1;
     } else {
-      this._elapsed = 0;
       this.scale = vec(1, 1);
       this.graphics.opacity = ORCH_IDLE_OPACITY;
     }
