@@ -63,6 +63,9 @@ export interface PhaseCompletedEvent {
   phase: EventPhaseName;
   status: PhaseStatus;
   data?: Record<string, unknown> | undefined;
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
 }
 
 export interface ReviewerDispatchedEvent {
@@ -77,6 +80,9 @@ export interface ReviewerCompletedEvent {
   reviewer: string;
   status: ReviewerStatus;
   criticality: Criticality;
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
 }
 
 export interface CoderFixStartedEvent {
@@ -89,6 +95,9 @@ export interface CoderFixCompletedEvent {
   t: string;
   event: 'coder_fix_completed';
   iteration: number;
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
 }
 
 export interface ReReviewDispatchedEvent {
@@ -101,6 +110,9 @@ export interface ReReviewCompletedEvent {
   t: string;
   event: 're_review_completed';
   criticalities: Record<string, Criticality>;
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
 }
 
 export interface ArtifactWrittenEvent {
