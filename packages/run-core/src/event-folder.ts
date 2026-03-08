@@ -45,12 +45,13 @@ function extractUsage(event: {
   toolUses?: number | undefined;
   durationMs?: number | undefined;
 }): UsageMetrics | undefined {
-  if (event.tokens === undefined && event.toolUses === undefined && event.durationMs === undefined) return undefined;
-  return {
-    ...(event.tokens !== undefined && { tokens: event.tokens }),
-    ...(event.toolUses !== undefined && { toolUses: event.toolUses }),
-    ...(event.durationMs !== undefined && { durationMs: event.durationMs }),
-  };
+  const { tokens, toolUses, durationMs } = event;
+  if (tokens === undefined && toolUses === undefined && durationMs === undefined) return undefined;
+  const usage: UsageMetrics = {};
+  if (tokens !== undefined) usage.tokens = tokens;
+  if (toolUses !== undefined) usage.toolUses = toolUses;
+  if (durationMs !== undefined) usage.durationMs = durationMs;
+  return usage;
 }
 
 /** Extract qualityGates from data, falling back to existing value. */

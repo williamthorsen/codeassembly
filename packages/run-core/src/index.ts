@@ -28,6 +28,7 @@ export type {
   CoderFixCompletedEvent,
   CoderFixStartedEvent,
   EventPhaseName,
+  EventUsageFields,
   PhaseCompletedEvent,
   PhaseDecisionEvent,
   PhaseStartedEvent,

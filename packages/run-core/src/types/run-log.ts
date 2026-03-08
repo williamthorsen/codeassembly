@@ -23,6 +23,13 @@ export interface RunHeader {
 /** Phase names as used in run-log.jsonl events. */
 export type EventPhaseName = 'architecture' | 'planning' | 'implementation' | 'review' | 'simplifier' | 'holistic';
 
+/** Optional usage fields present on event interfaces that track resource consumption. */
+export interface EventUsageFields {
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
+}
+
 // -- Individual event interfaces -----------------------------------------------
 
 export interface RunStartedEvent {
@@ -57,15 +64,12 @@ export interface PhaseStartedEvent {
   phase: EventPhaseName;
 }
 
-export interface PhaseCompletedEvent {
+export interface PhaseCompletedEvent extends EventUsageFields {
   t: string;
   event: 'phase_completed';
   phase: EventPhaseName;
   status: PhaseStatus;
   data?: Record<string, unknown> | undefined;
-  tokens?: number | undefined;
-  toolUses?: number | undefined;
-  durationMs?: number | undefined;
 }
 
 export interface ReviewerDispatchedEvent {
@@ -74,15 +78,12 @@ export interface ReviewerDispatchedEvent {
   reviewer: string;
 }
 
-export interface ReviewerCompletedEvent {
+export interface ReviewerCompletedEvent extends EventUsageFields {
   t: string;
   event: 'reviewer_completed';
   reviewer: string;
   status: ReviewerStatus;
   criticality: Criticality;
-  tokens?: number | undefined;
-  toolUses?: number | undefined;
-  durationMs?: number | undefined;
 }
 
 export interface CoderFixStartedEvent {
@@ -91,13 +92,10 @@ export interface CoderFixStartedEvent {
   iteration: number;
 }
 
-export interface CoderFixCompletedEvent {
+export interface CoderFixCompletedEvent extends EventUsageFields {
   t: string;
   event: 'coder_fix_completed';
   iteration: number;
-  tokens?: number | undefined;
-  toolUses?: number | undefined;
-  durationMs?: number | undefined;
 }
 
 export interface ReReviewDispatchedEvent {
@@ -106,13 +104,10 @@ export interface ReReviewDispatchedEvent {
   reviewers: string[];
 }
 
-export interface ReReviewCompletedEvent {
+export interface ReReviewCompletedEvent extends EventUsageFields {
   t: string;
   event: 're_review_completed';
   criticalities: Record<string, Criticality>;
-  tokens?: number | undefined;
-  toolUses?: number | undefined;
-  durationMs?: number | undefined;
 }
 
 export interface ArtifactWrittenEvent {
