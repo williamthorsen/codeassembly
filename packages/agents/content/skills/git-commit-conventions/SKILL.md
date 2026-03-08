@@ -14,11 +14,11 @@ Commit titles follow this format:
 {workspace}|{WORK_TYPE}: {commit title}
 ```
 
-See `_data/commit-format.md` for full specification.
+See `../_data/commit-format.md` for full specification.
 
 ## Commit metadata
 
-- `WORK_TYPE` describes the category of work (see `work-types.md`)
+- `WORK_TYPE` describes the category of work (see `../_data/work-types.md`)
 
 Example: `web|tests: Fix PromoPage tests`
 
@@ -49,11 +49,11 @@ Common example: If a package is added to `packages/workspace-a`, that updates th
 
 ## Branch naming
 
-Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as a separator. See `_data/branch-format.md` for the full specification.
+Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as a separator. See `../_data/branch-format.md` for the full specification.
 
 ## Work types reference
 
-See `_data/work-types.md` for the full list of work types ordered by priority:
+See `../_data/work-types.md` for the full list of work types ordered by priority:
 
 1. **Primary**: fix, feat, internal
 2. **Secondary**: refactor, tests
