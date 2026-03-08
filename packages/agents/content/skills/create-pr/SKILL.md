@@ -25,10 +25,13 @@ Create a pull request using the GitHub CLI and existing PR description.
 
    Use `get-default-branch name-only` to resolve `{default-branch}`.
 
+   Extract body from `## What` onward:
+
    ```bash
+   BODY=$(sed -n '/^## What$/,$p' path/to/change-summary.md)
    gh pr create \
      --title "{extracted title from file}" \
-     --body "$(tail -n +2 path/to/change-summary.md)" \
+     --body "$BODY" \
      --base "{default-branch}" \
      --draft
    ```
