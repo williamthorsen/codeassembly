@@ -16,6 +16,13 @@ const reviewerStatusSchema = z.enum(['completed', 'skipped', 'failed']);
 
 const eventPhaseSchema = z.enum(['architecture', 'planning', 'implementation', 'review', 'simplifier', 'holistic']);
 
+/** Reusable schema fragment for optional resource-usage metrics on events. */
+const usageMetricsSchema = {
+  tokens: z.number().optional(),
+  toolUses: z.number().optional(),
+  durationMs: z.number().optional(),
+};
+
 const runStartedSchema = z.object({
   t: z.string(),
   event: z.literal('run_started'),
@@ -54,6 +61,7 @@ const phaseCompletedSchema = z.object({
   phase: eventPhaseSchema,
   status: phaseStatusSchema,
   data: z.record(z.string(), z.unknown()).optional(),
+  ...usageMetricsSchema,
 });
 
 const reviewerDispatchedSchema = z.object({
@@ -68,6 +76,7 @@ const reviewerCompletedSchema = z.object({
   reviewer: z.string(),
   status: reviewerStatusSchema,
   criticality: criticalitySchema,
+  ...usageMetricsSchema,
 });
 
 const coderFixStartedSchema = z.object({
@@ -80,6 +89,7 @@ const coderFixCompletedSchema = z.object({
   t: z.string(),
   event: z.literal('coder_fix_completed'),
   iteration: z.number(),
+  ...usageMetricsSchema,
 });
 
 const reReviewDispatchedSchema = z.object({
@@ -92,6 +102,7 @@ const reReviewCompletedSchema = z.object({
   t: z.string(),
   event: z.literal('re_review_completed'),
   criticalities: z.record(z.string(), criticalitySchema),
+  ...usageMetricsSchema,
 });
 
 const artifactWrittenSchema = z.object({

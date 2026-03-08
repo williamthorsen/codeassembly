@@ -23,6 +23,13 @@ export interface RunHeader {
 /** Phase names as used in run-log.jsonl events. */
 export type EventPhaseName = 'architecture' | 'planning' | 'implementation' | 'review' | 'simplifier' | 'holistic';
 
+/** Optional usage fields present on event interfaces that track resource consumption. */
+export interface EventUsageFields {
+  tokens?: number | undefined;
+  toolUses?: number | undefined;
+  durationMs?: number | undefined;
+}
+
 // -- Individual event interfaces -----------------------------------------------
 
 export interface RunStartedEvent {
@@ -57,7 +64,7 @@ export interface PhaseStartedEvent {
   phase: EventPhaseName;
 }
 
-export interface PhaseCompletedEvent {
+export interface PhaseCompletedEvent extends EventUsageFields {
   t: string;
   event: 'phase_completed';
   phase: EventPhaseName;
@@ -71,7 +78,7 @@ export interface ReviewerDispatchedEvent {
   reviewer: string;
 }
 
-export interface ReviewerCompletedEvent {
+export interface ReviewerCompletedEvent extends EventUsageFields {
   t: string;
   event: 'reviewer_completed';
   reviewer: string;
@@ -85,7 +92,7 @@ export interface CoderFixStartedEvent {
   iteration: number;
 }
 
-export interface CoderFixCompletedEvent {
+export interface CoderFixCompletedEvent extends EventUsageFields {
   t: string;
   event: 'coder_fix_completed';
   iteration: number;
@@ -97,7 +104,7 @@ export interface ReReviewDispatchedEvent {
   reviewers: string[];
 }
 
-export interface ReReviewCompletedEvent {
+export interface ReReviewCompletedEvent extends EventUsageFields {
   t: string;
   event: 're_review_completed';
   criticalities: Record<string, Criticality>;

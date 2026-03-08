@@ -19,6 +19,7 @@ export type {
   ReviewIteration,
   RunStatus,
   SelectiveReReview,
+  UsageMetrics,
 } from './types/canonical.js';
 
 // Types — run-log event model
@@ -27,6 +28,7 @@ export type {
   CoderFixCompletedEvent,
   CoderFixStartedEvent,
   EventPhaseName,
+  EventUsageFields,
   PhaseCompletedEvent,
   PhaseDecisionEvent,
   PhaseStartedEvent,
