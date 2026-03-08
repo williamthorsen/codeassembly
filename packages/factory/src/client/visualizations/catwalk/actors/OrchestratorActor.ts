@@ -59,13 +59,11 @@ export class OrchestratorActor extends Actor {
 
   /** Render small colored rectangles trailing the orchestrator horizontally on the rail. */
   setCarriedArtifacts(configs: CarriedArtifactConfig[]): void {
-    // Remove previous carried artifact children
     for (const child of this._carriedChildren) {
       child.kill();
     }
     this._carriedChildren = [];
 
-    // Add new carried artifact children, positioned relative to the orchestrator
     for (const [i, config] of configs.entries()) {
       const offsetX = -(i + 1) * (CARRIED_ART_W + CARRIED_ART_GAP);
       const child = new Actor({ pos: vec(offsetX, 0) });
@@ -83,7 +81,6 @@ export class OrchestratorActor extends Actor {
 
   /** Render a text badge below the orchestrator sprite. Pass null to hide. */
   setCodeBadge(config: { label: string; color: string } | null): void {
-    // Remove previous badge child
     if (this._badgeChild !== undefined) {
       this._badgeChild.kill();
       this._badgeChild = undefined;
