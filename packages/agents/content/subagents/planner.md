@@ -134,6 +134,14 @@ When resumed with user feedback, you should:
 - **Designed for resumption**: the user may provide feedback across multiple iterations
 - **Self-contained step descriptions**: each step's `description` in orchestration-plan.json is detailed enough to serve as the complete task input for `/orchestrate-dev`
 
+## Turn budget
+
+You have **40 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
+
 ## Constraints
 
 - **Read-only on project files**: you may read any project file but only write to the provided output paths

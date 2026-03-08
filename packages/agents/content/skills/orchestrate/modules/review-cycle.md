@@ -86,7 +86,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > Write your review to: `{run-dir}/{NN}_reviewer_review.md`
 
-Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 15`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
+Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 20`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
 
 > Review the code changes on this branch for error-handling and silent-failure issues.
 >
@@ -99,7 +99,7 @@ Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 15`,
 >
 > Write your findings to: `{run-dir}/{NN}_silent-failure-reviewer_silent-failure-review.md`
 
-Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {models.aspect_test_reviewer}` (if activated):
+Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 20`, `model: {models.aspect_test_reviewer}` (if activated):
 
 > Review the code changes on this branch for test-coverage quality, behavioral gaps, and missing edge cases.
 >
@@ -114,7 +114,7 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 15`, `model: {
 >
 > Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`
 
-Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 15`, `model: {models.aspect_code_reviewer}` (if activated):
+Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 20`, `model: {models.aspect_code_reviewer}` (if activated):
 
 > Review the code changes on this branch for CLAUDE.md compliance, bugs, and logic errors.
 >

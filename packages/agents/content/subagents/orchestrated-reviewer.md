@@ -32,9 +32,15 @@ You will receive:
 1. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, where `<merge-base-sha>` is the pre-resolved SHA provided in your task prompt. If none was provided, compute it yourself: invoke `get-default-branch`, then run `git merge-base HEAD <default-branch>` to get the SHA.
 2. **Read changed files**: read the full files, not just diffs, to understand context
 3. **Evaluate against criteria**: apply review-criteria skill
-4. **Classify each finding**: assign category (F/W/T/R/S/L)
-5. **Classify overall criticality**: determine the overall review outcome
-6. **Write review file**: output to artifact directory
+4. **Form preliminary findings**: classify each finding into the F/W/T/R/S/L scheme and determine overall criticality
+5. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
+6. **Refine if turns remain**: if you have remaining turns, continue evaluation and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
+
+### Efficiency
+
+- **Diff-first**: read the diff before reading full files. Only read full file contents for files where the diff reveals potential issues.
+- **Batch reads**: when reading multiple files, use parallel tool calls rather than sequential ones.
+- **Proportional depth**: match the thoroughness of your review to the scope of the change. A 3-file bugfix does not need the same depth as a 20-file refactor.
 
 ## Finding format
 
@@ -135,6 +141,14 @@ When reviewing after a coder has responded to previous findings:
 - **No false positives**: if you're not confident something is wrong, don't flag it. Every finding should be worth the coder's time.
 - **Context-aware**: understand the codebase conventions before flagging violations. What looks wrong in isolation might be the established pattern.
 - **Proportional**: a typo fix doesn't need the same scrutiny as a security-critical change. Match your depth to the risk.
+
+## Turn budget
+
+You have **30 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
 
 ## Orchestrator return protocol
 

@@ -2,7 +2,7 @@
 name: aspect-code-reviewer
 description: Review code changes for CLAUDE.md compliance, bugs, and logic errors. Outputs structured findings with criticality classification for flow control.
 tools: [Read, Grep, Glob, Bash, Write]
-maxTurns: 15
+maxTurns: 20
 skills:
   - anti-patterns
   - common-mistakes
@@ -29,12 +29,16 @@ You will receive:
 
 1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Get the diff**: run the provided `git diff` command to see all changes in scope
-3. **Read changed files**: read the full files to understand context
-4. **Evaluate guideline compliance**: check for violations of project conventions, naming patterns, file organization, and coding standards defined in the project's configuration files
-5. **Check for bugs**: look for logic errors, incorrect conditions, off-by-one errors, null/undefined risks, race conditions, and other correctness issues
-6. **Classify each finding**: assign category (F/W/T/R/S/L)
-7. **Classify overall criticality**: determine the overall review outcome
-8. **Write review file**: output to artifact directory
+3. **Read changed files**: read the full files to understand context (but see efficiency note below)
+4. **Form preliminary findings**: identify potential guideline violations and bugs from what you've read so far
+5. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
+6. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
+
+### Efficiency
+
+- **Diff-first**: read the diff before reading full files. Only read full file contents for files where the diff reveals potential issues in your scope.
+- **Batch reads**: when reading multiple files, use parallel tool calls rather than sequential ones.
+- **Skip irrelevant files**: if the diff for a file shows only documentation, formatting, or test changes, skip reading its full content.
 
 ## Scope
 
@@ -136,6 +140,14 @@ Scope re-reviews to your domain: project guideline compliance, bugs, and logic e
 - **Context-aware**: understand the codebase conventions before flagging violations. What looks wrong in isolation might be the established pattern.
 - **Proportional**: a typo fix doesn't need the same scrutiny as a security-critical change. Match your depth to the risk.
 - **Stay in scope**: do not comment on error handling patterns or test coverage
+
+## Turn budget
+
+You have **20 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
 
 ## Orchestrator return protocol
 

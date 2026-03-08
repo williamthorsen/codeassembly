@@ -326,9 +326,9 @@ Always pass `max_turns` explicitly to every Task call:
 | orchestrated-planner              |        40 |
 | orchestrated-coder                |        80 |
 | orchestrated-reviewer             |        30 |
-| aspect-code-reviewer              |        15 |
-| aspect-silent-failure-reviewer    |        15 |
-| aspect-test-reviewer              |        15 |
+| aspect-code-reviewer              |        20 |
+| aspect-silent-failure-reviewer    |        20 |
+| aspect-test-reviewer              |        20 |
 | pr-review-toolkit:code-simplifier |        15 |
 | orchestrated-reviewer (final)     |        30 |
 

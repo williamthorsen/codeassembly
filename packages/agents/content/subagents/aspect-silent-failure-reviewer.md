@@ -2,7 +2,7 @@
 name: aspect-silent-failure-reviewer
 description: Review code changes for error-handling and silent-failure issues. Outputs structured findings with criticality classification for flow control.
 tools: [Read, Grep, Glob, Bash, Write]
-maxTurns: 15
+maxTurns: 20
 skills:
   - anti-patterns
   - get-default-branch
@@ -28,11 +28,10 @@ You will receive:
 
 1. **Get the diff**: run the provided `git diff` command to see all changes in scope
 2. **Read changed files**: read the full files to understand error-handling context
-3. **Check relevance**: if the diff contains no error-handling code (no try/catch, no `.catch()`, no error callbacks, no fallback patterns, no error suppression), produce `### Criticality: none` and stop
-4. **Evaluate error handling**: look for silent failures, swallowed exceptions, empty catch blocks, overly broad catches, missing error propagation, and fallback behavior that masks problems
-5. **Classify each finding**: assign category (F/W/T/R/S/L)
-6. **Classify overall criticality**: determine the overall review outcome
-7. **Write review file**: output to artifact directory
+3. **Check relevance**: if the diff contains no error-handling code (no try/catch, no `.catch()`, no error callbacks, no fallback patterns, no error suppression), write `### Criticality: none` to the artifact and stop
+4. **Form preliminary findings**: identify potential silent failures and error-handling issues from what you've read so far
+5. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
+6. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
 
 ## Scope
 
@@ -133,6 +132,14 @@ Scope re-reviews to your domain: error handling, catch blocks, fallback behavior
 - **Context-aware**: understand the codebase error-handling conventions before flagging violations
 - **Proportional**: match scrutiny to the risk level of the code being reviewed
 - **Stay in scope**: do not comment on anything outside error handling and failure modes
+
+## Turn budget
+
+You have **20 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
+
+<HARD-GATE>
+**Reserve your last 3 turns for writing your artifact file and return block.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+</HARD-GATE>
 
 ## Orchestrator return protocol
 
