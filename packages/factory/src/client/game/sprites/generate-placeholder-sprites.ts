@@ -1,3 +1,14 @@
+/**
+ * Generate placeholder sprite sheet SVGs for the Excalibur game visualization.
+ *
+ * Produces stick-figure sprites with per-frame animation poses (idle, walking, working,
+ * celebrating, concerned, resting) for each role type. Used by the Excalibur-based game
+ * scene, not the catwalk visualization.
+ *
+ * This module depends on Excalibur (via sprite-definitions) and cannot be run standalone
+ * with `tsx`. It is imported at runtime in the browser and tested via vitest with a mock
+ * of `excalibur`.
+ */
 import type { RoleType } from '../../../shared/constants/role-types.js';
 import { ROLE_TYPE_COLORS } from '../../../shared/constants/role-types.js';
 import { GRID_COLUMNS, GRID_ROWS, SPRITE_SIZE } from './sprite-definitions.js';

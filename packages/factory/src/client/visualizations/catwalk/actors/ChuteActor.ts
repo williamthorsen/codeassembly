@@ -1,5 +1,6 @@
 import { Actor, Color, Rectangle, vec } from 'excalibur';
 
+import { CHUTE_DIMMED_OPACITY, CHUTE_OPACITY } from '../constants/animation.js';
 import type { ChuteEndpoints } from '../layout/catwalk-layout.js';
 
 export interface ChuteActorConfig {
@@ -21,10 +22,10 @@ export class ChuteActor extends Actor {
     });
 
     this.graphics.use(rect);
-    this.graphics.opacity = config.dimmed ? 0.15 : 0.5;
+    this.graphics.opacity = config.dimmed ? CHUTE_DIMMED_OPACITY : CHUTE_OPACITY;
   }
 
   updateConfig(config: ChuteActorConfig): void {
-    this.graphics.opacity = config.dimmed ? 0.15 : 0.5;
+    this.graphics.opacity = config.dimmed ? CHUTE_DIMMED_OPACITY : CHUTE_OPACITY;
   }
 }

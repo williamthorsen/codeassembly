@@ -1,3 +1,12 @@
+/**
+ * Generate placeholder sprite sheet SVGs for the catwalk visualization.
+ *
+ * Produces simple colored-rectangle placeholders (orchestrator + subagent) and writes
+ * them to `src/client/visualizations/catwalk/sprites/assets/`. These are the sprites
+ * actually loaded by the catwalk renderer at runtime.
+ *
+ * Run with: `node --import tsx packages/factory/scripts/generate-placeholder-pngs.ts`
+ */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -15,7 +24,7 @@ function generatePlaceholderSvg(color: string, label: string): string {
       const y = row * SPRITE_SIZE;
       const frameNum = row * COLS + col;
       frames.push(
-        `<rect x="${x + 2}" y="${y + 2}" width="${SPRITE_SIZE - 4}" height="${SPRITE_SIZE - 4}" rx="4" fill="${color}" opacity="0.8" />`,
+        `<rect x="${x + 2}" y="${y + 2}" width="${SPRITE_SIZE - 4}" height="${SPRITE_SIZE - 4}" rx="4" fill="${color}" />`,
         `<text x="${x + SPRITE_SIZE / 2}" y="${y + SPRITE_SIZE / 2 + 3}" text-anchor="middle" font-size="8" font-family="monospace" fill="white">${label}${frameNum}</text>`,
       );
     }

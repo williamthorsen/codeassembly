@@ -11,6 +11,7 @@ const { mockActorConstructor, mockGraphicsUse, mockGetAnimation } = vi.hoisted((
 vi.mock('excalibur', () => {
   class MockActor {
     config: Record<string, unknown>;
+    scale = { x: 1, y: 1 };
     graphics = { use: mockGraphicsUse, opacity: 1, isVisible: true, scale: { x: 1, y: 1 } };
     pos = { x: 0, y: 0 };
     actions = {
@@ -92,6 +93,16 @@ const { ArtifactActor } = await import('../ArtifactActor.js');
 const { GateActor } = await import('../GateActor.js');
 const { ChuteActor } = await import('../ChuteActor.js');
 const { vec } = await import('excalibur');
+const {
+  ACTIVE_OPACITY,
+  CHUTE_DIMMED_OPACITY,
+  CHUTE_OPACITY,
+  DEACTIVATED_OPACITY,
+  GATE_OPACITY,
+  IDLE_OPACITY,
+  ORCH_IDLE_OPACITY,
+  RESTING_OPACITY,
+} = await import('../../constants/animation.js');
 
 describe('OrchestratorActor', () => {
   beforeEach(() => {
@@ -100,16 +111,16 @@ describe('OrchestratorActor', () => {
     mockGetAnimation.mockReturnValue({ type: 'animation' });
   });
 
-  it('sets opacity to 1.0 when working is true', () => {
+  it('sets opacity to ACTIVE_OPACITY when working is true', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
-  it('sets opacity to 0.8 when working is false', () => {
+  it('sets opacity to ORCH_IDLE_OPACITY when working is false', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.8);
+    expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
   });
 
   it('animateMoveTo calls actions.moveTo with position and walk speed', () => {
@@ -119,15 +130,20 @@ describe('OrchestratorActor', () => {
     expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 100 }), expect.any(Number));
   });
 
-  it('setWorking(true) enables pulse flag', () => {
+  it('setWorking(true) enables pulse flag and restores full opacity', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
+
     actor.setWorking(true);
 
-    // Simulate onPreUpdate — opacity should differ from static value
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+
+    // Simulate onPreUpdate — scale should pulse within range
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.6);
-    expect(actor.graphics.opacity).toBeLessThanOrEqual(1);
+    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
+    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
+    expect(actor.scale.y).toBe(actor.scale.x);
   });
 
   it('setWorking(false) disables pulse and sets idle opacity', () => {
@@ -136,7 +152,8 @@ describe('OrchestratorActor', () => {
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 0);
-    expect(actor.graphics.opacity).toBe(0.8);
+    expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
   it('calls getAnimation with orchestrator type and working state', () => {
@@ -186,79 +203,90 @@ describe('StationAgentActor', () => {
     mockGetAnimation.mockReturnValue({ type: 'animation' });
   });
 
-  it('sets opacity to 0.3 for idle state', () => {
+  it('sets opacity to IDLE_OPACITY for idle state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.3);
+    expect(actor.graphics.opacity).toBe(IDLE_OPACITY);
   });
 
-  it('sets opacity to 0.6 for resting state', () => {
+  it('sets opacity to RESTING_OPACITY for resting state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'resting' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.6);
+    expect(actor.graphics.opacity).toBe(RESTING_OPACITY);
   });
 
-  it('sets opacity to 1.0 for working state', () => {
+  it('sets opacity to ACTIVE_OPACITY for working state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
-  it('sets opacity to 1.0 for celebrating state', () => {
+  it('pulses scale when constructed with working state', () => {
+    const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
+    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
+    expect(actor.scale.y).toBe(actor.scale.x);
+  });
+
+  it('sets opacity to ACTIVE_OPACITY for celebrating state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'celebrating' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
-  it('sets opacity to 1.0 for concerned state', () => {
+  it('sets opacity to ACTIVE_OPACITY for concerned state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'concerned' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
-  it('sets opacity to 1.0 for walking state', () => {
+  it('sets opacity to ACTIVE_OPACITY for walking state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'walking' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
   it('sets opacity to DEACTIVATED_OPACITY for deactivated state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'deactivated' }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.15);
+    expect(actor.graphics.opacity).toBe(DEACTIVATED_OPACITY);
   });
 
   it('animateToState fades to target opacity via actions.fade', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
     actor.animateToState('resting');
 
-    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+    expect(actor.actions.fade).toHaveBeenCalledWith(RESTING_OPACITY, expect.any(Number));
   });
 
   it('animateToState enables pulse when transitioning to working', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'idle' }, vec(0, 0));
     actor.animateToState('working');
 
-    // Simulate onPreUpdate
+    expect(actor.actions.fade).toHaveBeenCalledWith(ACTIVE_OPACITY, expect.any(Number));
+
+    // Simulate onPreUpdate — scale should pulse within range
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBeGreaterThanOrEqual(0.7);
-    expect(actor.graphics.opacity).toBeLessThanOrEqual(1);
+    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
+    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
+    expect(actor.scale.y).toBe(actor.scale.x);
   });
 
   it('animateToState disables pulse when leaving working', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
     actor.animateToState('resting');
 
-    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+    expect(actor.actions.fade).toHaveBeenCalledWith(RESTING_OPACITY, expect.any(Number));
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
 
-    // After leaving working, onPreUpdate should not override the resting opacity.
-    // Set opacity to the resting value to simulate fade completion, then verify
-    // that onPreUpdate does not change it (pulse is disabled).
-    actor.graphics.opacity = 0.6;
+    // After leaving working, onPreUpdate should not change scale (pulse is disabled).
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
     actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBe(0.6);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
   it('fadeIn sets opacity to 0 then fades to state-appropriate opacity', () => {
@@ -267,14 +295,14 @@ describe('StationAgentActor', () => {
 
     // Opacity should be synchronously set to 0 before fade is called
     expect(actor.graphics.opacity).toBe(0);
-    expect(actor.actions.fade).toHaveBeenCalledWith(0.6, expect.any(Number));
+    expect(actor.actions.fade).toHaveBeenCalledWith(RESTING_OPACITY, expect.any(Number));
   });
 
   it('animateToState to deactivated fades to DEACTIVATED_OPACITY', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
     actor.animateToState('deactivated');
 
-    expect(actor.actions.fade).toHaveBeenCalledWith(0.15, expect.any(Number));
+    expect(actor.actions.fade).toHaveBeenCalledWith(DEACTIVATED_OPACITY, expect.any(Number));
   });
 
   it('calls getAnimation with subagent type and the given state', () => {
@@ -329,27 +357,27 @@ describe('CatwalkStationActor', () => {
     mockGraphicsUse.mockClear();
   });
 
-  it('sets opacity to 0.3 when absent is true', () => {
+  it('sets opacity to IDLE_OPACITY when absent is true', () => {
     const actor = new CatwalkStationActor({ phase: 'Architecture', color: '#5555FF', absent: true }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.3);
+    expect(actor.graphics.opacity).toBe(IDLE_OPACITY);
   });
 
-  it('sets opacity to 1.0 when absent is false', () => {
+  it('sets opacity to ACTIVE_OPACITY when absent is false', () => {
     const actor = new CatwalkStationActor({ phase: 'Architecture', color: '#5555FF', absent: false }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
   it('updateConfig toggles opacity', () => {
     const actor = new CatwalkStationActor({ phase: 'Architecture', color: '#5555FF', absent: false }, vec(0, 0));
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
 
     actor.updateConfig({ phase: 'Architecture', color: '#5555FF', absent: true });
-    expect(actor.graphics.opacity).toBe(0.3);
+    expect(actor.graphics.opacity).toBe(IDLE_OPACITY);
 
     actor.updateConfig({ phase: 'Architecture', color: '#5555FF', absent: false });
-    expect(actor.graphics.opacity).toBe(1);
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 });
 
@@ -397,7 +425,7 @@ describe('ArtifactActor', () => {
 
     // Opacity should be synchronously set to 0 before fade is called
     expect(actor.graphics.opacity).toBe(0);
-    expect(actor.actions.fade).toHaveBeenCalledWith(1, expect.any(Number));
+    expect(actor.actions.fade).toHaveBeenCalledWith(ACTIVE_OPACITY, expect.any(Number));
   });
 });
 
@@ -406,17 +434,17 @@ describe('GateActor', () => {
     mockGraphicsUse.mockClear();
   });
 
-  it('sets opacity to 0.85 and isVisible to true when open is false', () => {
+  it('sets opacity to GATE_OPACITY and isVisible to true when open is false', () => {
     const actor = new GateActor({ open: false }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.85);
+    expect(actor.graphics.opacity).toBe(GATE_OPACITY);
     expect(actor.graphics.isVisible).toBe(true);
   });
 
   it('sets isVisible to false when open is true', () => {
     const actor = new GateActor({ open: true }, vec(0, 0));
 
-    expect(actor.graphics.opacity).toBe(0.85);
+    expect(actor.graphics.opacity).toBe(GATE_OPACITY);
     expect(actor.graphics.isVisible).toBe(false);
   });
 
@@ -448,27 +476,27 @@ describe('ChuteActor', () => {
     mockActorConstructor.mockClear();
   });
 
-  it('sets opacity to 0.5 when dimmed is false', () => {
+  it('sets opacity to CHUTE_OPACITY when dimmed is false', () => {
     const actor = new ChuteActor({ dimmed: false }, { topX: 100, topY: 148, botX: 100, botY: 320 });
 
-    expect(actor.graphics.opacity).toBe(0.5);
+    expect(actor.graphics.opacity).toBe(CHUTE_OPACITY);
   });
 
-  it('sets opacity to 0.15 when dimmed is true', () => {
+  it('sets opacity to CHUTE_DIMMED_OPACITY when dimmed is true', () => {
     const actor = new ChuteActor({ dimmed: true }, { topX: 100, topY: 148, botX: 100, botY: 320 });
 
-    expect(actor.graphics.opacity).toBe(0.15);
+    expect(actor.graphics.opacity).toBe(CHUTE_DIMMED_OPACITY);
   });
 
   it('updateConfig toggles opacity', () => {
     const actor = new ChuteActor({ dimmed: false }, { topX: 100, topY: 148, botX: 100, botY: 320 });
-    expect(actor.graphics.opacity).toBe(0.5);
+    expect(actor.graphics.opacity).toBe(CHUTE_OPACITY);
 
     actor.updateConfig({ dimmed: true });
-    expect(actor.graphics.opacity).toBe(0.15);
+    expect(actor.graphics.opacity).toBe(CHUTE_DIMMED_OPACITY);
 
     actor.updateConfig({ dimmed: false });
-    expect(actor.graphics.opacity).toBe(0.5);
+    expect(actor.graphics.opacity).toBe(CHUTE_OPACITY);
   });
 
   it('computes position as midpoint between top and bottom endpoints', () => {
