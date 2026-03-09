@@ -50,8 +50,13 @@ export function composePose(pose: Pose, size: number): number[][] {
   return grid;
 }
 
-/** Renders all 12 poses into a 128x96 SVG sprite sheet with 4 columns and 3 rows. */
+/** Renders exactly 12 poses into a 128x96 SVG sprite sheet with 4 columns and 3 rows. */
 export function renderSpriteSheet(poses: Pose[], palette: Palette): string {
+  const expectedCount = ROWS * COLS;
+  if (poses.length !== expectedCount) {
+    throw new Error(`Expected exactly 12 poses but received ${poses.length}`);
+  }
+
   const width = SPRITE_SIZE * COLS;
   const height = SPRITE_SIZE * ROWS;
   const rects: string[] = [];
@@ -66,7 +71,11 @@ export function renderSpriteSheet(poses: Pose[], palette: Palette): string {
         if (paletteIndex === 0) continue;
 
         const color = palette[paletteIndex];
-        if (color === undefined || color === '') continue;
+        if (color === undefined) {
+          console.warn(`Palette index ${paletteIndex} out of range in frame ${frameIndex} at pixel (${x}, ${y})`);
+          continue;
+        }
+        if (color === '') continue;
 
         rects.push(`<rect x="${frameX + x}" y="${frameY + y}" width="1" height="1" fill="${color}" />`);
       }

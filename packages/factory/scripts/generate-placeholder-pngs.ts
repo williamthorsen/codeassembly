@@ -25,4 +25,4 @@ const orchestratorSvg = renderSpriteSheet(ORCHESTRATOR_POSES, ORCHESTRATOR_PALET
 writeFileSync(join(outDir, 'subagent.svg'), subagentSvg);
 writeFileSync(join(outDir, 'orchestrator.svg'), orchestratorSvg);
 
-console.info('Placeholder sprite sheets written to', outDir);
+console.info('Sprite sheets written to', outDir);
