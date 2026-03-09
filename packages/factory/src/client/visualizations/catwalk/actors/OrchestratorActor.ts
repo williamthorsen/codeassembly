@@ -8,7 +8,7 @@ import {
   SCALE_PULSE_MIN,
 } from '../constants/animation.js';
 import { BADGE_OFFSET_Y, CARRIED_ART_GAP, CARRIED_ART_H, CARRIED_ART_W } from '../constants/dimensions.js';
-import { WALK_SPEED } from '../constants/timing.js';
+import { PAUSE_DURATION, WALK_SPEED } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { CarriedArtifactConfig } from '../types.js';
 
@@ -35,6 +35,12 @@ export class OrchestratorActor extends Actor {
   /** Slide the orchestrator to a new position along the catwalk rail. Returns a promise that resolves when the walk completes. */
   animateMoveTo(pos: Vector): Promise<void> {
     return this.actions.moveTo(pos, WALK_SPEED).toPromise();
+  }
+
+  /** Fade the orchestrator out to invisible and stop the working pulse. */
+  fadeOut(): void {
+    this._working = false;
+    this.actions.fade(0, PAUSE_DURATION);
   }
 
   /** Toggle the pulsing working glow and switch sprite animation. */

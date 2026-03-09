@@ -288,6 +288,20 @@ describe('OrchestratorActor', () => {
       expect(firstBadge.kill).toHaveBeenCalled();
     }
   });
+
+  it('fadeOut fades opacity to 0 and stops the working pulse', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+
+    actor.fadeOut();
+
+    expect(actor.actions.fade).toHaveBeenCalledWith(0, expect.any(Number));
+
+    // Working pulse should be disabled — onPreUpdate should be a no-op
+    const opacityBefore = actor.graphics.opacity;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.graphics.opacity).toBe(opacityBefore);
+  });
 });
 
 describe('StationAgentActor', () => {

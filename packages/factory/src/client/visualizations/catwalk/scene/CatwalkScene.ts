@@ -95,6 +95,12 @@ export class CatwalkScene extends Scene {
       return;
     }
 
+    // Guard: fade out orchestrator when moving to a negative (sentinel) station index
+    if (diff.orchestrator.moved !== null && diff.orchestrator.moved.to < 0 && this.orchestratorRef !== undefined) {
+      this.orchestratorRef.fadeOut();
+      this.orchestratorRef = undefined;
+    }
+
     // Added agents are always handled by the scene directly (not by the choreographer)
     // because they require constructing actors with scene-specific config
     this.addDiffAgents(diff, config, layout);
