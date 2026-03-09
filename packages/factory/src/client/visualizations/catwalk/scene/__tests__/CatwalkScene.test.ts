@@ -102,6 +102,7 @@ vi.mock('../../actors/index.js', () => ({
       public position: unknown,
     ) {}
     animateMoveTo = vi.fn().mockResolvedValue(undefined);
+    fadeOut = vi.fn();
     setWorking = vi.fn();
     setCarriedArtifacts = vi.fn();
     setCodeBadge = vi.fn();
@@ -275,6 +276,43 @@ describe('CatwalkScene', () => {
     const orch = orchestrators[0];
     if (orch === undefined) throw new Error('orchestrator not found');
     expect(orch.animateMoveTo).toHaveBeenCalled();
+  });
+
+  it('fades out orchestrator when station moves to a negative index', () => {
+    // Start with an in-progress run — orchestrator at station 2 (implementation)
+    const status1 = createMockRunStatus({
+      status: 'in_progress',
+      phases: {
+        ...emptyPhases(),
+        architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
+      },
+    });
+    const scene = new CatwalkScene(status1);
+    scene.onInitialize();
+
+    // Transition to failed — orchestrator goes to station -1
+    const status2 = createMockRunStatus({
+      status: 'failed',
+      phases: {
+        ...emptyPhases(),
+        architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
+      },
+    });
+    scene.updateStatus(status2);
+
+    // The orchestrator should have fadeOut called instead of crashing
+    const orchestrators = scene.entities.filter(
+      (e): e is InstanceType<typeof OrchestratorActor> => e instanceof OrchestratorActor,
+    );
+    expect(orchestrators.length).toBe(1);
+    const orch = orchestrators[0];
+    if (orch === undefined) throw new Error('orchestrator not found');
+    expect(orch.fadeOut).toHaveBeenCalled();
+    expect(orch.animateMoveTo).not.toHaveBeenCalled();
   });
 
   it('calls setWorking on orchestrator when working state changes', () => {
