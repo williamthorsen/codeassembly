@@ -1,6 +1,12 @@
 import { Actor, vec, type Vector } from 'excalibur';
 
-import { ORCH_IDLE_OPACITY, PULSE_FREQUENCY, SCALE_PULSE_MAX, SCALE_PULSE_MIN } from '../constants/animation.js';
+import {
+  ACTIVE_OPACITY,
+  ORCH_IDLE_OPACITY,
+  PULSE_FREQUENCY,
+  SCALE_PULSE_MAX,
+  SCALE_PULSE_MIN,
+} from '../constants/animation.js';
 import { WALK_SPEED } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 
@@ -19,7 +25,7 @@ export class OrchestratorActor extends Actor {
     const animation = getAnimation('orchestrator', config.working ? 'working' : 'idle');
     this.graphics.use(animation);
     this._working = config.working;
-    this.graphics.opacity = config.working ? 1 : ORCH_IDLE_OPACITY;
+    this.graphics.opacity = config.working ? ACTIVE_OPACITY : ORCH_IDLE_OPACITY;
   }
 
   /** Slide the orchestrator to a new position along the catwalk rail. */
@@ -34,7 +40,7 @@ export class OrchestratorActor extends Actor {
     this.graphics.use(animation);
     this._elapsed = 0;
     if (working) {
-      this.graphics.opacity = 1;
+      this.graphics.opacity = ACTIVE_OPACITY;
     } else {
       this.scale = vec(1, 1);
       this.graphics.opacity = ORCH_IDLE_OPACITY;

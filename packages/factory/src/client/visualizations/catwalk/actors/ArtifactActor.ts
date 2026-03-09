@@ -1,5 +1,6 @@
 import { Actor, BaseAlign, Color, Font, GraphicsGroup, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
+import { ACTIVE_OPACITY } from '../constants/animation.js';
 import { ART_H, ART_W } from '../constants/dimensions.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 
@@ -55,6 +56,6 @@ export class ArtifactActor extends Actor {
   /** Fade in from invisible. */
   fadeIn(): void {
     this.graphics.opacity = 0;
-    this.actions.fade(1, PAUSE_DURATION);
+    this.actions.fade(ACTIVE_OPACITY, PAUSE_DURATION);
   }
 }

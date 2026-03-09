@@ -1,5 +1,7 @@
 import { Actor, BaseAlign, Color, Font, Text, TextAlign, type Vector } from 'excalibur';
 
+import { ACTIVE_OPACITY, IDLE_OPACITY } from '../constants/animation.js';
+
 export interface CatwalkStationActorConfig {
   phase: string;
   color: string;
@@ -23,10 +25,10 @@ export class CatwalkStationActor extends Actor {
     });
 
     this.graphics.use(label);
-    this.graphics.opacity = config.absent ? 0.3 : 1;
+    this.graphics.opacity = config.absent ? IDLE_OPACITY : ACTIVE_OPACITY;
   }
 
   updateConfig(config: CatwalkStationActorConfig): void {
-    this.graphics.opacity = config.absent ? 0.3 : 1;
+    this.graphics.opacity = config.absent ? IDLE_OPACITY : ACTIVE_OPACITY;
   }
 }

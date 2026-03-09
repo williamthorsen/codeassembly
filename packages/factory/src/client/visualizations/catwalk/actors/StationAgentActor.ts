@@ -1,7 +1,15 @@
 import { Actor, Color, GraphicsGroup, Rectangle, vec, type Vector } from 'excalibur';
 
 import { SPRITE_SIZE } from '../../../game/sprites/sprite-definitions.js';
-import { DEACTIVATED_OPACITY, PULSE_FREQUENCY, SCALE_PULSE_MAX, SCALE_PULSE_MIN } from '../constants/animation.js';
+import {
+  ACTIVE_OPACITY,
+  DEACTIVATED_OPACITY,
+  IDLE_OPACITY,
+  PULSE_FREQUENCY,
+  RESTING_OPACITY,
+  SCALE_PULSE_MAX,
+  SCALE_PULSE_MIN,
+} from '../constants/animation.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { AgentAnimationState } from '../types.js';
@@ -19,16 +27,16 @@ export interface StationAgentActorConfig {
 function opacityForState(state: AgentAnimationState): number {
   switch (state) {
     case 'idle':
-      return 0.3;
+      return IDLE_OPACITY;
     case 'resting':
-      return 0.6;
+      return RESTING_OPACITY;
     case 'deactivated':
       return DEACTIVATED_OPACITY;
     case 'working':
     case 'walking':
     case 'celebrating':
     case 'concerned':
-      return 1;
+      return ACTIVE_OPACITY;
     default: {
       const _exhaustive: never = state;
       return _exhaustive;
@@ -61,7 +69,7 @@ export class StationAgentActor extends Actor {
     if (this._pulsing) {
       this._elapsed = 0;
       // Fade ensures opacity reaches 1 even when transitioning from a dimmed state (e.g., idle at 0.3).
-      this.actions.fade(1, PAUSE_DURATION);
+      this.actions.fade(ACTIVE_OPACITY, PAUSE_DURATION);
     } else {
       this.scale = vec(1, 1);
       this.actions.fade(opacityForState(state), PAUSE_DURATION);

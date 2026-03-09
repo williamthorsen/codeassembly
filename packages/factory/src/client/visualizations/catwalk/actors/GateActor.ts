@@ -1,5 +1,6 @@
 import { Actor, Color, Rectangle, vec, type Vector } from 'excalibur';
 
+import { GATE_OPACITY } from '../constants/animation.js';
 import { GATE_W, ORCH_RADIUS } from '../constants/dimensions.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 
@@ -22,7 +23,7 @@ export class GateActor extends Actor {
     });
 
     this.graphics.use(rect);
-    this.graphics.opacity = 0.85;
+    this.graphics.opacity = GATE_OPACITY;
     this.graphics.isVisible = !config.open;
   }
 
