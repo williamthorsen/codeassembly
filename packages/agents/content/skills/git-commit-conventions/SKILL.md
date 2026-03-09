@@ -35,7 +35,7 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 ## Content guidelines
 
-- **Title describes the code change.** Not what prompted it. "Fix null check in user validation" — not "Address review comments."
+- **Title describes the code change, not what prompted it.** Ask: "what does the diff do?" — not "why did I open the editor?" Bad: "Address review findings", "Apply review suggestions", "Incorporate feedback". Good: "Add error logging to handleStateUpdate", "Remove dead rejection handler".
 - **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
 - **Only document what's in the diff.** External actions (e.g., updating a ticket) are not part of the commit and don't belong in its message.
 
