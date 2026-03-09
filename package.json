@@ -30,12 +30,12 @@
     "fmt:check": "sh -c 'prettier --check \"${@:-.}\"' --",
     "preinstall": "npx only-allow pnpm",
     "postinstall": "tsx scripts/report-overrides.ts",
-    "prepare": "lefthook install",
     "lint": "pnpm run root:lint && pnpm --recursive run ws lint",
     "lint:check": "pnpm run root:lint:check && pnpm --recursive run ws lint:check",
     "lint:strict": "pnpm --recursive run ws lint:strict",
     "outdated": "pnpm outdated --compatible --recursive",
     "outdated:latest": "pnpm outdated --recursive",
+    "prepare": "lefthook install",
     "root:check": "pnpm run root:typecheck && pnpm run fmt:check && pnpm run root:lint:check && pnpm run root:test",
     "root:lint": "eslint --fix --ignore-pattern 'packages/**' .",
     "root:lint:check": "eslint --ignore-pattern 'packages/**' .",
@@ -82,6 +82,9 @@
     "vitest": "4.0.18"
   },
   "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22"
+  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
@@ -89,8 +92,5 @@
       "sharp",
       "svelte-preprocess"
     ]
-  },
-  "engines": {
-    "node": ">=22"
   }
 }

@@ -31,6 +31,7 @@
   },
   "scripts": {
     "build": "pnpm run ws compile",
+    "prepare": "pnpm run ws compile",
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },
   "dependencies": {
