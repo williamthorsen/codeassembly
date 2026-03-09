@@ -279,14 +279,14 @@ describe('CatwalkScene', () => {
   });
 
   it('fades out orchestrator when station moves to a negative index', () => {
-    // Start with a completed run — orchestrator at station 6 (summary)
+    // Start with an in-progress run — orchestrator at station 2 (implementation)
     const status1 = createMockRunStatus({
-      status: 'completed',
+      status: 'in_progress',
       phases: {
         ...emptyPhases(),
         architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
         planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
-        implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
       },
     });
     const scene = new CatwalkScene(status1);
@@ -299,7 +299,7 @@ describe('CatwalkScene', () => {
         ...emptyPhases(),
         architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
         planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
-        implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        implementation: { status: 'in_progress', artifact: undefined, qualityGates: undefined },
       },
     });
     scene.updateStatus(status2);
