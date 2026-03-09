@@ -10,12 +10,13 @@ import {
   OrchestratorActor,
   StationAgentActor,
 } from '../actors/index.js';
+import { choreograph, type SceneRefs } from '../choreography/chute-choreographer.js';
 import { ART_H, ENGINE_HEIGHT, ENGINE_WIDTH, GROUND_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
 import { loadAllCatwalkSprites } from '../sprites/catwalk-sprite-loader.js';
 import { artifactKey, diffCatwalkConfig } from '../state/catwalk-differ.js';
-import type { CatwalkDiff, CatwalkSceneConfig } from '../types.js';
+import type { CatwalkDiff, CatwalkSceneConfig, StationArtifactConfig } from '../types.js';
 
 const RAIL_HEIGHT = 3;
 const RAIL_OPACITY = 0.6;
@@ -33,12 +34,16 @@ export class CatwalkScene extends Scene {
   private layout: CatwalkLayoutResult | undefined;
   private prevConfig: CatwalkSceneConfig | undefined;
 
-  // Actor registry — populated by buildScene(), updated by applyDiff()
+  // Actor registry -- populated by buildScene(), updated by applyDiff()
   private orchestratorRef: OrchestratorActor | undefined;
   private agentRefs = new Map<string, StationAgentActor>();
   private gateRefs = new Map<string, GateActor>();
   private artifactKeySet = new Set<string>();
   private artifactCountByStation = new Map<number, number>();
+
+  // Choreography guard -- prevents overlapping animations
+  private choreographyInProgress = false;
+  private pendingDiff: { diff: CatwalkDiff; config: CatwalkSceneConfig; layout: CatwalkLayoutResult } | undefined;
 
   constructor(status: CanonicalRunStatus) {
     super();
@@ -78,27 +83,68 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Dispatch animations to actors based on the computed diff. */
+  /** Dispatch animations to actors via the choreographer. Buffers if a choreography is in progress. */
   private applyDiff(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
-    // Orchestrator position
-    if (diff.orchestrator.moved !== null && this.orchestratorRef !== undefined) {
-      const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
-      this.orchestratorRef.animateMoveTo(vec(pos.x, pos.y));
-    }
-    // Orchestrator working state
-    if (diff.orchestrator.workingChanged !== null && this.orchestratorRef !== undefined) {
-      this.orchestratorRef.setWorking(diff.orchestrator.workingChanged.to);
-    }
-
-    // Agent state changes
-    for (const change of diff.agents.stateChanged) {
-      const actor = this.agentRefs.get(change.agentId);
-      if (actor !== undefined) {
-        actor.animateToState(change.to);
-      }
+    if (this.choreographyInProgress) {
+      // Buffer the latest diff; when the current choreography finishes, it will be applied.
+      // Known limitation: only the most recent pending diff is kept. If multiple diffs arrive
+      // during one choreography, intermediate diffs are dropped. This is acceptable because
+      // the final config always reflects ground truth, and the next diff will reconcile
+      // the scene to the correct state.
+      this.pendingDiff = { diff, config, layout };
+      return;
     }
 
-    // Added agents — fade in from invisible
+    // Added agents are always handled by the scene directly (not by the choreographer)
+    // because they require constructing actors with scene-specific config
+    this.addDiffAgents(diff, config, layout);
+
+    const refs = this.buildSceneRefs();
+    this.choreographyInProgress = true;
+
+    choreograph(diff, layout, refs)
+      .then(() => {
+        this.choreographyInProgress = false;
+        this.fitCamera();
+
+        // If another diff arrived while we were animating, apply it now
+        if (this.pendingDiff !== undefined) {
+          const pending = this.pendingDiff;
+          this.pendingDiff = undefined;
+          this.applyDiff(pending.diff, pending.config, pending.layout);
+        }
+        return;
+      })
+      .catch((error: unknown) => {
+        console.error('Choreography error:', error);
+        this.choreographyInProgress = false;
+
+        // Apply any buffered diff so the scene does not get stuck
+        if (this.pendingDiff !== undefined) {
+          const pending = this.pendingDiff;
+          this.pendingDiff = undefined;
+          this.applyDiff(pending.diff, pending.config, pending.layout);
+        }
+      });
+  }
+
+  /** Build the SceneRefs object that the choreographer needs. */
+  private buildSceneRefs(): SceneRefs {
+    return {
+      orchestrator: this.orchestratorRef,
+      agents: this.agentRefs,
+      gates: this.gateRefs,
+      addActor: (actor: Actor) => {
+        this.add(actor);
+      },
+      addArtifact: (artifact: StationArtifactConfig, layout: CatwalkLayoutResult) => {
+        this.addSingleArtifact(artifact, layout);
+      },
+    };
+  }
+
+  /** Add newly appearing agents from a diff (fade in from invisible). */
+  private addDiffAgents(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
     for (const agent of diff.agents.added) {
       const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
@@ -111,45 +157,24 @@ export class CatwalkScene extends Scene {
       this.add(actor);
       this.agentRefs.set(agent.id, actor);
     }
+  }
 
-    // Removed agents — deactivated visual state; removed from registry so future
-    // state changes cannot reach them. Actors remain in scene.entities for visual history.
-    for (const agent of diff.agents.removed) {
-      const actor = this.agentRefs.get(agent.id);
-      if (actor !== undefined) {
-        actor.animateToState('deactivated');
-        this.agentRefs.delete(agent.id);
-      }
-    }
+  /** Add a single artifact actor at its stacked position below the ground line. */
+  private addSingleArtifact(artifact: StationArtifactConfig, layout: CatwalkLayoutResult): void {
+    const key = artifactKey(artifact);
+    if (this.artifactKeySet.has(key)) return;
+    this.artifactKeySet.add(key);
 
-    // Gates — animate open (closed-to-open transitions only)
-    for (const gate of diff.gates.opened) {
-      const key = `${gate.betweenStations[0]}:${gate.betweenStations[1]}`;
-      const actor = this.gateRefs.get(key);
-      if (actor !== undefined) {
-        actor.animateOpen();
-      }
-    }
+    const indexAtStation = this.artifactCountByStation.get(artifact.stationIndex) ?? 0;
+    this.artifactCountByStation.set(artifact.stationIndex, indexAtStation + 1);
 
-    // Artifacts — fade in newly added artifacts, stacking below any already present
-    for (const artifact of diff.artifacts.added) {
-      const key = artifactKey(artifact);
-      if (this.artifactKeySet.has(key)) continue;
-      this.artifactKeySet.add(key);
+    const stationX = layout.stationX(artifact.stationIndex);
+    const groundEndpoints = layout.groundEndpoints();
+    const y = groundEndpoints.y + ARTIFACT_Y_OFFSET + indexAtStation * (ART_H + ARTIFACT_Y_SPACING);
 
-      const indexAtStation = this.artifactCountByStation.get(artifact.stationIndex) ?? 0;
-      this.artifactCountByStation.set(artifact.stationIndex, indexAtStation + 1);
-
-      const stationX = layout.stationX(artifact.stationIndex);
-      const groundEndpoints = layout.groundEndpoints();
-      const y = groundEndpoints.y + ARTIFACT_Y_OFFSET + indexAtStation * (ART_H + ARTIFACT_Y_SPACING);
-
-      const actor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(stationX, y));
-      actor.fadeIn();
-      this.add(actor);
-    }
-
-    this.fitCamera();
+    const actor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(stationX, y));
+    actor.fadeIn();
+    this.add(actor);
   }
 
   /** Converts the current run status to a scene config, computes layout, and adds all actors. */
@@ -254,6 +279,8 @@ export class CatwalkScene extends Scene {
 
     const pos = layout.orchestratorPosition(config.orchestrator.stationIndex);
     const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
+    orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
+    orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
     this.add(orchestratorActor);
     this.orchestratorRef = orchestratorActor;
   }

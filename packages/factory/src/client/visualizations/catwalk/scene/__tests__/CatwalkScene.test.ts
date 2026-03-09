@@ -101,8 +101,13 @@ vi.mock('../../actors/index.js', () => ({
       public config: unknown,
       public position: unknown,
     ) {}
-    animateMoveTo = vi.fn();
+    animateMoveTo = vi.fn().mockResolvedValue(undefined);
     setWorking = vi.fn();
+    setCarriedArtifacts = vi.fn();
+    setCodeBadge = vi.fn();
+    actions = {
+      moveTo: vi.fn().mockReturnValue({ toPromise: vi.fn().mockResolvedValue(undefined) }),
+    };
   },
   StationAgentActor: class MockStationAgentActor {
     constructor(
@@ -111,6 +116,16 @@ vi.mock('../../actors/index.js', () => ({
     ) {}
     animateToState = vi.fn();
     fadeIn = vi.fn();
+  },
+  FlyingArtifactActor: class MockFlyingArtifactActor {
+    constructor(
+      public config: unknown,
+      public endpoints: unknown,
+      public direction: string,
+    ) {}
+    ascend = vi.fn().mockResolvedValue(undefined);
+    descend = vi.fn().mockResolvedValue(undefined);
+    kill = vi.fn();
   },
 }));
 

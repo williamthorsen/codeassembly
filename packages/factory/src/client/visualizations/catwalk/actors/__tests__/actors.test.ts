@@ -20,9 +20,17 @@ vi.mock('excalibur', () => {
       scaleTo: vi.fn().mockReturnValue({ toPromise: vi.fn().mockResolvedValue(undefined) }),
       clearActions: vi.fn(),
     };
+    kill = vi.fn();
+    children: unknown[] = [];
     constructor(config: Record<string, unknown>) {
       mockActorConstructor(config);
       this.config = config;
+    }
+    addChild(child: unknown) {
+      this.children.push(child);
+    }
+    removeChild(child: unknown) {
+      this.children = this.children.filter((c) => c !== child);
     }
   }
 
@@ -90,6 +98,7 @@ const { OrchestratorActor } = await import('../OrchestratorActor.js');
 const { StationAgentActor } = await import('../StationAgentActor.js');
 const { CatwalkStationActor } = await import('../CatwalkStationActor.js');
 const { ArtifactActor } = await import('../ArtifactActor.js');
+const { FlyingArtifactActor } = await import('../FlyingArtifactActor.js');
 const { GateActor } = await import('../GateActor.js');
 const { ChuteActor } = await import('../ChuteActor.js');
 const { vec } = await import('excalibur');
@@ -123,9 +132,9 @@ describe('OrchestratorActor', () => {
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
   });
 
-  it('animateMoveTo calls actions.moveTo with position and walk speed', () => {
+  it('animateMoveTo calls actions.moveTo with position and walk speed', async () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 100));
-    actor.animateMoveTo(vec(200, 100));
+    await actor.animateMoveTo(vec(200, 100));
 
     expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 100 }), expect.any(Number));
   });
@@ -193,6 +202,91 @@ describe('OrchestratorActor', () => {
     actor.setWorking(true);
 
     expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+  });
+
+  it('setCarriedArtifacts with empty array kills all carried children', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setCarriedArtifacts([{ label: 'code', color: '#fff3bf' }]);
+
+    // One child was added via addChild
+    expect(actor.children.length).toBe(1);
+
+    // Store ref to the added child
+    const addedChild = actor.children[0];
+
+    actor.setCarriedArtifacts([]);
+
+    // The child should have been killed
+    expect(addedChild).toBeDefined();
+    expect(addedChild).toHaveProperty('kill');
+    if (addedChild !== undefined && 'kill' in addedChild) {
+      expect(addedChild.kill).toHaveBeenCalled();
+    }
+  });
+
+  it('setCarriedArtifacts creates one trailing child per artifact', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setCarriedArtifacts([
+      { label: 'code', color: '#fff3bf' },
+      { label: 'plan', color: '#b2f2bb' },
+    ]);
+
+    expect(actor.children.length).toBe(2);
+  });
+
+  it('setCarriedArtifacts kills previous children before adding new ones', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setCarriedArtifacts([{ label: 'code', color: '#fff3bf' }]);
+    const firstChild = actor.children[0];
+
+    actor.setCarriedArtifacts([
+      { label: 'plan', color: '#b2f2bb' },
+      { label: 'review', color: '#ffc9c9' },
+    ]);
+
+    // First child should have been killed before adding new ones
+    expect(firstChild).toBeDefined();
+    expect(firstChild).toHaveProperty('kill');
+    if (firstChild !== undefined && 'kill' in firstChild) {
+      expect(firstChild.kill).toHaveBeenCalled();
+    }
+  });
+
+  it('setCodeBadge(null) kills the badge child', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
+    const badgeChild = actor.children[0];
+
+    actor.setCodeBadge(null);
+
+    // The badge child should have been killed
+    expect(badgeChild).toBeDefined();
+    expect(badgeChild).toHaveProperty('kill');
+    if (badgeChild !== undefined && 'kill' in badgeChild) {
+      expect(badgeChild.kill).toHaveBeenCalled();
+    }
+  });
+
+  it('setCodeBadge with config adds a badge child', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
+
+    expect(actor.children.length).toBe(1);
+  });
+
+  it('setCodeBadge kills previous badge before adding new one', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
+    const firstBadge = actor.children[0];
+
+    actor.setCodeBadge({ label: 'v3', color: '#ff6600' });
+
+    // First badge should have been killed before adding new one
+    expect(firstBadge).toBeDefined();
+    expect(firstBadge).toHaveProperty('kill');
+    if (firstBadge !== undefined && 'kill' in firstBadge) {
+      expect(firstBadge.kill).toHaveBeenCalled();
+    }
   });
 });
 
@@ -466,6 +560,68 @@ describe('GateActor', () => {
     expect(actor.actions.scaleTo).toHaveBeenCalledWith(
       expect.objectContaining({ x: 1, y: 0 }),
       expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
+    );
+  });
+});
+
+describe('FlyingArtifactActor', () => {
+  const endpoints = { topX: 100, topY: 148, botX: 100, botY: 320 };
+
+  beforeEach(() => {
+    mockGraphicsUse.mockClear();
+    mockActorConstructor.mockClear();
+  });
+
+  it('constructs at bottom position when direction is ascend', () => {
+    new FlyingArtifactActor({ label: 'code', color: '#fff3bf' }, endpoints, 'ascend');
+
+    expect(mockActorConstructor).toHaveBeenCalledWith({
+      pos: expect.objectContaining({ x: 100, y: 320 }),
+    });
+  });
+
+  it('constructs at top position when direction is descend', () => {
+    new FlyingArtifactActor({ label: 'code', color: '#fff3bf' }, endpoints, 'descend');
+
+    expect(mockActorConstructor).toHaveBeenCalledWith({
+      pos: expect.objectContaining({ x: 100, y: 148 }),
+    });
+  });
+
+  it('ascend calls actions.moveTo toward the top and kills the actor', async () => {
+    const actor = new FlyingArtifactActor({ label: 'code', color: '#fff3bf' }, endpoints, 'ascend');
+
+    await actor.ascend();
+
+    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 100, y: 148 }), expect.any(Number));
+    expect(actor.kill).toHaveBeenCalled();
+  });
+
+  it('descend calls actions.moveTo toward the bottom and kills the actor', async () => {
+    const actor = new FlyingArtifactActor({ label: 'code', color: '#fff3bf' }, endpoints, 'descend');
+
+    await actor.descend();
+
+    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 100, y: 320 }), expect.any(Number));
+    expect(actor.kill).toHaveBeenCalled();
+  });
+
+  it('uses a GraphicsGroup with rect and label members', () => {
+    new FlyingArtifactActor({ label: 'plan', color: '#b2f2bb' }, endpoints, 'ascend');
+
+    expect(mockGraphicsUse).toHaveBeenCalledTimes(1);
+
+    const call = mockGraphicsUse.mock.calls[0];
+    if (!call) throw new TypeError('Expected graphics.use to have been called');
+
+    expect(call[0]).toEqual(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          members: expect.arrayContaining([
+            expect.objectContaining({ graphic: expect.anything(), offset: expect.anything() }),
+          ]),
+        }),
+      }),
     );
   });
 });

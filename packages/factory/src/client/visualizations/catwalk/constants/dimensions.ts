@@ -19,6 +19,14 @@ export const ART_W = 40;
 export const ART_H = 16;
 export const GATE_W = 6;
 
+// Carried artifact sizing (trailing badges behind orchestrator)
+export const CARRIED_ART_W = 20;
+export const CARRIED_ART_H = 10;
+export const CARRIED_ART_GAP = 4;
+
+// Code badge offset below orchestrator sprite
+export const BADGE_OFFSET_Y = 22;
+
 // Layout margins
 export const LAYOUT_MARGIN = 100;
 export const STATION_GAP = 30;

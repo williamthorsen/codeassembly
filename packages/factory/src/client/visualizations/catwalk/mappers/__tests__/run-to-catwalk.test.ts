@@ -340,6 +340,226 @@ describe('mapRunToCatwalk', () => {
     });
   });
 
+  describe('carried artifacts', () => {
+    it('populates carriedArtifacts when orchestrator is working (delivering to current phase)', () => {
+      // Architecture completed, planning not yet started -> orchestrator at planning (working)
+      // Should carry architecture artifacts
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch-assessment.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Orchestrator at station 1 (planning), working = true
+      expect(config.orchestrator.stationIndex).toBe(1);
+      expect(config.orchestrator.working).toBe(true);
+      expect(config.orchestrator.carriedArtifacts).toHaveLength(1);
+      expect(config.orchestrator.carriedArtifacts[0]?.label).toBe('architecture');
+    });
+
+    it('sets carriedArtifacts to empty when orchestrator is idle (phase agent is active)', () => {
+      // Architecture completed, planning in progress (data present)
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'in_progress', stepCount: undefined, artifacts: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Orchestrator at station 1 (planning), working = false (data is present)
+      expect(config.orchestrator.working).toBe(false);
+      expect(config.orchestrator.carriedArtifacts).toHaveLength(0);
+    });
+
+    it('sets carriedArtifacts to empty when orchestrator is at station 0', () => {
+      // No previous station to carry from
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.stationIndex).toBe(0);
+      expect(config.orchestrator.carriedArtifacts).toHaveLength(0);
+    });
+  });
+
+  describe('code badge', () => {
+    it('shows v2 badge when max implementation artifact iteration is 2', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'code.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+            iteration: 1,
+          },
+          {
+            filename: 'code-v2.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:20:00Z',
+            iteration: 2,
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.codeBadge).not.toBeNull();
+      expect(config.orchestrator.codeBadge?.label).toBe('v2');
+      expect(config.orchestrator.codeBadge?.color).toBe('#ffaa00');
+    });
+
+    it('shows v3 badge with warning color when max iteration is 3+', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [
+          {
+            filename: 'code-v3.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:30:00Z',
+            iteration: 3,
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.codeBadge?.label).toBe('v3');
+      expect(config.orchestrator.codeBadge?.color).toBe('#ff6600');
+    });
+
+    it('returns null codeBadge when no iteration data', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [
+          {
+            filename: 'code.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.codeBadge).toBeNull();
+    });
+
+    it('returns null codeBadge when max iteration is 1', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [
+          {
+            filename: 'code.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+            iteration: 1,
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.codeBadge).toBeNull();
+    });
+
+    it('returns null codeBadge when no artifacts at all', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.codeBadge).toBeNull();
+    });
+
+    it('ignores non-implementation artifacts when computing badge', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [
+          {
+            filename: 'review.md',
+            role: 'reviewer',
+            roleType: 'reviewer',
+            agent: 'orchestrated-reviewer',
+            type: 'review',
+            phase: 'review',
+            createdAt: '2026-01-01T00:10:00Z',
+            iteration: 3,
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.codeBadge).toBeNull();
+    });
+  });
+
   describe('artifact mapping', () => {
     it('maps artifacts to StationArtifactConfig with correct stationIndex, label, color, and slot', () => {
       const status = createMockRunStatus({
@@ -456,6 +676,30 @@ describe('mapRunToCatwalk', () => {
       // Only the architecture artifact should be present; the unknown phase is skipped
       expect(config.artifacts).toHaveLength(1);
       expect(config.artifacts[0]?.stationIndex).toBe(0);
+    });
+
+    it('maps artifacts with iteration to version on StationArtifactConfig', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [
+          {
+            filename: 'code.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+            iteration: 2,
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.artifacts).toHaveLength(1);
+      expect(config.artifacts[0]?.version).toBe(2);
     });
 
     it('omits version when iteration is not present on artifact', () => {

@@ -79,6 +79,77 @@ describe('diffOrchestrator', () => {
     expect(diff.moved).toEqual({ from: 0, to: 2 });
     expect(diff.workingChanged).toEqual({ from: true, to: false });
   });
+
+  it('returns carriedChanged null when carried artifacts are identical', () => {
+    const prev = orchestrator({ carriedArtifacts: [{ label: 'code', color: '#fff' }] });
+    const next = orchestrator({ carriedArtifacts: [{ label: 'code', color: '#fff' }] });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.carriedChanged).toBeNull();
+  });
+
+  it('detects carried artifact additions', () => {
+    const prev = orchestrator({ carriedArtifacts: [] });
+    const carried = [{ label: 'code', color: '#fff3bf' }];
+    const next = orchestrator({ carriedArtifacts: carried });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.carriedChanged).toEqual({ from: [], to: carried });
+  });
+
+  it('detects carried artifact removals', () => {
+    const carried = [{ label: 'code', color: '#fff3bf' }];
+    const prev = orchestrator({ carriedArtifacts: carried });
+    const next = orchestrator({ carriedArtifacts: [] });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.carriedChanged).toEqual({ from: carried, to: [] });
+  });
+
+  it('detects carried artifact reordering', () => {
+    const a = { label: 'code', color: '#fff3bf' };
+    const b = { label: 'plan', color: '#b2f2bb' };
+    const prev = orchestrator({ carriedArtifacts: [a, b] });
+    const next = orchestrator({ carriedArtifacts: [b, a] });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.carriedChanged).not.toBeNull();
+  });
+
+  it('returns codeBadgeChanged null when badges are identical', () => {
+    const badge = { label: 'v2', color: '#ffaa00' };
+    const prev = orchestrator({ codeBadge: badge });
+    const next = orchestrator({ codeBadge: { label: 'v2', color: '#ffaa00' } });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.codeBadgeChanged).toBeNull();
+  });
+
+  it('detects code badge appearance', () => {
+    const prev = orchestrator({ codeBadge: null });
+    const badge = { label: 'v2', color: '#ffaa00' };
+    const next = orchestrator({ codeBadge: badge });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.codeBadgeChanged).toEqual({ from: null, to: badge });
+  });
+
+  it('detects code badge disappearance', () => {
+    const badge = { label: 'v2', color: '#ffaa00' };
+    const prev = orchestrator({ codeBadge: badge });
+    const next = orchestrator({ codeBadge: null });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.codeBadgeChanged).toEqual({ from: badge, to: null });
+  });
+
+  it('detects code badge label change', () => {
+    const prev = orchestrator({ codeBadge: { label: 'v2', color: '#ffaa00' } });
+    const next = orchestrator({ codeBadge: { label: 'v3', color: '#ffaa00' } });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.codeBadgeChanged).not.toBeNull();
+  });
 });
 
 /** Minimal agent config factory. */
@@ -389,6 +460,28 @@ describe('diffCatwalkConfig', () => {
 
     expect(diff.hasChanges).toBe(true);
     expect(diff.artifacts.added).toEqual([newArtifact]);
+  });
+
+  it('returns hasChanges true when carried artifacts change', () => {
+    const prev = sceneConfig({ orchestrator: orchestrator({ carriedArtifacts: [] }) });
+    const next = sceneConfig({
+      orchestrator: orchestrator({ carriedArtifacts: [{ label: 'code', color: '#fff3bf' }] }),
+    });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.orchestrator.carriedChanged).not.toBeNull();
+  });
+
+  it('returns hasChanges true when code badge changes', () => {
+    const prev = sceneConfig({ orchestrator: orchestrator({ codeBadge: null }) });
+    const next = sceneConfig({
+      orchestrator: orchestrator({ codeBadge: { label: 'v2', color: '#ffaa00' } }),
+    });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.orchestrator.codeBadgeChanged).not.toBeNull();
   });
 
   it('detects changes across all sub-diffs simultaneously', () => {

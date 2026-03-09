@@ -178,6 +178,12 @@ function buildStations(status: CanonicalRunStatus): StationConfig[] {
 // Sub-function B: orchestrator
 // ---------------------------------------------------------------------------
 
+/** Amber color for iteration v2, orange for v3+. */
+const ITERATION_COLORS = {
+  v2: '#ffaa00',
+  v3plus: '#ff6600',
+};
+
 function buildOrchestrator(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): OrchestratorConfig {
   let stationIndex: number;
 
@@ -191,10 +197,63 @@ function buildOrchestrator(status: CanonicalRunStatus, currentPhase: PhaseName |
 
   const working = currentPhase !== undefined && !isPhasePresentInData(currentPhase, status.phases);
 
-  const carriedArtifacts: CarriedArtifactConfig[] = [];
-  const codeBadge: OrchestratorConfig['codeBadge'] = null;
+  const carriedArtifacts = buildCarriedArtifacts(status, stationIndex, working);
+  const codeBadge = buildCodeBadge(status);
 
   return { stationIndex, working, carriedArtifacts, codeBadge };
+}
+
+/**
+ * Build carried artifacts for the orchestrator. When the orchestrator is working
+ * (delivering to a station), carry the most recent output artifacts from the
+ * previous non-absent station.
+ */
+function buildCarriedArtifacts(
+  status: CanonicalRunStatus,
+  stationIndex: number,
+  working: boolean,
+): CarriedArtifactConfig[] {
+  if (!working || stationIndex <= 0 || !isPresent(status.artifacts) || status.artifacts.length === 0) {
+    return [];
+  }
+
+  // Find the most recent output artifacts from previous stations
+  // Scan stations in reverse from the orchestrator's current position
+  for (let i = stationIndex - 1; i >= 0; i--) {
+    const stationArtifacts = status.artifacts.filter((a) => PHASE_TO_STATION[a.phase] === i);
+
+    if (stationArtifacts.length > 0) {
+      return stationArtifacts.map((a) => ({
+        label: a.type,
+        color: lookupArtifactColor(a.type),
+      }));
+    }
+  }
+
+  return [];
+}
+
+/** Build the code badge showing iteration count when implementation has been re-entered. */
+function buildCodeBadge(status: CanonicalRunStatus): OrchestratorConfig['codeBadge'] {
+  if (!isPresent(status.artifacts) || status.artifacts.length === 0) {
+    return null;
+  }
+
+  // Find the max iteration value among implementation-phase artifacts
+  let maxIteration = 0;
+  for (const artifact of status.artifacts) {
+    const stationIndex = PHASE_TO_STATION[artifact.phase];
+    if (stationIndex === 2 && isPresent(artifact.iteration) && artifact.iteration > maxIteration) {
+      maxIteration = artifact.iteration;
+    }
+  }
+
+  if (maxIteration <= 1) {
+    return null;
+  }
+
+  const color = maxIteration === 2 ? ITERATION_COLORS.v2 : ITERATION_COLORS.v3plus;
+  return { label: `v${String(maxIteration)}`, color };
 }
 
 // ---------------------------------------------------------------------------

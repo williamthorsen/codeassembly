@@ -1,4 +1,4 @@
-import { Actor, vec, type Vector } from 'excalibur';
+import { Actor, BaseAlign, Color, Font, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
 import {
   ACTIVE_OPACITY,
@@ -7,8 +7,10 @@ import {
   SCALE_PULSE_MAX,
   SCALE_PULSE_MIN,
 } from '../constants/animation.js';
+import { BADGE_OFFSET_Y, CARRIED_ART_GAP, CARRIED_ART_H, CARRIED_ART_W } from '../constants/dimensions.js';
 import { WALK_SPEED } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
+import type { CarriedArtifactConfig } from '../types.js';
 
 export interface OrchestratorActorConfig {
   working: boolean;
@@ -18,6 +20,8 @@ export interface OrchestratorActorConfig {
 export class OrchestratorActor extends Actor {
   private _working = false;
   private _elapsed = 0;
+  private _carriedChildren: Actor[] = [];
+  private _badgeChild: Actor | undefined;
 
   constructor(config: OrchestratorActorConfig, position: Vector) {
     super({ pos: position });
@@ -28,9 +32,9 @@ export class OrchestratorActor extends Actor {
     this.graphics.opacity = config.working ? ACTIVE_OPACITY : ORCH_IDLE_OPACITY;
   }
 
-  /** Slide the orchestrator to a new position along the catwalk rail. */
-  animateMoveTo(pos: Vector): void {
-    this.actions.moveTo(pos, WALK_SPEED);
+  /** Slide the orchestrator to a new position along the catwalk rail. Returns a promise that resolves when the walk completes. */
+  animateMoveTo(pos: Vector): Promise<void> {
+    return this.actions.moveTo(pos, WALK_SPEED).toPromise();
   }
 
   /** Toggle the pulsing working glow and switch sprite animation. */
@@ -45,6 +49,58 @@ export class OrchestratorActor extends Actor {
       this.scale = vec(1, 1);
       this.graphics.opacity = ORCH_IDLE_OPACITY;
     }
+  }
+
+  /** Render small colored rectangles trailing the orchestrator horizontally on the rail. */
+  setCarriedArtifacts(configs: CarriedArtifactConfig[]): void {
+    // Remove previous carried artifact children
+    for (const child of this._carriedChildren) {
+      child.kill();
+    }
+    this._carriedChildren = [];
+
+    // Add new carried artifact children, positioned relative to the orchestrator
+    for (const [i, config] of configs.entries()) {
+      const offsetX = -(i + 1) * (CARRIED_ART_W + CARRIED_ART_GAP);
+      const child = new Actor({ pos: vec(offsetX, 0) });
+      child.graphics.use(
+        new Rectangle({
+          width: CARRIED_ART_W,
+          height: CARRIED_ART_H,
+          color: Color.fromHex(config.color),
+        }),
+      );
+      this.addChild(child);
+      this._carriedChildren.push(child);
+    }
+  }
+
+  /** Render a text badge below the orchestrator sprite. Pass null to hide. */
+  setCodeBadge(config: { label: string; color: string } | null): void {
+    // Remove previous badge child
+    if (this._badgeChild !== undefined) {
+      this._badgeChild.kill();
+      this._badgeChild = undefined;
+    }
+
+    if (config === null) return;
+
+    const badge = new Actor({ pos: vec(0, BADGE_OFFSET_Y) });
+    badge.graphics.use(
+      new Text({
+        text: config.label,
+        color: Color.fromHex(config.color),
+        font: new Font({
+          size: 9,
+          bold: true,
+          family: 'monospace',
+          textAlign: TextAlign.Center,
+          baseAlign: BaseAlign.Middle,
+        }),
+      }),
+    );
+    this.addChild(badge);
+    this._badgeChild = badge;
   }
 
   override onPreUpdate(_engine: unknown, deltaMs: number): void {

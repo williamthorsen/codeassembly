@@ -71,6 +71,8 @@ export interface CarriedArtifactConfig {
 export interface OrchestratorDiff {
   moved: { from: number; to: number } | null;
   workingChanged: { from: boolean; to: boolean } | null;
+  carriedChanged: { from: CarriedArtifactConfig[]; to: CarriedArtifactConfig[] } | null;
+  codeBadgeChanged: { from: OrchestratorConfig['codeBadge']; to: OrchestratorConfig['codeBadge'] } | null;
 }
 
 export interface AgentStateDiff {
