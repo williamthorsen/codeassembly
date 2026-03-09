@@ -5,6 +5,7 @@ import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import type { ArtifactHoverEvent } from '../game/scenes/FactoryScene.js';
 import { FactoryScene } from '../game/scenes/FactoryScene.js';
 import { loadAllSprites } from '../game/sprites/agent-sprite-loader.js';
+import { useContainerResize } from '../hooks/useContainerResize.js';
 import { ArtifactTooltip } from './ArtifactTooltip.js';
 
 import './GameCanvas.css';
@@ -18,6 +19,8 @@ export function GameCanvas({ status }: GameCanvasProps): React.JSX.Element {
   const engineRef = useRef<Engine | null>(null);
   const initializedRef = useRef(false);
   const [hover, setHover] = useState<ArtifactHoverEvent | null>(null);
+
+  useContainerResize(canvasRef, engineRef);
 
   useEffect(() => {
     if (!canvasRef.current) return;
