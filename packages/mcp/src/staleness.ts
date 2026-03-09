@@ -2,6 +2,9 @@ import { readdir, stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/** Directories skipped by the staleness scan (must match the compile command's ignore list). */
+const IGNORED_DIRS = new Set(['__tests__']);
+
 /** Type guard: checks whether an error is a Node.js ENOENT (file not found). */
 function isEnoent(err: unknown): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && err.code === 'ENOENT';
@@ -9,6 +12,7 @@ function isEnoent(err: unknown): boolean {
 
 /**
  * Recursively walk `dir` looking for any `.ts` file with `mtimeMs > referenceMs`.
+ * Skips directories listed in {@link IGNORED_DIRS} to match the compile command's source scope.
  * Short-circuits on first match.
  */
 async function hasNewerFile(dir: string, referenceMs: number): Promise<boolean> {
@@ -16,6 +20,7 @@ async function hasNewerFile(dir: string, referenceMs: number): Promise<boolean> 
   for (const entry of entries) {
     const fullPath = join(dir, entry.name);
     if (entry.isDirectory()) {
+      if (IGNORED_DIRS.has(entry.name)) continue;
       if (await hasNewerFile(fullPath, referenceMs)) {
         return true;
       }
