@@ -2,6 +2,7 @@ import { DisplayMode, Engine } from 'excalibur';
 import React, { useEffect, useRef } from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
+import { useContainerResize } from '../hooks/useContainerResize.js';
 import { ENGINE_HEIGHT, ENGINE_WIDTH } from '../visualizations/catwalk/constants/dimensions.js';
 import { CatwalkScene } from '../visualizations/catwalk/scene/CatwalkScene.js';
 
@@ -17,6 +18,8 @@ export function CatwalkCanvas({ status }: CatwalkCanvasProps): React.JSX.Element
   const engineRef = useRef<Engine | null>(null);
   const initializedRef = useRef(false);
   const startFailedRef = useRef(false);
+
+  useContainerResize(canvasRef, engineRef);
 
   useEffect(() => {
     if (!canvasRef.current) return;

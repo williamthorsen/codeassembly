@@ -42,7 +42,8 @@ body {
   width: 100%;
 }
 
-.canvas-container[data-view='factory'] {
+.canvas-container[data-view='factory'],
+.canvas-container[data-view='catwalk'] {
   aspect-ratio: 2 / 1;
   min-width: 800px;
 }
