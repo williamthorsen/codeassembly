@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../FlowDiagram/FlowDiagram.css', () => ({}));
+vi.mock('../../FlowDiagram.css', () => ({}));
 
 vi.mock('@xyflow/react', () => ({
   getSmoothStepPath: vi.fn(() => ['M0,0 L100,100', 50, 50, 0]),
@@ -9,7 +9,7 @@ vi.mock('@xyflow/react', () => ({
 }));
 
 const { Position } = await import('@xyflow/react');
-const { SpineEdge } = await import('../FlowDiagram/edges/SpineEdge.js');
+const { SpineEdge } = await import('../SpineEdge.js');
 
 const baseProps = {
   id: 'test-spine-edge',
