@@ -41,6 +41,7 @@ out/
 .vercel
 
 # Local-only
+.local/
 local/
 tmp/
 *.local
