@@ -187,8 +187,8 @@ describe('CatwalkScene', () => {
 
     scene.onInitialize();
 
-    // 1 rail + 1 ground + 7 stations + 6 chutes + 6 agents + 1 orchestrator + 6 gates = 28
-    expect(scene.entities.length).toBe(28);
+    // 1 rail + 1 ground + 7 stations + 6 chutes + 6 agents + 1 orchestrator + 6 gates + 6 dividers = 34
+    expect(scene.entities.length).toBe(34);
   });
 
   it('preserves entity count on updateStatus when config is unchanged', () => {
@@ -498,14 +498,19 @@ describe('CatwalkScene', () => {
     });
     scene.updateStatus(status2);
 
-    // Two new artifact actors should have been added
-    expect(scene.entities.length).toBe(countAfterInit + 2);
+    // Two output artifact actors + two derived input artifact actors at the next station = 4 new entities
+    expect(scene.entities.length).toBe(countAfterInit + 4);
 
-    // The two artifacts should have different Y positions (stacked, not overlapping)
+    // Four artifacts total: 2 outputs at station 0, 2 inputs at station 1
     const artifacts = scene.entities.filter((e): e is InstanceType<typeof ArtifactActor> => e instanceof ArtifactActor);
-    expect(artifacts.length).toBe(2);
+    expect(artifacts.length).toBe(4);
+    // Output artifacts at station 0 should be stacked (different Y positions)
     const [a1, a2] = artifacts;
-    if (!hasPosition(a1) || !hasPosition(a2)) throw new Error('expected 2 artifact actors with position');
+    if (!hasPosition(a1) || !hasPosition(a2)) throw new Error('expected artifact actors with position');
     expect(a1.position.y).not.toBe(a2.position.y);
+    // Input artifacts at station 1 should also be stacked
+    const [, , a3, a4] = artifacts;
+    if (!hasPosition(a3) || !hasPosition(a4)) throw new Error('expected input artifact actors with position');
+    expect(a3.position.y).not.toBe(a4.position.y);
   });
 });

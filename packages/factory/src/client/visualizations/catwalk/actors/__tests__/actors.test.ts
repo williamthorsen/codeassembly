@@ -132,11 +132,12 @@ describe('OrchestratorActor', () => {
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
   });
 
-  it('animateMoveTo calls actions.moveTo with position and walk speed', async () => {
+  it('animateMoveTo calls actions.moveTo with y adjusted by -SPRITE_SIZE/2', async () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 100));
+    // animateMoveTo adjusts y by -SPRITE_SIZE/2 (= -16) so sprite bottom sits on the rail
     await actor.animateMoveTo(vec(200, 100));
 
-    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 100 }), expect.any(Number));
+    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 84 }), expect.any(Number));
   });
 
   it('setWorking(true) enables pulse flag and restores full opacity', () => {

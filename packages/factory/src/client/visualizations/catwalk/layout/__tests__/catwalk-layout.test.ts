@@ -1,15 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ACCENT_BAR_H,
   AGENT_RADIUS,
+  ART_H,
   ART_W,
+  ARTIFACT_TOP_MARGIN,
+  ARTIFACT_Y_GAP,
   CANVAS_H,
-  CATWALK_Y,
-  CHUTE_BOT,
-  CHUTE_TOP,
-  GROUND_Y,
+  CHUTE_BOT_ABOVE_GROUND,
+  CHUTE_TOP_BELOW_RAIL,
+  DIVIDER_FIXED_DEPTH,
+  DIVIDER_LEFT_OF_AGENT,
+  GROUND_LINE_Y,
   LAYOUT_MARGIN,
+  RAIL_OVERSHOOT,
+  RAIL_Y,
+  SPRITE_SIZE,
   STATION_GAP,
+  STATION_LABEL_BELOW_GROUND,
 } from '../../constants/dimensions.js';
 import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry } from '../catwalk-layout.js';
 
@@ -17,10 +26,7 @@ import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry
 const AGENT_SPACING = AGENT_RADIUS * 2 + 20;
 const INPUT_OVERHANG = ART_W * 1.5 + 11;
 const OUTPUT_OVERHANG = ART_W / 2;
-const RAIL_OVERSHOOT = 75;
-const GROUND_LINE_OFFSET = 42;
 const ABSENT_X = -200;
-const PLATFORM_RIGHT_INSET = 20;
 
 function agentHalfWidth(agentCount: number): number {
   return ((Math.max(agentCount, 1) - 1) * AGENT_SPACING) / 2;
@@ -108,11 +114,11 @@ describe('computeCatwalkLayout', () => {
       }
     });
 
-    it('places all agents at y === GROUND_Y', () => {
+    it('places all agents at y === GROUND_LINE_Y', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
       for (let slot = 0; slot < 4; slot++) {
-        expect(layout.agentPosition(3, slot, 4).y).toBe(GROUND_Y);
+        expect(layout.agentPosition(3, slot, 4).y).toBe(GROUND_LINE_Y);
       }
     });
   });
@@ -124,10 +130,10 @@ describe('computeCatwalkLayout', () => {
       expect(layout.agentPosition(0, 0, 1).x).toBe(layout.stationX(0));
     });
 
-    it('places the single agent at y === GROUND_Y', () => {
+    it('places the single agent at y === GROUND_LINE_Y', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
-      expect(layout.agentPosition(0, 0, 1).y).toBe(GROUND_Y);
+      expect(layout.agentPosition(0, 0, 1).y).toBe(GROUND_LINE_Y);
     });
   });
 
@@ -140,26 +146,28 @@ describe('computeCatwalkLayout', () => {
       }
     });
 
-    it('has y equal to CATWALK_Y for every station', () => {
+    it('has y equal to RAIL_Y for every station', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
       for (let i = 0; i < defaultStations.length; i++) {
-        expect(layout.orchestratorPosition(i).y).toBe(CATWALK_Y);
+        expect(layout.orchestratorPosition(i).y).toBe(RAIL_Y);
       }
     });
   });
 
   describe('5. chute endpoints', () => {
-    it('has topY equal to CHUTE_TOP', () => {
+    it('has topY equal to RAIL_Y + CHUTE_TOP_BELOW_RAIL', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
-      expect(layout.chuteEndpoints(0, 0, 1).topY).toBe(CHUTE_TOP);
+      expect(layout.chuteEndpoints(0, 0, 1).topY).toBe(RAIL_Y + CHUTE_TOP_BELOW_RAIL);
     });
 
-    it('has botY equal to CHUTE_BOT', () => {
+    it('has botY derived from GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE - CHUTE_BOT_ABOVE_GROUND', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
-      expect(layout.chuteEndpoints(0, 0, 1).botY).toBe(CHUTE_BOT);
+      expect(layout.chuteEndpoints(0, 0, 1).botY).toBe(
+        GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE - CHUTE_BOT_ABOVE_GROUND,
+      );
     });
 
     it('is a vertical line (topX === botX)', () => {
@@ -193,24 +201,24 @@ describe('computeCatwalkLayout', () => {
       expect(layout.gatePosition(0, 1).x).toBe(expectedX);
     });
 
-    it('has y equal to CATWALK_Y', () => {
+    it('has y equal to RAIL_Y', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
-      expect(layout.gatePosition(0, 1).y).toBe(CATWALK_Y);
+      expect(layout.gatePosition(0, 1).y).toBe(RAIL_Y);
     });
   });
 
   describe('7. rail and ground endpoints', () => {
-    it('has rail y equal to CATWALK_Y', () => {
+    it('has rail y equal to RAIL_Y', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
-      expect(layout.railEndpoints().y).toBe(CATWALK_Y);
+      expect(layout.railEndpoints().y).toBe(RAIL_Y);
     });
 
-    it('has ground y equal to GROUND_Y + GROUND_LINE_OFFSET', () => {
+    it('has ground y equal to GROUND_LINE_Y', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
-      expect(layout.groundEndpoints().y).toBe(GROUND_Y + GROUND_LINE_OFFSET);
+      expect(layout.groundEndpoints().y).toBe(GROUND_LINE_Y);
     });
 
     it('shares the same x1 and x2 for rail and ground', () => {
@@ -228,10 +236,11 @@ describe('computeCatwalkLayout', () => {
       expect(layout.railEndpoints().x1).toBe(layout.stationX(0) - RAIL_OVERSHOOT);
     });
 
-    it('has x2 equal to platformWidth - PLATFORM_RIGHT_INSET', () => {
+    it('has x2 equal to lastVisibleStationX + RAIL_OVERSHOOT (symmetric)', () => {
       const layout = computeCatwalkLayout(defaultConfig);
+      const lastIndex = defaultStations.length - 1;
 
-      expect(layout.railEndpoints().x2).toBe(layout.platformWidth - PLATFORM_RIGHT_INSET);
+      expect(layout.railEndpoints().x2).toBe(layout.stationX(lastIndex) + RAIL_OVERSHOOT);
     });
 
     it('has positive extent (x2 > x1)', () => {
@@ -317,6 +326,12 @@ describe('computeCatwalkLayout', () => {
       const layout = computeCatwalkLayout(compactConfig);
 
       expect(layout.railEndpoints().x1).toBe(layout.stationX(2) - RAIL_OVERSHOOT);
+    });
+
+    it('sets rail x2 relative to the last visible station (symmetric)', () => {
+      const layout = computeCatwalkLayout(compactConfig);
+
+      expect(layout.railEndpoints().x2).toBe(layout.stationX(6) + RAIL_OVERSHOOT);
     });
   });
 
@@ -508,6 +523,182 @@ describe('computeCatwalkLayout', () => {
 
       expect(absentStationX).toBe(ABSENT_X);
       expect(gate.x).toBe((absentStationX + visibleStationX) / 2);
+    });
+  });
+
+  describe('18. output artifact positions', () => {
+    it('centers output artifacts below the producing agent', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const agentPos = layout.agentPosition(2, 0, 1);
+      const artPos = layout.outputArtifactPosition(2, 0, 1, 0);
+
+      expect(artPos.x).toBe(agentPos.x);
+    });
+
+    it('stacks output artifacts vertically with correct spacing', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const first = layout.outputArtifactPosition(0, 0, 1, 0);
+      const second = layout.outputArtifactPosition(0, 0, 1, 1);
+
+      expect(first.y).toBe(GROUND_LINE_Y + ARTIFACT_TOP_MARGIN + ART_H / 2);
+      expect(second.y - first.y).toBe(ART_H + ARTIFACT_Y_GAP);
+    });
+
+    it('uses independent x for each agent at a multi-agent station', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const art0 = layout.outputArtifactPosition(3, 0, 4, 0);
+      const art1 = layout.outputArtifactPosition(3, 1, 4, 0);
+
+      expect(art0.x).not.toBe(art1.x);
+      expect(art0.x).toBe(layout.agentPosition(3, 0, 4).x);
+      expect(art1.x).toBe(layout.agentPosition(3, 1, 4).x);
+    });
+  });
+
+  describe('19. input artifact positions', () => {
+    it('places input artifacts to the left of the divider', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const divider = layout.dividerPosition(2, 1);
+      const inputPos = layout.inputArtifactPosition(2, 1, 0);
+
+      expect(inputPos.x).toBeLessThan(divider.x);
+    });
+
+    it('stacks input artifacts with the same spacing as output artifacts', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const first = layout.inputArtifactPosition(2, 1, 0);
+      const second = layout.inputArtifactPosition(2, 1, 1);
+
+      expect(second.y - first.y).toBe(ART_H + ARTIFACT_Y_GAP);
+    });
+
+    it('has the same first-artifact y as output artifacts', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const output = layout.outputArtifactPosition(2, 0, 1, 0);
+      const input = layout.inputArtifactPosition(2, 1, 0);
+
+      expect(input.y).toBe(output.y);
+    });
+  });
+
+  describe('20. divider position', () => {
+    it('places the divider to the left of the leftmost agent', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const leftmostAgent = layout.agentPosition(3, 0, 4);
+      const divider = layout.dividerPosition(3, 4);
+
+      expect(divider.x).toBe(leftmostAgent.x - DIVIDER_LEFT_OF_AGENT);
+    });
+
+    it('starts at GROUND_LINE_Y', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const divider = layout.dividerPosition(0, 1);
+
+      expect(divider.y1).toBe(GROUND_LINE_Y);
+    });
+
+    it('extends to GROUND_LINE_Y + DIVIDER_FIXED_DEPTH', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const divider = layout.dividerPosition(0, 1);
+
+      expect(divider.y2).toBe(GROUND_LINE_Y + DIVIDER_FIXED_DEPTH);
+    });
+
+    it('is between input and output zones', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+      const divider = layout.dividerPosition(2, 1);
+      const inputPos = layout.inputArtifactPosition(2, 1, 0);
+      const outputPos = layout.outputArtifactPosition(2, 0, 1, 0);
+
+      expect(divider.x).toBeGreaterThan(inputPos.x);
+      expect(divider.x).toBeLessThan(outputPos.x);
+    });
+  });
+
+  describe('21. station label position', () => {
+    it('has x equal to stationX', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+
+      expect(layout.stationLabelPosition(0).x).toBe(layout.stationX(0));
+    });
+
+    it('has y equal to GROUND_LINE_Y + STATION_LABEL_BELOW_GROUND', () => {
+      const layout = computeCatwalkLayout(defaultConfig);
+
+      expect(layout.stationLabelPosition(0).y).toBe(GROUND_LINE_Y + STATION_LABEL_BELOW_GROUND);
+    });
+  });
+
+  describe('22. integration: realistic multi-station multi-agent config', () => {
+    const realisticConfig: CatwalkLayoutConfig = {
+      stations: [
+        { agentCount: 1, outputCountByAgent: [1], inputCount: 0 },
+        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
+        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
+        { agentCount: 3, outputCountByAgent: [1, 1, 1], inputCount: 1 },
+        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
+        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
+        { agentCount: 0, inputCount: 3 },
+      ],
+    };
+
+    it('places all agents at y = GROUND_LINE_Y', () => {
+      const layout = computeCatwalkLayout(realisticConfig);
+
+      for (let s = 0; s < 6; s++) {
+        const station = realisticConfig.stations[s];
+        if (station === undefined) continue;
+        for (let a = 0; a < station.agentCount; a++) {
+          expect(layout.agentPosition(s, a, station.agentCount).y).toBe(GROUND_LINE_Y);
+        }
+      }
+    });
+
+    it('places all orchestrator positions at y = RAIL_Y', () => {
+      const layout = computeCatwalkLayout(realisticConfig);
+
+      for (let s = 0; s < 7; s++) {
+        expect(layout.orchestratorPosition(s).y).toBe(RAIL_Y);
+      }
+    });
+
+    it('aligns each agent output column x with that agent x', () => {
+      const layout = computeCatwalkLayout(realisticConfig);
+
+      // Review station (3 agents)
+      for (let a = 0; a < 3; a++) {
+        const agentPos = layout.agentPosition(3, a, 3);
+        const artPos = layout.outputArtifactPosition(3, a, 3, 0);
+        expect(artPos.x).toBe(agentPos.x);
+      }
+    });
+
+    it('has each agent at multi-agent station with independent x', () => {
+      const layout = computeCatwalkLayout(realisticConfig);
+
+      const xs = [0, 1, 2].map((a) => layout.agentPosition(3, a, 3).x);
+      expect(new Set(xs).size).toBe(3);
+    });
+
+    it('places all input artifacts to the left of their station divider', () => {
+      const layout = computeCatwalkLayout(realisticConfig);
+
+      for (let s = 1; s < 7; s++) {
+        const station = realisticConfig.stations[s];
+        if (station === undefined) continue;
+        const agentCount = Math.max(station.agentCount, 1);
+        const divider = layout.dividerPosition(s, agentCount);
+        const inputPos = layout.inputArtifactPosition(s, agentCount, 0);
+        expect(inputPos.x).toBeLessThan(divider.x);
+      }
+    });
+
+    it('has symmetric rail extents past first and last visible station', () => {
+      const layout = computeCatwalkLayout(realisticConfig);
+      const rail = layout.railEndpoints();
+
+      expect(rail.x1).toBe(layout.stationX(0) - RAIL_OVERSHOOT);
+      expect(rail.x2).toBe(layout.stationX(6) + RAIL_OVERSHOOT);
     });
   });
 });

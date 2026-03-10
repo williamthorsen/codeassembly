@@ -600,26 +600,33 @@ describe('mapRunToCatwalk', () => {
 
       const config = mapRunToCatwalk(status);
 
-      expect(config.artifacts).toHaveLength(3);
+      // Filter output artifacts (input artifacts are generated from outputs)
+      const outputs = config.artifacts.filter((a) => a.slot === 'output');
+      expect(outputs).toHaveLength(3);
 
       // Architecture artifact at station 0
-      expect(config.artifacts[0]?.stationIndex).toBe(0);
-      expect(config.artifacts[0]?.label).toBe('architecture');
-      expect(config.artifacts[0]?.color).toBe(ARTIFACT_COLORS.arch);
-      expect(config.artifacts[0]?.slot).toBe('output');
+      expect(outputs[0]?.stationIndex).toBe(0);
+      expect(outputs[0]?.label).toBe('architecture');
+      expect(outputs[0]?.color).toBe(ARTIFACT_COLORS.arch);
+      expect(outputs[0]?.slot).toBe('output');
+      expect(outputs[0]?.agentSlotIndex).toBe(0);
 
       // Planning artifact at station 1
-      expect(config.artifacts[1]?.stationIndex).toBe(1);
-      expect(config.artifacts[1]?.label).toBe('plan');
-      expect(config.artifacts[1]?.color).toBe(ARTIFACT_COLORS.plan);
-      expect(config.artifacts[1]?.slot).toBe('output');
+      expect(outputs[1]?.stationIndex).toBe(1);
+      expect(outputs[1]?.label).toBe('plan');
+      expect(outputs[1]?.color).toBe(ARTIFACT_COLORS.plan);
+      expect(outputs[1]?.slot).toBe('output');
 
       // Code artifact at station 2 with version from iteration
-      expect(config.artifacts[2]?.stationIndex).toBe(2);
-      expect(config.artifacts[2]?.label).toBe('code');
-      expect(config.artifacts[2]?.color).toBe(ARTIFACT_COLORS.code);
-      expect(config.artifacts[2]?.slot).toBe('output');
-      expect(config.artifacts[2]?.version).toBe(2);
+      expect(outputs[2]?.stationIndex).toBe(2);
+      expect(outputs[2]?.label).toBe('code');
+      expect(outputs[2]?.color).toBe(ARTIFACT_COLORS.code);
+      expect(outputs[2]?.slot).toBe('output');
+      expect(outputs[2]?.version).toBe(2);
+
+      // Input artifacts are also present (derived from outputs)
+      const inputs = config.artifacts.filter((a) => a.slot === 'input');
+      expect(inputs.length).toBeGreaterThan(0);
     });
 
     it('uses fallback color for unrecognized artifact type', () => {
@@ -641,8 +648,9 @@ describe('mapRunToCatwalk', () => {
 
       const config = mapRunToCatwalk(status);
 
-      expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]?.color).toBe(ARTIFACT_COLORS.code);
+      const outputs = config.artifacts.filter((a) => a.slot === 'output');
+      expect(outputs).toHaveLength(1);
+      expect(outputs[0]?.color).toBe(ARTIFACT_COLORS.code);
     });
 
     it('skips artifacts with unknown phase', () => {
@@ -673,9 +681,10 @@ describe('mapRunToCatwalk', () => {
 
       const config = mapRunToCatwalk(status);
 
-      // Only the architecture artifact should be present; the unknown phase is skipped
-      expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]?.stationIndex).toBe(0);
+      // Only the architecture output artifact should be present; the unknown phase is skipped
+      const outputs = config.artifacts.filter((a) => a.slot === 'output');
+      expect(outputs).toHaveLength(1);
+      expect(outputs[0]?.stationIndex).toBe(0);
     });
 
     it('maps artifacts with iteration to version on StationArtifactConfig', () => {
@@ -698,8 +707,9 @@ describe('mapRunToCatwalk', () => {
 
       const config = mapRunToCatwalk(status);
 
-      expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]?.version).toBe(2);
+      const outputs = config.artifacts.filter((a) => a.slot === 'output');
+      expect(outputs).toHaveLength(1);
+      expect(outputs[0]?.version).toBe(2);
     });
 
     it('omits version when iteration is not present on artifact', () => {
@@ -721,8 +731,193 @@ describe('mapRunToCatwalk', () => {
 
       const config = mapRunToCatwalk(status);
 
-      expect(config.artifacts).toHaveLength(1);
-      expect(config.artifacts[0]).not.toHaveProperty('version');
+      const outputs = config.artifacts.filter((a) => a.slot === 'output');
+      expect(outputs).toHaveLength(1);
+      expect(outputs[0]).not.toHaveProperty('version');
+    });
+  });
+
+  describe('celebrating flag', () => {
+    it('sets celebrating to true on completed run', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.celebrating).toBe(true);
+    });
+
+    it('sets celebrating to false on in_progress run', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.celebrating).toBe(false);
+    });
+  });
+
+  describe('input artifacts', () => {
+    it('generates input artifacts at downstream stations from output artifacts', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Output at station 0, input at station 1
+      const inputs = config.artifacts.filter((a) => a.slot === 'input');
+      expect(inputs.length).toBeGreaterThanOrEqual(1);
+      const station1Input = inputs.find((a) => a.stationIndex === 1);
+      expect(station1Input).toBeDefined();
+      expect(station1Input?.label).toBe('architecture');
+    });
+
+    it('collects all run deliverables at the summary station when completed', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.json',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'orchestrated-planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Summary station (6) should have input artifacts from all upstream stations
+      const summaryInputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'input');
+      expect(summaryInputs.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('buildCarriedArtifacts boundary cases', () => {
+    it('carries review artifact when orchestrator is at the holistic review station (index 5)', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 1,
+            reviewers: {
+              'correctness-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+          },
+          codeSimplifier: { ran: true, actionableFindings: false, coderFixCycleRan: false, artifact: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'review.md',
+            role: 'reviewer',
+            roleType: 'reviewer',
+            agent: 'correctness-reviewer',
+            type: 'review',
+            phase: 'parallelReview',
+            createdAt: '2026-01-01T00:30:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Orchestrator should be at station 5 (holistic), working
+      expect(config.orchestrator.stationIndex).toBe(5);
+      expect(config.orchestrator.working).toBe(true);
+      // Should carry the review artifact from station 3 (reverse scan from 4 finds nothing, then from 3)
+      expect(config.orchestrator.carriedArtifacts.length).toBeGreaterThanOrEqual(1);
+      expect(config.orchestrator.carriedArtifacts[0]?.label).toBe('review');
+    });
+
+    it('carries implementation artifact when orchestrator is at the review station (fix-shuttle)', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'code.md',
+            role: 'author',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Orchestrator should be at station 3 (review), working
+      expect(config.orchestrator.stationIndex).toBe(3);
+      expect(config.orchestrator.working).toBe(true);
+      // Should carry the implementation artifact from station 2
+      expect(config.orchestrator.carriedArtifacts).toHaveLength(1);
+      expect(config.orchestrator.carriedArtifacts[0]?.label).toBe('code');
     });
   });
 });

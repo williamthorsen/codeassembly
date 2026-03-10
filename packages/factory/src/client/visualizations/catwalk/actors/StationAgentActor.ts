@@ -1,6 +1,5 @@
 import { Actor, Color, GraphicsGroup, Rectangle, vec, type Vector } from 'excalibur';
 
-import { SPRITE_SIZE } from '../../../game/sprites/sprite-definitions.js';
 import {
   ACTIVE_OPACITY,
   DEACTIVATED_OPACITY,
@@ -10,11 +9,10 @@ import {
   SCALE_PULSE_MAX,
   SCALE_PULSE_MIN,
 } from '../constants/animation.js';
+import { ACCENT_BAR_H, SPRITE_SIZE } from '../constants/dimensions.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { AgentAnimationState } from '../types.js';
-
-const ACCENT_BAR_HEIGHT = 4;
 
 export interface StationAgentActorConfig {
   id: string;
@@ -96,16 +94,18 @@ export class StationAgentActor extends Actor {
 
     const accentBar = new Rectangle({
       width: SPRITE_SIZE,
-      height: ACCENT_BAR_HEIGHT,
+      height: ACCENT_BAR_H,
       color: Color.fromHex(config.color),
     });
 
     const halfSprite = SPRITE_SIZE / 2;
+    // Render upward from the ground line position:
+    // accent bar bottom sits flush on ground line, sprite sits on top of accent bar
     const group = new GraphicsGroup({
       useAnchor: false,
       members: [
-        { graphic: animation, offset: vec(-halfSprite, 0) },
-        { graphic: accentBar, offset: vec(-halfSprite, SPRITE_SIZE) },
+        { graphic: animation, offset: vec(-halfSprite, -ACCENT_BAR_H - SPRITE_SIZE) },
+        { graphic: accentBar, offset: vec(-halfSprite, -ACCENT_BAR_H) },
       ],
     });
 

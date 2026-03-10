@@ -32,11 +32,12 @@ export class ArtifactActor extends Actor {
       }),
     });
 
+    // Center both graphics at the actor position
     const group = new GraphicsGroup({
       useAnchor: false,
       members: [
-        { graphic: rect, offset: vec(0, 0) },
-        { graphic: label, offset: vec(ART_W / 2, ART_H / 2), useBounds: false },
+        { graphic: rect, offset: vec(-ART_W / 2, -ART_H / 2) },
+        { graphic: label, offset: vec(0, 0), useBounds: false },
       ],
     });
 

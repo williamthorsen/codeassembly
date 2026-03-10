@@ -15,6 +15,7 @@ function orchestrator(overrides: Partial<OrchestratorConfig> = {}): Orchestrator
   return {
     stationIndex: 0,
     working: false,
+    celebrating: false,
     carriedArtifacts: [],
     codeBadge: null,
     ...overrides,
@@ -312,6 +313,7 @@ function artifact(
 ): StationArtifactConfig {
   return {
     stationIndex,
+    agentSlotIndex: 0,
     label,
     color: '#ffffff',
     slot: 'output',

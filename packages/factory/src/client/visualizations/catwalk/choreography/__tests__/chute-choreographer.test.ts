@@ -87,6 +87,7 @@ function orchestratorDiff(overrides: Partial<OrchestratorDiff> = {}): Orchestrat
   return {
     moved: null,
     workingChanged: null,
+    celebratingChanged: null,
     carriedChanged: null,
     codeBadgeChanged: null,
     ...overrides,
@@ -126,6 +127,13 @@ function mockLayout(): CatwalkLayoutResult {
     gatePosition: (_l: number, _r: number) => ({ x: 200, y: 100 }),
     railEndpoints: () => ({ x1: 25, x2: 575, y: 100 }),
     groundEndpoints: () => ({ x1: 25, x2: 575, y: 382 }),
+    outputArtifactPosition: (si: number, _slot: number, _count: number, _stack: number): Position => ({
+      x: stationX(si),
+      y: 400,
+    }),
+    inputArtifactPosition: (si: number, _count: number, _stack: number): Position => ({ x: stationX(si) - 40, y: 400 }),
+    dividerPosition: (si: number, _count: number) => ({ x: stationX(si) - 20, y1: 382, y2: 500 }),
+    stationLabelPosition: (si: number): Position => ({ x: stationX(si), y: 400 }),
     bounds: { minX: 0, maxX: 600, minY: 0, maxY: 540 },
     platformWidth: 600,
   };
@@ -251,6 +259,7 @@ describe('choreograph', () => {
     it('adds artifacts via refs.addArtifact', async () => {
       const artifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
         slot: 'output',
@@ -271,6 +280,7 @@ describe('choreograph', () => {
     it('creates flying artifact actors when orchestrator moves with added artifacts at origin', async () => {
       const artifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
         slot: 'output',
@@ -290,7 +300,7 @@ describe('choreograph', () => {
     it('uses origin chute endpoints for ascend and destination chute endpoints for descend', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
       const layout = mockLayout();
@@ -321,7 +331,7 @@ describe('choreograph', () => {
           moved: { from: 0, to: 1 },
           carriedChanged: { from: [], to: carried },
         }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
 
@@ -336,7 +346,7 @@ describe('choreograph', () => {
     it('walks the orchestrator to the destination station', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 2 } }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
 
@@ -348,6 +358,7 @@ describe('choreograph', () => {
     it('adds origin artifacts after delivery completes', async () => {
       const artifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
         slot: 'output',
@@ -367,12 +378,14 @@ describe('choreograph', () => {
     it('adds non-origin artifacts immediately', async () => {
       const originArtifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'arch',
         color: '#a5d8ff',
         slot: 'output',
       };
       const otherArtifact: StationArtifactConfig = {
         stationIndex: 2,
+        agentSlotIndex: 0,
         label: 'code',
         color: '#fff3bf',
         slot: 'output',
@@ -396,7 +409,7 @@ describe('choreograph', () => {
           moved: { from: 0, to: 1 },
           carriedChanged: null,
         }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
 
@@ -468,7 +481,7 @@ describe('choreograph', () => {
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
 
       const choreographPromise = choreograph(diff, mockLayout(), refs);
