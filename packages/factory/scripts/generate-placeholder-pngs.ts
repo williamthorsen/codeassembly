@@ -12,6 +12,7 @@ import { join } from 'node:path';
 
 import { ORCHESTRATOR_POSES } from './sprites/orchestrator-poses.ts';
 import { ORCHESTRATOR_PALETTE, SUBAGENT_PALETTE } from './sprites/palettes.ts';
+import { renderPreviewHtml } from './sprites/preview-renderer.ts';
 import { SUBAGENT_POSES } from './sprites/subagent-poses.ts';
 import { renderSpriteSheet } from './sprites/svg-renderer.ts';
 
@@ -25,4 +26,16 @@ const orchestratorSvg = renderSpriteSheet(ORCHESTRATOR_POSES, ORCHESTRATOR_PALET
 writeFileSync(join(outDir, 'subagent.svg'), subagentSvg);
 writeFileSync(join(outDir, 'orchestrator.svg'), orchestratorSvg);
 
+const previewHtml = renderPreviewHtml(subagentSvg, orchestratorSvg);
+const previewDir = join(import.meta.dirname, '../../../.local/sprites');
+mkdirSync(previewDir, { recursive: true });
+const timestamp = new Date()
+  .toISOString()
+  .replace(/[-:]/g, '')
+  .replace('T', '-')
+  .replace(/\.\d+Z$/, 'Z');
+const previewPath = join(previewDir, `${timestamp}_sprite-preview.html`);
+writeFileSync(previewPath, previewHtml);
+
 console.info('Sprite sheets written to', outDir);
+console.info('Preview written to', previewPath);

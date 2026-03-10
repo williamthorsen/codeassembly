@@ -9,6 +9,7 @@
     "dev": "tsx src/server/index.ts & pnpm vite --host",
     "dev:client": "pnpm vite --host",
     "dev:server": "tsx --watch src/server/index.ts",
+    "generate-sprites": "tsx scripts/generate-placeholder-pngs.ts",
     "validate:run-index": "tsx src/scripts/validate-run-index.ts",
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },
