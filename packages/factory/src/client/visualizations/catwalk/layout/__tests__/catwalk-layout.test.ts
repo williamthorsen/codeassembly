@@ -632,13 +632,13 @@ describe('computeCatwalkLayout', () => {
   describe('22. integration: realistic multi-station multi-agent config', () => {
     const realisticConfig: CatwalkLayoutConfig = {
       stations: [
-        { agentCount: 1, outputCountByAgent: [1], inputCount: 0 },
-        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
-        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
-        { agentCount: 3, outputCountByAgent: [1, 1, 1], inputCount: 1 },
-        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
-        { agentCount: 1, outputCountByAgent: [1], inputCount: 1 },
-        { agentCount: 0, inputCount: 3 },
+        { agentCount: 1 },
+        { agentCount: 1 },
+        { agentCount: 1 },
+        { agentCount: 3 },
+        { agentCount: 1 },
+        { agentCount: 1 },
+        { agentCount: 0 },
       ],
     };
 

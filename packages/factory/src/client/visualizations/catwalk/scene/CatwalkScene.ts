@@ -40,6 +40,8 @@ export class CatwalkScene extends Scene {
   private artifactKeySet = new Set<string>();
   /** Composite-keyed artifact count: `${stationIndex}:${agentSlotIndex}` for outputs, `${stationIndex}:input` for inputs. */
   private artifactCountByKey = new Map<string, number>();
+  /** Cached agent count per station, updated at the start of each diff application. */
+  private cachedAgentCountByStation = new Map<number, number>();
 
   // Choreography guard -- prevents overlapping animations
   private choreographyInProgress = false;
@@ -91,9 +93,14 @@ export class CatwalkScene extends Scene {
       return;
     }
 
+    // Cache the agent count per station from the incoming config so that
+    // addSingleArtifact (called during choreography) uses the current layout.
+    this.cachedAgentCountByStation = buildAgentCountByStation(config);
+
     // Guard: fade out orchestrator when moving to a negative (sentinel) station index
     if (diff.orchestrator.moved !== null && diff.orchestrator.moved.to < 0 && this.orchestratorRef !== undefined) {
       this.orchestratorRef.fadeOut();
+      this.orchestratorRef = undefined;
     }
 
     // Create orchestrator if it needs to appear and doesn't exist
@@ -154,6 +161,7 @@ export class CatwalkScene extends Scene {
       orchestrator: this.orchestratorRef,
       agents: this.agentRefs,
       gates: this.gateRefs,
+      agentCountByStation: this.cachedAgentCountByStation,
       addActor: (actor: Actor) => {
         this.add(actor);
       },
@@ -185,9 +193,7 @@ export class CatwalkScene extends Scene {
     if (this.artifactKeySet.has(key)) return;
     this.artifactKeySet.add(key);
 
-    const agentCountByStation =
-      this.prevConfig !== undefined ? buildAgentCountByStation(this.prevConfig) : new Map<number, number>();
-    const agentCount = Math.max(agentCountByStation.get(artifact.stationIndex) ?? 1, 1);
+    const agentCount = Math.max(this.cachedAgentCountByStation.get(artifact.stationIndex) ?? 1, 1);
 
     // Determine the count key and stack position
     const countKey =
@@ -214,6 +220,7 @@ export class CatwalkScene extends Scene {
     const layout = computeCatwalkLayout({ stations: layoutEntries });
     this.layout = layout;
     this.prevConfig = config;
+    this.cachedAgentCountByStation = buildAgentCountByStation(config);
 
     this.drawCatwalkRail(layout);
     this.drawGroundLine(layout);

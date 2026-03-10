@@ -445,11 +445,12 @@ function buildInputArtifacts(
     }
   }
 
-  // For each station N > 0 that has outputs from upstream, generate inputs
+  // For each station N that has outputs, generate inputs at station N+1.
+  // Cap at N+1 <= 5 so the summary station (6) is only populated by the
+  // completed block below, avoiding duplicate inputs.
   for (const [stationIndex, stationOutputs] of outputsByStation) {
-    // Generate inputs at station N+1 from this station's outputs
     const nextStation = stationIndex + 1;
-    if (nextStation <= 6) {
+    if (nextStation <= 5) {
       for (const output of stationOutputs) {
         inputs.push({
           stationIndex: nextStation,

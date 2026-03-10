@@ -13,6 +13,7 @@ export interface SceneRefs {
   orchestrator: OrchestratorActor | undefined;
   agents: Map<string, StationAgentActor>;
   gates: Map<string, GateActor>;
+  agentCountByStation: Map<number, number>;
   addActor: (actor: Actor) => void;
   addArtifact: (artifact: StationArtifactConfig, layout: CatwalkLayoutResult) => void;
 }
@@ -74,11 +75,8 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   // Step 1: Ascend -- flying artifacts rise up the origin chute
   const ascendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    const endpoints = layout.chuteEndpoints(
-      originStation,
-      artifact.agentSlotIndex,
-      Math.max(artifact.agentSlotIndex + 1, 1),
-    );
+    const agentCount = Math.max(refs.agentCountByStation.get(originStation) ?? 1, 1);
+    const endpoints = layout.chuteEndpoints(originStation, artifact.agentSlotIndex, agentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'ascend');
     refs.addActor(flyer);
     ascendPromises.push(flyer.ascend().catch(suppressKilledActorError));
@@ -97,11 +95,8 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   // Step 4: Descend -- flying artifacts drop down the destination chute per ticket spec
   const descendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    const endpoints = layout.chuteEndpoints(
-      destStation,
-      artifact.agentSlotIndex,
-      Math.max(artifact.agentSlotIndex + 1, 1),
-    );
+    const agentCount = Math.max(refs.agentCountByStation.get(destStation) ?? 1, 1);
+    const endpoints = layout.chuteEndpoints(destStation, artifact.agentSlotIndex, agentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
     descendPromises.push(flyer.descend().catch(suppressKilledActorError));

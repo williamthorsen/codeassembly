@@ -290,6 +290,29 @@ describe('OrchestratorActor', () => {
     }
   });
 
+  it('celebrate() calls getAnimation with celebrating state', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.celebrate();
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'celebrating');
+  });
+
+  it('celebrate() disables working pulse and sets ACTIVE_OPACITY', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+
+    actor.celebrate();
+
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
+
+    // Pulse should be disabled -- onPreUpdate should not change scale
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
+  });
+
   it('fadeOut fades opacity to 0 and stops the working pulse', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
 

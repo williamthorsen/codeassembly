@@ -163,6 +163,11 @@ function mockRefs(
     orchestrator: mockOrchestrator() as unknown as SceneRefs['orchestrator'],
     agents: new Map(),
     gates: new Map(),
+    agentCountByStation: new Map<number, number>([
+      [0, 1],
+      [1, 1],
+      [2, 1],
+    ]),
     addActor: (actor: unknown) => {
       addedActors.push(actor);
     },
@@ -520,6 +525,62 @@ describe('choreograph', () => {
       const refs = mockRefs({ orchestrator: undefined });
 
       await expect(choreograph(diff, mockLayout(), refs)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('suppressKilledActorError', () => {
+    it('silently swallows known killed-actor rejections', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+
+      const refs = mockRefs({
+        addActor: (actor: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
+          const flyer = actor as Record<string, unknown>;
+          if (typeof flyer.ascend === 'function') {
+            flyer.ascend = () => Promise.reject(new Error('Actor has been killed'));
+          }
+          if (typeof flyer.descend === 'function') {
+            flyer.descend = () => Promise.reject(new Error('Actor has been killed'));
+          }
+        },
+      });
+
+      await choreograph(diff, mockLayout(), refs);
+
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('logs unexpected rejections via console.error', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+
+      const refs = mockRefs({
+        addActor: (actor: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
+          const flyer = actor as Record<string, unknown>;
+          if (typeof flyer.ascend === 'function') {
+            flyer.ascend = () => Promise.reject(new Error('Unexpected error'));
+          }
+          if (typeof flyer.descend === 'function') {
+            flyer.descend = () => Promise.reject(new Error('Unexpected error'));
+          }
+        },
+      });
+
+      await choreograph(diff, mockLayout(), refs);
+
+      expect(consoleSpy).toHaveBeenCalledWith('Unexpected animation error:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
   });
 });

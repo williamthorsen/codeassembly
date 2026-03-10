@@ -23,10 +23,6 @@ import {
 export interface StationLayoutEntry {
   agentCount: number;
   absent?: boolean | undefined;
-  /** Output artifacts per agent slot (e.g., [2, 1] = 2 outputs for agent 0, 1 for agent 1). */
-  outputCountByAgent?: number[] | undefined;
-  /** Number of input artifacts for this station. */
-  inputCount?: number | undefined;
 }
 
 export interface CatwalkLayoutConfig {
