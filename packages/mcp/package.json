@@ -2,10 +2,11 @@
   "name": "@codeassembly/mcp",
   "version": "0.1.0",
   "private": true,
+  "description": "MCP server for orchestrated run management",
   "type": "module",
   "scripts": {
-    "ws": "node --import tsx ../../scripts/run-workspace-script.ts",
-    "prepare": "pnpm run ws compile"
+    "prepare": "pnpm run ws compile",
+    "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },
   "dependencies": {
     "@codeassembly/run-core": "workspace:*",

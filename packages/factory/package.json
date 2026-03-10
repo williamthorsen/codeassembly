@@ -2,12 +2,13 @@
   "name": "factory",
   "version": "0.1.0",
   "private": true,
+  "description": "Visual factory for orchestrated workflow management",
   "type": "module",
   "scripts": {
     "build": "pnpm vite build",
     "dev": "tsx src/server/index.ts & pnpm vite --host",
-    "dev:server": "tsx --watch src/server/index.ts",
     "dev:client": "pnpm vite --host",
+    "dev:server": "tsx --watch src/server/index.ts",
     "validate:run-index": "tsx src/scripts/validate-run-index.ts",
     "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
   },

@@ -1,6 +1,7 @@
 {
   "name": "codeassembly-monorepo",
   "version": "0.1.0",
+  "private": true,
   "description": "CodeAssembly monorepo",
   "keywords": [],
   "homepage": "https://github.com/williamthorsen/codeassembly#readme",
@@ -89,6 +90,7 @@
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
       "esbuild",
+      "lefthook",
       "sharp",
       "svelte-preprocess"
     ]

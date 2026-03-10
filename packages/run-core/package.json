@@ -2,12 +2,18 @@
   "name": "@codeassembly/run-core",
   "version": "0.1.0",
   "private": true,
+  "description": "Core runtime for orchestrated development runs",
   "type": "module",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "import": "./dist/esm/index.js",
       "types": "./src/index.ts"
+    },
+    "./config": {
+      "source": "./src/config.ts",
+      "import": "./dist/esm/config.js",
+      "types": "./src/config.ts"
     },
     "./parsers": {
       "source": "./src/parsers/run-data-parser.ts",
@@ -18,11 +24,6 @@
       "source": "./src/scanners/index.ts",
       "import": "./dist/esm/scanners/index.js",
       "types": "./src/scanners/index.ts"
-    },
-    "./config": {
-      "source": "./src/config.ts",
-      "import": "./dist/esm/config.js",
-      "types": "./src/config.ts"
     }
   },
   "main": "./dist/esm/index.js",
