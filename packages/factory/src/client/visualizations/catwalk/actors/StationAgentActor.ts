@@ -100,11 +100,12 @@ export class StationAgentActor extends Actor {
       color: Color.fromHex(config.color),
     });
 
+    const halfSprite = SPRITE_SIZE / 2;
     const group = new GraphicsGroup({
       useAnchor: false,
       members: [
-        { graphic: animation, offset: vec(0, 0) },
-        { graphic: accentBar, offset: vec(0, SPRITE_SIZE) },
+        { graphic: animation, offset: vec(-halfSprite, 0) },
+        { graphic: accentBar, offset: vec(-halfSprite, SPRITE_SIZE) },
       ],
     });
 
