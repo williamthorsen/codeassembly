@@ -4,7 +4,7 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import process from 'node:process';
 
-import { assertIsPackageJson } from './assertIsPackageJson.js';
+import { assertIsPackageJson } from './assertIsPackageJson.ts';
 
 const OK_CODE = 0;
 const ERROR_CODE = 1;
@@ -95,7 +95,7 @@ function getScripts(useIntTests = false): Record<string, string | []> {
     compile: 'tsx ../../config/build.ts',
     fmt: 'prettier --list-different --write .',
     'fmt:check': 'prettier --check .',
-    'generate-typings': 'tsgo --project tsconfig.generate-typings.json',
+    'generate-typings': 'tsc --project tsconfig.generate-typings.json',
     lint: 'eslint --fix .',
     'lint:check': 'eslint .',
     'lint:strict': 'strict-lint',
