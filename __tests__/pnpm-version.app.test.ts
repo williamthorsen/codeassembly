@@ -1,13 +1,12 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 
-import { isObject } from '@williamthorsen/toolbelt.objects';
 import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
-import rawPackageJson from '../package.json' with { type: 'json' };
-import { GITHUB_ACTION_FILE, GITHUB_ACTION_FILE_PATH } from './config.ts';
-import { getValueAtPathOrThrow } from './helpers/getValueAtPathOrThrow.ts';
+import { GITHUB_ACTION_FILE, GITHUB_ACTION_FILE_PATH } from '~/__tests__/config.ts';
+import { getValueAtPathOrThrow } from '~/__tests__/helpers/getValueAtPathOrThrow.ts';
+import rawPackageJson from '~/package.json' with { type: 'json' };
 
 describe('pnpm version consistency', () => {
   it('pnpm version is the same in GitHub action and package.json', async () => {
@@ -23,15 +22,8 @@ async function getPnpmVersionFromAction(): Promise<string> {
   const action = yaml.load(actionYaml);
   assert.ok(action, `Action not found in ${GITHUB_ACTION_FILE}`);
 
-  const steps = getValueAtPathOrThrow(action, 'jobs.code-quality.steps');
-  assert.ok(Array.isArray(steps), 'jobs.code-quality.steps is not an array');
+  const version = getValueAtPathOrThrow(action, 'jobs.code-quality.with.pnpm-version');
 
-  const pnpmStep = steps.find(
-    (step: unknown) => isObject(step) && typeof step.uses === 'string' && step.uses.startsWith('pnpm/action-setup@'),
-  );
-  assert.ok(pnpmStep, '"pnpm/action-setup" step not found in action');
-
-  const version = getValueAtPathOrThrow(pnpmStep, 'with.version');
   assert.ok(typeof version === 'string' && version.length > 0, 'pnpm version not found in action');
 
   return version;

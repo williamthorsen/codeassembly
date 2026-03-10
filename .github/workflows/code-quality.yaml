@@ -1,14 +1,5 @@
-name: Code Quality Checks
+name: Code quality checks
 
-# This workflow runs code quality checks on push and pull request events
-# It uses pnpm run ci to run all checks, which includes:
-# - Type checking
-# - Formatting checks
-# - Linting
-# - Tests with coverage
-# - Security audits
-# - Building all packages in the monorepo
-#
 # Note: This workflow will be automatically skipped if the commit message includes
 # any of the following strings: [skip ci], [ci skip], [no ci], [skip actions], or [actions skip]
 
@@ -23,40 +14,13 @@ on:
       - main
       - next
 
+  workflow_dispatch: {}
+
 jobs:
   code-quality:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
-
-    env:
-      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.32.0 # Match the version in package.json
-          run_install: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24.14.0' # Match the version in .tool-versions
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: |
-          pnpm config set auto-install-peers false
-          pnpm install
-
-      - name: Run code quality checks
-        run: pnpm run ci
+    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm.yaml@v1
+    secrets:
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+    with:
+      node-version: '24.14.0'
+      pnpm-version: '10.32.0'

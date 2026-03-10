@@ -42,6 +42,9 @@
     "noUncheckedIndexedAccess": true,
     // Report an error when a variable is declared but never used.
     "noUnusedLocals": true,
+    "paths": {
+      "~/*": ["./*"],
+    },
     "removeComments": true,
 
     // Enable JSON imports.
