@@ -8,7 +8,7 @@ vi.mock('../GameCanvas.js', async () => {
   return { GameCanvas: MockGameCanvas };
 });
 
-vi.mock('../FlowDiagram/FlowDiagram.js', async () => {
+vi.mock('../../visualizations/flow/FlowDiagram.js', async () => {
   const { MockFlowDiagram } = await import('../../../__test-helpers__/mock-visualization-components.js');
   return { FlowDiagram: MockFlowDiagram };
 });

@@ -2,8 +2,8 @@ import React from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import { type ActiveView, useVisualizationParam } from '../hooks/useVisualizationParam.js';
+import { FlowDiagram } from '../visualizations/flow/FlowDiagram.js';
 import { CatwalkCanvas } from './CatwalkCanvas.js';
-import { FlowDiagram } from './FlowDiagram/FlowDiagram.js';
 import { GameCanvas } from './GameCanvas.js';
 
 /** Returns the canvas component corresponding to the selected visualization view. */

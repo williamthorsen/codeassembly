@@ -1,9 +1,9 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../FlowDiagram/FlowDiagram.css', () => ({}));
+vi.mock('../../FlowDiagram.css', () => ({}));
 
-const { PacketAnimation } = await import('../FlowDiagram/edges/PacketAnimation.js');
+const { PacketAnimation } = await import('../PacketAnimation.js');
 
 describe('PacketAnimation', () => {
   beforeEach(() => {
