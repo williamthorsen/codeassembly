@@ -29,11 +29,11 @@ describe('renderPreviewHtml', () => {
   // ── Section labels ──────────────────────────────────────────────────────
 
   it('contains a subagent section label', () => {
-    expect(html).toContain('subagent');
+    expect(html).toContain('<h2>subagent</h2>');
   });
 
   it('contains an orchestrator section label', () => {
-    expect(html).toContain('orchestrator');
+    expect(html).toContain('<h2>orchestrator</h2>');
   });
 
   // ── Frame labels ────────────────────────────────────────────────────────

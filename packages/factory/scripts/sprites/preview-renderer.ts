@@ -19,6 +19,7 @@ const FRAME_LABELS = [
 
 const ANIMATION_NAMES = ['Idle', 'Walking', 'Working', 'Celebrating', 'Concerned', 'Resting'];
 
+/** Renders the 4x3 grid of individually labeled sprite frames as HTML. */
 function renderFrameGridHtml(dataUri: string): string {
   return FRAME_LABELS.map((label, i) => {
     const col = i % 4;
@@ -32,13 +33,14 @@ function renderFrameGridHtml(dataUri: string): string {
   }).join('\n');
 }
 
+/** Renders animation preview cells with element IDs for JS-driven playback. */
 // Animation definitions duplicated from sprite-definitions.ts (cannot import due to excalibur dependency)
 // Strategies: PingPong = forward then backward, Loop = forward-only, Freeze = static
 function renderAnimationSectionsHtml(idPrefix: string): string {
   return ANIMATION_NAMES.map((name) => {
     const id = `${idPrefix}-${name.toLowerCase()}`;
     return `<div class="anim-cell">
-  <div class="frame-preview" id="${id}" style="background-image: url(PLACEHOLDER);"></div>
+  <div class="frame-preview" id="${id}"></div>
   <div class="frame-label">${name}</div>
 </div>`;
   }).join('\n');
@@ -90,10 +92,9 @@ export function renderPreviewHtml(subagentSvg: string, orchestratorSvg: string):
     height: 128px;
     background-repeat: no-repeat;
     background-size: ${4 * 128}px ${3 * 128}px;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: pixelated;
-    image-rendering: -webkit-optimize-contrast;
-    -webkit-image-rendering: crisp-edges;
-    -moz-image-rendering: crisp-edges;
     border: 1px solid #333;
     margin: 0 auto;
   }
