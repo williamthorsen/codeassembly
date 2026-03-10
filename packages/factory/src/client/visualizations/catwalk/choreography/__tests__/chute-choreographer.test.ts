@@ -408,6 +408,65 @@ describe('choreograph', () => {
       expect(refs.addedArtifacts).toContain(otherArtifact);
     });
 
+    it('threads agentSlotIndex through chuteEndpoints so each slot gets a distinct chute X', async () => {
+      const SLOT_OFFSET = 50;
+
+      /** Layout whose chuteEndpoints returns a distinct X per (slotIndex, agentCount) pair. */
+      function slotAwareMockLayout(): CatwalkLayoutResult {
+        const base = mockLayout();
+        return {
+          ...base,
+          chuteEndpoints: (si: number, slotIndex: number, _count: number): ChuteEndpoints => {
+            const baseX = base.stationX(si);
+            return {
+              topX: baseX + slotIndex * SLOT_OFFSET,
+              topY: 148,
+              botX: baseX + slotIndex * SLOT_OFFSET,
+              botY: 320,
+            };
+          },
+        };
+      }
+
+      const artifact: StationArtifactConfig = {
+        stationIndex: 0,
+        agentSlotIndex: 1,
+        label: 'plan',
+        color: '#a5d8ff',
+        slot: 'output',
+      };
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [artifact] },
+      });
+      const refs = mockRefs({
+        agentCountByStation: new Map<number, number>([
+          [0, 2],
+          [1, 1],
+          [2, 1],
+        ]),
+      });
+      const layout = slotAwareMockLayout();
+
+      await choreograph(diff, layout, refs);
+
+      // Two flying actors: ascend (slot 1 at station 0) then descend (slot 1 at station 1)
+      expect(refs.addedActors.length).toBe(2);
+      const [ascendActor] = refs.addedActors;
+
+      // The MockActor stores constructor args in config.pos.
+      // For ascend direction, start pos = vec(botX, botY) where botX = stationX(0) + 1 * SLOT_OFFSET.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
+      const ascendConfig = (ascendActor as { config: { pos: { x: number; y: number } } }).config;
+
+      const expectedSlot1X = layout.stationX(0) + 1 * SLOT_OFFSET;
+      const slot0X = layout.stationX(0);
+
+      // The ascend actor must use the slot-1 X, not the slot-0 X
+      expect(ascendConfig.pos.x).toBe(expectedSlot1X);
+      expect(ascendConfig.pos.x).not.toBe(slot0X);
+    });
+
     it('clears carried artifacts unconditionally at step 5 even when carriedChanged is null', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({
