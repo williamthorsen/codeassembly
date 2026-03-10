@@ -24,18 +24,14 @@ function renderFrameGridHtml(dataUri: string): string {
   return FRAME_LABELS.map((label, i) => {
     const col = i % 4;
     const row = Math.floor(i / 4);
-    return [
-      `<div class="frame-cell">`,
-      `  <div class="frame-preview" style="background-image: url('${dataUri}'); background-position: -${col * 128}px -${row * 128}px;"></div>`,
-      `  <div class="frame-label">${label}</div>`,
-      `</div>`,
-    ].join('\n');
+    return `<div class="frame-cell">
+  <div class="frame-preview" style="background-image: url('${dataUri}'); background-position: -${col * 128}px -${row * 128}px;"></div>
+  <div class="frame-label">${label}</div>
+</div>`;
   }).join('\n');
 }
 
 /** Renders animation preview cells with element IDs for JS-driven playback. */
-// Animation definitions duplicated from sprite-definitions.ts (cannot import due to excalibur dependency)
-// Strategies: PingPong = forward then backward, Loop = forward-only, Freeze = static
 function renderAnimationSectionsHtml(idPrefix: string): string {
   return ANIMATION_NAMES.map((name) => {
     const id = `${idPrefix}-${name.toLowerCase()}`;
@@ -178,8 +174,6 @@ ${renderAnimationSectionsHtml('orchestrator')}
       if (anim.strategy === PING_PONG && sequence.length > 2) {
         var reversed = sequence.slice(1, -1).reverse();
         sequence = sequence.concat(reversed);
-      } else if (anim.strategy === PING_PONG && sequence.length === 2) {
-        sequence = sequence.concat(sequence.slice(0, 1));
       }
 
       var idx = 0;
