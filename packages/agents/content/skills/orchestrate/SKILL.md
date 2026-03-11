@@ -353,7 +353,7 @@ When an external plan exists with `{planTrust}` of `"low"`, always run Architect
 - Task is small enough for a single pass, or is a bug fix with clear scope, OR
 - External plan is present with `{planTrust}` of `"high"`. Emit `phase_decision` with `run: false, reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. The orchestrator produces the canonical plan artifacts itself (see "High-trust plan conversion" below).
 
-When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. (The actual adoption-mode prompt text is injected in Task 7 — the skip logic section describes the policy; Task 7 implements the prompt change.)
+When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. The planner's Task prompt includes an adoption-mode hint (see Phase 2 below).
 
 When an external plan exists with `{planTrust}` of `"low"`, always run Planning so the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
 
