@@ -84,12 +84,29 @@ If the user provides feedback (not approval):
 
 When the user approves the plan:
 
-Output confirmation:
+1. Resolve provenance data:
+   - Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
+   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
 
-```
-Plan finalized: {artifact-dir}/orchestration-plan.json
-{step count} steps ready for orchestration.
-```
+2. Add provenance header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). Read the file. Prepend the following YAML frontmatter and write back:
+
+   ```yaml
+   ---
+   provenance:
+     skill: plan-orchestrable-steps
+     timestamp: { timestamp }
+     baseSha: { baseSha }
+   ---
+   ```
+
+   If `baseSha` could not be resolved, omit the `baseSha` line.
+
+3. Output confirmation:
+
+   ```
+   Plan finalized: {artifact-dir}/orchestration-plan.json
+   {step count} steps ready for orchestration.
+   ```
 
 ## Artifact layout
 
