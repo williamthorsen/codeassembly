@@ -357,6 +357,70 @@ When an external plan exists with `{planTrust}` of `"medium"`, always run Planni
 
 When an external plan exists with `{planTrust}` of `"low"`, always run Planning so the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
 
+### High-trust plan conversion
+
+When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produces the canonical plan artifacts:
+
+1. **Check for JSON companion:** If the external plan file has a JSON companion (same directory, same base name or `orchestration-plan.json`), read it and use it as `{plan-json-content}`. Skip markdown parsing — the JSON is already structured.
+
+2. **Parse markdown to JSON** (if no companion): Parse the external plan's `### Task N:` sections. For each task section, extract:
+   - `title`: text after `### Task N: `
+   - `files`: lines under `**Files:**` (strip `- Create: `, `- Modify: `, `- Test: ` prefixes)
+   - `dependsOn`: parse `**Depends on:** Step N` or `**Depends on:** Steps N, M` references, converting to integer IDs
+   - `acceptanceCriteria`: bullet items under `**Acceptance criteria:**`
+   - `description`: remaining text in the section (between the title and the first recognized sub-heading)
+
+   If a task section lacks any of these sub-headings, use empty values: `[]` for arrays, `""` for strings.
+
+   Construct JSON in the orchestration-plan.json format:
+
+   ```json
+   {
+     "overview": "{text from ## Approach or ## Overview section, first paragraph}",
+     "steps": [
+       {
+         "id": 1,
+         "title": "{task title}",
+         "description": "{task description}",
+         "files": ["{path1}", "{path2}"],
+         "acceptanceCriteria": ["{criterion1}", "{criterion2}"],
+         "dependsOn": []
+       }
+     ]
+   }
+   ```
+
+3. **Write artifacts:** Write both files using the orchestrator role (not planner):
+   - `{run-dir}/{NN}_orchestrator_orchestration-plan.md` — copy of the external plan content with the YAML frontmatter block removed (strip everything between and including the opening `---` and closing `---` delimiters at the start of the file)
+   - `{run-dir}/{NN}_orchestrator_orchestration-plan.json` — the structured JSON
+
+   Both files share the same `{NN}`. Increment `{seq}` once for the pair.
+
+4. **Register artifacts:** Call MCP tool `register_artifact` for each:
+
+   ```
+   runDir: {run-dir}
+   filename: {NN}_orchestrator_orchestration-plan.md
+   role: orchestrator
+   roleType: orchestrator
+   agent: orchestrator
+   type: orchestration-plan
+   phase: initialization
+   note: "Adopted from high-trust external plan"
+   ```
+
+   ```
+   runDir: {run-dir}
+   filename: {NN}_orchestrator_orchestration-plan.json
+   role: orchestrator
+   roleType: orchestrator
+   agent: orchestrator
+   type: orchestration-plan
+   phase: initialization
+   ```
+
+5. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the skip logic (Task 5) with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
+
 ## Authority hierarchy
 
 When both a ticket and an external plan are available:
@@ -456,6 +520,8 @@ After: store the full path as `{architecture-path}`; increment `{seq}`. Extract 
 
 ## Phase 2: Planning (optional)
 
+**If Planning was skipped** (high-trust plan conversion already produced `{plan-md-path}` and `{plan-json-path}`): proceed directly to Phase 3 without dispatching the planner. The canonical plan artifacts were already written during initialization.
+
 Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "planning" } }`.
 
 Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {models.planner}`:
@@ -484,7 +550,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Task description: {task}
 >
-> {If planning phase ran: Implementation plan: Read `{plan-md-path}`}
+> {If `{plan-md-path}` is set: Implementation plan: Read `{plan-md-path}`}
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
