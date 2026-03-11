@@ -154,7 +154,40 @@ Prefix the status line with a colored emoji for visual distinction:
 
 1. **Get context**: Use `get-project-slug` and `get-ticket-id`. Resolve the diff base: use `--diff-base` if provided, otherwise use `get-default-branch`. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` — this concrete SHA is what you pass to all downstream agents. The ticket ID is optional — if unavailable, `init_run` will auto-generate one.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
-3. **Detect external plan**: Determine whether the task description contains an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content for use in downstream prompts. Otherwise, set `{externalPlan}` to `false`. This detection must happen before `init_run` so the flag is recorded correctly in the run header.
+3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
+
+   When `{externalPlan}` is `true`, evaluate the plan's provenance to compute a trust tier:
+
+   **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If no provenance block exists, set `{planTrust}` to `"low"` and skip remaining evaluation.
+
+   **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If not credible, set `{planTrust}` to `"low"` and skip remaining evaluation.
+
+   **c. Evaluate codebase freshness:** Run `git rev-parse origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as "unknown" and fall back to timestamp:
+   - If `provenance.timestamp` is less than 24 hours ago → "unknown (recent)"
+   - Otherwise → "unknown (stale)"
+
+   If `git rev-parse` succeeds and `provenance.baseSha` is present:
+   - If `baseSha` equals `{current-main-sha}` → "fresh"
+   - Else run `git merge-base --is-ancestor {baseSha} {current-main-sha}`. If exit code 0 → "diverged". If non-zero → "unverifiable".
+
+   If `git rev-parse` succeeds but `provenance.baseSha` is absent, fall back to timestamp as above.
+
+   **d. Assign trust tier:**
+
+   | Credible | Freshness        | Tier       |
+   | -------- | ---------------- | ---------- |
+   | Yes      | Fresh            | **high**   |
+   | Yes      | Diverged         | **medium** |
+   | Yes      | Unknown (recent) | **medium** |
+   | Yes      | Unverifiable     | **low**    |
+   | Yes      | Unknown (stale)  | **low**    |
+
+   Note: Non-credible sources are already handled in sub-step b (set to `"low"` and skip). This table only applies to credible sources.
+
+   Store the result as `{planTrust}` (one of `"high"`, `"medium"`, `"low"`).
+
+   This detection and evaluation must happen before `init_run` so the flags are recorded correctly in the run header.
+
 4. **Initialize run via MCP**: Attempt to call MCP tool `init_run` with:
 
    ```
@@ -167,6 +200,7 @@ Prefix the status line with a colored emoji for visual distinction:
    models: {resolved models map}
    config: {
      externalPlan: {externalPlan},
+     planTrust: {planTrust},
      mergeBaseSha: {merge-base-sha},
      diffBase: {diff-base},
      maxReviewRounds: {N},
