@@ -534,6 +534,8 @@ Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {
 >
 > {If `config.externalPlan` is true: Reference plan (validate before adopting): Read `{external-plan-path}`}
 >
+> {If `{planTrust}` is `"medium"`: This plan has medium trust (credible source, codebase may have diverged since plan creation). Focus on validating assumptions that may have been invalidated by recent changes to main. Adopt unchanged steps without re-deriving them.}
+>
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
 > Write plan files to: `{run-dir}/{NN}_planner_orchestration-plan.md` and `{run-dir}/{NN}_planner_orchestration-plan.json`
