@@ -341,9 +341,21 @@ The `summary` phase is not a pipeline phase — it is an inherent engine respons
 
 ### Skip logic
 
-**Skip Architecture if:** task is narrow, touches few files, or follows an existing pattern — **and** no external plan is present. When an external plan exists, always run Architecture to validate the plan's assumptions about codebase structure.
+**Skip Architecture if:**
 
-**Skip Planning if:** task is small enough for a single pass, or is a bug fix with clear scope. **Never skip Planning solely because the task already contains step-by-step instructions.** When an external plan exists, always run Planning so the planner can validate and produce the canonical plan artifact.
+- Task is narrow, touches few files, or follows an existing pattern — **and** no external plan is present, OR
+- External plan is present with `{planTrust}` of `"high"` or `"medium"`. Emit `phase_decision` with `run: false, reason: "skipped: {planTrust}-trust plan (skill: {provenance.skill}, freshness: {freshness classification})"`.
+
+When an external plan exists with `{planTrust}` of `"low"`, always run Architecture to validate the plan's assumptions about codebase structure.
+
+**Skip Planning if:**
+
+- Task is small enough for a single pass, or is a bug fix with clear scope, OR
+- External plan is present with `{planTrust}` of `"high"`. Emit `phase_decision` with `run: false, reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. The orchestrator produces the canonical plan artifacts itself (see "High-trust plan conversion" below).
+
+When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. (The actual adoption-mode prompt text is injected in Task 7 — the skip logic section describes the policy; Task 7 implements the prompt change.)
+
+When an external plan exists with `{planTrust}` of `"low"`, always run Planning so the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
 
 ## Authority hierarchy
 
