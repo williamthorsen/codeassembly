@@ -178,11 +178,27 @@ Present the plan to the user. Revise until approved.
    - Target: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 
-2. Save both artifacts following `save-artifact` naming conventions:
-   - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
-   - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md`
+2. Resolve provenance data:
+   - Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
+   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
 
-3. Report paths and suggest next steps:
+3. Save both artifacts following `save-artifact` naming conventions:
+   - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
+   - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md` — prepend the following YAML frontmatter to the plan content:
+
+   ```yaml
+   ---
+   provenance:
+     skill: design-and-plan
+     timestamp: { timestamp }
+     baseSha: { baseSha }
+     isInteractive: true
+   ---
+   ```
+
+   If `baseSha` could not be resolved, omit the `baseSha` line entirely.
+
+4. Report paths and suggest next steps:
 
 ```
 Design and plan complete:
