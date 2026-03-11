@@ -36,11 +36,11 @@ importers:
         specifier: 1.6.10
         version: 1.6.10(eslint@9.39.4)(typescript@5.9.3)(vitest@4.0.18(@types/node@22.19.15)(jsdom@28.1.0)(tsx@4.21.0)(yaml@2.8.0))
       '@williamthorsen/eslint-config-typescript':
-        specifier: 5.12.4
-        version: 5.12.4(@types/estree@1.0.8)(eslint@9.39.4)(typescript@5.9.3)
+        specifier: 5.13.0
+        version: 5.13.0(@types/estree@1.0.8)(eslint@9.39.4)(typescript@5.9.3)
       '@williamthorsen/strict-lint':
-        specifier: 6.0.0
-        version: 6.0.0(eslint@9.39.4)
+        specifier: 6.1.0
+        version: 6.1.0(eslint@9.39.4)
       '@williamthorsen/toolbelt.objects':
         specifier: 3.2.3
         version: 3.2.3
@@ -1174,15 +1174,15 @@ packages:
   '@vitest/utils@4.0.18':
     resolution: {integrity: sha512-msMRKLMVLWygpK3u2Hybgi4MNjcYJvwTb0Ru09+fOyCXIgT5raYP041DRRdiJiI3k/2U6SEbAETB3YtBrUkCFA==}
 
-  '@williamthorsen/eslint-config-typescript@5.12.4':
-    resolution: {integrity: sha512-+bDhnCmnymmSOtOxniJeBgNvOynKZRO8CjHPd/8/fe4uNfkkuBN2dtUZGcZuaaFexuu//mKpfB/mfIqlNL9MBA==}
+  '@williamthorsen/eslint-config-typescript@5.13.0':
+    resolution: {integrity: sha512-ErOFaKv+qil2TuB5uNDo8FjnIoihwKiZJ+62eA9YCFr9iQcEGR6IoIDQPFvH3tf+kaWLMOVUDC6RC7L0y4nhaQ==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: '>=9'
       typescript: '>=5'
 
-  '@williamthorsen/strict-lint@6.0.0':
-    resolution: {integrity: sha512-nkptSd+K8ZcZoF8XiDB06BCTR6aZhIs436PtlTo2ilr2+p//jfTKVeXyuvvNp0taCbfWSheXCKFNhjWmXeE0dg==}
+  '@williamthorsen/strict-lint@6.1.0':
+    resolution: {integrity: sha512-Zpv5U83zdjqHaLL1r6s2xD9XguV4y+L2looNWPyD7vgKv/OHamG+j//zrYhjRh2is1PM+1z/G+8q7ZAk1L8n3w==}
     hasBin: true
     peerDependencies:
       eslint: '>=9'
@@ -4423,7 +4423,7 @@ snapshots:
       '@vitest/pretty-format': 4.0.18
       tinyrainbow: 3.0.3
 
-  '@williamthorsen/eslint-config-typescript@5.12.4(@types/estree@1.0.8)(eslint@9.39.4)(typescript@5.9.3)':
+  '@williamthorsen/eslint-config-typescript@5.13.0(@types/estree@1.0.8)(eslint@9.39.4)(typescript@5.9.3)':
     dependencies:
       eslint: 9.39.4
       eslint-plugin-eslint-comments: 3.2.0(eslint@9.39.4)
@@ -4444,7 +4444,7 @@ snapshots:
       - '@types/estree'
       - supports-color
 
-  '@williamthorsen/strict-lint@6.0.0(eslint@9.39.4)':
+  '@williamthorsen/strict-lint@6.1.0(eslint@9.39.4)':
     dependencies:
       eslint: 9.39.4
       tsx: 4.21.0
