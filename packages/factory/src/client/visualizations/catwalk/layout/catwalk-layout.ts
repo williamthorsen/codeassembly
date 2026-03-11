@@ -18,6 +18,7 @@ import {
   SPRITE_SIZE,
   STATION_GAP,
   STATION_LABEL_BELOW_GROUND,
+  SUBAGENT_SPRITE_BOTTOM_PAD,
 } from '../constants/dimensions.js';
 
 export interface StationLayoutEntry {
@@ -86,6 +87,12 @@ export interface CatwalkLayoutResult {
   groundEndpoints(): LineEndpoints;
   bounds: Bounds;
   platformWidth: number;
+}
+
+function assertDefined<T>(value: T | undefined, message: string): asserts value is T {
+  if (value === undefined) {
+    throw new Error(message);
+  }
 }
 
 const AGENT_SPACING = AGENT_RADIUS * 2 + 20;
@@ -179,9 +186,9 @@ export function computeCatwalkLayout(config: CatwalkLayoutConfig): CatwalkLayout
   if (compact === true) {
     stationPositions = Array.from({ length: stations.length }, () => ABSENT_X);
     for (const [k, originalIndex] of visibleIndices.entries()) {
-      // Safe: k is the enumeration index from visibleIndices.entries(), so k < positions.length
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      stationPositions[originalIndex] = positions[k]!;
+      const pos = positions[k];
+      assertDefined(pos, `Position at index ${k} is unexpectedly undefined`);
+      stationPositions[originalIndex] = pos;
     }
   } else {
     stationPositions = [...positions];
@@ -189,14 +196,14 @@ export function computeCatwalkLayout(config: CatwalkLayoutConfig): CatwalkLayout
 
   // Step 4: Determine rail/ground extent values
   // visibleIndices is guaranteed non-empty here (the empty case was handled above)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const firstVisibleOriginalIndex = visibleIndices[0]!;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const lastVisibleOriginalIndex = visibleIndices[visibleIndices.length - 1]!;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const firstVisibleX = stationPositions[firstVisibleOriginalIndex]!;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const lastVisibleX = stationPositions[lastVisibleOriginalIndex]!;
+  const firstVisibleOriginalIndex = visibleIndices[0];
+  assertDefined(firstVisibleOriginalIndex, 'visibleIndices is unexpectedly empty');
+  const lastVisibleOriginalIndex = visibleIndices.at(-1);
+  assertDefined(lastVisibleOriginalIndex, 'visibleIndices is unexpectedly empty');
+  const firstVisibleX = stationPositions[firstVisibleOriginalIndex];
+  assertDefined(firstVisibleX, `Station position at index ${firstVisibleOriginalIndex} is unexpectedly undefined`);
+  const lastVisibleX = stationPositions[lastVisibleOriginalIndex];
+  assertDefined(lastVisibleX, `Station position at index ${lastVisibleOriginalIndex} is unexpectedly undefined`);
   const { x1, x2 } = lineExtents(firstVisibleX, lastVisibleX);
 
   return buildResult(stationPositions, platformWidth, x1, x2, stations);
@@ -223,9 +230,9 @@ function buildResult(
     if (index < 0 || index >= stationCount) {
       throw new RangeError(`Station index ${index} is out of range [0, ${stationCount})`);
     }
-    // Safe: index is in [0, stationCount) and stationPositions has stationCount entries
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return stationPositions[index]!;
+    const pos = stationPositions[index];
+    assertDefined(pos, `Station position at index ${index} is unexpectedly undefined`);
+    return pos;
   }
 
   /** Agent position on the ground line. Anchor: the point on the ground line (bottom of agent visual). */
@@ -250,7 +257,7 @@ function buildResult(
       topX: agentPos.x,
       topY: RAIL_Y + CHUTE_TOP_BELOW_RAIL,
       botX: agentPos.x,
-      botY: GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE - CHUTE_BOT_ABOVE_GROUND,
+      botY: GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD - CHUTE_BOT_ABOVE_GROUND,
     };
   }
 

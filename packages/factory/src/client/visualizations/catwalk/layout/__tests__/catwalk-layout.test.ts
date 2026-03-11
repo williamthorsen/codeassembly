@@ -19,6 +19,7 @@ import {
   SPRITE_SIZE,
   STATION_GAP,
   STATION_LABEL_BELOW_GROUND,
+  SUBAGENT_SPRITE_BOTTOM_PAD,
 } from '../../constants/dimensions.js';
 import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry } from '../catwalk-layout.js';
 
@@ -162,11 +163,11 @@ describe('computeCatwalkLayout', () => {
       expect(layout.chuteEndpoints(0, 0, 1).topY).toBe(RAIL_Y + CHUTE_TOP_BELOW_RAIL);
     });
 
-    it('has botY derived from GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE - CHUTE_BOT_ABOVE_GROUND', () => {
+    it('has botY derived from GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD - CHUTE_BOT_ABOVE_GROUND', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
       expect(layout.chuteEndpoints(0, 0, 1).botY).toBe(
-        GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE - CHUTE_BOT_ABOVE_GROUND,
+        GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD - CHUTE_BOT_ABOVE_GROUND,
       );
     });
 
@@ -415,8 +416,12 @@ describe('computeCatwalkLayout', () => {
       const widths = [1, 2, 3, 4].map((n) => computeCatwalkLayout(makeConfig(n)).platformWidth);
 
       for (let i = 0; i < widths.length - 1; i++) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        expect(widths[i + 1]!).toBeGreaterThan(widths[i]!);
+        const current = widths[i];
+        const next = widths[i + 1];
+        if (current === undefined || next === undefined) {
+          throw new Error(`Expected widths at indices ${i} and ${i + 1} to be defined`);
+        }
+        expect(next).toBeGreaterThan(current);
       }
     });
 

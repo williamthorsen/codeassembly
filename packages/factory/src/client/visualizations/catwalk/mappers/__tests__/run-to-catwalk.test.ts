@@ -794,6 +794,101 @@ describe('mapRunToCatwalk', () => {
       expect(station1Input?.label).toBe('architecture');
     });
 
+    it('routes coder change-summaries to implementation station even when phase is review', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'code-v1.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'change-summary',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'code-fix.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'change-summary',
+            phase: 'review',
+            iteration: 1,
+            createdAt: '2026-01-01T00:30:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Both change-summaries should be outputs at station 2 (implementation), not station 3 (review)
+      const implOutputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'output');
+      expect(implOutputs).toHaveLength(2);
+      const reviewOutputs = config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'output');
+      expect(reviewOutputs).toHaveLength(0);
+    });
+
+    it('excludes all fix-cycle artifacts from downstream input cascade', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'code-v1.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'code-fix1.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            iteration: 1,
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+          {
+            filename: 'code-fix2.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'code',
+            phase: 'implementation',
+            iteration: 2,
+            createdAt: '2026-01-01T00:30:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // All three should be outputs at station 2
+      const implOutputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'output');
+      expect(implOutputs).toHaveLength(3);
+
+      // Only the original (no iteration) should cascade as input to station 3
+      const reviewInputs = config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'input');
+      expect(reviewInputs).toHaveLength(1);
+      expect(reviewInputs[0]?.label).toBe('code');
+    });
+
     it('collects all run deliverables at the summary station when completed', () => {
       const status = createMockRunStatus({
         status: 'completed',
@@ -826,6 +921,230 @@ describe('mapRunToCatwalk', () => {
       // Summary station (6) should have input artifacts from all upstream stations
       const summaryInputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'input');
       expect(summaryInputs.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('correctly lays out a completed run with 2 fix cycles (realistic scenario)', () => {
+      // Models the actual run for ticket #239: architecture/planning absent,
+      // implementation + 2 review rounds with 3 parallel reviewers + holistic review.
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:30:00Z',
+        phases: {
+          ...emptyPhases(),
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+          parallelReview: {
+            aggregatedCriticality: 'low',
+            reviewRoundsUsed: 2,
+            reviewers: {
+              'orchestrated-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'aspect-test-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              'aspect-code-reviewer': {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+            coderFixCycleRan: true,
+            selectiveReReview: undefined,
+            iterations: [
+              {
+                reviewers: ['orchestrated-reviewer', 'aspect-test-reviewer', 'aspect-code-reviewer'],
+                dispatchedAt: '2026-01-01T00:30:00Z',
+              },
+              {
+                reviewers: ['orchestrated-reviewer', 'aspect-test-reviewer', 'aspect-code-reviewer'],
+                dispatchedAt: '2026-01-01T01:00:00Z',
+              },
+            ],
+          },
+          holisticReview: {
+            status: 'completed',
+            criticality: 'low',
+            reReviewCriticality: undefined,
+            coderFixCycleRan: false,
+            reviewRoundsUsed: 1,
+            artifact: undefined,
+          },
+        },
+        artifacts: [
+          // Implementation change-summary (original, no iteration)
+          {
+            filename: '03_coder_change-summary.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'change-summary',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          // Review round 1: 3 reviewers
+          {
+            filename: '04_reviewer_review.md',
+            role: 'reviewer',
+            roleType: 'reviewer',
+            agent: 'orchestrated-reviewer',
+            type: 'review',
+            phase: 'review',
+            iteration: 1,
+            createdAt: '2026-01-01T00:35:00Z',
+          },
+          {
+            filename: '06_test-reviewer_test-review.md',
+            role: 'test-reviewer',
+            roleType: 'reviewer',
+            agent: 'aspect-test-reviewer',
+            type: 'test-review',
+            phase: 'review',
+            iteration: 1,
+            createdAt: '2026-01-01T00:35:01Z',
+          },
+          {
+            filename: '07_code-reviewer_code-review.md',
+            role: 'code-reviewer',
+            roleType: 'reviewer',
+            agent: 'aspect-code-reviewer',
+            type: 'code-review',
+            phase: 'review',
+            iteration: 1,
+            createdAt: '2026-01-01T00:35:02Z',
+          },
+          // Fix cycle 1: coder change-summary (phase: review, iteration: 1)
+          {
+            filename: '08_coder_change-summary.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'change-summary',
+            phase: 'review',
+            iteration: 1,
+            createdAt: '2026-01-01T00:50:00Z',
+          },
+          // Review round 2: 3 reviewers
+          {
+            filename: '09_reviewer_review.md',
+            role: 'reviewer',
+            roleType: 'reviewer',
+            agent: 'orchestrated-reviewer',
+            type: 'review',
+            phase: 'review',
+            iteration: 2,
+            createdAt: '2026-01-01T01:05:00Z',
+          },
+          {
+            filename: '10_test-reviewer_test-review.md',
+            role: 'test-reviewer',
+            roleType: 'reviewer',
+            agent: 'aspect-test-reviewer',
+            type: 'test-review',
+            phase: 'review',
+            iteration: 2,
+            createdAt: '2026-01-01T01:05:01Z',
+          },
+          {
+            filename: '11_code-reviewer_code-review.md',
+            role: 'code-reviewer',
+            roleType: 'reviewer',
+            agent: 'aspect-code-reviewer',
+            type: 'code-review',
+            phase: 'review',
+            iteration: 2,
+            createdAt: '2026-01-01T01:05:02Z',
+          },
+          // Fix cycle 2: coder change-summary (phase: review, iteration: 2)
+          {
+            filename: '12_coder_change-summary.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'change-summary',
+            phase: 'review',
+            iteration: 2,
+            createdAt: '2026-01-01T01:10:00Z',
+          },
+          // Holistic review
+          {
+            filename: '14_reviewer_holistic-review.md',
+            role: 'reviewer',
+            roleType: 'reviewer',
+            agent: 'orchestrated-reviewer',
+            type: 'holistic-review',
+            phase: 'holistic',
+            createdAt: '2026-01-01T01:20:00Z',
+          },
+          // Summary
+          {
+            filename: '15_orchestrator_run-summary.md',
+            role: 'orchestrator',
+            roleType: 'orchestrator',
+            agent: 'orchestrator',
+            type: 'run-summary',
+            phase: 'summary',
+            createdAt: '2026-01-01T01:25:00Z',
+          },
+          {
+            filename: '16_analyst_savings-analysis.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'savings-analyzer',
+            type: 'savings-analysis',
+            phase: 'summary',
+            createdAt: '2026-01-01T01:25:01Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // --- Station 2 (coder): all change-summaries are outputs, no inputs ---
+      const station2Outputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'output');
+      const station2Inputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'input');
+      expect(station2Outputs).toHaveLength(3);
+      expect(station2Outputs.every((a) => a.label === 'change-summary')).toBe(true);
+      expect(station2Inputs).toHaveLength(0);
+
+      // --- Station 3 (reviewer): 6 review outputs, 1 change-summary input ---
+      const station3Outputs = config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'output');
+      const station3Inputs = config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'input');
+      expect(station3Outputs).toHaveLength(6);
+      expect(station3Inputs).toHaveLength(1);
+      expect(station3Inputs[0]?.label).toBe('change-summary');
+
+      // --- Station 4 (simplifier): no artifacts at all ---
+      const station4All = config.artifacts.filter((a) => a.stationIndex === 4);
+      expect(station4All).toHaveLength(0);
+
+      // --- Station 5 (holistic): 1 output, no inputs ---
+      const station5Outputs = config.artifacts.filter((a) => a.stationIndex === 5 && a.slot === 'output');
+      const station5Inputs = config.artifacts.filter((a) => a.stationIndex === 5 && a.slot === 'input');
+      expect(station5Outputs).toHaveLength(1);
+      expect(station5Outputs[0]?.label).toBe('holistic-review');
+      expect(station5Inputs).toHaveLength(0);
+
+      // --- Station 6 (orchestrator/summary): 2 outputs, 10 summary inputs ---
+      const station6Outputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'output');
+      const station6Inputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'input');
+      expect(station6Outputs).toHaveLength(2);
+      expect(station6Inputs).toHaveLength(10);
+
+      // --- Total artifact count ---
+      expect(config.artifacts).toHaveLength(23);
     });
   });
 

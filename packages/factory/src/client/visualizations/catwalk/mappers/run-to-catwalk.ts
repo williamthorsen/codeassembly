@@ -398,7 +398,12 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
   const artifacts: StationArtifactConfig[] = [];
 
   for (const entry of status.artifacts) {
-    const stationIndex = PHASE_TO_STATION[entry.phase];
+    // Coder change-summaries always belong to the implementation station,
+    // even when produced during the review phase (fix cycles).
+    const stationIndex =
+      entry.type === 'change-summary' && entry.role === 'coder'
+        ? PHASE_TO_STATION.implementation
+        : PHASE_TO_STATION[entry.phase];
     if (stationIndex === undefined) continue;
 
     // Determine agent slot index for per-agent artifact attribution
@@ -406,11 +411,11 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
     if (stationIndex === 3 && reviewerSlotMap.size > 0) {
       // Review station: match artifact agent to reviewer slot
       const slot = reviewerSlotMap.get(entry.agent);
-      if (slot !== undefined) {
-        agentSlotIndex = slot;
-      } else {
+      if (slot === undefined) {
         // Fallback to slot 0 with warning
         console.warn(`Artifact agent "${entry.agent}" not found in reviewer names; defaulting to slot 0`);
+      } else {
+        agentSlotIndex = slot;
       }
     }
 
@@ -438,10 +443,10 @@ function buildInputArtifacts(
   const outputsByStation = new Map<number, StationArtifactConfig[]>();
   for (const art of outputArtifacts) {
     const list = outputsByStation.get(art.stationIndex);
-    if (list !== undefined) {
-      list.push(art);
-    } else {
+    if (list === undefined) {
       outputsByStation.set(art.stationIndex, [art]);
+    } else {
+      list.push(art);
     }
   }
 
@@ -452,6 +457,10 @@ function buildInputArtifacts(
     const nextStation = stationIndex + 1;
     if (nextStation <= 5) {
       for (const output of stationOutputs) {
+        // Fix-cycle artifacts re-enter the same station workflow and should
+        // not cascade as new inputs to the next station. Any artifact with a
+        // version (mapped from iteration) was produced during a review cycle.
+        if (output.version !== undefined) continue;
         inputs.push({
           stationIndex: nextStation,
           agentSlotIndex: 0,

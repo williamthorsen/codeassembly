@@ -11,7 +11,7 @@ import {
   StationAgentActor,
 } from '../actors/index.js';
 import { choreograph, type SceneRefs } from '../choreography/chute-choreographer.js';
-import { CAMERA_TOP_MARGIN, DIVIDER_WIDTH, ENGINE_HEIGHT, RAIL_Y } from '../constants/dimensions.js';
+import { CAMERA_TOP_MARGIN, DIVIDER_WIDTH, ENGINE_HEIGHT, ENGINE_WIDTH, RAIL_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
 import { loadAllCatwalkSprites } from '../sprites/catwalk-sprite-loader.js';
@@ -388,13 +388,12 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Position camera with rail near top of viewport, centered horizontally on the rail extent. */
+  /** Position camera to fit the full platform width, centered horizontally with rail near top. */
   private positionCamera(): void {
     if (this.layout === undefined) return;
 
-    this.camera.zoom = 1.0;
-    const { x1, x2 } = this.layout.railEndpoints();
-    this.camera.pos = vec((x1 + x2) / 2, RAIL_Y + ENGINE_HEIGHT / 2 - CAMERA_TOP_MARGIN);
+    this.camera.zoom = Math.min(1, ENGINE_WIDTH / this.layout.platformWidth);
+    this.camera.pos = vec(this.layout.platformWidth / 2, RAIL_Y + ENGINE_HEIGHT / 2 - CAMERA_TOP_MARGIN);
   }
 }
 

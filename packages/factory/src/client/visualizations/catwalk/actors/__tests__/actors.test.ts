@@ -112,6 +112,7 @@ const {
   ORCH_IDLE_OPACITY,
   RESTING_OPACITY,
 } = await import('../../constants/animation.js');
+const { ORCH_SPRITE_BOTTOM_PAD, SPRITE_SIZE } = await import('../../constants/dimensions.js');
 
 describe('OrchestratorActor', () => {
   beforeEach(() => {
@@ -132,12 +133,16 @@ describe('OrchestratorActor', () => {
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
   });
 
-  it('animateMoveTo calls actions.moveTo with y adjusted by -SPRITE_SIZE/2', async () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 100));
-    // animateMoveTo adjusts y by -SPRITE_SIZE/2 (= -16) so sprite bottom sits on the rail
-    await actor.animateMoveTo(vec(200, 100));
+  it('animateMoveTo calls actions.moveTo with y adjusted for sprite padding', async () => {
+    const targetY = 100;
+    const actor = new OrchestratorActor({ working: false }, vec(0, targetY));
+    await actor.animateMoveTo(vec(200, targetY));
 
-    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 84 }), expect.any(Number));
+    const expectedY = targetY - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD;
+    expect(actor.actions.moveTo).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 200, y: expectedY }),
+      expect.any(Number),
+    );
   });
 
   it('setWorking(true) enables pulse flag and restores full opacity', () => {

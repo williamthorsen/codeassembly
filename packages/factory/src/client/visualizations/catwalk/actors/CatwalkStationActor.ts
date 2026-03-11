@@ -1,4 +1,4 @@
-import { Actor, BaseAlign, Color, Font, Text, TextAlign, type Vector } from 'excalibur';
+import { Actor, BaseAlign, Color, Font, Text, vec, type Vector } from 'excalibur';
 
 import { ACTIVE_OPACITY, IDLE_OPACITY } from '../constants/animation.js';
 
@@ -19,12 +19,14 @@ export class CatwalkStationActor extends Actor {
         size: 10,
         bold: true,
         family: 'monospace',
-        textAlign: TextAlign.Center,
         baseAlign: BaseAlign.Top,
       }),
     });
 
     this.graphics.use(label);
+    // Anchor (0.5, 0) centers the text horizontally on stationX, with top at the label y position.
+    // Avoids the TextAlign.Center + default anchor double-centering bug.
+    this.graphics.anchor = vec(0.5, 0);
     this.graphics.opacity = config.absent ? IDLE_OPACITY : ACTIVE_OPACITY;
   }
 

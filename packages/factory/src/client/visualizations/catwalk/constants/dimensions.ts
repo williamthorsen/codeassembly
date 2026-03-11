@@ -29,6 +29,12 @@ export const GROUND_Y = 340;
 /** Sprite pixel size (mirrors SPRITE_SIZE from sprite-definitions.ts to avoid excalibur dependency). */
 export const SPRITE_SIZE = 32;
 
+/** Transparent bottom padding in the orchestrator sprite sheet (rows 24-31 are empty). */
+export const ORCH_SPRITE_BOTTOM_PAD = 6;
+
+/** Transparent bottom padding in the subagent sprite sheet (rows 22-31 are empty). */
+export const SUBAGENT_SPRITE_BOTTOM_PAD = 10;
+
 /** Height of the colored accent bar beneath each agent sprite. */
 export const ACCENT_BAR_H = 4;
 
@@ -73,8 +79,8 @@ export const BADGE_OFFSET_Y = 22;
 // Artifact stacking (downward from GROUND_LINE_Y)
 // ---------------------------------------------------------------------------
 
-/** Gap between the ground line and the top of the first artifact. */
-export const ARTIFACT_TOP_MARGIN = 12;
+/** Gap between the ground line and the top of the first artifact. Must clear the station label text (~16px). */
+export const ARTIFACT_TOP_MARGIN = 26;
 
 /** Vertical gap between stacked artifacts. */
 export const ARTIFACT_Y_GAP = 4;
@@ -99,8 +105,8 @@ export const DIVIDER_FIXED_DEPTH = 120;
 // Station label
 // ---------------------------------------------------------------------------
 
-/** Gap below ground line to station label position. */
-export const STATION_LABEL_BELOW_GROUND = 18;
+/** Gap below ground line to station label top. Centered: (ARTIFACT_TOP_MARGIN − label height) / 2. */
+export const STATION_LABEL_BELOW_GROUND = 8;
 
 // ---------------------------------------------------------------------------
 // Rail extent (symmetric)
