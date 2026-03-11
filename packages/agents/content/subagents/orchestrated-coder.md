@@ -67,7 +67,7 @@ You operate in one of two modes based on your input:
 1. Read each finding carefully
 2. For each finding, either fix it or explain why it shouldn't be fixed
 3. Run quality gates after all fixes
-4. Commit fixes following git commit conventions
+4. Commit fixes. The commit title MUST describe the code change, not the review process — "Fix null check in layout resolver" not "Address review findings"
 5. Write your response to the output path provided in your task prompt
 
 **Output format:**
@@ -113,6 +113,17 @@ If any gate fails, fix the issue before reporting. Do not report "completed" wit
 
 If the project does not have a particular quality gate configured, note "N/A" for that gate.
 </HARD-GATE>
+
+## Commit formatting
+
+<HARD-GATE>
+Every commit message MUST satisfy all four rules. Violations are treated as quality gate failures.
+
+1. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
+2. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
+3. **No hard line breaks in the body.** Write naturally as continuous text. Do not insert newlines to wrap at a fixed column width.
+4. **Use backtick formatting for code identifiers.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
+   </HARD-GATE>
 
 ## Constraints
 

@@ -27,6 +27,22 @@ Don't pick and choose from rules without considering the full context of each ca
 - **Don't ignore build failures** - Address all build errors before proceeding
 - **Don't bypass established workflows** - Follow defined processes even when they seem unnecessary
 
+## Git commits
+
+These mistakes occur repeatedly despite explicit instructions in the `git-commit-conventions` skill.
+
+### Process-oriented titles
+
+Commit titles must describe the **code change**, not the process. Titles like "Address review findings," "Apply feedback," or "Fix issues from review" are never acceptable — they tell readers nothing about what changed. Describe what the diff does: "Fix null check in layout resolver," "Remove unused layout fields."
+
+### Title length
+
+72 characters max. This is a hard limit, not a guideline. Count characters before committing. If the title is too long, shorten it — don't just let it overflow.
+
+### Hard line breaks in commit body
+
+Do not insert newlines to wrap the commit body at a fixed column width. Write naturally as continuous text. Let the terminal or viewer handle wrapping. This applies to both prose paragraphs and list items.
+
 ## Pull requests
 
 ### Test plans
