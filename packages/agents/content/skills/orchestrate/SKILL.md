@@ -154,7 +154,40 @@ Prefix the status line with a colored emoji for visual distinction:
 
 1. **Get context**: Use `get-project-slug` and `get-ticket-id`. Resolve the diff base: use `--diff-base` if provided, otherwise use `get-default-branch`. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` — this concrete SHA is what you pass to all downstream agents. The ticket ID is optional — if unavailable, `init_run` will auto-generate one.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
-3. **Detect external plan**: Determine whether the task description contains an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content for use in downstream prompts. Otherwise, set `{externalPlan}` to `false`. This detection must happen before `init_run` so the flag is recorded correctly in the run header.
+3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
+
+   When `{externalPlan}` is `true`, evaluate the plan's provenance to compute a trust tier:
+
+   **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If no provenance block exists, set `{planTrust}` to `"low"` and skip remaining evaluation.
+
+   **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If not credible, set `{planTrust}` to `"low"` and skip remaining evaluation.
+
+   **c. Evaluate codebase freshness:** Run `git rev-parse origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as "unknown" and fall back to timestamp:
+   - If `provenance.timestamp` is less than 24 hours ago → "unknown (recent)"
+   - Otherwise → "unknown (stale)"
+
+   If `git rev-parse` succeeds and `provenance.baseSha` is present:
+   - If `baseSha` equals `{current-main-sha}` → "fresh"
+   - Else run `git merge-base --is-ancestor {baseSha} {current-main-sha}`. If exit code 0 → "diverged". If exit code 1 (not an ancestor) → "unverifiable". If the command fails for other reasons (e.g., exit code 128 for unknown ref, shallow clone), fall back to timestamp-based classification as in the `baseSha`-absent case above.
+
+   If `git rev-parse` succeeds but `provenance.baseSha` is absent, fall back to timestamp as above.
+
+   **d. Assign trust tier:**
+
+   | Credible | Freshness        | Tier       |
+   | -------- | ---------------- | ---------- |
+   | Yes      | Fresh            | **high**   |
+   | Yes      | Diverged         | **medium** |
+   | Yes      | Unknown (recent) | **medium** |
+   | Yes      | Unverifiable     | **low**    |
+   | Yes      | Unknown (stale)  | **low**    |
+
+   Note: Non-credible sources are already handled in sub-step b (set to `"low"` and skip). This table only applies to credible sources.
+
+   Store the result as `{planTrust}` (one of `"high"`, `"medium"`, `"low"`).
+
+   This detection and evaluation must happen before `init_run` so the flags are recorded correctly in the run header.
+
 4. **Initialize run via MCP**: Attempt to call MCP tool `init_run` with:
 
    ```
@@ -167,6 +200,7 @@ Prefix the status line with a colored emoji for visual distinction:
    models: {resolved models map}
    config: {
      externalPlan: {externalPlan},
+     planTrust: {planTrust},
      mergeBaseSha: {merge-base-sha},
      diffBase: {diff-base},
      maxReviewRounds: {N},
@@ -307,9 +341,85 @@ The `summary` phase is not a pipeline phase — it is an inherent engine respons
 
 ### Skip logic
 
-**Skip Architecture if:** task is narrow, touches few files, or follows an existing pattern — **and** no external plan is present. When an external plan exists, always run Architecture to validate the plan's assumptions about codebase structure.
+**Skip Architecture if:**
 
-**Skip Planning if:** task is small enough for a single pass, or is a bug fix with clear scope. **Never skip Planning solely because the task already contains step-by-step instructions.** When an external plan exists, always run Planning so the planner can validate and produce the canonical plan artifact.
+- Task is narrow, touches few files, or follows an existing pattern — **and** no external plan is present, OR
+- External plan is present with `{planTrust}` of `"high"` or `"medium"`. Emit `phase_decision` with `run: false, reason: "skipped: {planTrust}-trust plan (skill: {provenance.skill}, freshness: {freshness classification})"`.
+
+When an external plan exists with `{planTrust}` of `"low"`, always run Architecture to validate the plan's assumptions about codebase structure.
+
+**Skip Planning if:**
+
+- Task is small enough for a single pass, or is a bug fix with clear scope, OR
+- External plan is present with `{planTrust}` of `"high"`. Emit `phase_decision` with `run: false, reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. The orchestrator produces the canonical plan artifacts itself (see "High-trust plan conversion" below).
+
+When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. The planner's Task prompt includes an adoption-mode hint (see Phase 2 below).
+
+When an external plan exists with `{planTrust}` of `"low"`, always run Planning so the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
+
+### High-trust plan conversion
+
+When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produces the canonical plan artifacts:
+
+1. **Check for JSON companion:** If the external plan file has a JSON companion (same directory, same base name or `orchestration-plan.json`), read it and use it as `{plan-json-content}`. Skip markdown parsing — the JSON is already structured.
+
+2. **Parse markdown to JSON** (if no companion): Parse the external plan's `### Task N:` sections. For each task section, extract:
+   - `title`: text after `### Task N: `
+   - `files`: lines under `**Files:**` (strip `- Create: `, `- Modify: `, `- Test: ` prefixes)
+   - `dependsOn`: parse `**Depends on:** Step N` or `**Depends on:** Steps N, M` references, converting to integer IDs
+   - `acceptanceCriteria`: bullet items under `**Acceptance criteria:**`
+   - `description`: remaining text in the section (between the title and the first recognized sub-heading)
+
+   If a task section lacks any of these sub-headings, use empty values: `[]` for arrays, `""` for strings.
+
+   Construct JSON in the orchestration-plan.json format:
+
+   ```json
+   {
+     "overview": "{text from ## Approach or ## Overview section, first paragraph}",
+     "steps": [
+       {
+         "id": 1,
+         "title": "{task title}",
+         "description": "{task description}",
+         "files": ["{path1}", "{path2}"],
+         "acceptanceCriteria": ["{criterion1}", "{criterion2}"],
+         "dependsOn": []
+       }
+     ]
+   }
+   ```
+
+3. **Write artifacts:** Write both files using the orchestrator role (not planner):
+   - `{run-dir}/{NN}_orchestrator_orchestration-plan.md` — copy of the external plan content with the YAML frontmatter block removed (strip everything between and including the opening `---` and closing `---` delimiters at the start of the file)
+   - `{run-dir}/{NN}_orchestrator_orchestration-plan.json` — the structured JSON
+
+   Both files share the same `{NN}`. Increment `{seq}` once for the pair.
+
+4. **Register artifacts:** Call MCP tool `register_artifact` for each:
+
+   ```
+   runDir: {run-dir}
+   filename: {NN}_orchestrator_orchestration-plan.md
+   role: orchestrator
+   roleType: orchestrator
+   agent: orchestrator
+   type: orchestration-plan
+   phase: initialization
+   note: "Adopted from high-trust external plan"
+   ```
+
+   ```
+   runDir: {run-dir}
+   filename: {NN}_orchestrator_orchestration-plan.json
+   role: orchestrator
+   roleType: orchestrator
+   agent: orchestrator
+   type: orchestration-plan
+   phase: initialization
+   ```
+
+5. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the "Skip logic" section above with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
 
 ## Authority hierarchy
 
@@ -410,6 +520,8 @@ After: store the full path as `{architecture-path}`; increment `{seq}`. Extract 
 
 ## Phase 2: Planning (optional)
 
+**If Planning was skipped** (high-trust plan conversion already produced `{plan-md-path}` and `{plan-json-path}`): proceed directly to Phase 3 without dispatching the planner. The canonical plan artifacts were already written during initialization.
+
 Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "planning" } }`.
 
 Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {models.planner}`:
@@ -421,6 +533,8 @@ Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {
 > {If `{ticket-content}` is non-empty: Ticket requirements: Read `{ticket-requirements-path}`}
 >
 > {If `config.externalPlan` is true: Reference plan (validate before adopting): Read `{external-plan-path}`}
+>
+> {If `{planTrust}` is `"medium"`: This plan has medium trust (credible source, codebase may have diverged since plan creation). Focus on validating assumptions that may have been invalidated by recent changes to main. Adopt unchanged steps without re-deriving them.}
 >
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
@@ -438,7 +552,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Task description: {task}
 >
-> {If planning phase ran: Implementation plan: Read `{plan-md-path}`}
+> {If `{plan-md-path}` is set: Implementation plan: Read `{plan-md-path}`}
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
@@ -485,14 +599,15 @@ Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
 
 ## Phases
 
-| Phase           | Status                         | Notes                                                               |
-| --------------- | ------------------------------ | ------------------------------------------------------------------- |
-| Architecture    | {ran/skipped}                  | {impact level or skip reason}{if external plan: ", plan validated"} |
-| Planning        | {ran/skipped}                  | {step count or skip reason}{if external plan: ", N deviations"}     |
-| Implementation  | {completed/failed}             |                                                                     |
-| Review          | {approved/needs_manual_review} | {aggregated criticality, reviewers with findings, re-review ran}    |
-| Code simplifier | {ran/skipped}                  | {actionable findings, fix cycle ran/not needed}                     |
-| Holistic review | {ran/skipped}                  | {criticality, late-stage fixes}                                     |
+| Phase           | Status                         | Notes                                                                    |
+| --------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| Plan trust      | {planTrust or "n/a"}           | {if planTrust: "skill: {provenance.skill}, freshness: {classification}"} |
+| Architecture    | {ran/skipped}                  | {impact level or skip reason}                                            |
+| Planning        | {ran/skipped}                  | {step count or skip reason}{if ran with medium trust: ", adoption mode"} |
+| Implementation  | {completed/failed}             |                                                                          |
+| Review          | {approved/needs_manual_review} | {aggregated criticality, reviewers with findings, re-review ran}         |
+| Code simplifier | {ran/skipped}                  | {actionable findings, fix cycle ran/not needed}                          |
+| Holistic review | {ran/skipped}                  | {criticality, late-stage fixes}                                          |
 
 ## What was built
 
@@ -518,7 +633,8 @@ Examples of what belongs here:
 
 Include:
 
-- Deviations from reference plan (when external plan was provided)
+- Deviations from reference plan (when external plan was provided and planning ran)
+- Trust tier rationale (when external plan with provenance was provided)
 - Acceptance criteria from the ticket that were intentionally not addressed
 - Any other intentional omissions}
 

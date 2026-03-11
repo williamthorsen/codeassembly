@@ -25,18 +25,19 @@ Before every Task call and after every phase completion, output a status line:
 ### 1. Validate inputs and resolve context
 
 1. Read the plan file. If not found, report an error and stop.
-2. Resolve the ticket source:
+2. Parse YAML frontmatter from the plan content. If a `provenance` block is present, store it as `{input-provenance}`. If no frontmatter or no `provenance` block, set `{input-provenance}` to empty.
+3. Resolve the ticket source:
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
    - Other URL -> use WebFetch to retrieve content.
-3. Use `get-branch-context` to obtain `ticket_id` and `project_slug`.
-4. Resolve `artifacts.base_dir`:
+4. Use `get-branch-context` to obtain `ticket_id` and `project_slug`.
+5. Resolve `artifacts.base_dir`:
    - Read `artifacts.base_dir` from `.agents/preferences.yaml`
    - If not found, read from `~/.agents/preferences.yaml`
    - If still not found, use default: `~/.ai`
    - If relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-5. Resolve artifact directory: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
-6. `mkdir -p {artifact_dir}`
+6. Resolve artifact directory: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+7. `mkdir -p {artifact_dir}`
 
 ### 2. Detect plan format
 
@@ -129,6 +130,42 @@ Parse the return block:
 - `Artifact`: path to the refined plan
 
 `-- Refine plan -- revision complete`
+
+If the plan-reviser Task failed or the return block does not have `Status: completed`, skip the provenance update and report the failure:
+
+```
+Plan revision failed -- the plan-reviser did not complete successfully.
+  Review: {review_output_path}
+```
+
+Stop here. Do not attempt provenance update or report completion.
+
+If `{input-provenance}` is non-empty, update the provenance header on the revised plan:
+
+1. Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
+2. Read the revised plan file at `{revision_output_path}`.
+3. Construct updated provenance:
+   - `skill`: preserve from `{input-provenance}` (the original authoring skill)
+   - `timestamp`: current UTC time in ISO 8601 format
+   - `baseSha`: the newly resolved value (or preserved original)
+   - `isInteractive`: preserve from `{input-provenance}` if present
+   - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If `{input-provenance}.iteration` is absent, set to `2`.
+4. Prepend the updated YAML frontmatter to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, `iteration: 1`):
+
+   ```yaml
+   ---
+   provenance:
+     skill: design-and-plan
+     timestamp: 2026-03-10T08:00:00Z
+     baseSha: abc123def456...
+     isInteractive: true
+     iteration: 2
+   ---
+   ```
+
+   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if resolved or preserved from input.
+
+If `{input-provenance}` is empty, do not add a provenance header — the original plan had none, and refine-plan should not fabricate one.
 
 ### 6. Report completion
 
