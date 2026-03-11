@@ -190,8 +190,8 @@ Present the plan to the user. Revise until approved.
    ---
    provenance:
      skill: design-and-plan
-     timestamp: { timestamp }
-     baseSha: { baseSha }
+     timestamp: <timestamp>
+     baseSha: <baseSha>
      isInteractive: true
    ---
    ```

@@ -131,6 +131,15 @@ Parse the return block:
 
 `-- Refine plan -- revision complete`
 
+If the plan-reviser Task failed or the return block does not have `Status: completed`, skip the provenance update and report the failure:
+
+```
+Plan revision failed -- the plan-reviser did not complete successfully.
+  Review: {review_output_path}
+```
+
+Stop here. Do not attempt provenance update or report completion.
+
 If `{input-provenance}` is non-empty, update the provenance header on the revised plan:
 
 1. Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
@@ -140,7 +149,7 @@ If `{input-provenance}` is non-empty, update the provenance header on the revise
    - `timestamp`: current UTC time in ISO 8601 format
    - `baseSha`: the newly resolved value (or preserved original)
    - `isInteractive`: preserve from `{input-provenance}` if present
-   - `iteration`: `{input-provenance}.iteration + 1` (or `2` if iteration was absent/1)
+   - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If `{input-provenance}.iteration` is absent, set to `2`.
 4. Prepend the updated YAML frontmatter to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, `iteration: 1`):
 
    ```yaml

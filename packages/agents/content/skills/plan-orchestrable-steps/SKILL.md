@@ -88,14 +88,14 @@ When the user approves the plan:
    - Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
    - Set `{timestamp}` to the current UTC time in ISO 8601 format.
 
-2. Add provenance header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). Read the file. Prepend the following YAML frontmatter and write back:
+2. Add provenance header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the provenance header step -- the planner did not produce a markdown snapshot. Read the file. Prepend the following YAML frontmatter and write back:
 
    ```yaml
    ---
    provenance:
      skill: plan-orchestrable-steps
-     timestamp: { timestamp }
-     baseSha: { baseSha }
+     timestamp: <timestamp>
+     baseSha: <baseSha>
    ---
    ```
 

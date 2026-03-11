@@ -168,7 +168,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    If `git rev-parse` succeeds and `provenance.baseSha` is present:
    - If `baseSha` equals `{current-main-sha}` → "fresh"
-   - Else run `git merge-base --is-ancestor {baseSha} {current-main-sha}`. If exit code 0 → "diverged". If non-zero → "unverifiable".
+   - Else run `git merge-base --is-ancestor {baseSha} {current-main-sha}`. If exit code 0 → "diverged". If exit code 1 (not an ancestor) → "unverifiable". If the command fails for other reasons (e.g., exit code 128 for unknown ref, shallow clone), fall back to timestamp-based classification as in the `baseSha`-absent case above.
 
    If `git rev-parse` succeeds but `provenance.baseSha` is absent, fall back to timestamp as above.
 
@@ -419,7 +419,7 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
    phase: initialization
    ```
 
-5. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the skip logic (Task 5) with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
+5. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the "Skip logic" section above with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
 
 ## Authority hierarchy
 
