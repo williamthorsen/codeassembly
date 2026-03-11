@@ -599,14 +599,15 @@ Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
 
 ## Phases
 
-| Phase           | Status                         | Notes                                                               |
-| --------------- | ------------------------------ | ------------------------------------------------------------------- |
-| Architecture    | {ran/skipped}                  | {impact level or skip reason}{if external plan: ", plan validated"} |
-| Planning        | {ran/skipped}                  | {step count or skip reason}{if external plan: ", N deviations"}     |
-| Implementation  | {completed/failed}             |                                                                     |
-| Review          | {approved/needs_manual_review} | {aggregated criticality, reviewers with findings, re-review ran}    |
-| Code simplifier | {ran/skipped}                  | {actionable findings, fix cycle ran/not needed}                     |
-| Holistic review | {ran/skipped}                  | {criticality, late-stage fixes}                                     |
+| Phase           | Status                         | Notes                                                                    |
+| --------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| Plan trust      | {planTrust or "n/a"}           | {if planTrust: "skill: {provenance.skill}, freshness: {classification}"} |
+| Architecture    | {ran/skipped}                  | {impact level or skip reason}                                            |
+| Planning        | {ran/skipped}                  | {step count or skip reason}{if ran with medium trust: ", adoption mode"} |
+| Implementation  | {completed/failed}             |                                                                          |
+| Review          | {approved/needs_manual_review} | {aggregated criticality, reviewers with findings, re-review ran}         |
+| Code simplifier | {ran/skipped}                  | {actionable findings, fix cycle ran/not needed}                          |
+| Holistic review | {ran/skipped}                  | {criticality, late-stage fixes}                                          |
 
 ## What was built
 
@@ -632,7 +633,8 @@ Examples of what belongs here:
 
 Include:
 
-- Deviations from reference plan (when external plan was provided)
+- Deviations from reference plan (when external plan was provided and planning ran)
+- Trust tier rationale (when external plan with provenance was provided)
 - Acceptance criteria from the ticket that were intentionally not addressed
 - Any other intentional omissions}
 
