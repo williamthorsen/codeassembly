@@ -64,15 +64,13 @@ export class CatwalkScene extends Scene {
     this.positionCamera();
   }
 
-  /** Apply diff-driven animations on subsequent calls; full rebuild on the first call. */
+  /** Apply diff-driven animations on subsequent calls; full rebuild on the first call or artifact regression. */
   updateStatus(status: CanonicalRunStatus): void {
     this.status = status;
     const nextConfig = mapRunToCatwalk(status);
 
-    if (this.prevConfig === undefined) {
-      this.clear();
-      this.buildScene();
-      this.positionCamera();
+    if (this.prevConfig === undefined || hasArtifactRegression(this.prevConfig, nextConfig)) {
+      this.resetScene();
     } else {
       const diff = diffCatwalkConfig(this.prevConfig, nextConfig);
       if (diff.hasChanges) {
@@ -83,6 +81,21 @@ export class CatwalkScene extends Scene {
       }
       this.prevConfig = nextConfig;
     }
+  }
+
+  /** Clear the scene completely and rebuild from the current status. Cancels any in-flight choreography. */
+  private resetScene(): void {
+    this.choreographyInProgress = false;
+    this.pendingDiff = undefined;
+    this.orchestratorRef = undefined;
+    this.agentRefs.clear();
+    this.gateRefs.clear();
+    this.artifactKeySet.clear();
+    this.artifactCountByKey.clear();
+    this.cachedAgentCountByStation.clear();
+    this.clear();
+    this.buildScene();
+    this.positionCamera();
   }
 
   /** Dispatch animations to actors via the choreographer. Buffers if a choreography is in progress. */
@@ -114,7 +127,7 @@ export class CatwalkScene extends Scene {
     }
 
     // Added agents are always handled by the scene directly (not by the choreographer)
-    this.addDiffAgents(diff, config, layout);
+    this.addDiffAgents(diff, layout);
 
     const refs = this.buildSceneRefs();
     this.choreographyInProgress = true;
@@ -172,10 +185,9 @@ export class CatwalkScene extends Scene {
   }
 
   /** Add newly appearing agents from a diff (fade in from invisible). */
-  private addDiffAgents(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
-    const agentCountByStation = buildAgentCountByStation(config);
+  private addDiffAgents(diff: CatwalkDiff, layout: CatwalkLayoutResult): void {
     for (const agent of diff.agents.added) {
-      const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
+      const agentCountAtStation = this.cachedAgentCountByStation.get(agent.stationIndex) ?? 1;
       const pos = layout.agentPosition(agent.stationIndex, agent.slotIndex, agentCountAtStation);
       const actor = new StationAgentActor(
         { id: agent.id, role: agent.role, color: ROLE_TYPE_COLORS[agent.roleType], state: agent.state },
@@ -413,4 +425,10 @@ function buildLayoutEntries(config: CatwalkSceneConfig): StationLayoutEntry[] {
     agentCount: agentCountByStation.get(index) ?? 0,
     ...(station.absent ? { absent: true } : {}),
   }));
+}
+
+/** Detect whether any artifact key present in prevConfig is absent from nextConfig. */
+function hasArtifactRegression(prev: CatwalkSceneConfig, next: CatwalkSceneConfig): boolean {
+  const nextKeys = new Set(next.artifacts.map(artifactKey));
+  return prev.artifacts.some((a) => !nextKeys.has(artifactKey(a)));
 }

@@ -1,7 +1,5 @@
 import { AnimationStrategy } from 'excalibur';
 
-export type AgentAnimationState = 'idle' | 'working' | 'walking' | 'celebrating' | 'concerned' | 'resting';
-
 // Sprite sheet grid layout
 export const SPRITE_SIZE = 32;
 export const GRID_COLUMNS = 4;

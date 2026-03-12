@@ -55,13 +55,3 @@
 .demo-position {
   color: #888888;
 }
-
-.demo-normalize-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.demo-normalize-row label {
-  cursor: pointer;
-}

@@ -6,7 +6,7 @@ import { useContainerResize } from '../hooks/useContainerResize.js';
 import { ENGINE_HEIGHT, ENGINE_WIDTH } from '../visualizations/catwalk/constants/dimensions.js';
 import { CatwalkScene } from '../visualizations/catwalk/scene/CatwalkScene.js';
 
-import './GameCanvas.css';
+import './canvas.css';
 
 interface CatwalkCanvasProps {
   status: CanonicalRunStatus;

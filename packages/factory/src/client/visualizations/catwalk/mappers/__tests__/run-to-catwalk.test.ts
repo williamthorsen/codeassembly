@@ -1239,4 +1239,151 @@ describe('mapRunToCatwalk', () => {
       expect(config.orchestrator.carriedArtifacts[0]?.label).toBe('code');
     });
   });
+
+  describe('deferred input derivation', () => {
+    it('does not derive inputs at stations beyond the orchestrator position', () => {
+      // Architecture completed, planning in progress (orchestrator at station 1).
+      // Architecture output exists at station 0, but we should not see inputs at
+      // station 2 because the orchestrator is only at station 1.
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.json',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'orchestrated-planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Orchestrator at station 1 (planning is the current inferred phase)
+      expect(config.orchestrator.stationIndex).toBe(1);
+
+      // Input at station 1 should exist (orchestrator has reached it)
+      const station1Inputs = config.artifacts.filter((a) => a.stationIndex === 1 && a.slot === 'input');
+      expect(station1Inputs).toHaveLength(1);
+
+      // Input at station 2 should NOT exist (orchestrator has not reached it)
+      const station2Inputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'input');
+      expect(station2Inputs).toHaveLength(0);
+    });
+
+    it('derives all inputs for a completed run regardless of station index', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.json',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'orchestrated-planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Completed run: all inputs should be present
+      const station1Inputs = config.artifacts.filter((a) => a.stationIndex === 1 && a.slot === 'input');
+      expect(station1Inputs).toHaveLength(1);
+
+      const station2Inputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'input');
+      expect(station2Inputs).toHaveLength(1);
+
+      // Summary inputs should also be present
+      const summaryInputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'input');
+      expect(summaryInputs.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('inputs appear at the orchestrator station but not beyond', () => {
+      // Orchestrator at station 3 (review phase, working).
+      // Arch output at 0, plan output at 1, code output at 2.
+      // Inputs should exist at 1, 2, 3 but not beyond.
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 7, artifacts: ['plan.md'] },
+          implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.json',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'orchestrated-planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+          {
+            filename: 'code.md',
+            role: 'coder',
+            roleType: 'author',
+            agent: 'orchestrated-coder',
+            type: 'change-summary',
+            phase: 'implementation',
+            createdAt: '2026-01-01T00:30:00Z',
+          },
+        ],
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      // Orchestrator at station 3 (review, working)
+      expect(config.orchestrator.stationIndex).toBe(3);
+
+      // Inputs at stations 1, 2, 3 should exist
+      expect(config.artifacts.filter((a) => a.stationIndex === 1 && a.slot === 'input')).toHaveLength(1);
+      expect(config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'input')).toHaveLength(1);
+      expect(config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'input')).toHaveLength(1);
+
+      // No inputs at stations 4, 5 (orchestrator has not reached them)
+      expect(config.artifacts.filter((a) => a.stationIndex === 4 && a.slot === 'input')).toHaveLength(0);
+      expect(config.artifacts.filter((a) => a.stationIndex === 5 && a.slot === 'input')).toHaveLength(0);
+    });
+  });
 });

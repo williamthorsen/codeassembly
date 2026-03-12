@@ -11,12 +11,10 @@ interface DemoControlPanelProps {
   playbackState: PlaybackState;
   speed: number;
   cursor: number;
-  eventCount: number;
-  normalized: boolean;
+  snapshotCount: number;
   controls: PlaybackControls;
   onSelectRecording: (recording: DemoRecording) => void;
   onStop: () => void;
-  onToggleNormalized: () => void;
 }
 
 export function DemoControlPanel({
@@ -25,12 +23,10 @@ export function DemoControlPanel({
   playbackState,
   speed,
   cursor,
-  eventCount,
-  normalized,
+  snapshotCount,
   controls,
   onSelectRecording,
   onStop,
-  onToggleNormalized,
 }: DemoControlPanelProps): React.JSX.Element {
   function handleRecordingChange(e: React.ChangeEvent<HTMLSelectElement>): void {
     const selected = recordings.find((r) => r.name === e.target.value);
@@ -74,7 +70,7 @@ export function DemoControlPanel({
       </div>
 
       <span className="demo-position">
-        {displayPosition} / {eventCount}
+        {displayPosition} / {snapshotCount}
       </span>
 
       <div className="demo-speed-row">
@@ -88,12 +84,6 @@ export function DemoControlPanel({
         <button onClick={() => controls.resetSpeed()} aria-label="Reset speed">
           1x
         </button>
-      </div>
-
-      <div className="demo-normalize-row">
-        <label>
-          <input type="checkbox" checked={normalized} onChange={onToggleNormalized} /> Normalize gaps
-        </label>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ export interface UseDemoModeResult {
   controls: PlaybackControls;
   speed: number;
   cursor: number;
-  eventCount: number;
+  snapshotCount: number;
   recordings: DemoRecording[];
   loadRecording: (recording: DemoRecording) => void;
   stopDemo: () => void;
@@ -40,7 +40,7 @@ export function useDemoMode(): UseDemoModeResult {
     controls: playback.controls,
     speed: playback.speed,
     cursor: playback.cursor,
-    eventCount: playback.eventCount,
+    snapshotCount: playback.snapshotCount,
     recordings: DEMO_RECORDINGS,
     loadRecording,
     stopDemo,

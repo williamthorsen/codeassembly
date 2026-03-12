@@ -1,4 +1,12 @@
+import { foldEvents } from '../../../shared/event-folder.js';
+import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
+import type { DemoRecording } from '../index.js';
+
+// ---------------------------------------------------------------------------
+// Source data: header + events define the raw run log. These are used once at
+// module load time to pre-generate the curated snapshot sequence below.
+// ---------------------------------------------------------------------------
 
 const header: RunHeader = {
   runId: '20260301-120000Z-orchestrated',
@@ -274,10 +282,31 @@ const events: RunEvent[] = [
   { t: '2026-03-01T12:30:30Z', event: 'run_completed', status: 'completed' },
 ];
 
-export const moderatelyComplexRun = {
+// ---------------------------------------------------------------------------
+// Curated snapshot generation
+//
+// Each index is a 0-based event index. `foldEvents(header, events.slice(0, i+1))`
+// gives the canonical status after processing events through index `i`.
+//
+// Selected indices represent meaningful visual transitions:
+//   - run start, phase decisions
+//   - each phase start / artifact / phase complete
+//   - reviewer dispatches, completions, review artifacts
+//   - coder fix cycle, re-review
+//   - code simplifier, holistic review
+//   - summary artifact, run complete
+// ---------------------------------------------------------------------------
+const CURATED_EVENT_INDICES = [
+  0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19, 21, 22, 25, 27, 30, 31, 33, 34, 35, 37, 38, 39, 40,
+];
+
+function generateSnapshots(hdr: RunHeader, evts: ReadonlyArray<RunEvent>, indices: number[]): CanonicalRunStatus[] {
+  return indices.map((idx) => foldEvents(hdr, evts.slice(0, idx + 1)));
+}
+
+export const moderatelyComplexRun: DemoRecording = {
   name: 'Moderately complex run',
   description:
     'Full orchestrated run with architecture, planning, implementation, 3 reviewers, fix cycle, selective re-review, code simplifier, and holistic review.',
-  header,
-  events,
+  snapshots: generateSnapshots(header, events, CURATED_EVENT_INDICES),
 };

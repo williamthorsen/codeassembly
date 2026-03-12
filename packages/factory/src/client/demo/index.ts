@@ -1,11 +1,10 @@
-import type { RunEvent, RunHeader } from '../../shared/types/run-log.js';
+import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import { moderatelyComplexRun } from './recordings/moderately-complex-run.js';
 
 export interface DemoRecording {
   name: string;
   description: string;
-  header: RunHeader;
-  events: RunEvent[];
+  snapshots: CanonicalRunStatus[];
 }
 
 export const DEMO_RECORDINGS: DemoRecording[] = [moderatelyComplexRun];

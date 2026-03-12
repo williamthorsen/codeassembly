@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
+import { CatwalkCanvas } from './components/CatwalkCanvas.js';
 import { DemoControlPanel } from './components/DemoControlPanel.js';
 import { DemoStatusLight } from './components/DemoStatusLight.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
 import { StatusBar } from './components/StatusBar.js';
-import { VisualizationSwitcher } from './components/VisualizationSwitcher.js';
 import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
 import { useDemoMode } from './hooks/useDemoMode.js';
@@ -68,14 +68,6 @@ export function App(): React.JSX.Element {
 
   const demo = useDemoMode();
   const [showDemoPanel, setShowDemoPanel] = useState(false);
-  const [normalized, setNormalized] = useState(true);
-
-  // Reset normalization to match the new controller's initial state when recording changes
-  useEffect(() => {
-    if (demo.activeRecording) {
-      setNormalized(true);
-    }
-  }, [demo.activeRecording]);
 
   // Determine the active data source: demo data takes precedence when available
   const activeStatus = demo.isActive && demo.data !== null ? demo.data : runStatus;
@@ -172,12 +164,6 @@ export function App(): React.JSX.Element {
     );
   }
 
-  function handleToggleNormalized(): void {
-    const next = !normalized;
-    setNormalized(next);
-    demo.controls.setNormalized(next);
-  }
-
   function handleStopDemo(): void {
     demo.stopDemo();
     setShowDemoPanel(false);
@@ -193,12 +179,10 @@ export function App(): React.JSX.Element {
           playbackState={demo.playbackState}
           speed={demo.speed}
           cursor={demo.cursor}
-          eventCount={demo.eventCount}
-          normalized={normalized}
+          snapshotCount={demo.snapshotCount}
           controls={demo.controls}
           onSelectRecording={demo.loadRecording}
           onStop={handleStopDemo}
-          onToggleNormalized={handleToggleNormalized}
         />
       )}
     </>
@@ -230,7 +214,7 @@ export function App(): React.JSX.Element {
         {activeStatus && <StatusBar status={activeStatus} demoSlot={demoSlot} />}
         {isLoading && <p>Loading...</p>}
         {error && <p>Error: {error.message}</p>}
-        {activeStatus && <VisualizationSwitcher status={activeStatus} />}
+        {activeStatus && <CatwalkCanvas status={activeStatus} />}
       </main>
     </div>
   );

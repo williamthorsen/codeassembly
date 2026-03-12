@@ -61,7 +61,7 @@ vi.mock('../../visualizations/catwalk/constants/dimensions.js', () => ({
   ENGINE_HEIGHT: 600,
 }));
 
-vi.mock('../GameCanvas.css', () => ({}));
+vi.mock('../canvas.css', () => ({}));
 
 const { CatwalkCanvas } = await import('../CatwalkCanvas.js');
 const { CatwalkScene } = await import('../../visualizations/catwalk/scene/CatwalkScene.js');
