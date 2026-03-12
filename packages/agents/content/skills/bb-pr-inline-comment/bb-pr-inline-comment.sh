@@ -23,14 +23,6 @@ main() {
     show_usage 0
   fi
 
-  # Check dependencies
-  for cmd in curl jq git; do
-    if ! command -v "$cmd" &>/dev/null; then
-      echo "$PROG: required command '$cmd' not found" >&2
-      exit 127
-    fi
-  done
-
   local workspace="" repo_slug="" pr_id="" file_path="" line="" comment=""
 
   # Parse options
@@ -52,6 +44,15 @@ main() {
       show_usage
       ;;
     esac
+  done
+  shift $((OPTIND - 1))
+
+  # Check dependencies
+  for cmd in curl jq git; do
+    if ! command -v "$cmd" &>/dev/null; then
+      echo "$PROG: required command '$cmd' not found" >&2
+      exit 127
+    fi
   done
 
   # Read comment from stdin if not provided via -m
@@ -90,7 +91,7 @@ main() {
   assert_nonempty "comment (-m or stdin)" "$comment"
 
   # Validate line is a positive integer
-  if [[ ! "$line" =~ ^[0-9]+$ ]]; then
+  if [[ ! "$line" =~ ^[1-9][0-9]*$ ]]; then
     echo "$PROG: line number must be a positive integer, got '$line'" >&2
     exit 1
   fi
