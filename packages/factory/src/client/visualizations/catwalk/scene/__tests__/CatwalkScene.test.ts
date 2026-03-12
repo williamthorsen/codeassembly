@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createMockRunStatus, emptyPhases } from '../../../../../__test-helpers__/fixtures.js';
+import {
+  createCompletedRunPhases,
+  createMockRunStatus,
+  emptyPhases,
+} from '../../../../../__test-helpers__/fixtures.js';
 
 const { mockLoadAllCatwalkSprites } = vi.hoisted(() => ({
   mockLoadAllCatwalkSprites: vi.fn().mockResolvedValue(undefined),
@@ -103,6 +107,7 @@ vi.mock('../../actors/index.js', () => ({
     ) {}
     animateMoveTo = vi.fn().mockResolvedValue(undefined);
     fadeOut = vi.fn();
+    celebrate = vi.fn();
     setWorking = vi.fn();
     setCarriedArtifacts = vi.fn();
     setCodeBadge = vi.fn();
@@ -133,6 +138,9 @@ vi.mock('../../actors/index.js', () => ({
 const { CatwalkScene } = await import('../CatwalkScene.js');
 const { OrchestratorActor, ChuteActor, StationAgentActor, GateActor, ArtifactActor } =
   await import('../../actors/index.js');
+const { mapRunToCatwalk } = await import('../../mappers/run-to-catwalk.js');
+const { computeCatwalkLayout } = await import('../../layout/catwalk-layout.js');
+const { artifactKey } = await import('../../state/catwalk-differ.js');
 
 /** Type guard for objects that have a `config` property (all mock actors do). */
 function hasConfig(value: unknown): value is { config: Record<string, unknown> } {
@@ -187,8 +195,8 @@ describe('CatwalkScene', () => {
 
     scene.onInitialize();
 
-    // 1 rail + 1 ground + 7 stations + 6 chutes + 6 agents + 1 orchestrator + 6 gates = 28
-    expect(scene.entities.length).toBe(28);
+    // 1 rail + 1 ground + 7 stations + 6 chutes + 6 agents + 1 orchestrator + 6 gates + 6 dividers = 34
+    expect(scene.entities.length).toBe(34);
   });
 
   it('preserves entity count on updateStatus when config is unchanged', () => {
@@ -215,6 +223,43 @@ describe('CatwalkScene', () => {
     // Zoom must be capped at 1 (content fits without magnification)
     expect(scene.camera.zoom).toBeGreaterThan(0);
     expect(scene.camera.zoom).toBeLessThanOrEqual(1);
+  });
+
+  it('scales zoom below 1 when platform exceeds viewport width', () => {
+    // 5 reviewers make the review station wide enough to push platformWidth > ENGINE_WIDTH (1200)
+    const status = createMockRunStatus({
+      status: 'in_progress',
+      phases: {
+        ...emptyPhases(),
+        architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        implementation: { status: 'completed', artifact: 'code.md', qualityGates: undefined },
+        parallelReview: {
+          aggregatedCriticality: undefined,
+          reviewRoundsUsed: 0,
+          reviewers: Object.fromEntries(
+            ['r-a', 'r-b', 'r-c', 'r-d', 'r-e'].map((name) => [
+              name,
+              {
+                ran: true,
+                status: undefined,
+                criticality: undefined,
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            ]),
+          ),
+          coderFixCycleRan: false,
+          selectiveReReview: undefined,
+        },
+      },
+    });
+    const scene = new CatwalkScene(status);
+    scene.onInitialize();
+
+    expect(scene.camera.zoom).toBeLessThan(1);
+    expect(scene.camera.zoom).toBeGreaterThan(0);
   });
 
   it('does not add an orchestrator when stationIndex is negative', () => {
@@ -498,14 +543,196 @@ describe('CatwalkScene', () => {
     });
     scene.updateStatus(status2);
 
-    // Two new artifact actors should have been added
-    expect(scene.entities.length).toBe(countAfterInit + 2);
+    // Two output artifact actors + two derived input artifact actors at the next station = 4 new entities
+    expect(scene.entities.length).toBe(countAfterInit + 4);
 
-    // The two artifacts should have different Y positions (stacked, not overlapping)
+    // Four artifacts total: 2 outputs at station 0, 2 inputs at station 1
     const artifacts = scene.entities.filter((e): e is InstanceType<typeof ArtifactActor> => e instanceof ArtifactActor);
-    expect(artifacts.length).toBe(2);
-    const [a1, a2] = artifacts;
-    if (!hasPosition(a1) || !hasPosition(a2)) throw new Error('expected 2 artifact actors with position');
+    expect(artifacts.length).toBe(4);
+    // Output artifacts at station 0 should be stacked (different Y positions)
+    const [a1, a2, a3, a4] = artifacts;
+    if (!hasPosition(a1) || !hasPosition(a2)) throw new Error('expected artifact actors with position');
     expect(a1.position.y).not.toBe(a2.position.y);
+    // Input artifacts at station 1 should also be stacked
+    if (!hasPosition(a3) || !hasPosition(a4)) throw new Error('expected input artifact actors with position');
+    expect(a3.position.y).not.toBe(a4.position.y);
+  });
+
+  describe('completed run with artifacts (integration)', () => {
+    /** Replicate the scene's buildLayoutEntries / buildAgentCountByStation logic for verification. */
+    function buildExpectedLayout(status: Parameters<typeof mapRunToCatwalk>[0]) {
+      const config = mapRunToCatwalk(status);
+      const agentCountByStation = new Map<number, number>();
+      for (const agent of config.agents) {
+        agentCountByStation.set(agent.stationIndex, (agentCountByStation.get(agent.stationIndex) ?? 0) + 1);
+      }
+      const entries = config.stations.map((station, index) => ({
+        agentCount: agentCountByStation.get(index) ?? 0,
+        ...(station.absent ? { absent: true as const } : {}),
+      }));
+      const layout = computeCatwalkLayout({ stations: entries });
+      return { config, layout, agentCountByStation };
+    }
+
+    const completedStatus = createMockRunStatus({
+      status: 'completed',
+      phases: createCompletedRunPhases(),
+      artifacts: [
+        {
+          filename: 'arch.md',
+          role: 'architect',
+          roleType: 'analyst',
+          agent: 'arch',
+          type: 'architecture',
+          phase: 'architecture',
+          createdAt: '2026-01-01T00:01:00Z',
+        },
+        {
+          filename: 'plan.md',
+          role: 'planner',
+          roleType: 'planner',
+          agent: 'planner',
+          type: 'plan',
+          phase: 'planning',
+          createdAt: '2026-01-01T00:02:00Z',
+        },
+        {
+          filename: 'code.md',
+          role: 'coder',
+          roleType: 'author',
+          agent: 'coder',
+          type: 'change-summary',
+          phase: 'implementation',
+          createdAt: '2026-01-01T00:03:00Z',
+        },
+        {
+          filename: 'review1.md',
+          role: 'reviewer',
+          roleType: 'reviewer',
+          agent: 'correctness-reviewer',
+          type: 'review',
+          phase: 'review',
+          createdAt: '2026-01-01T00:04:00Z',
+        },
+        {
+          filename: 'review2.md',
+          role: 'reviewer',
+          roleType: 'reviewer',
+          agent: 'security-reviewer',
+          type: 'review',
+          phase: 'review',
+          createdAt: '2026-01-01T00:05:00Z',
+        },
+        {
+          filename: 'summary.md',
+          role: 'orchestrator',
+          roleType: 'orchestrator',
+          agent: 'orchestrator',
+          type: 'run-summary',
+          phase: 'summary',
+          createdAt: '2026-01-01T00:06:00Z',
+        },
+      ],
+    });
+
+    it('places every artifact actor at the position computed by the layout', () => {
+      const { config, layout, agentCountByStation } = buildExpectedLayout(completedStatus);
+
+      const scene = new CatwalkScene(completedStatus);
+      scene.onInitialize();
+
+      const sceneArtifacts = scene.entities.filter(
+        (e): e is InstanceType<typeof ArtifactActor> => e instanceof ArtifactActor,
+      );
+
+      // Compute expected positions the same way addArtifacts does
+      const countByKey = new Map<string, number>();
+      const expectedPositions: { key: string; x: number; y: number }[] = [];
+
+      for (const artifact of config.artifacts) {
+        const key = artifactKey(artifact);
+        const agentCount = Math.max(agentCountByStation.get(artifact.stationIndex) ?? 1, 1);
+
+        const countKey =
+          artifact.slot === 'input'
+            ? `${artifact.stationIndex}:input`
+            : `${artifact.stationIndex}:${artifact.agentSlotIndex}`;
+        const stackIndex = countByKey.get(countKey) ?? 0;
+        countByKey.set(countKey, stackIndex + 1);
+
+        const pos =
+          artifact.slot === 'input'
+            ? layout.inputArtifactPosition(artifact.stationIndex, agentCount, stackIndex)
+            : layout.outputArtifactPosition(artifact.stationIndex, artifact.agentSlotIndex, agentCount, stackIndex);
+
+        expectedPositions.push({ key, x: pos.x, y: pos.y });
+      }
+
+      // Every expected artifact must appear as a scene actor at the correct position
+      expect(sceneArtifacts.length).toBe(expectedPositions.length);
+
+      for (const [i, expected] of expectedPositions.entries()) {
+        const actor = sceneArtifacts[i];
+        if (!hasPosition(actor)) throw new Error(`Artifact actor ${i} (${expected.key}) missing position`);
+        expect(actor.position.x).toBe(expected.x);
+        expect(actor.position.y).toBe(expected.y);
+      }
+    });
+
+    it('separates input and output artifacts at the same station by x position', () => {
+      const { config, layout, agentCountByStation } = buildExpectedLayout(completedStatus);
+
+      const scene = new CatwalkScene(completedStatus);
+      scene.onInitialize();
+
+      const sceneArtifacts = scene.entities.filter(
+        (e): e is InstanceType<typeof ArtifactActor> => e instanceof ArtifactActor,
+      );
+
+      // Find stations that have both inputs and outputs
+      const stationArtifacts = new Map<number, { inputs: typeof sceneArtifacts; outputs: typeof sceneArtifacts }>();
+      for (const [i, artifact] of config.artifacts.entries()) {
+        const entry = stationArtifacts.get(artifact.stationIndex) ?? { inputs: [], outputs: [] };
+        const actor = sceneArtifacts[i];
+        if (actor === undefined) continue;
+        if (artifact.slot === 'input') {
+          entry.inputs.push(actor);
+        } else {
+          entry.outputs.push(actor);
+        }
+        stationArtifacts.set(artifact.stationIndex, entry);
+      }
+
+      // For each station with both inputs and outputs, verify inputs are to the left
+      for (const [stationIndex, { inputs, outputs }] of stationArtifacts) {
+        if (inputs.length === 0 || outputs.length === 0) continue;
+
+        const inputX = inputs.map((a) => (hasPosition(a) ? a.position.x : 0));
+        const outputX = outputs.map((a) => (hasPosition(a) ? a.position.x : 0));
+
+        const maxInputX = Math.max(...inputX);
+        const minOutputX = Math.min(...outputX);
+
+        // Divider position check: inputs must be strictly left of outputs
+        const agentCount = Math.max(agentCountByStation.get(stationIndex) ?? 1, 1);
+        const divider = layout.dividerPosition(stationIndex, agentCount);
+
+        expect(maxInputX).toBeLessThan(divider.x);
+        expect(minOutputX).toBeGreaterThan(divider.x);
+      }
+    });
+
+    it('triggers celebrate on orchestrator for a completed run', () => {
+      const scene = new CatwalkScene(completedStatus);
+      scene.onInitialize();
+
+      const orchestrators = scene.entities.filter(
+        (e): e is InstanceType<typeof OrchestratorActor> => e instanceof OrchestratorActor,
+      );
+      expect(orchestrators.length).toBe(1);
+      const orch = orchestrators[0];
+      if (orch === undefined) throw new Error('orchestrator not found');
+      expect(orch.celebrate).toHaveBeenCalledOnce();
+    });
   });
 });

@@ -7,7 +7,14 @@ import {
   SCALE_PULSE_MAX,
   SCALE_PULSE_MIN,
 } from '../constants/animation.js';
-import { BADGE_OFFSET_Y, CARRIED_ART_GAP, CARRIED_ART_H, CARRIED_ART_W } from '../constants/dimensions.js';
+import {
+  BADGE_OFFSET_Y,
+  CARRIED_ART_GAP,
+  CARRIED_ART_H,
+  CARRIED_ART_W,
+  ORCH_SPRITE_BOTTOM_PAD,
+  SPRITE_SIZE,
+} from '../constants/dimensions.js';
 import { PAUSE_DURATION, WALK_SPEED } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { CarriedArtifactConfig } from '../types.js';
@@ -24,7 +31,9 @@ export class OrchestratorActor extends Actor {
   private _badgeChild: Actor | undefined;
 
   constructor(config: OrchestratorActorConfig, position: Vector) {
-    super({ pos: position });
+    // Shift sprite up so the visible character bottom (not the transparent padding) sits on the rail.
+    // Center anchor: offset = -SPRITE_SIZE/2 + ORCH_SPRITE_BOTTOM_PAD shifts the character down onto the rail.
+    super({ pos: vec(position.x, position.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD) });
 
     const animation = getAnimation('orchestrator', config.working ? 'working' : 'idle');
     this.graphics.use(animation);
@@ -34,7 +43,7 @@ export class OrchestratorActor extends Actor {
 
   /** Slide the orchestrator to a new position along the catwalk rail. Returns a promise that resolves when the walk completes. */
   animateMoveTo(pos: Vector): Promise<void> {
-    return this.actions.moveTo(pos, WALK_SPEED).toPromise();
+    return this.actions.moveTo(vec(pos.x, pos.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD), WALK_SPEED).toPromise();
   }
 
   /** Fade the orchestrator out to invisible and stop the working pulse. */
@@ -55,6 +64,15 @@ export class OrchestratorActor extends Actor {
       this.scale = vec(1, 1);
       this.graphics.opacity = ORCH_IDLE_OPACITY;
     }
+  }
+
+  /** Switch to the celebrating sprite animation and stop the working pulse. */
+  celebrate(): void {
+    this._working = false;
+    this.scale = vec(1, 1);
+    this.graphics.opacity = ACTIVE_OPACITY;
+    const animation = getAnimation('orchestrator', 'celebrating');
+    this.graphics.use(animation);
   }
 
   /** Render small colored rectangles trailing the orchestrator horizontally on the rail. */

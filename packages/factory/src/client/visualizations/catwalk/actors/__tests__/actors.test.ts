@@ -112,6 +112,7 @@ const {
   ORCH_IDLE_OPACITY,
   RESTING_OPACITY,
 } = await import('../../constants/animation.js');
+const { ORCH_SPRITE_BOTTOM_PAD, SPRITE_SIZE } = await import('../../constants/dimensions.js');
 
 describe('OrchestratorActor', () => {
   beforeEach(() => {
@@ -132,11 +133,16 @@ describe('OrchestratorActor', () => {
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
   });
 
-  it('animateMoveTo calls actions.moveTo with position and walk speed', async () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 100));
-    await actor.animateMoveTo(vec(200, 100));
+  it('animateMoveTo calls actions.moveTo with y adjusted for sprite padding', async () => {
+    const targetY = 100;
+    const actor = new OrchestratorActor({ working: false }, vec(0, targetY));
+    await actor.animateMoveTo(vec(200, targetY));
 
-    expect(actor.actions.moveTo).toHaveBeenCalledWith(expect.objectContaining({ x: 200, y: 100 }), expect.any(Number));
+    const expectedY = targetY - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD;
+    expect(actor.actions.moveTo).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 200, y: expectedY }),
+      expect.any(Number),
+    );
   });
 
   it('setWorking(true) enables pulse flag and restores full opacity', () => {
@@ -287,6 +293,29 @@ describe('OrchestratorActor', () => {
     if (firstBadge !== undefined && 'kill' in firstBadge) {
       expect(firstBadge.kill).toHaveBeenCalled();
     }
+  });
+
+  it('celebrate() calls getAnimation with celebrating state', () => {
+    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.celebrate();
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'celebrating');
+  });
+
+  it('celebrate() disables working pulse and sets ACTIVE_OPACITY', () => {
+    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+
+    actor.celebrate();
+
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
+
+    // Pulse should be disabled -- onPreUpdate should not change scale
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
+    actor.onPreUpdate(undefined as never, 500);
+    expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
   it('fadeOut fades opacity to 0 and stops the working pulse', () => {

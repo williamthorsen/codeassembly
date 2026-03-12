@@ -11,7 +11,7 @@ import {
   StationAgentActor,
 } from '../actors/index.js';
 import { choreograph, type SceneRefs } from '../choreography/chute-choreographer.js';
-import { ART_H, ENGINE_HEIGHT, ENGINE_WIDTH, GROUND_Y } from '../constants/dimensions.js';
+import { CAMERA_TOP_MARGIN, DIVIDER_WIDTH, ENGINE_HEIGHT, ENGINE_WIDTH, RAIL_Y } from '../constants/dimensions.js';
 import { type CatwalkLayoutResult, computeCatwalkLayout, type StationLayoutEntry } from '../layout/catwalk-layout.js';
 import { mapRunToCatwalk } from '../mappers/run-to-catwalk.js';
 import { loadAllCatwalkSprites } from '../sprites/catwalk-sprite-loader.js';
@@ -25,8 +25,7 @@ const RAIL_COLOR = '#FFD700';
 const GROUND_LINE_HEIGHT = 2;
 const GROUND_LINE_COLOR = '#444444';
 
-const ARTIFACT_Y_OFFSET = 20;
-const ARTIFACT_Y_SPACING = 4;
+const DIVIDER_COLOR = '#666666';
 
 /** Excalibur scene that renders an orchestration run as a catwalk with stations, agents, gates, chutes, and artifacts. */
 export class CatwalkScene extends Scene {
@@ -39,7 +38,10 @@ export class CatwalkScene extends Scene {
   private agentRefs = new Map<string, StationAgentActor>();
   private gateRefs = new Map<string, GateActor>();
   private artifactKeySet = new Set<string>();
-  private artifactCountByStation = new Map<number, number>();
+  /** Composite-keyed artifact count: `${stationIndex}:${agentSlotIndex}` for outputs, `${stationIndex}:input` for inputs. */
+  private artifactCountByKey = new Map<string, number>();
+  /** Cached agent count per station, updated at the start of each diff application. */
+  private cachedAgentCountByStation = new Map<number, number>();
 
   // Choreography guard -- prevents overlapping animations
   private choreographyInProgress = false;
@@ -59,7 +61,7 @@ export class CatwalkScene extends Scene {
       console.error('Failed to load catwalk sprites:', error);
     });
     this.buildScene();
-    this.fitCamera();
+    this.positionCamera();
   }
 
   /** Apply diff-driven animations on subsequent calls; full rebuild on the first call. */
@@ -70,7 +72,7 @@ export class CatwalkScene extends Scene {
     if (this.prevConfig === undefined) {
       this.clear();
       this.buildScene();
-      this.fitCamera();
+      this.positionCamera();
     } else {
       const diff = diffCatwalkConfig(this.prevConfig, nextConfig);
       if (diff.hasChanges) {
@@ -87,13 +89,13 @@ export class CatwalkScene extends Scene {
   private applyDiff(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     if (this.choreographyInProgress) {
       // Buffer the latest diff; when the current choreography finishes, it will be applied.
-      // Known limitation: only the most recent pending diff is kept. If multiple diffs arrive
-      // during one choreography, intermediate diffs are dropped. This is acceptable because
-      // the final config always reflects ground truth, and the next diff will reconcile
-      // the scene to the correct state.
       this.pendingDiff = { diff, config, layout };
       return;
     }
+
+    // Cache the agent count per station from the incoming config so that
+    // addSingleArtifact (called during choreography) uses the current layout.
+    this.cachedAgentCountByStation = buildAgentCountByStation(config);
 
     // Guard: fade out orchestrator when moving to a negative (sentinel) station index
     if (diff.orchestrator.moved !== null && diff.orchestrator.moved.to < 0 && this.orchestratorRef !== undefined) {
@@ -101,8 +103,17 @@ export class CatwalkScene extends Scene {
       this.orchestratorRef = undefined;
     }
 
+    // Create orchestrator if it needs to appear and doesn't exist
+    if (diff.orchestrator.moved !== null && diff.orchestrator.moved.to >= 0 && this.orchestratorRef === undefined) {
+      const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
+      const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
+      orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
+      orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
+      this.add(orchestratorActor);
+      this.orchestratorRef = orchestratorActor;
+    }
+
     // Added agents are always handled by the scene directly (not by the choreographer)
-    // because they require constructing actors with scene-specific config
     this.addDiffAgents(diff, config, layout);
 
     const refs = this.buildSceneRefs();
@@ -111,7 +122,17 @@ export class CatwalkScene extends Scene {
     choreograph(diff, layout, refs)
       .then(() => {
         this.choreographyInProgress = false;
-        this.fitCamera();
+
+        // Trigger celebration after orchestrator arrives at destination
+        if (
+          diff.orchestrator.celebratingChanged !== null &&
+          diff.orchestrator.celebratingChanged.to &&
+          this.orchestratorRef !== undefined
+        ) {
+          this.orchestratorRef.celebrate();
+        }
+
+        this.positionCamera();
 
         // If another diff arrived while we were animating, apply it now
         if (this.pendingDiff !== undefined) {
@@ -140,6 +161,7 @@ export class CatwalkScene extends Scene {
       orchestrator: this.orchestratorRef,
       agents: this.agentRefs,
       gates: this.gateRefs,
+      agentCountByStation: this.cachedAgentCountByStation,
       addActor: (actor: Actor) => {
         this.add(actor);
       },
@@ -165,20 +187,28 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Add a single artifact actor at its stacked position below the ground line. */
+  /** Add a single artifact actor at its stacked position using layout functions. */
   private addSingleArtifact(artifact: StationArtifactConfig, layout: CatwalkLayoutResult): void {
     const key = artifactKey(artifact);
     if (this.artifactKeySet.has(key)) return;
     this.artifactKeySet.add(key);
 
-    const indexAtStation = this.artifactCountByStation.get(artifact.stationIndex) ?? 0;
-    this.artifactCountByStation.set(artifact.stationIndex, indexAtStation + 1);
+    const agentCount = Math.max(this.cachedAgentCountByStation.get(artifact.stationIndex) ?? 1, 1);
 
-    const stationX = layout.stationX(artifact.stationIndex);
-    const groundEndpoints = layout.groundEndpoints();
-    const y = groundEndpoints.y + ARTIFACT_Y_OFFSET + indexAtStation * (ART_H + ARTIFACT_Y_SPACING);
+    // Determine the count key and stack position
+    const countKey =
+      artifact.slot === 'input'
+        ? `${artifact.stationIndex}:input`
+        : `${artifact.stationIndex}:${artifact.agentSlotIndex}`;
+    const stackIndex = this.artifactCountByKey.get(countKey) ?? 0;
+    this.artifactCountByKey.set(countKey, stackIndex + 1);
 
-    const actor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(stationX, y));
+    const pos =
+      artifact.slot === 'input'
+        ? layout.inputArtifactPosition(artifact.stationIndex, agentCount, stackIndex)
+        : layout.outputArtifactPosition(artifact.stationIndex, artifact.agentSlotIndex, agentCount, stackIndex);
+
+    const actor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(pos.x, pos.y));
     actor.fadeIn();
     this.add(actor);
   }
@@ -190,6 +220,7 @@ export class CatwalkScene extends Scene {
     const layout = computeCatwalkLayout({ stations: layoutEntries });
     this.layout = layout;
     this.prevConfig = config;
+    this.cachedAgentCountByStation = buildAgentCountByStation(config);
 
     this.drawCatwalkRail(layout);
     this.drawGroundLine(layout);
@@ -199,6 +230,7 @@ export class CatwalkScene extends Scene {
     this.addOrchestrator(config, layout);
     this.addGates(config, layout);
     this.addArtifacts(config, layout);
+    this.addDividers(config, layout);
   }
 
   /** Draws the horizontal gold rail along the catwalk where the orchestrator travels. */
@@ -239,10 +271,10 @@ export class CatwalkScene extends Scene {
   /** Places a labeled station marker below the ground line for each workflow phase. */
   private addStations(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     for (const [i, station] of config.stations.entries()) {
-      const x = layout.stationX(i);
+      const pos = layout.stationLabelPosition(i);
       const stationActor = new CatwalkStationActor(
         { phase: station.label, color: station.color, absent: station.absent },
-        vec(x, GROUND_Y + 60),
+        vec(pos.x, pos.y),
       );
       this.add(stationActor);
     }
@@ -261,8 +293,7 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Places agent actors at their computed station positions with role-based colors.
-   *  Populates agentRefs registry. */
+  /** Places agent actors at their computed station positions with role-based colors. Populates agentRefs registry. */
   private addAgents(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
 
@@ -278,8 +309,7 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Places the orchestrator actor on the catwalk rail at the current phase station.
-   *  Populates orchestratorRef registry. */
+  /** Places the orchestrator actor on the catwalk rail at the current phase station. Populates orchestratorRef registry. */
   private addOrchestrator(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     if (config.orchestrator.stationIndex < 0) return;
 
@@ -287,12 +317,17 @@ export class CatwalkScene extends Scene {
     const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
     orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
     orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
+
+    // Trigger celebration immediately if initial state is celebrating
+    if (config.orchestrator.celebrating) {
+      orchestratorActor.celebrate();
+    }
+
     this.add(orchestratorActor);
     this.orchestratorRef = orchestratorActor;
   }
 
-  /** Places gate actors between adjacent stations to indicate phase transition progress.
-   *  Populates gateRefs registry. */
+  /** Places gate actors between adjacent stations to indicate phase transition progress. Populates gateRefs registry. */
   private addGates(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     for (const gate of config.gates) {
       const [left, right] = gate.betweenStations;
@@ -303,37 +338,62 @@ export class CatwalkScene extends Scene {
     }
   }
 
-  /** Stacks artifact actors vertically below the ground line at their producing station.
-   *  Populates artifactKeySet and artifactCountByStation registries. */
+  /** Stacks artifact actors using layout position functions. Populates artifactKeySet and artifactCountByKey registries. */
   private addArtifacts(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
+    const agentCountByStation = buildAgentCountByStation(config);
+
     for (const artifact of config.artifacts) {
       const key = artifactKey(artifact);
       this.artifactKeySet.add(key);
 
-      const indexAtStation = this.artifactCountByStation.get(artifact.stationIndex) ?? 0;
-      this.artifactCountByStation.set(artifact.stationIndex, indexAtStation + 1);
+      const agentCount = Math.max(agentCountByStation.get(artifact.stationIndex) ?? 1, 1);
+      const countKey =
+        artifact.slot === 'input'
+          ? `${artifact.stationIndex}:input`
+          : `${artifact.stationIndex}:${artifact.agentSlotIndex}`;
+      const stackIndex = this.artifactCountByKey.get(countKey) ?? 0;
+      this.artifactCountByKey.set(countKey, stackIndex + 1);
 
-      const stationX = layout.stationX(artifact.stationIndex);
-      const groundEndpoints = layout.groundEndpoints();
-      const y = groundEndpoints.y + ARTIFACT_Y_OFFSET + indexAtStation * (ART_H + ARTIFACT_Y_SPACING);
+      const pos =
+        artifact.slot === 'input'
+          ? layout.inputArtifactPosition(artifact.stationIndex, agentCount, stackIndex)
+          : layout.outputArtifactPosition(artifact.stationIndex, artifact.agentSlotIndex, agentCount, stackIndex);
 
-      const artifactActor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(stationX, y));
+      const artifactActor = new ArtifactActor({ label: artifact.label, color: artifact.color }, vec(pos.x, pos.y));
       this.add(artifactActor);
     }
   }
 
-  /** Adjusts the camera zoom and position so the entire scene content fits within the viewport. */
-  private fitCamera(): void {
+  /** Draw thin grey vertical dividers between input and output zones at each station with agents. */
+  private addDividers(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
+    const agentCountByStation = buildAgentCountByStation(config);
+
+    for (const [i] of config.stations.entries()) {
+      const agentCount = agentCountByStation.get(i);
+      if (agentCount === undefined || agentCount === 0) continue;
+
+      const divider = layout.dividerPosition(i, agentCount);
+      const height = divider.y2 - divider.y1;
+      const midY = (divider.y1 + divider.y2) / 2;
+
+      const dividerActor = new Actor({ pos: vec(divider.x, midY) });
+      dividerActor.graphics.use(
+        new Rectangle({
+          width: DIVIDER_WIDTH,
+          height,
+          color: Color.fromHex(DIVIDER_COLOR),
+        }),
+      );
+      this.add(dividerActor);
+    }
+  }
+
+  /** Position camera to fit the full platform width, centered horizontally with rail near top. */
+  private positionCamera(): void {
     if (this.layout === undefined) return;
 
-    const { minX, maxX, minY, maxY } = this.layout.bounds;
-    const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
-    const zoomX = ENGINE_WIDTH / contentWidth;
-    const zoomY = ENGINE_HEIGHT / contentHeight;
-
-    this.camera.zoom = Math.min(zoomX, zoomY, 1);
-    this.camera.pos = vec((minX + maxX) / 2, (minY + maxY) / 2);
+    this.camera.zoom = Math.min(1, ENGINE_WIDTH / this.layout.platformWidth);
+    this.camera.pos = vec(this.layout.platformWidth / 2, RAIL_Y + ENGINE_HEIGHT / 2 - CAMERA_TOP_MARGIN);
   }
 }
 

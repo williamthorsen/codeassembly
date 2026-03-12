@@ -25,6 +25,7 @@ export interface CatwalkSceneConfig {
 export interface OrchestratorConfig {
   stationIndex: number;
   working: boolean;
+  celebrating: boolean;
   carriedArtifacts: CarriedArtifactConfig[];
   codeBadge: { label: string; color: string } | null;
 }
@@ -53,6 +54,7 @@ export interface GateConfig {
 
 export interface StationArtifactConfig {
   stationIndex: number;
+  agentSlotIndex: number;
   label: string;
   color: string;
   slot: 'input' | 'output';
@@ -71,6 +73,7 @@ export interface CarriedArtifactConfig {
 export interface OrchestratorDiff {
   moved: { from: number; to: number } | null;
   workingChanged: { from: boolean; to: boolean } | null;
+  celebratingChanged: { from: boolean; to: boolean } | null;
   carriedChanged: { from: CarriedArtifactConfig[]; to: CarriedArtifactConfig[] } | null;
   codeBadgeChanged: { from: OrchestratorConfig['codeBadge']; to: OrchestratorConfig['codeBadge'] } | null;
 }

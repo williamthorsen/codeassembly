@@ -200,7 +200,9 @@ function buildOrchestrator(status: CanonicalRunStatus, currentPhase: PhaseName |
   const carriedArtifacts = buildCarriedArtifacts(status, stationIndex, working);
   const codeBadge = buildCodeBadge(status);
 
-  return { stationIndex, working, carriedArtifacts, codeBadge };
+  const celebrating = status.status === 'completed';
+
+  return { stationIndex, working, celebrating, carriedArtifacts, codeBadge };
 }
 
 /**
@@ -383,14 +385,43 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
     return [];
   }
 
+  // Build reviewer name -> slot index mapping for per-agent attribution
+  const reviewerSlotMap = new Map<string, number>();
+  const parallelReview = status.phases.parallelReview;
+  if (isPresent(parallelReview)) {
+    const names = extractReviewerNames(parallelReview);
+    for (const [i, name] of names.entries()) {
+      reviewerSlotMap.set(name, i);
+    }
+  }
+
   const artifacts: StationArtifactConfig[] = [];
 
   for (const entry of status.artifacts) {
-    const stationIndex = PHASE_TO_STATION[entry.phase];
+    // Coder change-summaries always belong to the implementation station,
+    // even when produced during the review phase (fix cycles).
+    const stationIndex =
+      entry.type === 'change-summary' && entry.role === 'coder'
+        ? PHASE_TO_STATION.implementation
+        : PHASE_TO_STATION[entry.phase];
     if (stationIndex === undefined) continue;
+
+    // Determine agent slot index for per-agent artifact attribution
+    let agentSlotIndex = 0;
+    if (stationIndex === 3 && reviewerSlotMap.size > 0) {
+      // Review station: match artifact agent to reviewer slot
+      const slot = reviewerSlotMap.get(entry.agent);
+      if (slot === undefined) {
+        // Fallback to slot 0 with warning
+        console.warn(`Artifact agent "${entry.agent}" not found in reviewer names; defaulting to slot 0`);
+      } else {
+        agentSlotIndex = slot;
+      }
+    }
 
     artifacts.push({
       stationIndex,
+      agentSlotIndex,
       label: entry.type,
       color: lookupArtifactColor(entry.type),
       slot: 'output',
@@ -399,6 +430,64 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
   }
 
   return artifacts;
+}
+
+/** Build input artifacts derived from upstream station outputs. */
+function buildInputArtifacts(
+  status: CanonicalRunStatus,
+  outputArtifacts: StationArtifactConfig[],
+): StationArtifactConfig[] {
+  const inputs: StationArtifactConfig[] = [];
+
+  // Group output artifacts by station
+  const outputsByStation = new Map<number, StationArtifactConfig[]>();
+  for (const art of outputArtifacts) {
+    const list = outputsByStation.get(art.stationIndex);
+    if (list === undefined) {
+      outputsByStation.set(art.stationIndex, [art]);
+    } else {
+      list.push(art);
+    }
+  }
+
+  // For each station N that has outputs, generate inputs at station N+1.
+  // Cap at N+1 <= 5 so the summary station (6) is only populated by the
+  // completed block below, avoiding duplicate inputs.
+  for (const [stationIndex, stationOutputs] of outputsByStation) {
+    const nextStation = stationIndex + 1;
+    if (nextStation <= 5) {
+      for (const output of stationOutputs) {
+        // Fix-cycle artifacts re-enter the same station workflow and should
+        // not cascade as new inputs to the next station. Any artifact with a
+        // version (mapped from iteration) was produced during a review cycle.
+        if (output.version !== undefined) continue;
+        inputs.push({
+          stationIndex: nextStation,
+          agentSlotIndex: 0,
+          label: output.label,
+          color: output.color,
+          slot: 'input',
+        });
+      }
+    }
+  }
+
+  // Summary station (index 6): collect all run deliverables when completed
+  if (status.status === 'completed') {
+    for (const art of outputArtifacts) {
+      // Skip artifacts already at station 6 to avoid duplicates
+      if (art.stationIndex === 6) continue;
+      inputs.push({
+        stationIndex: 6,
+        agentSlotIndex: 0,
+        label: art.label,
+        color: art.color,
+        slot: 'input',
+      });
+    }
+  }
+
+  return inputs;
 }
 
 // ---------------------------------------------------------------------------
@@ -411,7 +500,9 @@ export function mapRunToCatwalk(status: CanonicalRunStatus): CatwalkSceneConfig 
   const orchestrator = buildOrchestrator(status, currentPhase);
   const agents = buildAgents(status, currentPhase);
   const gates = buildGates(stations, status.phases);
-  const artifacts = buildArtifacts(status);
+  const outputArtifacts = buildArtifacts(status);
+  const inputArtifacts = buildInputArtifacts(status, outputArtifacts);
+  const artifacts = [...outputArtifacts, ...inputArtifacts];
 
   return { orchestrator, stations, agents, gates, artifacts };
 }

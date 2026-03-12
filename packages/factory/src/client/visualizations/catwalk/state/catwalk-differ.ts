@@ -12,11 +12,14 @@ import type {
   StationArtifactConfig,
 } from '../types.js';
 
-/** Compare two orchestrator configs and return position/working/carried/badge changes. */
+/** Compare two orchestrator configs and return position/working/celebrating/carried/badge changes. */
 export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorConfig): OrchestratorDiff {
   const moved = prev.stationIndex === next.stationIndex ? null : { from: prev.stationIndex, to: next.stationIndex };
 
   const workingChanged = prev.working === next.working ? null : { from: prev.working, to: next.working };
+
+  const celebratingChanged =
+    prev.celebrating === next.celebrating ? null : { from: prev.celebrating, to: next.celebrating };
 
   const prevCarried = JSON.stringify(prev.carriedArtifacts);
   const nextCarried = JSON.stringify(next.carriedArtifacts);
@@ -27,7 +30,7 @@ export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorCon
   const nextBadge = next.codeBadge === null ? null : `${next.codeBadge.label}:${next.codeBadge.color}`;
   const codeBadgeChanged = prevBadge === nextBadge ? null : { from: prev.codeBadge, to: next.codeBadge };
 
-  return { moved, workingChanged, carriedChanged, codeBadgeChanged };
+  return { moved, workingChanged, celebratingChanged, carriedChanged, codeBadgeChanged };
 }
 
 /** Compare two agent arrays by id, detecting state changes, additions, and removals. */
@@ -73,7 +76,7 @@ export function diffGates(prev: readonly GateConfig[], next: readonly GateConfig
 
 /** Build a composite identity key for an artifact (artifacts lack a single stable id). */
 export function artifactKey(a: StationArtifactConfig): string {
-  return `${a.stationIndex}:${a.label}:${a.slot}:${a.version ?? 0}`;
+  return `${a.stationIndex}:${a.agentSlotIndex}:${a.label}:${a.slot}:${a.version ?? 0}`;
 }
 
 /** Compare two artifact arrays, detecting newly added artifacts by composite key. */
@@ -96,6 +99,7 @@ export function diffCatwalkConfig(prev: CatwalkSceneConfig, next: CatwalkSceneCo
   const hasChanges =
     orchestrator.moved !== null ||
     orchestrator.workingChanged !== null ||
+    orchestrator.celebratingChanged !== null ||
     orchestrator.carriedChanged !== null ||
     orchestrator.codeBadgeChanged !== null ||
     agents.stateChanged.length > 0 ||

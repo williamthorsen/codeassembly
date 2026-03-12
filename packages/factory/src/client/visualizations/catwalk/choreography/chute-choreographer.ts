@@ -13,8 +13,21 @@ export interface SceneRefs {
   orchestrator: OrchestratorActor | undefined;
   agents: Map<string, StationAgentActor>;
   gates: Map<string, GateActor>;
+  agentCountByStation: Map<number, number>;
   addActor: (actor: Actor) => void;
   addArtifact: (artifact: StationArtifactConfig, layout: CatwalkLayoutResult) => void;
+}
+
+/**
+ * Suppress the known killed-actor error that Excalibur raises when an actor
+ * is killed mid-animation (e.g., scene cleared during playback). Log any
+ * unexpected rejection so it surfaces for debugging.
+ */
+function suppressKilledActorError(error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.includes('Actor has been killed')) {
+    console.error('Unexpected animation error:', error);
+  }
 }
 
 /**
@@ -62,11 +75,11 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   // Step 1: Ascend -- flying artifacts rise up the origin chute
   const ascendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    // slot 0, agentCount 1 = center of station
-    const endpoints = layout.chuteEndpoints(originStation, 0, 1);
+    const agentCount = Math.max(refs.agentCountByStation.get(originStation) ?? 1, 1);
+    const endpoints = layout.chuteEndpoints(originStation, artifact.agentSlotIndex, agentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'ascend');
     refs.addActor(flyer);
-    ascendPromises.push(flyer.ascend().catch(noop));
+    ascendPromises.push(flyer.ascend().catch(suppressKilledActorError));
   }
   await Promise.all(ascendPromises);
 
@@ -77,16 +90,16 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
 
   // Step 3: Walk -- slide orchestrator to destination
   const destPos = layout.orchestratorPosition(destStation);
-  await orchestrator.animateMoveTo(vec(destPos.x, destPos.y)).catch(noop);
+  await orchestrator.animateMoveTo(vec(destPos.x, destPos.y)).catch(suppressKilledActorError);
 
   // Step 4: Descend -- flying artifacts drop down the destination chute per ticket spec
   const descendPromises: Promise<void>[] = [];
   for (const artifact of originArtifacts) {
-    // slot 0, agentCount 1 = center of station
-    const endpoints = layout.chuteEndpoints(destStation, 0, 1);
+    const agentCount = Math.max(refs.agentCountByStation.get(destStation) ?? 1, 1);
+    const endpoints = layout.chuteEndpoints(destStation, artifact.agentSlotIndex, agentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
-    descendPromises.push(flyer.descend().catch(noop));
+    descendPromises.push(flyer.descend().catch(suppressKilledActorError));
   }
   await Promise.all(descendPromises);
 
@@ -107,7 +120,7 @@ function applyImmediate(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: Sc
   if (diff.orchestrator.moved !== null && orchestrator !== undefined) {
     const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
     // Fire-and-forget: no sequencing needed
-    orchestrator.animateMoveTo(vec(pos.x, pos.y)).catch(noop);
+    orchestrator.animateMoveTo(vec(pos.x, pos.y)).catch(suppressKilledActorError);
   }
 
   // Orchestrator working state
@@ -160,9 +173,4 @@ function applyGateChanges(diff: CatwalkDiff, refs: SceneRefs): void {
       actor.animateOpen();
     }
   }
-}
-
-/** No-op catch handler for actor animation promises that may reject if the actor is killed mid-animation. */
-function noop(): void {
-  // Intentionally empty — guards against killed actor / cleared scene errors.
 }

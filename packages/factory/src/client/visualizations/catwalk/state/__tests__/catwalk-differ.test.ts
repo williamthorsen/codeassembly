@@ -15,6 +15,7 @@ function orchestrator(overrides: Partial<OrchestratorConfig> = {}): Orchestrator
   return {
     stationIndex: 0,
     working: false,
+    celebrating: false,
     carriedArtifacts: [],
     codeBadge: null,
     ...overrides,
@@ -149,6 +150,22 @@ describe('diffOrchestrator', () => {
     const diff = diffOrchestrator(prev, next);
 
     expect(diff.codeBadgeChanged).not.toBeNull();
+  });
+
+  it('detects celebrating transition from false to true', () => {
+    const prev = orchestrator({ celebrating: false });
+    const next = orchestrator({ celebrating: true });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.celebratingChanged).toEqual({ from: false, to: true });
+  });
+
+  it('returns celebratingChanged null when celebrating is unchanged', () => {
+    const prev = orchestrator({ celebrating: false });
+    const next = orchestrator({ celebrating: false });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.celebratingChanged).toBeNull();
   });
 });
 
@@ -312,6 +329,7 @@ function artifact(
 ): StationArtifactConfig {
   return {
     stationIndex,
+    agentSlotIndex: 0,
     label,
     color: '#ffffff',
     slot: 'output',
@@ -482,6 +500,15 @@ describe('diffCatwalkConfig', () => {
 
     expect(diff.hasChanges).toBe(true);
     expect(diff.orchestrator.codeBadgeChanged).not.toBeNull();
+  });
+
+  it('returns hasChanges true when orchestrator transitions to celebrating', () => {
+    const prev = sceneConfig({ orchestrator: orchestrator({ celebrating: false }) });
+    const next = sceneConfig({ orchestrator: orchestrator({ celebrating: true }) });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.orchestrator.celebratingChanged).toEqual({ from: false, to: true });
   });
 
   it('detects changes across all sub-diffs simultaneously', () => {

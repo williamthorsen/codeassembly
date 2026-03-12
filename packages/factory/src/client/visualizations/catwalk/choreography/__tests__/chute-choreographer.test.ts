@@ -87,6 +87,7 @@ function orchestratorDiff(overrides: Partial<OrchestratorDiff> = {}): Orchestrat
   return {
     moved: null,
     workingChanged: null,
+    celebratingChanged: null,
     carriedChanged: null,
     codeBadgeChanged: null,
     ...overrides,
@@ -126,6 +127,13 @@ function mockLayout(): CatwalkLayoutResult {
     gatePosition: (_l: number, _r: number) => ({ x: 200, y: 100 }),
     railEndpoints: () => ({ x1: 25, x2: 575, y: 100 }),
     groundEndpoints: () => ({ x1: 25, x2: 575, y: 382 }),
+    outputArtifactPosition: (si: number, _slot: number, _count: number, _stack: number): Position => ({
+      x: stationX(si),
+      y: 400,
+    }),
+    inputArtifactPosition: (si: number, _count: number, _stack: number): Position => ({ x: stationX(si) - 40, y: 400 }),
+    dividerPosition: (si: number, _count: number) => ({ x: stationX(si) - 20, y1: 382, y2: 500 }),
+    stationLabelPosition: (si: number): Position => ({ x: stationX(si), y: 400 }),
     bounds: { minX: 0, maxX: 600, minY: 0, maxY: 540 },
     platformWidth: 600,
   };
@@ -155,6 +163,11 @@ function mockRefs(
     orchestrator: mockOrchestrator() as unknown as SceneRefs['orchestrator'],
     agents: new Map(),
     gates: new Map(),
+    agentCountByStation: new Map<number, number>([
+      [0, 1],
+      [1, 1],
+      [2, 1],
+    ]),
     addActor: (actor: unknown) => {
       addedActors.push(actor);
     },
@@ -251,6 +264,7 @@ describe('choreograph', () => {
     it('adds artifacts via refs.addArtifact', async () => {
       const artifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
         slot: 'output',
@@ -271,6 +285,7 @@ describe('choreograph', () => {
     it('creates flying artifact actors when orchestrator moves with added artifacts at origin', async () => {
       const artifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
         slot: 'output',
@@ -290,7 +305,7 @@ describe('choreograph', () => {
     it('uses origin chute endpoints for ascend and destination chute endpoints for descend', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
       const layout = mockLayout();
@@ -321,7 +336,7 @@ describe('choreograph', () => {
           moved: { from: 0, to: 1 },
           carriedChanged: { from: [], to: carried },
         }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
 
@@ -336,7 +351,7 @@ describe('choreograph', () => {
     it('walks the orchestrator to the destination station', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 2 } }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
 
@@ -348,6 +363,7 @@ describe('choreograph', () => {
     it('adds origin artifacts after delivery completes', async () => {
       const artifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
         slot: 'output',
@@ -367,12 +383,14 @@ describe('choreograph', () => {
     it('adds non-origin artifacts immediately', async () => {
       const originArtifact: StationArtifactConfig = {
         stationIndex: 0,
+        agentSlotIndex: 0,
         label: 'arch',
         color: '#a5d8ff',
         slot: 'output',
       };
       const otherArtifact: StationArtifactConfig = {
         stationIndex: 2,
+        agentSlotIndex: 0,
         label: 'code',
         color: '#fff3bf',
         slot: 'output',
@@ -390,13 +408,72 @@ describe('choreograph', () => {
       expect(refs.addedArtifacts).toContain(otherArtifact);
     });
 
+    it('threads agentSlotIndex through chuteEndpoints so each slot gets a distinct chute X', async () => {
+      const SLOT_OFFSET = 50;
+
+      /** Layout whose chuteEndpoints returns a distinct X per (slotIndex, agentCount) pair. */
+      function slotAwareMockLayout(): CatwalkLayoutResult {
+        const base = mockLayout();
+        return {
+          ...base,
+          chuteEndpoints: (si: number, slotIndex: number, _count: number): ChuteEndpoints => {
+            const baseX = base.stationX(si);
+            return {
+              topX: baseX + slotIndex * SLOT_OFFSET,
+              topY: 148,
+              botX: baseX + slotIndex * SLOT_OFFSET,
+              botY: 320,
+            };
+          },
+        };
+      }
+
+      const artifact: StationArtifactConfig = {
+        stationIndex: 0,
+        agentSlotIndex: 1,
+        label: 'plan',
+        color: '#a5d8ff',
+        slot: 'output',
+      };
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [artifact] },
+      });
+      const refs = mockRefs({
+        agentCountByStation: new Map<number, number>([
+          [0, 2],
+          [1, 1],
+          [2, 1],
+        ]),
+      });
+      const layout = slotAwareMockLayout();
+
+      await choreograph(diff, layout, refs);
+
+      // Two flying actors: ascend (slot 1 at station 0) then descend (slot 1 at station 1)
+      expect(refs.addedActors.length).toBe(2);
+      const [ascendActor] = refs.addedActors;
+
+      // The MockActor stores constructor args in config.pos.
+      // For ascend direction, start pos = vec(botX, botY) where botX = stationX(0) + 1 * SLOT_OFFSET.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
+      const ascendConfig = (ascendActor as { config: { pos: { x: number; y: number } } }).config;
+
+      const expectedSlot1X = layout.stationX(0) + 1 * SLOT_OFFSET;
+      const slot0X = layout.stationX(0);
+
+      // The ascend actor must use the slot-1 X, not the slot-0 X
+      expect(ascendConfig.pos.x).toBe(expectedSlot1X);
+      expect(ascendConfig.pos.x).not.toBe(slot0X);
+    });
+
     it('clears carried artifacts unconditionally at step 5 even when carriedChanged is null', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({
           moved: { from: 0, to: 1 },
           carriedChanged: null,
         }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
       const refs = mockRefs();
 
@@ -468,7 +545,7 @@ describe('choreograph', () => {
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
       });
 
       const choreographPromise = choreograph(diff, mockLayout(), refs);
@@ -507,6 +584,62 @@ describe('choreograph', () => {
       const refs = mockRefs({ orchestrator: undefined });
 
       await expect(choreograph(diff, mockLayout(), refs)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('suppressKilledActorError', () => {
+    it('silently swallows known killed-actor rejections', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+
+      const refs = mockRefs({
+        addActor: (actor: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
+          const flyer = actor as Record<string, unknown>;
+          if (typeof flyer.ascend === 'function') {
+            flyer.ascend = () => Promise.reject(new Error('Actor has been killed'));
+          }
+          if (typeof flyer.descend === 'function') {
+            flyer.descend = () => Promise.reject(new Error('Actor has been killed'));
+          }
+        },
+      });
+
+      await choreograph(diff, mockLayout(), refs);
+
+      expect(consoleSpy).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('logs unexpected rejections via console.error', async () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+      });
+
+      const refs = mockRefs({
+        addActor: (actor: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
+          const flyer = actor as Record<string, unknown>;
+          if (typeof flyer.ascend === 'function') {
+            flyer.ascend = () => Promise.reject(new Error('Unexpected error'));
+          }
+          if (typeof flyer.descend === 'function') {
+            flyer.descend = () => Promise.reject(new Error('Unexpected error'));
+          }
+        },
+      });
+
+      await choreograph(diff, mockLayout(), refs);
+
+      expect(consoleSpy).toHaveBeenCalledWith('Unexpected animation error:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
   });
 });
