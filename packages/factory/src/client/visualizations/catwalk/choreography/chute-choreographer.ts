@@ -32,22 +32,37 @@ function suppressKilledActorError(error: unknown): void {
 
 /**
  * Sequences chute animations and orchestrator movement based on a CatwalkDiff.
- * When the orchestrator moves AND new artifacts are present, choreographs a delivery sequence:
- * ascend -> pick up -> walk -> descend. Otherwise falls back to immediate application.
+ * When the orchestrator moves AND input artifacts appear at the destination, choreographs a
+ * delivery sequence: ascend from origin -> walk -> descend at destination -> land.
+ * Otherwise falls back to immediate application.
  */
 export async function choreograph(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): Promise<void> {
-  const isDelivery =
-    diff.orchestrator.moved !== null && diff.artifacts.added.length > 0 && refs.orchestrator !== undefined;
+  if (diff.orchestrator.moved === null || refs.orchestrator === undefined) {
+    applyImmediate(diff, layout, refs);
+    return;
+  }
 
-  if (isDelivery) {
-    await choreographDelivery(diff, layout, refs);
+  const deliveryArtifacts = diff.artifacts.added.filter(
+    (a) => a.stationIndex === diff.orchestrator.moved?.to && a.slot === 'input',
+  );
+
+  if (deliveryArtifacts.length > 0) {
+    await choreographDelivery(diff, layout, refs, deliveryArtifacts);
   } else {
     applyImmediate(diff, layout, refs);
   }
 }
 
-/** Execute the sequenced delivery animation: ascend -> pick up -> walk -> descend -> land. */
-async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResult, refs: SceneRefs): Promise<void> {
+/**
+ * Execute the sequenced delivery animation: ascend from origin -> pick up -> walk ->
+ * descend at destination -> land static inputs at destination.
+ */
+async function choreographDelivery(
+  diff: CatwalkDiff,
+  layout: CatwalkLayoutResult,
+  refs: SceneRefs,
+  deliveryArtifacts: StationArtifactConfig[],
+): Promise<void> {
   const orchestrator = refs.orchestrator;
   if (orchestrator === undefined || diff.orchestrator.moved === null) return;
 
@@ -55,11 +70,11 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   const originStation = moved.from;
   const destStation = moved.to;
 
-  // Identify artifacts at the origin station
-  const originArtifacts = diff.artifacts.added.filter((a) => a.stationIndex === originStation);
-  const otherArtifacts = diff.artifacts.added.filter((a) => a.stationIndex !== originStation);
+  // Non-delivery artifacts: everything except the delivery inputs -- fade in immediately
+  const deliverySet = new Set(deliveryArtifacts);
+  const nonDeliveryArtifacts = diff.artifacts.added.filter((a) => !deliverySet.has(a));
 
-  // Apply non-delivery changes immediately (agent states, gates, badge, working, non-origin artifacts)
+  // Apply non-delivery changes immediately (agent states, gates, badge, working, non-delivery artifacts)
   applyAgentChanges(diff, refs);
   applyGateChanges(diff, refs);
   if (diff.orchestrator.codeBadgeChanged !== null) {
@@ -68,15 +83,17 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   if (diff.orchestrator.workingChanged !== null) {
     orchestrator.setWorking(diff.orchestrator.workingChanged.to);
   }
-  for (const artifact of otherArtifacts) {
+  for (const artifact of nonDeliveryArtifacts) {
     refs.addArtifact(artifact, layout);
   }
 
-  // Step 1: Ascend -- flying artifacts rise up the origin chute
+  // Step 1: Ascend -- flying artifacts rise up the origin station chute
+  // Use a default chute position at the origin (slot 0) since the source output's
+  // agent slot may differ from the delivery artifact's
   const ascendPromises: Promise<void>[] = [];
-  for (const artifact of originArtifacts) {
-    const agentCount = Math.max(refs.agentCountByStation.get(originStation) ?? 1, 1);
-    const endpoints = layout.chuteEndpoints(originStation, artifact.agentSlotIndex, agentCount);
+  const originAgentCount = Math.max(refs.agentCountByStation.get(originStation) ?? 1, 1);
+  for (const artifact of deliveryArtifacts) {
+    const endpoints = layout.chuteEndpoints(originStation, 0, originAgentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'ascend');
     refs.addActor(flyer);
     ascendPromises.push(flyer.ascend().catch(suppressKilledActorError));
@@ -92,23 +109,21 @@ async function choreographDelivery(diff: CatwalkDiff, layout: CatwalkLayoutResul
   const destPos = layout.orchestratorPosition(destStation);
   await orchestrator.animateMoveTo(vec(destPos.x, destPos.y)).catch(suppressKilledActorError);
 
-  // Step 4: Descend -- flying artifacts drop down the destination chute per ticket spec
+  // Step 4: Descend -- flying artifacts drop down the destination station chute
   const descendPromises: Promise<void>[] = [];
-  for (const artifact of originArtifacts) {
-    const agentCount = Math.max(refs.agentCountByStation.get(destStation) ?? 1, 1);
-    const endpoints = layout.chuteEndpoints(destStation, artifact.agentSlotIndex, agentCount);
+  const destAgentCount = Math.max(refs.agentCountByStation.get(destStation) ?? 1, 1);
+  for (const artifact of deliveryArtifacts) {
+    const endpoints = layout.chuteEndpoints(destStation, 0, destAgentCount);
     const flyer = new FlyingArtifactActor({ label: artifact.label, color: artifact.color }, endpoints, 'descend');
     refs.addActor(flyer);
     descendPromises.push(flyer.descend().catch(suppressKilledActorError));
   }
   await Promise.all(descendPromises);
 
-  // Step 5: Clear carried artifacts and land artifacts at origin station
-  if (originArtifacts.length > 0) {
-    orchestrator.setCarriedArtifacts([]);
-    for (const artifact of originArtifacts) {
-      refs.addArtifact(artifact, layout);
-    }
+  // Step 5: Clear carried artifacts and land static inputs at destination station
+  orchestrator.setCarriedArtifacts([]);
+  for (const artifact of deliveryArtifacts) {
+    refs.addArtifact(artifact, layout);
   }
 }
 

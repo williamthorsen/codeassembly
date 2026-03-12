@@ -282,13 +282,13 @@ describe('choreograph', () => {
   });
 
   describe('delivery sequence', () => {
-    it('creates flying artifact actors when orchestrator moves with added artifacts at origin', async () => {
+    it('creates flying artifact actors when orchestrator moves with input artifacts at destination', async () => {
       const artifact: StationArtifactConfig = {
-        stationIndex: 0,
+        stationIndex: 1,
         agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
-        slot: 'output',
+        slot: 'input',
       };
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
@@ -305,7 +305,7 @@ describe('choreograph', () => {
     it('uses origin chute endpoints for ascend and destination chute endpoints for descend', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 1, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
       const refs = mockRefs();
       const layout = mockLayout();
@@ -316,8 +316,6 @@ describe('choreograph', () => {
       expect(refs.addedActors.length).toBe(2);
       const [ascendActor, descendActor] = refs.addedActors;
 
-      // The mock Actor stores constructor args in config.pos (a { x, y } vector).
-      // FlyingArtifactActor passes `pos: startPos` where startPos is derived from chute endpoints.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
       const ascendConfig = (ascendActor as { config: { pos: { x: number; y: number } } }).config;
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
@@ -336,7 +334,7 @@ describe('choreograph', () => {
           moved: { from: 0, to: 1 },
           carriedChanged: { from: [], to: carried },
         }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 1, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
       const refs = mockRefs();
 
@@ -351,7 +349,7 @@ describe('choreograph', () => {
     it('walks the orchestrator to the destination station', async () => {
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 2 } }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 2, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
       const refs = mockRefs();
 
@@ -360,13 +358,13 @@ describe('choreograph', () => {
       expect(refs.orchestrator?.animateMoveTo).toHaveBeenCalled();
     });
 
-    it('adds origin artifacts after delivery completes', async () => {
+    it('adds delivery artifacts at destination after delivery completes', async () => {
       const artifact: StationArtifactConfig = {
-        stationIndex: 0,
+        stationIndex: 1,
         agentSlotIndex: 0,
         label: 'architecture',
         color: '#a5d8ff',
-        slot: 'output',
+        slot: 'input',
       };
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
@@ -376,95 +374,65 @@ describe('choreograph', () => {
 
       await choreograph(diff, mockLayout(), refs);
 
-      // The origin artifact should be added as a landed artifact
+      // The delivery artifact should be added as a landed artifact at the destination
       expect(refs.addedArtifacts).toContain(artifact);
     });
 
-    it('adds non-origin artifacts immediately', async () => {
-      const originArtifact: StationArtifactConfig = {
+    it('adds non-delivery artifacts immediately', async () => {
+      const deliveryArtifact: StationArtifactConfig = {
+        stationIndex: 1,
+        agentSlotIndex: 0,
+        label: 'arch',
+        color: '#a5d8ff',
+        slot: 'input',
+      };
+      const outputArtifact: StationArtifactConfig = {
         stationIndex: 0,
         agentSlotIndex: 0,
         label: 'arch',
         color: '#a5d8ff',
         slot: 'output',
       };
-      const otherArtifact: StationArtifactConfig = {
-        stationIndex: 2,
-        agentSlotIndex: 0,
-        label: 'code',
-        color: '#fff3bf',
-        slot: 'output',
-      };
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [originArtifact, otherArtifact] },
+        artifacts: { added: [deliveryArtifact, outputArtifact] },
       });
       const refs = mockRefs();
 
       await choreograph(diff, mockLayout(), refs);
 
       // Both artifacts should end up in addedArtifacts
-      expect(refs.addedArtifacts).toContain(originArtifact);
-      expect(refs.addedArtifacts).toContain(otherArtifact);
+      expect(refs.addedArtifacts).toContain(deliveryArtifact);
+      expect(refs.addedArtifacts).toContain(outputArtifact);
     });
 
-    it('threads agentSlotIndex through chuteEndpoints so each slot gets a distinct chute X', async () => {
-      const SLOT_OFFSET = 50;
-
-      /** Layout whose chuteEndpoints returns a distinct X per (slotIndex, agentCount) pair. */
-      function slotAwareMockLayout(): CatwalkLayoutResult {
-        const base = mockLayout();
-        return {
-          ...base,
-          chuteEndpoints: (si: number, slotIndex: number, _count: number): ChuteEndpoints => {
-            const baseX = base.stationX(si);
-            return {
-              topX: baseX + slotIndex * SLOT_OFFSET,
-              topY: 148,
-              botX: baseX + slotIndex * SLOT_OFFSET,
-              botY: 320,
-            };
-          },
-        };
-      }
-
+    it('uses default slot 0 chute at origin for ascend', async () => {
+      // Delivery input has agentSlotIndex 0, but we verify the ascend uses
+      // the origin station's slot-0 chute regardless
       const artifact: StationArtifactConfig = {
-        stationIndex: 0,
-        agentSlotIndex: 1,
+        stationIndex: 1,
+        agentSlotIndex: 0,
         label: 'plan',
         color: '#a5d8ff',
-        slot: 'output',
+        slot: 'input',
       };
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
         artifacts: { added: [artifact] },
       });
-      const refs = mockRefs({
-        agentCountByStation: new Map<number, number>([
-          [0, 2],
-          [1, 1],
-          [2, 1],
-        ]),
-      });
-      const layout = slotAwareMockLayout();
+      const refs = mockRefs();
+      const layout = mockLayout();
 
       await choreograph(diff, layout, refs);
 
-      // Two flying actors: ascend (slot 1 at station 0) then descend (slot 1 at station 1)
       expect(refs.addedActors.length).toBe(2);
       const [ascendActor] = refs.addedActors;
 
-      // The MockActor stores constructor args in config.pos.
-      // For ascend direction, start pos = vec(botX, botY) where botX = stationX(0) + 1 * SLOT_OFFSET.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Inspecting mock FlyingArtifactActor constructor config
       const ascendConfig = (ascendActor as { config: { pos: { x: number; y: number } } }).config;
 
-      const expectedSlot1X = layout.stationX(0) + 1 * SLOT_OFFSET;
-      const slot0X = layout.stationX(0);
-
-      // The ascend actor must use the slot-1 X, not the slot-0 X
-      expect(ascendConfig.pos.x).toBe(expectedSlot1X);
-      expect(ascendConfig.pos.x).not.toBe(slot0X);
+      // Ascend should use station 0 (origin) chute position
+      expect(ascendConfig.pos.x).toBe(layout.stationX(0));
     });
 
     it('clears carried artifacts unconditionally at step 5 even when carriedChanged is null', async () => {
@@ -473,7 +441,7 @@ describe('choreograph', () => {
           moved: { from: 0, to: 1 },
           carriedChanged: null,
         }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 1, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
       const refs = mockRefs();
 
@@ -482,6 +450,29 @@ describe('choreograph', () => {
       // Even without a carriedChanged diff, step 5 should unconditionally clear
       expect(refs.orchestrator?.setCarriedArtifacts).toHaveBeenCalledTimes(1);
       expect(refs.orchestrator?.setCarriedArtifacts).toHaveBeenCalledWith([]);
+    });
+
+    it('falls back to applyImmediate when orchestrator moves but no inputs at destination', async () => {
+      // Output artifact at origin, but no input at destination -- not a delivery
+      const outputArtifact: StationArtifactConfig = {
+        stationIndex: 0,
+        agentSlotIndex: 0,
+        label: 'arch',
+        color: '#a5d8ff',
+        slot: 'output',
+      };
+      const diff = catwalkDiff({
+        orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
+        artifacts: { added: [outputArtifact] },
+      });
+      const refs = mockRefs();
+
+      await choreograph(diff, mockLayout(), refs);
+
+      // Should use applyImmediate path: no flying actors, artifact added directly
+      expect(refs.addedActors.length).toBe(0);
+      expect(refs.addedArtifacts).toContain(outputArtifact);
+      expect(refs.orchestrator?.animateMoveTo).toHaveBeenCalled();
     });
 
     it('sequences ascend before walk and walk before descend', async () => {
@@ -545,7 +536,7 @@ describe('choreograph', () => {
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 1, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
 
       const choreographPromise = choreograph(diff, mockLayout(), refs);
@@ -593,7 +584,7 @@ describe('choreograph', () => {
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 1, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
 
       const refs = mockRefs({
@@ -620,7 +611,7 @@ describe('choreograph', () => {
 
       const diff = catwalkDiff({
         orchestrator: orchestratorDiff({ moved: { from: 0, to: 1 } }),
-        artifacts: { added: [{ stationIndex: 0, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'output' }] },
+        artifacts: { added: [{ stationIndex: 1, agentSlotIndex: 0, label: 'arch', color: '#a5d8ff', slot: 'input' }] },
       });
 
       const refs = mockRefs({
