@@ -1,4 +1,12 @@
+import { foldEvents } from '../../../shared/event-folder.js';
+import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
+import type { DemoRecording } from '../index.js';
+
+// ---------------------------------------------------------------------------
+// Source data: header + events define the raw run log. These are used once at
+// module load time to pre-generate the curated snapshot sequence below.
+// ---------------------------------------------------------------------------
 
 const header: RunHeader = {
   runId: '20260301-120000Z-orchestrated',
@@ -274,10 +282,57 @@ const events: RunEvent[] = [
   { t: '2026-03-01T12:30:30Z', event: 'run_completed', status: 'completed' },
 ];
 
-export const moderatelyComplexRun = {
+// ---------------------------------------------------------------------------
+// Curated snapshot generation
+//
+// Each index is a 0-based event index. `foldEvents(header, events.slice(0, i+1))`
+// gives the canonical status after processing events through index `i`.
+//
+// Selected indices represent meaningful visual transitions:
+//   - run start, phase decisions
+//   - each phase start / artifact / phase complete
+//   - reviewer dispatches, completions, review artifacts
+//   - coder fix cycle, re-review
+//   - code simplifier, holistic review
+//   - summary artifact, run complete
+// ---------------------------------------------------------------------------
+const CURATED_EVENT_INDICES = [
+  0, // run_started
+  4, // phase decisions complete
+  5, // architecture started
+  6, // architecture artifact written
+  7, // architecture completed
+  8, // planning started
+  9, // planning artifact written
+  10, // planning completed
+  11, // implementation started
+  12, // implementation artifact written
+  13, // implementation completed
+  14, // review started
+  16, // 1st reviewer dispatched (code-reviewer)
+  19, // 1st reviewer completed (code-reviewer: medium)
+  21, // all reviewers completed (test-reviewer: low)
+  22, // 1st review artifact (code-review)
+  25, // coder fix started
+  27, // coder fix completed
+  30, // review phase completed
+  31, // simplifier started
+  33, // simplifier artifact written
+  34, // simplifier completed
+  35, // holistic started
+  37, // holistic artifact written
+  38, // holistic completed
+  39, // summary artifact written
+  40, // run completed
+];
+
+function generateSnapshots(hdr: RunHeader, evts: ReadonlyArray<RunEvent>, indices: number[]): CanonicalRunStatus[] {
+  return indices.map((idx) => foldEvents(hdr, evts.slice(0, idx + 1)));
+}
+
+export const moderatelyComplexRun: DemoRecording = {
   name: 'Moderately complex run',
   description:
     'Full orchestrated run with architecture, planning, implementation, 3 reviewers, fix cycle, selective re-review, code simplifier, and holistic review.',
-  header,
-  events,
+  snapshots: generateSnapshots(header, events, CURATED_EVENT_INDICES),
 };

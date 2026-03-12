@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { foldEvents } from '../../../shared/event-folder.js';
 import { DEMO_RECORDINGS } from '../index.js';
 import { moderatelyComplexRun } from '../recordings/moderately-complex-run.js';
 
@@ -9,31 +8,50 @@ describe('DEMO_RECORDINGS', () => {
     expect(DEMO_RECORDINGS.length).toBeGreaterThanOrEqual(1);
   });
 
-  it.each(DEMO_RECORDINGS)('$name: folds into a terminal status with a defined completedAt', (recording) => {
-    const result = foldEvents(recording.header, recording.events);
-
-    expect(['completed', 'failed', 'needs_manual_review']).toContain(result.status);
-    expect(result.completedAt).toBeDefined();
+  it.each(DEMO_RECORDINGS)('$name: last snapshot has a terminal status with a defined completedAt', (recording) => {
+    const lastSnapshot = recording.snapshots[recording.snapshots.length - 1];
+    expect(lastSnapshot).toBeDefined();
+    expect(['completed', 'failed', 'needs_manual_review']).toContain(lastSnapshot?.status);
+    expect(lastSnapshot?.completedAt).toBeDefined();
   });
 
-  it('Moderately complex run: exercises all 7 phase stations', () => {
-    const result = foldEvents(moderatelyComplexRun.header, moderatelyComplexRun.events);
+  it('Moderately complex run: exercises all 6 phase stations', () => {
+    const lastSnapshot = moderatelyComplexRun.snapshots[moderatelyComplexRun.snapshots.length - 1];
+    expect(lastSnapshot).toBeDefined();
 
-    expect(result.phases.architecture).toBeDefined();
-    expect(result.phases.planning).toBeDefined();
-    expect(result.phases.implementation).toBeDefined();
-    expect(result.phases.parallelReview).toBeDefined();
-    expect(result.phases.codeSimplifier).toBeDefined();
-    expect(result.phases.holisticReview).toBeDefined();
+    expect(lastSnapshot?.phases.architecture).toBeDefined();
+    expect(lastSnapshot?.phases.planning).toBeDefined();
+    expect(lastSnapshot?.phases.implementation).toBeDefined();
+    expect(lastSnapshot?.phases.parallelReview).toBeDefined();
+    expect(lastSnapshot?.phases.codeSimplifier).toBeDefined();
+    expect(lastSnapshot?.phases.holisticReview).toBeDefined();
 
-    // The 7th phase (summary) is implicit via run_completed
-    expect(result.status).toBe('completed');
+    expect(lastSnapshot?.status).toBe('completed');
   });
 
   it('Moderately complex run: has at least 3 reviewers', () => {
-    const result = foldEvents(moderatelyComplexRun.header, moderatelyComplexRun.events);
+    const lastSnapshot = moderatelyComplexRun.snapshots[moderatelyComplexRun.snapshots.length - 1];
+    expect(lastSnapshot).toBeDefined();
 
-    const reviewerCount = Object.keys(result.phases.parallelReview?.reviewers ?? {}).length;
+    const reviewerCount = Object.keys(lastSnapshot?.phases.parallelReview?.reviewers ?? {}).length;
     expect(reviewerCount).toBeGreaterThanOrEqual(3);
+  });
+
+  it('Moderately complex run: has ~27 curated snapshots', () => {
+    expect(moderatelyComplexRun.snapshots.length).toBeGreaterThanOrEqual(20);
+    expect(moderatelyComplexRun.snapshots.length).toBeLessThanOrEqual(30);
+  });
+
+  it('Moderately complex run: first snapshot is in_progress with no artifacts', () => {
+    const first = moderatelyComplexRun.snapshots[0];
+    expect(first).toBeDefined();
+    expect(first?.status).toBe('in_progress');
+    expect(first?.artifacts).toHaveLength(0);
+  });
+
+  it('Moderately complex run: last snapshot has all 10 artifacts', () => {
+    const last = moderatelyComplexRun.snapshots[moderatelyComplexRun.snapshots.length - 1];
+    expect(last).toBeDefined();
+    expect(last?.artifacts?.length).toBe(10);
   });
 });
