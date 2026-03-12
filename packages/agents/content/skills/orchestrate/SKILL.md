@@ -702,7 +702,6 @@ Task results include a `<usage>` block reporting resource consumption. Parse the
 
 - Usage fields are optional on all events — if the `<usage>` block is absent or any field cannot be parsed, omit those fields silently. Never fail a phase due to missing usage data.
 - Values must be non-negative integers. Discard any field that does not parse to a valid non-negative integer.
-- Include parsed usage fields on `phase_completed`, `reviewer_completed`, `coder_fix_completed`, and `re_review_completed` event emissions as described in each phase's "After" section.
 
 ## Error handling
 
