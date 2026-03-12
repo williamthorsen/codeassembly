@@ -22,7 +22,7 @@ import {
   WORKING_DURATION,
   WORKING_FRAME_COORDINATES,
   WORKING_STRATEGY,
-} from '../../../game/sprites/sprite-definitions.js';
+} from './sprite-definitions.js';
 import type { AgentAnimationState } from '../types.js';
 import { type CatwalkSpriteType, SPRITE_SHEET_URLS } from './sprite-sheet-urls.js';
 

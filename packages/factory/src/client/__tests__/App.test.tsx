@@ -10,7 +10,6 @@ const {
   mockUseRunStatus,
   mockRunSelector,
   mockStatusBar,
-  mockGameCanvas,
   mockCatwalkCanvas,
   mockFetchProjects,
   mockFlattenProjectIndex,
@@ -22,7 +21,6 @@ const {
     mockUseRunStatus: vi.fn(),
     mockRunSelector: vi.fn(),
     mockStatusBar: vi.fn(),
-    mockGameCanvas: vi.fn(),
     mockCatwalkCanvas: vi.fn(),
     mockFetchProjects: vi.fn<() => Promise<ProjectIndex>>(),
     mockFlattenProjectIndex: vi.fn<(index: ProjectIndex | null) => FlatRunInfo[]>(),
@@ -42,10 +40,6 @@ vi.mock('../components/RunSelector.js', () => ({
 
 vi.mock('../components/StatusBar.js', () => ({
   StatusBar: mockStatusBar,
-}));
-
-vi.mock('../components/GameCanvas.js', () => ({
-  GameCanvas: mockGameCanvas,
 }));
 
 vi.mock('../components/CatwalkCanvas.js', () => ({
@@ -127,9 +121,6 @@ describe('App', () => {
     mockStatusBar.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
       <div data-testid="status-bar">{status.runId}</div>
     ));
-    mockGameCanvas.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
-      <div data-testid="game-canvas">{status.runId}</div>
-    ));
     mockCatwalkCanvas.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
       <div data-testid="catwalk-canvas">{status.runId}</div>
     ));
@@ -144,7 +135,7 @@ describe('App', () => {
 
     expect(view.getByText('Loading...')).toBeInTheDocument();
     expect(view.queryByTestId('status-bar')).not.toBeInTheDocument();
-    expect(view.queryByTestId('game-canvas')).not.toBeInTheDocument();
+    expect(view.queryByTestId('catwalk-canvas')).not.toBeInTheDocument();
   });
 
   it('displays error state when useRunStatus returns error', () => {

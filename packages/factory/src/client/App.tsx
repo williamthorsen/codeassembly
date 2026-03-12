@@ -7,7 +7,7 @@ import { DemoStatusLight } from './components/DemoStatusLight.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
 import { StatusBar } from './components/StatusBar.js';
-import { VisualizationSwitcher } from './components/VisualizationSwitcher.js';
+import { CatwalkCanvas } from './components/CatwalkCanvas.js';
 import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
 import { useDemoMode } from './hooks/useDemoMode.js';
@@ -230,7 +230,7 @@ export function App(): React.JSX.Element {
         {activeStatus && <StatusBar status={activeStatus} demoSlot={demoSlot} />}
         {isLoading && <p>Loading...</p>}
         {error && <p>Error: {error.message}</p>}
-        {activeStatus && <VisualizationSwitcher status={activeStatus} />}
+        {activeStatus && <CatwalkCanvas status={activeStatus} />}
       </main>
     </div>
   );
