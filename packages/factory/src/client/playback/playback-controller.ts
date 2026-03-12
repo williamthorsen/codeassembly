@@ -1,6 +1,4 @@
-import { foldEvents } from '../../shared/event-folder.js';
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
-import type { RunEvent, RunHeader } from '../../shared/types/run-log.js';
 
 export type PlaybackState = 'stopped' | 'playing' | 'paused' | 'ended';
 
@@ -15,31 +13,29 @@ export interface PlaybackControls {
   slower(): void;
   resetSpeed(): void;
   setSpeed(n: number): void;
-  setNormalized(on: boolean): void;
 }
 
 const MIN_SPEED = 0.25;
-const MAX_SPEED = 128;
-const MAX_GAP_MS = 10_000;
+const MAX_SPEED = 32;
+const BASE_INTERVAL_MS = 1500;
+const MIN_INTERVAL_MS = 300;
 
+/** Snapshot-based playback controller that steps through a sequence of `CanonicalRunStatus` snapshots. */
 export class PlaybackController implements PlaybackControls {
-  private readonly header: RunHeader;
-  private readonly events: ReadonlyArray<RunEvent>;
+  private readonly snapshots: ReadonlyArray<CanonicalRunStatus>;
   private readonly onUpdate: (status: CanonicalRunStatus) => void;
   private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
-  private normalized = true;
 
   state: PlaybackState = 'stopped';
   cursor = -1;
   speed = 1;
 
-  get eventCount(): number {
-    return this.events.length;
+  get snapshotCount(): number {
+    return this.snapshots.length;
   }
 
-  constructor(header: RunHeader, events: ReadonlyArray<RunEvent>, onUpdate: (status: CanonicalRunStatus) => void) {
-    this.header = header;
-    this.events = events;
+  constructor(snapshots: ReadonlyArray<CanonicalRunStatus>, onUpdate: (status: CanonicalRunStatus) => void) {
+    this.snapshots = snapshots;
     this.onUpdate = onUpdate;
   }
 
@@ -69,8 +65,8 @@ export class PlaybackController implements PlaybackControls {
   }
 
   stepForward(): void {
-    if (this.cursor >= this.events.length - 1) {
-      if (this.cursor === this.events.length - 1) {
+    if (this.cursor >= this.snapshots.length - 1) {
+      if (this.cursor === this.snapshots.length - 1) {
         this.state = 'ended';
       }
       return;
@@ -79,7 +75,7 @@ export class PlaybackController implements PlaybackControls {
     this.cursor += 1;
     this.emitCurrent();
 
-    if (this.cursor === this.events.length - 1) {
+    if (this.cursor === this.snapshots.length - 1) {
       this.state = 'ended';
     } else if (this.state === 'stopped') {
       this.state = 'paused';
@@ -113,39 +109,27 @@ export class PlaybackController implements PlaybackControls {
     this.speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, n));
   }
 
-  setNormalized(on: boolean): void {
-    this.normalized = on;
-  }
-
   dispose(): void {
     this.cancelPending();
   }
 
   private emitCurrent(): void {
-    const eventsSlice = this.cursor >= 0 ? this.events.slice(0, this.cursor + 1) : [];
-    const status = foldEvents(this.header, eventsSlice);
-    this.onUpdate(status);
+    const snapshot = this.cursor >= 0 ? this.snapshots[this.cursor] : undefined;
+    if (snapshot !== undefined) {
+      this.onUpdate(snapshot);
+    }
   }
 
   private scheduleNext(): void {
     this.cancelPending();
 
     const nextIndex = this.cursor + 1;
-    if (nextIndex >= this.events.length) {
+    if (nextIndex >= this.snapshots.length) {
       this.state = 'ended';
       return;
     }
 
-    const currentEvent = this.events[this.cursor];
-    const nextEvent = this.events[nextIndex];
-
-    if (!currentEvent || !nextEvent) return;
-
-    let gapMs = new Date(nextEvent.t).getTime() - new Date(currentEvent.t).getTime();
-    if (this.normalized && gapMs > MAX_GAP_MS) {
-      gapMs = MAX_GAP_MS;
-    }
-    const delay = gapMs / this.speed;
+    const delay = Math.max(BASE_INTERVAL_MS / this.speed, MIN_INTERVAL_MS);
 
     this.pendingTimeout = setTimeout(() => {
       if (this.state !== 'playing') return;

@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
-import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
 import { PlaybackController } from '../playback-controller.js';
 
-function createHeader(): RunHeader {
-  return {
+function createSnapshots(): CanonicalRunStatus[] {
+  const base: CanonicalRunStatus = {
     runId: 'test-run',
     projectSlug: 'test',
     ticketId: undefined,
@@ -13,6 +12,9 @@ function createHeader(): RunHeader {
     branch: 'main',
     task: 'test task',
     startedAt: '2026-01-01T00:00:00Z',
+    completedAt: undefined,
+    status: 'in_progress',
+    reason: undefined,
     externalPlan: false,
     mergeBaseSha: undefined,
     diffBase: undefined,
@@ -22,21 +24,40 @@ function createHeader(): RunHeader {
     budgetThreshold: undefined,
     mode: undefined,
     model: undefined,
-  };
-}
-
-function createEvents(): RunEvent[] {
-  return [
-    { t: '2026-01-01T00:00:00Z', event: 'run_started' },
-    { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' },
-    {
-      t: '2026-01-01T00:02:00Z',
-      event: 'phase_completed',
-      phase: 'architecture',
-      status: 'completed',
-      data: { impactLevel: 'high' },
+    phases: {
+      architecture: undefined,
+      planning: undefined,
+      implementation: undefined,
+      parallelReview: undefined,
+      review: undefined,
+      codeSimplifier: undefined,
+      holisticReview: undefined,
     },
-    { t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' },
+    phaseDecisions: {},
+    artifacts: [],
+  };
+  return [
+    { ...base },
+    {
+      ...base,
+      phases: { ...base.phases, architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined } },
+    },
+    {
+      ...base,
+      phases: {
+        ...base.phases,
+        architecture: { status: 'completed', impactLevel: 'medium', artifact: 'architecture.md' },
+      },
+    },
+    {
+      ...base,
+      status: 'completed',
+      completedAt: '2026-01-01T00:10:00Z',
+      phases: {
+        ...base.phases,
+        architecture: { status: 'completed', impactLevel: 'medium', artifact: 'architecture.md' },
+      },
+    },
   ];
 }
 
@@ -57,15 +78,15 @@ describe('PlaybackController', () => {
   });
 
   it('initializes in stopped state at cursor -1', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     expect(ctrl.state).toBe('stopped');
     expect(ctrl.cursor).toBe(-1);
     expect(ctrl.speed).toBe(1);
-    expect(ctrl.eventCount).toBe(4);
+    expect(ctrl.snapshotCount).toBe(4);
   });
 
   it('stepForward advances cursor and calls onUpdate', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.stepForward();
 
     expect(ctrl.cursor).toBe(0);
@@ -75,7 +96,7 @@ describe('PlaybackController', () => {
   });
 
   it('stepBackward decrements cursor and calls onUpdate', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.stepForward();
     ctrl.stepForward();
     expect(ctrl.cursor).toBe(1);
@@ -86,42 +107,41 @@ describe('PlaybackController', () => {
   });
 
   it('stepBackward is a no-op at cursor -1', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.stepBackward();
     expect(ctrl.cursor).toBe(-1);
     expect(updates).toHaveLength(0);
   });
 
-  it('play emits first event immediately and advances via setTimeout', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
-    ctrl.setNormalized(false);
+  it('play emits first snapshot immediately and advances via setTimeout', () => {
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.play();
 
     expect(ctrl.state).toBe('playing');
     expect(ctrl.cursor).toBe(0);
     expect(updates).toHaveLength(1);
 
-    // Advance past first gap (60s at 1x speed = 60000ms)
-    vi.advanceTimersByTime(60_000);
+    // Base interval at 1x = 1500ms
+    vi.advanceTimersByTime(1500);
     expect(ctrl.cursor).toBe(1);
     expect(updates).toHaveLength(2);
   });
 
   it('pause stops scheduling', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.play();
     expect(updates).toHaveLength(1);
 
     ctrl.pause();
     expect(ctrl.state).toBe('paused');
 
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(10_000);
     // Should not have advanced
     expect(updates).toHaveLength(1);
   });
 
   it('stop resets cursor to -1', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.play();
     ctrl.stop();
 
@@ -129,16 +149,14 @@ describe('PlaybackController', () => {
     expect(ctrl.cursor).toBe(-1);
   });
 
-  it('transitions to ended after last event', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
-    ctrl.setNormalized(false);
+  it('transitions to ended after last snapshot', () => {
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.play();
 
-    // Advance through all events
-    // Gap 0->1: 60s, 1->2: 60s, 2->3: 480s
-    vi.advanceTimersByTime(60_000); // cursor 1
-    vi.advanceTimersByTime(60_000); // cursor 2
-    vi.advanceTimersByTime(480_000); // cursor 3
+    // 4 snapshots: first emitted immediately, then 3 more at 1500ms intervals
+    vi.advanceTimersByTime(1500); // cursor 1
+    vi.advanceTimersByTime(1500); // cursor 2
+    vi.advanceTimersByTime(1500); // cursor 3
 
     expect(ctrl.cursor).toBe(3);
     expect(ctrl.state).toBe('ended');
@@ -146,7 +164,7 @@ describe('PlaybackController', () => {
   });
 
   it('faster doubles speed and slower halves it', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     expect(ctrl.speed).toBe(1);
 
     ctrl.faster();
@@ -157,7 +175,7 @@ describe('PlaybackController', () => {
   });
 
   it('resetSpeed returns to 1x', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.faster();
     ctrl.faster();
     expect(ctrl.speed).toBe(4);
@@ -166,72 +184,48 @@ describe('PlaybackController', () => {
     expect(ctrl.speed).toBe(1);
   });
 
-  it('clamps speed at min 0.25 and max 128', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+  it('clamps speed at min 0.25 and max 32', () => {
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.setSpeed(0.1);
     expect(ctrl.speed).toBe(0.25);
 
     ctrl.setSpeed(256);
-    expect(ctrl.speed).toBe(128);
+    expect(ctrl.speed).toBe(32);
   });
 
-  it('setSpeed(2) halves inter-event delay', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
-    ctrl.setNormalized(false);
+  it('setSpeed(2) halves inter-snapshot delay', () => {
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.setSpeed(2);
     ctrl.play();
 
     expect(updates).toHaveLength(1);
 
-    // At 2x, 60s gap becomes 30s delay
-    vi.advanceTimersByTime(30_000);
+    // At 2x, 1500ms base becomes 750ms
+    vi.advanceTimersByTime(750);
     expect(ctrl.cursor).toBe(1);
     expect(updates).toHaveLength(2);
   });
 
-  it('normalization caps gaps larger than 10s to MAX_GAP_MS', () => {
-    // Two events separated by 60 seconds
-    const events: RunEvent[] = [
-      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
-      { t: '2026-01-01T00:01:00Z', event: 'run_completed', status: 'completed' },
-    ];
-    const ctrl = new PlaybackController(createHeader(), events, onUpdate);
-
-    // Default: normalization enabled — 60s gap capped to 10s
+  it('enforces minimum interval floor at high speed', () => {
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
+    ctrl.setSpeed(32);
     ctrl.play();
-    expect(ctrl.cursor).toBe(0);
+
     expect(updates).toHaveLength(1);
 
-    vi.advanceTimersByTime(10_000);
+    // At 32x, 1500/32 = 46.875ms, clamped to 300ms
+    vi.advanceTimersByTime(299);
+    expect(ctrl.cursor).toBe(0);
+
+    vi.advanceTimersByTime(1);
     expect(ctrl.cursor).toBe(1);
     expect(updates).toHaveLength(2);
-  });
-
-  it('without normalization uses actual gap', () => {
-    // Two events separated by 60 seconds
-    const events: RunEvent[] = [
-      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
-      { t: '2026-01-01T00:01:00Z', event: 'run_completed', status: 'completed' },
-    ];
-    const ctrl = new PlaybackController(createHeader(), events, onUpdate);
-
-    ctrl.setNormalized(false);
-    ctrl.play();
-    expect(ctrl.cursor).toBe(0);
-
-    // At 10s the cursor should NOT have advanced (gap is 60s)
-    vi.advanceTimersByTime(10_000);
-    expect(ctrl.cursor).toBe(0);
-
-    // At 60s it should advance
-    vi.advanceTimersByTime(50_000);
-    expect(ctrl.cursor).toBe(1);
   });
 
   it('play is a no-op when state is ended', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
 
-    // Step through all events to reach ended state
+    // Step through all snapshots to reach ended state
     for (let i = 0; i < 4; i++) {
       ctrl.stepForward();
     }
@@ -244,9 +238,9 @@ describe('PlaybackController', () => {
   });
 
   it('stepBackward from ended transitions to paused', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
 
-    // Step through all events to reach ended state
+    // Step through all snapshots to reach ended state
     for (let i = 0; i < 4; i++) {
       ctrl.stepForward();
     }
@@ -259,13 +253,13 @@ describe('PlaybackController', () => {
   });
 
   it('dispose cancels pending timeout', () => {
-    const ctrl = new PlaybackController(createHeader(), createEvents(), onUpdate);
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.play();
     expect(updates).toHaveLength(1);
 
     ctrl.dispose();
 
-    vi.advanceTimersByTime(120_000);
+    vi.advanceTimersByTime(10_000);
     expect(updates).toHaveLength(1);
   });
 });

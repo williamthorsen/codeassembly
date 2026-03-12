@@ -11,7 +11,7 @@ export interface UsePlaybackResult {
   controls: PlaybackControls;
   speed: number;
   cursor: number;
-  eventCount: number;
+  snapshotCount: number;
 }
 
 const noopControls: PlaybackControls = {
@@ -24,7 +24,6 @@ const noopControls: PlaybackControls = {
   slower() {},
   resetSpeed() {},
   setSpeed() {},
-  setNormalized() {},
 };
 
 export function usePlayback(recording: DemoRecording | null): UsePlaybackResult {
@@ -44,7 +43,7 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
       return;
     }
 
-    const controller = new PlaybackController(recording.header, recording.events, (status) => {
+    const controller = new PlaybackController(recording.snapshots, (status) => {
       setData(status);
       setPlaybackState(controller.state);
       setSpeed(controller.speed);
@@ -105,10 +104,6 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
     }
   }, []);
 
-  const setNormalized = useCallback((on: boolean) => {
-    controllerRef.current?.setNormalized(on);
-  }, []);
-
   const controls: PlaybackControls = recording
     ? {
         play,
@@ -120,7 +115,6 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
         slower,
         resetSpeed,
         setSpeed: setSpeedValue,
-        setNormalized,
       }
     : noopControls;
 
@@ -130,6 +124,6 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
     controls,
     speed,
     cursor,
-    eventCount: recording?.events.length ?? 0,
+    snapshotCount: recording?.snapshots.length ?? 0,
   };
 }

@@ -52,13 +52,13 @@ describe('useDemoMode', () => {
     expect(result.current.data).toBeNull();
   });
 
-  it('exposes playbackState, controls, speed, cursor, eventCount', () => {
+  it('exposes playbackState, controls, speed, cursor, snapshotCount', () => {
     const { result } = renderHook(() => useDemoMode());
 
     expect(result.current.playbackState).toBe('stopped');
     expect(result.current.speed).toBe(1);
     expect(result.current.cursor).toBe(-1);
-    expect(result.current.eventCount).toBe(0);
+    expect(result.current.snapshotCount).toBe(0);
     expect(typeof result.current.controls.play).toBe('function');
   });
 });

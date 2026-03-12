@@ -1,35 +1,64 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import type { DemoRecording } from '../../demo/index.js';
 import { usePlayback } from '../usePlayback.js';
+
+function makeSnapshot(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
+  return {
+    runId: 'test-run',
+    projectSlug: 'test',
+    ticketId: undefined,
+    projectRoot: '/test',
+    branch: 'main',
+    task: 'test task',
+    startedAt: '2026-01-01T00:00:00Z',
+    completedAt: undefined,
+    status: 'in_progress',
+    reason: undefined,
+    externalPlan: false,
+    mergeBaseSha: undefined,
+    diffBase: undefined,
+    maxReviewRounds: undefined,
+    effort: undefined,
+    approvalThreshold: undefined,
+    budgetThreshold: undefined,
+    mode: undefined,
+    model: undefined,
+    phases: {
+      architecture: undefined,
+      planning: undefined,
+      implementation: undefined,
+      parallelReview: undefined,
+      review: undefined,
+      codeSimplifier: undefined,
+      holisticReview: undefined,
+    },
+    phaseDecisions: {},
+    artifacts: [],
+    ...overrides,
+  };
+}
 
 function createRecording(): DemoRecording {
   return {
     name: 'Test recording',
     description: 'A simple test recording',
-    header: {
-      runId: 'test-run',
-      projectSlug: 'test',
-      ticketId: undefined,
-      projectRoot: '/test',
-      branch: 'main',
-      task: 'test task',
-      startedAt: '2026-01-01T00:00:00Z',
-      externalPlan: false,
-      mergeBaseSha: undefined,
-      diffBase: undefined,
-      maxReviewRounds: undefined,
-      effort: undefined,
-      approvalThreshold: undefined,
-      budgetThreshold: undefined,
-      mode: undefined,
-      model: undefined,
-    },
-    events: [
-      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
-      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' },
-      { t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' },
+    snapshots: [
+      makeSnapshot(),
+      makeSnapshot({
+        phases: {
+          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+          planning: undefined,
+          implementation: undefined,
+          parallelReview: undefined,
+          review: undefined,
+          codeSimplifier: undefined,
+          holisticReview: undefined,
+        },
+      }),
+      makeSnapshot({ status: 'completed', completedAt: '2026-01-01T00:10:00Z' }),
     ],
   };
 }
@@ -48,7 +77,7 @@ describe('usePlayback', () => {
 
     expect(result.current.data).toBeNull();
     expect(result.current.playbackState).toBe('stopped');
-    expect(result.current.eventCount).toBe(0);
+    expect(result.current.snapshotCount).toBe(0);
   });
 
   it('exposes all control functions', () => {
@@ -105,7 +134,7 @@ describe('usePlayback', () => {
     const rec1 = createRecording();
     const rec2: DemoRecording = {
       ...createRecording(),
-      header: { ...createRecording().header, runId: 'run-2' },
+      snapshots: createRecording().snapshots.map((s) => ({ ...s, runId: 'run-2' })),
     };
 
     const { result, rerender } = renderHook(({ rec }: { rec: DemoRecording | null }) => usePlayback(rec), {

@@ -68,14 +68,6 @@ export function App(): React.JSX.Element {
 
   const demo = useDemoMode();
   const [showDemoPanel, setShowDemoPanel] = useState(false);
-  const [normalized, setNormalized] = useState(true);
-
-  // Reset normalization to match the new controller's initial state when recording changes
-  useEffect(() => {
-    if (demo.activeRecording) {
-      setNormalized(true);
-    }
-  }, [demo.activeRecording]);
 
   // Determine the active data source: demo data takes precedence when available
   const activeStatus = demo.isActive && demo.data !== null ? demo.data : runStatus;
@@ -172,12 +164,6 @@ export function App(): React.JSX.Element {
     );
   }
 
-  function handleToggleNormalized(): void {
-    const next = !normalized;
-    setNormalized(next);
-    demo.controls.setNormalized(next);
-  }
-
   function handleStopDemo(): void {
     demo.stopDemo();
     setShowDemoPanel(false);
@@ -193,12 +179,10 @@ export function App(): React.JSX.Element {
           playbackState={demo.playbackState}
           speed={demo.speed}
           cursor={demo.cursor}
-          eventCount={demo.eventCount}
-          normalized={normalized}
+          snapshotCount={demo.snapshotCount}
           controls={demo.controls}
           onSelectRecording={demo.loadRecording}
           onStop={handleStopDemo}
-          onToggleNormalized={handleToggleNormalized}
         />
       )}
     </>

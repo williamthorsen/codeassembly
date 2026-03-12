@@ -19,7 +19,6 @@ function createControls(): PlaybackControls {
     slower: vi.fn(),
     resetSpeed: vi.fn(),
     setSpeed: vi.fn(),
-    setNormalized: vi.fn(),
   };
 }
 
@@ -28,48 +27,12 @@ function createRecordings(): DemoRecording[] {
     {
       name: 'Simple run',
       description: 'A simple run',
-      header: {
-        runId: 'r1',
-        projectSlug: 'test',
-        ticketId: undefined,
-        projectRoot: '/test',
-        branch: 'main',
-        task: 'test',
-        startedAt: '2026-01-01T00:00:00Z',
-        externalPlan: false,
-        mergeBaseSha: undefined,
-        diffBase: undefined,
-        maxReviewRounds: undefined,
-        effort: undefined,
-        approvalThreshold: undefined,
-        budgetThreshold: undefined,
-        mode: undefined,
-        model: undefined,
-      },
-      events: [],
+      snapshots: [],
     },
     {
       name: 'Complex run',
       description: 'A complex run',
-      header: {
-        runId: 'r2',
-        projectSlug: 'test',
-        ticketId: undefined,
-        projectRoot: '/test',
-        branch: 'main',
-        task: 'test',
-        startedAt: '2026-01-01T00:00:00Z',
-        externalPlan: false,
-        mergeBaseSha: undefined,
-        diffBase: undefined,
-        maxReviewRounds: undefined,
-        effort: undefined,
-        approvalThreshold: undefined,
-        budgetThreshold: undefined,
-        mode: undefined,
-        model: undefined,
-      },
-      events: [],
+      snapshots: [],
     },
   ];
 }
@@ -88,12 +51,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={1}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={createControls()}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -115,12 +76,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={1}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={createControls()}
         onSelectRecording={handleSelect}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -140,12 +99,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={1}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={controls}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -162,12 +119,10 @@ describe('DemoControlPanel', () => {
         playbackState="playing"
         speed={1}
         cursor={2}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={controls}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -184,12 +139,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={1}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={createControls()}
         onSelectRecording={() => {}}
         onStop={handleStop}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -206,12 +159,10 @@ describe('DemoControlPanel', () => {
         playbackState="paused"
         speed={1}
         cursor={3}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={controls}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -230,12 +181,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={2}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={createControls()}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -250,12 +199,10 @@ describe('DemoControlPanel', () => {
         playbackState="paused"
         speed={1}
         cursor={2}
-        eventCount={18}
-        normalized={true}
+        snapshotCount={18}
         controls={createControls()}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -270,12 +217,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={1}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={createControls()}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -291,12 +236,10 @@ describe('DemoControlPanel', () => {
         playbackState="stopped"
         speed={1}
         cursor={-1}
-        eventCount={10}
-        normalized={true}
+        snapshotCount={10}
         controls={controls}
         onSelectRecording={() => {}}
         onStop={() => {}}
-        onToggleNormalized={() => {}}
       />,
     );
 
@@ -308,28 +251,5 @@ describe('DemoControlPanel', () => {
 
     fireEvent.click(screen.getByLabelText('Reset speed'));
     expect(controls.resetSpeed).toHaveBeenCalledTimes(1);
-  });
-
-  it('normalization checkbox calls onToggleNormalized', () => {
-    const handleToggle = vi.fn();
-    render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
-        playbackState="stopped"
-        speed={1}
-        cursor={-1}
-        eventCount={10}
-        normalized={true}
-        controls={createControls()}
-        onSelectRecording={() => {}}
-        onStop={() => {}}
-        onToggleNormalized={handleToggle}
-      />,
-    );
-
-    const checkbox = screen.getByRole('checkbox');
-    fireEvent.click(checkbox);
-    expect(handleToggle).toHaveBeenCalledTimes(1);
   });
 });
