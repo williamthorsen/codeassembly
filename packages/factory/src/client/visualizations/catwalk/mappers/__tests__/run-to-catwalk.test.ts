@@ -1328,6 +1328,69 @@ describe('mapRunToCatwalk', () => {
       expect(summaryInputs.length).toBeGreaterThanOrEqual(2);
     });
 
+    it('withholds inputs when the orchestrator has not yet reached the target station', () => {
+      // Architecture in_progress — orchestrator at station 0.
+      // An artifact exists in status.artifacts but because findCurrentPhase
+      // returns 'architecture' (station 0), the guard `nextStation (1) <= orchestratorStationIndex (0)`
+      // is false → no input derived at station 1.
+      const statusBefore = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const configBefore = mapRunToCatwalk(statusBefore);
+
+      // Orchestrator inferred at station 0 (architecture is not yet evaluated)
+      expect(configBefore.orchestrator.stationIndex).toBe(0);
+
+      // No input at station 1 — orchestrator has not reached it
+      const station1InputsBefore = configBefore.artifacts.filter((a) => a.stationIndex === 1 && a.slot === 'input');
+      expect(station1InputsBefore).toHaveLength(0);
+
+      // Architecture completed — orchestrator advances to station 1 (planning)
+      const statusAfter = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'analyst',
+            roleType: 'analyst',
+            agent: 'orchestrated-architect',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+
+      const configAfter = mapRunToCatwalk(statusAfter);
+
+      // Orchestrator now at station 1
+      expect(configAfter.orchestrator.stationIndex).toBe(1);
+
+      // Input at station 1 appears now that orchestrator has reached it
+      const station1InputsAfter = configAfter.artifacts.filter((a) => a.stationIndex === 1 && a.slot === 'input');
+      expect(station1InputsAfter).toHaveLength(1);
+    });
+
     it('inputs appear at the orchestrator station but not beyond', () => {
       // Orchestrator at station 3 (review phase, working).
       // Arch output at 0, plan output at 1, code output at 2.
