@@ -112,7 +112,7 @@ const {
   ORCH_IDLE_OPACITY,
   RESTING_OPACITY,
 } = await import('../../constants/animation.js');
-const { ORCH_SPRITE_BOTTOM_PAD, SPRITE_SIZE } = await import('../../constants/dimensions.js');
+const { ORCH_SPRITE_BOTTOM_PADDING_PX, SPRITE_SIZE } = await import('../../constants/dimensions.js');
 
 describe('OrchestratorActor', () => {
   beforeEach(() => {
@@ -138,7 +138,7 @@ describe('OrchestratorActor', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, targetY));
     await actor.animateMoveTo(vec(200, targetY));
 
-    const expectedY = targetY - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD;
+    const expectedY = targetY - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PADDING_PX;
     expect(actor.actions.moveTo).toHaveBeenCalledWith(
       expect.objectContaining({ x: 200, y: expectedY }),
       expect.any(Number),

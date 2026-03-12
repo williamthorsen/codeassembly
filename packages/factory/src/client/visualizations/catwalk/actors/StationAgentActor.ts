@@ -9,7 +9,7 @@ import {
   SCALE_PULSE_MAX,
   SCALE_PULSE_MIN,
 } from '../constants/animation.js';
-import { ACCENT_BAR_H, SPRITE_SIZE, SUBAGENT_SPRITE_BOTTOM_PAD } from '../constants/dimensions.js';
+import { ACCENT_BAR_H, SPRITE_SIZE, SUBAGENT_SPRITE_BOTTOM_PADDING_PX } from '../constants/dimensions.js';
 import { PAUSE_DURATION } from '../constants/timing.js';
 import { getAnimation } from '../sprites/catwalk-sprite-loader.js';
 import type { AgentAnimationState } from '../types.js';
@@ -101,12 +101,15 @@ export class StationAgentActor extends Actor {
     const halfSprite = SPRITE_SIZE / 2;
     // Render upward from the ground line position:
     // accent bar bottom sits flush on ground line, sprite sits on top of accent bar.
-    // SUBAGENT_SPRITE_BOTTOM_PAD shifts the sprite down so the visible character (not transparent padding)
+    // SUBAGENT_SPRITE_BOTTOM_PADDING_PX shifts the sprite down so the visible character (not transparent padding)
     // sits flush on the accent bar top.
     const group = new GraphicsGroup({
       useAnchor: false,
       members: [
-        { graphic: animation, offset: vec(-halfSprite, -ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD) },
+        {
+          graphic: animation,
+          offset: vec(-halfSprite, -ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PADDING_PX),
+        },
         { graphic: accentBar, offset: vec(-halfSprite, -ACCENT_BAR_H) },
       ],
     });

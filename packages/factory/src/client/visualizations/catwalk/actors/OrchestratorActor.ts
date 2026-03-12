@@ -12,7 +12,7 @@ import {
   CARRIED_ART_GAP,
   CARRIED_ART_H,
   CARRIED_ART_W,
-  ORCH_SPRITE_BOTTOM_PAD,
+  ORCH_SPRITE_BOTTOM_PADDING_PX,
   SPRITE_SIZE,
 } from '../constants/dimensions.js';
 import { PAUSE_DURATION, WALK_SPEED } from '../constants/timing.js';
@@ -32,8 +32,8 @@ export class OrchestratorActor extends Actor {
 
   constructor(config: OrchestratorActorConfig, position: Vector) {
     // Shift sprite up so the visible character bottom (not the transparent padding) sits on the rail.
-    // Center anchor: offset = -SPRITE_SIZE/2 + ORCH_SPRITE_BOTTOM_PAD shifts the character down onto the rail.
-    super({ pos: vec(position.x, position.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD) });
+    // Center anchor: offset = -SPRITE_SIZE/2 + ORCH_SPRITE_BOTTOM_PADDING_PX shifts the character down onto the rail.
+    super({ pos: vec(position.x, position.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PADDING_PX) });
 
     const animation = getAnimation('orchestrator', config.working ? 'working' : 'idle');
     this.graphics.use(animation);
@@ -43,7 +43,9 @@ export class OrchestratorActor extends Actor {
 
   /** Slide the orchestrator to a new position along the catwalk rail. Returns a promise that resolves when the walk completes. */
   animateMoveTo(pos: Vector): Promise<void> {
-    return this.actions.moveTo(vec(pos.x, pos.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PAD), WALK_SPEED).toPromise();
+    return this.actions
+      .moveTo(vec(pos.x, pos.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PADDING_PX), WALK_SPEED)
+      .toPromise();
   }
 
   /** Fade the orchestrator out to invisible and stop the working pulse. */

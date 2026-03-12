@@ -19,7 +19,7 @@ import {
   SPRITE_SIZE,
   STATION_GAP,
   STATION_LABEL_BELOW_GROUND,
-  SUBAGENT_SPRITE_BOTTOM_PAD,
+  SUBAGENT_SPRITE_BOTTOM_PADDING_PX,
 } from '../../constants/dimensions.js';
 import { type CatwalkLayoutConfig, computeCatwalkLayout, type StationLayoutEntry } from '../catwalk-layout.js';
 
@@ -163,11 +163,11 @@ describe('computeCatwalkLayout', () => {
       expect(layout.chuteEndpoints(0, 0, 1).topY).toBe(RAIL_Y + CHUTE_TOP_BELOW_RAIL);
     });
 
-    it('has botY derived from GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD - CHUTE_BOT_ABOVE_GROUND', () => {
+    it('has botY derived from GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PADDING_PX - CHUTE_BOT_ABOVE_GROUND', () => {
       const layout = computeCatwalkLayout(defaultConfig);
 
       expect(layout.chuteEndpoints(0, 0, 1).botY).toBe(
-        GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD - CHUTE_BOT_ABOVE_GROUND,
+        GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PADDING_PX - CHUTE_BOT_ABOVE_GROUND,
       );
     });
 

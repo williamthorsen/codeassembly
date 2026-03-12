@@ -18,7 +18,7 @@ import {
   SPRITE_SIZE,
   STATION_GAP,
   STATION_LABEL_BELOW_GROUND,
-  SUBAGENT_SPRITE_BOTTOM_PAD,
+  SUBAGENT_SPRITE_BOTTOM_PADDING_PX,
 } from '../constants/dimensions.js';
 
 export interface StationLayoutEntry {
@@ -257,7 +257,7 @@ function buildResult(
       topX: agentPos.x,
       topY: RAIL_Y + CHUTE_TOP_BELOW_RAIL,
       botX: agentPos.x,
-      botY: GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PAD - CHUTE_BOT_ABOVE_GROUND,
+      botY: GROUND_LINE_Y - ACCENT_BAR_H - SPRITE_SIZE + SUBAGENT_SPRITE_BOTTOM_PADDING_PX - CHUTE_BOT_ABOVE_GROUND,
     };
   }
 
