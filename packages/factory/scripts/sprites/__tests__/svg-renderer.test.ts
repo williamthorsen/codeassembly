@@ -276,7 +276,7 @@ describe('pose data integrity', () => {
     }
   });
 
-  it('all orchestrator pixel values are within the valid palette range [0, 5]', () => {
+  it('all orchestrator pixel values are within the valid palette range [0, 6]', () => {
     for (const [poseIndex, pose] of ORCHESTRATOR_POSES.entries()) {
       for (const [partIndex, part] of pose.entries()) {
         for (const [rowIndex, row] of part.pixels.entries()) {
@@ -288,7 +288,7 @@ describe('pose data integrity', () => {
             expect(
               value,
               `orchestrator pose ${poseIndex}, part ${partIndex}, row ${rowIndex}, col ${colIndex}: value ${value} out of range`,
-            ).toBeLessThanOrEqual(5);
+            ).toBeLessThanOrEqual(6);
           }
         }
       }

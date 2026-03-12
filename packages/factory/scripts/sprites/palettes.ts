@@ -85,10 +85,12 @@ export const SUBAGENT_PALETTE: Palette = generatePalette(
   SUBAGENT_HSL.maxLightness,
 );
 
-/** Gold command-unit palette for the orchestrator robot. */
-export const ORCHESTRATOR_PALETTE: Palette = generatePalette(
+const basePalette = generatePalette(
   ORCHESTRATOR_HSL.hue,
   ORCHESTRATOR_HSL.saturation,
   ORCHESTRATOR_HSL.minLightness,
   ORCHESTRATOR_HSL.maxLightness,
 );
+
+/** Gold command-unit palette for the orchestrator robot, with beacon bright at index 6. */
+export const ORCHESTRATOR_PALETTE: Palette = [...basePalette, '#fff5c0'] as Palette;
