@@ -36,21 +36,21 @@ main() {
   # Parse options
   while getopts ":w:r:p:f:l:m:h" opt; do
     case $opt in
-      w) workspace="$OPTARG" ;;
-      r) repo_slug="$OPTARG" ;;
-      p) pr_id="$OPTARG" ;;
-      f) file_path="$OPTARG" ;;
-      l) line="$OPTARG" ;;
-      m) comment="$OPTARG" ;;
-      h) show_usage 0 ;;
-      :)
-        echo "$PROG: option -$OPTARG requires an argument" >&2
-        exit 1
-        ;;
-      *)
-        echo "$PROG: unknown option -$OPTARG" >&2
-        show_usage
-        ;;
+    w) workspace="$OPTARG" ;;
+    r) repo_slug="$OPTARG" ;;
+    p) pr_id="$OPTARG" ;;
+    f) file_path="$OPTARG" ;;
+    l) line="$OPTARG" ;;
+    m) comment="$OPTARG" ;;
+    h) show_usage 0 ;;
+    :)
+      echo "$PROG: option -$OPTARG requires an argument" >&2
+      exit 1
+      ;;
+    *)
+      echo "$PROG: unknown option -$OPTARG" >&2
+      show_usage
+      ;;
     esac
   done
 
@@ -89,6 +89,12 @@ main() {
   assert_nonempty "line (-l)" "$line"
   assert_nonempty "comment (-m or stdin)" "$comment"
 
+  # Validate line is a positive integer
+  if [[ ! "$line" =~ ^[0-9]+$ ]]; then
+    echo "$PROG: line number must be a positive integer, got '$line'" >&2
+    exit 1
+  fi
+
   # Build payload
   local payload
   payload="$(
@@ -104,32 +110,9 @@ main() {
 
   # Post comment
   local url="https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pullrequests/${pr_id}/comments"
-  local response http_status
 
-  if [[ "$auth_style" == "basic" ]]; then
-    response=$(curl --silent --show-error --write-out "\n%{http_code}" \
-      --user "${BITBUCKET_BOT_USERNAME}:${BITBUCKET_BOT_TOKEN}" \
-      --header "Content-Type: application/json" \
-      --request POST "$url" \
-      --data "$payload")
-  else
-    response=$(curl --silent --show-error --write-out "\n%{http_code}" \
-      --header "Authorization: Bearer ${auth_token}" \
-      --header "Content-Type: application/json" \
-      --request POST "$url" \
-      --data "$payload")
-  fi
-
-  http_status=$(echo "$response" | tail -n1)
   local body
-  body=$(echo "$response" | sed '$d')
-
-  if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
-    echo "$PROG: API request failed with HTTP $http_status" >&2
-    echo "$body" >&2
-    exit 1
-  fi
-
+  body="$(bb_api POST "$url" "$payload")"
   echo "$body"
 }
 
@@ -140,6 +123,42 @@ assert_nonempty() {
     echo "$PROG: $name is empty or unset" >&2
     exit 1
   fi
+}
+
+# Make an authenticated request to the Bitbucket API.
+# Usage: bb_api <method> <url> [body]
+# Prints the response body on success; exits on HTTP error.
+bb_api() {
+  local method="$1" url="$2" body="${3:-}"
+  local response http_status
+
+  local -a curl_args=(
+    --silent --show-error --write-out "\n%{http_code}"
+    --request "$method"
+  )
+
+  if [[ "$auth_style" == "basic" ]]; then
+    curl_args+=(--user "${BITBUCKET_BOT_USERNAME}:${BITBUCKET_BOT_TOKEN}")
+  else
+    curl_args+=(--header "Authorization: Bearer ${auth_token}")
+  fi
+
+  if [[ -n "$body" ]]; then
+    curl_args+=(--header "Content-Type: application/json" --data "$body")
+  fi
+
+  response=$(curl "${curl_args[@]}" "$url")
+  http_status=$(echo "$response" | tail -n1)
+  local response_body
+  response_body=$(echo "$response" | sed '$d')
+
+  if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
+    echo "$PROG: API request failed with HTTP $http_status" >&2
+    echo "$response_body" >&2
+    exit 1
+  fi
+
+  echo "$response_body"
 }
 
 # Detect workspace and repo slug from git remote origin URL.
@@ -222,27 +241,9 @@ detect_pr_id() {
   encoded_query=$(printf 'source.branch.name="%s"' "$branch" | jq --slurp --raw-input --raw-output '@uri')
 
   local url="https://api.bitbucket.org/2.0/repositories/${ws}/${repo}/pullrequests?q=${encoded_query}&state=OPEN"
-  local response http_status
 
-  if [[ "$auth_style" == "basic" ]]; then
-    response=$(curl --silent --show-error --write-out "\n%{http_code}" \
-      --user "${BITBUCKET_BOT_USERNAME}:${BITBUCKET_BOT_TOKEN}" \
-      "$url")
-  else
-    response=$(curl --silent --show-error --write-out "\n%{http_code}" \
-      --header "Authorization: Bearer ${auth_token}" \
-      "$url")
-  fi
-
-  http_status=$(echo "$response" | tail -n1)
   local body
-  body=$(echo "$response" | sed '$d')
-
-  if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
-    echo "$PROG: failed to query PRs for branch '$branch' (HTTP $http_status)" >&2
-    echo "$body" >&2
-    exit 1
-  fi
+  body="$(bb_api GET "$url")"
 
   local count
   count=$(echo "$body" | jq '.size')
