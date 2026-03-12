@@ -1,5 +1,6 @@
 import { Animation, ImageFiltering, ImageSource, SpriteSheet } from 'excalibur';
 
+import type { AgentAnimationState } from '../types.js';
 import {
   CELEBRATING_DURATION,
   CELEBRATING_FRAME_COORDINATES,
@@ -23,7 +24,6 @@ import {
   WORKING_FRAME_COORDINATES,
   WORKING_STRATEGY,
 } from './sprite-definitions.js';
-import type { AgentAnimationState } from '../types.js';
 import { type CatwalkSpriteType, SPRITE_SHEET_URLS } from './sprite-sheet-urls.js';
 
 const SPRITE_TYPES: readonly CatwalkSpriteType[] = ['subagent', 'orchestrator'];

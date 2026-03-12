@@ -9,14 +9,14 @@ describe('DEMO_RECORDINGS', () => {
   });
 
   it.each(DEMO_RECORDINGS)('$name: last snapshot has a terminal status with a defined completedAt', (recording) => {
-    const lastSnapshot = recording.snapshots[recording.snapshots.length - 1];
+    const lastSnapshot = recording.snapshots.at(-1);
     expect(lastSnapshot).toBeDefined();
     expect(['completed', 'failed', 'needs_manual_review']).toContain(lastSnapshot?.status);
     expect(lastSnapshot?.completedAt).toBeDefined();
   });
 
   it('Moderately complex run: exercises all 6 phase stations', () => {
-    const lastSnapshot = moderatelyComplexRun.snapshots[moderatelyComplexRun.snapshots.length - 1];
+    const lastSnapshot = moderatelyComplexRun.snapshots.at(-1);
     expect(lastSnapshot).toBeDefined();
 
     expect(lastSnapshot?.phases.architecture).toBeDefined();
@@ -30,7 +30,7 @@ describe('DEMO_RECORDINGS', () => {
   });
 
   it('Moderately complex run: has at least 3 reviewers', () => {
-    const lastSnapshot = moderatelyComplexRun.snapshots[moderatelyComplexRun.snapshots.length - 1];
+    const lastSnapshot = moderatelyComplexRun.snapshots.at(-1);
     expect(lastSnapshot).toBeDefined();
 
     const reviewerCount = Object.keys(lastSnapshot?.phases.parallelReview?.reviewers ?? {}).length;
@@ -50,7 +50,7 @@ describe('DEMO_RECORDINGS', () => {
   });
 
   it('Moderately complex run: last snapshot has all 10 artifacts', () => {
-    const last = moderatelyComplexRun.snapshots[moderatelyComplexRun.snapshots.length - 1];
+    const last = moderatelyComplexRun.snapshots.at(-1);
     expect(last).toBeDefined();
     expect(last?.artifacts?.length).toBe(10);
   });

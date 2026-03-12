@@ -127,7 +127,7 @@ export class CatwalkScene extends Scene {
     }
 
     // Added agents are always handled by the scene directly (not by the choreographer)
-    this.addDiffAgents(diff, config, layout);
+    this.addDiffAgents(diff, layout);
 
     const refs = this.buildSceneRefs();
     this.choreographyInProgress = true;
@@ -185,10 +185,9 @@ export class CatwalkScene extends Scene {
   }
 
   /** Add newly appearing agents from a diff (fade in from invisible). */
-  private addDiffAgents(diff: CatwalkDiff, config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
-    const agentCountByStation = buildAgentCountByStation(config);
+  private addDiffAgents(diff: CatwalkDiff, layout: CatwalkLayoutResult): void {
     for (const agent of diff.agents.added) {
-      const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
+      const agentCountAtStation = this.cachedAgentCountByStation.get(agent.stationIndex) ?? 1;
       const pos = layout.agentPosition(agent.stationIndex, agent.slotIndex, agentCountAtStation);
       const actor = new StationAgentActor(
         { id: agent.id, role: agent.role, color: ROLE_TYPE_COLORS[agent.roleType], state: agent.state },

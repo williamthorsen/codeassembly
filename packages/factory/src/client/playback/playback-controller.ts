@@ -66,9 +66,7 @@ export class PlaybackController implements PlaybackControls {
 
   stepForward(): void {
     if (this.cursor >= this.snapshots.length - 1) {
-      if (this.cursor === this.snapshots.length - 1) {
-        this.state = 'ended';
-      }
+      this.state = 'ended';
       return;
     }
 

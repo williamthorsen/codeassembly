@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
+import { CatwalkCanvas } from './components/CatwalkCanvas.js';
 import { DemoControlPanel } from './components/DemoControlPanel.js';
 import { DemoStatusLight } from './components/DemoStatusLight.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
 import { StatusBar } from './components/StatusBar.js';
-import { CatwalkCanvas } from './components/CatwalkCanvas.js';
 import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
 import { useDemoMode } from './hooks/useDemoMode.js';

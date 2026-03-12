@@ -297,33 +297,7 @@ const events: RunEvent[] = [
 //   - summary artifact, run complete
 // ---------------------------------------------------------------------------
 const CURATED_EVENT_INDICES = [
-  0, // run_started
-  4, // phase decisions complete
-  5, // architecture started
-  6, // architecture artifact written
-  7, // architecture completed
-  8, // planning started
-  9, // planning artifact written
-  10, // planning completed
-  11, // implementation started
-  12, // implementation artifact written
-  13, // implementation completed
-  14, // review started
-  16, // 1st reviewer dispatched (code-reviewer)
-  19, // 1st reviewer completed (code-reviewer: medium)
-  21, // all reviewers completed (test-reviewer: low)
-  22, // 1st review artifact (code-review)
-  25, // coder fix started
-  27, // coder fix completed
-  30, // review phase completed
-  31, // simplifier started
-  33, // simplifier artifact written
-  34, // simplifier completed
-  35, // holistic started
-  37, // holistic artifact written
-  38, // holistic completed
-  39, // summary artifact written
-  40, // run completed
+  0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19, 21, 22, 25, 27, 30, 31, 33, 34, 35, 37, 38, 39, 40,
 ];
 
 function generateSnapshots(hdr: RunHeader, evts: ReadonlyArray<RunEvent>, indices: number[]): CanonicalRunStatus[] {
