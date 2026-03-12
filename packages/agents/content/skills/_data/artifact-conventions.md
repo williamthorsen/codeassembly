@@ -471,23 +471,23 @@ Companion file in the same run directory. Each line is a JSON object (JSONL form
 
 ### Event types
 
-All 13 valid event types and their required fields:
+All 13 valid event types and their required fields. Fields suffixed with `?` are optional — usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs where the orchestrator captures Task result metrics; older runs omit them:
 
-| Event type             | Key fields                                                                                                |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| `run_started`          | _(none beyond `t`, `event`)_                                                                              |
-| `run_completed`        | `status` (`completed`\|`failed`\|`needs_manual_review`)                                                   |
-| `run_failed`           | `status`, `reason?`                                                                                       |
-| `phase_decision`       | `phase` (string), `run` (boolean), `reason?`                                                              |
-| `phase_started`        | `phase` (one of: `architecture`\|`planning`\|`implementation`\|`review`\|`simplifier`\|`holistic`)        |
-| `phase_completed`      | `phase`, `status` (one of: `completed`\|`skipped`\|`failed`\|`in_progress`\|`approved`), `data?` (record) |
-| `reviewer_dispatched`  | `reviewer` (string)                                                                                       |
-| `reviewer_completed`   | `reviewer`, `status` (`completed`\|`skipped`\|`failed`), `criticality` (`none`\|`low`\|`medium`\|`high`)  |
-| `coder_fix_started`    | `iteration` (number)                                                                                      |
-| `coder_fix_completed`  | `iteration` (number)                                                                                      |
-| `re_review_dispatched` | `reviewers` (string array)                                                                                |
-| `re_review_completed`  | `criticalities` (record: reviewer name -> criticality)                                                    |
-| `artifact_written`     | `filename`, `role`, `roleType`, `agent`, `type`, `phase`, `iteration?`, `note?`                           |
+| Event type             | Key fields                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run_started`          | _(none beyond `t`, `event`)_                                                                                                                     |
+| `run_completed`        | `status` (`completed`\|`failed`\|`needs_manual_review`)                                                                                          |
+| `run_failed`           | `status`, `reason?`                                                                                                                              |
+| `phase_decision`       | `phase` (string), `run` (boolean), `reason?`                                                                                                     |
+| `phase_started`        | `phase` (one of: `architecture`\|`planning`\|`implementation`\|`review`\|`simplifier`\|`holistic`)                                               |
+| `phase_completed`      | `phase`, `status` (one of: `completed`\|`skipped`\|`failed`\|`in_progress`\|`approved`), `data?` (record), `tokens?`, `toolUses?`, `durationMs?` |
+| `reviewer_dispatched`  | `reviewer` (string)                                                                                                                              |
+| `reviewer_completed`   | `reviewer`, `status` (`completed`\|`skipped`\|`failed`), `criticality` (`none`\|`low`\|`medium`\|`high`), `tokens?`, `toolUses?`, `durationMs?`  |
+| `coder_fix_started`    | `iteration` (number)                                                                                                                             |
+| `coder_fix_completed`  | `iteration` (number), `tokens?`, `toolUses?`, `durationMs?`                                                                                      |
+| `re_review_dispatched` | `reviewers` (string array)                                                                                                                       |
+| `re_review_completed`  | `criticalities` (record: reviewer name -> criticality), `tokens?`, `toolUses?`, `durationMs?`                                                    |
+| `artifact_written`     | `filename`, `role`, `roleType`, `agent`, `type`, `phase`, `iteration?`, `note?`                                                                  |
 
 ### Run directory layout (v3)
 
