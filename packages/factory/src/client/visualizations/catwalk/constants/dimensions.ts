@@ -29,11 +29,11 @@ export const GROUND_Y = 340;
 /** Sprite pixel size (mirrors SPRITE_SIZE from sprite-definitions.ts to avoid excalibur dependency). */
 export const SPRITE_SIZE = 32;
 
-/** Transparent bottom padding in the orchestrator sprite sheet (rows 24-31 are empty). */
-export const ORCH_SPRITE_BOTTOM_PAD = 6;
+/** Transparent bottom padding in the orchestrator sprite sheet (row 31 is empty). */
+export const ORCH_SPRITE_BOTTOM_PADDING_PX = 0;
 
-/** Transparent bottom padding in the subagent sprite sheet (rows 22-31 are empty). */
-export const SUBAGENT_SPRITE_BOTTOM_PAD = 10;
+/** Transparent bottom padding in the subagent sprite sheet (row 31 is empty). */
+export const SUBAGENT_SPRITE_BOTTOM_PADDING_PX = 1;
 
 /** Height of the colored accent bar beneath each agent sprite. */
 export const ACCENT_BAR_H = 4;

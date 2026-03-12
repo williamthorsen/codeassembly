@@ -1,195 +1,215 @@
 import type { BodyPart, Pose } from './svg-renderer.ts';
 
 // ── Body parts ──────────────────────────────────────────────────────────────
+// Target: ~24px total height (75% of 32), bottom-aligned with feet at row ~30.
+// Layout (top to bottom): Head rows 7-14, Torso rows 15-24, Legs rows 25-30.
 
-// 8x6 boxy head with 2-pixel visor strip at row 2
+// 10x8 boxy head with 2-pixel visor strip
 const HEAD: BodyPart = {
   pixels: [
-    [5, 5, 4, 4, 4, 4, 3, 3],
-    [5, 3, 3, 3, 3, 3, 3, 1],
-    [5, 5, 5, 5, 5, 5, 5, 1],
-    [5, 5, 5, 5, 5, 5, 5, 1],
-    [5, 3, 3, 3, 3, 3, 3, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1],
-  ],
-  offsetX: 12,
-  offsetY: 4,
-};
-
-// 10x8 rectangular torso with shadow on bottom/right edges
-const TORSO: BodyPart = {
-  pixels: [
-    [5, 4, 4, 4, 4, 4, 4, 4, 3, 3],
-    [5, 3, 3, 3, 3, 3, 3, 3, 2, 1],
-    [5, 3, 3, 3, 3, 3, 3, 3, 2, 1],
-    [5, 3, 3, 4, 4, 4, 3, 3, 2, 1],
-    [5, 3, 3, 3, 3, 3, 3, 3, 2, 1],
-    [5, 2, 2, 2, 2, 2, 2, 2, 2, 1],
-    [5, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [5, 5, 4, 4, 4, 4, 4, 4, 3, 3],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [5, 5, 5, 5, 5, 5, 5, 5, 5, 1],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 1],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ],
   offsetX: 11,
-  offsetY: 10,
+  offsetY: 7,
 };
 
-// 2x5 arm hanging at side (left)
+// 12x10 rectangular torso with shadow on bottom/right edges
+const TORSO: BodyPart = {
+  pixels: [
+    [5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1],
+    [5, 3, 3, 4, 4, 4, 4, 4, 3, 3, 2, 1],
+    [5, 3, 3, 4, 4, 4, 4, 4, 3, 3, 2, 1],
+    [5, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1],
+    [5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [5, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  ],
+  offsetX: 10,
+  offsetY: 15,
+};
+
+// 2x6 arm hanging at side (left)
 const ARM_LEFT_DOWN: BodyPart = {
   pixels: [
     [4, 3],
     [3, 2],
     [3, 2],
     [3, 2],
+    [3, 2],
     [1, 1],
   ],
-  offsetX: 9,
-  offsetY: 11,
+  offsetX: 8,
+  offsetY: 16,
 };
 
-// 2x5 arm hanging at side (right)
+// 2x6 arm hanging at side (right)
 const ARM_RIGHT_DOWN: BodyPart = {
   pixels: [
     [3, 4],
     [2, 3],
     [2, 3],
     [2, 3],
+    [2, 3],
     [1, 1],
   ],
-  offsetX: 21,
-  offsetY: 11,
+  offsetX: 22,
+  offsetY: 16,
 };
 
-// 2x5 arm raised partway (left)
+// 2x6 arm raised partway (left)
 const ARM_LEFT_UP: BodyPart = {
   pixels: [
     [4, 3],
     [3, 2],
     [3, 2],
     [3, 2],
+    [3, 2],
     [1, 1],
   ],
-  offsetX: 9,
-  offsetY: 8,
+  offsetX: 8,
+  offsetY: 12,
 };
 
-// 2x5 arm raised partway (right)
+// 2x6 arm raised partway (right)
 const ARM_RIGHT_UP: BodyPart = {
   pixels: [
     [3, 4],
     [2, 3],
     [2, 3],
     [2, 3],
+    [2, 3],
     [1, 1],
   ],
-  offsetX: 21,
-  offsetY: 8,
+  offsetX: 22,
+  offsetY: 12,
 };
 
-// 2x5 arm raised high (left, for celebrating)
+// 2x6 arm raised high (left, for celebrating)
 const ARM_LEFT_RAISED_HIGH: BodyPart = {
   pixels: [
     [4, 3],
     [3, 2],
     [3, 2],
     [3, 2],
+    [3, 2],
     [1, 1],
   ],
-  offsetX: 9,
-  offsetY: 5,
+  offsetX: 8,
+  offsetY: 8,
 };
 
-// 2x5 arm raised high (right, for celebrating)
+// 2x6 arm raised high (right, for celebrating)
 const ARM_RIGHT_RAISED_HIGH: BodyPart = {
   pixels: [
     [3, 4],
     [2, 3],
     [2, 3],
     [2, 3],
+    [2, 3],
     [1, 1],
   ],
-  offsetX: 21,
-  offsetY: 5,
+  offsetX: 22,
+  offsetY: 8,
 };
 
-// 2x5 arm raised high and splayed out (left, for V-shape celebrating)
+// 2x6 arm raised high and splayed out (left, for V-shape celebrating)
 const ARM_LEFT_SPLAYED: BodyPart = {
   pixels: [
     [4, 3],
     [3, 2],
     [3, 2],
     [3, 2],
+    [3, 2],
     [1, 1],
   ],
-  offsetX: 7,
-  offsetY: 5,
+  offsetX: 6,
+  offsetY: 8,
 };
 
-// 2x5 arm raised high and splayed out (right, for V-shape celebrating)
+// 2x6 arm raised high and splayed out (right, for V-shape celebrating)
 const ARM_RIGHT_SPLAYED: BodyPart = {
   pixels: [
     [3, 4],
     [2, 3],
     [2, 3],
     [2, 3],
+    [2, 3],
     [1, 1],
   ],
-  offsetX: 23,
-  offsetY: 5,
+  offsetX: 24,
+  offsetY: 8,
 };
 
-// 5x2 arm extended horizontally (left)
+// 6x2 arm extended horizontally (left)
 const ARM_LEFT_EXTENDED: BodyPart = {
   pixels: [
-    [4, 3, 3, 3, 1],
-    [1, 2, 2, 2, 1],
+    [4, 3, 3, 3, 3, 1],
+    [1, 2, 2, 2, 2, 1],
   ],
-  offsetX: 6,
-  offsetY: 12,
+  offsetX: 4,
+  offsetY: 17,
 };
 
-// 5x2 arm extended horizontally (right)
+// 6x2 arm extended horizontally (right)
 const ARM_RIGHT_EXTENDED: BodyPart = {
   pixels: [
-    [1, 3, 3, 3, 4],
-    [1, 2, 2, 2, 1],
+    [1, 3, 3, 3, 3, 4],
+    [1, 2, 2, 2, 2, 1],
   ],
-  offsetX: 21,
-  offsetY: 12,
+  offsetX: 22,
+  offsetY: 17,
 };
 
-// 3x4 legs standing straight (pair)
+// 9x6 legs standing straight (pair)
 const LEG_STAND: BodyPart = {
   pixels: [
-    [0, 3, 0, 0, 0, 3, 0],
-    [0, 3, 0, 0, 0, 3, 0],
-    [0, 2, 0, 0, 0, 2, 0],
-    [1, 1, 1, 0, 1, 1, 1],
+    [0, 3, 0, 0, 0, 0, 0, 3, 0],
+    [0, 3, 0, 0, 0, 0, 0, 3, 0],
+    [0, 3, 0, 0, 0, 0, 0, 3, 0],
+    [0, 2, 0, 0, 0, 0, 0, 2, 0],
+    [0, 2, 0, 0, 0, 0, 0, 2, 0],
+    [1, 1, 1, 0, 0, 0, 1, 1, 1],
   ],
-  offsetX: 12,
-  offsetY: 18,
+  offsetX: 11,
+  offsetY: 25,
 };
 
 // Legs with left leg forward, right leg back (walking mid-stride)
 const LEG_FORWARD: BodyPart = {
   pixels: [
-    [0, 3, 0, 0, 0, 0, 3],
-    [3, 2, 0, 0, 0, 0, 2],
-    [1, 1, 0, 0, 0, 0, 2],
-    [0, 0, 0, 0, 0, 1, 1],
+    [0, 3, 0, 0, 0, 0, 0, 0, 3],
+    [0, 3, 0, 0, 0, 0, 0, 0, 3],
+    [3, 2, 0, 0, 0, 0, 0, 0, 2],
+    [2, 2, 0, 0, 0, 0, 0, 0, 2],
+    [1, 1, 0, 0, 0, 0, 0, 0, 2],
+    [0, 0, 0, 0, 0, 0, 0, 1, 1],
   ],
-  offsetX: 11,
-  offsetY: 18,
+  offsetX: 10,
+  offsetY: 25,
 };
 
 // Legs with slight outward splay (for resting)
 const LEG_RELAXED: BodyPart = {
   pixels: [
-    [3, 0, 0, 0, 0, 0, 3],
-    [3, 0, 0, 0, 0, 0, 3],
-    [2, 0, 0, 0, 0, 0, 2],
-    [1, 1, 0, 0, 0, 1, 1],
+    [3, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 0, 0, 3],
+    [3, 0, 0, 0, 0, 0, 0, 0, 3],
+    [2, 0, 0, 0, 0, 0, 0, 0, 2],
+    [2, 0, 0, 0, 0, 0, 0, 0, 2],
+    [1, 1, 0, 0, 0, 0, 0, 1, 1],
   ],
-  offsetX: 12,
-  offsetY: 18,
+  offsetX: 11,
+  offsetY: 25,
 };
 
 // Arms pulled in close to body (for concerned)
@@ -198,10 +218,11 @@ const ARM_LEFT_PULLED_IN: BodyPart = {
     [4, 3],
     [3, 2],
     [3, 2],
+    [3, 2],
     [1, 1],
   ],
-  offsetX: 10,
-  offsetY: 12,
+  offsetX: 9,
+  offsetY: 17,
 };
 
 const ARM_RIGHT_PULLED_IN: BodyPart = {
@@ -209,16 +230,17 @@ const ARM_RIGHT_PULLED_IN: BodyPart = {
     [3, 4],
     [2, 3],
     [2, 3],
+    [2, 3],
     [1, 1],
   ],
-  offsetX: 20,
-  offsetY: 12,
+  offsetX: 21,
+  offsetY: 17,
 };
 
 // Head shifted down 1px (for slouching/resting)
 const HEAD_SLOUCH: BodyPart = {
   ...HEAD,
-  offsetY: 5,
+  offsetY: HEAD.offsetY + 1,
 };
 
 // ── 12 poses in sprite-sheet order ──────────────────────────────────────────
