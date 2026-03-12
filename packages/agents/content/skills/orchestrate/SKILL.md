@@ -516,7 +516,7 @@ Call Task with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model:
 >
 > Write your analysis to: `{run-dir}/{NN}_architect_architecture.md`
 
-After: store the full path as `{architecture-path}`; increment `{seq}`. Extract `Impact` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
+After: store the full path as `{architecture-path}`; increment `{seq}`. Extract `Impact` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
 
 ## Phase 2: Planning (optional)
 
@@ -540,7 +540,7 @@ Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {
 >
 > Write plan files to: `{run-dir}/{NN}_planner_orchestration-plan.md` and `{run-dir}/{NN}_planner_orchestration-plan.json`
 
-After: store the full paths as `{plan-md-path}` and `{plan-json-path}` (both share the same `{NN}`); increment `{seq}` once for the pair. Extract `Steps` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", data: { stepCount: {N} } } }` (or `status: "failed"` on failure). Call `register_artifact` for the plan artifacts.
+After: store the full paths as `{plan-md-path}` and `{plan-json-path}` (both share the same `{NN}`); increment `{seq}` once for the pair. Extract `Steps` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { stepCount: {N} } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the plan artifacts.
 
 ## Phase 3: Implementation (required)
 
@@ -559,7 +559,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 
 Pass all plan steps at once — the coder decides execution order.
 
-After: store the full path as `{change-summary-path}`; increment `{seq}`. Extract `Status` and `QualityGates` using Task return parsing. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure). Call `register_artifact` for the change-summary artifact.
+After: store the full path as `{change-summary-path}`; increment `{seq}`. Extract `Status` and `QualityGates` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the change-summary artifact.
 
 ## Review cycle (module)
 
@@ -685,6 +685,24 @@ Subagents include a structured return block at the end of their Task response. T
 - **Reviewers:** `Phase`, `Status`, `Artifact`, `Criticality` (`none`|`low`|`medium`|`high`)
 
 **Strict parsing:** if any required field is missing or its value does not match the expected enum, record the subagent as `failed` for that phase. Do not attempt to parse the artifact file as a fallback. Emit `phase_completed` with `status: "failed"`.
+
+## Usage capture
+
+Task results include a `<usage>` block reporting resource consumption. Parse these fields and map them to event fields for downstream analysis.
+
+**Parse format:** look for a `<usage>` block in the Task return value. Extract key-value pairs:
+
+| Task result field | Event field  |
+| ----------------- | ------------ |
+| `total_tokens`    | `tokens`     |
+| `tool_uses`       | `toolUses`   |
+| `duration_ms`     | `durationMs` |
+
+**Parsing rules:**
+
+- Usage fields are optional on all events — if the `<usage>` block is absent or any field cannot be parsed, omit those fields silently. Never fail a phase due to missing usage data.
+- Values must be non-negative integers. Discard any field that does not parse to a valid non-negative integer.
+- Include parsed usage fields on `phase_completed`, `reviewer_completed`, `coder_fix_completed`, and `re_review_completed` event emissions as described in each phase's "After" section.
 
 ## Error handling
 
