@@ -735,4 +735,141 @@ describe('CatwalkScene', () => {
       expect(orch.celebrate).toHaveBeenCalledOnce();
     });
   });
+
+  describe('artifact regression (scene rebuild)', () => {
+    it('rebuilds the scene when artifacts disappear between updates (backward step)', () => {
+      // Start with a run that has artifacts
+      const status1 = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'arch',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+      const scene = new CatwalkScene(status1);
+      scene.onInitialize();
+
+      const countAfterInit = scene.entities.length;
+
+      // Step backward: fewer artifacts
+      const status2 = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'arch',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+      scene.updateStatus(status2);
+
+      // Scene should have been rebuilt (fewer entities because fewer artifacts)
+      expect(scene.entities.length).toBeLessThan(countAfterInit);
+
+      // Verify the remaining artifact actors are correct
+      const artifacts = scene.entities.filter(
+        (e): e is InstanceType<typeof ArtifactActor> => e instanceof ArtifactActor,
+      );
+      // 1 output at station 0 + 1 input at station 1 = 2 artifacts
+      expect(artifacts).toHaveLength(2);
+    });
+
+    it('continues forward diffs after a rebuild', () => {
+      // Start with artifacts
+      const status1 = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+          planning: { status: 'completed', stepCount: 3, artifacts: ['plan.md'] },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'arch',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+          {
+            filename: 'plan.md',
+            role: 'planner',
+            roleType: 'planner',
+            agent: 'planner',
+            type: 'plan',
+            phase: 'planning',
+            createdAt: '2026-01-01T00:20:00Z',
+          },
+        ],
+      });
+      const scene = new CatwalkScene(status1);
+      scene.onInitialize();
+
+      // Trigger rebuild (backward step to fewer artifacts)
+      const status2 = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [],
+      });
+      scene.updateStatus(status2);
+
+      const countAfterRebuild = scene.entities.length;
+
+      // Forward step: add artifact
+      const status3 = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'arch',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+      scene.updateStatus(status3);
+
+      // Should have more entities (new artifact added via diff)
+      expect(scene.entities.length).toBeGreaterThan(countAfterRebuild);
+    });
+  });
 });
