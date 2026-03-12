@@ -432,10 +432,20 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
   return artifacts;
 }
 
-/** Build input artifacts derived from upstream station outputs. */
+/**
+ * Build input artifacts derived from upstream station outputs.
+ *
+ * For in-progress runs, inputs are only derived at stations the orchestrator
+ * has reached (stations <= `orchestratorStationIndex`). This ensures inputs
+ * appear in the diff exactly when the orchestrator moves to their station,
+ * producing the co-occurrence signal the choreographer needs to infer a delivery.
+ *
+ * For completed runs, all inputs are derived (orchestrator has passed all stations).
+ */
 function buildInputArtifacts(
   status: CanonicalRunStatus,
   outputArtifacts: StationArtifactConfig[],
+  orchestratorStationIndex: number,
 ): StationArtifactConfig[] {
   const inputs: StationArtifactConfig[] = [];
 
@@ -453,9 +463,10 @@ function buildInputArtifacts(
   // For each station N that has outputs, generate inputs at station N+1.
   // Cap at N+1 <= 5 so the summary station (6) is only populated by the
   // completed block below, avoiding duplicate inputs.
+  // Only derive inputs at stations the orchestrator has reached.
   for (const [stationIndex, stationOutputs] of outputsByStation) {
     const nextStation = stationIndex + 1;
-    if (nextStation <= 5) {
+    if (nextStation <= 5 && nextStation <= orchestratorStationIndex) {
       for (const output of stationOutputs) {
         // Fix-cycle artifacts re-enter the same station workflow and should
         // not cascade as new inputs to the next station. Any artifact with a
@@ -501,7 +512,7 @@ export function mapRunToCatwalk(status: CanonicalRunStatus): CatwalkSceneConfig 
   const agents = buildAgents(status, currentPhase);
   const gates = buildGates(stations, status.phases);
   const outputArtifacts = buildArtifacts(status);
-  const inputArtifacts = buildInputArtifacts(status, outputArtifacts);
+  const inputArtifacts = buildInputArtifacts(status, outputArtifacts, orchestrator.stationIndex);
   const artifacts = [...outputArtifacts, ...inputArtifacts];
 
   return { orchestrator, stations, agents, gates, artifacts };
