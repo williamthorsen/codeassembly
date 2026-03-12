@@ -140,6 +140,29 @@ describe('PlaybackController', () => {
     expect(updates).toHaveLength(1);
   });
 
+  it('play() from paused re-emits current snapshot before advancing', () => {
+    const ctrl = new PlaybackController(createSnapshots(), onUpdate);
+    ctrl.play();
+
+    // Advance to cursor 1
+    vi.advanceTimersByTime(1500);
+    expect(ctrl.cursor).toBe(1);
+    expect(updates).toHaveLength(2);
+
+    ctrl.pause();
+    expect(ctrl.state).toBe('paused');
+    const countAfterPause = updates.length;
+
+    // Resume: should re-emit snapshot at cursor 1 immediately
+    ctrl.play();
+    expect(updates).toHaveLength(countAfterPause + 1);
+
+    // After 1500ms, should advance to cursor 2
+    vi.advanceTimersByTime(1500);
+    expect(ctrl.cursor).toBe(2);
+    expect(updates).toHaveLength(countAfterPause + 2);
+  });
+
   it('stop resets cursor to -1', () => {
     const ctrl = new PlaybackController(createSnapshots(), onUpdate);
     ctrl.play();
@@ -261,5 +284,13 @@ describe('PlaybackController', () => {
 
     vi.advanceTimersByTime(10_000);
     expect(updates).toHaveLength(1);
+  });
+
+  it('transitions to ended immediately for an empty snapshot array', () => {
+    const ctrl = new PlaybackController([], onUpdate);
+    ctrl.play();
+
+    expect(ctrl.state).toBe('ended');
+    expect(updates).toHaveLength(0);
   });
 });

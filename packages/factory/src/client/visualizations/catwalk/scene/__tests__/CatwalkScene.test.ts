@@ -804,6 +804,87 @@ describe('CatwalkScene', () => {
       expect(artifacts).toHaveLength(2);
     });
 
+    it('rebuilds correctly when artifact regression occurs during active choreography', () => {
+      // Start with empty phases (orchestrator at station 0)
+      const status1 = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+      });
+      const scene = new CatwalkScene(status1);
+      scene.onInitialize();
+
+      // Grab the orchestrator and override animateMoveTo to return a never-resolving
+      // promise, keeping choreographyInProgress = true.
+      const orchestrators = scene.entities.filter(
+        (e): e is InstanceType<typeof OrchestratorActor> => e instanceof OrchestratorActor,
+      );
+      expect(orchestrators.length).toBe(1);
+      const orch = orchestrators[0];
+      if (orch === undefined) throw new Error('orchestrator not found');
+      orch.animateMoveTo = vi.fn().mockReturnValue(new Promise<void>(() => {}));
+
+      // Trigger choreography: architecture completed + artifact added.
+      // The orchestrator moves to station 1, but animateMoveTo never resolves.
+      const status2 = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'arch',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+      scene.updateStatus(status2);
+
+      // Trigger artifact regression while choreography is still in progress.
+      // This calls resetScene(), which sets choreographyInProgress = false and rebuilds.
+      const status3 = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        artifacts: [],
+      });
+      scene.updateStatus(status3);
+
+      // After rebuild, entity count should match a clean build from status3
+      const cleanScene = new CatwalkScene(status3);
+      cleanScene.onInitialize();
+      expect(scene.entities.length).toBe(cleanScene.entities.length);
+
+      // Forward diff: re-add architecture artifact — should work normally after rebuild
+      const countAfterRebuild = scene.entities.length;
+      const status4 = createMockRunStatus({
+        status: 'in_progress',
+        phases: {
+          ...emptyPhases(),
+          architecture: { status: 'completed', impactLevel: 'high', artifact: 'arch.md' },
+        },
+        artifacts: [
+          {
+            filename: 'arch.md',
+            role: 'architect',
+            roleType: 'analyst',
+            agent: 'arch',
+            type: 'architecture',
+            phase: 'architecture',
+            createdAt: '2026-01-01T00:10:00Z',
+          },
+        ],
+      });
+      scene.updateStatus(status4);
+
+      // Entity count should increase (artifact actors added via diff)
+      expect(scene.entities.length).toBeGreaterThan(countAfterRebuild);
+    });
+
     it('continues forward diffs after a rebuild', () => {
       // Start with artifacts
       const status1 = createMockRunStatus({
