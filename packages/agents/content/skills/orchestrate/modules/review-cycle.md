@@ -129,16 +129,17 @@ Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 20`, `model: {
 
 ### Findings aggregation
 
-After all dispatched reviewers complete, emit one `reviewer_completed` event per dispatched reviewer:
+After all dispatched reviewers complete, parse usage from each reviewer's Task result (see "Usage capture" in SKILL.md). Emit one `reviewer_completed` event per dispatched reviewer:
 
 ```
 Call MCP tool emit_event with:
   runDir: {run-dir}
   event: { event: "reviewer_completed", reviewer: "{name}",
-           status: "completed"|"failed", criticality: "{level}" }
+           status: "completed"|"failed", criticality: "{level}",
+           tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs} }
 ```
 
-For each aspect reviewer that was **not activated** (skipped by activation rules), emit a separate `reviewer_completed` event:
+For each aspect reviewer that was **not activated** (skipped by activation rules), emit a separate `reviewer_completed` event (no usage fields — the agent was not invoked):
 
 ```
 Call MCP tool emit_event with:
@@ -193,7 +194,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: update `{change-summary-path}` to the new file; increment `{seq}`. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N} } }`. Call `register_artifact` for the coder's change-summary artifact.
+After: update `{change-summary-path}` to the new file; increment `{seq}`. Parse usage from the coder's Task result (see "Usage capture" in SKILL.md). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N}, tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs} } }`. Call `register_artifact` for the coder's change-summary artifact.
 
 ### Selective re-review
 
@@ -213,7 +214,7 @@ Send re-review Task calls in a single message (parallel) using the same prompts,
 
 If a re-reviewer fails or times out, treat its original findings as unverified and include them in the aggregated criticality at their original severity. Emit `reviewer_completed` with `status: "failed"` for that reviewer.
 
-After re-reviews complete: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... } } }`. Call `register_artifact` for each re-reviewer's artifact file.
+After re-reviews complete: parse usage from each re-reviewer's Task result (see "Usage capture" in SKILL.md). Aggregate usage across all re-review Task results by summing `tokens`, `toolUses`, and `durationMs` independently. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... }, tokens: {summed-tokens}, toolUses: {summed-toolUses}, durationMs: {summed-durationMs} } }`. Call `register_artifact` for each re-reviewer's artifact file.
 
 Aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
 
@@ -224,7 +225,7 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `re
 - After N iterations unresolved (where N is the configured `max-review-rounds`): exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
 - Structural issues: may return to Planning once per run.
 
-At phase completion (converged or `needs_manual_review`): call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Then emit `phase_decision` for `parallelReview`:
+At phase completion (converged or `needs_manual_review`): compute aggregate usage for the entire review phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4 (all reviewer dispatches, coder fix cycles, and re-reviews). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Then emit `phase_decision` for `parallelReview`:
 
 ```
 Call MCP tool emit_event with:
@@ -281,7 +282,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: if a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure). Call `register_artifact` for the code-simplifier review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
+After: if a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Compute aggregate usage for the simplifier phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4a (the code-simplifier dispatch and, if applicable, the coder fix cycle). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the code-simplifier review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
 
 ## Phase 4b: Final comprehensive review
 
@@ -339,4 +340,4 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
 - **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
 
-After: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
+After: compute aggregate usage for the holistic phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4b (the holistic reviewer dispatch and, if applicable, coder fix and re-review cycles). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
