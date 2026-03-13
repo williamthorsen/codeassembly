@@ -236,6 +236,33 @@ describe('parseRunLogLine', () => {
     });
   });
 
+  it('parses a waiting_for_input event with reason', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:15:00Z',
+      event: 'waiting_for_input',
+      reason: 'permission_prompt',
+    });
+    const result = parseRunLogLine(line);
+    expect(result.event).toBe('waiting_for_input');
+    expect(result).toMatchObject({ reason: 'permission_prompt' });
+  });
+
+  it('parses an input_received event', () => {
+    const line = JSON.stringify({ t: '2026-01-01T00:15:30Z', event: 'input_received' });
+    const result = parseRunLogLine(line);
+    expect(result.event).toBe('input_received');
+    expect(result.t).toBe('2026-01-01T00:15:30Z');
+  });
+
+  it('throws when waiting_for_input has invalid reason', () => {
+    const line = JSON.stringify({
+      t: '2026-01-01T00:15:00Z',
+      event: 'waiting_for_input',
+      reason: 'invalid_reason',
+    });
+    expect(() => parseRunLogLine(line)).toThrow();
+  });
+
   it('throws on invalid JSON', () => {
     expect(() => parseRunLogLine('not json!')).toThrow();
   });

@@ -35,6 +35,7 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
     completedAt: undefined,
     status: 'completed',
     reason: undefined,
+    waitingForInput: undefined,
     externalPlan: false,
     mergeBaseSha: undefined,
     diffBase: undefined,

@@ -202,7 +202,9 @@ function buildOrchestrator(status: CanonicalRunStatus, currentPhase: PhaseName |
 
   const celebrating = status.status === 'completed';
 
-  return { stationIndex, working, celebrating, carriedArtifacts, codeBadge };
+  const waiting = status.waitingForInput !== undefined && status.status === 'in_progress';
+
+  return { stationIndex, working, celebrating, waiting, carriedArtifacts, codeBadge };
 }
 
 /**

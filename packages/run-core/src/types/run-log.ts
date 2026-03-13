@@ -1,4 +1,4 @@
-import type { Criticality, PhaseStatus, ReviewerStatus, RunStatus } from './canonical.js';
+import type { Criticality, PhaseStatus, ReviewerStatus, RunStatus, WaitingForInputReason } from './canonical.js';
 
 /** Static run metadata extracted from a v3 run-index.json header. */
 export interface RunHeader {
@@ -123,7 +123,18 @@ export interface ArtifactWrittenEvent {
   note?: string | undefined;
 }
 
-/** Discriminated union of all 13 run-log event types. */
+export interface WaitingForInputEvent {
+  t: string;
+  event: 'waiting_for_input';
+  reason: WaitingForInputReason;
+}
+
+export interface InputReceivedEvent {
+  t: string;
+  event: 'input_received';
+}
+
+/** Discriminated union of all 15 run-log event types. */
 export type RunEvent =
   | RunStartedEvent
   | RunCompletedEvent
@@ -137,4 +148,6 @@ export type RunEvent =
   | CoderFixCompletedEvent
   | ReReviewDispatchedEvent
   | ReReviewCompletedEvent
-  | ArtifactWrittenEvent;
+  | ArtifactWrittenEvent
+  | WaitingForInputEvent
+  | InputReceivedEvent;

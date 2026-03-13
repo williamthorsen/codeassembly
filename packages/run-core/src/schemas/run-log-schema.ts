@@ -118,7 +118,20 @@ const artifactWrittenSchema = z.object({
   note: z.string().optional(),
 });
 
-/** Discriminated union over the `event` field covering all 13 event types. */
+const waitingForInputReasonSchema = z.enum(['permission_prompt', 'elicitation_dialog', 'idle_prompt']);
+
+const waitingForInputSchema = z.object({
+  t: z.string(),
+  event: z.literal('waiting_for_input'),
+  reason: waitingForInputReasonSchema,
+});
+
+const inputReceivedSchema = z.object({
+  t: z.string(),
+  event: z.literal('input_received'),
+});
+
+/** Discriminated union over the `event` field covering all 15 event types. */
 export const runEventSchema = z.discriminatedUnion('event', [
   runStartedSchema,
   runCompletedSchema,
@@ -133,6 +146,8 @@ export const runEventSchema = z.discriminatedUnion('event', [
   reReviewDispatchedSchema,
   reReviewCompletedSchema,
   artifactWrittenSchema,
+  waitingForInputSchema,
+  inputReceivedSchema,
 ]);
 
 /** Parse a single JSONL line into a validated RunEvent. */

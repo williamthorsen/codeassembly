@@ -26,6 +26,7 @@ export interface OrchestratorConfig {
   stationIndex: number;
   working: boolean;
   celebrating: boolean;
+  waiting: boolean;
   carriedArtifacts: CarriedArtifactConfig[];
   codeBadge: { label: string; color: string } | null;
 }
@@ -74,6 +75,7 @@ export interface OrchestratorDiff {
   moved: { from: number; to: number } | null;
   workingChanged: { from: boolean; to: boolean } | null;
   celebratingChanged: { from: boolean; to: boolean } | null;
+  waitingChanged: { from: boolean; to: boolean } | null;
   carriedChanged: { from: CarriedArtifactConfig[]; to: CarriedArtifactConfig[] } | null;
   codeBadgeChanged: { from: OrchestratorConfig['codeBadge']; to: OrchestratorConfig['codeBadge'] } | null;
 }

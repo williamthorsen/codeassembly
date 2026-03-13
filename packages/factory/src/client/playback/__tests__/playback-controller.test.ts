@@ -15,6 +15,7 @@ function createSnapshots(): CanonicalRunStatus[] {
     completedAt: undefined,
     status: 'in_progress',
     reason: undefined,
+    waitingForInput: undefined,
     externalPlan: false,
     mergeBaseSha: undefined,
     diffBase: undefined,

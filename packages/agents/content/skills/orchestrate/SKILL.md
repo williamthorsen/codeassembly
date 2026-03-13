@@ -217,6 +217,14 @@ Prefix the status line with a colored emoji for visual distinction:
 
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
 
+   **Write breadcrumb** (MCP success path only): After a successful `init_run`, write the active run directory to a breadcrumb file so that Claude Code hooks can discover it:
+
+   ```
+   mkdir -p .claude/tmp && echo "{run-dir}" > .claude/tmp/active-run-dir
+   ```
+
+   Only write the breadcrumb after a successful `init_run` (MCP available). Do not write it on the MCP-unavailable fallback path. When MCP is unavailable, no `run-log.jsonl` is created, so the hooks have nothing to append to.
+
    **Failure — MCP unavailable** (tool not found / server not connected): Resolve `mcp_policy` (see "Resolving MCP policy" above) and apply the policy:
    - `required`: abort with a clear message explaining that MCP is unavailable and the policy requires it.
    - `prompt`: ask the developer: "MCP server is unavailable — no run-index.json, run-log.jsonl, or Factory visualization will be produced. Continue without MCP tracking? (yes / no)". Abort if the developer declines; continue on confirmation.
@@ -673,6 +681,12 @@ phase: summary
 ```
 
 Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
+
+**Clean up breadcrumb** (MCP success path only): After `complete_run`, remove the breadcrumb file:
+
+```
+rm -f .claude/tmp/active-run-dir
+```
 
 ## Phase 6: Wrap-up (prompted, conditional)
 

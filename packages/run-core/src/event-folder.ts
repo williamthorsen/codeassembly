@@ -92,6 +92,7 @@ export function foldEvents(header: RunHeader, events: ReadonlyArray<RunEvent>): 
     budgetThreshold: header.budgetThreshold,
     mode: header.mode,
     model: header.model,
+    waitingForInput: undefined,
     phases: {
       architecture: undefined,
       planning: undefined,
@@ -155,6 +156,14 @@ function applyEvent(state: CanonicalRunStatus, event: RunEvent): void {
 
     case 'artifact_written':
       applyArtifactWritten(state, event);
+      break;
+
+    case 'waiting_for_input':
+      state.waitingForInput = event.reason;
+      break;
+
+    case 'input_received':
+      state.waitingForInput = undefined;
       break;
   }
 }

@@ -2,6 +2,7 @@ export type RunStatus = 'in_progress' | 'completed' | 'failed' | 'needs_manual_r
 export type Criticality = 'none' | 'low' | 'medium' | 'high';
 export type ReviewerStatus = 'completed' | 'skipped' | 'failed';
 export type PhaseStatus = 'completed' | 'skipped' | 'failed' | 'in_progress' | 'approved';
+export type WaitingForInputReason = 'permission_prompt' | 'elicitation_dialog' | 'idle_prompt';
 
 /** Optional resource-usage metrics captured from subagent results. */
 export interface UsageMetrics {
@@ -42,6 +43,7 @@ export interface CanonicalRunStatus {
   budgetThreshold: string | undefined;
   mode: string | undefined;
   model: string | undefined;
+  waitingForInput: WaitingForInputReason | undefined;
   phases: Phases;
   phaseDecisions: Record<string, PhaseDecision> | undefined;
   artifacts: ArtifactEntry[] | undefined;

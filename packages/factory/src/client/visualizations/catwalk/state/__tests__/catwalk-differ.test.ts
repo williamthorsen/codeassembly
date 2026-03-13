@@ -16,6 +16,7 @@ function orchestrator(overrides: Partial<OrchestratorConfig> = {}): Orchestrator
     stationIndex: 0,
     working: false,
     celebrating: false,
+    waiting: false,
     carriedArtifacts: [],
     codeBadge: null,
     ...overrides,

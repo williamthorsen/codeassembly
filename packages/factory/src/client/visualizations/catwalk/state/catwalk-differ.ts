@@ -21,6 +21,8 @@ export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorCon
   const celebratingChanged =
     prev.celebrating === next.celebrating ? null : { from: prev.celebrating, to: next.celebrating };
 
+  const waitingChanged = prev.waiting === next.waiting ? null : { from: prev.waiting, to: next.waiting };
+
   const prevCarried = JSON.stringify(prev.carriedArtifacts);
   const nextCarried = JSON.stringify(next.carriedArtifacts);
   const carriedChanged =
@@ -30,7 +32,7 @@ export function diffOrchestrator(prev: OrchestratorConfig, next: OrchestratorCon
   const nextBadge = next.codeBadge === null ? null : `${next.codeBadge.label}:${next.codeBadge.color}`;
   const codeBadgeChanged = prevBadge === nextBadge ? null : { from: prev.codeBadge, to: next.codeBadge };
 
-  return { moved, workingChanged, celebratingChanged, carriedChanged, codeBadgeChanged };
+  return { moved, workingChanged, celebratingChanged, waitingChanged, carriedChanged, codeBadgeChanged };
 }
 
 /** Compare two agent arrays by id, detecting state changes, additions, and removals. */
@@ -100,6 +102,7 @@ export function diffCatwalkConfig(prev: CatwalkSceneConfig, next: CatwalkSceneCo
     orchestrator.moved !== null ||
     orchestrator.workingChanged !== null ||
     orchestrator.celebratingChanged !== null ||
+    orchestrator.waitingChanged !== null ||
     orchestrator.carriedChanged !== null ||
     orchestrator.codeBadgeChanged !== null ||
     agents.stateChanged.length > 0 ||
