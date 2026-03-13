@@ -87,7 +87,7 @@ Run the project's full quality gate (build + type-check + test + lint).
 
 ### 6. Commit
 
-One commit per logical change. Each commit must leave the repo green. Follow git-commit-conventions with the `deps` work type.
+One commit per logical change. Each commit must leave the repo green. Follow the `commit` skill conventions with the `deps` work type.
 
 ## Common Mistakes
 

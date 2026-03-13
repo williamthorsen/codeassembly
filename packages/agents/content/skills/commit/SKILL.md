@@ -1,7 +1,7 @@
 ---
-name: git-commit-conventions
+name: commit
 description: Git commit message format and metadata conventions for version control
-user-invocable: false
+user-invocable: true
 ---
 
 # Git commit conventions
@@ -33,11 +33,15 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 - **Title**: 72 characters max (hard limit).
 - **Body**: No hard wrapping. Write naturally — do not insert newlines to wrap at a column width.
 
-## Content guidelines
+## Title guidelines
 
-- **Title describes the code change, not what prompted it.** Ask: "what does the diff do?" — not "why did I open the editor?" Bad: "Address review findings", "Apply review suggestions", "Incorporate feedback". Good: "Add error logging to handleStateUpdate", "Remove dead rejection handler".
+- **Describes the code change, not what prompted it.** Ask: "what does the diff do?" — not "why did I open the editor?" Bad: "Address review findings", "Apply feedback", "Incorporate suggestions". Good: "Add error logging to handleStateUpdate", "Remove dead rejection handler".
 - **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
 - **Only document what's in the diff.** External actions (e.g., updating a ticket) are not part of the commit and don't belong in its message.
+
+## Body guidelines
+
+See `../_data/commit-format.md` for body formatting rules (punctuation, backtick formatting, paragraph structure, and what to omit).
 
 ## Changes touching multiple workspaces
 

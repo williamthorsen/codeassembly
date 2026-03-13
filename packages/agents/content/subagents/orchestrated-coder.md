@@ -5,8 +5,8 @@ tools: [Read, Write, Edit, Grep, Glob, Bash]
 maxTurns: 80
 skills:
   - anti-patterns
+  - commit
   - common-mistakes
-  - git-commit-conventions
 ---
 
 # Implementation Coder
