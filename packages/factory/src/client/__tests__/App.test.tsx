@@ -42,8 +42,9 @@ vi.mock('../components/StatusBar.js', () => ({
   StatusBar: mockStatusBar,
 }));
 
-vi.mock('../components/CatwalkCanvas.js', () => ({
-  CatwalkCanvas: mockCatwalkCanvas,
+vi.mock('../visualizations/registry.js', () => ({
+  visualizationRegistry: { catwalk: mockCatwalkCanvas },
+  DEFAULT_VIS: 'catwalk',
 }));
 
 vi.mock('../api/client.js', () => ({
@@ -91,12 +92,13 @@ describe('App', () => {
     cleanup();
   });
 
-  function setInitialParams(params: { project?: string; ticket?: string; run?: string } = {}): void {
+  function setInitialParams(params: { project?: string; ticket?: string; run?: string; vis?: string } = {}): void {
     mockUseSelectionParams.mockReturnValue({
       initialParams: {
         project: params.project ?? '',
         ticket: params.ticket ?? '',
         run: params.run ?? '',
+        vis: params.vis ?? '',
       },
       setParams: mockSetParams,
     });
@@ -494,6 +496,7 @@ describe('App', () => {
         project: 'beta',
         ticket: 'T-2',
         run: 'run-x',
+        vis: '',
       });
     });
 

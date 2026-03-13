@@ -4,6 +4,7 @@ interface SelectionParams {
   project: string;
   ticket: string;
   run: string;
+  vis: string;
 }
 
 interface UseSelectionParamsResult {
@@ -18,6 +19,7 @@ export function useSelectionParams(): UseSelectionParamsResult {
       project: params.get('project') ?? '',
       ticket: params.get('ticket') ?? '',
       run: params.get('run') ?? '',
+      vis: params.get('vis') ?? '',
     };
   });
 

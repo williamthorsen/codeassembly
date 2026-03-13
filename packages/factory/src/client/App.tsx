@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
-import { CatwalkCanvas } from './components/CatwalkCanvas.js';
 import { DemoControlPanel } from './components/DemoControlPanel.js';
 import { DemoStatusLight } from './components/DemoStatusLight.js';
 import { RunList } from './components/RunList.js';
@@ -14,6 +13,7 @@ import { useDemoMode } from './hooks/useDemoMode.js';
 import { useDismissedRuns } from './hooks/useDismissedRuns.js';
 import { useRunStatus } from './hooks/useRunStatus.js';
 import { useSelectionParams } from './hooks/useSelectionParams.js';
+import { DEFAULT_VIS, visualizationRegistry } from './visualizations/registry.js';
 
 import './App.css';
 
@@ -61,6 +61,7 @@ export function App(): React.JSX.Element {
   const [selectedProject, setSelectedProject] = useState<string | null>(() => initialParams.project || null);
   const [selectedTicket, setSelectedTicket] = useState<string | null>(() => initialParams.ticket || null);
   const [selectedRun, setSelectedRun] = useState<string | null>(() => initialParams.run || null);
+  const [selectedVis, setSelectedVis] = useState<string>(() => initialParams.vis || DEFAULT_VIS);
 
   const { data: runStatus, isLoading, error } = useRunStatus(selectedProject, selectedRun);
 
@@ -72,14 +73,15 @@ export function App(): React.JSX.Element {
   // Determine the active data source: demo data takes precedence when available
   const activeStatus = demo.isActive && demo.data !== null ? demo.data : runStatus;
 
-  // Sync selection state → URL params. A single effect replaces ad-hoc setParams calls.
+  // Sync selection state -> URL params. A single effect replaces ad-hoc setParams calls.
   useEffect(() => {
     setParams({
       project: selectedProject ?? '',
       ticket: selectedTicket ?? '',
       run: selectedRun ?? '',
+      vis: selectedVis === DEFAULT_VIS ? '' : selectedVis,
     });
-  }, [selectedProject, selectedTicket, selectedRun, setParams]);
+  }, [selectedProject, selectedTicket, selectedRun, selectedVis, setParams]);
 
   // Validate initial URL params against loaded data (runs once when index arrives).
   // Captures initial selection at mount time so the dependency array is honest: [index] only.
@@ -169,6 +171,9 @@ export function App(): React.JSX.Element {
     setShowDemoPanel(false);
   }
 
+  // Resolve the active visualization component from the registry
+  const VisComponent = visualizationRegistry[selectedVis] ?? visualizationRegistry[DEFAULT_VIS];
+
   const demoSlot = (
     <>
       <DemoStatusLight playbackState={demo.playbackState} onClick={() => setShowDemoPanel((prev) => !prev)} />
@@ -211,10 +216,23 @@ export function App(): React.JSX.Element {
         />
       </aside>
       <main className="main">
-        {activeStatus && <StatusBar status={activeStatus} demoSlot={demoSlot} />}
+        <div className="vis-toolbar">
+          <label className="vis-selector">
+            <span className="vis-label">Viz:</span>
+            <select value={selectedVis} onChange={(e) => setSelectedVis(e.target.value)} className="vis-dropdown">
+              {Object.keys(visualizationRegistry).map((key) => (
+                <option key={key} value={key}>
+                  {key}
+                </option>
+              ))}
+            </select>
+          </label>
+          {demoSlot}
+        </div>
+        {activeStatus && <StatusBar status={activeStatus} />}
         {isLoading && <p>Loading...</p>}
         {error && <p>Error: {error.message}</p>}
-        {activeStatus && <CatwalkCanvas status={activeStatus} />}
+        {activeStatus && VisComponent !== undefined && <VisComponent status={activeStatus} />}
       </main>
     </div>
   );
