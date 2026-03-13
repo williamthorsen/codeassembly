@@ -390,13 +390,28 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
    }
    ```
 
-3. **Write artifacts:** Write both files using the orchestrator role (not planner):
+3. **Guard: zero-steps fallback.** If `{plan-json-content}` has an empty `steps` array (length 0):
+
+   a. Emit a corrective `phase_decision` event for planning:
+
+   ```
+   Call MCP tool emit_event with:
+     runDir: {run-dir}
+     event: { event: "phase_decision", phase: "planning", run: true,
+              reason: "fallback: high-trust plan produced zero steps — running planning in adoption mode" }
+   ```
+
+   b. Set `{planTrust}` to `"medium"`. Do not increment `{seq}`.
+
+   c. Abort high-trust plan conversion — skip steps 4-6. Phase 2 (Planning) will produce the canonical plan artifacts using the adoption-mode hint.
+
+4. **Write artifacts:** Write both files using the orchestrator role (not planner):
    - `{run-dir}/{NN}_orchestrator_orchestration-plan.md` — copy of the external plan content with the YAML frontmatter block removed (strip everything between and including the opening `---` and closing `---` delimiters at the start of the file)
    - `{run-dir}/{NN}_orchestrator_orchestration-plan.json` — the structured JSON
 
    Both files share the same `{NN}`. Increment `{seq}` once for the pair.
 
-4. **Register artifacts:** Call MCP tool `register_artifact` for each:
+5. **Register artifacts:** Call MCP tool `register_artifact` for each:
 
    ```
    runDir: {run-dir}
@@ -419,7 +434,7 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
    phase: initialization
    ```
 
-5. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the "Skip logic" section above with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
+6. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the "Skip logic" section above with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
 
 ## Authority hierarchy
 
