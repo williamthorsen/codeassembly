@@ -17,6 +17,9 @@ export const DEACTIVATED_OPACITY = 0.15;
 /** Orchestrator opacity when not working. */
 export const ORCH_IDLE_OPACITY = 0.8;
 
+/** Orchestrator opacity when waiting for user input. */
+export const ORCH_WAITING_OPACITY = 0.6;
+
 // --- Scene element opacities ---
 
 /** Gate barrier opacity. */

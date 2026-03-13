@@ -89,6 +89,11 @@ const events: RunEvent[] = [
 
   // Phase 3: Implementation
   { t: '2026-03-01T12:05:00Z', event: 'phase_started', phase: 'implementation' },
+
+  // Permission prompt during implementation
+  { t: '2026-03-01T12:07:00Z', event: 'waiting_for_input', reason: 'permission_prompt' },
+  { t: '2026-03-01T12:07:30Z', event: 'input_received' },
+
   {
     t: '2026-03-01T12:10:00Z',
     event: 'artifact_written',
@@ -297,7 +302,7 @@ const events: RunEvent[] = [
 //   - summary artifact, run complete
 // ---------------------------------------------------------------------------
 const CURATED_EVENT_INDICES = [
-  0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 19, 21, 22, 25, 27, 30, 31, 33, 34, 35, 37, 38, 39, 40,
+  0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 21, 23, 24, 27, 29, 32, 33, 35, 36, 37, 39, 40, 41, 42,
 ];
 
 function generateSnapshots(hdr: RunHeader, evts: ReadonlyArray<RunEvent>, indices: number[]): CanonicalRunStatus[] {

@@ -119,11 +119,19 @@ export class CatwalkScene extends Scene {
     // Create orchestrator if it needs to appear and doesn't exist
     if (diff.orchestrator.moved !== null && diff.orchestrator.moved.to >= 0 && this.orchestratorRef === undefined) {
       const pos = layout.orchestratorPosition(diff.orchestrator.moved.to);
-      const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
+      const orchestratorActor = new OrchestratorActor(
+        { working: config.orchestrator.working, waiting: config.orchestrator.waiting },
+        vec(pos.x, pos.y),
+      );
       orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
       orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
       this.add(orchestratorActor);
       this.orchestratorRef = orchestratorActor;
+    }
+
+    // Apply waiting state immediately (not via choreography animation)
+    if (diff.orchestrator.waitingChanged !== null && this.orchestratorRef !== undefined) {
+      this.orchestratorRef.setWaiting(diff.orchestrator.waitingChanged.to);
     }
 
     // Added agents are always handled by the scene directly (not by the choreographer)
@@ -326,7 +334,10 @@ export class CatwalkScene extends Scene {
     if (config.orchestrator.stationIndex < 0) return;
 
     const pos = layout.orchestratorPosition(config.orchestrator.stationIndex);
-    const orchestratorActor = new OrchestratorActor({ working: config.orchestrator.working }, vec(pos.x, pos.y));
+    const orchestratorActor = new OrchestratorActor(
+      { working: config.orchestrator.working, waiting: config.orchestrator.waiting },
+      vec(pos.x, pos.y),
+    );
     orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
     orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
 

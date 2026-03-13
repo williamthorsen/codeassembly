@@ -20,6 +20,7 @@ export type {
   RunStatus,
   SelectiveReReview,
   UsageMetrics,
+  WaitingForInputReason,
 } from './types/canonical.js';
 
 // Types — run-log event model
@@ -29,6 +30,7 @@ export type {
   CoderFixStartedEvent,
   EventPhaseName,
   EventUsageFields,
+  InputReceivedEvent,
   PhaseCompletedEvent,
   PhaseDecisionEvent,
   PhaseStartedEvent,
@@ -41,6 +43,7 @@ export type {
   RunFailedEvent,
   RunHeader,
   RunStartedEvent,
+  WaitingForInputEvent,
 } from './types/run-log.js';
 
 // Constants — domain role types and phase names

@@ -110,6 +110,7 @@ const {
   GATE_OPACITY,
   IDLE_OPACITY,
   ORCH_IDLE_OPACITY,
+  ORCH_WAITING_OPACITY,
   RESTING_OPACITY,
 } = await import('../../constants/animation.js');
 const { ORCH_SPRITE_BOTTOM_PADDING_PX, SPRITE_SIZE } = await import('../../constants/dimensions.js');
@@ -122,20 +123,20 @@ describe('OrchestratorActor', () => {
   });
 
   it('sets opacity to ACTIVE_OPACITY when working is true', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
 
     expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
   it('sets opacity to ORCH_IDLE_OPACITY when working is false', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
 
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
   });
 
   it('animateMoveTo calls actions.moveTo with y adjusted for sprite padding', async () => {
     const targetY = 100;
-    const actor = new OrchestratorActor({ working: false }, vec(0, targetY));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, targetY));
     await actor.animateMoveTo(vec(200, targetY));
 
     const expectedY = targetY - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PADDING_PX;
@@ -146,13 +147,13 @@ describe('OrchestratorActor', () => {
   });
 
   it('setWorking(true) sets full opacity', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setWorking(true);
     expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
   });
 
   it('setWorking(false) sets idle opacity and resets scale', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
     actor.setWorking(false);
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
     expect(actor.scale).toEqual({ x: 1, y: 1 });
@@ -164,19 +165,19 @@ describe('OrchestratorActor', () => {
   });
 
   it('calls getAnimation with orchestrator type and working state', () => {
-    new OrchestratorActor({ working: true }, vec(0, 0));
+    new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
 
     expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
   });
 
   it('calls getAnimation with orchestrator type and idle state when not working', () => {
-    new OrchestratorActor({ working: false }, vec(0, 0));
+    new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
 
     expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
   });
 
   it('setWorking calls graphics.use to update the sprite', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
     mockGraphicsUse.mockClear();
 
     actor.setWorking(false);
@@ -185,7 +186,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('setWorking(false) calls getAnimation with idle state', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
     mockGetAnimation.mockClear();
 
     actor.setWorking(false);
@@ -194,7 +195,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('setWorking(true) calls getAnimation with working state', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     mockGetAnimation.mockClear();
 
     actor.setWorking(true);
@@ -203,7 +204,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('setCarriedArtifacts with empty array kills all carried children', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCarriedArtifacts([{ label: 'code', color: '#fff3bf' }]);
 
     // One child was added via addChild
@@ -223,7 +224,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('setCarriedArtifacts creates one trailing child per artifact', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCarriedArtifacts([
       { label: 'code', color: '#fff3bf' },
       { label: 'plan', color: '#b2f2bb' },
@@ -233,7 +234,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('setCarriedArtifacts kills previous children before adding new ones', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCarriedArtifacts([{ label: 'code', color: '#fff3bf' }]);
     const firstChild = actor.children[0];
 
@@ -251,7 +252,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('setCodeBadge(null) kills the badge child', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
     const badgeChild = actor.children[0];
 
@@ -266,14 +267,14 @@ describe('OrchestratorActor', () => {
   });
 
   it('setCodeBadge with config adds a badge child', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
 
     expect(actor.children.length).toBe(1);
   });
 
   it('setCodeBadge kills previous badge before adding new one', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     actor.setCodeBadge({ label: 'v2', color: '#ffaa00' });
     const firstBadge = actor.children[0];
 
@@ -288,7 +289,7 @@ describe('OrchestratorActor', () => {
   });
 
   it('celebrate() calls getAnimation with celebrating state', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
     mockGetAnimation.mockClear();
 
     actor.celebrate();
@@ -297,14 +298,91 @@ describe('OrchestratorActor', () => {
   });
 
   it('celebrate() sets ACTIVE_OPACITY and resets scale', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
     actor.celebrate();
     expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
     expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
+  it('setWaiting(true) calls getAnimation with concerned state', () => {
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(true);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'concerned');
+  });
+
+  it('setWaiting(true) sets ORCH_WAITING_OPACITY', () => {
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+
+    expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
+  });
+
+  it('setWaiting(false) restores working animation when previously working', () => {
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(false);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+  });
+
+  it('setWaiting(false) restores idle animation when previously not working', () => {
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(false);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
+    expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
+  });
+
+  it('constructor applies waiting state when config.waiting is true', () => {
+    mockGetAnimation.mockClear();
+
+    const actor = new OrchestratorActor({ working: true, waiting: true }, vec(0, 0));
+
+    // The constructor first applies working, then setWaiting(true) overrides to concerned
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'concerned');
+    expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
+  });
+
+  it('setWorking while waiting preserves concerned animation and opacity', () => {
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+    mockGetAnimation.mockClear();
+    mockGraphicsUse.mockClear();
+
+    actor.setWorking(true);
+
+    // Animation should not have been changed -- concerned state takes priority
+    expect(mockGetAnimation).not.toHaveBeenCalled();
+    expect(mockGraphicsUse).not.toHaveBeenCalled();
+    expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
+  });
+
+  it('setWaiting(false) restores working state set during waiting', () => {
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+
+    // Change working state while waiting -- visual state should not change yet
+    actor.setWorking(true);
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(false);
+
+    // After leaving waiting, should reflect the updated working=true state
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+  });
+
   it('fadeOut calls actions.fade with opacity 0', () => {
-    const actor = new OrchestratorActor({ working: true }, vec(0, 0));
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
     actor.fadeOut();
     expect(actor.actions.fade).toHaveBeenCalledWith(0, expect.any(Number));
   });

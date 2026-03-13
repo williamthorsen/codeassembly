@@ -16,6 +16,7 @@ function orchestrator(overrides: Partial<OrchestratorConfig> = {}): Orchestrator
     stationIndex: 0,
     working: false,
     celebrating: false,
+    waiting: false,
     carriedArtifacts: [],
     codeBadge: null,
     ...overrides,
@@ -166,6 +167,30 @@ describe('diffOrchestrator', () => {
     const diff = diffOrchestrator(prev, next);
 
     expect(diff.celebratingChanged).toBeNull();
+  });
+
+  it('detects waiting toggled on', () => {
+    const prev = orchestrator({ waiting: false });
+    const next = orchestrator({ waiting: true });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.waitingChanged).toEqual({ from: false, to: true });
+  });
+
+  it('detects waiting toggled off', () => {
+    const prev = orchestrator({ waiting: true });
+    const next = orchestrator({ waiting: false });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.waitingChanged).toEqual({ from: true, to: false });
+  });
+
+  it('returns waitingChanged null when waiting is unchanged', () => {
+    const prev = orchestrator({ waiting: false });
+    const next = orchestrator({ waiting: false });
+    const diff = diffOrchestrator(prev, next);
+
+    expect(diff.waitingChanged).toBeNull();
   });
 });
 
@@ -509,6 +534,15 @@ describe('diffCatwalkConfig', () => {
 
     expect(diff.hasChanges).toBe(true);
     expect(diff.orchestrator.celebratingChanged).toEqual({ from: false, to: true });
+  });
+
+  it('returns hasChanges true when orchestrator transitions to waiting', () => {
+    const prev = sceneConfig({ orchestrator: orchestrator({ waiting: false }) });
+    const next = sceneConfig({ orchestrator: orchestrator({ waiting: true }) });
+    const diff = diffCatwalkConfig(prev, next);
+
+    expect(diff.hasChanges).toBe(true);
+    expect(diff.orchestrator.waitingChanged).toEqual({ from: false, to: true });
   });
 
   it('detects changes across all sub-diffs simultaneously', () => {

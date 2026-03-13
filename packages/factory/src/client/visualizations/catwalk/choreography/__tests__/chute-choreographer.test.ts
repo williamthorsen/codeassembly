@@ -88,6 +88,7 @@ function orchestratorDiff(overrides: Partial<OrchestratorDiff> = {}): Orchestrat
     moved: null,
     workingChanged: null,
     celebratingChanged: null,
+    waitingChanged: null,
     carriedChanged: null,
     codeBadgeChanged: null,
     ...overrides,

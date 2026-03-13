@@ -1,6 +1,6 @@
 import { Actor, BaseAlign, Color, Font, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY } from '../constants/animation.js';
+import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY, ORCH_WAITING_OPACITY } from '../constants/animation.js';
 import {
   BADGE_OFFSET_Y,
   CARRIED_ART_GAP,
@@ -15,21 +15,30 @@ import type { CarriedArtifactConfig } from '../types.js';
 
 export interface OrchestratorActorConfig {
   working: boolean;
+  waiting?: boolean;
 }
 
-/** Renders the orchestrator as an animated sprite on the catwalk rail, supporting walk and working animations. */
+/** Renders the orchestrator as an animated sprite on the catwalk rail, supporting walk, working, and waiting animations. */
 export class OrchestratorActor extends Actor {
   private _carriedChildren: Actor[] = [];
   private _badgeChild: Actor | undefined;
+  private _working: boolean;
+  private _waiting: boolean;
 
   constructor(config: OrchestratorActorConfig, position: Vector) {
     // Shift sprite up so the visible character bottom (not the transparent padding) sits on the rail.
     // Center anchor: offset = -SPRITE_SIZE/2 + ORCH_SPRITE_BOTTOM_PADDING_PX shifts the character down onto the rail.
     super({ pos: vec(position.x, position.y - SPRITE_SIZE / 2 + ORCH_SPRITE_BOTTOM_PADDING_PX) });
 
+    this._working = config.working;
+    this._waiting = false;
     const animation = getAnimation('orchestrator', config.working ? 'working' : 'idle');
     this.graphics.use(animation);
     this.graphics.opacity = config.working ? ACTIVE_OPACITY : ORCH_IDLE_OPACITY;
+
+    if (config.waiting) {
+      this.setWaiting(true);
+    }
   }
 
   /** Slide the orchestrator to a new position along the catwalk rail. Returns a promise that resolves when the walk completes. */
@@ -44,8 +53,13 @@ export class OrchestratorActor extends Actor {
     this.actions.fade(0, PAUSE_DURATION);
   }
 
-  /** Toggle the working animation and switch sprite animation. */
+  /** Toggle the working animation and switch sprite animation. Skips visual changes while waiting so the concerned animation is preserved. */
   setWorking(working: boolean): void {
+    this._working = working;
+
+    // While waiting, record the new working state but preserve the concerned animation and opacity.
+    if (this._waiting) return;
+
     const animation = getAnimation('orchestrator', working ? 'working' : 'idle');
     this.graphics.use(animation);
     if (working) {
@@ -53,6 +67,18 @@ export class OrchestratorActor extends Actor {
     } else {
       this.scale = vec(1, 1);
       this.graphics.opacity = ORCH_IDLE_OPACITY;
+    }
+  }
+
+  /** Switch to concerned animation at reduced opacity when waiting, or restore prior working state when no longer waiting. */
+  setWaiting(waiting: boolean): void {
+    this._waiting = waiting;
+    if (waiting) {
+      const animation = getAnimation('orchestrator', 'concerned');
+      this.graphics.use(animation);
+      this.graphics.opacity = ORCH_WAITING_OPACITY;
+    } else {
+      this.setWorking(this._working);
     }
   }
 

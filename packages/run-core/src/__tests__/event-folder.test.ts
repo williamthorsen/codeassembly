@@ -32,10 +32,32 @@ describe('foldEvents', () => {
 
     expect(result.runId).toBe('test-run');
     expect(result.status).toBe('in_progress');
+    expect(result.waitingForInput).toBeUndefined();
     expect(result.phaseDecisions).toEqual({});
     expect(result.artifacts).toEqual([]);
     expect(result.completedAt).toBeUndefined();
     expect(result.reason).toBeUndefined();
+  });
+
+  it('sets waitingForInput on waiting_for_input event', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [{ t: '2026-01-01T00:15:00Z', event: 'waiting_for_input', reason: 'permission_prompt' }];
+
+    const result = foldEvents(header, events);
+
+    expect(result.waitingForInput).toBe('permission_prompt');
+  });
+
+  it('clears waitingForInput on input_received event', () => {
+    const header = createHeader();
+    const events: RunEvent[] = [
+      { t: '2026-01-01T00:15:00Z', event: 'waiting_for_input', reason: 'elicitation_dialog' },
+      { t: '2026-01-01T00:15:30Z', event: 'input_received' },
+    ];
+
+    const result = foldEvents(header, events);
+
+    expect(result.waitingForInput).toBeUndefined();
   });
 
   it('accumulates phase_decision events', () => {
