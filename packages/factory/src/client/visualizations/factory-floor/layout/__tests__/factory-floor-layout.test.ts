@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ACCENT_BAR_H,
+  BOUNDARY_GAP,
+  CODER_ROOM_LEFT,
+  CODER_ROOM_RIGHT,
   CODER_X,
-  HOLISTIC_X,
+  LOWER_AGENT_SPACING,
   LOWER_LEFT_MARGIN,
   LOWER_PLATFORM_Y,
+  ORCH_ROOM_LEFT,
+  ORCH_ROOM_RIGHT,
   PLATFORM_WIDTH,
   RAIL_Y,
-  REVIEWER_SPACING,
-  SIMPLIFIER_X,
+  SPRITE_SIZE,
+  SUBAGENT_SPRITE_BOTTOM_PADDING_PX,
   SUMMARY_X,
   UPPER_LEFT_MARGIN,
   UPPER_PLATFORM_Y,
@@ -19,6 +25,9 @@ import {
   type FactoryFloorLayoutConfig,
   type StationLayoutEntry,
 } from '../factory-floor-layout.js';
+
+/** Height of an agent visual (sprite + accent bar minus bottom padding). */
+const AGENT_VISUAL_HEIGHT = SPRITE_SIZE + ACCENT_BAR_H - SUBAGENT_SPRITE_BOTTOM_PADDING_PX;
 
 /** Standard 7-station configuration used across multiple test cases. */
 function defaultStations(reviewerCount = 1): readonly StationLayoutEntry[] {
@@ -82,16 +91,6 @@ describe(computeFactoryFloorLayout, () => {
       const layout = computeFactoryFloorLayout(buildConfig());
       expect(layout.stationPosition(6).x).toBe(SUMMARY_X);
     });
-
-    it('places Simplifier at SIMPLIFIER_X', () => {
-      const layout = computeFactoryFloorLayout(buildConfig());
-      expect(layout.stationPosition(4).x).toBe(SIMPLIFIER_X);
-    });
-
-    it('places Holistic at HOLISTIC_X', () => {
-      const layout = computeFactoryFloorLayout(buildConfig());
-      expect(layout.stationPosition(5).x).toBe(HOLISTIC_X);
-    });
   });
 
   describe('orchestrator position', () => {
@@ -112,14 +111,27 @@ describe(computeFactoryFloorLayout, () => {
     });
   });
 
-  describe('dual-anchor stability', () => {
-    it('Simplifier and Holistic positions are constant regardless of reviewer count', () => {
-      const layouts = [1, 2, 3, 4, 5].map((count) => computeFactoryFloorLayout(buildConfig(count)));
+  describe('lower-zone sequential flow', () => {
+    it('simplifier follows last reviewer', () => {
+      const layout = computeFactoryFloorLayout(buildConfig(3));
+      const lastReviewerX = layout.agentPosition(3, 2, 3).x;
+      const simplifierX = layout.stationPosition(4).x;
+      expect(simplifierX).toBeGreaterThan(lastReviewerX);
+    });
 
-      for (const layout of layouts) {
-        expect(layout.stationPosition(4).x).toBe(SIMPLIFIER_X);
-        expect(layout.stationPosition(5).x).toBe(HOLISTIC_X);
-      }
+    it('holistic follows simplifier', () => {
+      const layout = computeFactoryFloorLayout(buildConfig(3));
+      const simplifierX = layout.stationPosition(4).x;
+      const holisticX = layout.stationPosition(5).x;
+      expect(holisticX).toBeGreaterThan(simplifierX);
+    });
+
+    it('positions change with reviewer count', () => {
+      const layout1 = computeFactoryFloorLayout(buildConfig(1));
+      const layout3 = computeFactoryFloorLayout(buildConfig(3));
+
+      expect(layout3.stationPosition(4).x).not.toBe(layout1.stationPosition(4).x);
+      expect(layout3.stationPosition(5).x).not.toBe(layout1.stationPosition(5).x);
     });
 
     it('upper-zone positions are constant regardless of reviewer count', () => {
@@ -141,6 +153,29 @@ describe(computeFactoryFloorLayout, () => {
     });
   });
 
+  describe('adaptive spacing', () => {
+    it('all lower-zone agents stay left of the coder room', () => {
+      const layout = computeFactoryFloorLayout(buildConfig(4));
+      const holisticX = layout.stationPosition(5).x;
+      expect(holisticX).toBeLessThan(CODER_ROOM_LEFT);
+    });
+
+    it('uses preferred spacing when few agents', () => {
+      const layout = computeFactoryFloorLayout(buildConfig(1));
+      const simplifierX = layout.stationPosition(4).x;
+      expect(simplifierX).toBe(LOWER_LEFT_MARGIN + LOWER_AGENT_SPACING);
+    });
+
+    it('compresses spacing when many reviewers would overflow', () => {
+      const layout = computeFactoryFloorLayout(buildConfig(8));
+
+      // With 8 reviewers: gapCount = 10, availableWidth = CODER_ROOM_LEFT - LOWER_RIGHT_MARGIN - LOWER_LEFT_MARGIN
+      // All agents should still be left of the coder room
+      const holisticX = layout.stationPosition(5).x;
+      expect(holisticX).toBeLessThan(CODER_ROOM_LEFT);
+    });
+  });
+
   describe('platform width constancy', () => {
     it('platform width is constant regardless of reviewer count', () => {
       const widths = [0, 1, 2, 3, 5].map((count) => computeFactoryFloorLayout(buildConfig(count)).platformWidth);
@@ -159,12 +194,89 @@ describe(computeFactoryFloorLayout, () => {
       expect(pos.y).toBe(LOWER_PLATFORM_Y);
     });
 
-    it('multiple reviewers spread with REVIEWER_SPACING', () => {
+    it('multiple reviewers spread with adaptive spacing', () => {
       const layout = computeFactoryFloorLayout(buildConfig(3));
+      const pos0 = layout.agentPosition(3, 0, 3);
+      const pos1 = layout.agentPosition(3, 1, 3);
+      const pos2 = layout.agentPosition(3, 2, 3);
 
-      expect(layout.agentPosition(3, 0, 3).x).toBe(LOWER_LEFT_MARGIN);
-      expect(layout.agentPosition(3, 1, 3).x).toBe(LOWER_LEFT_MARGIN + REVIEWER_SPACING);
-      expect(layout.agentPosition(3, 2, 3).x).toBe(LOWER_LEFT_MARGIN + 2 * REVIEWER_SPACING);
+      expect(pos0.x).toBe(LOWER_LEFT_MARGIN);
+      // Spacing is consistent between reviewers
+      const spacing = pos1.x - pos0.x;
+      expect(pos2.x - pos1.x).toBe(spacing);
+      expect(spacing).toBeGreaterThan(0);
+    });
+  });
+
+  describe('zone boundary lines', () => {
+    it('upper boundary line is between UPPER_PLATFORM_Y and RAIL_Y', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const boundary = layout.upperBoundaryEndpoints();
+
+      expect(boundary.y).toBeGreaterThan(UPPER_PLATFORM_Y);
+      expect(boundary.y).toBeLessThan(RAIL_Y);
+    });
+
+    it('lower boundary line is between RAIL_Y and LOWER_PLATFORM_Y', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const boundary = layout.lowerBoundaryEndpoints();
+
+      expect(boundary.y).toBeGreaterThan(RAIL_Y);
+      expect(boundary.y).toBeLessThan(LOWER_PLATFORM_Y);
+    });
+
+    it('symmetric gap from upper boundary to agent platform', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const boundary = layout.upperBoundaryEndpoints();
+
+      // Gap from upper platform bottom (UPPER_PLATFORM_Y) to upper boundary
+      expect(boundary.y - UPPER_PLATFORM_Y).toBe(BOUNDARY_GAP);
+    });
+
+    it('symmetric gap from lower boundary to agent sprite top', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const boundary = layout.lowerBoundaryEndpoints();
+
+      // Lower agents stand at LOWER_PLATFORM_Y, sprite top is at LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT
+      // Gap from lower boundary to sprite top should equal BOUNDARY_GAP
+      const spriteTop = LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT;
+      expect(spriteTop - boundary.y).toBe(BOUNDARY_GAP);
+    });
+  });
+
+  describe('room bounds', () => {
+    it('coder room spans from CODER_ROOM_LEFT to CODER_ROOM_RIGHT', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const room = layout.coderRoomBounds();
+
+      expect(room.left).toBe(CODER_ROOM_LEFT);
+      expect(room.right).toBe(CODER_ROOM_RIGHT);
+    });
+
+    it('orchestrator room spans from ORCH_ROOM_LEFT to ORCH_ROOM_RIGHT', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const room = layout.orchestratorRoomBounds();
+
+      expect(room.left).toBe(ORCH_ROOM_LEFT);
+      expect(room.right).toBe(ORCH_ROOM_RIGHT);
+    });
+
+    it('rooms share a wall (coder right = orchestrator left)', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const coder = layout.coderRoomBounds();
+      const orch = layout.orchestratorRoomBounds();
+
+      expect(coder.right).toBe(orch.left);
+    });
+
+    it('room vertical extent matches boundary lines', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const coder = layout.coderRoomBounds();
+      const upper = layout.upperBoundaryEndpoints();
+      const lower = layout.lowerBoundaryEndpoints();
+
+      expect(coder.top).toBe(upper.y);
+      expect(coder.bottom).toBe(lower.y);
     });
   });
 
@@ -263,7 +375,7 @@ describe(computeFactoryFloorLayout, () => {
       expect(pos.y).toBe(LOWER_PLATFORM_Y);
     });
 
-    it('handles many reviewers without affecting other positions', () => {
+    it('handles many reviewers without affecting upper or rail positions', () => {
       const layout = computeFactoryFloorLayout(buildConfig(10));
 
       // Upper zone unchanged
@@ -274,30 +386,8 @@ describe(computeFactoryFloorLayout, () => {
       expect(layout.stationPosition(2).x).toBe(CODER_X);
       expect(layout.stationPosition(6).x).toBe(SUMMARY_X);
 
-      // Right-anchored lower zone unchanged
-      expect(layout.stationPosition(4).x).toBe(SIMPLIFIER_X);
-      expect(layout.stationPosition(5).x).toBe(HOLISTIC_X);
-
       // Platform width unchanged
       expect(layout.platformWidth).toBe(PLATFORM_WIDTH);
-    });
-  });
-
-  describe('zone boundary lines', () => {
-    it('upper boundary line is between UPPER_PLATFORM_Y and RAIL_Y', () => {
-      const layout = computeFactoryFloorLayout(buildConfig());
-      const boundary = layout.upperBoundaryEndpoints();
-
-      expect(boundary.y).toBeGreaterThan(UPPER_PLATFORM_Y);
-      expect(boundary.y).toBeLessThan(RAIL_Y);
-    });
-
-    it('lower boundary line is between RAIL_Y and LOWER_PLATFORM_Y', () => {
-      const layout = computeFactoryFloorLayout(buildConfig());
-      const boundary = layout.lowerBoundaryEndpoints();
-
-      expect(boundary.y).toBeGreaterThan(RAIL_Y);
-      expect(boundary.y).toBeLessThan(LOWER_PLATFORM_Y);
     });
   });
 

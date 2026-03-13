@@ -1,4 +1,4 @@
-import { Actor, Color, Rectangle, Scene, vec } from 'excalibur';
+import { Actor, BaseAlign, Color, Font, Rectangle, Scene, Text, vec } from 'excalibur';
 
 import { ROLE_TYPE_COLORS } from '../../../../shared/constants/role-types.js';
 import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
@@ -7,7 +7,7 @@ import { OrchestratorActor } from '../../catwalk/actors/OrchestratorActor.js';
 import { StationAgentActor } from '../../catwalk/actors/StationAgentActor.js';
 import { loadAllCatwalkSprites } from '../../catwalk/sprites/catwalk-sprite-loader.js';
 import { choreographFloor, type FloorSceneRefs } from '../choreography/floor-choreographer.js';
-import { CAMERA_TOP_MARGIN, ENGINE_HEIGHT, ENGINE_WIDTH, RAIL_Y } from '../constants/dimensions.js';
+import { ENGINE_HEIGHT, ENGINE_WIDTH, LABEL_Y_OFFSET } from '../constants/dimensions.js';
 import {
   computeFactoryFloorLayout,
   type FactoryFloorLayoutResult,
@@ -22,6 +22,8 @@ const RAIL_OPACITY = 0.6;
 const RAIL_COLOR = '#FFD700';
 const ZONE_BOUNDARY_COLOR = '#444444';
 const ZONE_BOUNDARY_HEIGHT = 1;
+const ROOM_LINE_COLOR = '#444444';
+const ROOM_LINE_WIDTH = 1;
 
 /** Excalibur scene that renders an orchestration run as a three-zone factory floor layout. */
 export class FactoryFloorScene extends Scene {
@@ -171,6 +173,8 @@ export class FactoryFloorScene extends Scene {
       actor.fadeIn();
       this.add(actor);
       this.agentRefs.set(agent.id, actor);
+
+      this.addLabel(agent.role, ROLE_TYPE_COLORS[agent.roleType], pos.x, pos.y);
     }
   }
 
@@ -191,8 +195,10 @@ export class FactoryFloorScene extends Scene {
 
     this.drawRail(layout);
     this.drawZoneBoundaries(layout);
+    this.drawRooms(layout);
     this.addChutes(config, layout);
     this.addAgents(config, layout);
+    this.addLabels(config, layout);
     this.addOrchestrator(config, layout);
   }
 
@@ -238,6 +244,33 @@ export class FactoryFloorScene extends Scene {
     this.add(line);
   }
 
+  private drawVerticalLine(x: number, y1: number, y2: number): void {
+    const height = y2 - y1;
+    const midY = (y1 + y2) / 2;
+
+    const line = new Actor({ pos: vec(x, midY) });
+    line.graphics.use(
+      new Rectangle({
+        width: ROOM_LINE_WIDTH,
+        height,
+        color: Color.fromHex(ROOM_LINE_COLOR),
+      }),
+    );
+    this.add(line);
+  }
+
+  private drawRooms(layout: FactoryFloorLayoutResult): void {
+    const coder = layout.coderRoomBounds();
+    const orch = layout.orchestratorRoomBounds();
+
+    // Coder room left wall
+    this.drawVerticalLine(coder.left, coder.top, coder.bottom);
+    // Shared wall between coder and orchestrator rooms
+    this.drawVerticalLine(coder.right, coder.top, coder.bottom);
+    // Orchestrator room right wall
+    this.drawVerticalLine(orch.right, orch.top, orch.bottom);
+  }
+
   private addChutes(config: FactoryFloorSceneConfig, layout: FactoryFloorLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
 
@@ -267,6 +300,36 @@ export class FactoryFloorScene extends Scene {
     }
   }
 
+  private addLabels(config: FactoryFloorSceneConfig, layout: FactoryFloorLayoutResult): void {
+    const agentCountByStation = buildAgentCountByStation(config);
+
+    for (const agent of config.agents) {
+      const agentCountAtStation = agentCountByStation.get(agent.stationIndex) ?? 1;
+      const pos = layout.agentPosition(agent.stationIndex, agent.slotIndex, agentCountAtStation);
+      this.addLabel(agent.role, ROLE_TYPE_COLORS[agent.roleType], pos.x, pos.y);
+    }
+  }
+
+  /** Create a text label beneath an agent at the given position. */
+  private addLabel(role: string, color: string, x: number, y: number): void {
+    const label = new Text({
+      text: role,
+      color: Color.fromHex(color),
+      font: new Font({
+        size: 10,
+        bold: true,
+        family: 'monospace',
+        baseAlign: BaseAlign.Top,
+      }),
+    });
+
+    const labelActor = new Actor({ pos: vec(x, y + LABEL_Y_OFFSET) });
+    labelActor.graphics.use(label);
+    // Anchor (0.5, 0) centers text horizontally on x, with top at the label y position.
+    labelActor.graphics.anchor = vec(0.5, 0);
+    this.add(labelActor);
+  }
+
   private addOrchestrator(config: FactoryFloorSceneConfig, layout: FactoryFloorLayoutResult): void {
     if (config.orchestrator.stationIndex < 0) return;
 
@@ -287,7 +350,7 @@ export class FactoryFloorScene extends Scene {
     if (this.layout === undefined) return;
 
     this.camera.zoom = Math.min(1, ENGINE_WIDTH / this.layout.platformWidth);
-    this.camera.pos = vec(this.layout.platformWidth / 2, RAIL_Y + ENGINE_HEIGHT / 2 - CAMERA_TOP_MARGIN);
+    this.camera.pos = vec(this.layout.platformWidth / 2, ENGINE_HEIGHT / 2);
   }
 }
 

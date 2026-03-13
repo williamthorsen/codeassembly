@@ -1,19 +1,23 @@
 import {
   ACCENT_BAR_H,
   AGENT_SPACING,
+  BOUNDARY_GAP,
   CHUTE_PLATFORM_OFFSET,
   CHUTE_RAIL_OFFSET,
+  CODER_ROOM_LEFT,
+  CODER_ROOM_RIGHT,
   CODER_X,
   ENGINE_HEIGHT,
-  HOLISTIC_X,
   LAYOUT_MARGIN,
+  LOWER_AGENT_SPACING,
   LOWER_LEFT_MARGIN,
   LOWER_PLATFORM_Y,
+  LOWER_RIGHT_MARGIN,
+  ORCH_ROOM_LEFT,
+  ORCH_ROOM_RIGHT,
   PLATFORM_WIDTH,
   RAIL_OVERSHOOT,
   RAIL_Y,
-  REVIEWER_SPACING,
-  SIMPLIFIER_X,
   SPRITE_SIZE,
   STATION_ZONE,
   SUBAGENT_SPRITE_BOTTOM_PADDING_PX,
@@ -58,6 +62,13 @@ export interface Bounds {
   maxY: number;
 }
 
+export interface RoomBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 export interface FactoryFloorLayoutResult {
   /** Station center position (x, y varies by zone). */
   stationPosition(index: number): Position;
@@ -77,12 +88,19 @@ export interface FactoryFloorLayoutResult {
   upperBoundaryEndpoints(): LineEndpoints;
   /** Lower platform zone boundary line. */
   lowerBoundaryEndpoints(): LineEndpoints;
+  /** Coder room rectangle (between upper and lower boundaries). */
+  coderRoomBounds(): RoomBounds;
+  /** Orchestrator room rectangle (between upper and lower boundaries). */
+  orchestratorRoomBounds(): RoomBounds;
   bounds: Bounds;
   platformWidth: number;
 }
 
+/** Height of an agent visual (sprite + accent bar minus bottom padding). */
+const AGENT_VISUAL_HEIGHT = SPRITE_SIZE + ACCENT_BAR_H - SUBAGENT_SPRITE_BOTTOM_PADDING_PX;
+
 /** Returns the X coordinate for a given station index. */
-function stationXForIndex(stationIndex: number, reviewerCount: number): number {
+function stationXForIndex(stationIndex: number, reviewerCount: number, lowerSpacing: number): number {
   switch (stationIndex) {
     case 0:
       return UPPER_LEFT_MARGIN;
@@ -91,16 +109,17 @@ function stationXForIndex(stationIndex: number, reviewerCount: number): number {
     case 2:
       return CODER_X;
     case 3: {
-      // Reviewers: centered around the first reviewer position
-      // Each reviewer slot is at LOWER_LEFT_MARGIN + i * REVIEWER_SPACING
+      // Reviewers: centered around the reviewer positions
       const effectiveCount = Math.max(reviewerCount, 1);
-      const totalWidth = (effectiveCount - 1) * REVIEWER_SPACING;
+      const totalWidth = (effectiveCount - 1) * lowerSpacing;
       return LOWER_LEFT_MARGIN + totalWidth / 2;
     }
     case 4:
-      return SIMPLIFIER_X;
+      // Simplifier: follows last reviewer
+      return LOWER_LEFT_MARGIN + Math.max(reviewerCount, 1) * lowerSpacing;
     case 5:
-      return HOLISTIC_X;
+      // Holistic: follows simplifier
+      return LOWER_LEFT_MARGIN + (Math.max(reviewerCount, 1) + 1) * lowerSpacing;
     case 6:
       return SUMMARY_X;
     default:
@@ -139,7 +158,16 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
   const reviewerEntry = stations[3];
   const reviewerCount = reviewerEntry === undefined ? 1 : Math.max(reviewerEntry.agentCount, 1);
 
+  // Compute adaptive lower-zone spacing: all lower agents (reviewers + simplifier + holistic) flow sequentially
+  const availableWidth = CODER_ROOM_LEFT - LOWER_RIGHT_MARGIN - LOWER_LEFT_MARGIN;
+  const gapCount = reviewerCount + 2; // reviewers + simplifier + holistic
+  const lowerSpacing = Math.min(LOWER_AGENT_SPACING, availableWidth / gapCount);
+
   const pw = PLATFORM_WIDTH;
+
+  // Symmetric boundary positions
+  const upperBoundaryY = UPPER_PLATFORM_Y + BOUNDARY_GAP;
+  const lowerBoundaryY = LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT - BOUNDARY_GAP;
 
   function zoneOf(stationIndex: number): Zone {
     const zone = STATION_ZONE[stationIndex];
@@ -155,7 +183,7 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
     }
     const zone = zoneOf(index);
     return {
-      x: stationXForIndex(index, reviewerCount),
+      x: stationXForIndex(index, reviewerCount, lowerSpacing),
       y: platformYForZone(zone),
     };
   }
@@ -167,13 +195,13 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
     if (stationIndex === 3) {
       // Reviewers use adaptive left-anchored spacing
       return {
-        x: LOWER_LEFT_MARGIN + slotIndex * REVIEWER_SPACING,
+        x: LOWER_LEFT_MARGIN + slotIndex * lowerSpacing,
         y,
       };
     }
 
     // Non-reviewer stations: center agents around the station X
-    const cx = stationXForIndex(stationIndex, reviewerCount);
+    const cx = stationXForIndex(stationIndex, reviewerCount, lowerSpacing);
     const effectiveCount = Math.max(agentCount, 1);
     const totalWidth = (effectiveCount - 1) * AGENT_SPACING;
     return {
@@ -184,7 +212,7 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
 
   function orchestratorPosition(stationIndex: number): Position {
     return {
-      x: stationXForIndex(stationIndex, reviewerCount),
+      x: stationXForIndex(stationIndex, reviewerCount, lowerSpacing),
       y: RAIL_Y,
     };
   }
@@ -231,20 +259,36 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
   }
 
   function upperBoundaryEndpoints(): LineEndpoints {
-    const midY = (UPPER_PLATFORM_Y + RAIL_Y) / 2;
     return {
       x1: LAYOUT_MARGIN - RAIL_OVERSHOOT,
       x2: pw - LAYOUT_MARGIN + RAIL_OVERSHOOT,
-      y: midY,
+      y: upperBoundaryY,
     };
   }
 
   function lowerBoundaryEndpoints(): LineEndpoints {
-    const midY = (RAIL_Y + LOWER_PLATFORM_Y) / 2;
     return {
       x1: LAYOUT_MARGIN - RAIL_OVERSHOOT,
       x2: pw - LAYOUT_MARGIN + RAIL_OVERSHOOT,
-      y: midY,
+      y: lowerBoundaryY,
+    };
+  }
+
+  function coderRoomBounds(): RoomBounds {
+    return {
+      left: CODER_ROOM_LEFT,
+      right: CODER_ROOM_RIGHT,
+      top: upperBoundaryY,
+      bottom: lowerBoundaryY,
+    };
+  }
+
+  function orchestratorRoomBounds(): RoomBounds {
+    return {
+      left: ORCH_ROOM_LEFT,
+      right: ORCH_ROOM_RIGHT,
+      top: upperBoundaryY,
+      bottom: lowerBoundaryY,
     };
   }
 
@@ -265,6 +309,8 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
     railEndpoints,
     upperBoundaryEndpoints,
     lowerBoundaryEndpoints,
+    coderRoomBounds,
+    orchestratorRoomBounds,
     bounds,
     platformWidth: pw,
   };

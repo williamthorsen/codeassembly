@@ -162,6 +162,8 @@ function mockLayout(): FactoryFloorLayoutResult {
     railEndpoints: () => ({ x1: 25, x2: 575, y: 300 }),
     upperBoundaryEndpoints: () => ({ x1: 25, x2: 575, y: 220 }),
     lowerBoundaryEndpoints: () => ({ x1: 25, x2: 575, y: 380 }),
+    coderRoomBounds: () => ({ left: 480, right: 580, top: 220, bottom: 380 }),
+    orchestratorRoomBounds: () => ({ left: 580, right: 630, top: 220, bottom: 380 }),
     bounds: { minX: 0, maxX: 720, minY: 0, maxY: 600 },
     platformWidth: 720,
   };
