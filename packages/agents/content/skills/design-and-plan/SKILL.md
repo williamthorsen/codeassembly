@@ -198,7 +198,12 @@ Present the plan to the user. Revise until approved.
 
    If `baseSha` could not be resolved, omit the `baseSha` line entirely.
 
-4. Report paths and suggest next steps:
+4. Report paths and suggest next steps. Recommend exactly one option based on your assessment of the work's scope and risk:
+   - **Refine plan** — recommend when the work is high-stakes, architecturally complex, or has significant unknowns
+   - **Orchestrate** — recommend when the work involves multi-file code changes where the review cycle adds value
+   - **Implement directly** — recommend when the work is small, prose-heavy, clearly scoped, or low-risk
+
+   Append "(recommended)" only after the option you recommend.
 
 ```
 Design and plan complete:
@@ -206,8 +211,9 @@ Design and plan complete:
   Plan:   {plan_path}
 
 Next steps:
-  - /refine-plan {plan_path} (recommended for high-stakes work)
-  - /orchestrate-dev (when ready to implement)
+  - /refine-plan {plan_path}
+  - /orchestrate-dev
+  - Implement directly
 ```
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.
