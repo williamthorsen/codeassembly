@@ -233,14 +233,20 @@ describe(computeFactoryFloorLayout, () => {
       expect(boundary.y - UPPER_PLATFORM_Y).toBe(BOUNDARY_GAP);
     });
 
-    it('symmetric gap from lower boundary to agent sprite top', () => {
+    it('lower boundary aligns with lower-zone sprite tops', () => {
       const layout = computeFactoryFloorLayout(buildConfig());
       const boundary = layout.lowerBoundaryEndpoints();
 
-      // Lower agents stand at LOWER_PLATFORM_Y, sprite top is at LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT
-      // Gap from lower boundary to sprite top should equal BOUNDARY_GAP
       const spriteTop = LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT;
-      expect(spriteTop - boundary.y).toBe(BOUNDARY_GAP);
+      expect(boundary.y).toBe(spriteTop);
+    });
+
+    it('rail is equidistant from both boundaries', () => {
+      const layout = computeFactoryFloorLayout(buildConfig());
+      const upper = layout.upperBoundaryEndpoints();
+      const lower = layout.lowerBoundaryEndpoints();
+
+      expect(RAIL_Y - upper.y).toBe(lower.y - RAIL_Y);
     });
   });
 

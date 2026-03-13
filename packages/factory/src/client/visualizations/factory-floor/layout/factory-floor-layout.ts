@@ -165,9 +165,9 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
 
   const pw = PLATFORM_WIDTH;
 
-  // Symmetric boundary positions
+  // Boundary positions: upper boundary has a gap below agents; lower boundary aligns with sprite tops
   const upperBoundaryY = UPPER_PLATFORM_Y + BOUNDARY_GAP;
-  const lowerBoundaryY = LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT - BOUNDARY_GAP;
+  const lowerBoundaryY = LOWER_PLATFORM_Y - AGENT_VISUAL_HEIGHT;
 
   function zoneOf(stationIndex: number): Zone {
     const zone = STATION_ZONE[stationIndex];

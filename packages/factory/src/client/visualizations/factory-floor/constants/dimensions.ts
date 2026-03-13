@@ -18,7 +18,7 @@ export const UPPER_PLATFORM_Y = 110;
 export const RAIL_Y = 205;
 
 /** Y coordinate of the lower platform where Reviewers, Simplifier, and Holistic stand. */
-export const LOWER_PLATFORM_Y = 365;
+export const LOWER_PLATFORM_Y = 305;
 
 // ---------------------------------------------------------------------------
 // Zone assignment by station index
