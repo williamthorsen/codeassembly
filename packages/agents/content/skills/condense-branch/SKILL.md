@@ -47,7 +47,7 @@ Use `summarize-change` to compose a good commit message. Save the description pe
 Follow `_data/commit-format.md`:
 
 ```
-{TICKET} {workspace}|{WORK_TYPE}: {title}
+{workspace}|{WORK_TYPE}: {title}
 
 {body}
 ```

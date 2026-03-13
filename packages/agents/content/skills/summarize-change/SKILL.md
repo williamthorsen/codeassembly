@@ -25,7 +25,7 @@ Check commit messages for additional context.
 3. **Compose title**: `{ticket ID} {workspace} | {work type}: {title}`
    - Omit empty segments
    - Pipe (`|`) must have a space on both sides
-   - Ticket ID appears in the change summary title (for identification) but is omitted from commit titles
+   - Ticket ID appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
 
 4. **Write description** per the output format below
 
