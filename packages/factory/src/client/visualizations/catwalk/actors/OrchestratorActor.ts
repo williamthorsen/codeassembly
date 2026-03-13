@@ -1,12 +1,6 @@
 import { Actor, BaseAlign, Color, Font, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import {
-  ACTIVE_OPACITY,
-  ORCH_IDLE_OPACITY,
-  PULSE_FREQUENCY,
-  SCALE_PULSE_MAX,
-  SCALE_PULSE_MIN,
-} from '../constants/animation.js';
+import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY } from '../constants/animation.js';
 import {
   BADGE_OFFSET_Y,
   CARRIED_ART_GAP,
@@ -23,10 +17,9 @@ export interface OrchestratorActorConfig {
   working: boolean;
 }
 
-/** Renders the orchestrator as an animated sprite on the catwalk rail, supporting walk and pulse animations. */
+/** Renders the orchestrator as an animated sprite on the catwalk rail, supporting walk and working animations. */
 export class OrchestratorActor extends Actor {
   private _working = false;
-  private _elapsed = 0;
   private _carriedChildren: Actor[] = [];
   private _badgeChild: Actor | undefined;
 
@@ -48,18 +41,17 @@ export class OrchestratorActor extends Actor {
       .toPromise();
   }
 
-  /** Fade the orchestrator out to invisible and stop the working pulse. */
+  /** Fade the orchestrator out to invisible and stop the working animation. */
   fadeOut(): void {
     this._working = false;
     this.actions.fade(0, PAUSE_DURATION);
   }
 
-  /** Toggle the pulsing working glow and switch sprite animation. */
+  /** Toggle the working animation and switch sprite animation. */
   setWorking(working: boolean): void {
     this._working = working;
     const animation = getAnimation('orchestrator', working ? 'working' : 'idle');
     this.graphics.use(animation);
-    this._elapsed = 0;
     if (working) {
       this.graphics.opacity = ACTIVE_OPACITY;
     } else {
@@ -68,7 +60,7 @@ export class OrchestratorActor extends Actor {
     }
   }
 
-  /** Switch to the celebrating sprite animation and stop the working pulse. */
+  /** Switch to the celebrating sprite animation and stop the working animation. */
   celebrate(): void {
     this._working = false;
     this.scale = vec(1, 1);
@@ -124,13 +116,5 @@ export class OrchestratorActor extends Actor {
     );
     this.addChild(badge);
     this._badgeChild = badge;
-  }
-
-  override onPreUpdate(_engine: unknown, deltaMs: number): void {
-    if (!this._working) return;
-    this._elapsed += deltaMs;
-    const t = Math.sin((this._elapsed * PULSE_FREQUENCY * Math.PI * 2) / 1000);
-    const s = SCALE_PULSE_MIN + ((SCALE_PULSE_MAX - SCALE_PULSE_MIN) * (t + 1)) / 2;
-    this.scale = vec(s, s);
   }
 }
