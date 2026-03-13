@@ -34,6 +34,10 @@ Rules for how code is structured, organized, and documented.
 - Complex objects documented by TypeScript interfaces don't need additional JSDoc
 - Only document params when the name alone doesn't convey purpose or constraints
 
+## Naming
+
+Follow the naming rules in `_data/naming-conventions.md`: no abbreviations, unit-of-measure suffixes on numerics, verb-led function names, boolean prefixes (`is`, `has`, `should`, `does`).
+
 ## Testing patterns
 
 ### Test structure
