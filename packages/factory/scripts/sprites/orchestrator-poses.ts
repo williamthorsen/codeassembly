@@ -176,11 +176,11 @@ function vibrate(part: BodyPart): BodyPart {
 
 /** Twelve animation poses for the orchestrator robot, ordered by sprite-sheet frame index. */
 export const ORCHESTRATOR_POSES: Pose[] = [
-  // Frame 0: Idle 1 — beacon dim, visor normal, treads A
-  [TREADS_A, TORSO, ARM_LEFT, ARM_RIGHT, HEAD, BEACON_OFF],
+  // Frame 0: Idle 1 — beacon dim (indices 2/1), visor normal, treads A
+  [TREADS_A, TORSO, ARM_LEFT, ARM_RIGHT, HEAD, BEACON_IDLE],
 
-  // Frame 1: Idle 2 — beacon dim, visor dimmed, treads A
-  [TREADS_A, TORSO, ARM_LEFT, ARM_RIGHT, HEAD_VISOR_DIM, BEACON_OFF],
+  // Frame 1: Idle 2 — beacon dim (indices 2/1), visor dimmed, treads A
+  [TREADS_A, TORSO, ARM_LEFT, ARM_RIGHT, HEAD_VISOR_DIM, BEACON_IDLE],
 
   // Frame 2: Concerned — head slouched, beacon dim
   [TREADS_A, TORSO, ARM_LEFT, ARM_RIGHT, HEAD_SLOUCH, BEACON_OFF],

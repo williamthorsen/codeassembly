@@ -19,7 +19,6 @@ export interface OrchestratorActorConfig {
 
 /** Renders the orchestrator as an animated sprite on the catwalk rail, supporting walk and working animations. */
 export class OrchestratorActor extends Actor {
-  private _working = false;
   private _carriedChildren: Actor[] = [];
   private _badgeChild: Actor | undefined;
 
@@ -30,7 +29,6 @@ export class OrchestratorActor extends Actor {
 
     const animation = getAnimation('orchestrator', config.working ? 'working' : 'idle');
     this.graphics.use(animation);
-    this._working = config.working;
     this.graphics.opacity = config.working ? ACTIVE_OPACITY : ORCH_IDLE_OPACITY;
   }
 
@@ -43,13 +41,11 @@ export class OrchestratorActor extends Actor {
 
   /** Fade the orchestrator out to invisible and stop the working animation. */
   fadeOut(): void {
-    this._working = false;
     this.actions.fade(0, PAUSE_DURATION);
   }
 
   /** Toggle the working animation and switch sprite animation. */
   setWorking(working: boolean): void {
-    this._working = working;
     const animation = getAnimation('orchestrator', working ? 'working' : 'idle');
     this.graphics.use(animation);
     if (working) {
@@ -62,7 +58,6 @@ export class OrchestratorActor extends Actor {
 
   /** Switch to the celebrating sprite animation and stop the working animation. */
   celebrate(): void {
-    this._working = false;
     this.scale = vec(1, 1);
     this.graphics.opacity = ACTIVE_OPACITY;
     const animation = getAnimation('orchestrator', 'celebrating');

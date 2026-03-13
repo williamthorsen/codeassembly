@@ -93,4 +93,5 @@ const basePalette = generatePalette(
 );
 
 /** Gold command-unit palette for the orchestrator robot, with beacon bright at index 6. */
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Palette is a readonly tuple starting with ''; spread loses that refinement
 export const ORCHESTRATOR_PALETTE: Palette = [...basePalette, '#fff5c0'] as Palette;

@@ -45,11 +45,11 @@ const SPRITE_TYPES: readonly CatwalkSpriteType[] = ['subagent', 'orchestrator'];
 
 let animationCache: Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>> | undefined;
 
-type FrameConfig = {
+interface FrameConfig {
   frameCoordinates: ReadonlyArray<{ x: number; y: number }>;
   duration: number;
   strategy: import('excalibur').AnimationStrategy;
-};
+}
 
 /** Resolves frame coordinates and timing for orchestrator sprite states. */
 function orchestratorFrameConfig(state: AgentAnimationState): FrameConfig {

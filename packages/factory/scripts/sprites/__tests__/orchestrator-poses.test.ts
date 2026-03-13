@@ -37,7 +37,7 @@ describe('ORCHESTRATOR_POSES', () => {
     // Frame 4 (Working 1) should have beacon with index 6 pixels
     const beaconPart = ORCHESTRATOR_POSES[4]?.[5]; // last part = beacon
     expect(beaconPart).toBeDefined();
-    const hasIndex6 = beaconPart!.pixels.some((row) => row.some((value) => value === 6));
+    const hasIndex6 = beaconPart?.pixels.some((row) => row.includes(6)) ?? false;
     expect(hasIndex6).toBe(true);
   });
 });

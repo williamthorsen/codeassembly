@@ -6,7 +6,7 @@ import {
   ORCH_WORKING_STRATEGY,
   WORKING_DURATION,
   WORKING_FRAME_COORDINATES,
-} from '../../../../game/sprites/sprite-definitions.js';
+} from '../sprite-definitions.js';
 
 const { mockImageSourceConstructor, mockImageSourceLoad, mockSpriteSheetFromImageSource, mockAnimationFromCoords } =
   vi.hoisted(() => {
@@ -136,28 +136,44 @@ describe('catwalk-sprite-loader', () => {
       expect(mockImageSourceConstructor).toHaveBeenCalledTimes(4);
     });
 
-    it('orchestrator working animation uses ORCH_WORKING_DURATION (500ms)', () => {
-      loadAllCatwalkSprites();
-      const workingCall = mockAnimationFromCoords.mock.calls.find(
-        (call) =>
-          call[0]?.frameCoordinates?.[0]?.x === ORCH_WORKING_FRAME_COORDINATES[0].x &&
-          call[0]?.frameCoordinates?.[0]?.y === ORCH_WORKING_FRAME_COORDINATES[0].y &&
-          call[0]?.frameCoordinates?.length === ORCH_WORKING_FRAME_COORDINATES.length,
+    it('orchestrator working animation uses ORCH_WORKING_DURATION (500ms)', async () => {
+      await loadAllCatwalkSprites();
+
+      interface AnimCallConfig {
+        frameCoordinates: Array<{ x: number; y: number }>;
+        durationPerFrameMs: number;
+        strategy: string;
+      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- vi.fn() mock calls are untyped; assertion safe in test code
+      const calls = mockAnimationFromCoords.mock.calls as Array<[AnimCallConfig]>;
+      const orchCoord = ORCH_WORKING_FRAME_COORDINATES[0];
+      const workingCall = calls.find(
+        ([config]) =>
+          config.frameCoordinates.length === ORCH_WORKING_FRAME_COORDINATES.length &&
+          config.frameCoordinates[0]?.x === orchCoord?.x &&
+          config.frameCoordinates[0]?.y === orchCoord?.y,
       );
       expect(workingCall).toBeDefined();
-      expect(workingCall![0].durationPerFrameMs).toBe(ORCH_WORKING_DURATION);
-      expect(workingCall![0].strategy).toBe(ORCH_WORKING_STRATEGY);
+      expect(workingCall?.[0].durationPerFrameMs).toBe(ORCH_WORKING_DURATION);
+      expect(workingCall?.[0].strategy).toBe(ORCH_WORKING_STRATEGY);
     });
 
-    it('subagent working animation still uses original WORKING_DURATION (300ms)', () => {
-      loadAllCatwalkSprites();
-      const workingCall = mockAnimationFromCoords.mock.calls.find(
-        (call) =>
-          call[0]?.frameCoordinates?.[0]?.x === WORKING_FRAME_COORDINATES[0].x &&
-          call[0]?.frameCoordinates?.[0]?.y === WORKING_FRAME_COORDINATES[0].y,
+    it('subagent working animation still uses original WORKING_DURATION (300ms)', async () => {
+      await loadAllCatwalkSprites();
+
+      interface AnimCallConfig {
+        frameCoordinates: Array<{ x: number; y: number }>;
+        durationPerFrameMs: number;
+        strategy: string;
+      }
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- vi.fn() mock calls are untyped; assertion safe in test code
+      const calls = mockAnimationFromCoords.mock.calls as Array<[AnimCallConfig]>;
+      const subCoord = WORKING_FRAME_COORDINATES[0];
+      const workingCall = calls.find(
+        ([config]) => config.frameCoordinates[0]?.x === subCoord?.x && config.frameCoordinates[0]?.y === subCoord?.y,
       );
       expect(workingCall).toBeDefined();
-      expect(workingCall![0].durationPerFrameMs).toBe(WORKING_DURATION);
+      expect(workingCall?.[0].durationPerFrameMs).toBe(WORKING_DURATION);
     });
   });
 

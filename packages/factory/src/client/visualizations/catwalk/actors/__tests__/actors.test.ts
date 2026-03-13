@@ -159,9 +159,8 @@ describe('OrchestratorActor', () => {
   });
 
   it('does not have onPreUpdate (no scale pulse)', () => {
-    const actor = new OrchestratorActor({ working: false }, vec(0, 0));
-    // onPreUpdate should be inherited default (no-op), not overridden
-    expect(actor.constructor.prototype.hasOwnProperty('onPreUpdate')).toBe(false);
+    const ownMethods = Object.getOwnPropertyNames(OrchestratorActor.prototype);
+    expect(ownMethods).not.toContain('onPreUpdate');
   });
 
   it('calls getAnimation with orchestrator type and working state', () => {
