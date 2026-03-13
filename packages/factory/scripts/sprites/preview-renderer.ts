@@ -1,8 +1,8 @@
-// Frame labels matching the pose ordering from sprite-definitions.ts
+// Frame labels for subagent sprite sheet
 // Row 0 (frames 0-3): Idle 1, Idle 2, Walking, Resting 1
 // Row 1 (frames 4-7): Working 1, Working 2, Working 3, Resting 2
 // Row 2 (frames 8-11): Celebrating 1, Celebrating 2, Concerned, Resting 3
-const FRAME_LABELS = [
+const SUBAGENT_FRAME_LABELS = [
   'Idle 1',
   'Idle 2',
   'Walking',
@@ -17,29 +17,53 @@ const FRAME_LABELS = [
   'Resting 3',
 ];
 
-const ANIMATION_NAMES = ['Idle', 'Walking', 'Working', 'Celebrating', 'Concerned', 'Resting'];
+// Frame labels for orchestrator sprite sheet
+// Row 0 (frames 0-3): Idle 1, Idle 2, Concerned, (spare)
+// Row 1 (frames 4-7): Working 1, Working 2, Walking 1, Walking 2
+// Row 2 (frames 8-11): Celebrating 1, Celebrating 2, (spare), (spare)
+const ORCHESTRATOR_FRAME_LABELS = [
+  'Idle 1',
+  'Idle 2',
+  'Concerned',
+  '(spare)',
+  'Working 1',
+  'Working 2',
+  'Walking 1',
+  'Walking 2',
+  'Celebrating 1',
+  'Celebrating 2',
+  '(spare)',
+  '(spare)',
+];
+
+const SUBAGENT_ANIMATION_NAMES = ['Idle', 'Walking', 'Working', 'Celebrating', 'Concerned', 'Resting'];
+const ORCHESTRATOR_ANIMATION_NAMES = ['Idle', 'Walking', 'Working', 'Celebrating', 'Concerned'];
 
 /** Renders the 4x3 grid of individually labeled sprite frames as HTML. */
-function renderFrameGridHtml(dataUri: string): string {
-  return FRAME_LABELS.map((label, i) => {
-    const col = i % 4;
-    const row = Math.floor(i / 4);
-    return `<div class="frame-cell">
+function renderFrameGridHtml(dataUri: string, frameLabels: readonly string[]): string {
+  return frameLabels
+    .map((label, i) => {
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      return `<div class="frame-cell">
   <div class="frame-preview" style="background-image: url('${dataUri}'); background-position: -${col * 128}px -${row * 128}px;"></div>
   <div class="frame-label">${label}</div>
 </div>`;
-  }).join('\n');
+    })
+    .join('\n');
 }
 
 /** Renders animation preview cells with element IDs for JS-driven playback. */
-function renderAnimationSectionsHtml(idPrefix: string): string {
-  return ANIMATION_NAMES.map((name) => {
-    const id = `${idPrefix}-${name.toLowerCase()}`;
-    return `<div class="anim-cell">
+function renderAnimationSectionsHtml(idPrefix: string, animationNames: readonly string[]): string {
+  return animationNames
+    .map((name) => {
+      const id = `${idPrefix}-${name.toLowerCase()}`;
+      return `<div class="anim-cell">
   <div class="frame-preview" id="${id}"></div>
   <div class="frame-label">${name}</div>
 </div>`;
-  }).join('\n');
+    })
+    .join('\n');
 }
 
 /** Generates a self-contained HTML preview page displaying labeled sprite frames and animated previews. */
@@ -108,22 +132,22 @@ export function renderPreviewHtml(subagentSvg: string, orchestratorSvg: string):
     <h2>subagent</h2>
     <h3>Frames</h3>
     <div class="frame-grid">
-${renderFrameGridHtml(subagentDataUri)}
+${renderFrameGridHtml(subagentDataUri, SUBAGENT_FRAME_LABELS)}
     </div>
     <h3>Animations</h3>
     <div class="anim-grid">
-${renderAnimationSectionsHtml('subagent')}
+${renderAnimationSectionsHtml('subagent', SUBAGENT_ANIMATION_NAMES)}
     </div>
   </div>
   <div class="column">
     <h2>orchestrator</h2>
     <h3>Frames</h3>
     <div class="frame-grid">
-${renderFrameGridHtml(orchestratorDataUri)}
+${renderFrameGridHtml(orchestratorDataUri, ORCHESTRATOR_FRAME_LABELS)}
     </div>
     <h3>Animations</h3>
     <div class="anim-grid">
-${renderAnimationSectionsHtml('orchestrator')}
+${renderAnimationSectionsHtml('orchestrator', ORCHESTRATOR_ANIMATION_NAMES)}
     </div>
   </div>
 </div>
@@ -141,7 +165,7 @@ ${renderAnimationSectionsHtml('orchestrator')}
   var FREEZE = 'Freeze';
 
   // Animation definitions (duplicated from sprite-definitions.ts)
-  var animations = [
+  var subagentAnimations = [
     { name: 'idle', frames: [{x:0,y:0},{x:1,y:0}], duration: 600, strategy: PING_PONG },
     { name: 'walking', frames: [{x:2,y:0}], duration: 200, strategy: LOOP },
     { name: 'working', frames: [{x:0,y:1},{x:1,y:1},{x:2,y:1}], duration: 300, strategy: LOOP },
@@ -150,13 +174,21 @@ ${renderAnimationSectionsHtml('orchestrator')}
     { name: 'resting', frames: [{x:3,y:0},{x:3,y:1},{x:3,y:2}], duration: 500, strategy: PING_PONG }
   ];
 
+  var orchestratorAnimations = [
+    { name: 'idle', frames: [{x:0,y:0},{x:1,y:0}], duration: 1200, strategy: PING_PONG },
+    { name: 'walking', frames: [{x:2,y:1},{x:3,y:1}], duration: 300, strategy: LOOP },
+    { name: 'working', frames: [{x:0,y:1},{x:1,y:1}], duration: 500, strategy: LOOP },
+    { name: 'celebrating', frames: [{x:0,y:2},{x:1,y:2}], duration: 250, strategy: LOOP },
+    { name: 'concerned', frames: [{x:2,y:0}], duration: 600, strategy: FREEZE },
+  ];
+
   var prefixes = [
-    { prefix: 'subagent', uri: subagentUri },
-    { prefix: 'orchestrator', uri: orchestratorUri }
+    { prefix: 'subagent', uri: subagentUri, animations: subagentAnimations },
+    { prefix: 'orchestrator', uri: orchestratorUri, animations: orchestratorAnimations }
   ];
 
   prefixes.forEach(function(cfg) {
-    animations.forEach(function(anim) {
+    cfg.animations.forEach(function(anim) {
       var el = document.getElementById(cfg.prefix + '-' + anim.name);
       if (!el) return;
 

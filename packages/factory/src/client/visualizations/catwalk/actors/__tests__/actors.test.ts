@@ -145,30 +145,22 @@ describe('OrchestratorActor', () => {
     );
   });
 
-  it('setWorking(true) enables pulse flag and restores full opacity', () => {
+  it('setWorking(true) sets full opacity', () => {
     const actor = new OrchestratorActor({ working: false }, vec(0, 0));
-    expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
-
     actor.setWorking(true);
-
     expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
-
-    // Simulate onPreUpdate — scale should pulse within range
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 500);
-    expect(actor.scale.x).toBeGreaterThanOrEqual(1);
-    expect(actor.scale.x).toBeLessThanOrEqual(1.08);
-    expect(actor.scale.y).toBe(actor.scale.x);
   });
 
-  it('setWorking(false) disables pulse and sets idle opacity', () => {
+  it('setWorking(false) sets idle opacity and resets scale', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
     actor.setWorking(false);
-
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 0);
     expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
     expect(actor.scale).toEqual({ x: 1, y: 1 });
+  });
+
+  it('does not have onPreUpdate (no scale pulse)', () => {
+    const ownMethods = Object.getOwnPropertyNames(OrchestratorActor.prototype);
+    expect(ownMethods).not.toContain('onPreUpdate');
   });
 
   it('calls getAnimation with orchestrator type and working state', () => {
@@ -304,32 +296,17 @@ describe('OrchestratorActor', () => {
     expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'celebrating');
   });
 
-  it('celebrate() disables working pulse and sets ACTIVE_OPACITY', () => {
+  it('celebrate() sets ACTIVE_OPACITY and resets scale', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
-
     actor.celebrate();
-
     expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
-    expect(actor.scale).toEqual({ x: 1, y: 1 });
-
-    // Pulse should be disabled -- onPreUpdate should not change scale
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 500);
     expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
-  it('fadeOut fades opacity to 0 and stops the working pulse', () => {
+  it('fadeOut calls actions.fade with opacity 0', () => {
     const actor = new OrchestratorActor({ working: true }, vec(0, 0));
-
     actor.fadeOut();
-
     expect(actor.actions.fade).toHaveBeenCalledWith(0, expect.any(Number));
-
-    // Working pulse should be disabled — onPreUpdate should be a no-op
-    const opacityBefore = actor.graphics.opacity;
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 500);
-    expect(actor.graphics.opacity).toBe(opacityBefore);
   });
 });
 
