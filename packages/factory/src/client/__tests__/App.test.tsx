@@ -11,6 +11,7 @@ const {
   mockRunSelector,
   mockStatusBar,
   mockCatwalkCanvas,
+  mockFactoryFloorCanvas,
   mockFetchProjects,
   mockFlattenProjectIndex,
   mockUseDismissedRuns,
@@ -22,6 +23,7 @@ const {
     mockRunSelector: vi.fn(),
     mockStatusBar: vi.fn(),
     mockCatwalkCanvas: vi.fn(),
+    mockFactoryFloorCanvas: vi.fn(),
     mockFetchProjects: vi.fn<() => Promise<ProjectIndex>>(),
     mockFlattenProjectIndex: vi.fn<(index: ProjectIndex | null) => FlatRunInfo[]>(),
     mockUseDismissedRuns: vi.fn(),
@@ -43,7 +45,7 @@ vi.mock('../components/StatusBar.js', () => ({
 }));
 
 vi.mock('../visualizations/registry.js', () => ({
-  visualizationRegistry: { catwalk: mockCatwalkCanvas },
+  visualizationRegistry: { catwalk: mockCatwalkCanvas, 'factory-floor': mockFactoryFloorCanvas },
   DEFAULT_VIS: 'catwalk',
 }));
 
@@ -125,6 +127,9 @@ describe('App', () => {
     ));
     mockCatwalkCanvas.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
       <div data-testid="catwalk-canvas">{status.runId}</div>
+    ));
+    mockFactoryFloorCanvas.mockImplementation(({ status }: { status: CanonicalRunStatus }) => (
+      <div data-testid="factory-floor-canvas">{status.runId}</div>
     ));
     mockRunList.mockImplementation(() => <div data-testid="run-list" />);
   });
@@ -449,6 +454,47 @@ describe('App', () => {
     fireEvent.click(view.getByTestId('dismiss-all-btn'));
 
     expect(mockDismissAll).toHaveBeenCalledWith([]);
+  });
+
+  describe('visualization selector', () => {
+    it('renders factory-floor visualization when vis param is factory-floor', () => {
+      setInitialParams({ vis: 'factory-floor' });
+      const status = createMockRunStatus({ runId: 'run-42' });
+      mockUseRunStatus.mockReturnValue({ data: status, isLoading: false, error: null });
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      expect(view.getByTestId('factory-floor-canvas')).toHaveTextContent('run-42');
+      expect(view.queryByTestId('catwalk-canvas')).not.toBeInTheDocument();
+    });
+
+    it('changing the dropdown value calls setParams with the vis value', () => {
+      const status = createMockRunStatus({ runId: 'run-42' });
+      mockUseRunStatus.mockReturnValue({ data: status, isLoading: false, error: null });
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      const dropdown = view.getByRole('combobox');
+      mockSetParams.mockClear();
+      fireEvent.change(dropdown, { target: { value: 'factory-floor' } });
+
+      expect(mockSetParams).toHaveBeenCalledWith(expect.objectContaining({ vis: 'factory-floor' }));
+    });
+
+    it('falls back to default visualization for unrecognized vis param', () => {
+      setInitialParams({ vis: 'nonexistent' });
+      const status = createMockRunStatus({ runId: 'run-42' });
+      mockUseRunStatus.mockReturnValue({ data: status, isLoading: false, error: null });
+
+      const { container } = render(<App />);
+      const view = within(container);
+
+      // Falls back to catwalk (default) since "nonexistent" is not in the registry
+      expect(view.getByTestId('catwalk-canvas')).toHaveTextContent('run-42');
+      expect(view.queryByTestId('factory-floor-canvas')).not.toBeInTheDocument();
+    });
   });
 
   describe('URL sync', () => {

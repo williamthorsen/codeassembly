@@ -4,6 +4,7 @@ import {
   CHUTE_PLATFORM_OFFSET,
   CHUTE_RAIL_OFFSET,
   CODER_X,
+  ENGINE_HEIGHT,
   HOLISTIC_X,
   LAYOUT_MARGIN,
   LOWER_LEFT_MARGIN,
@@ -268,6 +269,3 @@ export function computeFactoryFloorLayout(config: FactoryFloorLayoutConfig): Fac
     platformWidth: pw,
   };
 }
-
-// Re-export ENGINE_HEIGHT for use in bounds computation
-import { ENGINE_HEIGHT } from '../constants/dimensions.js';

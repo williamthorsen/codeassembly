@@ -33,7 +33,10 @@ export function FactoryFloorCanvas({ status }: FactoryFloorCanvasProps): React.J
 
     const scene = new FactoryFloorScene(status);
     engine.addScene('factory-floor', scene);
-    void engine.goToScene('factory-floor');
+    void engine.goToScene('factory-floor').catch((error: unknown) => {
+      startFailedRef.current = true;
+      console.error('Failed to go to factory-floor scene:', error);
+    });
 
     void engine
       .start()
