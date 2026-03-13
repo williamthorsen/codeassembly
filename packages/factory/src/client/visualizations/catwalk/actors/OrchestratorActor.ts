@@ -1,6 +1,6 @@
 import { Actor, BaseAlign, Color, Font, Rectangle, Text, TextAlign, vec, type Vector } from 'excalibur';
 
-import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY } from '../constants/animation.js';
+import { ACTIVE_OPACITY, ORCH_IDLE_OPACITY, ORCH_WAITING_OPACITY } from '../constants/animation.js';
 import {
   BADGE_OFFSET_Y,
   CARRIED_ART_GAP,
@@ -33,6 +33,10 @@ export class OrchestratorActor extends Actor {
     const animation = getAnimation('orchestrator', config.working ? 'working' : 'idle');
     this.graphics.use(animation);
     this.graphics.opacity = config.working ? ACTIVE_OPACITY : ORCH_IDLE_OPACITY;
+
+    if (config.waiting) {
+      this.setWaiting(true);
+    }
   }
 
   /** Slide the orchestrator to a new position along the catwalk rail. Returns a promise that resolves when the walk completes. */
@@ -65,7 +69,7 @@ export class OrchestratorActor extends Actor {
     if (waiting) {
       const animation = getAnimation('orchestrator', 'concerned');
       this.graphics.use(animation);
-      this.graphics.opacity = 0.6;
+      this.graphics.opacity = ORCH_WAITING_OPACITY;
     } else {
       this.setWorking(this._working);
     }

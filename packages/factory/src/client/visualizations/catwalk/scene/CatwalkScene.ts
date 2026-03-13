@@ -125,9 +125,6 @@ export class CatwalkScene extends Scene {
       );
       orchestratorActor.setCarriedArtifacts(config.orchestrator.carriedArtifacts);
       orchestratorActor.setCodeBadge(config.orchestrator.codeBadge);
-      if (config.orchestrator.waiting) {
-        orchestratorActor.setWaiting(true);
-      }
       this.add(orchestratorActor);
       this.orchestratorRef = orchestratorActor;
     }
@@ -347,11 +344,6 @@ export class CatwalkScene extends Scene {
     // Trigger celebration immediately if initial state is celebrating
     if (config.orchestrator.celebrating) {
       orchestratorActor.celebrate();
-    }
-
-    // Apply initial waiting state if the orchestrator starts in a waiting state
-    if (config.orchestrator.waiting) {
-      orchestratorActor.setWaiting(true);
     }
 
     this.add(orchestratorActor);

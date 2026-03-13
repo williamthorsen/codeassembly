@@ -110,6 +110,7 @@ const {
   GATE_OPACITY,
   IDLE_OPACITY,
   ORCH_IDLE_OPACITY,
+  ORCH_WAITING_OPACITY,
   RESTING_OPACITY,
 } = await import('../../constants/animation.js');
 const { ORCH_SPRITE_BOTTOM_PADDING_PX, SPRITE_SIZE } = await import('../../constants/dimensions.js');
@@ -301,6 +302,54 @@ describe('OrchestratorActor', () => {
     actor.celebrate();
     expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
     expect(actor.scale).toEqual({ x: 1, y: 1 });
+  });
+
+  it('setWaiting(true) calls getAnimation with concerned state', () => {
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(true);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'concerned');
+  });
+
+  it('setWaiting(true) sets ORCH_WAITING_OPACITY', () => {
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+
+    expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
+  });
+
+  it('setWaiting(false) restores working animation when previously working', () => {
+    const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(false);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+  });
+
+  it('setWaiting(false) restores idle animation when previously not working', () => {
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(false);
+
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'idle');
+    expect(actor.graphics.opacity).toBe(ORCH_IDLE_OPACITY);
+  });
+
+  it('constructor applies waiting state when config.waiting is true', () => {
+    mockGetAnimation.mockClear();
+
+    const actor = new OrchestratorActor({ working: true, waiting: true }, vec(0, 0));
+
+    // The constructor first applies working, then setWaiting(true) overrides to concerned
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'concerned');
+    expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
   });
 
   it('fadeOut calls actions.fade with opacity 0', () => {

@@ -762,6 +762,45 @@ describe('mapRunToCatwalk', () => {
     });
   });
 
+  describe('waiting flag', () => {
+    it('sets waiting to true when waitingForInput is set and status is in_progress', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        waitingForInput: 'permission_prompt',
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.waiting).toBe(true);
+    });
+
+    it('sets waiting to false when waitingForInput is undefined', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: emptyPhases(),
+        waitingForInput: undefined,
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.waiting).toBe(false);
+    });
+
+    it('sets waiting to false when waitingForInput is set but status is completed', () => {
+      const status = createMockRunStatus({
+        status: 'completed',
+        completedAt: '2026-01-01T01:00:00Z',
+        phases: createCompletedRunPhases(),
+        waitingForInput: 'permission_prompt',
+      });
+
+      const config = mapRunToCatwalk(status);
+
+      expect(config.orchestrator.waiting).toBe(false);
+    });
+  });
+
   describe('input artifacts', () => {
     it('generates input artifacts at downstream stations from output artifacts', () => {
       const status = createMockRunStatus({
