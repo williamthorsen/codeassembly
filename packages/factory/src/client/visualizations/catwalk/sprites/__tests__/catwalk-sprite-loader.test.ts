@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  ORCH_WORKING_DURATION,
+  ORCH_WORKING_FRAME_COORDINATES,
+  ORCH_WORKING_STRATEGY,
+  WORKING_DURATION,
+  WORKING_FRAME_COORDINATES,
+} from '../../../../game/sprites/sprite-definitions.js';
+
 const { mockImageSourceConstructor, mockImageSourceLoad, mockSpriteSheetFromImageSource, mockAnimationFromCoords } =
   vi.hoisted(() => {
     const mockLoad = vi.fn().mockResolvedValue(undefined);
@@ -126,6 +134,30 @@ describe('catwalk-sprite-loader', () => {
       expect(getAnimation('subagent', 'idle')).toBeDefined();
       // 2 calls for the failed attempt + 2 for the retry = 4 ImageSource constructions
       expect(mockImageSourceConstructor).toHaveBeenCalledTimes(4);
+    });
+
+    it('orchestrator working animation uses ORCH_WORKING_DURATION (500ms)', () => {
+      loadAllCatwalkSprites();
+      const workingCall = mockAnimationFromCoords.mock.calls.find(
+        (call) =>
+          call[0]?.frameCoordinates?.[0]?.x === ORCH_WORKING_FRAME_COORDINATES[0].x &&
+          call[0]?.frameCoordinates?.[0]?.y === ORCH_WORKING_FRAME_COORDINATES[0].y &&
+          call[0]?.frameCoordinates?.length === ORCH_WORKING_FRAME_COORDINATES.length,
+      );
+      expect(workingCall).toBeDefined();
+      expect(workingCall![0].durationPerFrameMs).toBe(ORCH_WORKING_DURATION);
+      expect(workingCall![0].strategy).toBe(ORCH_WORKING_STRATEGY);
+    });
+
+    it('subagent working animation still uses original WORKING_DURATION (300ms)', () => {
+      loadAllCatwalkSprites();
+      const workingCall = mockAnimationFromCoords.mock.calls.find(
+        (call) =>
+          call[0]?.frameCoordinates?.[0]?.x === WORKING_FRAME_COORDINATES[0].x &&
+          call[0]?.frameCoordinates?.[0]?.y === WORKING_FRAME_COORDINATES[0].y,
+      );
+      expect(workingCall).toBeDefined();
+      expect(workingCall![0].durationPerFrameMs).toBe(WORKING_DURATION);
     });
   });
 
