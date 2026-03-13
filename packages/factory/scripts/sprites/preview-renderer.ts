@@ -25,15 +25,15 @@ const ORCHESTRATOR_FRAME_LABELS = [
   'Idle 1',
   'Idle 2',
   'Concerned',
-  '',
+  '(spare)',
   'Working 1',
   'Working 2',
   'Walking 1',
   'Walking 2',
   'Celebrating 1',
   'Celebrating 2',
-  '',
-  '',
+  '(spare)',
+  '(spare)',
 ];
 
 const SUBAGENT_ANIMATION_NAMES = ['Idle', 'Walking', 'Working', 'Celebrating', 'Concerned', 'Resting'];

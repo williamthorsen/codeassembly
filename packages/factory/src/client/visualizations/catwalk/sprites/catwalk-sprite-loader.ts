@@ -47,7 +47,7 @@ let animationCache: Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>> 
 
 interface FrameConfig {
   frameCoordinates: ReadonlyArray<{ x: number; y: number }>;
-  duration: number;
+  durationMs: number;
   strategy: import('excalibur').AnimationStrategy;
 }
 
@@ -57,45 +57,45 @@ function orchestratorFrameConfig(state: AgentAnimationState): FrameConfig {
     case 'idle':
       return {
         frameCoordinates: ORCH_IDLE_FRAME_COORDINATES,
-        duration: ORCH_IDLE_DURATION,
+        durationMs: ORCH_IDLE_DURATION,
         strategy: ORCH_IDLE_STRATEGY,
       };
     case 'walking':
       return {
         frameCoordinates: ORCH_WALKING_FRAME_COORDINATES,
-        duration: ORCH_WALKING_DURATION,
+        durationMs: ORCH_WALKING_DURATION,
         strategy: ORCH_WALKING_STRATEGY,
       };
     case 'working':
       return {
         frameCoordinates: ORCH_WORKING_FRAME_COORDINATES,
-        duration: ORCH_WORKING_DURATION,
+        durationMs: ORCH_WORKING_DURATION,
         strategy: ORCH_WORKING_STRATEGY,
       };
     case 'celebrating':
       return {
         frameCoordinates: ORCH_CELEBRATING_FRAME_COORDINATES,
-        duration: ORCH_CELEBRATING_DURATION,
+        durationMs: ORCH_CELEBRATING_DURATION,
         strategy: ORCH_CELEBRATING_STRATEGY,
       };
     case 'concerned':
       return {
         frameCoordinates: ORCH_CONCERNED_FRAME_COORDINATES,
-        duration: ORCH_CONCERNED_DURATION,
+        durationMs: ORCH_CONCERNED_DURATION,
         strategy: ORCH_CONCERNED_STRATEGY,
       };
     case 'resting':
       // Orchestrator never enters resting; reuse idle.
       return {
         frameCoordinates: ORCH_IDLE_FRAME_COORDINATES,
-        duration: ORCH_IDLE_DURATION,
+        durationMs: ORCH_IDLE_DURATION,
         strategy: ORCH_IDLE_STRATEGY,
       };
     case 'deactivated':
       // Deactivated agents reuse the idle animation; opacity is handled by the actor.
       return {
         frameCoordinates: ORCH_IDLE_FRAME_COORDINATES,
-        duration: ORCH_IDLE_DURATION,
+        durationMs: ORCH_IDLE_DURATION,
         strategy: ORCH_IDLE_STRATEGY,
       };
     default: {
@@ -109,28 +109,28 @@ function orchestratorFrameConfig(state: AgentAnimationState): FrameConfig {
 function subagentFrameConfig(state: AgentAnimationState): FrameConfig {
   switch (state) {
     case 'idle':
-      return { frameCoordinates: IDLE_FRAME_COORDINATES, duration: IDLE_DURATION, strategy: IDLE_STRATEGY };
+      return { frameCoordinates: IDLE_FRAME_COORDINATES, durationMs: IDLE_DURATION, strategy: IDLE_STRATEGY };
     case 'walking':
-      return { frameCoordinates: WALKING_FRAME_COORDINATES, duration: WALKING_DURATION, strategy: WALKING_STRATEGY };
+      return { frameCoordinates: WALKING_FRAME_COORDINATES, durationMs: WALKING_DURATION, strategy: WALKING_STRATEGY };
     case 'working':
-      return { frameCoordinates: WORKING_FRAME_COORDINATES, duration: WORKING_DURATION, strategy: WORKING_STRATEGY };
+      return { frameCoordinates: WORKING_FRAME_COORDINATES, durationMs: WORKING_DURATION, strategy: WORKING_STRATEGY };
     case 'celebrating':
       return {
         frameCoordinates: CELEBRATING_FRAME_COORDINATES,
-        duration: CELEBRATING_DURATION,
+        durationMs: CELEBRATING_DURATION,
         strategy: CELEBRATING_STRATEGY,
       };
     case 'concerned':
       return {
         frameCoordinates: CONCERNED_FRAME_COORDINATES,
-        duration: CONCERNED_DURATION,
+        durationMs: CONCERNED_DURATION,
         strategy: CONCERNED_STRATEGY,
       };
     case 'resting':
-      return { frameCoordinates: RESTING_FRAME_COORDINATES, duration: RESTING_DURATION, strategy: RESTING_STRATEGY };
+      return { frameCoordinates: RESTING_FRAME_COORDINATES, durationMs: RESTING_DURATION, strategy: RESTING_STRATEGY };
     case 'deactivated':
       // Deactivated agents reuse the idle animation; opacity is handled by the actor.
-      return { frameCoordinates: IDLE_FRAME_COORDINATES, duration: IDLE_DURATION, strategy: IDLE_STRATEGY };
+      return { frameCoordinates: IDLE_FRAME_COORDINATES, durationMs: IDLE_DURATION, strategy: IDLE_STRATEGY };
     default: {
       const _exhaustive: never = state;
       return _exhaustive;
@@ -163,11 +163,11 @@ function buildAnimationsForSheet(
 ): Map<AgentAnimationState, Animation> {
   const map = new Map<AgentAnimationState, Animation>();
   for (const state of ALL_STATES) {
-    const { frameCoordinates, duration, strategy } = frameConfigForState(state, spriteType);
+    const { frameCoordinates, durationMs, strategy } = frameConfigForState(state, spriteType);
     const animation = Animation.fromSpriteSheetCoordinates({
       spriteSheet,
       frameCoordinates: [...frameCoordinates],
-      durationPerFrameMs: duration,
+      durationPerFrameMs: durationMs,
       strategy,
     });
     map.set(state, animation);
