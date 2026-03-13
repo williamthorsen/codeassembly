@@ -41,6 +41,8 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 ## Body guidelines
 
+**No hard line breaks.** Write each paragraph or list item as a single long line. Do not insert newlines to wrap at a column width. Every tool that renders commit messages handles wrapping; manual breaks produce ragged text.
+
 See `../_data/commit-format.md` for body formatting rules (punctuation, backtick formatting, paragraph structure, and what to omit).
 
 ## Changes touching multiple workspaces
