@@ -46,3 +46,32 @@ body {
   border: 1px solid #aa0000;
   background-color: #1a0000;
 }
+
+.vis-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background-color: #0a0a0a;
+  border-bottom: 1px solid #333333;
+  font-size: 12px;
+}
+
+.vis-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vis-label {
+  color: #888888;
+}
+
+.vis-dropdown {
+  background-color: #1a1a1a;
+  color: #cccccc;
+  border: 1px solid #444444;
+  padding: 2px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}

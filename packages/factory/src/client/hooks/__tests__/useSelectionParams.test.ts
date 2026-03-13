@@ -22,6 +22,7 @@ describe('useSelectionParams', () => {
       project: '',
       ticket: '',
       run: '',
+      vis: '',
     });
   });
 
@@ -34,6 +35,7 @@ describe('useSelectionParams', () => {
       project: 'my-proj',
       ticket: 'TK-1',
       run: 'run-42',
+      vis: '',
     });
   });
 
@@ -46,6 +48,20 @@ describe('useSelectionParams', () => {
       project: 'my-proj',
       ticket: '',
       run: '',
+      vis: '',
+    });
+  });
+
+  it('reads vis param from URL', () => {
+    globalThis.history.replaceState(null, '', '/?vis=factory-floor');
+
+    const { result } = renderHook(() => useSelectionParams());
+
+    expect(result.current.initialParams).toEqual({
+      project: '',
+      ticket: '',
+      run: '',
+      vis: 'factory-floor',
     });
   });
 
