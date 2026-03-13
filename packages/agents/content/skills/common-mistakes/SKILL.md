@@ -29,7 +29,7 @@ Don't pick and choose from rules without considering the full context of each ca
 
 ## Git commits
 
-These mistakes occur repeatedly despite explicit instructions in the `git-commit-conventions` skill.
+These mistakes occur repeatedly despite explicit instructions in the `commit` skill.
 
 ### Process-oriented titles
 

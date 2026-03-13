@@ -22,7 +22,7 @@ Append a structured entry to `mistakes.md` colocated with the skill that caused 
 
 ## Example
 
-File: `agents/common/skills/git-commit-conventions/mistakes.md`
+File: `agents/common/skills/commit/mistakes.md`
 
 ```markdown
 - 2025-02-18: Hard-wrapped commit body at 72 chars → Skill should state body has no line-length limit

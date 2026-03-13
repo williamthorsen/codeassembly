@@ -46,6 +46,14 @@ feat: Add user profile component
 deps: Upgrade React to v18
 ```
 
+## Body formatting
+
+- **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
+- **Use backticks for code identifiers.** Variable names, function names, class names, and file paths must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `src/lib/manifest.ts`.
+- **Never reference automated tests or CI.** Do not mention formatting, linting, unit tests, or typechecking as part of what the commit does.
+- **Never use review finding IDs.** Identifiers like F1, W2, T3 belong only in review documents — they are meaningless in `git log`.
+- **Break up large paragraphs.** Use a blank line between paragraphs. Prefer short, focused paragraphs over walls of text.
+
 ## Branch naming
 
 See `branch-format.md` for branch naming conventions. Branch format: `{ticket}/{description}`.
