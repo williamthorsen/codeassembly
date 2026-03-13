@@ -352,6 +352,35 @@ describe('OrchestratorActor', () => {
     expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
   });
 
+  it('setWorking while waiting preserves concerned animation and opacity', () => {
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+    mockGetAnimation.mockClear();
+    mockGraphicsUse.mockClear();
+
+    actor.setWorking(true);
+
+    // Animation should not have been changed -- concerned state takes priority
+    expect(mockGetAnimation).not.toHaveBeenCalled();
+    expect(mockGraphicsUse).not.toHaveBeenCalled();
+    expect(actor.graphics.opacity).toBe(ORCH_WAITING_OPACITY);
+  });
+
+  it('setWaiting(false) restores working state set during waiting', () => {
+    const actor = new OrchestratorActor({ working: false, waiting: false }, vec(0, 0));
+    actor.setWaiting(true);
+
+    // Change working state while waiting -- visual state should not change yet
+    actor.setWorking(true);
+    mockGetAnimation.mockClear();
+
+    actor.setWaiting(false);
+
+    // After leaving waiting, should reflect the updated working=true state
+    expect(mockGetAnimation).toHaveBeenCalledWith('orchestrator', 'working');
+    expect(actor.graphics.opacity).toBe(ACTIVE_OPACITY);
+  });
+
   it('fadeOut calls actions.fade with opacity 0', () => {
     const actor = new OrchestratorActor({ working: true, waiting: false }, vec(0, 0));
     actor.fadeOut();
