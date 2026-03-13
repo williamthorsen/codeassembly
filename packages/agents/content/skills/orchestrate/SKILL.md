@@ -162,7 +162,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If not credible, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
-   **c. Evaluate codebase freshness:** Run `git rev-parse origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as "unknown" and fall back to timestamp:
+   **c. Evaluate codebase freshness:** Run `git rev-parse --short origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as "unknown" and fall back to timestamp:
    - If `provenance.timestamp` is less than 24 hours ago → "unknown (recent)"
    - Otherwise → "unknown (stale)"
 

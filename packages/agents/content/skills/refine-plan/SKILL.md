@@ -142,7 +142,7 @@ Stop here. Do not attempt provenance update or report completion.
 
 If `{input-provenance}` is non-empty, update the provenance header on the revised plan:
 
-1. Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
+1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
 2. Read the revised plan file at `{revision_output_path}`.
 3. Construct updated provenance:
    - `skill`: preserve from `{input-provenance}` (the original authoring skill)

@@ -179,7 +179,7 @@ Present the plan to the user. Revise until approved.
    - `mkdir -p` the target directory
 
 2. Resolve provenance data:
-   - Run `git rev-parse origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
+   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
    - Set `{timestamp}` to the current UTC time in ISO 8601 format.
 
 3. Save both artifacts following `save-artifact` naming conventions:
