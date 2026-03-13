@@ -41,7 +41,23 @@ Commit titles must describe the **code change**, not the process. Titles like "A
 
 ### Hard line breaks in commit body
 
-Do not insert newlines to wrap the commit body at a fixed column width. Write naturally as continuous text. Let the terminal or viewer handle wrapping. This applies to both prose paragraphs and list items.
+This is a frequently repeated mistake. Do not insert newlines to wrap the commit body at a fixed column width. Every tool that displays commit messages (GitHub, Bitbucket, terminal pagers) handles wrapping. Manually broken lines create ragged text, produce unnecessary diffs when reflowed, and make commit messages harder to search.
+
+Write each paragraph or list item as a single unwrapped line. Let the viewer handle wrapping.
+
+Wrong:
+
+```
+Add no-automated-tests-in-test-plan rule to summarize-change and
+prepare-pr skills. Add PR comment labeling rules to review-criteria
+(finding IDs map to descriptive labels like `fixme:`, `warning:`).
+```
+
+Right:
+
+```
+Add no-automated-tests-in-test-plan rule to summarize-change and prepare-pr skills. Add PR comment labeling rules to review-criteria (finding IDs map to descriptive labels like `fixme:`, `warning:`).
+```
 
 ## Pull requests
 
@@ -70,3 +86,8 @@ These mistakes span multiple categories:
 - Conditional expects that can silently pass
 - Tests that pass coincidentally despite logical flaws
 - Missing edge case coverage
+
+### Finding IDs out of context
+
+- Finding IDs (`F1`, `W2`, `T3`, etc.) belong only in review documents. Never use them in commit messages, PR descriptions, tickets, or plans.
+- When posting findings as PR comments, use descriptive labels (`fixme:`, `warning:`, `todo:`, `suggestion:`, `recommendation:`) instead. See `review-criteria` skill for the full mapping.
