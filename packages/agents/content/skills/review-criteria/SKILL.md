@@ -99,3 +99,15 @@ Used by review-producing skills and agents for structured code review findings. 
 ### Re-review severity escalation
 
 `S → R → T → W → F`. L findings are never escalated.
+
+## PR comment format
+
+When posting findings as PR comments (e.g., inline comments on a pull request), use a descriptive label instead of the raw finding ID. Finding IDs like `F1` or `W2` are internal to review documents and have no meaning to readers in PR context.
+
+| Finding prefix | PR comment label  |
+| -------------- | ----------------- |
+| `F`            | `fixme:`          |
+| `W`            | `warning:`        |
+| `T`            | `todo:`           |
+| `S`            | `suggestion:`     |
+| `R`            | `recommendation:` |

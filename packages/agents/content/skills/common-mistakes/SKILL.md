@@ -70,3 +70,8 @@ These mistakes span multiple categories:
 - Conditional expects that can silently pass
 - Tests that pass coincidentally despite logical flaws
 - Missing edge case coverage
+
+### Finding IDs out of context
+
+- Finding IDs (`F1`, `W2`, `T3`, etc.) belong only in review documents. Never use them in commit messages, PR descriptions, tickets, or plans.
+- When posting findings as PR comments, use descriptive labels (`fixme:`, `warning:`, `todo:`, `suggestion:`, `recommendation:`) instead. See `review-criteria` skill for the full mapping.

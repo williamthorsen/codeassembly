@@ -52,3 +52,4 @@ Example: `20250121-1530Z_auto-share-exception_pull-request.md`
 - The PR description file is a copy of the change summary
 - This separation allows for PR-specific modifications if needed
 - The change summary serves as the source of truth for branch work
+- Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
