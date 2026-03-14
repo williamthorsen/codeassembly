@@ -4,5 +4,5 @@
   "compilerOptions": {
     "noEmit": true,
   },
-  "include": ["src/", "scripts/", "*.ts", "*.js"],
+  "include": ["src/", "scripts/", "docs/visions/", "*.ts", "*.js"],
 }

@@ -7,5 +7,5 @@
     "strict": true,
     "useDefineForClassFields": true,
   },
-  "include": ["src/", "scripts/", "*.ts"],
+  "include": ["src/", "scripts/", "docs/visions/", "*.ts"],
 }
