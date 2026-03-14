@@ -33,9 +33,15 @@ export async function fetchArtifacts(projectSlug: string, runId: string): Promis
   return data.artifacts;
 }
 
-export async function fetchArtifactContent(projectSlug: string, runId: string, filename: string): Promise<string> {
+export async function fetchArtifactContent(
+  projectSlug: string,
+  runId: string,
+  filename: string,
+  options?: { format?: 'html' },
+): Promise<string> {
+  const url = `${API_BASE}/runs/${projectSlug}/${runId}/artifacts/${filename}`;
   const data = await fetchJson<ArtifactContentResponse>(
-    `${API_BASE}/runs/${projectSlug}/${runId}/artifacts/${filename}`,
+    options?.format === 'html' ? `${url}?format=html` : url,
     'Failed to fetch artifact',
   );
   return data.content;

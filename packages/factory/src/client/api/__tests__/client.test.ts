@@ -99,6 +99,16 @@ describe('fetchArtifactContent', () => {
     expect(mockFetch).toHaveBeenCalledWith('/api/runs/test/run/artifacts/plan.md');
   });
 
+  it('appends format=html query param when format option is provided', async () => {
+    const mockData = { content: '<h1>Plan</h1>\n<p>Step 1...</p>\n' };
+    mockFetch.mockResolvedValue(createMockResponse(mockData));
+
+    const result = await fetchArtifactContent('test', 'run', 'plan.md', { format: 'html' });
+
+    expect(result).toBe('<h1>Plan</h1>\n<p>Step 1...</p>\n');
+    expect(mockFetch).toHaveBeenCalledWith('/api/runs/test/run/artifacts/plan.md?format=html');
+  });
+
   it('throws on non-ok response', async () => {
     mockFetch.mockResolvedValue(createMockResponse(null, false, 'Not Found'));
 
