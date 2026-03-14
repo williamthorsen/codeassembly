@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import type { Request, Response } from 'express';
 import { Router } from 'express';
+import { marked } from 'marked';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
 import { parseRunData } from '../adapters/status-adapter.js';
@@ -80,7 +81,10 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
 
     const artifactPath = join(runPath, filename);
     try {
-      const content = await readFile(artifactPath, 'utf8');
+      let content = await readFile(artifactPath, 'utf8');
+      if (req.query.format === 'html' && filename.endsWith('.md')) {
+        content = await marked.parse(content);
+      }
       res.json({ content });
     } catch (error) {
       if (isEnoent(error)) {

@@ -256,6 +256,60 @@ describe('createRunsRouter', () => {
       expect(res.body).toEqual({ error: 'Run not found' });
     });
 
+    describe('format=html', () => {
+      it('renders markdown to HTML when format=html on a .md file', async () => {
+        const scanner = createMockScanner(indexWithRun());
+        const router = createRunsRouter(scanner);
+        const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+        mockedReadFile.mockResolvedValueOnce('# Hello\n\nWorld');
+
+        await handler(
+          {
+            params: { projectSlug: 'test-project', runId: 'run-1', filename: 'plan.md' },
+            query: { format: 'html' },
+          },
+          res,
+        );
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({ content: '<h1>Hello</h1>\n<p>World</p>\n' });
+      });
+
+      it('returns raw content when format=html on a non-.md file', async () => {
+        const scanner = createMockScanner(indexWithRun());
+        const router = createRunsRouter(scanner);
+        const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+        const jsonContent = '{"key": "value"}';
+        mockedReadFile.mockResolvedValueOnce(jsonContent);
+
+        await handler(
+          {
+            params: { projectSlug: 'test-project', runId: 'run-1', filename: 'data.json' },
+            query: { format: 'html' },
+          },
+          res,
+        );
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({ content: jsonContent });
+      });
+
+      it('returns raw content when no format param is provided', async () => {
+        const scanner = createMockScanner(indexWithRun());
+        const router = createRunsRouter(scanner);
+        const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+        mockedReadFile.mockResolvedValueOnce('# Raw markdown');
+
+        await handler({ params: { projectSlug: 'test-project', runId: 'run-1', filename: 'plan.md' } }, res);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({ content: '# Raw markdown' });
+      });
+    });
+
     describe('path traversal validation', () => {
       it('rejects filename with ".."', async () => {
         const scanner = createMockScanner(indexWithRun());
