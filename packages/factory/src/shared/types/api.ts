@@ -31,10 +31,6 @@ export interface ArtifactListResponse {
   artifacts: string[];
 }
 
-export interface ArtifactContentResponse {
-  content: string;
-}
-
 /** Dependency interface for route handlers that need to read the project index. */
 export interface ProjectIndexProvider {
   getIndex(): ProjectIndex | null;

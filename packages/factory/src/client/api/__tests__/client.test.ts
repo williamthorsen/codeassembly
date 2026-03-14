@@ -17,6 +17,7 @@ function createMockResponse(data: unknown, ok = true, statusText = 'OK') {
     ok,
     statusText,
     json: () => Promise.resolve(data),
+    text: () => Promise.resolve(typeof data === 'string' ? data : JSON.stringify(data)),
   };
 }
 
@@ -89,9 +90,8 @@ describe('fetchArtifacts', () => {
 });
 
 describe('fetchArtifactContent', () => {
-  it('returns artifact content on success', async () => {
-    const mockData = { content: '# Plan\nStep 1...' };
-    mockFetch.mockResolvedValue(createMockResponse(mockData));
+  it('returns raw artifact content on success', async () => {
+    mockFetch.mockResolvedValue(createMockResponse('# Plan\nStep 1...'));
 
     const result = await fetchArtifactContent('test', 'run', 'plan.md');
 

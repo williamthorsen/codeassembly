@@ -1,9 +1,4 @@
-import type {
-  ArtifactContentResponse,
-  ArtifactListResponse,
-  CanonicalRunStatus,
-  ProjectIndex,
-} from '../../shared/types/api.js';
+import type { ArtifactListResponse, CanonicalRunStatus, ProjectIndex } from '../../shared/types/api.js';
 import type { UserSettings } from '../../shared/types/settings.js';
 
 const API_BASE = '/api';
@@ -34,11 +29,11 @@ export async function fetchArtifacts(projectSlug: string, runId: string): Promis
 }
 
 export async function fetchArtifactContent(projectSlug: string, runId: string, filename: string): Promise<string> {
-  const data = await fetchJson<ArtifactContentResponse>(
-    `${API_BASE}/runs/${projectSlug}/${runId}/artifacts/${filename}`,
-    'Failed to fetch artifact',
-  );
-  return data.content;
+  const response = await fetch(`${API_BASE}/runs/${projectSlug}/${runId}/artifacts/${filename}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch artifact: ${response.statusText}`);
+  }
+  return response.text();
 }
 
 export function fetchSettings(): Promise<UserSettings> {
