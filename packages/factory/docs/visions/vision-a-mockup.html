@@ -1,0 +1,1909 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Living Factory — Vision A Mockup</title>
+    <style>
+      /* ── Reset & base ─────────────────────────────────────────────── */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        background: #0d0d1a;
+        color: #ccc;
+        font-family: 'Courier New', monospace;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── CGA-16 palette ──────────────────────────────────────────── */
+      :root {
+        --black: #000000;
+        --dark-blue: #0000aa;
+        --dark-green: #00aa00;
+        --dark-cyan: #00aaaa;
+        --dark-red: #aa0000;
+        --dark-magenta: #aa00aa;
+        --brown: #aa5500;
+        --light-gray: #aaaaaa;
+        --dark-gray: #555555;
+        --blue: #5555ff;
+        --green: #55ff55;
+        --cyan: #55ffff;
+        --red: #ff5555;
+        --magenta: #ff55ff;
+        --yellow: #ffff55;
+        --white: #ffffff;
+
+        /* Role-type colors */
+        --orchestrator: #ff55ff;
+        --analyst: #5555ff;
+        --planner: #55ff55;
+        --author: #ffff55;
+        --reviewer: #ff5555;
+
+        /* Artifact colors (pastel) */
+        --art-arch: #a5d8ff;
+        --art-plan: #b2f2bb;
+        --art-code: #fff3bf;
+        --art-review: #ffc9c9;
+        --art-clean: #f3d9fa;
+        --art-holi: #c3fae8;
+        --art-summary: #f8f9fa;
+
+        /* Scene colors */
+        --bg: #1a1a2e;
+        --platform: #22223a;
+        --rail-gold: #ffd700;
+        --ground: #444444;
+        --conveyor: #333344;
+      }
+
+      /* ── Header bar ──────────────────────────────────────────────── */
+      .header {
+        height: 36px;
+        background: #111122;
+        border-bottom: 1px solid #333;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 16px;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+      .header .title {
+        color: var(--magenta);
+        font-weight: bold;
+        font-size: 13px;
+      }
+      .header .meta {
+        color: #888;
+      }
+      .header .meta strong {
+        color: #aaa;
+      }
+      .header .status-pill {
+        background: #1a3a1a;
+        color: var(--green);
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+      }
+      .header .status-pill.completed {
+        background: #1a3a1a;
+        color: var(--green);
+      }
+
+      /* ── Phase tabs ──────────────────────────────────────────────── */
+      .phase-tabs {
+        height: 28px;
+        background: #151528;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 2px;
+        flex-shrink: 0;
+        border-bottom: 1px solid #222;
+      }
+      .phase-tab {
+        padding: 4px 12px;
+        font-size: 10px;
+        color: #666;
+        cursor: pointer;
+        border-radius: 3px 3px 0 0;
+        transition: all 0.15s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .phase-tab:hover {
+        color: #aaa;
+        background: #1a1a30;
+      }
+      .phase-tab.active {
+        color: #fff;
+        background: #2a2a4a;
+        border-bottom: 2px solid var(--rail-gold);
+      }
+      .phase-tab.completed-tab {
+        color: #6a6;
+      }
+      .phase-tab.current-tab {
+        color: var(--rail-gold);
+      }
+      .phase-tab.skipped-tab {
+        color: #444;
+        text-decoration: line-through;
+      }
+
+      /* ── Main factory area ───────────────────────────────────────── */
+      .factory-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      /* Scanline overlay */
+      .factory-container::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.03) 2px,
+          rgba(0, 0, 0, 0.03) 4px
+        );
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      /* ── Factory canvas (the scene) ──────────────────────────────── */
+      .factory-scene {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* ── Gantry rail ─────────────────────────────────────────────── */
+      .gantry-rail {
+        position: absolute;
+        top: 60px;
+        left: 40px;
+        right: 40px;
+        height: 3px;
+        background: var(--rail-gold);
+        opacity: 0.6;
+        z-index: 10;
+      }
+      .gantry-rail::before,
+      .gantry-rail::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        width: 8px;
+        height: 7px;
+        background: var(--rail-gold);
+        border-radius: 2px;
+        opacity: 0.8;
+      }
+      .gantry-rail::before {
+        left: -4px;
+      }
+      .gantry-rail::after {
+        right: -4px;
+      }
+
+      /* ── Ground line ─────────────────────────────────────────────── */
+      .ground-line {
+        position: absolute;
+        top: 280px;
+        left: 40px;
+        right: 40px;
+        height: 2px;
+        background: var(--ground);
+        z-index: 10;
+      }
+
+      /* ── Stations ────────────────────────────────────────────────── */
+      .station {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 20;
+      }
+      .station.skipped {
+        opacity: 0.25;
+      }
+
+      /* Station sign (hangs from rail) */
+      .station-sign {
+        position: absolute;
+        top: -14px;
+        font-size: 9px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
+        padding: 2px 6px;
+        border-radius: 2px;
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      /* Chute line */
+      .chute {
+        position: absolute;
+        width: 1px;
+        background: #333;
+        opacity: 0.4;
+        z-index: 5;
+      }
+
+      /* ── Agent sprites ───────────────────────────────────────────── */
+      .agent {
+        position: absolute;
+        width: 32px;
+        height: 36px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 30;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .agent:hover {
+        transform: scale(1.15);
+      }
+      .agent:hover .agent-tooltip {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .agent-sprite {
+        width: 32px;
+        height: 32px;
+        image-rendering: pixelated;
+        position: relative;
+      }
+      .agent-accent {
+        width: 32px;
+        height: 4px;
+        border-radius: 1px;
+      }
+
+      /* Pixel-art sprite rendering via CSS */
+      .sprite-body {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(8, 1fr);
+      }
+      .sprite-body .px {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Agent states */
+      .agent.idle {
+        opacity: 0.35;
+      }
+      .agent.resting {
+        opacity: 0.5;
+      }
+      .agent.working {
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+      .agent.celebrating {
+        animation: bounce 0.6s ease-in-out infinite;
+      }
+      .agent.concerned {
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.08);
+        }
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      /* Agent tooltip */
+      .agent-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+        border: 1px solid #444;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        z-index: 200;
+        color: #ccc;
+      }
+      .agent-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 4px solid transparent;
+        border-top-color: #444;
+      }
+
+      /* ── Orchestrator ────────────────────────────────────────────── */
+      .orchestrator {
+        position: absolute;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: left 0.8s ease-in-out;
+      }
+      .orchestrator:hover {
+      }
+      .orchestrator:hover .agent-tooltip {
+        opacity: 1;
+      }
+
+      .orch-sprite {
+        width: 36px;
+        height: 36px;
+        position: relative;
+        image-rendering: pixelated;
+      }
+
+      .orch-gantry-arm {
+        width: 2px;
+        height: 16px;
+        background: #666;
+        margin-top: -2px;
+      }
+
+      /* Carried artifacts trailing behind orchestrator */
+      .carried-artifacts {
+        display: flex;
+        gap: 3px;
+        margin-top: 2px;
+      }
+      .carried-art {
+        width: 16px;
+        height: 8px;
+        border-radius: 1px;
+        font-size: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #222;
+        font-weight: bold;
+      }
+
+      /* Code badge */
+      .code-badge {
+        font-size: 8px;
+        font-weight: bold;
+        padding: 1px 4px;
+        border-radius: 2px;
+        margin-top: 2px;
+      }
+
+      /* ── Artifact tiles ──────────────────────────────────────────── */
+      .artifact-area {
+        position: absolute;
+        z-index: 15;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .artifact-area.outputs {
+      }
+      .artifact-area.inputs {
+      }
+
+      .artifact-tile {
+        width: 40px;
+        height: 14px;
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7px;
+        font-weight: bold;
+        color: #222;
+        cursor: pointer;
+        transition: all 0.15s;
+        position: relative;
+      }
+      .artifact-tile:hover {
+        transform: scale(1.2);
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        z-index: 100;
+      }
+      .artifact-tile:hover .art-tooltip {
+        opacity: 1;
+      }
+
+      .art-tooltip {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: #111;
+        border: 1px solid #444;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 9px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+        z-index: 200;
+        color: #ccc;
+      }
+
+      .version-indicator {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        font-size: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      /* ── Conveyor belts ──────────────────────────────────────────── */
+      .conveyor {
+        position: absolute;
+        height: 6px;
+        background: var(--conveyor);
+        border-radius: 3px;
+        z-index: 8;
+        overflow: hidden;
+      }
+      .conveyor.active::after {
+        content: '';
+        position: absolute;
+        top: 1px;
+        left: 0;
+        width: 200%;
+        height: 4px;
+        background: repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 4px,
+          rgba(255, 215, 0, 0.15) 4px,
+          rgba(255, 215, 0, 0.15) 8px
+        );
+        animation: conveyorMove 1s linear infinite;
+      }
+      @keyframes conveyorMove {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(-8px);
+        }
+      }
+
+      /* ── Gates ───────────────────────────────────────────────────── */
+      .gate {
+        position: absolute;
+        width: 6px;
+        height: 20px;
+        z-index: 12;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .gate-bar {
+        flex: 1;
+        border-radius: 1px;
+        transition: background 0.3s;
+      }
+      .gate.closed .gate-bar {
+        background: var(--dark-red);
+      }
+      .gate.open .gate-bar {
+        background: var(--dark-green);
+        opacity: 0.6;
+      }
+
+      /* ── Station labels ──────────────────────────────────────────── */
+      .station-label {
+        position: absolute;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #666;
+        white-space: nowrap;
+        z-index: 15;
+      }
+      .station-label.completed-label {
+        color: #6a6;
+      }
+      .station-label.active-label {
+        color: var(--rail-gold);
+      }
+
+      /* ── Dividers ────────────────────────────────────────────────── */
+      .divider {
+        position: absolute;
+        width: 1px;
+        background: #444;
+        opacity: 0.4;
+        z-index: 9;
+      }
+
+      /* ── Minimap ─────────────────────────────────────────────────── */
+      .minimap {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        width: 180px;
+        height: 40px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid #333;
+        border-radius: 4px;
+        z-index: 150;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .minimap-station {
+        flex: 1;
+        height: 8px;
+        border-radius: 2px;
+        opacity: 0.6;
+      }
+      .minimap-station.mm-active {
+        opacity: 1;
+        box-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+      }
+      .minimap-label {
+        position: absolute;
+        bottom: 100%;
+        right: 0;
+        font-size: 8px;
+        color: #555;
+        margin-bottom: 2px;
+      }
+      .minimap-viewport {
+        position: absolute;
+        top: 2px;
+        height: calc(100% - 4px);
+        border: 1px solid var(--rail-gold);
+        border-radius: 2px;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      /* ── Vault (artifact inspector) ──────────────────────────────── */
+      .vault-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 0;
+        background: #111122;
+        border-top: 2px solid #333;
+        z-index: 500;
+        transition: height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .vault-overlay.open {
+        height: 55%;
+      }
+
+      .vault-header {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        gap: 12px;
+        border-bottom: 1px solid #333;
+        flex-shrink: 0;
+      }
+      .vault-header .vault-type {
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 3px;
+        color: #222;
+      }
+      .vault-header .vault-filename {
+        font-size: 12px;
+        color: #ccc;
+      }
+      .vault-header .vault-meta {
+        font-size: 10px;
+        color: #666;
+        margin-left: auto;
+      }
+      .vault-header .vault-close {
+        background: none;
+        border: 1px solid #444;
+        color: #888;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .vault-header .vault-close:hover {
+        color: #fff;
+        border-color: #888;
+      }
+
+      /* Version tabs */
+      .vault-versions {
+        display: flex;
+        padding: 0 16px;
+        gap: 2px;
+        border-bottom: 1px solid #222;
+        flex-shrink: 0;
+      }
+      .vault-version-tab {
+        padding: 6px 14px;
+        font-size: 10px;
+        color: #666;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+      }
+      .vault-version-tab:hover {
+        color: #aaa;
+      }
+      .vault-version-tab.active {
+        color: var(--author);
+        border-bottom-color: var(--author);
+      }
+      .vault-compare-btn {
+        margin-left: auto;
+        padding: 4px 10px;
+        font-size: 9px;
+        background: #1a2a3a;
+        border: 1px solid #334;
+        color: #89b;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: inherit;
+        align-self: center;
+      }
+      .vault-compare-btn:hover {
+        background: #2a3a4a;
+        color: #abf;
+      }
+
+      .vault-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 16px;
+        display: flex;
+        gap: 16px;
+      }
+
+      /* Vault content panels */
+      .vault-sidebar {
+        width: 180px;
+        flex-shrink: 0;
+        border-right: 1px solid #222;
+        padding-right: 12px;
+        font-size: 10px;
+      }
+      .vault-sidebar dt {
+        color: #666;
+        margin-top: 8px;
+        text-transform: uppercase;
+        font-size: 9px;
+      }
+      .vault-sidebar dd {
+        color: #aaa;
+        margin-top: 2px;
+      }
+
+      .vault-content {
+        flex: 1;
+        font-size: 11px;
+        line-height: 1.6;
+        color: #bbb;
+      }
+
+      /* Review findings in vault */
+      .findings-summary {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .finding-badge {
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+      }
+      .finding-badge.fatal {
+        background: #3a1a1a;
+        color: var(--red);
+      }
+      .finding-badge.warning {
+        background: #3a3a1a;
+        color: var(--yellow);
+      }
+      .finding-badge.test-gap {
+        background: #1a2a3a;
+        color: var(--cyan);
+      }
+      .finding-badge.refactor {
+        background: #1a3a2a;
+        color: var(--green);
+      }
+      .finding-badge.style {
+        background: #2a1a3a;
+        color: var(--magenta);
+      }
+      .finding-badge.low {
+        background: #1a1a2a;
+        color: #888;
+      }
+
+      .finding-card {
+        background: #181828;
+        border: 1px solid #2a2a3a;
+        border-left: 3px solid;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        border-radius: 0 4px 4px 0;
+        font-size: 11px;
+      }
+      .finding-card .finding-severity {
+        font-size: 9px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .finding-card .finding-text {
+        color: #aaa;
+      }
+      .finding-card .finding-file {
+        font-size: 9px;
+        color: var(--blue);
+        margin-top: 4px;
+        cursor: pointer;
+      }
+      .finding-card .finding-file:hover {
+        text-decoration: underline;
+      }
+
+      /* ── Playback bar ────────────────────────────────────────────── */
+      .playback-bar {
+        height: 32px;
+        background: #111122;
+        border-top: 1px solid #222;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 8px;
+        flex-shrink: 0;
+        z-index: 200;
+      }
+      .playback-btn {
+        background: none;
+        border: 1px solid #333;
+        color: #888;
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .playback-btn:hover {
+        color: #fff;
+        border-color: #666;
+      }
+      .playback-btn.active {
+        color: var(--green);
+        border-color: var(--dark-green);
+      }
+
+      .timeline {
+        flex: 1;
+        height: 4px;
+        background: #222;
+        border-radius: 2px;
+        position: relative;
+        cursor: pointer;
+      }
+      .timeline-progress {
+        height: 100%;
+        background: var(--rail-gold);
+        border-radius: 2px;
+        transition: width 0.3s;
+      }
+      .timeline-dot {
+        position: absolute;
+        top: -4px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        cursor: pointer;
+        transition: transform 0.1s;
+        z-index: 5;
+        border: 1px solid rgba(0, 0, 0, 0.3);
+      }
+      .timeline-dot:hover {
+        transform: translateX(-50%) scale(1.5);
+      }
+      .timeline-dot .dot-label {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 8px;
+        color: #666;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.15s;
+        margin-bottom: 4px;
+      }
+      .timeline-dot:hover .dot-label {
+        opacity: 1;
+      }
+
+      .playback-speed {
+        font-size: 10px;
+        color: #666;
+        min-width: 30px;
+        text-align: center;
+      }
+      .playback-time {
+        font-size: 10px;
+        color: #888;
+      }
+
+      /* ── Confetti ────────────────────────────────────────────────── */
+      .confetti-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 90;
+        overflow: hidden;
+      }
+      .confetti-particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        animation: confettiFall linear forwards;
+      }
+      @keyframes confettiFall {
+        0% {
+          transform: translateY(-20px) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(400px) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      /* ── Summary card (completion overlay) ───────────────────────── */
+      .summary-card {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(17, 17, 34, 0.92);
+        border: 1px solid #3a3a5a;
+        border-radius: 6px;
+        padding: 12px 20px;
+        z-index: 80;
+        display: flex;
+        gap: 20px;
+        font-size: 11px;
+        animation: fadeSlideIn 0.5s ease-out;
+      }
+      @keyframes fadeSlideIn {
+        0% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-10px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+      .summary-stat {
+        text-align: center;
+      }
+      .summary-stat .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+      }
+      .summary-stat .stat-label {
+        font-size: 9px;
+        color: #666;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+
+      /* ── Ambient glow behind active station ──────────────────────── */
+      .station-glow {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        opacity: 0.08;
+        filter: blur(20px);
+        z-index: 1;
+      }
+
+      /* ── Iteration loop arrow ────────────────────────────────────── */
+      .loop-arrow {
+        position: absolute;
+        z-index: 25;
+        color: #ff8800;
+        font-size: 12px;
+        opacity: 0.7;
+        animation: loopPulse 2s ease-in-out infinite;
+      }
+      @keyframes loopPulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 0.9;
+        }
+      }
+
+      /* ── Scrollbar styling ───────────────────────────────────────── */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header bar -->
+    <div class="header">
+      <span class="title">CodeAssembly Factory</span>
+      <span class="meta"><strong>Project:</strong> codeassembly</span>
+      <span class="meta"><strong>Ticket:</strong> #293</span>
+      <span class="meta"><strong>Run:</strong> R-20260313-001</span>
+      <span class="status-pill completed">COMPLETED</span>
+      <span class="meta" style="margin-left: auto"><strong>Duration:</strong> 6m 42s</span>
+    </div>
+
+    <!-- Phase tabs -->
+    <div class="phase-tabs">
+      <div class="phase-tab completed-tab" data-station="0">1. Architect</div>
+      <div class="phase-tab completed-tab" data-station="1">2. Planner</div>
+      <div class="phase-tab completed-tab" data-station="2">3. Coder</div>
+      <div class="phase-tab completed-tab" data-station="3">4. Review</div>
+      <div class="phase-tab skipped-tab" data-station="4">5. Simplify</div>
+      <div class="phase-tab completed-tab" data-station="5">6. Holistic</div>
+      <div class="phase-tab completed-tab active" data-station="6">7. Summary</div>
+    </div>
+
+    <!-- Factory scene -->
+    <div class="factory-container">
+      <div class="factory-scene" id="factoryScene">
+        <!-- Gantry rail -->
+        <div class="gantry-rail"></div>
+
+        <!-- Ground line -->
+        <div class="ground-line"></div>
+
+        <!-- ── Stations ──────────────────────────────────────────── -->
+
+        <!-- Station 0: Architecture -->
+        <div class="station" style="left: 80px; top: 50px" id="st0">
+          <div class="station-sign" style="color: var(--analyst)">ARCHITECT</div>
+          <div class="chute" style="top: 14px; height: 196px; left: 50%; transform: translateX(-50%)"></div>
+        </div>
+        <div class="station-label completed-label" style="left: 72px; top: 286px">architect</div>
+        <div class="station-glow" style="left: 52px; top: 220px; background: var(--analyst)"></div>
+
+        <!-- Station 1: Planning -->
+        <div class="station" style="left: 220px; top: 50px" id="st1">
+          <div class="station-sign" style="color: var(--planner)">PLANNER</div>
+          <div class="chute" style="top: 14px; height: 196px; left: 50%; transform: translateX(-50%)"></div>
+        </div>
+        <div class="station-label completed-label" style="left: 216px; top: 286px">planner</div>
+        <div class="station-glow" style="left: 192px; top: 220px; background: var(--planner)"></div>
+
+        <!-- Station 2: Implementation -->
+        <div class="station" style="left: 370px; top: 50px" id="st2">
+          <div class="station-sign" style="color: var(--author)">CODER</div>
+          <div class="chute" style="top: 14px; height: 196px; left: 50%; transform: translateX(-50%)"></div>
+        </div>
+        <div class="station-label completed-label" style="left: 370px; top: 286px">coder</div>
+        <div class="station-glow" style="left: 342px; top: 220px; background: var(--author)"></div>
+
+        <!-- Station 3: Review (wide, multiple agents) -->
+        <div class="station" style="left: 520px; top: 50px; width: 140px" id="st3">
+          <div class="station-sign" style="color: var(--reviewer); left: 50%; transform: translateX(-50%)">
+            REVIEWERS
+          </div>
+          <div class="chute" style="top: 14px; height: 196px; left: 20px"></div>
+          <div class="chute" style="top: 14px; height: 196px; left: 70px"></div>
+          <div class="chute" style="top: 14px; height: 196px; left: 120px"></div>
+        </div>
+        <div class="station-label completed-label" style="left: 556px; top: 286px">reviewers</div>
+        <div class="station-glow" style="left: 540px; top: 220px; background: var(--reviewer); width: 120px"></div>
+
+        <!-- Station 4: Simplifier (skipped) -->
+        <div class="station skipped" style="left: 720px; top: 50px" id="st4">
+          <div class="station-sign" style="color: #444">SIMPLIFY</div>
+          <div
+            class="chute"
+            style="top: 14px; height: 196px; left: 50%; transform: translateX(-50%); opacity: 0.15"
+          ></div>
+        </div>
+        <div class="station-label" style="left: 716px; top: 286px; color: #333; text-decoration: line-through">
+          simplify
+        </div>
+
+        <!-- Station 5: Holistic -->
+        <div class="station" style="left: 840px; top: 50px" id="st5">
+          <div class="station-sign" style="color: var(--reviewer)">HOLISTIC</div>
+          <div class="chute" style="top: 14px; height: 196px; left: 50%; transform: translateX(-50%)"></div>
+        </div>
+        <div class="station-label completed-label" style="left: 836px; top: 286px">holistic</div>
+        <div class="station-glow" style="left: 812px; top: 220px; background: var(--reviewer)"></div>
+
+        <!-- Station 6: Summary -->
+        <div class="station" style="left: 970px; top: 50px" id="st6">
+          <div class="station-sign" style="color: var(--orchestrator)">SUMMARY</div>
+          <div class="chute" style="top: 14px; height: 196px; left: 50%; transform: translateX(-50%)"></div>
+        </div>
+        <div class="station-label completed-label" style="left: 964px; top: 286px">summary</div>
+
+        <!-- ── Agent sprites ─────────────────────────────────────── -->
+
+        <!-- Architect agent (resting) -->
+        <div class="agent resting" style="left: 74px; top: 240px" id="agent-arch">
+          <div class="agent-sprite" id="sprite-analyst"></div>
+          <div class="agent-accent" style="background: var(--analyst)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--analyst)">Architect</strong><br />
+            Status: resting | Duration: 32s
+          </div>
+        </div>
+
+        <!-- Planner agent (resting) -->
+        <div class="agent resting" style="left: 214px; top: 240px" id="agent-plan">
+          <div class="agent-sprite" id="sprite-planner"></div>
+          <div class="agent-accent" style="background: var(--planner)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--planner)">Planner</strong><br />
+            Status: resting | Duration: 48s
+          </div>
+        </div>
+
+        <!-- Coder agent (celebrating) -->
+        <div class="agent celebrating" style="left: 364px; top: 240px" id="agent-coder">
+          <div class="agent-sprite" id="sprite-author"></div>
+          <div class="agent-accent" style="background: var(--author)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--author)">Coder</strong><br />
+            Status: celebrating | Duration: 2m 14s
+          </div>
+        </div>
+
+        <!-- Reviewer agents (3 parallel, celebrating) -->
+        <div class="agent celebrating" style="left: 530px; top: 240px" id="agent-rev0">
+          <div class="agent-sprite" id="sprite-reviewer-0"></div>
+          <div class="agent-accent" style="background: var(--reviewer)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--reviewer)">Code reviewer</strong><br />
+            Status: celebrating | Criticality: low
+          </div>
+        </div>
+        <div class="agent celebrating" style="left: 580px; top: 240px" id="agent-rev1">
+          <div class="agent-sprite" id="sprite-reviewer-1"></div>
+          <div class="agent-accent" style="background: var(--reviewer)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--reviewer)">Silent-failure reviewer</strong><br />
+            Status: celebrating | Criticality: none
+          </div>
+        </div>
+        <div class="agent celebrating" style="left: 630px; top: 240px" id="agent-rev2">
+          <div class="agent-sprite" id="sprite-reviewer-2"></div>
+          <div class="agent-accent" style="background: var(--reviewer)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--reviewer)">Test reviewer</strong><br />
+            Status: celebrating | Criticality: none
+          </div>
+        </div>
+
+        <!-- Holistic reviewer (celebrating) -->
+        <div class="agent celebrating" style="left: 834px; top: 240px" id="agent-holi">
+          <div class="agent-sprite" id="sprite-reviewer-holi"></div>
+          <div class="agent-accent" style="background: var(--reviewer)"></div>
+          <div class="agent-tooltip">
+            <strong style="color: var(--reviewer)">Holistic reviewer</strong><br />
+            Status: celebrating | Criticality: low
+          </div>
+        </div>
+
+        <!-- ── Orchestrator ──────────────────────────────────────── -->
+        <div class="orchestrator celebrating" style="left: 960px; top: 36px" id="orchestrator">
+          <div class="orch-sprite" id="sprite-orch"></div>
+          <div class="code-badge" style="background: #ffaa00; color: #222">v2</div>
+          <div class="agent-tooltip" style="bottom: auto; top: calc(100% + 8px)">
+            <strong style="color: var(--orchestrator)">Orchestrator</strong><br />
+            Run: R-20260313-001 | Status: completed<br />
+            Duration: 6m 42s | Artifacts: 12
+          </div>
+        </div>
+
+        <!-- ── Conveyor belts ────────────────────────────────────── -->
+        <div class="conveyor active" style="left: 112px; top: 278px; width: 90px"></div>
+        <div class="conveyor active" style="left: 252px; top: 278px; width: 100px"></div>
+        <div class="conveyor active" style="left: 402px; top: 278px; width: 110px"></div>
+        <div class="conveyor" style="left: 670px; top: 278px; width: 42px; opacity: 0.3"></div>
+        <div class="conveyor active" style="left: 750px; top: 278px; width: 78px"></div>
+        <div class="conveyor active" style="left: 878px; top: 278px; width: 80px"></div>
+
+        <!-- ── Gates ─────────────────────────────────────────────── -->
+        <div class="gate open" style="left: 153px; top: 52px">
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+        </div>
+        <div class="gate open" style="left: 298px; top: 52px">
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+        </div>
+        <div class="gate open" style="left: 448px; top: 52px">
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+        </div>
+        <div class="gate open" style="left: 678px; top: 52px">
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+        </div>
+        <div class="gate open" style="left: 783px; top: 52px">
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+        </div>
+        <div class="gate open" style="left: 908px; top: 52px">
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+          <div class="gate-bar"></div>
+        </div>
+
+        <!-- ── Dividers (input|output separators) ────────────────── -->
+        <div class="divider" style="left: 63px; top: 280px; height: 100px"></div>
+        <div class="divider" style="left: 203px; top: 280px; height: 100px"></div>
+        <div class="divider" style="left: 348px; top: 280px; height: 100px"></div>
+        <div class="divider" style="left: 513px; top: 280px; height: 100px"></div>
+        <div class="divider" style="left: 823px; top: 280px; height: 100px"></div>
+        <div class="divider" style="left: 948px; top: 280px; height: 100px"></div>
+
+        <!-- ── Artifacts ─────────────────────────────────────────── -->
+
+        <!-- Station 0: Architecture outputs -->
+        <div class="artifact-area outputs" style="left: 74px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-arch)" onclick="openVault('arch')">
+            arch
+            <div class="art-tooltip">architecture-assessment.md<br />Agent: architect | Phase: architecture</div>
+          </div>
+        </div>
+
+        <!-- Station 0: Architecture inputs (none for first station) -->
+
+        <!-- Station 1: Planning inputs -->
+        <div class="artifact-area inputs" style="left: 166px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-arch); opacity: 0.7">arch</div>
+        </div>
+
+        <!-- Station 1: Planning outputs -->
+        <div class="artifact-area outputs" style="left: 214px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-plan)" onclick="openVault('plan')">
+            plan
+            <div class="art-tooltip">implementation-plan.md<br />Agent: planner | Phase: planning</div>
+          </div>
+          <div class="artifact-tile" style="background: var(--art-plan); opacity: 0.8" onclick="openVault('plan-json')">
+            .json
+            <div class="art-tooltip">implementation-plan.json<br />Agent: planner | Phase: planning</div>
+          </div>
+        </div>
+
+        <!-- Station 2: Implementation inputs -->
+        <div class="artifact-area inputs" style="left: 310px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-plan); opacity: 0.7">plan</div>
+        </div>
+
+        <!-- Station 2: Implementation outputs -->
+        <div class="artifact-area outputs" style="left: 358px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-code)" onclick="openVault('code-v1')">
+            code
+            <div class="art-tooltip">change-summary.md v1<br />Agent: coder | Phase: implementation</div>
+          </div>
+          <div class="artifact-tile" style="background: var(--art-code)" onclick="openVault('code-v2')">
+            code
+            <div class="version-indicator" style="background: #ffaa00">2</div>
+            <div class="art-tooltip">change-summary.md v2<br />Agent: coder | Iteration: 2</div>
+          </div>
+        </div>
+
+        <!-- Iteration loop arrow -->
+        <div class="loop-arrow" style="left: 470px; top: 260px">&#x21BB;</div>
+
+        <!-- Station 3: Review inputs -->
+        <div class="artifact-area inputs" style="left: 476px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-code); opacity: 0.7">code</div>
+        </div>
+
+        <!-- Station 3: Review outputs (per reviewer) -->
+        <div class="artifact-area outputs" style="left: 530px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-review)" onclick="openVault('review')">
+            review
+            <div class="art-tooltip">code-review findings<br />Agent: code-reviewer | 0F 1W 0T 2R 1S</div>
+          </div>
+        </div>
+        <div class="artifact-area outputs" style="left: 580px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-review)" onclick="openVault('review-sf')">
+            review
+            <div class="art-tooltip">silent-failure-review findings<br />Agent: sf-reviewer | 0F 0W 0T 0R 0S</div>
+          </div>
+        </div>
+        <div class="artifact-area outputs" style="left: 630px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-review)" onclick="openVault('review-test')">
+            review
+            <div class="art-tooltip">test-review findings<br />Agent: test-reviewer | 0F 0W 1T 0R 0S</div>
+          </div>
+        </div>
+
+        <!-- Station 5: Holistic inputs -->
+        <div class="artifact-area inputs" style="left: 790px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-code); opacity: 0.7">code</div>
+        </div>
+
+        <!-- Station 5: Holistic outputs -->
+        <div class="artifact-area outputs" style="left: 834px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-holi)" onclick="openVault('holistic')">
+            holi
+            <div class="art-tooltip">holistic-review.md<br />Agent: holistic-reviewer | Criticality: low</div>
+          </div>
+        </div>
+
+        <!-- Station 6: Summary inputs -->
+        <div class="artifact-area inputs" style="left: 920px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-arch); opacity: 0.6">arch</div>
+          <div class="artifact-tile" style="background: var(--art-plan); opacity: 0.6">plan</div>
+          <div class="artifact-tile" style="background: var(--art-code); opacity: 0.6">code</div>
+          <div class="artifact-tile" style="background: var(--art-review); opacity: 0.6">rev</div>
+          <div class="artifact-tile" style="background: var(--art-holi); opacity: 0.6">holi</div>
+        </div>
+
+        <!-- Station 6: Summary output -->
+        <div class="artifact-area outputs" style="left: 970px; top: 306px">
+          <div class="artifact-tile" style="background: var(--art-summary)" onclick="openVault('summary')">
+            sum
+            <div class="art-tooltip">run-summary.md<br />Agent: orchestrator</div>
+          </div>
+        </div>
+
+        <!-- ── Summary card (completion overlay) ──────────────────── -->
+        <div class="summary-card" id="summaryCard">
+          <div class="summary-stat">
+            <div class="stat-value" style="color: var(--green)">6:42</div>
+            <div class="stat-label">Duration</div>
+          </div>
+          <div class="summary-stat">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Artifacts</div>
+          </div>
+          <div class="summary-stat">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Code iterations</div>
+          </div>
+          <div class="summary-stat">
+            <div class="stat-value" style="color: var(--yellow)">1W</div>
+            <div class="stat-label">Review findings</div>
+          </div>
+          <div class="summary-stat">
+            <div class="stat-value" style="color: var(--green)">Low</div>
+            <div class="stat-label">Criticality</div>
+          </div>
+        </div>
+
+        <!-- ── Confetti ──────────────────────────────────────────── -->
+        <div class="confetti-container" id="confetti"></div>
+
+        <!-- ── Minimap ───────────────────────────────────────────── -->
+        <div class="minimap">
+          <div class="minimap-label">minimap</div>
+          <div class="minimap-station mm-active" style="background: var(--analyst)"></div>
+          <div class="minimap-station mm-active" style="background: var(--planner)"></div>
+          <div class="minimap-station mm-active" style="background: var(--author)"></div>
+          <div class="minimap-station mm-active" style="background: var(--reviewer)"></div>
+          <div class="minimap-station" style="background: #333"></div>
+          <div class="minimap-station mm-active" style="background: var(--reviewer)"></div>
+          <div class="minimap-station mm-active" style="background: var(--orchestrator)"></div>
+          <div class="minimap-viewport" style="left: 3px; width: calc(100% - 6px)"></div>
+        </div>
+      </div>
+
+      <!-- ── Vault overlay ───────────────────────────────────────── -->
+      <div class="vault-overlay" id="vault">
+        <div class="vault-header">
+          <div class="vault-type" id="vaultType" style="background: var(--art-review)">REVIEW</div>
+          <div class="vault-filename" id="vaultFilename">code-review-findings.md</div>
+          <div class="vault-meta" id="vaultMeta">Agent: code-reviewer | Phase: review | Round 1</div>
+          <button class="vault-close" onclick="closeVault()">ESC Close</button>
+        </div>
+        <div class="vault-versions" id="vaultVersions" style="display: none">
+          <div class="vault-version-tab" onclick="selectVersion(1)">
+            v1 <span style="color: #484; font-size: 8px">+142 -0</span>
+          </div>
+          <div class="vault-version-tab active" onclick="selectVersion(2)">
+            v2 <span style="color: #484; font-size: 8px">+12 -3</span>
+          </div>
+          <button class="vault-compare-btn" onclick="compareVersions()">Compare v1 vs v2</button>
+        </div>
+        <div class="vault-body">
+          <div class="vault-sidebar" id="vaultSidebar">
+            <dl>
+              <dt>Type</dt>
+              <dd id="vaultSideType">review</dd>
+              <dt>Phase</dt>
+              <dd id="vaultSidePhase">parallelReview</dd>
+              <dt>Agent</dt>
+              <dd id="vaultSideAgent">aspect-code-reviewer</dd>
+              <dt>Criticality</dt>
+              <dd id="vaultSideCrit" style="color: var(--yellow)">low</dd>
+              <dt>Created</dt>
+              <dd id="vaultSideTime">14:32:18</dd>
+              <dt>Tokens</dt>
+              <dd id="vaultSideTokens">12,847</dd>
+            </dl>
+          </div>
+          <div class="vault-content" id="vaultContent">
+            <!-- Review findings content -->
+            <div class="findings-summary">
+              <span class="finding-badge fatal">0 Fatal</span>
+              <span class="finding-badge warning">1 Warning</span>
+              <span class="finding-badge test-gap">0 Test gap</span>
+              <span class="finding-badge refactor">2 Refactor</span>
+              <span class="finding-badge style">1 Style</span>
+              <span class="finding-badge low">0 Low</span>
+            </div>
+
+            <div class="finding-card" style="border-left-color: var(--yellow)">
+              <div class="finding-severity" style="color: var(--yellow)">W Warning</div>
+              <div class="finding-text">
+                Unbounded array growth in event log. The <code>events</code> array in <code>event-folder.ts</code> grows
+                without limit during long runs. Consider a ring buffer or periodic pruning to prevent memory exhaustion.
+              </div>
+              <div class="finding-file">src/shared/event-folder.ts:42</div>
+            </div>
+
+            <div class="finding-card" style="border-left-color: var(--green)">
+              <div class="finding-severity" style="color: var(--green)">R Refactor</div>
+              <div class="finding-text">
+                The <code>buildStations</code> function rebuilds the full station array on every update. Consider
+                memoizing by station count since the station configuration rarely changes mid-run.
+              </div>
+              <div class="finding-file">src/client/visualizations/catwalk/mappers/run-to-catwalk.ts:163</div>
+            </div>
+
+            <div class="finding-card" style="border-left-color: var(--green)">
+              <div class="finding-severity" style="color: var(--green)">R Refactor</div>
+              <div class="finding-text">
+                Reviewer name extraction handles three data shapes with duplicated iteration logic. Extract a shared
+                <code>collectReviewerNames</code> helper to reduce branching complexity.
+              </div>
+              <div class="finding-file">src/client/visualizations/catwalk/mappers/run-to-catwalk.ts:89</div>
+            </div>
+
+            <div class="finding-card" style="border-left-color: var(--magenta)">
+              <div class="finding-severity" style="color: var(--magenta)">S Style</div>
+              <div class="finding-text">
+                Inconsistent use of <code>isPresent()</code> vs direct <code>!== undefined</code> checks. The codebase
+                defines <code>isPresent</code> but uses it in only half the applicable locations.
+              </div>
+              <div class="finding-file">src/client/visualizations/catwalk/mappers/run-to-catwalk.ts</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playback bar -->
+    <div class="playback-bar">
+      <button class="playback-btn" title="Rewind">|&lt;</button>
+      <button class="playback-btn" title="Step back">&lt;</button>
+      <button class="playback-btn active" title="Play/Pause">&#9654;</button>
+      <button class="playback-btn" title="Step forward">&gt;</button>
+      <button class="playback-btn" title="Skip to end">&gt;|</button>
+      <div class="playback-speed">1x</div>
+      <div class="timeline" id="timeline">
+        <div class="timeline-progress" style="width: 100%"></div>
+        <div class="timeline-dot" style="left: 4%; background: var(--analyst)">
+          <div class="dot-label">architecture</div>
+        </div>
+        <div class="timeline-dot" style="left: 12%; background: var(--planner)">
+          <div class="dot-label">planning</div>
+        </div>
+        <div class="timeline-dot" style="left: 28%; background: var(--author)">
+          <div class="dot-label">implementation v1</div>
+        </div>
+        <div class="timeline-dot" style="left: 42%; background: var(--reviewer)">
+          <div class="dot-label">review dispatched</div>
+        </div>
+        <div class="timeline-dot" style="left: 55%; background: var(--reviewer)">
+          <div class="dot-label">reviews complete</div>
+        </div>
+        <div class="timeline-dot" style="left: 62%; background: var(--author)">
+          <div class="dot-label">fix cycle v2</div>
+        </div>
+        <div class="timeline-dot" style="left: 75%; background: var(--reviewer)">
+          <div class="dot-label">holistic review</div>
+        </div>
+        <div class="timeline-dot" style="left: 92%; background: var(--orchestrator)">
+          <div class="dot-label">summary</div>
+        </div>
+        <div class="timeline-dot" style="left: 100%; background: var(--green)">
+          <div class="dot-label">completed</div>
+        </div>
+      </div>
+      <div class="playback-time">6:42 / 6:42</div>
+    </div>
+
+    <script>
+      // ── Pixel-art sprite rendering ──────────────────────────────────
+      // Generate tiny pixel-art sprites using canvas for each role type
+
+      function createPixelSprite(canvasSize, pixels, scale) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasSize * scale;
+        canvas.height = canvasSize * scale;
+        canvas.style.width = canvasSize + 'px';
+        canvas.style.height = canvasSize + 'px';
+        canvas.style.imageRendering = 'pixelated';
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        for (const [x, y, color] of pixels) {
+          ctx.fillStyle = color;
+          ctx.fillRect(x * scale, y * scale, scale, scale);
+        }
+        return canvas;
+      }
+
+      // Pixel data for a simple agent figure (8x8 grid, scale 4x)
+      function agentPixels(mainColor, accentColor) {
+        const skin = '#FFD5B8';
+        const dark = '#222';
+        return [
+          // Head
+          [3, 0, skin],
+          [4, 0, skin],
+          [2, 1, skin],
+          [3, 1, dark],
+          [4, 1, dark],
+          [5, 1, skin],
+          [3, 2, skin],
+          [4, 2, skin],
+          // Body
+          [2, 3, mainColor],
+          [3, 3, mainColor],
+          [4, 3, mainColor],
+          [5, 3, mainColor],
+          [2, 4, mainColor],
+          [3, 4, accentColor],
+          [4, 4, accentColor],
+          [5, 4, mainColor],
+          [1, 5, skin],
+          [2, 5, mainColor],
+          [3, 5, mainColor],
+          [4, 5, mainColor],
+          [5, 5, mainColor],
+          [6, 5, skin],
+          // Legs
+          [2, 6, dark],
+          [3, 6, dark],
+          [4, 6, dark],
+          [5, 6, dark],
+          [2, 7, dark],
+          [3, 7, dark],
+          [4, 7, dark],
+          [5, 7, dark],
+        ];
+      }
+
+      function orchPixels() {
+        const main = '#AA00AA';
+        const accent = '#FF55FF';
+        const skin = '#FFD5B8';
+        const dark = '#222';
+        const gold = '#FFD700';
+        return [
+          // Crown
+          [2, 0, gold],
+          [4, 0, gold],
+          [6, 0, gold],
+          [1, 1, gold],
+          [2, 1, gold],
+          [3, 1, gold],
+          [4, 1, gold],
+          [5, 1, gold],
+          [6, 1, gold],
+          [7, 1, gold],
+          // Head
+          [3, 2, skin],
+          [4, 2, dark],
+          [5, 2, dark],
+          [3, 3, skin],
+          [4, 3, skin],
+          [5, 3, skin],
+          // Body
+          [2, 4, main],
+          [3, 4, accent],
+          [4, 4, accent],
+          [5, 4, accent],
+          [6, 4, main],
+          [2, 5, main],
+          [3, 5, main],
+          [4, 5, accent],
+          [5, 5, main],
+          [6, 5, main],
+          // Legs
+          [2, 6, dark],
+          [3, 6, dark],
+          [5, 6, dark],
+          [6, 6, dark],
+          [2, 7, dark],
+          [3, 7, dark],
+          [5, 7, dark],
+          [6, 7, dark],
+        ];
+      }
+
+      // Render sprites into the DOM
+      const spriteConfigs = {
+        'sprite-analyst': { main: '#3344AA', accent: '#5555FF' },
+        'sprite-planner': { main: '#22AA44', accent: '#55FF55' },
+        'sprite-author': { main: '#AA9922', accent: '#FFFF55' },
+        'sprite-reviewer-0': { main: '#AA2222', accent: '#FF5555' },
+        'sprite-reviewer-1': { main: '#AA3333', accent: '#FF6666' },
+        'sprite-reviewer-2': { main: '#AA2244', accent: '#FF5577' },
+        'sprite-reviewer-holi': { main: '#992244', accent: '#FF4477' },
+      };
+
+      for (const [id, config] of Object.entries(spriteConfigs)) {
+        const el = document.getElementById(id);
+        if (el) {
+          const canvas = createPixelSprite(8, agentPixels(config.main, config.accent), 4);
+          el.appendChild(canvas);
+        }
+      }
+
+      // Orchestrator sprite
+      const orchEl = document.getElementById('sprite-orch');
+      if (orchEl) {
+        const canvas = createPixelSprite(8, orchPixels(), 5);
+        canvas.style.width = '36px';
+        canvas.style.height = '36px';
+        orchEl.appendChild(canvas);
+      }
+
+      // ── Confetti generation ──────────────────────────────────────────
+      const confettiContainer = document.getElementById('confetti');
+      const confettiColors = ['#FF55FF', '#55FF55', '#FFFF55', '#5555FF', '#FF5555', '#55FFFF', '#FFD700'];
+
+      function spawnConfetti() {
+        for (let i = 0; i < 40; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'confetti-particle';
+          particle.style.left = Math.random() * 100 + '%';
+          particle.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+          particle.style.animationDuration = 2 + Math.random() * 3 + 's';
+          particle.style.animationDelay = Math.random() * 2 + 's';
+          particle.style.width = 2 + Math.random() * 4 + 'px';
+          particle.style.height = 2 + Math.random() * 4 + 'px';
+          confettiContainer.appendChild(particle);
+
+          // Clean up after animation
+          setTimeout(() => particle.remove(), 6000);
+        }
+      }
+
+      // Spawn confetti on load to show completion state
+      spawnConfetti();
+      // Respawn periodically for ambient delight
+      setInterval(spawnConfetti, 8000);
+
+      // ── Vault interaction ─────────────────────────────────────────────
+
+      const vaultEl = document.getElementById('vault');
+      const vaultTypeEl = document.getElementById('vaultType');
+      const vaultFilenameEl = document.getElementById('vaultFilename');
+      const vaultMetaEl = document.getElementById('vaultMeta');
+      const vaultVersionsEl = document.getElementById('vaultVersions');
+      const vaultContentEl = document.getElementById('vaultContent');
+      const vaultSideTypeEl = document.getElementById('vaultSideType');
+      const vaultSidePhaseEl = document.getElementById('vaultSidePhase');
+      const vaultSideAgentEl = document.getElementById('vaultSideAgent');
+      const vaultSideCritEl = document.getElementById('vaultSideCrit');
+      const vaultSideTimeEl = document.getElementById('vaultSideTime');
+      const vaultSideTokensEl = document.getElementById('vaultSideTokens');
+
+      const vaultData = {
+        arch: {
+          type: 'ARCH',
+          color: 'var(--art-arch)',
+          filename: 'architecture-assessment.md',
+          meta: 'Agent: architect | Phase: architecture',
+          sideType: 'architecture',
+          sidePhase: 'architecture',
+          sideAgent: 'orchestrated-architect',
+          sideCrit: 'none',
+          sideTime: '14:30:02',
+          sideTokens: '4,231',
+          versions: false,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#a5d8ff; font-size:13px; margin-bottom:8px;">Architecture assessment</h3><p style="margin-bottom:8px;"><strong>Impact level:</strong> <span style="color:#55FF55;">none</span></p><p style="margin-bottom:8px;">This change adds visualization documentation and an HTML mockup file. No architectural impact -- no new dependencies, no schema changes, no API surface modifications.</p><p style="margin-bottom:8px;"><strong>Decision:</strong> Skip architecture deep-dive. Proceed directly to planning.</p></div>',
+        },
+        plan: {
+          type: 'PLAN',
+          color: 'var(--art-plan)',
+          filename: 'implementation-plan.md',
+          meta: 'Agent: planner | Phase: planning | 4 steps',
+          sideType: 'plan',
+          sidePhase: 'planning',
+          sideAgent: 'orchestrated-planner',
+          sideCrit: '--',
+          sideTime: '14:30:34',
+          sideTokens: '8,102',
+          versions: false,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#b2f2bb; font-size:13px; margin-bottom:8px;">Implementation plan</h3><ol style="margin-left:16px; line-height:2;"><li>Create <code>packages/factory/docs/visions/</code> directory</li><li>Write vision document (<code>vision-a-factory-evolved.md</code>) covering metaphor, information architecture, interaction model, and delight</li><li>Write HTML mockup (<code>vision-a-mockup.html</code>) as self-contained visual</li><li>Verify both files render correctly</li></ol></div>',
+        },
+        'code-v1': {
+          type: 'CODE',
+          color: 'var(--art-code)',
+          filename: 'change-summary.md',
+          meta: 'Agent: coder | Phase: implementation | v1',
+          sideType: 'change-summary',
+          sidePhase: 'implementation',
+          sideAgent: 'orchestrated-coder',
+          sideCrit: '--',
+          sideTime: '14:31:22',
+          sideTokens: '18,493',
+          versions: true,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#fff3bf; font-size:13px; margin-bottom:8px;">Change summary (v1)</h3><div style="background:#1a2a1a; border:1px solid #2a3a2a; border-radius:4px; padding:8px; margin-bottom:8px; font-size:10px;"><span style="color:#55FF55;">+ packages/factory/docs/visions/vision-a-factory-evolved.md</span><br><span style="color:#55FF55;">+ packages/factory/docs/visions/vision-a-mockup.html</span></div><p style="font-size:10px; color:#666;">2 files added, 0 modified, 0 deleted<br>+847 lines, -0 lines</p></div>',
+        },
+        'code-v2': {
+          type: 'CODE',
+          color: 'var(--art-code)',
+          filename: 'change-summary.md',
+          meta: 'Agent: coder | Phase: implementation | v2 (fix cycle)',
+          sideType: 'change-summary',
+          sidePhase: 'implementation',
+          sideAgent: 'orchestrated-coder',
+          sideCrit: '--',
+          sideTime: '14:35:48',
+          sideTokens: '6,211',
+          versions: true,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#fff3bf; font-size:13px; margin-bottom:8px;">Change summary (v2 -- fix cycle)</h3><div style="background:#1a2a1a; border:1px solid #2a3a2a; border-radius:4px; padding:8px; margin-bottom:8px; font-size:10px;"><span style="color:#FFFF55;">~ packages/factory/docs/visions/vision-a-factory-evolved.md</span><br><span style="color:#FFFF55;">~ packages/factory/docs/visions/vision-a-mockup.html</span></div><p style="font-size:10px; color:#666;">0 files added, 2 modified, 0 deleted<br>+12 lines, -3 lines</p><p style="margin-top:8px; font-size:10px;">Addressed W finding: added ring buffer mention in event-folder discussion.</p></div>',
+        },
+        review: {
+          type: 'REVIEW',
+          color: 'var(--art-review)',
+          filename: 'code-review-findings.md',
+          meta: 'Agent: code-reviewer | Phase: review | Round 1',
+          sideType: 'review',
+          sidePhase: 'parallelReview',
+          sideAgent: 'aspect-code-reviewer',
+          sideCrit: 'low',
+          sideTime: '14:32:18',
+          sideTokens: '12,847',
+          versions: false,
+          content: null, // uses default review content already in HTML
+        },
+        'review-sf': {
+          type: 'REVIEW',
+          color: 'var(--art-review)',
+          filename: 'silent-failure-review.md',
+          meta: 'Agent: sf-reviewer | Phase: review | Round 1',
+          sideType: 'review',
+          sidePhase: 'parallelReview',
+          sideAgent: 'aspect-silent-failure-reviewer',
+          sideCrit: 'none',
+          sideTime: '14:32:22',
+          sideTokens: '9,102',
+          versions: false,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#ffc9c9; font-size:13px; margin-bottom:8px;">Silent-failure review</h3><div class="findings-summary"><span class="finding-badge fatal">0 Fatal</span><span class="finding-badge warning">0 Warning</span><span class="finding-badge test-gap">0 Test gap</span><span class="finding-badge refactor">0 Refactor</span><span class="finding-badge style">0 Style</span><span class="finding-badge low">0 Low</span></div><p style="color:#6a6;">No findings. Documentation-only changes do not introduce error-handling concerns.</p></div>',
+        },
+        'review-test': {
+          type: 'REVIEW',
+          color: 'var(--art-review)',
+          filename: 'test-review-findings.md',
+          meta: 'Agent: test-reviewer | Phase: review | Round 1',
+          sideType: 'review',
+          sidePhase: 'parallelReview',
+          sideAgent: 'aspect-test-reviewer',
+          sideCrit: 'none',
+          sideTime: '14:32:25',
+          sideTokens: '7,842',
+          versions: false,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#ffc9c9; font-size:13px; margin-bottom:8px;">Test review</h3><div class="findings-summary"><span class="finding-badge fatal">0 Fatal</span><span class="finding-badge warning">0 Warning</span><span class="finding-badge test-gap">1 Test gap</span><span class="finding-badge refactor">0 Refactor</span><span class="finding-badge style">0 Style</span><span class="finding-badge low">0 Low</span></div><div class="finding-card" style="border-left-color: var(--cyan);"><div class="finding-severity" style="color: var(--cyan);">T Test gap</div><div class="finding-text">No validation test for the HTML mockup file structure. Consider a simple test that verifies the file exists and contains expected structural elements.</div><div class="finding-file">packages/factory/docs/visions/vision-a-mockup.html</div></div></div>',
+        },
+        holistic: {
+          type: 'HOLI',
+          color: 'var(--art-holi)',
+          filename: 'holistic-review.md',
+          meta: 'Agent: holistic-reviewer | Phase: holistic | Criticality: low',
+          sideType: 'holistic',
+          sidePhase: 'holisticReview',
+          sideAgent: 'orchestrated-reviewer',
+          sideCrit: 'low',
+          sideTime: '14:36:45',
+          sideTokens: '11,384',
+          versions: false,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#c3fae8; font-size:13px; margin-bottom:8px;">Holistic review</h3><p style="margin-bottom:8px;"><strong>Criticality:</strong> <span style="color: var(--yellow);">low</span></p><p style="margin-bottom:8px;">The changes are well-contained documentation additions. The vision document is thorough and the HTML mockup effectively communicates the design intent. Minor concern: the mockup file is large (800+ lines) but this is acceptable for a self-contained visual.</p><p><strong>Recommendation:</strong> Approve. No additional fix cycles needed.</p></div>',
+        },
+        summary: {
+          type: 'SUM',
+          color: 'var(--art-summary)',
+          filename: 'run-summary.md',
+          meta: 'Agent: orchestrator | Phase: summary',
+          sideType: 'summary',
+          sidePhase: 'summary',
+          sideAgent: 'orchestrator',
+          sideCrit: '--',
+          sideTime: '14:37:02',
+          sideTokens: '3,102',
+          versions: false,
+          content:
+            '<div style="color:#aaa;"><h3 style="color:#f8f9fa; font-size:13px; margin-bottom:8px;">Run summary</h3><table style="font-size:10px; border-collapse:collapse; width:100%; margin-bottom:12px;"><tr style="border-bottom:1px solid #333;"><td style="padding:4px 8px; color:#666;">Status</td><td style="padding:4px 8px; color:var(--green);">Completed</td></tr><tr style="border-bottom:1px solid #333;"><td style="padding:4px 8px; color:#666;">Duration</td><td style="padding:4px 8px;">6m 42s</td></tr><tr style="border-bottom:1px solid #333;"><td style="padding:4px 8px; color:#666;">Code iterations</td><td style="padding:4px 8px;">2 (1 fix cycle)</td></tr><tr style="border-bottom:1px solid #333;"><td style="padding:4px 8px; color:#666;">Review rounds</td><td style="padding:4px 8px;">1</td></tr><tr style="border-bottom:1px solid #333;"><td style="padding:4px 8px; color:#666;">Aggregated criticality</td><td style="padding:4px 8px; color:var(--yellow);">low</td></tr><tr><td style="padding:4px 8px; color:#666;">Files changed</td><td style="padding:4px 8px;">2 added</td></tr></table><p style="font-size:10px; color:#666;">All quality gates passed. No fatal or warning findings remain after fix cycle.</p></div>',
+        },
+      };
+
+      // Default review content (saved from HTML)
+      let defaultReviewContent = null;
+
+      function openVault(artifactId) {
+        const data = vaultData[artifactId];
+        if (!data) return;
+
+        // Save default review content on first use
+        if (defaultReviewContent === null) {
+          defaultReviewContent = vaultContentEl.innerHTML;
+        }
+
+        vaultTypeEl.textContent = data.type;
+        vaultTypeEl.style.background = data.color;
+        vaultFilenameEl.textContent = data.filename;
+        vaultMetaEl.textContent = data.meta;
+
+        vaultSideTypeEl.textContent = data.sideType;
+        vaultSidePhaseEl.textContent = data.sidePhase;
+        vaultSideAgentEl.textContent = data.sideAgent;
+        vaultSideCritEl.textContent = data.sideCrit;
+        vaultSideCritEl.style.color =
+          data.sideCrit === 'low' ? 'var(--yellow)' : data.sideCrit === 'none' ? 'var(--green)' : '#888';
+        vaultSideTimeEl.textContent = data.sideTime;
+        vaultSideTokensEl.textContent = data.sideTokens;
+
+        vaultVersionsEl.style.display = data.versions ? 'flex' : 'none';
+
+        if (data.content !== null) {
+          vaultContentEl.innerHTML = data.content;
+        } else {
+          vaultContentEl.innerHTML = defaultReviewContent;
+        }
+
+        vaultEl.classList.add('open');
+      }
+
+      function closeVault() {
+        vaultEl.classList.remove('open');
+      }
+
+      function selectVersion(v) {
+        const tabs = vaultVersionsEl.querySelectorAll('.vault-version-tab');
+        tabs.forEach((tab, i) => {
+          tab.classList.toggle('active', i === v - 1);
+        });
+      }
+
+      function compareVersions() {
+        vaultContentEl.innerHTML =
+          '<div style="color:#aaa;"><h3 style="color:#fff3bf; font-size:13px; margin-bottom:8px;">Comparing v1 vs v2</h3><div style="display:flex; gap:16px;"><div style="flex:1; background:#1a1a2a; border:1px solid #2a2a3a; padding:8px; border-radius:4px; font-size:10px;"><div style="color:#666; margin-bottom:4px; font-weight:bold;">v1 (original)</div><div style="color:#888;">...event log grows without limit...</div><div style="background:#2a1a1a; padding:2px 4px; margin:4px 0; color:#ff8888;">- // No size limit on events array</div></div><div style="flex:1; background:#1a1a2a; border:1px solid #2a2a3a; padding:8px; border-radius:4px; font-size:10px;"><div style="color:#666; margin-bottom:4px; font-weight:bold;">v2 (after fix cycle)</div><div style="color:#888;">...event log uses ring buffer...</div><div style="background:#1a2a1a; padding:2px 4px; margin:4px 0; color:#88ff88;">+ // Ring buffer caps events at MAX_EVENTS</div><div style="background:#1a2a1a; padding:2px 4px; margin:2px 0; color:#88ff88;">+ const MAX_EVENTS = 10000;</div></div></div></div>';
+      }
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeVault();
+        if (e.key >= '1' && e.key <= '7') {
+          const stationIdx = parseInt(e.key) - 1;
+          // Visual feedback: flash the phase tab
+          const tabs = document.querySelectorAll('.phase-tab');
+          tabs.forEach((t) => t.classList.remove('active'));
+          if (tabs[stationIdx]) tabs[stationIdx].classList.add('active');
+        }
+      });
+
+      // Phase tab click
+      document.querySelectorAll('.phase-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.phase-tab').forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+        });
+      });
+
+      // ── Ambient orchestrator movement (celebrating bounce) ──────────
+      const orch = document.getElementById('orchestrator');
+      let orchBounce = 0;
+      function animateOrch() {
+        orchBounce += 0.05;
+        const y = Math.sin(orchBounce) * 3;
+        orch.style.transform = `translateY(${y}px)`;
+        requestAnimationFrame(animateOrch);
+      }
+      animateOrch();
+    </script>
+  </body>
+</html>

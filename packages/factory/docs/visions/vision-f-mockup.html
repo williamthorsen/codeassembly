@@ -1,0 +1,2464 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision F: The empire view</title>
+    <style>
+      /* ═══════════════════════════════════════════════════════════════
+   Reset & base
+   ═══════════════════════════════════════════════════════════════ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: 'Courier New', 'Consolas', monospace;
+        color: #dde0e8;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   Palette — Sci-fi industrial: steel/teal/cyan/amber
+   NOT dark-on-dark. Mid-tone steel & slate surfaces dominate.
+   ═══════════════════════════════════════════════════════════════ */
+      :root {
+        /* Surface colors (comfortable mid-tones) */
+        --bg-empire: #2a3040;
+        --bg-facility: #2e3545;
+        --bg-station: #364050;
+        --bg-panel: #3a4458;
+        --bg-header: #232a36;
+        --bg-hover: #404b5e;
+
+        /* Structural colors */
+        --steel-dark: #3a4252;
+        --steel-mid: #4a5568;
+        --steel-light: #6b7a90;
+        --steel-bright: #8899aa;
+        --slate: #505d6e;
+
+        /* Teal ambient lighting */
+        --teal-deep: #1a3038;
+        --teal-mid: #2a4a52;
+        --teal-glow: #3a6a70;
+        --teal-bright: #4a8a88;
+        --teal-env: rgba(58, 106, 112, 0.12);
+
+        /* Signal colors — accents only */
+        --cyan: #55ffff;
+        --cyan-dim: #3aaabb;
+        --amber: #ffaa00;
+        --amber-dim: #cc8800;
+        --green: #55ff55;
+        --green-dim: #44bb44;
+        --red: #ff5555;
+        --red-dim: #cc4444;
+
+        /* Role-type colors (CGA-16) */
+        --orchestrator: #ff55ff;
+        --analyst: #5555ff;
+        --planner: #55ff55;
+        --author: #ffff55;
+        --reviewer: #ff5555;
+
+        /* Text */
+        --text-primary: #dde0e8;
+        --text-secondary: #99a5b4;
+        --text-dim: #667788;
+        --text-bright: #f0f2f8;
+
+        /* Borders */
+        --border: #4a5568;
+        --border-dim: #3a4252;
+        --border-glow: rgba(85, 255, 255, 0.3);
+
+        /* Artifact pastels */
+        --art-arch: #a5d8ff;
+        --art-plan: #b2f2bb;
+        --art-code: #fff3bf;
+        --art-review: #ffc9c9;
+        --art-clean: #f3d9fa;
+        --art-holi: #c3fae8;
+        --art-summary: #f0f2f8;
+
+        /* Finding severities */
+        --severity-F: #ff3333;
+        --severity-W: #ffaa00;
+        --severity-T: #ffdd55;
+        --severity-R: #5588ff;
+        --severity-S: #888899;
+        --severity-L: #556677;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   Layout structure
+   ═══════════════════════════════════════════════════════════════ */
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        background: var(--bg-empire);
+      }
+
+      /* ── Header bar ───────────────────────────────────────────── */
+      .header-bar {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0.5rem 1.25rem;
+        background: var(--bg-header);
+        border-bottom: 2px solid var(--steel-dark);
+        font-size: 0.8rem;
+        z-index: 100;
+        flex-shrink: 0;
+      }
+      .header-bar .logo {
+        color: var(--cyan);
+        font-weight: bold;
+        font-size: 0.95rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .header-bar .sep {
+        color: var(--steel-light);
+      }
+      .header-bar .meta {
+        color: var(--text-secondary);
+      }
+      .header-bar .meta b {
+        color: var(--text-primary);
+      }
+
+      /* View toggle pills */
+      .view-toggle {
+        display: flex;
+        gap: 0;
+        margin-left: auto;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .view-toggle button {
+        background: var(--steel-dark);
+        color: var(--text-secondary);
+        border: none;
+        padding: 0.35rem 0.9rem;
+        font-family: inherit;
+        font-size: 0.75rem;
+        cursor: pointer;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: all 0.2s;
+      }
+      .view-toggle button.active {
+        background: var(--teal-mid);
+        color: var(--cyan);
+        box-shadow: inset 0 0 8px rgba(85, 255, 255, 0.15);
+      }
+      .view-toggle button:hover:not(.active) {
+        background: var(--bg-hover);
+      }
+
+      /* ── Main viewport ────────────────────────────────────────── */
+      .viewport {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   EMPIRE VIEW — Multiple facilities at a glance
+   ═══════════════════════════════════════════════════════════════ */
+      .empire-view {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background:
+          radial-gradient(ellipse at 30% 60%, rgba(58, 106, 112, 0.12) 0%, transparent 60%),
+          radial-gradient(ellipse at 70% 30%, rgba(42, 74, 82, 0.1) 0%, transparent 50%),
+          linear-gradient(180deg, #2a3040 0%, #283038 50%, #2a3040 100%);
+        transition:
+          opacity 0.5s,
+          transform 0.5s;
+        padding: 1.25rem;
+        gap: 1rem;
+      }
+      .empire-view.hidden {
+        opacity: 0;
+        transform: scale(1.15);
+        pointer-events: none;
+      }
+
+      /* Empire summary strip */
+      .empire-summary {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        padding: 0.6rem 1.2rem;
+        background: var(--bg-panel);
+        border: 1px solid var(--border-dim);
+        border-radius: 6px;
+        font-size: 0.78rem;
+        flex-shrink: 0;
+      }
+      .empire-summary .stat {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .empire-summary .stat-value {
+        color: var(--cyan);
+        font-weight: bold;
+        font-size: 0.95rem;
+      }
+      .empire-summary .stat-label {
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.65rem;
+      }
+
+      /* Facility cards grid */
+      .empire-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+        gap: 1rem;
+        overflow-y: auto;
+        padding-bottom: 0.5rem;
+      }
+
+      /* ── Individual facility card ─────────────────────────────── */
+      .facility-card {
+        background: var(--bg-facility);
+        border: 1px solid var(--border-dim);
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.25s;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .facility-card:hover {
+        border-color: var(--cyan-dim);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(85, 255, 255, 0.08);
+      }
+      .facility-card.needs-attention {
+        border-color: var(--amber);
+        box-shadow: 0 0 12px rgba(255, 170, 0, 0.15);
+      }
+      .facility-card.needs-attention::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--amber);
+        animation: attention-pulse 2s ease-in-out infinite;
+      }
+      .facility-card.failed-card {
+        border-color: var(--red-dim);
+        box-shadow: 0 0 12px rgba(255, 85, 85, 0.12);
+      }
+      .facility-card.failed-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--red);
+      }
+      .facility-card.completed-card {
+        border-color: var(--green-dim);
+      }
+      .facility-card.completed-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--green-dim);
+      }
+
+      @keyframes attention-pulse {
+        0%,
+        100% {
+          opacity: 0.7;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Facility header */
+      .facility-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.65rem 0.9rem;
+        background: var(--bg-header);
+        border-bottom: 1px solid var(--border-dim);
+      }
+      .facility-id {
+        font-size: 0.7rem;
+        color: var(--cyan-dim);
+        letter-spacing: 1px;
+      }
+      .facility-ticket {
+        font-size: 0.72rem;
+        color: var(--text-primary);
+        font-weight: bold;
+      }
+      .facility-branch {
+        font-size: 0.65rem;
+        color: var(--text-dim);
+        margin-left: auto;
+      }
+      .facility-status {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: bold;
+      }
+      .facility-status.in-progress {
+        background: rgba(85, 255, 255, 0.15);
+        color: var(--cyan);
+      }
+      .facility-status.completed {
+        background: rgba(85, 255, 85, 0.15);
+        color: var(--green);
+      }
+      .facility-status.failed {
+        background: rgba(255, 85, 85, 0.15);
+        color: var(--red);
+      }
+      .facility-status.needs-review {
+        background: rgba(255, 170, 0, 0.15);
+        color: var(--amber);
+      }
+
+      /* Facility body — miniature factory floor */
+      .facility-body {
+        flex: 1;
+        padding: 0.6rem 0.9rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      /* Pipeline progress bar */
+      .pipeline-bar {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 0.25rem 0;
+      }
+      .phase-pip {
+        flex: 1;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-radius: 2px;
+        position: relative;
+        color: var(--text-dim);
+        background: var(--steel-dark);
+        border: 1px solid var(--border-dim);
+        transition: all 0.3s;
+      }
+      .phase-pip.completed-phase {
+        background: rgba(85, 255, 85, 0.12);
+        border-color: rgba(85, 255, 85, 0.3);
+        color: var(--green-dim);
+      }
+      .phase-pip.active-phase {
+        background: rgba(85, 255, 255, 0.15);
+        border-color: var(--cyan-dim);
+        color: var(--cyan);
+        animation: phase-glow 2s ease-in-out infinite;
+        box-shadow: 0 0 6px rgba(85, 255, 255, 0.2);
+      }
+      .phase-pip.failed-phase {
+        background: rgba(255, 85, 85, 0.15);
+        border-color: var(--red-dim);
+        color: var(--red);
+      }
+      .phase-pip.warning-phase {
+        background: rgba(255, 170, 0, 0.12);
+        border-color: var(--amber-dim);
+        color: var(--amber);
+      }
+
+      @keyframes phase-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 4px rgba(85, 255, 255, 0.15);
+        }
+        50% {
+          box-shadow: 0 0 10px rgba(85, 255, 255, 0.3);
+        }
+      }
+
+      /* Mini agent roster */
+      .mini-roster {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        flex-wrap: wrap;
+      }
+      .mini-agent {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.45rem;
+        background: var(--steel-dark);
+        border-radius: 3px;
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+        border-left: 2px solid var(--text-dim);
+      }
+      .mini-agent.working {
+        border-left-color: var(--cyan);
+        color: var(--text-primary);
+      }
+      .mini-agent.idle {
+        border-left-color: var(--text-dim);
+      }
+      .mini-agent.done {
+        border-left-color: var(--green-dim);
+      }
+      .mini-agent.problem {
+        border-left-color: var(--red);
+        color: var(--red);
+      }
+
+      .mini-agent-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .mini-agent.working .mini-agent-dot {
+        animation: dot-pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes dot-pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+      }
+
+      /* Facility footer — metrics */
+      .facility-footer {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.45rem 0.9rem;
+        background: var(--bg-header);
+        border-top: 1px solid var(--border-dim);
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+      }
+      .facility-footer .metric-val {
+        color: var(--text-primary);
+        font-weight: bold;
+      }
+      .facility-footer .metric-warn {
+        color: var(--amber);
+      }
+      .finding-pills {
+        display: flex;
+        gap: 2px;
+        margin-left: auto;
+      }
+      .finding-pill {
+        padding: 0.1rem 0.3rem;
+        border-radius: 2px;
+        font-size: 0.55rem;
+        font-weight: bold;
+      }
+      .finding-pill.fatal {
+        background: rgba(255, 51, 51, 0.25);
+        color: var(--severity-F);
+      }
+      .finding-pill.warning {
+        background: rgba(255, 170, 0, 0.2);
+        color: var(--severity-W);
+      }
+      .finding-pill.test {
+        background: rgba(255, 221, 85, 0.15);
+        color: var(--severity-T);
+      }
+      .finding-pill.refactor {
+        background: rgba(85, 136, 255, 0.15);
+        color: var(--severity-R);
+      }
+      .finding-pill.style {
+        background: rgba(136, 136, 153, 0.15);
+        color: var(--severity-S);
+      }
+
+      /* Notification badge on facility card */
+      .notification-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--amber);
+        color: #000;
+        font-size: 0.65rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);
+        z-index: 10;
+        animation: badge-bounce 2s ease-in-out infinite;
+      }
+      .notification-badge.critical {
+        background: var(--red);
+        box-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
+      }
+      @keyframes badge-bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        15% {
+          transform: scale(1.15);
+        }
+        30% {
+          transform: scale(1);
+        }
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   FACILITY VIEW — Zoomed into a single run
+   ═══════════════════════════════════════════════════════════════ */
+      .facility-view {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background:
+          radial-gradient(ellipse at 50% 100%, rgba(58, 106, 112, 0.15) 0%, transparent 50%),
+          radial-gradient(ellipse at 20% 20%, rgba(42, 74, 82, 0.08) 0%, transparent 40%),
+          linear-gradient(180deg, #2e3545 0%, #2a3040 40%, #283038 100%);
+        transition:
+          opacity 0.5s,
+          transform 0.5s;
+      }
+      .facility-view.hidden {
+        opacity: 0;
+        transform: scale(0.85);
+        pointer-events: none;
+      }
+
+      /* Back button */
+      .back-btn {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        z-index: 50;
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--cyan);
+        font-family: inherit;
+        font-size: 0.7rem;
+        padding: 0.4rem 0.8rem;
+        cursor: pointer;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: all 0.2s;
+      }
+      .back-btn:hover {
+        background: var(--teal-mid);
+        border-color: var(--cyan-dim);
+      }
+
+      /* Facility view header */
+      .facility-view-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0.6rem 1.25rem 0.6rem 7rem;
+        background: var(--bg-header);
+        border-bottom: 2px solid var(--steel-dark);
+        font-size: 0.78rem;
+        flex-shrink: 0;
+      }
+      .fv-title {
+        color: var(--cyan);
+        font-weight: bold;
+        font-size: 0.85rem;
+      }
+      .fv-meta {
+        color: var(--text-secondary);
+      }
+      .fv-meta b {
+        color: var(--text-primary);
+      }
+      .fv-status {
+        margin-left: auto;
+        padding: 0.2rem 0.65rem;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: bold;
+      }
+      .fv-status.in-progress {
+        background: rgba(85, 255, 255, 0.15);
+        color: var(--cyan);
+      }
+
+      /* ── Timing strip ─────────────────────────────────────────── */
+      .timing-strip {
+        display: flex;
+        height: 18px;
+        margin: 0 1.25rem;
+        border-radius: 0 0 4px 4px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .timing-segment {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255, 255, 255, 0.6);
+        border-right: 1px solid rgba(0, 0, 0, 0.2);
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .timing-segment:hover {
+        filter: brightness(1.3);
+      }
+      .timing-segment:last-child {
+        border-right: none;
+      }
+      .timing-segment .time-label {
+        position: absolute;
+        bottom: 1px;
+        font-size: 0.45rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+        color: white;
+      }
+      .timing-segment:hover .time-label {
+        opacity: 1;
+      }
+
+      /* ── Factory floor ────────────────────────────────────────── */
+      .factory-floor {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem 1.25rem;
+        gap: 0.5rem;
+        overflow-y: auto;
+      }
+
+      /* Gantry rail */
+      .gantry-rail {
+        height: 40px;
+        background:
+          repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 58px,
+            var(--steel-mid) 58px,
+            var(--steel-mid) 60px
+          ),
+          linear-gradient(180deg, var(--steel-dark) 0%, var(--bg-panel) 100%);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+      }
+      /* Rivets */
+      .gantry-rail::before,
+      .gantry-rail::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 1px;
+      }
+      .gantry-rail::before {
+        top: 6px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--steel-light) 0px,
+          var(--steel-light) 3px,
+          transparent 3px,
+          transparent 20px
+        );
+        opacity: 0.4;
+      }
+      .gantry-rail::after {
+        bottom: 6px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--steel-light) 0px,
+          var(--steel-light) 3px,
+          transparent 3px,
+          transparent 20px
+        );
+        opacity: 0.4;
+      }
+
+      /* Orchestrator sprite on rail */
+      .orchestrator-sprite {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        background: var(--orchestrator);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        color: #000;
+        font-weight: bold;
+        box-shadow: 0 0 10px rgba(255, 85, 255, 0.4);
+        transition: left 1.5s ease-in-out;
+        z-index: 5;
+      }
+      /* Pixel art face on orchestrator */
+      .orchestrator-sprite::after {
+        content: '';
+        width: 18px;
+        height: 14px;
+        background:
+          radial-gradient(circle at 6px 5px, #000 2px, transparent 2px),
+          radial-gradient(circle at 12px 5px, #000 2px, transparent 2px),
+          linear-gradient(transparent 9px, #000 9px, #000 11px, transparent 11px);
+        image-rendering: pixelated;
+      }
+
+      /* ── Station platforms ────────────────────────────────────── */
+      .stations-row {
+        display: flex;
+        gap: 6px;
+        flex: 1;
+        min-height: 0;
+      }
+
+      .station {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-station);
+        border: 1px solid var(--border-dim);
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+        min-width: 0;
+        transition: border-color 0.3s;
+      }
+      .station.active-station {
+        border-color: var(--cyan-dim);
+        box-shadow: 0 0 8px rgba(85, 255, 255, 0.1);
+      }
+      .station.completed-station {
+        border-color: var(--green-dim);
+      }
+      .station.failed-station {
+        border-color: var(--red-dim);
+      }
+      .station.review-station {
+        flex: 1.6;
+      }
+
+      /* Station sign */
+      .station-sign {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.5rem;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-dim);
+      }
+      .station-sign .sign-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .station-sign .sign-name {
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .station-sign .sign-time {
+        margin-left: auto;
+        font-size: 0.55rem;
+        color: var(--text-dim);
+        flex-shrink: 0;
+      }
+
+      /* Station body — where agents work */
+      .station-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem;
+        position: relative;
+        gap: 0.25rem;
+        /* Textured floor: crosshatch pattern */
+        background:
+          repeating-linear-gradient(
+            45deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(255, 255, 255, 0.015) 8px,
+            rgba(255, 255, 255, 0.015) 9px
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(255, 255, 255, 0.015) 8px,
+            rgba(255, 255, 255, 0.015) 9px
+          ),
+          var(--bg-station);
+      }
+
+      /* Agent sprite */
+      .agent-sprite {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.5rem;
+        font-weight: bold;
+        position: relative;
+        image-rendering: pixelated;
+      }
+      /* Pixel face for agents */
+      .agent-sprite .face {
+        width: 16px;
+        height: 12px;
+        position: relative;
+      }
+      .agent-sprite .eye {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 1px;
+      }
+      .agent-sprite .eye.left {
+        top: 2px;
+        left: 3px;
+      }
+      .agent-sprite .eye.right {
+        top: 2px;
+        right: 3px;
+      }
+      .agent-sprite .mouth {
+        position: absolute;
+        bottom: 1px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 6px;
+        height: 2px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 0 0 3px 3px;
+      }
+
+      .agent-sprite.working {
+        animation: work-bob 1.5s ease-in-out infinite;
+      }
+      @keyframes work-bob {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+
+      .agent-sprite.idle {
+        opacity: 0.6;
+      }
+      .agent-sprite.celebrating {
+        animation: celebrate 0.5s ease-in-out infinite;
+      }
+      @keyframes celebrate {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        25% {
+          transform: translateY(-4px) rotate(-5deg);
+        }
+        75% {
+          transform: translateY(-4px) rotate(5deg);
+        }
+      }
+
+      .agent-sprite.concerned {
+        animation: concerned-shake 0.4s ease-in-out infinite;
+      }
+      @keyframes concerned-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-2px);
+        }
+        75% {
+          transform: translateX(2px);
+        }
+      }
+
+      /* Time-on-task ring around agent */
+      .time-ring {
+        position: absolute;
+        inset: -3px;
+        border-radius: 6px;
+        border: 2px solid transparent;
+        border-top-color: var(--cyan-dim);
+        border-right-color: var(--cyan-dim);
+        opacity: 0.6;
+      }
+      .time-ring.quarter {
+        border-right-color: transparent;
+      }
+      .time-ring.half {
+      }
+      .time-ring.three-quarter {
+        border-bottom-color: var(--cyan-dim);
+      }
+      .time-ring.full {
+        border-color: var(--green-dim);
+        opacity: 0.8;
+      }
+      .time-ring.overtime {
+        border-color: var(--amber);
+        opacity: 1;
+        animation: overtime-pulse 1.5s ease-in-out infinite;
+      }
+      @keyframes overtime-pulse {
+        0%,
+        100% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Thought/speech bubble */
+      .thought-bubble {
+        position: absolute;
+        top: -32px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.2rem 0.4rem;
+        font-size: 0.5rem;
+        color: var(--text-primary);
+        white-space: nowrap;
+        z-index: 20;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      .thought-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 5px;
+        background: var(--bg-panel);
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        border-bottom: 1px solid var(--border);
+      }
+      .thought-bubble.urgent {
+        border-color: var(--amber);
+        color: var(--amber);
+      }
+      .thought-bubble.error {
+        border-color: var(--red);
+        color: var(--red);
+      }
+
+      /* Artifact shelf */
+      .artifact-shelf {
+        display: flex;
+        gap: 3px;
+        padding: 0.15rem 0.25rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        min-height: 18px;
+      }
+      .artifact-tile {
+        width: 14px;
+        height: 16px;
+        border-radius: 2px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: transform 0.15s;
+        position: relative;
+      }
+      .artifact-tile:hover {
+        transform: scale(1.4);
+        z-index: 10;
+        box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+      }
+      /* Artifact colors by type */
+      .artifact-tile.arch {
+        background: var(--art-arch);
+      }
+      .artifact-tile.plan {
+        background: var(--art-plan);
+      }
+      .artifact-tile.code {
+        background: var(--art-code);
+      }
+      .artifact-tile.review {
+        background: var(--art-review);
+      }
+      .artifact-tile.clean {
+        background: var(--art-clean);
+      }
+      .artifact-tile.holi {
+        background: var(--art-holi);
+      }
+      .artifact-tile.summary {
+        background: var(--art-summary);
+      }
+
+      /* Stacked artifact indicator */
+      .artifact-tile .stack-badge {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        font-size: 0.4rem;
+        background: var(--steel-dark);
+        color: var(--text-primary);
+        border-radius: 2px;
+        padding: 0 2px;
+        line-height: 1.2;
+      }
+
+      /* Conveyor belt between stations */
+      .conveyor-belt {
+        width: 6px;
+        align-self: center;
+        height: 2px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--steel-mid) 0px,
+          var(--steel-mid) 3px,
+          transparent 3px,
+          transparent 5px
+        );
+        flex-shrink: 0;
+      }
+      .conveyor-belt.active {
+        background: repeating-linear-gradient(
+          90deg,
+          var(--cyan-dim) 0px,
+          var(--cyan-dim) 3px,
+          transparent 3px,
+          transparent 5px
+        );
+        animation: convey 0.5s linear infinite;
+      }
+      @keyframes convey {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 5px 0;
+        }
+      }
+
+      /* Blocking relationship lines */
+      .blocking-indicator {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+        font-size: 0.5rem;
+        color: var(--amber);
+        z-index: 15;
+      }
+      .blocking-indicator .wait-line {
+        width: 30px;
+        height: 1px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--amber) 0px,
+          var(--amber) 4px,
+          transparent 4px,
+          transparent 8px
+        );
+        animation: dash-scroll 1s linear infinite;
+      }
+      @keyframes dash-scroll {
+        from {
+          background-position: 0 0;
+        }
+        to {
+          background-position: 8px 0;
+        }
+      }
+
+      /* Review sub-stations */
+      .review-sub-stations {
+        display: flex;
+        gap: 4px;
+        width: 100%;
+        padding: 0 0.25rem;
+      }
+      .review-sub {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.2rem;
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 3px;
+        border: 1px solid var(--border-dim);
+      }
+      .review-sub .sub-label {
+        font-size: 0.45rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      /* ── Artifact detail panel (click to inspect) ─────────────── */
+      .artifact-panel {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50%;
+        background: var(--bg-panel);
+        border-top: 2px solid var(--cyan-dim);
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.35s ease-out;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+      }
+      .artifact-panel.open {
+        transform: translateY(0);
+      }
+
+      .artifact-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 1rem;
+        background: var(--bg-header);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .artifact-panel-header .artifact-type-badge {
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+      .artifact-panel-header .artifact-filename {
+        font-size: 0.78rem;
+        color: var(--text-primary);
+      }
+      .artifact-panel-header .artifact-meta {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+      }
+      .artifact-panel-close {
+        margin-left: auto;
+        background: none;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 0.65rem;
+        padding: 0.25rem 0.6rem;
+        cursor: pointer;
+      }
+      .artifact-panel-close:hover {
+        color: var(--text-primary);
+        border-color: var(--cyan-dim);
+      }
+
+      .artifact-panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.75rem 1rem;
+        font-size: 0.72rem;
+        line-height: 1.6;
+      }
+
+      /* Code diff styling */
+      .diff-block {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-dim);
+        border-radius: 4px;
+        padding: 0.5rem 0.75rem;
+        margin: 0.4rem 0;
+        font-size: 0.68rem;
+        line-height: 1.5;
+      }
+      .diff-block .diff-add {
+        color: var(--green);
+      }
+      .diff-block .diff-remove {
+        color: var(--red);
+      }
+      .diff-block .diff-file {
+        color: var(--cyan);
+        font-weight: bold;
+        margin-bottom: 0.25rem;
+      }
+
+      /* Finding cards */
+      .finding-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.4rem 0.6rem;
+        margin: 0.3rem 0;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        border-left: 3px solid;
+      }
+      .finding-card .severity-badge {
+        padding: 0.1rem 0.35rem;
+        border-radius: 2px;
+        font-size: 0.6rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+      .finding-card .finding-text {
+        font-size: 0.68rem;
+        color: var(--text-primary);
+        line-height: 1.4;
+      }
+      .finding-card .finding-file {
+        font-size: 0.6rem;
+        color: var(--cyan-dim);
+        margin-top: 0.15rem;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   Notification overlay (attention-drawing)
+   ═══════════════════════════════════════════════════════════════ */
+      .notification-toast {
+        position: fixed;
+        top: 3.5rem;
+        right: 1rem;
+        background: var(--bg-panel);
+        border: 1px solid var(--amber);
+        border-radius: 6px;
+        padding: 0.6rem 1rem;
+        font-size: 0.72rem;
+        color: var(--text-primary);
+        z-index: 200;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        animation: toast-in 0.4s ease-out;
+        max-width: 340px;
+      }
+      .notification-toast .toast-icon {
+        font-size: 0.9rem;
+        flex-shrink: 0;
+      }
+      .notification-toast .toast-msg {
+        flex: 1;
+      }
+      .notification-toast .toast-source {
+        font-size: 0.6rem;
+        color: var(--text-dim);
+        margin-top: 0.15rem;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateX(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   Scrollbar styling
+   ═══════════════════════════════════════════════════════════════ */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--steel-dark);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--steel-mid);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--steel-light);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   Tooltip
+   ═══════════════════════════════════════════════════════════════ */
+      .tooltip {
+        position: fixed;
+        background: var(--bg-header);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.65rem;
+        color: var(--text-primary);
+        z-index: 300;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        max-width: 240px;
+        line-height: 1.4;
+        display: none;
+      }
+      .tooltip .tt-label {
+        color: var(--text-dim);
+        font-size: 0.55rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .tooltip .tt-value {
+        color: var(--text-primary);
+      }
+      .tooltip .tt-sep {
+        height: 1px;
+        background: var(--border-dim);
+        margin: 0.2rem 0;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+   Surface textures (rivets, panel lines)
+   ═══════════════════════════════════════════════════════════════ */
+      .panel-lines {
+        background-image:
+          repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 30px,
+            rgba(255, 255, 255, 0.02) 30px,
+            rgba(255, 255, 255, 0.02) 31px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 60px,
+            rgba(255, 255, 255, 0.02) 60px,
+            rgba(255, 255, 255, 0.02) 61px
+          );
+      }
+
+      /* Cross-bracing decoration */
+      .cross-brace {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        opacity: 0.04;
+        background:
+          linear-gradient(45deg, transparent 48%, var(--steel-light) 48%, var(--steel-light) 52%, transparent 52%),
+          linear-gradient(-45deg, transparent 48%, var(--steel-light) 48%, var(--steel-light) 52%, transparent 52%);
+        background-size: 40px 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- ════════════════════════════════════════════════════════════
+       HEADER BAR
+       ════════════════════════════════════════════════════════════ -->
+      <div class="header-bar">
+        <span class="logo">CodeAssembly</span>
+        <span class="sep">|</span>
+        <span class="meta"><b>Developer:</b> william</span>
+        <span class="sep">|</span>
+        <span class="meta"><b>Active runs:</b> <span style="color: var(--cyan)">3</span></span>
+        <span class="sep">|</span>
+        <span class="meta"><b>Completed today:</b> <span style="color: var(--green)">5</span></span>
+
+        <div class="view-toggle" id="viewToggle">
+          <button class="active" data-view="empire">Empire</button>
+          <button data-view="facility">Facility</button>
+        </div>
+      </div>
+
+      <div class="viewport">
+        <!-- ════════════════════════════════════════════════════════════
+         EMPIRE VIEW
+         ════════════════════════════════════════════════════════════ -->
+        <div class="empire-view panel-lines" id="empireView">
+          <!-- Empire summary strip -->
+          <div class="empire-summary">
+            <div class="stat">
+              <span class="stat-value">3</span>
+              <span class="stat-label">Active</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color: var(--green)">5</span>
+              <span class="stat-label">Completed</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color: var(--red)">1</span>
+              <span class="stat-label">Failed</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" style="color: var(--amber)">1</span>
+              <span class="stat-label">Needs attention</span>
+            </div>
+            <div style="flex: 1"></div>
+            <div class="stat">
+              <span class="stat-value">12</span>
+              <span class="stat-label">Agents working</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">47</span>
+              <span class="stat-label">Artifacts produced</span>
+            </div>
+          </div>
+
+          <!-- Facility cards grid -->
+          <div class="empire-grid" id="empireGrid">
+            <!-- ── Facility 1: In progress, healthy ─────────── -->
+            <div class="facility-card" onclick="zoomToFacility(this)">
+              <div class="facility-header">
+                <span class="facility-id">R-20260313-001</span>
+                <span class="facility-ticket">PROJ-142</span>
+                <span class="facility-branch">feat/user-auth</span>
+                <span class="facility-status in-progress">In progress</span>
+              </div>
+              <div class="facility-body">
+                <div class="pipeline-bar">
+                  <div class="phase-pip completed-phase">Arch</div>
+                  <div class="phase-pip completed-phase">Plan</div>
+                  <div class="phase-pip completed-phase">Impl</div>
+                  <div class="phase-pip active-phase">Review</div>
+                  <div class="phase-pip">Simp</div>
+                  <div class="phase-pip">Holi</div>
+                  <div class="phase-pip">Sum</div>
+                </div>
+                <div class="mini-roster">
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Architect
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Planner
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Coder
+                  </div>
+                  <div class="mini-agent working">
+                    <div class="mini-agent-dot"></div>
+                    Code reviewer
+                  </div>
+                  <div class="mini-agent working">
+                    <div class="mini-agent-dot"></div>
+                    Test reviewer
+                  </div>
+                  <div class="mini-agent working">
+                    <div class="mini-agent-dot"></div>
+                    Failure reviewer
+                  </div>
+                  <div class="mini-agent idle">
+                    <div class="mini-agent-dot"></div>
+                    Simplifier
+                  </div>
+                </div>
+              </div>
+              <div class="facility-footer">
+                <span><span class="metric-val">8m 42s</span> elapsed</span>
+                <span><span class="metric-val">12</span> artifacts</span>
+                <span>Round <span class="metric-val">1</span></span>
+                <div class="finding-pills">
+                  <span class="finding-pill warning">1W</span>
+                  <span class="finding-pill test">2T</span>
+                  <span class="finding-pill style">1S</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Facility 2: Needs attention (fatal finding) ─── -->
+            <div class="facility-card needs-attention" onclick="zoomToFacility(this)">
+              <div class="notification-badge critical">!</div>
+              <div class="facility-header">
+                <span class="facility-id">R-20260313-002</span>
+                <span class="facility-ticket">PROJ-155</span>
+                <span class="facility-branch">fix/payment-handler</span>
+                <span class="facility-status needs-review">Needs review</span>
+              </div>
+              <div class="facility-body">
+                <div class="pipeline-bar">
+                  <div class="phase-pip completed-phase">Arch</div>
+                  <div class="phase-pip completed-phase">Plan</div>
+                  <div class="phase-pip completed-phase">Impl</div>
+                  <div class="phase-pip warning-phase">Review</div>
+                  <div class="phase-pip">Simp</div>
+                  <div class="phase-pip">Holi</div>
+                  <div class="phase-pip">Sum</div>
+                </div>
+                <div class="mini-roster">
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Architect
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Planner
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Coder
+                  </div>
+                  <div class="mini-agent problem">
+                    <div class="mini-agent-dot"></div>
+                    Code reviewer
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Test reviewer
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Failure reviewer
+                  </div>
+                </div>
+              </div>
+              <div class="facility-footer">
+                <span><span class="metric-val metric-warn">14m 05s</span> elapsed</span>
+                <span><span class="metric-val">18</span> artifacts</span>
+                <span>Round <span class="metric-val metric-warn">3</span></span>
+                <div class="finding-pills">
+                  <span class="finding-pill fatal">1F</span>
+                  <span class="finding-pill warning">2W</span>
+                  <span class="finding-pill test">1T</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Facility 3: Completed successfully ────────── -->
+            <div class="facility-card completed-card" onclick="zoomToFacility(this)">
+              <div class="facility-header">
+                <span class="facility-id">R-20260313-003</span>
+                <span class="facility-ticket">PROJ-148</span>
+                <span class="facility-branch">feat/export-csv</span>
+                <span class="facility-status completed">Completed</span>
+              </div>
+              <div class="facility-body">
+                <div class="pipeline-bar">
+                  <div class="phase-pip completed-phase">Arch</div>
+                  <div class="phase-pip completed-phase">Plan</div>
+                  <div class="phase-pip completed-phase">Impl</div>
+                  <div class="phase-pip completed-phase">Review</div>
+                  <div class="phase-pip completed-phase">Simp</div>
+                  <div class="phase-pip completed-phase">Holi</div>
+                  <div class="phase-pip completed-phase">Sum</div>
+                </div>
+                <div class="mini-roster">
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Architect
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Planner
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Coder
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Code reviewer
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Test reviewer
+                  </div>
+                </div>
+              </div>
+              <div class="facility-footer">
+                <span><span class="metric-val">6m 18s</span> total</span>
+                <span><span class="metric-val">14</span> artifacts</span>
+                <span>Round <span class="metric-val">1</span></span>
+                <div class="finding-pills">
+                  <span class="finding-pill refactor">2R</span>
+                  <span class="finding-pill style">3S</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Facility 4: Failed ────────────────────────── -->
+            <div class="facility-card failed-card" onclick="zoomToFacility(this)">
+              <div class="notification-badge critical">X</div>
+              <div class="facility-header">
+                <span class="facility-id">R-20260313-004</span>
+                <span class="facility-ticket">PROJ-160</span>
+                <span class="facility-branch">fix/db-migration</span>
+                <span class="facility-status failed">Failed</span>
+              </div>
+              <div class="facility-body">
+                <div class="pipeline-bar">
+                  <div class="phase-pip completed-phase">Arch</div>
+                  <div class="phase-pip completed-phase">Plan</div>
+                  <div class="phase-pip failed-phase">Impl</div>
+                  <div class="phase-pip">Review</div>
+                  <div class="phase-pip">Simp</div>
+                  <div class="phase-pip">Holi</div>
+                  <div class="phase-pip">Sum</div>
+                </div>
+                <div class="mini-roster">
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Architect
+                  </div>
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Planner
+                  </div>
+                  <div class="mini-agent problem">
+                    <div class="mini-agent-dot"></div>
+                    Coder
+                  </div>
+                </div>
+              </div>
+              <div class="facility-footer">
+                <span><span class="metric-val" style="color: var(--red)">3m 47s</span> total</span>
+                <span><span class="metric-val">5</span> artifacts</span>
+                <span style="color: var(--red)">Failed at implementation</span>
+              </div>
+            </div>
+
+            <!-- ── Facility 5: In progress, early stage ──────── -->
+            <div class="facility-card" onclick="zoomToFacility(this)">
+              <div class="facility-header">
+                <span class="facility-id">R-20260313-005</span>
+                <span class="facility-ticket">PROJ-163</span>
+                <span class="facility-branch">feat/notification-system</span>
+                <span class="facility-status in-progress">In progress</span>
+              </div>
+              <div class="facility-body">
+                <div class="pipeline-bar">
+                  <div class="phase-pip completed-phase">Arch</div>
+                  <div class="phase-pip active-phase">Plan</div>
+                  <div class="phase-pip">Impl</div>
+                  <div class="phase-pip">Review</div>
+                  <div class="phase-pip">Simp</div>
+                  <div class="phase-pip">Holi</div>
+                  <div class="phase-pip">Sum</div>
+                </div>
+                <div class="mini-roster">
+                  <div class="mini-agent done">
+                    <div class="mini-agent-dot"></div>
+                    Architect
+                  </div>
+                  <div class="mini-agent working">
+                    <div class="mini-agent-dot"></div>
+                    Planner
+                  </div>
+                </div>
+              </div>
+              <div class="facility-footer">
+                <span><span class="metric-val">1m 30s</span> elapsed</span>
+                <span><span class="metric-val">3</span> artifacts</span>
+              </div>
+            </div>
+          </div>
+          <!-- /empire-grid -->
+        </div>
+        <!-- /empire-view -->
+
+        <!-- ════════════════════════════════════════════════════════════
+         FACILITY VIEW (zoomed into Run R-20260313-001)
+         ════════════════════════════════════════════════════════════ -->
+        <div class="facility-view hidden" id="facilityView">
+          <button class="back-btn" onclick="zoomToEmpire()">&#9664; Empire</button>
+
+          <div class="facility-view-header">
+            <span class="fv-title">R-20260313-001</span>
+            <span class="fv-meta"><b>PROJ-142</b> &mdash; feat/user-auth</span>
+            <span class="fv-meta">Add OAuth2 authentication flow with token refresh</span>
+            <span class="fv-status in-progress">In progress &bull; 8m 42s</span>
+          </div>
+
+          <!-- Timing strip -->
+          <div class="timing-strip">
+            <div class="timing-segment" style="flex: 0.8; background: rgba(85, 85, 255, 0.3)">
+              Arch
+              <span class="time-label">0:48</span>
+            </div>
+            <div class="timing-segment" style="flex: 1.2; background: rgba(85, 255, 85, 0.3)">
+              Plan
+              <span class="time-label">1:12</span>
+            </div>
+            <div class="timing-segment" style="flex: 3.5; background: rgba(255, 255, 85, 0.3)">
+              Impl
+              <span class="time-label">3:30</span>
+            </div>
+            <div class="timing-segment" style="flex: 3.2; background: rgba(255, 85, 85, 0.25)">
+              Review
+              <span class="time-label">3:12</span>
+            </div>
+            <div class="timing-segment" style="flex: 0.5; background: rgba(85, 85, 85, 0.15)">&hellip;</div>
+          </div>
+
+          <!-- Factory floor -->
+          <div class="factory-floor">
+            <!-- Gantry rail -->
+            <div class="gantry-rail">
+              <div class="orchestrator-sprite" style="left: 53%" title="Orchestrator — coordinating review phase"></div>
+            </div>
+
+            <!-- Station platforms -->
+            <div class="stations-row">
+              <!-- Station 1: Architecture (completed) -->
+              <div class="station completed-station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--analyst)"></div>
+                  <span class="sign-name">Architecture</span>
+                  <span class="sign-time">0:48</span>
+                </div>
+                <div class="station-body">
+                  <div style="position: relative">
+                    <div
+                      class="agent-sprite idle"
+                      style="background: rgba(85, 85, 255, 0.3); border: 2px solid var(--analyst)"
+                    >
+                      <div class="face">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth"></div>
+                      </div>
+                    </div>
+                    <div class="time-ring full"></div>
+                  </div>
+                  <div class="artifact-shelf">
+                    <div
+                      class="artifact-tile arch"
+                      title="architecture-assessment.md"
+                      onclick="
+                        event.stopPropagation();
+                        showArtifact('arch');
+                      "
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Station 2: Planning (completed) -->
+              <div class="station completed-station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--planner)"></div>
+                  <span class="sign-name">Planning</span>
+                  <span class="sign-time">1:12</span>
+                </div>
+                <div class="station-body">
+                  <div style="position: relative">
+                    <div
+                      class="agent-sprite idle"
+                      style="background: rgba(85, 255, 85, 0.3); border: 2px solid var(--planner)"
+                    >
+                      <div class="face">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth"></div>
+                      </div>
+                    </div>
+                    <div class="time-ring full"></div>
+                  </div>
+                  <div class="artifact-shelf">
+                    <div
+                      class="artifact-tile plan"
+                      title="implementation-plan.md"
+                      onclick="
+                        event.stopPropagation();
+                        showArtifact('plan');
+                      "
+                    ></div>
+                    <div
+                      class="artifact-tile plan"
+                      title="implementation-plan.json"
+                      onclick="
+                        event.stopPropagation();
+                        showArtifact('plan-json');
+                      "
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Station 3: Implementation (completed) -->
+              <div class="station completed-station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--author)"></div>
+                  <span class="sign-name">Implementation</span>
+                  <span class="sign-time">3:30</span>
+                </div>
+                <div class="station-body">
+                  <div style="position: relative">
+                    <div
+                      class="agent-sprite idle"
+                      style="background: rgba(255, 255, 85, 0.3); border: 2px solid var(--author)"
+                    >
+                      <div class="face">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth"></div>
+                      </div>
+                    </div>
+                    <div class="time-ring full"></div>
+                    <div class="thought-bubble" style="opacity: 0.5">Done &mdash; 4 files changed</div>
+                  </div>
+                  <div class="artifact-shelf">
+                    <div
+                      class="artifact-tile code"
+                      title="change-summary.md (v1)"
+                      onclick="
+                        event.stopPropagation();
+                        showArtifact('code');
+                      "
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Station 4: Review (active, parallel reviewers) -->
+              <div class="station active-station review-station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--reviewer)"></div>
+                  <span class="sign-name">Review</span>
+                  <span class="sign-time" style="color: var(--cyan)">3:12...</span>
+                </div>
+                <div class="station-body" style="justify-content: flex-start; padding-top: 0.4rem">
+                  <div class="review-sub-stations">
+                    <!-- Code reviewer -->
+                    <div class="review-sub">
+                      <span class="sub-label">Code</span>
+                      <div style="position: relative">
+                        <div
+                          class="agent-sprite working"
+                          style="
+                            background: rgba(255, 85, 85, 0.3);
+                            border: 2px solid var(--reviewer);
+                            width: 24px;
+                            height: 24px;
+                          "
+                        >
+                          <div class="face">
+                            <div class="eye left" style="width: 2px; height: 2px"></div>
+                            <div class="eye right" style="width: 2px; height: 2px"></div>
+                          </div>
+                        </div>
+                        <div class="time-ring three-quarter" style="inset: -2px"></div>
+                        <div class="thought-bubble" style="top: -28px; font-size: 0.45rem; padding: 0.15rem 0.3rem">
+                          Checking error handling...
+                        </div>
+                      </div>
+                      <div class="artifact-shelf" style="min-height: 14px">
+                        <div
+                          class="artifact-tile review"
+                          style="width: 10px; height: 12px"
+                          title="code-review.md (partial)"
+                          onclick="
+                            event.stopPropagation();
+                            showArtifact('review');
+                          "
+                        ></div>
+                      </div>
+                    </div>
+                    <!-- Test reviewer -->
+                    <div class="review-sub">
+                      <span class="sub-label">Test</span>
+                      <div style="position: relative">
+                        <div
+                          class="agent-sprite working"
+                          style="
+                            background: rgba(255, 85, 85, 0.3);
+                            border: 2px solid var(--reviewer);
+                            width: 24px;
+                            height: 24px;
+                          "
+                        >
+                          <div class="face">
+                            <div class="eye left" style="width: 2px; height: 2px"></div>
+                            <div class="eye right" style="width: 2px; height: 2px"></div>
+                          </div>
+                        </div>
+                        <div class="time-ring half" style="inset: -2px"></div>
+                        <div class="thought-bubble" style="top: -28px; font-size: 0.45rem; padding: 0.15rem 0.3rem">
+                          Missing edge case tests
+                        </div>
+                      </div>
+                      <div class="artifact-shelf" style="min-height: 14px"></div>
+                    </div>
+                    <!-- Failure reviewer -->
+                    <div class="review-sub">
+                      <span class="sub-label">Failure</span>
+                      <div style="position: relative">
+                        <div
+                          class="agent-sprite working"
+                          style="
+                            background: rgba(255, 85, 85, 0.3);
+                            border: 2px solid var(--reviewer);
+                            width: 24px;
+                            height: 24px;
+                          "
+                        >
+                          <div class="face">
+                            <div class="eye left" style="width: 2px; height: 2px"></div>
+                            <div class="eye right" style="width: 2px; height: 2px"></div>
+                          </div>
+                        </div>
+                        <div class="time-ring quarter" style="inset: -2px"></div>
+                        <div class="thought-bubble" style="top: -28px; font-size: 0.45rem; padding: 0.15rem 0.3rem">
+                          Analyzing error paths...
+                        </div>
+                      </div>
+                      <div class="artifact-shelf" style="min-height: 14px"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Station 5: Simplifier (pending) -->
+              <div class="station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--author); opacity: 0.4"></div>
+                  <span class="sign-name" style="opacity: 0.5">Simplifier</span>
+                </div>
+                <div class="station-body">
+                  <div style="position: relative">
+                    <div
+                      class="agent-sprite idle"
+                      style="background: rgba(255, 255, 85, 0.15); border: 2px solid rgba(255, 255, 85, 0.3)"
+                    >
+                      <div class="face" style="opacity: 0.3">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Station 6: Holistic (pending) -->
+              <div class="station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--reviewer); opacity: 0.4"></div>
+                  <span class="sign-name" style="opacity: 0.5">Holistic</span>
+                </div>
+                <div class="station-body">
+                  <div style="position: relative">
+                    <div
+                      class="agent-sprite idle"
+                      style="background: rgba(255, 85, 85, 0.15); border: 2px solid rgba(255, 85, 85, 0.3)"
+                    >
+                      <div class="face" style="opacity: 0.3">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Station 7: Summary (pending) -->
+              <div class="station">
+                <div class="station-sign">
+                  <div class="sign-dot" style="background: var(--orchestrator); opacity: 0.4"></div>
+                  <span class="sign-name" style="opacity: 0.5">Summary</span>
+                </div>
+                <div class="station-body">
+                  <div style="position: relative">
+                    <div
+                      class="agent-sprite idle"
+                      style="background: rgba(255, 85, 255, 0.15); border: 2px solid rgba(255, 85, 255, 0.3)"
+                    >
+                      <div class="face" style="opacity: 0.3">
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="mouth"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- /stations-row -->
+          </div>
+          <!-- /factory-floor -->
+
+          <!-- Artifact detail panel (initially hidden) -->
+          <div class="artifact-panel" id="artifactPanel">
+            <div class="artifact-panel-header">
+              <span
+                class="artifact-type-badge"
+                id="artifactTypeBadge"
+                style="background: var(--art-review); color: #333"
+                >REVIEW</span
+              >
+              <span class="artifact-filename" id="artifactFilename">code-review.md</span>
+              <span class="artifact-meta" id="artifactMeta">by code-reviewer &bull; review phase &bull; round 1</span>
+              <button class="artifact-panel-close" onclick="closeArtifact()">ESC &times;</button>
+            </div>
+            <div class="artifact-panel-body" id="artifactBody">
+              <!-- Content injected by JS -->
+            </div>
+          </div>
+        </div>
+        <!-- /facility-view -->
+
+        <!-- Notification toast (visible in facility view) -->
+        <div class="notification-toast" id="notificationToast" style="display: none">
+          <span class="toast-icon" id="toastIcon">&#9888;</span>
+          <div>
+            <div class="toast-msg" id="toastMsg">Reviewer found a potential issue</div>
+            <div class="toast-source" id="toastSource">code-reviewer &bull; PROJ-142 &bull; 3s ago</div>
+          </div>
+        </div>
+
+        <!-- Tooltip (shared) -->
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <!-- /viewport -->
+    </div>
+    <!-- /app -->
+
+    <script>
+      // ═══════════════════════════════════════════════════════════════
+      // View switching with spatial zoom transition
+      // ═══════════════════════════════════════════════════════════════
+
+      const empireView = document.getElementById('empireView');
+      const facilityView = document.getElementById('facilityView');
+      const viewToggle = document.getElementById('viewToggle');
+      const notificationToast = document.getElementById('notificationToast');
+
+      let currentView = 'empire';
+
+      function zoomToFacility(card) {
+        if (currentView === 'facility') return;
+        currentView = 'facility';
+
+        // Animate empire out (zoom up/scale up as if zooming in)
+        empireView.classList.add('hidden');
+
+        // Animate facility in (zoom from small/inner)
+        facilityView.classList.remove('hidden');
+
+        // Update toggle
+        viewToggle.querySelectorAll('button').forEach((b) => {
+          b.classList.toggle('active', b.dataset.view === 'facility');
+        });
+
+        // Show notification after a delay to simulate live behavior
+        setTimeout(showNotification, 2500);
+      }
+
+      function zoomToEmpire() {
+        if (currentView === 'empire') return;
+        currentView = 'empire';
+
+        facilityView.classList.add('hidden');
+        empireView.classList.remove('hidden');
+
+        viewToggle.querySelectorAll('button').forEach((b) => {
+          b.classList.toggle('active', b.dataset.view === 'empire');
+        });
+
+        notificationToast.style.display = 'none';
+      }
+
+      // Toggle buttons
+      viewToggle.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.dataset.view === 'facility') {
+          zoomToFacility(null);
+        } else {
+          zoomToEmpire();
+        }
+      });
+
+      // ═══════════════════════════════════════════════════════════════
+      // Notification system
+      // ═══════════════════════════════════════════════════════════════
+
+      function showNotification() {
+        if (currentView !== 'facility') return;
+        const toast = notificationToast;
+        document.getElementById('toastIcon').textContent = '\u26A0';
+        document.getElementById('toastMsg').textContent =
+          'Code reviewer found 1W: unbounded array growth in event-folder.ts';
+        document.getElementById('toastSource').textContent = 'code-reviewer \u2022 PROJ-142 \u2022 just now';
+        toast.style.display = 'flex';
+        toast.style.animation = 'none';
+        toast.offsetHeight; // reflow
+        toast.style.animation = 'toast-in 0.4s ease-out';
+
+        // Auto-dismiss after 8s
+        setTimeout(() => {
+          if (toast.style.display !== 'none') {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+              toast.style.display = 'none';
+              toast.style.opacity = '1';
+              toast.style.transition = '';
+            }, 500);
+          }
+        }, 8000);
+      }
+
+      // ═══════════════════════════════════════════════════════════════
+      // Artifact panel
+      // ═══════════════════════════════════════════════════════════════
+
+      const artifactPanel = document.getElementById('artifactPanel');
+      const artifactBody = document.getElementById('artifactBody');
+      const artifactTypeBadge = document.getElementById('artifactTypeBadge');
+      const artifactFilename = document.getElementById('artifactFilename');
+      const artifactMeta = document.getElementById('artifactMeta');
+
+      const artifactContent = {
+        arch: {
+          type: 'ARCHITECTURE',
+          color: 'var(--art-arch)',
+          filename: 'architecture-assessment.md',
+          meta: 'by orchestrated-architect \u2022 architecture phase \u2022 0:48',
+          body: `<div style="color:var(--text-secondary); margin-bottom:0.5rem;">Impact classification: <b style="color:var(--green)">LOW</b></div>
+<p style="margin-bottom:0.5rem;">This change adds OAuth2 authentication with token refresh. The architectural impact is low &mdash; it introduces a new auth module but does not modify existing data models or API contracts.</p>
+<div style="margin-top:0.5rem; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.2); border-radius:4px; border-left:3px solid var(--analyst);">
+  <div style="font-size:0.6rem; color:var(--text-dim); text-transform:uppercase; margin-bottom:0.2rem;">Recommendation</div>
+  Proceed with standard implementation. No architectural review gates needed.
+</div>`,
+        },
+        plan: {
+          type: 'PLAN',
+          color: 'var(--art-plan)',
+          filename: 'implementation-plan.md',
+          meta: 'by orchestrated-planner \u2022 planning phase \u2022 1:12',
+          body: `<div style="color:var(--text-secondary); margin-bottom:0.5rem;">4 steps &bull; estimated complexity: medium</div>
+<ol style="padding-left:1.2rem; line-height:1.8;">
+  <li style="margin-bottom:0.3rem;"><b>Create auth module</b> &mdash; <code style="color:var(--cyan-dim); background:rgba(0,0,0,0.3); padding:0.1rem 0.3rem; border-radius:2px;">src/auth/oauth2-provider.ts</code></li>
+  <li style="margin-bottom:0.3rem;"><b>Implement token refresh</b> &mdash; Background refresh with configurable interval</li>
+  <li style="margin-bottom:0.3rem;"><b>Add auth middleware</b> &mdash; Express middleware for protected routes</li>
+  <li style="margin-bottom:0.3rem;"><b>Write integration tests</b> &mdash; Mock OAuth2 provider, test refresh flow</li>
+</ol>`,
+        },
+        code: {
+          type: 'CODE',
+          color: 'var(--art-code)',
+          filename: 'change-summary.md (v1)',
+          meta: 'by orchestrated-coder \u2022 implementation phase \u2022 3:30',
+          body: `<div style="color:var(--text-secondary); margin-bottom:0.5rem;">4 files changed &bull; +187 &minus;12 lines</div>
+<div class="diff-block">
+  <div class="diff-file">src/auth/oauth2-provider.ts (new)</div>
+  <div class="diff-add">+ export class OAuth2Provider {</div>
+  <div class="diff-add">+   private tokenCache: Map&lt;string, TokenEntry&gt;;</div>
+  <div class="diff-add">+   private refreshInterval: NodeJS.Timer | null;</div>
+  <div class="diff-add">+ </div>
+  <div class="diff-add">+   async authenticate(code: string): Promise&lt;AuthResult&gt; {</div>
+  <div class="diff-add">+     const tokens = await this.exchangeCode(code);</div>
+  <div class="diff-add">+     this.tokenCache.set(tokens.userId, {</div>
+  <div class="diff-add">+       accessToken: tokens.access_token,</div>
+  <div class="diff-add">+       refreshToken: tokens.refresh_token,</div>
+  <div class="diff-add">+       expiresAt: Date.now() + tokens.expires_in * 1000,</div>
+  <div class="diff-add">+     });</div>
+  <div style="color:var(--text-dim);">     ... (35 more lines)</div>
+</div>
+<div class="diff-block">
+  <div class="diff-file">src/middleware/auth.ts (new)</div>
+  <div class="diff-add">+ export function requireAuth(provider: OAuth2Provider) {</div>
+  <div class="diff-add">+   return async (req: Request, res: Response, next: NextFunction) =&gt; {</div>
+  <div class="diff-add">+     const token = extractBearerToken(req);</div>
+  <div style="color:var(--text-dim);">     ... (22 more lines)</div>
+</div>`,
+        },
+        review: {
+          type: 'REVIEW',
+          color: 'var(--art-review)',
+          filename: 'code-review.md (in progress)',
+          meta: 'by code-reviewer \u2022 review phase \u2022 round 1',
+          body: `<div style="display:flex; gap:1rem; margin-bottom:0.75rem; padding:0.4rem 0.6rem; background:rgba(0,0,0,0.2); border-radius:4px;">
+  <span>Criticality: <b style="color:var(--severity-W)">MEDIUM</b></span>
+  <span>Findings: <b>4</b></span>
+  <span style="color:var(--text-dim)">Round 1 of 1</span>
+</div>
+<div class="finding-card" style="border-color:var(--severity-W);">
+  <span class="severity-badge" style="background:rgba(255,170,0,0.2); color:var(--severity-W);">W</span>
+  <div>
+    <div class="finding-text">Unbounded array growth in token cache. <code style="color:var(--cyan-dim); background:rgba(0,0,0,0.3); padding:0.1rem 0.2rem; border-radius:2px;">tokenCache</code> entries are never evicted. Consider a TTL-based map or ring buffer.</div>
+    <div class="finding-file">src/auth/oauth2-provider.ts:14</div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:var(--severity-T);">
+  <span class="severity-badge" style="background:rgba(255,221,85,0.15); color:var(--severity-T);">T</span>
+  <div>
+    <div class="finding-text">No test for token refresh failure scenario. What happens when the refresh endpoint returns a 401?</div>
+    <div class="finding-file">src/auth/__tests__/oauth2-provider.test.ts</div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:var(--severity-T);">
+  <span class="severity-badge" style="background:rgba(255,221,85,0.15); color:var(--severity-T);">T</span>
+  <div>
+    <div class="finding-text">Missing test for concurrent token refresh. Race condition possible when multiple requests trigger refresh simultaneously.</div>
+    <div class="finding-file">src/auth/__tests__/oauth2-provider.test.ts</div>
+  </div>
+</div>
+<div class="finding-card" style="border-color:var(--severity-S);">
+  <span class="severity-badge" style="background:rgba(136,136,153,0.15); color:var(--severity-S);">S</span>
+  <div>
+    <div class="finding-text">Inconsistent naming: <code style="color:var(--cyan-dim); background:rgba(0,0,0,0.3); padding:0.1rem 0.2rem; border-radius:2px;">extractBearerToken</code> vs <code style="color:var(--cyan-dim); background:rgba(0,0,0,0.3); padding:0.1rem 0.2rem; border-radius:2px;">parseAuthHeader</code> in other modules.</div>
+    <div class="finding-file">src/middleware/auth.ts:8</div>
+  </div>
+</div>`,
+        },
+        'plan-json': {
+          type: 'PLAN',
+          color: 'var(--art-plan)',
+          filename: 'implementation-plan.json',
+          meta: 'by orchestrated-planner \u2022 planning phase \u2022 1:12',
+          body: `<div class="diff-block" style="border-color:var(--planner);">
+<div style="color:var(--planner); margin-bottom:0.3rem;">Structured plan data</div>
+<div style="color:var(--text-secondary);">{</div>
+<div style="color:var(--text-secondary);">&nbsp;&nbsp;"steps": [</div>
+<div style="color:var(--text-primary);">&nbsp;&nbsp;&nbsp;&nbsp;{ "id": 1, "title": "Create auth module", "files": ["src/auth/oauth2-provider.ts"] },</div>
+<div style="color:var(--text-primary);">&nbsp;&nbsp;&nbsp;&nbsp;{ "id": 2, "title": "Implement token refresh", "files": ["src/auth/oauth2-provider.ts"] },</div>
+<div style="color:var(--text-primary);">&nbsp;&nbsp;&nbsp;&nbsp;{ "id": 3, "title": "Add auth middleware", "files": ["src/middleware/auth.ts"] },</div>
+<div style="color:var(--text-primary);">&nbsp;&nbsp;&nbsp;&nbsp;{ "id": 4, "title": "Write integration tests", "files": ["src/auth/__tests__/"] }</div>
+<div style="color:var(--text-secondary);">&nbsp;&nbsp;],</div>
+<div style="color:var(--text-secondary);">&nbsp;&nbsp;"estimatedComplexity": "medium"</div>
+<div style="color:var(--text-secondary);">}</div>
+</div>`,
+        },
+      };
+
+      function showArtifact(type) {
+        const data = artifactContent[type];
+        if (!data) return;
+
+        artifactTypeBadge.textContent = data.type;
+        artifactTypeBadge.style.background = data.color;
+        artifactTypeBadge.style.color = '#333';
+        artifactFilename.textContent = data.filename;
+        artifactMeta.textContent = data.meta;
+        artifactBody.innerHTML = data.body;
+
+        artifactPanel.classList.add('open');
+      }
+
+      function closeArtifact() {
+        artifactPanel.classList.remove('open');
+      }
+
+      // ESC to close artifact panel or go back to empire
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (artifactPanel.classList.contains('open')) {
+            closeArtifact();
+          } else if (currentView === 'facility') {
+            zoomToEmpire();
+          }
+        }
+      });
+
+      // ═══════════════════════════════════════════════════════════════
+      // Tooltip system
+      // ═══════════════════════════════════════════════════════════════
+
+      const tooltip = document.getElementById('tooltip');
+
+      // Attach tooltips to timing segments on hover
+      document.querySelectorAll('.timing-segment').forEach((seg) => {
+        seg.addEventListener('mouseenter', (e) => {
+          const label = seg.textContent.trim();
+          const timeLabel = seg.querySelector('.time-label');
+          const time = timeLabel ? timeLabel.textContent : '';
+          tooltip.innerHTML = `
+      <div class="tt-label">Phase duration</div>
+      <div class="tt-value">${label} &mdash; ${time}</div>
+    `;
+          tooltip.style.display = 'block';
+          positionTooltip(e);
+        });
+        seg.addEventListener('mousemove', positionTooltip);
+        seg.addEventListener('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+      });
+
+      // Attach tooltips to facility cards (empire view)
+      document.querySelectorAll('.facility-card').forEach((card) => {
+        const header = card.querySelector('.facility-header');
+        const ticket = header.querySelector('.facility-ticket').textContent;
+        const branch = header.querySelector('.facility-branch').textContent;
+        const status = header.querySelector('.facility-status').textContent;
+
+        card.addEventListener('mouseenter', (e) => {
+          tooltip.innerHTML = `
+      <div class="tt-label">Click to zoom in</div>
+      <div class="tt-value">${ticket} &mdash; ${branch}</div>
+      <div class="tt-sep"></div>
+      <div class="tt-value">Status: ${status}</div>
+    `;
+          tooltip.style.display = 'block';
+          positionTooltip(e);
+        });
+        card.addEventListener('mousemove', positionTooltip);
+        card.addEventListener('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+      });
+
+      function positionTooltip(e) {
+        const x = e.clientX + 12;
+        const y = e.clientY - 10;
+        tooltip.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+        tooltip.style.top = Math.min(y, window.innerHeight - 80) + 'px';
+      }
+
+      // ═══════════════════════════════════════════════════════════════
+      // Ambient animation: cycle thought bubbles
+      // ═══════════════════════════════════════════════════════════════
+
+      const reviewerThoughts = [
+        ['Checking error handling...', 'Found W: unbounded cache', 'Verifying auth flow...'],
+        ['Missing edge case tests', 'Checking test coverage...', 'Found T: refresh failure'],
+        ['Analyzing error paths...', 'Silent failures OK', 'Checking graceful degradation'],
+      ];
+
+      let thoughtCycle = 0;
+      setInterval(() => {
+        if (currentView !== 'facility') return;
+        thoughtCycle = (thoughtCycle + 1) % 3;
+        const bubbles = document.querySelectorAll('.review-sub .thought-bubble');
+        bubbles.forEach((bubble, i) => {
+          const thoughts = reviewerThoughts[i];
+          if (thoughts) {
+            bubble.textContent = thoughts[thoughtCycle];
+            // Color code if it's a finding
+            if (thoughts[thoughtCycle].startsWith('Found')) {
+              bubble.classList.add('urgent');
+            } else {
+              bubble.classList.remove('urgent');
+            }
+          }
+        });
+      }, 3000);
+
+      // ═══════════════════════════════════════════════════════════════
+      // Ambient animation: orchestrator position drift
+      // ═══════════════════════════════════════════════════════════════
+
+      const orchestratorSprite = document.querySelector('.orchestrator-sprite');
+      let orchPos = 53;
+      let orchDir = 1;
+
+      setInterval(() => {
+        if (currentView !== 'facility') return;
+        orchPos += orchDir * 0.5;
+        if (orchPos > 58) orchDir = -1;
+        if (orchPos < 48) orchDir = 1;
+        orchestratorSprite.style.left = orchPos + '%';
+      }, 300);
+
+      // ═══════════════════════════════════════════════════════════════
+      // Empire view: simulate live updates on facility cards
+      // ═══════════════════════════════════════════════════════════════
+
+      let empireTimer = 0;
+      const empireTimerEl = document.querySelectorAll('.facility-footer .metric-val')[0];
+
+      setInterval(() => {
+        if (currentView !== 'empire') return;
+        empireTimer++;
+        // Just pulse the active cards to show liveness
+        const activeCards = document.querySelectorAll('.facility-card:not(.completed-card):not(.failed-card)');
+        activeCards.forEach((card) => {
+          const pips = card.querySelectorAll('.phase-pip.active-phase');
+          pips.forEach((pip) => {
+            pip.style.boxShadow =
+              empireTimer % 2 === 0 ? '0 0 10px rgba(85,255,255,0.3)' : '0 0 4px rgba(85,255,255,0.15)';
+          });
+        });
+      }, 1500);
+    </script>
+  </body>
+</html>

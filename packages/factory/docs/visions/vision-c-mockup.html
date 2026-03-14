@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision C: The mission timeline</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+      :root {
+        /* CGA-16 palette */
+        --black: #000000;
+        --dark-blue: #0000aa;
+        --dark-green: #00aa00;
+        --dark-cyan: #00aaaa;
+        --dark-red: #aa0000;
+        --dark-magenta: #aa00aa;
+        --brown: #aa5500;
+        --light-gray: #aaaaaa;
+        --dark-gray: #555555;
+        --blue: #5555ff;
+        --green: #55ff55;
+        --cyan: #55ffff;
+        --red: #ff5555;
+        --magenta: #ff55ff;
+        --yellow: #ffff55;
+        --white: #ffffff;
+
+        /* Role-type colors */
+        --orchestrator: #ff55ff;
+        --analyst: #5555ff;
+        --planner: #55ff55;
+        --author: #ffff55;
+        --reviewer: #ff5555;
+
+        /* Surface colors */
+        --bg-primary: #0a0a0f;
+        --bg-secondary: #111118;
+        --bg-tertiary: #1a1a24;
+        --bg-track: #0d0d14;
+        --border-dim: #222233;
+        --border-bright: #333355;
+        --text-primary: #ddddee;
+        --text-secondary: #888899;
+        --text-dim: #555566;
+
+        /* Track layout */
+        --track-height: 56px;
+        --track-gap: 2px;
+        --label-width: 160px;
+        --timeline-start: 180px;
+        --status-bar-height: 42px;
+        --transport-height: 48px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Inter', system-ui, sans-serif;
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      /* ── Status bar (top) ─────────────────────────────── */
+      .status-bar {
+        height: var(--status-bar-height);
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-dim);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 24px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        position: relative;
+        z-index: 10;
+      }
+
+      .status-bar .status-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .status-bar .status-label {
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-size: 10px;
+      }
+
+      .status-bar .status-value {
+        color: var(--text-primary);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+
+      .status-badge.in-progress {
+        background: rgba(85, 255, 85, 0.15);
+        color: var(--green);
+        border: 1px solid rgba(85, 255, 85, 0.3);
+      }
+
+      .status-badge .pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 0.4;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+      }
+
+      /* Phase progress mini-bar */
+      .phase-progress {
+        display: flex;
+        gap: 2px;
+        margin-left: auto;
+      }
+
+      .phase-pip {
+        width: 20px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-dim);
+        transition: all 0.3s ease;
+      }
+
+      .phase-pip.completed {
+        background: var(--dark-green);
+        border-color: var(--green);
+      }
+      .phase-pip.active {
+        background: var(--dark-green);
+        border-color: var(--green);
+        animation: pip-pulse 1.5s ease-in-out infinite;
+      }
+      .phase-pip.pending {
+        opacity: 0.3;
+      }
+
+      @keyframes pip-pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 4px rgba(85, 255, 85, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 8px rgba(85, 255, 85, 0.6);
+        }
+      }
+
+      /* Mission clock */
+      .mission-clock {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--green);
+        letter-spacing: 0.1em;
+        text-shadow: 0 0 8px rgba(85, 255, 85, 0.3);
+      }
+
+      /* ── Main timeline area ───────────────────────────── */
+      .timeline-container {
+        height: calc(100vh - var(--status-bar-height) - var(--transport-height));
+        display: flex;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Track labels (left rail) */
+      .track-labels {
+        width: var(--label-width);
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-dim);
+        flex-shrink: 0;
+        padding-top: 28px; /* align with time ruler */
+        z-index: 5;
+      }
+
+      .track-label {
+        height: var(--track-height);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-dim);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .track-label:hover {
+        background: var(--bg-tertiary);
+      }
+
+      .track-label .role-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      .track-label .label-text {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .track-label.active .label-text {
+        color: var(--text-primary);
+      }
+
+      .track-label .agent-pill {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      .track-label .agent-pill.working {
+        animation: pill-glow 2s ease-in-out infinite;
+      }
+
+      @keyframes pill-glow {
+        0%,
+        100% {
+          box-shadow: none;
+        }
+        50% {
+          box-shadow: 0 0 6px currentColor;
+        }
+      }
+
+      .sub-track-label {
+        height: 36px;
+        padding-left: 28px;
+        font-size: 10px;
+      }
+
+      .sub-track-label .label-text {
+        font-size: 10px;
+        color: var(--text-dim);
+      }
+
+      /* Track group collapse indicator */
+      .track-label .collapse-indicator {
+        font-size: 8px;
+        color: var(--text-dim);
+        transition: transform 0.2s;
+      }
+
+      .track-label.expanded .collapse-indicator {
+        transform: rotate(90deg);
+      }
+
+      /* Timeline scroll area */
+      .timeline-scroll {
+        flex: 1;
+        overflow-x: auto;
+        overflow-y: hidden;
+        position: relative;
+      }
+
+      .timeline-inner {
+        min-width: 1200px;
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* Time ruler */
+      .time-ruler {
+        height: 28px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-bright);
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        padding: 0 0 4px 0;
+      }
+
+      .time-tick {
+        position: absolute;
+        bottom: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        transform: translateX(-50%);
+      }
+
+      .time-tick::before {
+        content: '';
+        position: absolute;
+        bottom: 14px;
+        left: 50%;
+        width: 1px;
+        height: 6px;
+        background: var(--border-dim);
+      }
+
+      /* Tracks */
+      .tracks-area {
+        position: relative;
+      }
+
+      .track {
+        height: var(--track-height);
+        border-bottom: 1px solid var(--border-dim);
+        position: relative;
+        background: var(--bg-track);
+      }
+
+      .track.active {
+        background: rgba(85, 255, 85, 0.02);
+      }
+
+      .track.sub-track {
+        height: 36px;
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      /* Phase blocks on tracks */
+      .phase-block {
+        position: absolute;
+        top: 8px;
+        height: calc(100% - 16px);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        font-weight: 500;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .phase-block.completed {
+        opacity: 0.85;
+      }
+
+      .phase-block.active {
+        animation: block-grow 3s ease-in-out infinite;
+      }
+
+      @keyframes block-grow {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.15);
+        }
+      }
+
+      .phase-block.pending {
+        opacity: 0.15;
+        border: 1px dashed;
+      }
+
+      .phase-block .duration-label {
+        position: absolute;
+        right: 6px;
+        font-size: 9px;
+        opacity: 0.7;
+      }
+
+      /* Sub-track phase blocks */
+      .track.sub-track .phase-block {
+        top: 4px;
+        height: calc(100% - 8px);
+      }
+
+      /* Gate markers */
+      .gate-marker {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        z-index: 3;
+      }
+
+      .gate-line {
+        position: absolute;
+        top: 0;
+        left: 1px;
+        width: 1px;
+        height: 100%;
+      }
+
+      .gate-icon {
+        position: absolute;
+        top: -14px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 10px;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+      }
+
+      .gate-icon.passed {
+        color: var(--green);
+        background: rgba(85, 255, 85, 0.15);
+        border: 1px solid rgba(85, 255, 85, 0.3);
+      }
+
+      .gate-icon.pending {
+        color: var(--text-dim);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-dim);
+      }
+
+      /* Artifact chips */
+      .artifact-chip {
+        position: absolute;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        z-index: 2;
+        white-space: nowrap;
+      }
+
+      .artifact-chip:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.3);
+        z-index: 4;
+      }
+
+      .artifact-chip .chip-icon {
+        font-size: 10px;
+      }
+
+      .artifact-chip.selected {
+        outline: 2px solid var(--white);
+        outline-offset: 1px;
+      }
+
+      /* Severity strip on review chips */
+      .severity-strip {
+        display: flex;
+        height: 4px;
+        border-radius: 2px;
+        overflow: hidden;
+        gap: 1px;
+      }
+
+      .severity-strip .seg {
+        height: 100%;
+      }
+
+      /* Version badge */
+      .version-badge {
+        position: absolute;
+        top: -6px;
+        right: -4px;
+        font-size: 8px;
+        font-weight: 700;
+        padding: 0 3px;
+        border-radius: 3px;
+        font-family: 'JetBrains Mono', monospace;
+        line-height: 12px;
+      }
+
+      /* Iteration connector lines */
+      .iteration-line {
+        position: absolute;
+        height: 2px;
+        z-index: 1;
+        opacity: 0.4;
+      }
+
+      /* Playhead */
+      .playhead {
+        position: absolute;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        z-index: 6;
+        pointer-events: none;
+      }
+
+      .playhead-line {
+        width: 2px;
+        height: 100%;
+        background: var(--green);
+        box-shadow:
+          0 0 8px rgba(85, 255, 85, 0.5),
+          0 0 16px rgba(85, 255, 85, 0.2);
+      }
+
+      .playhead-head {
+        position: absolute;
+        top: -2px;
+        left: -5px;
+        width: 12px;
+        height: 12px;
+        background: var(--green);
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        filter: drop-shadow(0 0 4px rgba(85, 255, 85, 0.5));
+      }
+
+      /* Orchestrator presence indicator */
+      .orchestrator-presence {
+        position: absolute;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: rgba(255, 85, 255, 0.15);
+        border: 1px solid rgba(255, 85, 255, 0.4);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: var(--magenta);
+        font-weight: 600;
+        animation: orch-float 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      @keyframes orch-float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-2px);
+        }
+      }
+
+      .orchestrator-presence .orch-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--magenta);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      /* CRT scanline overlay */
+      .scanline-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.03) 2px,
+          rgba(0, 0, 0, 0.03) 4px
+        );
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      /* ── Transport bar (bottom) ───────────────────────── */
+      .transport-bar {
+        height: var(--transport-height);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-dim);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 12px;
+        z-index: 10;
+      }
+
+      .transport-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        border: 1px solid var(--border-dim);
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+
+      .transport-btn:hover {
+        border-color: var(--border-bright);
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .transport-btn.active {
+        border-color: var(--green);
+        color: var(--green);
+        background: rgba(85, 255, 85, 0.1);
+      }
+
+      .transport-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border-dim);
+      }
+
+      .speed-display {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        min-width: 36px;
+        text-align: center;
+      }
+
+      /* Scrub bar */
+      .scrub-bar {
+        flex: 1;
+        height: 6px;
+        background: var(--bg-tertiary);
+        border-radius: 3px;
+        position: relative;
+        cursor: pointer;
+        margin: 0 8px;
+      }
+
+      .scrub-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--dark-green), var(--green));
+        position: relative;
+        transition: width 0.3s ease;
+      }
+
+      .scrub-fill::after {
+        content: '';
+        position: absolute;
+        right: -4px;
+        top: -3px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 6px rgba(85, 255, 85, 0.4);
+      }
+
+      .snapshot-counter {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        white-space: nowrap;
+      }
+
+      /* ── Artifact drawer (right) ──────────────────────── */
+      .artifact-drawer {
+        width: 420px;
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-bright);
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        overflow: hidden;
+      }
+
+      .drawer-header {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-dim);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .drawer-header .drawer-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .drawer-header .drawer-close {
+        margin-left: auto;
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: none;
+        color: var(--text-dim);
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 3px;
+      }
+
+      .drawer-header .drawer-close:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+
+      .drawer-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border-dim);
+      }
+
+      .drawer-tab {
+        padding: 8px 16px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--text-dim);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+      }
+
+      .drawer-tab.active {
+        color: var(--text-primary);
+        border-bottom-color: var(--green);
+      }
+
+      .drawer-tab:hover:not(.active) {
+        color: var(--text-secondary);
+      }
+
+      .drawer-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 16px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      /* Finding items in drawer */
+      .finding-item {
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        border-left: 3px solid;
+      }
+
+      .finding-item.fatal {
+        border-color: var(--red);
+        background: rgba(255, 85, 85, 0.06);
+      }
+
+      .finding-item.warning {
+        border-color: #ffaa00;
+        background: rgba(255, 170, 0, 0.06);
+      }
+
+      .finding-item.test-gap {
+        border-color: var(--yellow);
+        background: rgba(255, 255, 85, 0.04);
+      }
+
+      .finding-item.refactor {
+        border-color: var(--blue);
+        background: rgba(85, 85, 255, 0.06);
+      }
+
+      .finding-item.style {
+        border-color: var(--light-gray);
+        background: rgba(170, 170, 170, 0.04);
+      }
+
+      .finding-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+
+      .finding-severity {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 2px;
+      }
+
+      .finding-severity.F {
+        background: var(--dark-red);
+        color: var(--red);
+      }
+      .finding-severity.W {
+        background: rgba(170, 85, 0, 0.5);
+        color: #ffaa00;
+      }
+      .finding-severity.T {
+        background: rgba(170, 170, 0, 0.3);
+        color: var(--yellow);
+      }
+      .finding-severity.R {
+        background: rgba(0, 0, 170, 0.3);
+        color: var(--blue);
+      }
+      .finding-severity.S {
+        background: rgba(85, 85, 85, 0.3);
+        color: var(--light-gray);
+      }
+
+      .finding-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .finding-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+
+      .finding-file {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        color: var(--text-dim);
+        margin-top: 4px;
+      }
+
+      .trace-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 3px;
+        border: 1px solid rgba(85, 255, 85, 0.3);
+        background: rgba(85, 255, 85, 0.08);
+        color: var(--green);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 6px;
+        transition: all 0.15s;
+      }
+
+      .trace-btn:hover {
+        background: rgba(85, 255, 85, 0.15);
+        border-color: rgba(85, 255, 85, 0.5);
+      }
+
+      /* Version compare bar */
+      .version-compare {
+        padding: 8px 12px;
+        background: var(--bg-tertiary);
+        border-radius: 4px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+      }
+
+      .version-select {
+        padding: 2px 6px;
+        border-radius: 3px;
+        border: 1px solid var(--border-dim);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+      }
+
+      .version-arrow {
+        color: var(--text-dim);
+      }
+
+      /* Diff preview in drawer */
+      .diff-preview {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        line-height: 1.6;
+        background: var(--bg-primary);
+        border-radius: 4px;
+        padding: 8px;
+        overflow-x: auto;
+      }
+
+      .diff-line {
+        white-space: pre;
+      }
+      .diff-line.add {
+        color: var(--green);
+        background: rgba(85, 255, 85, 0.06);
+      }
+      .diff-line.remove {
+        color: var(--red);
+        background: rgba(255, 85, 85, 0.06);
+      }
+      .diff-line.context {
+        color: var(--text-dim);
+      }
+      .diff-line.header {
+        color: var(--cyan);
+        font-weight: 600;
+      }
+
+      .diff-line .line-num {
+        display: inline-block;
+        width: 32px;
+        color: var(--text-dim);
+        text-align: right;
+        margin-right: 8px;
+        user-select: none;
+        opacity: 0.5;
+      }
+
+      /* ── Animated elements ────────────────────────────── */
+
+      /* Glow effect on active track */
+      .track.active::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(85, 255, 85, 0.02), transparent);
+        pointer-events: none;
+      }
+
+      /* Artifact arrival animation */
+      @keyframes artifact-arrive {
+        0% {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .artifact-chip.arriving {
+        animation: artifact-arrive 0.5s ease-out;
+      }
+
+      /* Gate open animation */
+      @keyframes gate-open {
+        0% {
+          transform: translateX(-50%) scale(0.5);
+          opacity: 0;
+        }
+        50% {
+          transform: translateX(-50%) scale(1.3);
+        }
+        100% {
+          transform: translateX(-50%) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .gate-icon.just-opened {
+        animation: gate-open 0.6s ease-out;
+      }
+
+      /* Keyboard shortcut hints */
+      .shortcut-hints {
+        margin-left: auto;
+        display: flex;
+        gap: 12px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+      }
+
+      .shortcut-hint kbd {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 3px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-dim);
+        border-radius: 2px;
+        font-family: inherit;
+        font-size: 9px;
+        margin-right: 3px;
+      }
+
+      /* Vision label */
+      .vision-label {
+        position: fixed;
+        bottom: 56px;
+        right: 12px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 9px;
+        color: var(--text-dim);
+        opacity: 0.4;
+        z-index: 200;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-label">Project</span>
+        <span class="status-value">codeassembly</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Ticket</span>
+        <span class="status-value">#287</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Run</span>
+        <span class="status-value">run-20260313-a4f2</span>
+      </div>
+      <div class="status-item">
+        <span class="status-badge in-progress">
+          <span class="pulse-dot"></span>
+          IN PROGRESS
+        </span>
+      </div>
+      <div class="status-item">
+        <span class="mission-clock" id="clock">T+ 04:32</span>
+      </div>
+      <div class="phase-progress">
+        <div class="phase-pip completed" title="Architecture"></div>
+        <div class="phase-pip completed" title="Planning"></div>
+        <div class="phase-pip completed" title="Implementation"></div>
+        <div class="phase-pip active" title="Review"></div>
+        <div class="phase-pip pending" title="Simplifier"></div>
+        <div class="phase-pip pending" title="Holistic"></div>
+        <div class="phase-pip pending" title="Summary"></div>
+      </div>
+    </div>
+
+    <!-- Main content area -->
+    <div class="timeline-container">
+      <!-- Track labels (left rail) -->
+      <div class="track-labels">
+        <div class="track-label" style="border-left: 3px solid var(--analyst)">
+          <span class="role-dot" style="background: var(--analyst)"></span>
+          <span class="label-text">Architecture</span>
+          <span class="agent-pill" style="background: rgba(85, 85, 255, 0.15); color: var(--analyst)">done</span>
+        </div>
+        <div class="track-label" style="border-left: 3px solid var(--planner)">
+          <span class="role-dot" style="background: var(--planner)"></span>
+          <span class="label-text">Planning</span>
+          <span class="agent-pill" style="background: rgba(85, 255, 85, 0.15); color: var(--planner)">done</span>
+        </div>
+        <div class="track-label" style="border-left: 3px solid var(--author)">
+          <span class="role-dot" style="background: var(--author)"></span>
+          <span class="label-text">Implementation</span>
+          <span class="agent-pill" style="background: rgba(255, 255, 85, 0.15); color: var(--author)">v2</span>
+        </div>
+        <div class="track-label active expanded" style="border-left: 3px solid var(--reviewer)">
+          <span class="collapse-indicator">&#9654;</span>
+          <span class="role-dot" style="background: var(--reviewer)"></span>
+          <span class="label-text">Review</span>
+          <span class="agent-pill working" style="background: rgba(255, 85, 85, 0.15); color: var(--reviewer)"
+            >3 active</span
+          >
+        </div>
+        <div class="track-label sub-track-label" style="border-left: 3px solid transparent; padding-left: 24px">
+          <span class="role-dot" style="background: var(--reviewer); width: 6px; height: 6px"></span>
+          <span class="label-text">code-reviewer</span>
+        </div>
+        <div class="track-label sub-track-label" style="border-left: 3px solid transparent; padding-left: 24px">
+          <span class="role-dot" style="background: var(--reviewer); width: 6px; height: 6px"></span>
+          <span class="label-text">silent-failure</span>
+        </div>
+        <div class="track-label sub-track-label" style="border-left: 3px solid transparent; padding-left: 24px">
+          <span class="role-dot" style="background: var(--reviewer); width: 6px; height: 6px"></span>
+          <span class="label-text">test-reviewer</span>
+        </div>
+        <div class="track-label" style="border-left: 3px solid var(--reviewer); opacity: 0.4">
+          <span class="role-dot" style="background: var(--reviewer); opacity: 0.3"></span>
+          <span class="label-text">Simplifier</span>
+        </div>
+        <div class="track-label" style="border-left: 3px solid var(--reviewer); opacity: 0.4">
+          <span class="role-dot" style="background: var(--reviewer); opacity: 0.3"></span>
+          <span class="label-text">Holistic</span>
+        </div>
+        <div class="track-label" style="border-left: 3px solid var(--orchestrator); opacity: 0.4">
+          <span class="role-dot" style="background: var(--orchestrator); opacity: 0.3"></span>
+          <span class="label-text">Summary</span>
+        </div>
+      </div>
+
+      <!-- Timeline scroll area -->
+      <div class="timeline-scroll">
+        <div class="timeline-inner">
+          <!-- Time ruler -->
+          <div class="time-ruler">
+            <span class="time-tick" style="left: 5%">0:00</span>
+            <span class="time-tick" style="left: 12%">0:30</span>
+            <span class="time-tick" style="left: 19%">1:00</span>
+            <span class="time-tick" style="left: 26%">1:30</span>
+            <span class="time-tick" style="left: 33%">2:00</span>
+            <span class="time-tick" style="left: 40%">2:30</span>
+            <span class="time-tick" style="left: 47%">3:00</span>
+            <span class="time-tick" style="left: 54%">3:30</span>
+            <span class="time-tick" style="left: 61%">4:00</span>
+            <span class="time-tick" style="left: 68%">4:30</span>
+            <span class="time-tick" style="left: 75%">5:00</span>
+            <span class="time-tick" style="left: 82%">5:30</span>
+            <span class="time-tick" style="left: 89%">6:00</span>
+          </div>
+
+          <!-- Gate markers (on ruler) -->
+          <div class="gate-marker" style="left: 14%">
+            <div class="gate-icon passed just-opened">&#10003;</div>
+            <div class="gate-line" style="background: rgba(85, 255, 85, 0.2)"></div>
+          </div>
+          <div class="gate-marker" style="left: 22%">
+            <div class="gate-icon passed">&#10003;</div>
+            <div class="gate-line" style="background: rgba(85, 255, 85, 0.2)"></div>
+          </div>
+          <div class="gate-marker" style="left: 50%">
+            <div class="gate-icon passed">&#10003;</div>
+            <div class="gate-line" style="background: rgba(85, 255, 85, 0.2)"></div>
+          </div>
+          <div class="gate-marker" style="left: 75%">
+            <div class="gate-icon pending">&#9679;</div>
+            <div class="gate-line" style="background: rgba(85, 85, 85, 0.15)"></div>
+          </div>
+
+          <div class="tracks-area">
+            <!-- Track: Architecture -->
+            <div class="track">
+              <div
+                class="phase-block completed"
+                style="
+                  left: 5%;
+                  width: 9%;
+                  background: rgba(85, 85, 255, 0.2);
+                  border: 1px solid rgba(85, 85, 255, 0.4);
+                "
+              >
+                <span style="color: var(--analyst)">Architecture</span>
+                <span class="duration-label" style="color: var(--analyst)">0:38</span>
+              </div>
+              <!-- Artifact: arch assessment -->
+              <div
+                class="artifact-chip arriving"
+                style="
+                  left: 12%;
+                  bottom: 6px;
+                  background: rgba(85, 85, 255, 0.25);
+                  border: 1px solid rgba(85, 85, 255, 0.4);
+                  color: var(--analyst);
+                "
+              >
+                <span class="chip-icon">&#9635;</span>
+                arch-assessment
+              </div>
+            </div>
+
+            <!-- Track: Planning -->
+            <div class="track">
+              <div
+                class="phase-block completed"
+                style="
+                  left: 15%;
+                  width: 7%;
+                  background: rgba(85, 255, 85, 0.15);
+                  border: 1px solid rgba(85, 255, 85, 0.3);
+                "
+              >
+                <span style="color: var(--planner)">Planning</span>
+                <span class="duration-label" style="color: var(--planner)">0:52</span>
+              </div>
+              <div
+                class="artifact-chip"
+                style="
+                  left: 20%;
+                  bottom: 6px;
+                  background: rgba(85, 255, 85, 0.2);
+                  border: 1px solid rgba(85, 255, 85, 0.35);
+                  color: var(--planner);
+                "
+              >
+                <span class="chip-icon">&#9635;</span>
+                plan.md
+              </div>
+              <div
+                class="artifact-chip"
+                style="
+                  left: 28%;
+                  bottom: 6px;
+                  background: rgba(85, 255, 85, 0.2);
+                  border: 1px solid rgba(85, 255, 85, 0.35);
+                  color: var(--planner);
+                "
+              >
+                <span class="chip-icon">{ }</span>
+                plan.json
+              </div>
+            </div>
+
+            <!-- Track: Implementation -->
+            <div class="track">
+              <!-- v1 block -->
+              <div
+                class="phase-block completed"
+                style="
+                  left: 23%;
+                  width: 18%;
+                  background: rgba(255, 255, 85, 0.12);
+                  border: 1px solid rgba(255, 255, 85, 0.3);
+                "
+              >
+                <span style="color: var(--author)">Implementation</span>
+                <span class="duration-label" style="color: var(--author)">2:15</span>
+              </div>
+              <!-- v2 block (re-entry) -->
+              <div
+                class="phase-block completed"
+                style="
+                  left: 52%;
+                  width: 10%;
+                  background: rgba(255, 255, 85, 0.12);
+                  border: 1px solid rgba(255, 170, 0, 0.4);
+                "
+              >
+                <span style="color: #ffaa00">v2 fix cycle</span>
+                <span class="duration-label" style="color: #ffaa00">1:05</span>
+              </div>
+              <!-- v1 artifact -->
+              <div
+                class="artifact-chip"
+                style="
+                  left: 38%;
+                  bottom: 6px;
+                  background: rgba(255, 255, 85, 0.2);
+                  border: 1px solid rgba(255, 255, 85, 0.35);
+                  color: var(--author);
+                "
+              >
+                <span class="chip-icon">&#916;</span>
+                change-summary
+                <div class="version-badge" style="background: var(--dark-green); color: var(--green)">v1</div>
+              </div>
+              <!-- v2 artifact -->
+              <div
+                class="artifact-chip selected"
+                style="
+                  left: 56%;
+                  bottom: 6px;
+                  background: rgba(255, 170, 0, 0.2);
+                  border: 1px solid rgba(255, 170, 0, 0.4);
+                  color: #ffaa00;
+                "
+              >
+                <span class="chip-icon">&#916;</span>
+                change-summary
+                <div class="version-badge" style="background: rgba(255, 102, 0, 0.5); color: #ff6600">v2</div>
+              </div>
+              <!-- Iteration connector -->
+              <div
+                class="iteration-line"
+                style="left: 44%; width: 12%; bottom: 15px; border-top: 1px dashed rgba(255, 170, 0, 0.4)"
+              ></div>
+            </div>
+
+            <!-- Track: Review (group header) -->
+            <div class="track active">
+              <!-- Filled review region -->
+              <div
+                class="phase-block active"
+                style="
+                  left: 42%;
+                  width: 24%;
+                  background: rgba(255, 85, 85, 0.08);
+                  border: 1px solid rgba(255, 85, 85, 0.2);
+                "
+              ></div>
+              <!-- Orchestrator presence -->
+              <div class="orchestrator-presence" style="left: 55%; top: 8px">
+                <span class="orch-dot"></span>
+                orchestrator
+              </div>
+            </div>
+
+            <!-- Sub-track: code-reviewer -->
+            <div class="track sub-track">
+              <div
+                class="phase-block active"
+                style="
+                  left: 42%;
+                  width: 22%;
+                  background: rgba(255, 85, 85, 0.1);
+                  border: 1px solid rgba(255, 85, 85, 0.25);
+                  border-radius: 3px;
+                "
+              ></div>
+              <div
+                class="artifact-chip"
+                style="
+                  left: 47%;
+                  top: 4px;
+                  background: rgba(255, 85, 85, 0.2);
+                  border: 1px solid rgba(255, 85, 85, 0.35);
+                  color: var(--reviewer);
+                  height: 18px;
+                  font-size: 8px;
+                "
+              >
+                <span class="chip-icon">&#9888;</span>
+                code-review
+                <!-- Severity strip -->
+                <div class="severity-strip" style="width: 28px">
+                  <div class="seg" style="flex: 1; background: var(--red)"></div>
+                  <div class="seg" style="flex: 2; background: #ffaa00"></div>
+                  <div class="seg" style="flex: 1; background: var(--light-gray)"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-track: silent-failure -->
+            <div class="track sub-track">
+              <div
+                class="phase-block active"
+                style="
+                  left: 42%;
+                  width: 20%;
+                  background: rgba(255, 85, 85, 0.08);
+                  border: 1px solid rgba(255, 85, 85, 0.2);
+                  border-radius: 3px;
+                "
+              ></div>
+              <div
+                class="artifact-chip"
+                style="
+                  left: 48%;
+                  top: 4px;
+                  background: rgba(255, 85, 85, 0.15);
+                  border: 1px solid rgba(255, 85, 85, 0.3);
+                  color: var(--reviewer);
+                  height: 18px;
+                  font-size: 8px;
+                "
+              >
+                <span class="chip-icon">&#9888;</span>
+                silent-failure
+                <div class="severity-strip" style="width: 20px">
+                  <div class="seg" style="flex: 1; background: #ffaa00"></div>
+                  <div class="seg" style="flex: 1; background: var(--yellow)"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-track: test-reviewer -->
+            <div class="track sub-track">
+              <div
+                class="phase-block active"
+                style="
+                  left: 42%;
+                  width: 19%;
+                  background: rgba(255, 85, 85, 0.06);
+                  border: 1px solid rgba(255, 85, 85, 0.15);
+                  border-radius: 3px;
+                "
+              ></div>
+              <div
+                class="artifact-chip"
+                style="
+                  left: 46%;
+                  top: 4px;
+                  background: rgba(255, 85, 85, 0.12);
+                  border: 1px solid rgba(255, 85, 85, 0.25);
+                  color: var(--reviewer);
+                  height: 18px;
+                  font-size: 8px;
+                "
+              >
+                <span class="chip-icon">&#9888;</span>
+                test-review
+                <div class="severity-strip" style="width: 24px">
+                  <div class="seg" style="flex: 2; background: var(--yellow)"></div>
+                  <div class="seg" style="flex: 1; background: var(--light-gray)"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Track: Simplifier (pending) -->
+            <div class="track">
+              <div
+                class="phase-block pending"
+                style="left: 70%; width: 8%; border-color: var(--reviewer); color: var(--text-dim)"
+              ></div>
+            </div>
+
+            <!-- Track: Holistic (pending) -->
+            <div class="track">
+              <div
+                class="phase-block pending"
+                style="left: 79%; width: 6%; border-color: var(--reviewer); color: var(--text-dim)"
+              ></div>
+            </div>
+
+            <!-- Track: Summary (pending) -->
+            <div class="track">
+              <div
+                class="phase-block pending"
+                style="left: 86%; width: 5%; border-color: var(--orchestrator); color: var(--text-dim)"
+              ></div>
+            </div>
+
+            <!-- Playhead -->
+            <div class="playhead" id="playhead" style="left: 66%">
+              <div class="playhead-head"></div>
+              <div class="playhead-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Artifact drawer -->
+      <div class="artifact-drawer">
+        <div class="drawer-header">
+          <span style="font-size: 12px">&#9888;</span>
+          <span class="drawer-title" style="color: var(--reviewer)">code-review findings</span>
+          <span style="font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); margin-left: 4px"
+            >aspect-code-reviewer</span
+          >
+          <button class="drawer-close">&times;</button>
+        </div>
+        <div class="drawer-tabs">
+          <div class="drawer-tab active">Findings (4)</div>
+          <div class="drawer-tab">Raw</div>
+          <div class="drawer-tab">Trace</div>
+        </div>
+        <div class="drawer-content">
+          <!-- Fatal finding -->
+          <div class="finding-item fatal">
+            <div class="finding-header">
+              <span class="finding-severity F">F</span>
+              <span class="finding-title">Missing error handling in payment processor</span>
+            </div>
+            <div class="finding-desc">
+              The <code>processPayment()</code> function catches errors but silently swallows them, returning
+              <code>undefined</code> instead of propagating the failure. This could cause silent data loss in
+              production.
+            </div>
+            <div class="finding-file">src/services/payment-processor.ts:47</div>
+            <button class="trace-btn">&#8594; Trace resolution</button>
+          </div>
+
+          <!-- Warning finding -->
+          <div class="finding-item warning">
+            <div class="finding-header">
+              <span class="finding-severity W">W</span>
+              <span class="finding-title">Race condition in concurrent queue</span>
+            </div>
+            <div class="finding-desc">
+              The queue's <code>dequeue()</code> method reads length before acquiring the lock, creating a TOCTOU window
+              under concurrent access.
+            </div>
+            <div class="finding-file">src/lib/task-queue.ts:82</div>
+          </div>
+
+          <!-- Warning finding -->
+          <div class="finding-item warning">
+            <div class="finding-header">
+              <span class="finding-severity W">W</span>
+              <span class="finding-title">Unbounded retry loop</span>
+            </div>
+            <div class="finding-desc">
+              The retry logic in <code>fetchWithRetry()</code> has no maximum attempt limit, risking infinite loops on
+              persistent failures.
+            </div>
+            <div class="finding-file">src/lib/http-client.ts:23</div>
+          </div>
+
+          <!-- Style finding -->
+          <div class="finding-item style">
+            <div class="finding-header">
+              <span class="finding-severity S">S</span>
+              <span class="finding-title">Inconsistent naming convention</span>
+            </div>
+            <div class="finding-desc">
+              Uses <code>getData</code> alongside <code>fetch_result</code> -- mixed camelCase and snake_case.
+            </div>
+            <div class="finding-file">src/api/routes.ts:15, 31</div>
+          </div>
+
+          <!-- Diff section for the selected change-summary v2 -->
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-dim)">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px">
+              <span style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 600; color: var(--author)"
+                >change-summary v2</span
+              >
+              <div class="version-compare">
+                <span style="color: var(--text-dim)">Compare:</span>
+                <select class="version-select">
+                  <option>v1</option>
+                </select>
+                <span class="version-arrow">&#8594;</span>
+                <select class="version-select">
+                  <option>v2</option>
+                </select>
+              </div>
+            </div>
+            <div class="diff-preview">
+              <div class="diff-line header">@@ src/services/payment-processor.ts @@</div>
+              <div class="diff-line context">
+                <span class="line-num">45</span> async function processPayment(order: Order) {
+              </div>
+              <div class="diff-line context"><span class="line-num">46</span> try {</div>
+              <div class="diff-line context">
+                <span class="line-num">47</span> const result = await gateway.charge(order);
+              </div>
+              <div class="diff-line remove"><span class="line-num">48</span>- } catch {</div>
+              <div class="diff-line remove"><span class="line-num">49</span>- return undefined;</div>
+              <div class="diff-line add"><span class="line-num">48</span>+ } catch (error) {</div>
+              <div class="diff-line add">
+                <span class="line-num">49</span>+ throw new PaymentError('charge failed', { cause: error });
+              </div>
+              <div class="diff-line context"><span class="line-num">50</span> }</div>
+              <div class="diff-line context"><span class="line-num">51</span> }</div>
+              <div class="diff-line header" style="margin-top: 8px">@@ src/lib/http-client.ts @@</div>
+              <div class="diff-line context">
+                <span class="line-num">21</span> async function fetchWithRetry(url: string) {
+              </div>
+              <div class="diff-line remove"><span class="line-num">22</span>- while (true) {</div>
+              <div class="diff-line add"><span class="line-num">22</span>+ const MAX_RETRIES = 3;</div>
+              <div class="diff-line add">
+                <span class="line-num">23</span>+ for (let attempt = 0; attempt &lt; MAX_RETRIES; attempt++) {
+              </div>
+              <div class="diff-line context"><span class="line-num">24</span> try {</div>
+              <div class="diff-line context"><span class="line-num">25</span> return await fetch(url);</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transport bar -->
+    <div class="transport-bar">
+      <button class="transport-btn" title="Step backward (Left arrow)">&#9664;&#9664;</button>
+      <button class="transport-btn active" title="Play/Pause (Space)">&#9654;</button>
+      <button class="transport-btn" title="Step forward (Right arrow)">&#9654;&#9654;</button>
+      <button class="transport-btn" title="Stop">&#9632;</button>
+      <div class="transport-divider"></div>
+      <button class="transport-btn" title="Slower (-)">-</button>
+      <span class="speed-display">1.0x</span>
+      <button class="transport-btn" title="Faster (+)">+</button>
+      <div class="transport-divider"></div>
+      <div class="scrub-bar">
+        <div class="scrub-fill" style="width: 66%"></div>
+      </div>
+      <span class="snapshot-counter">14 / 21</span>
+      <div class="shortcut-hints">
+        <span class="shortcut-hint"><kbd>Space</kbd> play</span>
+        <span class="shortcut-hint"><kbd>&#8592;&#8594;</kbd> step</span>
+        <span class="shortcut-hint"><kbd>Esc</kbd> close</span>
+        <span class="shortcut-hint"><kbd>1-7</kbd> jump</span>
+      </div>
+    </div>
+
+    <!-- CRT scanline overlay -->
+    <div class="scanline-overlay"></div>
+
+    <!-- Vision label -->
+    <div class="vision-label">Vision C: The mission timeline</div>
+
+    <script>
+      // Animate the mission clock
+      let elapsed = 272; // 4:32
+      const clockEl = document.getElementById('clock');
+      setInterval(() => {
+        elapsed++;
+        const min = Math.floor(elapsed / 60);
+        const sec = elapsed % 60;
+        clockEl.textContent = `T+ ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      }, 1000);
+
+      // Animate the playhead with a subtle drift
+      const playhead = document.getElementById('playhead');
+      let playheadPos = 66;
+      setInterval(() => {
+        playheadPos += 0.02;
+        if (playheadPos > 68) playheadPos = 66;
+        playhead.style.left = playheadPos + '%';
+      }, 100);
+
+      // Add hover effects to artifact chips
+      document.querySelectorAll('.artifact-chip').forEach((chip) => {
+        chip.addEventListener('mouseenter', () => {
+          chip.style.boxShadow = '0 0 8px ' + getComputedStyle(chip).borderColor;
+        });
+        chip.addEventListener('mouseleave', () => {
+          chip.style.boxShadow = 'none';
+        });
+      });
+
+      // Add hover effects to track labels
+      document.querySelectorAll('.track-label').forEach((label) => {
+        label.addEventListener('mouseenter', () => {
+          label.style.background = 'var(--bg-tertiary)';
+        });
+        label.addEventListener('mouseleave', () => {
+          label.style.background = '';
+        });
+      });
+    </script>
+  </body>
+</html>

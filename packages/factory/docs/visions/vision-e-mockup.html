@@ -1,0 +1,2212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision E: The Workshop Floor</title>
+    <style>
+      /* ===== Reset & base ===== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        background: #2a3440;
+        color: #d0d8e0;
+        font-family: 'Courier New', monospace;
+        display: flex;
+        flex-direction: column;
+      }
+
+      :root {
+        /* Steel & slate surfaces */
+        --steel-dark: #3d4654;
+        --steel-mid: #5a6270;
+        --steel-light: #8a9199;
+        --steel-highlight: #a0a8b0;
+
+        /* Floor & environment */
+        --floor: #2d3a3f;
+        --floor-light: #364548;
+        --floor-grid: #344042;
+        --ambient-teal: #1a3a40;
+        --ambient-teal-light: #2d5960;
+
+        /* Screens & active */
+        --cyan: #55ffff;
+        --cyan-dim: #00aaaa;
+        --cyan-glow: rgba(85, 255, 255, 0.15);
+        --screen-bg: #0a2a2e;
+        --screen-border: #1a4a50;
+
+        /* Warnings & railings */
+        --amber: #ffaa00;
+        --amber-dim: #cc8800;
+        --amber-glow: rgba(255, 170, 0, 0.2);
+        --railing: #aa7700;
+
+        /* Status */
+        --green: #55ff55;
+        --green-dim: #2a6a2a;
+        --red: #ff5555;
+        --red-dim: #6a2a2a;
+
+        /* Role types */
+        --orchestrator: #ff55ff;
+        --analyst: #5555ff;
+        --planner: #55ff55;
+        --author: #ffff55;
+        --reviewer: #ff5555;
+
+        /* Artifact pastels */
+        --art-arch: #a5d8ff;
+        --art-plan: #b2f2bb;
+        --art-code: #fff3bf;
+        --art-review: #ffc9c9;
+        --art-clean: #f3d9fa;
+        --art-holi: #c3fae8;
+        --art-summary: #f8f9fa;
+      }
+
+      /* ===== Header bar ===== */
+      .header {
+        height: 38px;
+        background: #2a3440;
+        border-bottom: 2px solid var(--railing);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 16px;
+        font-size: 11px;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .header::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--amber-dim);
+        opacity: 0.3;
+      }
+      .header .logo {
+        color: var(--cyan);
+        font-weight: bold;
+        font-size: 13px;
+        letter-spacing: 1px;
+        text-shadow: 0 0 8px rgba(85, 255, 255, 0.4);
+      }
+      .header .sep {
+        color: var(--steel-mid);
+      }
+      .header .meta {
+        color: var(--steel-light);
+      }
+      .header .meta strong {
+        color: var(--cyan-dim);
+      }
+      .header .status-pill {
+        padding: 2px 10px;
+        border-radius: 3px;
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .header .status-pill.in-progress {
+        background: rgba(85, 255, 255, 0.15);
+        color: var(--cyan);
+        border: 1px solid rgba(85, 255, 255, 0.3);
+        animation: pulse-status 2s ease-in-out infinite;
+      }
+      .header .elapsed {
+        color: var(--amber);
+        font-weight: bold;
+        font-size: 12px;
+        margin-left: auto;
+      }
+
+      @keyframes pulse-status {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+
+      /* ===== Routing board (pipeline overview) ===== */
+      .routing-board {
+        height: 44px;
+        background: linear-gradient(180deg, #1e2830 0%, #243038 100%);
+        border-bottom: 1px solid var(--steel-dark);
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        gap: 4px;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .routing-board::before {
+        content: 'PIPELINE';
+        position: absolute;
+        left: 20px;
+        top: 4px;
+        font-size: 8px;
+        color: var(--steel-mid);
+        letter-spacing: 2px;
+      }
+      .route-node {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 3px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        margin-top: 6px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .route-node:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .route-node .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .route-node.completed .dot {
+        background: var(--green);
+        box-shadow: 0 0 4px rgba(85, 255, 85, 0.5);
+      }
+      .route-node.completed {
+        color: var(--green);
+        opacity: 0.8;
+      }
+      .route-node.active .dot {
+        background: var(--cyan);
+        box-shadow: 0 0 8px rgba(85, 255, 255, 0.6);
+        animation: pulse-dot 1.5s ease-in-out infinite;
+      }
+      .route-node.active {
+        color: var(--cyan);
+        font-weight: bold;
+      }
+      .route-node.pending .dot {
+        background: var(--steel-mid);
+        opacity: 0.4;
+      }
+      .route-node.pending {
+        color: var(--steel-mid);
+        opacity: 0.4;
+      }
+      .route-connector {
+        width: 20px;
+        height: 2px;
+        background: var(--steel-dark);
+        flex-shrink: 0;
+        margin-top: 6px;
+        position: relative;
+      }
+      .route-connector.completed {
+        background: var(--green-dim);
+      }
+      .route-connector.active {
+        background: linear-gradient(90deg, var(--green-dim), var(--cyan-dim));
+        animation: flow-connector 2s linear infinite;
+      }
+
+      /* Timing strip beneath routing board */
+      .timing-strip {
+        position: absolute;
+        bottom: 0;
+        left: 100px;
+        right: 20px;
+        height: 3px;
+        display: flex;
+        border-radius: 1px;
+        overflow: hidden;
+      }
+      .timing-segment {
+        height: 100%;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+      .timing-segment:hover {
+        opacity: 1;
+      }
+
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          box-shadow: 0 0 4px rgba(85, 255, 255, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 12px rgba(85, 255, 255, 0.8);
+        }
+      }
+
+      @keyframes flow-connector {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 20px 0;
+        }
+      }
+
+      /* ===== Workshop floor ===== */
+      .workshop-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: var(--floor);
+      }
+
+      /* Hex grid floor pattern with panel lines */
+      .floor-pattern {
+        position: absolute;
+        inset: 0;
+        background-image:
+      /* Grid dots */
+          radial-gradient(circle at 30px 30px, var(--floor-grid) 1px, transparent 1px),
+          radial-gradient(circle at 60px 60px, var(--floor-grid) 1px, transparent 1px),
+          /* Panel lines */ linear-gradient(90deg, rgba(68, 80, 85, 0.12) 1px, transparent 1px),
+          linear-gradient(0deg, rgba(68, 80, 85, 0.08) 1px, transparent 1px),
+          /* Subtle hex pattern */
+          linear-gradient(
+              60deg,
+              transparent 48%,
+              rgba(68, 80, 85, 0.04) 49%,
+              rgba(68, 80, 85, 0.04) 51%,
+              transparent 52%
+            ),
+          linear-gradient(
+            -60deg,
+            transparent 48%,
+            rgba(68, 80, 85, 0.04) 49%,
+            rgba(68, 80, 85, 0.04) 51%,
+            transparent 52%
+          );
+        background-size:
+          60px 60px,
+          60px 60px,
+          120px 120px,
+          120px 120px,
+          40px 40px,
+          40px 40px;
+        opacity: 0.5;
+        z-index: 0;
+      }
+
+      /* Ambient teal lighting from above — layered for depth */
+      .ambient-light {
+        position: absolute;
+        inset: 0;
+        background:
+      /* Main overhead teal wash */
+          radial-gradient(ellipse 120% 80% at 50% 0%, rgba(45, 89, 96, 0.18) 0%, transparent 70%),
+          /* Pool of light at active station (review) */
+          radial-gradient(ellipse 200px 250px at 680px 120px, rgba(85, 255, 255, 0.06) 0%, transparent 70%),
+          /* Warm accent light from left */
+          radial-gradient(ellipse 300px 400px at 0% 50%, rgba(170, 119, 0, 0.05) 0%, transparent 70%),
+          /* Gentle brightening of center floor */
+          radial-gradient(ellipse 100% 60% at 50% 100%, rgba(55, 70, 78, 0.15) 0%, transparent 60%);
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      /* Overhead pneumatic rail */
+      .pneumatic-rail {
+        position: absolute;
+        top: 28px;
+        left: 60px;
+        right: 60px;
+        height: 4px;
+        background: linear-gradient(180deg, var(--steel-light) 0%, var(--steel-mid) 100%);
+        border-radius: 2px;
+        z-index: 15;
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.3),
+          0 0 1px var(--steel-highlight);
+      }
+      .pneumatic-rail::before,
+      .pneumatic-rail::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        width: 12px;
+        height: 12px;
+        background: var(--steel-mid);
+        border: 1px solid var(--steel-highlight);
+        border-radius: 2px;
+      }
+      .pneumatic-rail::before {
+        left: -2px;
+      }
+      .pneumatic-rail::after {
+        right: -2px;
+      }
+
+      /* Rail supports */
+      .rail-support {
+        position: absolute;
+        top: 32px;
+        width: 3px;
+        height: 20px;
+        background: linear-gradient(180deg, var(--steel-mid), var(--steel-dark));
+        z-index: 14;
+      }
+
+      /* Canister on rail */
+      .canister {
+        position: absolute;
+        top: 20px;
+        width: 18px;
+        height: 12px;
+        background: linear-gradient(180deg, var(--amber) 0%, var(--amber-dim) 100%);
+        border-radius: 4px;
+        z-index: 16;
+        box-shadow:
+          0 0 10px var(--amber-glow),
+          0 2px 4px rgba(0, 0, 0, 0.4);
+        animation: canister-move 8s ease-in-out infinite;
+      }
+      .canister::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        right: 3px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 1px;
+      }
+
+      @keyframes canister-move {
+        0% {
+          left: 52%;
+        }
+        15% {
+          left: 62%;
+        }
+        30% {
+          left: 62%;
+        }
+        50% {
+          left: 72%;
+        }
+        65% {
+          left: 72%;
+        }
+        80% {
+          left: 52%;
+        }
+        100% {
+          left: 52%;
+        }
+      }
+
+      /* ===== Workstations ===== */
+      .station {
+        position: absolute;
+        z-index: 10;
+      }
+
+      /* Station base platform */
+      .station-platform {
+        position: relative;
+        width: 155px;
+        background: linear-gradient(180deg, var(--steel-mid) 0%, var(--steel-dark) 100%);
+        border: 1px solid var(--steel-light);
+        border-radius: 4px;
+        overflow: visible;
+        box-shadow:
+          0 4px 12px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      /* Rivets on station */
+      .station-platform::before {
+        content: '';
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        right: 4px;
+        height: 1px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--steel-highlight) 0px,
+          var(--steel-highlight) 2px,
+          transparent 2px,
+          transparent 12px
+        );
+        opacity: 0.4;
+      }
+
+      /* Cross bracing texture */
+      .station-platform::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--steel-dark) 0px,
+          var(--steel-dark) 2px,
+          var(--steel-mid) 2px,
+          var(--steel-mid) 4px
+        );
+        border-radius: 0 0 3px 3px;
+      }
+
+      /* Station label */
+      .station-label {
+        padding: 5px 8px 3px;
+        font-size: 9px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .station-label .role-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+
+      /* Station interior */
+      .station-interior {
+        padding: 4px 6px 8px;
+        display: flex;
+        gap: 5px;
+      }
+
+      /* Monitor area */
+      .monitor-bank {
+        flex: 1;
+      }
+      .monitor {
+        background: var(--screen-bg);
+        border: 1px solid var(--screen-border);
+        border-radius: 2px;
+        padding: 3px 4px;
+        margin-bottom: 3px;
+        font-size: 7px;
+        line-height: 1.4;
+        position: relative;
+        overflow: hidden;
+      }
+      .monitor::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          transparent 0%,
+          transparent 50%,
+          rgba(85, 255, 255, 0.02) 50%,
+          transparent 100%
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        animation: scanlines 8s linear infinite;
+      }
+      .monitor .status-text {
+        color: var(--cyan);
+      }
+      .monitor .time-text {
+        color: var(--amber);
+      }
+      .monitor .label-text {
+        color: var(--steel-light);
+      }
+      .monitor .metric {
+        color: #88ccaa;
+      }
+      .monitor .green-text {
+        color: var(--green);
+      }
+      .monitor .red-text {
+        color: var(--red);
+      }
+
+      @keyframes scanlines {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 0 100px;
+        }
+      }
+
+      /* Shelf area */
+      .shelf-unit {
+        width: 44px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .shelf-label {
+        font-size: 6px;
+        color: var(--steel-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+        margin-bottom: 1px;
+      }
+      .shelf-rack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        justify-content: center;
+      }
+      .artifact-obj {
+        width: 12px;
+        height: 14px;
+        border-radius: 1px;
+        position: relative;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      .artifact-obj:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 3px 8px rgba(0, 0, 0, 0.4),
+          0 0 8px rgba(255, 255, 255, 0.1);
+      }
+      .artifact-obj::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        right: 2px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .artifact-obj.has-version::before {
+        content: attr(data-version);
+        position: absolute;
+        bottom: -1px;
+        right: -1px;
+        font-size: 5px;
+        background: var(--steel-dark);
+        color: var(--cyan);
+        padding: 0 2px;
+        border-radius: 1px;
+        line-height: 1.2;
+      }
+
+      /* Agent sprite area */
+      .agent-area {
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      /* Simple pixel agent */
+      .agent-sprite {
+        width: 24px;
+        height: 28px;
+        position: relative;
+        image-rendering: pixelated;
+      }
+      /* Head */
+      .agent-sprite .head {
+        width: 12px;
+        height: 10px;
+        border-radius: 3px 3px 1px 1px;
+        margin: 0 auto;
+        position: relative;
+      }
+      .agent-sprite .head::after {
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 2px;
+        width: 2px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 6px 0 0 rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+      }
+      /* Body */
+      .agent-sprite .body {
+        width: 16px;
+        height: 12px;
+        margin: 1px auto 0;
+        border-radius: 2px;
+        position: relative;
+      }
+      /* Arms (for working animation) */
+      .agent-sprite.working .body::before,
+      .agent-sprite.working .body::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        width: 4px;
+        height: 6px;
+        border-radius: 1px;
+        animation: work-arms 0.8s ease-in-out infinite alternate;
+      }
+      .agent-sprite.working .body::before {
+        left: -5px;
+      }
+      .agent-sprite.working .body::after {
+        right: -5px;
+        animation-delay: 0.4s;
+      }
+
+      @keyframes work-arms {
+        0% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        100% {
+          transform: translateY(-3px) rotate(-10deg);
+        }
+      }
+
+      /* Celebrating animation */
+      .agent-sprite.celebrating {
+        animation: celebrate-bounce 0.5s ease-in-out infinite;
+      }
+      @keyframes celebrate-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+
+      /* Concerned animation */
+      .agent-sprite.concerned .head {
+        animation: concern-shake 0.3s ease-in-out infinite;
+      }
+      @keyframes concern-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-1px);
+        }
+        75% {
+          transform: translateX(1px);
+        }
+      }
+
+      /* ===== Time ring around stations ===== */
+      .time-ring {
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 140px;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+      .time-ring-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition:
+          width 0.5s ease,
+          background 0.5s ease;
+      }
+      .time-ring-fill.fast {
+        background: linear-gradient(90deg, var(--green-dim), var(--green));
+      }
+      .time-ring-fill.moderate {
+        background: linear-gradient(90deg, var(--green-dim), var(--amber));
+      }
+      .time-ring-fill.slow {
+        background: linear-gradient(90deg, var(--amber-dim), var(--red));
+      }
+
+      /* ===== Thought bubbles ===== */
+      .thought-bubble {
+        position: absolute;
+        z-index: 30;
+        max-width: 180px;
+        min-width: 110px;
+        padding: 5px 8px;
+        background: rgba(26, 42, 48, 0.92);
+        border: 1px solid var(--screen-border);
+        border-radius: 6px;
+        font-size: 8px;
+        line-height: 1.4;
+        color: var(--cyan);
+        backdrop-filter: blur(4px);
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.3),
+          0 0 12px var(--cyan-glow);
+        pointer-events: auto;
+        cursor: default;
+      }
+      .thought-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid rgba(26, 42, 48, 0.92);
+      }
+      .thought-bubble.alert {
+        border-color: var(--red);
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.3),
+          0 0 12px rgba(255, 85, 85, 0.3);
+        animation: alert-pulse 1.5s ease-in-out infinite;
+      }
+      .thought-bubble.alert::after {
+        border-top-color: rgba(26, 42, 48, 0.92);
+      }
+      .thought-bubble .bubble-role {
+        font-size: 7px;
+        opacity: 0.6;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .thought-bubble .bubble-text {
+        color: #c0e8f0;
+      }
+      .thought-bubble .finding-badge {
+        display: inline-block;
+        padding: 0 3px;
+        border-radius: 2px;
+        font-size: 7px;
+        font-weight: bold;
+        margin-right: 2px;
+      }
+      .finding-badge.fatal {
+        background: var(--red-dim);
+        color: var(--red);
+      }
+      .finding-badge.warning {
+        background: rgba(255, 170, 0, 0.2);
+        color: var(--amber);
+      }
+      .finding-badge.test {
+        background: rgba(255, 255, 85, 0.15);
+        color: var(--author);
+      }
+      .finding-badge.style {
+        background: rgba(138, 145, 153, 0.2);
+        color: var(--steel-light);
+      }
+
+      @keyframes alert-pulse {
+        0%,
+        100% {
+          border-color: var(--red);
+          box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            0 0 12px rgba(255, 85, 85, 0.2);
+        }
+        50% {
+          border-color: #ff8888;
+          box-shadow:
+            0 2px 8px rgba(0, 0, 0, 0.3),
+            0 0 20px rgba(255, 85, 85, 0.5);
+        }
+      }
+
+      /* ===== Station alert light ===== */
+      .alert-light {
+        position: absolute;
+        top: -4px;
+        right: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        z-index: 20;
+      }
+      .alert-light.ok {
+        background: var(--green);
+        box-shadow: 0 0 4px rgba(85, 255, 85, 0.3);
+      }
+      .alert-light.warning {
+        background: var(--amber);
+        box-shadow: 0 0 8px var(--amber-glow);
+        animation: klaxon 1s ease-in-out infinite;
+      }
+      .alert-light.critical {
+        background: var(--red);
+        box-shadow: 0 0 8px rgba(255, 85, 85, 0.4);
+        animation: klaxon 0.5s ease-in-out infinite;
+      }
+      .alert-light.idle {
+        background: var(--steel-mid);
+        opacity: 0.4;
+      }
+
+      @keyframes klaxon {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 4px currentColor;
+        }
+        50% {
+          opacity: 0.4;
+          box-shadow: 0 0 12px currentColor;
+        }
+      }
+
+      /* ===== Blocking tether line ===== */
+      .tether-line {
+        position: absolute;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .tether-line svg {
+        overflow: visible;
+      }
+
+      /* ===== Amber safety railing ===== */
+      .safety-railing {
+        position: absolute;
+        height: 3px;
+        border-radius: 1px;
+        z-index: 3;
+      }
+      .safety-railing.top-rail {
+        background: repeating-linear-gradient(
+          90deg,
+          var(--railing) 0px,
+          var(--railing) 8px,
+          var(--amber-dim) 8px,
+          var(--amber-dim) 10px
+        );
+      }
+      .safety-railing.bottom-rail {
+        background: repeating-linear-gradient(
+          90deg,
+          var(--amber-dim) 0px,
+          var(--amber-dim) 8px,
+          var(--railing) 8px,
+          var(--railing) 10px
+        );
+      }
+
+      /* ===== Detail panel (right side) ===== */
+      .detail-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 340px;
+        height: 100%;
+        background: linear-gradient(180deg, #1e2a30 0%, #1a2428 100%);
+        border-left: 2px solid var(--screen-border);
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+        overflow-y: auto;
+      }
+      .detail-panel .panel-header {
+        padding: 10px 14px;
+        background: var(--screen-bg);
+        border-bottom: 1px solid var(--screen-border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .detail-panel .panel-header .panel-title {
+        font-size: 11px;
+        color: var(--cyan);
+        font-weight: bold;
+        flex: 1;
+      }
+      .detail-panel .panel-close {
+        width: 20px;
+        height: 20px;
+        border: 1px solid var(--steel-mid);
+        border-radius: 3px;
+        background: none;
+        color: var(--steel-light);
+        cursor: pointer;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .detail-panel .panel-close:hover {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .detail-panel .panel-body {
+        padding: 12px 14px;
+        flex: 1;
+      }
+      .detail-panel .findings-table {
+        width: 100%;
+        font-size: 9px;
+        border-collapse: collapse;
+      }
+      .detail-panel .findings-table th {
+        text-align: left;
+        padding: 4px 6px;
+        color: var(--steel-light);
+        border-bottom: 1px solid var(--steel-dark);
+        font-size: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .detail-panel .findings-table td {
+        padding: 5px 6px;
+        border-bottom: 1px solid rgba(61, 70, 84, 0.3);
+        color: #b0c0c8;
+        vertical-align: top;
+      }
+      .detail-panel .severity-summary {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .detail-panel .sev-badge {
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 9px;
+        font-weight: bold;
+      }
+      .detail-panel .sev-badge.f {
+        background: var(--red-dim);
+        color: var(--red);
+      }
+      .detail-panel .sev-badge.w {
+        background: rgba(255, 170, 0, 0.15);
+        color: var(--amber);
+      }
+      .detail-panel .sev-badge.t {
+        background: rgba(255, 255, 85, 0.1);
+        color: #cccc55;
+      }
+      .detail-panel .sev-badge.r {
+        background: rgba(85, 85, 255, 0.1);
+        color: #8888ff;
+      }
+      .detail-panel .sev-badge.s {
+        background: rgba(138, 145, 153, 0.15);
+        color: var(--steel-light);
+      }
+      .detail-panel .sev-badge.l {
+        background: rgba(138, 145, 153, 0.08);
+        color: var(--steel-mid);
+      }
+      .detail-panel .reviewer-section {
+        margin-top: 10px;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        border-left: 2px solid;
+      }
+      .detail-panel .reviewer-name {
+        font-size: 9px;
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+      .detail-panel .file-ref {
+        color: var(--cyan-dim);
+        cursor: pointer;
+        text-decoration: underline;
+        text-decoration-style: dotted;
+      }
+      .detail-panel .file-ref:hover {
+        color: var(--cyan);
+      }
+
+      /* Version tabs */
+      .version-tabs {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 8px;
+      }
+      .version-tab {
+        padding: 3px 8px;
+        font-size: 8px;
+        color: var(--steel-light);
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--steel-dark);
+        border-radius: 3px 3px 0 0;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .version-tab.active {
+        color: var(--cyan);
+        background: var(--screen-bg);
+        border-color: var(--screen-border);
+        border-bottom-color: transparent;
+      }
+      .version-tab:hover:not(.active) {
+        color: #c0d0d8;
+      }
+
+      /* ===== Notification toast ===== */
+      .notification {
+        position: absolute;
+        top: 12px;
+        right: 360px;
+        z-index: 60;
+        background: rgba(106, 42, 42, 0.92);
+        border: 1px solid var(--red);
+        border-radius: 6px;
+        padding: 8px 14px;
+        font-size: 9px;
+        color: #ffcccc;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 4px 16px rgba(255, 85, 85, 0.2);
+        animation:
+          notification-slide 0.4s ease-out,
+          alert-pulse 2s ease-in-out infinite 0.4s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 280px;
+      }
+      .notification .notif-icon {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+      .notification .notif-text strong {
+        color: var(--red);
+      }
+
+      @keyframes notification-slide {
+        from {
+          transform: translateX(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* ===== Scanline overlay (subtle) ===== */
+      .workshop-container::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgba(0, 0, 0, 0.015) 3px,
+          rgba(0, 0, 0, 0.015) 6px
+        );
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      /* ===== Cable/pipe decorations ===== */
+      .cable-bundle {
+        position: absolute;
+        z-index: 2;
+      }
+      .cable {
+        position: absolute;
+        height: 2px;
+        border-radius: 1px;
+        opacity: 0.3;
+      }
+
+      /* ===== Review station expanded width ===== */
+      .station.review-station .station-platform {
+        width: 250px;
+      }
+      .station.review-station .time-ring {
+        width: 230px;
+      }
+
+      /* Multi-agent layout for review */
+      .multi-agent-row {
+        display: flex;
+        gap: 6px;
+        padding: 0 4px;
+      }
+      .mini-agent-cell {
+        flex: 1;
+        text-align: center;
+        position: relative;
+      }
+      .mini-agent-cell .mini-label {
+        font-size: 6px;
+        color: var(--steel-light);
+        margin-top: 2px;
+      }
+
+      /* ===== Tool rack decoration ===== */
+      .tool-rack {
+        position: absolute;
+        right: -12px;
+        top: 20px;
+        width: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .tool-item {
+        width: 8px;
+        height: 3px;
+        background: var(--steel-mid);
+        border-radius: 1px;
+        opacity: 0.4;
+      }
+
+      /* ===== Orchestrator on routing board ===== */
+      .orchestrator-indicator {
+        position: absolute;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .orchestrator-sprite {
+        width: 20px;
+        height: 24px;
+        position: relative;
+      }
+      .orchestrator-sprite .head {
+        width: 10px;
+        height: 8px;
+        background: linear-gradient(180deg, #d4a530 0%, #b8901a 100%);
+        border-radius: 3px 3px 1px 1px;
+        margin: 0 auto;
+        position: relative;
+      }
+      .orchestrator-sprite .head::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 1px;
+        width: 2px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 5px 0 0 rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+      }
+      .orchestrator-sprite .body {
+        width: 14px;
+        height: 10px;
+        background: linear-gradient(180deg, #c89820 0%, #a07818 100%);
+        margin: 1px auto 0;
+        border-radius: 2px;
+      }
+      .orchestrator-sprite .beacon {
+        position: absolute;
+        top: -3px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 4px;
+        background: var(--amber);
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--amber);
+        animation: beacon-pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes beacon-pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 3px var(--amber);
+        }
+        50% {
+          box-shadow:
+            0 0 10px var(--amber),
+            0 0 20px rgba(255, 170, 0, 0.3);
+        }
+      }
+
+      /* ===== Footer / timeline scrubber ===== */
+      .footer {
+        height: 32px;
+        background: #1e2830;
+        border-top: 1px solid var(--steel-dark);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 12px;
+        font-size: 9px;
+        color: var(--steel-light);
+        flex-shrink: 0;
+      }
+      .footer .transport-btn {
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--steel-mid);
+        border-radius: 3px;
+        background: none;
+        color: var(--steel-light);
+        cursor: pointer;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      }
+      .footer .transport-btn:hover {
+        border-color: var(--cyan-dim);
+        color: var(--cyan);
+      }
+      .footer .scrubber {
+        flex: 1;
+        height: 4px;
+        background: var(--steel-dark);
+        border-radius: 2px;
+        position: relative;
+        cursor: pointer;
+      }
+      .footer .scrubber-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--green-dim), var(--cyan-dim));
+        border-radius: 2px;
+        width: 58%;
+      }
+      .footer .scrubber-handle {
+        position: absolute;
+        top: -4px;
+        left: 58%;
+        transform: translateX(-50%);
+        width: 10px;
+        height: 12px;
+        background: var(--cyan);
+        border-radius: 2px;
+        box-shadow: 0 0 6px rgba(85, 255, 255, 0.4);
+      }
+      .footer .speed-label {
+        color: var(--amber);
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===== Header ===== -->
+    <div class="header">
+      <span class="logo">CODEASSEMBLY</span>
+      <span class="sep">|</span>
+      <span class="meta">Project: <strong>factory</strong></span>
+      <span class="sep">|</span>
+      <span class="meta">Ticket: <strong>#293</strong></span>
+      <span class="sep">|</span>
+      <span class="meta">Branch: <strong>293</strong></span>
+      <span class="sep">|</span>
+      <span class="status-pill in-progress">IN PROGRESS</span>
+      <span class="elapsed">6m 42s</span>
+    </div>
+
+    <!-- ===== Routing board (pipeline overview) ===== -->
+    <div class="routing-board">
+      <div class="route-node completed"><span class="dot"></span>Arch</div>
+      <div class="route-connector completed"></div>
+      <div class="route-node completed"><span class="dot"></span>Plan</div>
+      <div class="route-connector completed"></div>
+      <div class="route-node completed"><span class="dot"></span>Impl</div>
+      <div class="route-connector active"></div>
+      <div class="route-node active"><span class="dot"></span>Review</div>
+      <div class="route-connector"></div>
+      <div class="route-node pending"><span class="dot"></span>Simplify</div>
+      <div class="route-connector"></div>
+      <div class="route-node pending"><span class="dot"></span>Holistic</div>
+      <div class="route-connector"></div>
+      <div class="route-node pending"><span class="dot"></span>Summary</div>
+
+      <!-- Timing strip -->
+      <div class="timing-strip">
+        <div class="timing-segment" style="width: 8%; background: var(--analyst)" title="Architecture: 0m 32s"></div>
+        <div class="timing-segment" style="width: 12%; background: var(--planner)" title="Planning: 0m 48s"></div>
+        <div class="timing-segment" style="width: 38%; background: var(--author)" title="Implementation: 2m 32s"></div>
+        <div
+          class="timing-segment"
+          style="width: 28%; background: var(--reviewer)"
+          title="Review: 1m 50s (active)"
+        ></div>
+        <div
+          class="timing-segment"
+          style="width: 14%; background: var(--steel-dark); opacity: 0.2"
+          title="Remaining phases"
+        ></div>
+      </div>
+    </div>
+
+    <!-- ===== Workshop floor ===== -->
+    <div class="workshop-container">
+      <div class="floor-pattern"></div>
+      <div class="ambient-light"></div>
+
+      <!-- Pneumatic overhead rail -->
+      <div class="pneumatic-rail"></div>
+      <div class="rail-support" style="left: 130px"></div>
+      <div class="rail-support" style="left: 260px"></div>
+      <div class="rail-support" style="left: 520px"></div>
+      <div class="rail-support" style="left: 770px"></div>
+      <div class="rail-support" style="left: 910px"></div>
+
+      <!-- Animated canister on rail -->
+      <div class="canister"></div>
+
+      <!-- Safety railings -->
+      <div class="safety-railing top-rail" style="bottom: 20px; left: 40px; right: 380px"></div>
+      <div class="safety-railing bottom-rail" style="bottom: 12px; left: 40px; right: 380px"></div>
+
+      <!-- Cable decorations -->
+      <div class="cable-bundle" style="left: 30px; top: 50px">
+        <div class="cable" style="top: 0; width: 20px; background: var(--cyan-dim)"></div>
+        <div class="cable" style="top: 4px; width: 25px; background: var(--amber-dim)"></div>
+        <div class="cable" style="top: 8px; width: 18px; background: var(--steel-mid)"></div>
+      </div>
+      <div class="cable-bundle" style="right: 360px; top: 50px">
+        <div class="cable" style="top: 0; width: 15px; background: var(--steel-mid)"></div>
+        <div class="cable" style="top: 4px; width: 22px; background: var(--cyan-dim)"></div>
+      </div>
+
+      <!-- Floor lane markings between stations -->
+      <div
+        style="
+          position: absolute;
+          top: 215px;
+          left: 195px;
+          width: 15px;
+          height: 2px;
+          background: var(--amber-dim);
+          opacity: 0.2;
+          z-index: 2;
+          border-radius: 1px;
+        "
+      ></div>
+      <div
+        style="
+          position: absolute;
+          top: 215px;
+          left: 365px;
+          width: 15px;
+          height: 2px;
+          background: var(--amber-dim);
+          opacity: 0.2;
+          z-index: 2;
+          border-radius: 1px;
+        "
+      ></div>
+      <div
+        style="
+          position: absolute;
+          top: 215px;
+          left: 540px;
+          width: 15px;
+          height: 2px;
+          background: var(--amber-dim);
+          opacity: 0.2;
+          z-index: 2;
+          border-radius: 1px;
+        "
+      ></div>
+      <div
+        style="
+          position: absolute;
+          top: 215px;
+          left: 815px;
+          width: 15px;
+          height: 2px;
+          background: var(--amber-dim);
+          opacity: 0.15;
+          z-index: 2;
+          border-radius: 1px;
+        "
+      ></div>
+
+      <!-- Ventilation grille on floor (decorative detail) -->
+      <div
+        style="
+          position: absolute;
+          bottom: 40px;
+          left: 80px;
+          width: 40px;
+          height: 8px;
+          background: repeating-linear-gradient(
+            90deg,
+            var(--steel-dark) 0px,
+            var(--steel-dark) 3px,
+            var(--floor) 3px,
+            var(--floor) 5px
+          );
+          border-radius: 2px;
+          z-index: 2;
+          opacity: 0.4;
+        "
+      ></div>
+      <div
+        style="
+          position: absolute;
+          bottom: 40px;
+          left: 450px;
+          width: 40px;
+          height: 8px;
+          background: repeating-linear-gradient(
+            90deg,
+            var(--steel-dark) 0px,
+            var(--steel-dark) 3px,
+            var(--floor) 3px,
+            var(--floor) 5px
+          );
+          border-radius: 2px;
+          z-index: 2;
+          opacity: 0.4;
+        "
+      ></div>
+
+      <!-- Small reference board on wall between stations 2 and 3 -->
+      <div
+        style="
+          position: absolute;
+          top: 46px;
+          left: 320px;
+          width: 30px;
+          height: 18px;
+          background: var(--steel-dark);
+          border: 1px solid var(--steel-mid);
+          border-radius: 1px;
+          z-index: 3;
+        "
+      >
+        <div
+          style="margin: 2px; width: 10px; height: 2px; background: var(--cyan-dim); opacity: 0.5; border-radius: 1px"
+        ></div>
+        <div
+          style="
+            margin: 2px;
+            width: 16px;
+            height: 1px;
+            background: var(--steel-light);
+            opacity: 0.3;
+            border-radius: 1px;
+          "
+        ></div>
+        <div
+          style="
+            margin: 2px;
+            width: 12px;
+            height: 1px;
+            background: var(--steel-light);
+            opacity: 0.3;
+            border-radius: 1px;
+          "
+        ></div>
+      </div>
+
+      <!-- ===== Station 1: Architecture (completed) ===== -->
+      <div class="station" style="left: 40px; top: 68px">
+        <div class="station-platform">
+          <div class="alert-light ok"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--analyst)"></span>
+            <span style="color: var(--analyst)">Architecture</span>
+          </div>
+          <div class="station-interior">
+            <div class="monitor-bank">
+              <div class="monitor">
+                <span class="label-text">STATUS</span> <span class="green-text">COMPLETE</span><br />
+                <span class="label-text">TIME</span> <span class="time-text">0m 32s</span><br />
+                <span class="label-text">IMPACT</span> <span class="metric">medium</span>
+              </div>
+            </div>
+            <div class="shelf-unit">
+              <div class="shelf-label">Output</div>
+              <div class="shelf-rack">
+                <div
+                  class="artifact-obj"
+                  style="background: linear-gradient(180deg, var(--art-arch), #7eb8df)"
+                  title="architecture-assessment.md"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="tool-rack">
+            <div class="tool-item"></div>
+            <div class="tool-item" style="width: 6px"></div>
+            <div class="tool-item"></div>
+          </div>
+        </div>
+        <!-- Time ring -->
+        <div class="time-ring">
+          <div class="time-ring-fill fast" style="width: 100%"></div>
+        </div>
+        <!-- Agent (resting) -->
+        <div class="agent-area" style="bottom: -30px">
+          <div class="agent-sprite">
+            <div class="head" style="background: linear-gradient(180deg, #5577ff, #3355cc)"></div>
+            <div class="body" style="background: linear-gradient(180deg, #4466dd, #2244aa)"></div>
+          </div>
+        </div>
+        <!-- Thought bubble (done) -->
+        <div class="thought-bubble" style="top: -42px; left: 10px; min-width: 90px">
+          <div class="bubble-role" style="color: var(--analyst)">Architect</div>
+          <div class="bubble-text" style="color: var(--green)">Done. Impact: medium</div>
+        </div>
+      </div>
+
+      <!-- ===== Station 2: Planning (completed) ===== -->
+      <div class="station" style="left: 210px; top: 68px">
+        <div class="station-platform">
+          <div class="alert-light ok"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--planner)"></span>
+            <span style="color: var(--planner)">Planning</span>
+          </div>
+          <div class="station-interior">
+            <div class="monitor-bank">
+              <div class="monitor">
+                <span class="label-text">STATUS</span> <span class="green-text">COMPLETE</span><br />
+                <span class="label-text">TIME</span> <span class="time-text">0m 48s</span><br />
+                <span class="label-text">STEPS</span> <span class="metric">4 steps</span>
+              </div>
+            </div>
+            <div class="shelf-unit">
+              <div class="shelf-label">Output</div>
+              <div class="shelf-rack">
+                <div
+                  class="artifact-obj"
+                  style="background: linear-gradient(180deg, var(--art-plan), #82c29b)"
+                  title="implementation-plan.md"
+                ></div>
+                <div
+                  class="artifact-obj"
+                  style="background: linear-gradient(180deg, #d0ebff, #a0c8e8)"
+                  title="implementation-plan.json"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="tool-rack">
+            <div class="tool-item"></div>
+            <div class="tool-item" style="width: 5px"></div>
+          </div>
+        </div>
+        <div class="time-ring">
+          <div class="time-ring-fill fast" style="width: 100%"></div>
+        </div>
+        <div class="agent-area" style="bottom: -30px">
+          <div class="agent-sprite">
+            <div class="head" style="background: linear-gradient(180deg, #55dd55, #33aa33)"></div>
+            <div class="body" style="background: linear-gradient(180deg, #44cc44, #228822)"></div>
+          </div>
+        </div>
+        <div class="thought-bubble" style="top: -42px; left: 10px; min-width: 100px">
+          <div class="bubble-role" style="color: var(--planner)">Planner</div>
+          <div class="bubble-text" style="color: var(--green)">Done. 4 steps planned</div>
+        </div>
+      </div>
+
+      <!-- ===== Station 3: Implementation (completed, multi-version) ===== -->
+      <div class="station" style="left: 380px; top: 68px">
+        <div class="station-platform">
+          <div class="alert-light ok"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--author)"></span>
+            <span style="color: var(--author)">Implementation</span>
+          </div>
+          <div class="station-interior">
+            <div class="monitor-bank">
+              <div class="monitor">
+                <span class="label-text">STATUS</span> <span class="green-text">COMPLETE</span><br />
+                <span class="label-text">TIME</span> <span class="time-text">2m 32s</span><br />
+                <span class="label-text">GATES</span> <span class="green-text">3/3 pass</span>
+              </div>
+            </div>
+            <div class="shelf-unit">
+              <div class="shelf-label">Output</div>
+              <div class="shelf-rack">
+                <div
+                  class="artifact-obj has-version"
+                  data-version="v1"
+                  style="background: linear-gradient(180deg, var(--art-code), #ddc88f)"
+                  title="change-summary.md v1"
+                ></div>
+                <div
+                  class="artifact-obj has-version"
+                  data-version="v2"
+                  style="background: linear-gradient(180deg, var(--art-code), #ddc88f); opacity: 0.7"
+                  title="change-summary.md v2"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div class="tool-rack">
+            <div class="tool-item"></div>
+            <div class="tool-item" style="width: 7px"></div>
+            <div class="tool-item"></div>
+            <div class="tool-item" style="width: 5px"></div>
+          </div>
+        </div>
+        <div class="time-ring">
+          <div class="time-ring-fill moderate" style="width: 100%"></div>
+        </div>
+        <div class="agent-area" style="bottom: -30px">
+          <div class="agent-sprite">
+            <div class="head" style="background: linear-gradient(180deg, #dddd55, #aaaa33)"></div>
+            <div class="body" style="background: linear-gradient(180deg, #cccc44, #888822)"></div>
+          </div>
+        </div>
+        <div class="thought-bubble" style="top: -42px; left: 0px; min-width: 120px">
+          <div class="bubble-role" style="color: var(--author)">Coder</div>
+          <div class="bubble-text" style="color: var(--green)">Done. 4/4 steps. v2 after fixes</div>
+        </div>
+      </div>
+
+      <!-- ===== Station 4: Review (ACTIVE - expanded with 3 reviewers) ===== -->
+      <div class="station review-station" style="left: 555px; top: 55px">
+        <div class="station-platform">
+          <div class="alert-light warning"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--reviewer)"></span>
+            <span style="color: var(--reviewer)">Review</span>
+            <span style="font-size: 7px; color: var(--amber); margin-left: auto; margin-right: 16px">Round 1</span>
+          </div>
+          <div class="station-interior" style="flex-direction: column; gap: 3px">
+            <!-- Multi-agent row: 3 parallel reviewers -->
+            <div class="multi-agent-row">
+              <!-- Reviewer 1: Code review -->
+              <div class="mini-agent-cell">
+                <div class="agent-sprite working" style="margin: 0 auto; width: 18px; height: 22px">
+                  <div
+                    class="head"
+                    style="
+                      background: linear-gradient(180deg, #ff6655, #cc3333);
+                      width: 9px;
+                      height: 7px;
+                      border-radius: 2px 2px 1px 1px;
+                    "
+                  ></div>
+                  <div
+                    class="body"
+                    style="background: linear-gradient(180deg, #ee5544, #aa2222); width: 12px; height: 9px"
+                  ></div>
+                </div>
+                <div class="mini-label" style="color: var(--reviewer)">Code</div>
+              </div>
+              <!-- Reviewer 2: Silent failures -->
+              <div class="mini-agent-cell">
+                <div class="agent-sprite working" style="margin: 0 auto; width: 18px; height: 22px">
+                  <div
+                    class="head"
+                    style="
+                      background: linear-gradient(180deg, #ff6655, #cc3333);
+                      width: 9px;
+                      height: 7px;
+                      border-radius: 2px 2px 1px 1px;
+                    "
+                  ></div>
+                  <div
+                    class="body"
+                    style="background: linear-gradient(180deg, #ee5544, #aa2222); width: 12px; height: 9px"
+                  ></div>
+                </div>
+                <div class="mini-label" style="color: var(--reviewer)">Silent</div>
+              </div>
+              <!-- Reviewer 3: Test review -->
+              <div class="mini-agent-cell">
+                <div class="agent-sprite working" style="margin: 0 auto; width: 18px; height: 22px">
+                  <div
+                    class="head"
+                    style="
+                      background: linear-gradient(180deg, #ff6655, #cc3333);
+                      width: 9px;
+                      height: 7px;
+                      border-radius: 2px 2px 1px 1px;
+                    "
+                  ></div>
+                  <div
+                    class="body"
+                    style="background: linear-gradient(180deg, #ee5544, #aa2222); width: 12px; height: 9px"
+                  ></div>
+                </div>
+                <div class="mini-label" style="color: var(--reviewer)">Tests</div>
+              </div>
+            </div>
+            <!-- Monitor for review -->
+            <div class="monitor" style="margin: 0 4px">
+              <span class="label-text">REVIEWERS</span> <span class="status-text">3 active</span> |
+              <span class="label-text">ROUND</span> <span class="time-text">1</span><br />
+              <span class="label-text">FINDINGS</span>
+              <span class="red-text">1F</span>
+              <span class="time-text">2W</span>
+              <span style="color: #cccc55">1T</span>
+              <span style="color: #8888ff">2R</span>
+              <span style="color: var(--steel-light)">1S</span>
+            </div>
+            <!-- Shelf with partial results -->
+            <div style="display: flex; gap: 3px; padding: 0 4px 2px; align-items: center">
+              <div class="shelf-label" style="font-size: 6px; white-space: nowrap">Findings:</div>
+              <div class="shelf-rack">
+                <div
+                  class="artifact-obj"
+                  style="background: linear-gradient(180deg, var(--art-review), #dda0a0); width: 10px; height: 12px"
+                  title="code-review.md"
+                ></div>
+                <div
+                  class="artifact-obj"
+                  style="background: linear-gradient(180deg, var(--art-review), #dda0a0); width: 10px; height: 12px"
+                  title="silent-failure-review.md"
+                ></div>
+                <div
+                  class="artifact-obj"
+                  style="
+                    background: linear-gradient(180deg, var(--art-review), #dda0a0);
+                    width: 10px;
+                    height: 12px;
+                    opacity: 0.5;
+                  "
+                  title="test-review.md (in progress)"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="time-ring" style="width: 230px">
+          <div class="time-ring-fill moderate" style="width: 65%"></div>
+        </div>
+
+        <!-- Thought bubbles for reviewers (staggered) -->
+        <div class="thought-bubble alert" style="top: -58px; left: -20px; max-width: 160px">
+          <div class="bubble-role" style="color: var(--reviewer)">Code reviewer</div>
+          <div class="bubble-text">
+            <span class="finding-badge fatal">F</span> Unbounded array growth in event-folder.ts
+          </div>
+        </div>
+        <div class="thought-bubble" style="top: -44px; left: 140px; max-width: 140px">
+          <div class="bubble-role" style="color: var(--reviewer)">Silent failure rev.</div>
+          <div class="bubble-text">Checking error handling in status-adapter...</div>
+        </div>
+        <div class="thought-bubble" style="top: -28px; right: -30px; left: auto; max-width: 130px">
+          <div class="bubble-role" style="color: var(--reviewer)">Test reviewer</div>
+          <div class="bubble-text">Analyzing test coverage for edge cases...</div>
+        </div>
+      </div>
+
+      <!-- ===== Station 5: Simplifier (pending) ===== -->
+      <div class="station" style="left: 830px; top: 80px; opacity: 0.35">
+        <div class="station-platform" style="width: 120px">
+          <div class="alert-light idle"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--author)"></span>
+            <span style="color: var(--steel-mid)">Simplifier</span>
+          </div>
+          <div class="station-interior">
+            <div class="monitor-bank">
+              <div class="monitor">
+                <span class="label-text">STATUS</span> <span style="color: var(--steel-mid)">PENDING</span><br />
+                <span class="label-text">WAITING</span>
+              </div>
+            </div>
+            <div class="shelf-unit" style="width: 30px">
+              <div class="shelf-label">Output</div>
+              <div class="shelf-rack"></div>
+            </div>
+          </div>
+        </div>
+        <div class="time-ring" style="width: 110px">
+          <div class="time-ring-fill" style="width: 0%"></div>
+        </div>
+        <div class="agent-area" style="bottom: -28px">
+          <div class="agent-sprite">
+            <div class="head" style="background: #556; width: 10px; height: 8px; border-radius: 2px 2px 1px 1px"></div>
+            <div class="body" style="background: #445; width: 12px; height: 9px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Station 6: Holistic (pending) ===== -->
+      <div class="station" style="left: 960px; top: 80px; opacity: 0.35">
+        <div class="station-platform" style="width: 120px">
+          <div class="alert-light idle"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--reviewer)"></span>
+            <span style="color: var(--steel-mid)">Holistic</span>
+          </div>
+          <div class="station-interior">
+            <div class="monitor-bank">
+              <div class="monitor">
+                <span class="label-text">STATUS</span> <span style="color: var(--steel-mid)">PENDING</span><br />
+                <span class="label-text">WAITING</span>
+              </div>
+            </div>
+            <div class="shelf-unit" style="width: 30px">
+              <div class="shelf-label">Output</div>
+              <div class="shelf-rack"></div>
+            </div>
+          </div>
+        </div>
+        <div class="time-ring" style="width: 110px">
+          <div class="time-ring-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- ===== Station 7: Summary (pending) ===== -->
+      <div class="station" style="left: 1090px; top: 80px; opacity: 0.35">
+        <div class="station-platform" style="width: 120px">
+          <div class="alert-light idle"></div>
+          <div class="station-label">
+            <span class="role-dot" style="background: var(--orchestrator)"></span>
+            <span style="color: var(--steel-mid)">Summary</span>
+          </div>
+          <div class="station-interior">
+            <div class="monitor-bank">
+              <div class="monitor">
+                <span class="label-text">STATUS</span> <span style="color: var(--steel-mid)">PENDING</span><br />
+                <span class="label-text">WAITING</span>
+              </div>
+            </div>
+            <div class="shelf-unit" style="width: 30px">
+              <div class="shelf-label">Output</div>
+              <div class="shelf-rack"></div>
+            </div>
+          </div>
+        </div>
+        <div class="time-ring" style="width: 110px">
+          <div class="time-ring-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- ===== Orchestrator sprite (at routing board area) ===== -->
+      <div class="orchestrator-indicator" style="left: 50px; bottom: 50px">
+        <div class="orchestrator-sprite">
+          <div class="beacon"></div>
+          <div class="head"></div>
+          <div class="body"></div>
+        </div>
+        <div
+          style="
+            font-size: 6px;
+            color: var(--amber);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-top: 1px;
+          "
+        >
+          Orchestrator
+        </div>
+      </div>
+
+      <!-- Orchestrator thought bubble -->
+      <div class="thought-bubble" style="bottom: 90px; left: 20px; min-width: 120px; max-width: 150px; z-index: 31">
+        <div class="bubble-role" style="color: var(--orchestrator)">Orchestrator</div>
+        <div class="bubble-text">Dispatched 3 reviewers. Waiting for results...</div>
+      </div>
+
+      <!-- ===== Blocking tether: Review waiting prevents Simplifier ===== -->
+      <svg class="tether-line" style="left: 0; top: 0; width: 100%; height: 100%">
+        <defs>
+          <linearGradient id="tether-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color: var(--reviewer); stop-opacity: 0.6" />
+            <stop offset="100%" style="stop-color: var(--reviewer); stop-opacity: 0.15" />
+          </linearGradient>
+        </defs>
+        <!-- Tether from review to simplifier -->
+        <line x1="805" y1="150" x2="850" y2="140" stroke="url(#tether-grad)" stroke-width="1.5" stroke-dasharray="4 3">
+          <animate attributeName="stroke-dashoffset" from="0" to="-7" dur="1s" repeatCount="indefinite" />
+        </line>
+      </svg>
+
+      <!-- ===== Notification toast ===== -->
+      <div class="notification">
+        <span class="notif-icon" style="color: var(--red)">&#x26A0;</span>
+        <span class="notif-text"
+          ><strong>Fatal finding</strong> from code-reviewer: Unbounded array growth in event-folder.ts</span
+        >
+      </div>
+
+      <!-- ===== Detail panel (code-review findings) ===== -->
+      <div class="detail-panel">
+        <div class="panel-header">
+          <span class="panel-title">Code review findings</span>
+          <span style="font-size: 8px; color: var(--reviewer)">code-reviewer</span>
+          <button class="panel-close">x</button>
+        </div>
+        <div class="panel-body">
+          <!-- Severity summary -->
+          <div class="severity-summary">
+            <span class="sev-badge f">1 F</span>
+            <span class="sev-badge w">2 W</span>
+            <span class="sev-badge t">0 T</span>
+            <span class="sev-badge r">2 R</span>
+            <span class="sev-badge s">1 S</span>
+            <span class="sev-badge l">0 L</span>
+          </div>
+
+          <!-- Reviewer section -->
+          <div class="reviewer-section" style="border-color: var(--reviewer)">
+            <div class="reviewer-name" style="color: var(--reviewer)">
+              aspect-code-reviewer
+              <span style="font-size: 7px; color: var(--steel-light); font-weight: normal">// Criticality: High</span>
+            </div>
+            <table class="findings-table">
+              <thead>
+                <tr>
+                  <th style="width: 28px">Sev</th>
+                  <th>Finding</th>
+                  <th style="width: 80px">File</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="sev-badge f">F</span></td>
+                  <td>
+                    Unbounded array growth in event log accumulator. Each event push is O(1) but the array is never
+                    trimmed, causing memory to grow linearly with run length.
+                  </td>
+                  <td><span class="file-ref">event-folder.ts:42</span></td>
+                </tr>
+                <tr>
+                  <td><span class="sev-badge w">W</span></td>
+                  <td>
+                    Race condition in project-watcher when multiple file changes arrive within the debounce window.
+                    Could lead to stale status data.
+                  </td>
+                  <td><span class="file-ref">project-watcher.ts:87</span></td>
+                </tr>
+                <tr>
+                  <td><span class="sev-badge w">W</span></td>
+                  <td>
+                    Error thrown in status-adapter is caught but not re-thrown with context, making debugging difficult.
+                  </td>
+                  <td><span class="file-ref">status-adapter.ts:134</span></td>
+                </tr>
+                <tr>
+                  <td><span class="sev-badge r">R</span></td>
+                  <td>
+                    Duplicated phase-name mapping logic in run-to-factory-floor.ts and floor-choreographer.ts. Extract
+                    shared helper.
+                  </td>
+                  <td><span class="file-ref">run-to-factory-floor.ts:23</span></td>
+                </tr>
+                <tr>
+                  <td><span class="sev-badge r">R</span></td>
+                  <td>Magic number 32 (sprite size) used in 4 files. Extract to shared constant in dimensions.ts.</td>
+                  <td><span class="file-ref">sprite-definitions.ts:15</span></td>
+                </tr>
+                <tr>
+                  <td><span class="sev-badge s">S</span></td>
+                  <td>
+                    Inconsistent naming: <code style="color: var(--cyan); font-size: 8px">agentSlotIndex</code> vs
+                    <code style="color: var(--cyan); font-size: 8px">slotIndex</code> across type definitions.
+                  </td>
+                  <td><span class="file-ref">types.ts:52</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Version tabs for iteration comparison -->
+          <div style="margin-top: 14px">
+            <div
+              style="
+                font-size: 8px;
+                color: var(--steel-light);
+                margin-bottom: 4px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              "
+            >
+              Implementation diff
+            </div>
+            <div class="version-tabs">
+              <div class="version-tab active">v1</div>
+              <div class="version-tab">v2</div>
+              <div class="version-tab" style="margin-left: auto; color: var(--cyan-dim); border-color: var(--cyan-dim)">
+                Compare...
+              </div>
+            </div>
+            <!-- Code diff snippet -->
+            <div
+              style="
+                background: #0a1a1e;
+                border: 1px solid var(--screen-border);
+                border-radius: 3px;
+                padding: 6px 8px;
+                font-size: 8px;
+                line-height: 1.6;
+                overflow-x: auto;
+              "
+            >
+              <div style="color: var(--steel-mid); margin-bottom: 4px">// event-folder.ts</div>
+              <div style="color: #558855">+ const MAX_EVENTS = 10_000;</div>
+              <div style="color: #558855">+ if (events.length > MAX_EVENTS) {</div>
+              <div style="color: #558855">+ &nbsp;&nbsp;events = events.slice(-MAX_EVENTS);</div>
+              <div style="color: #558855">+ }</div>
+              <div style="color: var(--steel-mid); margin-top: 4px">// status-adapter.ts</div>
+              <div style="color: #885555">- } catch (err) {</div>
+              <div style="color: #558855">+ } catch (err: unknown) {</div>
+              <div style="color: #558855">
+                + &nbsp;&nbsp;const msg = err instanceof Error ? err.message : String(err);
+              </div>
+              <div style="color: #558855">+ &nbsp;&nbsp;throw new Error(`Failed to adapt run status: ${msg}`);</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Footer / transport ===== -->
+    <div class="footer">
+      <button class="transport-btn" title="Step back">&#x23EE;</button>
+      <button class="transport-btn" title="Pause" style="border-color: var(--cyan-dim); color: var(--cyan)">
+        &#x23F8;
+      </button>
+      <button class="transport-btn" title="Step forward">&#x23ED;</button>
+      <div class="scrubber">
+        <div class="scrubber-fill"></div>
+        <div class="scrubber-handle"></div>
+      </div>
+      <span class="speed-label">1x</span>
+      <span style="color: var(--steel-mid)">|</span>
+      <span>Phase 4 of 7</span>
+      <span style="color: var(--steel-mid)">|</span>
+      <span style="color: var(--amber)">6m 42s</span>
+      <span style="color: var(--steel-mid)">/</span>
+      <span style="color: var(--steel-mid)">~10m est.</span>
+    </div>
+
+    <script>
+      // ===== Thought bubble cycling animation =====
+      const bubbleCycles = {
+        'code-reviewer': [
+          { html: '<span class="finding-badge fatal">F</span> Unbounded array growth in event-folder.ts', alert: true },
+          {
+            html: '<span class="finding-badge warning">W</span> Race condition in project-watcher debounce',
+            alert: false,
+          },
+          {
+            html: '<span class="finding-badge warning">W</span> Error context lost in status-adapter catch',
+            alert: false,
+          },
+          { html: 'Criticality: <strong style="color: var(--red);">High</strong> (1 fatal)', alert: true },
+        ],
+        'silent-failure': [
+          { html: 'Checking error handling in status-adapter...', alert: false },
+          { html: 'Analyzing retry logic in project-watcher...', alert: false },
+          { html: 'No silent failures found so far', alert: false },
+          { html: '<span class="finding-badge style">R</span> Missing fallback in run-index parser', alert: false },
+        ],
+        'test-reviewer': [
+          { html: 'Analyzing test coverage for edge cases...', alert: false },
+          { html: 'event-folder.ts: 0% branch coverage', alert: false },
+          { html: '<span class="finding-badge test">T</span> No test for max-events boundary', alert: false },
+          { html: 'Coverage gap in floor-choreographer', alert: false },
+        ],
+      };
+
+      const bubbleEls = document.querySelectorAll('.review-station .thought-bubble');
+      const keys = ['code-reviewer', 'silent-failure', 'test-reviewer'];
+      const indices = [0, 0, 0];
+
+      function cycleBubble(idx) {
+        const key = keys[idx];
+        if (!key || !bubbleCycles[key]) return;
+        const cycles = bubbleCycles[key];
+        indices[idx] = (indices[idx] + 1) % cycles.length;
+        const entry = cycles[indices[idx]];
+        const el = bubbleEls[idx];
+        if (!el) return;
+        const textEl = el.querySelector('.bubble-text');
+        if (textEl) textEl.innerHTML = entry.html;
+        if (entry.alert) {
+          el.classList.add('alert');
+        } else {
+          el.classList.remove('alert');
+        }
+      }
+
+      // Stagger the cycling intervals
+      setTimeout(() => setInterval(() => cycleBubble(0), 5000), 0);
+      setTimeout(() => setInterval(() => cycleBubble(1), 4500), 1500);
+      setTimeout(() => setInterval(() => cycleBubble(2), 4800), 3000);
+
+      // ===== Time ring animation for active station =====
+      const reviewRing = document.querySelector('.review-station .time-ring-fill');
+      let ringWidth = 65;
+      setInterval(() => {
+        ringWidth = Math.min(100, ringWidth + 0.5);
+        if (reviewRing) {
+          reviewRing.style.width = ringWidth + '%';
+          if (ringWidth > 85) {
+            reviewRing.className = 'time-ring-fill slow';
+          } else if (ringWidth > 70) {
+            reviewRing.className = 'time-ring-fill moderate';
+          }
+        }
+      }, 1000);
+
+      // ===== Elapsed time counter =====
+      let elapsedSec = 6 * 60 + 42;
+      const elapsedEl = document.querySelector('.header .elapsed');
+      const footerElapsed = document.querySelectorAll('.footer span');
+      setInterval(() => {
+        elapsedSec++;
+        const m = Math.floor(elapsedSec / 60);
+        const s = elapsedSec % 60;
+        const text = `${m}m ${s.toString().padStart(2, '0')}s`;
+        if (elapsedEl) elapsedEl.textContent = text;
+        // Update footer too
+        footerElapsed.forEach((span) => {
+          if (span.textContent && span.textContent.includes('m ') && span.style.color.includes('amber')) {
+            // This is the elapsed time span in the footer
+          }
+        });
+      }, 1000);
+
+      // ===== Notification dismiss after 10 seconds =====
+      setTimeout(() => {
+        const notif = document.querySelector('.notification');
+        if (notif) {
+          notif.style.transition = 'opacity 0.5s, transform 0.5s';
+          notif.style.opacity = '0';
+          notif.style.transform = 'translateX(20px)';
+          setTimeout(() => notif.remove(), 500);
+        }
+      }, 10000);
+
+      // ===== Scrubber fill animation =====
+      const scrubberFill = document.querySelector('.scrubber-fill');
+      const scrubberHandle = document.querySelector('.scrubber-handle');
+      let scrubPos = 58;
+      setInterval(() => {
+        scrubPos = Math.min(100, scrubPos + 0.1);
+        if (scrubberFill) scrubberFill.style.width = scrubPos + '%';
+        if (scrubberHandle) scrubberHandle.style.left = scrubPos + '%';
+      }, 1000);
+    </script>
+  </body>
+</html>

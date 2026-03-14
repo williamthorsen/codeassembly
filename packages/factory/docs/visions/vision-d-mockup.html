@@ -1,0 +1,2218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision D: The vertical facility</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: 'Courier New', monospace;
+        background: #2a3a42;
+        color: #d0dce0;
+      }
+
+      :root {
+        /* Sci-fi industrial palette — NOT dark-on-dark */
+        --bg-far: #1e3038; /* Deepest background layer — misty teal */
+        --bg-mid: #243840; /* Middle depth layer */
+        --bg-near: #2a4048; /* Near background */
+        --steel: #4a5c68; /* Primary steel surface */
+        --steel-lt: #5a7080; /* Light steel */
+        --steel-dk: #3a4c56; /* Dark steel */
+        --slate: #3e5260; /* Slate surfaces */
+        --panel: #354858; /* Panel backgrounds */
+        --rivet: #6a8090; /* Rivet/bolt highlights */
+
+        /* Signal colors — accents only */
+        --cyan: #55ffff;
+        --cyan-dim: #2a8888;
+        --cyan-glow: rgba(85, 255, 255, 0.15);
+        --amber: #ffaa44;
+        --amber-dim: #886622;
+        --amber-glow: rgba(255, 170, 68, 0.15);
+        --green: #55ff55;
+        --green-dim: #2a882a;
+        --red: #ff5555;
+        --red-dim: #883030;
+
+        /* Role-type colors */
+        --orchestrator: #ff55ff;
+        --analyst: #5555ff;
+        --planner: #55ff55;
+        --author: #ffff55;
+        --reviewer: #ff5555;
+
+        /* Artifact colors */
+        --art-arch: #7ab8d8;
+        --art-plan: #82c292;
+        --art-code: #d8c878;
+        --art-review: #d88888;
+        --art-summary: #a8b8c8;
+      }
+
+      /* ── Main layout ────────────────────────────────────────────── */
+      .facility {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* ── Status bar (top) ───────────────────────────────────────── */
+      .status-bar {
+        height: 36px;
+        background: var(--steel-dk);
+        border-bottom: 2px solid var(--steel);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 20px;
+        font-size: 11px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 100;
+      }
+      .status-bar::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyan-dim), transparent);
+      }
+      .status-bar .label {
+        color: #6a8898;
+      }
+      .status-bar .value {
+        color: var(--cyan);
+        font-weight: bold;
+      }
+      .status-bar .status-badge {
+        background: var(--green-dim);
+        color: var(--green);
+        padding: 2px 8px;
+        border-radius: 2px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        animation: pulse-glow 2s infinite;
+      }
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 4px rgba(85, 255, 85, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 12px rgba(85, 255, 85, 0.5);
+        }
+      }
+      .timing-strip {
+        flex: 1;
+        height: 6px;
+        background: var(--steel);
+        border-radius: 3px;
+        overflow: hidden;
+        display: flex;
+        position: relative;
+      }
+      .timing-strip .seg {
+        height: 100%;
+        position: relative;
+      }
+      .timing-strip .seg.done {
+        opacity: 0.8;
+      }
+      .timing-strip .seg.active {
+        animation: seg-pulse 1.5s infinite;
+      }
+      @keyframes seg-pulse {
+        0%,
+        100% {
+          opacity: 0.8;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* ── Facility viewport ──────────────────────────────────────── */
+      .facility-viewport {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        /* Layered misty teal background */
+        background: linear-gradient(180deg, var(--bg-far) 0%, var(--bg-mid) 40%, var(--bg-near) 100%);
+      }
+
+      /* ── Background depth layers (parallax-style) ───────────────── */
+      .bg-layer {
+        position: absolute;
+        width: 100%;
+        pointer-events: none;
+      }
+      .bg-layer.far {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0.3;
+      }
+      .bg-layer.mid {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0.4;
+      }
+
+      /* Pipes in background */
+      .bg-pipe {
+        position: absolute;
+        background: var(--steel-dk);
+        border-radius: 4px;
+      }
+      .bg-pipe.horizontal {
+        height: 8px;
+      }
+      .bg-pipe.vertical {
+        width: 8px;
+      }
+      .bg-pipe .joint {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--steel);
+        border: 2px solid var(--rivet);
+      }
+      .bg-pipe .flow {
+        position: absolute;
+        background: var(--cyan-dim);
+        border-radius: 3px;
+        animation: pipe-flow 3s linear infinite;
+        opacity: 0.5;
+      }
+      .bg-pipe.horizontal .flow {
+        width: 20px;
+        height: 4px;
+        top: 2px;
+      }
+      @keyframes pipe-flow {
+        0% {
+          left: -20px;
+        }
+        100% {
+          left: calc(100% + 20px);
+        }
+      }
+
+      /* ── Levels container ───────────────────────────────────────── */
+      .levels {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Level (floor) ──────────────────────────────────────────── */
+      .level {
+        position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        min-height: 0;
+      }
+
+      /* Catwalk / platform */
+      .platform {
+        position: relative;
+        height: 12px;
+        background: var(--steel);
+        border-top: 2px solid var(--steel-lt);
+        border-bottom: 2px solid var(--steel-dk);
+        z-index: 10;
+      }
+      .platform::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--rivet) 0px,
+          var(--rivet) 3px,
+          transparent 3px,
+          transparent 12px
+        );
+        opacity: 0.6;
+      }
+
+      /* Cross-bracing under platforms */
+      .cross-brace {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+        overflow: hidden;
+      }
+      .cross-brace .brace {
+        position: absolute;
+        width: 2px;
+        background: var(--steel-dk);
+        transform-origin: top left;
+      }
+
+      /* Railing */
+      .railing {
+        position: absolute;
+        top: -20px;
+        height: 20px;
+        z-index: 11;
+      }
+      .railing .rail-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--amber-dim);
+        border-radius: 2px;
+      }
+      .railing .rail-post {
+        position: absolute;
+        top: 0;
+        width: 3px;
+        height: 20px;
+        background: var(--amber-dim);
+        border-radius: 1px;
+      }
+
+      /* ── Stations ───────────────────────────────────────────────── */
+      .station {
+        position: absolute;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .station-body {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+
+      /* Station workbench */
+      .workbench {
+        width: 110px;
+        height: 42px;
+        background: var(--panel);
+        border: 2px solid var(--steel);
+        border-radius: 3px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .workbench::before {
+        /* Rivets */
+        content: '';
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        right: 3px;
+        bottom: 3px;
+        border: 1px dashed rgba(106, 128, 144, 0.2);
+        border-radius: 2px;
+      }
+
+      /* Screen on workbench */
+      .screen {
+        width: 32px;
+        height: 22px;
+        background: #1a2a30;
+        border: 1px solid var(--cyan-dim);
+        border-radius: 2px;
+        position: relative;
+        overflow: hidden;
+      }
+      .screen.active {
+        border-color: var(--cyan);
+        box-shadow:
+          0 0 8px var(--cyan-glow),
+          inset 0 0 6px rgba(85, 255, 255, 0.1);
+      }
+      .screen .scanlines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent 0px,
+          transparent 2px,
+          rgba(0, 0, 0, 0.15) 2px,
+          rgba(0, 0, 0, 0.15) 4px
+        );
+        pointer-events: none;
+      }
+      .screen .code-lines {
+        padding: 2px 3px;
+        font-size: 4px;
+        line-height: 5px;
+        color: var(--cyan);
+        opacity: 0.7;
+      }
+      .screen.active .code-lines {
+        opacity: 1;
+        animation: type-code 0.8s steps(4) infinite;
+      }
+      @keyframes type-code {
+        0% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* Station label */
+      .station-label {
+        font-size: 8px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: var(--steel-lt);
+        margin-top: 2px;
+        text-align: center;
+        background: var(--steel-dk);
+        padding: 1px 6px;
+        border-radius: 1px;
+      }
+
+      /* Phase sign hanging from ceiling/pipe */
+      .phase-sign {
+        position: absolute;
+        top: -40px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 9px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 2px;
+        border: 1px solid;
+        white-space: nowrap;
+        z-index: 30;
+      }
+      .phase-sign::before {
+        content: '';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        width: 1px;
+        height: 12px;
+        background: var(--steel);
+      }
+      .phase-sign::after {
+        content: '';
+        position: absolute;
+        top: -15px;
+        left: calc(50% - 3px);
+        width: 7px;
+        height: 4px;
+        background: var(--steel);
+        border-radius: 1px;
+      }
+
+      /* ── Agents (pixel-art characters) ──────────────────────────── */
+      .agent {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      /* Pixel art agent sprite */
+      .sprite {
+        width: 24px;
+        height: 32px;
+        image-rendering: pixelated;
+        position: relative;
+      }
+      .sprite .head {
+        width: 12px;
+        height: 10px;
+        border-radius: 3px 3px 1px 1px;
+        margin: 0 auto;
+        position: relative;
+      }
+      .sprite .head .eyes {
+        position: absolute;
+        bottom: 2px;
+        left: 2px;
+        right: 2px;
+        height: 3px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .sprite .head .eyes .eye {
+        width: 2px;
+        height: 2px;
+        background: #fff;
+        border-radius: 1px;
+      }
+      .sprite .body {
+        width: 16px;
+        height: 12px;
+        margin: 1px auto 0;
+        border-radius: 2px;
+        position: relative;
+      }
+      .sprite .body .arms {
+        position: absolute;
+        top: 2px;
+        left: -3px;
+        right: -3px;
+        height: 8px;
+      }
+      .sprite .body .arm-l,
+      .sprite .body .arm-r {
+        position: absolute;
+        width: 4px;
+        height: 8px;
+        border-radius: 1px;
+        top: 0;
+      }
+      .sprite .body .arm-l {
+        left: 0;
+      }
+      .sprite .body .arm-r {
+        right: 0;
+      }
+      .sprite .legs {
+        width: 12px;
+        height: 6px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+      }
+      .sprite .legs .leg {
+        width: 4px;
+        height: 6px;
+        border-radius: 0 0 2px 2px;
+      }
+
+      /* Agent working animation */
+      .agent.working .sprite .body .arm-l {
+        animation: work-arm-l 0.6s ease-in-out infinite;
+      }
+      .agent.working .sprite .body .arm-r {
+        animation: work-arm-r 0.6s ease-in-out infinite 0.3s;
+      }
+      @keyframes work-arm-l {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(-15deg);
+        }
+      }
+      @keyframes work-arm-r {
+        0%,
+        100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(15deg);
+        }
+      }
+
+      /* Celebrating agent */
+      .agent.celebrating .sprite {
+        animation: celebrate 0.5s ease-in-out infinite;
+      }
+      @keyframes celebrate {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+
+      /* Concerned agent */
+      .agent.concerned .sprite .head {
+        animation: concerned-shake 0.3s ease-in-out infinite;
+      }
+      @keyframes concerned-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        50% {
+          transform: translateX(2px);
+        }
+      }
+
+      /* ── Thought/speech bubbles ─────────────────────────────────── */
+      .thought-bubble {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(42, 64, 72, 0.95);
+        border: 1px solid var(--steel-lt);
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 7px;
+        line-height: 10px;
+        white-space: nowrap;
+        z-index: 50;
+        max-width: 180px;
+        color: #c0d0d8;
+      }
+      .thought-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid var(--steel-lt);
+      }
+      .thought-bubble .bubble-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .thought-bubble .bubble-label {
+        font-size: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.6;
+      }
+      .thought-bubble .bubble-text {
+        font-weight: bold;
+        color: #e0eff5;
+      }
+      .thought-bubble.alert {
+        border-color: var(--amber);
+        background: rgba(50, 40, 25, 0.95);
+      }
+      .thought-bubble.alert .bubble-text {
+        color: var(--amber);
+      }
+      .thought-bubble.alert::after {
+        border-top-color: var(--amber);
+      }
+      .thought-bubble.error {
+        border-color: var(--red);
+        background: rgba(50, 25, 25, 0.95);
+        animation: bubble-alert 1s ease-in-out infinite;
+      }
+      .thought-bubble.error .bubble-text {
+        color: var(--red);
+      }
+      .thought-bubble.error::after {
+        border-top-color: var(--red);
+      }
+      @keyframes bubble-alert {
+        0%,
+        100% {
+          box-shadow: 0 0 4px rgba(255, 85, 85, 0.3);
+        }
+        50% {
+          box-shadow: 0 0 12px rgba(255, 85, 85, 0.6);
+        }
+      }
+
+      /* ── Artifacts (physical objects) ────────────────────────────── */
+      .artifact-stack {
+        display: flex;
+        gap: 2px;
+        position: absolute;
+        z-index: 15;
+      }
+      .artifact {
+        width: 14px;
+        height: 18px;
+        border-radius: 2px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .artifact:hover {
+        transform: translateY(-3px);
+        z-index: 20;
+      }
+      .artifact .doc-lines {
+        width: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .artifact .doc-lines .line {
+        height: 1px;
+        border-radius: 0.5px;
+        opacity: 0.5;
+      }
+      .artifact .version-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        font-size: 5px;
+        background: var(--steel-dk);
+        color: #aaa;
+        padding: 0 2px;
+        border-radius: 2px;
+        border: 1px solid var(--steel);
+      }
+
+      /* ── Time-on-task indicators ────────────────────────────────── */
+      .timer {
+        position: absolute;
+        font-size: 7px;
+        font-weight: bold;
+        padding: 1px 4px;
+        border-radius: 2px;
+        background: rgba(30, 48, 56, 0.9);
+        border: 1px solid var(--steel);
+        z-index: 25;
+      }
+      .timer.normal {
+        color: var(--cyan);
+        border-color: var(--cyan-dim);
+      }
+      .timer.warning {
+        color: var(--amber);
+        border-color: var(--amber-dim);
+      }
+      .timer.long {
+        color: var(--red);
+        border-color: var(--red-dim);
+        animation: timer-pulse 1s infinite;
+      }
+      @keyframes timer-pulse {
+        0%,
+        100% {
+          opacity: 0.8;
+        }
+        50% {
+          opacity: 1;
+          box-shadow: 0 0 6px rgba(255, 85, 85, 0.4);
+        }
+      }
+
+      /* Progress bar on station */
+      .progress-bar {
+        position: absolute;
+        bottom: -4px;
+        left: 2px;
+        right: 2px;
+        height: 3px;
+        background: var(--steel-dk);
+        border-radius: 2px;
+        overflow: hidden;
+        z-index: 12;
+      }
+      .progress-bar .fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.5s ease;
+      }
+
+      /* ── Pneumatic tubes ────────────────────────────────────────── */
+      .pneumatic-tube {
+        position: absolute;
+        z-index: 5;
+        pointer-events: none;
+      }
+      .pneumatic-tube .tube-body {
+        position: absolute;
+        background: rgba(74, 92, 104, 0.4);
+        border: 1px solid var(--steel);
+        border-radius: 6px;
+      }
+      .pneumatic-tube .tube-body.vertical {
+        width: 12px;
+      }
+      .pneumatic-tube .tube-body.horizontal {
+        height: 12px;
+      }
+      .pneumatic-tube .capsule {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--cyan);
+        opacity: 0.6;
+        animation: tube-travel 2.5s ease-in-out infinite;
+      }
+      @keyframes tube-travel {
+        0% {
+          top: 0;
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.8;
+        }
+        90% {
+          opacity: 0.8;
+        }
+        100% {
+          top: calc(100% - 8px);
+          opacity: 0;
+        }
+      }
+
+      /* ── Lift/elevator ──────────────────────────────────────────── */
+      .lift {
+        position: absolute;
+        z-index: 8;
+      }
+      .lift-shaft {
+        width: 20px;
+        background: var(--steel-dk);
+        border: 1px solid var(--steel);
+        border-radius: 2px;
+        position: relative;
+      }
+      .lift-shaft .rail {
+        position: absolute;
+        width: 2px;
+        top: 0;
+        bottom: 0;
+        background: var(--amber-dim);
+      }
+      .lift-shaft .rail.left {
+        left: 3px;
+      }
+      .lift-shaft .rail.right {
+        right: 3px;
+      }
+      .lift-shaft .car {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        left: 1px;
+        background: var(--panel);
+        border: 1px solid var(--amber-dim);
+        border-radius: 2px;
+        animation: lift-move 4s ease-in-out infinite;
+      }
+      @keyframes lift-move {
+        0%,
+        100% {
+          top: 5px;
+        }
+        50% {
+          top: calc(100% - 21px);
+        }
+      }
+
+      /* ── Conveyor belt ──────────────────────────────────────────── */
+      .conveyor {
+        position: absolute;
+        height: 8px;
+        background: var(--steel-dk);
+        border: 1px solid var(--steel);
+        border-radius: 4px;
+        z-index: 6;
+        overflow: hidden;
+      }
+      .conveyor .belt-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(
+          90deg,
+          var(--steel) 0px,
+          var(--steel) 3px,
+          var(--steel-dk) 3px,
+          var(--steel-dk) 8px
+        );
+        animation: belt-scroll 1s linear infinite;
+      }
+      @keyframes belt-scroll {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(8px);
+        }
+      }
+      .conveyor .roller {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--steel);
+        border: 1px solid var(--steel-lt);
+        top: -1px;
+      }
+      .conveyor .roller.left {
+        left: -1px;
+      }
+      .conveyor .roller.right {
+        right: -1px;
+      }
+
+      /* ── Blocking indicators (dependency lines) ─────────────────── */
+      .blocking-line {
+        position: absolute;
+        z-index: 35;
+        pointer-events: none;
+      }
+      .blocking-line .line {
+        stroke: var(--amber);
+        stroke-width: 2;
+        stroke-dasharray: 6 4;
+        animation: dash-flow 0.8s linear infinite;
+      }
+      @keyframes dash-flow {
+        0% {
+          stroke-dashoffset: 0;
+        }
+        100% {
+          stroke-dashoffset: -10;
+        }
+      }
+      .waiting-icon {
+        position: absolute;
+        font-size: 10px;
+        z-index: 36;
+        animation: wait-bounce 1s ease-in-out infinite;
+      }
+      @keyframes wait-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-3px);
+        }
+      }
+
+      /* ── Notification badges ────────────────────────────────────── */
+      .notification {
+        position: absolute;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 8px;
+        font-weight: bold;
+        animation: notif-draw 0.5s ease-in-out infinite alternate;
+      }
+      .notification.fatal {
+        background: rgba(60, 20, 20, 0.95);
+        border: 1px solid var(--red);
+        color: var(--red);
+      }
+      @keyframes notif-draw {
+        0% {
+          box-shadow: 0 0 4px rgba(255, 85, 85, 0.3);
+        }
+        100% {
+          box-shadow:
+            0 0 16px rgba(255, 85, 85, 0.6),
+            0 0 30px rgba(255, 85, 85, 0.2);
+        }
+      }
+      .notification .severity-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 2px;
+        font-size: 8px;
+        font-weight: bold;
+      }
+      .badge-F {
+        background: var(--red);
+        color: #fff;
+      }
+      .badge-W {
+        background: var(--amber);
+        color: #000;
+      }
+      .badge-T {
+        background: #ffff55;
+        color: #000;
+      }
+      .badge-R {
+        background: #5555ff;
+        color: #fff;
+      }
+      .badge-S {
+        background: #888;
+        color: #fff;
+      }
+      .badge-L {
+        background: #555;
+        color: #aaa;
+      }
+
+      /* ── Level labels ───────────────────────────────────────────── */
+      .level-label {
+        position: absolute;
+        left: 10px;
+        font-size: 8px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--steel-lt);
+        opacity: 0.5;
+        z-index: 2;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+      }
+
+      /* ── Orchestrator ───────────────────────────────────────────── */
+      .orchestrator {
+        position: absolute;
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .orchestrator .sprite .head {
+        background: var(--orchestrator);
+      }
+      .orchestrator .sprite .body {
+        background: color-mix(in srgb, var(--orchestrator) 60%, #333);
+      }
+      .orchestrator .sprite .body .arm-l,
+      .orchestrator .sprite .body .arm-r {
+        background: color-mix(in srgb, var(--orchestrator) 50%, #333);
+      }
+      .orchestrator .sprite .legs .leg {
+        background: color-mix(in srgb, var(--orchestrator) 40%, #333);
+      }
+      .orchestrator .orch-label {
+        font-size: 6px;
+        color: var(--orchestrator);
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+      }
+
+      /* ── Info panel (hover/click overlay) ────────────────────────── */
+      .info-panel {
+        position: absolute;
+        right: 12px;
+        top: 50px;
+        width: 260px;
+        background: rgba(42, 64, 72, 0.97);
+        border: 1px solid var(--steel-lt);
+        border-radius: 4px;
+        z-index: 200;
+        font-size: 10px;
+        overflow: hidden;
+      }
+      .info-panel .panel-header {
+        padding: 8px 10px;
+        background: var(--steel-dk);
+        border-bottom: 1px solid var(--steel);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .info-panel .panel-header .title {
+        font-weight: bold;
+        font-size: 11px;
+        color: #e0eff5;
+      }
+      .info-panel .panel-header .close-btn {
+        cursor: pointer;
+        color: var(--steel-lt);
+        font-size: 14px;
+        line-height: 1;
+      }
+      .info-panel .panel-body {
+        padding: 10px;
+      }
+      .info-panel .panel-body .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 0;
+        border-bottom: 1px solid rgba(106, 128, 144, 0.15);
+      }
+      .info-panel .panel-body .row .k {
+        color: #6a8898;
+      }
+      .info-panel .panel-body .row .v {
+        color: #c0d0d8;
+        font-weight: bold;
+      }
+
+      /* Findings list in panel */
+      .findings-list {
+        margin-top: 8px;
+      }
+      .findings-list .finding {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(106, 128, 144, 0.1);
+        font-size: 9px;
+        line-height: 13px;
+      }
+      .findings-list .finding .desc {
+        color: #b0c0c8;
+        flex: 1;
+      }
+      .findings-list .finding .file-ref {
+        font-size: 8px;
+        color: var(--cyan-dim);
+        display: block;
+        margin-top: 2px;
+      }
+
+      /* Diff preview in panel */
+      .diff-preview {
+        margin-top: 8px;
+        background: #1a2a30;
+        border: 1px solid var(--steel);
+        border-radius: 3px;
+        padding: 6px 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 8px;
+        line-height: 12px;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+      .diff-preview .diff-add {
+        color: var(--green);
+      }
+      .diff-preview .diff-del {
+        color: var(--red);
+      }
+      .diff-preview .diff-ctx {
+        color: #6a8898;
+      }
+      .diff-preview .diff-hdr {
+        color: var(--cyan);
+      }
+
+      /* ── Mist/fog overlay at edges ──────────────────────────────── */
+      .mist {
+        position: absolute;
+        pointer-events: none;
+        z-index: 90;
+      }
+      .mist.top {
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(180deg, rgba(30, 48, 56, 0.6) 0%, transparent 100%);
+      }
+      .mist.bottom {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(0deg, rgba(30, 48, 56, 0.8) 0%, transparent 100%);
+      }
+
+      /* ── Mini-map ───────────────────────────────────────────────── */
+      .minimap {
+        position: absolute;
+        bottom: 8px;
+        right: 12px;
+        width: 120px;
+        height: 70px;
+        background: rgba(30, 48, 56, 0.9);
+        border: 1px solid var(--steel);
+        border-radius: 3px;
+        z-index: 95;
+        padding: 4px;
+      }
+      .minimap .minimap-label {
+        font-size: 6px;
+        color: var(--steel-lt);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+      }
+      .minimap .minimap-levels {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        height: calc(100% - 12px);
+      }
+      .minimap .minimap-level {
+        flex: 1;
+        background: var(--steel-dk);
+        border-radius: 1px;
+        display: flex;
+        align-items: center;
+        padding: 0 3px;
+        gap: 3px;
+      }
+      .minimap .minimap-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+      }
+      .minimap .minimap-dot.active {
+        animation: mini-pulse 1s infinite;
+      }
+      @keyframes mini-pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      /* ── Tooltip (on hover over info panel items) ───────────────── */
+      .tooltip {
+        position: absolute;
+        background: rgba(30, 48, 56, 0.97);
+        border: 1px solid var(--cyan-dim);
+        border-radius: 3px;
+        padding: 4px 8px;
+        font-size: 8px;
+        color: var(--cyan);
+        z-index: 300;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+
+      /* ── Responsive helper — scale the scene ────────────────────── */
+      @media (max-width: 900px) {
+        .info-panel {
+          width: 200px;
+          right: 8px;
+        }
+        .workbench {
+          width: 90px;
+          height: 36px;
+        }
+        .phase-sign {
+          font-size: 7px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="facility">
+      <!-- ═══════ STATUS BAR ═══════ -->
+      <div class="status-bar">
+        <span><span class="label">PROJECT </span><span class="value">codeassembly</span></span>
+        <span><span class="label">TICKET </span><span class="value">#293</span></span>
+        <span><span class="label">RUN </span><span class="value">R-20260313-001</span></span>
+        <span><span class="label">BRANCH </span><span class="value">feat/293-vertical-viz</span></span>
+        <span class="status-badge">in progress</span>
+        <span><span class="label">ELAPSED </span><span class="value">8m 42s</span></span>
+        <div class="timing-strip">
+          <div class="seg done" style="flex: 0.8; background: #5555ff" title="Architecture: 0:48"></div>
+          <div class="seg done" style="flex: 1.2; background: #55ff55" title="Planning: 1:12"></div>
+          <div class="seg done" style="flex: 3; background: #ffff55" title="Implementation: 3:00"></div>
+          <div class="seg active" style="flex: 2.5; background: #ff5555" title="Review: 2:30+"></div>
+          <div class="seg" style="flex: 0.5; background: var(--steel-dk)" title="Simplifier: pending"></div>
+          <div class="seg" style="flex: 0.5; background: var(--steel-dk)" title="Holistic: pending"></div>
+          <div class="seg" style="flex: 0.3; background: var(--steel-dk)" title="Summary: pending"></div>
+        </div>
+      </div>
+
+      <!-- ═══════ FACILITY VIEWPORT ═══════ -->
+      <div class="facility-viewport" id="viewport">
+        <!-- Background depth layers -->
+        <div class="bg-layer far">
+          <!-- Distant pipes -->
+          <div class="bg-pipe horizontal" style="top: 15%; left: 5%; width: 90%; opacity: 0.15">
+            <div class="flow"></div>
+          </div>
+          <div class="bg-pipe horizontal" style="top: 55%; left: 10%; width: 80%; opacity: 0.12">
+            <div class="flow" style="animation-delay: -1.5s"></div>
+          </div>
+          <div class="bg-pipe horizontal" style="top: 85%; left: 0%; width: 60%; opacity: 0.1">
+            <div class="flow" style="animation-delay: -0.8s"></div>
+          </div>
+        </div>
+
+        <div class="bg-layer mid">
+          <!-- Mid-distance structural pipes -->
+          <div class="bg-pipe vertical" style="left: 15%; top: 0; height: 100%; opacity: 0.12"></div>
+          <div class="bg-pipe vertical" style="left: 50%; top: 0; height: 100%; opacity: 0.1"></div>
+          <div class="bg-pipe vertical" style="left: 82%; top: 0; height: 100%; opacity: 0.08"></div>
+        </div>
+
+        <!-- ═══════ LEVELS ═══════ -->
+        <div class="levels" id="levels">
+          <!-- ──── LEVEL 4 (TOP): ARCHITECTURE & PLANNING ──── -->
+          <div class="level" id="level-4" style="flex: 1">
+            <div class="level-label" style="top: 15px">Level 4 -- Analysis</div>
+
+            <!-- Railing -->
+            <div class="railing" style="left: 40px; right: 40px; top: auto; bottom: 12px">
+              <div class="rail-top"></div>
+              <div class="rail-post" style="left: 0"></div>
+              <div class="rail-post" style="left: 60px"></div>
+              <div class="rail-post" style="left: 120px"></div>
+              <div class="rail-post" style="right: 140px"></div>
+              <div class="rail-post" style="right: 80px"></div>
+              <div class="rail-post" style="right: 0"></div>
+            </div>
+
+            <!-- Architecture station -->
+            <div class="station" style="left: 80px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="background: rgba(85, 85, 255, 0.15); border-color: #5555ff; color: #5555ff"
+              >
+                Architecture
+              </div>
+              <div class="station-body">
+                <div class="agent celebrating">
+                  <div class="thought-bubble">
+                    <div class="bubble-content">
+                      <span class="bubble-label">Completed</span>
+                      <span class="bubble-text">Impact: low -- schema change only</span>
+                    </div>
+                  </div>
+                  <div class="sprite">
+                    <div class="head" style="background: #5555ff">
+                      <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #3a3aaa">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #3333aa"></div>
+                        <div class="arm-r" style="background: #3333aa"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #2a2a88"></div>
+                      <div class="leg" style="background: #2a2a88"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench">
+                  <div class="screen">
+                    <div class="scanlines"></div>
+                    <div class="code-lines">imp: low<br />schema</div>
+                  </div>
+                  <!-- Artifacts on workbench -->
+                  <div class="artifact-stack" style="right: 6px; top: 6px">
+                    <div class="artifact" style="background: var(--art-arch)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 6px; background: #4488aa"></div>
+                        <div class="line" style="width: 8px; background: #4488aa"></div>
+                        <div class="line" style="width: 5px; background: #4488aa"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="progress-bar"><div class="fill" style="width: 100%; background: #5555ff"></div></div>
+                </div>
+                <div class="timer normal" style="right: -40px; top: 5px">0:48</div>
+                <div class="station-label">Architect</div>
+              </div>
+            </div>
+
+            <!-- Planning station -->
+            <div class="station" style="left: 320px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="background: rgba(85, 255, 85, 0.15); border-color: #55ff55; color: #55ff55"
+              >
+                Planning
+              </div>
+              <div class="station-body">
+                <div class="agent celebrating">
+                  <div class="thought-bubble">
+                    <div class="bubble-content">
+                      <span class="bubble-label">Completed</span>
+                      <span class="bubble-text">4 steps planned, 2 files</span>
+                    </div>
+                  </div>
+                  <div class="sprite">
+                    <div class="head" style="background: #55ff55">
+                      <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #3aaa3a">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #33aa33"></div>
+                        <div class="arm-r" style="background: #33aa33"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #2a882a"></div>
+                      <div class="leg" style="background: #2a882a"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench">
+                  <div class="screen">
+                    <div class="scanlines"></div>
+                    <div class="code-lines">steps: 4<br />ready</div>
+                  </div>
+                  <div class="artifact-stack" style="right: 4px; top: 4px">
+                    <div class="artifact" style="background: var(--art-plan)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 7px; background: #448844"></div>
+                        <div class="line" style="width: 8px; background: #448844"></div>
+                        <div class="line" style="width: 4px; background: #448844"></div>
+                      </div>
+                    </div>
+                    <div class="artifact" style="background: var(--art-plan)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 8px; background: #448844"></div>
+                        <div class="line" style="width: 5px; background: #448844"></div>
+                        <div class="line" style="width: 7px; background: #448844"></div>
+                      </div>
+                      <div class="version-badge">.json</div>
+                    </div>
+                  </div>
+                  <div class="progress-bar"><div class="fill" style="width: 100%; background: #55ff55"></div></div>
+                </div>
+                <div class="timer normal" style="right: -40px; top: 5px">1:12</div>
+                <div class="station-label">Planner</div>
+              </div>
+            </div>
+
+            <!-- Conveyor from arch to plan -->
+            <div class="conveyor" style="left: 210px; bottom: 32px; width: 100px">
+              <div class="belt-pattern"></div>
+              <div class="roller left"></div>
+              <div class="roller right"></div>
+            </div>
+
+            <!-- Platform -->
+            <div class="platform"></div>
+          </div>
+
+          <!-- ──── LEVEL 3 (MID-UPPER): IMPLEMENTATION ──── -->
+          <div class="level" id="level-3" style="flex: 1.2">
+            <div class="level-label" style="top: 10px">Level 3 -- Build</div>
+
+            <div class="railing" style="left: 40px; width: 300px; top: auto; bottom: 12px">
+              <div class="rail-top"></div>
+              <div class="rail-post" style="left: 0"></div>
+              <div class="rail-post" style="left: 80px"></div>
+              <div class="rail-post" style="left: 160px"></div>
+              <div class="rail-post" style="right: 0"></div>
+            </div>
+
+            <!-- Implementation station -->
+            <div class="station" style="left: 120px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="background: rgba(255, 255, 85, 0.15); border-color: #ffff55; color: #ffff55"
+              >
+                Implementation
+              </div>
+              <div class="station-body">
+                <div class="agent celebrating">
+                  <div class="thought-bubble">
+                    <div class="bubble-content">
+                      <span class="bubble-label">Done -- v2 after fix cycle</span>
+                      <span class="bubble-text">+142 -38 across 4 files</span>
+                    </div>
+                  </div>
+                  <div class="sprite">
+                    <div class="head" style="background: #ffff55">
+                      <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #aaaa33">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #999933"></div>
+                        <div class="arm-r" style="background: #999933"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #888822"></div>
+                      <div class="leg" style="background: #888822"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="width: 130px">
+                  <div class="screen active">
+                    <div class="scanlines"></div>
+                    <div class="code-lines">
+                      + export fn<br />- old impl<br />
+                      tests ok
+                    </div>
+                  </div>
+                  <div class="artifact-stack" style="right: 4px; top: 4px">
+                    <div class="artifact" style="background: var(--art-code)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 8px; background: #998833"></div>
+                        <div class="line" style="width: 6px; background: #998833"></div>
+                        <div class="line" style="width: 7px; background: #998833"></div>
+                      </div>
+                      <div class="version-badge">v1</div>
+                    </div>
+                    <div class="artifact" style="background: var(--art-code); border-color: rgba(255, 255, 85, 0.3)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 7px; background: #998833"></div>
+                        <div class="line" style="width: 8px; background: #998833"></div>
+                        <div class="line" style="width: 5px; background: #998833"></div>
+                      </div>
+                      <div class="version-badge" style="background: var(--amber-dim); color: var(--amber)">v2</div>
+                    </div>
+                  </div>
+                  <div class="progress-bar"><div class="fill" style="width: 100%; background: #ffff55"></div></div>
+                </div>
+                <div class="timer normal" style="right: -40px; top: 5px">3:00</div>
+                <div class="station-label">Coder</div>
+              </div>
+            </div>
+
+            <!-- Pneumatic tube down from level 4 to level 3 -->
+            <div class="pneumatic-tube" style="left: 440px; top: -10px">
+              <div class="tube-body vertical" style="left: 0; top: 0; height: 80px"></div>
+              <div class="capsule" style="left: 2px; animation-delay: -0.5s"></div>
+            </div>
+
+            <!-- Lift on right side connecting levels -->
+            <div class="lift" style="right: 60px; top: -5px">
+              <div class="lift-shaft" style="height: 90px">
+                <div class="rail left"></div>
+                <div class="rail right"></div>
+                <div class="car"></div>
+              </div>
+            </div>
+
+            <div class="platform"></div>
+          </div>
+
+          <!-- ──── LEVEL 2 (MID-LOWER): REVIEW ──── -->
+          <div class="level" id="level-2" style="flex: 1.4">
+            <div class="level-label" style="top: 8px">Level 2 -- Review</div>
+
+            <div class="railing" style="left: 20px; right: 30px; top: auto; bottom: 12px">
+              <div class="rail-top"></div>
+              <div class="rail-post" style="left: 0"></div>
+              <div class="rail-post" style="left: 100px"></div>
+              <div class="rail-post" style="left: 200px"></div>
+              <div class="rail-post" style="left: 340px"></div>
+              <div class="rail-post" style="left: 450px"></div>
+              <div class="rail-post" style="right: 80px"></div>
+              <div class="rail-post" style="right: 0"></div>
+            </div>
+
+            <!-- Reviewer 1: code-reviewer -->
+            <div class="station" style="left: 40px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="background: rgba(255, 85, 85, 0.15); border-color: #ff5555; color: #ff5555; font-size: 7px"
+              >
+                Code review
+              </div>
+              <div class="station-body">
+                <div class="agent working">
+                  <div class="thought-bubble error">
+                    <div class="bubble-content">
+                      <span class="bubble-label">Finding -- Fatal</span>
+                      <span class="bubble-text">Missing null check in event-folder.ts</span>
+                    </div>
+                  </div>
+                  <div class="sprite">
+                    <div class="head" style="background: #ff5555">
+                      <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #aa3333">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #993333"></div>
+                        <div class="arm-r" style="background: #993333"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #882222"></div>
+                      <div class="leg" style="background: #882222"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="width: 100px">
+                  <div class="screen active" style="border-color: var(--red)">
+                    <div class="scanlines"></div>
+                    <div class="code-lines" style="color: var(--red)">1F 2W 1T<br />crit:high</div>
+                  </div>
+                  <div class="artifact-stack" style="right: 4px; top: 4px">
+                    <div class="artifact" style="background: var(--art-review)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 7px; background: #884444"></div>
+                        <div class="line" style="width: 6px; background: #884444"></div>
+                        <div class="line" style="width: 8px; background: #884444"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="progress-bar"><div class="fill" style="width: 75%; background: #ff5555"></div></div>
+                </div>
+                <div class="timer warning" style="right: -36px; top: 5px">2:30</div>
+                <div class="station-label">Code Rev.</div>
+              </div>
+            </div>
+
+            <!-- FATAL notification drawing attention -->
+            <div class="notification fatal" style="left: 35px; bottom: 120px">
+              <span class="severity-badge badge-F">F</span>
+              <span>Fatal finding: null check -- code-reviewer</span>
+            </div>
+
+            <!-- Reviewer 2: silent-failure-reviewer -->
+            <div class="station" style="left: 220px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="background: rgba(255, 85, 85, 0.15); border-color: #ff5555; color: #ff5555; font-size: 7px"
+              >
+                Silent fail
+              </div>
+              <div class="station-body">
+                <div class="agent working">
+                  <div class="thought-bubble">
+                    <div class="bubble-content">
+                      <span class="bubble-label">Reviewing</span>
+                      <span class="bubble-text">Checking error boundaries...</span>
+                    </div>
+                  </div>
+                  <div class="sprite">
+                    <div class="head" style="background: #ff7755">
+                      <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #aa5533">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #995533"></div>
+                        <div class="arm-r" style="background: #995533"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #884422"></div>
+                      <div class="leg" style="background: #884422"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="width: 100px">
+                  <div class="screen active">
+                    <div class="scanlines"></div>
+                    <div class="code-lines">scan...<br />0 issues</div>
+                  </div>
+                  <div class="progress-bar"><div class="fill" style="width: 60%; background: #ff7755"></div></div>
+                </div>
+                <div class="timer normal" style="right: -36px; top: 5px">1:48</div>
+                <div class="station-label">Silent Fail</div>
+              </div>
+            </div>
+
+            <!-- Reviewer 3: test-reviewer -->
+            <div class="station" style="left: 400px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="background: rgba(255, 85, 85, 0.15); border-color: #ff5555; color: #ff5555; font-size: 7px"
+              >
+                Test review
+              </div>
+              <div class="station-body">
+                <div class="agent working">
+                  <div class="thought-bubble">
+                    <div class="bubble-content">
+                      <span class="bubble-label">Reviewing</span>
+                      <span class="bubble-text">2 test gaps found so far</span>
+                    </div>
+                  </div>
+                  <div class="sprite">
+                    <div class="head" style="background: #ff5577">
+                      <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #aa3355">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #993355"></div>
+                        <div class="arm-r" style="background: #993355"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #882244"></div>
+                      <div class="leg" style="background: #882244"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="width: 100px">
+                  <div class="screen active">
+                    <div class="scanlines"></div>
+                    <div class="code-lines">gaps: 2<br />scan...</div>
+                  </div>
+                  <div class="artifact-stack" style="right: 4px; top: 4px">
+                    <div class="artifact" style="background: var(--art-review)">
+                      <div class="doc-lines">
+                        <div class="line" style="width: 6px; background: #884444"></div>
+                        <div class="line" style="width: 8px; background: #884444"></div>
+                        <div class="line" style="width: 5px; background: #884444"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="progress-bar"><div class="fill" style="width: 45%; background: #ff5577"></div></div>
+                </div>
+                <div class="timer normal" style="right: -36px; top: 5px">1:48</div>
+                <div class="station-label">Test Rev.</div>
+              </div>
+            </div>
+
+            <!-- Conveyors connecting reviewers -->
+            <div class="conveyor" style="left: 160px; bottom: 32px; width: 50px">
+              <div class="belt-pattern"></div>
+              <div class="roller left"></div>
+              <div class="roller right"></div>
+            </div>
+            <div class="conveyor" style="left: 340px; bottom: 32px; width: 50px">
+              <div class="belt-pattern"></div>
+              <div class="roller left"></div>
+              <div class="roller right"></div>
+            </div>
+
+            <!-- Blocking line: reviewers waiting on each other's completion to merge -->
+            <svg class="blocking-line" style="left: 150px; bottom: 60px; width: 300px; height: 30px">
+              <line class="line" x1="0" y1="15" x2="300" y2="15" />
+            </svg>
+            <div class="waiting-icon" style="left: 290px; bottom: 78px; color: var(--amber)">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                <line x1="6" y1="3" x2="6" y2="6.5" stroke="currentColor" stroke-width="1.5" />
+                <line x1="6" y1="6.5" x2="8" y2="8" stroke="currentColor" stroke-width="1" />
+              </svg>
+            </div>
+
+            <!-- Pneumatic tube from level 3 -->
+            <div class="pneumatic-tube" style="left: 265px; top: -15px">
+              <div class="tube-body vertical" style="left: 0; top: 0; height: 60px"></div>
+              <div class="capsule" style="left: 2px; animation-delay: -1.2s"></div>
+            </div>
+
+            <div class="platform"></div>
+          </div>
+
+          <!-- ──── LEVEL 1 (BOTTOM): SIMPLIFIER, HOLISTIC, SUMMARY ──── -->
+          <div class="level" id="level-1" style="flex: 1">
+            <div class="level-label" style="top: 8px">Level 1 -- Finalize</div>
+
+            <div class="railing" style="left: 30px; right: 30px; top: auto; bottom: 12px">
+              <div class="rail-top"></div>
+              <div class="rail-post" style="left: 0"></div>
+              <div class="rail-post" style="left: 80px"></div>
+              <div class="rail-post" style="left: 200px"></div>
+              <div class="rail-post" style="left: 320px"></div>
+              <div class="rail-post" style="right: 80px"></div>
+              <div class="rail-post" style="right: 0"></div>
+            </div>
+
+            <!-- Simplifier station (idle/waiting) -->
+            <div class="station" style="left: 50px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="
+                  background: rgba(85, 85, 255, 0.1);
+                  border-color: rgba(85, 85, 255, 0.3);
+                  color: rgba(85, 85, 255, 0.4);
+                  font-size: 7px;
+                "
+              >
+                Simplifier
+              </div>
+              <div class="station-body">
+                <div class="agent" style="opacity: 0.4">
+                  <div class="sprite">
+                    <div class="head" style="background: #4444aa">
+                      <div class="eyes">
+                        <div class="eye" style="opacity: 0.3"></div>
+                        <div class="eye" style="opacity: 0.3"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #333388">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #2a2a77"></div>
+                        <div class="arm-r" style="background: #2a2a77"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #222266"></div>
+                      <div class="leg" style="background: #222266"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="opacity: 0.5">
+                  <div class="screen">
+                    <div class="scanlines"></div>
+                    <div class="code-lines" style="opacity: 0.3">idle<br />---</div>
+                  </div>
+                </div>
+                <div class="station-label" style="opacity: 0.4">Simplifier</div>
+              </div>
+            </div>
+
+            <!-- Holistic station (idle/waiting) -->
+            <div class="station" style="left: 230px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="
+                  background: rgba(85, 85, 255, 0.1);
+                  border-color: rgba(85, 85, 255, 0.3);
+                  color: rgba(85, 85, 255, 0.4);
+                  font-size: 7px;
+                "
+              >
+                Holistic
+              </div>
+              <div class="station-body">
+                <div class="agent" style="opacity: 0.4">
+                  <div class="sprite">
+                    <div class="head" style="background: #4444aa">
+                      <div class="eyes">
+                        <div class="eye" style="opacity: 0.3"></div>
+                        <div class="eye" style="opacity: 0.3"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #333388">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #2a2a77"></div>
+                        <div class="arm-r" style="background: #2a2a77"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #222266"></div>
+                      <div class="leg" style="background: #222266"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="opacity: 0.5">
+                  <div class="screen">
+                    <div class="scanlines"></div>
+                    <div class="code-lines" style="opacity: 0.3">idle<br />---</div>
+                  </div>
+                </div>
+                <div class="station-label" style="opacity: 0.4">Holistic</div>
+              </div>
+            </div>
+
+            <!-- Summary station (idle/waiting) -->
+            <div class="station" style="left: 410px; bottom: 20px">
+              <div
+                class="phase-sign"
+                style="
+                  background: rgba(168, 184, 200, 0.1);
+                  border-color: rgba(168, 184, 200, 0.3);
+                  color: rgba(168, 184, 200, 0.4);
+                  font-size: 7px;
+                "
+              >
+                Summary
+              </div>
+              <div class="station-body">
+                <div class="agent" style="opacity: 0.4">
+                  <div class="sprite">
+                    <div class="head" style="background: #5a6a7a">
+                      <div class="eyes">
+                        <div class="eye" style="opacity: 0.3"></div>
+                        <div class="eye" style="opacity: 0.3"></div>
+                      </div>
+                    </div>
+                    <div class="body" style="background: #4a5a6a">
+                      <div class="arms">
+                        <div class="arm-l" style="background: #3a4a5a"></div>
+                        <div class="arm-r" style="background: #3a4a5a"></div>
+                      </div>
+                    </div>
+                    <div class="legs">
+                      <div class="leg" style="background: #2a3a4a"></div>
+                      <div class="leg" style="background: #2a3a4a"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="workbench" style="opacity: 0.5">
+                  <div class="screen">
+                    <div class="scanlines"></div>
+                    <div class="code-lines" style="opacity: 0.3">idle<br />---</div>
+                  </div>
+                </div>
+                <div class="station-label" style="opacity: 0.4">Summary</div>
+              </div>
+            </div>
+
+            <!-- Conveyors between bottom stations -->
+            <div class="conveyor" style="left: 170px; bottom: 32px; width: 50px; opacity: 0.4">
+              <div class="belt-pattern" style="animation-play-state: paused"></div>
+              <div class="roller left"></div>
+              <div class="roller right"></div>
+            </div>
+            <div class="conveyor" style="left: 350px; bottom: 32px; width: 50px; opacity: 0.4">
+              <div class="belt-pattern" style="animation-play-state: paused"></div>
+              <div class="roller left"></div>
+              <div class="roller right"></div>
+            </div>
+
+            <div class="platform"></div>
+          </div>
+        </div>
+        <!-- /levels -->
+
+        <!-- ═══════ ORCHESTRATOR ═══════ -->
+        <div class="orchestrator" id="orchestrator" style="right: 80px; top: 50%">
+          <div class="thought-bubble alert" style="bottom: calc(100% + 2px)">
+            <div class="bubble-content">
+              <span class="bubble-label">Orchestrator</span>
+              <span class="bubble-text">Waiting for 3 reviewers...</span>
+            </div>
+          </div>
+          <div class="sprite" style="transform: scale(1.2)">
+            <div class="head" style="background: #ff55ff">
+              <div class="eyes">
+                <div class="eye"></div>
+                <div class="eye"></div>
+              </div>
+            </div>
+            <div class="body" style="background: #aa33aa">
+              <div class="arms">
+                <div class="arm-l" style="background: #993399"></div>
+                <div class="arm-r" style="background: #993399"></div>
+              </div>
+            </div>
+            <div class="legs">
+              <div class="leg" style="background: #882288"></div>
+              <div class="leg" style="background: #882288"></div>
+            </div>
+          </div>
+          <div class="orch-label">ORCHESTRATOR</div>
+        </div>
+
+        <!-- ═══════ LIFT (right side, connecting all levels) ═══════ -->
+        <div class="lift" style="right: 28px; top: 10%; z-index: 7">
+          <div class="lift-shaft" style="height: 75%">
+            <div class="rail left"></div>
+            <div class="rail right"></div>
+            <div class="car" style="animation-duration: 6s"></div>
+          </div>
+        </div>
+
+        <!-- ═══════ ATMOSPHERIC MIST ═══════ -->
+        <div class="mist top"></div>
+        <div class="mist bottom"></div>
+
+        <!-- ═══════ MINIMAP ═══════ -->
+        <div class="minimap">
+          <div class="minimap-label">Facility</div>
+          <div class="minimap-levels">
+            <div class="minimap-level">
+              <div class="minimap-dot" style="background: #5555ff"></div>
+              <div class="minimap-dot" style="background: #55ff55"></div>
+              <span style="font-size: 5px; color: #6a8898; margin-left: auto">L4 Analysis</span>
+            </div>
+            <div class="minimap-level">
+              <div class="minimap-dot" style="background: #ffff55"></div>
+              <span style="font-size: 5px; color: #6a8898; margin-left: auto">L3 Build</span>
+            </div>
+            <div class="minimap-level" style="border: 1px solid var(--red-dim)">
+              <div class="minimap-dot active" style="background: #ff5555"></div>
+              <div class="minimap-dot active" style="background: #ff7755"></div>
+              <div class="minimap-dot active" style="background: #ff5577"></div>
+              <span style="font-size: 5px; color: #ff5555; margin-left: auto">L2 Review</span>
+            </div>
+            <div class="minimap-level" style="opacity: 0.4">
+              <div class="minimap-dot" style="background: #5555ff"></div>
+              <div class="minimap-dot" style="background: #5555ff"></div>
+              <div class="minimap-dot" style="background: #888"></div>
+              <span style="font-size: 5px; color: #6a8898; margin-left: auto">L1 Finalize</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════ INFO PANEL (click-level detail) ═══════ -->
+        <div class="info-panel" id="info-panel">
+          <div class="panel-header">
+            <span class="title">Code reviewer findings</span>
+            <span class="close-btn" onclick="document.getElementById('info-panel').style.display = 'none'">x</span>
+          </div>
+          <div class="panel-body">
+            <div class="row"><span class="k">Agent</span><span class="v">aspect-code-reviewer</span></div>
+            <div class="row"><span class="k">Phase</span><span class="v">review</span></div>
+            <div class="row">
+              <span class="k">Status</span><span class="v" style="color: var(--amber)">in progress</span>
+            </div>
+            <div class="row"><span class="k">Duration</span><span class="v">2m 30s</span></div>
+            <div class="row">
+              <span class="k">Criticality</span><span class="v" style="color: var(--red)">HIGH</span>
+            </div>
+            <div class="row">
+              <span class="k">Findings</span>
+              <span class="v">
+                <span
+                  class="severity-badge badge-F"
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    font-size: 7px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >F</span
+                >
+                <span
+                  class="severity-badge badge-W"
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    font-size: 7px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >W</span
+                >
+                <span
+                  class="severity-badge badge-W"
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    font-size: 7px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >W</span
+                >
+                <span
+                  class="severity-badge badge-T"
+                  style="
+                    width: 12px;
+                    height: 12px;
+                    font-size: 7px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >T</span
+                >
+              </span>
+            </div>
+            <div class="findings-list">
+              <div class="finding">
+                <span
+                  class="severity-badge badge-F"
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    font-size: 8px;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >F</span
+                >
+                <div class="desc">
+                  Missing null check on <code style="color: var(--cyan); font-size: 8px">eventLog</code> parameter
+                  before iteration. Will throw TypeError on undefined input.
+                  <span class="file-ref">src/shared/event-folder.ts:42</span>
+                </div>
+              </div>
+              <div class="finding">
+                <span
+                  class="severity-badge badge-W"
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    font-size: 8px;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >W</span
+                >
+                <div class="desc">
+                  Unbounded array growth in event accumulator. Consider ring buffer or max-size cap.
+                  <span class="file-ref">src/shared/event-folder.ts:58</span>
+                </div>
+              </div>
+              <div class="finding">
+                <span
+                  class="severity-badge badge-W"
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    font-size: 8px;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >W</span
+                >
+                <div class="desc">
+                  Race condition when multiple status updates arrive within same tick.
+                  <span class="file-ref">src/server/adapters/status-adapter.ts:112</span>
+                </div>
+              </div>
+              <div class="finding">
+                <span
+                  class="severity-badge badge-T"
+                  style="
+                    width: 14px;
+                    height: 14px;
+                    font-size: 8px;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 2px;
+                  "
+                  >T</span
+                >
+                <div class="desc">
+                  No test coverage for empty event array edge case.
+                  <span class="file-ref">src/shared/__tests__/event-folder.test.ts</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Diff preview -->
+            <div style="margin-top: 10px; font-size: 9px; color: #6a8898">Change summary (v2):</div>
+            <div class="diff-preview">
+              <div class="diff-hdr">@@ src/shared/event-folder.ts @@</div>
+              <div class="diff-ctx">export function foldEvents(</div>
+              <div class="diff-ctx">events: RunEvent[],</div>
+              <div class="diff-add">+ // Guard against undefined input</div>
+              <div class="diff-add">+ if (!events) return createEmpty();</div>
+              <div class="diff-ctx">let state = createEmpty();</div>
+              <div class="diff-del">- for (const ev of events) {</div>
+              <div class="diff-add">+ for (const ev of events ?? []) {</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /facility-viewport -->
+    </div>
+    <!-- /facility -->
+
+    <script>
+      // Simple ambient animations
+      (function () {
+        // Animate orchestrator position vertically to show it patrols between levels
+        const orch = document.getElementById('orchestrator');
+        if (orch) {
+          let direction = 1;
+          let pos = 48;
+          function moveOrch() {
+            pos += direction * 0.03;
+            if (pos > 58) direction = -1;
+            if (pos < 42) direction = 1;
+            orch.style.top = pos + '%';
+            requestAnimationFrame(moveOrch);
+          }
+          moveOrch();
+        }
+
+        // Subtle floating particles for atmosphere
+        const viewport = document.getElementById('viewport');
+        if (viewport) {
+          for (let i = 0; i < 12; i++) {
+            const p = document.createElement('div');
+            p.style.cssText = `
+          position: absolute;
+          width: ${1 + Math.random() * 2}px;
+          height: ${1 + Math.random() * 2}px;
+          background: rgba(85, 255, 255, ${0.05 + Math.random() * 0.1});
+          border-radius: 50%;
+          left: ${Math.random() * 100}%;
+          top: ${Math.random() * 100}%;
+          pointer-events: none;
+          z-index: 3;
+          animation: float-particle ${8 + Math.random() * 12}s ease-in-out infinite ${Math.random() * 5}s;
+        `;
+            viewport.appendChild(p);
+          }
+
+          const style = document.createElement('style');
+          style.textContent = `
+        @keyframes float-particle {
+          0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+          25% { transform: translate(${10 + Math.random() * 20}px, -${5 + Math.random() * 15}px); opacity: 0.6; }
+          50% { transform: translate(${-5 + Math.random() * 15}px, -${10 + Math.random() * 20}px); opacity: 0.4; }
+          75% { transform: translate(${-10 + Math.random() * 20}px, ${5 + Math.random() * 10}px); opacity: 0.5; }
+        }
+      `;
+          document.head.appendChild(style);
+        }
+
+        // Typing effect on screen code-lines for active screens
+        const activeScreens = document.querySelectorAll('.screen.active .code-lines');
+        activeScreens.forEach((screen) => {
+          const original = screen.innerHTML;
+          let cursor = true;
+          setInterval(() => {
+            cursor = !cursor;
+            screen.innerHTML =
+              original + (cursor ? '<span style="color: #fff;">_</span>' : '<span style="opacity:0;">_</span>');
+          }, 500);
+        });
+      })();
+    </script>
+  </body>
+</html>

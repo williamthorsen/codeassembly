@@ -1,0 +1,1643 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision B: The run timeline</title>
+    <style>
+      /* ===== Reset & base ===== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        font-size: 14px;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #0d0d1a;
+        color: #d4d4d4;
+        overflow-x: hidden;
+        min-height: 100vh;
+      }
+      code,
+      .mono {
+        font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      }
+
+      /* ===== CGA-16 palette (role-type accents) ===== */
+      :root {
+        --orchestrator: #ff55ff;
+        --analyst: #5555ff;
+        --planner: #55ff55;
+        --author: #ffff55;
+        --reviewer: #ff5555;
+        --bg-deep: #0d0d1a;
+        --bg-card: #1a1a2e;
+        --bg-card-hover: #22223a;
+        --bg-card-expanded: #16162b;
+        --border: #333355;
+        --text-primary: #e0e0e8;
+        --text-secondary: #8888aa;
+        --text-dim: #555577;
+        --success: #55ff55;
+        --failure: #ff5555;
+        --warning: #ffaa00;
+        --artifact-arch: #a5d8ff;
+        --artifact-plan: #b2f2bb;
+        --artifact-code: #fff3bf;
+        --artifact-review: #ffc9c9;
+        --artifact-clean: #f3d9fa;
+        --artifact-holi: #c3fae8;
+        --artifact-summary: #f8f9fa;
+      }
+
+      /* ===== Top bar ===== */
+      .top-bar {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #111128;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.85rem;
+      }
+      .top-bar .label {
+        color: var(--text-secondary);
+      }
+      .top-bar .value {
+        color: var(--text-primary);
+      }
+      .top-bar .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .status-badge.in-progress {
+        background: rgba(85, 85, 255, 0.2);
+        color: var(--analyst);
+      }
+      .status-badge.completed {
+        background: rgba(85, 255, 85, 0.15);
+        color: var(--success);
+      }
+      .top-bar .task-desc {
+        margin-left: auto;
+        color: var(--text-secondary);
+        font-style: italic;
+        max-width: 40%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* ===== Timeline spine ===== */
+      .timeline-spine {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 2rem 0.5rem;
+        gap: 0;
+      }
+      .spine-segment {
+        display: flex;
+        align-items: center;
+        position: relative;
+      }
+      .spine-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        cursor: pointer;
+      }
+      .spine-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2.5px solid;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #fff;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+      .spine-dot.completed {
+        background: currentColor;
+      }
+      .spine-dot.completed::after {
+        content: '\2713';
+        font-size: 0.85rem;
+        color: #0d0d1a;
+        font-weight: 900;
+      }
+      .spine-dot.active {
+        box-shadow:
+          0 0 12px currentColor,
+          0 0 24px rgba(255, 255, 255, 0.1);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .spine-dot.active::after {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: dot-pulse 1.5s ease-in-out infinite;
+      }
+      .spine-dot.pending {
+        opacity: 0.35;
+      }
+      .spine-dot.skipped {
+        opacity: 0.2;
+        border-style: dashed;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 8px currentColor;
+        }
+        50% {
+          box-shadow:
+            0 0 20px currentColor,
+            0 0 40px rgba(255, 255, 255, 0.08);
+        }
+      }
+      @keyframes dot-pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.6;
+          transform: scale(0.7);
+        }
+      }
+
+      .spine-label {
+        margin-top: 0.4rem;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+      .spine-node.active .spine-label {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .spine-line {
+        width: 60px;
+        height: 2px;
+        background: var(--border);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .spine-line.done {
+        background: linear-gradient(90deg, currentColor 100%, transparent 100%);
+      }
+      .spine-line.half {
+        background: linear-gradient(90deg, currentColor 50%, var(--border) 50%);
+      }
+
+      /* ===== Timing strip ===== */
+      .timing-strip {
+        display: flex;
+        margin: 0 2rem;
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background: #111128;
+      }
+      .timing-segment {
+        height: 100%;
+        transition: width 0.5s ease;
+        position: relative;
+      }
+      .timing-segment:hover::after {
+        content: attr(data-label);
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #222;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.65rem;
+        white-space: nowrap;
+        color: #ccc;
+        z-index: 10;
+      }
+
+      /* ===== Phase cards row ===== */
+      .phase-cards-row {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 2rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        align-items: flex-start;
+      }
+      .phase-cards-row::-webkit-scrollbar {
+        height: 4px;
+      }
+      .phase-cards-row::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .phase-cards-row::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      /* ===== Phase card ===== */
+      .phase-card {
+        flex: 0 0 220px;
+        min-height: 140px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-top: 3px solid;
+        border-radius: 6px;
+        padding: 0.85rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+      }
+      .phase-card:hover {
+        background: var(--bg-card-hover);
+        transform: translateY(-2px);
+      }
+      .phase-card.expanded {
+        flex: 0 0 700px;
+        min-height: auto;
+        background: var(--bg-card-expanded);
+      }
+      .phase-card.active {
+        box-shadow: 0 0 16px rgba(85, 85, 255, 0.15);
+      }
+      .phase-card.skipped {
+        opacity: 0.35;
+        border-top-style: dashed;
+        min-height: 100px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        margin-bottom: 0.6rem;
+      }
+
+      /* ===== Pixel avatar ===== */
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 3px;
+        image-rendering: pixelated;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .avatar canvas {
+        width: 100%;
+        height: 100%;
+      }
+
+      .card-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.3;
+      }
+      .card-role {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-top: 0.15rem;
+      }
+
+      .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+      }
+      .meta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.15rem 0.45rem;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .meta-badge .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+
+      /* Artifact badges */
+      .artifact-badges {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+        margin-top: 0.65rem;
+      }
+      .artifact-badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-family: monospace;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .artifact-badge:hover {
+        transform: scale(1.05);
+        filter: brightness(1.2);
+      }
+
+      /* ===== Quality gates ===== */
+      .quality-gates {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .gate-item {
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      .gate-pass {
+        color: var(--success);
+      }
+      .gate-fail {
+        color: var(--failure);
+      }
+
+      /* ===== Expanded content area ===== */
+      .card-expanded-content {
+        margin-top: 1rem;
+        border-top: 1px solid var(--border);
+        padding-top: 0.85rem;
+        animation: slide-down 0.3s ease;
+      }
+      @keyframes slide-down {
+        from {
+          opacity: 0;
+          max-height: 0;
+        }
+        to {
+          opacity: 1;
+          max-height: 2000px;
+        }
+      }
+
+      .artifact-viewer {
+        background: #111128;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+        border: 1px solid var(--border);
+      }
+      .artifact-viewer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+      .artifact-viewer-title {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+      .version-tabs {
+        display: flex;
+        gap: 0.25rem;
+      }
+      .version-tab {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+      }
+      .version-tab.active {
+        background: rgba(255, 255, 85, 0.15);
+        color: var(--author);
+      }
+
+      /* Diff rendering */
+      .diff-block {
+        font-family: monospace;
+        font-size: 0.72rem;
+        line-height: 1.55;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .diff-add {
+        color: #55ff55;
+        background: rgba(85, 255, 85, 0.06);
+      }
+      .diff-remove {
+        color: #ff5555;
+        background: rgba(255, 85, 85, 0.06);
+      }
+      .diff-context {
+        color: #666688;
+      }
+      .diff-header {
+        color: var(--analyst);
+        font-weight: 600;
+      }
+
+      /* ===== Review sub-cards ===== */
+      .reviewer-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .reviewer-card {
+        background: rgba(255, 85, 85, 0.04);
+        border: 1px solid rgba(255, 85, 85, 0.15);
+        border-radius: 4px;
+        padding: 0.6rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .reviewer-name {
+        font-size: 0.75rem;
+        font-weight: 500;
+        flex: 1;
+      }
+      .criticality-badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-weight: 600;
+      }
+      .crit-none {
+        background: rgba(85, 255, 85, 0.15);
+        color: var(--success);
+      }
+      .crit-low {
+        background: rgba(85, 255, 85, 0.1);
+        color: #88cc88;
+      }
+      .crit-medium {
+        background: rgba(255, 170, 0, 0.15);
+        color: var(--warning);
+      }
+      .crit-high {
+        background: rgba(255, 85, 85, 0.2);
+        color: var(--failure);
+      }
+
+      /* Finding badges */
+      .finding-badges {
+        display: flex;
+        gap: 0.3rem;
+      }
+      .finding-badge {
+        font-size: 0.6rem;
+        font-weight: 700;
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .finding-F {
+        background: rgba(255, 85, 85, 0.25);
+        color: #ff5555;
+      }
+      .finding-W {
+        background: rgba(255, 170, 0, 0.2);
+        color: #ffaa00;
+      }
+      .finding-T {
+        background: rgba(85, 85, 255, 0.2);
+        color: #7777ff;
+      }
+      .finding-R {
+        background: rgba(85, 255, 85, 0.15);
+        color: #55ff55;
+      }
+      .finding-S {
+        background: rgba(170, 170, 170, 0.15);
+        color: #aaaaaa;
+      }
+      .finding-L {
+        background: rgba(100, 100, 120, 0.15);
+        color: #666688;
+      }
+
+      /* ===== Findings table ===== */
+      .findings-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.5rem;
+        font-size: 0.72rem;
+      }
+      .findings-table th {
+        text-align: left;
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+      .findings-table td {
+        padding: 0.4rem 0.5rem;
+        border-bottom: 1px solid rgba(51, 51, 85, 0.3);
+      }
+      .findings-table tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      /* ===== Iteration section ===== */
+      .iteration-section {
+        margin-top: 0.75rem;
+        padding: 0.6rem;
+        background: rgba(255, 255, 85, 0.03);
+        border: 1px solid rgba(255, 255, 85, 0.1);
+        border-radius: 4px;
+      }
+      .iteration-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        cursor: pointer;
+      }
+      .iteration-header .round-badge {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.5rem;
+        background: rgba(255, 170, 0, 0.15);
+        color: var(--warning);
+        border-radius: 10px;
+      }
+
+      /* ===== Criticality trend ===== */
+      .crit-trend {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.7rem;
+      }
+      .crit-trend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .crit-trend-arrow {
+        color: var(--text-dim);
+        font-size: 0.6rem;
+      }
+
+      /* ===== Scrubber ===== */
+      .scrubber-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem 2rem;
+        background: #111128;
+        border-top: 1px solid var(--border);
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+      }
+      .scrubber-controls {
+        display: flex;
+        gap: 0.35rem;
+      }
+      .scrubber-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      }
+      .scrubber-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+      }
+      .scrubber-btn.active {
+        background: rgba(85, 85, 255, 0.2);
+        color: var(--analyst);
+      }
+
+      .scrubber-track {
+        flex: 1;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+        position: relative;
+        cursor: pointer;
+      }
+      .scrubber-fill {
+        height: 100%;
+        border-radius: 3px;
+        background: linear-gradient(90deg, var(--analyst), var(--orchestrator));
+        transition: width 0.3s ease;
+      }
+      .scrubber-handle {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        border: 2px solid var(--analyst);
+        position: absolute;
+        top: -4px;
+        transition: left 0.3s ease;
+        cursor: grab;
+      }
+      .scrubber-time {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        min-width: 100px;
+        text-align: right;
+      }
+      .scrubber-speed {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        padding: 0.15rem 0.4rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 3px;
+      }
+
+      /* ===== Connection lines (decorative) ===== */
+      .connection-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ===== Animate-in for cards ===== */
+      .card-enter {
+        animation: card-slide-in 0.5s ease forwards;
+      }
+      @keyframes card-slide-in {
+        from {
+          opacity: 0;
+          transform: translateX(30px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0) scale(1);
+        }
+      }
+
+      /* ===== Artifact-drop animation ===== */
+      .artifact-drop {
+        animation: artifact-appear 0.4s ease;
+      }
+      @keyframes artifact-appear {
+        0% {
+          opacity: 0;
+          transform: scale(0.5) translateY(-8px);
+        }
+        60% {
+          transform: scale(1.1) translateY(0);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      /* ===== Compare panel ===== */
+      .compare-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .compare-side {
+        background: #111128;
+        border-radius: 4px;
+        padding: 0.6rem;
+        border: 1px solid var(--border);
+      }
+      .compare-side-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.4rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      /* ===== Tooltip ===== */
+      .tooltip {
+        position: fixed;
+        background: #222240;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.5rem 0.7rem;
+        font-size: 0.72rem;
+        color: var(--text-primary);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+        z-index: 200;
+        max-width: 250px;
+        display: none;
+      }
+
+      /* Padding for scrubber */
+      .main-content {
+        padding-bottom: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ===== Run header bar ===== -->
+    <div class="top-bar">
+      <span><span class="label">Project </span><span class="value mono">codeassembly</span></span>
+      <span><span class="label">Ticket </span><span class="value mono">CA-293</span></span>
+      <span
+        ><span class="label">Run </span
+        ><span class="value mono" style="font-size: 0.75rem">20260313-143200Z</span></span
+      >
+      <span><span class="label">Branch </span><span class="value mono">293/feat/run-timeline-viz</span></span>
+      <span class="status-badge in-progress">
+        <span
+          style="
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--analyst);
+            animation: dot-pulse 1.5s infinite;
+          "
+        ></span>
+        IN PROGRESS
+      </span>
+      <span><span class="label">Duration </span><span class="value mono">12m 48s</span></span>
+      <span class="task-desc">Implement the run timeline visualization with phase cards and artifact viewers</span>
+    </div>
+
+    <div class="main-content">
+      <!-- ===== Timeline spine ===== -->
+      <div class="timeline-spine" id="timelineSpine">
+        <!-- Architecture -->
+        <div class="spine-segment">
+          <div class="spine-node" data-phase="arch">
+            <div class="spine-dot completed" style="color: var(--analyst); border-color: var(--analyst)"></div>
+            <span class="spine-label">Architecture</span>
+          </div>
+        </div>
+        <div class="spine-line done" style="color: var(--analyst)"></div>
+
+        <!-- Planning -->
+        <div class="spine-segment">
+          <div class="spine-node" data-phase="plan">
+            <div class="spine-dot completed" style="color: var(--planner); border-color: var(--planner)"></div>
+            <span class="spine-label">Planning</span>
+          </div>
+        </div>
+        <div class="spine-line done" style="color: var(--planner)"></div>
+
+        <!-- Implementation -->
+        <div class="spine-segment">
+          <div class="spine-node" data-phase="impl">
+            <div class="spine-dot completed" style="color: var(--author); border-color: var(--author)"></div>
+            <span class="spine-label">Implementation</span>
+          </div>
+        </div>
+        <div class="spine-line done" style="color: var(--author)"></div>
+
+        <!-- Review -->
+        <div class="spine-segment">
+          <div class="spine-node active" data-phase="review">
+            <div class="spine-dot active" style="color: var(--reviewer); border-color: var(--reviewer)"></div>
+            <span class="spine-label">Review</span>
+          </div>
+        </div>
+        <div class="spine-line half" style="color: var(--reviewer)"></div>
+
+        <!-- Simplifier -->
+        <div class="spine-segment">
+          <div class="spine-node" data-phase="simp">
+            <div class="spine-dot pending" style="color: var(--reviewer); border-color: var(--reviewer)"></div>
+            <span class="spine-label">Simplifier</span>
+          </div>
+        </div>
+        <div class="spine-line"></div>
+
+        <!-- Holistic -->
+        <div class="spine-segment">
+          <div class="spine-node" data-phase="holi">
+            <div class="spine-dot pending" style="color: var(--reviewer); border-color: var(--reviewer)"></div>
+            <span class="spine-label">Holistic</span>
+          </div>
+        </div>
+        <div class="spine-line"></div>
+
+        <!-- Summary -->
+        <div class="spine-segment">
+          <div class="spine-node" data-phase="summary">
+            <div class="spine-dot pending" style="color: var(--orchestrator); border-color: var(--orchestrator)"></div>
+            <span class="spine-label">Summary</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Timing strip ===== -->
+      <div class="timing-strip" style="margin-bottom: 0.25rem">
+        <div
+          class="timing-segment"
+          style="width: 8%; background: var(--analyst); opacity: 0.5"
+          data-label="Architecture: 1m 30s"
+        ></div>
+        <div
+          class="timing-segment"
+          style="width: 10%; background: var(--planner); opacity: 0.5"
+          data-label="Planning: 1m 30s"
+        ></div>
+        <div
+          class="timing-segment"
+          style="width: 35%; background: var(--author); opacity: 0.5"
+          data-label="Implementation: 5m 30s"
+        ></div>
+        <div
+          class="timing-segment"
+          style="width: 30%; background: var(--reviewer); opacity: 0.5; animation: pulse-bg 2s infinite"
+          data-label="Review: 4m 18s (in progress)"
+        ></div>
+      </div>
+
+      <!-- ===== Phase cards ===== -->
+      <div class="phase-cards-row" id="cardsRow">
+        <!-- Card: Architecture (collapsed) -->
+        <div class="phase-card card-enter" style="border-top-color: var(--analyst); animation-delay: 0s" id="card-arch">
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-arch" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Architecture</div>
+              <div class="card-role">orchestrated-architect (analyst)</div>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="meta-badge"><span class="dot" style="background: var(--success)"></span> Completed</span>
+            <span class="meta-badge mono">1m 30s</span>
+            <span class="meta-badge">Impact: <strong style="color: var(--warning)">medium</strong></span>
+          </div>
+          <div class="artifact-badges">
+            <span
+              class="artifact-badge artifact-drop"
+              style="background: rgba(165, 216, 255, 0.15); color: var(--artifact-arch)"
+              >architecture.md</span
+            >
+          </div>
+        </div>
+
+        <!-- Card: Planning (collapsed) -->
+        <div
+          class="phase-card card-enter"
+          style="border-top-color: var(--planner); animation-delay: 0.1s"
+          id="card-plan"
+        >
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-plan" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Planning</div>
+              <div class="card-role">orchestrated-planner (planner)</div>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="meta-badge"><span class="dot" style="background: var(--success)"></span> Completed</span>
+            <span class="meta-badge mono">1m 30s</span>
+            <span class="meta-badge">Steps: <strong>8</strong></span>
+          </div>
+          <div class="artifact-badges">
+            <span
+              class="artifact-badge artifact-drop"
+              style="background: rgba(178, 242, 187, 0.15); color: var(--artifact-plan)"
+              >orchestration-plan.md</span
+            >
+            <span
+              class="artifact-badge artifact-drop"
+              style="background: rgba(178, 242, 187, 0.12); color: var(--artifact-plan); opacity: 0.8"
+              >plan.json</span
+            >
+          </div>
+        </div>
+
+        <!-- Card: Implementation (EXPANDED with diff content) -->
+        <div
+          class="phase-card expanded card-enter"
+          style="border-top-color: var(--author); animation-delay: 0.2s"
+          id="card-impl"
+        >
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-impl" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Implementation</div>
+              <div class="card-role">orchestrated-coder (author)</div>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="meta-badge"><span class="dot" style="background: var(--success)"></span> Completed</span>
+            <span class="meta-badge mono">5m 30s</span>
+          </div>
+          <div class="quality-gates">
+            <span class="gate-item gate-pass">&#x2713; Typecheck</span>
+            <span class="gate-item gate-pass">&#x2713; Lint</span>
+            <span class="gate-item gate-pass">&#x2713; Tests</span>
+          </div>
+          <div class="artifact-badges">
+            <span
+              class="artifact-badge artifact-drop"
+              style="background: rgba(255, 243, 191, 0.15); color: var(--artifact-code)"
+              >change-summary.md</span
+            >
+          </div>
+
+          <!-- Expanded content: diff viewer -->
+          <div class="card-expanded-content">
+            <div class="artifact-viewer">
+              <div class="artifact-viewer-header">
+                <span class="artifact-viewer-title">change-summary.md</span>
+                <div class="version-tabs">
+                  <button class="version-tab active">v1</button>
+                  <button class="version-tab">v2</button>
+                  <button
+                    class="version-tab"
+                    style="
+                      font-size: 0.6rem;
+                      padding: 0.15rem 0.4rem;
+                      background: rgba(255, 255, 85, 0.08);
+                      color: var(--author);
+                    "
+                  >
+                    Compare
+                  </button>
+                </div>
+              </div>
+              <div class="diff-block">
+                <span class="diff-header"
+                  >--- a/packages/factory/src/client/visualizations/timeline/TimelineView.tsx</span
+                >
+                <span class="diff-header"
+                  >+++ b/packages/factory/src/client/visualizations/timeline/TimelineView.tsx</span
+                >
+                <span class="diff-context">@@ -0,0 +1,48 @@</span>
+                <span class="diff-add">+import React from 'react';</span>
+                <span class="diff-add"
+                  >+import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';</span
+                >
+                <span class="diff-add">+import { TimelineSpine } from './TimelineSpine.js';</span>
+                <span class="diff-add">+import { PhaseCard } from './PhaseCard.js';</span>
+                <span class="diff-add">+import { ArtifactViewer } from './ArtifactViewer.js';</span>
+                <span class="diff-add">+</span>
+                <span class="diff-add">+interface TimelineViewProps {</span>
+                <span class="diff-add">+ status: CanonicalRunStatus;</span>
+                <span class="diff-add">+ expandedPhase: string | null;</span>
+                <span class="diff-add">+ onPhaseClick: (phase: string) => void;</span>
+                <span class="diff-add">+}</span>
+                <span class="diff-add">+</span>
+                <span class="diff-add"
+                  >+/** Renders the full run timeline with spine, cards, and artifact viewers. */</span
+                >
+                <span class="diff-add"
+                  >+export function TimelineView({ status, expandedPhase, onPhaseClick }: TimelineViewProps) {</span
+                >
+                <span class="diff-add">+ return (</span>
+                <span class="diff-add">+ &lt;div className="timeline-view"&gt;</span>
+                <span class="diff-add">+ &lt;TimelineSpine phases={status.phases} /&gt;</span>
+                <span class="diff-add">+ &lt;div className="phase-cards-row"&gt;</span>
+                <span class="diff-add">+ {PHASE_NAMES.map((phase) =&gt; (</span>
+                <span class="diff-add">+ &lt;PhaseCard</span>
+                <span class="diff-add">+ key={phase}</span>
+                <span class="diff-add">+ phase={phase}</span>
+                <span class="diff-add">+ expanded={expandedPhase === phase}</span>
+                <span class="diff-add">+ onClick={() =&gt; onPhaseClick(phase)}</span>
+                <span class="diff-add">+ /&gt;</span>
+                <span class="diff-add">+ ))}</span>
+                <span class="diff-add">+ &lt;/div&gt;</span>
+                <span class="diff-add">+ &lt;/div&gt;</span>
+                <span class="diff-add">+ );</span>
+                <span class="diff-add">+}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Review (EXPANDED with reviewer details) -->
+        <div
+          class="phase-card expanded active card-enter"
+          style="border-top-color: var(--reviewer); animation-delay: 0.3s; flex: 0 0 720px"
+          id="card-review"
+        >
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-review" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Review</div>
+              <div class="card-role">3 parallel reviewers</div>
+            </div>
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 0.5rem">
+              <span class="criticality-badge crit-medium">medium</span>
+              <span
+                class="round-badge"
+                style="
+                  font-size: 0.65rem;
+                  padding: 0.15rem 0.5rem;
+                  background: rgba(255, 170, 0, 0.15);
+                  color: var(--warning);
+                  border-radius: 10px;
+                "
+                >Round 2 of 3</span
+              >
+            </div>
+          </div>
+
+          <!-- Criticality trend -->
+          <div class="crit-trend">
+            <span style="color: var(--text-secondary); font-size: 0.7rem">Criticality trend:</span>
+            <span class="crit-trend-dot" style="background: var(--warning)"></span>
+            <span style="color: var(--warning); font-size: 0.65rem">medium</span>
+            <span class="crit-trend-arrow">&#8594;</span>
+            <span class="crit-trend-dot" style="background: var(--success)"></span>
+            <span style="color: var(--success); font-size: 0.65rem">none</span>
+          </div>
+
+          <div class="card-expanded-content">
+            <!-- Reviewer sub-cards -->
+            <div class="reviewer-stack">
+              <div class="reviewer-card">
+                <canvas class="avatar" id="avatar-cr" width="32" height="32" style="width: 24px; height: 24px"></canvas>
+                <span class="reviewer-name">code-reviewer</span>
+                <div class="finding-badges">
+                  <span class="finding-badge finding-W">W</span>
+                  <span class="finding-badge finding-T">T</span>
+                  <span class="finding-badge finding-T">T</span>
+                  <span class="finding-badge finding-S">S</span>
+                </div>
+                <span class="criticality-badge crit-medium" style="font-size: 0.6rem">medium</span>
+              </div>
+              <div class="reviewer-card">
+                <canvas
+                  class="avatar"
+                  id="avatar-sfr"
+                  width="32"
+                  height="32"
+                  style="width: 24px; height: 24px"
+                ></canvas>
+                <span class="reviewer-name">silent-failure-reviewer</span>
+                <div class="finding-badges">
+                  <span class="finding-badge finding-R">R</span>
+                  <span class="finding-badge finding-L">L</span>
+                </div>
+                <span class="criticality-badge crit-low" style="font-size: 0.6rem">low</span>
+              </div>
+              <div class="reviewer-card">
+                <canvas class="avatar" id="avatar-tr" width="32" height="32" style="width: 24px; height: 24px"></canvas>
+                <span class="reviewer-name">test-reviewer</span>
+                <div class="finding-badges">
+                  <span class="finding-badge finding-T">T</span>
+                  <span class="finding-badge finding-T">T</span>
+                  <span class="finding-badge finding-S">S</span>
+                </div>
+                <span class="criticality-badge crit-low" style="font-size: 0.6rem">low</span>
+              </div>
+            </div>
+
+            <!-- Findings table (code-reviewer expanded) -->
+            <div class="artifact-viewer" style="margin-top: 0.75rem">
+              <div class="artifact-viewer-header">
+                <span class="artifact-viewer-title">code-reviewer findings</span>
+              </div>
+              <table class="findings-table">
+                <thead>
+                  <tr>
+                    <th style="width: 35px">Sev</th>
+                    <th>Finding</th>
+                    <th style="width: 80px">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="finding-badge finding-W" style="width: auto; padding: 0.1rem 0.35rem">W</span></td>
+                    <td style="color: var(--text-primary)">
+                      Missing error handling in
+                      <code
+                        style="
+                          color: var(--author);
+                          background: rgba(255, 255, 85, 0.08);
+                          padding: 0.1rem 0.3rem;
+                          border-radius: 2px;
+                        "
+                        >fetchArtifactContent</code
+                      >
+                      -- network errors propagate unhandled
+                    </td>
+                    <td><span style="font-size: 0.65rem; color: var(--success)">&#x2713; Fixed</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="finding-badge finding-T" style="width: auto; padding: 0.1rem 0.35rem">T</span></td>
+                    <td style="color: var(--text-primary)">
+                      No test coverage for
+                      <code
+                        style="
+                          color: var(--author);
+                          background: rgba(255, 255, 85, 0.08);
+                          padding: 0.1rem 0.3rem;
+                          border-radius: 2px;
+                        "
+                        >TimelineSpine</code
+                      >
+                      component rendering
+                    </td>
+                    <td><span style="font-size: 0.65rem; color: var(--success)">&#x2713; Fixed</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="finding-badge finding-T" style="width: auto; padding: 0.1rem 0.35rem">T</span></td>
+                    <td style="color: var(--text-primary)">
+                      Edge case: empty artifacts array causes
+                      <code
+                        style="
+                          color: var(--author);
+                          background: rgba(255, 255, 85, 0.08);
+                          padding: 0.1rem 0.3rem;
+                          border-radius: 2px;
+                        "
+                        >PhaseCard</code
+                      >
+                      to throw
+                    </td>
+                    <td><span style="font-size: 0.65rem; color: var(--success)">&#x2713; Fixed</span></td>
+                  </tr>
+                  <tr>
+                    <td><span class="finding-badge finding-S" style="width: auto; padding: 0.1rem 0.35rem">S</span></td>
+                    <td style="color: var(--text-primary)">
+                      Inconsistent naming:
+                      <code
+                        style="
+                          color: var(--author);
+                          background: rgba(255, 255, 85, 0.08);
+                          padding: 0.1rem 0.3rem;
+                          border-radius: 2px;
+                        "
+                        >phaseCards</code
+                      >
+                      vs
+                      <code
+                        style="
+                          color: var(--author);
+                          background: rgba(255, 255, 85, 0.08);
+                          padding: 0.1rem 0.3rem;
+                          border-radius: 2px;
+                        "
+                        >cardPhases</code
+                      >
+                    </td>
+                    <td><span style="font-size: 0.65rem; color: var(--success)">&#x2713; Fixed</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Iteration section -->
+            <div class="iteration-section">
+              <div class="iteration-header">
+                <span>Fix cycle: iteration 1</span>
+                <span class="round-badge">Coder applied 4 fixes</span>
+              </div>
+              <div style="margin-top: 0.5rem">
+                <div class="artifact-badges">
+                  <span
+                    class="artifact-badge artifact-drop"
+                    style="background: rgba(255, 243, 191, 0.15); color: var(--artifact-code)"
+                    >change-summary v2</span
+                  >
+                </div>
+                <div style="margin-top: 0.4rem; font-size: 0.7rem; color: var(--text-secondary)">
+                  Re-review dispatched: code-reviewer, test-reviewer
+                </div>
+                <div style="margin-top: 0.3rem; font-size: 0.7rem; display: flex; gap: 0.5rem">
+                  <span
+                    >code-reviewer:
+                    <span class="criticality-badge crit-none" style="font-size: 0.6rem">none</span></span
+                  >
+                  <span
+                    >test-reviewer:
+                    <span class="criticality-badge crit-none" style="font-size: 0.6rem">none</span></span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: Simplifier (pending) -->
+        <div
+          class="phase-card skipped card-enter"
+          style="border-top-color: var(--reviewer); animation-delay: 0.4s; opacity: 0.3"
+          id="card-simp"
+        >
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-simp" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Simplifier</div>
+              <div class="card-role">code-simplifier (reviewer)</div>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="meta-badge"><span class="dot" style="background: var(--text-dim)"></span> Pending</span>
+          </div>
+        </div>
+
+        <!-- Card: Holistic (pending) -->
+        <div
+          class="phase-card skipped card-enter"
+          style="border-top-color: var(--reviewer); animation-delay: 0.5s; opacity: 0.3"
+          id="card-holi"
+        >
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-holi" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Holistic review</div>
+              <div class="card-role">orchestrated-reviewer (reviewer)</div>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="meta-badge"><span class="dot" style="background: var(--text-dim)"></span> Pending</span>
+          </div>
+        </div>
+
+        <!-- Card: Summary (pending) -->
+        <div
+          class="phase-card skipped card-enter"
+          style="border-top-color: var(--orchestrator); animation-delay: 0.6s; opacity: 0.3"
+          id="card-summary"
+        >
+          <div class="card-header">
+            <canvas class="avatar" id="avatar-summary" width="32" height="32"></canvas>
+            <div>
+              <div class="card-title">Summary</div>
+              <div class="card-role">orchestrator</div>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="meta-badge"><span class="dot" style="background: var(--text-dim)"></span> Pending</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Scrubber bar ===== -->
+    <div class="scrubber-bar">
+      <div class="scrubber-controls">
+        <button class="scrubber-btn" title="Step backward">&#x23EE;</button>
+        <button class="scrubber-btn active" title="Pause">&#x23F8;</button>
+        <button class="scrubber-btn" title="Step forward">&#x23ED;</button>
+      </div>
+      <div class="scrubber-track">
+        <div class="scrubber-fill" style="width: 62%"></div>
+        <div class="scrubber-handle" style="left: calc(62% - 7px)"></div>
+      </div>
+      <span class="scrubber-time mono">Snapshot 18 / 29</span>
+      <span class="scrubber-speed">1x</span>
+    </div>
+
+    <!-- ===== Tooltip ===== -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+      // ===== Pixel avatar rendering =====
+      // Draw simple CGA-style pixel avatars on each card's canvas
+
+      const AVATAR_PALETTES = {
+        analyst: { body: '#5555FF', accent: '#3333CC', skin: '#FFCC99', bg: '#1a1a2e' },
+        planner: { body: '#55FF55', accent: '#33CC33', skin: '#FFCC99', bg: '#1a1a2e' },
+        author: { body: '#FFFF55', accent: '#CCCC33', skin: '#FFCC99', bg: '#1a1a2e' },
+        reviewer: { body: '#FF5555', accent: '#CC3333', skin: '#FFCC99', bg: '#1a1a2e' },
+        orchestrator: { body: '#FF55FF', accent: '#CC33CC', skin: '#FFCC99', bg: '#1a1a2e' },
+      };
+
+      function drawAvatar(canvasId, roleType, state) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const p = AVATAR_PALETTES[roleType] || AVATAR_PALETTES.analyst;
+
+        ctx.fillStyle = p.bg;
+        ctx.fillRect(0, 0, 32, 32);
+
+        // Simple pixel character (8x8 grid scaled to 32x32, so each "pixel" is 4x4)
+        function px(x, y, color) {
+          ctx.fillStyle = color;
+          ctx.fillRect(x * 4, y * 4, 4, 4);
+        }
+
+        // Head (skin)
+        px(3, 1, p.skin);
+        px(4, 1, p.skin);
+        px(3, 2, p.skin);
+        px(4, 2, p.skin);
+
+        // Eyes
+        px(3, 2, '#333');
+        px(4, 2, '#333');
+
+        // Body
+        px(2, 3, p.body);
+        px(3, 3, p.body);
+        px(4, 3, p.body);
+        px(5, 3, p.body);
+        px(2, 4, p.body);
+        px(3, 4, p.body);
+        px(4, 4, p.body);
+        px(5, 4, p.body);
+        px(3, 5, p.body);
+        px(4, 5, p.body);
+
+        // Arms
+        if (state === 'working') {
+          // Arms up (working animation frame)
+          px(1, 3, p.skin);
+          px(6, 2, p.skin);
+          px(1, 2, p.skin);
+          px(6, 3, p.skin);
+        } else if (state === 'celebrating') {
+          // Arms up high
+          px(1, 1, p.skin);
+          px(6, 1, p.skin);
+          px(1, 2, p.skin);
+          px(6, 2, p.skin);
+        } else {
+          // Arms down (idle)
+          px(1, 4, p.skin);
+          px(6, 4, p.skin);
+        }
+
+        // Legs
+        px(3, 6, p.accent);
+        px(4, 6, p.accent);
+        px(3, 7, p.accent);
+        px(4, 7, p.accent);
+
+        // Activity indicator
+        if (state === 'working') {
+          // Small sparkle
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, 2, 2);
+          ctx.fillRect(28, 4, 2, 2);
+        }
+      }
+
+      // Draw all avatars
+      drawAvatar('avatar-arch', 'analyst', 'idle');
+      drawAvatar('avatar-plan', 'planner', 'idle');
+      drawAvatar('avatar-impl', 'author', 'idle');
+      drawAvatar('avatar-review', 'reviewer', 'working');
+      drawAvatar('avatar-simp', 'reviewer', 'idle');
+      drawAvatar('avatar-holi', 'reviewer', 'idle');
+      drawAvatar('avatar-summary', 'orchestrator', 'idle');
+
+      // Reviewer sub-card avatars
+      drawAvatar('avatar-cr', 'reviewer', 'idle');
+      drawAvatar('avatar-sfr', 'reviewer', 'idle');
+      drawAvatar('avatar-tr', 'reviewer', 'idle');
+
+      // ===== Working avatar animation =====
+      let frame = 0;
+      setInterval(() => {
+        frame++;
+        drawAvatar('avatar-review', 'reviewer', frame % 2 === 0 ? 'working' : 'idle');
+      }, 800);
+
+      // ===== Interactive card expand/collapse =====
+      document.querySelectorAll('.phase-card:not(.skipped)').forEach((card) => {
+        card.addEventListener('click', (e) => {
+          // Don't toggle if clicking inside the expanded content
+          if (e.target.closest('.card-expanded-content')) return;
+
+          const wasExpanded = card.classList.contains('expanded');
+
+          // Collapse all
+          document.querySelectorAll('.phase-card.expanded').forEach((c) => {
+            if (c !== card) {
+              c.classList.remove('expanded');
+              c.style.flex = '';
+              const content = c.querySelector('.card-expanded-content');
+              if (content) content.style.display = 'none';
+            }
+          });
+
+          if (wasExpanded) {
+            card.classList.remove('expanded');
+            card.style.flex = '';
+            const content = card.querySelector('.card-expanded-content');
+            if (content) content.style.display = 'none';
+          } else {
+            card.classList.add('expanded');
+            card.style.flex = '0 0 700px';
+            const content = card.querySelector('.card-expanded-content');
+            if (content) content.style.display = 'block';
+          }
+        });
+      });
+
+      // ===== Version tabs =====
+      document.querySelectorAll('.version-tab').forEach((tab) => {
+        tab.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const parent = tab.closest('.version-tabs');
+          parent.querySelectorAll('.version-tab').forEach((t) => t.classList.remove('active'));
+          tab.classList.add('active');
+        });
+      });
+
+      // ===== Tooltip on spine nodes =====
+      const tooltip = document.getElementById('tooltip');
+      const phaseInfo = {
+        arch: {
+          name: 'Architecture',
+          agent: 'orchestrated-architect',
+          status: 'Completed',
+          duration: '1m 30s',
+          artifacts: 1,
+        },
+        plan: {
+          name: 'Planning',
+          agent: 'orchestrated-planner',
+          status: 'Completed',
+          duration: '1m 30s',
+          artifacts: 2,
+        },
+        impl: {
+          name: 'Implementation',
+          agent: 'orchestrated-coder',
+          status: 'Completed',
+          duration: '5m 30s',
+          artifacts: 1,
+        },
+        review: {
+          name: 'Review',
+          agent: '3 parallel reviewers',
+          status: 'In progress (round 2)',
+          duration: '4m 18s',
+          artifacts: 4,
+        },
+        simp: { name: 'Simplifier', agent: 'code-simplifier', status: 'Pending', duration: '--', artifacts: 0 },
+        holi: {
+          name: 'Holistic review',
+          agent: 'orchestrated-reviewer',
+          status: 'Pending',
+          duration: '--',
+          artifacts: 0,
+        },
+        summary: { name: 'Summary', agent: 'orchestrator', status: 'Pending', duration: '--', artifacts: 0 },
+      };
+
+      document.querySelectorAll('.spine-node').forEach((node) => {
+        node.addEventListener('mouseenter', (e) => {
+          const phase = node.dataset.phase;
+          const info = phaseInfo[phase];
+          if (!info) return;
+
+          tooltip.innerHTML = `
+      <div style="font-weight:600;margin-bottom:0.3rem;">${info.name}</div>
+      <div style="color:var(--text-secondary);margin-bottom:0.2rem;">${info.agent}</div>
+      <div style="display:flex;gap:0.75rem;">
+        <span>${info.status}</span>
+        <span class="mono">${info.duration}</span>
+      </div>
+      ${info.artifacts > 0 ? `<div style="margin-top:0.2rem;color:var(--text-secondary);">${info.artifacts} artifact${info.artifacts > 1 ? 's' : ''}</div>` : ''}
+    `;
+          tooltip.style.display = 'block';
+          const rect = node.getBoundingClientRect();
+          tooltip.style.left = rect.left + 'px';
+          tooltip.style.top = rect.bottom + 8 + 'px';
+        });
+
+        node.addEventListener('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+      });
+
+      // ===== Scrubber interaction =====
+      const scrubberTrack = document.querySelector('.scrubber-track');
+      const scrubberFill = document.querySelector('.scrubber-fill');
+      const scrubberHandle = document.querySelector('.scrubber-handle');
+      const scrubberTime = document.querySelector('.scrubber-time');
+
+      let isDragging = false;
+
+      function updateScrubber(pct) {
+        pct = Math.max(0, Math.min(100, pct));
+        scrubberFill.style.width = pct + '%';
+        scrubberHandle.style.left = `calc(${pct}% - 7px)`;
+        const snapshot = Math.round((pct / 100) * 29);
+        scrubberTime.textContent = `Snapshot ${snapshot} / 29`;
+      }
+
+      scrubberTrack.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        const rect = scrubberTrack.getBoundingClientRect();
+        const pct = ((e.clientX - rect.left) / rect.width) * 100;
+        updateScrubber(pct);
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const rect = scrubberTrack.getBoundingClientRect();
+        const pct = ((e.clientX - rect.left) / rect.width) * 100;
+        updateScrubber(pct);
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      // ===== Keyboard navigation =====
+      let focusedCardIndex = -1;
+      const cards = document.querySelectorAll('.phase-card:not(.skipped)');
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+          focusedCardIndex = Math.min(focusedCardIndex + 1, cards.length - 1);
+          cards[focusedCardIndex].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+          cards[focusedCardIndex].style.outline = '2px solid var(--analyst)';
+          cards.forEach((c, i) => {
+            if (i !== focusedCardIndex) c.style.outline = '';
+          });
+        } else if (e.key === 'ArrowLeft') {
+          focusedCardIndex = Math.max(focusedCardIndex - 1, 0);
+          cards[focusedCardIndex].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+          cards[focusedCardIndex].style.outline = '2px solid var(--analyst)';
+          cards.forEach((c, i) => {
+            if (i !== focusedCardIndex) c.style.outline = '';
+          });
+        } else if (e.key === 'Enter' && focusedCardIndex >= 0) {
+          cards[focusedCardIndex].click();
+        } else if (e.key === 'Escape') {
+          document.querySelectorAll('.phase-card.expanded').forEach((c) => {
+            c.classList.remove('expanded');
+            c.style.flex = '';
+            const content = c.querySelector('.card-expanded-content');
+            if (content) content.style.display = 'none';
+          });
+          cards.forEach((c) => (c.style.outline = ''));
+          focusedCardIndex = -1;
+        }
+      });
+
+      // ===== Pulse background for active timing segment =====
+      const style = document.createElement('style');
+      style.textContent = `
+  @keyframes pulse-bg {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.65; }
+  }
+`;
+      document.head.appendChild(style);
+
+      // ===== Auto-scroll to active card =====
+      setTimeout(() => {
+        const activeCard = document.querySelector('.phase-card.active');
+        if (activeCard) {
+          activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 600);
+    </script>
+  </body>
+</html>
