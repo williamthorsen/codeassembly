@@ -5,17 +5,17 @@
 /** Size of each tile in pixels (LimeZu 32x32 upscaled versions). */
 export const TILE_SIZE = 32;
 
-/** Map width in tiles. */
-export const MAP_COLS = 20;
+/** Map width in tiles (matches v2 prototype: 30 columns). */
+export const MAP_COLS = 30;
 
-/** Map height in tiles. */
-export const MAP_ROWS = 15;
+/** Map height in tiles (matches v2 prototype: 22 rows). */
+export const MAP_ROWS = 22;
 
 /** Map width in pixels. */
-export const MAP_WIDTH = MAP_COLS * TILE_SIZE; // 640
+export const MAP_WIDTH = MAP_COLS * TILE_SIZE; // 960
 
 /** Map height in pixels. */
-export const MAP_HEIGHT = MAP_ROWS * TILE_SIZE; // 480
+export const MAP_HEIGHT = MAP_ROWS * TILE_SIZE; // 704
 
 // ---------------------------------------------------------------------------
 // Engine viewport dimensions
@@ -41,7 +41,10 @@ export const LABEL_COLOR = '#ccccdd';
 // Room layout (tile coordinates)
 // ---------------------------------------------------------------------------
 
-/** Room definition for placeholder rendering. Coordinates are in tile units. */
+/**
+ * Room definition for placeholder rendering. Coordinates are in tile units.
+ * @deprecated Use `RoomDefinition` from `../types.js` and rooms from `../layout/room-definitions.js` instead.
+ */
 export interface RoomDef {
   id: string;
   label: string;
@@ -52,7 +55,10 @@ export interface RoomDef {
   color: string;
 }
 
-/** Predefined facility rooms arranged in a 20x15 tile map. */
+/**
+ * Predefined facility rooms for placeholder rendering.
+ * @deprecated Use `ALL_ROOMS` from `../layout/room-definitions.js` instead. Still used by `TilemapScene.ts`.
+ */
 export const FACILITY_ROOMS: readonly RoomDef[] = [
   { id: 'control', label: 'Control Room', tileX: 1, tileY: 1, tileW: 5, tileH: 5, color: '#3a3a5e' },
   { id: 'analysis', label: 'Analysis Lab', tileX: 7, tileY: 1, tileW: 6, tileH: 5, color: '#3e3a5a' },
