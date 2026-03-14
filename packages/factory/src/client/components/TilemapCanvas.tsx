@@ -13,17 +13,18 @@ interface TilemapCanvasProps {
 }
 
 /**
- * Renders the tilemap visualization by managing an Excalibur engine lifecycle tied to a canvas element.
- * For Phase 1 the scene is static — the status prop is accepted but not used.
+ * Renders the tilemap visualization by managing an Excalibur engine lifecycle
+ * tied to a canvas element. Forwards run status updates to the scene.
  */
-export function TilemapCanvas({ status: _status }: TilemapCanvasProps): React.JSX.Element {
+export function TilemapCanvas({ status }: TilemapCanvasProps): React.JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
+  const sceneRef = useRef<TilemapScene | null>(null);
   const initializedRef = useRef(false);
-  const startFailedRef = useRef(false);
 
   useContainerResize(canvasRef, engineRef);
 
+  // Engine lifecycle
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -36,8 +37,9 @@ export function TilemapCanvas({ status: _status }: TilemapCanvasProps): React.JS
 
     const scene = new TilemapScene();
     engine.addScene('tilemap', scene);
+    sceneRef.current = scene;
+
     void engine.goToScene('tilemap').catch((error: unknown) => {
-      startFailedRef.current = true;
       console.error('Failed to go to tilemap scene:', error);
     });
 
@@ -45,10 +47,11 @@ export function TilemapCanvas({ status: _status }: TilemapCanvasProps): React.JS
       .start()
       .then(() => {
         initializedRef.current = true;
+        // Apply initial status once engine is ready
+        scene.updateStatus(status);
         return;
       })
       .catch((error: unknown) => {
-        startFailedRef.current = true;
         console.error('Failed to start Excalibur engine:', error);
       });
 
@@ -56,10 +59,17 @@ export function TilemapCanvas({ status: _status }: TilemapCanvasProps): React.JS
 
     return () => {
       initializedRef.current = false;
-      startFailedRef.current = false;
+      sceneRef.current = null;
       engine.stop();
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Forward status updates to the scene
+  useEffect(() => {
+    if (initializedRef.current && sceneRef.current) {
+      sceneRef.current.updateStatus(status);
+    }
+  }, [status]);
 
   return <canvas ref={canvasRef} className="game-canvas" />;
 }

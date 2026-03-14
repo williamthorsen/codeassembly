@@ -303,7 +303,7 @@ describe('mapRunToTilemap', () => {
           ...emptyPhases(),
           architecture: { status: 'in_progress', impactLevel: undefined, artifact: undefined },
         },
-        waitingForInput: { type: 'user_approval', message: 'Approve plan' },
+        waitingForInput: 'permission_prompt',
       });
 
       const config = mapRunToTilemap(status);

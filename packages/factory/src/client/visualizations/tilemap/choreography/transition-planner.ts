@@ -1,4 +1,4 @@
-import type { FacilityLayout, Position, ResolvedPositions, TilemapDiff, Transition, TransitionPlan } from '../types.js';
+import type { FacilityLayout, ResolvedPositions, TilemapDiff, Transition, TransitionPlan } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Duration constants (milliseconds)
