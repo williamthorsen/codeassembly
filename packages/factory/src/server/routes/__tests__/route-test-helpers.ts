@@ -8,20 +8,31 @@ import type { ProjectIndex, ProjectIndexProvider } from '../../../shared/types/a
 export interface MockResponse {
   statusCode: number;
   body: unknown;
+  contentType: string | undefined;
   status(code: number): MockResponse;
   json(data: unknown): void;
+  type(contentType: string): MockResponse;
+  send(body: unknown): void;
 }
 
 export function createMockResponse(): MockResponse {
   const res: MockResponse = {
     statusCode: 200,
     body: undefined,
+    contentType: undefined,
     status(code: number) {
       res.statusCode = code;
       return res;
     },
     json(data: unknown) {
       res.body = data;
+    },
+    type(contentType: string) {
+      res.contentType = contentType;
+      return res;
+    },
+    send(body: unknown) {
+      res.body = body;
     },
   };
   return res;
@@ -36,7 +47,7 @@ export function createMockScanner(index: ProjectIndex | null): ProjectIndexProvi
 // --- Handler extraction ---
 
 export type RouteHandler = (
-  req: { params: Record<string, string>; body?: unknown },
+  req: { params: Record<string, string>; query?: Record<string, string>; body?: unknown },
   res: MockResponse,
 ) => void | Promise<void>;
 
@@ -74,13 +85,15 @@ function extractLayerWithHandle(route: unknown): HasHandle | undefined {
 
 /**
  * Invokes a route layer's handle function and awaits the result if it returns a Promise.
+ * Defaults `query` to an empty object to match Express request behavior.
  */
 async function invokeLayerHandle(
   layer: HasHandle,
-  req: { params: Record<string, string>; body?: unknown },
+  req: { params: Record<string, string>; query?: Record<string, string>; body?: unknown },
   res: MockResponse,
 ): Promise<void> {
-  const result: unknown = layer.handle(req, res);
+  const reqWithDefaults = { query: {}, ...req };
+  const result: unknown = layer.handle(reqWithDefaults, res);
   if (result instanceof Promise) await result;
 }
 

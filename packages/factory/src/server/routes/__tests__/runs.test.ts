@@ -204,7 +204,7 @@ describe('createRunsRouter', () => {
   });
 
   describe('GET /:projectSlug/:runId/artifacts/:filename', () => {
-    it('returns artifact content', async () => {
+    it('returns raw artifact content for .md files with markdown content-type', async () => {
       const scanner = createMockScanner(indexWithRun());
       const router = createRunsRouter(scanner);
       const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
@@ -215,7 +215,88 @@ describe('createRunsRouter', () => {
 
       expect(mockedReadFile).toHaveBeenCalledWith(join(RUN_PATH, 'plan.md'), 'utf8');
       expect(res.statusCode).toBe(200);
-      expect(res.body).toEqual({ content: '# Plan\nStep 1...' });
+      expect(res.contentType).toBe('text/markdown; charset=utf-8');
+      expect(res.body).toBe('# Plan\nStep 1...');
+    });
+
+    it('returns raw content with application/json content-type for .json files', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+      mockedReadFile.mockResolvedValueOnce('{"key": "value"}');
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1', filename: 'status.json' } }, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.contentType).toBe('application/json; charset=utf-8');
+      expect(res.body).toBe('{"key": "value"}');
+    });
+
+    it('returns raw content with ndjson content-type for .jsonl files', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+      mockedReadFile.mockResolvedValueOnce('{"line":1}\n{"line":2}\n');
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1', filename: 'events.jsonl' } }, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.contentType).toBe('application/x-ndjson; charset=utf-8');
+      expect(res.body).toBe('{"line":1}\n{"line":2}\n');
+    });
+
+    it('returns raw content with text/plain content-type for unknown extensions', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+      mockedReadFile.mockResolvedValueOnce('some plain text');
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1', filename: 'notes.txt' } }, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.contentType).toBe('text/plain; charset=utf-8');
+      expect(res.body).toBe('some plain text');
+    });
+
+    it('renders markdown to HTML when format=html is specified', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+      mockedReadFile.mockResolvedValueOnce('# Hello\n\nWorld');
+
+      await handler(
+        {
+          params: { projectSlug: 'test-project', runId: 'run-1', filename: 'plan.md' },
+          query: { format: 'html' },
+        },
+        res,
+      );
+
+      expect(res.statusCode).toBe(200);
+      expect(res.contentType).toBe('text/html; charset=utf-8');
+      expect(res.body).toContain('<h1>Hello</h1>');
+      expect(res.body).toContain('<p>World</p>');
+    });
+
+    it('returns 400 when format=html is requested for a non-markdown file', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/artifacts/:filename');
+
+      await handler(
+        {
+          params: { projectSlug: 'test-project', runId: 'run-1', filename: 'status.json' },
+          query: { format: 'html' },
+        },
+        res,
+      );
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toEqual({ error: 'HTML rendering is only supported for .md files' });
     });
 
     it('returns 404 when artifact file does not exist (ENOENT)', async () => {

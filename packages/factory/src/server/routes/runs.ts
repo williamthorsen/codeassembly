@@ -1,8 +1,9 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { extname, join } from 'node:path';
 
 import type { Request, Response } from 'express';
 import { Router } from 'express';
+import { marked } from 'marked';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
 import { parseRunData } from '../adapters/status-adapter.js';
@@ -72,6 +73,14 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
       return;
     }
 
+    const format = req.query.format;
+    const ext = extname(filename).toLowerCase();
+
+    if (format === 'html' && ext !== '.md') {
+      res.status(400).json({ error: 'HTML rendering is only supported for .md files' });
+      return;
+    }
+
     const runPath = findRunPath(scanner, projectSlug, runId);
     if (!runPath) {
       res.status(404).json({ error: 'Run not found' });
@@ -81,7 +90,14 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
     const artifactPath = join(runPath, filename);
     try {
       const content = await readFile(artifactPath, 'utf8');
-      res.json({ content });
+
+      if (format === 'html') {
+        const html = marked(content);
+        res.type('text/html; charset=utf-8').send(html);
+        return;
+      }
+
+      res.type(contentTypeForExtension(ext)).send(content);
     } catch (error) {
       if (isEnoent(error)) {
         res.status(404).json({ error: 'Artifact not found' });
@@ -93,6 +109,17 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
   });
 
   return router;
+}
+
+const CONTENT_TYPES: Record<string, string> = {
+  '.md': 'text/markdown; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.jsonl': 'application/x-ndjson; charset=utf-8',
+};
+
+/** Returns the content-type string for a given file extension, defaulting to plain text. */
+function contentTypeForExtension(ext: string): string {
+  return CONTENT_TYPES[ext] ?? 'text/plain; charset=utf-8';
 }
 
 function findRunPath(scanner: ProjectIndexProvider, projectSlug: string, runId: string): string | undefined {
