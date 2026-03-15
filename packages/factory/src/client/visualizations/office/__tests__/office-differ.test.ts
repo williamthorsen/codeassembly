@@ -31,7 +31,7 @@ function agent(overrides: Partial<OfficeAgentState> & { id: string }): OfficeAge
     phase: 'implementation',
     status: 'idle',
     zoneId: 'workshop',
-    slotId: 'workshop-ws-0',
+    slotId: 'workshop-desk-0',
     ...overrides,
   };
 }
@@ -43,7 +43,7 @@ function artifact(overrides: Partial<OfficeArtifactState> & { id: string }): Off
     status: 'created',
     producerPhase: 'implementation',
     zoneId: 'workshop',
-    slotId: 'workshop-ws-0',
+    slotId: 'workshop-desk-0',
     ...overrides,
   };
 }
@@ -106,17 +106,17 @@ describe(diffOfficeConfigs, () => {
     });
 
     it('detects agent slot reassignment', () => {
-      const a = agent({ id: 'a1', zoneId: 'workshop', slotId: 'workshop-ws-0' });
+      const a = agent({ id: 'a1', zoneId: 'workshop', slotId: 'workshop-desk-0' });
       const prev = config({ agents: [a] });
-      const next = config({ agents: [{ ...a, zoneId: 'workshop', slotId: 'workshop-ws-1' }] });
+      const next = config({ agents: [{ ...a, zoneId: 'workshop', slotId: 'workshop-desk-1' }] });
       const diff = diffOfficeConfigs(prev, next);
 
       expect(diff.agents).toHaveLength(1);
       expect(diff.agents[0]?.moved).toEqual({
         fromZone: 'workshop',
-        fromSlot: 'workshop-ws-0',
+        fromSlot: 'workshop-desk-0',
         toZone: 'workshop',
-        toSlot: 'workshop-ws-1',
+        toSlot: 'workshop-desk-1',
       });
     });
 

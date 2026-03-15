@@ -42,7 +42,7 @@ describe(createOfficeLayout, () => {
     it('returns all slots for a zone', () => {
       const prepSlots = layout.slotsInZone('prep');
       expect(prepSlots).toHaveLength(2);
-      expect(prepSlots.map((s) => s.id)).toEqual(['prep-ws-0', 'prep-ws-1']);
+      expect(prepSlots.map((s) => s.id)).toEqual(['prep-desk-0', 'prep-desk-1']);
     });
 
     it('filters by slot type', () => {

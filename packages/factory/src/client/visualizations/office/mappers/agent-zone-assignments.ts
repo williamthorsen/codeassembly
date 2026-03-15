@@ -42,18 +42,18 @@ export function assignAgentToZone(agent: LogicalAgentState, agentIndex: number):
   if (zoneId === 'prep') {
     // Architect gets ws-0, planner gets ws-1
     const slotIndex = agent.phase === 'architecture' ? 0 : 1;
-    return { zoneId, slotId: `prep-ws-${slotIndex}` };
+    return { zoneId, slotId: `prep-desk-${slotIndex}` };
   }
 
   if (zoneId === 'workshop') {
     // Coder gets ws-0, reviewers get ws-1 through ws-5
     if (agent.phase === 'implementation') {
-      return { zoneId, slotId: 'workshop-ws-0' };
+      return { zoneId, slotId: 'workshop-desk-0' };
     }
     // Reviewers (review, simplifier, holistic) get ws-1 through ws-5
     // Cap at 5 reviewer slots
     const reviewerSlot = Math.min(agentIndex, 5);
-    return { zoneId, slotId: `workshop-ws-${reviewerSlot}` };
+    return { zoneId, slotId: `workshop-desk-${reviewerSlot}` };
   }
 
   // Governor zone fallback (summary phase agents)
@@ -113,15 +113,15 @@ export function assignArtifactToZone(
 function resolveProducerSlot(phase: PhaseName): string {
   switch (phase) {
     case 'architecture':
-      return 'prep-ws-0';
+      return 'prep-desk-0';
     case 'planning':
-      return 'prep-ws-1';
+      return 'prep-desk-1';
     case 'implementation':
-      return 'workshop-ws-0';
+      return 'workshop-desk-0';
     case 'review':
     case 'simplifier':
     case 'holistic':
-      return 'workshop-ws-1';
+      return 'workshop-desk-1';
     case 'summary':
       return 'governor-desk-0';
   }
@@ -162,7 +162,7 @@ export function computeReviewerIndices(agents: LogicalAgentState[]): Map<string,
   const overflowCount = reviewAgents.length - maxSlot;
   if (overflowCount > 0) {
     console.warn(
-      `[office] ${String(overflowCount)} reviewer(s) exceed available slots; they will share workshop-ws-${String(maxSlot)}`,
+      `[office] ${String(overflowCount)} reviewer(s) exceed available slots; they will share workshop-desk-${String(maxSlot)}`,
     );
   }
 

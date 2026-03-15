@@ -80,8 +80,8 @@ describe(planTransitions, () => {
   });
 
   it('produces walk transitions with corridor waypoints for agent cross-zone movement', () => {
-    const fromPos: Position = layout.slotPosition('prep-ws-0');
-    const toPos: Position = layout.slotPosition('workshop-ws-0');
+    const fromPos: Position = layout.slotPosition('prep-desk-0');
+    const toPos: Position = layout.slotPosition('workshop-desk-0');
 
     const diff: OfficeDiff = {
       ...emptyDiff(),
@@ -89,7 +89,7 @@ describe(planTransitions, () => {
         {
           agentId: 'a1',
           statusChanged: null,
-          moved: { fromZone: 'prep', fromSlot: 'prep-ws-0', toZone: 'workshop', toSlot: 'workshop-ws-0' },
+          moved: { fromZone: 'prep', fromSlot: 'prep-desk-0', toZone: 'workshop', toSlot: 'workshop-desk-0' },
         },
       ],
       hasChanges: true,
@@ -153,7 +153,7 @@ describe(planTransitions, () => {
   });
 
   it('produces fade_in for newly added agents', () => {
-    const toPos: Position = layout.slotPosition('workshop-ws-0');
+    const toPos: Position = layout.slotPosition('workshop-desk-0');
 
     const diff: OfficeDiff = {
       ...emptyDiff(),
@@ -161,7 +161,7 @@ describe(planTransitions, () => {
         {
           agentId: 'new-agent',
           statusChanged: null,
-          moved: { fromZone: '', fromSlot: '', toZone: 'workshop', toSlot: 'workshop-ws-0' },
+          moved: { fromZone: '', fromSlot: '', toZone: 'workshop', toSlot: 'workshop-desk-0' },
         },
       ],
       hasChanges: true,

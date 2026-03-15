@@ -10,8 +10,8 @@ export const PREP_ZONE: ZoneDefinition = {
   label: 'Prep area',
   bounds: { col: 1, row: 1, width: 11, height: 12 },
   slots: [
-    { id: 'prep-ws-0', type: 'workstation', tile: { col: 3, row: 5 } },
-    { id: 'prep-ws-1', type: 'workstation', tile: { col: 8, row: 5 } },
+    { id: 'prep-desk-0', type: 'workstation', tile: { col: 3, row: 5 } },
+    { id: 'prep-desk-1', type: 'workstation', tile: { col: 8, row: 5 } },
   ],
   doors: [{ tile: { col: 6, row: 13 }, direction: 'down' }],
 };
@@ -26,12 +26,12 @@ export const WORKSHOP_ZONE: ZoneDefinition = {
   label: 'The workshop',
   bounds: { col: 13, row: 1, width: 26, height: 12 },
   slots: [
-    { id: 'workshop-ws-0', type: 'workstation', tile: { col: 16, row: 5 } },
-    { id: 'workshop-ws-1', type: 'workstation', tile: { col: 22, row: 10 } },
-    { id: 'workshop-ws-2', type: 'workstation', tile: { col: 25, row: 10 } },
-    { id: 'workshop-ws-3', type: 'workstation', tile: { col: 28, row: 10 } },
-    { id: 'workshop-ws-4', type: 'workstation', tile: { col: 31, row: 10 } },
-    { id: 'workshop-ws-5', type: 'workstation', tile: { col: 34, row: 10 } },
+    { id: 'workshop-desk-0', type: 'workstation', tile: { col: 16, row: 5 } },
+    { id: 'workshop-desk-1', type: 'workstation', tile: { col: 22, row: 10 } },
+    { id: 'workshop-desk-2', type: 'workstation', tile: { col: 25, row: 10 } },
+    { id: 'workshop-desk-3', type: 'workstation', tile: { col: 28, row: 10 } },
+    { id: 'workshop-desk-4', type: 'workstation', tile: { col: 31, row: 10 } },
+    { id: 'workshop-desk-5', type: 'workstation', tile: { col: 34, row: 10 } },
   ],
   doors: [{ tile: { col: 13, row: 7 }, direction: 'left' }],
 };

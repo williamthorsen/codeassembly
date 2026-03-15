@@ -64,14 +64,14 @@ describe(mapLogicalToOffice, () => {
 
     expect(arch).toBeDefined();
     expect(arch?.zoneId).toBe('prep');
-    expect(arch?.slotId).toBe('prep-ws-0');
+    expect(arch?.slotId).toBe('prep-desk-0');
 
     expect(plan).toBeDefined();
     expect(plan?.zoneId).toBe('prep');
-    expect(plan?.slotId).toBe('prep-ws-1');
+    expect(plan?.slotId).toBe('prep-desk-1');
   });
 
-  it('assigns coder to workshop/workshop-ws-0', () => {
+  it('assigns coder to workshop/workshop-desk-0', () => {
     const scene = logicalScene({
       agents: [agent({ id: 'coder', phase: 'implementation', roleType: 'author' })],
     });
@@ -79,10 +79,10 @@ describe(mapLogicalToOffice, () => {
     const coder = result.agents.find((a) => a.id === 'coder');
 
     expect(coder?.zoneId).toBe('workshop');
-    expect(coder?.slotId).toBe('workshop-ws-0');
+    expect(coder?.slotId).toBe('workshop-desk-0');
   });
 
-  it('assigns reviewers to workshop/workshop-ws-1 through ws-5', () => {
+  it('assigns reviewers to workshop/workshop-desk-1 through ws-5', () => {
     const scene = logicalScene({
       agents: [
         agent({ id: 'rev-a', phase: 'review', roleType: 'reviewer' }),
@@ -95,10 +95,10 @@ describe(mapLogicalToOffice, () => {
 
     expect(reviewers).toHaveLength(3);
     const slotIds = new Set(reviewers.map((r) => r.slotId));
-    // All should be workshop-ws-1 through ws-3
-    expect(slotIds).toContain('workshop-ws-1');
-    expect(slotIds).toContain('workshop-ws-2');
-    expect(slotIds).toContain('workshop-ws-3');
+    // All should be workshop-desk-1 through ws-3
+    expect(slotIds).toContain('workshop-desk-1');
+    expect(slotIds).toContain('workshop-desk-2');
+    expect(slotIds).toContain('workshop-desk-3');
   });
 
   it('places orchestrator at prep when dispatching to architecture', () => {
@@ -165,7 +165,7 @@ describe(mapLogicalToOffice, () => {
     const result = mapLogicalToOffice(scene);
 
     expect(result.artifacts[0]?.zoneId).toBe('workshop');
-    expect(result.artifacts[0]?.slotId).toBe('workshop-ws-0');
+    expect(result.artifacts[0]?.slotId).toBe('workshop-desk-0');
   });
 
   it('derives correct zone states from agent statuses', () => {

@@ -46,13 +46,13 @@ describe(resolvePositions, () => {
           phase: 'architecture',
           status: 'working',
           zoneId: 'prep',
-          slotId: 'prep-ws-0',
+          slotId: 'prep-desk-0',
         },
       ],
     });
     const positions = resolvePositions(c, layout);
 
-    const expected = layout.slotPosition('prep-ws-0');
+    const expected = layout.slotPosition('prep-desk-0');
     expect(positions.agents.get('a1')).toEqual(expected);
   });
 
@@ -86,7 +86,7 @@ describe(resolvePositions, () => {
           phase: 'architecture',
           status: 'working',
           zoneId: 'prep',
-          slotId: 'prep-ws-0',
+          slotId: 'prep-desk-0',
         },
         {
           id: 'a2',
@@ -95,7 +95,7 @@ describe(resolvePositions, () => {
           phase: 'implementation',
           status: 'idle',
           zoneId: 'workshop',
-          slotId: 'workshop-ws-0',
+          slotId: 'workshop-desk-0',
         },
       ],
       artifacts: [
@@ -106,7 +106,7 @@ describe(resolvePositions, () => {
           status: 'created',
           producerPhase: 'architecture',
           zoneId: 'prep',
-          slotId: 'prep-ws-0',
+          slotId: 'prep-desk-0',
         },
       ],
     });
@@ -114,8 +114,8 @@ describe(resolvePositions, () => {
 
     expect(positions.agents.size).toBe(2);
     expect(positions.artifacts.size).toBe(1);
-    expect(positions.agents.get('a1')).toEqual(layout.slotPosition('prep-ws-0'));
-    expect(positions.agents.get('a2')).toEqual(layout.slotPosition('workshop-ws-0'));
+    expect(positions.agents.get('a1')).toEqual(layout.slotPosition('prep-desk-0'));
+    expect(positions.agents.get('a2')).toEqual(layout.slotPosition('workshop-desk-0'));
   });
 
   it('returns empty maps for empty config', () => {

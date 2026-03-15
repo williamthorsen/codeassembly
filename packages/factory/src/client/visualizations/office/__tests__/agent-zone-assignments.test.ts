@@ -46,39 +46,39 @@ function artifact(overrides: Partial<LogicalArtifactState> & { id: string }): Lo
 }
 
 describe(assignAgentToZone, () => {
-  it('assigns architect to prep/prep-ws-0', () => {
+  it('assigns architect to prep/prep-desk-0', () => {
     const result = assignAgentToZone(agent({ id: 'arch', phase: 'architecture', roleType: 'analyst' }), 0);
-    expect(result).toEqual({ zoneId: 'prep', slotId: 'prep-ws-0' });
+    expect(result).toEqual({ zoneId: 'prep', slotId: 'prep-desk-0' });
   });
 
-  it('assigns planner to prep/prep-ws-1', () => {
+  it('assigns planner to prep/prep-desk-1', () => {
     const result = assignAgentToZone(agent({ id: 'plan', phase: 'planning', roleType: 'planner' }), 0);
-    expect(result).toEqual({ zoneId: 'prep', slotId: 'prep-ws-1' });
+    expect(result).toEqual({ zoneId: 'prep', slotId: 'prep-desk-1' });
   });
 
-  it('assigns coder to workshop/workshop-ws-0', () => {
+  it('assigns coder to workshop/workshop-desk-0', () => {
     const result = assignAgentToZone(agent({ id: 'code', phase: 'implementation', roleType: 'author' }), 0);
-    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-0' });
+    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-desk-0' });
   });
 
-  it('assigns reviewers to workshop/workshop-ws-{index}', () => {
+  it('assigns reviewers to workshop/workshop-desk-{index}', () => {
     const result = assignAgentToZone(agent({ id: 'rev1', phase: 'review', roleType: 'reviewer' }), 1);
-    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-1' });
+    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-desk-1' });
   });
 
   it('caps reviewer slot index at 5', () => {
     const result = assignAgentToZone(agent({ id: 'rev6', phase: 'review', roleType: 'reviewer' }), 10);
-    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-5' });
+    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-desk-5' });
   });
 
   it('assigns simplifier to workshop', () => {
     const result = assignAgentToZone(agent({ id: 'simp', phase: 'simplifier', roleType: 'reviewer' }), 2);
-    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-2' });
+    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-desk-2' });
   });
 
   it('assigns holistic reviewer to workshop', () => {
     const result = assignAgentToZone(agent({ id: 'hol', phase: 'holistic', roleType: 'reviewer' }), 3);
-    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-3' });
+    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-desk-3' });
   });
 
   it('assigns summary-phase agent to governor/governor-desk-0', () => {
@@ -141,7 +141,7 @@ describe(assignArtifactToZone, () => {
 
   it('assigns created artifacts to their producer zone', () => {
     const result = assignArtifactToZone(artifact({ id: 'a1', status: 'created', producerPhase: 'architecture' }), 0);
-    expect(result).toEqual({ zoneId: 'prep', slotId: 'prep-ws-0' });
+    expect(result).toEqual({ zoneId: 'prep', slotId: 'prep-desk-0' });
   });
 
   it('assigns in_transit artifacts to their producer zone (same as created)', () => {
@@ -149,7 +149,7 @@ describe(assignArtifactToZone, () => {
       artifact({ id: 'a1', status: 'in_transit', producerPhase: 'implementation' }),
       0,
     );
-    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-0' });
+    expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-desk-0' });
   });
 });
 
@@ -283,7 +283,7 @@ describe(buildArtifactStates, () => {
     const result = buildArtifactStates(artifacts);
 
     expect(result[0]?.slotId).toBe('governor-storage-0');
-    expect(result[1]?.slotId).toBe('prep-ws-1');
+    expect(result[1]?.slotId).toBe('prep-desk-1');
     expect(result[2]?.slotId).toBe('governor-storage-1');
   });
 
@@ -294,7 +294,7 @@ describe(buildArtifactStates, () => {
     ];
     const result = buildArtifactStates(artifacts);
 
-    expect(result[0]?.slotId).toBe('prep-ws-0');
+    expect(result[0]?.slotId).toBe('prep-desk-0');
     // in_transit did not consume a storage slot, so first delivered gets storage-0
     expect(result[1]?.slotId).toBe('governor-storage-0');
   });
