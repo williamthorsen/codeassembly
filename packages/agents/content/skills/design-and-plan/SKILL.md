@@ -174,7 +174,10 @@ Present the plan to the user. Revise until approved.
 1. Resolve artifact directory using `save-artifact` conventions:
    - Use `get-ticket-id` for ticket ID (auto-generate `{YYYYMMDD}-{4 random hex}` if none found)
    - Use `get-project-slug` for project slug
-   - Resolve `artifacts.base_dir` from `.agents/preferences.yaml` → `~/.agents/preferences.yaml` → default `~/.ai`
+   - Resolve `artifacts.base_dir` by checking these sources in order. Use the first value found:
+     1. `.agents/preferences.yaml`
+     2. `~/.agents/preferences.yaml`
+     3. Default: `~/.ai`
    - Target: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 
