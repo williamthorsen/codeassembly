@@ -70,7 +70,10 @@ export function deriveAgentRoster(status: CanonicalRunStatus): AgentRosterEntry[
     }
 
     const agentId = PHASE_AGENT_ID[phase];
-    if (agentId === undefined) continue;
+    if (agentId === undefined) {
+      console.warn(`deriveAgentRoster: no agent ID for phase "${phase}" — skipping`);
+      continue;
+    }
 
     roster.push({
       agentId,

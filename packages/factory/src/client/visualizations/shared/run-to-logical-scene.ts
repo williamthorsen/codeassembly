@@ -133,7 +133,11 @@ function buildArtifactStates(status: CanonicalRunStatus): LogicalArtifactState[]
 
   for (const entry of status.artifacts) {
     const phaseName = DATA_PHASE_TO_PHASE_NAME[entry.phase];
-    if (phaseName === undefined || phaseName === 'summary') continue;
+    if (phaseName === undefined) {
+      console.warn(`buildArtifactStates: unrecognized artifact phase "${entry.phase}" — skipping`);
+      continue;
+    }
+    if (phaseName === 'summary') continue;
 
     // Coder change-summaries always belong to implementation,
     // even when produced during the review phase (fix cycles)
