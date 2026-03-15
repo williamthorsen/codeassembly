@@ -19,8 +19,7 @@ export function mapLogicalToOffice(logical: LogicalSceneState): OfficeSceneConfi
 
   // Assign agents to zones and slots
   const agents: OfficeAgentState[] = logical.agents.map((agent) => {
-    const isReviewer = reviewerIndices.has(agent.id);
-    const slotIndex = isReviewer ? (reviewerIndices.get(agent.id) ?? 1) : 0;
+    const slotIndex = reviewerIndices.get(agent.id) ?? 0;
     const assignment = assignAgentToZone(agent, slotIndex);
 
     return {

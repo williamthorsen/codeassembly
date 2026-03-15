@@ -5,7 +5,11 @@ import type {
   LogicalOrchestratorState,
   OrchestratorStatus,
 } from '../../shared/types.js';
+import { GOVERNOR_ZONE } from '../constants/zone-definitions.js';
 import type { OfficeAgentState, OfficeArtifactState, OfficeZoneState, ZoneDefinition } from '../types.js';
+
+/** Number of storage slots in the governor zone, used for cycling delivered artifacts. */
+const GOVERNOR_STORAGE_SLOT_COUNT = GOVERNOR_ZONE.slots.filter((s) => s.type === 'storage').length;
 
 // ---------------------------------------------------------------------------
 // Phase-to-zone mapping
@@ -95,7 +99,7 @@ export function assignArtifactToZone(
 ): { zoneId: string; slotId: string } {
   if (artifact.status === 'delivered') {
     // Delivered artifacts go to governor storage slots (cycle through available slots)
-    const storageSlotIndex = storageCounter % 3;
+    const storageSlotIndex = storageCounter % GOVERNOR_STORAGE_SLOT_COUNT;
     return { zoneId: 'governor', slotId: `governor-storage-${storageSlotIndex}` };
   }
 
@@ -131,14 +135,8 @@ function resolveProducerSlot(phase: PhaseName): string {
 export function deriveZoneStates(agents: OfficeAgentState[], zones: readonly ZoneDefinition[]): OfficeZoneState[] {
   return zones.map((zone) => {
     const agentsInZone = agents.filter((a) => a.zoneId === zone.id);
-
-    // No agents: neither active nor completed
-    if (agentsInZone.length === 0) {
-      return { id: zone.id, active: false, completed: false };
-    }
-
     const active = agentsInZone.some((a) => a.status === 'working');
-    const completed = agentsInZone.every((a) => a.status === 'done');
+    const completed = agentsInZone.length > 0 && agentsInZone.every((a) => a.status === 'done');
 
     return { id: zone.id, active, completed };
   });
