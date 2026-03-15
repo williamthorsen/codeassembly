@@ -21,7 +21,11 @@ export type AgentStatus = 'idle' | 'working' | 'done' | 'blocked' | 'concerned';
 // Orchestrator status
 // ---------------------------------------------------------------------------
 
-/** High-level orchestrator lifecycle state derived from run phase and status. */
+/**
+ * High-level orchestrator lifecycle state derived from run phase and status.
+ * `delivering` is reserved for a future delivery-tracking schema event and
+ * is never emitted by the current mapper implementation.
+ */
 export type OrchestratorStatus = 'idle' | 'dispatching' | 'monitoring' | 'delivering' | 'done';
 
 // ---------------------------------------------------------------------------

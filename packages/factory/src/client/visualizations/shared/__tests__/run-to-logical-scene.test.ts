@@ -531,6 +531,29 @@ describe(mapRunToLogicalScene, () => {
       }
     });
 
+    it('marks review artifacts as created when review is still in progress', () => {
+      const status = createMockRunStatus({
+        status: 'in_progress',
+        phases: createInProgressReviewPhases(),
+        artifacts: [
+          {
+            filename: 'review.md',
+            role: 'reviewer',
+            roleType: 'reviewer',
+            agent: 'reviewer',
+            type: 'review',
+            phase: 'parallelReview',
+            createdAt: '2026-01-01T00:35:00Z',
+          },
+        ],
+      });
+
+      const scene = mapRunToLogicalScene(status);
+
+      expect(scene.artifacts).toHaveLength(1);
+      expect(scene.artifacts[0]?.status).toBe('created');
+    });
+
     it('includes iteration on versioned artifacts', () => {
       const status = createMockRunStatus({
         status: 'in_progress',

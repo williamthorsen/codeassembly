@@ -4,7 +4,7 @@ import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { type AgentAnimationState, resolveAgentState } from './agent-state-resolver.js';
 import { isPresent, lookupArtifactColor } from './artifact-utils.js';
 import { type AgentRosterEntry, deriveAgentRoster } from './derive-agent-roster.js';
-import { buildCarriedArtifacts, buildCodeBadge } from './orchestrator-utils.js';
+import { buildCarriedArtifacts, buildCodeBadge, DATA_PHASE_TO_PHASE_NAME } from './orchestrator-utils.js';
 import type {
   AgentStatus,
   ArtifactStatus,
@@ -14,38 +14,6 @@ import type {
   LogicalSceneState,
   OrchestratorStatus,
 } from './types.js';
-
-// ---------------------------------------------------------------------------
-// Data-model phase name to PhaseName normalization
-// ---------------------------------------------------------------------------
-
-const ARTIFACT_PHASE_MAP: Record<string, PhaseName> = {
-  architecture: 'architecture',
-  planning: 'planning',
-  implementation: 'implementation',
-  review: 'review',
-  parallelReview: 'review',
-  codeSimplifier: 'simplifier',
-  holisticReview: 'holistic',
-  summary: 'summary',
-};
-
-// ---------------------------------------------------------------------------
-// Agent ID to phase mapping
-// ---------------------------------------------------------------------------
-
-const AGENT_ID_TO_PHASE: Record<string, PhaseName> = {
-  arch: 'architecture',
-  plan: 'planning',
-  coder: 'implementation',
-  simp: 'simplifier',
-  holi: 'holistic',
-};
-
-function agentIdToPhase(agentId: string): PhaseName | undefined {
-  if (agentId.startsWith('reviewer-')) return 'review';
-  return AGENT_ID_TO_PHASE[agentId];
-}
 
 // ---------------------------------------------------------------------------
 // Animation state to agent status mapping
@@ -80,8 +48,7 @@ function buildAgentStates(
   currentPhase: PhaseName | undefined,
 ): LogicalAgentState[] {
   return roster.map((entry) => {
-    const phase = agentIdToPhase(entry.agentId) ?? entry.phase;
-    const animState = resolveAgentState(phase, status, currentPhase);
+    const animState = resolveAgentState(entry.phase, status, currentPhase);
 
     return {
       id: entry.agentId,
@@ -125,6 +92,11 @@ function buildOrchestratorState(
 // Sub-function: artifact states
 // ---------------------------------------------------------------------------
 
+/** Check whether a phase object is present and has completed. */
+function isPhaseCompleted(phase: { status?: string } | undefined): boolean {
+  return isPresent(phase) && phase.status === 'completed';
+}
+
 /**
  * Determine the artifact lifecycle status based on whether the producing
  * phase has completed.
@@ -132,21 +104,20 @@ function buildOrchestratorState(
 function resolveArtifactStatus(producerPhase: PhaseName, status: CanonicalRunStatus): ArtifactStatus {
   if (status.status === 'completed') return 'delivered';
 
-  // Check if the phase that produced this artifact has been evaluated
   const phases = status.phases;
   switch (producerPhase) {
     case 'architecture':
-      return isPresent(phases.architecture) && phases.architecture.status === 'completed' ? 'delivered' : 'created';
+      return isPhaseCompleted(phases.architecture) ? 'delivered' : 'created';
     case 'planning':
-      return isPresent(phases.planning) && phases.planning.status === 'completed' ? 'delivered' : 'created';
+      return isPhaseCompleted(phases.planning) ? 'delivered' : 'created';
     case 'implementation':
-      return isPresent(phases.implementation) && phases.implementation.status === 'completed' ? 'delivered' : 'created';
+      return isPhaseCompleted(phases.implementation) ? 'delivered' : 'created';
     case 'review':
-      return isPresent(phases.parallelReview ?? phases.review) ? 'delivered' : 'created';
+      return isPhaseCompleted(phases.parallelReview) || isPhaseCompleted(phases.review) ? 'delivered' : 'created';
     case 'simplifier':
       return phases.codeSimplifier?.ran === true ? 'delivered' : 'created';
     case 'holistic':
-      return isPresent(phases.holisticReview) && phases.holisticReview.status === 'completed' ? 'delivered' : 'created';
+      return isPhaseCompleted(phases.holisticReview) ? 'delivered' : 'created';
     default:
       return 'created';
   }
@@ -161,7 +132,7 @@ function buildArtifactStates(status: CanonicalRunStatus): LogicalArtifactState[]
   const artifacts: LogicalArtifactState[] = [];
 
   for (const entry of status.artifacts) {
-    const phaseName = ARTIFACT_PHASE_MAP[entry.phase];
+    const phaseName = DATA_PHASE_TO_PHASE_NAME[entry.phase];
     if (phaseName === undefined || phaseName === 'summary') continue;
 
     // Coder change-summaries always belong to implementation,

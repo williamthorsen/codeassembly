@@ -37,7 +37,7 @@ export const ITERATION_COLORS = {
  * Map data-model phase property names to visualization-layer `PhaseName` values.
  * Used to normalize artifact `phase` fields for phase-index comparisons.
  */
-const DATA_PHASE_TO_PHASE_NAME: Record<string, PhaseName> = {
+export const DATA_PHASE_TO_PHASE_NAME: Record<string, PhaseName> = {
   architecture: 'architecture',
   planning: 'planning',
   implementation: 'implementation',
