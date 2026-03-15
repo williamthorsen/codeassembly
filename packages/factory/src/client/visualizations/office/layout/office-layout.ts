@@ -25,8 +25,11 @@ function computeZoneCenter(zone: ZoneDefinition): Position {
 function buildCorridorPath(from: ZoneDefinition, to: ZoneDefinition): Position[] {
   const fromDoor = from.doors[0];
   const toDoor = to.doors[0];
-  if (fromDoor === undefined || toDoor === undefined) {
-    return [];
+  if (fromDoor === undefined) {
+    throw new Error(`Zone "${from.id}" has no doors; cannot build corridor path`);
+  }
+  if (toDoor === undefined) {
+    throw new Error(`Zone "${to.id}" has no doors; cannot build corridor path`);
   }
 
   const fromDoorPixel = tileToPixel(fromDoor.tile);
@@ -85,7 +88,7 @@ export function createOfficeLayout(): FacilityLayout {
     if (pos === undefined) {
       throw new Error(`Unknown slot ID: "${slotId}"`);
     }
-    return pos;
+    return { ...pos };
   }
 
   function zoneCenter(zoneId: string): Position {
@@ -93,7 +96,7 @@ export function createOfficeLayout(): FacilityLayout {
     if (center === undefined) {
       throw new Error(`Unknown zone ID: "${zoneId}"`);
     }
-    return center;
+    return { ...center };
   }
 
   function slotsInZone(zoneId: string, type?: SlotType): SlotDefinition[] {

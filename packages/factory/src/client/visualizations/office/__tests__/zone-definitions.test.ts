@@ -13,6 +13,8 @@ describe('ZONE_DEFINITIONS', () => {
     expect(ids).toEqual(['prep', 'workshop', 'governor']);
   });
 
+  // Display slots (prep-display-0, workshop-display-0, governor-display-0) are deferred.
+  // Counts reflect workstation and storage slots only.
   it('has the expected number of slots per zone', () => {
     expect(PREP_ZONE.slots).toHaveLength(2);
     expect(WORKSHOP_ZONE.slots).toHaveLength(6);

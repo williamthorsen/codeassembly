@@ -58,20 +58,24 @@ export class OfficeScene extends Scene {
 
   /** Apply a new logical scene state, running the full pipeline. */
   updateState(logical: LogicalSceneState): void {
-    const nextConfig = mapLogicalToOffice(logical);
-    const nextPositions = resolvePositions(nextConfig, this.layout);
+    try {
+      const nextConfig = mapLogicalToOffice(logical);
+      const nextPositions = resolvePositions(nextConfig, this.layout);
 
-    if (this.prevConfig === undefined) {
-      this.applyFullState(nextConfig, nextPositions);
-    } else {
-      const diff = diffOfficeConfigs(this.prevConfig, nextConfig);
-      if (diff.hasChanges) {
-        // Teleport entities to new positions (no animation in this ticket)
+      if (this.prevConfig === undefined) {
         this.applyFullState(nextConfig, nextPositions);
+      } else {
+        const diff = diffOfficeConfigs(this.prevConfig, nextConfig);
+        if (diff.hasChanges) {
+          // Teleport entities to new positions (no animation in this ticket)
+          this.applyFullState(nextConfig, nextPositions);
+        }
       }
-    }
 
-    this.prevConfig = nextConfig;
+      this.prevConfig = nextConfig;
+    } catch (error) {
+      console.error('[OfficeScene] updateState failed:', error);
+    }
   }
 
   /** Clear all entity actors and rebuild from scratch. */
@@ -79,7 +83,7 @@ export class OfficeScene extends Scene {
     this.clearEntities();
 
     // Place orchestrator
-    this.placeOrchestrator(config, positions.orchestrator);
+    this.placeOrchestrator(positions.orchestrator);
 
     // Place agents
     for (const agent of config.agents) {
@@ -181,7 +185,7 @@ export class OfficeScene extends Scene {
   }
 
   /** Place a larger circle for the orchestrator at the given position. */
-  private placeOrchestrator(_config: OfficeSceneConfig, pos: Position): void {
+  private placeOrchestrator(pos: Position): void {
     const actor = new Actor({ pos: vec(pos.x, pos.y) });
     actor.graphics.use(
       new Circle({

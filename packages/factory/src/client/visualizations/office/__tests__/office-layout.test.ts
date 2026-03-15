@@ -84,6 +84,7 @@ describe(createOfficeLayout, () => {
 
       // The paths should pass through the same points in opposite order
       expect(forward).toHaveLength(backward.length);
+      expect(forward).toEqual(backward.toReversed());
     });
 
     it('passes through doorway positions', () => {

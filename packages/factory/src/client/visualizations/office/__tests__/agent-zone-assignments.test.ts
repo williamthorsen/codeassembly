@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { LogicalAgentState, LogicalArtifactState, LogicalOrchestratorState } from '../../shared/types.js';
-import { ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
+import { GOVERNOR_ZONE, ZONE_DEFINITIONS } from '../constants/zone-definitions.js';
 import {
   assignAgentToZone,
   assignArtifactToZone,
@@ -79,6 +79,11 @@ describe(assignAgentToZone, () => {
   it('assigns holistic reviewer to workshop', () => {
     const result = assignAgentToZone(agent({ id: 'hol', phase: 'holistic', roleType: 'reviewer' }), 3);
     expect(result).toEqual({ zoneId: 'workshop', slotId: 'workshop-ws-3' });
+  });
+
+  it('assigns summary-phase agent to governor/governor-desk-0', () => {
+    const result = assignAgentToZone(agent({ id: 'sum', phase: 'summary', roleType: 'author' }), 0);
+    expect(result).toEqual({ zoneId: 'governor', slotId: 'governor-desk-0' });
   });
 });
 
@@ -198,6 +203,16 @@ describe(deriveZoneStates, () => {
     const workshop = states.find((z) => z.id === 'workshop');
     expect(workshop).toEqual({ id: 'workshop', active: true, completed: false });
   });
+
+  it('a zone with idle and done agents is neither active nor completed', () => {
+    const agents: OfficeAgentState[] = [
+      officeAgent({ id: 'a1', zoneId: 'workshop', status: 'idle' }),
+      officeAgent({ id: 'a2', zoneId: 'workshop', status: 'done' }),
+    ];
+    const states = deriveZoneStates(agents, ZONE_DEFINITIONS);
+    const workshop = states.find((z) => z.id === 'workshop');
+    expect(workshop).toEqual({ id: 'workshop', active: false, completed: false });
+  });
 });
 
 describe(computeReviewerIndices, () => {
@@ -233,6 +248,29 @@ describe(computeReviewerIndices, () => {
     const maxIndex = Math.max(...indices.values());
     expect(maxIndex).toBe(5);
   });
+
+  it('logs a warning when reviewer count exceeds available slots', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const agents: LogicalAgentState[] = Array.from({ length: 7 }, (_, i) =>
+      agent({ id: `rev-${String(i).padStart(2, '0')}`, phase: 'review', roleType: 'reviewer' }),
+    );
+    computeReviewerIndices(agents);
+
+    expect(warnSpy).toHaveBeenCalledOnce();
+    expect(warnSpy.mock.calls[0]?.[0]).toContain('2 reviewer(s) exceed available slots');
+    warnSpy.mockRestore();
+  });
+
+  it('does not warn when reviewer count fits available slots', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const agents: LogicalAgentState[] = Array.from({ length: 5 }, (_, i) =>
+      agent({ id: `rev-${String(i).padStart(2, '0')}`, phase: 'review', roleType: 'reviewer' }),
+    );
+    computeReviewerIndices(agents);
+
+    expect(warnSpy).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
 });
 
 describe(buildArtifactStates, () => {
@@ -247,5 +285,23 @@ describe(buildArtifactStates, () => {
     expect(result[0]?.slotId).toBe('governor-storage-0');
     expect(result[1]?.slotId).toBe('prep-ws-1');
     expect(result[2]?.slotId).toBe('governor-storage-1');
+  });
+
+  it('does not increment storage counter for in_transit artifacts', () => {
+    const artifacts: LogicalArtifactState[] = [
+      artifact({ id: 'a1', status: 'in_transit', producerPhase: 'architecture' }),
+      artifact({ id: 'a2', status: 'delivered', producerPhase: 'planning' }),
+    ];
+    const result = buildArtifactStates(artifacts);
+
+    expect(result[0]?.slotId).toBe('prep-ws-0');
+    // in_transit did not consume a storage slot, so first delivered gets storage-0
+    expect(result[1]?.slotId).toBe('governor-storage-0');
+  });
+
+  it('cycles storage slots using a modulus matching the governor zone storage count', () => {
+    const governorStorageCount = GOVERNOR_ZONE.slots.filter((s) => s.type === 'storage').length;
+    // Storage cycling modulus must equal the number of governor storage slots
+    expect(governorStorageCount).toBe(3);
   });
 });

@@ -154,11 +154,20 @@ export function computeReviewerIndices(agents: LogicalAgentState[]): Map<string,
     .filter((a) => a.phase === 'review' || a.phase === 'simplifier' || a.phase === 'holistic')
     .toSorted((a, b) => a.id.localeCompare(b.id));
 
+  const maxSlot = 5;
   const indices = new Map<string, number>();
   for (const [i, agent] of reviewAgents.entries()) {
     // Reviewer slots start at ws-1, cap at ws-5
-    indices.set(agent.id, Math.min(i + 1, 5));
+    indices.set(agent.id, Math.min(i + 1, maxSlot));
   }
+
+  const overflowCount = reviewAgents.length - maxSlot;
+  if (overflowCount > 0) {
+    console.warn(
+      `[office] ${String(overflowCount)} reviewer(s) exceed available slots; they will share workshop-ws-${String(maxSlot)}`,
+    );
+  }
+
   return indices;
 }
 

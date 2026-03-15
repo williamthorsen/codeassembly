@@ -1,8 +1,6 @@
 import type { PhaseName, RoleType } from '../../../shared/constants/role-types.js';
-
-// Re-export visualization-agnostic status types from shared
-export type { CarriedArtifact, CodeBadge } from '../shared/orchestrator-utils.js';
-export type { AgentStatus, ArtifactStatus, OrchestratorStatus } from '../shared/types.js';
+import type { CarriedArtifact, CodeBadge } from '../shared/orchestrator-utils.js';
+import type { AgentStatus, ArtifactStatus, OrchestratorStatus } from '../shared/types.js';
 
 // ---------------------------------------------------------------------------
 // Spatial primitives
@@ -96,16 +94,16 @@ export interface OfficeAgentState {
   role: string;
   roleType: RoleType;
   phase: PhaseName;
-  status: import('../shared/types.js').AgentStatus;
+  status: AgentStatus;
   zoneId: string;
   slotId: string;
 }
 
 /** Orchestrator state with spatial assignment. */
 export interface OfficeOrchestratorState {
-  status: import('../shared/types.js').OrchestratorStatus;
-  carriedArtifacts: import('../shared/orchestrator-utils.js').CarriedArtifact[];
-  codeBadge: import('../shared/orchestrator-utils.js').CodeBadge | null;
+  status: OrchestratorStatus;
+  carriedArtifacts: CarriedArtifact[];
+  codeBadge: CodeBadge | null;
   waiting: boolean;
   zoneId: string;
 }
@@ -115,7 +113,7 @@ export interface OfficeArtifactState {
   id: string;
   label: string;
   color: string;
-  status: import('../shared/types.js').ArtifactStatus;
+  status: ArtifactStatus;
   producerPhase: PhaseName;
   zoneId: string;
   slotId: string;
@@ -146,12 +144,12 @@ export interface OfficeOrchestratorDiff {
   statusChanged: { from: string; to: string } | null;
   waitingChanged: { from: boolean; to: boolean } | null;
   carriedChanged: {
-    from: import('../shared/orchestrator-utils.js').CarriedArtifact[];
-    to: import('../shared/orchestrator-utils.js').CarriedArtifact[];
+    from: CarriedArtifact[];
+    to: CarriedArtifact[];
   } | null;
   codeBadgeChanged: {
-    from: import('../shared/orchestrator-utils.js').CodeBadge | null;
-    to: import('../shared/orchestrator-utils.js').CodeBadge | null;
+    from: CodeBadge | null;
+    to: CodeBadge | null;
   } | null;
 }
 
@@ -211,3 +209,7 @@ export interface Transition {
 export interface TransitionPlan {
   transitions: Transition[];
 }
+
+// Re-export visualization-agnostic status types from shared
+export { type CarriedArtifact, type CodeBadge } from '../shared/orchestrator-utils.js';
+export { type AgentStatus, type ArtifactStatus, type OrchestratorStatus } from '../shared/types.js';

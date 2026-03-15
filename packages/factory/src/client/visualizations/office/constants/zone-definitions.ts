@@ -3,6 +3,7 @@ import type { ZoneDefinition } from '../types.js';
 /**
  * Prep area zone: architecture and planning agents work here.
  * Matches prototype tiles: { x: 1, y: 1, w: 11, h: 12 }.
+ * Display slots (prep-display-0) deferred to a future ticket.
  */
 export const PREP_ZONE: ZoneDefinition = {
   id: 'prep',
@@ -18,6 +19,7 @@ export const PREP_ZONE: ZoneDefinition = {
 /**
  * Workshop zone: coder and reviewers work here.
  * Matches prototype tiles: { x: 13, y: 1, w: 26, h: 12 }.
+ * Display slots (workshop-display-0) deferred to a future ticket.
  */
 export const WORKSHOP_ZONE: ZoneDefinition = {
   id: 'workshop',
@@ -37,6 +39,7 @@ export const WORKSHOP_ZONE: ZoneDefinition = {
 /**
  * Governor's office zone: orchestrator home base with artifact storage.
  * Matches prototype tiles: { x: 1, y: 16, w: 38, h: 13 }.
+ * Display slots (governor-display-0) deferred to a future ticket.
  */
 export const GOVERNOR_ZONE: ZoneDefinition = {
   id: 'governor',

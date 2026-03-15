@@ -127,6 +127,22 @@ describe(mapLogicalToOffice, () => {
     expect(result.orchestrator.zoneId).toBe('governor');
   });
 
+  it('places orchestrator at governor when done', () => {
+    const scene = logicalScene({
+      orchestrator: { status: 'done', carriedArtifacts: [], codeBadge: null, waiting: false },
+    });
+    const result = mapLogicalToOffice(scene);
+    expect(result.orchestrator.zoneId).toBe('governor');
+  });
+
+  it('places orchestrator at governor when delivering', () => {
+    const scene = logicalScene({
+      orchestrator: { status: 'delivering', carriedArtifacts: [], codeBadge: null, waiting: false },
+    });
+    const result = mapLogicalToOffice(scene);
+    expect(result.orchestrator.zoneId).toBe('governor');
+  });
+
   it('places delivered artifacts at governor storage', () => {
     const scene = logicalScene({
       artifacts: [
