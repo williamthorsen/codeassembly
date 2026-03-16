@@ -2,56 +2,59 @@ import type { ZoneDefinition } from '../types.js';
 
 /**
  * Prep area zone: architecture and planning agents work here.
- * Matches prototype tiles: { x: 1, y: 1, w: 11, h: 12 }.
- * Display slots (prep-display-0) deferred to a future ticket.
+ * Layout: cols 1-11, rows 0-11 (11w x 12h).
+ * Two workstations (architect left, planner right), each facing wall-mounted displays.
+ * South door opens onto the transition strip at row 12.
  */
 export const PREP_ZONE: ZoneDefinition = {
   id: 'prep',
   label: 'Prep area',
-  bounds: { col: 1, row: 1, width: 11, height: 12 },
+  bounds: { col: 1, row: 0, width: 11, height: 12 },
   slots: [
     { id: 'prep-desk-0', type: 'workstation', tile: { col: 3, row: 5 } },
     { id: 'prep-desk-1', type: 'workstation', tile: { col: 8, row: 5 } },
   ],
-  doors: [{ tile: { col: 6, row: 13 }, direction: 'down' }],
+  doors: [{ tile: { col: 6, row: 12 }, direction: 'down' }],
 };
 
 /**
  * Workshop zone: coder and reviewers work here.
- * Matches prototype tiles: { x: 13, y: 1, w: 26, h: 12 }.
- * Display slots (workshop-display-0) deferred to a future ticket.
+ * Layout: cols 13-35, rows 0-11 (23w x 12h).
+ * Coder station at left, up to 5 reviewer stations across the middle-right.
+ * South door opens onto the transition strip at row 12.
  */
 export const WORKSHOP_ZONE: ZoneDefinition = {
   id: 'workshop',
   label: 'The workshop',
-  bounds: { col: 13, row: 1, width: 26, height: 12 },
+  bounds: { col: 13, row: 0, width: 23, height: 12 },
   slots: [
-    { id: 'workshop-desk-0', type: 'workstation', tile: { col: 16, row: 5 } },
-    { id: 'workshop-desk-1', type: 'workstation', tile: { col: 22, row: 10 } },
-    { id: 'workshop-desk-2', type: 'workstation', tile: { col: 25, row: 10 } },
-    { id: 'workshop-desk-3', type: 'workstation', tile: { col: 28, row: 10 } },
-    { id: 'workshop-desk-4', type: 'workstation', tile: { col: 31, row: 10 } },
-    { id: 'workshop-desk-5', type: 'workstation', tile: { col: 34, row: 10 } },
+    { id: 'workshop-desk-0', type: 'workstation', tile: { col: 15, row: 5 } },
+    { id: 'workshop-desk-1', type: 'workstation', tile: { col: 21, row: 7 } },
+    { id: 'workshop-desk-2', type: 'workstation', tile: { col: 25, row: 7 } },
+    { id: 'workshop-desk-3', type: 'workstation', tile: { col: 28, row: 7 } },
+    { id: 'workshop-desk-4', type: 'workstation', tile: { col: 31, row: 7 } },
+    { id: 'workshop-desk-5', type: 'workstation', tile: { col: 34, row: 7 } },
   ],
-  doors: [{ tile: { col: 13, row: 7 }, direction: 'left' }],
+  doors: [{ tile: { col: 25, row: 12 }, direction: 'down' }],
 };
 
 /**
- * Governor's office zone: orchestrator home base with artifact storage.
- * Matches prototype tiles: { x: 1, y: 16, w: 38, h: 13 }.
- * Display slots (governor-display-0) deferred to a future ticket.
+ * Governor's office zone: orchestrator home base with delivery surface.
+ * Layout: cols 19-35, rows 13-21 (17w x 9h).
+ * Orchestrator desk at left, delivery desks at right, control console on north wall.
+ * North door opens onto the transition strip at row 12.
  */
 export const GOVERNOR_ZONE: ZoneDefinition = {
   id: 'governor',
   label: "Governor's office",
-  bounds: { col: 1, row: 16, width: 38, height: 13 },
+  bounds: { col: 19, row: 13, width: 17, height: 9 },
   slots: [
-    { id: 'governor-desk-0', type: 'workstation', tile: { col: 5, row: 20 } },
-    { id: 'governor-storage-0', type: 'storage', tile: { col: 12, row: 18 } },
-    { id: 'governor-storage-1', type: 'storage', tile: { col: 16, row: 18 } },
-    { id: 'governor-storage-2', type: 'storage', tile: { col: 20, row: 18 } },
+    { id: 'governor-desk-0', type: 'workstation', tile: { col: 23, row: 18 } },
+    { id: 'governor-storage-0', type: 'storage', tile: { col: 28, row: 16 } },
+    { id: 'governor-storage-1', type: 'storage', tile: { col: 31, row: 16 } },
+    { id: 'governor-storage-2', type: 'storage', tile: { col: 34, row: 16 } },
   ],
-  doors: [{ tile: { col: 6, row: 16 }, direction: 'up' }],
+  doors: [{ tile: { col: 26, row: 13 }, direction: 'up' }],
 };
 
 /** All zone definitions for the 3-zone office layout. */
