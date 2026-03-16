@@ -187,7 +187,7 @@ The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
 1. Resolve ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
 2. Find or create a run directory:
-   - **If an active run exists** (a run directory with no more than 24 hours since the last artifact): save into it
+   - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): save into it
    - **If no active run exists**: create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
 3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
 
