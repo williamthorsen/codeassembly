@@ -27,6 +27,7 @@ interface SpriteCache {
 }
 
 let cache: SpriteCache | undefined;
+let inflight: Promise<void> | undefined;
 
 // ---------------------------------------------------------------------------
 // Loader
@@ -36,10 +37,20 @@ let cache: SpriteCache | undefined;
  * Load all office sprite sheets and build the sprite cache.
  * The cache is populated synchronously before awaiting image data, so
  * getter functions work immediately after invoking this function.
+ * Concurrent callers share the same in-flight promise.
  */
-export async function loadOfficeSprites(): Promise<void> {
-  if (cache !== undefined) return;
+export function loadOfficeSprites(): Promise<void> {
+  if (cache !== undefined) return Promise.resolve();
+  if (inflight !== undefined) return inflight;
 
+  inflight = doLoad().finally(() => {
+    inflight = undefined;
+  });
+  return inflight;
+}
+
+/** Perform the actual sprite loading and cache population. */
+async function doLoad(): Promise<void> {
   const imageSources: ImageSource[] = [];
 
   // Create room/office sheet image sources and sprite sheets
@@ -123,7 +134,6 @@ export async function loadOfficeSprites(): Promise<void> {
   }
 
   // Populate cache synchronously so getters work immediately.
-  // The guard at the top deduplicates concurrent callers.
   cache = {
     roomSheets,
     roomImageSources,

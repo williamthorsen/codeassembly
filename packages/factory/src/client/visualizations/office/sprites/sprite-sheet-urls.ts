@@ -1,4 +1,3 @@
-// Room builder sheets
 // Character idle sprites
 import adamUrl from './assets/Adam_idle_32x32.png';
 import alexUrl from './assets/Alex_idle_32x32.png';
@@ -22,6 +21,7 @@ import prepDesk186Url from './assets/Modern_Office_Singles_32x32_186.png';
 import modernShelf205Url from './assets/Modern_Office_Singles_32x32_205.png';
 import execShelf206Url from './assets/Modern_Office_Singles_32x32_206.png';
 import robUrl from './assets/Rob_idle_32x32.png';
+// Room builder sheets
 import shadowsUrl from './assets/Room_Builder_Floor_Shadows_32x32.png';
 import floorsUrl from './assets/Room_Builder_Floors_32x32.png';
 import wallsUrl from './assets/Room_Builder_Walls_32x32.png';

@@ -144,8 +144,8 @@ function buildMinimalStatus(overrides: Partial<CanonicalRunStatus> = {}): Canoni
   };
 }
 
-// Static actor baseline: 1 background + 26 furniture = 27
-const STATIC_ACTOR_COUNT = 27;
+// Minimum actor count after onInitialize: 1 background + 26 furniture + 1 orchestrator = 28
+const MIN_ACTOR_COUNT_AFTER_INIT = 28;
 
 describe('OfficeScene', () => {
   it('can be constructed', () => {
@@ -158,8 +158,8 @@ describe('OfficeScene', () => {
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
 
-    // At minimum: 27 static actors + 1 orchestrator
-    expect(actorCount).toBeGreaterThanOrEqual(STATIC_ACTOR_COUNT + 1);
+    // At minimum: 1 background + 26 furniture + 1 orchestrator
+    expect(actorCount).toBeGreaterThanOrEqual(MIN_ACTOR_COUNT_AFTER_INIT);
   });
 
   it('places agents from updateStatus', () => {
@@ -208,8 +208,8 @@ describe('OfficeScene', () => {
       }),
     );
 
-    // With 3 reviewers instead of default 1, there should be more actors
-    expect(actorCount).toBeGreaterThan(initialCount);
+    // With 3 reviewers (up from the default 1), there should be at least 2 more actors
+    expect(actorCount).toBeGreaterThanOrEqual(initialCount + 2);
   });
 
   it('handles empty state gracefully', () => {
@@ -267,11 +267,11 @@ describe('OfficeScene', () => {
     scene.onInitialize();
     const withReviewersCount = actorCount;
 
-    // Reduce to 1 reviewer (default)
+    // Reduce to 1 default reviewer
     scene.updateStatus(buildMinimalStatus());
     const withDefaultCount = actorCount;
 
-    // Fewer actors because 3 reviewers -> 1 reviewer
+    // Fewer actors because 3 reviewers -> 1 default reviewer
     expect(withDefaultCount).toBeLessThan(withReviewersCount);
   });
 

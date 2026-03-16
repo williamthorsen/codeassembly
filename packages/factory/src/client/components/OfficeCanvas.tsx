@@ -60,6 +60,8 @@ export function OfficeCanvas({ status }: OfficeCanvasProps): React.JSX.Element {
     if (!engineRef.current || !initializedRef.current) {
       if (startFailedRef.current) {
         console.warn('OfficeCanvas: status update dropped because engine failed to start');
+      } else {
+        console.debug('OfficeCanvas: status update dropped while engine is initializing');
       }
       return;
     }

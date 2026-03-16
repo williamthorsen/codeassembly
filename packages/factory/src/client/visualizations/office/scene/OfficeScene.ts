@@ -100,6 +100,8 @@ export class OfficeScene extends Scene {
 
       this.prevConfig = nextConfig;
     } catch (error) {
+      // Intentional silent degradation: the scene freezes at its last good state.
+      // prevConfig is NOT updated on failure, so the next call will re-attempt a full render.
       console.error('[OfficeScene] updateState failed:', error);
     }
   }

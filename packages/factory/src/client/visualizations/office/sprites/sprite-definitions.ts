@@ -114,10 +114,10 @@ export const CHARACTER_ROLE_MAP: Record<string, CharacterName> = {
 export function resolveCharacterName(phase: string, agentId: string): CharacterName {
   // Reviewer phases use a rotating pool based on agent ID hash
   if (phase === 'review' || phase === 'simplifier' || phase === 'holistic') {
-    // Extract a stable numeric index from the agent ID
-    let hash = 0;
+    // Compute a stable index using a djb2-style multiplicative hash for better distribution
+    let hash = 5381;
     for (let i = 0; i < agentId.length; i++) {
-      hash = Math.trunc(hash + (agentId.codePointAt(i) ?? 0));
+      hash = Math.trunc(hash * 33 + (agentId.codePointAt(i) ?? 0));
     }
     const character = REVIEWER_CHARACTERS[Math.abs(hash) % REVIEWER_CHARACTERS.length];
     if (character !== undefined) {
