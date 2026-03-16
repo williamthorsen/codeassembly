@@ -140,22 +140,26 @@ Plan revision failed -- the plan-reviser did not complete successfully.
 
 Stop here. Do not attempt provenance update or report completion.
 
-If `{input-provenance}` is non-empty, update the provenance header on the revised plan:
+Update the provenance header on the revised plan. The behavior depends on whether `{input-provenance}` is non-empty or empty.
+
+**When `{input-provenance}` is non-empty:**
 
 1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
 2. Read the revised plan file at `{revision_output_path}`.
 3. Construct updated provenance:
    - `skill`: preserve from `{input-provenance}` (the original authoring skill)
+   - `refinedBy`: set to `refine-plan`
    - `timestamp`: current UTC time in ISO 8601 format
    - `baseSha`: the newly resolved value (or preserved original)
    - `isInteractive`: preserve from `{input-provenance}` if present
    - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If `{input-provenance}.iteration` is absent, set to `2`.
-4. Prepend the updated YAML frontmatter to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, `iteration: 1`):
+4. Prepend the updated YAML frontmatter to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
 
    ```yaml
    ---
    provenance:
      skill: design-and-plan
+     refinedBy: refine-plan
      timestamp: 2026-03-10T08:00:00Z
      baseSha: abc123def456...
      isInteractive: true
@@ -165,7 +169,28 @@ If `{input-provenance}` is non-empty, update the provenance header on the revise
 
    Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if resolved or preserved from input.
 
-If `{input-provenance}` is empty, do not add a provenance header — the original plan had none, and refine-plan should not fabricate one.
+**When `{input-provenance}` is empty:**
+
+1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
+2. Read the revised plan file at `{revision_output_path}`.
+3. Construct provenance with:
+   - `skill`: set to `unknown`
+   - `refinedBy`: set to `refine-plan`
+   - `timestamp`: current UTC time in ISO 8601 format
+   - `baseSha`: the resolved value (omit if command failed)
+   - `iteration`: set to `2`
+4. Prepend the YAML frontmatter to the revised plan and write back:
+
+   ```yaml
+   ---
+   provenance:
+     skill: unknown
+     refinedBy: refine-plan
+     timestamp: 2026-03-10T08:00:00Z
+     baseSha: abc123def456...
+     iteration: 2
+   ---
+   ```
 
 ### 6. Report completion
 
