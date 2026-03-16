@@ -162,25 +162,22 @@ Prefix the status line with a colored emoji for visual distinction:
 
    **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If not credible, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
-   **c. Evaluate codebase freshness:** Run `git rev-parse --short origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as "unknown" and fall back to timestamp:
-   - If `provenance.timestamp` is less than 24 hours ago → "unknown (recent)"
-   - Otherwise → "unknown (stale)"
+   **c. Evaluate codebase freshness:** Run `git rev-parse --short origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as `"unknown"`.
 
    If `git rev-parse` succeeds and `provenance.baseSha` is present:
    - If `baseSha` equals `{current-main-sha}` → "fresh"
-   - Else run `git merge-base --is-ancestor {baseSha} {current-main-sha}`. If exit code 0 → "diverged". If exit code 1 (not an ancestor) → "unverifiable". If the command fails for other reasons (e.g., exit code 128 for unknown ref, shallow clone), fall back to timestamp-based classification as in the `baseSha`-absent case above.
+   - Else run `git merge-base --is-ancestor {baseSha} {current-main-sha}`. If exit code 0 → "diverged". If exit code 1 (not an ancestor) → "unverifiable". If the command fails for other reasons (e.g., exit code 128 for unknown ref, shallow clone) → "unknown".
 
-   If `git rev-parse` succeeds but `provenance.baseSha` is absent, fall back to timestamp as above.
+   If `git rev-parse` succeeds but `provenance.baseSha` is absent → "unknown".
 
    **d. Assign trust tier:**
 
-   | Credible | Freshness        | Tier       |
-   | -------- | ---------------- | ---------- |
-   | Yes      | Fresh            | **high**   |
-   | Yes      | Diverged         | **medium** |
-   | Yes      | Unknown (recent) | **medium** |
-   | Yes      | Unverifiable     | **low**    |
-   | Yes      | Unknown (stale)  | **low**    |
+   | Credible | Freshness    | Tier       |
+   | -------- | ------------ | ---------- |
+   | Yes      | Fresh        | **high**   |
+   | Yes      | Diverged     | **medium** |
+   | Yes      | Unknown      | **medium** |
+   | Yes      | Unverifiable | **low**    |
 
    Note: Non-credible sources are already handled in sub-step b (set to `"low"` and skip). This table only applies to credible sources.
 
