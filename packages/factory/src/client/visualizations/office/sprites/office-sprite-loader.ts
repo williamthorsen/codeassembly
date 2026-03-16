@@ -85,10 +85,8 @@ async function doLoad(): Promise<void> {
 
   // Create character image sources and extract directional sprites
   const characterSprites = new Map<string, Sprite>();
-  const characterNames: readonly CharacterName[] = ['Adam', 'Alex', 'Amelia', 'Ash', 'Bob', 'Dan', 'Rob'];
 
-  for (const name of characterNames) {
-    const url = CHARACTER_URLS[name];
+  for (const [name, url] of Object.entries(CHARACTER_URLS)) {
     const imageSource = new ImageSource(url, { filtering: ImageFiltering.Pixel });
     imageSources.push(imageSource);
 

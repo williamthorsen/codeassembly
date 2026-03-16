@@ -119,10 +119,7 @@ export function resolveCharacterName(phase: string, agentId: string): CharacterN
     for (let i = 0; i < agentId.length; i++) {
       hash = Math.trunc(hash * 33 + (agentId.codePointAt(i) ?? 0));
     }
-    const character = REVIEWER_CHARACTERS[Math.abs(hash) % REVIEWER_CHARACTERS.length];
-    if (character !== undefined) {
-      return character;
-    }
+    return REVIEWER_CHARACTERS[Math.abs(hash) % REVIEWER_CHARACTERS.length] ?? 'Adam';
   }
 
   return CHARACTER_ROLE_MAP[phase] ?? 'Adam';
