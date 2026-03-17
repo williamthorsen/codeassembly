@@ -6,7 +6,7 @@ user-invocable: true
 
 # Refine plan
 
-Perform a single review-and-revise round on a saved implementation plan, checking for completeness (decision gaps the coder would fill) and correctness (factual accuracy against the codebase). Produces a refined plan ready for `/orchestrate-dev`.
+Perform a single review-and-revise round on a saved implementation plan, checking for completeness (decision gaps the coder would fill) and correctness (factual accuracy against the codebase). Produces a refined plan ready for orchestrated development.
 
 ## Arguments
 
@@ -75,11 +75,16 @@ Parse the return block:
 
 Evaluate the finding counts:
 
-- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement and stop.
+- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement, then present next steps. The plan was just reviewed with no issues — use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Include both `{plan_path}` (the original, since no revision was needed) and `{ticket_source}` in each option line.
 
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
     Review: {review_output_path}
+
+  Next steps:
+    > Orchestrate dev: Use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_source}
+    * Refine plan: Use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
+    * Implement directly
   ```
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): skip user interaction. Proceed to step 5 with empty user answers.
@@ -187,12 +192,32 @@ Update the provenance header on the revised plan. The behavior depends on whethe
    ---
    ```
 
-### 6. Report completion
+### 6. Offer ticket update if approach diverged
+
+Compare the revised plan's approach/solution with the source ticket's solution section. If they materially diverge, offer to update the ticket to match the revised plan. If the approaches haven't diverged, skip this step silently.
+
+**Material divergence** means a different technical approach (e.g., build-time flag changed to runtime detection) or changed scope boundaries (features added or removed). **Non-divergence** means refined details within the same approach (e.g., different function names, reordered steps).
+
+- For GitHub tickets (resolved via `gh issue view` in step 1): offer to update via `gh issue edit {number} --body "{updated body}"`
+- For file-based tickets: offer to update the file directly
+
+This is a shared-state action — do not update without explicit consent. If the user declines, continue to step 7.
+
+### 7. Report completion and present next steps
 
 ```
 Plan refined:
   Review:  {review_output_path}
   Revised: {revision_output_path}
+```
+
+After reporting, present next steps. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, orchestration is the typical recommendation. Use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each option line.
+
+```
+Next steps:
+  > Orchestrate dev: Use the `orchestrate-dev` skill with plan: {revision_output_path}, ticket: {ticket_source}
+  * Refine plan: Use the `refine-plan` skill with plan: {revision_output_path}, ticket: {ticket_source}
+  * Implement directly
 ```
 
 ## Edge cases
