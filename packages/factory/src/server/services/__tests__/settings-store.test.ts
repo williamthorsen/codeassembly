@@ -69,7 +69,7 @@ describe('SettingsStore', () => {
     });
 
     it('returns defaults for invalid JSON', async () => {
-      using _silent = silencedConsole();
+      using _silent = silencedConsole(['error']);
       const store = new SettingsStore(tempDir);
       // Write valid first to create the directory, then overwrite with invalid JSON
       await store.save({ dismissedRuns: {} });
@@ -81,7 +81,7 @@ describe('SettingsStore', () => {
     });
 
     it('returns defaults for invalid schema', async () => {
-      using _silent = silencedConsole();
+      using _silent = silencedConsole(['error']);
       const store = new SettingsStore(tempDir);
       await store.save({ dismissedRuns: {} });
       const { writeFile: write } = await import('node:fs/promises');

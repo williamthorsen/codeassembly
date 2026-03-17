@@ -40,7 +40,7 @@ describe('useDismissedRuns', () => {
   });
 
   it('leaves dismissed as empty on fetchSettings failure', async () => {
-    using _silent = silencedConsole();
+    using _silent = silencedConsole(['error']);
     mockedFetchSettings.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useDismissedRuns());
