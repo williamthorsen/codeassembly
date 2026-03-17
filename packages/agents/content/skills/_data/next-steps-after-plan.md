@@ -17,8 +17,8 @@ Present all three options. Mark the recommended option with `>` and others with 
 ```
 Next steps:
   > {recommended option}: Use the `{skill-name}` skill with plan: {plan_path}, ticket: {ticket_source}
-  * {other option}: Use the `{skill-name}` skill with plan: {plan_path}, ticket: {ticket_source}
-  * {other option}: Use the `{skill-name}` skill with plan: {plan_path}, ticket: {ticket_source}
+  * {second option}: Use the `{skill-name}` skill with plan: {plan_path}, ticket: {ticket_source}
+  * {third option}
 ```
 
 Skill names for each option:

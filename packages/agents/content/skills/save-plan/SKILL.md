@@ -51,7 +51,7 @@ Follow [artifact conventions](_data/artifact-conventions.md).
 
 Report the file path, then present a ticket prompt and next steps together in a single message. Do not wait for the user's reply before showing next steps.
 
-The plan source is unknown (could be plan mode, third-party tool, or manual) — treat it as unreviewed. Use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Omit the ticket path from option lines — no ticket path is available at completion time; the user supplies it when invoking the next skill.
+The plan source is unknown (could be plan mode, third-party tool, or manual) — treat it as unreviewed. Use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Omit the ticket path from option lines — no ticket path is available at completion time.
 
 ```
 Plan saved: {plan_path}
@@ -59,9 +59,7 @@ Plan saved: {plan_path}
 Would you like to create or update a ticket for this work? If so, use the `create-ticket` skill.
 
 Next steps:
-  > Refine plan: Use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
-  * Orchestrate dev: Use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_source}
+  > Refine plan: Use the `refine-plan` skill with plan: {plan_path}
+  * Orchestrate dev: Use the `orchestrate-dev` skill with plan: {plan_path}
   * Implement directly
 ```
-
-In the output above, `{ticket_source}` is a placeholder — the user provides the actual ticket path or URL when they invoke the next skill.

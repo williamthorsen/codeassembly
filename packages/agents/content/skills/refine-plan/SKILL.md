@@ -75,7 +75,7 @@ Parse the return block:
 
 Evaluate the finding counts:
 
-- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement, then present next steps. The plan was just reviewed with no issues — use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Include both `{plan_path}` (the original, since no revision was needed) and `{ticket_source}` in each option line.
+- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement, then present next steps. The plan was just reviewed with no issues — use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Use `{plan_path}` (the original plan argument, not `{revision_output_path}` — no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
 
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
@@ -211,7 +211,7 @@ Plan refined:
   Revised: {revision_output_path}
 ```
 
-After reporting, present next steps. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, orchestration is the typical recommendation. Use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each option line.
+After reporting, present next steps. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, orchestration is the typical recommendation. Use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
 
 ```
 Next steps:
