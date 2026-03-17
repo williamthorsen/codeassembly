@@ -6,7 +6,6 @@ maxTurns: 30
 skills:
   - anti-patterns
   - common-mistakes
-  - get-session-context
   - review-criteria
   - software-engineering
 ---
@@ -29,7 +28,7 @@ You will receive:
 
 ## Process
 
-1. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, where `<merge-base-sha>` is the pre-resolved SHA provided in your task prompt. If none was provided, compute it yourself: invoke `get-session-context`, then run `git merge-base HEAD <default-branch>` to get the SHA.
+1. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, using the merge-base SHA provided in your task prompt.
 2. **Read changed files**: read the full files, not just diffs, to understand context
 3. **Evaluate against criteria**: apply review-criteria skill
 4. **Form preliminary findings**: classify each finding into the F/W/T/R/S/L scheme and determine overall criticality
