@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Components to release (comma-separated, leave empty for all)'
+        required: false
+        type: string
+      bump:
+        description: 'Override bump type (leave empty to auto-detect)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  release:
+    uses: williamthorsen/node-monorepo-tools/.github/workflows/release-workflow.yaml@release-workflow-v1
+    with:
+      only: ${{ inputs.only || '' }}
+      bump: ${{ inputs.bump || '' }}
