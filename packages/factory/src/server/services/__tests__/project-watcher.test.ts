@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { silencedConsole } from '../../../test-utils.js';
+import { silencedConsole } from '../../../utils/test-utils.ts';
 import { ProjectWatcher } from '../project-watcher.js';
 
 // Mock fs.watch

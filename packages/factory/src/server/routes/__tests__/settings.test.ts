@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '../../../shared/types/settings.js';
-import { silencedConsole } from '../../../test-utils.js';
+import { silencedConsole } from '../../../utils/test-utils.ts';
 import { createSettingsRouter, type SettingsProvider } from '../settings.js';
 import { createMockResponse, getHandler, type MockResponse } from './route-test-helpers.ts';
 

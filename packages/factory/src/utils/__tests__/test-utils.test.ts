@@ -1,0 +1,61 @@
+import { type MockInstance, describe, expect, expectTypeOf, it } from 'vitest';
+
+import { silencedConsole } from '../test-utils.js';
+
+describe('silencedConsole', () => {
+  describe('type narrowing', () => {
+    it('exposes only the requested methods', () => {
+      const silent = silencedConsole(['error', 'warn']);
+      expectTypeOf(silent).toHaveProperty('error');
+      expectTypeOf(silent).toHaveProperty('warn');
+      expectTypeOf(silent).not.toHaveProperty('log');
+      expectTypeOf(silent).not.toHaveProperty('info');
+      expectTypeOf(silent).not.toHaveProperty('debug');
+      silent[Symbol.dispose]();
+    });
+
+    it('types each spy as MockInstance', () => {
+      const silent = silencedConsole(['error']);
+      expectTypeOf(silent.error).toEqualTypeOf<MockInstance>();
+      silent[Symbol.dispose]();
+    });
+
+    it('is Disposable', () => {
+      const silent = silencedConsole(['error']);
+      expectTypeOf(silent).toMatchTypeOf<Disposable>();
+      silent[Symbol.dispose]();
+    });
+  });
+
+  describe('runtime behavior', () => {
+    it('silences the requested method', () => {
+      const original = console.error;
+      using _silent = silencedConsole(['error']);
+      expect(console.error).not.toBe(original);
+    });
+
+    it('does not silence methods not in the list', () => {
+      const originalLog = console.log;
+      using _silent = silencedConsole(['error']);
+      expect(console.log).toBe(originalLog);
+    });
+
+    it('records calls on the returned spy', () => {
+      using silent = silencedConsole(['warn']);
+      console.warn('test message', 42);
+      expect(silent.warn).toHaveBeenCalledWith('test message', 42);
+    });
+
+    it('restores all spies when disposed', () => {
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      {
+        using _silent = silencedConsole(['error', 'warn']);
+        expect(console.error).not.toBe(originalError);
+        expect(console.warn).not.toBe(originalWarn);
+      }
+      expect(console.error).toBe(originalError);
+      expect(console.warn).toBe(originalWarn);
+    });
+  });
+});

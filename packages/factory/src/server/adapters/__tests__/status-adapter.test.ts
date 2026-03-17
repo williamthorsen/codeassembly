@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { silencedConsole } from '../../../test-utils.js';
+import { silencedConsole } from '../../../utils/test-utils.ts';
 import { parseRunData, parseStatusFile } from '../status-adapter.js';
 
 const { mockedReadFile } = vi.hoisted(() => ({
