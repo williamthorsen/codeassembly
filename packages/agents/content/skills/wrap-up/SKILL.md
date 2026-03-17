@@ -41,12 +41,12 @@ Gather signals to classify the session and identify actionable items.
 
 Check these signals in order to classify the session:
 
-| Signal                           | How to check                                                                                                                                                                                     | Session type             |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
-| Orchestrated run artifacts       | Look for `run-index.json` in the artifact directory for the current ticket (resolve via `get-session-context` → ticket ID, then check `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`) | **Orchestrated**         |
-| Code changes on branch           | `git diff --name-only {default-branch}...HEAD` produces output                                                                                                                                   | **Interactive dev**      |
-| Review artifacts in conversation | Conversation contains review findings or `/review-change` output                                                                                                                                 | **Review**               |
-| None of the above                | No code changes, no run artifacts, no review artifacts                                                                                                                                           | **Research/exploration** |
+| Signal                           | How to check                                                                                                                                                                                              | Session type             |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Orchestrated run artifacts       | Look for `run-index.json` in the artifact directory for the current ticket (resolve via `get-session-context` → ticket ID, then check `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`) | **Orchestrated**         |
+| Code changes on branch           | `git diff --name-only {default_branch}...HEAD` produces output                                                                                                                                            | **Interactive dev**      |
+| Review artifacts in conversation | Conversation contains review findings or `/review-change` output                                                                                                                                          | **Review**               |
+| None of the above                | No code changes, no run artifacts, no review artifacts                                                                                                                                                    | **Research/exploration** |
 
 Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
 
@@ -110,7 +110,7 @@ If no ticket is available (from `get-session-context`), default all destinations
 
 #### 1d. Check code state
 
-Run `git status` and `git log --oneline {default-branch}..HEAD` to understand:
+Run `git status` and `git log --oneline {default_branch}..HEAD` to understand:
 
 - Are there uncommitted changes?
 - How many commits are on the branch?
