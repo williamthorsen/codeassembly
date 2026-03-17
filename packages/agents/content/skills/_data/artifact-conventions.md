@@ -141,6 +141,19 @@ Example run directory (full orchestrated run with iterative review):
   16_orchestrator_run-summary.md                        # Phase 5
 ```
 
+## Plan provenance
+
+Plan artifacts include a YAML frontmatter `provenance` block that records authoring origin and processing history. The orchestrator uses provenance to evaluate trust when plans are supplied externally.
+
+| Field           | Description                                                                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `skill`         | The skill that originally authored the plan (e.g., `design-and-plan`, `plan-orchestrable-steps`, `plan-mode`). Set to `unknown` when the authoring skill cannot be determined. |
+| `refinedBy`     | The skill that last processed/refined the plan (e.g., `refine-plan`). Absent if the plan has not been refined. Records processing, not authorship.                             |
+| `timestamp`     | ISO 8601 UTC timestamp of when provenance was last written or updated.                                                                                                         |
+| `baseSha`       | Short SHA of `origin/main` at provenance write time. Used for freshness evaluation. Omitted if unresolvable.                                                                   |
+| `isInteractive` | Present and `true` when the plan was produced through a structured interactive flow. Omitted otherwise.                                                                        |
+| `iteration`     | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements.                                                |
+
 ## run-index.json
 
 Machine-readable metadata for orchestrated runs. Written and maintained exclusively by the orchestrator. Individual skills do not write to this file directly.

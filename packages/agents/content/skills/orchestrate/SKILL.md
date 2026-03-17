@@ -158,9 +158,9 @@ Prefix the status line with a colored emoji for visual distinction:
 
    When `{externalPlan}` is `true`, evaluate the plan's provenance to compute a trust tier:
 
-   **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If no provenance block exists, set `{planTrust}` to `"low"` and skip remaining evaluation.
+   **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `refinedBy`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If no provenance block exists, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
-   **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If not credible, set `{planTrust}` to `"low"` and skip remaining evaluation.
+   **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If credible, proceed to sub-step c. If not credible but `provenance.refinedBy` is `refine-plan`, mark the plan as "refinement-elevated" and proceed to sub-step c (the trust tier will be capped at `"medium"` in sub-step d). If neither credible nor refinement-elevated, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
    **c. Evaluate codebase freshness:** Run `git rev-parse --short origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as `"unknown"`.
 
@@ -172,14 +172,18 @@ Prefix the status line with a colored emoji for visual distinction:
 
    **d. Assign trust tier:**
 
-   | Credible | Freshness    | Tier       |
-   | -------- | ------------ | ---------- |
-   | Yes      | Fresh        | **high**   |
-   | Yes      | Diverged     | **medium** |
-   | Yes      | Unknown      | **medium** |
-   | Yes      | Unverifiable | **low**    |
+   | Source              | Freshness    | Tier       |
+   | ------------------- | ------------ | ---------- |
+   | Credible            | Fresh        | **high**   |
+   | Credible            | Diverged     | **medium** |
+   | Credible            | Unknown      | **medium** |
+   | Credible            | Unverifiable | **low**    |
+   | Refinement-elevated | Fresh        | **medium** |
+   | Refinement-elevated | Diverged     | **medium** |
+   | Refinement-elevated | Unknown      | **medium** |
+   | Refinement-elevated | Unverifiable | **low**    |
 
-   Note: Non-credible sources are already handled in sub-step b (set to `"low"` and skip). This table only applies to credible sources.
+   Note: Non-credible sources without `refinedBy: refine-plan` are already handled in sub-step b (set to `"low"` and skip). Refinement-elevated plans can reach `"medium"` but never `"high"`. Plans from credible sources are unaffected by the presence or absence of `refinedBy`.
 
    Store the result as `{planTrust}` (one of `"high"`, `"medium"`, `"low"`).
 

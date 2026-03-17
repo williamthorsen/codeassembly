@@ -20,7 +20,11 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 
 3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)
 
-4. **Save** as ticket-level artifact:
+4. **Resolve provenance data**:
+   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
+   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
+
+5. **Save** as ticket-level artifact:
 
    ```
    {YYYYMMDD-HHMMZ}_{slug}_plan.md
@@ -29,6 +33,19 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
    Example: `20260226-1430Z_oauth2-migration_plan.md`
 
    `mkdir -p` the target directory before writing.
+
+   Prepend the following YAML frontmatter to the plan content:
+
+   ```yaml
+   ---
+   provenance:
+     skill: plan-mode
+     timestamp: <timestamp>
+     baseSha: <baseSha>
+   ---
+   ```
+
+   Include `baseSha` only if resolved successfully.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 
