@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { silencedConsole } from '../../../test-utils.js';
+import { silencedConsole } from '../../../utils/test-utils.ts';
 import { parseRunData, parseStatusFile } from '../status-adapter.js';
 
 const { mockedReadFile } = vi.hoisted(() => ({
@@ -980,7 +980,7 @@ describe('parseRunData', () => {
     });
 
     it('skips unrecognized event types (forward compatibility)', async () => {
-      using _silent = silencedConsole();
+      using _silent = silencedConsole(['error']);
       const logContent = jsonlLines(
         { t: '2026-01-01T00:00:00Z', event: 'run_started' },
         { t: '2026-01-01T00:01:00Z', event: 'future_event_type', data: {} },
@@ -998,7 +998,7 @@ describe('parseRunData', () => {
     });
 
     it('skips corrupt JSON line mid-stream and processes surrounding events', async () => {
-      using _silent = silencedConsole();
+      using _silent = silencedConsole(['error']);
       const lines = [
         JSON.stringify({ t: '2026-01-01T00:00:00Z', event: 'run_started' }),
         '{ not valid json',

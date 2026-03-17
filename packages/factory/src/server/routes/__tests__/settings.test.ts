@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '../../../shared/types/settings.js';
-import { silencedConsole } from '../../../test-utils.js';
+import { silencedConsole } from '../../../utils/test-utils.ts';
 import { createSettingsRouter, type SettingsProvider } from '../settings.js';
 import { createMockResponse, getHandler, type MockResponse } from './route-test-helpers.ts';
 
@@ -51,7 +51,7 @@ describe('createSettingsRouter', () => {
     });
 
     it('returns 500 when store.load() throws', async () => {
-      using _silent = silencedConsole();
+      using _silent = silencedConsole(['error']);
       const store = createMockStore({ dismissedRuns: {} });
       vi.mocked(store.load).mockRejectedValueOnce(new Error('Disk error'));
       const router = createSettingsRouter(store);
@@ -91,7 +91,7 @@ describe('createSettingsRouter', () => {
     });
 
     it('returns 500 when store.patch() throws', async () => {
-      using _silent = silencedConsole();
+      using _silent = silencedConsole(['error']);
       const store = createMockStore({ dismissedRuns: {} });
       vi.mocked(store.patch).mockRejectedValueOnce(new Error('Write error'));
       const router = createSettingsRouter(store);

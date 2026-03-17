@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '../../../shared/types/settings.js';
-import { silencedConsole } from '../../../test-utils.js';
+import { silencedConsole } from '../../../utils/test-utils.ts';
 import { useDismissedRuns } from '../useDismissedRuns.js';
 
 vi.mock('../../api/client.js', () => ({
@@ -40,7 +40,7 @@ describe('useDismissedRuns', () => {
   });
 
   it('leaves dismissed as empty on fetchSettings failure', async () => {
-    using _silent = silencedConsole();
+    using _silent = silencedConsole(['error']);
     mockedFetchSettings.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useDismissedRuns());
