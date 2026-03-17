@@ -18,7 +18,7 @@ export function silencedConsole<M extends ConsoleMethod>(methods: readonly M[]):
   const spies: MockInstance[] = [];
   const entries: Array<[M, MockInstance]> = [];
   for (const method of methods) {
-    const spy = createConsoleSpy(method);
+    const spy = silenceOneMethod(method);
     spies.push(spy);
     entries.push([method, spy]);
   }
@@ -39,8 +39,11 @@ function typedFromEntries<K extends string, V>(entries: Array<[K, V]>): Record<K
   return Object.fromEntries(entries) as Record<K, V>;
 }
 
-/** Creates a mock spy on the given console method. */
-function createConsoleSpy(method: ConsoleMethod): MockInstance {
+/** Spies on a single console method and replaces it with a no-op. */
+function silenceOneMethod(method: ConsoleMethod): MockInstance {
+  // Use a concrete method in `spyOn` to satisfy TypeScript's conditional-type resolution,
+  // then restore and re-spy on the actual method. A switch is needed because `vi.spyOn`
+  // requires a string-literal type, not a union, for its `mockImplementation` parameter.
   switch (method) {
     case 'debug':
       return vi.spyOn(console, 'debug').mockImplementation(() => {});
