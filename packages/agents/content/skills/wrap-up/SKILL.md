@@ -41,12 +41,12 @@ Gather signals to classify the session and identify actionable items.
 
 Check these signals in order to classify the session:
 
-| Signal                           | How to check                                                                                                                                                                                    | Session type             |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Orchestrated run artifacts       | Look for `run-index.json` in the artifact directory for the current ticket (resolve via `get-branch-context` → ticket ID, then check `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`) | **Orchestrated**         |
-| Code changes on branch           | `git diff --name-only {default-branch}...HEAD` produces output                                                                                                                                  | **Interactive dev**      |
-| Review artifacts in conversation | Conversation contains review findings or `/review-change` output                                                                                                                                | **Review**               |
-| None of the above                | No code changes, no run artifacts, no review artifacts                                                                                                                                          | **Research/exploration** |
+| Signal                           | How to check                                                                                                                                                                                     | Session type             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| Orchestrated run artifacts       | Look for `run-index.json` in the artifact directory for the current ticket (resolve via `get-session-context` → ticket ID, then check `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`) | **Orchestrated**         |
+| Code changes on branch           | `git diff --name-only {default-branch}...HEAD` produces output                                                                                                                                   | **Interactive dev**      |
+| Review artifacts in conversation | Conversation contains review findings or `/review-change` output                                                                                                                                 | **Review**               |
+| None of the above                | No code changes, no run artifacts, no review artifacts                                                                                                                                           | **Research/exploration** |
 
 Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
 
@@ -106,7 +106,7 @@ For each insight found, assign an `I{n}` ID (sequentially: I1, I2, ...) and sugg
 - `ticket comment` — if the insight relates to the current ticket's work
 - `devlog` — if the insight is general knowledge not specific to one ticket
 
-If no ticket is available (from `get-branch-context`), default all destinations to `devlog`.
+If no ticket is available (from `get-session-context`), default all destinations to `devlog`.
 
 #### 1d. Check code state
 
@@ -214,7 +214,7 @@ Process confirmed actions in this order:
 
 1. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
 2. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
-3. **Post insights to ticket** — post each `ticket comment` insight via `gh issue comment {number} --body "{insight}"` (ticket number from `get-branch-context`). If no ticket is available, re-route to devlog.
+3. **Post insights to ticket** — post each `ticket comment` insight via `gh issue comment {number} --body "{insight}"` (ticket number from `get-session-context`). If no ticket is available, re-route to devlog.
 4. **Save session devlog** — invoke `/create-devlog`. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 **Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.

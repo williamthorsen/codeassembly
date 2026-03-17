@@ -172,13 +172,8 @@ Present the plan to the user. Revise until approved.
 ### Phase 5: Save artifacts and stop
 
 1. Resolve artifact directory using `save-artifact` conventions:
-   - Use `get-ticket-id` for ticket ID (auto-generate `{YYYYMMDD}-{4 random hex}` if none found)
-   - Use `get-project-slug` for project slug
-   - Resolve `artifacts.base_dir` by checking these sources in order. Use the first value found:
-     1. `.agents/preferences.yaml`
-     2. `~/.agents/preferences.yaml`
-     3. Default: `~/.ai`
-   - Target: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+   - Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
+   - Target: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 
 2. Resolve provenance data:

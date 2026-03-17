@@ -24,7 +24,7 @@ If branch exists, increment version number.
 
 4. **Condense commits**:
 
-   Use `get-default-branch` to resolve `{default-branch}`.
+   Use `get-session-context` to obtain `default_branch`.
 
    ```bash
    git reset --soft $(git merge-base {default-branch} HEAD)

@@ -11,7 +11,7 @@ Analyze the current branch's changes since diverging from the default branch.
 ## Process
 
 1. **Gather context**:
-   - Call `get-default-branch`, `get-ticket-id`; consult `_data/work-types.md`.
+   - Use `get-session-context` to obtain `default_branch` and `ticket_id`; consult `_data/work-types.md`.
    - Determine workspace from commit subjects: parse `{workspace}|{type}:` prefixes, collect unique values. Single → use it. Multiple → use `*`. None → omit.
 
 2. **Analyze changes**:
@@ -98,13 +98,11 @@ When the original ticket is accessible:
 
 ### Path resolution
 
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`
-2. If base_dir is relative, resolve from project root. If absolute, use as-is.
-3. Use `get-project-slug` for the project slug.
+Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 
-Ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
+Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 Artifact type: `change-summary`. Filename format:
 

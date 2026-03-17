@@ -10,7 +10,7 @@ Create a pull request description from an existing change summary.
 
 ## Process
 
-1. **Get ticket ID** using `get-ticket-id`
+1. **Get context** using `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`
 
 2. **Get current commit hash**:
 
@@ -18,7 +18,7 @@ Create a pull request description from an existing change summary.
 git rev-parse --short HEAD
 ```
 
-3. **Find matching change summary**: Resolve the ticket directory (`{base_dir}/projects/{project-slug}/tickets/{ticket-id}/` — see path resolution in [Saving](#saving)). Look for `*_change-summary.md`.
+3. **Find matching change summary**: Resolve the ticket directory (`{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`). Look for `*_change-summary.md`.
    - Verify content contains the current commit hash
 
 4. **If no match found**: Use `summarize-change` first, then continue
@@ -31,13 +31,11 @@ git rev-parse --short HEAD
 
 ### Path resolution
 
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`
-2. If base_dir is relative, resolve from project root. If absolute, use as-is.
-3. Use `get-project-slug` for the project slug.
+Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 
-Ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
+Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 Artifact type: `pull-request`. Filename format:
 

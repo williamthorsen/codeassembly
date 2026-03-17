@@ -10,7 +10,7 @@ Write an issue ticket (e.g., Jira issue) describing the issues that would have n
 
 ## Process
 
-1. **Analyze branch changes** using `get-default-branch`:
+1. **Analyze branch changes** using `get-session-context` to obtain `default_branch`:
 
 ```bash
 git diff $DEFAULT_BRANCH...HEAD
@@ -63,13 +63,11 @@ git diff $DEFAULT_BRANCH...HEAD
 
 ### Path resolution
 
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`
-2. If base_dir is relative, resolve from project root. If absolute, use as-is.
-3. Use `get-project-slug` for the project slug.
+Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 
-Ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
+Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 Artifact type: `ticket`. Filename format:
 

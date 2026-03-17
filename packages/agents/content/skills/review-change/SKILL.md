@@ -15,7 +15,7 @@ Act as a conscientious code reviewer for changes in the current scope.
 
 ## Process
 
-1. **Get context** using `get-default-branch`, `get-ticket-id`, and `get-project-slug`
+1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `project_slug`, and `artifact_base_dir`
 2. **Read prior artifacts** — if a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions). _(Branch scope only.)_
 3. **Analyze changes**:
    - Branch scope: `git diff $DEFAULT_BRANCH...HEAD`
@@ -175,9 +175,7 @@ Score: X/10
 
 ### Path resolution
 
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`
-2. If base_dir is relative, resolve from project root. If absolute, use as-is.
-3. Use `get-project-slug` for the project slug.
+Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 
@@ -185,7 +183,7 @@ Follow [artifact conventions](_data/artifact-conventions.md).
 
 The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
-1. Resolve ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
+1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 2. Find or create a run directory:
    - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): save into it
    - **If no active run exists**: create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
@@ -195,7 +193,7 @@ Each review is a separate artifact in the run directory. Do not append to existi
 
 ### Commit scope
 
-Ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
+Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 Artifact type: `review`. Filename format:
 

@@ -67,14 +67,9 @@ Use these to mark significant sections:
 
 ## Saving
 
-Resolve artifact directory:
+Resolve artifact directory using `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths`. The chats path is `artifact_paths.chats` (default: `chats`).
 
-1. Read `artifacts.base_dir` and `artifacts.paths.chats` from `.agents/preferences.yaml`
-2. If not found there, read from `~/.agents/preferences.yaml`
-3. If still not found, use defaults: base_dir=`.ai`, path=`chats`
-4. If base_dir is relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-5. Use `get-project-slug` for the project slug.
-6. Full path: `{base_dir}/projects/{project-slug}/{path}/`
+Full path: `{artifact_base_dir}/projects/{project_slug}/{chats_path}/`
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 

@@ -4,7 +4,7 @@ Standards for AI-generated artifact storage, naming, and lifecycle.
 
 ## Directory structure
 
-All artifacts live under a configurable base directory (`base_dir`, default `~/.ai`):
+All artifacts live under a configurable base directory (`base_dir`, default `~/.ai`). Use `get-session-context` to resolve `artifact_base_dir`:
 
 ```
 {base_dir}/
@@ -26,7 +26,7 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/.
 
 ### Project slug
 
-Always present under `projects/`, even when `.ai/` is inside the project. Constant structure enables simple directory sync for export (`.ai/projects/` ↔ `~/.ai/projects/`). Use `get-project-slug` to obtain.
+Always present under `projects/`, even when `{base_dir}/` is inside the project. Constant structure enables simple directory sync for export. Use `get-session-context` to obtain `project_slug`.
 
 ### Ticket ID
 
@@ -57,13 +57,15 @@ Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored pat
 
 ## Path resolution
 
-Skills resolve artifact directories using this algorithm:
+Skills resolve artifact directories by invoking `get-session-context` and reading `artifact_base_dir` and `project_slug` from the manifest. This is the canonical method for all artifact path resolution.
+
+For contexts where the manifest is unavailable (e.g., standalone scripts without skill access), the manual fallback is:
 
 1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
 2. If not found there, read from `~/.agents/preferences.yaml`
-3. If still not found, use default: `base_dir` = `~/.ai`
-4. If `base_dir` is relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-5. Use `get-project-slug` for the project slug.
+3. If still not found, use the default base directory
+4. If `base_dir` is relative, resolve from project root. If absolute, use as-is.
+5. Read `project.slug` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then the bare directory name of the working directory.
 
 ### Ticket-scoped paths
 
@@ -120,7 +122,7 @@ Artifact ordering is explicit via the sequence number. Timing is captured in the
 Example run directory (full orchestrated run with iterative review):
 
 ```
-.ai/projects/williamthorsen-configs-macos/tickets/MAC-68/20260221-034100Z-orchestrated/
+{base_dir}/projects/williamthorsen-configs-macos/tickets/MAC-68/20260221-034100Z-orchestrated/
   run-index.json
   01_orchestrator_run-manifest.md                       # initialization
   02_orchestrator_ticket-requirements.md                # initialization (optional)
@@ -676,10 +678,10 @@ Used by review-producing skills and agents for structured code review findings. 
 
 Every level degrades gracefully:
 
-- Missing project `.agents/preferences.yaml` → fall back to global `~/.agents/preferences.yaml`
-- Missing global preferences → fall back to hardcoded default (`~/.ai`)
-- Missing `~/.ai/` directory → created automatically on first artifact save
-- Missing `get-project-slug` result → derive from git remote or directory name
+- Missing project `.agents/preferences.yaml` -> fall back to global `~/.agents/preferences.yaml`
+- Missing global preferences -> fall back to the default base directory
+- Missing `{base_dir}/` directory -> created automatically on first artifact save
+- Missing `project.slug` in preferences -> use the bare directory name of the working directory
 
 ## Migration from status.json (v1) to run-index.json (v2)
 
