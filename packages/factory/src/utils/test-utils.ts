@@ -41,19 +41,9 @@ function typedFromEntries<K extends string, V>(entries: Array<[K, V]>): Record<K
 
 /** Spies on a single console method and replaces it with a no-op. */
 function silenceOneMethod(method: ConsoleMethod): MockInstance {
-  // Use a concrete method in `spyOn` to satisfy TypeScript's conditional-type resolution,
-  // then restore and re-spy on the actual method. A switch is needed because `vi.spyOn`
-  // requires a string-literal type, not a union, for its `mockImplementation` parameter.
-  switch (method) {
-    case 'debug':
-      return vi.spyOn(console, 'debug').mockImplementation(() => {});
-    case 'error':
-      return vi.spyOn(console, 'error').mockImplementation(() => {});
-    case 'info':
-      return vi.spyOn(console, 'info').mockImplementation(() => {});
-    case 'log':
-      return vi.spyOn(console, 'log').mockImplementation(() => {});
-    case 'warn':
-      return vi.spyOn(console, 'warn').mockImplementation(() => {});
-  }
+  // Split spyOn from mockImplementation so TypeScript resolves the overload union
+  // without requiring literal narrowing via a switch.
+  const spy = vi.spyOn(console, method);
+  spy.mockImplementation(() => {});
+  return spy;
 }
