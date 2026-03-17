@@ -30,14 +30,9 @@ Before every Task call and after every phase completion, output a status line:
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
    - Other URL -> use WebFetch to retrieve content.
-4. Use `get-branch-context` to obtain `ticket_id` and `project_slug`.
-5. Resolve `artifacts.base_dir`:
-   - Read `artifacts.base_dir` from `.agents/preferences.yaml`
-   - If not found, read from `~/.agents/preferences.yaml`
-   - If still not found, use default: `~/.ai`
-   - If relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-6. Resolve artifact directory: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
-7. `mkdir -p {artifact_dir}`
+4. Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`.
+5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+6. `mkdir -p {artifact_dir}`
 
 ### 2. Detect plan format
 

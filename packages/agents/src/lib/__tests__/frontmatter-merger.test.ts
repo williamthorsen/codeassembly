@@ -1,20 +1,6 @@
-import { existsSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
 import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter, parseFrontmatter, parseOverlayOverrides } from '../frontmatter-merger.js';
-
-const CONFIGS_BASE = '/Users/william/repos/configs/macos.live';
-const COMMON_SUBAGENTS = path.join(CONFIGS_BASE, 'agents/common/subagents');
-const CLAUDE_AGENTS = path.join(CONFIGS_BASE, '_HOME/_claude/agents');
-const ROVODEV_SUBAGENTS = path.join(CONFIGS_BASE, '_HOME/_rovodev/subagents');
-const HAS_CONFIGS_REPO = existsSync(CONFIGS_BASE);
-
-async function readFixture(filePath: string): Promise<string> {
-  return readFile(filePath, 'utf8');
-}
 
 describe('parseFrontmatter', () => {
   it('should extract agent name from frontmatter', () => {
@@ -165,80 +151,3 @@ describe('mergeFrontmatter', () => {
     expect(lines[6]).toBe('---');
   });
 });
-
-describe.skipIf(!HAS_CONFIGS_REPO)(
-  'mergeFrontmatter parity with sync-agent-files.sh (requires configs.macos repo)',
-  () => {
-    it('should produce identical output for orchestrated-coder with claude.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'orchestrated-coder.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/claude.yml'));
-      const expected = await readFixture(path.join(CLAUDE_AGENTS, 'orchestrated-coder.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for orchestrated-coder with rovodev.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'orchestrated-coder.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/rovodev.yml'));
-      const expected = await readFixture(path.join(ROVODEV_SUBAGENTS, 'orchestrated-coder.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for aspect-code-reviewer with claude.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'aspect-code-reviewer.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/claude.yml'));
-      const expected = await readFixture(path.join(CLAUDE_AGENTS, 'aspect-code-reviewer.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for aspect-code-reviewer with rovodev.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'aspect-code-reviewer.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/rovodev.yml'));
-      const expected = await readFixture(path.join(ROVODEV_SUBAGENTS, 'aspect-code-reviewer.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for orchestrated-architect with claude.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'orchestrated-architect.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/claude.yml'));
-      const expected = await readFixture(path.join(CLAUDE_AGENTS, 'orchestrated-architect.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for orchestrated-architect with rovodev.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'orchestrated-architect.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/rovodev.yml'));
-      const expected = await readFixture(path.join(ROVODEV_SUBAGENTS, 'orchestrated-architect.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for planner with claude.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'planner.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/claude.yml'));
-      const expected = await readFixture(path.join(CLAUDE_AGENTS, 'planner.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-
-    it('should produce identical output for planner with rovodev.yml', async () => {
-      const source = await readFixture(path.join(COMMON_SUBAGENTS, 'planner.md'));
-      const overlay = await readFixture(path.join(COMMON_SUBAGENTS, '_data/rovodev.yml'));
-      const expected = await readFixture(path.join(ROVODEV_SUBAGENTS, 'planner.md'));
-
-      const result = mergeFrontmatter(source, overlay);
-      expect(result).toBe(expected);
-    });
-  },
-);

@@ -77,25 +77,19 @@ Run artifacts are saved by the skills that produce them (`review-change`, `respo
 
 ## Path resolution
 
-Resolve the artifact directory before saving:
-
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
-2. If not found there, read from `~/.agents/preferences.yaml`
-3. If still not found, use default: base_dir=`~/.ai`
-4. If base_dir is relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-5. Use `get-project-slug` for the project slug.
+Resolve the artifact directory before saving. Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
 ### Ticket-scoped path
 
 ```
-{base_dir}/projects/{project-slug}/tickets/{ticket-id}/
+{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/
 ```
 
-Use `get-ticket-id` for the ticket ID. Create the directory if needed.
+Create the directory if needed.
 
 ### Non-ticket paths
 
-Read `artifacts.paths.{category}` from preferences.yaml for chats, devlogs, plans. Defaults: `chats`, `devlogs`, `plans`. These are relative to the project directory: `{base_dir}/projects/{project-slug}/{category}/`.
+Read `artifact_paths` from the `get-session-context` manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 

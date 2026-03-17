@@ -23,11 +23,10 @@ Before every Task call and after every phase completion, output a status line:
 
 ### 1. Resolve context
 
-1. Use `get-project-slug` to obtain the project slug.
-2. Use `get-ticket-id` to obtain the ticket ID. If no ticket ID is available, auto-generate one: `{YYYYMMDD}-{4 random hex}`.
-3. **Resolve base directory**: Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`. If relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-4. **Resolve artifact directory**: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/` — this is the ticket level, NOT inside a run directory. `orchestration-plan.json` is a ticket-level mutable artifact.
-5. `mkdir -p {artifact-dir}`
+1. Use `get-session-context` to obtain `project_slug`, `ticket_id`, and `artifact_base_dir`.
+2. If no ticket ID is available, auto-generate one: `{YYYYMMDD}-{4 random hex}`.
+3. **Resolve artifact directory**: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` -- this is the ticket level, NOT inside a run directory. `orchestration-plan.json` is a ticket-level mutable artifact.
+4. `mkdir -p {artifact-dir}`
 
 ### 2. Invoke planner agent
 
@@ -111,11 +110,11 @@ When the user approves the plan:
 ## Artifact layout
 
 ```
-{base_dir}/projects/{project-slug}/tickets/{ticket-id}/
-├── orchestration-plan.json                              ← machine-readable plan (mutable, overwritten each iteration)
-├── 20260219-143000Z_planner_orchestration-plan.md       ← human-readable plan snapshot (iteration 1)
-├── 20260219-144500Z_planner_orchestration-plan.md       ← human-readable plan snapshot (iteration 2, after feedback)
-└── {run-id}/                              ← orchestration run directories (created later by /orchestrate-dev)
+{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/
+├── orchestration-plan.json                              <- machine-readable plan (mutable, overwritten each iteration)
+├── 20260219-143000Z_planner_orchestration-plan.md       <- human-readable plan snapshot (iteration 1)
+├── 20260219-144500Z_planner_orchestration-plan.md       <- human-readable plan snapshot (iteration 2, after feedback)
+└── {run-id}/                              <- orchestration run directories (created later by /orchestrate-dev)
 ```
 
 - `orchestration-plan.json` is a **ticket-level mutable artifact** — it is overwritten on each planning iteration, not timestamped

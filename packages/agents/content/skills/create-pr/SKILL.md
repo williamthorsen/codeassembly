@@ -11,19 +11,19 @@ Create a pull request using the GitHub CLI and existing PR description.
 ## Process
 
 1. **Find PR description file**:
-   - Use `get-ticket-id` and `get-project-slug`
-   - Look for most recently modified `*_change-summary.md` in `.ai/projects/{project-slug}/tickets/{ticket-id}/`
+   - Use `get-session-context` to obtain `ticket_id`, `project_slug`, `artifact_base_dir`, and `default_branch`
+   - Look for most recently modified `*_change-summary.md` in `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 2. **Extract title**:
    - Use the first `#` heading from the file as PR title
 
 3. **Check branch sync**:
-   - ⚠️ If current branch is not up to date with remote, **STOP THIS TASK** 🚨
+   - If current branch is not up to date with remote, **STOP THIS TASK**
    - Run `git status` to verify
 
 4. **Create PR**:
 
-   Use `get-default-branch name-only` to resolve `{default-branch}`.
+   Derive the bare branch name from `default_branch` by stripping the remote prefix (e.g., `origin/main` -> `main`).
 
    Extract body from `## What` onward:
 
@@ -32,13 +32,13 @@ Create a pull request using the GitHub CLI and existing PR description.
    gh pr create \
      --title "{extracted title from file}" \
      --body "$BODY" \
-     --base "{default-branch}" \
+     --base "{bare branch name}" \
      --draft
    ```
 
 ## Important
 
-- Use `get-default-branch name-only` for `--base`
+- Strip the remote prefix from `default_branch` (e.g., `origin/main` -> `main`) for `--base`
 - Do NOT use full reference (`origin/main`) - GitHub CLI expects branch name only
 - Creates PR as draft by default
 - If instructions are unclear, ask for confirmation before creating

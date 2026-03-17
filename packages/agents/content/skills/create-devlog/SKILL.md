@@ -48,14 +48,9 @@ Summarize changes made in recent commits or the working tree.
 
 ## Saving
 
-Resolve artifact directory:
+Resolve artifact directory using `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths`. The devlogs path is `artifact_paths.devlogs` (default: `devlogs`).
 
-1. Read `artifacts.base_dir` and `artifacts.paths.devlogs` from `.agents/preferences.yaml`
-2. If not found there, read from `~/.agents/preferences.yaml`
-3. If still not found, use defaults: base_dir=`.ai`, path=`devlogs`
-4. If base_dir is relative, resolve from project root (`git rev-parse --show-toplevel`). If absolute, use as-is.
-5. Use `get-project-slug` for the project slug.
-6. Full path: `{base_dir}/projects/{project-slug}/{path}/`
+Full path: `{artifact_base_dir}/projects/{project_slug}/{devlogs_path}/`
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 

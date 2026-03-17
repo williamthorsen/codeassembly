@@ -13,10 +13,8 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 1. **Extract plan content** from conversation context (the most recent plan discussed or produced)
 
 2. **Resolve artifact path**:
-   - Use `get-branch-context` for `ticket_id` and `project_slug`
-   - Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`
-   - If `base_dir` is relative, resolve from project root. If absolute, use as-is.
-   - Ticket directory: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+   - Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`
+   - Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)
 

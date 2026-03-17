@@ -12,11 +12,10 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 
 ### 1. Resolve project metadata
 
-Get `project_slug` and `base_dir` — but NOT `ticket_id` (that comes from the platform in step 5).
+Get `project_slug` and `artifact_base_dir` -- but NOT `ticket_id` (that comes from the platform in step 5).
 
-- Read `project.slug` from `.agents/preferences.yaml`; if absent, use `get-project-slug`
+- Use `get-session-context` to obtain `project_slug` and `artifact_base_dir`
 - Read `project.ticket_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
-- Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`. If relative, resolve from project root. If absolute, use as-is.
 
 ### 2. Write ticket content
 
@@ -87,7 +86,7 @@ If `integrations.jira.enabled: true`, note that Jira creation needs additional c
 
 ### 5. Save local artifacts
 
-Ticket directory: `{base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 `mkdir -p` the target directory before writing.
 

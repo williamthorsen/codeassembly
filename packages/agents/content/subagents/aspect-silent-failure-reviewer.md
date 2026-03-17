@@ -5,7 +5,7 @@ tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 20
 skills:
   - anti-patterns
-  - get-default-branch
+  - get-session-context
   - review-criteria
 ---
 

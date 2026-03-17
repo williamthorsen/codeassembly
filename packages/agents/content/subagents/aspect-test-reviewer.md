@@ -6,7 +6,7 @@ maxTurns: 20
 skills:
   - anti-patterns
   - common-mistakes
-  - get-default-branch
+  - get-session-context
   - review-criteria
 ---
 

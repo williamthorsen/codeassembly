@@ -19,7 +19,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 ## Process
 
-1. **Get context** using `get-ticket-id` and `get-project-slug`
+1. **Get context** using `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, L{n}). See [finding scheme](_data/artifact-conventions.md#finding-scheme-fwtrsl) for category definitions.
@@ -37,7 +37,7 @@ If a path argument is provided, read the review directly from that path. If the 
 
 If no path is provided, find the most recent `reviewer_review` in the active run:
 
-1. Resolve the ticket directory: `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/`
+1. Resolve the ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 2. Find the most recent run directory (highest timestamp in directory name)
 3. List files matching `*_reviewer_review.md` or `*_overseer_review.md` in the run directory
 4. Select the file with the highest timestamp
@@ -161,9 +161,7 @@ Author: {Agent name} (model: {model})
 
 ### Path resolution
 
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`, falling back to `~/.agents/preferences.yaml`, then default `~/.ai`
-2. If base_dir is relative, resolve from project root. If absolute, use as-is.
-3. Use `get-project-slug` for the project slug.
+Use `get-session-context` to obtain `artifact_base_dir` and `project_slug`.
 
 Follow [artifact conventions](_data/artifact-conventions.md).
 

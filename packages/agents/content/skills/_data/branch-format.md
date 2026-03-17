@@ -30,5 +30,5 @@ Old-format branch names like `MAC-123/agents/feat/add-orchestrator` still parse 
 
 ## Related skills
 
-- `get-branch-context` — Parses the branch name and caches all derived metadata (ticket ID, branch name, and other metadata) in a manifest file for single-lookup access. Preferred over individual skills when multiple metadata fields are needed.
+- `get-session-context` — Parses the branch name and caches all derived metadata (ticket ID, branch name, artifact paths, and other metadata) in a manifest file for single-lookup access. Preferred over individual skills when multiple metadata fields are needed.
 - `get-ticket-id` — Extracts the ticket ID segment.
