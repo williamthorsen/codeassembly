@@ -73,7 +73,7 @@ For contexts where the manifest is unavailable (e.g., standalone scripts without
 {base_dir}/projects/{project-slug}/tickets/{ticket-id}/
 ```
 
-Ticket-level artifacts and run directories both live here. Use `get-ticket-id` for the ticket ID.
+Ticket-level artifacts and run directories both live here. Use `get-session-context` to obtain `ticket_id`.
 
 ### Run paths
 
