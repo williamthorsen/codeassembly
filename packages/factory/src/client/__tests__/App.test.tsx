@@ -293,7 +293,7 @@ describe('App', () => {
   });
 
   it('handles fetchProjects error', async () => {
-    using _silent = silencedConsole();
+    using _silent = silencedConsole(['error']);
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
     mockFetchProjects.mockRejectedValue(new Error('Server down'));
 
@@ -322,7 +322,7 @@ describe('App', () => {
   });
 
   it('handles fetchProjects rejection with non-Error value', async () => {
-    using _silent = silencedConsole();
+    using _silent = silencedConsole(['error']);
     mockUseRunStatus.mockReturnValue({ data: null, isLoading: false, error: null });
     mockFetchProjects.mockRejectedValue('connection refused');
 
