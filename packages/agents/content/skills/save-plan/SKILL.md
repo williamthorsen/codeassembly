@@ -59,7 +59,7 @@ Plan saved: {plan_path}
 Would you like to create or update a ticket for this work? If so, use the `create-ticket` skill.
 
 Next steps:
-  > Refine plan: Use the `refine-plan` skill with plan: {plan_path}
-  * Orchestrate dev: Use the `orchestrate-dev` skill with plan: {plan_path}
-  * Implement directly
+  ▶ Refine plan (recommended): Use the `refine-plan` skill with plan: {plan_path}
+  · Orchestrate: Use the `orchestrate-dev` skill with plan: {plan_path}
+  · Implement directly
 ```

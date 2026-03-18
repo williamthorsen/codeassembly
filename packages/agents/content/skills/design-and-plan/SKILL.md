@@ -204,9 +204,9 @@ Design and plan complete:
   Plan:   {plan_path}
 
 Next steps:
-  > Refine plan: Use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
-  * Orchestrate dev: Use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_path}
-  * Implement directly
+  ▶ Refine plan (recommended): Use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
+  · Orchestrate: Use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_path}
+  · Implement directly
 ```
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.
