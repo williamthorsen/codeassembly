@@ -1,9 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
+import type { AnimationHandle, TransitionContext } from '../transitions/transition-executor.js';
+import type { TransitionPlan } from '../types.js';
 
 // Track actors added/removed through the mock
 let actorCount = 0;
+
+// Capture transition plans passed to executeTransitions for assertion
+let capturedPlans: TransitionPlan[] = [];
+const mockExecuteTransitions = vi.fn((plan: TransitionPlan, _context: TransitionContext): AnimationHandle => {
+  capturedPlans.push(plan);
+  return { cancel: vi.fn() };
+});
+
+vi.mock('../transitions/transition-executor.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../transitions/transition-executor.js')>();
+  return {
+    ...original,
+    executeTransitions: (plan: TransitionPlan, context: TransitionContext): AnimationHandle =>
+      mockExecuteTransitions(plan, context),
+  };
+});
 
 // Mock Excalibur to avoid canvas/WebGL dependencies in tests
 vi.mock('excalibur', () => {
@@ -11,9 +29,24 @@ vi.mock('excalibur', () => {
     opacity = 1;
     use() {}
   }
+
+  /** Create chainable mock actions object. */
+  function createMockActions() {
+    const actions = {
+      moveTo: vi.fn().mockReturnThis(),
+      fade: vi.fn().mockReturnThis(),
+      scaleTo: vi.fn().mockReturnThis(),
+      callMethod: vi.fn().mockReturnThis(),
+      clearActions: vi.fn(),
+    };
+    return actions;
+  }
+
   class MockActor {
     pos = { x: 0, y: 0 };
+    scale = { x: 1, y: 1 };
     graphics = new MockGraphic();
+    actions = createMockActions();
     z = 0;
     constructor(opts?: { pos?: { x: number; y: number }; anchor?: { x: number; y: number }; z?: number }) {
       if (opts?.pos) this.pos = opts.pos;
@@ -162,13 +195,14 @@ describe('OfficeScene', () => {
     expect(actorCount).toBeGreaterThanOrEqual(MIN_ACTOR_COUNT_AFTER_INIT);
   });
 
-  it('places agents from updateStatus', () => {
+  it('triggers transitions with fade_in when agents are added via updateStatus', () => {
+    mockExecuteTransitions.mockClear();
+    capturedPlans = [];
     actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
-    const initialCount = actorCount;
 
-    // Add reviewers via parallelReview to get more agents
+    // Add reviewers via parallelReview to trigger agent fade-in transitions
     scene.updateStatus(
       buildMinimalStatus({
         phases: emptyPhases({
@@ -208,8 +242,10 @@ describe('OfficeScene', () => {
       }),
     );
 
-    // With 3 reviewers (up from the default 1), there should be at least 2 more actors
-    expect(actorCount).toBeGreaterThanOrEqual(initialCount + 2);
+    expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
+    expect(capturedPlans).toHaveLength(1);
+    const fadeIns = capturedPlans[0]?.transitions.filter((t) => t.type === 'fade_in') ?? [];
+    expect(fadeIns.length).toBeGreaterThan(0);
   });
 
   it('handles empty state gracefully', () => {
@@ -224,8 +260,11 @@ describe('OfficeScene', () => {
     expect(actorCount).toBe(initialCount);
   });
 
-  it('clears and replaces entities on subsequent updateStatus calls', () => {
+  it('uses transition executor for subsequent updateStatus calls with changes', () => {
+    mockExecuteTransitions.mockClear();
+    capturedPlans = [];
     actorCount = 0;
+
     // Start with 3 reviewers
     const statusWith3Reviewers = buildMinimalStatus({
       phases: emptyPhases({
@@ -265,21 +304,27 @@ describe('OfficeScene', () => {
     });
     const scene = new OfficeScene(statusWith3Reviewers);
     scene.onInitialize();
-    const withReviewersCount = actorCount;
 
-    // Reduce to 1 default reviewer
+    // executeTransitions should not have been called for initial render
+    expect(mockExecuteTransitions).not.toHaveBeenCalled();
+
+    // Reduce to minimal status — this should trigger the transition executor
     scene.updateStatus(buildMinimalStatus());
-    const withDefaultCount = actorCount;
 
-    // Fewer actors because 3 reviewers -> 1 default reviewer
-    expect(withDefaultCount).toBeLessThan(withReviewersCount);
+    expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
+
+    // Verify the plan contains fade_out transitions for removed reviewers
+    expect(capturedPlans).toHaveLength(1);
+    const fadeOuts = capturedPlans[0]?.transitions.filter((t) => t.type === 'fade_out') ?? [];
+    expect(fadeOuts.length).toBeGreaterThan(0);
   });
 
-  it('places artifacts at assigned positions', () => {
+  it('triggers transitions with artifact_appear when artifacts are added', () => {
+    mockExecuteTransitions.mockClear();
+    capturedPlans = [];
     actorCount = 0;
     const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
-    const initialCount = actorCount;
 
     scene.updateStatus(
       buildMinimalStatus({
@@ -305,7 +350,9 @@ describe('OfficeScene', () => {
       }),
     );
 
-    // Should have added at least the artifact
-    expect(actorCount).toBeGreaterThan(initialCount);
+    expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
+    expect(capturedPlans).toHaveLength(1);
+    const artifactAppears = capturedPlans[0]?.transitions.filter((t) => t.type === 'artifact_appear') ?? [];
+    expect(artifactAppears.length).toBeGreaterThan(0);
   });
 });

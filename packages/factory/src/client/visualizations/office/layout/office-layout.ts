@@ -67,6 +67,14 @@ export function createOfficeLayout(): FacilityLayout {
     zoneCenters.set(zone.id, computeZoneCenter(zone));
   }
 
+  // Build slot definition lookup
+  const slotById = new Map<string, SlotDefinition>();
+  for (const zone of zones) {
+    for (const slot of zone.slots) {
+      slotById.set(slot.id, slot);
+    }
+  }
+
   // Build zone lookup
   const zoneById = new Map<string, ZoneDefinition>();
   for (const zone of zones) {
@@ -119,11 +127,16 @@ export function createOfficeLayout(): FacilityLayout {
     return [...path];
   }
 
+  function slotDefinition(slotId: string): SlotDefinition | undefined {
+    return slotById.get(slotId);
+  }
+
   return {
     slotPosition,
     zoneCenter,
     slotsInZone,
     corridorPath,
+    slotDefinition,
     zones,
   };
 }
