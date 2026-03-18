@@ -1,6 +1,5 @@
-import { foldEvents } from '../../../shared/event-folder.js';
-import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
+import { generateSnapshots } from '../../playback/generate-snapshots.js';
 import type { DemoRecording } from '../index.js';
 
 // ---------------------------------------------------------------------------
@@ -304,10 +303,6 @@ const events: RunEvent[] = [
 const CURATED_EVENT_INDICES = [
   0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 21, 23, 24, 27, 29, 32, 33, 35, 36, 37, 39, 40, 41, 42,
 ];
-
-function generateSnapshots(hdr: RunHeader, evts: ReadonlyArray<RunEvent>, indices: number[]): CanonicalRunStatus[] {
-  return indices.map((idx) => foldEvents(hdr, evts.slice(0, idx + 1)));
-}
 
 export const moderatelyComplexRun: DemoRecording = {
   name: 'Moderately complex run',

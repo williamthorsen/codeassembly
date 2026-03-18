@@ -2,22 +2,143 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
-import { DemoControlPanel } from './components/DemoControlPanel.js';
 import { DemoStatusLight } from './components/DemoStatusLight.js';
+import type { PlayerPanelProps } from './components/PlayerPanel.js';
+import { PlayerPanel } from './components/PlayerPanel.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
 import { StatusBar } from './components/StatusBar.js';
+import type { DemoRecording } from './demo/index.js';
 import { flattenProjectIndex } from './helpers/flatten-project-index.js';
 import { toRunKey } from './helpers/run-key.js';
 import { useDemoMode } from './hooks/useDemoMode.js';
 import { useDismissedRuns } from './hooks/useDismissedRuns.js';
+import { useRunPlayback } from './hooks/useRunPlayback.js';
 import { useRunStatus } from './hooks/useRunStatus.js';
 import { useSelectionParams } from './hooks/useSelectionParams.js';
+import type { PlaybackControls, PlaybackState } from './playback/playback-controller.js';
 import { DEFAULT_VIS, visualizationRegistry } from './visualizations/registry.js';
 
 import './App.css';
 
 const PROJECT_POLL_INTERVAL_MS = 5000;
+
+interface SourceControlsProps {
+  showDemoSelector: boolean;
+  onToggleDemoSelector: () => void;
+  demoPlaybackState: PlaybackState;
+  recordings: readonly DemoRecording[];
+  activeRecordingName: string | undefined;
+  onStartDemo: (recording: DemoRecording) => void;
+  showReplayButton: boolean;
+  onStartReplay: () => void;
+}
+
+/** Resolves PlayerPanel props from the active playback source. */
+function resolvePlayerProps(
+  replay: {
+    isActive: boolean;
+    playbackState: PlaybackState;
+    speed: number;
+    cursor: number;
+    snapshotCount: number;
+    controls: PlaybackControls;
+  },
+  demo: {
+    playbackState: PlaybackState;
+    speed: number;
+    cursor: number;
+    snapshotCount: number;
+    controls: PlaybackControls;
+    activeRecording: DemoRecording | null;
+  },
+  selectedRun: string | null,
+  onStopReplay: () => void,
+  onStopDemo: () => void,
+): PlayerPanelProps {
+  if (replay.isActive) {
+    return {
+      label: selectedRun ?? '',
+      playbackState: replay.playbackState,
+      speed: replay.speed,
+      cursor: replay.cursor,
+      snapshotCount: replay.snapshotCount,
+      controls: replay.controls,
+      onStop: onStopReplay,
+    };
+  }
+  return {
+    label: demo.activeRecording?.name ?? '',
+    playbackState: demo.playbackState,
+    speed: demo.speed,
+    cursor: demo.cursor,
+    snapshotCount: demo.snapshotCount,
+    controls: demo.controls,
+    onStop: onStopDemo,
+  };
+}
+
+/** Renders demo status light, recording selector, and replay button. */
+function SourceControls({
+  showDemoSelector,
+  onToggleDemoSelector,
+  demoPlaybackState,
+  recordings,
+  activeRecordingName,
+  onStartDemo,
+  showReplayButton,
+  onStartReplay,
+}: SourceControlsProps): React.JSX.Element {
+  return (
+    <>
+      <DemoStatusLight playbackState={demoPlaybackState} onClick={onToggleDemoSelector} />
+      {showDemoSelector && (
+        <select
+          value={activeRecordingName ?? ''}
+          onChange={(e) => {
+            const selected = recordings.find((r) => r.name === e.target.value);
+            if (selected) {
+              onStartDemo(selected);
+            }
+          }}
+          aria-label="Select recording"
+          style={{
+            background: '#222222',
+            color: '#ffffff',
+            border: '1px solid #555555',
+            padding: '4px',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+        >
+          <option value="">Select recording...</option>
+          {recordings.map((r) => (
+            <option key={r.name} value={r.name}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+      )}
+      {showReplayButton && (
+        <button
+          onClick={onStartReplay}
+          style={{
+            background: '#333333',
+            color: '#ffffff',
+            border: '1px solid #555555',
+            padding: '4px 8px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+          aria-label="Replay run"
+        >
+          Replay
+        </button>
+      )}
+    </>
+  );
+}
 
 interface Selection {
   project: string | null;
@@ -68,10 +189,16 @@ export function App(): React.JSX.Element {
   const { dismissed, dismiss, dismissAll } = useDismissedRuns();
 
   const demo = useDemoMode();
-  const [showDemoPanel, setShowDemoPanel] = useState(false);
+  const replay = useRunPlayback(selectedProject, selectedRun);
+  const [showDemoSelector, setShowDemoSelector] = useState(false);
 
-  // Determine the active data source: demo data takes precedence when available
-  const activeStatus = demo.isActive && demo.data !== null ? demo.data : runStatus;
+  // Determine the active data source: replay > demo > live
+  let activeStatus = runStatus;
+  if (replay.isActive && replay.data !== null) {
+    activeStatus = replay.data;
+  } else if (demo.isActive && demo.data !== null) {
+    activeStatus = demo.data;
+  }
 
   // Sync selection state -> URL params. A single effect replaces ad-hoc setParams calls.
   useEffect(() => {
@@ -151,6 +278,7 @@ export function App(): React.JSX.Element {
 
   function handleSelectRun(projectSlug: string, runId: string): void {
     demo.stopDemo();
+    replay.stopReplay();
     const match = allRuns.find((r) => r.projectSlug === projectSlug && r.runId === runId);
     setSelectedProject(projectSlug);
     setSelectedTicket(match?.ticketId ?? null);
@@ -166,32 +294,31 @@ export function App(): React.JSX.Element {
     );
   }
 
+  function handleStartDemo(recording: DemoRecording): void {
+    replay.stopReplay();
+    demo.loadRecording(recording);
+  }
+
   function handleStopDemo(): void {
     demo.stopDemo();
-    setShowDemoPanel(false);
+    setShowDemoSelector(false);
+  }
+
+  function handleStartReplay(): void {
+    demo.stopDemo();
+    replay.startReplay();
+  }
+
+  function handleStopReplay(): void {
+    replay.stopReplay();
   }
 
   // Resolve the active visualization component from the registry
   const VisComponent = visualizationRegistry[selectedVis] ?? visualizationRegistry[DEFAULT_VIS];
 
-  const demoSlot = (
-    <>
-      <DemoStatusLight playbackState={demo.playbackState} onClick={() => setShowDemoPanel((prev) => !prev)} />
-      {showDemoPanel && (
-        <DemoControlPanel
-          recordings={demo.recordings}
-          activeRecording={demo.activeRecording}
-          playbackState={demo.playbackState}
-          speed={demo.speed}
-          cursor={demo.cursor}
-          snapshotCount={demo.snapshotCount}
-          controls={demo.controls}
-          onSelectRecording={demo.loadRecording}
-          onStop={handleStopDemo}
-        />
-      )}
-    </>
-  );
+  // Determine which player panel to show (if any)
+  const isPlayerActive = replay.isActive || demo.isActive;
+  const showReplayButton = selectedRun !== null && !replay.isActive && !demo.isActive;
 
   return (
     <div className="app">
@@ -227,8 +354,20 @@ export function App(): React.JSX.Element {
               ))}
             </select>
           </label>
-          {demoSlot}
+          <SourceControls
+            showDemoSelector={showDemoSelector}
+            onToggleDemoSelector={() => setShowDemoSelector((prev) => !prev)}
+            demoPlaybackState={demo.playbackState}
+            recordings={demo.recordings}
+            activeRecordingName={demo.activeRecording?.name}
+            onStartDemo={handleStartDemo}
+            showReplayButton={showReplayButton}
+            onStartReplay={handleStartReplay}
+          />
         </div>
+        {isPlayerActive && (
+          <PlayerPanel {...resolvePlayerProps(replay, demo, selectedRun, handleStopReplay, handleStopDemo)} />
+        )}
         {activeStatus && <StatusBar status={activeStatus} />}
         {isLoading && <p>Loading...</p>}
         {error && <p>Error: {error.message}</p>}

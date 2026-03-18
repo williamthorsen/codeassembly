@@ -10,6 +10,53 @@ import { isEnoent } from '../type-guards.js';
 import type { ArtifactEntry, CanonicalRunStatus, PhaseDecision, Phases, RunStatus } from '../types/canonical.js';
 import type { RunEvent, RunHeader } from '../types/run-log.js';
 
+/** Read and parse a v3 run's raw header + events without folding into a final snapshot. */
+export async function parseRunRawData(runPath: string): Promise<{ header: RunHeader; events: RunEvent[] }> {
+  const indexPath = join(runPath, 'run-index.json');
+  let indexContent: string;
+
+  try {
+    indexContent = await readFile(indexPath, 'utf8');
+  } catch (error) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    const message = `Run at ${runPath} does not have a v3 event log`;
+    throw new RunDataParseError(message, 'no_event_log', runPath);
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(indexContent);
+  } catch (error) {
+    const message = `Failed to parse JSON at ${indexPath}: ${String(error)}`;
+    throw new RunDataParseError(message, 'corrupt_json', indexPath);
+  }
+
+  const v3Result = v3RunIndexSchema.safeParse(raw);
+  if (!v3Result.success) {
+    const message = `Run at ${runPath} does not have a v3 event log`;
+    throw new RunDataParseError(message, 'no_event_log', runPath);
+  }
+
+  const logPath = join(runPath, 'run-log.jsonl');
+  let logContent: string;
+  try {
+    logContent = await readFile(logPath, 'utf8');
+  } catch (error) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    const message = `v3 run-index.json found at ${indexPath} but run-log.jsonl is missing`;
+    throw new RunDataParseError(message, 'missing_companion', indexPath);
+  }
+
+  const header = extractHeader(v3Result.data);
+  const events = parseLogLines(logContent, logPath);
+
+  return { header, events };
+}
+
 /** Try v3 (header + log) first, then v2 (run-index.json), fall back to v1 (status.json). */
 export async function parseRunData(runPath: string): Promise<CanonicalRunStatus> {
   const indexPath = join(runPath, 'run-index.json');
@@ -50,44 +97,8 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
       throw new RunDataParseError(message, 'missing_companion', indexPath);
     }
 
-    const v3Data = v3Result.data;
-    const header: RunHeader = {
-      runId: v3Data.context.runId,
-      projectSlug: v3Data.context.projectSlug,
-      ticketId: v3Data.context.ticketId,
-      projectRoot: v3Data.context.projectRoot,
-      branch: v3Data.context.branch,
-      task: v3Data.context.task,
-      startedAt: v3Data.context.startedAt,
-      externalPlan: v3Data.config.externalPlan,
-      mergeBaseSha: v3Data.config.mergeBaseSha,
-      diffBase: v3Data.config.diffBase,
-      maxReviewRounds: v3Data.config.maxReviewRounds,
-      effort: v3Data.config.effort,
-      approvalThreshold: v3Data.config.approvalThreshold,
-      budgetThreshold: v3Data.config.budgetThreshold,
-      mode: v3Data.config.mode,
-      model: v3Data.config.model,
-    };
-
-    const events: RunEvent[] = [];
-    const lines = logContent.split('\n').filter((line) => line.trim() !== '');
-    for (const [i, line] of lines.entries()) {
-      try {
-        events.push(parseRunLogLine(line));
-      } catch (error) {
-        if (error instanceof SyntaxError) {
-          // JSON.parse failed — indicates file corruption, not a forward-compat scenario
-          console.error(
-            `[run-data-parser] corrupt JSON at line index ${String(i)} in ${logPath} (possible file corruption):`,
-            error,
-          );
-        } else {
-          // Schema validation failed — likely an unrecognized event type (forward-compat)
-          console.warn(`[run-data-parser] skipped unrecognized event at line index ${String(i)} in ${logPath}:`, error);
-        }
-      }
-    }
+    const header = extractHeader(v3Result.data);
+    const events = parseLogLines(logContent, logPath);
 
     return foldEvents(header, events);
   }
@@ -211,6 +222,74 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
     phaseDecisions: context.phaseDecisions,
     artifacts: raw.artifacts,
   };
+}
+
+// -- v3 helpers ---------------------------------------------------------------
+
+interface V3ParsedData {
+  context: {
+    runId: string;
+    projectSlug: string;
+    ticketId?: string | undefined;
+    projectRoot: string;
+    branch: string;
+    task: string;
+    startedAt: string;
+  };
+  config: {
+    externalPlan?: boolean | undefined;
+    mergeBaseSha?: string | undefined;
+    diffBase?: string | undefined;
+    maxReviewRounds?: number | undefined;
+    effort?: string | undefined;
+    approvalThreshold?: string | undefined;
+    budgetThreshold?: string | undefined;
+    mode?: string | undefined;
+    model?: string | undefined;
+  };
+}
+
+/** Extract a `RunHeader` from parsed v3 run-index.json data. */
+function extractHeader(v3Data: V3ParsedData): RunHeader {
+  return {
+    runId: v3Data.context.runId,
+    projectSlug: v3Data.context.projectSlug,
+    ticketId: v3Data.context.ticketId,
+    projectRoot: v3Data.context.projectRoot,
+    branch: v3Data.context.branch,
+    task: v3Data.context.task,
+    startedAt: v3Data.context.startedAt,
+    externalPlan: v3Data.config.externalPlan,
+    mergeBaseSha: v3Data.config.mergeBaseSha,
+    diffBase: v3Data.config.diffBase,
+    maxReviewRounds: v3Data.config.maxReviewRounds,
+    effort: v3Data.config.effort,
+    approvalThreshold: v3Data.config.approvalThreshold,
+    budgetThreshold: v3Data.config.budgetThreshold,
+    mode: v3Data.config.mode,
+    model: v3Data.config.model,
+  };
+}
+
+/** Parse JSONL content into run events, skipping corrupt or unrecognized lines. */
+function parseLogLines(logContent: string, logPath: string): RunEvent[] {
+  const events: RunEvent[] = [];
+  const lines = logContent.split('\n').filter((line) => line.trim() !== '');
+  for (const [i, line] of lines.entries()) {
+    try {
+      events.push(parseRunLogLine(line));
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        console.error(
+          `[run-data-parser] corrupt JSON at line index ${String(i)} in ${logPath} (possible file corruption):`,
+          error,
+        );
+      } else {
+        console.warn(`[run-data-parser] skipped unrecognized event at line index ${String(i)} in ${logPath}:`, error);
+      }
+    }
+  }
+  return events;
 }
 
 // -- validation via Zod schemas with issue capture ---------------------------

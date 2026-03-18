@@ -3,6 +3,7 @@ import type {
   ArtifactListResponse,
   CanonicalRunStatus,
   ProjectIndex,
+  RunEventsResponse,
 } from '../../shared/types/api.js';
 import type { UserSettings } from '../../shared/types/settings.js';
 
@@ -23,6 +24,11 @@ export function fetchProjects(): Promise<ProjectIndex> {
 
 export function fetchRunStatus(projectSlug: string, runId: string): Promise<CanonicalRunStatus> {
   return fetchJson<CanonicalRunStatus>(`${API_BASE}/runs/${projectSlug}/${runId}`, 'Failed to fetch run status');
+}
+
+/** Fetch raw header + events for a v3 run. Returns 404 for v1/v2 runs. */
+export function fetchRunEvents(projectSlug: string, runId: string): Promise<RunEventsResponse> {
+  return fetchJson<RunEventsResponse>(`${API_BASE}/runs/${projectSlug}/${runId}/events`, 'Failed to fetch run events');
 }
 
 export async function fetchArtifacts(projectSlug: string, runId: string): Promise<string[]> {

@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 import type { DemoRecording } from '../demo/index.js';
 import { DEMO_RECORDINGS } from '../demo/index.js';
-import type { PlaybackControls, PlaybackState } from '../playback/playback-controller.js';
+import type { PlaybackControls, PlaybackSource, PlaybackState } from '../playback/playback-controller.js';
 import { usePlayback } from './usePlayback.js';
 
 export interface UseDemoModeResult {
@@ -22,7 +22,13 @@ export interface UseDemoModeResult {
 
 export function useDemoMode(): UseDemoModeResult {
   const [activeRecording, setActiveRecording] = useState<DemoRecording | null>(null);
-  const playback = usePlayback(activeRecording);
+
+  const source = useMemo<PlaybackSource | null>(
+    () => (activeRecording ? { label: activeRecording.name, snapshots: activeRecording.snapshots } : null),
+    [activeRecording],
+  );
+
+  const playback = usePlayback(source);
 
   const loadRecording = useCallback((recording: DemoRecording) => {
     setActiveRecording(recording);

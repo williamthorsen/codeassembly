@@ -1,12 +1,13 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { RunDataParseError } from '@codeassembly/run-core';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { marked } from 'marked';
 
 import type { ProjectIndexProvider } from '../../shared/types/api.js';
-import { parseRunData } from '../adapters/status-adapter.js';
+import { parseRunData, parseRunRawData } from '../adapters/status-adapter.js';
 import { isEnoent } from '../type-guards.js';
 
 interface RunParams {
@@ -41,6 +42,33 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
       }
       console.error('Error getting run status:', error);
       res.status(500).json({ error: 'Failed to get run status' });
+    }
+  });
+
+  // GET /api/runs/:projectSlug/:runId/events - return raw header + events for v3 runs
+  router.get('/:projectSlug/:runId/events', async (req: Request<RunParams>, res: Response) => {
+    const { projectSlug, runId } = req.params;
+
+    const runPath = findRunPath(scanner, projectSlug, runId);
+    if (!runPath) {
+      res.status(404).json({ error: 'Run not found' });
+      return;
+    }
+
+    try {
+      const { header, events } = await parseRunRawData(runPath);
+      res.json({ header, events });
+    } catch (error) {
+      if (error instanceof RunDataParseError && error.category === 'no_event_log') {
+        res.status(404).json({ error: 'Run does not have an event log' });
+        return;
+      }
+      if (isEnoent(error)) {
+        res.status(404).json({ error: 'Run data not found' });
+        return;
+      }
+      console.error('Error getting run events:', error);
+      res.status(500).json({ error: 'Failed to get run events' });
     }
   });
 

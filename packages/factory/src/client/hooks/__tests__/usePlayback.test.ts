@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
-import type { DemoRecording } from '../../demo/index.js';
+import type { PlaybackSource } from '../../playback/playback-controller.js';
 import { usePlayback } from '../usePlayback.js';
 
 function makeSnapshot(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
@@ -42,10 +42,9 @@ function makeSnapshot(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRun
   };
 }
 
-function createRecording(): DemoRecording {
+function createSource(): PlaybackSource {
   return {
-    name: 'Test recording',
-    description: 'A simple test recording',
+    label: 'Test recording',
     snapshots: [
       makeSnapshot(),
       makeSnapshot({
@@ -82,7 +81,7 @@ describe('usePlayback', () => {
   });
 
   it('exposes all control functions', () => {
-    const { result } = renderHook(() => usePlayback(createRecording()));
+    const { result } = renderHook(() => usePlayback(createSource()));
 
     expect(typeof result.current.controls.play).toBe('function');
     expect(typeof result.current.controls.pause).toBe('function');
@@ -95,7 +94,7 @@ describe('usePlayback', () => {
   });
 
   it('stepForward produces valid CanonicalRunStatus with correct runId', () => {
-    const { result } = renderHook(() => usePlayback(createRecording()));
+    const { result } = renderHook(() => usePlayback(createSource()));
 
     act(() => {
       result.current.controls.stepForward();
@@ -106,7 +105,7 @@ describe('usePlayback', () => {
   });
 
   it('stop() sets playbackState to stopped and cursor to -1', () => {
-    const { result } = renderHook(() => usePlayback(createRecording()));
+    const { result } = renderHook(() => usePlayback(createSource()));
 
     act(() => {
       result.current.controls.stepForward();
@@ -122,7 +121,7 @@ describe('usePlayback', () => {
   });
 
   it('play() transitions playbackState to playing', () => {
-    const { result } = renderHook(() => usePlayback(createRecording()));
+    const { result } = renderHook(() => usePlayback(createSource()));
 
     act(() => {
       result.current.controls.play();
@@ -131,15 +130,15 @@ describe('usePlayback', () => {
     expect(result.current.cursor).toBe(0);
   });
 
-  it('disposes old controller when recording changes', () => {
-    const rec1 = createRecording();
-    const rec2: DemoRecording = {
-      ...createRecording(),
-      snapshots: createRecording().snapshots.map((s) => ({ ...s, runId: 'run-2' })),
+  it('disposes old controller when source changes', () => {
+    const src1 = createSource();
+    const src2: PlaybackSource = {
+      ...createSource(),
+      snapshots: createSource().snapshots.map((s) => ({ ...s, runId: 'run-2' })),
     };
 
-    const { result, rerender } = renderHook(({ rec }: { rec: DemoRecording | null }) => usePlayback(rec), {
-      initialProps: { rec: rec1 },
+    const { result, rerender } = renderHook(({ src }: { src: PlaybackSource | null }) => usePlayback(src), {
+      initialProps: { src: src1 },
     });
 
     act(() => {
@@ -147,7 +146,7 @@ describe('usePlayback', () => {
     });
     expect(result.current.data?.runId).toBe('test-run');
 
-    rerender({ rec: rec2 });
+    rerender({ src: src2 });
 
     act(() => {
       result.current.controls.stepForward();
@@ -156,7 +155,7 @@ describe('usePlayback', () => {
   });
 
   it('disposes controller on unmount', () => {
-    const { result, unmount } = renderHook(() => usePlayback(createRecording()));
+    const { result, unmount } = renderHook(() => usePlayback(createSource()));
 
     act(() => {
       result.current.controls.stepForward();

@@ -1,12 +1,11 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { DemoRecording } from '../../demo/index.js';
 import type { PlaybackControls } from '../../playback/playback-controller.js';
 
-vi.mock('../DemoControlPanel.css', () => ({}));
+vi.mock('../PlayerPanel.css', () => ({}));
 
-const { DemoControlPanel } = await import('../DemoControlPanel.js');
+const { PlayerPanel } = await import('../PlayerPanel.js');
 
 function createControls(): PlaybackControls {
   return {
@@ -22,86 +21,37 @@ function createControls(): PlaybackControls {
   };
 }
 
-function createRecordings(): DemoRecording[] {
-  return [
-    {
-      name: 'Simple run',
-      description: 'A simple run',
-      snapshots: [],
-    },
-    {
-      name: 'Complex run',
-      description: 'A complex run',
-      snapshots: [],
-    },
-  ];
-}
-
-describe('DemoControlPanel', () => {
+describe(PlayerPanel, () => {
   afterEach(() => {
     cleanup();
   });
 
-  it('renders all recordings in the selector', () => {
-    const recordings = createRecordings();
+  it('displays the source label', () => {
     render(
-      <DemoControlPanel
-        recordings={recordings}
-        activeRecording={null}
+      <PlayerPanel
+        label="My run"
         playbackState="stopped"
         speed={1}
         cursor={-1}
         snapshotCount={10}
         controls={createControls()}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
 
-    const select = screen.getByLabelText('Select recording');
-    const options = within(select).getAllByRole('option');
-    // +1 for the placeholder option
-    expect(options).toHaveLength(3);
-    expect(options[1]?.textContent).toBe('Simple run');
-    expect(options[2]?.textContent).toBe('Complex run');
-  });
-
-  it('selecting a recording calls onSelectRecording with the correct object', () => {
-    const recordings = createRecordings();
-    const handleSelect = vi.fn();
-    render(
-      <DemoControlPanel
-        recordings={recordings}
-        activeRecording={recordings[0] ?? null}
-        playbackState="stopped"
-        speed={1}
-        cursor={-1}
-        snapshotCount={10}
-        controls={createControls()}
-        onSelectRecording={handleSelect}
-        onStop={() => {}}
-      />,
-    );
-
-    const select = screen.getByLabelText('Select recording');
-    fireEvent.change(select, { target: { value: 'Complex run' } });
-
-    expect(handleSelect).toHaveBeenCalledTimes(1);
-    expect(handleSelect).toHaveBeenCalledWith(recordings[1]);
+    expect(screen.getByText('My run')).toBeInTheDocument();
   });
 
   it('play button calls controls.play when stopped', () => {
     const controls = createControls();
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="stopped"
         speed={1}
         cursor={-1}
         snapshotCount={10}
         controls={controls}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
@@ -113,15 +63,13 @@ describe('DemoControlPanel', () => {
   it('pause button calls controls.pause when playing', () => {
     const controls = createControls();
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="playing"
         speed={1}
         cursor={2}
         snapshotCount={10}
         controls={controls}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
@@ -133,15 +81,13 @@ describe('DemoControlPanel', () => {
   it('stop button calls onStop', () => {
     const handleStop = vi.fn();
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="stopped"
         speed={1}
         cursor={-1}
         snapshotCount={10}
         controls={createControls()}
-        onSelectRecording={() => {}}
         onStop={handleStop}
       />,
     );
@@ -153,15 +99,13 @@ describe('DemoControlPanel', () => {
   it('step-back and step-forward call respective control functions', () => {
     const controls = createControls();
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="paused"
         speed={1}
         cursor={3}
         snapshotCount={10}
         controls={controls}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
@@ -175,15 +119,13 @@ describe('DemoControlPanel', () => {
 
   it('displays current speed', () => {
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="stopped"
         speed={2}
         cursor={-1}
         snapshotCount={10}
         controls={createControls()}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
@@ -193,15 +135,13 @@ describe('DemoControlPanel', () => {
 
   it('displays position indicator', () => {
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="paused"
         speed={1}
         cursor={2}
         snapshotCount={18}
         controls={createControls()}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
@@ -211,15 +151,13 @@ describe('DemoControlPanel', () => {
 
   it('displays 0 / N when cursor is -1', () => {
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="stopped"
         speed={1}
         cursor={-1}
         snapshotCount={10}
         controls={createControls()}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
@@ -230,15 +168,13 @@ describe('DemoControlPanel', () => {
   it('speed buttons call correct control functions', () => {
     const controls = createControls();
     render(
-      <DemoControlPanel
-        recordings={createRecordings()}
-        activeRecording={null}
+      <PlayerPanel
+        label="Test"
         playbackState="stopped"
         speed={1}
         cursor={-1}
         snapshotCount={10}
         controls={controls}
-        onSelectRecording={() => {}}
         onStop={() => {}}
       />,
     );
