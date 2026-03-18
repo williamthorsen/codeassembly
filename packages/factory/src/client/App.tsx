@@ -193,8 +193,12 @@ export function App(): React.JSX.Element {
   const [showDemoSelector, setShowDemoSelector] = useState(false);
 
   // Determine the active data source: replay > demo > live
-  const activeStatus =
-    replay.isActive && replay.data !== null ? replay.data : demo.isActive && demo.data !== null ? demo.data : runStatus;
+  let activeStatus = runStatus;
+  if (replay.isActive && replay.data !== null) {
+    activeStatus = replay.data;
+  } else if (demo.isActive && demo.data !== null) {
+    activeStatus = demo.data;
+  }
 
   // Sync selection state -> URL params. A single effect replaces ad-hoc setParams calls.
   useEffect(() => {
