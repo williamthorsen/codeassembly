@@ -2,7 +2,7 @@
 
 Standard next-steps block for skills that produce a code review. Skills reference this file to maintain a consistent format and recommendation logic.
 
-The next-steps block has two independent sub-blocks. Each is shown only when its condition is met. If neither condition is met, no next-steps block appears.
+The next-steps block has two independent sub-blocks. Each is shown only when its condition is met. If neither condition is met, no next-steps block appears. Whether one or both sub-blocks are shown, always wrap the output in a `Next steps:` header.
 
 ## Deviations sub-block
 
@@ -18,6 +18,8 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 ### Output format
 
 ```
+Next steps:
+
 Deviations from ticket:
   ▶ Update ticket: Use the `design-and-plan` skill with ticket: {ticket_source}
   · Leave as-is
@@ -27,8 +29,8 @@ Deviations from ticket:
 
 ### Recommendation rules
 
-1. **Update ticket** -- acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured
-2. **Leave as-is** -- deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met)
+1. **Recommend "Update ticket"** (`▶`) -- acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured
+2. **No recommendation** -- deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). Present both options with `·` markers; the user decides.
 
 When uncertain, recommend updating the ticket.
 
@@ -47,6 +49,8 @@ Shown when the review contains actionable findings (F, W, or T categories).
 ### Output format
 
 ```
+Next steps:
+
 Actionable findings:
   ▶ {recommended option} (recommended): Use the `{skill-name}` skill with ticket: {ticket_source}
   · {second option}: Use the `{skill-name}` skill with ticket: {ticket_source}

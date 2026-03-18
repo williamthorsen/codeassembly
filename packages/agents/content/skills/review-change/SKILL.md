@@ -38,7 +38,7 @@ For GitHub: `gh issue view --json number,title,body,labels {number}`
 2. **Resolve ticket** _(branch scope only)_ — resolve the ticket source using this priority order:
    1. **Explicit argument** — if a `ticket` argument was provided, resolve it per the [Arguments](#arguments) table
    2. **Auto-resolve** — if no argument, scan `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` for the most recent `*_ticket.md` file and read it
-   3. **No ticket found** — skip ticket compliance; review proceeds as today
+   3. **No ticket found** — skip ticket compliance; review proceeds without it
 3. **Read prior artifacts** — if a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions). _(Branch scope only.)_
 4. **Analyze changes**:
    - Branch scope: `git diff $DEFAULT_BRANCH...HEAD`
