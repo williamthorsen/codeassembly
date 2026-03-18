@@ -1,6 +1,6 @@
 import type { core } from 'zod';
 
-export type RunDataParseErrorCategory = 'corrupt_json' | 'invalid_schema' | 'missing_companion';
+export type RunDataParseErrorCategory = 'corrupt_json' | 'invalid_schema' | 'missing_companion' | 'no_event_log';
 
 /**
  * Structured error for run-data parsing failures.

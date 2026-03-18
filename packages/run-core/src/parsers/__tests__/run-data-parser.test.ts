@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { RunDataParseError } from '../../run-data-parse-error.js';
-import { parseRunData, parseStatusFile } from '../run-data-parser.js';
+import { parseRunData, parseRunRawData, parseStatusFile } from '../run-data-parser.js';
 
 const { mockedReadFile } = vi.hoisted(() => ({
   mockedReadFile: vi.fn(),
@@ -1220,5 +1220,110 @@ describe('parseRunData', () => {
       expect(error.filePath).toBe('/runs/test-run/status.json');
       expect(error.zodIssues).toBeDefined();
     });
+  });
+});
+
+describe(parseRunRawData, () => {
+  function minimalV3Header(): Record<string, unknown> {
+    return {
+      version: 3,
+      context: {
+        runId: 'v3-test-run',
+        projectSlug: 'test',
+        projectRoot: '/test',
+        branch: 'main',
+        task: 'test task',
+        startedAt: '2026-01-01T00:00:00Z',
+      },
+      config: {
+        mode: 'orchestrated',
+        model: 'claude-opus-4-6',
+      },
+    };
+  }
+
+  function jsonlLines(...events: Record<string, unknown>[]): string {
+    return events.map((e) => JSON.stringify(e)).join('\n');
+  }
+
+  it('returns header and events for a v3 run', async () => {
+    const logContent = jsonlLines(
+      { t: '2026-01-01T00:00:00Z', event: 'run_started' },
+      { t: '2026-01-01T00:01:00Z', event: 'phase_started', phase: 'architecture' },
+      { t: '2026-01-01T00:10:00Z', event: 'run_completed', status: 'completed' },
+    );
+
+    mockFileContents({
+      '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+      '/runs/test-run/run-log.jsonl': logContent,
+    });
+
+    const result = await parseRunRawData('/runs/test-run');
+
+    expect(result.header.runId).toBe('v3-test-run');
+    expect(result.header.mode).toBe('orchestrated');
+    expect(result.events).toHaveLength(3);
+    expect(result.events[0]?.event).toBe('run_started');
+    expect(result.events[2]?.event).toBe('run_completed');
+  });
+
+  it('throws no_event_log for v1 runs (no run-index.json)', async () => {
+    mockFileContents({
+      '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
+    });
+
+    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+
+    expect(error).toBeInstanceOf(RunDataParseError);
+    if (!(error instanceof RunDataParseError)) return;
+    expect(error.category).toBe('no_event_log');
+  });
+
+  it('throws no_event_log for v2 runs (non-v3 schema)', async () => {
+    mockFileContents({
+      '/runs/test-run/run-index.json': JSON.stringify(v2Fixture),
+    });
+
+    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+
+    expect(error).toBeInstanceOf(RunDataParseError);
+    if (!(error instanceof RunDataParseError)) return;
+    expect(error.category).toBe('no_event_log');
+  });
+
+  it('throws corrupt_json for unparseable JSON', async () => {
+    mockFileContents({
+      '/runs/test-run/run-index.json': '{ not valid json !!!',
+    });
+
+    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+
+    expect(error).toBeInstanceOf(RunDataParseError);
+    if (!(error instanceof RunDataParseError)) return;
+    expect(error.category).toBe('corrupt_json');
+  });
+
+  it('throws missing_companion when run-log.jsonl is absent for a v3 run', async () => {
+    mockFileContents({
+      '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+    });
+
+    const error = await parseRunRawData('/runs/test-run').catch((error_: unknown) => error_);
+
+    expect(error).toBeInstanceOf(RunDataParseError);
+    if (!(error instanceof RunDataParseError)) return;
+    expect(error.category).toBe('missing_companion');
+  });
+
+  it('returns empty events array for an empty log file', async () => {
+    mockFileContents({
+      '/runs/test-run/run-index.json': JSON.stringify(minimalV3Header()),
+      '/runs/test-run/run-log.jsonl': '',
+    });
+
+    const result = await parseRunRawData('/runs/test-run');
+
+    expect(result.header.runId).toBe('v3-test-run');
+    expect(result.events).toHaveLength(0);
   });
 });
