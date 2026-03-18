@@ -1,4 +1,4 @@
-.demo-control-panel {
+.player-panel {
   background: #111111;
   border: 1px solid #555555;
   padding: 8px 16px;
@@ -11,23 +11,21 @@
   min-width: 200px;
 }
 
-.demo-control-panel select {
-  background: #222222;
-  color: #ffffff;
-  border: 1px solid #555555;
-  padding: 4px;
-  font-family: monospace;
-  font-size: 12px;
-  width: 100%;
+.player-panel-label {
+  color: #55ffff;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.demo-transport-row {
+.player-transport-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.demo-control-panel button {
+.player-panel button {
   background: #333333;
   color: #ffffff;
   border: 1px solid #555555;
@@ -37,21 +35,21 @@
   font-size: 12px;
 }
 
-.demo-control-panel button:hover {
+.player-panel button:hover {
   background: #444444;
 }
 
-.demo-speed-row {
+.player-speed-row {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-.demo-speed-display {
+.player-speed-display {
   min-width: 40px;
   text-align: center;
 }
 
-.demo-position {
+.player-position {
   color: #888888;
 }

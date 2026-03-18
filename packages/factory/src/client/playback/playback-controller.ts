@@ -2,6 +2,12 @@ import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
 
 export type PlaybackState = 'stopped' | 'playing' | 'paused' | 'ended';
 
+/** Generalized input for playback — a labeled sequence of snapshots from any source. */
+export interface PlaybackSource {
+  label: string;
+  snapshots: CanonicalRunStatus[];
+}
+
 /** Control methods exposed by the PlaybackController, used by UI components. */
 export interface PlaybackControls {
   play(): void;

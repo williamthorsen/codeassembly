@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CanonicalRunStatus } from '../../shared/types/canonical.js';
-import type { DemoRecording } from '../demo/index.js';
-import type { PlaybackControls, PlaybackState } from '../playback/playback-controller.js';
+import type { PlaybackControls, PlaybackSource, PlaybackState } from '../playback/playback-controller.js';
 import { PlaybackController } from '../playback/playback-controller.js';
 
 export interface UsePlaybackResult {
@@ -26,7 +25,7 @@ const noopControls: PlaybackControls = {
   setSpeed() {},
 };
 
-export function usePlayback(recording: DemoRecording | null): UsePlaybackResult {
+export function usePlayback(source: PlaybackSource | null): UsePlaybackResult {
   const [data, setData] = useState<CanonicalRunStatus | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState>('stopped');
   const [speed, setSpeed] = useState(1);
@@ -34,7 +33,7 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
   const controllerRef = useRef<PlaybackController | null>(null);
 
   useEffect(() => {
-    if (!recording) {
+    if (!source) {
       controllerRef.current = null;
       setData(null);
       setPlaybackState('stopped');
@@ -43,7 +42,7 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
       return;
     }
 
-    const controller = new PlaybackController(recording.snapshots, (status) => {
+    const controller = new PlaybackController(source.snapshots, (status) => {
       setData(status);
       setPlaybackState(controller.state);
       setSpeed(controller.speed);
@@ -54,7 +53,7 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
     return () => {
       controller.dispose();
     };
-  }, [recording]);
+  }, [source]);
 
   const play = useCallback(() => {
     controllerRef.current?.play();
@@ -104,7 +103,7 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
     }
   }, []);
 
-  const controls: PlaybackControls = recording
+  const controls: PlaybackControls = source
     ? {
         play,
         pause,
@@ -124,6 +123,6 @@ export function usePlayback(recording: DemoRecording | null): UsePlaybackResult 
     controls,
     speed,
     cursor,
-    snapshotCount: recording?.snapshots.length ?? 0,
+    snapshotCount: source?.snapshots.length ?? 0,
   };
 }
