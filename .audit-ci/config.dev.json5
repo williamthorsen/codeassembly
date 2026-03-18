@@ -3,7 +3,7 @@
   "moderate": true,
   "allowlist": [
     // js-yaml - Transitive from @changesets/cli (dev-only)
-    "GHSA-mh29-5h37-fv8m", // Prototype pollution
+    // "GHSA-mh29-5h37-fv8m", // Prototype pollution
   ],
   "extra-args": ["--dev"],
   "report-type": "summary",
