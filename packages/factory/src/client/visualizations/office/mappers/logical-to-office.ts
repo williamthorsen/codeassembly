@@ -5,7 +5,7 @@ import {
   assignAgentToZone,
   buildArtifactStates,
   computeReviewerIndices,
-  deriveOrchestratorZone,
+  deriveOrchestratorAssignment,
   deriveZoneStates,
 } from './agent-zone-assignments.js';
 
@@ -33,15 +33,16 @@ export function mapLogicalToOffice(logical: LogicalSceneState): OfficeSceneConfi
     };
   });
 
-  // Derive orchestrator zone
-  const orchestratorZoneId = deriveOrchestratorZone(logical.orchestrator, logical.currentPhase);
+  // Derive orchestrator zone and slot
+  const orchestratorAssignment = deriveOrchestratorAssignment(logical.orchestrator, logical.currentPhase);
 
   const orchestrator = {
     status: logical.orchestrator.status,
     carriedArtifacts: logical.orchestrator.carriedArtifacts,
     codeBadge: logical.orchestrator.codeBadge,
     waiting: logical.orchestrator.waiting,
-    zoneId: orchestratorZoneId,
+    zoneId: orchestratorAssignment.zoneId,
+    slotId: orchestratorAssignment.slotId,
   };
 
   // Assign artifacts to zones

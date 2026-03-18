@@ -41,8 +41,14 @@ describe(createOfficeLayout, () => {
   describe('slotsInZone', () => {
     it('returns all slots for a zone', () => {
       const prepSlots = layout.slotsInZone('prep');
-      expect(prepSlots).toHaveLength(2);
-      expect(prepSlots.map((s) => s.id)).toEqual(['prep-desk-0', 'prep-desk-1']);
+      expect(prepSlots).toHaveLength(3);
+      expect(prepSlots.map((s) => s.id)).toEqual(['prep-desk-0', 'prep-desk-1', 'prep-standing-0']);
+    });
+
+    it('does not return standing slots when filtering by workstation', () => {
+      const workstations = layout.slotsInZone('prep', 'workstation');
+      expect(workstations).toHaveLength(2);
+      expect(workstations.every((s) => s.type === 'workstation')).toBe(true);
     });
 
     it('filters by slot type', () => {

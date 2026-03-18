@@ -15,7 +15,7 @@ export function resolvePositions(config: OfficeSceneConfig, layout: FacilityLayo
     artifacts.set(artifact.id, layout.slotPosition(artifact.slotId));
   }
 
-  const orchestrator = layout.zoneCenter(config.orchestrator.zoneId);
+  const orchestrator = layout.slotPosition(config.orchestrator.slotId);
 
   return { agents, artifacts, orchestrator };
 }

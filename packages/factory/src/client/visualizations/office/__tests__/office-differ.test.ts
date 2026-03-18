@@ -12,6 +12,7 @@ function config(overrides: Partial<OfficeSceneConfig> = {}): OfficeSceneConfig {
       codeBadge: null,
       waiting: false,
       zoneId: 'governor',
+      slotId: 'governor-desk-0',
     },
     agents: [],
     artifacts: [],
@@ -57,11 +58,20 @@ describe(diffOfficeConfigs, () => {
 
   describe('orchestrator', () => {
     it('detects orchestrator zone movement', () => {
-      const prev = config({ orchestrator: { ...config().orchestrator, zoneId: 'governor' } });
-      const next = config({ orchestrator: { ...config().orchestrator, zoneId: 'workshop' } });
+      const prev = config({
+        orchestrator: { ...config().orchestrator, zoneId: 'governor', slotId: 'governor-desk-0' },
+      });
+      const next = config({
+        orchestrator: { ...config().orchestrator, zoneId: 'workshop', slotId: 'workshop-standing-0' },
+      });
       const diff = diffOfficeConfigs(prev, next);
 
-      expect(diff.orchestrator.moved).toEqual({ from: 'governor', to: 'workshop' });
+      expect(diff.orchestrator.moved).toEqual({
+        fromZone: 'governor',
+        fromSlot: 'governor-desk-0',
+        toZone: 'workshop',
+        toSlot: 'workshop-standing-0',
+      });
       expect(diff.hasChanges).toBe(true);
     });
 

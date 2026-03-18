@@ -48,6 +48,7 @@ describe(mapLogicalToOffice, () => {
     expect(result.artifacts).toHaveLength(0);
     expect(result.zones).toHaveLength(3);
     expect(result.orchestrator.zoneId).toBe('governor');
+    expect(result.orchestrator.slotId).toBe('governor-desk-0');
   });
 
   it('assigns architect and planner to prep zone', () => {
@@ -101,46 +102,51 @@ describe(mapLogicalToOffice, () => {
     expect(slotIds).toContain('workshop-desk-3');
   });
 
-  it('places orchestrator at prep when dispatching to architecture', () => {
+  it('places orchestrator at prep with standing slot when dispatching to architecture', () => {
     const scene = logicalScene({
       currentPhase: 'architecture',
       orchestrator: { status: 'dispatching', carriedArtifacts: [], codeBadge: null, waiting: false },
     });
     const result = mapLogicalToOffice(scene);
     expect(result.orchestrator.zoneId).toBe('prep');
+    expect(result.orchestrator.slotId).toBe('prep-standing-0');
   });
 
-  it('places orchestrator at workshop when monitoring implementation', () => {
+  it('places orchestrator at workshop with standing slot when monitoring implementation', () => {
     const scene = logicalScene({
       currentPhase: 'implementation',
       orchestrator: { status: 'monitoring', carriedArtifacts: [], codeBadge: null, waiting: false },
     });
     const result = mapLogicalToOffice(scene);
     expect(result.orchestrator.zoneId).toBe('workshop');
+    expect(result.orchestrator.slotId).toBe('workshop-standing-0');
   });
 
-  it('places orchestrator at governor when idle', () => {
+  it('places orchestrator at governor with desk slot when idle', () => {
     const scene = logicalScene({
       orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false },
     });
     const result = mapLogicalToOffice(scene);
     expect(result.orchestrator.zoneId).toBe('governor');
+    expect(result.orchestrator.slotId).toBe('governor-desk-0');
   });
 
-  it('places orchestrator at governor when done', () => {
+  it('places orchestrator at governor with desk slot when done', () => {
     const scene = logicalScene({
       orchestrator: { status: 'done', carriedArtifacts: [], codeBadge: null, waiting: false },
     });
     const result = mapLogicalToOffice(scene);
     expect(result.orchestrator.zoneId).toBe('governor');
+    expect(result.orchestrator.slotId).toBe('governor-desk-0');
   });
 
-  it('places orchestrator at governor when delivering', () => {
+  it('places orchestrator at governor with desk slot when delivering', () => {
     const scene = logicalScene({
       orchestrator: { status: 'delivering', carriedArtifacts: [], codeBadge: null, waiting: false },
     });
     const result = mapLogicalToOffice(scene);
     expect(result.orchestrator.zoneId).toBe('governor');
+    expect(result.orchestrator.slotId).toBe('governor-desk-0');
   });
 
   it('places delivered artifacts at governor storage', () => {

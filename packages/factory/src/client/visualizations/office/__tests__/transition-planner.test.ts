@@ -45,13 +45,13 @@ describe(planTransitions, () => {
       ...emptyDiff(),
       orchestrator: {
         ...emptyDiff().orchestrator,
-        moved: { from: 'governor', to: 'workshop' },
+        moved: { fromZone: 'governor', fromSlot: 'governor-desk-0', toZone: 'workshop', toSlot: 'workshop-standing-0' },
       },
       hasChanges: true,
     };
 
-    const prevPos = positions({ orchestrator: layout.zoneCenter('governor') });
-    const nextPos = positions({ orchestrator: layout.zoneCenter('workshop') });
+    const prevPos = positions({ orchestrator: layout.slotPosition('governor-desk-0') });
+    const nextPos = positions({ orchestrator: layout.slotPosition('workshop-standing-0') });
 
     const result = planTransitions(diff, prevPos, nextPos, layout);
     const walk = result.transitions.find((t) => t.type === 'walk' && t.entityId === 'orchestrator');
@@ -132,14 +132,14 @@ describe(planTransitions, () => {
       ...emptyDiff(),
       orchestrator: {
         ...emptyDiff().orchestrator,
-        moved: { from: 'governor', to: 'prep' },
+        moved: { fromZone: 'governor', fromSlot: 'governor-desk-0', toZone: 'prep', toSlot: 'prep-standing-0' },
         statusChanged: { from: 'idle', to: 'dispatching' },
       },
       hasChanges: true,
     };
 
-    const prevPos = positions({ orchestrator: layout.zoneCenter('governor') });
-    const nextPos = positions({ orchestrator: layout.zoneCenter('prep') });
+    const prevPos = positions({ orchestrator: layout.slotPosition('governor-desk-0') });
+    const nextPos = positions({ orchestrator: layout.slotPosition('prep-standing-0') });
 
     const result = planTransitions(diff, prevPos, nextPos, layout);
 
@@ -202,6 +202,73 @@ describe(planTransitions, () => {
 
     const appear = result.transitions.find((t) => t.type === 'artifact_appear' && t.entityId === 'art1');
     expect(appear).toBeDefined();
+  });
+
+  it('deduplicates coincident waypoints for orchestrator walk from standing slot', () => {
+    // When the orchestrator starts at prep-standing-0 (the door tile), the first corridor
+    // waypoint is the same pixel position. The planner must deduplicate them.
+    const prepStandingPos = layout.slotPosition('prep-standing-0');
+    const governorDeskPos = layout.slotPosition('governor-desk-0');
+
+    const diff: OfficeDiff = {
+      ...emptyDiff(),
+      orchestrator: {
+        ...emptyDiff().orchestrator,
+        moved: { fromZone: 'prep', fromSlot: 'prep-standing-0', toZone: 'governor', toSlot: 'governor-desk-0' },
+      },
+      hasChanges: true,
+    };
+
+    const prevPos = positions({ orchestrator: prepStandingPos });
+    const nextPos = positions({ orchestrator: governorDeskPos });
+
+    const result = planTransitions(diff, prevPos, nextPos, layout);
+    const walk = result.transitions.find((t) => t.type === 'walk' && t.entityId === 'orchestrator');
+
+    expect(walk).toBeDefined();
+    const waypoints = walk?.waypoints ?? [];
+
+    // Verify no consecutive coincident points
+    for (let i = 1; i < waypoints.length; i++) {
+      const prev = waypoints[i - 1];
+      const curr = waypoints[i];
+      if (prev === undefined || curr === undefined) continue;
+      expect(prev.x === curr.x && prev.y === curr.y).toBe(false);
+    }
+  });
+
+  it('preserves non-coincident waypoints unchanged', () => {
+    const fromPos: Position = layout.slotPosition('prep-desk-0');
+    const toPos: Position = layout.slotPosition('workshop-desk-0');
+
+    const diff: OfficeDiff = {
+      ...emptyDiff(),
+      agents: [
+        {
+          agentId: 'a1',
+          statusChanged: null,
+          moved: { fromZone: 'prep', fromSlot: 'prep-desk-0', toZone: 'workshop', toSlot: 'workshop-desk-0' },
+        },
+      ],
+      hasChanges: true,
+    };
+
+    const prevPos = positions({ agents: new Map([['a1', fromPos]]) });
+    const nextPos = positions({ agents: new Map([['a1', toPos]]) });
+
+    const result = planTransitions(diff, prevPos, nextPos, layout);
+    const walk = result.transitions.find((t) => t.type === 'walk' && t.entityId === 'a1');
+
+    expect(walk).toBeDefined();
+    const waypoints = walk?.waypoints ?? [];
+
+    // All waypoints should be unique consecutive points (start is inside the room, not at the door)
+    for (let i = 1; i < waypoints.length; i++) {
+      const prev = waypoints[i - 1];
+      const curr = waypoints[i];
+      if (prev === undefined || curr === undefined) continue;
+      expect(prev.x === curr.x && prev.y === curr.y).toBe(false);
+    }
   });
 
   it('produces artifact_deliver for artifacts transitioning to delivered', () => {

@@ -7,7 +7,7 @@ import {
   assignArtifactToZone,
   buildArtifactStates,
   computeReviewerIndices,
-  deriveOrchestratorZone,
+  deriveOrchestratorAssignment,
   deriveZoneStates,
 } from '../mappers/agent-zone-assignments.js';
 import type { OfficeAgentState } from '../types.js';
@@ -87,37 +87,61 @@ describe(assignAgentToZone, () => {
   });
 });
 
-describe(deriveOrchestratorZone, () => {
-  it('returns governor when idle', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'idle' }), undefined)).toBe('governor');
+describe(deriveOrchestratorAssignment, () => {
+  it('returns governor zone and governor-desk-0 when idle', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'idle' }), undefined)).toEqual({
+      zoneId: 'governor',
+      slotId: 'governor-desk-0',
+    });
   });
 
-  it('returns governor when done', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'done' }), undefined)).toBe('governor');
+  it('returns governor zone and governor-desk-0 when done', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'done' }), undefined)).toEqual({
+      zoneId: 'governor',
+      slotId: 'governor-desk-0',
+    });
   });
 
-  it('returns governor when delivering', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'delivering' }), undefined)).toBe('governor');
+  it('returns governor zone and governor-desk-0 when delivering', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'delivering' }), undefined)).toEqual({
+      zoneId: 'governor',
+      slotId: 'governor-desk-0',
+    });
   });
 
-  it('returns prep when dispatching to architecture phase', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'dispatching' }), 'architecture')).toBe('prep');
+  it('returns prep zone and prep-standing-0 when dispatching to architecture phase', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'dispatching' }), 'architecture')).toEqual({
+      zoneId: 'prep',
+      slotId: 'prep-standing-0',
+    });
   });
 
-  it('returns prep when dispatching to planning phase', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'dispatching' }), 'planning')).toBe('prep');
+  it('returns prep zone and prep-standing-0 when dispatching to planning phase', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'dispatching' }), 'planning')).toEqual({
+      zoneId: 'prep',
+      slotId: 'prep-standing-0',
+    });
   });
 
-  it('returns workshop when monitoring implementation phase', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'monitoring' }), 'implementation')).toBe('workshop');
+  it('returns workshop zone and workshop-standing-0 when monitoring implementation phase', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'monitoring' }), 'implementation')).toEqual({
+      zoneId: 'workshop',
+      slotId: 'workshop-standing-0',
+    });
   });
 
-  it('returns workshop when dispatching to review phase', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'dispatching' }), 'review')).toBe('workshop');
+  it('returns workshop zone and workshop-standing-0 when dispatching to review phase', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'dispatching' }), 'review')).toEqual({
+      zoneId: 'workshop',
+      slotId: 'workshop-standing-0',
+    });
   });
 
-  it('returns governor when dispatching with no current phase', () => {
-    expect(deriveOrchestratorZone(orchestrator({ status: 'dispatching' }), undefined)).toBe('governor');
+  it('returns governor zone and governor-desk-0 when dispatching with no current phase', () => {
+    expect(deriveOrchestratorAssignment(orchestrator({ status: 'dispatching' }), undefined)).toEqual({
+      zoneId: 'governor',
+      slotId: 'governor-desk-0',
+    });
   });
 });
 

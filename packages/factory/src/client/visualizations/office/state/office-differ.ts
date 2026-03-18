@@ -13,7 +13,10 @@ import type {
 
 /** Compare two orchestrator states and return zone/status/waiting/carried/badge changes. */
 function diffOrchestrator(prev: OfficeOrchestratorState, next: OfficeOrchestratorState): OfficeOrchestratorDiff {
-  const moved = prev.zoneId === next.zoneId ? null : { from: prev.zoneId, to: next.zoneId };
+  const moved =
+    prev.zoneId === next.zoneId && prev.slotId === next.slotId
+      ? null
+      : { fromZone: prev.zoneId, fromSlot: prev.slotId, toZone: next.zoneId, toSlot: next.slotId };
   const statusChanged = prev.status === next.status ? null : { from: prev.status, to: next.status };
   const waitingChanged = prev.waiting === next.waiting ? null : { from: prev.waiting, to: next.waiting };
 

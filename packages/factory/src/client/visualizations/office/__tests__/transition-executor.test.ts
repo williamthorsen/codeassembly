@@ -56,6 +56,7 @@ function buildContext(overrides: Partial<TransitionContext> = {}): TransitionCon
       codeBadge: null,
       waiting: false,
       zoneId: 'governor',
+      slotId: 'governor-desk-0',
     },
     agents: [],
     artifacts: [],
@@ -154,7 +155,14 @@ describe(executeTransitions, () => {
     const context = buildContext({
       createAgent,
       config: {
-        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        orchestrator: {
+          status: 'idle',
+          carriedArtifacts: [],
+          codeBadge: null,
+          waiting: false,
+          zoneId: 'governor',
+          slotId: 'governor-desk-0',
+        },
         agents: [
           {
             id: 'agent-1',
@@ -278,7 +286,14 @@ describe(executeTransitions, () => {
     const context = buildContext({
       createArtifact,
       config: {
-        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        orchestrator: {
+          status: 'idle',
+          carriedArtifacts: [],
+          codeBadge: null,
+          waiting: false,
+          zoneId: 'governor',
+          slotId: 'governor-desk-0',
+        },
         agents: [],
         artifacts: [
           {
@@ -472,7 +487,14 @@ describe(executeTransitions, () => {
       }),
       createAgent,
       config: {
-        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        orchestrator: {
+          status: 'idle',
+          carriedArtifacts: [],
+          codeBadge: null,
+          waiting: false,
+          zoneId: 'governor',
+          slotId: 'governor-desk-0',
+        },
         agents: [
           {
             id: 'new-agent',
@@ -558,7 +580,14 @@ describe(executeTransitions, () => {
       findActor: vi.fn().mockReturnValue(actor),
       updateSprite,
       config: {
-        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        orchestrator: {
+          status: 'idle',
+          carriedArtifacts: [],
+          codeBadge: null,
+          waiting: false,
+          zoneId: 'governor',
+          slotId: 'governor-desk-0',
+        },
         agents: [], // agent-1 intentionally absent
         artifacts: [],
         zones: [],
@@ -598,7 +627,14 @@ describe(executeTransitions, () => {
       findActor: vi.fn().mockReturnValue(actor),
       updateSprite,
       config: {
-        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        orchestrator: {
+          status: 'idle',
+          carriedArtifacts: [],
+          codeBadge: null,
+          waiting: false,
+          zoneId: 'governor',
+          slotId: 'governor-desk-0',
+        },
         agents: [
           {
             id: 'agent-1',

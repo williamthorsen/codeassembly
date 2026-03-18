@@ -61,26 +61,35 @@ export function assignAgentToZone(agent: LogicalAgentState, agentIndex: number):
 }
 
 // ---------------------------------------------------------------------------
-// Orchestrator zone
+// Orchestrator assignment
 // ---------------------------------------------------------------------------
 
-/** Derive the orchestrator's zone from its status and the current phase. */
-export function deriveOrchestratorZone(
+/** Slot mapping from zone to the orchestrator's standing/home slot. */
+const ORCHESTRATOR_SLOT_BY_ZONE: Record<string, string> = {
+  governor: 'governor-desk-0',
+  prep: 'prep-standing-0',
+  workshop: 'workshop-standing-0',
+};
+
+/** Derive the orchestrator's zone and slot from its status and the current phase. */
+export function deriveOrchestratorAssignment(
   orchestrator: LogicalOrchestratorState,
   currentPhase: PhaseName | undefined,
-): string {
+): { zoneId: string; slotId: string } {
   const homeZone = 'governor';
 
+  let zoneId: string;
   if (isOrchestratorAtHome(orchestrator.status)) {
-    return homeZone;
+    zoneId = homeZone;
+  } else if (currentPhase === undefined) {
+    zoneId = homeZone;
+  } else {
+    // When dispatching or monitoring, infer zone from current phase
+    zoneId = phaseToZoneId(currentPhase);
   }
 
-  // When dispatching or monitoring, infer zone from current phase
-  if (currentPhase !== undefined) {
-    return phaseToZoneId(currentPhase);
-  }
-
-  return homeZone;
+  const slotId = ORCHESTRATOR_SLOT_BY_ZONE[zoneId] ?? 'governor-desk-0';
+  return { zoneId, slotId };
 }
 
 /** Check whether the orchestrator status indicates it should be at its home zone. */
