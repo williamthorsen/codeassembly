@@ -57,16 +57,27 @@ export function assignAgentToZone(agent: LogicalAgentState, agentIndex: number):
   }
 
   // Governor zone fallback (summary phase agents)
-  return { zoneId, slotId: 'governor-desk-0' };
+  return { zoneId, slotId: ORCHESTRATOR_HOME_SLOT };
 }
 
 // ---------------------------------------------------------------------------
 // Orchestrator assignment
 // ---------------------------------------------------------------------------
 
+/** Zone IDs that the orchestrator can be assigned to. */
+type OrchestratorZoneId = 'governor' | 'prep' | 'workshop';
+
+/** Check whether a zone ID is one of the known orchestrator zones. */
+function isOrchestratorZoneId(zoneId: string): zoneId is OrchestratorZoneId {
+  return zoneId === 'governor' || zoneId === 'prep' || zoneId === 'workshop';
+}
+
+/** Orchestrator's home slot in the governor zone. */
+const ORCHESTRATOR_HOME_SLOT = 'governor-desk-0';
+
 /** Slot mapping from zone to the orchestrator's standing/home slot. */
-const ORCHESTRATOR_SLOT_BY_ZONE: Record<string, string> = {
-  governor: 'governor-desk-0',
+const ORCHESTRATOR_SLOT_BY_ZONE: Record<OrchestratorZoneId, string> = {
+  governor: ORCHESTRATOR_HOME_SLOT,
   prep: 'prep-standing-0',
   workshop: 'workshop-standing-0',
 };
@@ -88,7 +99,13 @@ export function deriveOrchestratorAssignment(
     zoneId = phaseToZoneId(currentPhase);
   }
 
-  const slotId = ORCHESTRATOR_SLOT_BY_ZONE[zoneId] ?? 'governor-desk-0';
+  const slotId = isOrchestratorZoneId(zoneId) ? ORCHESTRATOR_SLOT_BY_ZONE[zoneId] : undefined;
+
+  if (slotId === undefined) {
+    console.warn(`[office] Unknown orchestrator zone '${zoneId}'; falling back to ${ORCHESTRATOR_HOME_SLOT}`);
+    return { zoneId, slotId: ORCHESTRATOR_HOME_SLOT };
+  }
+
   return { zoneId, slotId };
 }
 

@@ -573,6 +573,64 @@ describe(executeTransitions, () => {
     expect(lastCall?.[3]).toBe(DIR_DOWN);
   });
 
+  it('resolves orchestrator resting direction from slot facing metadata', () => {
+    const actor = createMockActor();
+    const updateSprite = vi.fn();
+    const slotDefinition = vi
+      .fn()
+      .mockReturnValue({ id: 'prep-standing-0', type: 'standing', tile: { col: 6, row: 12 }, facing: 'up' });
+
+    const context = buildContext({
+      findActor: vi.fn().mockReturnValue(actor),
+      updateSprite,
+      config: {
+        orchestrator: {
+          status: 'dispatching',
+          carriedArtifacts: [],
+          codeBadge: null,
+          waiting: false,
+          zoneId: 'prep',
+          slotId: 'prep-standing-0',
+        },
+        agents: [],
+        artifacts: [],
+        zones: [],
+      },
+      layout: {
+        slotPosition: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        zoneCenter: vi.fn().mockReturnValue({ x: 0, y: 0 }),
+        slotsInZone: vi.fn().mockReturnValue([]),
+        corridorPath: vi.fn().mockReturnValue([]),
+        slotDefinition,
+        zones: [],
+      },
+    });
+
+    const plan: TransitionPlan = {
+      transitions: [
+        {
+          type: 'walk',
+          entityId: 'orchestrator',
+          entityKind: 'orchestrator',
+          delayMs: 0,
+          waypoints: [
+            { x: 0, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        },
+      ],
+    };
+
+    executeTransitions(plan, context);
+    vi.advanceTimersByTime(0);
+
+    // The slot has facing: 'up', so resting direction should be DIR_UP
+    const lastCall = updateSprite.mock.calls.at(-1);
+    expect(lastCall).toBeDefined();
+    expect(lastCall?.[3]).toBe(DIR_UP);
+    expect(slotDefinition).toHaveBeenCalledWith('prep-standing-0');
+  });
+
   it('uses DIR_UP as fallback resting direction when agent is absent from config', () => {
     const actor = createMockActor();
     const updateSprite = vi.fn();

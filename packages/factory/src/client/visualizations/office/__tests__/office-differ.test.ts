@@ -75,6 +75,24 @@ describe(diffOfficeConfigs, () => {
       expect(diff.hasChanges).toBe(true);
     });
 
+    it('detects orchestrator slot change within the same zone', () => {
+      const prev = config({
+        orchestrator: { ...config().orchestrator, zoneId: 'governor', slotId: 'governor-desk-0' },
+      });
+      const next = config({
+        orchestrator: { ...config().orchestrator, zoneId: 'governor', slotId: 'governor-desk-1' },
+      });
+      const diff = diffOfficeConfigs(prev, next);
+
+      expect(diff.orchestrator.moved).toEqual({
+        fromZone: 'governor',
+        fromSlot: 'governor-desk-0',
+        toZone: 'governor',
+        toSlot: 'governor-desk-1',
+      });
+      expect(diff.hasChanges).toBe(true);
+    });
+
     it('detects orchestrator status change', () => {
       const prev = config({ orchestrator: { ...config().orchestrator, status: 'idle' } });
       const next = config({ orchestrator: { ...config().orchestrator, status: 'dispatching' } });
