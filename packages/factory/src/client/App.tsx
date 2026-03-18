@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProjectIndex } from '../shared/types/api.js';
 import { fetchProjects } from './api/client.js';
 import { DemoStatusLight } from './components/DemoStatusLight.js';
+import type { PlayerPanelProps } from './components/PlayerPanel.js';
 import { PlayerPanel } from './components/PlayerPanel.js';
 import { RunList } from './components/RunList.js';
 import { RunSelector } from './components/RunSelector.js';
@@ -15,11 +16,129 @@ import { useDismissedRuns } from './hooks/useDismissedRuns.js';
 import { useRunPlayback } from './hooks/useRunPlayback.js';
 import { useRunStatus } from './hooks/useRunStatus.js';
 import { useSelectionParams } from './hooks/useSelectionParams.js';
+import type { PlaybackControls, PlaybackState } from './playback/playback-controller.js';
 import { DEFAULT_VIS, visualizationRegistry } from './visualizations/registry.js';
 
 import './App.css';
 
 const PROJECT_POLL_INTERVAL_MS = 5000;
+
+interface SourceControlsProps {
+  showDemoSelector: boolean;
+  onToggleDemoSelector: () => void;
+  demoPlaybackState: PlaybackState;
+  recordings: readonly DemoRecording[];
+  activeRecordingName: string | undefined;
+  onStartDemo: (recording: DemoRecording) => void;
+  showReplayButton: boolean;
+  onStartReplay: () => void;
+}
+
+/** Resolves PlayerPanel props from the active playback source. */
+function resolvePlayerProps(
+  replay: {
+    isActive: boolean;
+    playbackState: PlaybackState;
+    speed: number;
+    cursor: number;
+    snapshotCount: number;
+    controls: PlaybackControls;
+  },
+  demo: {
+    playbackState: PlaybackState;
+    speed: number;
+    cursor: number;
+    snapshotCount: number;
+    controls: PlaybackControls;
+    activeRecording: DemoRecording | null;
+  },
+  selectedRun: string | null,
+  onStopReplay: () => void,
+  onStopDemo: () => void,
+): PlayerPanelProps {
+  if (replay.isActive) {
+    return {
+      label: selectedRun ?? '',
+      playbackState: replay.playbackState,
+      speed: replay.speed,
+      cursor: replay.cursor,
+      snapshotCount: replay.snapshotCount,
+      controls: replay.controls,
+      onStop: onStopReplay,
+    };
+  }
+  return {
+    label: demo.activeRecording?.name ?? '',
+    playbackState: demo.playbackState,
+    speed: demo.speed,
+    cursor: demo.cursor,
+    snapshotCount: demo.snapshotCount,
+    controls: demo.controls,
+    onStop: onStopDemo,
+  };
+}
+
+/** Renders demo status light, recording selector, and replay button. */
+function SourceControls({
+  showDemoSelector,
+  onToggleDemoSelector,
+  demoPlaybackState,
+  recordings,
+  activeRecordingName,
+  onStartDemo,
+  showReplayButton,
+  onStartReplay,
+}: SourceControlsProps): React.JSX.Element {
+  return (
+    <>
+      <DemoStatusLight playbackState={demoPlaybackState} onClick={onToggleDemoSelector} />
+      {showDemoSelector && (
+        <select
+          value={activeRecordingName ?? ''}
+          onChange={(e) => {
+            const selected = recordings.find((r) => r.name === e.target.value);
+            if (selected) {
+              onStartDemo(selected);
+            }
+          }}
+          aria-label="Select recording"
+          style={{
+            background: '#222222',
+            color: '#ffffff',
+            border: '1px solid #555555',
+            padding: '4px',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+        >
+          <option value="">Select recording...</option>
+          {recordings.map((r) => (
+            <option key={r.name} value={r.name}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+      )}
+      {showReplayButton && (
+        <button
+          onClick={onStartReplay}
+          style={{
+            background: '#333333',
+            color: '#ffffff',
+            border: '1px solid #555555',
+            padding: '4px 8px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+          aria-label="Replay run"
+        >
+          Replay
+        </button>
+      )}
+    </>
+  );
+}
 
 interface Selection {
   project: string | null;
@@ -197,56 +316,6 @@ export function App(): React.JSX.Element {
   const isPlayerActive = replay.isActive || demo.isActive;
   const showReplayButton = selectedRun !== null && !replay.isActive && !demo.isActive;
 
-  const demoSlot = (
-    <>
-      <DemoStatusLight playbackState={demo.playbackState} onClick={() => setShowDemoSelector((prev) => !prev)} />
-      {showDemoSelector && (
-        <select
-          value={demo.activeRecording?.name ?? ''}
-          onChange={(e) => {
-            const selected = demo.recordings.find((r) => r.name === e.target.value);
-            if (selected) {
-              handleStartDemo(selected);
-            }
-          }}
-          aria-label="Select recording"
-          style={{
-            background: '#222222',
-            color: '#ffffff',
-            border: '1px solid #555555',
-            padding: '4px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-          }}
-        >
-          <option value="">Select recording...</option>
-          {demo.recordings.map((r) => (
-            <option key={r.name} value={r.name}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-      )}
-      {showReplayButton && (
-        <button
-          onClick={handleStartReplay}
-          style={{
-            background: '#333333',
-            color: '#ffffff',
-            border: '1px solid #555555',
-            padding: '4px 8px',
-            cursor: 'pointer',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-          }}
-          aria-label="Replay run"
-        >
-          Replay
-        </button>
-      )}
-    </>
-  );
-
   return (
     <div className="app">
       <aside className="sidebar">
@@ -281,18 +350,19 @@ export function App(): React.JSX.Element {
               ))}
             </select>
           </label>
-          {demoSlot}
+          <SourceControls
+            showDemoSelector={showDemoSelector}
+            onToggleDemoSelector={() => setShowDemoSelector((prev) => !prev)}
+            demoPlaybackState={demo.playbackState}
+            recordings={demo.recordings}
+            activeRecordingName={demo.activeRecording?.name}
+            onStartDemo={handleStartDemo}
+            showReplayButton={showReplayButton}
+            onStartReplay={handleStartReplay}
+          />
         </div>
         {isPlayerActive && (
-          <PlayerPanel
-            label={replay.isActive ? (selectedRun ?? '') : (demo.activeRecording?.name ?? '')}
-            playbackState={replay.isActive ? replay.playbackState : demo.playbackState}
-            speed={replay.isActive ? replay.speed : demo.speed}
-            cursor={replay.isActive ? replay.cursor : demo.cursor}
-            snapshotCount={replay.isActive ? replay.snapshotCount : demo.snapshotCount}
-            controls={replay.isActive ? replay.controls : demo.controls}
-            onStop={replay.isActive ? handleStopReplay : handleStopDemo}
-          />
+          <PlayerPanel {...resolvePlayerProps(replay, demo, selectedRun, handleStopReplay, handleStopDemo)} />
         )}
         {activeStatus && <StatusBar status={activeStatus} />}
         {isLoading && <p>Loading...</p>}

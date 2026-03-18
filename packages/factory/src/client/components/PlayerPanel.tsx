@@ -4,7 +4,7 @@ import type { PlaybackControls, PlaybackState } from '../playback/playback-contr
 
 import './PlayerPanel.css';
 
-interface PlayerPanelProps {
+export interface PlayerPanelProps {
   label: string;
   playbackState: PlaybackState;
   speed: number;
