@@ -30,8 +30,6 @@ Act as a conscientious code reviewer for changes in the current scope.
 
 For GitHub: `gh issue view --json number,title,body,labels {number}`
 
-**Auto-resolve fallback** — when no `ticket` argument is given, use `get-session-context` to obtain `ticket_id`, then scan the artifact directory (`{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`) for the most recent `*_ticket.md` file. If found, read it as the ticket source. If not found, skip ticket compliance and review proceeds without it.
-
 ## Process
 
 1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `project_slug`, and `artifact_base_dir`
@@ -218,8 +216,6 @@ Score: X/10
 - For commit scope: remember this commit may be one of many in a branch
 
 ## Saving
-
-The review artifact includes all sections through ticket compliance. The next-steps prompt (step 8) is interactive output only and is not saved.
 
 ### Path resolution
 

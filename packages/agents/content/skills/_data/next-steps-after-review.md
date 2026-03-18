@@ -21,7 +21,7 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 Next steps:
 
 Deviations from ticket:
-  ▶ Update ticket: Use the `design-and-plan` skill with ticket: {ticket_source}
+  ▶ Update ticket (recommended): Use the `design-and-plan` skill with ticket: {ticket_source}
   · Leave as-is
 ```
 
@@ -30,7 +30,7 @@ Deviations from ticket:
 ### Recommendation rules
 
 1. **Recommend "Update ticket"** (`▶`) -- acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured
-2. **No recommendation** -- deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). Present both options with `·` markers; the user decides.
+2. **No recommendation** -- deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). Present both options with `·` markers (without `(recommended)`); the user decides.
 
 When uncertain, recommend updating the ticket.
 
@@ -85,7 +85,7 @@ When both sub-blocks are shown, present them as separate sections within a singl
 Next steps:
 
 Deviations from ticket:
-  ▶ Update ticket: Use the `design-and-plan` skill with ticket: {ticket_source}
+  ▶ Update ticket (recommended): Use the `design-and-plan` skill with ticket: {ticket_source}
   · Leave as-is
 
 Actionable findings:
