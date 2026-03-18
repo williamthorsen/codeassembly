@@ -1,11 +1,23 @@
-import { Actor, Circle, Color, Font, Label, Rectangle, Scene, TextAlign, vec } from 'excalibur';
+import { Actor, Canvas, Color, type ImageSource, Rectangle, Scene, vec } from 'excalibur';
 
-import { getRoleTypeColor } from '../../../../shared/constants/role-types.js';
+import type { CanonicalRunStatus } from '../../../../shared/types/canonical.js';
+import { mapRunToLogicalScene } from '../../shared/run-to-logical-scene.js';
 import type { LogicalSceneState } from '../../shared/types.js';
 import { CANVAS_HEIGHT_PX, CANVAS_WIDTH_PX, TILE_SIZE } from '../constants/dimensions.js';
+import { GOVERNOR_ZONE, PREP_ZONE, WORKSHOP_ZONE } from '../constants/zone-definitions.js';
 import { createOfficeLayout } from '../layout/office-layout.js';
 import { resolvePositions } from '../layout/position-resolver.js';
 import { mapLogicalToOffice } from '../mappers/logical-to-office.js';
+import {
+  getCharacterSprite,
+  getFloorImageSource,
+  getOfficeImageSource,
+  getShadowImageSource,
+  getSingleSprite,
+  getWallImageSource,
+  loadOfficeSprites,
+} from '../sprites/office-sprite-loader.js';
+import { DIR_DOWN, DIR_UP, FURNITURE_MANIFEST, resolveCharacterName } from '../sprites/sprite-definitions.js';
 import { diffOfficeConfigs } from '../state/office-differ.js';
 import type { FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } from '../types.js';
 
@@ -13,31 +25,33 @@ import type { FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } f
 // Visual constants
 // ---------------------------------------------------------------------------
 
-const AGENT_RADIUS = 12;
-const ORCHESTRATOR_RADIUS = 16;
 const ARTIFACT_WIDTH = 24;
 const ARTIFACT_HEIGHT = 12;
+const SIDE_WALL_COLOR = '#b0a898';
 
-const ZONE_COLORS: Record<string, string> = {
-  prep: '#4A90D9',
-  workshop: '#D97B4A',
-  governor: '#6B8E23',
-};
-
-const ZONE_BORDER_OPACITY = 0.3;
-const ZONE_FILL_OPACITY = 0.08;
+// Tile source pixel coordinates in sprite sheets
+const FLOOR_TILE_SX = 96; // col 3 * 32
+const FLOOR_TILE_SY = 0; // row 0 * 32
+const GRAY_TILE_SX = 288; // col 9 * 32
+const GRAY_TILE_SY = 0; // row 0 * 32
+const WALL_UPPER_SX = 32; // col 1 * 32
+const WALL_UPPER_SY = 256; // row 8 * 32
+const WALL_BASE_SX = 32; // col 1 * 32
+const WALL_BASE_SY = 288; // row 9 * 32
+const SHADOW_SX = 0; // col 0 * 32
+const SHADOW_SY = 0; // row 0 * 32
 
 // ---------------------------------------------------------------------------
 // OfficeScene
 // ---------------------------------------------------------------------------
 
 /**
- * Excalibur scene that renders the office visualization pipeline:
- * LogicalSceneState -> adapter -> differ -> position resolver -> transition planner -> render.
- * Uses geometric placeholders for all entities.
+ * Excalibur scene that renders the office visualization with LimeZu tileset sprites.
+ * Pipeline: CanonicalRunStatus -> LogicalSceneState -> adapter -> differ -> position resolver -> render.
  */
 export class OfficeScene extends Scene {
   private readonly layout: FacilityLayout;
+  private status: CanonicalRunStatus;
   private prevConfig: OfficeSceneConfig | undefined;
 
   // Actor registries for incremental updates
@@ -45,19 +59,32 @@ export class OfficeScene extends Scene {
   private artifactActors = new Map<string, Actor>();
   private orchestratorActor: Actor | undefined;
 
-  constructor() {
+  constructor(status: CanonicalRunStatus) {
     super();
+    this.status = status;
     this.layout = createOfficeLayout();
     this.backgroundColor = Color.fromHex('#e8e4e0');
   }
 
   override onInitialize(): void {
-    this.drawZones();
+    loadOfficeSprites().catch((error: unknown) => {
+      console.error('[OfficeScene] Failed to load sprites:', error);
+    });
+
+    this.drawBackground();
+    this.placeFurniture();
+    this.updateStatus(this.status);
     this.positionCamera();
   }
 
-  /** Apply a new logical scene state, running the full pipeline. */
-  updateState(logical: LogicalSceneState): void {
+  /** Apply a new run status, running the full visualization pipeline. */
+  updateStatus(status: CanonicalRunStatus): void {
+    this.status = status;
+    this.updateState(mapRunToLogicalScene(status));
+  }
+
+  /** Apply a new logical scene state, running the spatial pipeline. */
+  private updateState(logical: LogicalSceneState): void {
     try {
       const nextConfig = mapLogicalToOffice(logical);
       const nextPositions = resolvePositions(nextConfig, this.layout);
@@ -67,13 +94,14 @@ export class OfficeScene extends Scene {
       } else {
         const diff = diffOfficeConfigs(this.prevConfig, nextConfig);
         if (diff.hasChanges) {
-          // Teleport entities to new positions (no animation in this ticket)
           this.applyFullState(nextConfig, nextPositions);
         }
       }
 
       this.prevConfig = nextConfig;
     } catch (error) {
+      // Intentional silent degradation: the scene freezes at its last good state.
+      // prevConfig is NOT updated on failure, so the next call will re-attempt a full render.
       console.error('[OfficeScene] updateState failed:', error);
     }
   }
@@ -89,7 +117,7 @@ export class OfficeScene extends Scene {
     for (const agent of config.agents) {
       const pos = positions.agents.get(agent.id);
       if (pos !== undefined) {
-        this.placeAgent(agent.id, agent.roleType, pos);
+        this.placeAgent(agent.id, agent.phase, pos);
       }
     }
 
@@ -120,86 +148,80 @@ export class OfficeScene extends Scene {
     this.artifactActors.clear();
   }
 
-  /** Draw zone rectangles as labeled geometric areas. */
-  private drawZones(): void {
-    for (const zone of this.layout.zones) {
-      const x = zone.bounds.col * TILE_SIZE;
-      const y = zone.bounds.row * TILE_SIZE;
-      const width = zone.bounds.width * TILE_SIZE;
-      const height = zone.bounds.height * TILE_SIZE;
-      const color = ZONE_COLORS[zone.id] ?? '#888888';
+  /** Draw the tiled background onto a single Canvas graphic actor. */
+  private drawBackground(): void {
+    const floorImage = getFloorImageSource();
+    const wallImage = getWallImageSource();
+    const shadowImage = getShadowImageSource();
 
-      // Zone fill
-      const fill = new Actor({ pos: vec(x + width / 2, y + height / 2) });
-      fill.graphics.use(
-        new Rectangle({
-          width,
-          height,
-          color: Color.fromHex(color),
-        }),
-      );
-      fill.graphics.opacity = ZONE_FILL_OPACITY;
-      this.add(fill);
+    const bgCanvas = new Canvas({
+      width: CANVAS_WIDTH_PX,
+      height: CANVAS_HEIGHT_PX,
+      draw: (ctx) => {
+        drawFloors(ctx, floorImage);
+        drawTransitionStrip(ctx, floorImage);
+        drawNorthWalls(ctx, wallImage);
+        drawFloorShadows(ctx, shadowImage);
+        drawSideWalls(ctx);
+        drawZoneBoundaryWall(ctx);
+      },
+    });
 
-      // Zone border
-      const border = new Actor({ pos: vec(x + width / 2, y + height / 2) });
-      border.graphics.use(
-        new Rectangle({
-          width,
-          height,
-          color: Color.Transparent,
-          strokeColor: Color.fromHex(color),
-          lineWidth: 2,
-        }),
-      );
-      border.graphics.opacity = ZONE_BORDER_OPACITY;
-      this.add(border);
+    const bgActor = new Actor({ pos: vec(0, 0), anchor: vec(0, 0), z: 0 });
+    bgActor.graphics.use(bgCanvas);
+    this.add(bgActor);
+  }
 
-      // Zone label
-      const label = new Label({
-        text: zone.label,
-        pos: vec(x + width / 2, y + 12),
-        font: new Font({
-          family: 'monospace',
-          size: 10,
-          color: Color.fromHex(color),
-          textAlign: TextAlign.Center,
-        }),
+  /** Place static furniture actors from the manifest. */
+  private placeFurniture(): void {
+    for (const item of FURNITURE_MANIFEST) {
+      const actor = new Actor({
+        pos: vec(item.tx * TILE_SIZE, item.ty * TILE_SIZE),
+        anchor: vec(0, 0),
+        z: 1,
       });
-      this.add(label);
+
+      if (item.asset !== undefined) {
+        actor.graphics.use(getSingleSprite(item.asset));
+      } else if (item.region !== undefined) {
+        const region = item.region;
+        const officeImage = getOfficeImageSource();
+        const regionCanvas = new Canvas({
+          width: region.sw,
+          height: region.sh,
+          draw: (ctx) => {
+            ctx.drawImage(officeImage.image, region.sx, region.sy, region.sw, region.sh, 0, 0, region.sw, region.sh);
+          },
+        });
+        actor.graphics.use(regionCanvas);
+      }
+
+      this.add(actor);
     }
   }
 
-  /** Place a colored circle for an agent at the given position. */
-  private placeAgent(agentId: string, roleType: string, pos: Position): void {
-    const color = getRoleTypeColor(roleType);
-    const actor = new Actor({ pos: vec(pos.x, pos.y) });
-    actor.graphics.use(
-      new Circle({
-        radius: AGENT_RADIUS,
-        color: Color.fromHex(color),
-      }),
-    );
+  /** Place a character sprite for an agent at the given position. */
+  private placeAgent(agentId: string, phase: string, pos: Position): void {
+    const characterName = resolveCharacterName(phase, agentId);
+    const sprite = getCharacterSprite(characterName, DIR_UP);
+    const actor = new Actor({ pos: vec(pos.x, pos.y), anchor: vec(0.5, 1), z: 2 });
+    actor.graphics.use(sprite);
     this.add(actor);
     this.agentActors.set(agentId, actor);
   }
 
-  /** Place a larger circle for the orchestrator at the given position. */
+  /** Place the orchestrator (Adam) sprite facing the camera. */
   private placeOrchestrator(pos: Position): void {
-    const actor = new Actor({ pos: vec(pos.x, pos.y) });
-    actor.graphics.use(
-      new Circle({
-        radius: ORCHESTRATOR_RADIUS,
-        color: Color.fromHex('#FF55FF'),
-      }),
-    );
+    const sprite = getCharacterSprite('Adam', DIR_DOWN);
+    const actor = new Actor({ pos: vec(pos.x, pos.y), anchor: vec(0.5, 1), z: 2 });
+    actor.graphics.use(sprite);
     this.add(actor);
     this.orchestratorActor = actor;
   }
 
   /** Place a colored rectangle for an artifact at the given position. */
   private placeArtifact(artifactId: string, color: string, pos: Position): void {
-    const actor = new Actor({ pos: vec(pos.x, pos.y) });
+    const actor = new Actor({ pos: vec(pos.x, pos.y), z: 3 });
     actor.graphics.use(
       new Rectangle({
         width: ARTIFACT_WIDTH,
@@ -215,4 +237,107 @@ export class OfficeScene extends Scene {
   private positionCamera(): void {
     this.camera.pos = vec(CANVAS_WIDTH_PX / 2, CANVAS_HEIGHT_PX / 2);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Background drawing helpers (use Canvas2D API directly)
+// ---------------------------------------------------------------------------
+
+/** Draw a single tile from a sprite sheet image onto the canvas. */
+function drawTile(
+  ctx: CanvasRenderingContext2D,
+  image: ImageSource,
+  sx: number,
+  sy: number,
+  dx: number,
+  dy: number,
+): void {
+  ctx.drawImage(image.image, sx, sy, TILE_SIZE, TILE_SIZE, dx, dy, TILE_SIZE, TILE_SIZE);
+}
+
+/** Fill all room areas with cream floor tiles. */
+function drawFloors(ctx: CanvasRenderingContext2D, floorImage: ImageSource): void {
+  const cols = CANVAS_WIDTH_PX / TILE_SIZE;
+  const rows = CANVAS_HEIGHT_PX / TILE_SIZE;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      drawTile(ctx, floorImage, FLOOR_TILE_SX, FLOOR_TILE_SY, c * TILE_SIZE, r * TILE_SIZE);
+    }
+  }
+}
+
+/** Draw the gray transition strip at row 12 across the full width. */
+function drawTransitionStrip(ctx: CanvasRenderingContext2D, floorImage: ImageSource): void {
+  const cols = CANVAS_WIDTH_PX / TILE_SIZE;
+  for (let c = 0; c < cols; c++) {
+    drawTile(ctx, floorImage, GRAY_TILE_SX, GRAY_TILE_SY, c * TILE_SIZE, 12 * TILE_SIZE);
+  }
+}
+
+/** Draw north walls (upper + baseboard) for prep, workshop, and governor zones. */
+function drawNorthWalls(ctx: CanvasRenderingContext2D, wallImage: ImageSource): void {
+  // Prep and workshop north walls at rows 0-1
+  const prepStart = PREP_ZONE.bounds.col;
+  const workshopEnd = WORKSHOP_ZONE.bounds.col + WORKSHOP_ZONE.bounds.width;
+
+  for (let c = prepStart; c < workshopEnd; c++) {
+    // Skip zone boundary wall column (drawn separately as solid fill)
+    if (c === 12) continue;
+    drawTile(ctx, wallImage, WALL_UPPER_SX, WALL_UPPER_SY, c * TILE_SIZE, 0);
+    drawTile(ctx, wallImage, WALL_BASE_SX, WALL_BASE_SY, c * TILE_SIZE, TILE_SIZE);
+  }
+
+  // Governor's office north wall at rows 13-14
+  const govStart = GOVERNOR_ZONE.bounds.col;
+  const govEnd = govStart + GOVERNOR_ZONE.bounds.width;
+  const govDoorCols = new Set<number>();
+  for (const door of GOVERNOR_ZONE.doors) {
+    for (let d = -1; d <= 1; d++) {
+      govDoorCols.add(door.tile.col + d);
+    }
+  }
+
+  for (let c = govStart; c < govEnd; c++) {
+    if (govDoorCols.has(c)) continue;
+    drawTile(ctx, wallImage, WALL_UPPER_SX, WALL_UPPER_SY, c * TILE_SIZE, 13 * TILE_SIZE);
+    drawTile(ctx, wallImage, WALL_BASE_SX, WALL_BASE_SY, c * TILE_SIZE, 14 * TILE_SIZE);
+  }
+}
+
+/** Draw floor shadow tiles below each north wall. */
+function drawFloorShadows(ctx: CanvasRenderingContext2D, shadowImage: ImageSource): void {
+  // Shadow at row 2 for prep/workshop walls
+  const prepStart = PREP_ZONE.bounds.col;
+  const workshopEnd = WORKSHOP_ZONE.bounds.col + WORKSHOP_ZONE.bounds.width;
+  for (let c = prepStart; c < workshopEnd; c++) {
+    drawTile(ctx, shadowImage, SHADOW_SX, SHADOW_SY, c * TILE_SIZE, 2 * TILE_SIZE);
+  }
+
+  // Shadow at row 15 for governor wall
+  const govStart = GOVERNOR_ZONE.bounds.col;
+  const govEnd = govStart + GOVERNOR_ZONE.bounds.width;
+  for (let c = govStart; c < govEnd; c++) {
+    drawTile(ctx, shadowImage, SHADOW_SX, SHADOW_SY, c * TILE_SIZE, 15 * TILE_SIZE);
+  }
+}
+
+/** Draw solid-fill side walls along the left and right borders. */
+function drawSideWalls(ctx: CanvasRenderingContext2D): void {
+  const rows = CANVAS_HEIGHT_PX / TILE_SIZE;
+  ctx.fillStyle = SIDE_WALL_COLOR;
+
+  // Left wall (column 0)
+  ctx.fillRect(0, 0, TILE_SIZE, rows * TILE_SIZE);
+
+  // Right wall (last column) - only for rows covered by zones
+  const rightCol = CANVAS_WIDTH_PX - TILE_SIZE;
+  ctx.fillRect(rightCol, 0, TILE_SIZE, 12 * TILE_SIZE);
+  ctx.fillRect(rightCol, 13 * TILE_SIZE, TILE_SIZE, 9 * TILE_SIZE);
+}
+
+/** Draw the vertical wall strip between the prep and workshop zones. */
+function drawZoneBoundaryWall(ctx: CanvasRenderingContext2D): void {
+  ctx.fillStyle = SIDE_WALL_COLOR;
+  ctx.fillRect(12 * TILE_SIZE, 0, TILE_SIZE, 12 * TILE_SIZE);
 }

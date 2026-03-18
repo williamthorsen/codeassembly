@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { LogicalSceneState } from '../../shared/types.js';
+import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
 
 // Track actors added/removed through the mock
 let actorCount = 0;
@@ -14,8 +14,10 @@ vi.mock('excalibur', () => {
   class MockActor {
     pos = { x: 0, y: 0 };
     graphics = new MockGraphic();
-    constructor(opts?: { pos?: { x: number; y: number } }) {
+    z = 0;
+    constructor(opts?: { pos?: { x: number; y: number }; anchor?: { x: number; y: number }; z?: number }) {
       if (opts?.pos) this.pos = opts.pos;
+      if (opts?.z !== undefined) this.z = opts.z;
     }
   }
   class MockScene {
@@ -28,132 +30,282 @@ vi.mock('excalibur', () => {
       actorCount--;
     }
   }
+  class MockCanvas {
+    config: unknown;
+    constructor(config: unknown) {
+      this.config = config;
+    }
+  }
+  class MockImageSource {
+    image = {};
+    url: string;
+    load = vi.fn().mockResolvedValue(undefined);
+    constructor(url: string, _opts?: unknown) {
+      this.url = url;
+    }
+  }
+  const MockSprite = {
+    from(_imageSource: unknown) {
+      return {};
+    },
+  };
 
   return {
     Actor: MockActor,
-    Circle: class {},
+    Canvas: MockCanvas,
     Color: {
       fromHex: (hex: string) => ({ hex }),
       Transparent: { hex: 'transparent' },
     },
-    Font: class {},
-    Label: MockActor,
+    ImageFiltering: { Pixel: 'pixel' },
+    ImageSource: MockImageSource,
     Rectangle: class {},
     Scene: MockScene,
-    TextAlign: { Center: 'center' },
+    Sprite: MockSprite,
+    SpriteSheet: {
+      fromImageSource: vi.fn().mockReturnValue({
+        getSprite: vi.fn().mockReturnValue({
+          type: 'sprite',
+          draw: vi.fn(),
+        }),
+      }),
+    },
     vec: (x: number, y: number) => ({ x, y }),
   };
 });
 
+// Mock sprite loader to avoid real image loads
+vi.mock('../sprites/office-sprite-loader.js', () => ({
+  loadOfficeSprites: vi.fn().mockResolvedValue(undefined),
+  getFloorSheet: vi.fn().mockReturnValue({
+    getSprite: vi.fn().mockReturnValue({ type: 'sprite', draw: vi.fn() }),
+  }),
+  getWallSheet: vi.fn().mockReturnValue({
+    getSprite: vi.fn().mockReturnValue({ type: 'sprite', draw: vi.fn() }),
+  }),
+  getShadowSheet: vi.fn().mockReturnValue({
+    getSprite: vi.fn().mockReturnValue({ type: 'sprite', draw: vi.fn() }),
+  }),
+  getOfficeSheet: vi.fn().mockReturnValue({
+    getSprite: vi.fn().mockReturnValue({ type: 'sprite', draw: vi.fn() }),
+  }),
+  getFloorImageSource: vi.fn().mockReturnValue({ image: {} }),
+  getWallImageSource: vi.fn().mockReturnValue({ image: {} }),
+  getShadowImageSource: vi.fn().mockReturnValue({ image: {} }),
+  getOfficeImageSource: vi.fn().mockReturnValue({ image: {} }),
+  getCharacterSprite: vi.fn().mockReturnValue({ type: 'sprite' }),
+  getSingleSprite: vi.fn().mockReturnValue({ type: 'sprite' }),
+}));
+
 // Import after mocking
 const { OfficeScene } = await import('../scene/OfficeScene.js');
 
-/** Build a minimal LogicalSceneState. */
-function logicalScene(overrides: Partial<LogicalSceneState> = {}): LogicalSceneState {
+/** Build empty phases with all required keys set to undefined. */
+function emptyPhases(overrides: Partial<Phases> = {}): Phases {
   return {
-    runStatus: 'in_progress',
-    currentPhase: undefined,
-    agents: [],
-    orchestrator: {
-      status: 'idle',
-      carriedArtifacts: [],
-      codeBadge: null,
-      waiting: false,
-    },
-    artifacts: [],
+    architecture: undefined,
+    planning: undefined,
+    implementation: undefined,
+    parallelReview: undefined,
+    review: undefined,
+    codeSimplifier: undefined,
+    holisticReview: undefined,
     ...overrides,
   };
 }
 
+/** Build a minimal CanonicalRunStatus for scene construction. */
+function buildMinimalStatus(overrides: Partial<CanonicalRunStatus> = {}): CanonicalRunStatus {
+  return {
+    runId: 'test-run',
+    projectSlug: 'test-project',
+    ticketId: '1',
+    projectRoot: '/tmp/test',
+    branch: 'test',
+    task: 'test task',
+    startedAt: '2026-01-01T00:00:00Z',
+    completedAt: undefined,
+    status: 'in_progress',
+    reason: undefined,
+    externalPlan: undefined,
+    mergeBaseSha: undefined,
+    diffBase: undefined,
+    maxReviewRounds: undefined,
+    effort: undefined,
+    approvalThreshold: undefined,
+    budgetThreshold: undefined,
+    mode: undefined,
+    model: undefined,
+    waitingForInput: undefined,
+    phases: emptyPhases(),
+    phaseDecisions: undefined,
+    artifacts: undefined,
+    ...overrides,
+  };
+}
+
+// Minimum actor count after onInitialize: 1 background + 26 furniture + 1 orchestrator = 28
+const MIN_ACTOR_COUNT_AFTER_INIT = 28;
+
 describe('OfficeScene', () => {
   it('can be constructed', () => {
-    const scene = new OfficeScene();
+    const scene = new OfficeScene(buildMinimalStatus());
     expect(scene).toBeDefined();
   });
 
-  it('draws zone rectangles on initialize', () => {
+  it('draws background and furniture on initialize', () => {
     actorCount = 0;
-    const scene = new OfficeScene();
+    const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
 
-    // 3 zones x 3 actors each (fill, border, label) = 9
-    expect(actorCount).toBe(9);
+    // At minimum: 1 background + 26 furniture + 1 orchestrator
+    expect(actorCount).toBeGreaterThanOrEqual(MIN_ACTOR_COUNT_AFTER_INIT);
   });
 
-  it('places entities when updateState is called', () => {
+  it('places agents from updateStatus', () => {
     actorCount = 0;
-    const scene = new OfficeScene();
+    const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
     const initialCount = actorCount;
 
-    scene.updateState(
-      logicalScene({
-        agents: [{ id: 'a1', role: 'coder', roleType: 'author', phase: 'implementation', status: 'working' }],
+    // Add reviewers via parallelReview to get more agents
+    scene.updateStatus(
+      buildMinimalStatus({
+        phases: emptyPhases({
+          parallelReview: {
+            aggregatedCriticality: undefined,
+            reviewRoundsUsed: 1,
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+            reviewers: {
+              codeReviewer: {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              silentFailure: {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              testReviewer: {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+          },
+        }),
       }),
     );
 
-    // Should have added orchestrator + 1 agent
-    expect(actorCount).toBe(initialCount + 2);
+    // With 3 reviewers (up from the default 1), there should be at least 2 more actors
+    expect(actorCount).toBeGreaterThanOrEqual(initialCount + 2);
   });
 
   it('handles empty state gracefully', () => {
     actorCount = 0;
-    const scene = new OfficeScene();
+    const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
+    const initialCount = actorCount;
 
-    // Should not throw
-    scene.updateState(logicalScene());
+    // Should not throw; re-applying same status should not change count
+    scene.updateStatus(buildMinimalStatus());
 
-    // 9 zone actors + 1 orchestrator
-    expect(actorCount).toBe(10);
+    expect(actorCount).toBe(initialCount);
   });
 
-  it('clears and replaces entities on subsequent updateState calls', () => {
+  it('clears and replaces entities on subsequent updateStatus calls', () => {
     actorCount = 0;
-    const scene = new OfficeScene();
+    // Start with 3 reviewers
+    const statusWith3Reviewers = buildMinimalStatus({
+      phases: emptyPhases({
+        parallelReview: {
+          aggregatedCriticality: undefined,
+          reviewRoundsUsed: 1,
+          coderFixCycleRan: false,
+          selectiveReReview: undefined,
+          reviewers: {
+            codeReviewer: {
+              ran: true,
+              status: 'completed',
+              criticality: 'low',
+              reason: undefined,
+              reReviewCriticality: undefined,
+              reReviewError: undefined,
+            },
+            silentFailure: {
+              ran: true,
+              status: 'completed',
+              criticality: 'low',
+              reason: undefined,
+              reReviewCriticality: undefined,
+              reReviewError: undefined,
+            },
+            testReviewer: {
+              ran: true,
+              status: 'completed',
+              criticality: 'low',
+              reason: undefined,
+              reReviewCriticality: undefined,
+              reReviewError: undefined,
+            },
+          },
+        },
+      }),
+    });
+    const scene = new OfficeScene(statusWith3Reviewers);
     scene.onInitialize();
+    const withReviewersCount = actorCount;
 
-    scene.updateState(
-      logicalScene({
-        agents: [
-          { id: 'a1', role: 'coder', roleType: 'author', phase: 'implementation', status: 'working' },
-          { id: 'a2', role: 'architect', roleType: 'analyst', phase: 'architecture', status: 'idle' },
-        ],
-      }),
-    );
+    // Reduce to 1 default reviewer
+    scene.updateStatus(buildMinimalStatus());
+    const withDefaultCount = actorCount;
 
-    const firstCount = actorCount;
-
-    scene.updateState(
-      logicalScene({
-        agents: [{ id: 'a1', role: 'coder', roleType: 'author', phase: 'implementation', status: 'done' }],
-      }),
-    );
-
-    // Went from 2 agents to 1 agent, so should be one fewer
-    expect(actorCount).toBe(firstCount - 1);
+    // Fewer actors because 3 reviewers -> 1 default reviewer
+    expect(withDefaultCount).toBeLessThan(withReviewersCount);
   });
 
   it('places artifacts at assigned positions', () => {
     actorCount = 0;
-    const scene = new OfficeScene();
+    const scene = new OfficeScene(buildMinimalStatus());
     scene.onInitialize();
+    const initialCount = actorCount;
 
-    scene.updateState(
-      logicalScene({
+    scene.updateStatus(
+      buildMinimalStatus({
+        phases: emptyPhases({
+          planning: {
+            status: 'completed',
+            stepCount: undefined,
+            artifacts: undefined,
+            startedAt: '2026-01-01T00:00:00Z',
+          },
+        }),
         artifacts: [
           {
-            id: 'art1',
-            label: 'plan',
-            color: '#00ff00',
-            status: 'delivered',
-            producerPhase: 'planning',
+            phase: 'planning',
+            type: 'plan',
+            role: 'planner',
+            filename: 'plan.md',
+            roleType: 'planner',
+            agent: 'planner-1',
+            createdAt: '2026-01-01T00:00:00Z',
           },
         ],
       }),
     );
 
-    // 9 zone actors + 1 orchestrator + 1 artifact
-    expect(actorCount).toBe(11);
+    // Should have added at least the artifact
+    expect(actorCount).toBeGreaterThan(initialCount);
   });
 });

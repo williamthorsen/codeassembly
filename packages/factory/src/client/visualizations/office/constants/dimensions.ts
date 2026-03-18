@@ -2,10 +2,10 @@
 export const TILE_SIZE = 32;
 
 /** Canvas width in tiles. */
-export const CANVAS_COLS = 40;
+export const CANVAS_COLS = 36;
 
 /** Canvas height in tiles. */
-export const CANVAS_ROWS = 30;
+export const CANVAS_ROWS = 22;
 
 /** Canvas width in pixels. */
 export const CANVAS_WIDTH_PX = CANVAS_COLS * TILE_SIZE;
