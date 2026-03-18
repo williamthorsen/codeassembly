@@ -13,12 +13,24 @@ describe('ZONE_DEFINITIONS', () => {
     expect(ids).toEqual(['prep', 'workshop', 'governor']);
   });
 
-  // Display slots (prep-display-0, workshop-display-0, governor-display-0) are deferred.
-  // Counts reflect workstation and storage slots only.
   it('has the expected number of slots per zone', () => {
-    expect(PREP_ZONE.slots).toHaveLength(2);
-    expect(WORKSHOP_ZONE.slots).toHaveLength(6);
+    expect(PREP_ZONE.slots).toHaveLength(3);
+    expect(WORKSHOP_ZONE.slots).toHaveLength(7);
     expect(GOVERNOR_ZONE.slots).toHaveLength(4);
+  });
+
+  it('includes standing slots at prep and workshop door tiles', () => {
+    const prepStanding = PREP_ZONE.slots.find((s) => s.id === 'prep-standing-0');
+    expect(prepStanding).toBeDefined();
+    expect(prepStanding?.type).toBe('standing');
+    expect(prepStanding?.tile).toEqual({ col: 6, row: 12 });
+    expect(prepStanding?.facing).toBe('up');
+
+    const workshopStanding = WORKSHOP_ZONE.slots.find((s) => s.id === 'workshop-standing-0');
+    expect(workshopStanding).toBeDefined();
+    expect(workshopStanding?.type).toBe('standing');
+    expect(workshopStanding?.tile).toEqual({ col: 25, row: 12 });
+    expect(workshopStanding?.facing).toBe('up');
   });
 
   it('has globally unique slot IDs across all zones', () => {

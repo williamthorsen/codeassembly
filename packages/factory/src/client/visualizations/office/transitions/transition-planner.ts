@@ -17,8 +17,8 @@ export function planTransitions(
 
   // Orchestrator transitions
   if (diff.orchestrator.moved !== null) {
-    const fromZone = diff.orchestrator.moved.from;
-    const toZone = diff.orchestrator.moved.to;
+    const fromZone = diff.orchestrator.moved.fromZone;
+    const toZone = diff.orchestrator.moved.toZone;
     const waypoints = buildWalkWaypoints(
       prevPositions.orchestrator,
       nextPositions.orchestrator,
@@ -170,7 +170,8 @@ export function planTransitions(
 
 /**
  * Build walk waypoints including corridor path when moving between different zones,
- * or a direct path when moving within the same zone.
+ * or a direct path when moving within the same zone. Consecutive coincident points
+ * are filtered to prevent zero-length walk segments.
  */
 function buildWalkWaypoints(
   from: Position,
@@ -179,11 +180,28 @@ function buildWalkWaypoints(
   toZone: string,
   layout: FacilityLayout,
 ): Position[] {
+  let raw: Position[];
   if (fromZone === toZone) {
-    return [from, to];
+    raw = [from, to];
+  } else {
+    // Cross-zone: go through corridor
+    const corridor = layout.corridorPath(fromZone, toZone);
+    raw = [from, ...corridor, to];
   }
 
-  // Cross-zone: go through corridor
-  const corridor = layout.corridorPath(fromZone, toZone);
-  return [from, ...corridor, to];
+  return deduplicateCoincidentPoints(raw);
+}
+
+/** Remove consecutive coincident points from a waypoint array. */
+function deduplicateCoincidentPoints(points: Position[]): Position[] {
+  if (points.length <= 1) return points;
+
+  const result: Position[] = [];
+  for (const point of points) {
+    const prev = result.at(-1);
+    if (prev === undefined || prev.x !== point.x || prev.y !== point.y) {
+      result.push(point);
+    }
+  }
+  return result;
 }

@@ -81,16 +81,28 @@ export function computeDirection(from: Position, to: Position): number {
   return dx > 0 ? DIR_RIGHT : DIR_LEFT;
 }
 
-/** Resolve the resting direction for an agent at a workstation slot. */
-function resolveAgentRestingDirection(entityId: string, config: OfficeSceneConfig, layout: FacilityLayout): number {
-  const agent = config.agents.find((a) => a.id === entityId);
-  if (agent === undefined) {
-    return DIR_UP;
+/** Resolve the resting direction for an entity at its assigned slot. */
+function resolveRestingDirection(
+  entityId: string,
+  entityKind: EntityKind,
+  config: OfficeSceneConfig,
+  layout: FacilityLayout,
+): number {
+  let slotId: string | undefined;
+
+  if (entityKind === 'orchestrator') {
+    slotId = config.orchestrator.slotId;
+  } else {
+    const agent = config.agents.find((a) => a.id === entityId);
+    if (agent === undefined) {
+      return DIR_UP;
+    }
+    slotId = agent.slotId;
   }
 
-  const slot = layout.slotDefinition(agent.slotId);
+  const slot = layout.slotDefinition(slotId);
   if (slot?.facing === undefined) {
-    return DIR_UP;
+    return entityKind === 'orchestrator' ? DIR_DOWN : DIR_UP;
   }
 
   return directionToSpriteCol(slot.facing);
@@ -131,8 +143,7 @@ function handleWalk(transition: Transition, context: TransitionContext): void {
   const entityKind = transition.entityKind;
 
   actor.actions.callMethod(() => {
-    const restingDirection =
-      entityKind === 'orchestrator' ? DIR_DOWN : resolveAgentRestingDirection(entityId, context.config, context.layout);
+    const restingDirection = resolveRestingDirection(entityId, entityKind, context.config, context.layout);
     context.updateSprite(actor, entityId, entityKind, restingDirection);
   });
 }

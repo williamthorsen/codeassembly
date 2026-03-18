@@ -22,7 +22,14 @@ import { diffOfficeConfigs } from '../state/office-differ.js';
 import type { AnimationHandle } from '../transitions/transition-executor.js';
 import { executeTransitions } from '../transitions/transition-executor.js';
 import { planTransitions } from '../transitions/transition-planner.js';
-import type { EntityKind, FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } from '../types.js';
+import type {
+  EntityKind,
+  FacilityLayout,
+  OfficeDiff,
+  OfficeSceneConfig,
+  Position,
+  ResolvedPositions,
+} from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Visual constants
@@ -102,9 +109,18 @@ export class OfficeScene extends Scene {
       } else {
         const diff = diffOfficeConfigs(this.prevConfig, nextConfig);
         if (diff.hasChanges) {
-          this.activeAnimation?.cancel();
-          const fromPositions = this.snapshotCurrentPositions(this.prevPositions);
-          const plan = planTransitions(diff, fromPositions, nextPositions, this.layout);
+          if (hasStructuralChanges(diff)) {
+            // Structural changes (moves, adds, removes) require cancelling
+            // in-progress walks and snapping entities to their intended targets
+            // so interrupted walks don't strand them at intermediate positions.
+            this.activeAnimation?.cancel();
+            this.activeAnimation = undefined;
+            this.snapToPositions(this.prevPositions);
+          }
+          // Non-structural changes (status, carried, badge) are additive:
+          // new transitions queue behind any in-progress walk on the actor's
+          // action list, so the walk continues to completion.
+          const plan = planTransitions(diff, this.prevPositions, nextPositions, this.layout);
           this.activeAnimation = executeTransitions(plan, this.buildTransitionContext(nextConfig, nextPositions));
         }
       }
@@ -161,36 +177,31 @@ export class OfficeScene extends Scene {
   }
 
   /**
-   * Snapshot current actor pixel positions, falling back to stable positions
-   * for entities that don't have a live actor (e.g., removed entities).
+   * Snap all entity actors to their resolved target positions.
+   * Call after cancelling animations to prevent interrupted walks
+   * from stranding entities at intermediate corridor positions.
    */
-  private snapshotCurrentPositions(stablePositions: ResolvedPositions): ResolvedPositions {
-    const agents = new Map<string, Position>();
-    for (const [id, stablePos] of stablePositions.agents) {
+  private snapToPositions(positions: ResolvedPositions): void {
+    if (this.orchestratorActor !== undefined) {
+      this.orchestratorActor.pos.x = positions.orchestrator.x;
+      this.orchestratorActor.pos.y = positions.orchestrator.y;
+    }
+
+    for (const [id, pos] of positions.agents) {
       const actor = this.agentActors.get(id);
-      if (actor === undefined) {
-        agents.set(id, stablePos);
-      } else {
-        agents.set(id, { x: actor.pos.x, y: actor.pos.y });
+      if (actor !== undefined) {
+        actor.pos.x = pos.x;
+        actor.pos.y = pos.y;
       }
     }
 
-    const artifacts = new Map<string, Position>();
-    for (const [id, stablePos] of stablePositions.artifacts) {
+    for (const [id, pos] of positions.artifacts) {
       const actor = this.artifactActors.get(id);
-      if (actor === undefined) {
-        artifacts.set(id, stablePos);
-      } else {
-        artifacts.set(id, { x: actor.pos.x, y: actor.pos.y });
+      if (actor !== undefined) {
+        actor.pos.x = pos.x;
+        actor.pos.y = pos.y;
       }
     }
-
-    const orchestrator =
-      this.orchestratorActor === undefined
-        ? stablePositions.orchestrator
-        : { x: this.orchestratorActor.pos.x, y: this.orchestratorActor.pos.y };
-
-    return { agents, artifacts, orchestrator };
   }
 
   /** Draw the tiled background onto a single Canvas graphic actor. */
@@ -363,6 +374,23 @@ export class OfficeScene extends Scene {
   private positionCamera(): void {
     this.camera.pos = vec(CANVAS_WIDTH_PX / 2, CANVAS_HEIGHT_PX / 2);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Diff classification
+// ---------------------------------------------------------------------------
+
+/**
+ * Check whether a diff contains structural changes that affect entity
+ * positions or lifecycle (moves, additions, removals). Non-structural
+ * changes (status, carried artifacts, badges, zone activity) are additive
+ * and do not require cancelling in-progress walk animations.
+ */
+function hasStructuralChanges(diff: OfficeDiff): boolean {
+  if (diff.orchestrator.moved !== null) return true;
+  if (diff.agents.some((a) => a.moved !== null)) return true;
+  if (diff.artifacts.added.length > 0 || diff.artifacts.removed.length > 0) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------

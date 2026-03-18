@@ -13,6 +13,7 @@ export const PREP_ZONE: ZoneDefinition = {
   slots: [
     { id: 'prep-desk-0', type: 'workstation', tile: { col: 3, row: 5 }, facing: 'up' },
     { id: 'prep-desk-1', type: 'workstation', tile: { col: 8, row: 5 }, facing: 'up' },
+    { id: 'prep-standing-0', type: 'standing', tile: { col: 6, row: 12 }, facing: 'up' },
   ],
   doors: [{ tile: { col: 6, row: 12 }, direction: 'down' }],
 };
@@ -34,6 +35,7 @@ export const WORKSHOP_ZONE: ZoneDefinition = {
     { id: 'workshop-desk-3', type: 'workstation', tile: { col: 28, row: 7 }, facing: 'down' },
     { id: 'workshop-desk-4', type: 'workstation', tile: { col: 31, row: 7 }, facing: 'down' },
     { id: 'workshop-desk-5', type: 'workstation', tile: { col: 34, row: 7 }, facing: 'down' },
+    { id: 'workshop-standing-0', type: 'standing', tile: { col: 25, row: 12 }, facing: 'up' },
   ],
   doors: [{ tile: { col: 25, row: 12 }, direction: 'down' }],
 };

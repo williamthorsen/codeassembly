@@ -16,6 +16,7 @@ describe(resolvePositions, () => {
         codeBadge: null,
         waiting: false,
         zoneId: 'governor',
+        slotId: 'governor-desk-0',
       },
       agents: [],
       artifacts: [],
@@ -28,11 +29,28 @@ describe(resolvePositions, () => {
     };
   }
 
-  it('resolves orchestrator position to zone center', () => {
+  it('resolves orchestrator position to its slot position', () => {
     const c = config();
     const positions = resolvePositions(c, layout);
 
-    const expected = layout.zoneCenter('governor');
+    const expected = layout.slotPosition('governor-desk-0');
+    expect(positions.orchestrator).toEqual(expected);
+  });
+
+  it('resolves orchestrator at prep standing slot', () => {
+    const c = config({
+      orchestrator: {
+        status: 'dispatching',
+        carriedArtifacts: [],
+        codeBadge: null,
+        waiting: false,
+        zoneId: 'prep',
+        slotId: 'prep-standing-0',
+      },
+    });
+    const positions = resolvePositions(c, layout);
+
+    const expected = layout.slotPosition('prep-standing-0');
     expect(positions.orchestrator).toEqual(expected);
   });
 

@@ -24,7 +24,7 @@ export interface TileRect {
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
 /** Semantic role of a slot within a zone. */
-export type SlotType = 'workstation' | 'storage';
+export type SlotType = 'workstation' | 'storage' | 'standing';
 
 /** A named position within a zone where an entity can be placed. */
 export interface SlotDefinition {
@@ -109,6 +109,7 @@ export interface OfficeOrchestratorState {
   codeBadge: CodeBadge | null;
   waiting: boolean;
   zoneId: string;
+  slotId: string;
 }
 
 /** Artifact state with spatial assignment. */
@@ -143,7 +144,7 @@ export interface ZoneDiffEntry {
 
 /** Orchestrator-level diff fields. */
 export interface OfficeOrchestratorDiff {
-  moved: { from: string; to: string } | null;
+  moved: { fromZone: string; fromSlot: string; toZone: string; toSlot: string } | null;
   statusChanged: { from: string; to: string } | null;
   waitingChanged: { from: boolean; to: boolean } | null;
   carriedChanged: {
