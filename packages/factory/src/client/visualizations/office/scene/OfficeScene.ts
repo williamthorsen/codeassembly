@@ -19,7 +19,10 @@ import {
 } from '../sprites/office-sprite-loader.js';
 import { DIR_DOWN, DIR_UP, FURNITURE_MANIFEST, resolveCharacterName } from '../sprites/sprite-definitions.js';
 import { diffOfficeConfigs } from '../state/office-differ.js';
-import type { FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } from '../types.js';
+import type { AnimationHandle } from '../transitions/transition-executor.js';
+import { executeTransitions } from '../transitions/transition-executor.js';
+import { planTransitions } from '../transitions/transition-planner.js';
+import type { EntityKind, FacilityLayout, OfficeSceneConfig, Position, ResolvedPositions } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // Visual constants
@@ -53,6 +56,8 @@ export class OfficeScene extends Scene {
   private readonly layout: FacilityLayout;
   private status: CanonicalRunStatus;
   private prevConfig: OfficeSceneConfig | undefined;
+  private prevPositions: ResolvedPositions | undefined;
+  private activeAnimation: AnimationHandle | undefined;
 
   // Actor registries for incremental updates
   private agentActors = new Map<string, Actor>();
@@ -67,6 +72,9 @@ export class OfficeScene extends Scene {
   }
 
   override onInitialize(): void {
+    // If sprite loading fails the scene will render with fallback/empty graphics.
+    // This is intentional silent degradation — the office remains interactive but visually broken.
+    // TODO(#333): consider aborting initialization or retrying on sprite-load failure.
     loadOfficeSprites().catch((error: unknown) => {
       console.error('[OfficeScene] Failed to load sprites:', error);
     });
@@ -89,16 +97,20 @@ export class OfficeScene extends Scene {
       const nextConfig = mapLogicalToOffice(logical);
       const nextPositions = resolvePositions(nextConfig, this.layout);
 
-      if (this.prevConfig === undefined) {
+      if (this.prevConfig === undefined || this.prevPositions === undefined) {
         this.applyFullState(nextConfig, nextPositions);
       } else {
         const diff = diffOfficeConfigs(this.prevConfig, nextConfig);
         if (diff.hasChanges) {
-          this.applyFullState(nextConfig, nextPositions);
+          this.activeAnimation?.cancel();
+          const fromPositions = this.snapshotCurrentPositions(this.prevPositions);
+          const plan = planTransitions(diff, fromPositions, nextPositions, this.layout);
+          this.activeAnimation = executeTransitions(plan, this.buildTransitionContext(nextConfig, nextPositions));
         }
       }
 
       this.prevConfig = nextConfig;
+      this.prevPositions = nextPositions;
     } catch (error) {
       // Intentional silent degradation: the scene freezes at its last good state.
       // prevConfig is NOT updated on failure, so the next call will re-attempt a full render.
@@ -146,6 +158,39 @@ export class OfficeScene extends Scene {
       this.remove(actor);
     }
     this.artifactActors.clear();
+  }
+
+  /**
+   * Snapshot current actor pixel positions, falling back to stable positions
+   * for entities that don't have a live actor (e.g., removed entities).
+   */
+  private snapshotCurrentPositions(stablePositions: ResolvedPositions): ResolvedPositions {
+    const agents = new Map<string, Position>();
+    for (const [id, stablePos] of stablePositions.agents) {
+      const actor = this.agentActors.get(id);
+      if (actor === undefined) {
+        agents.set(id, stablePos);
+      } else {
+        agents.set(id, { x: actor.pos.x, y: actor.pos.y });
+      }
+    }
+
+    const artifacts = new Map<string, Position>();
+    for (const [id, stablePos] of stablePositions.artifacts) {
+      const actor = this.artifactActors.get(id);
+      if (actor === undefined) {
+        artifacts.set(id, stablePos);
+      } else {
+        artifacts.set(id, { x: actor.pos.x, y: actor.pos.y });
+      }
+    }
+
+    const orchestrator =
+      this.orchestratorActor === undefined
+        ? stablePositions.orchestrator
+        : { x: this.orchestratorActor.pos.x, y: this.orchestratorActor.pos.y };
+
+    return { agents, artifacts, orchestrator };
   }
 
   /** Draw the tiled background onto a single Canvas graphic actor. */
@@ -201,26 +246,28 @@ export class OfficeScene extends Scene {
   }
 
   /** Place a character sprite for an agent at the given position. */
-  private placeAgent(agentId: string, phase: string, pos: Position): void {
+  private placeAgent(agentId: string, phase: string, pos: Position): Actor {
     const characterName = resolveCharacterName(phase, agentId);
     const sprite = getCharacterSprite(characterName, DIR_UP);
     const actor = new Actor({ pos: vec(pos.x, pos.y), anchor: vec(0.5, 1), z: 2 });
     actor.graphics.use(sprite);
     this.add(actor);
     this.agentActors.set(agentId, actor);
+    return actor;
   }
 
   /** Place the orchestrator (Adam) sprite facing the camera. */
-  private placeOrchestrator(pos: Position): void {
+  private placeOrchestrator(pos: Position): Actor {
     const sprite = getCharacterSprite('Adam', DIR_DOWN);
     const actor = new Actor({ pos: vec(pos.x, pos.y), anchor: vec(0.5, 1), z: 2 });
     actor.graphics.use(sprite);
     this.add(actor);
     this.orchestratorActor = actor;
+    return actor;
   }
 
   /** Place a colored rectangle for an artifact at the given position. */
-  private placeArtifact(artifactId: string, color: string, pos: Position): void {
+  private placeArtifact(artifactId: string, color: string, pos: Position): Actor {
     const actor = new Actor({ pos: vec(pos.x, pos.y), z: 3 });
     actor.graphics.use(
       new Rectangle({
@@ -231,6 +278,85 @@ export class OfficeScene extends Scene {
     );
     this.add(actor);
     this.artifactActors.set(artifactId, actor);
+    return actor;
+  }
+
+  /** Look up an actor by entity ID and kind from the registries. */
+  private findActor(entityId: string, entityKind: EntityKind): Actor | undefined {
+    switch (entityKind) {
+      case 'orchestrator':
+        return this.orchestratorActor;
+      case 'agent':
+        return this.agentActors.get(entityId);
+      case 'artifact':
+        return this.artifactActors.get(entityId);
+    }
+  }
+
+  /** Remove an entity's actor from the scene and registries. */
+  private removeEntityActor(entityId: string, entityKind: EntityKind): void {
+    switch (entityKind) {
+      case 'orchestrator':
+        if (this.orchestratorActor !== undefined) {
+          this.remove(this.orchestratorActor);
+          this.orchestratorActor = undefined;
+        }
+        break;
+      case 'agent': {
+        const actor = this.agentActors.get(entityId);
+        if (actor !== undefined) {
+          this.remove(actor);
+          this.agentActors.delete(entityId);
+        }
+        break;
+      }
+      case 'artifact': {
+        const actor = this.artifactActors.get(entityId);
+        if (actor !== undefined) {
+          this.remove(actor);
+          this.artifactActors.delete(entityId);
+        }
+        break;
+      }
+    }
+  }
+
+  /** Update the sprite direction for an entity's actor using the given config snapshot. */
+  private updateEntitySprite(
+    actor: Actor,
+    entityId: string,
+    entityKind: EntityKind,
+    direction: number,
+    config: OfficeSceneConfig,
+  ): void {
+    if (entityKind === 'orchestrator') {
+      actor.graphics.use(getCharacterSprite('Adam', direction));
+    } else if (entityKind === 'agent') {
+      const agentState = config.agents.find((a) => a.id === entityId);
+      const phase = agentState?.phase ?? 'implementation';
+      const characterName = resolveCharacterName(phase, entityId);
+      actor.graphics.use(getCharacterSprite(characterName, direction));
+    }
+    // Artifacts have no directional sprites
+  }
+
+  /** Build a TransitionContext that bridges the executor to scene internals. */
+  private buildTransitionContext(
+    nextConfig: OfficeSceneConfig,
+    nextPositions: ResolvedPositions,
+  ): import('../transitions/transition-executor.js').TransitionContext {
+    return {
+      findActor: (entityId, entityKind) => this.findActor(entityId, entityKind),
+      createAgent: (agentId, pos, phase) => this.placeAgent(agentId, phase, pos),
+      createArtifact: (artifactId, pos, color) => this.placeArtifact(artifactId, color, pos),
+      createOrchestrator: (pos) => this.placeOrchestrator(pos),
+      removeActor: (entityId, entityKind) => this.removeEntityActor(entityId, entityKind),
+      updateSprite: (actor, entityId, entityKind, direction) =>
+        this.updateEntitySprite(actor, entityId, entityKind, direction, nextConfig),
+      config: nextConfig,
+      nextPositions,
+      layout: this.layout,
+    };
   }
 
   /** Center the camera on the facility. */

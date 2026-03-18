@@ -106,6 +106,21 @@ describe(createOfficeLayout, () => {
     });
   });
 
+  describe('slotDefinition', () => {
+    it('returns the correct definition for a known slot', () => {
+      const slot = layout.slotDefinition('workshop-desk-1');
+      expect(slot).toBeDefined();
+      expect(slot?.id).toBe('workshop-desk-1');
+      expect(slot?.type).toBe('workstation');
+      expect(slot?.tile).toEqual({ col: 21, row: 7 });
+      expect(slot?.facing).toBe('down');
+    });
+
+    it('returns undefined for an unknown slot ID', () => {
+      expect(layout.slotDefinition('nonexistent')).toBeUndefined();
+    });
+  });
+
   describe('zones', () => {
     it('exposes all zone definitions', () => {
       expect(layout.zones).toHaveLength(3);

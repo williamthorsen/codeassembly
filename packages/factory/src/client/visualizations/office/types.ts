@@ -31,6 +31,7 @@ export interface SlotDefinition {
   id: string;
   type: SlotType;
   tile: TileCoord;
+  facing?: Direction;
 }
 
 /** A doorway connecting a zone to the corridor system. */
@@ -72,6 +73,8 @@ export interface FacilityLayout {
   slotsInZone(zoneId: string, type?: SlotType): SlotDefinition[];
   /** Return corridor waypoints between two zones (directional). */
   corridorPath(fromZoneId: string, toZoneId: string): Position[];
+  /** Return the slot definition for a given slot ID, or undefined if not found. */
+  slotDefinition(slotId: string): SlotDefinition | undefined;
   /** All zone definitions. */
   zones: readonly ZoneDefinition[];
 }
@@ -204,6 +207,9 @@ export interface Transition {
   from?: unknown;
   to?: unknown;
 }
+
+/** Entity kind discriminator extracted from Transition. */
+export type EntityKind = Transition['entityKind'];
 
 /** Ordered list of transitions to apply. */
 export interface TransitionPlan {

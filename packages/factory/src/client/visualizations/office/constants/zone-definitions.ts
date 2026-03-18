@@ -11,8 +11,8 @@ export const PREP_ZONE: ZoneDefinition = {
   label: 'Prep area',
   bounds: { col: 1, row: 0, width: 11, height: 12 },
   slots: [
-    { id: 'prep-desk-0', type: 'workstation', tile: { col: 3, row: 5 } },
-    { id: 'prep-desk-1', type: 'workstation', tile: { col: 8, row: 5 } },
+    { id: 'prep-desk-0', type: 'workstation', tile: { col: 3, row: 5 }, facing: 'up' },
+    { id: 'prep-desk-1', type: 'workstation', tile: { col: 8, row: 5 }, facing: 'up' },
   ],
   doors: [{ tile: { col: 6, row: 12 }, direction: 'down' }],
 };
@@ -28,12 +28,12 @@ export const WORKSHOP_ZONE: ZoneDefinition = {
   label: 'The workshop',
   bounds: { col: 13, row: 0, width: 23, height: 12 },
   slots: [
-    { id: 'workshop-desk-0', type: 'workstation', tile: { col: 15, row: 5 } },
-    { id: 'workshop-desk-1', type: 'workstation', tile: { col: 21, row: 7 } },
-    { id: 'workshop-desk-2', type: 'workstation', tile: { col: 25, row: 7 } },
-    { id: 'workshop-desk-3', type: 'workstation', tile: { col: 28, row: 7 } },
-    { id: 'workshop-desk-4', type: 'workstation', tile: { col: 31, row: 7 } },
-    { id: 'workshop-desk-5', type: 'workstation', tile: { col: 34, row: 7 } },
+    { id: 'workshop-desk-0', type: 'workstation', tile: { col: 15, row: 5 }, facing: 'up' },
+    { id: 'workshop-desk-1', type: 'workstation', tile: { col: 21, row: 7 }, facing: 'down' },
+    { id: 'workshop-desk-2', type: 'workstation', tile: { col: 25, row: 7 }, facing: 'down' },
+    { id: 'workshop-desk-3', type: 'workstation', tile: { col: 28, row: 7 }, facing: 'down' },
+    { id: 'workshop-desk-4', type: 'workstation', tile: { col: 31, row: 7 }, facing: 'down' },
+    { id: 'workshop-desk-5', type: 'workstation', tile: { col: 34, row: 7 }, facing: 'down' },
   ],
   doors: [{ tile: { col: 25, row: 12 }, direction: 'down' }],
 };
@@ -49,7 +49,7 @@ export const GOVERNOR_ZONE: ZoneDefinition = {
   label: "Governor's office",
   bounds: { col: 19, row: 13, width: 17, height: 9 },
   slots: [
-    { id: 'governor-desk-0', type: 'workstation', tile: { col: 23, row: 18 } },
+    { id: 'governor-desk-0', type: 'workstation', tile: { col: 23, row: 18 }, facing: 'down' },
     { id: 'governor-storage-0', type: 'storage', tile: { col: 28, row: 16 } },
     { id: 'governor-storage-1', type: 'storage', tile: { col: 31, row: 16 } },
     { id: 'governor-storage-2', type: 'storage', tile: { col: 34, row: 16 } },
