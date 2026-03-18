@@ -137,7 +137,10 @@ function handleWalk(transition: Transition, context: TransitionContext): void {
   });
 }
 
-/** Fade in: create actor at target position with opacity 0, then fade to 1. */
+/**
+ * Fade in: create actor at target position with opacity 0, then fade to 1.
+ * Handles `agent` and `orchestrator` entity kinds only. Artifacts use `artifact_appear` instead.
+ */
 function handleFadeIn(transition: Transition, context: TransitionContext): void {
   const targetPos = transition.waypoints?.[0];
   if (targetPos === undefined) return;
@@ -248,9 +251,27 @@ export function executeTransitions(plan: TransitionPlan, context: TransitionCont
   const timers: ReturnType<typeof setTimeout>[] = [];
   const touchedActors = new Set<Actor>();
 
+  /** Clear all pending timers and in-progress actor actions. */
+  function cancelAll(): void {
+    for (const timer of timers) {
+      clearTimeout(timer);
+    }
+    for (const actor of touchedActors) {
+      actor.actions.clearActions();
+    }
+    timers.length = 0;
+    touchedActors.clear();
+  }
+
   for (const transition of plan.transitions) {
     const timer = setTimeout(() => {
-      dispatchTransition(transition, context);
+      try {
+        dispatchTransition(transition, context);
+      } catch (error) {
+        console.error('[transition-executor] dispatchTransition failed:', error);
+        cancelAll();
+        return;
+      }
 
       // Track actors that received actions for cancel support
       const actor = context.findActor(transition.entityId, transition.entityKind);
@@ -262,16 +283,5 @@ export function executeTransitions(plan: TransitionPlan, context: TransitionCont
     timers.push(timer);
   }
 
-  return {
-    cancel() {
-      for (const timer of timers) {
-        clearTimeout(timer);
-      }
-      for (const actor of touchedActors) {
-        actor.actions.clearActions();
-      }
-      timers.length = 0;
-      touchedActors.clear();
-    },
-  };
+  return { cancel: cancelAll };
 }

@@ -319,6 +319,64 @@ describe('OfficeScene', () => {
     expect(fadeOuts.length).toBeGreaterThan(0);
   });
 
+  it('cancels active animation when a new updateStatus arrives mid-animation', () => {
+    mockExecuteTransitions.mockClear();
+    capturedPlans = [];
+    actorCount = 0;
+    const scene = new OfficeScene(buildMinimalStatus());
+    scene.onInitialize();
+
+    // First update: add reviewers -> triggers executeTransitions
+    const cancelMock = vi.fn();
+    mockExecuteTransitions.mockReturnValueOnce({ cancel: cancelMock });
+
+    scene.updateStatus(
+      buildMinimalStatus({
+        phases: emptyPhases({
+          parallelReview: {
+            aggregatedCriticality: undefined,
+            reviewRoundsUsed: 1,
+            coderFixCycleRan: false,
+            selectiveReReview: undefined,
+            reviewers: {
+              codeReviewer: {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              silentFailure: {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+              testReviewer: {
+                ran: true,
+                status: 'completed',
+                criticality: 'low',
+                reason: undefined,
+                reReviewCriticality: undefined,
+                reReviewError: undefined,
+              },
+            },
+          },
+        }),
+      }),
+    );
+
+    expect(mockExecuteTransitions).toHaveBeenCalledTimes(1);
+
+    // Second update while first animation is still "active" — should cancel it
+    scene.updateStatus(buildMinimalStatus());
+
+    expect(cancelMock).toHaveBeenCalled();
+  });
+
   it('triggers transitions with artifact_appear when artifacts are added', () => {
     mockExecuteTransitions.mockClear();
     capturedPlans = [];

@@ -72,6 +72,9 @@ export class OfficeScene extends Scene {
   }
 
   override onInitialize(): void {
+    // If sprite loading fails the scene will render with fallback/empty graphics.
+    // This is intentional silent degradation — the office remains interactive but visually broken.
+    // TODO(#333): consider aborting initialization or retrying on sprite-load failure.
     loadOfficeSprites().catch((error: unknown) => {
       console.error('[OfficeScene] Failed to load sprites:', error);
     });
@@ -100,7 +103,8 @@ export class OfficeScene extends Scene {
         const diff = diffOfficeConfigs(this.prevConfig, nextConfig);
         if (diff.hasChanges) {
           this.activeAnimation?.cancel();
-          const plan = planTransitions(diff, this.prevPositions, nextPositions, this.layout);
+          const fromPositions = this.snapshotCurrentPositions(this.prevPositions);
+          const plan = planTransitions(diff, fromPositions, nextPositions, this.layout);
           this.activeAnimation = executeTransitions(plan, this.buildTransitionContext(nextConfig, nextPositions));
         }
       }
@@ -154,6 +158,39 @@ export class OfficeScene extends Scene {
       this.remove(actor);
     }
     this.artifactActors.clear();
+  }
+
+  /**
+   * Snapshot current actor pixel positions, falling back to stable positions
+   * for entities that don't have a live actor (e.g., removed entities).
+   */
+  private snapshotCurrentPositions(stablePositions: ResolvedPositions): ResolvedPositions {
+    const agents = new Map<string, Position>();
+    for (const [id, stablePos] of stablePositions.agents) {
+      const actor = this.agentActors.get(id);
+      if (actor === undefined) {
+        agents.set(id, stablePos);
+      } else {
+        agents.set(id, { x: actor.pos.x, y: actor.pos.y });
+      }
+    }
+
+    const artifacts = new Map<string, Position>();
+    for (const [id, stablePos] of stablePositions.artifacts) {
+      const actor = this.artifactActors.get(id);
+      if (actor === undefined) {
+        artifacts.set(id, stablePos);
+      } else {
+        artifacts.set(id, { x: actor.pos.x, y: actor.pos.y });
+      }
+    }
+
+    const orchestrator =
+      this.orchestratorActor === undefined
+        ? stablePositions.orchestrator
+        : { x: this.orchestratorActor.pos.x, y: this.orchestratorActor.pos.y };
+
+    return { agents, artifacts, orchestrator };
   }
 
   /** Draw the tiled background onto a single Canvas graphic actor. */
@@ -284,13 +321,18 @@ export class OfficeScene extends Scene {
     }
   }
 
-  /** Update the sprite direction for an entity's actor. */
-  private updateEntitySprite(actor: Actor, entityId: string, entityKind: EntityKind, direction: number): void {
+  /** Update the sprite direction for an entity's actor using the given config snapshot. */
+  private updateEntitySprite(
+    actor: Actor,
+    entityId: string,
+    entityKind: EntityKind,
+    direction: number,
+    config: OfficeSceneConfig,
+  ): void {
     if (entityKind === 'orchestrator') {
       actor.graphics.use(getCharacterSprite('Adam', direction));
     } else if (entityKind === 'agent') {
-      // Resolve agent phase from the current config
-      const agentState = this.prevConfig?.agents.find((a) => a.id === entityId);
+      const agentState = config.agents.find((a) => a.id === entityId);
       const phase = agentState?.phase ?? 'implementation';
       const characterName = resolveCharacterName(phase, entityId);
       actor.graphics.use(getCharacterSprite(characterName, direction));
@@ -310,7 +352,7 @@ export class OfficeScene extends Scene {
       createOrchestrator: (pos) => this.placeOrchestrator(pos),
       removeActor: (entityId, entityKind) => this.removeEntityActor(entityId, entityKind),
       updateSprite: (actor, entityId, entityKind, direction) =>
-        this.updateEntitySprite(actor, entityId, entityKind, direction),
+        this.updateEntitySprite(actor, entityId, entityKind, direction, nextConfig),
       config: nextConfig,
       nextPositions,
       layout: this.layout,

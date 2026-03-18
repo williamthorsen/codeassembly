@@ -191,6 +191,31 @@ describe(executeTransitions, () => {
     expect(mockActor.actions.fade).toHaveBeenCalledWith(1, expect.any(Number));
   });
 
+  it('dispatches fade_in for orchestrator entity kind', () => {
+    const mockActor = createMockActor();
+    const createOrchestrator = vi.fn().mockReturnValue(mockActor);
+    const context = buildContext({ createOrchestrator });
+
+    const plan: TransitionPlan = {
+      transitions: [
+        {
+          type: 'fade_in',
+          entityId: 'orchestrator',
+          entityKind: 'orchestrator',
+          delayMs: 0,
+          waypoints: [{ x: 100, y: 200 }],
+        },
+      ],
+    };
+
+    executeTransitions(plan, context);
+    vi.advanceTimersByTime(0);
+
+    expect(createOrchestrator).toHaveBeenCalledWith({ x: 100, y: 200 });
+    expect(mockActor.graphics.opacity).toBe(0);
+    expect(mockActor.actions.fade).toHaveBeenCalledWith(1, expect.any(Number));
+  });
+
   it('dispatches fade_out transitions and removes actor', () => {
     const actor = createMockActor();
     const removeActor = vi.fn();
@@ -263,7 +288,7 @@ describe(executeTransitions, () => {
             status: 'created',
             producerPhase: 'planning',
             zoneId: 'workshop',
-            slotId: 'workshop-storage-0',
+            slotId: 'workshop-desk-0',
           },
         ],
         zones: [],
@@ -317,6 +342,58 @@ describe(executeTransitions, () => {
     vi.advanceTimersByTime(0);
 
     expect(actor.actions.moveTo).toHaveBeenCalledWith({ x: 300, y: 150 }, expect.any(Number));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Edge cases — silent early returns
+  // ---------------------------------------------------------------------------
+
+  it('does nothing for walk transition with fewer than 2 waypoints', () => {
+    const actor = createMockActor();
+    const context = buildContext({
+      findActor: vi.fn().mockReturnValue(actor),
+    });
+
+    const plan: TransitionPlan = {
+      transitions: [
+        {
+          type: 'walk',
+          entityId: 'agent-1',
+          entityKind: 'agent',
+          delayMs: 0,
+          waypoints: [{ x: 0, y: 0 }],
+        },
+      ],
+    };
+
+    executeTransitions(plan, context);
+    vi.advanceTimersByTime(0);
+
+    expect(actor.actions.moveTo).not.toHaveBeenCalled();
+  });
+
+  it('does nothing for artifact_deliver with missing target position', () => {
+    const actor = createMockActor();
+    const context = buildContext({
+      findActor: vi.fn().mockReturnValue(actor),
+      nextPositions: { agents: new Map(), artifacts: new Map(), orchestrator: { x: 0, y: 0 } },
+    });
+
+    const plan: TransitionPlan = {
+      transitions: [
+        {
+          type: 'artifact_deliver',
+          entityId: 'artifact-missing',
+          entityKind: 'artifact',
+          delayMs: 0,
+        },
+      ],
+    };
+
+    executeTransitions(plan, context);
+    vi.advanceTimersByTime(0);
+
+    expect(actor.actions.moveTo).not.toHaveBeenCalled();
   });
 
   // ---------------------------------------------------------------------------
@@ -384,6 +461,60 @@ describe(executeTransitions, () => {
     expect(actor.actions.fade).toHaveBeenCalledTimes(2);
   });
 
+  it('cancel clears actions on actors created by fade_in transitions', () => {
+    const createdActor = createMockActor();
+    const createAgent = vi.fn().mockReturnValue(createdActor);
+    const context = buildContext({
+      findActor: vi.fn().mockImplementation((id: string) => {
+        // After creation, findActor resolves the new actor
+        if (id === 'new-agent') return createdActor;
+        return undefined;
+      }),
+      createAgent,
+      config: {
+        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        agents: [
+          {
+            id: 'new-agent',
+            role: 'coder',
+            roleType: 'author',
+            phase: 'implementation',
+            status: 'working',
+            zoneId: 'workshop',
+            slotId: 'workshop-desk-0',
+          },
+        ],
+        artifacts: [],
+        zones: [],
+      },
+    });
+
+    const plan: TransitionPlan = {
+      transitions: [
+        {
+          type: 'fade_in',
+          entityId: 'new-agent',
+          entityKind: 'agent',
+          delayMs: 0,
+          waypoints: [{ x: 50, y: 50 }],
+        },
+        { type: 'state_change', entityId: 'new-agent', entityKind: 'agent', delayMs: 500 },
+      ],
+    };
+
+    const handle = executeTransitions(plan, context);
+    vi.advanceTimersByTime(0);
+
+    expect(createAgent).toHaveBeenCalled();
+
+    handle.cancel();
+    expect(createdActor.actions.clearActions).toHaveBeenCalled();
+
+    // Second transition should not fire
+    vi.advanceTimersByTime(600);
+    expect(createdActor.actions.fade).toHaveBeenCalledTimes(1); // Only the initial fade_in
+  });
+
   // ---------------------------------------------------------------------------
   // Resting direction resolution
   // ---------------------------------------------------------------------------
@@ -418,6 +549,42 @@ describe(executeTransitions, () => {
     const lastCall = updateSprite.mock.calls.at(-1);
     expect(lastCall).toBeDefined();
     expect(lastCall?.[3]).toBe(DIR_DOWN);
+  });
+
+  it('uses DIR_UP as fallback resting direction when agent is absent from config', () => {
+    const actor = createMockActor();
+    const updateSprite = vi.fn();
+    const context = buildContext({
+      findActor: vi.fn().mockReturnValue(actor),
+      updateSprite,
+      config: {
+        orchestrator: { status: 'idle', carriedArtifacts: [], codeBadge: null, waiting: false, zoneId: 'governor' },
+        agents: [], // agent-1 intentionally absent
+        artifacts: [],
+        zones: [],
+      },
+    });
+
+    const plan: TransitionPlan = {
+      transitions: [
+        {
+          type: 'walk',
+          entityId: 'agent-1',
+          entityKind: 'agent',
+          delayMs: 0,
+          waypoints: [
+            { x: 0, y: 0 },
+            { x: 100, y: 100 },
+          ],
+        },
+      ],
+    };
+
+    executeTransitions(plan, context);
+    vi.advanceTimersByTime(0);
+
+    const lastCall = updateSprite.mock.calls.at(-1);
+    expect(lastCall?.[3]).toBe(DIR_UP);
   });
 
   it('resolves agent resting direction from slot facing metadata', () => {
