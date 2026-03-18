@@ -80,4 +80,13 @@ describe(generateSnapshots, () => {
 
     expect(snapshots).toHaveLength(0);
   });
+
+  it('clamps out-of-range indices to the full event set', () => {
+    const snapshots = generateSnapshots(header, events, [0, 99]);
+
+    expect(snapshots).toHaveLength(2);
+    // Index 99 exceeds events.length - 1 (3), so slice(0, 100) returns the full array
+    const fullFold = generateSnapshots(header, events, [events.length - 1]);
+    expect(snapshots[1]).toEqual(fullFold[0]);
+  });
 });

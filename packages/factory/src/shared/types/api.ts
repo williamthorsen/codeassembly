@@ -1,3 +1,5 @@
+import type { RunEvent, RunHeader } from '@codeassembly/run-core';
+
 import type { RunStatus } from './canonical.js';
 
 export interface ProjectIndex {
@@ -45,6 +47,6 @@ export type { RunEvent, RunHeader } from '@codeassembly/run-core';
 
 /** Response payload for the raw events endpoint. */
 export interface RunEventsResponse {
-  header: import('@codeassembly/run-core').RunHeader;
-  events: import('@codeassembly/run-core').RunEvent[];
+  header: RunHeader;
+  events: RunEvent[];
 }

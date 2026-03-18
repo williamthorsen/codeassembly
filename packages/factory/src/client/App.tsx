@@ -141,15 +141,6 @@ export function App(): React.JSX.Element {
     return toRunKey(selectedProject, selectedTicket, selectedRun);
   }, [selectedProject, selectedTicket, selectedRun]);
 
-  // Stop current replay when the selected run changes
-  const prevSelectedRunRef = useRef(selectedRun);
-  useEffect(() => {
-    if (prevSelectedRunRef.current !== selectedRun && replay.isActive) {
-      replay.stopReplay();
-    }
-    prevSelectedRunRef.current = selectedRun;
-  }, [selectedRun, replay.isActive, replay.stopReplay]);
-
   function handleSelectProject(projectSlug: string): void {
     setSelectedProject(projectSlug || null);
     setSelectedTicket(null);
@@ -163,6 +154,7 @@ export function App(): React.JSX.Element {
 
   function handleSelectRun(projectSlug: string, runId: string): void {
     demo.stopDemo();
+    replay.stopReplay();
     const match = allRuns.find((r) => r.projectSlug === projectSlug && r.runId === runId);
     setSelectedProject(projectSlug);
     setSelectedTicket(match?.ticketId ?? null);

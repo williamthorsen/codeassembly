@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 
+import { RunDataParseError } from '@codeassembly/run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProjectIndex } from '../../../shared/types/api.js';
@@ -7,10 +8,11 @@ import { silencedConsole } from '../../../utils/test-utils.ts';
 import { createRunsRouter } from '../runs.js';
 import { createMockResponse, createMockScanner, getHandler, type MockResponse } from './route-test-helpers.ts';
 
-const { mockedReaddir, mockedReadFile, mockedParseRunData } = vi.hoisted(() => ({
+const { mockedReaddir, mockedReadFile, mockedParseRunData, mockedParseRunRawData } = vi.hoisted(() => ({
   mockedReaddir: vi.fn(),
   mockedReadFile: vi.fn(),
   mockedParseRunData: vi.fn(),
+  mockedParseRunRawData: vi.fn(),
 }));
 
 vi.mock('node:fs/promises', () => ({
@@ -21,6 +23,7 @@ vi.mock('node:fs/promises', () => ({
 
 vi.mock('../../adapters/status-adapter.js', () => ({
   parseRunData: mockedParseRunData,
+  parseRunRawData: mockedParseRunRawData,
 }));
 
 const RUN_PATH = '/projects/test-project/tickets/TICKET-1/run-1';
@@ -126,6 +129,74 @@ describe('createRunsRouter', () => {
 
       expect(res.statusCode).toBe(500);
       expect(res.body).toEqual({ error: 'Failed to get run status' });
+    });
+  });
+
+  describe('GET /:projectSlug/:runId/events', () => {
+    it('returns header and events on success', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/events');
+
+      const mockResult = { header: { runId: 'run-1' }, events: [{ t: '2026-01-01T00:00:00Z', event: 'run_started' }] };
+      mockedParseRunRawData.mockResolvedValueOnce(mockResult);
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
+
+      expect(mockedParseRunRawData).toHaveBeenCalledWith(RUN_PATH);
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockResult);
+    });
+
+    it('returns 404 when run is not found', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/events');
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'nonexistent' } }, res);
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toEqual({ error: 'Run not found' });
+    });
+
+    it('returns 404 when run does not have an event log', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/events');
+
+      mockedParseRunRawData.mockRejectedValueOnce(new RunDataParseError('No event log', 'no_event_log', RUN_PATH));
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toEqual({ error: 'Run does not have an event log' });
+    });
+
+    it('returns 404 when run data files do not exist (ENOENT)', async () => {
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/events');
+
+      mockedParseRunRawData.mockRejectedValueOnce(createEnoentError(RUN_PATH));
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toEqual({ error: 'Run data not found' });
+    });
+
+    it('returns 500 on generic errors', async () => {
+      using _silent = silencedConsole(['error']);
+      const scanner = createMockScanner(indexWithRun());
+      const router = createRunsRouter(scanner);
+      const handler = getHandler(router, 'get', '/:projectSlug/:runId/events');
+
+      mockedParseRunRawData.mockRejectedValueOnce(new Error('Unexpected failure'));
+
+      await handler({ params: { projectSlug: 'test-project', runId: 'run-1' } }, res);
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body).toEqual({ error: 'Failed to get run events' });
     });
   });
 
