@@ -71,7 +71,7 @@ describe('installCommand', () => {
     // Check that skills were installed — count should match shared + platform-specific
     const contentDir = resolveContentDir();
     const allSkillEntries = await readdir(path.join(contentDir, 'skills'));
-    const sharedSkillCount = allSkillEntries.filter((e) => !e.startsWith('_')).length;
+    const sharedSkillCount = allSkillEntries.filter((e) => e !== '_platforms').length;
     const platformSkillsDir = path.join(contentDir, 'skills', '_platforms', 'claude');
     const platformSkillCount = existsSync(platformSkillsDir) ? (await readdir(platformSkillsDir)).length : 0;
     const expectedSkillCount = sharedSkillCount + platformSkillCount;
@@ -225,7 +225,7 @@ describe('installCommand', () => {
     expect(skillsContents).not.toContain('review-permissions');
   });
 
-  it('should not install _platforms directory into target skills', async () => {
+  it('should install _data support directory but not _platforms', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -234,7 +234,13 @@ describe('installCommand', () => {
 
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
     expect(skillsContents).not.toContain('_platforms');
-    expect(skillsContents).not.toContain('_data');
+    expect(skillsContents).toContain('_data');
+
+    // Verify _data contents are present
+    const dataContents = await readdir(path.join(claudeHome, 'skills', '_data'));
+    expect(dataContents).toContain('artifact-conventions.md');
+    expect(dataContents).toContain('next-steps-after-plan.md');
+    expect(dataContents).toContain('commit-format.md');
   });
 
   it('should generate prompts.yml for rovodev with valid YAML structure', async () => {

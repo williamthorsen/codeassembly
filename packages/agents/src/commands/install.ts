@@ -91,7 +91,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
  * Installs skill directories from content/skills/ into the target skills directory.
  * Shared skills (top-level entries) are installed for all platforms. Platform-specific
  * skills from `_platforms/{platformId}/` are installed only for the matching platform.
- * Entries starting with `_` (e.g., `_data`, `_platforms`) are skipped from the main loop.
+ * The `_platforms` directory is skipped (handled by dedicated platform-specific logic below).
  *
  * If a previously installed item has been modified by the user, it is skipped unless
  * `--force` is set, mirroring the uninstall command's drift-checking behavior.
@@ -108,9 +108,9 @@ async function installSkills(
   const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
-  // Install shared skills (skip underscore-prefixed directories: _data, _platforms)
+  // Install shared skills and support directories (skip only _platforms, handled below)
   for (const entry of dirEntries) {
-    if (entry.startsWith('_')) {
+    if (entry === '_platforms') {
       continue;
     }
     const result = await installSkillEntry(
