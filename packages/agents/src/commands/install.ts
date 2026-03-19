@@ -108,9 +108,9 @@ async function installSkills(
   const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
-  // Install shared skills and support directories (skip only _platforms, handled below)
+  // Install shared skills and support directories (skip _platforms and dotfiles)
   for (const entry of dirEntries) {
-    if (entry === '_platforms') {
+    if (entry === '_platforms' || entry.startsWith('.')) {
       continue;
     }
     const result = await installSkillEntry(
@@ -138,6 +138,9 @@ async function installSkills(
   }
 
   for (const entry of platformDirEntries) {
+    if (entry.startsWith('.')) {
+      continue;
+    }
     const result = await installSkillEntry(
       path.join(platformSkillsSrcDir, entry),
       path.join(skillsDestDir, entry),
