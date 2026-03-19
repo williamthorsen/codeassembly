@@ -1,12 +1,11 @@
-import tsconfigPaths from 'vite-tsconfig-paths';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
 export const baseConfig = defineConfig({
-  plugins: [tsconfigPaths()],
   resolve: {
     // Prefer "source" exports condition so workspace packages resolve from .ts source
     // during testing, without requiring a prior build step.
     conditions: ['source'],
+    tsconfigPaths: true,
   },
   ssr: {
     resolve: {

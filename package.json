@@ -59,7 +59,7 @@
     "@types/js-yaml": "4.0.9",
     "@types/node": "22.19.15",
     "@typescript/native-preview": "7.0.0-dev.20260319.1",
-    "@vitejs/plugin-react": "5.2.0",
+    "@vitejs/plugin-react": "6.0.1",
     "@vitest/coverage-v8": "4.1.0",
     "@vitest/eslint-plugin": "1.6.12",
     "@williamthorsen/eslint-config-typescript": "5.16.2",
@@ -79,8 +79,7 @@
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.57.1",
-    "vite": "7.3.1",
-    "vite-tsconfig-paths": "6.1.1",
+    "vite": "8.0.1",
     "vitest": "4.1.0"
   },
   "packageManager": "pnpm@10.32.1",
