@@ -67,6 +67,18 @@ Check for an existing manifest file before performing any derivation.
 
 If no valid manifest exists (or the existing manifest has a stale schema), derive each field from the branch name, preferences, and the system prompt.
 
+#### Load and merge preferences
+
+**Read both preference files and merge them before extracting any fields.** This is the first step of every derivation — do not skip it.
+
+1. Read `.agents/preferences.yaml` using the Read tool. If the file does not exist, treat as empty.
+2. Read `~/.agents/preferences.yaml` using the Read tool. If the file does not exist, treat as empty.
+3. Merge into a single `{prefs}` by taking each top-level section and its keys from the project-level file, falling back to the global file for any section or key not present at the project level. Project-level values always win.
+
+All field sections below extract values from `{prefs}`. Do not re-read the files or specify fallback chains — the merge has already resolved precedence.
+
+To extract a YAML value: read line by line. When you encounter a top-level key (no leading whitespace, e.g., `project:`), subsequent indented lines belong to that section until the next non-indented line. Match the target key within that section and take the value after the colon, trimmed of leading/trailing whitespace and quotes.
+
 #### Branch name
 
 Use the raw branch name extracted from `gitStatus` in step 1.
@@ -81,7 +93,7 @@ Extract the ticket ID from the **start** of the branch name using these rules:
 4. **Normalize to uppercase**: the ticket ID is always stored in uppercase (e.g., `mac-147` becomes `MAC-147`).
 5. The ticket ID pattern ends at the first `/` or `_` separator, or at the end of the branch name if it is the entire branch name. Do not continue matching past the first separator or into hyphenated descriptions. For example, `MAC-147-some-description` extracts `MAC-147` (the match stops before the second hyphen because `-s` does not continue the digits pattern), and `MAC-147/feat/foo` extracts `MAC-147`.
 6. If no prefixed ticket ID is found, check for a **bare issue number**: one or more digits anchored to the start of the branch name, terminated by `/`, `_`, or `-`, or at the end of the branch name if it is the entire name. Examples: `147/feat/something` -> `147`, `42_fix_login` -> `42`, `99` -> `99`. Do not match digits that appear after non-digit characters.
-7. If a bare issue number is found, read `project.ticket_prefix` from `.agents/preferences.yaml`:
+7. If a bare issue number is found, extract `project.ticket_prefix` from `{prefs}`:
    - If `ticket_prefix` is `#` (a GitHub display prefix): return the **bare number only**. The `#` character is a display convention, not an identifier component, and must not appear in file paths.
    - If a Jira-style prefix is configured (e.g., `MAC-`): ticket ID = `{ticket_prefix}{number}` (e.g., prefix `MAC-` + number `147` -> `MAC-147`).
    - If no prefix is configured: ticket ID = the number alone (e.g., `147`).
@@ -93,31 +105,23 @@ Everything after the ticket ID and its trailing separator is the description. If
 
 #### Project slug
 
-Read `.agents/preferences.yaml` using the Read tool. Extract the `project.slug` value from the YAML content. Read the file line by line: when you encounter a line `project:` (at the top level, with no leading whitespace), subsequent indented lines belong to that section until the next non-indented line. Match `slug:` within that section and take the value after the colon, trimmed of leading/trailing whitespace and quotes.
+Extract `project.slug` from `{prefs}`.
 
-If `project.slug` is not found in `.agents/preferences.yaml`, read `~/.agents/preferences.yaml` and check for `project.slug` there.
+If not found, fall back to `repository.slug` (deprecated field, found under the `repository:` section in `{prefs}`). If none of these are found, use the bare directory name of the working directory (from the `Working directory:` field in the system prompt environment block). For example, if the working directory is `/Users/william/repos/projects/codeassembly`, the default slug is `codeassembly`.
 
-If `project.slug` is not found in either file, fall back to `repository.slug` (deprecated field, found under the `repository:` section in `.agents/preferences.yaml`). If none of these are found, use the bare directory name of the working directory (from the `Working directory:` field in the system prompt environment block). For example, if the working directory is `/Users/william/repos/projects/codeassembly`, the default slug is `codeassembly`.
-
-Also extract `project.ticket_prefix` from the same `project:` section (e.g., `MAC-`). This value is used by the ticket ID extraction logic (step 7) when a bare issue number is found. If not present, no prefix is applied.
+Also extract `project.ticket_prefix` from `{prefs}` (e.g., `MAC-`). This value is used by the ticket ID extraction logic (step 7) when a bare issue number is found. If not present, no prefix is applied.
 
 #### Default branch
 
-From `.agents/preferences.yaml`, extract `repository.default_remote[0].name` and `repository.default_remote[0].default_branch`. Find the `repository:` section (top-level, no leading whitespace), then `default_remote:` (indented under it). The first list item starts with `- name:` (YAML list items begin with `-`). Extract the `name` value and the `default_branch` value from that list item, trimming whitespace and quotes.
+Extract `repository.default_remote[0].name` and `repository.default_remote[0].default_branch` from `{prefs}`. Find the `repository:` section, then `default_remote:` (indented under it). The first list item starts with `- name:` (YAML list items begin with `-`). Extract the `name` value and the `default_branch` value from that list item.
 
 Construct the full remote reference as `{name}/{default_branch}` (e.g., `origin/main`).
 
-If not found in `.agents/preferences.yaml`, check `~/.agents/preferences.yaml` for the same fields.
-
-If preferences are missing or the fields are absent in both files, default to `origin/main`.
+If the fields are absent, default to `origin/main`.
 
 #### Artifact base directory
 
-Resolve the artifact base directory by reading preferences in this order:
-
-1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
-2. If not found, read `artifacts.base_dir` from `~/.agents/preferences.yaml`
-3. If still not found, use default: `~/.ai`
+Extract `artifacts.base_dir` from `{prefs}`. If not found, use default: `~/.ai`.
 
 Expand `~` using the home directory inferred from the `Working directory:` field in the system prompt environment block (e.g., if the working directory is `/Users/william/repos/myproject`, the home directory is `/Users/william`).
 
@@ -127,7 +131,7 @@ Store the fully resolved absolute path in the manifest.
 
 #### Artifact paths
 
-From whichever preferences file yielded `base_dir` (or from `.agents/preferences.yaml` if the default was used), read `artifacts.paths.*`:
+From `{prefs}`, extract `artifacts.paths.*`:
 
 - `artifacts.paths.chats` (default: `chats`)
 - `artifacts.paths.devlogs` (default: `devlogs`)
