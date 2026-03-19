@@ -21,14 +21,22 @@ export function checkSymlinkSafety(dirPath: string): void {
   }
 }
 
+/** Returns true for OS metadata files like .DS_Store that should never be installed. */
+function isDotfile(filePath: string): boolean {
+  return path.basename(filePath).startsWith('.');
+}
+
 /**
- * Copies a file or directory recursively.
+ * Copies a file or directory recursively, excluding dotfiles (e.g., .DS_Store).
  * @param src Absolute source path.
  * @param dest Absolute destination path.
  */
 export async function copyItem(src: string, dest: string): Promise<void> {
   await mkdir(path.dirname(dest), { recursive: true });
-  await cp(src, dest, { recursive: true });
+  await cp(src, dest, {
+    recursive: true,
+    filter: (source) => !isDotfile(source),
+  });
 }
 
 /**

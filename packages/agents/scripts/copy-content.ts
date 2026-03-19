@@ -15,7 +15,10 @@ const cliEntry = path.join(packageRoot, 'dist', 'esm', 'cli.js');
 // 1. Copy content/ to dist/content/
 console.info('Copying content/ to dist/content/...');
 await mkdir(path.dirname(contentDest), { recursive: true });
-await cp(contentSrc, contentDest, { recursive: true });
+await cp(contentSrc, contentDest, {
+  recursive: true,
+  filter: (source) => !path.basename(source).startsWith('.'),
+});
 console.info('  Done.');
 
 // 2. Prepend shebang to dist/esm/cli.js
