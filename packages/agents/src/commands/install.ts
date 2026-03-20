@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.js';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.js';
-import { checkSymlinkSafety, copyItem, linkItem } from '../lib/installer.js';
+import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.js';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type { AgentsManifest, InstallOptions, ManifestEntry, PlatformId, PlatformManifest } from '../lib/types.js';
@@ -262,6 +262,7 @@ async function installSubagents(
     const source = await readFile(srcPath, 'utf8');
     const merged = mergeFrontmatter(source, overlayYaml);
     await mkdir(path.dirname(destPath), { recursive: true });
+    await unlinkIfSymlink(destPath);
     await writeFile(destPath, merged, 'utf8');
 
     const hash = await computeContentHash(destPath);
@@ -388,6 +389,7 @@ async function generatePromptsYml(
   await mkdir(paths.platformHome, { recursive: true });
 
   const destPath = path.join(paths.platformHome, relativePath);
+  await unlinkIfSymlink(destPath);
   await writeFile(destPath, yamlContent, 'utf8');
 
   const hash = await computeContentHash(destPath);
