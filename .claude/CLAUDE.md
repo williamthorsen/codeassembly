@@ -1,3 +1,3 @@
 # CLAUDE.md
 
-Read @.agents/PROJECT.md, which provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+@.agents/PROJECT.md

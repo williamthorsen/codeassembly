@@ -2,12 +2,31 @@
 
 ## Project structure
 
-This is a pnpm monorepo centered around agentic code-orchestration flows. It contains two packages:
+This is a pnpm monorepo centered around agentic code-orchestration flows. It contains four packages:
 
-- **Agents** (`packages/agents/`) — a CLI tool and content library of reusable AI agent skills and subagent definitions that power orchestrated development workflows
-- **Factory** (`packages/factory/`) — a web-based visualization that renders orchestration runs as an interactive 2D game scene
+- **Run-core** (`packages/run-core/`) — canonical domain model, Zod schemas, and data parsing for orchestration runs; foundational library consumed by other packages
+- **MCP** (`packages/mcp/`) — MCP server exposing run-management tools (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`) built on run-core
+- **Agents** (`packages/agents/`) — CLI tool and content library of reusable AI agent skills and subagent definitions that power orchestrated development workflows
+- **Factory** (`packages/factory/`) — web-based visualization that renders orchestration runs as an interactive 2D game scene
 
-The two packages share a domain model: the orchestration skills (agents) write `run-index.json` artifacts during runs, and Factory reads and visualizes them. Co-locating both in this monorepo ensures schema changes can be made atomically.
+The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents is independent (it produces the artifact files that run-core parses). Co-locating all four ensures schema changes can be made atomically.
+
+### Run-core (`packages/run-core/`)
+
+Shared runtime library. Exports via three subpath entries:
+
+- `.` — types (`CanonicalRunStatus`, `RunStatus`, `Phases`, event types), constants (`PHASE_NAMES`, `PHASE_ROLE`), schemas, `foldEvents()` (reconstructs run state from header + event log)
+- `./config` — path resolution (`resolveBaseDir()`, `resolveProjectsDir()`)
+- `./parsers` — Node.js file parsers for run data
+- `./scanners` — directory scanning and validation
+
+**Package:** `@codeassembly/run-core` (private)
+
+### MCP (`packages/mcp/`)
+
+MCP server for orchestrated run management. Wraps run-core capabilities as five MCP tools for Claude integration.
+
+**Package:** `@codeassembly/mcp` (private)
 
 ### Agents (`packages/agents/`)
 
@@ -242,28 +261,6 @@ packages/factory/src/
 - Prettier for formatting
 - TypeScript strict mode
 - Optional strict linting with `@williamthorsen/strict-lint`
-
-## Code descriptions
-
-Every non-trivial function, method, class, and component must have a `/** ... */` description. One sentence is the target, but longer descriptions are fine when more explanation helps. Do not use JSDoc tags (`@param`, `@returns`, `@throws`, etc.) — the type signature already communicates parameter and return types. Describe _what_ the code does and _why_, not _how_.
-
-Trivial code (simple getters, one-line helpers whose name fully describes their behavior) may omit the description.
-
-```typescript
-/** Resolves agent colors from role types using the CGA-16 palette. */
-function resolveAgentColor(roleType: RoleType): string {
-```
-
-Not:
-
-```typescript
-/**
- * Resolves agent colors from role types using the CGA-16 palette.
- * @param roleType - The role type to look up
- * @returns The hex color string for the role type
- */
-function resolveAgentColor(roleType: RoleType): string {
-```
 
 ## Skills
 
