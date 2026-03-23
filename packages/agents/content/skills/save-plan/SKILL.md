@@ -45,13 +45,13 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 
    Include `baseSha` only if resolved successfully.
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 ## Completion
 
 Report the file path, then present a ticket prompt and next steps together in a single message. Do not wait for the user's reply before showing next steps.
 
-The plan source is unknown (could be plan mode, third-party tool, or manual) — treat it as unreviewed. Use this as recommendation context when applying the rules in [next-steps-after-plan](_data/next-steps-after-plan.md). Omit the ticket path from option lines — no ticket path is available at completion time.
+The plan source is unknown (could be plan mode, third-party tool, or manual) — treat it as unreviewed. Use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Omit the ticket path from option lines — no ticket path is available at completion time.
 
 ```
 Plan saved: {plan_path}

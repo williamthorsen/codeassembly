@@ -36,7 +36,7 @@ Rules for how code is structured, organized, and documented.
 
 ## Naming
 
-Follow the naming rules in `_data/naming-conventions.md`: no abbreviations, unit-of-measure suffixes on numerics, verb-led function names, boolean prefixes (`is`, `has`, `should`, `does`).
+Follow the naming rules in [naming-conventions.md](../_data/naming-conventions.md): no abbreviations, unit-of-measure suffixes on numerics, verb-led function names, boolean prefixes (`is`, `has`, `should`, `does`).
 
 ## Testing patterns
 

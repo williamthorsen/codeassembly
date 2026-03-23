@@ -71,7 +71,7 @@ Resolve artifact directory using `get-session-context` to obtain `artifact_base_
 
 Full path: `{artifact_base_dir}/projects/{project_slug}/{chats_path}/`
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 Artifact type: `chat-summary`. Filename format:
 

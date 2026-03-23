@@ -11,7 +11,7 @@ Analyze the current branch's changes since diverging from the default branch.
 ## Process
 
 1. **Gather context**:
-   - Use `get-session-context` to obtain `default_branch` and `ticket_id`; consult `_data/work-types.md`.
+   - Use `get-session-context` to obtain `default_branch` and `ticket_id`; consult [work-types.md](../_data/work-types.md).
    - Determine workspace from commit subjects: parse `{workspace}|{type}:` prefixes, collect unique values. Single → use it. Multiple → use `*`. None → omit.
 
 2. **Analyze changes**:
@@ -100,7 +100,7 @@ When the original ticket is accessible:
 
 Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
