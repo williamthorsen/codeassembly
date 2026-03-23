@@ -13,6 +13,8 @@ Interactive design exploration followed by ticket refinement and implementation 
 ## Arguments
 
 - Task source (required): issue URL, shorthand reference (`#99`, `issue 99`), file path, or description of what to build
+- `--check-staleness` (optional): always run the relevancy check, regardless of the heuristic
+- `--skip-staleness` (optional): never run the relevancy check, regardless of the heuristic
 
 ## Overview
 
@@ -24,7 +26,7 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 ## Process
 
-### Phase 1: Understand the task
+### Phase 1: Resolve task source and assess relevancy
 
 1. **Resolve the task source:**
 
@@ -42,27 +44,58 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 2.  Check `git remote get-url origin` (e.g., `github.com` → GitHub)
 3.  Ask the user
 
-For GitHub: `gh issue view --json number,title,body,labels {number}`
+For GitHub: `gh issue view --json number,title,body,labels,updatedAt {number}`
 
-Store the resolved issue metadata (platform, repo, issue number) for Phase 3's optional remote update.
+Store the resolved issue metadata (platform, repo, issue number, last-updated date) for use in the relevancy check and Phase 4's optional remote update.
 
-2. **Explore project context:** check relevant files, docs, recent commits to understand the affected area of the codebase.
+2. **Assess relevancy** — determine whether the ticket may be stale and, if so, verify it is still relevant.
 
-3. **Ask clarifying questions** — one at a time:
+**Override arguments take precedence:**
+
+- If `--check-staleness` was passed: run the relevancy check immediately (no prompt).
+- If `--skip-staleness` was passed: skip the relevancy check entirely.
+- If neither was passed: evaluate the heuristic below.
+
+**Heuristic** (evaluated only when the task source is a remote ticket with a last-updated date):
+
+1. Retrieve the ticket's last-updated date from the resolved metadata (e.g., GitHub's `updatedAt` field).
+2. Count commits since that date: `git rev-list --count --after="{last-updated date}" HEAD`
+3. If the ticket was updated within the last 3 days _or_ fewer than 5 commits have landed since the last update, skip the relevancy check.
+4. Otherwise, prompt the user: "This ticket may be out of date ({N} commits since the last update on {date}). Would you like me to check for staleness and relevancy?" If the user declines, continue into Phase 2.
+
+If the task source is plain text or a file (no remote metadata), skip the relevancy check unless `--check-staleness` was explicitly passed.
+
+**The relevancy check** (when triggered by user approval or `--check-staleness`):
+
+1. Identify the area of the codebase the ticket relates to — extract file paths, module names, or feature areas mentioned in the issue body.
+2. Look at commits since the ticket's last update that touch that area: `git log --oneline --after="{last-updated date}" -- {paths}`
+3. Check whether referenced files and paths still exist.
+4. Assess whether the problem described still appears to exist given the changes found.
+
+**After the check:**
+
+- **No concerns found:** continue silently into Phase 2.
+- **Concerns found:** present a brief relevancy assessment describing what changed and how it may affect the ticket. Ask the user whether to proceed as-is, adjust the scope, or stop.
+
+### Phase 2: Understand the task
+
+1. **Explore project context:** check relevant files, docs, recent commits to understand the affected area of the codebase.
+
+2. **Ask clarifying questions** — one at a time:
    - Purpose and motivation
    - Constraints and scope boundaries
    - Success criteria and edge cases
    - Prefer multiple choice when possible
    - Only one question per message
 
-### Phase 2: Converge on a design
+### Phase 3: Converge on a design
 
 1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.
 2. **When the solution is not obvious:** propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why.
 3. **Present the design** in sections scaled to complexity. Ask after each section whether it looks right.
 4. **Get explicit approval** before proceeding.
 
-### Phase 3: Refine the ticket
+### Phase 4: Refine the ticket
 
 If the source ticket already covers problem, context, solution, and acceptance criteria adequately — and brainstorming didn't surface changes — confirm with the user and adopt it as-is. Skip the rewrite. Only add or revise sections where the Q&A revealed gaps or shifts in understanding.
 
@@ -96,10 +129,10 @@ Present the ticket to the user. Revise until approved.
 - GitHub: `gh issue edit {number} --body "{refined body}"`
 - Other platforms: note that automated update is not yet supported; suggest manual update
 
-### Phase 4: Generate implementation plan
+### Phase 5: Generate implementation plan
 
 <HARD-GATE>
-Do NOT start this phase until the ticket from Phase 3 has been explicitly approved.
+Do NOT start this phase until the ticket from Phase 4 has been explicitly approved.
 </HARD-GATE>
 
 Produce a plan that gives a competent coder everything they need — and enough context to adapt when the codebase doesn't match expectations.
@@ -169,7 +202,7 @@ Code belongs in the plan only when it captures a decision that isn't obvious fro
 
 Present the plan to the user. Revise until approved.
 
-### Phase 5: Save artifacts and stop
+### Phase 6: Save artifacts and stop
 
 1. Resolve artifact directory using `save-artifact` conventions:
    - Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
