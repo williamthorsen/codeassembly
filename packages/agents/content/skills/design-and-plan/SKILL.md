@@ -52,8 +52,8 @@ Store the resolved issue metadata (platform, repo, issue number, last-updated da
 
 **Override arguments take precedence:**
 
-- If `--check-staleness` was passed: always run the relevancy check.
-- If `--skip-staleness` was passed: always skip the relevancy check.
+- If `--check-staleness` was passed: run the relevancy check immediately (no prompt).
+- If `--skip-staleness` was passed: skip the relevancy check entirely.
 - If neither was passed: evaluate the heuristic below.
 
 **Heuristic** (evaluated only when the task source is a remote ticket with a last-updated date):
@@ -61,11 +61,11 @@ Store the resolved issue metadata (platform, repo, issue number, last-updated da
 1. Retrieve the ticket's last-updated date from the resolved metadata (e.g., GitHub's `updatedAt` field).
 2. Count commits since that date: `git rev-list --count --after="{last-updated date}" HEAD`
 3. If the ticket was updated within the last 3 days _or_ fewer than 5 commits have landed since the last update, skip the relevancy check.
-4. Otherwise, run the relevancy check.
+4. Otherwise, prompt the user: "This ticket may be out of date ({N} commits since the last update on {date}). Would you like me to check for staleness and relevancy?" If the user declines, continue into Phase 2.
 
 If the task source is plain text or a file (no remote metadata), skip the relevancy check unless `--check-staleness` was explicitly passed.
 
-**The relevancy check** (when triggered):
+**The relevancy check** (when triggered by user approval or `--check-staleness`):
 
 1. Identify the area of the codebase the ticket relates to — extract file paths, module names, or feature areas mentioned in the issue body.
 2. Look at commits since the ticket's last update that touch that area: `git log --oneline --after="{last-updated date}" -- {paths}`
