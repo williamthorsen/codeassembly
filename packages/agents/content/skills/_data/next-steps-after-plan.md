@@ -29,7 +29,7 @@ Skill names for each option:
 
 ## Recommendation rules
 
-Select the recommended option by checking these rules in order. Recommend the first rule whose conditions are met; if neither Rule 1 nor Rule 2 applies, Rule 3 is the default.
+Select the recommended option by checking these rules in order and stopping at the first match.
 
 1. **Refine plan** — recommend when either condition holds:
    - The plan has not been previously refined AND involves shared interfaces, cross-cutting changes, or costly-to-reverse decisions
