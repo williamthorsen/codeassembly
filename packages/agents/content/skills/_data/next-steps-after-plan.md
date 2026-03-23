@@ -4,28 +4,33 @@ Standard next-steps block for skills that produce or refine an implementation pl
 
 ## Options
 
-| Option             | Description                                       |
-| ------------------ | ------------------------------------------------- |
-| Refine plan        | Review the plan for completeness and correctness  |
-| Orchestrate        | Run the full orchestrated development pipeline    |
-| Implement directly | Implement without orchestration (no review cycle) |
+| #   | Emoji | Option             | Description                                       |
+| --- | ----- | ------------------ | ------------------------------------------------- |
+| 1   | 🧠    | Refine plan        | Review the plan for completeness and correctness  |
+| 2   | 🎶    | Orchestrate        | Run the full orchestrated development pipeline    |
+| 3   | 🚀    | Implement directly | Implement without orchestration (no review cycle) |
 
 ## Output format
 
-Present all three options. Mark the recommended option with `▶` and others with `·`. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context.
+Present all three options as a numbered list. The recommendation rules below determine which option is recommended — bold that option's label and append `(🟢 recommended)`. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
+
+Options that invoke a skill include context-clearing guidance:
+
+- **Refine plan** and **Orchestrate**: prepend "Clear context and use..." — the plan artifact is self-contained, and orchestration dispatches fresh subagents, so prior conversation wastes tokens and can introduce bias.
+- **Implement directly**: no "Clear context" prefix — conversation history is valuable for manual implementation.
 
 ```
 Next steps:
-  ▶ {recommended option} (recommended): Use the `{skill-name}` skill with plan: {plan_path}, ticket: {ticket_source}
-  · {second option}: Use the `{skill-name}` skill with plan: {plan_path}, ticket: {ticket_source}
-  · {third option}
+  1. 🧠 Refine plan: Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
+  2. 🎶 **Orchestrate** (🟢 recommended): Clear context and use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_source}
+  3. 🚀 Implement directly
 ```
 
 Skill names for each option:
 
-- **Refine plan** -> `refine-plan`
-- **Orchestrate** -> `orchestrate-dev`
-- **Implement directly** -> no skill invocation; the user implements manually or asks the agent to begin
+- 🧠 **Refine plan** -> `refine-plan`
+- 🎶 **Orchestrate** -> `orchestrate-dev`
+- 🚀 **Implement directly** -> no skill invocation; the user implements manually or asks the agent to begin
 
 ## Recommendation rules
 
