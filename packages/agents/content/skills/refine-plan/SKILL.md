@@ -82,9 +82,9 @@ Evaluate the finding counts:
     Review: {review_output_path}
 
   Next steps:
-    ▶ Orchestrate (recommended): Use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_source}
-    · Refine plan: Use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
-    · Implement directly
+    ▶ {recommended option} (recommended): ...
+    · {second option}: ...
+    · {third option}
   ```
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): skip user interaction. Proceed to step 5 with empty user answers.
@@ -215,9 +215,9 @@ After reporting, present next steps. The plan was just reviewed. If the review s
 
 ```
 Next steps:
-  ▶ Orchestrate (recommended): Use the `orchestrate-dev` skill with plan: {revision_output_path}, ticket: {ticket_source}
-  · Refine plan: Use the `refine-plan` skill with plan: {revision_output_path}, ticket: {ticket_source}
-  · Implement directly
+  ▶ {recommended option} (recommended): ...
+  · {second option}: ...
+  · {third option}
 ```
 
 ## Edge cases

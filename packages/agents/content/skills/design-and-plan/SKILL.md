@@ -196,7 +196,7 @@ Present the plan to the user. Revise until approved.
 
    If `baseSha` could not be resolved, omit the `baseSha` line entirely.
 
-4. Report paths and present next steps. The plan is unreviewed — use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+4. Report paths and present next steps. The plan was developed interactively with user approval at each stage — use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 
 ```
 Design and plan complete:
@@ -204,9 +204,9 @@ Design and plan complete:
   Plan:   {plan_path}
 
 Next steps:
-  ▶ Refine plan (recommended): Use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
-  · Orchestrate: Use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_path}
-  · Implement directly
+  ▶ {recommended option} (recommended): ...
+  · {second option}: ...
+  · {third option}
 ```
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.

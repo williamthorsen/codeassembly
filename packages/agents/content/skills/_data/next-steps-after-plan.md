@@ -29,12 +29,22 @@ Skill names for each option:
 
 ## Recommendation rules
 
-Select the recommended option using these rules in priority order:
+Select the recommended option by checking these rules in order and stopping at the first match.
 
-1. **Refine plan** -- the plan is unreviewed and the work is non-trivial, OR a review surfaced significant scope changes or unresolved questions
-2. **Orchestrate** -- the plan involves non-trivial code changes
-3. **Implement directly** -- the work is trivially simple, prose-only, or a single well-understood change
+1. **Refine plan** — recommend when both of the following are true:
 
-When uncertain between two options, recommend the more thorough one.
+   The plan involves any of:
+   - Changes to dependency boundaries (which libraries are used, which APIs are consumed, or how they're configured)
+   - Changes to the shape or semantics of behavioral contracts or data structures
+   - Far-reaching downstream consequences
+   - Changes to control flow, state management, or execution order
+   - Introduction of new interfaces, modules, or subsystems
 
-Each skill supplies its own recommendation context (e.g., whether the plan is unreviewed, whether a review just completed). Apply these rules using that context.
+   AND either of:
+   - The plan has not been previously refined
+   - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
+
+2. **Implement directly** — recommend when the work is mechanical, touches an isolated module, or follows an established pattern closely enough that the coder's first pass is sufficient
+3. **Orchestrate** — all other cases (default)
+
+Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
