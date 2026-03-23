@@ -34,9 +34,9 @@ Select the recommended option by checking these rules in order and stopping at t
 1. **Refine plan** — recommend when both of the following are true:
 
    The plan involves any of:
-   - Non-trivial changes in how dependencies are used
-   - Non-trivial changes in behavioral contracts or data structures
-   - Non-trivial or far-reaching downstream consequences
+   - Changes to dependency boundaries (which libraries are used, which APIs are consumed, or how they're configured)
+   - Changes to the shape or semantics of behavioral contracts or data structures
+   - Far-reaching downstream consequences
    - Changes to control flow, state management, or execution order
    - Introduction of new interfaces, modules, or subsystems
 
