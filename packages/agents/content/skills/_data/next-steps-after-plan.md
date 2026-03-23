@@ -31,9 +31,19 @@ Skill names for each option:
 
 Select the recommended option by checking these rules in order and stopping at the first match.
 
-1. **Refine plan** — recommend when either condition holds:
-   - The plan has not been previously refined AND involves shared interfaces, cross-cutting changes, or costly-to-reverse decisions
-   - A prior review surfaced significant scope changes or unresolved questions
+1. **Refine plan** — recommend when both of the following are true:
+
+   The plan involves any of:
+   - Non-trivial changes in how dependencies are used
+   - Non-trivial changes in behavioral contracts or data structures
+   - Non-trivial or far-reaching downstream consequences
+   - Changes to control flow, state management, or execution order
+   - Introduction of new interfaces, modules, or subsystems
+
+   AND either of:
+   - The plan has not been previously refined
+   - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
+
 2. **Implement directly** — recommend when the work is mechanical, touches an isolated module, or follows an established pattern closely enough that the coder's first pass is sufficient
 3. **Orchestrate** — all other cases (default)
 
