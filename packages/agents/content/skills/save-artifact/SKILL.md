@@ -40,8 +40,8 @@ Save AI-generated files with standardized naming conventions.
 
 **Common fields (both formats):**
 
-- **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType` (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`). See [artifact-conventions.md](_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](_data/artifact-conventions.md#roletype-taxonomy).
-- **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](_data/artifact-conventions.md#artifact-types) for the complete artifact type list.
+- **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType` (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`). See [artifact-conventions.md](../_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy).
+- **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the complete artifact type list.
 
 Run artifacts are saved by the skills that produce them (`review-change`, `respond-to-review`). They handle run directory discovery and creation.
 
@@ -91,7 +91,7 @@ Create the directory if needed.
 
 Read `artifact_paths` from the `get-session-context` manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 ## Slug generation
 

@@ -69,7 +69,7 @@ If inside an active run (`run-index.json` exists in a parent directory):
 2. Save as ticket-level artifact: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/{timestamp}_{slug}_plan.md`
 3. Slug derived from the plan's descriptive title (kebab-case, max 60 chars).
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 `mkdir -p` the target directory before writing.
 

@@ -22,7 +22,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 1. **Get context** using `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
-4. **Parse findings**: extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, L{n}). See [finding scheme](_data/artifact-conventions.md#finding-scheme-fwtrsl) for category definitions.
+4. **Parse findings**: extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, L{n}). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below
 6. **Write response** per the output format
 7. **Save** per the [Saving](#saving) section
@@ -70,7 +70,7 @@ This is distinct from the **post-implementation** vocabulary used by the orchest
 
 ## Disposition scope
 
-Per [artifact conventions](_data/artifact-conventions.md#disposition-rules):
+Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 | Role     | Can disposition                                              | Cannot disposition                                       |
 | -------- | ------------------------------------------------------------ | -------------------------------------------------------- |
@@ -163,7 +163,7 @@ Author: {Agent name} (model: {model})
 
 Use `get-session-context` to obtain `artifact_base_dir` and `project_slug`.
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 ### Run directory
 

@@ -65,7 +65,7 @@ git diff $DEFAULT_BRANCH...HEAD
 
 Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 

@@ -44,7 +44,7 @@ For GitHub: `gh issue view --json number,title,body,labels {number}`
 5. **Review thoroughly** following the guidelines below
 6. **Assign a score** out of 10
 7. **Save the review** per the [Saving](#saving) section
-8. **Present next steps** _(branch scope only)_ — after saving, present a next-steps prompt following [next-steps-after-review](_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, and whether ticket compliance gaps or unplanned work were identified. The next-steps prompt is interactive output only and is not saved in the review artifact.
+8. **Present next steps** _(branch scope only)_ — after saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, and whether ticket compliance gaps or unplanned work were identified. The next-steps prompt is interactive output only and is not saved in the review artifact.
 
 ## Review guidelines
 
@@ -65,7 +65,7 @@ Read and apply the `review-criteria` skill (`../review-criteria/SKILL.md`). Addi
 
 ## Issue numbering
 
-Uniquely number all issues for easy reference. See [finding scheme](_data/artifact-conventions.md#finding-scheme-fwtrsl) for full category criteria and criticality mapping.
+Uniquely number all issues for easy reference. See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for full category criteria and criticality mapping.
 
 - FIXMEs: `F{n}` — critical, must fix before merge
 - Warnings: `W{n}` — questionable decisions, may block merge
@@ -221,7 +221,7 @@ Score: X/10
 
 Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
 
-Follow [artifact conventions](_data/artifact-conventions.md).
+Follow [artifact conventions](../_data/artifact-conventions.md).
 
 ### Branch scope
 
