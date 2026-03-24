@@ -1,6 +1,6 @@
 ---
 name: assess-ticket
-description: Assess a ticket against the current codebase for drift, relevance, progress, and remaining scope
+description: Assess a ticket against the current codebase for drift, relevance, and progress
 user-invocable: true
 ---
 
@@ -13,7 +13,7 @@ Assess a ticket's relationship to the current codebase. Produces a structured as
 ## Arguments
 
 - **Ticket source** (optional): issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
-- **Mode** (optional): `drift`, `relevance`, `progress`, `remaining-scope`, or `all` (default: `all`)
+- **Mode** (optional): `drift`, `relevance`, `progress`, or `all` (default: `all`)
 
 ## Process
 
@@ -31,7 +31,7 @@ Determine whether the ticket's factual assumptions still match the codebase.
 
 1. Extract file paths, module names, API references, and structural assumptions from the ticket body.
 2. Check whether referenced files and paths still exist.
-3. If the ticket has a last-updated date, examine commits since that date in affected areas: `git log --oneline --after="{date}" -- {paths}`
+3. If the ticket has a last-updated date, examine commits since that date in affected areas: `git log --oneline --no-merges --after="{date}" -- {paths}`
 4. If no last-updated date is available, compare the ticket's assumptions against the current state of the affected files.
 5. Assess whether the assumptions hold, have partially drifted, or are no longer valid.
 
@@ -59,40 +59,64 @@ This mode requires understanding intent, not just facts. When signals are ambigu
 
 #### Progress
 
-Determine whether the described work has been implemented.
+Determine whether the described work has been implemented. The output format adapts based on whether the ticket has acceptance criteria.
 
-1. Identify what the ticket's solution describes — new files, modified APIs, added tests, changed behavior.
-2. Search the codebase for evidence of these artifacts.
-3. Assess whether the solution has been fully implemented, partially implemented, or not started.
-
-**Verdicts:**
-
-- 🟢 `complete` — the described work has been done; all major solution elements are present
-- 🟠 `partial` — some of the described work has been done but significant portions remain
-- 🔴 `none` — none of the described work is present in the codebase
-
-#### Remaining scope
-
-Walk each acceptance criterion and check whether it is met in the current codebase.
+**When the ticket has acceptance criteria:**
 
 1. Extract acceptance criteria from the ticket. These may be checkboxes, numbered lists, or prose descriptions of expected behavior.
 2. For each criterion, examine the codebase to determine whether it has been met.
-3. Present each criterion as a checklist item.
+3. Present the verdict with a count summary (e.g., "4 of 7 criteria met"), followed by each criterion as a checklist item.
 
-If the ticket has no identifiable acceptance criteria, state this and skip the checklist.
+**When the ticket has no acceptance criteria:**
+
+1. Identify what the ticket's solution describes — new files, modified APIs, added tests, changed behavior.
+2. Search the codebase for evidence of these artifacts.
+3. Present the verdict followed by evidence bullets describing what has and hasn't been done.
+
+**Verdicts:**
+
+- 🟢 `complete` — all described work (or all acceptance criteria) has been done
+- 🟠 `partial` — some of the described work has been done but significant portions remain
+- 🔴 `none` — none of the described work is present in the codebase
 
 ### 3. Output
 
-Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all four dimensions in order.
+Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all three dimensions in order.
 
 Obtain the base SHA via `git rev-parse --short HEAD`.
+
+**When the ticket has acceptance criteria:**
 
 ```markdown
 ## Assessment: {ticket title} (#{number})
 
 Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
-𝛥 **Drift:** {emoji} `{verdict}`
+Δ **Drift:** {emoji} `{verdict}`
+
+- {Evidence bullet}
+- {Evidence bullet}
+
+🎯 **Relevance:** {emoji} `{verdict}`
+
+- {Evidence bullet}
+- {Evidence bullet}
+
+📶 **Progress:** {emoji} `{verdict}` ({N} of {M} criteria met)
+
+- [x] {Criterion met}
+- [x] {Criterion met}
+- [ ] {Criterion not met}
+```
+
+**When the ticket has no acceptance criteria:**
+
+```markdown
+## Assessment: {ticket title} (#{number})
+
+Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
+
+Δ **Drift:** {emoji} `{verdict}`
 
 - {Evidence bullet}
 - {Evidence bullet}
@@ -106,11 +130,6 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
 - {Evidence bullet}
 - {Evidence bullet}
-
-📋 **Remaining scope:**
-
-- [x] {Criterion met}
-- [ ] {Criterion unmet}
 ```
 
 ### Emoji mapping

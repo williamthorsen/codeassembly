@@ -23,7 +23,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 2. **Determine the platform and construct the fetch identifier:**
 
-   a. Read `project.ticket_prefix` from `.agents/preferences.yaml` (already resolved by `get-session-context`).
+   a. Read `project.ticket_prefix` from `.agents/preferences.yaml`.
 
    b. **If `ticket_id` is purely numeric** (e.g., `357`):
    - If `ticket_prefix` is `#` or absent: the ID is a platform issue number. Determine the platform using the [platform resolution cascade](#platform-resolution-cascade). For GitHub, fetch issue `357`.
@@ -62,6 +62,10 @@ gh issue view --json number,title,body,labels,updatedAt {number}
 ```
 
 Skills may request a subset of these fields. The `updatedAt` field is needed by skills that perform temporal analysis (e.g., staleness checks) and may be omitted by skills that only need the ticket content.
+
+### Jira
+
+Not yet supported for automated fetch. If the platform is determined to be Jira, present the Jira key to the user and ask them to provide the ticket content.
 
 ## Resolved metadata
 
