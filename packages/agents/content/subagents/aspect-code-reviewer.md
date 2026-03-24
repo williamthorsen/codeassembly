@@ -57,7 +57,7 @@ Do NOT flag:
 
 - Error-handling and silent-failure patterns (handled by silent-failure reviewer)
 - Missing test coverage (handled by test reviewer)
-- Simplification opportunities (handled by code-simplifier in Phase 4a)
+- Simplification opportunities (handled by code-simplification-reviewer in Phase 4a)
 - Style preferences not codified in project guidelines
 
 ## Finding format

@@ -1,6 +1,6 @@
 # Review cycle module
 
-Orchestrate the parallel review, code-simplifier, and holistic review phases as a self-contained review cycle. This module is loaded and followed by the orchestrate engine — it is not a standalone skill.
+Orchestrate the parallel review, code-simplification-reviewer, and holistic review phases as a self-contained review cycle. This module is loaded and followed by the orchestrate engine — it is not a standalone skill.
 
 ## Inputs
 
@@ -234,11 +234,11 @@ Call MCP tool emit_event with:
            reason: "executed" }
 ```
 
-## Phase 4a: Code simplifier
+## Phase 4a: Code simplification review
 
-After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplifier as a sequential final pass. Code-simplifier operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplifier failure should be recorded via `emit_event` but should NOT block progression to Phase 4b or fail the run.
+After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplification-reviewer as a sequential final pass. The code-simplification-reviewer operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplification-reviewer failure should be recorded via `emit_event` but should NOT block progression to Phase 4b or fail the run.
 
-Before dispatching code-simplifier, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
+Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
 
 Emit `phase_decision` for `codeSimplifier` before Phase 4a executes:
 
@@ -253,7 +253,7 @@ If Phase 4a will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, even
 
 If Phase 4a is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "skipped" } }`.
 
-Call Task with `subagent_type: pr-review-toolkit:code-simplifier`, `max_turns: 15`, `model: {models.code_simplifier}`:
+Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 15`, `model: {models.code_simplification_reviewer}`:
 
 > Review the code changes on this branch for simplification opportunities.
 >
@@ -266,9 +266,9 @@ Call Task with `subagent_type: pr-review-toolkit:code-simplifier`, `max_turns: 1
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
-> Write your findings to: `{run-dir}/{NN}_code-simplifier_code-simplifier-review.md`
+> Write your findings to: `{run-dir}/{NN}_code-simplification-reviewer_code-simplification-review.md`
 
-After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Read the findings file. Code-simplifier findings are NOT re-reviewed by other agents. If code-simplifier produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
+After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
 
@@ -282,11 +282,11 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {mo
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: if a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Compute aggregate usage for the simplifier phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4a (the code-simplifier dispatch and, if applicable, the coder fix cycle). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the code-simplifier review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
+After: if a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Compute aggregate usage for the simplifier phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4a (the code-simplification-reviewer dispatch and, if applicable, the coder fix cycle). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the code-simplification-reviewer review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
 
 ## Phase 4b: Final comprehensive review
 
-After the parallel review and code-simplifier complete, perform one additional review with a clean context. This is NOT part of the parallel review. Skip Phase 4b if Phase 4 exited with unresolved findings (`needs_manual_review`); in that case Phase 4a was also skipped — under the parallel review structure, `needs_manual_review` is the only non-converged exit path, so no other skip condition is needed. If Phase 4 converged, always run Phase 4b (whether or not Phase 4a produced findings).
+After the parallel review and code-simplification-reviewer complete, perform one additional review with a clean context. This is NOT part of the parallel review. Skip Phase 4b if Phase 4 exited with unresolved findings (`needs_manual_review`); in that case Phase 4a was also skipped — under the parallel review structure, `needs_manual_review` is the only non-converged exit path, so no other skip condition is needed. If Phase 4 converged, always run Phase 4b (whether or not Phase 4a produced findings).
 
 The initial Phase 4b review always runs regardless of remaining budget. Phase 4b shares the review-round budget with Phase 4 only for subsequent fix-and-re-review cycles — rounds consumed in Phase 4 reduce the budget available for those cycles.
 

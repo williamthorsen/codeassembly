@@ -11,6 +11,8 @@ aspect-silent-failure-reviewer: {} # inherits _defaults
 
 aspect-test-reviewer: {} # inherits _defaults
 
+code-simplification-reviewer: {} # inherits _defaults
+
 plan-reviewer: {} # inherits _defaults
 
 plan-reviser: {} # inherits _defaults
