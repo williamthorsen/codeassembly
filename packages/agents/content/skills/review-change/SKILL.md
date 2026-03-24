@@ -12,23 +12,7 @@ Act as a conscientious code reviewer for changes in the current scope.
 
 - _(no arguments)_: Review branch changes (default scope)
 - `commit [<ref>]`: Review a specific commit (HEAD if ref omitted)
-- `ticket <source>` _(optional, branch scope only)_: Ticket or requirements to check code against. Source resolution:
-
-| Input form                                                  | Resolution                                                |
-| ----------------------------------------------------------- | --------------------------------------------------------- |
-| URL to a known platform (GitHub, Jira, etc.)                | Use platform CLI or WebFetch to retrieve issue content    |
-| Other URL                                                   | WebFetch the URL content                                  |
-| Shorthand reference (`#99`, `issue 99`, `GitHub issue #99`) | Resolve platform (see below), then fetch via platform CLI |
-| File path                                                   | Read the file                                             |
-| Plain text                                                  | Use as-is                                                 |
-
-**Shorthand reference resolution** — determine which platform `#99` refers to:
-
-1. Check `.agents/preferences.yaml` -> `integrations` (if exactly one enabled, use it; if multiple, ask)
-2. Check `git remote get-url origin` (e.g., `github.com` -> GitHub)
-3. Ask the user
-
-For GitHub: `gh issue view --json number,title,body,labels {number}`
+- `ticket <source>` _(optional, branch scope only)_: Ticket or requirements to check code against. Resolve using the [ticket source resolution](../_data/ticket-source-resolution.md) table.
 
 ## Process
 

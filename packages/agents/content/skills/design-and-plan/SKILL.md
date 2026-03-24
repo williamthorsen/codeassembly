@@ -28,25 +28,7 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source:**
-
-| Input form                                                  | Resolution                                                |
-| ----------------------------------------------------------- | --------------------------------------------------------- |
-| URL to a known platform (GitHub, Jira, etc.)                | Use platform CLI or WebFetch to retrieve issue content    |
-| Other URL                                                   | WebFetch the URL content                                  |
-| Shorthand reference (`#99`, `issue 99`, `GitHub issue #99`) | Resolve platform (see below), then fetch via platform CLI |
-| File path                                                   | Read the file                                             |
-| Plain text                                                  | Use as-is                                                 |
-
-**Shorthand reference resolution** — determine which platform `#99` refers to:
-
-1.  Check `.agents/preferences.yaml` → `integrations` (if exactly one enabled, use it; if multiple, ask)
-2.  Check `git remote get-url origin` (e.g., `github.com` → GitHub)
-3.  Ask the user
-
-For GitHub: `gh issue view --json number,title,body,labels,updatedAt {number}`
-
-Store the resolved issue metadata (platform, repo, issue number, last-updated date) for use in the relevancy check and Phase 4's optional remote update.
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 4's optional remote update.
 
 2. **Assess relevancy** — determine whether the ticket may be stale and, if so, verify it is still relevant.
 
@@ -67,15 +49,12 @@ If the task source is plain text or a file (no remote metadata), skip the releva
 
 **The relevancy check** (when triggered by user approval or `--check-staleness`):
 
-1. Identify the area of the codebase the ticket relates to — extract file paths, module names, or feature areas mentioned in the issue body.
-2. Look at commits since the ticket's last update that touch that area: `git log --oneline --after="{last-updated date}" -- {paths}`
-3. Check whether referenced files and paths still exist.
-4. Assess whether the problem described still appears to exist given the changes found.
+Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift`.
 
-**After the check:**
+**After the check** — interpret the drift verdict:
 
-- **No concerns found:** continue silently into Phase 2.
-- **Concerns found:** present a brief relevancy assessment describing what changed and how it may affect the ticket. Ask the user whether to proceed as-is, adjust the scope, or stop.
+- 🟢 `none`: continue silently into Phase 2.
+- 🟠 `partial` or 🔴 `severe`: present the assessment findings to the user. Ask whether to proceed as-is, adjust the scope, or stop.
 
 ### Phase 2: Understand the task
 
