@@ -49,7 +49,7 @@ Select the recommended option by checking these rules in order and stopping at t
    - The plan has not been previously refined
    - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
 
-2. **Implement directly** — recommend when the work is mechanical, touches an isolated module, or follows an established pattern closely enough that the coder's first pass is sufficient
+2. **Implement directly** — recommend when the work is mechanical and isolated (single module, no cross-cutting renames or shared convention changes), or follows an established pattern closely enough that the coder's first pass is sufficient
 3. **Orchestrate** — all other cases (default)
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
