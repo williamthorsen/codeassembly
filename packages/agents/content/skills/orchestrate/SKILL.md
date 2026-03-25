@@ -83,7 +83,7 @@ Invalid model names (e.g., `gpt4`) are rejected by the Task tool at dispatch tim
 | `aspect_code_reviewer`           | aspect-code-reviewer (Phase 4)                    |
 | `aspect_silent_failure_reviewer` | aspect-silent-failure-reviewer (Phase 4)          |
 | `aspect_test_reviewer`           | aspect-test-reviewer (Phase 4)                    |
-| `code_simplifier`                | code-simplifier (Phase 4a)                        |
+| `code_simplification_reviewer`   | code-simplification-reviewer (Phase 4a)           |
 | `holistic_reviewer`              | orchestrated-reviewer holistic (Phase 4b)         |
 | `savings_analyzer`               | savings-analyzer (Phase 5, parallel with summary) |
 
@@ -141,7 +141,7 @@ Prefix the status line with a colored emoji for visual distinction:
 | `pr-review-toolkit:silent-failure-hunter` | 🕵️️️    |
 | `pr-review-toolkit:pr-test-analyzer`      | 🔬    |
 | `pr-review-toolkit:code-reviewer`         | 🔎    |
-| `pr-review-toolkit:code-simplifier`       | 🙃    |
+| `code-simplification-reviewer`            | 🙃    |
 | `savings-analyzer`                        | 💰    |
 
 **Example:**
@@ -459,19 +459,19 @@ When a plan conflicts with the ticket, the ticket wins. Never override reviewer 
 
 Always pass `max_turns` explicitly to every Task call:
 
-| subagent_type                     | max_turns |
-| :-------------------------------- | --------: |
-| orchestrated-architect            |        30 |
-| orchestrated-planner              |        40 |
-| orchestrated-coder                |        80 |
-| orchestrated-reviewer             |        30 |
-| aspect-code-reviewer              |        20 |
-| aspect-silent-failure-reviewer    |        20 |
-| aspect-test-reviewer              |        20 |
-| pr-review-toolkit:code-simplifier |        15 |
-| orchestrated-reviewer (final)     |        30 |
+| subagent_type                  | max_turns |
+| :----------------------------- | --------: |
+| orchestrated-architect         |        30 |
+| orchestrated-planner           |        40 |
+| orchestrated-coder             |        80 |
+| orchestrated-reviewer          |        30 |
+| aspect-code-reviewer           |        20 |
+| aspect-silent-failure-reviewer |        20 |
+| aspect-test-reviewer           |        20 |
+| code-simplification-reviewer   |        15 |
+| orchestrated-reviewer (final)  |        30 |
 
-> **Note:** `code-simplifier` remains a `pr-review-toolkit` agent because it runs sequentially in Phase 4a after all parallel reviews converge — it is not an aspect reviewer and does not participate in the Phase 4 parallel dispatch or activation logic.
+> **Note:** `code-simplification-reviewer` runs sequentially in Phase 4a after all parallel reviews converge — it is not an aspect reviewer and does not participate in the Phase 4 parallel dispatch or activation logic.
 
 ## Pipeline execution
 
@@ -587,7 +587,7 @@ After: store the full path as `{change-summary-path}`; increment `{seq}`. Extrac
 
 ## Review cycle (module)
 
-When the pipeline includes `review-cycle`, prepare context variables (see context preparation section) and invoke `modules/review-cycle.md`. The module manages Phase 4 (parallel review), Phase 4a (code-simplifier), and Phase 4b (holistic review) internally.
+When the pipeline includes `review-cycle`, prepare context variables (see context preparation section) and invoke `modules/review-cycle.md`. The module manages Phase 4 (parallel review), Phase 4a (code-simplification-reviewer), and Phase 4b (holistic review) internally.
 
 After the module completes, read `{review-status}` and `{seq}` from the module's exit state. Use `{review-status}` to determine the run's final status:
 

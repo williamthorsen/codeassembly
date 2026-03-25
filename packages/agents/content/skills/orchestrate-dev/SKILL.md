@@ -80,12 +80,12 @@ All effort levels use the same pipeline. Architecture and planning requirements 
 architecture (optional) -> planning (optional) -> implementation (required) -> review-cycle (required)
 ```
 
-| Phase            | Requirement | Description                                       |
-| ---------------- | ----------- | ------------------------------------------------- |
-| `architecture`   | `optional`  | Assess impact; runs based on task analysis        |
-| `planning`       | `optional`  | Create implementation plan; runs based on task    |
-| `implementation` | `required`  | Write code                                        |
-| `review-cycle`   | `required`  | Parallel review, code-simplifier, holistic review |
+| Phase            | Requirement | Description                                                    |
+| ---------------- | ----------- | -------------------------------------------------------------- |
+| `architecture`   | `optional`  | Assess impact; runs based on task analysis                     |
+| `planning`       | `optional`  | Create implementation plan; runs based on task                 |
+| `implementation` | `required`  | Write code                                                     |
+| `review-cycle`   | `required`  | Parallel review, code-simplification-reviewer, holistic review |
 
 ## Process
 

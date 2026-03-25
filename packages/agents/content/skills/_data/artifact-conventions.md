@@ -110,8 +110,8 @@ Non-ticket paths are relative to the project directory. Category names remain co
 ```
 
 - **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`)
-- **role**: `architect`, `coder`, `code-reviewer`, `code-simplifier`, `orchestrator`, `planner`, `reviewer`, `silent-failure-reviewer`, `test-reviewer` (extensible — this is a common roles list, not exhaustive)
-- **artifact**: What the document is — `architecture`, `change-summary`, `code-review`, `code-simplifier-review`, `orchestration-plan`, `plan`, `review`, `run-manifest`, `run-summary`, `silent-failure-review`, `test-review`
+- **role**: `architect`, `coder`, `code-reviewer`, `code-simplification-reviewer`, `orchestrator`, `planner`, `reviewer`, `silent-failure-reviewer`, `test-reviewer` (extensible — this is a common roles list, not exhaustive)
+- **artifact**: What the document is — `architecture`, `change-summary`, `code-review`, `code-simplification-review`, `orchestration-plan`, `plan`, `review`, `run-manifest`, `run-summary`, `silent-failure-review`, `test-review`
 
 Underscore separates all structural parts. Hyphens are free for use within any part (role names, artifact names, slugs).
 
@@ -137,7 +137,7 @@ Example run directory (full orchestrated run with iterative review):
   10_coder_change-summary.md                            # Phase 4: coder fix
   11_reviewer_review.md                                 # Phase 4: re-review (iteration 2)
   12_code-reviewer_code-review.md                       # Phase 4: re-review (iteration 2)
-  13_code-simplifier_code-simplifier-review.md          # Phase 4a
+  13_code-simplification-reviewer_code-simplification-review.md # Phase 4a
   14_coder_change-summary.md                            # Phase 4a: coder fix
   15_reviewer_holistic-review.md                        # Phase 4b
   16_orchestrator_run-summary.md                        # Phase 5
@@ -429,13 +429,13 @@ The same pattern applies to all phases: `architecture`, `planning`, `implementat
 
 Each role maps to one of five workflow-function types:
 
-| roleType       | Description                                         | Example roles                                                                              |
-| -------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `orchestrator` | Coordinates phases and manages run state            | `orchestrator`                                                                             |
-| `analyst`      | Assesses impact and provides architectural guidance | `architect`                                                                                |
-| `planner`      | Produces implementation plans                       | `planner`                                                                                  |
-| `author`       | Writes or modifies project code                     | `coder`                                                                                    |
-| `reviewer`     | Evaluates code and produces findings                | `reviewer`, `code-reviewer`, `code-simplifier`, `silent-failure-reviewer`, `test-reviewer` |
+| roleType       | Description                                         | Example roles                                                                                           |
+| -------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `orchestrator` | Coordinates phases and manages run state            | `orchestrator`                                                                                          |
+| `analyst`      | Assesses impact and provides architectural guidance | `architect`                                                                                             |
+| `planner`      | Produces implementation plans                       | `planner`                                                                                               |
+| `author`       | Writes or modifies project code                     | `coder`                                                                                                 |
+| `reviewer`     | Evaluates code and produces findings                | `reviewer`, `code-reviewer`, `code-simplification-reviewer`, `silent-failure-reviewer`, `test-reviewer` |
 
 ### Artifact entry fields
 
@@ -531,20 +531,20 @@ V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 
 ### Run artifacts (in run directories)
 
-| Artifact                 | Purpose                                                   | Dispositions?                          |
-| ------------------------ | --------------------------------------------------------- | -------------------------------------- |
-| `architecture`           | Architectural impact assessment and integration guidance  | No                                     |
-| `change-summary`         | What changed + dispositions on prior findings (if any)    | Yes, when responding to a prior review |
-| `code-review`            | Aspect review: CLAUDE.md compliance, bugs, logic errors   | No                                     |
-| `code-simplifier-review` | Aspect review: simplification opportunities and dead code | No                                     |
-| `holistic-review`        | Holistic review after iterative convergence               | Only for own prior findings            |
-| `orchestration-plan`     | Structured orchestration steps (.md and .json variants)   | No                                     |
-| `plan`                   | Implementation plan document                              | No                                     |
-| `review`                 | Code review findings + dispositions on own prior findings | Only for own prior findings            |
-| `run-manifest`           | Immutable record of run initial conditions                | No                                     |
-| `run-summary`            | Final summary of the orchestrated run                     | No                                     |
-| `silent-failure-review`  | Aspect review: error handling and silent failure analysis | No                                     |
-| `test-review`            | Aspect review: test coverage quality and behavioral gaps  | No                                     |
+| Artifact                     | Purpose                                                   | Dispositions?                          |
+| ---------------------------- | --------------------------------------------------------- | -------------------------------------- |
+| `architecture`               | Architectural impact assessment and integration guidance  | No                                     |
+| `change-summary`             | What changed + dispositions on prior findings (if any)    | Yes, when responding to a prior review |
+| `code-review`                | Aspect review: CLAUDE.md compliance, bugs, logic errors   | No                                     |
+| `code-simplification-review` | Aspect review: simplification opportunities and dead code | No                                     |
+| `holistic-review`            | Holistic review after iterative convergence               | Only for own prior findings            |
+| `orchestration-plan`         | Structured orchestration steps (.md and .json variants)   | No                                     |
+| `plan`                       | Implementation plan document                              | No                                     |
+| `review`                     | Code review findings + dispositions on own prior findings | Only for own prior findings            |
+| `run-manifest`               | Immutable record of run initial conditions                | No                                     |
+| `run-summary`                | Final summary of the orchestrated run                     | No                                     |
+| `silent-failure-review`      | Aspect review: error handling and silent failure analysis | No                                     |
+| `test-review`                | Aspect review: test coverage quality and behavioral gaps  | No                                     |
 
 The first `coder_change-summary` in a run has no dispositions (nothing to respond to). Subsequent ones embed dispositions alongside the change summary.
 
@@ -711,12 +711,12 @@ Reviewer keys in `context.phases.parallelReview.reviewers`:
 
 Role segments in artifact filenames:
 
-| v1 role  | v2 role                   |
-| -------- | ------------------------- |
-| `aspect` | `silent-failure-reviewer` |
-| `aspect` | `test-reviewer`           |
-| `aspect` | `code-reviewer`           |
-| `aspect` | `code-simplifier`         |
+| v1 role  | v2 role                        |
+| -------- | ------------------------------ |
+| `aspect` | `silent-failure-reviewer`      |
+| `aspect` | `test-reviewer`                |
+| `aspect` | `code-reviewer`                |
+| `aspect` | `code-simplification-reviewer` |
 
 ### Timestamp format
 

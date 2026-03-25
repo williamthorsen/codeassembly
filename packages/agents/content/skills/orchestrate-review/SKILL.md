@@ -10,7 +10,7 @@ Run the review cycle on existing branch changes by invoking the `orchestrate` en
 
 ## Use cases
 
-- **Post-implementation review**: code was written manually or by a non-orchestrated agent and needs the full review cycle (parallel review, code-simplifier, holistic review).
+- **Post-implementation review**: code was written manually or by a non-orchestrated agent and needs the full review cycle (parallel review, code-simplification-reviewer, holistic review).
 - **Re-review after manual fixes**: a previous orchestrated run exited with `needs_manual_review`, fixes were applied manually, and a fresh review cycle is needed.
 - **External PR review**: review changes on a branch that was created outside the orchestration workflow.
 
@@ -35,9 +35,9 @@ Use `orchestrate-dev` instead when you need the full development workflow (archi
 review-cycle (required)
 ```
 
-| Phase          | Requirement | Description                                       |
-| -------------- | ----------- | ------------------------------------------------- |
-| `review-cycle` | `required`  | Parallel review, code-simplifier, holistic review |
+| Phase          | Requirement | Description                                                    |
+| -------------- | ----------- | -------------------------------------------------------------- |
+| `review-cycle` | `required`  | Parallel review, code-simplification-reviewer, holistic review |
 
 ## Process
 

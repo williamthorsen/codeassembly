@@ -24,6 +24,9 @@ aspect-silent-failure-reviewer:
 aspect-test-reviewer:
   model: sonnet
 
+code-simplification-reviewer:
+  model: sonnet
+
 planner:
   model: sonnet
 
