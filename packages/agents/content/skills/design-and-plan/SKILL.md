@@ -208,18 +208,17 @@ Present the plan to the user. Revise until approved.
 
    If `baseSha` could not be resolved, omit the `baseSha` line entirely.
 
-4. Report paths and present next steps. The plan was developed interactively with user approval at each stage — use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+4. Report paths and present next steps.
 
 ```
 Design and plan complete:
   Ticket: {ticket_path}
   Plan:   {plan_path}
-
-Next steps:
-  1. {emoji} {option}: ...
-  2. {emoji} **{recommended option}** (🟢 recommended): ...
-  3. {emoji} {option}
 ```
+
+<HARD-GATE>
+Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+</HARD-GATE>
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.
 

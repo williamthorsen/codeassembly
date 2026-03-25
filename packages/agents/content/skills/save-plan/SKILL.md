@@ -52,15 +52,12 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 Report the file path, then present a ticket prompt and next steps together in a single message. Do not wait for the user's reply before showing next steps.
 
-The plan was developed in conversation with user participation — use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Omit the ticket path from option lines — no ticket path is available at completion time.
-
 ```
 Plan saved: {plan_path}
 
 Would you like to create or update a ticket for this work? If so, use the `create-ticket` skill.
-
-Next steps:
-  1. {emoji} {option}: ...
-  2. {emoji} **{recommended option}** (🟢 recommended): ...
-  3. {emoji} {option}
 ```
+
+<HARD-GATE>
+Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. The plan was developed in conversation with user participation — use this as recommendation context. Omit the ticket path from option lines — no ticket path is available at completion time.
+</HARD-GATE>

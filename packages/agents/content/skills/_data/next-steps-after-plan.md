@@ -19,10 +19,18 @@ Options that invoke a skill include context-clearing guidance:
 - **Refine plan** and **Orchestrate**: prepend "Clear context and use..." — the plan artifact is self-contained, and orchestration dispatches fresh subagents, so prior conversation wastes tokens and can introduce bias.
 - **Implement directly**: no "Clear context" prefix — conversation history is valuable for manual implementation.
 
+Example:
+
 ```
 Next steps:
-  1. 🧠 Refine plan: Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
-  2. 🎶 **Orchestrate** (🟢 recommended): Clear context and use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_source}
+  1. 🧠 Refine plan:
+     Clear context and use the `refine-plan` skill with
+     plan: {plan_path},
+     ticket: {ticket_source}
+  2. 🎶 **Orchestrate** (recommended):
+     Clear context and use the `orchestrate-dev` skill with
+     plan: {plan_path},
+     ticket: {ticket_source}
   3. 🚀 Implement directly
 ```
 

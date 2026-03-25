@@ -75,17 +75,16 @@ Parse the return block:
 
 Evaluate the finding counts:
 
-- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement, then present next steps. The plan was just reviewed with no issues — use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Use `{plan_path}` (the original plan argument, not `{revision_output_path}` — no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
+- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement, then present next steps.
 
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
     Review: {review_output_path}
-
-  Next steps:
-    1. {emoji} {option}: ...
-    2. {emoji} **{recommended option}** (🟢 recommended): ...
-    3. {emoji} {option}
   ```
+
+  <HARD-GATE>
+  Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. The plan was just reviewed with no issues — use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}` — no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
+  </HARD-GATE>
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): skip user interaction. Proceed to step 5 with empty user answers.
 
@@ -211,14 +210,9 @@ Plan refined:
   Revised: {revision_output_path}
 ```
 
-After reporting, present next steps. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, orchestration is the typical recommendation. Use this as recommendation context when applying the rules in [next-steps-after-plan](../_data/next-steps-after-plan.md). Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
-
-```
-Next steps:
-  1. {emoji} {option}: ...
-  2. {emoji} **{recommended option}** (🟢 recommended): ...
-  3. {emoji} {option}
-```
+<HARD-GATE>
+Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, orchestration is the typical recommendation. Use this as recommendation context. Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
+</HARD-GATE>
 
 ## Edge cases
 
