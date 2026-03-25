@@ -87,6 +87,14 @@ For each deferred item found, assign a prefix from the item vocabulary based on 
 
 Record the source attribution for each item (e.g., "run-summary", "holistic review", "conversation").
 
+#### 1b-iii. Assess complexity
+
+For each finding (not legacy items or insights), assess its complexity using the [complexity classification](../_data/complexity-classification.md) rubric. Assign a level (1–4) based on the characteristics described in the rubric.
+
+Items at levels 1–2 (trivial or mechanical) are **quick-fix candidates** — simple enough for the agent to apply immediately without review. Tag these items for the quick-fix pass in Phase 2a.
+
+Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
+
 #### 1c. Scan for insights
 
 Insights are notable observations worth preserving — patterns learned, surprising findings, or knowledge that would benefit future work.
@@ -116,9 +124,35 @@ Run `git status` and `git log --oneline {default_branch}..HEAD` to understand:
 - How many commits are on the branch?
 - Has a change summary already been generated? (Check for `*_change-summary.md` artifacts.)
 
-### Phase 2: Inventory and action menu
+### Phase 2a: Quick fixes
 
-Present the user with an inventory of addressable items and a numbered action menu. Only include sections that have at least one item.
+If any findings were tagged as quick-fix candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. Skip this phase entirely if no items qualify — do not show an empty section.
+
+#### Output format
+
+```
+### Quick fixes
+
+These findings are simple enough to apply now:
+
+  {prefix} {ID}    {description}
+
+  {prefix} {ID}    {description}
+
+Apply quick fixes? Reply "all", numbers, or "skip"
+```
+
+#### Response handling
+
+- **Applied items**: make the changes and commit them with a message summarizing the fixes. Stage only the quick-fix changes — if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
+- **Skipped items**: demote back into the Findings section. They become eligible for the "Create tickets for findings" action in Phase 2b.
+- **Partial selection** (e.g., `"1, 3"`): apply selected items, demote the rest.
+
+**Wait for the user to respond before proceeding.**
+
+### Phase 2b: Inventory and action menu
+
+Present the user with an inventory of remaining addressable items and a numbered action menu. Only include sections that have at least one item. Items applied as quick fixes in Phase 2a do not appear here.
 
 #### Output format
 
@@ -195,7 +229,7 @@ These are defaults. Always include any section where items were actually found, 
 
 ### Phase 3: Execution
 
-Parse the user's response and execute confirmed actions.
+Parse the user's response to the Phase 2b action menu and execute confirmed actions.
 
 #### Response parsing
 
@@ -245,6 +279,18 @@ After all actions are processed, present a concise report:
 ```
 
 Omit empty sections. Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
+
+### Phase 5: PR prompt
+
+After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits — whether from the session's earlier work, quick fixes applied in Phase 2a, or both — prompt the user to create a PR:
+
+```
+Ready to create a PR? Use `/summarize-change` to generate a change summary, then `/create-pr` to open the pull request.
+```
+
+Skip this prompt if there are no commits on the branch (e.g., a research/exploration session with no code changes).
+
+This is advisory — not an action in a numbered menu. Consistent with the "never auto-execute" constraint.
 
 ## Ticket title conventions
 
