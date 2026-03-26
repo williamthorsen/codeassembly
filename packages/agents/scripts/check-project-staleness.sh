@@ -61,17 +61,15 @@ main() {
   [[ -f "$repo_root/$PROJECT_MD" ]] || exit 0
 
   # Bail silently if PROJECT.md has no git history
-  local last_modified_epoch last_modified_date
+  local last_modified_epoch
   last_modified_epoch="$(git log -1 --format=%ct -- "$PROJECT_MD" 2>/dev/null)" || exit 0
   [[ -n "$last_modified_epoch" ]] || exit 0
-
-  last_modified_date="$(git log -1 --format=%ci -- "$PROJECT_MD")"
 
   # Count meaningful commits since the last modification.
   # Use git log --name-only in a single pass, parsed by awk to exclude
   # commits that only touch package manifests and lock files.
   local meaningful_count
-  meaningful_count="$(count_meaningful_commits "$last_modified_date")"
+  meaningful_count="$(count_meaningful_commits "$last_modified_epoch")"
 
   if [[ "$meaningful_count" -ge "$threshold" ]]; then
     local formatted_date relative_time
@@ -91,13 +89,13 @@ MSG
 
 # region | Helper functions
 
-# Count commits since a date, excluding those that only touch package/lock files.
+# Count commits since an epoch timestamp, excluding those that only touch package/lock files.
 count_meaningful_commits() {
-  local since_date="$1"
+  local since_epoch="$1"
 
-  # Produce a stream of "COMMIT <sha>\n<file1>\n<file2>\n..." blocks.
+  # Produce a stream of "COMMIT\n<file1>\n<file2>\n..." blocks.
   # Awk counts commits where at least one file is NOT a package/lock file.
-  git log --pretty="format:COMMIT" --name-only --after="$since_date" HEAD 2>/dev/null |
+  git log --pretty="format:COMMIT" --name-only --after="@$since_epoch" HEAD 2>/dev/null |
     awk '
     /^COMMIT$/ {
       if (NR > 1 && has_meaningful) count++

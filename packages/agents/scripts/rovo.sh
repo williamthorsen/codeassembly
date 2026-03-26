@@ -14,10 +14,12 @@ readonly PROG="$(basename "$0")"
 
 # Main flow
 main() {
-  # Show help (manual check — getopts cannot parse long options)
-  if [[ "${1:-}" == "--help" ]]; then
-    show_usage 0
-  fi
+  # Handle launcher flags before forwarding to acli.
+  # Use -- to pass flags like -h directly to acli: rovo.sh -- -h
+  case "${1:-}" in
+  -h | --help) show_usage 0 ;;
+  --) shift ;;
+  esac
 
   # Check dependencies
   if ! command -v acli &>/dev/null; then
@@ -67,9 +69,11 @@ so, then launches acli rovodev run with all arguments forwarded.
 Usage:
   $PROG [args...]
   $PROG --help
+  $PROG -- [args passed directly to acli]
 
 Options:
   -h, --help   Show this help
+  --           Stop processing launcher flags; forward remaining args to acli
 
 Dependencies:
   acli         Atlassian CLI
@@ -77,6 +81,7 @@ Dependencies:
 Examples:
   $PROG
   $PROG --yolo
+  $PROG -- --help          # Show acli's help, not the launcher's
 USAGE
   exit "${1:-1}"
 }

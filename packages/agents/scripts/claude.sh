@@ -14,10 +14,12 @@ readonly PROG="$(basename "$0")"
 
 # Main flow
 main() {
-  # Show help (manual check — getopts cannot parse long options)
-  if [[ "${1:-}" == "--help" ]]; then
-    show_usage 0
-  fi
+  # Handle launcher flags before forwarding to claude.
+  # Use -- to pass flags like -h directly to claude: claude.sh -- -h
+  case "${1:-}" in
+  -h | --help) show_usage 0 ;;
+  --) shift ;;
+  esac
 
   # Check dependencies
   if ! command -v claude &>/dev/null; then
@@ -67,9 +69,11 @@ so, then launches claude with all arguments forwarded.
 Usage:
   $PROG [args...]
   $PROG --help
+  $PROG -- [args passed directly to claude]
 
 Options:
   -h, --help   Show this help
+  --           Stop processing launcher flags; forward remaining args to claude
 
 Dependencies:
   claude       Claude Code CLI
@@ -77,7 +81,7 @@ Dependencies:
 Examples:
   $PROG
   $PROG --resume
-  $PROG "explain this code"
+  $PROG -- --help          # Show claude's help, not the launcher's
 USAGE
   exit "${1:-1}"
 }
