@@ -66,6 +66,12 @@ describe(rewriteMarkdownPaths, () => {
       expected: 'See [review cycle](~/.claude/skills/orchestrate/modules/review-cycle.md) for details.',
     },
     {
+      name: 'leaves anchor-only links untouched',
+      fileRelPath: 'prepare-pr/SKILL.md',
+      content: 'See [Saving](#saving) section.',
+      expected: 'See [Saving](#saving) section.',
+    },
+    {
       name: 'rewrites multiple links in the same content',
       fileRelPath: 'commit/SKILL.md',
       content: 'See [format](../_data/commit-format.md) and [types](../_data/work-types.md).',
@@ -143,6 +149,13 @@ describe(rewritePathsInDirectory, () => {
 
     const result = await readFile(path.join(skillDir, 'notes.txt'), 'utf8');
     expect(result).toBe(originalContent);
+  });
+
+  it('handles an empty directory without error', async () => {
+    const skillDir = path.join(skillsDestDir, 'empty-skill');
+    await mkdir(skillDir, { recursive: true });
+
+    await expect(rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills')).resolves.toBeUndefined();
   });
 
   it('does not write files when no changes are needed', async () => {

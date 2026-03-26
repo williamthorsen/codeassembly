@@ -1,4 +1,4 @@
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /**
@@ -11,8 +11,8 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, skill
 
   // Match Markdown links [text](target) where target is a relative path
   return content.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (_match, text: string, target: string) => {
-    // Skip non-relative targets: URLs, absolute paths, tilde paths
-    if (/^https?:\/\//.test(target) || target.startsWith('/') || target.startsWith('~')) {
+    // Skip non-relative targets: URLs, absolute paths, tilde paths, anchor-only links
+    if (/^https?:\/\//.test(target) || target.startsWith('/') || target.startsWith('~') || target.startsWith('#')) {
       return `[${text}](${target})`;
     }
 
@@ -50,16 +50,25 @@ export async function rewritePathsInDirectory(
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry);
-    const stats = await stat(fullPath);
+    const stats = await lstat(fullPath);
+
+    if (stats.isSymbolicLink()) {
+      continue;
+    }
 
     if (stats.isDirectory()) {
       await rewritePathsInDirectory(fullPath, skillsDestDir, skillsPrefix);
     } else if (entry.endsWith('.md')) {
-      const fileRelPath = path.relative(skillsDestDir, fullPath).split(path.sep).join('/');
-      const content = await readFile(fullPath, 'utf8');
-      const rewritten = rewriteMarkdownPaths(content, fileRelPath, skillsPrefix);
-      if (rewritten !== content) {
-        await writeFile(fullPath, rewritten, 'utf8');
+      try {
+        const fileRelPath = path.relative(skillsDestDir, fullPath).split(path.sep).join('/');
+        const content = await readFile(fullPath, 'utf8');
+        const rewritten = rewriteMarkdownPaths(content, fileRelPath, skillsPrefix);
+        if (rewritten !== content) {
+          await writeFile(fullPath, rewritten, 'utf8');
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to rewrite paths in ${fullPath}: ${message}`);
       }
     }
   }
