@@ -536,4 +536,57 @@ describe('installCommand', () => {
     // The surrounding double quotes should be stripped
     expect(doubleQuotedEntry.description).toBe('A double-quoted description');
   });
+
+  it('should rewrite relative Markdown link paths to absolute in copy mode', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions(), tempDir);
+
+    // code-patterns SKILL.md has a Markdown link: [naming-conventions.md](../_data/naming-conventions.md)
+    const codePatternSkillPath = path.join(claudeHome, 'skills', 'code-patterns', 'SKILL.md');
+    const content = await readFile(codePatternSkillPath, 'utf8');
+
+    // Relative Markdown link paths should have been rewritten to ~/... absolute paths
+    expect(content).toContain('~/.claude/skills/_data/naming-conventions.md');
+
+    // No remaining relative ../_data/ Markdown link references should exist
+    expect(content).not.toMatch(/\]\(\.\.\/_data\//);
+  });
+
+  it('should preserve anchor fragments in rewritten paths', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions(), tempDir);
+
+    // review-criteria has a link with an anchor fragment:
+    // [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl)
+    const reviewCriteriaPath = path.join(claudeHome, 'skills', 'review-criteria', 'SKILL.md');
+    const content = await readFile(reviewCriteriaPath, 'utf8');
+
+    // Anchor fragment should be preserved in the rewritten path
+    expect(content).toContain('~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrsl');
+  });
+
+  it('should not rewrite paths in link mode', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeOptions({ link: true }), tempDir);
+
+    // In link mode, skills are installed as symlinks pointing to the source directory.
+    // The rewriter should not run, so the source files remain unchanged.
+    const codePatternSkillPath = path.join(claudeHome, 'skills', 'code-patterns');
+    const stats = lstatSync(codePatternSkillPath);
+    expect(stats.isSymbolicLink()).toBe(true);
+
+    // Verify that the original source file still has relative paths (not rewritten)
+    const contentDir = resolveContentDir();
+    const sourceContent = await readFile(path.join(contentDir, 'skills', 'code-patterns', 'SKILL.md'), 'utf8');
+    expect(sourceContent).toContain('../_data/naming-conventions.md');
+  });
 });

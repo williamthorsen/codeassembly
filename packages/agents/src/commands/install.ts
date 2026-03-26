@@ -5,6 +5,7 @@ import { resolveContentDir } from '../lib/content-resolver.js';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.js';
 import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.js';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.js';
+import { rewritePathsInDirectory } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type { AgentsManifest, InstallOptions, ManifestEntry, PlatformId, PlatformManifest } from '../lib/types.js';
 
@@ -39,6 +40,8 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
     const entries: Array<ManifestEntry> = [];
 
     // Install skills (shared + platform-specific)
+    const platformConfig = PLATFORMS[platformId];
+    const skillsPrefix = `${platformConfig.homeDir}/${platformConfig.skillsDir}`;
     const skillEntries = await installSkills(
       contentDir,
       paths.skillsDir,
@@ -46,6 +49,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
       existingByPath,
       options,
       platformId,
+      skillsPrefix,
     );
     entries.push(...skillEntries);
 
@@ -103,6 +107,7 @@ async function installSkills(
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
   platformId: PlatformId,
+  skillsPrefix: string,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const skillsSrcDir = path.join(contentDir, 'skills');
   const dirEntries = await readdir(skillsSrcDir);
@@ -120,6 +125,7 @@ async function installSkills(
       platformHome,
       existingByPath,
       options,
+      skillsPrefix,
     );
     entries.push(result);
   }
@@ -148,6 +154,7 @@ async function installSkills(
       platformHome,
       existingByPath,
       options,
+      skillsPrefix,
       '(platform-specific)',
     );
     entries.push(result);
@@ -169,6 +176,7 @@ async function installSkillEntry(
   platformHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
+  skillsPrefix: string,
   label = '',
 ): Promise<ManifestEntry> {
   if (options.dryRun) {
@@ -189,7 +197,13 @@ async function installSkillEntry(
 
   await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
 
+  // Rewrite relative Markdown paths to absolute in copy mode for directories
   const stats = await stat(srcPath);
+  if (!options.link && stats.isDirectory()) {
+    const skillsDestDir = path.dirname(destPath);
+    await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix);
+  }
+
   return {
     relativePath,
     contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
