@@ -1,19 +1,19 @@
 ---
 name: assess-ticket
-description: Assess a ticket against the current codebase for drift, relevance, and progress
+description: Assess a ticket against the current codebase for drift, relevance, progress, and complexity
 user-invocable: true
 ---
 
 # Assess ticket
 
-Assess a ticket's relationship to the current codebase. Produces a structured assessment with constrained verdicts and supporting evidence.
+Assess a ticket against the current codebase across four dimensions: drift, relevance, progress, and complexity. Produces a structured assessment with constrained verdicts and supporting evidence.
 
 **Announce at start:** "Using assess-ticket to assess {ticket reference} (mode: {mode})."
 
 ## Arguments
 
 - **Ticket source** (optional): issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
-- **Mode** (optional): `drift`, `relevance`, `progress`, or `all` (default: `all`)
+- **Mode** (optional): `drift`, `relevance`, `progress`, `complexity`, or `all` (default: `all`)
 
 ## Process
 
@@ -23,7 +23,7 @@ Resolve the ticket source using the [ticket source resolution](../_data/ticket-s
 
 ### 2. Investigate
 
-Run the investigation for the requested mode (or all modes in order when mode is `all`).
+Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, complexity is investigated last so it benefits from context gathered during drift, relevance, and progress analysis.
 
 #### Drift
 
@@ -79,9 +79,25 @@ Determine whether the described work has been implemented. The output format ada
 - 🟠 `partial` — some of the described work has been done but significant portions remain
 - 🔴 `none` — none of the described work is present in the codebase
 
+#### Complexity
+
+Classify how complex the described work is relative to the current codebase. Reference the [complexity classification](../_data/complexity-classification.md) rubric for level definitions.
+
+1. Identify the work surface — files, modules, packages, APIs, interfaces, and dependencies that the ticket describes changing or creating. Verify against the codebase.
+2. Assess cross-cutting extent — how many modules or packages are touched, whether changes cross package boundaries, and whether shared interfaces or data structures are affected.
+3. Assess decision density — whether the work follows established patterns or requires new ones, and whether design choices could go multiple ways.
+4. Classify against the rubric. When characteristics span two levels, prefer the higher level.
+
+**Verdicts:**
+
+- ⚪ `trivial` — single-line or purely mechanical; no judgment needed
+- 🟢 `mechanical` — follows an obvious pattern; single module, no API or behavioral changes
+- 🟠 `involved` — requires understanding context; touches multiple files or modules; may involve design decisions
+- 🔴 `architectural` — cross-cutting concerns, new patterns, dependency boundary changes, or far-reaching consequences
+
 ### 3. Output
 
-Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all three dimensions in order.
+Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all four dimensions in order.
 
 Obtain the base SHA via `git rev-parse --short HEAD`.
 
@@ -107,6 +123,11 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 - [x] {Criterion met}
 - [x] {Criterion met}
 - [ ] {Criterion not met}
+
+🧩 **Complexity:** {emoji} `{label}`
+
+- {Evidence bullet}
+- {Evidence bullet}
 ```
 
 **When the ticket has no acceptance criteria:**
@@ -130,9 +151,16 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
 - {Evidence bullet}
 - {Evidence bullet}
+
+🧩 **Complexity:** {emoji} `{label}`
+
+- {Evidence bullet}
+- {Evidence bullet}
 ```
 
 ### Emoji mapping
+
+Drift, relevance, and progress use a **concern scale** — green means no concern, red means high concern:
 
 | Verdict position | Emoji |
 | ---------------- | ----- |
@@ -140,13 +168,23 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 | Mixed / unclear  | 🟠    |
 | High concern     | 🔴    |
 
+Complexity uses a **size scale** — emojis represent effort and scope, not concern:
+
+| Level | Emoji |
+| ----- | ----- |
+| 1     | ⚪    |
+| 2     | 🟢    |
+| 3     | 🟠    |
+| 4     | 🔴    |
+
 ### Verdict reference
 
-| Dimension     | 🟢         | 🟠          | 🔴           |
-| ------------- | ---------- | ----------- | ------------ |
-| **Drift**     | `none`     | `partial`   | `severe`     |
-| **Relevance** | `relevant` | `uncertain` | `superseded` |
-| **Progress**  | `complete` | `partial`   | `none`       |
+| Dimension      | ⚪        | 🟢           | 🟠          | 🔴              |
+| -------------- | --------- | ------------ | ----------- | --------------- |
+| **Drift**      | —         | `none`       | `partial`   | `severe`        |
+| **Relevance**  | —         | `relevant`   | `uncertain` | `superseded`    |
+| **Progress**   | —         | `complete`   | `partial`   | `none`          |
+| **Complexity** | `trivial` | `mechanical` | `involved`  | `architectural` |
 
 ## Key principles
 
