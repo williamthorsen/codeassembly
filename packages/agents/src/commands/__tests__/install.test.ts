@@ -563,12 +563,12 @@ describe('installCommand', () => {
     await installCommand(makeOptions(), tempDir);
 
     // review-criteria has a link with an anchor fragment:
-    // [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrsl)
+    // [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix)
     const reviewCriteriaPath = path.join(claudeHome, 'skills', 'review-criteria', 'SKILL.md');
     const content = await readFile(reviewCriteriaPath, 'utf8');
 
     // Anchor fragment should be preserved in the rewritten path
-    expect(content).toContain('~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrsl');
+    expect(content).toContain('~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix');
   });
 
   it('should not rewrite paths in link mode', async () => {

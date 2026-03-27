@@ -19,9 +19,10 @@ describe(rewriteMarkdownPaths, () => {
     {
       name: 'preserves anchor fragments',
       fileRelPath: 'review-criteria/SKILL.md',
-      content: 'See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrsl) for criteria.',
+      content:
+        'See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for criteria.',
       expected:
-        'See [finding scheme](~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrsl) for criteria.',
+        'See [finding scheme](~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for criteria.',
     },
     {
       name: 'leaves URL links untouched',
