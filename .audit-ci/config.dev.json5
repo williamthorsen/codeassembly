@@ -2,8 +2,9 @@
   "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
   "moderate": true,
   "allowlist": [
-    // js-yaml - Transitive from @changesets/cli (dev-only)
-    // "GHSA-mh29-5h37-fv8m", // Prototype pollution
+    // brace-expansion
+    // https://github.com/advisories/GHSA-f886-m6hf-6m8v
+    "GHSA-f886-m6hf-6m8v",
   ],
   "extra-args": ["--dev"],
   "report-type": "summary",
