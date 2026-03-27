@@ -14,17 +14,17 @@ This skill is context-adaptive: it detects the session type and adjusts its reco
 
 Items in the wrap-up output use spelled-out prefixes followed by a short ID. The prefix tells the developer the nature of the work at a glance. The ID provides a handle for referencing the item in instructions.
 
-| Prefix           | ID pattern | Meaning                                        |
-| ---------------- | ---------- | ---------------------------------------------- |
-| `fixme`          | `F{n}`     | Must fix — bugs, security issues, breakage     |
-| `warning`        | `W{n}`     | Questionable — may need action, needs judgment |
-| `todo`           | `T{n}`     | Should do — not urgent, can wait               |
-| `recommendation` | `R{n}`     | Advisable — discretionary improvement          |
-| `suggestion`     | `S{n}`     | Optional — nice-to-have                        |
-| `legacy`         | `L{n}`     | Pre-existing — noticed in old code             |
-| `insight`        | `I{n}`     | Knowledge — pattern, gotcha, or learning       |
+| Prefix           | ID pattern         | Meaning                                        |
+| ---------------- | ------------------ | ---------------------------------------------- |
+| `fixme`          | `F{n}`             | Must fix — bugs, security issues, breakage     |
+| `warning`        | `W{n}`             | Questionable — may need action, needs judgment |
+| `todo`           | `T{n}`             | Should do — not urgent, can wait               |
+| `recommendation` | `R{n}`             | Advisable — discretionary improvement          |
+| `suggestion`     | `S{n}`             | Optional — nice-to-have                        |
+| `legacy`         | `{F,W,T,R,S}{n}-L` | Pre-existing — noticed in old code             |
+| `insight`        | `I{n}`             | Knowledge — pattern, gotcha, or learning       |
 
-This vocabulary is consistent with the F/T/W/R/S/L classification used by review agents. The `insight` prefix extends it for knowledge items that aren't defects.
+This vocabulary is consistent with the F/W/T/R/S classification (with `-L` suffix for legacy) used by review agents. The `insight` prefix extends it for knowledge items that aren't defects.
 
 ### Numbering rules
 
@@ -80,10 +80,10 @@ For each match, extract a short description of what was deferred and why (if sta
 
 For each deferred item found, assign a prefix from the item vocabulary based on the nature of the work:
 
-- Items from **review artifacts** retain their original classification (F/W/T/R/S). If the source used F/W/T/R/S/L IDs, map to the corresponding prefix but assign a fresh number.
+- Items from **review artifacts** retain their original classification (F/W/T/R/S). If the source used severity-tagged legacy IDs (e.g., `F3-L`), map to the corresponding prefix but assign a fresh number.
 - Items from **run-summary** `## Deferred items` section: read the item description and classify based on severity. Work explicitly deferred by the architect/planner is typically `todo`. Bugs or failures are `fixme`. Improvements are `recommendation` or `suggestion`.
 - Items from **conversation scanning**: classify based on the context in which they were deferred. "We should fix X" → `fixme` or `todo`. "It would be nice to Y" → `suggestion`. "Consider Z approach" → `recommendation`.
-- **Legacy items** (pre-existing issues not authored in this branch) get the `legacy` prefix and are collected into a separate section. These come from review artifacts classified as L, or from conversation observations about old code.
+- **Legacy items** (pre-existing issues not authored in this branch) get the `legacy` prefix and are collected into a separate section. These come from review artifacts with `-L` suffix IDs, or from conversation observations about old code.
 
 Record the source attribution for each item (e.g., "run-summary", "holistic review", "conversation").
 

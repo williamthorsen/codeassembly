@@ -31,7 +31,7 @@ You will receive:
 1. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, using the merge-base SHA provided in your task prompt.
 2. **Read changed files**: read the full files, not just diffs, to understand context
 3. **Evaluate against criteria**: apply review-criteria skill
-4. **Form preliminary findings**: classify each finding into the F/W/T/R/S/L scheme and determine overall criticality
+4. **Form preliminary findings**: classify each finding into the F/W/T/R/S scheme (with `-L` suffix for legacy) and determine overall criticality
 5. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
 6. **Refine if turns remain**: if you have remaining turns, continue evaluation and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
 
@@ -45,7 +45,7 @@ You will receive:
 
 Each finding must include:
 
-- **ID**: sequential within category (F/W/T/R/S/L — see `review-criteria` skill for the full finding scheme)
+- **ID**: sequential within category (F/W/T/R/S, with `-L` suffix for legacy — see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
 - **Description**: what the issue is
 - **Recommendation**: what to do about it
@@ -102,12 +102,14 @@ Write your review to the output path provided in your task prompt.
 - **Description:** {optional improvement}
 - **Recommendation:** {how to improve}
 
-#### L1: {title}
+#### F3-L: {title}
 
-- **Severity:** legacy
+- **Severity:** critical (legacy)
 - **Location:** `src/auth/utils.ts:15`
 - **Description:** {pre-existing issue observed}
 - **Recommendation:** {future opportunity}
+
+{Use the same pattern for all severity letters: `W2-L` with `warning (legacy)`, `T1-L` with `todo (legacy)`, etc.}
 ```
 
 If no findings, write:
@@ -129,7 +131,7 @@ When reviewing after a coder has responded to previous findings:
 
 1. Treat coder responses as **claims to verify**, not facts. Read the actual code to confirm fixes.
 2. If a finding was marked NOT_FIXED with a justification, **independently evaluate** the justification. Don't accept it just because a reason was given.
-3. If you disagree with the coder's response on a finding for the **second time**, bump its severity up one level: `S → R → T → W → F`. L findings are never escalated.
+3. If you disagree with the coder's response on a finding for the **second time**, bump its severity up one level: `S → R → T → W → F`. Legacy (`-L`) findings are never escalated.
 4. New issues discovered during re-review get new IDs and are treated the same as first-round findings.
 5. Do NOT lower severity on a finding just because the coder attempted a fix. Either it's fixed or it isn't.
    </HARD-GATE>

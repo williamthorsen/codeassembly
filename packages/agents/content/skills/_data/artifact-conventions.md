@@ -604,18 +604,18 @@ A role can only disposition findings directed at it or its own prior findings. T
 | Reviewer | Own prior findings (revise/withdraw in light of new context) | Coder rejections (re-raise as escalated finding instead) |
 | Overseer | Any finding (arbiter authority)                              | —                                                        |
 
-## Finding scheme (F/W/T/R/S/L)
+## Finding scheme (F/W/T/R/S + legacy suffix)
 
 Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
 
-| ID     | Category       | Criticality | Merge-blocking?            |
-| ------ | -------------- | ----------- | -------------------------- |
-| `F{n}` | FIXME          | `high`      | Always                     |
-| `W{n}` | Warning        | `medium`    | Unless justified           |
-| `T{n}` | TODO           | `low`       | Never (ticket if deferred) |
-| `R{n}` | Recommendation | `low`       | Never (note if deferred)   |
-| `S{n}` | Suggestion     | `none`      | Never (piggyback only)     |
-| `L{n}` | Legacy         | excluded    | Never                      |
+| ID                 | Category       | Criticality | Merge-blocking?            |
+| ------------------ | -------------- | ----------- | -------------------------- |
+| `F{n}`             | FIXME          | `high`      | Always                     |
+| `W{n}`             | Warning        | `medium`    | Unless justified           |
+| `T{n}`             | TODO           | `low`       | Never (ticket if deferred) |
+| `R{n}`             | Recommendation | `low`       | Never (note if deferred)   |
+| `S{n}`             | Suggestion     | `none`      | Never (piggyback only)     |
+| `{F,W,T,R,S}{n}-L` | Legacy         | excluded    | Never                      |
 
 ### Category criteria
 
@@ -650,24 +650,26 @@ Used by review-producing skills and agents for structured code review findings. 
 - Additional test cases for edge cases
 - Documentation improvements
 
-**Legacy (L)** — pre-existing code observation:
+**Legacy (-L suffix)** — pre-existing code observation:
 
-- Issues in code not authored in this branch
+- Issues in code not authored in this branch — use the same severity letter as the equivalent author finding plus a `-L` suffix
+- Legacy findings share the numbering sequence with author findings of the same severity letter. Example: if a review has `F1`, `F2` (author findings), the first legacy FIXME is `F3-L`
+- Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
 - Frame as future opportunities, not current defects
 - Never count against the review score
 
 ### Overall criticality mapping
 
-| Highest finding present | Criticality | Meaning                    |
-| ----------------------- | ----------- | -------------------------- |
-| None, or only S/L       | `none`      | No actionable findings     |
-| T and/or R (no W/F)     | `low`       | Deferrable items available |
-| W (no F)                | `medium`    | Real issues to address     |
-| F                       | `high`      | Must fix before merge      |
+| Highest finding present    | Criticality | Meaning                    |
+| -------------------------- | ----------- | -------------------------- |
+| None, only S, or only `-L` | `none`      | No actionable findings     |
+| T and/or R (no W/F)        | `low`       | Deferrable items available |
+| W (no F)                   | `medium`    | Real issues to address     |
+| F                          | `high`      | Must fix before merge      |
 
 ### Re-review severity escalation
 
-`S → R → T → W → F`. L findings are never escalated.
+`S → R → T → W → F`. Legacy (`-L`) findings are never escalated.
 
 ## Artifact lifecycle
 

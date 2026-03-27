@@ -35,7 +35,7 @@ You will receive:
 
 ## Finding scheme (C/X)
 
-Plan review uses a resolution-oriented finding scheme, not the severity-oriented F/W/T/R/S/L scheme used for code review. The key decision is "who resolves this" -- the reviser autonomously, or the user.
+Plan review uses a resolution-oriented finding scheme, not the severity-oriented F/W/T/R/S scheme (with `-L` suffix for legacy) used for code review. The key decision is "who resolves this" -- the reviser autonomously, or the user.
 
 - `C{n}` -- Completeness findings (decision gaps the coder would fill with its own judgment)
 - `X{n}` -- Correctness findings (factual errors, structural issues, requirements gaps)

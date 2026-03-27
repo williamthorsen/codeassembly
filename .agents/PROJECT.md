@@ -122,16 +122,16 @@ The `orchestrate` skill is the internal pipeline engine. It:
 
 **Subagent roles:**
 
-| Subagent                         | Phase             | Purpose                                                                |
-| -------------------------------- | ----------------- | ---------------------------------------------------------------------- |
-| `orchestrated-architect`         | Architecture      | Assesses architectural impact; classifies as none/low/medium/high      |
-| `orchestrated-planner`           | Planning          | Creates ordered implementation plans (.md + .json)                     |
-| `orchestrated-coder`             | Implementation    | Implements code, runs quality gates, commits, writes change-summary.md |
-| `orchestrated-reviewer`          | Review + Holistic | Structured code review with F/W/T/R/S/L finding scheme                 |
-| `aspect-code-reviewer`           | Review (parallel) | Focused on CLAUDE.md compliance, bugs, logic errors                    |
-| `aspect-silent-failure-reviewer` | Review (parallel) | Focused on error-handling and silent failures                          |
-| `aspect-test-reviewer`           | Review (parallel) | Focused on test coverage quality and behavioral gaps                   |
-| `planner`                        | Standalone        | Breaks stories into independently orchestrable steps                   |
+| Subagent                         | Phase             | Purpose                                                                         |
+| -------------------------------- | ----------------- | ------------------------------------------------------------------------------- |
+| `orchestrated-architect`         | Architecture      | Assesses architectural impact; classifies as none/low/medium/high               |
+| `orchestrated-planner`           | Planning          | Creates ordered implementation plans (.md + .json)                              |
+| `orchestrated-coder`             | Implementation    | Implements code, runs quality gates, commits, writes change-summary.md          |
+| `orchestrated-reviewer`          | Review + Holistic | Structured code review with F/W/T/R/S finding scheme (+ `-L` suffix for legacy) |
+| `aspect-code-reviewer`           | Review (parallel) | Focused on CLAUDE.md compliance, bugs, logic errors                             |
+| `aspect-silent-failure-reviewer` | Review (parallel) | Focused on error-handling and silent failures                                   |
+| `aspect-test-reviewer`           | Review (parallel) | Focused on test coverage quality and behavioral gaps                            |
+| `planner`                        | Standalone        | Breaks stories into independently orchestrable steps                            |
 
 **Artifact storage:** `{base_dir}/projects/{project-slug}/tickets/{ticket-id}/{run-id}/`
 
