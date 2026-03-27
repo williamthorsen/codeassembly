@@ -108,6 +108,8 @@ Write your review to the output path provided in your task prompt.
 - **Location:** `src/auth/utils.ts:15`
 - **Description:** {pre-existing issue observed}
 - **Recommendation:** {future opportunity}
+
+{Use the same pattern for all severity letters: `W2-L` with `warning (legacy)`, `T1-L` with `todo (legacy)`, etc.}
 ```
 
 If no findings, write:

@@ -654,6 +654,7 @@ Used by review-producing skills and agents for structured code review findings. 
 
 - Issues in code not authored in this branch — use the same severity letter as the equivalent author finding plus a `-L` suffix
 - Legacy findings share the numbering sequence with author findings of the same severity letter. Example: if a review has `F1`, `F2` (author findings), the first legacy FIXME is `F3-L`
+- Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
 - Frame as future opportunities, not current defects
 - Never count against the review score
 
