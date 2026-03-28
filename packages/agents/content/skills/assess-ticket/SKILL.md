@@ -120,9 +120,9 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 
 📶 **Progress:** {emoji} `{verdict}` ({N} of {M} criteria met)
 
-- [x] {Criterion met}
-- [x] {Criterion met}
-- [ ] {Criterion not met}
+- ✅ {Criterion met}
+- ✅ {Criterion met}
+- ❌ {Criterion not met}
 
 🧩 **Complexity:** {emoji} `{label}`
 
