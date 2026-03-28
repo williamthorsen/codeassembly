@@ -1,6 +1,6 @@
 ---
 name: assess-ticket
-description: Assess a ticket against the current codebase for drift, relevance, progress, and complexity
+description: Assess a ticket against the current codebase for drift, relevance, progress, and complexity, and prompt for follow-up actions
 user-invocable: true
 ---
 
@@ -158,6 +158,10 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 - {Evidence bullet}
 ```
 
+### 4. Next steps
+
+After presenting the assessment output, evaluate whether any verdicts are non-baseline and, if so, present follow-up actions. Follow [next steps after assessment](next-steps-after-assessment.md) for the baseline definition, verdict-to-actions mapping, combination rules, and interaction protocol.
+
 ### Emoji mapping
 
 Drift, relevance, and progress use a **concern scale** — green means no concern, red means high concern:
@@ -190,5 +194,5 @@ Complexity uses a **size scale** — emojis represent effort and scope, not conc
 
 - **Evidence over opinion** — every verdict must be supported by specific evidence (file paths, commit SHAs, code references)
 - **Prefer caution on relevance** — use `uncertain` when signals are ambiguous rather than committing to `superseded`
-- **No action, just assessment** — this skill produces output; it does not modify tickets, save artifacts, or post comments
+- **Assessment first, action on request** — lead with the assessment; offer follow-up actions but do not execute without user selection
 - **Scale to ticket complexity** — a simple ticket gets a brief assessment; a complex ticket with many acceptance criteria gets a thorough one
