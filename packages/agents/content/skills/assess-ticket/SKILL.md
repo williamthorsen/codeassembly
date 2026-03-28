@@ -23,7 +23,7 @@ Resolve the ticket source using the [ticket source resolution](../_data/ticket-s
 
 ### 2. Investigate
 
-Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, complexity is investigated last so it benefits from context gathered during drift, relevance, and progress analysis.
+Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, complexity is investigated last so it benefits from context gathered during drift, relevance, and progress analysis. **Skip complexity when progress is `complete`** — complexity is forward-looking and has no value for finished work.
 
 #### Drift
 
@@ -97,7 +97,7 @@ Classify how complex the described work is relative to the current codebase. Ref
 
 ### 3. Output
 
-Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all four dimensions in order.
+Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all dimensions in order — omitting complexity when progress is `complete`.
 
 Obtain the base SHA via `git rev-parse --short HEAD`.
 
