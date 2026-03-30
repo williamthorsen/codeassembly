@@ -186,53 +186,52 @@ packages/factory/src/
 
 ## Common commands
 
-**Root-level development:**
+**Root-level development (via `@williamthorsen/nmr`):**
 
 - `pnpm install` - Install all dependencies
-- `pnpm run check` - Run typecheck, format check, lint check, and tests
-- `pnpm run check:strict` - Strict checks including coverage and audit
-- `pnpm run ci` - Full CI pipeline (strict checks + build)
-- `pnpm run build` - Build all packages
-- `pnpm run test` - Run tests across all packages
-- `pnpm run lint` - Lint all packages
-- `pnpm run typecheck` - TypeScript check all packages
-- `pnpm run root:test` - Run only root-level tests (in `__tests__/`)
-- `pnpm run root:lint` - Lint only root-level files
-- `pnpm run root:check` - Run all root-level checks
+- `nmr check` - Run typecheck, format check, lint check, and tests
+- `nmr check:strict` - Strict checks including coverage and audit
+- `nmr ci` - Full CI pipeline (strict checks + build)
+- `nmr build` - Build all packages
+- `nmr test` - Run tests across all packages
+- `nmr lint` - Lint all packages
+- `nmr typecheck` - TypeScript check all packages
+- `nmr root:test` - Run only root-level tests (in `__tests__/`)
+- `nmr root:lint` - Lint only root-level files
+
+**Workspace packages (via nmr):**
+
+- `nmr build` - Build the package
+- `nmr test` - Run tests
+- `nmr test:watch` - Run tests in watch mode
+- `nmr test:coverage` - Run tests with coverage
+- `nmr lint` - Lint
+- `nmr typecheck` - TypeScript check
 
 **Factory package (`packages/factory/`):**
 
 - `pnpm run dev` - Start both Express server and Vite dev server
 - `pnpm run dev:server` - Start Express server only (with tsx --watch)
 - `pnpm run dev:client` - Start Vite dev server only
-- `pnpm run ws build` - Build the package
-- `pnpm run ws test` - Run tests
-- `pnpm run ws test:watch` - Run tests in watch mode
-- `pnpm run ws test:coverage` - Run tests with coverage
-- `pnpm run ws lint` - Lint
-- `pnpm run ws typecheck` - TypeScript check
 
 **Agents package (`packages/agents/`):**
 
 - `pnpm run build` - Compile TypeScript + copy content to dist
-- `pnpm run ws test` - Run tests
-- `pnpm run ws lint` - Lint
-- `pnpm run ws typecheck` - TypeScript check
 
 ## Architecture
 
 ### Root-level tests
 
 - Located in `__tests__/` directory
-- Verify Node.js and pnpm versions match `.tool-versions`
+- Consistency checks (Node.js and pnpm version alignment) via `@williamthorsen/nmr/tests`
 - Use Vitest with config in `vitest.root.config.ts`
 
 ### Workspace script system
 
-- Centralized script management via `scripts/run-workspace-script.ts`
-- Each package uses `pnpm run ws {command}` for consistent tooling
-- Common scripts defined in `run-workspace-script.ts` with package-level overrides
-- Supports integration tests with `--int-test` flag
+- Centralized script management via `@williamthorsen/nmr`
+- Run workspace scripts with `nmr {command}` (e.g., `nmr test`, `nmr build`)
+- Default scripts (build, test, lint, typecheck, etc.) provided by nmr
+- Package-specific overrides in each package's `package.json`
 
 ### Build system
 

@@ -8,8 +8,7 @@
     "codeassembly-agents": "dist/esm/cli.js"
   },
   "scripts": {
-    "build": "pnpm run ws compile && tsx scripts/copy-content.ts",
-    "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
+    "build": "nmr compile && tsx scripts/copy-content.ts"
   },
   "dependencies": {
     "js-yaml": "4.1.1"

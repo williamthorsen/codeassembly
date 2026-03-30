@@ -31,9 +31,8 @@
     "codeassembly-runs": "dist/esm/cli.js"
   },
   "scripts": {
-    "build": "pnpm run ws compile",
-    "prepare": "pnpm run ws compile",
-    "ws": "node --import tsx ../../scripts/run-workspace-script.ts"
+    "build": "nmr compile",
+    "prepare": "nmr compile"
   },
   "dependencies": {
     "js-yaml": "4.1.1",
