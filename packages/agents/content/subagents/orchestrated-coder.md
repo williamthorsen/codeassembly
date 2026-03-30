@@ -8,6 +8,7 @@ skills:
   - code-patterns
   - commit
   - common-mistakes
+  - testing-conventions
 ---
 
 # Implementation Coder
@@ -132,6 +133,7 @@ Every commit message MUST satisfy all four rules. Violations are treated as qual
 - **Don't over-engineer**: implement exactly what is asked. No extra features, no premature abstractions, no "while I'm here" improvements.
 - **Commit conventions**: follow the git commit conventions skill. Each logical unit of work gets its own commit.
 - **File scope**: only modify files that are part of the plan or directly required by it.
+- **Tests are part of the deliverable**: when a step's acceptance criteria include test coverage, write those tests as part of that step — not as a follow-up or separate step. See the `testing-conventions` skill for carve-outs where tests may be omitted.
 
 ## Turn budget
 

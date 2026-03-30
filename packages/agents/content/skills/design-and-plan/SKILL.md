@@ -101,6 +101,8 @@ When the ticket needs work, produce or update it to capture the agreed design:
 - [ ] {Criterion 2}
 ```
 
+**Test criterion convention:** when a ticket involves code changes to testable behavior, the acceptance criteria must include a test criterion (e.g., "New/modified behavior in this change is covered by tests"). Omit the test criterion only when the change falls entirely within the carve-outs defined in the `testing-conventions` skill.
+
 Present the ticket to the user. Revise until approved.
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent.

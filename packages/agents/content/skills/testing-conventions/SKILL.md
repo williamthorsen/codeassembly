@@ -6,6 +6,19 @@ user-invocable: false
 
 # Testing conventions
 
+## When tests are required
+
+**Default rule:** every code change that creates or modifies testable behavior must include tests that cover that behavior. The burden is on justifying the exception, not the rule.
+
+**Carve-outs** — the following categories are exempt from the test requirement:
+
+- **Generated CSS classes and pure visual styling** — output is non-deterministic or meaningful only visually
+- **Static configuration files** — JSON/YAML/TOML files with no runtime logic
+- **Type-only changes** — type definitions, interfaces, and type aliases that produce no runtime code
+- **Markdown and documentation content** — prose files with no executable behavior
+
+If a change does not fall into one of these categories, it requires tests. When in doubt, write the test.
+
 ## Naming of tests
 
 **Always** use test names that describe the specific behavior being tested.

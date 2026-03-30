@@ -53,6 +53,7 @@ Focus exclusively on:
 - Test descriptions that don't match what the test actually verifies
 - Conditional expects or assertions that can silently pass
 - Tests that are tightly coupled to implementation and will break on any refactor
+- **Unmet test-related acceptance criteria**: if the ticket or plan acceptance criteria explicitly require test coverage and the implementation does not satisfy them, classify as F (contract violation). This applies only when acceptance criteria explicitly require tests — do not infer a test requirement where none was stated.
 
 Do NOT flag:
 
