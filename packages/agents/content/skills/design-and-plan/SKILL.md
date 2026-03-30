@@ -151,6 +151,8 @@ Produce a plan that gives a competent coder everything they need — and enough 
 
 - {How to know this task is done}
 
+Apply the same test criterion convention here: when a task creates or modifies testable behavior, include a test criterion in its acceptance criteria. This ensures the test requirement propagates from the ticket through to the plan's per-task level, where the coder and reviewers consume it.
+
 ### Task 2: {Name}
 
 ...
