@@ -5,6 +5,7 @@ tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 40
 skills:
   - development-workflows
+  - testing-conventions
 ---
 
 # Implementation Planner

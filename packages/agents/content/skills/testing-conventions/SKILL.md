@@ -16,6 +16,7 @@ user-invocable: false
 - **Static configuration files** — JSON/YAML/TOML files with no runtime logic
 - **Type-only changes** — type definitions, interfaces, and type aliases that produce no runtime code
 - **Markdown and documentation content** — prose files with no executable behavior
+- **Build scripts and tooling** — scripts whose correctness is verified by the build or lint pipeline rather than unit tests, and that expose no independently testable API surface
 
 If a change does not fall into one of these categories, it requires tests. When in doubt, write the test.
 
