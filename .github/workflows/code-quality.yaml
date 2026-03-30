@@ -18,9 +18,10 @@ on:
 
 jobs:
   code-quality:
-    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm.yaml@v1
+    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v4
     secrets:
       GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
     with:
-      node-version: '24.14.0'
+      check-command: 'nmr ci'
+      node-version: '24.14.1'
       pnpm-version: '10.33.0'
