@@ -5,6 +5,7 @@ tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 40
 skills:
   - development-workflows
+  - testing-conventions
 ---
 
 # Implementation Planner
@@ -37,6 +38,7 @@ You will receive:
 - **Ordered by dependency**: if step B depends on step A, it must come after A
 - **Quality gates are explicit steps**: include steps for type-checking, linting, and tests — don't assume the coder will do these automatically
 - **Include file paths**: every step must list the specific files it touches
+- **Test coverage in acceptance criteria**: when a step creates or modifies testable behavior, its acceptance criteria must include test coverage. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
 
 ## Output: plan (Markdown)
 
