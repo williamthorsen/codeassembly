@@ -34,7 +34,7 @@ commit:
 | Convention        | Example with scope + type            | Example with type only       |
 | ----------------- | ------------------------------------ | ---------------------------- |
 | `{scope}\|{type}` | `agents\|feat: Add script installer` | `feat: Add script installer` |
-| `{scope}({type})` | `agents(feat): Add script installer` | `feat: Add script installer` |
+| `{type}({scope})` | `feat(agents): Add script installer` | `feat: Add script installer` |
 | `{type}`          | `feat: Add script installer`         | `feat: Add script installer` |
 | `''` (empty)      | `Add script installer`               | `Add script installer`       |
 
