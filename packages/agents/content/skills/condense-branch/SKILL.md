@@ -44,13 +44,13 @@ Use `summarize-change` to compose a good commit message. Save the description pe
 
 ## Commit format
 
-Follow [commit-format.md](../_data/commit-format.md):
+Follow [commit-format.md](../_data/commit-format.md). Use `describe-change.sh` to resolve the commit title prefix:
 
+```bash
+{skills_root}/../scripts/describe-change.sh --scope {scope} --type {type}
 ```
-{workspace}|{WORK_TYPE}: {title}
 
-{body}
-```
+Use the `commit_prefix` field from the JSON output as the title prefix.
 
 ## Safety
 

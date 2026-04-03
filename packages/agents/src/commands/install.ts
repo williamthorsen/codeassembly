@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.js';
@@ -7,7 +7,14 @@ import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.js';
 import { rewritePathsInDirectory } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
-import type { AgentsManifest, InstallOptions, ManifestEntry, PlatformId, PlatformManifest } from '../lib/types.js';
+import type {
+  AgentsManifest,
+  InstallOptions,
+  ManifestEntry,
+  PlatformConfig,
+  PlatformId,
+  PlatformManifest,
+} from '../lib/types.js';
 
 /**
  * Executes the install command, installing skills and subagents for the specified platforms.
@@ -32,6 +39,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
     // Safety check: ensure target directories are not symlinks
     checkSymlinkSafety(paths.skillsDir);
     checkSymlinkSafety(paths.subagentsDir);
+    checkSymlinkSafety(paths.scriptsDir);
 
     // Build lookup of previously installed entries for drift detection
     const existingEntries = manifest.platforms[platformId]?.entries ?? [];
@@ -57,6 +65,10 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
     const subagentEntries = await installSubagents(contentDir, paths, platformId, existingByPath, options);
     entries.push(...subagentEntries);
 
+    // Install scripts
+    const scriptEntries = await installScripts(contentDir, paths.scriptsDir, platformConfig, existingByPath, options);
+    entries.push(...scriptEntries);
+
     // Generate prompts.yml for Rovo Dev (skill discovery file)
     if (platformId === 'rovodev') {
       const promptsEntry = await generatePromptsYml(paths, existingByPath, options);
@@ -69,6 +81,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
       console.info(`  [dry-run] Would install ${entries.length} items:`);
       console.info(`    ${skillEntries.length} skill items`);
       console.info(`    ${subagentEntries.length} subagent items`);
+      console.info(`    ${scriptEntries.length} script items`);
       continue;
     }
 
@@ -412,6 +425,78 @@ async function generatePromptsYml(
     contentHash: hash,
     linked: false,
   };
+}
+
+/**
+ * Installs script files from content/scripts/ into the target scripts directory.
+ * Scripts are flat files (no frontmatter, no platform-specific variants).
+ * Copied scripts receive the executable bit (0o755); symlinked scripts inherit
+ * the source's permissions.
+ */
+async function installScripts(
+  contentDir: string,
+  scriptsDestDir: string,
+  platformConfig: PlatformConfig,
+  existingByPath: ReadonlyMap<string, ManifestEntry>,
+  options: InstallOptions,
+): Promise<ReadonlyArray<ManifestEntry>> {
+  const scriptsSrcDir = path.join(contentDir, 'scripts');
+  let dirEntries: ReadonlyArray<string>;
+  try {
+    dirEntries = await readdir(scriptsSrcDir);
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    return [];
+  }
+
+  const entries: Array<ManifestEntry> = [];
+
+  for (const entry of dirEntries) {
+    if (entry.startsWith('.')) {
+      continue;
+    }
+
+    const srcPath = path.join(scriptsSrcDir, entry);
+    const destPath = path.join(scriptsDestDir, entry);
+    const relativePath = `${platformConfig.scriptsDir}/${entry}`;
+
+    if (options.dryRun) {
+      const action = options.link ? 'link' : 'copy';
+      console.info(`    [${action}] ${relativePath}`);
+      entries.push({ relativePath, contentHash: 'dry-run', linked: options.link });
+      continue;
+    }
+
+    // Check for user modifications before overwriting
+    const existingEntry = existingByPath.get(relativePath);
+    if (existingEntry && !options.force) {
+      const drift = await detectDrift(existingEntry, path.dirname(scriptsDestDir));
+      if (drift === 'modified') {
+        console.warn(`  Skipping modified item: ${relativePath}`);
+        entries.push(existingEntry);
+        continue;
+      }
+    }
+
+    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+    // Ensure copied scripts are executable
+    if (!options.link) {
+      await chmod(destPath, 0o755);
+    }
+
+    // Compute hash from source for symlinked scripts (dest symlink may not resolve in all environments)
+    const hashPath = options.link ? srcPath : destPath;
+    entries.push({
+      relativePath,
+      contentHash: await computeContentHash(hashPath),
+      linked: options.link,
+    });
+  }
+
+  return entries;
 }
 
 /**
