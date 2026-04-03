@@ -640,6 +640,9 @@ async function installPlatformGuidance(
     if (!isEnoent(error)) {
       throw error;
     }
+    console.warn(
+      `  Warning: no platform guidance directory found at ${guidanceSrcDir}, skipping platform guidance installation`,
+    );
     return [];
   }
 

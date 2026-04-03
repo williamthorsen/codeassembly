@@ -14,8 +14,6 @@ export interface PlatformConfig {
   readonly scriptsDir: string;
   /** Filename of the frontmatter overlay YAML for this platform. */
   readonly frontmatterFile: string;
-  /** Platform-specific guidance filename relative to the platform home directory. */
-  readonly guidanceFile: string;
 }
 
 /** A single entry in the manifest tracking an installed file or directory. */

@@ -203,6 +203,35 @@ describe('guidance installation', () => {
       expect(stats.isSymbolicLink()).toBe(true);
     });
 
+    it('overwrites modified platform guidance with --force', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
+      const original = await readFile(claudeMd, 'utf8');
+      const modified = original + '\n<!-- user modification -->\n';
+      await writeFile(claudeMd, modified, 'utf8');
+
+      await installCommand(makeOptions({ force: true }), tempDir);
+
+      const afterReinstall = await readFile(claudeMd, 'utf8');
+      expect(afterReinstall).toBe(original);
+    });
+
+    it('does not write platform guidance in dry-run mode', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions({ dryRun: true }), tempDir);
+
+      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
+      expect(existsSync(claudeMd)).toBe(false);
+    });
+
     it('skips modified platform guidance without --force', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
@@ -273,6 +302,21 @@ describe('guidance installation', () => {
       expect(manifest.shared).toBeDefined();
     });
 
+    it('removes shared guidance when no platform home directories exist', async () => {
+      // Install with no platform home dirs — only shared guidance is installed
+      await installCommand(makeOptions({ platform: 'all' }), tempDir);
+
+      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
+      expect(existsSync(sharedAgentsMd)).toBe(true);
+
+      await uninstallCommand({ platform: 'all', force: false }, tempDir);
+
+      expect(existsSync(sharedAgentsMd)).toBe(false);
+
+      const manifest = await readManifest(getManifestPath(tempDir));
+      expect(manifest.shared).toBeUndefined();
+    });
+
     it('removes modified shared guidance with --force', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
@@ -306,6 +350,44 @@ describe('guidance installation', () => {
       const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('shared (~/.agents/)');
       expect(output).toContain('current');
+
+      infoSpy.mockRestore();
+    });
+
+    it('reports missing shared guidance when file is deleted from disk', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      // Delete the installed shared guidance file
+      await rm(path.join(tempDir, '.agents', 'AGENTS.md'));
+
+      const infoSpy = vi.spyOn(console, 'info');
+      await statusCommand({ platform: 'claude' }, tempDir);
+
+      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      expect(output).toContain('missing:');
+      expect(output).toContain('AGENTS.md');
+
+      infoSpy.mockRestore();
+    });
+
+    it('reports platform guidance state', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      const infoSpy = vi.spyOn(console, 'info');
+      await statusCommand({ platform: 'claude' }, tempDir);
+
+      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      // Platform section should report CLAUDE.md as current
+      expect(output).toContain('claude:');
+      expect(output).toMatch(/\d+ current/);
 
       infoSpy.mockRestore();
     });
