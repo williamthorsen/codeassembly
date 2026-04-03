@@ -23,7 +23,16 @@ git rev-parse --short HEAD
 
 4. **If no match found**: Use `summarize-change` first, then continue
 
-5. **Create PR description**:
+5. **Resolve PR title prefix** using `describe-change.sh`:
+
+```bash
+json=$({skills_root}/../scripts/describe-change.sh --scope {scope} --type {type})
+pr_prefix=$(echo "$json" | grep -o '"pr_prefix":"[^"]*"' | cut -d'"' -f4)
+```
+
+Use `${pr_prefix}{title}` as the PR title. See [commit-format.md](../_data/commit-format.md) for prefix conventions.
+
+6. **Create PR description**:
    - Copy change summary content
    - Save per the [Saving](#saving) section
 

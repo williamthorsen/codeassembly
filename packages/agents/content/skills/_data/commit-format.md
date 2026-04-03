@@ -1,20 +1,64 @@
 # Git commit format
 
-## Commit title format
+## Commit title prefix
 
-The standard commit title is 72 characters max (hard limit):
+Commit titles may include a prefix that identifies scope (workspace, package, module) and work type. The prefix format is configurable per repository and per user.
 
-```txt
-{workspace}|{WORK_TYPE}: {commit title}
+### Resolving the prefix
+
+Run the `describe-change.sh` script to resolve the correct prefix:
+
+```bash
+{skills_root}/../scripts/describe-change.sh --scope {scope} --type {type}
 ```
 
-If the project does not have monorepo workspaces, omit the `{workspace}`:
+The script reads `commit.prefix`, `ticket.prefix`, and `pr.prefix` from `.agents/preferences.yaml` (project) then `~/.agents/preferences.yaml` (global), falling back to empty string. It outputs JSON:
 
-```
-{WORK_TYPE}: {description}
+```json
+{ "commit_prefix": "agents|feat: ", "ticket_prefix": "agents|feat: ", "pr_prefix": "agents|feat: " }
 ```
 
-Add `!` after the work type to indicate breaking changes: `ts|feat!: Remove deprecated API`
+Use the `commit_prefix` field for commit titles. Non-empty values already include the trailing `: `.
+
+If the script is not found, produce no prefix.
+
+### Supported conventions
+
+Configure the prefix convention in `.agents/preferences.yaml` or `~/.agents/preferences.yaml`:
+
+```yaml
+commit:
+  prefix: '{scope}|{type}'
+```
+
+| Convention        | Example with scope + type            | Example with type only       |
+| ----------------- | ------------------------------------ | ---------------------------- |
+| `{scope}\|{type}` | `agents\|feat: Add script installer` | `feat: Add script installer` |
+| `{type}({scope})` | `feat(agents): Add script installer` | `feat: Add script installer` |
+| `{type}`          | `feat: Add script installer`         | `feat: Add script installer` |
+| `''` (empty)      | `Add script installer`               | `Add script installer`       |
+
+When only `--type` is provided (no `--scope`), the prefix is always `{type}: ` regardless of convention. When only `--scope` or neither is provided, the prefix is empty.
+
+### Scope
+
+The scope identifies the part of the codebase affected by the commit:
+
+- In a monorepo, the scope is typically the workspace name or abbreviation.
+- Use `root` if the commit touches only files in the monorepo root.
+- Use `*` if the commit spans multiple workspaces, or root and one or more workspaces.
+- If a root change is tightly associated with only one workspace, don't count it as a root change.
+
+Common example: if a package is added to `packages/workspace-a`, that updates the package lock file in root. Don't treat that as a change to root.
+
+## Title constraints
+
+- **72 characters max** (hard limit).
+- **Describes the code change, not what prompted it.** Ask: "what does the diff do?" Bad: "Address review findings". Good: "Add error logging to `handleStateUpdate`".
+- **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
+- **Only document what's in the diff.** External actions (e.g., updating a ticket) don't belong.
+
+Add `!` after the work type to indicate breaking changes: `agents|feat!: Remove deprecated API`
 
 ## Ticket ID
 
@@ -27,25 +71,6 @@ Include the ticket ID at the end of the commit body only if the branch covers mo
 - **Title**: 72 characters max (hard limit).
 - **Body**: No hard wrapping. Write naturally — do not insert newlines to wrap at a column width.
 
-## Examples
-
-### Monorepo workspace
-
-In a monorepo the workspace is usually the name (or abbreviated name) of the workspace changed by the commit:
-
-```
-web|tests: Fix ProgressNotes tests broken by upgrades
-*|internal: Add user route and user profile component
-admin|deps!: Upgrade React to v18
-```
-
-### Non-monorepo
-
-```
-feat: Add user profile component
-deps: Upgrade React to v18
-```
-
 ## Body formatting
 
 - **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
@@ -57,20 +82,3 @@ deps: Upgrade React to v18
 ## Branch naming
 
 See `branch-format.md` for branch naming conventions. Branch format: `{ticket}/{description}`.
-
-## Legacy format
-
-This was the previously used format. Some projects still use it, but don't propagate it. The `{TICKET}` prefix in these templates is part of the old format and should not be used in new commits.
-
-```txt
-{workspace} {TICKET}: [{WORK_TYPE}] {description}
-
-# No ticket
-{workspace} [{WORK_TYPE}] {description}
-
-# Not a monorepo
-{TICKET}: [{WORK_TYPE}] {description}
-
-# No ticket, not a monorepo
-[{WORK_TYPE}] {description}
-```

@@ -54,6 +54,7 @@ describe('platform', () => {
       expect(result.platformHome).toBe(path.join(tempDir, PLATFORMS.claude.homeDir));
       expect(result.skillsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.skillsDir));
       expect(result.subagentsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.subagentsDir));
+      expect(result.scriptsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.scriptsDir));
     });
 
     it('should resolve correct paths for rovodev platform', () => {
@@ -62,6 +63,7 @@ describe('platform', () => {
       expect(result.platformHome).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir));
       expect(result.skillsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.skillsDir));
       expect(result.subagentsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.subagentsDir));
+      expect(result.scriptsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.scriptsDir));
     });
 
     it('should produce absolute paths containing the platform home directory', () => {
@@ -69,6 +71,7 @@ describe('platform', () => {
 
       expect(result.skillsDir.startsWith(result.platformHome)).toBe(true);
       expect(result.subagentsDir.startsWith(result.platformHome)).toBe(true);
+      expect(result.scriptsDir.startsWith(result.platformHome)).toBe(true);
     });
   });
 });

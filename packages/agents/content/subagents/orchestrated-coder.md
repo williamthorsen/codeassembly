@@ -119,12 +119,13 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 ## Commit formatting
 
 <HARD-GATE>
-Every commit message MUST satisfy all four rules. Violations are treated as quality gate failures.
+Every commit message MUST satisfy all five rules. Violations are treated as quality gate failures.
 
-1. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
-2. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
-3. **No hard line breaks in the body.** Write naturally as continuous text. Do not insert newlines to wrap at a fixed column width.
-4. **Use backtick formatting for code identifiers.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
+1. **Resolve the title prefix** using `describe-change.sh` (see `commit-format.md` in the commit skill's `_data/` directory). If the script is not found, produce no prefix.
+2. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
+3. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
+4. **No hard line breaks in the body.** Write naturally as continuous text. Do not insert newlines to wrap at a fixed column width.
+5. **Use backtick formatting for code identifiers.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
    </HARD-GATE>
 
 ## Constraints

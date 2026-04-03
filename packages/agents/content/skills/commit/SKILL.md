@@ -8,21 +8,11 @@ user-invocable: true
 
 ## Commit message format
 
-Commit titles follow this format:
-
-```txt
-{workspace}|{WORK_TYPE}: {commit title}
-```
-
-See `../_data/commit-format.md` for full specification.
+See `../_data/commit-format.md` for the full specification, including how to resolve the commit title prefix using `describe-change.sh`.
 
 ## Commit metadata
 
 - `WORK_TYPE` describes the category of work (see `../_data/work-types.md`)
-
-Example: `web|tests: Fix PromoPage tests`
-
-- WORK_TYPE: `tests`
 
 ## Ticket ID
 
@@ -45,11 +35,11 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 See `../_data/commit-format.md` for body formatting rules (punctuation, backtick formatting, paragraph structure, and what to omit).
 
-## Changes touching multiple workspaces
+## Changes touching multiple scopes
 
 - Use `root` if commit touches only files in monorepo root
-- Use `*` if commit comprises changes to multiple workspaces, or root and one or more workspaces
-- If a root change is tightly associated with only one workspace, don't count it as a root change
+- Use `*` if commit comprises changes to multiple scopes, or root and one or more scopes
+- If a root change is tightly associated with only one scope, don't count it as a root change
 
 Common example: If a package is added to `packages/workspace-a`, that updates the package lock file in root. Don't treat that as a change to root.
 

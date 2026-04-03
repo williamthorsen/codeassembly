@@ -12,7 +12,6 @@ Analyze the current branch's changes since diverging from the default branch.
 
 1. **Gather context**:
    - Use `get-session-context` to obtain `default_branch` and `ticket_id`; consult [work-types.md](../_data/work-types.md).
-   - Determine workspace from commit subjects: parse `{workspace}|{type}:` prefixes, collect unique values. Single → use it. Multiple → use `*`. None → omit.
 
 2. **Analyze changes**:
 
@@ -22,9 +21,7 @@ git diff $DEFAULT_BRANCH...HEAD
 
 Check commit messages for additional context.
 
-3. **Compose title**: `{ticket ID} {workspace} | {work type}: {title}`
-   - Omit empty segments
-   - Pipe (`|`) must have a space on both sides
+3. **Compose title**: `{ticket ID} {title}`
    - Ticket ID appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
 
 4. **Write description** per the output format below
@@ -36,7 +33,7 @@ If expected information is missing, stop and ask the developer.
 ## Output format
 
 ```markdown
-# {TICKET} {workspace} | {work type}: {title}
+# {TICKET} {title}
 
 Commit: {short hash of HEAD}
 Timestamp: {YYYY-MM-DD HH:MMZ format}

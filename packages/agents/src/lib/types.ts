@@ -10,6 +10,8 @@ export interface PlatformConfig {
   readonly skillsDir: string;
   /** Relative path from the platform home to the subagents directory. */
   readonly subagentsDir: string;
+  /** Relative path from the platform home to the scripts directory. */
+  readonly scriptsDir: string;
   /** Filename of the frontmatter overlay YAML for this platform. */
   readonly frontmatterFile: string;
 }
