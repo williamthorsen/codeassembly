@@ -105,8 +105,8 @@ function printUsage(): void {
   console.info(`Usage: codeassembly-agents <command> [options]
 
 Commands:
-  install     Install skills and subagents into platform directories
-  uninstall   Remove installed skills and subagents
+  install     Install guidance, skills, and subagents into platform directories
+  uninstall   Remove installed guidance, skills, and subagents
   status      Show the current state of installed items
 
 Options:

@@ -6,6 +6,9 @@ import path from 'node:path';
 
 import type { AgentsManifest, ManifestEntry } from './types.js';
 
+/** Shared guidance home directory relative to the user's home. */
+const SHARED_HOME_DIR = '.agents';
+
 /**
  * Type guard for AgentsManifest.
  */
@@ -43,6 +46,14 @@ export function createEmptyManifest(): AgentsManifest {
     schemaVersion: 1,
     platforms: {},
   };
+}
+
+/**
+ * Resolves the absolute path to the shared guidance home directory (`~/.agents/`).
+ */
+export function resolveSharedHome(baseDir?: string): string {
+  const home = baseDir ?? homedir();
+  return path.join(home, SHARED_HOME_DIR);
 }
 
 /**

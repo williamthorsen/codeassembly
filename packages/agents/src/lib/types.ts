@@ -34,9 +34,17 @@ export interface PlatformManifest {
   readonly entries: ReadonlyArray<ManifestEntry>;
 }
 
+/** Manifest data for shared (cross-platform) entries installed to `~/.agents/`. */
+export interface SharedManifest {
+  readonly version: string;
+  readonly installedAt: string;
+  readonly entries: ReadonlyArray<ManifestEntry>;
+}
+
 /** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
 export interface AgentsManifest {
   readonly schemaVersion: number;
+  readonly shared?: SharedManifest | undefined;
   readonly platforms: Partial<Record<PlatformId, PlatformManifest>>;
 }
 

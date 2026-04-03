@@ -4,7 +4,14 @@ import path from 'node:path';
 import { resolveContentDir } from '../lib/content-resolver.js';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.js';
 import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.js';
-import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.js';
+import {
+  computeContentHash,
+  detectDrift,
+  getManifestPath,
+  readManifest,
+  resolveSharedHome,
+  writeManifest,
+} from '../lib/manifest.js';
 import { rewritePathsInDirectory } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type {
@@ -14,6 +21,7 @@ import type {
   PlatformConfig,
   PlatformId,
   PlatformManifest,
+  SharedManifest,
 } from '../lib/types.js';
 
 /**
@@ -25,8 +33,21 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
   const manifest = await readManifest(manifestPath);
   const platforms = resolvePlatformIds(options.platform, baseDir);
 
+  // Install shared guidance unconditionally (before platform detection check)
+  const sharedGuidanceResult = await installSharedGuidance(contentDir, manifest, options, baseDir);
+
   if (platforms.length === 0) {
-    console.info('No target platforms detected. Nothing to install.');
+    // Even with no platforms, persist the shared manifest update
+    if (!options.dryRun && sharedGuidanceResult) {
+      const updatedManifest: AgentsManifest = {
+        ...manifest,
+        shared: sharedGuidanceResult,
+      };
+      await writeManifest(manifestPath, updatedManifest);
+      console.info('\nManifest updated.');
+    } else {
+      console.info('No target platforms detected. Nothing else to install.');
+    }
     return;
   }
 
@@ -76,6 +97,10 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
     );
     entries.push(...scriptEntries);
 
+    // Install platform-specific guidance file
+    const guidanceEntries = await installPlatformGuidance(contentDir, paths, platformId, existingByPath, options);
+    entries.push(...guidanceEntries);
+
     // Generate prompts.yml for Rovo Dev (skill discovery file)
     if (platformId === 'rovodev') {
       const promptsEntry = await generatePromptsYml(paths, existingByPath, options);
@@ -89,6 +114,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
       console.info(`    ${skillEntries.length} skill items`);
       console.info(`    ${subagentEntries.length} subagent items`);
       console.info(`    ${scriptEntries.length} script items`);
+      console.info(`    ${guidanceEntries.length} guidance items`);
       continue;
     }
 
@@ -104,6 +130,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
   if (!options.dryRun) {
     const updatedManifest: AgentsManifest = {
       ...manifest,
+      shared: sharedGuidanceResult ?? manifest.shared,
       platforms: updatedPlatforms,
     };
     await writeManifest(manifestPath, updatedManifest);
@@ -501,6 +528,157 @@ async function installScripts(
     entries.push({
       relativePath,
       contentHash: await computeContentHash(hashPath),
+      linked: options.link,
+    });
+  }
+
+  return entries;
+}
+
+/**
+ * Installs shared guidance files from `content/guidance/shared/` to `~/.agents/`.
+ * Runs unconditionally (not gated by platform detection).
+ */
+async function installSharedGuidance(
+  contentDir: string,
+  manifest: AgentsManifest,
+  options: InstallOptions,
+  baseDir?: string,
+): Promise<SharedManifest | undefined> {
+  const sharedSrcDir = path.join(contentDir, 'guidance', 'shared');
+  let dirEntries: ReadonlyArray<string>;
+  try {
+    dirEntries = await readdir(sharedSrcDir);
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    console.warn(
+      `  Warning: no shared guidance directory found at ${sharedSrcDir}, skipping shared guidance installation`,
+    );
+    return undefined;
+  }
+
+  const sharedHome = resolveSharedHome(baseDir);
+  checkSymlinkSafety(sharedHome);
+
+  const existingEntries = manifest.shared?.entries ?? [];
+  const existingByPath = new Map(existingEntries.map((e) => [e.relativePath, e]));
+  const entries: Array<ManifestEntry> = [];
+
+  console.info('\nInstalling shared guidance');
+
+  let anyWritten = false;
+
+  for (const entry of dirEntries) {
+    if (entry.startsWith('.')) {
+      continue;
+    }
+
+    const srcPath = path.join(sharedSrcDir, entry);
+    const destPath = path.join(sharedHome, entry);
+
+    if (options.dryRun) {
+      const action = options.link ? 'link' : 'copy';
+      console.info(`    [${action}] ${entry} -> ~/.agents/${entry}`);
+      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
+      continue;
+    }
+
+    // Check for user modifications before overwriting
+    const existingEntry = existingByPath.get(entry);
+    if (existingEntry && !options.force) {
+      const drift = await detectDrift(existingEntry, sharedHome);
+      if (drift === 'modified') {
+        console.warn(`  Skipping modified item: ~/.agents/${entry}`);
+        entries.push(existingEntry);
+        continue;
+      }
+    }
+
+    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+    anyWritten = true;
+
+    entries.push({
+      relativePath: entry,
+      contentHash: await computeContentHash(options.link ? srcPath : destPath),
+      linked: options.link,
+    });
+  }
+
+  if (options.dryRun) {
+    console.info(`  [dry-run] Would install ${entries.length} shared guidance items`);
+    return undefined;
+  }
+
+  console.info(`  Installed ${entries.length} shared guidance items`);
+
+  return {
+    version: '0.1.0',
+    installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
+    entries,
+  };
+}
+
+/**
+ * Installs platform-specific guidance files from `content/guidance/_platforms/{platformId}/`
+ * into the platform home directory.
+ */
+async function installPlatformGuidance(
+  contentDir: string,
+  platformPaths: { platformHome: string },
+  platformId: PlatformId,
+  existingByPath: ReadonlyMap<string, ManifestEntry>,
+  options: InstallOptions,
+): Promise<ReadonlyArray<ManifestEntry>> {
+  const platformConfig = PLATFORMS[platformId];
+  const guidanceSrcDir = path.join(contentDir, 'guidance', '_platforms', platformId);
+  let dirEntries: ReadonlyArray<string>;
+  try {
+    dirEntries = await readdir(guidanceSrcDir);
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    console.warn(
+      `  Warning: no platform guidance directory found at ${guidanceSrcDir}, skipping platform guidance installation`,
+    );
+    return [];
+  }
+
+  const entries: Array<ManifestEntry> = [];
+
+  for (const entry of dirEntries) {
+    if (entry.startsWith('.')) {
+      continue;
+    }
+
+    const srcPath = path.join(guidanceSrcDir, entry);
+    const destPath = path.join(platformPaths.platformHome, entry);
+
+    if (options.dryRun) {
+      const action = options.link ? 'link' : 'copy';
+      console.info(`    [${action}] ${entry} (guidance)`);
+      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
+      continue;
+    }
+
+    // Check for user modifications before overwriting
+    const existingEntry = existingByPath.get(entry);
+    if (existingEntry && !options.force) {
+      const drift = await detectDrift(existingEntry, platformPaths.platformHome);
+      if (drift === 'modified') {
+        console.warn(`  Skipping modified item: ${platformConfig.homeDir}/${entry}`);
+        entries.push(existingEntry);
+        continue;
+      }
+    }
+
+    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+    entries.push({
+      relativePath: entry,
+      contentHash: await computeContentHash(options.link ? srcPath : destPath),
       linked: options.link,
     });
   }
