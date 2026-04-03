@@ -14,6 +14,8 @@ export interface PlatformConfig {
   readonly scriptsDir: string;
   /** Filename of the frontmatter overlay YAML for this platform. */
   readonly frontmatterFile: string;
+  /** Platform-specific guidance filename relative to the platform home directory. */
+  readonly guidanceFile: string;
 }
 
 /** A single entry in the manifest tracking an installed file or directory. */
@@ -34,9 +36,17 @@ export interface PlatformManifest {
   readonly entries: ReadonlyArray<ManifestEntry>;
 }
 
+/** Manifest data for shared (cross-platform) entries installed to `~/.agents/`. */
+export interface SharedManifest {
+  readonly version: string;
+  readonly installedAt: string;
+  readonly entries: ReadonlyArray<ManifestEntry>;
+}
+
 /** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
 export interface AgentsManifest {
   readonly schemaVersion: number;
+  readonly shared?: SharedManifest | undefined;
   readonly platforms: Partial<Record<PlatformId, PlatformManifest>>;
 }
 

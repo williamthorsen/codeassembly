@@ -1,4 +1,4 @@
-import { detectDrift, getManifestPath, readManifest } from '../lib/manifest.js';
+import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
 import { resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type { InstallOptions } from '../lib/types.js';
 
@@ -10,7 +10,10 @@ export async function statusCommand(options: Pick<InstallOptions, 'platform'>, b
   const manifest = await readManifest(manifestPath);
   const platforms = resolvePlatformIds(options.platform, baseDir);
 
-  if (platforms.length === 0) {
+  // Report shared guidance status unconditionally
+  await reportSharedGuidanceStatus(manifest, baseDir);
+
+  if (platforms.length === 0 && !manifest.shared) {
     console.info('No target platforms detected.');
     return;
   }
@@ -51,4 +54,46 @@ export async function statusCommand(options: Pick<InstallOptions, 'platform'>, b
 
     console.info(`  Summary: ${currentCount} current, ${modifiedCount} modified, ${missingCount} missing`);
   }
+}
+
+/**
+ * Reports the status of shared guidance files installed to `~/.agents/`.
+ */
+async function reportSharedGuidanceStatus(
+  manifest: Awaited<ReturnType<typeof readManifest>>,
+  baseDir?: string,
+): Promise<void> {
+  const sharedManifest = manifest.shared;
+  if (!sharedManifest) {
+    return;
+  }
+
+  console.info('\nshared (~/.agents/):');
+  console.info(`  Installed at: ${sharedManifest.installedAt}`);
+  console.info(`  Version: ${sharedManifest.version}`);
+
+  const sharedHome = resolveSharedHome(baseDir);
+  let currentCount = 0;
+  let modifiedCount = 0;
+  let missingCount = 0;
+
+  for (const entry of sharedManifest.entries) {
+    const drift = await detectDrift(entry, sharedHome);
+
+    switch (drift) {
+      case 'current':
+        currentCount++;
+        break;
+      case 'modified':
+        modifiedCount++;
+        console.info(`    modified: ${entry.relativePath}`);
+        break;
+      case 'missing':
+        missingCount++;
+        console.info(`    missing:  ${entry.relativePath}`);
+        break;
+    }
+  }
+
+  console.info(`  Summary: ${currentCount} current, ${modifiedCount} modified, ${missingCount} missing`);
 }

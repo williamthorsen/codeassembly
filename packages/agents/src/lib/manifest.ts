@@ -4,7 +4,10 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import type { AgentsManifest, ManifestEntry } from './types.js';
+import type { AgentsManifest, ManifestEntry, SharedManifest } from './types.js';
+
+/** Shared guidance home directory relative to the user's home. */
+const SHARED_HOME_DIR = '.agents';
 
 /**
  * Type guard for AgentsManifest.
@@ -43,6 +46,25 @@ export function createEmptyManifest(): AgentsManifest {
     schemaVersion: 1,
     platforms: {},
   };
+}
+
+/**
+ * Creates an empty shared manifest.
+ */
+export function createEmptySharedManifest(): SharedManifest {
+  return {
+    version: '0.1.0',
+    installedAt: new Date().toISOString(),
+    entries: [],
+  };
+}
+
+/**
+ * Resolves the absolute path to the shared guidance home directory (`~/.agents/`).
+ */
+export function resolveSharedHome(baseDir?: string): string {
+  const home = baseDir ?? homedir();
+  return path.join(home, SHARED_HOME_DIR);
 }
 
 /**
