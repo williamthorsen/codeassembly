@@ -553,15 +553,22 @@ async function installSharedGuidance(
     if (!isEnoent(error)) {
       throw error;
     }
+    console.warn(
+      `  Warning: no shared guidance directory found at ${sharedSrcDir}, skipping shared guidance installation`,
+    );
     return undefined;
   }
 
   const sharedHome = resolveSharedHome(baseDir);
+  checkSymlinkSafety(sharedHome);
+
   const existingEntries = manifest.shared?.entries ?? [];
   const existingByPath = new Map(existingEntries.map((e) => [e.relativePath, e]));
   const entries: Array<ManifestEntry> = [];
 
   console.info('\nInstalling shared guidance');
+
+  let anyWritten = false;
 
   for (const entry of dirEntries) {
     if (entry.startsWith('.')) {
@@ -591,6 +598,7 @@ async function installSharedGuidance(
     }
 
     await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+    anyWritten = true;
 
     entries.push({
       relativePath,
@@ -608,7 +616,7 @@ async function installSharedGuidance(
 
   return {
     version: '0.1.0',
-    installedAt: new Date().toISOString(),
+    installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
     entries,
   };
 }
@@ -619,7 +627,7 @@ async function installSharedGuidance(
  */
 async function installPlatformGuidance(
   contentDir: string,
-  platformPaths: { platformHome: string; guidanceFile: string },
+  platformPaths: { platformHome: string },
   platformId: PlatformId,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
