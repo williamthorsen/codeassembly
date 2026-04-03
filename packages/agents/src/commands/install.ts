@@ -456,6 +456,7 @@ async function installScripts(
     if (!isEnoent(error)) {
       throw error;
     }
+    console.warn(`  Warning: no scripts directory found at ${scriptsSrcDir}, skipping script installation`);
     return [];
   }
 
