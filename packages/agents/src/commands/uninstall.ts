@@ -19,6 +19,8 @@ export async function uninstallCommand(
 
   let remainingPlatforms = { ...manifest.platforms };
 
+  // uninstallSharedGuidance above is a no-op when manifest.shared is undefined,
+  // so this guard safely covers the "nothing installed at all" case.
   if (platforms.length === 0 && !manifest.shared) {
     console.info('No target platforms detected. Nothing to uninstall.');
     return;

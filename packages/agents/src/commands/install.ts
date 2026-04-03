@@ -577,21 +577,20 @@ async function installSharedGuidance(
 
     const srcPath = path.join(sharedSrcDir, entry);
     const destPath = path.join(sharedHome, entry);
-    const relativePath = entry;
 
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${relativePath} -> ~/.agents/${relativePath}`);
-      entries.push({ relativePath, contentHash: 'dry-run', linked: options.link });
+      console.info(`    [${action}] ${entry} -> ~/.agents/${entry}`);
+      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
       continue;
     }
 
     // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(relativePath);
+    const existingEntry = existingByPath.get(entry);
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, sharedHome);
       if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ~/.agents/${relativePath}`);
+        console.warn(`  Skipping modified item: ~/.agents/${entry}`);
         entries.push(existingEntry);
         continue;
       }
@@ -601,7 +600,7 @@ async function installSharedGuidance(
     anyWritten = true;
 
     entries.push({
-      relativePath,
+      relativePath: entry,
       contentHash: await computeContentHash(options.link ? srcPath : destPath),
       linked: options.link,
     });
@@ -653,21 +652,20 @@ async function installPlatformGuidance(
 
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(platformPaths.platformHome, entry);
-    const relativePath = entry;
 
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${relativePath} (guidance)`);
-      entries.push({ relativePath, contentHash: 'dry-run', linked: options.link });
+      console.info(`    [${action}] ${entry} (guidance)`);
+      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
       continue;
     }
 
     // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(relativePath);
+    const existingEntry = existingByPath.get(entry);
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, platformPaths.platformHome);
       if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ${platformConfig.homeDir}/${relativePath}`);
+        console.warn(`  Skipping modified item: ${platformConfig.homeDir}/${entry}`);
         entries.push(existingEntry);
         continue;
       }
@@ -676,7 +674,7 @@ async function installPlatformGuidance(
     await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
 
     entries.push({
-      relativePath,
+      relativePath: entry,
       contentHash: await computeContentHash(options.link ? srcPath : destPath),
       linked: options.link,
     });
