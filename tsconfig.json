@@ -65,6 +65,7 @@
   "exclude": ["node_modules"],
   "include": [
     // This file covers only the monorepo root. Packages have their own tsconfig.json files that extend this one.
+    ".config/**/*.ts",
     "__tests__/",
     "config/",
     "scripts/",
