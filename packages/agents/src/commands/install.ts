@@ -66,7 +66,14 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
     entries.push(...subagentEntries);
 
     // Install scripts
-    const scriptEntries = await installScripts(contentDir, paths.scriptsDir, platformConfig, existingByPath, options);
+    const scriptEntries = await installScripts(
+      contentDir,
+      paths.scriptsDir,
+      paths.platformHome,
+      platformConfig,
+      existingByPath,
+      options,
+    );
     entries.push(...scriptEntries);
 
     // Generate prompts.yml for Rovo Dev (skill discovery file)
@@ -436,6 +443,7 @@ async function generatePromptsYml(
 async function installScripts(
   contentDir: string,
   scriptsDestDir: string,
+  platformHome: string,
   platformConfig: PlatformConfig,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
@@ -472,7 +480,7 @@ async function installScripts(
     // Check for user modifications before overwriting
     const existingEntry = existingByPath.get(relativePath);
     if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, path.dirname(scriptsDestDir));
+      const drift = await detectDrift(existingEntry, platformHome);
       if (drift === 'modified') {
         console.warn(`  Skipping modified item: ${relativePath}`);
         entries.push(existingEntry);

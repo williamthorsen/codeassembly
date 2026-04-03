@@ -67,13 +67,13 @@ Resolve the ticket prefix using `describe-change.sh`:
 
 ```bash
 json=$({skills_root}/../scripts/describe-change.sh --scope {scope} --type {type})
-ticket_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4)
+change_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4)
 ```
 
 Create the issue **without** the ticket ID prefix in the title:
 
 ```bash
-url=$(gh issue create --title "${ticket_prefix}{title}" --body "{ticket body}")
+url=$(gh issue create --title "${change_prefix}{title}" --body "{ticket body}")
 ```
 
 Extract the issue number from the returned URL:

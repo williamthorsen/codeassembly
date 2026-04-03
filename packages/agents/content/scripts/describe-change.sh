@@ -35,11 +35,13 @@ done
 # Parse a specific prefix value from a YAML file.
 # Reads line-by-line, tracks the current top-level section, and matches
 # `prefix:` within the target section (commit, ticket, or pr).
+# Outputs "FOUND:{value}" when the key is present (value may be empty),
+# or nothing when the key is absent. This lets callers distinguish
+# "key absent" from "key present with empty value."
 parse_prefix() {
   local file="$1"
   local section="$2"
   local current_section=""
-  local indent=""
 
   if [[ ! -f "$file" ]]; then
     return
@@ -52,7 +54,6 @@ parse_prefix() {
     # Detect top-level keys (no leading whitespace, ends with colon)
     if [[ "$line" =~ ^[a-zA-Z_] ]]; then
       current_section="${line%%:*}"
-      indent=""
       continue
     fi
 
@@ -69,28 +70,30 @@ parse_prefix() {
       elif [[ "$value" =~ ^\"(.*)\"$ ]]; then
         value="${BASH_REMATCH[1]}"
       fi
-      echo "$value"
+      echo "FOUND:${value}"
       return
     fi
   done < "$file"
 }
 
 # Resolve a prefix value by checking project, then global, then defaulting to empty.
+# parse_prefix returns "FOUND:{value}" when the key is present, or empty when absent.
+# This lets an explicit empty value at the project level override a global non-empty value.
 resolve_prefix() {
   local section="$1"
-  local value
+  local result
 
   # Project preferences
-  value="$(parse_prefix ".agents/preferences.yaml" "$section")"
-  if [[ -n "$value" ]]; then
-    echo "$value"
+  result="$(parse_prefix ".agents/preferences.yaml" "$section")"
+  if [[ "$result" == FOUND:* ]]; then
+    echo "${result#FOUND:}"
     return
   fi
 
   # Global preferences
-  value="$(parse_prefix "$HOME/.agents/preferences.yaml" "$section")"
-  if [[ -n "$value" ]]; then
-    echo "$value"
+  result="$(parse_prefix "$HOME/.agents/preferences.yaml" "$section")"
+  if [[ "$result" == FOUND:* ]]; then
+    echo "${result#FOUND:}"
     return
   fi
 
@@ -136,13 +139,21 @@ format_prefix() {
   echo "${result}: "
 }
 
+# Escape backslashes and double quotes for safe JSON interpolation.
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  echo "$s"
+}
+
 commit_convention="$(resolve_prefix "commit")"
 ticket_convention="$(resolve_prefix "ticket")"
 pr_convention="$(resolve_prefix "pr")"
 
-commit_prefix="$(format_prefix "$commit_convention")"
-ticket_prefix="$(format_prefix "$ticket_convention")"
-pr_prefix="$(format_prefix "$pr_convention")"
+commit_prefix="$(json_escape "$(format_prefix "$commit_convention")")"
+ticket_prefix="$(json_escape "$(format_prefix "$ticket_convention")")"
+pr_prefix="$(json_escape "$(format_prefix "$pr_convention")")"
 
 printf '{"commit_prefix":"%s","ticket_prefix":"%s","pr_prefix":"%s"}\n' \
   "$commit_prefix" "$ticket_prefix" "$pr_prefix"
