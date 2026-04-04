@@ -513,6 +513,7 @@ Pass the following engine-managed variables to the module:
 - `{ticket-requirements-path}` — full path to ticket-requirements artifact (empty string if unavailable)
 - `{plan-md-path}` — full path to orchestration-plan.md artifact (empty string if planning was skipped)
 - `{aspect_reviewers}` — resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
+- `{authored-by-pipeline}` — `true` when the pipeline spec includes `implementation`; `false` otherwise. Signals whether the code under review was authored by the orchestrated pipeline (used by the test reviewer for classification).
 
 ### review-cycle: resolving `{models}`
 
