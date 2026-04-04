@@ -1,4 +1,4 @@
-import { existsSync, lstatSync } from 'node:fs';
+import { existsSync, lstatSync, statSync } from 'node:fs';
 import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -592,5 +592,121 @@ describe('installCommand', () => {
     const contentDir = resolveContentDir();
     const sourceContent = await readFile(path.join(contentDir, 'skills', 'code-patterns', 'SKILL.md'), 'utf8');
     expect(sourceContent).toContain('../_data/naming-conventions.md');
+  });
+
+  describe('installScripts', () => {
+    it('should place script files in the scripts directory after install', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      const scriptsDir = path.join(claudeHome, 'scripts');
+      expect(existsSync(scriptsDir)).toBe(true);
+      const scriptFiles = await readdir(scriptsDir);
+      expect(scriptFiles).toContain('describe-change.sh');
+    });
+
+    it('should set executable permissions on copied scripts', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      const scriptPath = path.join(claudeHome, 'scripts', 'describe-change.sh');
+      const mode = statSync(scriptPath).mode & 0o777;
+      expect(mode).toBe(0o755);
+    });
+
+    it('should record script entries with sha256 hash and linked: false in copy mode', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      const manifest = await readManifest(getManifestPath(tempDir));
+      const claudeManifest = manifest.platforms.claude;
+      expect(claudeManifest).toBeDefined();
+      const scriptEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('scripts/'));
+      expect(scriptEntries?.length).toBeGreaterThan(0);
+      for (const entry of scriptEntries ?? []) {
+        expect(entry.contentHash).toMatch(/^sha256:/);
+        expect(entry.linked).toBe(false);
+      }
+    });
+
+    it('should record script entries with linked: true in link mode', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions({ link: true }), tempDir);
+
+      const manifest = await readManifest(getManifestPath(tempDir));
+      const claudeManifest = manifest.platforms.claude;
+      expect(claudeManifest).toBeDefined();
+      const scriptEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('scripts/'));
+      expect(scriptEntries?.length).toBeGreaterThan(0);
+      for (const entry of scriptEntries ?? []) {
+        expect(entry.linked).toBe(true);
+      }
+    });
+
+    it('should skip modified script on re-install without --force', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      // Modify a script after installation
+      const scriptPath = path.join(claudeHome, 'scripts', 'describe-change.sh');
+      const originalContent = await readFile(scriptPath, 'utf8');
+      const modifiedContent = originalContent + '\n# user modification\n';
+      await writeFile(scriptPath, modifiedContent, 'utf8');
+
+      // Re-install without --force
+      await installCommand(makeOptions(), tempDir);
+
+      // Modified script should be preserved
+      const afterReinstall = await readFile(scriptPath, 'utf8');
+      expect(afterReinstall).toBe(modifiedContent);
+    });
+
+    it('should overwrite modified script on re-install with --force', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      // Modify a script after installation
+      const scriptPath = path.join(claudeHome, 'scripts', 'describe-change.sh');
+      const originalContent = await readFile(scriptPath, 'utf8');
+      const modifiedContent = originalContent + '\n# user modification\n';
+      await writeFile(scriptPath, modifiedContent, 'utf8');
+
+      // Re-install with --force
+      await installCommand(makeOptions({ force: true }), tempDir);
+
+      // Modified script should be overwritten
+      const afterReinstall = await readFile(scriptPath, 'utf8');
+      expect(afterReinstall).not.toBe(modifiedContent);
+      expect(afterReinstall).toBe(originalContent);
+    });
+
+    it('should not create scripts directory in dry-run mode', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions({ dryRun: true }), tempDir);
+
+      const scriptsDir = path.join(claudeHome, 'scripts');
+      expect(existsSync(scriptsDir)).toBe(false);
+    });
   });
 });
