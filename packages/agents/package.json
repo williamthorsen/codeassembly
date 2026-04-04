@@ -9,6 +9,10 @@
   },
   "scripts": {
     "build": "nmr compile && tsx scripts/copy-content.ts",
+    "fmt:all": "pnpm run fmt && pnpm run fmt:sh",
+    "fmt:all:check": "pnpm run fmt:sh:check && pnpm run fmt:check",
+    "fmt:sh": "shfmt --write **/*.sh",
+    "fmt:sh:check": "shfmt --list **/*.sh",
     "test:sh": "shellspec content/scripts/"
   },
   "dependencies": {
