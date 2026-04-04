@@ -28,13 +28,40 @@ describe('installer', () => {
       expect(() => checkSymlinkSafety(path.join(tempDir, 'nonexistent'))).not.toThrow();
     });
 
-    it('should throw for a symlinked directory', async () => {
+    it('should throw for a symlinked directory and list its contents', async () => {
+      const realDir = path.join(tempDir, 'real');
+      const symlinkDir = path.join(tempDir, 'link');
+      await mkdir(realDir, { recursive: true });
+      await writeFile(path.join(realDir, 'AGENTS.md'), '');
+      await writeFile(path.join(realDir, 'preferences.yaml'), '');
+      await symlink(realDir, symlinkDir);
+
+      expect(() => checkSymlinkSafety(symlinkDir)).toThrow(
+        /Target directory is a symlink.*AGENTS\.md.*preferences\.yaml.*Remove the symlink/s,
+      );
+    });
+
+    it('should show overflow count when directory has more than 5 entries', async () => {
+      const realDir = path.join(tempDir, 'real');
+      const symlinkDir = path.join(tempDir, 'link');
+      await mkdir(realDir, { recursive: true });
+      for (let i = 0; i < 7; i++) {
+        await writeFile(path.join(realDir, `file-${i}.txt`), '');
+      }
+      await symlink(realDir, symlinkDir);
+
+      expect(() => checkSymlinkSafety(symlinkDir)).toThrow('... and 2 more');
+    });
+
+    it('should not list files when the symlinked directory is empty', async () => {
       const realDir = path.join(tempDir, 'real');
       const symlinkDir = path.join(tempDir, 'link');
       await mkdir(realDir, { recursive: true });
       await symlink(realDir, symlinkDir);
 
-      expect(() => checkSymlinkSafety(symlinkDir)).toThrow('Target directory is a symlink');
+      expect(() => checkSymlinkSafety(symlinkDir)).toThrow(
+        /cannot write into a symlinked directory\.\nRemove the symlink/,
+      );
     });
   });
 

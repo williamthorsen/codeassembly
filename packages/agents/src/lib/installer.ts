@@ -1,4 +1,4 @@
-import { existsSync, lstatSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync } from 'node:fs';
 import { cp, lstat, mkdir, readlink, rm, symlink } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -13,11 +13,33 @@ export function checkSymlinkSafety(dirPath: string): void {
 
   const stats = lstatSync(dirPath);
   if (stats.isSymbolicLink()) {
-    throw new Error(
-      `Target directory is a symlink: ${dirPath}\n` +
-        'The install command cannot write into a symlinked directory.\n' +
-        'Please remove the symlink and re-run the install command.',
+    const lines = [
+      `Target directory is a symlink: ${dirPath}`,
+      'The install command cannot write into a symlinked directory.',
+    ];
+
+    try {
+      const entries = readdirSync(dirPath);
+      if (entries.length > 0) {
+        const MAX_LISTED = 5;
+        lines.push('The target directory contains files that may need to be preserved:');
+        for (const entry of entries.slice(0, MAX_LISTED)) {
+          lines.push(`  ${entry}`);
+        }
+        if (entries.length > MAX_LISTED) {
+          lines.push(`  ... and ${entries.length - MAX_LISTED} more`);
+        }
+      }
+    } catch {
+      // Fall back to warning without file list if the directory can't be read.
+    }
+
+    lines.push(
+      'Remove the symlink, recreate it as a regular directory, restore',
+      'any preserved files, and re-run the install command.',
     );
+
+    throw new Error(lines.join('\n'));
   }
 }
 
