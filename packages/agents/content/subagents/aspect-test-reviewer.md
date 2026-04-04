@@ -53,7 +53,10 @@ Focus exclusively on:
 - Test descriptions that don't match what the test actually verifies
 - Conditional expects or assertions that can silently pass
 - Tests that are tightly coupled to implementation and will break on any refactor
-- **Unmet test-related acceptance criteria**: if the ticket or plan acceptance criteria explicitly require test coverage and the implementation does not satisfy them, classify as F (contract violation). This applies only when acceptance criteria explicitly require tests — do not infer a test requirement where none was stated.
+- **Untested branch-authored behavior**: classification depends on authorship context, signaled via the dispatch prompt:
+  - **Pipeline-authored code** (`authored-by-pipeline: true`): untested branch-authored behavior is F. The pipeline wrote this code; shipping it without tests is a defect, not a deferral. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
+  - **Non-pipeline-authored code** (no authorship signal, or `authored-by-pipeline: false`): untested branch-authored behavior is T. Test coverage is the original author's responsibility — flag the gap, but don't block the merge.
+  - This rule overrides the general T-level guidance for test gaps in `review-criteria`. The override is intentional: the shared scheme provides defaults; this reviewer specializes them based on authorship context.
 
 Do NOT flag:
 

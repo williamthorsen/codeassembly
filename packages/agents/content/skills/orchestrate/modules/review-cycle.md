@@ -21,6 +21,7 @@ The orchestrate engine must provide these context variables before entering this
 | `{models}`                   | Resolved model assignments map (see "Resolving models" in SKILL.md)                                                 |
 | `{mcp-available}`            | `true` when MCP tools are available; `false` when the engine is running without MCP                                 |
 | `{aspect_reviewers}`         | Aspect reviewer overrides from mode preset. Per-aspect: `false` = never activate, absent = use file-pattern default |
+| `{authored-by-pipeline}`     | `true` when the pipeline includes an implementation phase (code was authored by the pipeline); `false` otherwise    |
 
 ## Exit state
 
@@ -106,6 +107,8 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 20`, `model: {
 > Task description: {task}
 >
 > {If `{ticket-requirements-path}` is non-empty: Ticket requirements: Read `{ticket-requirements-path}`}
+>
+> {If `{authored-by-pipeline}` is `true`: This code was authored by the orchestrated pipeline (`authored-by-pipeline: true`). Classify untested branch-authored behavior as F (not T). See your classification guidance for details.}
 >
 > Files changed:
 > {changed-files}
