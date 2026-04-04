@@ -9,7 +9,7 @@ Commit titles may include a prefix that identifies scope (workspace, package, mo
 Run the `describe-change.sh` script to resolve the correct prefix:
 
 ```bash
-{skills_root}/../scripts/describe-change.sh --scope {scope} --type {type}
+{platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}
 ```
 
 The script reads `commit.prefix`, `ticket.prefix`, and `pr.prefix` from `.agents/preferences.yaml` (project) then `~/.agents/preferences.yaml` (global), falling back to empty string. It outputs JSON:

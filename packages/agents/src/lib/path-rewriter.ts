@@ -37,14 +37,23 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, skill
 }
 
 /**
- * Walks `.md` files in `dirPath`, applies `rewriteMarkdownPaths` to each, and writes back.
+ * Replaces `{platform_home_dir}` with `~/{homeDir}` (e.g., `~/.claude`) in `content`.
+ */
+export function rewriteTemplateVariables(content: string, homeDir: string): string {
+  return content.replaceAll('{platform_home_dir}', `~/${homeDir}`);
+}
+
+/**
+ * Walks `.md` files in `dirPath`, applies path and template variable rewrites, and writes back.
  * `skillsDestDir` is the root skills install directory, used to compute each file's relative path.
  * `skillsPrefix` is the platform-relative prefix (e.g., `.claude/skills`).
+ * `homeDir` is the platform home directory segment (e.g., `.claude`).
  */
 export async function rewritePathsInDirectory(
   dirPath: string,
   skillsDestDir: string,
   skillsPrefix: string,
+  homeDir: string,
 ): Promise<void> {
   const entries = await readdir(dirPath);
 
@@ -57,12 +66,13 @@ export async function rewritePathsInDirectory(
     }
 
     if (stats.isDirectory()) {
-      await rewritePathsInDirectory(fullPath, skillsDestDir, skillsPrefix);
+      await rewritePathsInDirectory(fullPath, skillsDestDir, skillsPrefix, homeDir);
     } else if (entry.endsWith('.md')) {
       try {
         const fileRelPath = path.relative(skillsDestDir, fullPath).split(path.sep).join('/');
         const content = await readFile(fullPath, 'utf8');
-        const rewritten = rewriteMarkdownPaths(content, fileRelPath, skillsPrefix);
+        let rewritten = rewriteMarkdownPaths(content, fileRelPath, skillsPrefix);
+        rewritten = rewriteTemplateVariables(rewritten, homeDir);
         if (rewritten !== content) {
           await writeFile(fullPath, rewritten, 'utf8');
         }

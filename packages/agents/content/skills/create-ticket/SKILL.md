@@ -66,7 +66,7 @@ Determine where to create the remote ticket:
 Resolve the ticket prefix using `describe-change.sh`:
 
 ```bash
-json=$({skills_root}/../scripts/describe-change.sh --scope {scope} --type {type})
+json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type})
 change_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4)
 ```
 

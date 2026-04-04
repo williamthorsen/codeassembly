@@ -153,14 +153,14 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(originalContent);
   });
 
-  it('should install skills as symlinks when link mode is enabled', async () => {
+  it('should copy skills even when link mode is enabled', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     await installCommand(makeOptions({ link: true }), tempDir);
 
-    // Verify that at least one skill entry is a symlink
+    // Skills require path transformation, so they are always copied (never symlinked)
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
     expect(skillsContents.length).toBeGreaterThan(0);
 
@@ -170,30 +170,31 @@ describe('installCommand', () => {
     }
     const firstSkill = path.join(claudeHome, 'skills', firstSkillName);
     const stats = lstatSync(firstSkill);
-    expect(stats.isSymbolicLink()).toBe(true);
+    expect(stats.isSymbolicLink()).toBe(false);
 
-    // Verify manifest records skill entries as linked
+    // Verify manifest records skill entries as not linked
     const manifest = await readManifest(getManifestPath(tempDir));
     const claudeManifest = manifest.platforms.claude;
     expect(claudeManifest).toBeDefined();
-    const linkedEntries = claudeManifest?.entries.filter((e) => e.linked);
-    expect(linkedEntries?.length).toBeGreaterThan(0);
+    const skillEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('skills/'));
+    expect(skillEntries?.length).toBeGreaterThan(0);
+    for (const entry of skillEntries ?? []) {
+      expect(entry.linked).toBe(false);
+    }
 
-    // Verify subagent entries always have linked: false (they require frontmatter merging)
+    // Verify subagent entries also have linked: false (they require frontmatter merging)
     const subagentEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('agents/'));
     expect(subagentEntries?.length).toBeGreaterThan(0);
     for (const entry of subagentEntries ?? []) {
       expect(entry.linked).toBe(false);
     }
 
-    // Verify an installed subagent file is a regular file, not a symlink
-    const firstSubagentEntry = subagentEntries?.[0];
-    if (firstSubagentEntry === undefined) {
-      throw new Error('Expected at least one subagent entry');
+    // Verify scripts are still symlinked in link mode
+    const scriptEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('scripts/'));
+    expect(scriptEntries?.length).toBeGreaterThan(0);
+    for (const entry of scriptEntries ?? []) {
+      expect(entry.linked).toBe(true);
     }
-    const subagentFilePath = path.join(claudeHome, firstSubagentEntry.relativePath);
-    const subagentStats = lstatSync(subagentFilePath);
-    expect(subagentStats.isSymbolicLink()).toBe(false);
   });
 
   it('should install claude-specific skills and exclude rovodev-specific skills', async () => {
@@ -450,25 +451,25 @@ describe('installCommand', () => {
     expect(existsSync(promptsPath)).toBe(false);
   });
 
-  it('should install platform-specific skills as symlinks in link mode', async () => {
+  it('should copy platform-specific skills even in link mode', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     await installCommand(makeOptions({ platform: 'claude', link: true }), tempDir);
 
-    // Verify review-permissions (claude platform-specific) is installed as a symlink
+    // Verify review-permissions (claude platform-specific) is copied, not symlinked
     const reviewPermissionsPath = path.join(claudeHome, 'skills', 'review-permissions');
     const stats = lstatSync(reviewPermissionsPath);
-    expect(stats.isSymbolicLink()).toBe(true);
+    expect(stats.isSymbolicLink()).toBe(false);
 
-    // Verify the manifest records it as linked
+    // Verify the manifest records it as not linked
     const manifest = await readManifest(getManifestPath(tempDir));
     const claudeManifest = manifest.platforms.claude;
     expect(claudeManifest).toBeDefined();
     const reviewPermEntry = claudeManifest?.entries.find((e) => e.relativePath === 'skills/review-permissions');
     expect(reviewPermEntry).toBeDefined();
-    expect(reviewPermEntry?.linked).toBe(true);
+    expect(reviewPermEntry?.linked).toBe(false);
   });
 
   it('should strip surrounding quotes from skill descriptions in prompts.yml', async () => {
@@ -571,20 +572,23 @@ describe('installCommand', () => {
     expect(content).toContain('~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix');
   });
 
-  it('should not rewrite paths in link mode', async () => {
+  it('should rewrite paths in skills even in link mode', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     await installCommand(makeOptions({ link: true }), tempDir);
 
-    // In link mode, skills are installed as symlinks pointing to the source directory.
-    // The rewriter should not run, so the source files remain unchanged.
+    // Skills are always copied and rewritten, even in link mode
     const codePatternSkillPath = path.join(claudeHome, 'skills', 'code-patterns');
     const stats = lstatSync(codePatternSkillPath);
-    expect(stats.isSymbolicLink()).toBe(true);
+    expect(stats.isSymbolicLink()).toBe(false);
 
-    // Verify that the original source file still has relative paths (not rewritten)
+    // Verify that the installed copy has rewritten paths
+    const installedContent = await readFile(path.join(codePatternSkillPath, 'SKILL.md'), 'utf8');
+    expect(installedContent).toContain('~/.claude/skills/_data/naming-conventions.md');
+
+    // Verify that the original source file still has relative paths (not modified)
     const contentDir = resolveContentDir();
     const sourceContent = await readFile(path.join(contentDir, 'skills', 'code-patterns', 'SKILL.md'), 'utf8');
     expect(sourceContent).toContain('../_data/naming-conventions.md');
