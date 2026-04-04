@@ -5,7 +5,7 @@
   "description": "Specialized subagents for orchestrated development workflows",
   "type": "module",
   "bin": {
-    "codeassembly-agents": "dist/esm/cli.js"
+    "codeassembly-agents": "bin/codeassembly-agents.js"
   },
   "scripts": {
     "build": "nmr compile && tsx scripts/copy-content.ts"

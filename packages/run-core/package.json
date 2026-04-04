@@ -28,7 +28,7 @@
   },
   "main": "./dist/esm/index.js",
   "bin": {
-    "codeassembly-runs": "dist/esm/cli.js"
+    "codeassembly-runs": "bin/codeassembly-runs.js"
   },
   "scripts": {
     "build": "nmr compile",
