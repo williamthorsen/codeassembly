@@ -26,7 +26,7 @@ git rev-parse --short HEAD
 5. **Resolve PR title prefix** using `describe-change.sh`:
 
 ```bash
-json=$({skills_root}/../scripts/describe-change.sh --scope {scope} --type {type})
+json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type})
 pr_prefix=$(echo "$json" | grep -o '"pr_prefix":"[^"]*"' | cut -d'"' -f4)
 ```
 

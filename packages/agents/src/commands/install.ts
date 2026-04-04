@@ -79,6 +79,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
       options,
       platformId,
       skillsPrefix,
+      platformConfig.homeDir,
     );
     entries.push(...skillEntries);
 
@@ -155,6 +156,7 @@ async function installSkills(
   options: InstallOptions,
   platformId: PlatformId,
   skillsPrefix: string,
+  homeDir: string,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const skillsSrcDir = path.join(contentDir, 'skills');
   const dirEntries = await readdir(skillsSrcDir);
@@ -173,6 +175,7 @@ async function installSkills(
       existingByPath,
       options,
       skillsPrefix,
+      homeDir,
     );
     entries.push(result);
   }
@@ -202,6 +205,7 @@ async function installSkills(
       existingByPath,
       options,
       skillsPrefix,
+      homeDir,
       '(platform-specific)',
     );
     entries.push(result);
@@ -212,9 +216,9 @@ async function installSkills(
 
 /**
  * Installs a single skill entry (directory or file) from source to destination.
- * Handles dry-run mode, drift detection for previously installed items, and
- * copy/link based on install options. Used by `installSkills` for both shared
- * and platform-specific skill entries.
+ * Skills are always copied and rewritten (never symlinked), because they require
+ * path transformation at install time — the same pattern subagents use for
+ * frontmatter merging.
  */
 async function installSkillEntry(
   srcPath: string,
@@ -224,12 +228,12 @@ async function installSkillEntry(
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
   skillsPrefix: string,
+  homeDir: string,
   label = '',
 ): Promise<ManifestEntry> {
   if (options.dryRun) {
-    const action = options.link ? 'link' : 'copy';
-    console.info(`    [${action}] ${relativePath}${label ? ` ${label}` : ''}`);
-    return { relativePath, contentHash: 'dry-run', linked: options.link };
+    console.info(`    [copy] ${relativePath}${label ? ` ${label}` : ''}`);
+    return { relativePath, contentHash: 'dry-run', linked: false };
   }
 
   // Check for user modifications before overwriting
@@ -242,19 +246,19 @@ async function installSkillEntry(
     }
   }
 
-  await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+  await copyItem(srcPath, destPath);
 
-  // Rewrite relative Markdown paths to absolute in copy mode for directories
+  // Rewrite Markdown paths and template variables for directories
   const stats = await stat(srcPath);
-  if (!options.link && stats.isDirectory()) {
+  if (stats.isDirectory()) {
     const skillsDestDir = path.dirname(destPath);
-    await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix);
+    await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir);
   }
 
   return {
     relativePath,
     contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
-    linked: options.link,
+    linked: false,
   };
 }
 

@@ -47,7 +47,7 @@ Use `summarize-change` to compose a good commit message. Save the description pe
 Follow [commit-format.md](../_data/commit-format.md). Use `describe-change.sh` to resolve the commit title prefix:
 
 ```bash
-{skills_root}/../scripts/describe-change.sh --scope {scope} --type {type}
+{platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}
 ```
 
 Use the `commit_prefix` field from the JSON output as the title prefix.

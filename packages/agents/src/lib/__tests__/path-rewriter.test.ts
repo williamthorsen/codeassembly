@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { rewriteMarkdownPaths, rewritePathsInDirectory } from '../path-rewriter.js';
+import { rewriteMarkdownPaths, rewritePathsInDirectory, rewriteTemplateVariables } from '../path-rewriter.js';
 
 describe(rewriteMarkdownPaths, () => {
   const skillsPrefix = '.claude/skills';
@@ -100,6 +100,30 @@ describe(rewriteMarkdownPaths, () => {
   });
 });
 
+describe(rewriteTemplateVariables, () => {
+  it('replaces {platform_home_dir} with tilde-prefixed homeDir', () => {
+    const content = '{platform_home_dir}/scripts/describe-change.sh --scope agents --type feat';
+    expect(rewriteTemplateVariables(content, '.claude')).toBe(
+      '~/.claude/scripts/describe-change.sh --scope agents --type feat',
+    );
+  });
+
+  it('replaces multiple occurrences', () => {
+    const content = 'Run {platform_home_dir}/scripts/a.sh then {platform_home_dir}/scripts/b.sh';
+    expect(rewriteTemplateVariables(content, '.claude')).toBe('Run ~/.claude/scripts/a.sh then ~/.claude/scripts/b.sh');
+  });
+
+  it('returns content unchanged when no template variables are present', () => {
+    const content = '# No variables here\n\nJust plain text.';
+    expect(rewriteTemplateVariables(content, '.claude')).toBe(content);
+  });
+
+  it('resolves to the correct path for different platforms', () => {
+    const content = '{platform_home_dir}/scripts/describe-change.sh';
+    expect(rewriteTemplateVariables(content, '.rovodev')).toBe('~/.rovodev/scripts/describe-change.sh');
+  });
+});
+
 describe(rewritePathsInDirectory, () => {
   let tempDir: string;
   let skillsDestDir: string;
@@ -119,7 +143,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(path.join(skillDir, 'SKILL.md'), 'See [format](../_data/commit-format.md) for spec.', 'utf8');
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe('See [format](~/.claude/skills/_data/commit-format.md) for spec.');
@@ -134,7 +158,7 @@ describe(rewritePathsInDirectory, () => {
       'utf8',
     );
 
-    await rewritePathsInDirectory(path.join(skillsDestDir, 'orchestrate'), skillsDestDir, '.claude/skills');
+    await rewritePathsInDirectory(path.join(skillsDestDir, 'orchestrate'), skillsDestDir, '.claude/skills', '.claude');
 
     const result = await readFile(path.join(nestedDir, 'review-cycle.md'), 'utf8');
     expect(result).toBe('See [conventions](~/.claude/skills/_data/artifact-conventions.md) for details.');
@@ -146,7 +170,7 @@ describe(rewritePathsInDirectory, () => {
     const originalContent = 'See [format](../_data/commit-format.md) for spec.';
     await writeFile(path.join(skillDir, 'notes.txt'), originalContent, 'utf8');
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
 
     const result = await readFile(path.join(skillDir, 'notes.txt'), 'utf8');
     expect(result).toBe(originalContent);
@@ -156,7 +180,41 @@ describe(rewritePathsInDirectory, () => {
     const skillDir = path.join(skillsDestDir, 'empty-skill');
     await mkdir(skillDir, { recursive: true });
 
-    await expect(rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills')).resolves.toBeUndefined();
+    await expect(
+      rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude'),
+    ).resolves.toBeUndefined();
+  });
+
+  it('replaces {platform_home_dir} template variables in .md files', async () => {
+    const skillDir = path.join(skillsDestDir, 'commit');
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(
+      path.join(skillDir, 'SKILL.md'),
+      '{platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}',
+      'utf8',
+    );
+
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
+
+    const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
+    expect(result).toBe('~/.claude/scripts/describe-change.sh --scope {scope} --type {type}');
+  });
+
+  it('applies both Markdown link and template variable rewrites', async () => {
+    const skillDir = path.join(skillsDestDir, 'prepare-pr');
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(
+      path.join(skillDir, 'SKILL.md'),
+      'See [format](../_data/commit-format.md). Run {platform_home_dir}/scripts/describe-change.sh.',
+      'utf8',
+    );
+
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
+
+    const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
+    expect(result).toBe(
+      'See [format](~/.claude/skills/_data/commit-format.md). Run ~/.claude/scripts/describe-change.sh.',
+    );
   });
 
   it('does not write files when no changes are needed', async () => {
@@ -164,7 +222,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(path.join(skillDir, 'SKILL.md'), '# No links here\n', 'utf8');
 
-    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills');
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe('# No links here\n');
