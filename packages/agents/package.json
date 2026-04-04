@@ -8,7 +8,8 @@
     "codeassembly-agents": "bin/codeassembly-agents.js"
   },
   "scripts": {
-    "build": "nmr compile && tsx scripts/copy-content.ts"
+    "build": "nmr compile && tsx scripts/copy-content.ts",
+    "test:sh": "shellspec content/scripts/"
   },
   "dependencies": {
     "js-yaml": "4.1.1"

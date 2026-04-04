@@ -17,18 +17,18 @@ type=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --scope)
-      scope="$2"
-      shift 2
-      ;;
-    --type)
-      type="$2"
-      shift 2
-      ;;
-    *)
-      echo "Unknown option: $1" >&2
-      exit 1
-      ;;
+  --scope)
+    scope="$2"
+    shift 2
+    ;;
+  --type)
+    type="$2"
+    shift 2
+    ;;
+  *)
+    echo "Unknown option: $1" >&2
+    exit 1
+    ;;
   esac
 done
 
@@ -73,7 +73,7 @@ parse_prefix() {
       echo "FOUND:${value}"
       return
     fi
-  done < "$file"
+  done <"$file"
 }
 
 # Resolve a prefix value by checking project, then global, then defaulting to empty.
@@ -147,13 +147,20 @@ json_escape() {
   echo "$s"
 }
 
-commit_convention="$(resolve_prefix "commit")"
-ticket_convention="$(resolve_prefix "ticket")"
-pr_convention="$(resolve_prefix "pr")"
+main() {
+  commit_convention="$(resolve_prefix "commit")"
+  ticket_convention="$(resolve_prefix "ticket")"
+  pr_convention="$(resolve_prefix "pr")"
 
-commit_prefix="$(json_escape "$(format_prefix "$commit_convention")")"
-ticket_prefix="$(json_escape "$(format_prefix "$ticket_convention")")"
-pr_prefix="$(json_escape "$(format_prefix "$pr_convention")")"
+  commit_prefix="$(json_escape "$(format_prefix "$commit_convention")")"
+  ticket_prefix="$(json_escape "$(format_prefix "$ticket_convention")")"
+  pr_prefix="$(json_escape "$(format_prefix "$pr_convention")")"
 
-printf '{"commit_prefix":"%s","ticket_prefix":"%s","pr_prefix":"%s"}\n' \
-  "$commit_prefix" "$ticket_prefix" "$pr_prefix"
+  printf '{"commit_prefix":"%s","ticket_prefix":"%s","pr_prefix":"%s"}\n' \
+    "$commit_prefix" "$ticket_prefix" "$pr_prefix"
+}
+
+# Allow sourcing for testing without executing main.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

@@ -499,6 +499,12 @@ async function installScripts(
     }
 
     const srcPath = path.join(scriptsSrcDir, entry);
+
+    // Skip directories (e.g. __tests__)
+    const srcStat = await stat(srcPath);
+    if (!srcStat.isFile()) {
+      continue;
+    }
     const destPath = path.join(scriptsDestDir, entry);
     const relativePath = `${platformConfig.scriptsDir}/${entry}`;
 
