@@ -1,7 +1,7 @@
 import { removeItem } from '../lib/installer.js';
 import { detectDrift, getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
 import { resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
-import type { AgentsManifest, InstallOptions, SharedManifest } from '../lib/types.js';
+import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.js';
 
 /**
  * Executes the uninstall command, removing installed skills, subagents, and guidance files.
@@ -36,7 +36,7 @@ export async function uninstallCommand(
     console.info(`\nUninstalling for platform: ${platformId}`);
     const paths = resolvePlatformPaths(platformId, baseDir);
     let removedCount = 0;
-    let skippedCount = 0;
+    const skippedEntries: ManifestEntry[] = [];
 
     for (const entry of platformManifest.entries) {
       const drift = await detectDrift(entry, paths.platformHome);
@@ -49,7 +49,7 @@ export async function uninstallCommand(
 
       if (drift === 'modified' && !options.force) {
         console.warn(`  Skipping modified file: ${entry.relativePath}`);
-        skippedCount++;
+        skippedEntries.push(entry);
         continue;
       }
 
@@ -58,13 +58,18 @@ export async function uninstallCommand(
       removedCount++;
     }
 
-    // Only remove platform from manifest when all entries were successfully removed
-    if (skippedCount === 0) {
+    // Remove platform from manifest or retain only skipped entries
+    if (skippedEntries.length === 0) {
       const { [platformId]: _removed, ...rest } = remainingPlatforms;
       remainingPlatforms = rest;
+    } else {
+      remainingPlatforms = {
+        ...remainingPlatforms,
+        [platformId]: { ...platformManifest, entries: skippedEntries },
+      };
     }
 
-    console.info(`  Removed ${removedCount} items, skipped ${skippedCount} modified items`);
+    console.info(`  Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
   }
 
   const updatedManifest: AgentsManifest = {
@@ -94,7 +99,7 @@ async function uninstallSharedGuidance(
   console.info('\nUninstalling shared guidance');
   const sharedHome = resolveSharedHome(baseDir);
   let removedCount = 0;
-  let skippedCount = 0;
+  const skippedEntries: ManifestEntry[] = [];
 
   for (const entry of sharedManifest.entries) {
     const drift = await detectDrift(entry, sharedHome);
@@ -106,7 +111,7 @@ async function uninstallSharedGuidance(
 
     if (drift === 'modified' && !options.force) {
       console.warn(`  Skipping modified file: ~/.agents/${entry.relativePath}`);
-      skippedCount++;
+      skippedEntries.push(entry);
       continue;
     }
 
@@ -115,11 +120,11 @@ async function uninstallSharedGuidance(
     removedCount++;
   }
 
-  console.info(`  Removed ${removedCount} items, skipped ${skippedCount} modified items`);
+  console.info(`  Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
 
-  // Retain shared manifest only if some entries were skipped
-  if (skippedCount > 0) {
-    return sharedManifest;
+  // Retain shared manifest only with the entries that were skipped
+  if (skippedEntries.length > 0) {
+    return { ...sharedManifest, entries: skippedEntries };
   }
   return undefined;
 }
