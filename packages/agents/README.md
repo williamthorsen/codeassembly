@@ -23,12 +23,12 @@ Project-level values take precedence over global. An explicitly empty value at t
 
 #### `artifacts`
 
-| Key                       | Type   | Default   | Description                                                                                                |
-| ------------------------- | ------ | --------- | ---------------------------------------------------------------------------------------------------------- |
-| `artifacts.base_dir`      | string | `~/.ai`   | Root directory for all generated artifacts (chats, plans, devlogs, tickets, runs). Supports `~` expansion. |
-| `artifacts.paths.chats`   | string | `chats`   | Subdirectory name for chat artifacts, relative to the project artifact directory.                          |
-| `artifacts.paths.devlogs` | string | `devlogs` | Subdirectory name for devlog artifacts.                                                                    |
-| `artifacts.paths.plans`   | string | `plans`   | Subdirectory name for plan artifacts.                                                                      |
+| Key                       | Type   | Default          | Description                                                                                                |
+| ------------------------- | ------ | ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `artifacts.base_dir`      | string | `~/ai-artifacts` | Root directory for all generated artifacts (chats, plans, devlogs, tickets, runs). Supports `~` expansion. |
+| `artifacts.paths.chats`   | string | `chats`          | Subdirectory name for chat artifacts, relative to the project artifact directory.                          |
+| `artifacts.paths.devlogs` | string | `devlogs`        | Subdirectory name for devlog artifacts.                                                                    |
+| `artifacts.paths.plans`   | string | `plans`          | Subdirectory name for plan artifacts.                                                                      |
 
 #### `repository`
 
@@ -183,7 +183,7 @@ project:
   ticket_prefix: '#'
 
 artifacts:
-  base_dir: ~/repos/vaults/code-artifacts
+  base_dir: ~/ai-artifacts
   paths:
     chats: chats
     devlogs: devlogs

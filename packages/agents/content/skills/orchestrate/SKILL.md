@@ -212,7 +212,7 @@ Prefix the status line with a colored emoji for visual distinction:
    }
    ```
 
-   When omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/.ai`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
+   When omitted (the normal case), `init_run` resolves the artifact base directory automatically from preferences (`artifacts.base_dir` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`, defaulting to `~/ai-artifacts`). An optional `baseDir` parameter can be passed as an explicit override, but the skill does not need to pass it under normal circumstances.
 
    **Success path:** Store the returned `{ runDir, runId, ticketId, timestamp }` as context variables. Set `{mcp-available}` = `true`. `{run-dir}` is the canonical artifact directory for all subsequent file writes and MCP calls. The returned `ticketId` is the resolved value (provided or auto-generated). Initialize `{seq} = 1`.
 
