@@ -55,6 +55,10 @@ Examples:
 - When given an exact file path, use the read tool directly. Do not search for the file first.
 - If the read attempt returns "file does not exist", STOP and ask the user for help — do not attempt to find the file by searching. A missing file at an exact path usually indicates a configuration or environment problem, not a wrong filename.
 
+## Shell commands
+
+- Use `git -C {path}` instead of `cd {path} && git`. Compound `cd &&` commands trigger extra permission prompts.
+
 ## Workflow
 
 - Questions are not instructions. When the user asks "Did you do X?", answer the question. Do not treat it as a request to do X.
