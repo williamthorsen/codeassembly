@@ -30,21 +30,21 @@ Example: branch `MAC-130/agents/feat/branch-manifest` produces `.agents/MAC-130-
   "project_slug": "configs-macos",
   "default_branch": "origin/main",
   "branch_name": "MAC-130/agents/feat/branch-manifest",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T19:43:00Z"
 }
 ```
 
-| Field               | Type               | Description                                                                               |
-| ------------------- | ------------------ | ----------------------------------------------------------------------------------------- |
-| `ticket_id`         | `string` or `null` | Ticket ID extracted from branch name, or `null` if not derivable                          |
-| `project_slug`      | `string`           | Project slug for artifact namespacing                                                     |
-| `default_branch`    | `string`           | Full remote reference for the default branch (e.g., `origin/main`)                        |
-| `branch_name`       | `string`           | Raw branch name as it appears in `gitStatus`                                              |
-| `artifact_base_dir` | `string`           | Resolved absolute path for artifact storage (from preferences or default `~/.ai`)         |
-| `artifact_paths`    | `object`           | Category suffix paths relative to the project directory (defaults: chats, devlogs, plans) |
-| `created_at`        | `string`           | ISO 8601 UTC timestamp of when the manifest was created                                   |
+| Field               | Type               | Description                                                                                |
+| ------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
+| `ticket_id`         | `string` or `null` | Ticket ID extracted from branch name, or `null` if not derivable                           |
+| `project_slug`      | `string`           | Project slug for artifact namespacing                                                      |
+| `default_branch`    | `string`           | Full remote reference for the default branch (e.g., `origin/main`)                         |
+| `branch_name`       | `string`           | Raw branch name as it appears in `gitStatus`                                               |
+| `artifact_base_dir` | `string`           | Resolved absolute path for artifact storage (from preferences or default `~/ai-artifacts`) |
+| `artifact_paths`    | `object`           | Category suffix paths relative to the project directory (defaults: chats, devlogs, plans)  |
+| `created_at`        | `string`           | ISO 8601 UTC timestamp of when the manifest was created                                    |
 
 ## Resolution order
 
@@ -121,7 +121,7 @@ If the fields are absent, default to `origin/main`.
 
 #### Artifact base directory
 
-Extract `artifacts.base_dir` from `{prefs}`. If not found, use default: `~/.ai`.
+Extract `artifacts.base_dir` from `{prefs}`. If not found, use default: `~/ai-artifacts`.
 
 Expand `~` using the home directory inferred from the `Working directory:` field in the system prompt environment block (e.g., if the working directory is `/Users/william/repos/myproject`, the home directory is `/Users/william`).
 
@@ -190,7 +190,7 @@ Branch: `MAC-130/agents/feat/branch-manifest`
   "project_slug": "configs-macos",
   "default_branch": "origin/main",
   "branch_name": "MAC-130/agents/feat/branch-manifest",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -211,7 +211,7 @@ Branch: `PT-456/fix/login-redirect`
   "project_slug": "example-project",
   "default_branch": "origin/main",
   "branch_name": "PT-456/fix/login-redirect",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -232,7 +232,7 @@ Branch: `mac-147`
   "project_slug": "configs-macos",
   "default_branch": "origin/main",
   "branch_name": "mac-147",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-27T00:00:00Z"
 }
@@ -254,7 +254,7 @@ Branch: `experiment/try-new-parser`
   "project_slug": "example-project",
   "default_branch": "origin/main",
   "branch_name": "experiment/try-new-parser",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -277,7 +277,7 @@ Produces the same ticket ID as the slash-separated variant. Separators `_` and `
   "project_slug": "configs-macos",
   "default_branch": "origin/main",
   "branch_name": "MAC-130_agents_feat_branch-manifest",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -298,7 +298,7 @@ Branch: `NMR-567.2/fix/regression`
   "project_slug": "example-project",
   "default_branch": "origin/main",
   "branch_name": "NMR-567.2/fix/regression",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -319,7 +319,7 @@ Branch: `MAC-200`
   "project_slug": "example-project",
   "default_branch": "origin/main",
   "branch_name": "MAC-200",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -341,7 +341,7 @@ Branch: `a-1-test`
   "project_slug": "example-project",
   "default_branch": "origin/main",
   "branch_name": "a-1-test",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-25T00:00:00Z"
 }
@@ -366,7 +366,7 @@ Preferences: `project.ticket_prefix: MAC-`
   "project_slug": "configs-macos",
   "default_branch": "origin/main",
   "branch_name": "147/feat/improve-parser",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-28T00:00:00Z"
 }
@@ -391,7 +391,7 @@ Preferences: no `project.ticket_prefix` configured
   "project_slug": "example-project",
   "default_branch": "origin/main",
   "branch_name": "42_fix_login-redirect",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-02-28T00:00:00Z"
 }
@@ -416,7 +416,7 @@ Preferences: `project.ticket_prefix: '#'`
   "project_slug": "codeassembly",
   "default_branch": "origin/main",
   "branch_name": "152",
-  "artifact_base_dir": "/Users/william/.ai",
+  "artifact_base_dir": "{artifact_base_dir}",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-03-03T00:00:00Z"
 }
@@ -425,13 +425,13 @@ Preferences: `project.ticket_prefix: '#'`
 #### 12. Custom artifact base directory (relative path)
 
 Branch: `MAC-200/feat/new-feature`
-Preferences: `artifacts.base_dir: .ai`
+Preferences: `artifacts.base_dir: ai-artifacts`
 Working directory: `/Users/william/repos/myproject`
 
 **Derivation trace:**
 
 1. Ticket ID: `MAC-200`.
-2. `artifacts.base_dir` is `.ai` (relative). Resolve against working directory: `/Users/william/repos/myproject/.ai`.
+2. `artifacts.base_dir` is `ai-artifacts` (relative). Resolve against working directory: `/Users/william/repos/myproject/ai-artifacts`.
 
 ```json
 {
@@ -439,7 +439,7 @@ Working directory: `/Users/william/repos/myproject`
   "project_slug": "myproject",
   "default_branch": "origin/main",
   "branch_name": "MAC-200/feat/new-feature",
-  "artifact_base_dir": "/Users/william/repos/myproject/.ai",
+  "artifact_base_dir": "/Users/william/repos/myproject/ai-artifacts",
   "artifact_paths": { "chats": "chats", "devlogs": "devlogs", "plans": "plans" },
   "created_at": "2026-03-17T00:00:00Z"
 }
@@ -450,7 +450,7 @@ Working directory: `/Users/william/repos/myproject`
 - **Corrupt manifest**: If a manifest file exists but contains invalid JSON, delete it and fall through to derivation to produce a new file.
 - **Stale-schema manifest**: If a manifest file exists with valid JSON but is missing required fields (e.g., `artifact_base_dir`, `artifact_paths`), delete it and fall through to derivation. This occurs once per branch when the schema evolves.
 - **Detached HEAD**: If `gitStatus` does not indicate an active branch (no `Current branch:` line or empty value), return an error message. Do not attempt derivation.
-- **Missing preferences**: If `.agents/preferences.yaml` cannot be read, use `~/.agents/preferences.yaml`. If that is also unavailable, use defaults: `project_slug` from the working directory name, `default_branch` as `origin/main`, `artifact_base_dir` as `~/.ai` (expanded to absolute).
+- **Missing preferences**: If `.agents/preferences.yaml` cannot be read, use `~/.agents/preferences.yaml`. If that is also unavailable, use defaults: `project_slug` from the working directory name, `default_branch` as `origin/main`, `artifact_base_dir` as `~/ai-artifacts` (expanded to absolute).
 - **Author-prefixed branches**: Branch names like `wthorsen/MAC-130` are not matched for ticket ID extraction (the ticket ID must be at the start). The ticket ID will be `null`. (The ticket ID is visually present but not at position zero; extracting it would require a separate enhancement.)
 
 ## Constraints

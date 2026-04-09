@@ -1,5 +1,5 @@
 artifacts:
-  base_dir: ~/repos/vaults/code-artifacts
+  base_dir: ~/ai-artifacts
 editors:
   - extensions: '*.md'
     name: Webstorm

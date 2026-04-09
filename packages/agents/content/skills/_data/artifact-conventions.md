@@ -4,7 +4,7 @@ Standards for AI-generated artifact storage, naming, and lifecycle.
 
 ## Directory structure
 
-All artifacts live under a configurable base directory (`base_dir`, default `~/.ai`). Use `get-session-context` to resolve `artifact_base_dir`:
+All artifacts live under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Use `get-session-context` to resolve `artifact_base_dir`:
 
 ```
 {base_dir}/
@@ -53,7 +53,7 @@ Multiple runs per ticket (restarts, separate review cycles) each get their own r
 
 ### Persistent export destination
 
-Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored path (the default). In worktrees, they are lost on deletion. The `export-ai-artifacts.sh` script copies them to `~/.ai/projects/{project-slug}/` for long-term retention, preserving the same directory structure. Exported artifacts are immutable (first export wins).
+Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored path (the default). In worktrees, they are lost on deletion. The `export-ai-artifacts.sh` script copies them to `~/ai-artifacts/projects/{project-slug}/` for long-term retention, preserving the same directory structure. Exported artifacts are immutable (first export wins).
 
 ## Path resolution
 
