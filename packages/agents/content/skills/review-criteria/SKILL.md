@@ -21,7 +21,7 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Skip
 
-- Lint or formatting issues (automated tools handle these)
+- Lint or formatting issues (automated tools handle these) — e.g., unused imports, missing semicolons, import order, whitespace. Do not create findings for issues that CI linters will catch; at most mention them in passing prose.
 - Pre-existing issues in unchanged code (categorize as Legacy if noted)
 
 ## Logic verification
@@ -62,6 +62,7 @@ Used by review-producing skills and agents for structured code review findings. 
 - Missing edge case handling that could cause runtime errors
 - Convention violations that affect maintainability
 - Decisions that seem wrong but may be intentional (require justification)
+- **Gate:** A warning must reflect a judgment call by the author, not a mechanical oversight. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning — classify as Suggestion at most.
 
 **TODO (T)** — should fix, not in this PR:
 
