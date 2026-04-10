@@ -1,5 +1,5 @@
 {
-  "name": "factory",
+  "name": "@codeassembly/factory",
   "version": "0.1.0",
   "private": true,
   "description": "Visual factory for orchestrated workflow management",
