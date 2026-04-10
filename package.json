@@ -46,6 +46,7 @@
     "glob": "13.0.6",
     "lefthook": "2.1.5",
     "prettier": "3.8.1",
+    "readyup": "0.13.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.58.1",

@@ -12,5 +12,14 @@
   },
   // These files will be linted
   // These files will be linted
-  "include": [".config/**/*.ts", "__tests__", "config/", "scripts/", "eslint.config.js", "*.json", "*.ts"],
+  "include": [
+    ".config/**/*.ts",
+    ".rdy/**/*.ts",
+    "__tests__",
+    "config/",
+    "scripts/",
+    "eslint.config.js",
+    "*.json",
+    "*.ts",
+  ],
 }
