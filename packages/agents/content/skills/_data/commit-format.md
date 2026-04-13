@@ -73,6 +73,7 @@ Include the ticket ID at the end of the commit body only if the branch covers mo
 
 ## Body formatting
 
+- **Lead with the outcome.** The first paragraph should state what the commit accomplishes in plain language — what now works, what changed, or what was fixed. Implementation details (which functions were added, which modules were wired together) belong in subsequent paragraphs or bullet lists.
 - **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
 - **Use backticks for code identifiers.** Variable names, function names, class names, and file paths must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `src/lib/manifest.ts`.
 - **Never reference automated tests or CI.** Do not mention formatting, linting, unit tests, or typechecking as part of what the commit does.

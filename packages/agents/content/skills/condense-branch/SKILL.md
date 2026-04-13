@@ -36,7 +36,7 @@ If branch exists, increment version number.
 
 ### If commits have detailed descriptions
 
-Synthesize existing descriptions to describe the final result. Omit information that's no longer relevant (e.g., changes made then reversed).
+Synthesize existing descriptions to describe the final result. Lead the first paragraph with what the branch accomplishes as a whole; use subsequent paragraphs for implementation details. Omit information that's no longer relevant (e.g., changes made then reversed).
 
 ### If commits lack detail
 
