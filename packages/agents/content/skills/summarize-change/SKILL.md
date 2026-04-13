@@ -83,6 +83,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ## Guidance
 
+- The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the headline (outcome in plain language), `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
 - Order Details subsections per `work-types.md` priority: Primary → Secondary → Tertiary
