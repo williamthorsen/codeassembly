@@ -39,6 +39,7 @@ You will receive:
 - **Quality gates are explicit steps**: include steps for type-checking, linting, and tests — don't assume the coder will do these automatically
 - **Include file paths**: every step must list the specific files it touches
 - **Test coverage in acceptance criteria**: when a step creates or modifies testable behavior, its acceptance criteria must include test coverage. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
+- **Documentation coverage in acceptance criteria**: when a step adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
 
 ## Output: plan (Markdown)
 

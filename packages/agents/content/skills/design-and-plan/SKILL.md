@@ -103,6 +103,8 @@ When the ticket needs work, produce or update it to capture the agreed design:
 
 **Test criterion convention:** when a ticket involves code changes to testable behavior, the acceptance criteria must include a test criterion (e.g., "New/modified behavior in this change is covered by tests"). Omit the test criterion only when the change falls entirely within the carve-outs defined in the `testing-conventions` skill.
 
+**Documentation criterion convention:** when a ticket involves changes that add, remove, or rename user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), the acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
+
 Present the ticket to the user. Revise until approved.
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent.
@@ -152,6 +154,8 @@ Produce a plan that gives a competent coder everything they need — and enough 
 - {How to know this task is done}
 
 Apply the same test criterion convention here: when a task creates or modifies testable behavior, include a test criterion in its acceptance criteria. This ensures the test requirement propagates from the ticket through to the plan's per-task level, where the coder and reviewers consume it.
+
+Apply the same documentation criterion convention here: when a task adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), include a criterion for updating documentation, help text, and usage examples — including removal of references to anything that no longer exists.
 
 ### Task 2: {Name}
 

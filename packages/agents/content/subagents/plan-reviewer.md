@@ -47,11 +47,12 @@ Each finding is tagged with a resolution type:
 
 ### Completeness criteria (C findings)
 
-| Focus                    | Check                                                | Resolution                                               |
-| ------------------------ | ---------------------------------------------------- | -------------------------------------------------------- |
-| UX specification         | Interactions, layouts, states, user flows specified? | `user` -- UX decisions are preference-based              |
-| Technical decisions      | Patterns, data structures, API shapes specified?     | `auto` if codebase pattern applies; `user` if ambiguous  |
-| Behavioral specification | Edge cases, defaults, failure modes specified?       | `auto` if conventions dictate; `user` if domain-specific |
+| Focus                    | Check                                                                          | Resolution                                               |
+| ------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| UX specification         | Interactions, layouts, states, user flows specified?                           | `user` -- UX decisions are preference-based              |
+| Technical decisions      | Patterns, data structures, API shapes specified?                               | `auto` if codebase pattern applies; `user` if ambiguous  |
+| Behavioral specification | Edge cases, defaults, failure modes specified?                                 | `auto` if conventions dictate; `user` if domain-specific |
+| Documentation coverage   | Steps touching user-facing surface include doc updates in acceptance criteria? | `auto` if doc files identifiable; `user` if ambiguous    |
 
 ### Correctness criteria (X findings)
 
