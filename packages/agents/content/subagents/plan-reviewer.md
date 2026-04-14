@@ -25,13 +25,14 @@ You will receive:
 
 ## Process
 
-1. **Read the plan**: read the full plan file. If orchestration format, also check for a `.json` companion.
-2. **Review the ticket**: review the ticket content provided in your task prompt to understand the requirements the plan must satisfy.
-3. **Explore the codebase**: use Glob, Grep, and Read to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
-4. **Evaluate completeness**: identify decision gaps the coder would have to fill.
-5. **Evaluate correctness**: identify factual errors and structural issues.
-6. **Map requirements coverage**: trace each requirement to a plan step.
-7. **Write the review**: output findings to the provided path.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Read the plan**: read the full plan file. If orchestration format, also check for a `.json` companion.
+3. **Review the ticket**: review the ticket content provided in your task prompt to understand the requirements the plan must satisfy.
+4. **Explore the codebase**: use Glob, Grep, and Read to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
+5. **Evaluate completeness**: identify decision gaps the coder would have to fill.
+6. **Evaluate correctness**: identify factual errors and structural issues.
+7. **Map requirements coverage**: trace each requirement to a plan step.
+8. **Write the review**: output findings to the provided path.
 
 ## Finding scheme (C/X)
 

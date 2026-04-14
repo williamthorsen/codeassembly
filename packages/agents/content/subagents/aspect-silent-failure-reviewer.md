@@ -25,12 +25,13 @@ You will receive:
 
 ## Process
 
-1. **Get the diff**: run the provided `git diff` command to see all changes in scope
-2. **Read changed files**: read the full files to understand error-handling context
-3. **Check relevance**: if the diff contains no error-handling code (no try/catch, no `.catch()`, no error callbacks, no fallback patterns, no error suppression), write `### Criticality: none` to the artifact and stop
-4. **Form preliminary findings**: identify potential silent failures and error-handling issues from what you've read so far
-5. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
-6. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Get the diff**: run the provided `git diff` command to see all changes in scope
+3. **Read changed files**: read the full files to understand error-handling context
+4. **Check relevance**: if the diff contains no error-handling code (no try/catch, no `.catch()`, no error callbacks, no fallback patterns, no error suppression), write `### Criticality: none` to the artifact and stop
+5. **Form preliminary findings**: identify potential silent failures and error-handling issues from what you've read so far
+6. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
+7. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
 
 ## Scope
 

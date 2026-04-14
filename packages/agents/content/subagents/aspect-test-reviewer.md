@@ -27,13 +27,14 @@ You will receive:
 
 ## Process
 
-1. **Get the diff**: run the provided `git diff` command to see all changes in scope
-2. **Read changed files**: read both source and test files in full to understand context
-3. **Check relevance**: if the change contains no new or modified source files that require test coverage (e.g., only documentation, configuration, or formatting changes), write `### Criticality: none` to the artifact and stop
-4. **Map source to tests**: identify which source files have corresponding test files, and which new source files lack tests entirely
-5. **Form preliminary findings**: identify behavioral gaps, missing edge cases, and test quality issues from what you've read so far
-6. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
-7. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Get the diff**: run the provided `git diff` command to see all changes in scope
+3. **Read changed files**: read both source and test files in full to understand context
+4. **Check relevance**: if the change contains no new or modified source files that require test coverage (e.g., only documentation, configuration, or formatting changes), write `### Criticality: none` to the artifact and stop
+5. **Map source to tests**: identify which source files have corresponding test files, and which new source files lack tests entirely
+6. **Form preliminary findings**: identify behavioral gaps, missing edge cases, and test quality issues from what you've read so far
+7. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
+8. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
 
 ### Efficiency
 
