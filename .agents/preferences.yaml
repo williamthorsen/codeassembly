@@ -7,6 +7,7 @@ editors:
 integrations:
   jira:
     enabled: false
+platform: github
 project:
   slug: codeassembly
   ticket_prefix: '#' # ignored in file names
