@@ -15,14 +15,10 @@ export default [
     // Completely ignore these files
     ignores: [
       '**/*.sh',
-      '**/.astro/**',
-      '**/.next/**',
+      '**/.readyup/**/*.js',
       '**/coverage/**',
       '**/dist/**',
       '**/local/**',
-      'packages/cdk/.*/**/*',
-      // 'packages/cdk/src/bin/**/*',
-      'packages/**/.next/**/*',
       '**/content/skills/_platforms/**',
     ],
   },
