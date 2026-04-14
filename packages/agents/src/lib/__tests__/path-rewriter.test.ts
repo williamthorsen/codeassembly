@@ -68,7 +68,7 @@ describe(rewriteMarkdownPaths, () => {
     },
     {
       name: 'leaves anchor-only links untouched',
-      fileRelPath: 'prepare-pr/SKILL.md',
+      fileRelPath: 'create-pr/SKILL.md',
       content: 'See [Saving](#saving) section.',
       expected: 'See [Saving](#saving) section.',
     },
@@ -201,7 +201,7 @@ describe(rewritePathsInDirectory, () => {
   });
 
   it('applies both Markdown link and template variable rewrites', async () => {
-    const skillDir = path.join(skillsDestDir, 'prepare-pr');
+    const skillDir = path.join(skillsDestDir, 'create-pr');
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),

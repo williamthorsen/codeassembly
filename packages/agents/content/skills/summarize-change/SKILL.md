@@ -33,6 +33,14 @@ If expected information is missing, stop and ask the developer.
 ## Output format
 
 ```markdown
+---
+title: '{bare title without ticket ID}'
+ticket_id: '{ticket ID from session context}'
+commit: '{short hash of HEAD}'
+scope: '{scope inferred from commit prefixes, or omitted if ambiguous}'
+type: '{work type inferred from commit prefixes, or omitted if ambiguous}'
+---
+
 # {TICKET} {title}
 
 Commit: {short hash of HEAD}
@@ -89,6 +97,15 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - Order Details subsections per `work-types.md` priority: Primary → Secondary → Tertiary
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
+
+## Frontmatter inference
+
+The YAML frontmatter provides machine-readable metadata for downstream consumers (e.g., `create-pr`).
+
+- **`title`**: The bare title without the ticket ID prefix. If the ticket is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`.
+- **`ticket_id`**: From `get-session-context`.
+- **`commit`**: Short hash of HEAD (`git rev-parse --short HEAD`).
+- **`scope`** and **`type`**: Infer from the commit message prefixes on the branch. Examine commits between the default branch and HEAD. If all (or the dominant majority of) commits share the same scope and type prefix (e.g., `agents|feat:`), use those values. If commits use mixed scopes or types with no clear dominant value, omit the ambiguous field entirely from the frontmatter. Omission is safe — downstream consumers treat missing fields as absent and skip the corresponding resolution step.
 
 ## As a PR description
 
