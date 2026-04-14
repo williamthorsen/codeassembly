@@ -44,10 +44,17 @@ If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type
 
 ### 6. Resolve PR title prefix
 
-If `type` is present (from frontmatter or override): call `describe-change.sh` to resolve the PR title prefix:
+If `type` is present (from frontmatter or override): call `describe-change.sh` to resolve the PR title prefix. Include `--scope` only when `scope` is also present:
 
 ```bash
+# When both type and scope are present:
 json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type})
+
+# When only type is present (no scope):
+json=$({platform_home_dir}/scripts/describe-change.sh --type {type})
+```
+
+```bash
 pr_prefix=$(echo "$json" | grep -o '"pr_prefix":"[^"]*"' | cut -d'"' -f4)
 ```
 
@@ -59,7 +66,7 @@ See [commit-format.md](../_data/commit-format.md) for prefix conventions.
 
 ### 7. Resolve labels
 
-If `scope` and `type` are both present and `.meta/label-map.json` exists, resolve labels following the same pattern as `create-ticket`:
+If at least one of `scope` or `type` is present and `.meta/label-map.json` exists, resolve labels following the same pattern as `create-ticket`:
 
 1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip — labels = [].
 2. **Type label:** Strip any trailing `!` from the type. Look up the stripped type in `label_map.types`. If found, add the mapped label name.

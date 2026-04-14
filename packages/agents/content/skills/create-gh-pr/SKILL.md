@@ -39,7 +39,7 @@ label_flags+=" --label \"{label_name}\""
 ```bash
 url=$(gh pr create \
   --title "{title}" \
-  --body "$BODY" \
+  --body "{body}" \
   --base "{base_branch}" \
   --draft \
   ${label_flags})
