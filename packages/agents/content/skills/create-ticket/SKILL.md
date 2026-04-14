@@ -41,7 +41,7 @@ Create the ticket body describing WHAT needs to be done — problem, context, an
 {Optional enhancements}
 ```
 
-Also draft a short title (without ticket ID prefix) for use in step 4.
+Also draft a short title (without ticket ID prefix) for use in step 5.
 
 ### 3. Resolve platform
 
@@ -59,7 +59,36 @@ Determine where to create the remote ticket:
 
 3. **Ask** — if platform cannot be determined
 
-### 4. Create remote ticket
+### 4. Resolve labels (GitHub only)
+
+If the platform resolved in step 3 is GitHub, attempt to read `.meta/label-map.json` using the Read tool. If the file does not exist, skip label resolution — no labels will be applied.
+
+The label map has this shape:
+
+```json
+{
+  "types": { "feat": "feature", "fix": "fix", ... },
+  "scopes": { "agents": "scope:agents", "factory": "scope:factory", ... }
+}
+```
+
+If the file exists, resolve labels from the scope and type established in the conversation context:
+
+1. **Type label:** Strip any trailing `!` from the type (e.g., `feat!` → `feat`). Look up the stripped type in `label_map.types`. If found, add the mapped label name.
+2. **Breaking label:** If the original type had a `!` suffix, add `breaking` as an additional label.
+3. **Scope label:** Look up the scope in `label_map.scopes`. If found, add the mapped label name.
+
+Missing entries are silently skipped — if a type or scope is not in the map, no label is added for that dimension.
+
+Construct `--label` flags for each resolved label:
+
+```bash
+label_flags=""
+# For each resolved label:
+label_flags+=" --label \"{label_name}\""
+```
+
+### 5. Create remote ticket
 
 #### GitHub path
 
@@ -70,10 +99,10 @@ json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {ty
 change_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4)
 ```
 
-Create the issue **without** the ticket ID prefix in the title:
+Create the issue **without** the ticket ID prefix in the title. Include `--label` flags if labels were resolved in step 4:
 
 ```bash
-url=$(gh issue create --title "${change_prefix}{title}" --body "{ticket body}")
+url=$(gh issue create --title "${change_prefix}{title}" --body "{ticket body}"${label_flags})
 ```
 
 Extract the issue number from the returned URL:
@@ -89,9 +118,9 @@ Construct the ticket ID from `ticket_prefix` (step 1) and `number`:
 
 #### Jira path (stub)
 
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Skip to step 6 (save locally with an auto-generated ticket ID). Full Jira API support deferred.
+If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Skip to step 7 (save locally with an auto-generated ticket ID). Full Jira API support deferred.
 
-### 5. Save local artifacts
+### 6. Save local artifacts
 
 Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
@@ -109,7 +138,7 @@ Example: `20260226-2130Z_role-type-architecture_ticket.md`
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
-### 6. Save plan (if present)
+### 7. Save plan (if present)
 
 If a plan exists in conversation context, save it as a ticket-scoped artifact in the same directory:
 
