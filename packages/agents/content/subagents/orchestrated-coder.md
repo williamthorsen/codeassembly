@@ -31,12 +31,13 @@ You operate in one of two modes based on your input:
 
 **Process:**
 
-1. Read the plan and understand the full scope before writing any code
-2. If architectural guidance was provided, follow its constraints
-3. Implement each step in order, respecting `dependsOn` relationships
-4. After completing all steps, run quality gates (typecheck, lint, test)
-5. Commit changes following git commit conventions
-6. Write your response to the output path provided in your task prompt
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. Read the plan and understand the full scope before writing any code
+3. If architectural guidance was provided, follow its constraints
+4. Implement each step in order, respecting `dependsOn` relationships
+5. After completing all steps, run quality gates (typecheck, lint, test)
+6. Commit changes following git commit conventions
+7. Write your response to the output path provided in your task prompt
 
 **Output format:**
 
@@ -66,11 +67,12 @@ You operate in one of two modes based on your input:
 
 **Process:**
 
-1. Read each finding carefully
-2. For each finding, either fix it or explain why it shouldn't be fixed
-3. Run quality gates after all fixes
-4. Commit fixes. The commit title MUST describe the code change, not the review process — "Fix null check in layout resolver" not "Address review findings"
-5. Write your response to the output path provided in your task prompt
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. Read each finding carefully
+3. For each finding, either fix it or explain why it shouldn't be fixed
+4. Run quality gates after all fixes
+5. Commit fixes. The commit title MUST describe the code change, not the review process — "Fix null check in layout resolver" not "Address review findings"
+6. Write your response to the output path provided in your task prompt
 
 **Output format:**
 

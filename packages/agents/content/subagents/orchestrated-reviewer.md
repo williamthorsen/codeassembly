@@ -28,13 +28,14 @@ You will receive:
 
 ## Process
 
-1. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, using the merge-base SHA provided in your task prompt.
-2. **Read changed files**: read the full files, not just diffs, to understand context
-3. **Evaluate against criteria**: apply review-criteria skill
-4. **Verify acceptance criteria**: if ticket requirements or plan acceptance criteria were provided, verify that the implementation satisfies them. Unmet acceptance criteria are findings — classify by severity like any other issue. For test-related acceptance criteria specifically, unmet criteria are F-severity (contract violation), consistent with the calibration in `aspect-test-reviewer`.
-5. **Form preliminary findings**: classify each finding into the F/W/T/R/S scheme (with `-L` suffix for legacy) and determine overall criticality
-6. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
-7. **Refine if turns remain**: if you have remaining turns, continue evaluation and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, using the merge-base SHA provided in your task prompt.
+3. **Read changed files**: read the full files, not just diffs, to understand context
+4. **Evaluate against criteria**: apply review-criteria skill
+5. **Verify acceptance criteria**: if ticket requirements or plan acceptance criteria were provided, verify that the implementation satisfies them. Unmet acceptance criteria are findings — classify by severity like any other issue. For test-related acceptance criteria specifically, unmet criteria are F-severity (contract violation), consistent with the calibration in `aspect-test-reviewer`.
+6. **Form preliminary findings**: classify each finding into the F/W/T/R/S scheme (with `-L` suffix for legacy) and determine overall criticality
+7. **Write your artifact**: write the review file to the output path with your current findings, criticality classification, and return block — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
+8. **Refine if turns remain**: if you have remaining turns, continue evaluation and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
 
 ### Efficiency
 

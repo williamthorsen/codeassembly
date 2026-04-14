@@ -26,12 +26,13 @@ You will receive:
 
 ## Process
 
-1. **Read the original plan**: understand its structure, format, and content.
-2. **Read the review findings**: understand each C and X finding.
-3. **For auto-resolvable findings (X and auto-tagged C)**: explore the codebase to gather the information needed to resolve each finding. Read the files, check the patterns, verify the corrections.
-4. **For user-answered findings**: incorporate the user's answers directly.
-5. **Produce the refined plan**: write a complete plan document (not a diff) in the same format as the original, with all findings addressed.
-6. **Append the changes table**: document what changed from the original.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Read the original plan**: understand its structure, format, and content.
+3. **Read the review findings**: understand each C and X finding.
+4. **For auto-resolvable findings (X and auto-tagged C)**: explore the codebase to gather the information needed to resolve each finding. Read the files, check the patterns, verify the corrections.
+5. **For user-answered findings**: incorporate the user's answers directly.
+6. **Produce the refined plan**: write a complete plan document (not a diff) in the same format as the original, with all findings addressed.
+7. **Append the changes table**: document what changed from the original.
 
 ## Format handling
 

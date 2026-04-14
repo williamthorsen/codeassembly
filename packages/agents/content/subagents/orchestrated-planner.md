@@ -25,11 +25,12 @@ You will receive:
 
 ## Process
 
-1. **Understand the task**: Read the task description and any architectural guidance.
-2. **Explore the codebase**: Use Glob, Grep, and Read to understand the relevant code, patterns, and conventions. Identify the files that will need to change.
-3. **Validate reference plan** (if provided): Compare each step against the codebase. Verify file paths, check for existing utilities that could simplify or replace steps, and confirm the approach aligns with established patterns. Address any assumption issues flagged by the architect. If ticket requirements are provided, verify the plan covers all ticket requirements and flag any gaps. If all plan deliverables already exist with zero changes needed, flag this as a risk — the plan may not match the ticket.
-4. **Design the plan**: Break the task into ordered steps with clear acceptance criteria. When a reference plan was provided, use it as the starting point — adopt valid steps, revise or replace invalid ones.
-5. **Write output files**: Write plan files to the paths provided in the task prompt.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Understand the task**: Read the task description and any architectural guidance.
+3. **Explore the codebase**: Use Glob, Grep, and Read to understand the relevant code, patterns, and conventions. Identify the files that will need to change.
+4. **Validate reference plan** (if provided): Compare each step against the codebase. Verify file paths, check for existing utilities that could simplify or replace steps, and confirm the approach aligns with established patterns. Address any assumption issues flagged by the architect. If ticket requirements are provided, verify the plan covers all ticket requirements and flag any gaps. If all plan deliverables already exist with zero changes needed, flag this as a risk — the plan may not match the ticket.
+5. **Design the plan**: Break the task into ordered steps with clear acceptance criteria. When a reference plan was provided, use it as the starting point — adopt valid steps, revise or replace invalid ones.
+6. **Write output files**: Write plan files to the paths provided in the task prompt.
 
 ## Step design principles
 

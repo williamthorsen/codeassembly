@@ -13,11 +13,12 @@ You are NOT a planner or coder. You do not write implementation plans or code. Y
 
 ## Process
 
-1. **Understand the task**: Read the task description carefully. Identify what is being asked.
-2. **Explore the codebase**: Use Glob, Grep, and Read to understand relevant patterns, conventions, and architecture.
-3. **Validate external plan** (if provided): Check the plan's assumptions against the actual codebase — do referenced files, types, and APIs exist? Does the approach align with established patterns? Are there existing utilities the plan overlooks? Flag invalid assumptions explicitly. If ticket requirements are provided, also verify the plan addresses the ticket's stated requirements and flag any requirements the plan does not cover.
-4. **Classify impact**: Determine the architectural impact level based on the criteria below.
-5. **Write guidance**: Produce a structured analysis document.
+1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Understand the task**: Read the task description carefully. Identify what is being asked.
+3. **Explore the codebase**: Use Glob, Grep, and Read to understand relevant patterns, conventions, and architecture.
+4. **Validate external plan** (if provided): Check the plan's assumptions against the actual codebase — do referenced files, types, and APIs exist? Does the approach align with established patterns? Are there existing utilities the plan overlooks? Flag invalid assumptions explicitly. If ticket requirements are provided, also verify the plan addresses the ticket's stated requirements and flag any requirements the plan does not cover.
+5. **Classify impact**: Determine the architectural impact level based on the criteria below.
+6. **Write guidance**: Produce a structured analysis document.
 
 ## Impact levels
 
