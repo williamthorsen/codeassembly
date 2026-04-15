@@ -49,14 +49,14 @@ Wrong:
 
 ```
 Add no-automated-tests-in-test-plan rule to summarize-change and
-prepare-pr skills. Add PR comment labeling rules to review-criteria
+review-criteria skills. Add PR comment labeling rules to review-criteria
 (finding IDs map to descriptive labels like `fixme:`, `warning:`).
 ```
 
 Right:
 
 ```
-Add no-automated-tests-in-test-plan rule to summarize-change and prepare-pr skills. Add PR comment labeling rules to review-criteria (finding IDs map to descriptive labels like `fixme:`, `warning:`).
+Add no-automated-tests-in-test-plan rule to summarize-change and review-criteria skills. Add PR comment labeling rules to review-criteria (finding IDs map to descriptive labels like `fixme:`, `warning:`).
 ```
 
 ## Pull requests

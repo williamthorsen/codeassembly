@@ -1,53 +1,104 @@
 ---
 name: create-pr
-description: Create GitHub pull request from change summary
+description: Create a pull request by orchestrating change summary, prefix resolution, label resolution, and platform delegation
 user-invocable: true
 ---
 
-# Create GitHub pull request
+# Create pull request
 
-Create a pull request using the GitHub CLI and existing PR description.
+Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
+
+## Optional arguments
+
+- `--scope {scope}`: Override the scope inferred by `summarize-change`.
+- `--type {type}`: Override the work type inferred by `summarize-change`.
 
 ## Process
 
-1. **Find PR description file**:
-   - Use `get-session-context` to obtain `ticket_id`, `project_slug`, `artifact_base_dir`, and `default_branch`
-   - Look for most recently modified `*_change-summary.md` in `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+### 1. Get session context
 
-2. **Extract title**:
-   - Use the first `#` heading from the file as PR title
+Use `get-session-context` to obtain `ticket_id`, `project_slug`, `platform`, `default_branch`, `branch_name`, and `artifact_base_dir`.
 
-3. **Check branch sync**:
-   - If current branch is not up to date with remote, **STOP THIS TASK**
-   - Run `git status` to verify
+### 2. Check branch sync
 
-4. **Create PR**:
+Verify the current branch is up to date with remote:
 
-   Derive the bare branch name from `default_branch` by stripping the remote prefix (e.g., `origin/main` -> `main`).
+```bash
+git fetch origin
+git status
+```
 
-   Extract body from `## What` onward:
+If the branch is not up to date with remote, **STOP THIS TASK** and notify the user. Do not proceed to `summarize-change` or any later step.
 
-   ```bash
-   BODY=$(sed -n '/^## What$/,$p' path/to/change-summary.md)
-   gh pr create \
-     --title "{extracted title from file}" \
-     --body "$BODY" \
-     --base "{bare branch name}" \
-     --draft
-   ```
+### 3. Call `summarize-change`
+
+Invoke the `summarize-change` skill to produce a change summary. This generates a markdown file with YAML frontmatter containing `title`, `ticket_id`, `commit`, `scope`, and `type`.
+
+### 4. Read frontmatter
+
+Read the YAML frontmatter from the change summary. Extract `title`, `scope`, and `type`.
+
+### 5. Apply overrides
+
+If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type` was provided, use it instead of the frontmatter `type`.
+
+### 6. Resolve PR title prefix
+
+If `type` is present (from frontmatter or override): call `describe-change.sh` to resolve the PR title prefix. Include `--scope` only when `scope` is also present:
+
+```bash
+# When both type and scope are present:
+json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type})
+
+# When only type is present (no scope):
+json=$({platform_home_dir}/scripts/describe-change.sh --type {type})
+```
+
+```bash
+pr_prefix=$(echo "$json" | grep -o '"pr_prefix":"[^"]*"' | cut -d'"' -f4)
+```
+
+If `pr_prefix` is non-empty, prepend it to the title: `{pr_prefix}{title}`.
+
+If `type` is absent, use the bare title as-is. Do not call `describe-change.sh` without a type.
+
+See [commit-format.md](../_data/commit-format.md) for prefix conventions.
+
+### 7. Resolve labels
+
+Resolve labels following the same pattern as `create-ticket`:
+
+1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip — labels = [].
+2. **Type label** (if `type` is present): Strip any trailing `!` from the type. Look up the stripped type in `label_map.types`. If found, add the mapped label name.
+3. **Breaking label** (if `type` is present): If the original type had a `!` suffix, add `breaking` as an additional label.
+4. **Scope label** (if `scope` is present): Look up the scope in `label_map.scopes`. If found, add the mapped label name.
+
+Missing entries are silently skipped. If neither scope nor type is present, labels = [].
+
+### 8. Detect platform and select delegate
+
+Read `platform` from the session context manifest:
+
+- `"github"` -> delegate to `create-gh-pr`
+- `"bitbucket"` -> delegate to `create-bitbucket-pr`
+- Unknown or missing -> ask the user which platform to use
+
+### 9. Call delegate
+
+Pass the following inputs to the selected delegate per the delegate interface:
+
+| Input               | Value                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `title`             | Final title (with prefix if resolved)                                                               |
+| `body`              | Content from `## What` onward in the change summary                                                 |
+| `labels`            | Resolved label names (may be empty list)                                                            |
+| `base_branch`       | Bare branch name derived from `default_branch` (strip remote prefix, e.g., `origin/main` -> `main`) |
+| `ticket_id`         | From session context                                                                                |
+| `project_slug`      | From session context                                                                                |
+| `artifact_base_dir` | From session context                                                                                |
 
 ## Important
 
-- Strip the remote prefix from `default_branch` (e.g., `origin/main` -> `main`) for `--base`
-- Do NOT use full reference (`origin/main`) - GitHub CLI expects branch name only
-- Creates PR as draft by default
-- If instructions are unclear, ask for confirmation before creating
-
-## Verification
-
-Before creating:
-
-- [ ] Branch is up to date with remote
-- [ ] PR description file exists and is current
-- [ ] Title extracted correctly
-- [ ] Base branch is correct
+- The orchestrator owns all decisions (scope, type, prefix, labels). Delegates own only execution (platform API calls).
+- Strip the remote prefix from `default_branch` (e.g., `origin/main` -> `main`) before passing to the delegate.
+- Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
