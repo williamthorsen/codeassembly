@@ -26,6 +26,8 @@ This skill receives the following inputs from the orchestrator:
 
 ### 1. Construct label flags
 
+If `labels` is empty, skip this step — no `--label` flags are needed.
+
 For each label in the `labels` list, construct a `--label` flag:
 
 ```bash

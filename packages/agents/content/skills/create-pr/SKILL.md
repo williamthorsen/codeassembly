@@ -66,14 +66,14 @@ See [commit-format.md](../_data/commit-format.md) for prefix conventions.
 
 ### 7. Resolve labels
 
-If at least one of `scope` or `type` is present and `.meta/label-map.json` exists, resolve labels following the same pattern as `create-ticket`:
+Resolve labels following the same pattern as `create-ticket`:
 
 1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip — labels = [].
-2. **Type label:** Strip any trailing `!` from the type. Look up the stripped type in `label_map.types`. If found, add the mapped label name.
-3. **Breaking label:** If the original type had a `!` suffix, add `breaking` as an additional label.
-4. **Scope label:** Look up the scope in `label_map.scopes`. If found, add the mapped label name.
+2. **Type label** (if `type` is present): Strip any trailing `!` from the type. Look up the stripped type in `label_map.types`. If found, add the mapped label name.
+3. **Breaking label** (if `type` is present): If the original type had a `!` suffix, add `breaking` as an additional label.
+4. **Scope label** (if `scope` is present): Look up the scope in `label_map.scopes`. If found, add the mapped label name.
 
-Missing entries are silently skipped. If scope or type is absent, skip the corresponding lookup. If neither is present, labels = [].
+Missing entries are silently skipped. If neither scope nor type is present, labels = [].
 
 ### 8. Detect platform and select delegate
 
