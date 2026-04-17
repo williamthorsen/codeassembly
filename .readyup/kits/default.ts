@@ -28,6 +28,14 @@ export default defineRdyKit({
           },
           fix: 'Add `@.agents/PROJECT.md` to .claude/CLAUDE.md so Claude reads project context',
         },
+        {
+          name: '.meta/label-map.json exists',
+          check: () => {
+            const content = readFile('.meta/label-map.json');
+            return content !== undefined;
+          },
+          fix: 'Run `codeassembly-agents generate label-map` to create a starter label map',
+        },
       ],
     },
   ],
