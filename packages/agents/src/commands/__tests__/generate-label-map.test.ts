@@ -1,10 +1,23 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateLabelMap } from '../generate-label-map.js';
+import { generateLabelMap, printGenerateUsage } from '../generate-label-map.js';
+
+interface LabelMap {
+  readonly $schema: string;
+  readonly types: Record<string, string>;
+  readonly scopes: Record<string, string>;
+}
+
+/** Parses the generated JSON file content into a typed `LabelMap`. */
+function parseLabelMap(raw: string): LabelMap {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- JSON.parse returns `any`; validated by test assertions
+  return JSON.parse(raw);
+}
 
 describe(generateLabelMap, () => {
   let tempDir: string;
@@ -20,18 +33,31 @@ describe(generateLabelMap, () => {
 
   it('creates .meta/label-map.json with correct structure', async () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
-    const parsed = JSON.parse(result);
+    const parsed = parseLabelMap(result);
 
-    expect(parsed).toHaveProperty('$schema');
-    expect(parsed.$schema).toContain('agents-v');
-    expect(parsed.$schema).toContain('label-map.json');
+    expect(parsed.$schema).toMatch(
+      /^https:\/\/github\.com\/williamthorsen\/codeassembly\/raw\/agents-v[\d.]+\/packages\/agents\/schemas\/label-map\.json$/,
+    );
     expect(parsed.types).toBeDefined();
     expect(parsed.scopes).toEqual({});
   });
 
+  it('embeds the actual package version in the $schema URL', async () => {
+    const thisDir = path.dirname(fileURLToPath(import.meta.url));
+    const packageJsonPath = path.resolve(thisDir, '../../../package.json');
+    const packageJsonRaw = await readFile(packageJsonPath, 'utf8');
+
+    const packageJsonParsed: { version: string } = JSON.parse(packageJsonRaw);
+
+    const result = await readGeneratedFile({ force: false }, tempDir);
+    const parsed = parseLabelMap(result);
+
+    expect(parsed.$schema).toContain(`agents-v${packageJsonParsed.version}`);
+  });
+
   it('includes all canonical type mappings', async () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
-    const parsed = JSON.parse(result);
+    const parsed = parseLabelMap(result);
 
     expect(parsed.types).toEqual({
       ai: 'ai',
@@ -56,7 +82,7 @@ describe(generateLabelMap, () => {
     await mkdir(path.join(tempDir, 'packages', 'beta'), { recursive: true });
 
     const result = await readGeneratedFile({ force: false }, tempDir);
-    const parsed = JSON.parse(result);
+    const parsed = parseLabelMap(result);
 
     expect(parsed.scopes).toEqual({
       alpha: 'scope:alpha',
@@ -67,7 +93,7 @@ describe(generateLabelMap, () => {
 
   it('returns empty scopes when packages/ does not exist', async () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
-    const parsed = JSON.parse(result);
+    const parsed = parseLabelMap(result);
 
     expect(parsed.scopes).toEqual({});
   });
@@ -77,7 +103,7 @@ describe(generateLabelMap, () => {
     await writeFile(path.join(tempDir, 'packages', 'README.md'), 'hello', 'utf8');
 
     const result = await readGeneratedFile({ force: false }, tempDir);
-    const parsed = JSON.parse(result);
+    const parsed = parseLabelMap(result);
 
     expect(parsed.scopes).toEqual({});
   });
@@ -106,7 +132,7 @@ describe(generateLabelMap, () => {
     await writeFile(path.join(metaDir, 'label-map.json'), '{"old": true}', 'utf8');
 
     const result = await readGeneratedFile({ force: true }, tempDir);
-    const parsed = JSON.parse(result);
+    const parsed = parseLabelMap(result);
 
     expect(parsed).toHaveProperty('types');
     expect(parsed).not.toHaveProperty('old');
@@ -119,6 +145,19 @@ describe(generateLabelMap, () => {
 
     const expectedPath = path.join(tempDir, '.meta', 'label-map.json');
     expect(infoSpy).toHaveBeenCalledWith(expectedPath);
+
+    infoSpy.mockRestore();
+  });
+});
+
+describe(printGenerateUsage, () => {
+  it('outputs available targets and options', () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    printGenerateUsage();
+
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('label-map'));
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('--force'));
 
     infoSpy.mockRestore();
   });

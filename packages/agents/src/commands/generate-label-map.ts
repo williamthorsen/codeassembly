@@ -1,5 +1,7 @@
+import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /** Canonical mapping from commit type keys to human-readable label values. */
 const TYPE_MAP: Readonly<Record<string, string>> = {
@@ -61,25 +63,47 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
 
   // Include root scope only when at least one package subdirectory exists (monorepo).
   if (hasSubdirectory) {
-    scopes['root'] = 'scope:root';
+    scopes.root = 'scope:root';
   }
 
   return scopes;
 }
 
 /**
+ * Resolves the `package.json` path relative to this module.
+ *
+ * In dev (`src/commands/`), two levels up reaches the package root.
+ * In built output (`dist/esm/commands/`), three levels up reaches the package root.
+ */
+function resolvePackageJsonPath(): string {
+  const thisDir = path.dirname(fileURLToPath(import.meta.url));
+
+  const primaryPath = path.resolve(thisDir, '../../package.json');
+  if (existsSync(primaryPath)) {
+    return primaryPath;
+  }
+
+  const fallbackPath = path.resolve(thisDir, '../../../package.json');
+  if (existsSync(fallbackPath)) {
+    return fallbackPath;
+  }
+
+  throw new Error(`Could not locate package.json. Searched:\n  ${primaryPath}\n  ${fallbackPath}`);
+}
+
+/**
  * Reads the agents package version from `package.json`.
  */
 async function readPackageVersion(): Promise<string> {
-  const packageJsonPath = new URL('../../package.json', import.meta.url);
+  const packageJsonPath = resolvePackageJsonPath();
   const raw = await readFile(packageJsonPath, 'utf8');
   const parsed: unknown = JSON.parse(raw);
   if (typeof parsed !== 'object' || parsed === null || !('version' in parsed)) {
     throw new Error('Unable to read version from package.json');
   }
-  const version = (parsed as { version: unknown }).version;
+  const { version } = parsed;
   if (typeof version !== 'string') {
-    throw new Error('Invalid version field in package.json');
+    throw new TypeError('Invalid version field in package.json');
   }
   return version;
 }
