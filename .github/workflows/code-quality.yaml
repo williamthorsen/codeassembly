@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Code quality checks
 
 # Note: This workflow will be automatically skipped if the commit message includes
@@ -7,12 +8,10 @@ on:
   push:
     branches:
       - main
-      - next
 
   pull_request:
     branches:
       - main
-      - next
 
   workflow_dispatch: {}
 
@@ -20,5 +19,5 @@ jobs:
   code-quality:
     uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v5
     with:
-      check-command: pnpm exec nmr ci
+      check-command: 'pnpm exec nmr build && pnpm exec nmr check:strict'
       node-version: '24.14.1'
