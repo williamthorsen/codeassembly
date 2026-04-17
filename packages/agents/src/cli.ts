@@ -2,6 +2,7 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
+import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.js';
 import { installCommand } from './commands/install.js';
 import { statusCommand } from './commands/status.js';
 import { uninstallCommand } from './commands/uninstall.js';
@@ -46,11 +47,13 @@ function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'platfo
  */
 function parseArgs(argv: ReadonlyArray<string>): {
   command: string;
+  subcommand: string;
   options: InstallOptions;
   help: boolean;
 } {
   const args = argv.slice(2);
   let command = '';
+  let subcommand = '';
   let platform: InstallOptions['platform'] = 'all';
   let link = false;
   let force = false;
@@ -87,12 +90,15 @@ function parseArgs(argv: ReadonlyArray<string>): {
           process.exit(1);
         } else if (!command) {
           command = arg;
+        } else if (!subcommand) {
+          subcommand = arg;
         }
     }
   }
 
   return {
     command,
+    subcommand,
     options: { platform, link, force, dryRun },
     help,
   };
@@ -105,9 +111,10 @@ function printUsage(): void {
   console.info(`Usage: codeassembly-agents <command> [options]
 
 Commands:
-  install     Install guidance, skills, and subagents into platform directories
-  uninstall   Remove installed guidance, skills, and subagents
-  status      Show the current state of installed items
+  install          Install guidance, skills, and subagents into platform directories
+  uninstall        Remove installed guidance, skills, and subagents
+  status           Show the current state of installed items
+  generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
   --platform <name>  Target platform: claude, rovodev, or all (default: all)
@@ -121,7 +128,7 @@ Options:
  * Main CLI entry point.
  */
 async function main(): Promise<void> {
-  const { command, options, help } = parseArgs(process.argv);
+  const { command, subcommand, options, help } = parseArgs(process.argv);
 
   if (help || !command) {
     printUsage();
@@ -138,6 +145,15 @@ async function main(): Promise<void> {
         break;
       case 'status':
         await statusCommand({ platform: options.platform });
+        break;
+      case 'generate':
+        if (subcommand === 'label-map') {
+          await generateLabelMap({ force: options.force });
+        } else {
+          if (subcommand) console.error(`Error: Unknown generate target "${subcommand}"`);
+          printGenerateUsage();
+          process.exit(1);
+        }
         break;
       default:
         console.error(`Error: Unknown command "${command}"`);

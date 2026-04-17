@@ -36,11 +36,12 @@ The agents package is a CLI tool (`codeassembly-agents`) that installs reusable 
 
 **CLI commands:**
 
-| Command     | Description                                                       |
-| ----------- | ----------------------------------------------------------------- |
-| `install`   | Copies or symlinks skills and subagents into platform directories |
-| `uninstall` | Removes previously installed items (respects drift detection)     |
-| `status`    | Shows current vs modified vs missing installed items              |
+| Command             | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `generate <target>` | Scaffolds project files (`label-map`)                             |
+| `install`           | Copies or symlinks skills and subagents into platform directories |
+| `status`            | Shows current vs modified vs missing installed items              |
+| `uninstall`         | Removes previously installed items (respects drift detection)     |
 
 Key flags: `--platform <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`.
 
