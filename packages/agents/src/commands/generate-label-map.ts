@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,19 +49,17 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
   }
 
   const scopes: Record<string, string> = {};
-  let hasSubdirectory = false;
 
   for (const entry of entries) {
     const entryPath = path.join(packagesDir, entry);
     const entryStat = await stat(entryPath);
     if (entryStat.isDirectory()) {
-      hasSubdirectory = true;
       scopes[entry] = `scope:${entry}`;
     }
   }
 
   // Include root scope only when at least one package subdirectory exists (monorepo).
-  if (hasSubdirectory) {
+  if (Object.keys(scopes).length > 0) {
     scopes.root = 'scope:root';
   }
 
@@ -75,27 +72,34 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
  * In dev (`src/commands/`), two levels up reaches the package root.
  * In built output (`dist/esm/commands/`), three levels up reaches the package root.
  */
-function resolvePackageJsonPath(): string {
+async function resolvePackageJsonPath(): Promise<string> {
   const thisDir = path.dirname(fileURLToPath(import.meta.url));
 
   const primaryPath = path.resolve(thisDir, '../../package.json');
-  if (existsSync(primaryPath)) {
+  if (await pathExists(primaryPath)) {
     return primaryPath;
   }
 
   const fallbackPath = path.resolve(thisDir, '../../../package.json');
-  if (existsSync(fallbackPath)) {
+  if (await pathExists(fallbackPath)) {
     return fallbackPath;
   }
 
   throw new Error(`Could not locate package.json. Searched:\n  ${primaryPath}\n  ${fallbackPath}`);
 }
 
+/** Checks whether a path exists on disk. */
+async function pathExists(filePath: string): Promise<boolean> {
+  return stat(filePath)
+    .then(() => true)
+    .catch(() => false);
+}
+
 /**
  * Reads the agents package version from `package.json`.
  */
 async function readPackageVersion(): Promise<string> {
-  const packageJsonPath = resolvePackageJsonPath();
+  const packageJsonPath = await resolvePackageJsonPath();
   const raw = await readFile(packageJsonPath, 'utf8');
   const parsed: unknown = JSON.parse(raw);
   if (typeof parsed !== 'object' || parsed === null || !('version' in parsed)) {

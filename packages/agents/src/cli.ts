@@ -150,9 +150,7 @@ async function main(): Promise<void> {
         if (subcommand === 'label-map') {
           await generateLabelMap({ force: options.force });
         } else {
-          if (subcommand) {
-            console.error(`Error: Unknown generate target "${subcommand}"`);
-          }
+          if (subcommand) console.error(`Error: Unknown generate target "${subcommand}"`);
           printGenerateUsage();
           process.exit(1);
         }
