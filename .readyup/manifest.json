@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "kits": [
+    {
+      "name": "default",
+      "path": "kits/default.js",
+      "source": "kits/default.ts",
+      "sourceHash": "5126a82e"
+    }
+  ]
+}
