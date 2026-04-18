@@ -11,6 +11,9 @@
 
 # Agents
 docs/plans/
+.agents/*.branch-manifest.json
+.agents/*.manifest.json
+.playwright-mcp/
 
 # Credentials
 *.pem
@@ -32,8 +35,6 @@ dist-ssr/
 out/
 
 # Framework
-.agents/*.branch-manifest.json
-.agents/*.manifest.json
 .astro/
 .aws-sam/
 .cdk.out/
