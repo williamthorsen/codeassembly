@@ -1,5 +1,5 @@
 import { existsSync, lstatSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -189,18 +189,23 @@ describe('guidance installation', () => {
       expect(guidanceEntry?.contentHash).toMatch(/^sha256:/);
     });
 
-    it('creates symlinks for platform guidance in link mode', async () => {
+    it('copies platform guidance (never symlinks) even in link mode', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
       await installCommand(makeOptions({ platform: 'claude', link: true }), tempDir);
 
-      // Use lstatSync to check existence and type; existsSync follows symlinks
-      // and returns false when the relative target doesn't resolve from tempDir
+      // Platform guidance must be copied so install-time path rewriting can take effect;
+      // a symlink would expose unrewritten source content to agents.
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       const stats = lstatSync(claudeMd);
-      expect(stats.isSymbolicLink()).toBe(true);
+      expect(stats.isSymbolicLink()).toBe(false);
+      expect(stats.isFile()).toBe(true);
+
+      const manifest = await readManifest(getManifestPath(tempDir));
+      const guidanceEntry = manifest.platforms.claude?.entries.find((e) => e.relativePath === 'CLAUDE.md');
+      expect(guidanceEntry?.linked).toBe(false);
     });
 
     it('overwrites modified platform guidance with --force', async () => {
@@ -336,6 +341,55 @@ describe('guidance installation', () => {
     });
   });
 
+  describe('link policy (end-to-end)', () => {
+    async function setupAllPlatforms(): Promise<void> {
+      const claudeHome = path.join(tempDir, '.claude');
+      const rovodevHome = path.join(tempDir, '.rovodev');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+      await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+    }
+
+    async function collectBareRelativeLinks(): Promise<Array<{ file: string; target: string }>> {
+      const violations: Array<{ file: string; target: string }> = [];
+      for (const tier of ['.claude', '.rovodev', '.agents']) {
+        const tierDir = path.join(tempDir, tier);
+        if (!existsSync(tierDir)) {
+          continue;
+        }
+        await walkMarkdownFiles(tierDir, async (filePath) => {
+          const content = await readFile(filePath, 'utf8');
+          const matches = content.matchAll(/\[([^\]]*)\]\(([^)]+)\)/g);
+          for (const match of matches) {
+            const target = match[2];
+            if (target === undefined || /^(https?:\/\/|\/|~\/|#)/.test(target)) {
+              continue;
+            }
+            violations.push({ file: path.relative(tempDir, filePath), target });
+          }
+        });
+      }
+      return violations;
+    }
+
+    it('no installed .md contains a bare-relative Markdown link target (copy mode)', async () => {
+      await setupAllPlatforms();
+      await installCommand(makeOptions({ platform: 'all', link: false }), tempDir);
+
+      const violations = await collectBareRelativeLinks();
+      expect(violations, formatViolations(violations)).toEqual([]);
+    });
+
+    it('--link mode does not bypass path rewriting', async () => {
+      await setupAllPlatforms();
+      await installCommand(makeOptions({ platform: 'all', link: true }), tempDir);
+
+      const violations = await collectBareRelativeLinks();
+      expect(violations, formatViolations(violations)).toEqual([]);
+    });
+  });
+
   describe('status', () => {
     it('reports shared guidance state', async () => {
       const claudeHome = path.join(tempDir, '.claude');
@@ -413,3 +467,30 @@ describe('guidance installation', () => {
     });
   });
 });
+
+async function walkMarkdownFiles(dir: string, visit: (filePath: string) => Promise<void>): Promise<void> {
+  const entries = await readdir(dir);
+  for (const entry of entries) {
+    const full = path.join(dir, entry);
+    const info = await lstat(full);
+    // Skip symlinks — readFile follows links, so for installed .md files this test
+    // depends on copy-mode for platform guidance (guaranteed by installPlatformGuidance).
+    // Symlinked content (shared guidance in --link mode, scripts) is validated elsewhere.
+    if (info.isSymbolicLink()) {
+      continue;
+    }
+    if (info.isDirectory()) {
+      await walkMarkdownFiles(full, visit);
+    } else if (entry.endsWith('.md')) {
+      await visit(full);
+    }
+  }
+}
+
+function formatViolations(violations: ReadonlyArray<{ file: string; target: string }>): string {
+  if (violations.length === 0) {
+    return '';
+  }
+  const lines = violations.map((v) => `  ${v.file}: [...](${v.target})`);
+  return `Installed Markdown contains bare-relative link targets:\n${lines.join('\n')}`;
+}

@@ -12,7 +12,7 @@ import {
   resolveSharedHome,
   writeManifest,
 } from '../lib/manifest.js';
-import { rewritePathsInDirectory } from '../lib/path-rewriter.js';
+import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type {
   AgentsManifest,
@@ -632,7 +632,9 @@ async function installSharedGuidance(
 
 /**
  * Installs platform-specific guidance files from `content/guidance/_platforms/{platformId}/`
- * into the platform home directory.
+ * into the platform home directory. Platform guidance is always copied and rewritten (never
+ * symlinked), because install-time path rewriting produces absolute link targets that agents
+ * can resolve without knowing a path convention.
  */
 async function installPlatformGuidance(
   contentDir: string,
@@ -667,9 +669,8 @@ async function installPlatformGuidance(
     const destPath = path.join(platformPaths.platformHome, entry);
 
     if (options.dryRun) {
-      const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${entry} (guidance)`);
-      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
+      console.info(`    [copy] ${entry} (guidance)`);
+      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: false });
       continue;
     }
 
@@ -684,12 +685,19 @@ async function installPlatformGuidance(
       }
     }
 
-    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+    await unlinkIfSymlink(destPath);
+    await copyItem(srcPath, destPath);
+
+    // Rewrite Markdown link targets and {platform_home_dir} templates so installed guidance
+    // contains only absolute paths — no convention required for agents to resolve links.
+    if (entry.endsWith('.md')) {
+      await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir);
+    }
 
     entries.push({
       relativePath: entry,
-      contentHash: await computeContentHash(options.link ? srcPath : destPath),
-      linked: options.link,
+      contentHash: await computeContentHash(destPath),
+      linked: false,
     });
   }
 
