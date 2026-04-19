@@ -73,9 +73,9 @@ Examples:
 - Record insights as comments on the relevant GitHub issue, not just in conversation. Insights about conventions, API patterns, codebase discoveries, and architectural decisions have lasting value.
 - If you notice a recurring correction or convention emerging across multiple interactions, suggest codifying it as a rule in agent guidance.
 
-## Plan files
+## Artifacts
 
-Save plan and design documents to the artifact directory's `plans/` path (resolved per [artifact conventions](skills/_data/artifact-conventions.md)).
+When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
 ## Commits
 
