@@ -12,14 +12,14 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/a
     └── {project-slug}/
         ├── tickets/
         │   └── {ticket-id}/
-        │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts
+        │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts (devlogs land here when a ticket is in session)
         │       └── {run-id}/                                 ← review run directory
         │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md
         ├── devlogs/
-        │   └── {timestamp}_{concise-title}.md
+        │   └── {timestamp}_{concise-title}.md               ← project-scoped fallback when no ticket is in session
         └── plans/
             └── {design-documents}.md
 ```
@@ -91,6 +91,8 @@ Ticket-level artifacts and run directories both live here. Use `get-session-cont
 
 Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml.
 
+Devlogs are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped `devlogs/` path above. Project-scoped fallback devlog filenames retain the legacy `YYYYMMDD-HHMMZ` (no seconds) timestamp prefix for backward compatibility with pre-existing artifacts at that path; ticket-scoped devlogs use the standard `YYYYMMDD-HHMMSSZ` ticket-level shape.
+
 ## Naming conventions
 
 ### Ticket-level artifacts
@@ -155,6 +157,35 @@ Plan artifacts include a YAML frontmatter `provenance` block that records author
 | `baseSha`       | Short SHA of `origin/main` at provenance write time. Used for freshness evaluation. Omitted if unresolvable.                                                                   |
 | `isInteractive` | Present and `true` when the plan was produced through a structured interactive flow. Omitted otherwise.                                                                        |
 | `iteration`     | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements.                                                |
+
+## Devlog frontmatter
+
+Devlog artifacts include a YAML frontmatter block that records authoring origin and links the devlog to its ticket, run, branch, and commits. The shape mirrors plan provenance so a single frontmatter parser can serve both artifact types.
+
+```yaml
+---
+provenance:
+  skill: create-devlog
+  timestamp: <ISO 8601 UTC>
+  baseSha: <short SHA of origin/main> # omit if unresolvable
+  isInteractive: true
+ticket_id: <id> # omit when no ticket is in session
+run_id: <run id> # omit when not invoked from an orchestrated wrap-up
+branch: <branch name>
+commits: [<sha>, ...] # omit for working-tree devlogs
+---
+```
+
+| Field                      | Required | Description                                                                                                                               |
+| -------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | Always `create-devlog`.                                                                                                                   |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the devlog was written.                                                                                    |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                             |
+| `provenance.isInteractive` | yes      | Always `true` — devlogs are produced interactively or via an interactive wrap-up.                                                         |
+| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session (research/exploration sessions).                                 |
+| `run_id`                   | no       | The orchestrated run ID. Present only when `/create-devlog` is invoked with `--run-id` (typically by `/wrap-up` for orchestrated runs).   |
+| `branch`                   | yes      | Current branch name from session context.                                                                                                 |
+| `commits`                  | no       | List of short SHAs the devlog summarizes. Omitted for `working-tree` invocations; otherwise a single SHA or N SHAs depending on argument. |
 
 ## run-index.json
 
@@ -551,6 +582,7 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 ### Ticket-level artifacts
 
 - `change-summary` — Branch change summary for PRs
+- `devlog` — Development log entry (falls back to non-ticket path when no ticket is in session)
 - `orchestration-plan` — Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
 - `plan` — Implementation plan document
 - `plan-review` — Plan review findings (completeness and correctness analysis)
@@ -561,7 +593,6 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 
 ### Non-ticket artifacts
 
-- `devlog` — Development log entry
 - `chat-summary` — Conversation summary
 
 ## Run lifecycle
