@@ -285,7 +285,7 @@ Omit empty sections. Use the item's original ID (F1, L1, I2) so the developer ca
 After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits — whether from the session's earlier work, quick fixes applied in Phase 2a, or both — prompt the user to create a PR:
 
 ```
-Ready to create a PR? Use `/summarize-change` to generate a change summary, then `/create-pr` to open the pull request.
+Ready to create a PR? If yes, I'll use `/create-pr` to open the pull request. 👍🏼👎🏼
 ```
 
 Skip this prompt if there are no commits on the branch (e.g., a research/exploration session with no code changes).
