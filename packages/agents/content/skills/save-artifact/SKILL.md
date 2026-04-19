@@ -52,7 +52,7 @@ Run artifacts are saved by the skills that produce them (`review-change`, `respo
 ### Ticket-level
 
 - `change-summary` — Branch change summary for PRs
-- `devlog` — Development log entry (project-scoped fallback when no ticket in session)
+- `devlog` — Development log entry (ticket-scoped when a ticket is in session; falls back to project-scoped `devlogs/` otherwise)
 - `orchestration-plan` — Orchestration plan for the orchestrate engine
 - `plan` — Implementation plan document
 - `plan-review` — Plan review findings (completeness and correctness analysis)
@@ -91,7 +91,7 @@ Create the directory if needed.
 
 Read `artifact_paths` from the `get-session-context` manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
-Devlogs use the `devlogs` category path only as a fallback — when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#devlog-frontmatter) for the devlog frontmatter shape.
+Devlogs use the `devlogs` category path only as a fallback — when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule, and `create-devlog/SKILL.md` for the devlog frontmatter shape.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
