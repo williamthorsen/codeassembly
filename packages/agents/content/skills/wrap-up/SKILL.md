@@ -50,6 +50,8 @@ Check these signals in order to classify the session:
 
 Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
 
+When the orchestrated path matches, capture the discovered run directory's basename as `run_id` for later use. Phase 3 passes this value through to `/create-devlog` as `--run-id`, so the devlog frontmatter can link back to the run that produced the work.
+
 #### 1b. Scan for deferred items
 
 Deferred items are things that were identified during the session but intentionally not addressed.
@@ -249,7 +251,7 @@ Process confirmed actions in this order:
 1. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
 2. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
 3. **Post insights to ticket** — post each `ticket comment` insight via `gh issue comment {number} --body "{insight}"` (ticket number from `get-session-context`). If no ticket is available, re-route to devlog.
-4. **Save session devlog** — invoke `/create-devlog`. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
+4. **Save session devlog** — invoke `/create-devlog`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Otherwise invoke `/create-devlog` with no run-id argument. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 **Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.
 
