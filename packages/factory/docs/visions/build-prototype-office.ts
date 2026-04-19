@@ -10,7 +10,7 @@
  * Assets are read from disk, converted to base64 data URIs, and embedded
  * into a self-contained HTML file.
  *
- * Run: pnpm tsx build-prototype-office.ts
+ * Run: pnpm exec tsx build-prototype-office.ts
  */
 import fs from 'node:fs';
 import path from 'node:path';
