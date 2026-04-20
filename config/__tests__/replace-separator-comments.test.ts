@@ -183,6 +183,54 @@ describe(transformFile, () => {
     expect(transformFile(input)).toBe(input);
   });
 
+  it('rewrites block-comment equals box to inline block-comment heading', () => {
+    const input = [
+      '/* ================================================================',
+      "   Control console display (governor's office)",
+      '   ================================================================ */',
+      '.console { color: red; }',
+    ].join('\n');
+    const output = transformFile(input);
+    const expected = ["/* -- Control console display (governor's office) -- */", '.console { color: red; }'].join('\n');
+    expect(output).toBe(expected);
+  });
+
+  it('rewrites block-comment dash box to inline block-comment heading', () => {
+    const input = [
+      '/* ----------------------------',
+      '   Layout',
+      '   ---------------------------- */',
+      'body {}',
+    ].join('\n');
+    const output = transformFile(input);
+    expect(output).toContain('/* -- Layout -- */');
+    expect(output).not.toMatch(/-{8,}/);
+  });
+
+  it('converts block-comment foldable label to block-comment region fold', () => {
+    const input = [
+      '/* ================================================================',
+      '   Helpers',
+      '   ================================================================ */',
+      '.helper { color: blue; }',
+      '.other { color: red; }',
+    ].join('\n');
+    const output = transformFile(input);
+    expect(output).toContain('/* region | Helpers */');
+    expect(output).toContain('/* endregion | Helpers */');
+  });
+
+  it('leaves block-comment box with mismatched bar kinds alone', () => {
+    const input = [
+      '/* ================================================================',
+      '   Mixed',
+      '   ---------------------------------------------------------------- */',
+      '.x {}',
+    ].join('\n');
+    const output = transformFile(input);
+    expect(output).toBe(input);
+  });
+
   it('does not match a 3-line box with mismatched bar kinds', () => {
     const input = [
       '// ---------------------------------------------------------------------------',

@@ -84,9 +84,7 @@ function buildHTML(assetsJSON: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CodeAssembly — Office prototype</title>
 <style>
-/* ================================================================
-   Reset & body
-   ================================================================ */
+/* -- Reset & body -- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   background: #e8e4e0;
@@ -99,9 +97,7 @@ body {
   padding: 12px 0;
 }
 
-/* ================================================================
-   Pipeline panel (above the canvas)
-   ================================================================ */
+/* -- Pipeline panel (above the canvas) -- */
 .pipeline-panel {
   display: flex;
   gap: 6px;
@@ -170,9 +166,7 @@ body {
   font-family: 'Courier New', monospace;
 }
 
-/* ================================================================
-   Canvas & overlay container
-   ================================================================ */
+/* -- Canvas & overlay container -- */
 #facility-container { position: relative; }
 canvas {
   image-rendering: pixelated;
@@ -184,9 +178,7 @@ canvas {
   pointer-events: none;
 }
 
-/* ================================================================
-   Thought bubbles
-   ================================================================ */
+/* -- Thought bubbles -- */
 .thought-bubble {
   position: absolute;
   background: white;
@@ -234,9 +226,7 @@ canvas {
   margin-right: 4px;
 }
 
-/* ================================================================
-   Time indicators
-   ================================================================ */
+/* -- Time indicators -- */
 .time-indicator {
   position: absolute;
   font-family: 'Courier New', monospace;
@@ -256,9 +246,7 @@ canvas {
   border: 1px solid rgba(204,153,0,0.3);
 }
 
-/* ================================================================
-   Labels
-   ================================================================ */
+/* -- Labels -- */
 .room-label {
   position: absolute;
   font-family: 'Segoe UI', system-ui, sans-serif;
@@ -279,9 +267,7 @@ canvas {
   white-space: nowrap;
 }
 
-/* ================================================================
-   Findings whiteboard (HTML overlay in the workshop)
-   ================================================================ */
+/* -- Findings whiteboard (HTML overlay in the workshop) -- */
 .findings-whiteboard {
   position: absolute;
   background: rgba(255,255,255,0.95);
@@ -334,9 +320,7 @@ canvas {
 .finding-status.wip   { background: rgba(184,150,10,0.12); color: #b8960a; }
 .finding-status.new   { background: rgba(204,68,68,0.12); color: #cc4444; }
 
-/* ================================================================
-   Control console display (governor's office)
-   ================================================================ */
+/* -- Control console display (governor's office) -- */
 .console-display {
   position: absolute;
   background: rgba(30,30,50,0.92);
@@ -365,9 +349,7 @@ canvas {
   color: #f9e2af;
 }
 
-/* ================================================================
-   Delivered artifacts (governor's office)
-   ================================================================ */
+/* -- Delivered artifacts (governor's office) -- */
 .delivered-artifact {
   position: absolute;
   background: rgba(255,255,255,0.9);
@@ -387,9 +369,7 @@ canvas {
 .delivered-artifact.red    { border-color: rgba(170,34,34,0.3); color: #aa2222; }
 .delivered-artifact.green  { border-color: rgba(42,122,42,0.3); color: #2a7a2a; }
 
-/* ================================================================
-   Action buttons (governor's office)
-   ================================================================ */
+/* -- Action buttons (governor's office) -- */
 .action-buttons {
   position: absolute;
   display: flex;
@@ -423,9 +403,7 @@ canvas {
   cursor: default;
 }
 
-/* ================================================================
-   Artifact objects (inline colored blocks)
-   ================================================================ */
+/* -- Artifact objects (inline colored blocks) -- */
 .artifact {
   position: absolute;
   width: 16px; height: 12px;
@@ -454,9 +432,7 @@ canvas {
 .artifact-label.blue-label { color: #336699; border-color: rgba(51,102,153,0.2); }
 .artifact-label.yellow-label { color: #886600; border-color: rgba(136,102,0,0.2); }
 
-/* ================================================================
-   Artifact detail panel (modal)
-   ================================================================ */
+/* -- Artifact detail panel (modal) -- */
 #artifact-panel {
   display: none;
   position: fixed;

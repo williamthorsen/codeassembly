@@ -7,8 +7,12 @@ import { glob } from 'glob';
 const BOX_LINE_RE = /^(\s*)\/\/\s*(-{8,}|={8,})\s*$/;
 const SYMMETRIC_RE = /^(\s*)\/\/\s*-{3,}\s+(\S.*?\S|\S)\s+-{3,}\s*$/;
 const ASYMMETRIC_RE = /^(\s*)\/\/\s+--\s+(\S.*?\S|\S)\s+-{3,}\s*$/;
+const BLOCK_BOX_TOP_RE = /^(\s*)\/\*\s*(-{8,}|={8,})\s*$/;
+const BLOCK_BOX_BOTTOM_RE = /^\s*(-{8,}|={8,})\s*\*\/\s*$/;
 const FOLDABLE_RE = /(\bhelpers?\b|\bsub-function\b|\btype guards?\b|\btypes?\b|\bstyles?\b|\bgetters?\b)/i;
 const OPT_OUT_MARKER = '// separator-sweep: skip';
+
+type CommentStyle = 'line' | 'block';
 
 type Replacement = {
   startLine: number;
@@ -16,6 +20,7 @@ type Replacement = {
   indent: string;
   label: string;
   kind: 'heading' | 'region';
+  style: CommentStyle;
 };
 
 export function isFoldable(label: string): boolean {
@@ -53,6 +58,29 @@ function findReplacements(lines: string[]): Replacement[] {
           indent,
           label: labelMatch[1],
           kind: isFoldable(labelMatch[1]) ? 'region' : 'heading',
+          style: 'line',
+        });
+        i += 3;
+        continue;
+      }
+    }
+
+    const blockTopMatch = line.match(BLOCK_BOX_TOP_RE);
+    if (blockTopMatch && i + 2 < lines.length) {
+      const indent = blockTopMatch[1];
+      const bar = blockTopMatch[2][0];
+      const labelLine = lines[i + 1];
+      const bottomLine = lines[i + 2];
+      const labelMatch = labelLine.match(/^\s*(\S.*?)\s*$/);
+      const bottomMatch = bottomLine.match(BLOCK_BOX_BOTTOM_RE);
+      if (labelMatch && bottomMatch && bottomMatch[1][0] === bar) {
+        out.push({
+          startLine: i,
+          endLine: i + 2,
+          indent,
+          label: labelMatch[1],
+          kind: isFoldable(labelMatch[1]) ? 'region' : 'heading',
+          style: 'block',
         });
         i += 3;
         continue;
@@ -67,6 +95,7 @@ function findReplacements(lines: string[]): Replacement[] {
         indent: symMatch[1],
         label: symMatch[2],
         kind: isFoldable(symMatch[2]) ? 'region' : 'heading',
+        style: 'line',
       });
       i += 1;
       continue;
@@ -80,6 +109,7 @@ function findReplacements(lines: string[]): Replacement[] {
         indent: asymMatch[1],
         label: asymMatch[2],
         kind: isFoldable(asymMatch[2]) ? 'region' : 'heading',
+        style: 'line',
       });
       i += 1;
       continue;
@@ -113,7 +143,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
   for (const r of replacements) {
     if (r.kind !== 'region') continue;
     const insertBefore = regionEnds.get(r.startLine) ?? lines.length;
-    endregionInsertions.set(insertBefore, `${r.indent}// endregion | ${r.label}`);
+    endregionInsertions.set(insertBefore, formatEndRegion(r));
   }
 
   const out: string[] = [];
@@ -128,8 +158,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
     }
     const r = byStart.get(i);
     if (r) {
-      const replacement = r.kind === 'region' ? `${r.indent}// region | ${r.label}` : `${r.indent}// -- ${r.label} --`;
-      out.push(replacement);
+      out.push(formatReplacement(r));
       i = r.endLine + 1;
       continue;
     }
@@ -145,6 +174,17 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
   }
 
   return out.join('\n');
+}
+
+function formatReplacement(r: Replacement): string {
+  if (r.kind === 'region') {
+    return r.style === 'block' ? `${r.indent}/* region | ${r.label} */` : `${r.indent}// region | ${r.label}`;
+  }
+  return r.style === 'block' ? `${r.indent}/* -- ${r.label} -- */` : `${r.indent}// -- ${r.label} --`;
+}
+
+function formatEndRegion(r: Replacement): string {
+  return r.style === 'block' ? `${r.indent}/* endregion | ${r.label} */` : `${r.indent}// endregion | ${r.label}`;
 }
 
 function trimTrailingBlankLines(arr: string[]): void {
