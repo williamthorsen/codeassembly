@@ -197,7 +197,7 @@ Compare the revised plan's approach/solution with the source ticket's solution s
 
 **Material divergence** means a different technical approach (e.g., build-time flag changed to runtime detection) or changed scope boundaries (features added or removed). **Non-divergence** means refined details within the same approach (e.g., different function names, reordered steps).
 
-- For GitHub tickets (resolved via `gh issue view` in step 1): offer to update via `gh issue edit {number} --body "{updated body}"`
+- For GitHub tickets (resolved via `gh issue view` in step 1): offer to update by writing the revised body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
 - For file-based tickets: offer to update the file directly
 
 This is a shared-state action — do not update without explicit consent. If the user declines, continue to step 7.

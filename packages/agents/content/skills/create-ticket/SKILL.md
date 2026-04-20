@@ -99,10 +99,10 @@ json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {ty
 change_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4)
 ```
 
-Create the issue **without** the ticket ID prefix in the title. Include `--label` flags if labels were resolved in step 4:
+Create the issue **without** the ticket ID prefix in the title. Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 4:
 
 ```bash
-url=$(gh issue create --title "${change_prefix}{title}" --body "{ticket body}"${label_flags})
+url=$(gh issue create --title "${change_prefix}{title}" --body-file "$body_path"${label_flags})
 ```
 
 Extract the issue number from the returned URL:
@@ -146,10 +146,10 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 {YYYYMMDD-HHMMZ}_{slug}_plan.md
 ```
 
-Then attach it as a comment on the remote issue:
+Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the comment into the shell command:
 
 ```bash
-gh issue comment {number} --body "{plan comment}"
+gh issue comment {number} --body-file "$body_path"
 ```
 
 Plan comment format:
