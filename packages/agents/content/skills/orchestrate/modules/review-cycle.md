@@ -177,7 +177,7 @@ Before applying these rules, check the iteration budget. If N iterations have be
 
 Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_started", iteration: {N} } }`.
 
-Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
+Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
 > Address the review findings for the following task.
 >
@@ -273,7 +273,7 @@ Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 15`, `
 
 After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
-Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
+Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
 > Address the code simplification findings for the following task.
 >
