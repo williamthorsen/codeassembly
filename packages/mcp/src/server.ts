@@ -41,7 +41,7 @@ async function getStaleWarningContent(): Promise<Array<{ type: 'text'; text: str
 export function createServer(): McpServer {
   const server = new McpServer({ name: 'codeassembly', version: '0.1.0' }, { capabilities: { tools: {} } });
 
-  // -- init_run ---------------------------------------------------------------
+  // -- init_run --
   server.registerTool(
     'init_run',
     {
@@ -70,7 +70,7 @@ export function createServer(): McpServer {
     },
   );
 
-  // -- emit_event -------------------------------------------------------------
+  // -- emit_event --
   server.registerTool(
     'emit_event',
     {
@@ -94,7 +94,7 @@ export function createServer(): McpServer {
     },
   );
 
-  // -- register_artifact ------------------------------------------------------
+  // -- register_artifact --
   server.registerTool(
     'register_artifact',
     {
@@ -125,7 +125,7 @@ export function createServer(): McpServer {
     },
   );
 
-  // -- complete_run -----------------------------------------------------------
+  // -- complete_run --
   server.registerTool(
     'complete_run',
     {
@@ -151,7 +151,7 @@ export function createServer(): McpServer {
     },
   );
 
-  // -- get_run_state ----------------------------------------------------------
+  // -- get_run_state --
   server.registerTool(
     'get_run_state',
     {

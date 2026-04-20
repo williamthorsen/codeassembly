@@ -10,22 +10,18 @@ import type { Phases } from '../../../../shared/types/canonical.js';
 import { mapRunToLogicalScene } from '../run-to-logical-scene.js';
 import type { LogicalSceneState } from '../types.js';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+// region | Helpers
 
 function findAgent(scene: LogicalSceneState, id: string) {
   return scene.agents.find((a) => a.id === id);
 }
 
-// ---------------------------------------------------------------------------
-// mapRunToLogicalScene
-// ---------------------------------------------------------------------------
+// endregion | Helpers
+
+// -- mapRunToLogicalScene --
 
 describe(mapRunToLogicalScene, () => {
-  // -------------------------------------------------------------------------
-  // 1. Empty run
-  // -------------------------------------------------------------------------
+  // -- 1. Empty run --
 
   describe('empty in_progress run', () => {
     it('has first agent working, others idle, orchestrator dispatching, no artifacts', () => {
@@ -60,9 +56,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 2. Architecture in progress
-  // -------------------------------------------------------------------------
+  // -- 2. Architecture in progress --
 
   describe('architecture in progress', () => {
     it('has architect working, orchestrator monitoring', () => {
@@ -85,9 +79,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 3. Implementation in progress
-  // -------------------------------------------------------------------------
+  // -- 3. Implementation in progress --
 
   describe('implementation in progress', () => {
     it('has arch+plan done, coder working, orchestrator monitoring', () => {
@@ -114,9 +106,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 4. Review in progress
-  // -------------------------------------------------------------------------
+  // -- 4. Review in progress --
 
   describe('review in progress', () => {
     it('has reviewers working, orchestrator monitoring', () => {
@@ -143,9 +133,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 5. Completed run
-  // -------------------------------------------------------------------------
+  // -- 5. Completed run --
 
   describe('completed run', () => {
     it('has all agents done, orchestrator done, artifacts present', () => {
@@ -212,9 +200,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 6. Failed run
-  // -------------------------------------------------------------------------
+  // -- 6. Failed run --
 
   describe('failed run', () => {
     it('has all agents concerned, orchestrator done', () => {
@@ -240,9 +226,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 7. Skipped phases
-  // -------------------------------------------------------------------------
+  // -- 7. Skipped phases --
 
   describe('skipped phases', () => {
     it('excludes agents for skipped phases', () => {
@@ -264,9 +248,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 8. Waiting for input
-  // -------------------------------------------------------------------------
+  // -- 8. Waiting for input --
 
   describe('waiting for input', () => {
     it('marks orchestrator as waiting', () => {
@@ -285,9 +267,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 9. Variable reviewer count
-  // -------------------------------------------------------------------------
+  // -- 9. Variable reviewer count --
 
   describe('variable reviewer count', () => {
     it('produces 1 reviewer when no parallel review data exists', () => {
@@ -316,9 +296,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 10. Carried artifacts
-  // -------------------------------------------------------------------------
+  // -- 10. Carried artifacts --
 
   describe('carried artifacts', () => {
     it('carries artifacts from prior phase when orchestrator is dispatching', () => {
@@ -367,9 +345,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 11. Code badge
-  // -------------------------------------------------------------------------
+  // -- 11. Code badge --
 
   describe('code badge', () => {
     it('shows code badge after implementation re-enters revision', () => {
@@ -440,9 +416,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 12. Artifact lifecycle
-  // -------------------------------------------------------------------------
+  // -- 12. Artifact lifecycle --
 
   describe('artifact lifecycle', () => {
     it('marks artifacts as created when their phase is still in progress', () => {
@@ -586,9 +560,7 @@ describe(mapRunToLogicalScene, () => {
     });
   });
 
-  // -------------------------------------------------------------------------
-  // 13. Scene structure
-  // -------------------------------------------------------------------------
+  // -- 13. Scene structure --
 
   describe('scene structure', () => {
     it('returns a valid LogicalSceneState shape', () => {

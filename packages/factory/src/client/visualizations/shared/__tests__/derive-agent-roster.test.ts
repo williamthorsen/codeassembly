@@ -8,9 +8,7 @@ import {
 } from '../../../../__test-helpers__/fixtures.js';
 import { deriveAgentRoster } from '../derive-agent-roster.js';
 
-// ---------------------------------------------------------------------------
-// deriveAgentRoster
-// ---------------------------------------------------------------------------
+// -- deriveAgentRoster --
 
 describe(deriveAgentRoster, () => {
   it('produces entries for all agents in a full completed run', () => {

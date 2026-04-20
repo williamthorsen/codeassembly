@@ -1,6 +1,4 @@
-// ---------------------------------------------------------------------------
-// Animation constants
-// ---------------------------------------------------------------------------
+// -- Animation constants --
 // Centralized timing, speed, opacity, and scale values for office transitions.
 // Tweak values here to adjust the feel of all office animations.
 

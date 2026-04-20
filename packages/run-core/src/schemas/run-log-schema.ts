@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { RunEvent } from '../types/run-log.js';
 import { criticalitySchema, runStatusSchema } from './run-index-schema.js';
 
-// -- Individual event schemas --------------------------------------------------
+// -- Individual event schemas --
 //
 // Each schema uses plain `.object()` (not `.loose()`). Zod 4's default behavior
 // for `.object()` is to strip unknown keys during parse. This means:
@@ -158,7 +158,7 @@ export function parseRunLogLine(line: string): RunEvent {
   return parsed;
 }
 
-// -- V3 run-index.json schema -------------------------------------------------
+// -- V3 run-index.json schema --
 
 /** V3 context: header-only (no phases, status, completedAt, or phaseDecisions). */
 const v3ContextSchema = z.object({

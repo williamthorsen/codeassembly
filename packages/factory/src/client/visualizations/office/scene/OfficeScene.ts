@@ -31,9 +31,7 @@ import type {
   ResolvedPositions,
 } from '../types.js';
 
-// ---------------------------------------------------------------------------
-// Visual constants
-// ---------------------------------------------------------------------------
+// -- Visual constants --
 
 const ARTIFACT_WIDTH = 24;
 const ARTIFACT_HEIGHT = 12;
@@ -51,9 +49,7 @@ const WALL_BASE_SY = 288; // row 9 * 32
 const SHADOW_SX = 0; // col 0 * 32
 const SHADOW_SY = 0; // row 0 * 32
 
-// ---------------------------------------------------------------------------
-// OfficeScene
-// ---------------------------------------------------------------------------
+// -- OfficeScene --
 
 /**
  * Excalibur scene that renders the office visualization with LimeZu tileset sprites.
@@ -376,9 +372,7 @@ export class OfficeScene extends Scene {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Diff classification
-// ---------------------------------------------------------------------------
+// -- Diff classification --
 
 /**
  * Check whether a diff contains structural changes that affect entity
@@ -393,9 +387,7 @@ function hasStructuralChanges(diff: OfficeDiff): boolean {
   return false;
 }
 
-// ---------------------------------------------------------------------------
-// Background drawing helpers (use Canvas2D API directly)
-// ---------------------------------------------------------------------------
+// region | Background drawing helpers (use Canvas2D API directly)
 
 /** Draw a single tile from a sprite sheet image onto the canvas. */
 function drawTile(
@@ -495,3 +487,5 @@ function drawZoneBoundaryWall(ctx: CanvasRenderingContext2D): void {
   ctx.fillStyle = SIDE_WALL_COLOR;
   ctx.fillRect(12 * TILE_SIZE, 0, TILE_SIZE, 12 * TILE_SIZE);
 }
+
+// endregion | Background drawing helpers (use Canvas2D API directly)

@@ -14,7 +14,7 @@ import {
   v2RunIndexSchema,
 } from '../run-index-schema.js';
 
-// -- fixtures ----------------------------------------------------------------
+// -- fixtures --
 
 function minimalContext(): Record<string, unknown> {
   return {
@@ -49,7 +49,7 @@ function fullArtifact(): Record<string, unknown> {
   };
 }
 
-// -- enum schemas ------------------------------------------------------------
+// -- enum schemas --
 
 describe('runStatusSchema', () => {
   it.each(['in_progress', 'completed', 'failed', 'needs_manual_review'])('accepts "%s"', (value) => {
@@ -81,7 +81,7 @@ describe('criticalitySchema', () => {
   });
 });
 
-// -- phase entry -------------------------------------------------------------
+// -- phase entry --
 
 describe('phaseEntrySchema', () => {
   it('accepts empty object', () => {
@@ -154,7 +154,7 @@ describe('phaseEntrySchema', () => {
   });
 });
 
-// -- phases record -----------------------------------------------------------
+// -- phases record --
 
 describe('phasesSchema', () => {
   it('accepts empty object', () => {
@@ -182,7 +182,7 @@ describe('phasesSchema', () => {
   });
 });
 
-// -- phase decisions ---------------------------------------------------------
+// -- phase decisions --
 
 describe('phaseDecisionSchema', () => {
   it('accepts entry with run and reason', () => {
@@ -236,7 +236,7 @@ describe('phaseDecisionMapSchema', () => {
   });
 });
 
-// -- artifact entry ----------------------------------------------------------
+// -- artifact entry --
 
 describe('artifactEntrySchema', () => {
   it('accepts entry with all required fields', () => {
@@ -273,7 +273,7 @@ describe('artifactEntrySchema', () => {
   });
 });
 
-// -- v2 context --------------------------------------------------------------
+// -- v2 context --
 
 describe('v2ContextSchema', () => {
   it('accepts minimal valid context', () => {
@@ -328,7 +328,7 @@ describe('v2ContextSchema', () => {
   });
 });
 
-// -- v2 config ---------------------------------------------------------------
+// -- v2 config --
 
 describe('v2ConfigSchema', () => {
   it('accepts empty config', () => {
@@ -370,7 +370,7 @@ describe('v2ConfigSchema', () => {
   });
 });
 
-// -- v2 run-index ------------------------------------------------------------
+// -- v2 run-index --
 
 describe('v2RunIndexSchema', () => {
   it('accepts minimal valid v2', () => {

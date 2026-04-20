@@ -15,9 +15,7 @@ import {
   type SingleAssetKey,
 } from './sprite-sheet-urls.js';
 
-// ---------------------------------------------------------------------------
-// Cache
-// ---------------------------------------------------------------------------
+// -- Cache --
 
 interface SpriteCache {
   roomSheets: Record<RoomSheetKey, SpriteSheet>;
@@ -29,9 +27,7 @@ interface SpriteCache {
 let cache: SpriteCache | undefined;
 let inflight: Promise<void> | undefined;
 
-// ---------------------------------------------------------------------------
-// Loader
-// ---------------------------------------------------------------------------
+// -- Loader --
 
 /**
  * Load all office sprite sheets and build the sprite cache.
@@ -147,9 +143,7 @@ async function doLoad(): Promise<void> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Getters
-// ---------------------------------------------------------------------------
+// region | Getters
 
 /** Return the floor tile sprite sheet. Throws if sprites have not been loaded. */
 export function getFloorSheet(): SpriteSheet {
@@ -246,3 +240,5 @@ export function getOfficeImageSource(): ImageSource {
 export function clearOfficeSpriteCache(): void {
   cache = undefined;
 }
+
+// endregion | Getters

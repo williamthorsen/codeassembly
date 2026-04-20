@@ -103,9 +103,7 @@ function extractReviewerNames(parallelReview: ParallelReviewPhase): string[] {
   return [];
 }
 
-// ---------------------------------------------------------------------------
-// Phase status accessors
-// ---------------------------------------------------------------------------
+// -- Phase status accessors --
 
 type PhaseStatusAccessor = (phases: Phases) => string | undefined;
 
@@ -130,9 +128,7 @@ const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
   summary: () => {},
 };
 
-// ---------------------------------------------------------------------------
-// Stations
-// ---------------------------------------------------------------------------
+// -- Stations --
 
 function buildStations(status: CanonicalRunStatus): StationConfig[] {
   return PHASE_NAMES.map((phase) => {
@@ -148,9 +144,7 @@ function buildStations(status: CanonicalRunStatus): StationConfig[] {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Orchestrator
-// ---------------------------------------------------------------------------
+// -- Orchestrator --
 
 const ITERATION_COLORS = {
   v2: '#ffaa00',
@@ -219,9 +213,7 @@ function buildCodeBadge(status: CanonicalRunStatus): OrchestratorConfig['codeBad
   return { label: `v${String(maxIteration)}`, color };
 }
 
-// ---------------------------------------------------------------------------
-// Agent state resolution
-// ---------------------------------------------------------------------------
+// -- Agent state resolution --
 
 function resolveAgentState(
   phase: PhaseName,
@@ -251,9 +243,7 @@ function resolveAgentState(
   return 'idle';
 }
 
-// ---------------------------------------------------------------------------
-// Agents
-// ---------------------------------------------------------------------------
+// -- Agents --
 
 function buildAgents(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): AgentConfig[] {
   const agents: AgentConfig[] = [];
@@ -317,9 +307,7 @@ function buildReviewerAgents(status: CanonicalRunStatus, currentPhase: PhaseName
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Artifacts
-// ---------------------------------------------------------------------------
+// -- Artifacts --
 
 function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
   if (!isPresent(status.artifacts) || status.artifacts.length === 0) {
@@ -416,9 +404,7 @@ function buildInputArtifacts(
   return inputs;
 }
 
-// ---------------------------------------------------------------------------
-// Public mapper
-// ---------------------------------------------------------------------------
+// -- Public mapper --
 
 /** Transforms a canonical run status into a factory-floor scene configuration. */
 export function mapRunToFactoryFloor(status: CanonicalRunStatus): FactoryFloorSceneConfig {

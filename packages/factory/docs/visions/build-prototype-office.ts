@@ -18,12 +18,12 @@ import path from 'node:path';
 const BASE = '/Users/william/icloude/Resources/Tilesets';
 
 const assetPaths: Record<string, string> = {
-  // --------------- Sheets ---------------
+  // -- Sheets --
   floors: `${BASE}/moderninteriors-win/1_Interiors/32x32/Room_Bulder_subfiles_32x32/Room_Builder_Floors_32x32.png`,
   walls: `${BASE}/moderninteriors-win/1_Interiors/32x32/Room_Bulder_subfiles_32x32/Room_Builder_Walls_32x32.png`,
   floorShadows: `${BASE}/moderninteriors-win/1_Interiors/32x32/Room_Bulder_subfiles_32x32/Room_Builder_Floor_Shadows_32x32.png`,
 
-  // --------------- Furniture singles (64x96 each) ---------------
+  // -- Furniture singles (64x96 each) --
   plant100: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_100.png`,
   chairBack105: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_105.png`,
   cert115: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_115.png`,
@@ -47,7 +47,7 @@ const assetPaths: Record<string, string> = {
   waterCooler320: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_320.png`,
   bush339: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_339.png`,
 
-  // --------------- Characters (all idle/standing) ---------------
+  // -- Characters (all idle/standing) --
   adamIdle: `${BASE}/moderninteriors-win/2_Characters/Old/Single_Characters_Legacy/32x32/Adam_idle_32x32.png`,
   alexIdle: `${BASE}/moderninteriors-win/2_Characters/Old/Single_Characters_Legacy/32x32/Alex_idle_32x32.png`,
   ameliaIdle: `${BASE}/moderninteriors-win/2_Characters/Old/Single_Characters_Legacy/32x32/Amelia_idle_32x32.png`,
@@ -84,9 +84,7 @@ function buildHTML(assetsJSON: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CodeAssembly — Office prototype</title>
 <style>
-/* ================================================================
-   Reset & body
-   ================================================================ */
+/* -- Reset & body -- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   background: #e8e4e0;
@@ -99,9 +97,7 @@ body {
   padding: 12px 0;
 }
 
-/* ================================================================
-   Pipeline panel (above the canvas)
-   ================================================================ */
+/* -- Pipeline panel (above the canvas) -- */
 .pipeline-panel {
   display: flex;
   gap: 6px;
@@ -170,9 +166,7 @@ body {
   font-family: 'Courier New', monospace;
 }
 
-/* ================================================================
-   Canvas & overlay container
-   ================================================================ */
+/* -- Canvas & overlay container -- */
 #facility-container { position: relative; }
 canvas {
   image-rendering: pixelated;
@@ -184,9 +178,7 @@ canvas {
   pointer-events: none;
 }
 
-/* ================================================================
-   Thought bubbles
-   ================================================================ */
+/* -- Thought bubbles -- */
 .thought-bubble {
   position: absolute;
   background: white;
@@ -234,9 +226,7 @@ canvas {
   margin-right: 4px;
 }
 
-/* ================================================================
-   Time indicators
-   ================================================================ */
+/* -- Time indicators -- */
 .time-indicator {
   position: absolute;
   font-family: 'Courier New', monospace;
@@ -256,9 +246,7 @@ canvas {
   border: 1px solid rgba(204,153,0,0.3);
 }
 
-/* ================================================================
-   Labels
-   ================================================================ */
+/* -- Labels -- */
 .room-label {
   position: absolute;
   font-family: 'Segoe UI', system-ui, sans-serif;
@@ -279,9 +267,7 @@ canvas {
   white-space: nowrap;
 }
 
-/* ================================================================
-   Findings whiteboard (HTML overlay in the workshop)
-   ================================================================ */
+/* -- Findings whiteboard (HTML overlay in the workshop) -- */
 .findings-whiteboard {
   position: absolute;
   background: rgba(255,255,255,0.95);
@@ -334,9 +320,7 @@ canvas {
 .finding-status.wip   { background: rgba(184,150,10,0.12); color: #b8960a; }
 .finding-status.new   { background: rgba(204,68,68,0.12); color: #cc4444; }
 
-/* ================================================================
-   Control console display (governor's office)
-   ================================================================ */
+/* -- Control console display (governor's office) -- */
 .console-display {
   position: absolute;
   background: rgba(30,30,50,0.92);
@@ -365,9 +349,7 @@ canvas {
   color: #f9e2af;
 }
 
-/* ================================================================
-   Delivered artifacts (governor's office)
-   ================================================================ */
+/* -- Delivered artifacts (governor's office) -- */
 .delivered-artifact {
   position: absolute;
   background: rgba(255,255,255,0.9);
@@ -387,9 +369,7 @@ canvas {
 .delivered-artifact.red    { border-color: rgba(170,34,34,0.3); color: #aa2222; }
 .delivered-artifact.green  { border-color: rgba(42,122,42,0.3); color: #2a7a2a; }
 
-/* ================================================================
-   Action buttons (governor's office)
-   ================================================================ */
+/* -- Action buttons (governor's office) -- */
 .action-buttons {
   position: absolute;
   display: flex;
@@ -423,9 +403,7 @@ canvas {
   cursor: default;
 }
 
-/* ================================================================
-   Artifact objects (inline colored blocks)
-   ================================================================ */
+/* -- Artifact objects (inline colored blocks) -- */
 .artifact {
   position: absolute;
   width: 16px; height: 12px;
@@ -454,9 +432,7 @@ canvas {
 .artifact-label.blue-label { color: #336699; border-color: rgba(51,102,153,0.2); }
 .artifact-label.yellow-label { color: #886600; border-color: rgba(136,102,0,0.2); }
 
-/* ================================================================
-   Artifact detail panel (modal)
-   ================================================================ */
+/* -- Artifact detail panel (modal) -- */
 #artifact-panel {
   display: none;
   position: fixed;
@@ -601,14 +577,10 @@ canvas {
 </div>
 
 <script>
-// ================================================================
-// TILESET DATA (embedded base64)
-// ================================================================
+// -- TILESET DATA (embedded base64) --
 const ASSETS = ${assetsJSON};
 
-// ================================================================
-// CONSTANTS
-// ================================================================
+// -- CONSTANTS --
 const T = 32;          // tile size in pixels
 // On Retina (devicePixelRatio >= 2), SCALE=1 gives crisp 2x2 device pixels per game pixel.
 // On non-Retina, SCALE=2 ensures pixels are visible.
@@ -619,9 +591,7 @@ const ROWS = 30;       // canvas rows
 const CW = COLS * T;   // canvas width  = 1280
 const CH = ROWS * T;   // canvas height = 960
 
-// ================================================================
-// IMAGE LOADING
-// ================================================================
+// -- IMAGE LOADING --
 function loadImage(dataURI) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -641,9 +611,7 @@ async function loadAllAssets() {
   return imgs;
 }
 
-// ================================================================
-// DRAWING HELPERS
-// ================================================================
+// region | DRAWING HELPERS
 let ctx, images;
 
 // Draw a 32x32 tile from a sprite sheet at tile position (dx, dy)
@@ -670,18 +638,16 @@ function drawChar(charKey, direction, tx, ty) {
   ctx.drawImage(images[charKey], sx, 0, T, 64, tx * T, ty * T, T, 64);
 }
 
-// ================================================================
-// ZONE DEFINITIONS (three-zone layout)
-// ================================================================
+// endregion | DRAWING HELPERS
+
+// -- ZONE DEFINITIONS (three-zone layout) --
 const zones = {
   prep:     { x: 1,  y: 1,  w: 11, h: 12 },
   workshop: { x: 13, y: 1,  w: 26, h: 12 },
   governor: { x: 1,  y: 16, w: 38, h: 13 },
 };
 
-// ================================================================
-// MAIN FACILITY DRAWING
-// ================================================================
+// -- MAIN FACILITY DRAWING --
 function drawFacility() {
   // ─── 1. Fill canvas background (light warm gray = "outside") ───
   ctx.fillStyle = '#e8e4e0';
@@ -853,9 +819,7 @@ function drawFacility() {
   drawChar('robIdle', 3, 34, 10);
 }
 
-// ================================================================
-// HTML OVERLAYS
-// ================================================================
+// -- HTML OVERLAYS --
 function createOverlays() {
   const container = document.getElementById('overlay-container');
   container.style.width = (CW * SCALE) + 'px';
@@ -1051,9 +1015,7 @@ function addArtifact(container, x, y, cls, title, clickable) {
   container.appendChild(el);
 }
 
-// ================================================================
-// ARTIFACT PANEL INTERACTION
-// ================================================================
+// -- ARTIFACT PANEL INTERACTION --
 function openArtifactPanel() {
   document.getElementById('artifact-panel').classList.add('visible');
   document.getElementById('artifact-backdrop').classList.add('visible');
@@ -1068,9 +1030,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeArtifactPanel();
 });
 
-// ================================================================
-// INITIALIZATION
-// ================================================================
+// -- INITIALIZATION --
 async function init() {
   const canvas = document.getElementById('facility-canvas');
   canvas.width  = CW;

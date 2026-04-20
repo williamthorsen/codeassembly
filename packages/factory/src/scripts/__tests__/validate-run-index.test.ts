@@ -58,7 +58,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// -- validateFile -----------------------------------------------------------
+// -- validateFile --
 
 describe('validateFile', () => {
   it('returns valid result for correct run-index.json', async () => {
@@ -112,7 +112,7 @@ describe('validateFile', () => {
   });
 });
 
-// -- findRunIndexFiles ------------------------------------------------------
+// -- findRunIndexFiles --
 
 describe('findRunIndexFiles', () => {
   it('finds run-index.json files in nested subdirectories', async () => {
@@ -176,7 +176,7 @@ describe('findRunIndexFiles', () => {
   });
 });
 
-// -- reportResults ----------------------------------------------------------
+// -- reportResults --
 
 describe('reportResults', () => {
   it('handles empty results array', () => {
@@ -232,7 +232,7 @@ describe('reportResults', () => {
   });
 });
 
-// -- main CLI entry point ---------------------------------------------------
+// -- main CLI entry point --
 
 describe('main', () => {
   let originalArgv: string[];

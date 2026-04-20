@@ -2,10 +2,8 @@ import type { RunEvent, RunHeader } from '../../../shared/types/run-log.js';
 import { generateSnapshots } from '../../playback/generate-snapshots.js';
 import type { DemoRecording } from '../index.js';
 
-// ---------------------------------------------------------------------------
 // Source data: header + events define the raw run log. These are used once at
 // module load time to pre-generate the curated snapshot sequence below.
-// ---------------------------------------------------------------------------
 
 const header: RunHeader = {
   runId: '20260301-120000Z-orchestrated',
@@ -286,8 +284,7 @@ const events: RunEvent[] = [
   { t: '2026-03-01T12:30:30Z', event: 'run_completed', status: 'completed' },
 ];
 
-// ---------------------------------------------------------------------------
-// Curated snapshot generation
+// -- Curated snapshot generation --
 //
 // Each index is a 0-based event index. `foldEvents(header, events.slice(0, i+1))`
 // gives the canonical status after processing events through index `i`.
@@ -299,7 +296,6 @@ const events: RunEvent[] = [
 //   - coder fix cycle, re-review
 //   - code simplifier, holistic review
 //   - summary artifact, run complete
-// ---------------------------------------------------------------------------
 const CURATED_EVENT_INDICES = [
   0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 21, 23, 24, 27, 29, 32, 33, 35, 36, 37, 39, 40, 41, 42,
 ];

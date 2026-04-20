@@ -22,9 +22,7 @@ import type {
   TransitionPlan,
 } from '../types.js';
 
-// ---------------------------------------------------------------------------
-// TransitionContext — the scene-provided callbacks the executor depends on
-// ---------------------------------------------------------------------------
+// -- TransitionContext — the scene-provided callbacks the executor depends on --
 
 /** Callback interface that decouples the executor from scene internals. */
 export interface TransitionContext {
@@ -39,18 +37,14 @@ export interface TransitionContext {
   layout: FacilityLayout;
 }
 
-// ---------------------------------------------------------------------------
-// AnimationHandle — returned to the caller for interrupt support
-// ---------------------------------------------------------------------------
+// -- AnimationHandle — returned to the caller for interrupt support --
 
 /** Handle for cancelling all pending and in-progress transition animations. */
 export interface AnimationHandle {
   cancel(): void;
 }
 
-// ---------------------------------------------------------------------------
-// Direction helpers
-// ---------------------------------------------------------------------------
+// region | Direction helpers
 
 /** Map a Direction string to a sprite-sheet column index. */
 function directionToSpriteCol(direction: Direction): number {
@@ -108,9 +102,9 @@ function resolveRestingDirection(
   return directionToSpriteCol(slot.facing);
 }
 
-// ---------------------------------------------------------------------------
-// Transition handlers
-// ---------------------------------------------------------------------------
+// endregion | Direction helpers
+
+// -- Transition handlers --
 
 /** Schedule walk waypoints as chained moveTo actions with direction updates between segments. */
 function handleWalk(transition: Transition, context: TransitionContext): void {
@@ -222,9 +216,7 @@ function handleArtifactDeliver(transition: Transition, context: TransitionContex
   actor.actions.moveTo(vec(targetPos.x, targetPos.y), ARTIFACT_DELIVER_SPEED_PX_PER_SEC);
 }
 
-// ---------------------------------------------------------------------------
-// Dispatcher
-// ---------------------------------------------------------------------------
+// -- Dispatcher --
 
 /** Dispatch a transition to the appropriate handler. */
 function dispatchTransition(transition: Transition, context: TransitionContext): void {
@@ -250,9 +242,7 @@ function dispatchTransition(transition: Transition, context: TransitionContext):
   }
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
+// -- Public API --
 
 /**
  * Execute a transition plan by scheduling each transition with its delay

@@ -8,7 +8,7 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-// -- core validation logic (exported for testing) ----------------------------
+// -- core validation logic (exported for testing) --
 
 export interface ValidationResult {
   filePath: string;
@@ -84,7 +84,7 @@ export function reportResults(results: ValidationResult[]): number {
   return failed;
 }
 
-// -- CLI entry point ---------------------------------------------------------
+// -- CLI entry point --
 
 /** CLI entry point. Exported for testing. */
 export async function main(): Promise<void> {

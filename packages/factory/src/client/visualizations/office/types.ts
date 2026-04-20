@@ -2,9 +2,7 @@ import type { PhaseName, RoleType } from '../../../shared/constants/role-types.j
 import type { CarriedArtifact, CodeBadge } from '../shared/orchestrator-utils.js';
 import type { AgentStatus, ArtifactStatus, OrchestratorStatus } from '../shared/types.js';
 
-// ---------------------------------------------------------------------------
-// Spatial primitives
-// ---------------------------------------------------------------------------
+// -- Spatial primitives --
 
 /** Tile-space coordinate (column, row). */
 export interface TileCoord {
@@ -49,9 +47,7 @@ export interface ZoneDefinition {
   doors: DoorDefinition[];
 }
 
-// ---------------------------------------------------------------------------
-// Pixel-space position
-// ---------------------------------------------------------------------------
+// -- Pixel-space position --
 
 /** Pixel-space position. */
 export interface Position {
@@ -59,9 +55,7 @@ export interface Position {
   y: number;
 }
 
-// ---------------------------------------------------------------------------
-// Facility layout query API
-// ---------------------------------------------------------------------------
+// -- Facility layout query API --
 
 /** Query interface for the spatial layout consumed by downstream layers. */
 export interface FacilityLayout {
@@ -79,9 +73,7 @@ export interface FacilityLayout {
   zones: readonly ZoneDefinition[];
 }
 
-// ---------------------------------------------------------------------------
-// Office scene config (spatial layer output)
-// ---------------------------------------------------------------------------
+// -- Office scene config (spatial layer output) --
 
 /** Spatial configuration for the office visualization. */
 export interface OfficeSceneConfig {
@@ -130,9 +122,7 @@ export interface OfficeZoneState {
   completed: boolean;
 }
 
-// ---------------------------------------------------------------------------
-// Diff types
-// ---------------------------------------------------------------------------
+// region | Diff types
 
 /** Describes a single field change on a zone. */
 export interface ZoneDiffEntry {
@@ -180,9 +170,9 @@ export interface OfficeDiff {
   hasChanges: boolean;
 }
 
-// ---------------------------------------------------------------------------
-// Resolved positions (pixel-space output)
-// ---------------------------------------------------------------------------
+// endregion | Diff types
+
+// -- Resolved positions (pixel-space output) --
 
 /** Pixel-space positions for all entities in a scene snapshot. */
 export interface ResolvedPositions {
@@ -191,9 +181,7 @@ export interface ResolvedPositions {
   orchestrator: Position;
 }
 
-// ---------------------------------------------------------------------------
-// Transition plan types
-// ---------------------------------------------------------------------------
+// region | Transition plan types
 
 /** Transition action type. */
 export type TransitionType = 'walk' | 'state_change' | 'fade_in' | 'fade_out' | 'artifact_appear' | 'artifact_deliver';
@@ -220,3 +208,5 @@ export interface TransitionPlan {
 // Re-export visualization-agnostic status types from shared
 export { type CarriedArtifact, type CodeBadge } from '../shared/orchestrator-utils.js';
 export { type AgentStatus, type ArtifactStatus, type OrchestratorStatus } from '../shared/types.js';
+
+// endregion | Transition plan types

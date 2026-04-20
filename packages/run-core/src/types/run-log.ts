@@ -30,7 +30,7 @@ export interface EventUsageFields {
   durationMs?: number | undefined;
 }
 
-// -- Individual event interfaces -----------------------------------------------
+// -- Individual event interfaces --
 
 export interface RunStartedEvent {
   t: string;

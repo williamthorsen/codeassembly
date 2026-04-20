@@ -1151,38 +1151,38 @@ describe('mapRunToCatwalk', () => {
 
       const config = mapRunToCatwalk(status);
 
-      // --- Station 2 (coder): all change-summaries are outputs, no inputs ---
+      // -- Station 2 (coder): all change-summaries are outputs, no inputs --
       const station2Outputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'output');
       const station2Inputs = config.artifacts.filter((a) => a.stationIndex === 2 && a.slot === 'input');
       expect(station2Outputs).toHaveLength(3);
       expect(station2Outputs.every((a) => a.label === 'change-summary')).toBe(true);
       expect(station2Inputs).toHaveLength(0);
 
-      // --- Station 3 (reviewer): 6 review outputs, 1 change-summary input ---
+      // -- Station 3 (reviewer): 6 review outputs, 1 change-summary input --
       const station3Outputs = config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'output');
       const station3Inputs = config.artifacts.filter((a) => a.stationIndex === 3 && a.slot === 'input');
       expect(station3Outputs).toHaveLength(6);
       expect(station3Inputs).toHaveLength(1);
       expect(station3Inputs[0]?.label).toBe('change-summary');
 
-      // --- Station 4 (simplifier): no artifacts at all ---
+      // -- Station 4 (simplifier): no artifacts at all --
       const station4All = config.artifacts.filter((a) => a.stationIndex === 4);
       expect(station4All).toHaveLength(0);
 
-      // --- Station 5 (holistic): 1 output, no inputs ---
+      // -- Station 5 (holistic): 1 output, no inputs --
       const station5Outputs = config.artifacts.filter((a) => a.stationIndex === 5 && a.slot === 'output');
       const station5Inputs = config.artifacts.filter((a) => a.stationIndex === 5 && a.slot === 'input');
       expect(station5Outputs).toHaveLength(1);
       expect(station5Outputs[0]?.label).toBe('holistic-review');
       expect(station5Inputs).toHaveLength(0);
 
-      // --- Station 6 (orchestrator/summary): 2 outputs, 10 summary inputs ---
+      // -- Station 6 (orchestrator/summary): 2 outputs, 10 summary inputs --
       const station6Outputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'output');
       const station6Inputs = config.artifacts.filter((a) => a.stationIndex === 6 && a.slot === 'input');
       expect(station6Outputs).toHaveLength(2);
       expect(station6Inputs).toHaveLength(10);
 
-      // --- Total artifact count ---
+      // -- Total artifact count --
       expect(config.artifacts).toHaveLength(23);
     });
   });

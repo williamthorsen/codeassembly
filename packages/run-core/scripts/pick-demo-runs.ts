@@ -109,7 +109,7 @@ function passesSinceFilter(startedAt: string, since: Date): boolean {
   return started >= since.getTime();
 }
 
-// -- Rendering ----------------------------------------------------------------
+// -- Rendering --
 
 function renderMarkdown(rows: ReadonlyArray<RankedRun>): string {
   const paths = rows.map((r) => `${r.projectSlug}/${r.ticketId}/${r.runId}`);
@@ -132,7 +132,7 @@ function renderJson(rows: ReadonlyArray<RankedRun>): string {
   return `${JSON.stringify(payload, null, 2)}\n`;
 }
 
-// -- Argument parsing ---------------------------------------------------------
+// -- Argument parsing --
 
 function parseArgs(args: ReadonlyArray<string>): Options {
   let top = DEFAULT_TOP;

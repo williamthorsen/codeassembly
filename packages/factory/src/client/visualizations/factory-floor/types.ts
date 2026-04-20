@@ -62,9 +62,7 @@ export interface CarriedArtifactConfig {
   color: string;
 }
 
-// ---------------------------------------------------------------------------
-// Diff types
-// ---------------------------------------------------------------------------
+// region | Diff types
 
 export interface OrchestratorDiff {
   moved: { from: number; to: number } | null;
@@ -96,3 +94,5 @@ export interface FactoryFloorDiff {
   artifacts: ArtifactDiffs;
   hasChanges: boolean;
 }
+
+// endregion | Diff types

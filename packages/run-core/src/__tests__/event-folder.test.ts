@@ -405,7 +405,7 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Phase startedAt/completedAt timestamps (S1) -----------------------------------
+  // -- Phase startedAt/completedAt timestamps (S1) --
 
   it('sets startedAt on phase_started for architecture', () => {
     const header = createHeader();
@@ -464,7 +464,7 @@ describe('foldEvents', () => {
     expect(result.phases.holisticReview?.completedAt).toBe('2026-01-01T00:10:00Z');
   });
 
-  // -- ReviewIteration tracking (S2) -----------------------------------------------
+  // -- ReviewIteration tracking (S2) --
 
   it('builds review iteration from dispatched and completed events', () => {
     const header = createHeader();
@@ -545,7 +545,7 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Implementation phase folding (F2) -----------------------------------------------
+  // -- Implementation phase folding (F2) --
 
   it('sets implementation to in_progress on phase_started', () => {
     const header = createHeader();
@@ -602,7 +602,7 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Planning phase folding (F2) ---------------------------------------------------
+  // -- Planning phase folding (F2) --
 
   it('sets planning to in_progress on phase_started', () => {
     const header = createHeader();
@@ -639,7 +639,7 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Review phase_completed merge (W2) -----------------------------------------------
+  // -- Review phase_completed merge (W2) --
 
   it('merges aggregatedCriticality and reviewRoundsUsed on review phase_completed', () => {
     const header = createHeader();
@@ -662,7 +662,7 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview?.reviewRoundsUsed).toBe(2);
   });
 
-  // -- Unknown reviewer in re_review_completed (S1) ------------------------------------
+  // -- Unknown reviewer in re_review_completed (S1) --
 
   it('silently ignores unknown reviewers in re_review_completed without error', () => {
     const header = createHeader();
@@ -684,7 +684,7 @@ describe('foldEvents', () => {
     expect(result.phases.parallelReview?.reviewers?.['unknown-reviewer']).toBeUndefined();
   });
 
-  // -- Usage metrics folding ---------------------------------------------------------------
+  // -- Usage metrics folding --
 
   it('folds usage metrics from reviewer_completed into ReviewerInfo', () => {
     const header = createHeader();
@@ -798,7 +798,7 @@ describe('foldEvents', () => {
     });
   });
 
-  // -- Full event sequence integration test (F1) ----------------------------------------
+  // -- Full event sequence integration test (F1) --
 
   it('produces correct CanonicalRunStatus from a full event sequence', () => {
     const header = createHeader({

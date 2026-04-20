@@ -17,7 +17,7 @@ import {
   toRecord,
 } from './helpers.js';
 
-// -- Helpers ------------------------------------------------------------------
+// region | Helpers
 
 interface ConnectedClient {
   client: Client;
@@ -44,7 +44,9 @@ async function createConnectedClient(): Promise<ConnectedClient> {
   };
 }
 
-// -- Tests --------------------------------------------------------------------
+// endregion | Helpers
+
+// -- Tests --
 
 const cleanups: Array<() => Promise<void>> = [];
 

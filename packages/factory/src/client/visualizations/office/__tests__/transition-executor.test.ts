@@ -13,9 +13,7 @@ const { DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_UP } = await import('../sprites/sprit
 import type { TransitionContext } from '../transitions/transition-executor.js';
 import type { FacilityLayout, OfficeSceneConfig, Position, TransitionPlan } from '../types.js';
 
-// ---------------------------------------------------------------------------
-// Test helpers
-// ---------------------------------------------------------------------------
+// region | Test helpers
 
 /** Create a mock actor with chainable actions. */
 function createMockActor() {
@@ -77,9 +75,9 @@ function buildContext(overrides: Partial<TransitionContext> = {}): TransitionCon
   };
 }
 
-// ---------------------------------------------------------------------------
-// computeDirection
-// ---------------------------------------------------------------------------
+// endregion | Test helpers
+
+// -- computeDirection --
 
 describe(computeDirection, () => {
   it('returns DIR_DOWN when moving south', () => {
@@ -107,9 +105,7 @@ describe(computeDirection, () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// executeTransitions — dispatch by type
-// ---------------------------------------------------------------------------
+// -- executeTransitions — dispatch by type --
 
 describe(executeTransitions, () => {
   beforeEach(() => {
@@ -359,9 +355,7 @@ describe(executeTransitions, () => {
     expect(actor.actions.moveTo).toHaveBeenCalledWith({ x: 300, y: 150 }, expect.any(Number));
   });
 
-  // ---------------------------------------------------------------------------
-  // Edge cases — silent early returns
-  // ---------------------------------------------------------------------------
+  // -- Edge cases — silent early returns --
 
   it('does nothing for walk transition with fewer than 2 waypoints', () => {
     const actor = createMockActor();
@@ -411,9 +405,7 @@ describe(executeTransitions, () => {
     expect(actor.actions.moveTo).not.toHaveBeenCalled();
   });
 
-  // ---------------------------------------------------------------------------
-  // Stagger timing
-  // ---------------------------------------------------------------------------
+  // -- Stagger timing --
 
   it('respects delayMs stagger timing', () => {
     const actor = createMockActor();
@@ -444,9 +436,7 @@ describe(executeTransitions, () => {
     expect(actor.actions.fade).toHaveBeenCalledTimes(6);
   });
 
-  // ---------------------------------------------------------------------------
-  // Cancel behavior
-  // ---------------------------------------------------------------------------
+  // -- Cancel behavior --
 
   it('cancel clears pending timers and actions', () => {
     const actor = createMockActor();
@@ -537,9 +527,7 @@ describe(executeTransitions, () => {
     expect(createdActor.actions.fade).toHaveBeenCalledTimes(1); // Only the initial fade_in
   });
 
-  // ---------------------------------------------------------------------------
-  // Resting direction resolution
-  // ---------------------------------------------------------------------------
+  // -- Resting direction resolution --
 
   it('sets resting direction to DIR_DOWN for orchestrator after walk', () => {
     const actor = createMockActor();
