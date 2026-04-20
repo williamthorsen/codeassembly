@@ -1,4 +1,3 @@
-#!/usr/bin/env tsx
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -14,14 +13,14 @@ const OPT_OUT_MARKER = '// separator-sweep: skip';
 
 type CommentStyle = 'line' | 'block';
 
-type Replacement = {
+interface Replacement {
   startLine: number;
   endLine: number;
   indent: string;
   label: string;
   kind: 'heading' | 'region';
   style: CommentStyle;
-};
+}
 
 /** Return true when a separator label signals a supporting/collapsible section that should become a region fold. */
 export function isFoldable(label: string): boolean {
@@ -45,83 +44,58 @@ function findReplacements(lines: string[]): Replacement[] {
   const out: Replacement[] = [];
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i] ?? '';
-
-    const boxMatch = line.match(BOX_LINE_RE);
-    if (boxMatch && i + 2 < lines.length) {
-      const indent = boxMatch[1] ?? '';
-      const bar = (boxMatch[2] ?? '')[0] ?? '';
-      const labelMatch = (lines[i + 1] ?? '').match(/^\s*\/\/\s*(\S.*?)\s*$/);
-      const bottomMatch = (lines[i + 2] ?? '').match(BOX_LINE_RE);
-      if (labelMatch && bottomMatch && bottomMatch[1] === indent && (bottomMatch[2] ?? '')[0] === bar) {
-        const label = labelMatch[1] ?? '';
-        out.push({
-          startLine: i,
-          endLine: i + 2,
-          indent,
-          label,
-          kind: isFoldable(label) ? 'region' : 'heading',
-          style: 'line',
-        });
-        i += 3;
-        continue;
-      }
-    }
-
-    const blockTopMatch = line.match(BLOCK_BOX_TOP_RE);
-    if (blockTopMatch && i + 2 < lines.length) {
-      const indent = blockTopMatch[1] ?? '';
-      const bar = (blockTopMatch[2] ?? '')[0] ?? '';
-      const labelMatch = (lines[i + 1] ?? '').match(/^\s*(\S.*?)\s*$/);
-      const bottomMatch = (lines[i + 2] ?? '').match(BLOCK_BOX_BOTTOM_RE);
-      if (labelMatch && bottomMatch && (bottomMatch[1] ?? '')[0] === bar) {
-        const label = labelMatch[1] ?? '';
-        out.push({
-          startLine: i,
-          endLine: i + 2,
-          indent,
-          label,
-          kind: isFoldable(label) ? 'region' : 'heading',
-          style: 'block',
-        });
-        i += 3;
-        continue;
-      }
-    }
-
-    const symMatch = line.match(SYMMETRIC_RE);
-    if (symMatch) {
-      const label = symMatch[2] ?? '';
-      out.push({
-        startLine: i,
-        endLine: i,
-        indent: symMatch[1] ?? '',
-        label,
-        kind: isFoldable(label) ? 'region' : 'heading',
-        style: 'line',
-      });
-      i += 1;
+    const match = matchLineBox(lines, i) ?? matchBlockBox(lines, i) ?? matchSingleLine(lines[i] ?? '', i);
+    if (match) {
+      out.push(match);
+      i = match.endLine + 1;
       continue;
     }
-
-    const asymMatch = line.match(ASYMMETRIC_RE);
-    if (asymMatch) {
-      const label = asymMatch[2] ?? '';
-      out.push({
-        startLine: i,
-        endLine: i,
-        indent: asymMatch[1] ?? '',
-        label,
-        kind: isFoldable(label) ? 'region' : 'heading',
-        style: 'line',
-      });
-      i += 1;
-      continue;
-    }
-
     i += 1;
   }
   return out;
+}
+
+/** Match the 3-line `//` dash/equals box pattern at position `i`. */
+function matchLineBox(lines: string[], i: number): Replacement | null {
+  if (i + 2 >= lines.length) return null;
+  const topMatch = (lines[i] ?? '').match(BOX_LINE_RE);
+  if (!topMatch) return null;
+  const indent = topMatch[1] ?? '';
+  const bar = (topMatch[2] ?? '')[0] ?? '';
+  const labelMatch = (lines[i + 1] ?? '').match(/^\s*\/\/\s*(\S.*?)\s*$/);
+  const bottomMatch = (lines[i + 2] ?? '').match(BOX_LINE_RE);
+  if (!labelMatch || !bottomMatch) return null;
+  if (bottomMatch[1] !== indent || (bottomMatch[2] ?? '')[0] !== bar) return null;
+  const label = labelMatch[1] ?? '';
+  return { startLine: i, endLine: i + 2, indent, label, kind: classify(label), style: 'line' };
+}
+
+/** Match the 3-line `/* …` block-comment box pattern at position `i`. */
+function matchBlockBox(lines: string[], i: number): Replacement | null {
+  if (i + 2 >= lines.length) return null;
+  const topMatch = (lines[i] ?? '').match(BLOCK_BOX_TOP_RE);
+  if (!topMatch) return null;
+  const indent = topMatch[1] ?? '';
+  const bar = (topMatch[2] ?? '')[0] ?? '';
+  const labelMatch = (lines[i + 1] ?? '').match(/^\s*(\S.*?)\s*$/);
+  const bottomMatch = (lines[i + 2] ?? '').match(BLOCK_BOX_BOTTOM_RE);
+  if (!labelMatch || !bottomMatch) return null;
+  if ((bottomMatch[1] ?? '')[0] !== bar) return null;
+  const label = labelMatch[1] ?? '';
+  return { startLine: i, endLine: i + 2, indent, label, kind: classify(label), style: 'block' };
+}
+
+/** Match either single-line separator form (symmetric dashes or asymmetric rulered) on one line. */
+function matchSingleLine(line: string, i: number): Replacement | null {
+  const match = line.match(SYMMETRIC_RE) ?? line.match(ASYMMETRIC_RE);
+  if (!match) return null;
+  const label = match[2] ?? '';
+  return { startLine: i, endLine: i, indent: match[1] ?? '', label, kind: classify(label), style: 'line' };
+}
+
+/** Decide whether a separator label should become a region fold or an inline heading. */
+function classify(label: string): Replacement['kind'] {
+  return isFoldable(label) ? 'region' : 'heading';
 }
 
 /** For each region replacement, determine the line before which its endregion marker should be inserted. */
@@ -159,9 +133,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
     const pendingEnd = endregionInsertions.get(i);
     if (pendingEnd !== undefined) {
       trimTrailingBlankLines(out);
-      out.push('');
-      out.push(pendingEnd);
-      out.push('');
+      out.push('', pendingEnd, '');
     }
     const r = byStart.get(i);
     if (r) {
@@ -176,8 +148,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
   const pendingAtEof = endregionInsertions.get(lines.length);
   if (pendingAtEof !== undefined) {
     trimTrailingBlankLines(out);
-    out.push('');
-    out.push(pendingAtEof);
+    out.push('', pendingAtEof);
   }
 
   return out.join('\n');
@@ -198,7 +169,7 @@ function formatEndRegion(r: Replacement): string {
 
 /** Remove any blank strings from the tail of the array in place. */
 function trimTrailingBlankLines(arr: string[]): void {
-  while (arr.length > 0 && arr[arr.length - 1] === '') arr.pop();
+  while (arr.length > 0 && arr.at(-1) === '') arr.pop();
 }
 
 // region | Helpers for CLI
@@ -208,7 +179,7 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const globIdx = args.indexOf('--glob');
-  const explicit = globIdx >= 0 ? args[globIdx + 1] : undefined;
+  const explicit = globIdx !== -1 ? args[globIdx + 1] : undefined;
   const patterns = explicit ? [explicit] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts', 'scripts/**/*.ts'];
 
   const files = await glob(patterns, {
@@ -216,7 +187,7 @@ async function main(): Promise<void> {
   });
 
   let changedCount = 0;
-  for (const file of files.sort()) {
+  for (const file of files.toSorted()) {
     const original = await readFile(file, 'utf8');
     const transformed = transformFile(original);
     if (transformed === original) continue;
