@@ -18,12 +18,12 @@ import path from 'node:path';
 const BASE = '/Users/william/icloude/Resources/Tilesets';
 
 const assetPaths: Record<string, string> = {
-  // --------------- Sheets ---------------
+  // -- Sheets --
   floors: `${BASE}/moderninteriors-win/1_Interiors/32x32/Room_Bulder_subfiles_32x32/Room_Builder_Floors_32x32.png`,
   walls: `${BASE}/moderninteriors-win/1_Interiors/32x32/Room_Bulder_subfiles_32x32/Room_Builder_Walls_32x32.png`,
   floorShadows: `${BASE}/moderninteriors-win/1_Interiors/32x32/Room_Bulder_subfiles_32x32/Room_Builder_Floor_Shadows_32x32.png`,
 
-  // --------------- Furniture singles (64x96 each) ---------------
+  // -- Furniture singles (64x96 each) --
   plant100: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_100.png`,
   chairBack105: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_105.png`,
   cert115: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_115.png`,
@@ -47,7 +47,7 @@ const assetPaths: Record<string, string> = {
   waterCooler320: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_320.png`,
   bush339: `${BASE}/Modern_Office_Revamped_v1.2/4_Modern_Office_singles/32x32/Modern_Office_Singles_32x32_339.png`,
 
-  // --------------- Characters (all idle/standing) ---------------
+  // -- Characters (all idle/standing) --
   adamIdle: `${BASE}/moderninteriors-win/2_Characters/Old/Single_Characters_Legacy/32x32/Adam_idle_32x32.png`,
   alexIdle: `${BASE}/moderninteriors-win/2_Characters/Old/Single_Characters_Legacy/32x32/Alex_idle_32x32.png`,
   ameliaIdle: `${BASE}/moderninteriors-win/2_Characters/Old/Single_Characters_Legacy/32x32/Amelia_idle_32x32.png`,
@@ -601,14 +601,10 @@ canvas {
 </div>
 
 <script>
-// ================================================================
-// TILESET DATA (embedded base64)
-// ================================================================
+// -- TILESET DATA (embedded base64) --
 const ASSETS = ${assetsJSON};
 
-// ================================================================
-// CONSTANTS
-// ================================================================
+// -- CONSTANTS --
 const T = 32;          // tile size in pixels
 // On Retina (devicePixelRatio >= 2), SCALE=1 gives crisp 2x2 device pixels per game pixel.
 // On non-Retina, SCALE=2 ensures pixels are visible.
@@ -619,9 +615,7 @@ const ROWS = 30;       // canvas rows
 const CW = COLS * T;   // canvas width  = 1280
 const CH = ROWS * T;   // canvas height = 960
 
-// ================================================================
-// IMAGE LOADING
-// ================================================================
+// -- IMAGE LOADING --
 function loadImage(dataURI) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -641,9 +635,7 @@ async function loadAllAssets() {
   return imgs;
 }
 
-// ================================================================
-// DRAWING HELPERS
-// ================================================================
+// region | DRAWING HELPERS
 let ctx, images;
 
 // Draw a 32x32 tile from a sprite sheet at tile position (dx, dy)
@@ -670,18 +662,16 @@ function drawChar(charKey, direction, tx, ty) {
   ctx.drawImage(images[charKey], sx, 0, T, 64, tx * T, ty * T, T, 64);
 }
 
-// ================================================================
-// ZONE DEFINITIONS (three-zone layout)
-// ================================================================
+// endregion | DRAWING HELPERS
+
+// -- ZONE DEFINITIONS (three-zone layout) --
 const zones = {
   prep:     { x: 1,  y: 1,  w: 11, h: 12 },
   workshop: { x: 13, y: 1,  w: 26, h: 12 },
   governor: { x: 1,  y: 16, w: 38, h: 13 },
 };
 
-// ================================================================
-// MAIN FACILITY DRAWING
-// ================================================================
+// -- MAIN FACILITY DRAWING --
 function drawFacility() {
   // ─── 1. Fill canvas background (light warm gray = "outside") ───
   ctx.fillStyle = '#e8e4e0';
@@ -853,9 +843,7 @@ function drawFacility() {
   drawChar('robIdle', 3, 34, 10);
 }
 
-// ================================================================
-// HTML OVERLAYS
-// ================================================================
+// -- HTML OVERLAYS --
 function createOverlays() {
   const container = document.getElementById('overlay-container');
   container.style.width = (CW * SCALE) + 'px';
@@ -1051,9 +1039,7 @@ function addArtifact(container, x, y, cls, title, clickable) {
   container.appendChild(el);
 }
 
-// ================================================================
-// ARTIFACT PANEL INTERACTION
-// ================================================================
+// -- ARTIFACT PANEL INTERACTION --
 function openArtifactPanel() {
   document.getElementById('artifact-panel').classList.add('visible');
   document.getElementById('artifact-backdrop').classList.add('visible');
@@ -1068,9 +1054,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeArtifactPanel();
 });
 
-// ================================================================
-// INITIALIZATION
-// ================================================================
+// -- INITIALIZATION --
 async function init() {
   const canvas = document.getElementById('facility-canvas');
   canvas.width  = CW;

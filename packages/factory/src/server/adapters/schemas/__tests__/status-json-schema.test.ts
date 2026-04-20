@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { v1StatusSchema } from '../status-json-schema.js';
 
-// -- fixtures ----------------------------------------------------------------
+// -- fixtures --
 
 function minimalValid(): Record<string, unknown> {
   return {
@@ -17,7 +17,7 @@ function minimalValid(): Record<string, unknown> {
   };
 }
 
-// -- valid inputs ------------------------------------------------------------
+// -- valid inputs --
 
 describe('v1StatusSchema', () => {
   describe('valid inputs', () => {
@@ -84,7 +84,7 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- run status validation -------------------------------------------------
+  // -- run status validation --
 
   describe('run status validation', () => {
     it.each(['in_progress', 'completed', 'failed', 'needs_manual_review'])('accepts valid status "%s"', (status) => {
@@ -103,7 +103,7 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- optional field type validation ----------------------------------------
+  // -- optional field type validation --
 
   describe('optional field type validation', () => {
     it('rejects non-string ticketId', () => {
@@ -131,7 +131,7 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- phases validation -----------------------------------------------------
+  // -- phases validation --
 
   describe('phases validation', () => {
     it('rejects null phases', () => {
@@ -182,7 +182,7 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- phase decisions validation --------------------------------------------
+  // -- phase decisions validation --
 
   describe('phaseDecision validation', () => {
     it('accepts undefined phaseDecision', () => {
@@ -219,7 +219,7 @@ describe('v1StatusSchema', () => {
     });
   });
 
-  // -- error handling --------------------------------------------------------
+  // -- error handling --
 
   describe('error handling', () => {
     it('rejects non-object input', () => {

@@ -122,7 +122,7 @@ export async function parseStatusFile(filePath: string): Promise<CanonicalRunSta
   return normalizeV1(raw);
 }
 
-// -- v1 types and normalization ----------------------------------------------
+// region | v1 types and normalization
 
 interface V1StatusObject {
   runId: string;
@@ -159,7 +159,9 @@ function normalizeV1(raw: V1StatusObject): CanonicalRunStatus {
   };
 }
 
-// -- v2 types and normalization ----------------------------------------------
+// endregion | v1 types and normalization
+
+// region | v2 types and normalization
 
 interface V2RunIndex {
   version: 2;
@@ -224,7 +226,9 @@ function normalizeV2(raw: V2RunIndex): CanonicalRunStatus {
   };
 }
 
-// -- v3 helpers ---------------------------------------------------------------
+// endregion | v2 types and normalization
+
+// region | v3 helpers
 
 interface V3ParsedData {
   context: {
@@ -292,7 +296,9 @@ function parseLogLines(logContent: string, logPath: string): RunEvent[] {
   return events;
 }
 
-// -- validation via Zod schemas with issue capture ---------------------------
+// endregion | v3 helpers
+
+// -- validation via Zod schemas with issue capture --
 
 function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2RunIndex {
   const result = v2RunIndexSchema.safeParse(raw);

@@ -15,9 +15,7 @@ import type {
   OrchestratorStatus,
 } from './types.js';
 
-// ---------------------------------------------------------------------------
-// Animation state to agent status mapping
-// ---------------------------------------------------------------------------
+// -- Animation state to agent status mapping --
 
 /** Collapse fine-grained animation state to logical agent status. */
 function mapAnimationToAgentStatus(state: AgentAnimationState): AgentStatus {
@@ -37,9 +35,7 @@ function mapAnimationToAgentStatus(state: AgentAnimationState): AgentStatus {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function: agent states
-// ---------------------------------------------------------------------------
+// region | Sub-function: agent states
 
 /** Build logical agent states from the roster and run status. */
 function buildAgentStates(
@@ -60,9 +56,9 @@ function buildAgentStates(
   });
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function: orchestrator state
-// ---------------------------------------------------------------------------
+// endregion | Sub-function: agent states
+
+// region | Sub-function: orchestrator state
 
 /** Derive the logical orchestrator state from run status and current phase. */
 function buildOrchestratorState(
@@ -88,9 +84,9 @@ function buildOrchestratorState(
   return { status: orchStatus, carriedArtifacts, codeBadge, waiting };
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function: artifact states
-// ---------------------------------------------------------------------------
+// endregion | Sub-function: orchestrator state
+
+// region | Sub-function: artifact states
 
 /** Check whether a phase object is present and has completed. */
 function isPhaseCompleted(phase: { status?: string } | undefined): boolean {
@@ -158,9 +154,9 @@ function buildArtifactStates(status: CanonicalRunStatus): LogicalArtifactState[]
   return artifacts;
 }
 
-// ---------------------------------------------------------------------------
-// Public mapper
-// ---------------------------------------------------------------------------
+// endregion | Sub-function: artifact states
+
+// -- Public mapper --
 
 /**
  * Transform a `CanonicalRunStatus` snapshot into a `LogicalSceneState`

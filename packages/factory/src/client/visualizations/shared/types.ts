@@ -6,9 +6,7 @@ import type { CarriedArtifact, CodeBadge } from './orchestrator-utils.js';
 export type { AgentAnimationState } from './agent-state-resolver.js';
 export type { CarriedArtifact, CodeBadge } from './orchestrator-utils.js';
 
-// ---------------------------------------------------------------------------
-// Agent status
-// ---------------------------------------------------------------------------
+// -- Agent status --
 
 /**
  * Collapsed agent status for visualization-agnostic consumers.
@@ -17,9 +15,7 @@ export type { CarriedArtifact, CodeBadge } from './orchestrator-utils.js';
  */
 export type AgentStatus = 'idle' | 'working' | 'done' | 'blocked' | 'concerned';
 
-// ---------------------------------------------------------------------------
-// Orchestrator status
-// ---------------------------------------------------------------------------
+// -- Orchestrator status --
 
 /**
  * High-level orchestrator lifecycle state derived from run phase and status.
@@ -28,16 +24,12 @@ export type AgentStatus = 'idle' | 'working' | 'done' | 'blocked' | 'concerned';
  */
 export type OrchestratorStatus = 'idle' | 'dispatching' | 'monitoring' | 'delivering' | 'done';
 
-// ---------------------------------------------------------------------------
-// Artifact status
-// ---------------------------------------------------------------------------
+// -- Artifact status --
 
 /** Lifecycle state of an artifact in the logical scene. */
 export type ArtifactStatus = 'created' | 'in_transit' | 'delivered';
 
-// ---------------------------------------------------------------------------
-// Logical scene state
-// ---------------------------------------------------------------------------
+// -- Logical scene state --
 
 /** Visualization-agnostic snapshot of workflow progress. */
 export interface LogicalSceneState {

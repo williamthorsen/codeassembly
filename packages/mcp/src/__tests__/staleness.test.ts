@@ -10,9 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isBuildStale } from '../staleness.js';
 import { getStringField, toRecord } from './helpers.js';
 
-// ---------------------------------------------------------------------------
-// Test helper: create a fake package directory mirroring packages/mcp layout
-// ---------------------------------------------------------------------------
+// region | Test helper: create a fake package directory mirroring packages/mcp layout
 
 interface FakePackageOptions {
   srcMtimeMs: number;
@@ -60,9 +58,9 @@ async function createFakePackage(opts: FakePackageOptions): Promise<string> {
   return pathToFileURL(join(distEsm, 'staleness.js')).href;
 }
 
-// ---------------------------------------------------------------------------
-// isBuildStale() unit tests
-// ---------------------------------------------------------------------------
+// endregion | Test helper: create a fake package directory mirroring packages/mcp layout
+
+// -- isBuildStale() unit tests --
 
 describe('isBuildStale', () => {
   it('returns true when source is newer than dist', async () => {
@@ -163,9 +161,7 @@ describe('isBuildStale', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Warning delivery tests (protocol-level, mocked isBuildStale)
-// ---------------------------------------------------------------------------
+// -- Warning delivery tests (protocol-level, mocked isBuildStale) --
 
 describe('stale build warning delivery', () => {
   // Use vi.mock to control isBuildStale for these tests.

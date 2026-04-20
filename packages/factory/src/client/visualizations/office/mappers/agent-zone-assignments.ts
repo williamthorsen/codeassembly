@@ -11,9 +11,7 @@ import type { OfficeAgentState, OfficeArtifactState, OfficeZoneState, ZoneDefini
 /** Number of storage slots in the governor zone, used for cycling delivered artifacts. */
 const GOVERNOR_STORAGE_SLOT_COUNT = GOVERNOR_ZONE.slots.filter((s) => s.type === 'storage').length;
 
-// ---------------------------------------------------------------------------
-// Phase-to-zone mapping
-// ---------------------------------------------------------------------------
+// -- Phase-to-zone mapping --
 
 /** Map a phase to its office zone. */
 function phaseToZoneId(phase: PhaseName): string {
@@ -31,9 +29,7 @@ function phaseToZoneId(phase: PhaseName): string {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Agent assignment
-// ---------------------------------------------------------------------------
+// -- Agent assignment --
 
 /** Assign an agent to a zone and slot based on phase and role type. */
 export function assignAgentToZone(agent: LogicalAgentState, agentIndex: number): { zoneId: string; slotId: string } {
@@ -60,9 +56,7 @@ export function assignAgentToZone(agent: LogicalAgentState, agentIndex: number):
   return { zoneId, slotId: ORCHESTRATOR_HOME_SLOT };
 }
 
-// ---------------------------------------------------------------------------
-// Orchestrator assignment
-// ---------------------------------------------------------------------------
+// -- Orchestrator assignment --
 
 /** Zone IDs that the orchestrator can be assigned to. */
 type OrchestratorZoneId = 'governor' | 'prep' | 'workshop';
@@ -114,9 +108,7 @@ function isOrchestratorAtHome(status: OrchestratorStatus): boolean {
   return status === 'idle' || status === 'done' || status === 'delivering';
 }
 
-// ---------------------------------------------------------------------------
-// Artifact assignment
-// ---------------------------------------------------------------------------
+// -- Artifact assignment --
 
 /** Assign an artifact to a zone and slot based on its status and producer phase. */
 export function assignArtifactToZone(
@@ -153,9 +145,7 @@ function resolveProducerSlot(phase: PhaseName): string {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Zone state derivation
-// ---------------------------------------------------------------------------
+// -- Zone state derivation --
 
 /** Derive aggregate zone states from the agents present in each zone. */
 export function deriveZoneStates(agents: OfficeAgentState[], zones: readonly ZoneDefinition[]): OfficeZoneState[] {
@@ -168,9 +158,7 @@ export function deriveZoneStates(agents: OfficeAgentState[], zones: readonly Zon
   });
 }
 
-// ---------------------------------------------------------------------------
-// Reviewer index computation
-// ---------------------------------------------------------------------------
+// -- Reviewer index computation --
 
 /** Compute stable reviewer slot indices by sorting review-phase agents by ID. */
 export function computeReviewerIndices(agents: LogicalAgentState[]): Map<string, number> {

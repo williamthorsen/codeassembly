@@ -129,9 +129,7 @@ function extractReviewerNames(parallelReview: ParallelReviewPhase): string[] {
   return [];
 }
 
-// ---------------------------------------------------------------------------
-// Phase status accessors (mirrors agent-state-resolver.ts)
-// ---------------------------------------------------------------------------
+// -- Phase status accessors (mirrors agent-state-resolver.ts) --
 
 type PhaseStatusAccessor = (phases: Phases) => string | undefined;
 
@@ -156,9 +154,7 @@ const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
   summary: () => {},
 };
 
-// ---------------------------------------------------------------------------
-// Sub-function A: stations
-// ---------------------------------------------------------------------------
+// region | Sub-function A: stations
 
 function buildStations(status: CanonicalRunStatus): StationConfig[] {
   return PHASE_NAMES.map((phase) => {
@@ -174,9 +170,9 @@ function buildStations(status: CanonicalRunStatus): StationConfig[] {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function B: orchestrator
-// ---------------------------------------------------------------------------
+// endregion | Sub-function A: stations
+
+// region | Sub-function B: orchestrator
 
 /** Amber color for iteration v2, orange for v3+. */
 const ITERATION_COLORS = {
@@ -260,9 +256,9 @@ function buildCodeBadge(status: CanonicalRunStatus): OrchestratorConfig['codeBad
   return { label: `v${String(maxIteration)}`, color };
 }
 
-// ---------------------------------------------------------------------------
-// Agent state resolution
-// ---------------------------------------------------------------------------
+// endregion | Sub-function B: orchestrator
+
+// -- Agent state resolution --
 
 function resolveAgentState(
   phase: PhaseName,
@@ -293,9 +289,7 @@ function resolveAgentState(
   return 'idle';
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function C: agents
-// ---------------------------------------------------------------------------
+// region | Sub-function C: agents
 
 function buildAgents(status: CanonicalRunStatus, currentPhase: PhaseName | undefined): AgentConfig[] {
   const agents: AgentConfig[] = [];
@@ -360,9 +354,9 @@ function buildReviewerAgents(status: CanonicalRunStatus, currentPhase: PhaseName
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function D: gates
-// ---------------------------------------------------------------------------
+// endregion | Sub-function C: agents
+
+// region | Sub-function D: gates
 
 function buildGates(stations: StationConfig[], phases: Phases): GateConfig[] {
   const gates: GateConfig[] = [];
@@ -378,9 +372,9 @@ function buildGates(stations: StationConfig[], phases: Phases): GateConfig[] {
   return gates;
 }
 
-// ---------------------------------------------------------------------------
-// Sub-function E: artifacts
-// ---------------------------------------------------------------------------
+// endregion | Sub-function D: gates
+
+// region | Sub-function E: artifacts
 
 function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
   if (!isPresent(status.artifacts) || status.artifacts.length === 0) {
@@ -503,9 +497,9 @@ function buildInputArtifacts(
   return inputs;
 }
 
-// ---------------------------------------------------------------------------
-// Public mapper
-// ---------------------------------------------------------------------------
+// endregion | Sub-function E: artifacts
+
+// -- Public mapper --
 
 export function mapRunToCatwalk(status: CanonicalRunStatus): CatwalkSceneConfig {
   const currentPhase = findCurrentPhase(status.phases, status.phaseDecisions, status.status);

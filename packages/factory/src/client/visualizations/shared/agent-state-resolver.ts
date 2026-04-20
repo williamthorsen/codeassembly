@@ -3,9 +3,7 @@ import { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 import { isPhaseEvaluated, isPhasePresentInData } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical.js';
 
-// ---------------------------------------------------------------------------
-// Agent animation state
-// ---------------------------------------------------------------------------
+// -- Agent animation state --
 
 /**
  * Animation states shared across all visualization types. Intentionally
@@ -21,9 +19,7 @@ export type AgentAnimationState =
   | 'concerned'
   | 'deactivated';
 
-// ---------------------------------------------------------------------------
-// Phase status accessors
-// ---------------------------------------------------------------------------
+// -- Phase status accessors --
 
 type PhaseStatusAccessor = (phases: Phases) => string | undefined;
 
@@ -48,9 +44,7 @@ export const PHASE_STATUS_ACCESSORS: Record<PhaseName, PhaseStatusAccessor> = {
   summary: () => {},
 };
 
-// ---------------------------------------------------------------------------
-// Agent state resolution
-// ---------------------------------------------------------------------------
+// -- Agent state resolution --
 
 /**
  * Resolve the animation state for an agent at a given phase, based on the

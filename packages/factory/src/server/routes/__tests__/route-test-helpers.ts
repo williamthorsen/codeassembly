@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 
 import type { ProjectIndex, ProjectIndexProvider } from '../../../shared/types/api.js';
 
-// --- Mock response ---
+// -- Mock response --
 
 export interface MockResponse {
   statusCode: number;
@@ -27,13 +27,13 @@ export function createMockResponse(): MockResponse {
   return res;
 }
 
-// --- Mock scanner ---
+// -- Mock scanner --
 
 export function createMockScanner(index: ProjectIndex | null): ProjectIndexProvider {
   return { getIndex: vi.fn(() => index) };
 }
 
-// --- Handler extraction ---
+// -- Handler extraction --
 
 export interface MockRequest {
   params: Record<string, string>;

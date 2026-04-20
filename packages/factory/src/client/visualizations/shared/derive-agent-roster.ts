@@ -4,9 +4,7 @@ import { findPhaseDecision } from '../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, ParallelReviewPhase } from '../../../shared/types/canonical.js';
 import { extractReviewerNames, isPresent, PHASE_AGENT_ID } from './artifact-utils.js';
 
-// ---------------------------------------------------------------------------
-// Agent roster entry
-// ---------------------------------------------------------------------------
+// -- Agent roster entry --
 
 /** Identity record for a single agent, without spatial assignment. */
 export interface AgentRosterEntry {
@@ -16,9 +14,7 @@ export interface AgentRosterEntry {
   phase: PhaseName;
 }
 
-// ---------------------------------------------------------------------------
-// Reviewer derivation
-// ---------------------------------------------------------------------------
+// -- Reviewer derivation --
 
 /**
  * Extract reviewer names from run status, falling back to a single
@@ -42,9 +38,7 @@ function buildReviewerEntries(reviewerNames: string[]): AgentRosterEntry[] {
   }));
 }
 
-// ---------------------------------------------------------------------------
-// Full roster derivation
-// ---------------------------------------------------------------------------
+// -- Full roster derivation --
 
 /**
  * Derive the agent roster from run status. Returns one entry per

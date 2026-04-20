@@ -1,9 +1,7 @@
 import { ARTIFACT_COLORS } from '../../../shared/constants/artifact-colors.js';
 import type { ParallelReviewPhase } from '../../../shared/types/canonical.js';
 
-// ---------------------------------------------------------------------------
-// Type guards
-// ---------------------------------------------------------------------------
+// region | Type guards
 
 /**
  * Check that a value is neither null nor undefined. The Phases type uses
@@ -18,9 +16,9 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-// ---------------------------------------------------------------------------
-// Artifact color lookup
-// ---------------------------------------------------------------------------
+// endregion | Type guards
+
+// -- Artifact color lookup --
 
 /** Maps run-index artifact type names to shared ARTIFACT_COLORS keys. */
 export const ARTIFACT_TYPE_COLOR_KEY: Record<string, keyof typeof ARTIFACT_COLORS> = {
@@ -38,9 +36,7 @@ export function lookupArtifactColor(type: string): string {
   return key === undefined ? ARTIFACT_COLORS.code : ARTIFACT_COLORS[key];
 }
 
-// ---------------------------------------------------------------------------
-// Phase agent IDs
-// ---------------------------------------------------------------------------
+// -- Phase agent IDs --
 
 /** Short phase alias used as agent IDs for non-review phases. */
 export const PHASE_AGENT_ID: Record<string, string> = {
@@ -51,9 +47,7 @@ export const PHASE_AGENT_ID: Record<string, string> = {
   holistic: 'holi',
 };
 
-// ---------------------------------------------------------------------------
-// Reviewer name extraction
-// ---------------------------------------------------------------------------
+// -- Reviewer name extraction --
 
 /**
  * Extract reviewer names from any known parallelReview data shape.

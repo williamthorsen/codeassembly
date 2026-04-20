@@ -1,8 +1,6 @@
 import type { CharacterName, SingleAssetKey } from './sprite-sheet-urls.js';
 
-// ---------------------------------------------------------------------------
-// Character sprite layout
-// ---------------------------------------------------------------------------
+// -- Character sprite layout --
 
 /** Number of directional columns in each character idle sprite sheet. */
 export const CHARACTER_FRAME_COLS = 4;
@@ -28,9 +26,7 @@ export const DIR_RIGHT = 2;
 /** Column index for the up-facing direction. */
 export const DIR_UP = 3;
 
-// ---------------------------------------------------------------------------
-// Furniture manifest
-// ---------------------------------------------------------------------------
+// -- Furniture manifest --
 
 /** A spritesheet region descriptor for multi-tile composites. */
 interface SpriteRegion {
@@ -92,9 +88,7 @@ export const FURNITURE_MANIFEST: readonly FurnitureItem[] = [
   { label: 'Plant (governor)', asset: 'plant100', tx: 34, ty: 13 },
 ] as const;
 
-// ---------------------------------------------------------------------------
-// Character-to-role mapping
-// ---------------------------------------------------------------------------
+// -- Character-to-role mapping --
 
 /** Default character assignment pool for reviewer roles, indexed by slot position. */
 const REVIEWER_CHARACTERS: readonly CharacterName[] = ['Bob', 'Ash', 'Rob'];

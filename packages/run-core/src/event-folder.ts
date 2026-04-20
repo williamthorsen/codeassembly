@@ -15,7 +15,7 @@ import type {
 } from './types/canonical.js';
 import type { EventPhaseName, RunEvent, RunHeader } from './types/run-log.js';
 
-// -- Type guard helpers -------------------------------------------------------
+// region | Type guard helpers
 
 const CRITICALITY_VALUES: ReadonlySet<string> = new Set(['none', 'low', 'medium', 'high']);
 
@@ -66,6 +66,8 @@ function extractQualityGates(
   }
   return existing;
 }
+
+// endregion | Type guard helpers
 
 /**
  * Reconstruct a CanonicalRunStatus from a RunHeader and a sequence of RunEvents.

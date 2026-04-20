@@ -3,9 +3,7 @@ import { PHASE_NAMES } from '../../../shared/constants/role-types.js';
 import type { CanonicalRunStatus } from '../../../shared/types/canonical.js';
 import { isPresent, lookupArtifactColor } from './artifact-utils.js';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// region | Types
 
 /** A lightweight artifact label+color pair carried by the orchestrator. */
 export interface CarriedArtifact {
@@ -19,9 +17,9 @@ export interface CodeBadge {
   color: string;
 }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+// endregion | Types
+
+// -- Constants --
 
 /** Amber color for iteration v2, orange for v3+. */
 export const ITERATION_COLORS = {
@@ -29,9 +27,7 @@ export const ITERATION_COLORS = {
   v3plus: '#ff6600',
 };
 
-// ---------------------------------------------------------------------------
-// Data-model phase name to PhaseName normalization
-// ---------------------------------------------------------------------------
+// -- Data-model phase name to PhaseName normalization --
 
 /**
  * Map data-model phase property names to visualization-layer `PhaseName` values.
@@ -48,9 +44,7 @@ export const DATA_PHASE_TO_PHASE_NAME: Record<string, PhaseName> = {
   summary: 'summary',
 };
 
-// ---------------------------------------------------------------------------
-// Carried artifacts
-// ---------------------------------------------------------------------------
+// -- Carried artifacts --
 
 /**
  * Build carried artifacts for the orchestrator. When the orchestrator is
@@ -90,9 +84,7 @@ export function buildCarriedArtifacts(
   return [];
 }
 
-// ---------------------------------------------------------------------------
-// Code badge
-// ---------------------------------------------------------------------------
+// -- Code badge --
 
 /** Build the code badge showing iteration count when implementation has been re-entered. */
 export function buildCodeBadge(status: CanonicalRunStatus): CodeBadge | null {
