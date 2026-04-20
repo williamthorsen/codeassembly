@@ -109,7 +109,7 @@ Present the ticket to the user. Revise until approved.
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent.
 
-- GitHub: `gh issue edit {number} --body "{refined body}"`
+- GitHub: write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
 - Other platforms: note that automated update is not yet supported; suggest manual update
 
 ### Phase 5: Generate implementation plan
