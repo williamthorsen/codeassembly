@@ -23,10 +23,12 @@ type Replacement = {
   style: CommentStyle;
 };
 
+/** Return true when a separator label signals a supporting/collapsible section that should become a region fold. */
 export function isFoldable(label: string): boolean {
   return FOLDABLE_RE.test(label);
 }
 
+/** Rewrite every recognized separator in the source to its canonical inline-heading or region-fold form. */
 export function transformFile(source: string): string {
   if (source.includes(OPT_OUT_MARKER)) return source;
 
@@ -38,6 +40,7 @@ export function transformFile(source: string): string {
   return emitOutput(lines, replacements, regionEnds);
 }
 
+/** Scan the source lines for every separator form and return a positional record of each match. */
 function findReplacements(lines: string[]): Replacement[] {
   const out: Replacement[] = [];
   let i = 0;
@@ -120,6 +123,7 @@ function findReplacements(lines: string[]): Replacement[] {
   return out;
 }
 
+/** For each region replacement, determine the line before which its endregion marker should be inserted. */
 function resolveRegionEnds(replacements: Replacement[], totalLines: number): Map<number, number> {
   const ends = new Map<number, number>();
   for (let idx = 0; idx < replacements.length; idx += 1) {
@@ -137,6 +141,7 @@ function resolveRegionEnds(replacements: Replacement[], totalLines: number): Map
   return ends;
 }
 
+/** Produce the rewritten source by walking the original lines, swapping separator blocks for canonical output, and inserting endregion markers. */
 function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Map<number, number>): string {
   const byStart = new Map(replacements.map((r) => [r.startLine, r]));
   const endregionInsertions = new Map<number, string>();
@@ -176,6 +181,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
   return out.join('\n');
 }
 
+/** Render a replacement as its canonical single line, respecting the line-vs-block comment style. */
 function formatReplacement(r: Replacement): string {
   if (r.kind === 'region') {
     return r.style === 'block' ? `${r.indent}/* region | ${r.label} */` : `${r.indent}// region | ${r.label}`;
@@ -183,20 +189,25 @@ function formatReplacement(r: Replacement): string {
   return r.style === 'block' ? `${r.indent}/* -- ${r.label} -- */` : `${r.indent}// -- ${r.label} --`;
 }
 
+/** Render the endregion marker that matches a given region replacement. */
 function formatEndRegion(r: Replacement): string {
   return r.style === 'block' ? `${r.indent}/* endregion | ${r.label} */` : `${r.indent}// endregion | ${r.label}`;
 }
 
+/** Remove any blank strings from the tail of the array in place. */
 function trimTrailingBlankLines(arr: string[]): void {
   while (arr.length > 0 && arr[arr.length - 1] === '') arr.pop();
 }
 
 // region | Helpers for CLI
+
+/** CLI entry point: sweep the matching files, writing (or printing a diff of) the canonical-form result for each changed file. */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const globIdx = args.indexOf('--glob');
-  const patterns = globIdx >= 0 ? [args[globIdx + 1]] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts'];
+  const patterns =
+    globIdx >= 0 ? [args[globIdx + 1]] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts', 'scripts/**/*.ts'];
 
   const files = await glob(patterns, {
     ignore: ['**/node_modules/**', '**/dist/**'],
@@ -219,6 +230,7 @@ async function main(): Promise<void> {
   console.log(`${dryRun ? 'would change' : 'changed'} ${changedCount} file(s)`);
 }
 
+/** Print a minimal positional unified diff between two source strings to stdout. */
 function printDiff(before: string, after: string): void {
   const beforeLines = before.split('\n');
   const afterLines = after.split('\n');
