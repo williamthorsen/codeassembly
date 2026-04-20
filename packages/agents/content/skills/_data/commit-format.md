@@ -55,6 +55,7 @@ Common example: if a package is added to `packages/workspace-a`, that updates th
 
 - **72 characters max** (hard limit).
 - **Describes the code change, not what prompted it.** Ask: "what does the diff do?" Bad: "Address review findings". Good: "Add error logging to `handleStateUpdate`".
+- **Describes the outcome, not the mechanism.** The title feeds the changelog and, for release-notes-contributing work types, the release notes — a reader scanning those sees only the title. Ask: "what does this change deliver?" — not "what did I edit?" Bad: "Upgrade hono from v1 to v2". Good: "Upgrade hono to patch authentication vulnerability".
 - **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
 - **Only document what's in the diff.** External actions (e.g., updating a ticket) don't belong.
 

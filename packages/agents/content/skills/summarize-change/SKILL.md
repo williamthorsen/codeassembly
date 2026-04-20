@@ -123,14 +123,6 @@ The YAML frontmatter provides machine-readable metadata for downstream consumers
 
 When used as a PR description, include **from `## What` onward only** — omit the H1 title and metadata block.
 
-## Title guidance
-
-When the original ticket is accessible:
-
-- Use its title as input, not verbatim
-- If the branch completes all ticket work, the ticket title may suffice
-- For partial work, the title should reflect actual branch contents
-
 ## Saving
 
 ### Path resolution

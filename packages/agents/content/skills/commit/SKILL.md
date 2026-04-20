@@ -29,6 +29,7 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 - **Imperative, task-oriented voice.** "Add…", "Fix…", "Prevent…", "Enable…" — describing what the coder did. The title appears next to the PR number in release notes; it reads as the task. This voice is distinct from the body voice, which is declarative (see below).
 - **Describes the code change, not what prompted it.** Ask: "what does the diff do?" — not "why did I open the editor?" Bad: "Address review findings", "Apply feedback", "Incorporate suggestions". Good: "Add error logging to handleStateUpdate", "Remove dead rejection handler".
+- **Describes the outcome, not the mechanism.** The title feeds the changelog and, for release-notes-contributing work types, the release notes — a reader scanning those sees only the title. Ask: "what does this change deliver?" — not "what did I edit?" Bad: "Upgrade hono from v1 to v2". Good: "Upgrade hono to patch authentication vulnerability".
 - **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
 - **Only document what's in the diff.** External actions (e.g., updating a ticket) are not part of the commit and don't belong in its message.
 
