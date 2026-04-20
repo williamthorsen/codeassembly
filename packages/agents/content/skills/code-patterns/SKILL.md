@@ -34,6 +34,24 @@ Rules for how code is structured, organized, and documented.
 - Complex objects documented by TypeScript interfaces don't need additional JSDoc
 - Only document params when the name alone doesn't convey purpose or constraints
 
+### Section separators
+
+Do not use multi-line boxed separators (`// --------` / `// Label` / `// --------`) or rulered headings (`// --- Label ---`, `// -- Label ---…`). They wrap awkwardly and add noise without carrying information. Two canonical forms replace them:
+
+- **Inline heading** — the default for primary-content sections:
+
+  ```ts
+  // -- Canvas dimensions --
+  ```
+
+- **Region fold** — for supporting or collapsible blocks (helpers, types, styles, getters, type guards, sub-functions):
+
+  ```ts
+  // region | Helpers
+  function findAgent(...) { ... }
+  // endregion | Helpers
+  ```
+
 ## Naming
 
 Follow the naming rules in [naming-conventions.md](../_data/naming-conventions.md): no abbreviations, unit-of-measure suffixes on numerics, verb-led function names, boolean prefixes (`is`, `has`, `should`, `does`).
