@@ -12,6 +12,12 @@ import {
   resolveSharedHome,
   writeManifest,
 } from '../lib/manifest.js';
+import {
+  buildSourceUrl,
+  injectMarkerInFile,
+  injectMarkersInDirectory,
+  injectProvenanceMarker,
+} from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type {
@@ -171,6 +177,7 @@ async function installSkills(
       path.join(skillsSrcDir, entry),
       path.join(skillsDestDir, entry),
       `skills/${entry}`,
+      `skills/${entry}`,
       platformHome,
       existingByPath,
       options,
@@ -201,6 +208,7 @@ async function installSkills(
       path.join(platformSkillsSrcDir, entry),
       path.join(skillsDestDir, entry),
       `skills/${entry}`,
+      `skills/_platforms/${platformId}/${entry}`,
       platformHome,
       existingByPath,
       options,
@@ -224,6 +232,7 @@ async function installSkillEntry(
   srcPath: string,
   destPath: string,
   relativePath: string,
+  sourceRelativeRoot: string,
   platformHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
@@ -248,11 +257,14 @@ async function installSkillEntry(
 
   await copyItem(srcPath, destPath);
 
-  // Rewrite Markdown paths and template variables for directories
+  // Rewrite Markdown paths, expand templates, and inject provenance markers for directories
   const stats = await stat(srcPath);
   if (stats.isDirectory()) {
     const skillsDestDir = path.dirname(destPath);
     await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir);
+    await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
+  } else if (destPath.endsWith('.md')) {
+    await injectMarkerInFile(destPath, buildSourceUrl(sourceRelativeRoot));
   }
 
   return {
@@ -323,12 +335,13 @@ async function installSubagents(
       }
     }
 
-    // Read source, merge frontmatter, write to destination
+    // Read source, merge frontmatter, inject provenance marker, write to destination
     const source = await readFile(srcPath, 'utf8');
     const merged = mergeFrontmatter(source, overlayYaml);
+    const withMarker = injectProvenanceMarker(merged, buildSourceUrl(`subagents/${entry}`));
     await mkdir(path.dirname(destPath), { recursive: true });
     await unlinkIfSymlink(destPath);
-    await writeFile(destPath, merged, 'utf8');
+    await writeFile(destPath, withMarker, 'utf8');
 
     const hash = await computeContentHash(destPath);
     entries.push({
@@ -607,6 +620,13 @@ async function installSharedGuidance(
     }
 
     await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+    // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
+    // to the source file; marking them would mislabel the source itself.
+    if (!options.link && entry.endsWith('.md')) {
+      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${entry}`));
+    }
+
     anyWritten = true;
 
     entries.push({
@@ -692,6 +712,7 @@ async function installPlatformGuidance(
     // contains only absolute paths — no convention required for agents to resolve links.
     if (entry.endsWith('.md')) {
       await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir);
+      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_platforms/${platformId}/${entry}`));
     }
 
     entries.push({

@@ -65,6 +65,21 @@ Add no-automated-tests-in-test-plan rule to summarize-change and review-criteria
 
 - Never include automated quality checks (CI, linting, type-checking, formatting) in test plans. They run automatically.
 
+## Editing generated files
+
+Files installed by the agents installer (under `~/.claude/`, `~/.agents/`, and other platform homes) are **generated artifacts**. The source of truth lives in `williamthorsen/codeassembly` under `packages/agents/content/`.
+
+Look for a provenance marker at the top of the file. Generated files carry one of two formats:
+
+- **YAML frontmatter:** three `# GENERATED FILE …` comment lines immediately after the opening `---`
+- **No frontmatter:** three `<!-- GENERATED FILE … -->` comment lines at the top
+
+If you see a marker, **do not edit the file in place** — the change will be silently overwritten on the next `pnpm agents install`. Instead:
+
+1. Edit the source file in `williamthorsen/codeassembly` (the marker's `Source:` line links directly to it)
+2. Open a PR against that repo
+3. After merge, re-run `pnpm agents install` to pick up the change
+
 ## Cross-cutting issues
 
 These mistakes span multiple categories:
