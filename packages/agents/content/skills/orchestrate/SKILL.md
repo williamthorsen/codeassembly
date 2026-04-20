@@ -463,7 +463,7 @@ Always pass `max_turns` explicitly to every Task call:
 | :----------------------------- | --------: |
 | orchestrated-architect         |        30 |
 | orchestrated-planner           |        40 |
-| orchestrated-coder             |        80 |
+| orchestrated-coder             |       150 |
 | orchestrated-reviewer          |        30 |
 | aspect-code-reviewer           |        20 |
 | aspect-silent-failure-reviewer |        20 |
@@ -571,7 +571,7 @@ After: store the full paths as `{plan-md-path}` and `{plan-json-path}` (both sha
 
 Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "implementation" } }`.
 
-Call Task with `subagent_type: orchestrated-coder`, `max_turns: 80`, `model: {models.coder}`:
+Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
 > Implement the following changes.
 >
@@ -738,6 +738,7 @@ Task results include a `<usage>` block reporting resource consumption. Parse the
 
 - **Subagent failure**: emit `phase_completed` with `status: "failed"`, retry same phase once. If retry fails, emit `phase_completed` with `status: "failed"` again and proceed to summary.
 - **maxTurns exhausted**: record as `needs_manual_review`.
+- **Recovery from coder interruption**: when a coder Task returns without a structured return block (typically an `agentId:` marker on `max_turns` exhaustion), the coder maintains its change-summary incrementally — the partial artifact at the canonical `{run-dir}/{NN}_coder_change-summary.md` path will list which plan tasks or findings were completed vs. pending. Read the partial summary and use it to seed a continuation dispatch or populate the run summary. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel.
 - **Quality gate failure** (coder reports failing gates): treat as review finding at `critical` severity.
 - **`get_run_state` unavailable**: if any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
 - **MCP server unavailable at `init_run`**: handled by the step 4 availability guard — the resolved `mcp_policy` determines whether to abort, prompt the developer, or continue without MCP tracking.
