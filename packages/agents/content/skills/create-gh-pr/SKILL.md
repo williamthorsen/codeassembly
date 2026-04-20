@@ -41,8 +41,6 @@ label_flags+=" --label \"{label_name}\""
 Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Store the path so the retry step in step 3 can reuse it.
 
 ```bash
-# Write {body} to $TMPDIR/gh-body-{timestamp}.md via the Write tool,
-# then reference that path here:
 url=$(gh pr create \
   --title "{title}" \
   --body-file "$body_path" \

@@ -102,8 +102,6 @@ change_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4
 Create the issue **without** the ticket ID prefix in the title. Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 4:
 
 ```bash
-# Write {ticket body} to $TMPDIR/gh-body-{timestamp}.md via the Write tool,
-# then reference that path here:
 url=$(gh issue create --title "${change_prefix}{title}" --body-file "$body_path"${label_flags})
 ```
 
@@ -151,8 +149,6 @@ If a plan exists in conversation context, save it as a ticket-scoped artifact in
 Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the comment into the shell command:
 
 ```bash
-# Write {plan comment} to $TMPDIR/gh-body-{timestamp}.md via the Write tool,
-# then reference that path here:
 gh issue comment {number} --body-file "$body_path"
 ```
 

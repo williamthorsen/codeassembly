@@ -24,7 +24,7 @@ Any `gh` invocation that takes a Markdown body: `gh issue create`, `gh issue edi
    gh pr create --title "..." --body-file "$body_path" [other flags]
    ```
 
-   Store the path in a shell variable (e.g., `body_path`) so retries and follow-on calls reuse the same file.
+   Name the variable `body_path` so retries and follow-on calls reuse the same file unambiguously.
 
 No cleanup is required — `$TMPDIR` is OS-managed.
 
