@@ -45,22 +45,22 @@ function findReplacements(lines: string[]): Replacement[] {
   const out: Replacement[] = [];
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i];
+    const line = lines[i] ?? '';
+
     const boxMatch = line.match(BOX_LINE_RE);
     if (boxMatch && i + 2 < lines.length) {
-      const indent = boxMatch[1];
-      const bar = boxMatch[2][0]; // '-' or '='
-      const labelLine = lines[i + 1];
-      const bottomLine = lines[i + 2];
-      const labelMatch = labelLine.match(/^\s*\/\/\s*(\S.*?)\s*$/);
-      const bottomMatch = bottomLine.match(BOX_LINE_RE);
-      if (labelMatch && bottomMatch && bottomMatch[1] === indent && bottomMatch[2][0] === bar) {
+      const indent = boxMatch[1] ?? '';
+      const bar = (boxMatch[2] ?? '')[0] ?? '';
+      const labelMatch = (lines[i + 1] ?? '').match(/^\s*\/\/\s*(\S.*?)\s*$/);
+      const bottomMatch = (lines[i + 2] ?? '').match(BOX_LINE_RE);
+      if (labelMatch && bottomMatch && bottomMatch[1] === indent && (bottomMatch[2] ?? '')[0] === bar) {
+        const label = labelMatch[1] ?? '';
         out.push({
           startLine: i,
           endLine: i + 2,
           indent,
-          label: labelMatch[1],
-          kind: isFoldable(labelMatch[1]) ? 'region' : 'heading',
+          label,
+          kind: isFoldable(label) ? 'region' : 'heading',
           style: 'line',
         });
         i += 3;
@@ -70,19 +70,18 @@ function findReplacements(lines: string[]): Replacement[] {
 
     const blockTopMatch = line.match(BLOCK_BOX_TOP_RE);
     if (blockTopMatch && i + 2 < lines.length) {
-      const indent = blockTopMatch[1];
-      const bar = blockTopMatch[2][0];
-      const labelLine = lines[i + 1];
-      const bottomLine = lines[i + 2];
-      const labelMatch = labelLine.match(/^\s*(\S.*?)\s*$/);
-      const bottomMatch = bottomLine.match(BLOCK_BOX_BOTTOM_RE);
-      if (labelMatch && bottomMatch && bottomMatch[1][0] === bar) {
+      const indent = blockTopMatch[1] ?? '';
+      const bar = (blockTopMatch[2] ?? '')[0] ?? '';
+      const labelMatch = (lines[i + 1] ?? '').match(/^\s*(\S.*?)\s*$/);
+      const bottomMatch = (lines[i + 2] ?? '').match(BLOCK_BOX_BOTTOM_RE);
+      if (labelMatch && bottomMatch && (bottomMatch[1] ?? '')[0] === bar) {
+        const label = labelMatch[1] ?? '';
         out.push({
           startLine: i,
           endLine: i + 2,
           indent,
-          label: labelMatch[1],
-          kind: isFoldable(labelMatch[1]) ? 'region' : 'heading',
+          label,
+          kind: isFoldable(label) ? 'region' : 'heading',
           style: 'block',
         });
         i += 3;
@@ -92,12 +91,13 @@ function findReplacements(lines: string[]): Replacement[] {
 
     const symMatch = line.match(SYMMETRIC_RE);
     if (symMatch) {
+      const label = symMatch[2] ?? '';
       out.push({
         startLine: i,
         endLine: i,
-        indent: symMatch[1],
-        label: symMatch[2],
-        kind: isFoldable(symMatch[2]) ? 'region' : 'heading',
+        indent: symMatch[1] ?? '',
+        label,
+        kind: isFoldable(label) ? 'region' : 'heading',
         style: 'line',
       });
       i += 1;
@@ -106,12 +106,13 @@ function findReplacements(lines: string[]): Replacement[] {
 
     const asymMatch = line.match(ASYMMETRIC_RE);
     if (asymMatch) {
+      const label = asymMatch[2] ?? '';
       out.push({
         startLine: i,
         endLine: i,
-        indent: asymMatch[1],
-        label: asymMatch[2],
-        kind: isFoldable(asymMatch[2]) ? 'region' : 'heading',
+        indent: asymMatch[1] ?? '',
+        label,
+        kind: isFoldable(label) ? 'region' : 'heading',
         style: 'line',
       });
       i += 1;
@@ -128,11 +129,12 @@ function resolveRegionEnds(replacements: Replacement[], totalLines: number): Map
   const ends = new Map<number, number>();
   for (let idx = 0; idx < replacements.length; idx += 1) {
     const r = replacements[idx];
-    if (r.kind !== 'region') continue;
+    if (!r || r.kind !== 'region') continue;
     let endBefore = totalLines;
     for (let j = idx + 1; j < replacements.length; j += 1) {
-      if (replacements[j].indent === r.indent) {
-        endBefore = replacements[j].startLine;
+      const next = replacements[j];
+      if (next && next.indent === r.indent) {
+        endBefore = next.startLine;
         break;
       }
     }
@@ -167,7 +169,7 @@ function emitOutput(lines: string[], replacements: Replacement[], regionEnds: Ma
       i = r.endLine + 1;
       continue;
     }
-    out.push(lines[i]);
+    out.push(lines[i] ?? '');
     i += 1;
   }
 
@@ -206,8 +208,8 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const globIdx = args.indexOf('--glob');
-  const patterns =
-    globIdx >= 0 ? [args[globIdx + 1]] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts', 'scripts/**/*.ts'];
+  const explicit = globIdx >= 0 ? args[globIdx + 1] : undefined;
+  const patterns = explicit ? [explicit] : ['packages/**/*.{ts,tsx,js,jsx}', 'config/**/*.ts', 'scripts/**/*.ts'];
 
   const files = await glob(patterns, {
     ignore: ['**/node_modules/**', '**/dist/**'],
