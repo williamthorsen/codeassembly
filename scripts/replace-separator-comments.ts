@@ -193,14 +193,14 @@ async function main(): Promise<void> {
     if (transformed === original) continue;
     changedCount += 1;
     if (dryRun) {
-      console.log(`--- ${file}`);
+      console.info(`--- ${file}`);
       printDiff(original, transformed);
     } else {
       await writeFile(file, transformed);
-      console.log(`rewrote ${file}`);
+      console.info(`rewrote ${file}`);
     }
   }
-  console.log(`${dryRun ? 'would change' : 'changed'} ${changedCount} file(s)`);
+  console.info(`${dryRun ? 'would change' : 'changed'} ${changedCount} file(s)`);
 }
 
 /** Print a minimal positional unified diff between two source strings to stdout. */
@@ -212,8 +212,8 @@ function printDiff(before: string, after: string): void {
     const b = beforeLines[i];
     const a = afterLines[i];
     if (b === a) continue;
-    if (b !== undefined) console.log(`- ${b}`);
-    if (a !== undefined) console.log(`+ ${a}`);
+    if (b !== undefined) console.info(`- ${b}`);
+    if (a !== undefined) console.info(`+ ${a}`);
   }
 }
 // endregion | Helpers for CLI
