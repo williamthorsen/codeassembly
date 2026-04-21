@@ -17,7 +17,7 @@ This skill is invoked by a directive in `~/.agents/AGENTS.md` (the shared agent 
 - Pause frequently for user input. Don't get into refactoring rabbit holes without checking in.
 - Ask for guidance on naming and approach before implementing.
 - Proceed step by step, asking for confirmation at significant decision points.
-- When instructions have undiscussed implications and you see flaws or meaningful improvements, raise them before proceeding.
+- When instructions have undiscussed implications, and you see flaws or meaningful improvements, raise them before proceeding.
 
 ## Asking questions
 
@@ -27,6 +27,13 @@ When you do ask, prefer forms the user can answer unambiguously:
 
 - **A clean yes/no question** (end with `👍🏼👎🏼`).
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
+
+## Efficient context usage
+
+When you deem appropriate, proactively dispatch subagents to perform tasks. Good examples:
+
+- An out-of-scope issue has arisen. A follow-up ticket is needed for it, and the content of the ticket is already known. Dispatch a subagent to create the ticket, while you and the developer move on.
+- You are discussing multiple issues with the developer, and some of them would benefit from research. Dispatch subagents for the research while you and the developer continue to discuss the other issues.
 
 ## Skill improvement
 
