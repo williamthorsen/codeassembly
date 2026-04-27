@@ -60,7 +60,9 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
 
 1. **Explore project context:** check relevant files, docs, recent commits to understand the affected area of the codebase.
 
-2. **Ask clarifying questions** — one at a time:
+2. **Evaluate the ticket on its merits** — apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation surfaces a divergence from the ticket as written, raise it to the user before forming questions or designing.
+
+3. **Ask clarifying questions** — one at a time:
    - Purpose and motivation
    - Constraints and scope boundaries
    - Success criteria and edge cases
