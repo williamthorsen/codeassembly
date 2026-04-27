@@ -17,7 +17,7 @@ Create a pull request on the appropriate platform. This is the user-facing entry
 
 ### 1. Get session context
 
-Use `get-session-context` to obtain `ticket_id`, `project_slug`, `platform`, `default_branch`, `branch_name`, and `artifact_base_dir`.
+Use `get-session-context` to obtain `ticket_id`, `ticket_ref`, `project_slug`, `platform`, `default_branch`, `branch_name`, and `artifact_base_dir`.
 
 ### 2. Check branch sync
 
@@ -83,7 +83,13 @@ Read `platform` from the session context manifest:
 - `"bitbucket"` -> delegate to `create-bitbucket-pr`
 - Unknown or missing -> ask the user which platform to use
 
-### 9. Call delegate
+### 9. Append auto-close keyword (if applicable)
+
+If `ticket_ref` is non-null, append `\n\nCloses {ticket_ref}` to the body. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when no auto-close integration is wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
+
+If `ticket_ref` is null, skip — no closing line.
+
+### 10. Call delegate
 
 Pass the following inputs to the selected delegate per the delegate interface:
 
