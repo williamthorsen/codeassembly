@@ -27,6 +27,7 @@ Example: branch `MAC-130/agents/feat/branch-manifest` produces `.agents/MAC-130-
 ```json
 {
   "ticket_id": "MAC-130",
+  "ticket_ref": "MAC-130",
   "project_slug": "configs-macos",
   "platform": "github",
   "default_branch": "origin/main",
@@ -37,16 +38,17 @@ Example: branch `MAC-130/agents/feat/branch-manifest` produces `.agents/MAC-130-
 }
 ```
 
-| Field               | Type               | Description                                                                                |
-| ------------------- | ------------------ | ------------------------------------------------------------------------------------------ |
-| `ticket_id`         | `string` or `null` | Ticket ID extracted from branch name, or `null` if not derivable                           |
-| `project_slug`      | `string`           | Project slug for artifact namespacing                                                      |
-| `platform`          | `string`           | Development platform (`"github"` or `"bitbucket"`, default: `"github"`)                    |
-| `default_branch`    | `string`           | Full remote reference for the default branch (e.g., `origin/main`)                         |
-| `branch_name`       | `string`           | Raw branch name as it appears in `gitStatus`                                               |
-| `artifact_base_dir` | `string`           | Resolved absolute path for artifact storage (from preferences or default `~/ai-artifacts`) |
-| `artifact_paths`    | `object`           | Category suffix paths relative to the project directory (defaults: chats, devlogs, plans)  |
-| `created_at`        | `string`           | ISO 8601 UTC timestamp of when the manifest was created                                    |
+| Field               | Type               | Description                                                                                                                                      |
+| ------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ticket_id`         | `string` or `null` | Ticket ID extracted from branch name, or `null` if not derivable                                                                                 |
+| `ticket_ref`        | `string` or `null` | Display form of the ticket ID, with `#` prepended when `ticket_prefix == '#'`; equal to `ticket_id` otherwise; `null` when `ticket_id` is `null` |
+| `project_slug`      | `string`           | Project slug for artifact namespacing                                                                                                            |
+| `platform`          | `string`           | Development platform (`"github"` or `"bitbucket"`, default: `"github"`)                                                                          |
+| `default_branch`    | `string`           | Full remote reference for the default branch (e.g., `origin/main`)                                                                               |
+| `branch_name`       | `string`           | Raw branch name as it appears in `gitStatus`                                                                                                     |
+| `artifact_base_dir` | `string`           | Resolved absolute path for artifact storage (from preferences or default `~/ai-artifacts`)                                                       |
+| `artifact_paths`    | `object`           | Category suffix paths relative to the project directory (defaults: chats, devlogs, plans)                                                        |
+| `created_at`        | `string`           | ISO 8601 UTC timestamp of when the manifest was created                                                                                          |
 
 ## Resolution order
 
@@ -59,7 +61,7 @@ Check for an existing manifest file before performing any derivation.
 3. If the branch name is empty or the gitStatus indicates a detached HEAD state, return an error: "Detached HEAD: this skill requires an active branch. Create or check out a branch before invoking this skill."
 4. Sanitize the branch name: trim any leading or trailing whitespace, then replace every `/` with `-`. After replacing, remove any trailing `-` characters.
 5. Use the Read tool to attempt reading `.agents/{sanitized-branch}.branch-manifest.json`.
-6. If the file exists and contains valid JSON, check for stale schema (see [Immutability contract](#immutability-contract)). If the schema is current (all required fields present, including `platform`, `artifact_base_dir`, and `artifact_paths`), return the manifest object. Done.
+6. If the file exists and contains valid JSON, check for stale schema (see [Immutability contract](#immutability-contract)). If the schema is current (all required fields present, including `platform`, `artifact_base_dir`, `artifact_paths`, and `ticket_ref`), return the manifest object. Done.
 7. If the file does not exist, use the Read tool to attempt reading `.agents/{sanitized-branch}.manifest.json` (old format).
 8. If the old-format file exists and contains valid JSON, check for stale schema. If the schema is current, return the manifest object. Done. Do not create a new `.branch-manifest.json` file in this case. Old `.manifest.json` files are supported for reading but not automatically migrated. To migrate, delete the old file and re-invoke the skill.
 9. If either file exists but contains invalid JSON (corrupt manifest) or valid JSON with a stale schema (missing required fields), note the path for overwrite and fall through to step 2 (derivation). A corrupt or stale old-format file is overwritten in place at its old path (`.manifest.json`), not migrated to the new path.
@@ -100,6 +102,16 @@ Extract the ticket ID from the **start** of the branch name using these rules:
    - If a Jira-style prefix is configured (e.g., `MAC-`): ticket ID = `{ticket_prefix}{number}` (e.g., prefix `MAC-` + number `147` -> `MAC-147`).
    - If no prefix is configured: ticket ID = the number alone (e.g., `147`).
 8. If neither a prefixed ticket ID nor a bare issue number is found, the ticket ID is `null`.
+
+#### Ticket ref
+
+Derive the rendered display form of the ticket reference from the resolved `ticket_id` and `project.ticket_prefix`:
+
+- If `ticket_id` is `null`, `ticket_ref` is `null`.
+- Else if `ticket_prefix` is `#`, `ticket_ref` is `'#' + ticket_id` (e.g., `ticket_id = '312'` → `ticket_ref = '#312'`).
+- Otherwise, `ticket_ref` equals `ticket_id` (the prefix is already part of the stored ID, e.g., `MAC-147` → `MAC-147`).
+
+`ticket_ref` is the canonical form for rendering ticket references in human-facing text (PR bodies, commit footers, headings). `ticket_id` remains the form to use in file paths and identifiers.
 
 #### Description
 
@@ -150,7 +162,7 @@ These are category suffixes relative to the project directory. Apply defaults fo
 After deriving all fields, persist the manifest using the Write tool.
 
 1. If a corrupt or stale-schema manifest was detected in step 1.9, the Write tool will overwrite it at the path noted in that step (old-format files are overwritten in place, new-format files are overwritten at the new path).
-2. Construct the JSON object with all 8 fields.
+2. Construct the JSON object with all 9 fields.
 3. For the `created_at` field, take the `currentDate` value (format `YYYY-MM-DD`) from the system prompt and append `T00:00:00Z` to create the timestamp. Since exact time is not available without Bash, use midnight UTC as the time component. Same-day manifests will have identical `created_at` values.
 4. If no corrupt or stale file is being overwritten, use the Write tool to save to `.agents/{sanitized-branch}.branch-manifest.json`.
 
@@ -161,7 +173,7 @@ After deriving all fields, persist the manifest using the Write tool.
 Once created, a manifest file is never overwritten under normal circumstances. It captures the session context at creation time. There are two exception categories that trigger re-derivation:
 
 1. **Corrupt manifest** (invalid JSON): the file cannot be parsed. Delete it and re-derive all fields.
-2. **Stale-schema manifest** (valid JSON but missing required fields): the manifest was created under an older schema version that did not include fields now required (e.g., `platform`, `artifact_base_dir`, `artifact_paths`). Delete it and re-derive all fields.
+2. **Stale-schema manifest** (valid JSON but missing required fields): the manifest was created under an older schema version that did not include fields now required (e.g., `platform`, `artifact_base_dir`, `artifact_paths`, `ticket_ref`). Delete it and re-derive all fields.
 
 In both cases, the existing file is deleted and the full derivation process runs to produce a new manifest with the current schema. This is a one-time cost per branch when the schema evolves.
 
@@ -174,7 +186,7 @@ Before this skill, agents made multiple separate metadata calls and inline resol
 With this skill, a single call returns all metadata:
 
 ```
-get-session-context   -> { ticket_id, project_slug, platform, default_branch, branch_name, artifact_base_dir, artifact_paths, created_at }
+get-session-context   -> { ticket_id, ticket_ref, project_slug, platform, default_branch, branch_name, artifact_base_dir, artifact_paths, created_at }
 ```
 
 On the first invocation, the skill derives and caches. On subsequent invocations, it reads from the manifest file (single file read, zero permission prompts).
@@ -193,6 +205,7 @@ Branch: `MAC-130/agents/feat/branch-manifest`
 ```json
 {
   "ticket_id": "MAC-130",
+  "ticket_ref": "MAC-130",
   "project_slug": "configs-macos",
   "platform": "github",
   "default_branch": "origin/main",
@@ -215,6 +228,7 @@ Branch: `PT-456/fix/login-redirect`
 ```json
 {
   "ticket_id": "PT-456",
+  "ticket_ref": "PT-456",
   "project_slug": "example-project",
   "platform": "github",
   "default_branch": "origin/main",
@@ -237,6 +251,7 @@ Branch: `mac-147`
 ```json
 {
   "ticket_id": "MAC-147",
+  "ticket_ref": "MAC-147",
   "project_slug": "configs-macos",
   "platform": "github",
   "default_branch": "origin/main",
@@ -260,6 +275,7 @@ Branch: `experiment/try-new-parser`
 ```json
 {
   "ticket_id": null,
+  "ticket_ref": null,
   "project_slug": "example-project",
   "platform": "github",
   "default_branch": "origin/main",
@@ -284,6 +300,7 @@ Produces the same ticket ID as the slash-separated variant. Separators `_` and `
 ```json
 {
   "ticket_id": "MAC-130",
+  "ticket_ref": "MAC-130",
   "project_slug": "configs-macos",
   "platform": "github",
   "default_branch": "origin/main",
@@ -306,6 +323,7 @@ Branch: `NMR-567.2/fix/regression`
 ```json
 {
   "ticket_id": "NMR-567.2",
+  "ticket_ref": "NMR-567.2",
   "project_slug": "example-project",
   "platform": "github",
   "default_branch": "origin/main",
@@ -328,6 +346,7 @@ Branch: `MAC-200`
 ```json
 {
   "ticket_id": "MAC-200",
+  "ticket_ref": "MAC-200",
   "project_slug": "example-project",
   "platform": "github",
   "default_branch": "origin/main",
@@ -351,6 +370,7 @@ Branch: `a-1-test`
 ```json
 {
   "ticket_id": null,
+  "ticket_ref": null,
   "project_slug": "example-project",
   "platform": "github",
   "default_branch": "origin/main",
@@ -377,6 +397,7 @@ Preferences: `project.ticket_prefix: MAC-`
 ```json
 {
   "ticket_id": "MAC-147",
+  "ticket_ref": "MAC-147",
   "project_slug": "configs-macos",
   "platform": "github",
   "default_branch": "origin/main",
@@ -403,6 +424,7 @@ Preferences: no `project.ticket_prefix` configured
 ```json
 {
   "ticket_id": "42",
+  "ticket_ref": "42",
   "project_slug": "example-project",
   "platform": "github",
   "default_branch": "origin/main",
@@ -424,11 +446,13 @@ Preferences: `project.ticket_prefix: '#'`
 2. Bare issue number check: `152` found at start, at end of branch name.
 3. Read `project.ticket_prefix` from preferences: `#`.
 4. Prefix is `#` (display-only convention). Return bare number: `152`.
-5. After stripping the ticket ID, nothing remains. Description is empty.
+5. Ticket ref: prefix is `#`, so `ticket_ref = '#' + ticket_id = '#152'` (this is the demonstrative case where `ticket_ref` differs from `ticket_id`).
+6. After stripping the ticket ID, nothing remains. Description is empty.
 
 ```json
 {
   "ticket_id": "152",
+  "ticket_ref": "#152",
   "project_slug": "codeassembly",
   "platform": "github",
   "default_branch": "origin/main",
@@ -453,6 +477,7 @@ Working directory: `/Users/william/repos/myproject`
 ```json
 {
   "ticket_id": "MAC-200",
+  "ticket_ref": "MAC-200",
   "project_slug": "myproject",
   "platform": "github",
   "default_branch": "origin/main",
@@ -466,7 +491,7 @@ Working directory: `/Users/william/repos/myproject`
 ## Edge cases
 
 - **Corrupt manifest**: If a manifest file exists but contains invalid JSON, delete it and fall through to derivation to produce a new file.
-- **Stale-schema manifest**: If a manifest file exists with valid JSON but is missing required fields (e.g., `platform`, `artifact_base_dir`, `artifact_paths`), delete it and fall through to derivation. This is a one-time cost per branch when the schema evolves.
+- **Stale-schema manifest**: If a manifest file exists with valid JSON but is missing required fields (e.g., `platform`, `artifact_base_dir`, `artifact_paths`, `ticket_ref`), delete it and fall through to derivation. This is a one-time cost per branch when the schema evolves.
 - **Detached HEAD**: If `gitStatus` does not indicate an active branch (no `Current branch:` line or empty value), return an error message. Do not attempt derivation.
 - **Missing preferences**: If `.agents/preferences.yaml` cannot be read, use `~/.agents/preferences.yaml`. If that is also unavailable, use defaults: `project_slug` from the working directory name, `default_branch` as `origin/main`, `artifact_base_dir` as `~/ai-artifacts` (expanded to absolute).
 - **Author-prefixed branches**: Branch names like `wthorsen/MAC-130` are not matched for ticket ID extraction (the ticket ID must be at the start). The ticket ID will be `null`. (The ticket ID is visually present but not at position zero; extracting it would require a separate enhancement.)
