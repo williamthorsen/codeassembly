@@ -1,6 +1,6 @@
 ---
 name: aspect-code-reviewer
-description: Review code changes for CLAUDE.md compliance, bugs, and logic errors. Outputs structured findings with criticality classification for flow control.
+description: Review code changes for project-guideline compliance, bugs, and logic errors. Outputs structured findings with criticality classification for flow control.
 tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 20
 skills:
@@ -26,7 +26,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Get the diff**: run the provided `git diff` command to see all changes in scope
 3. **Read changed files**: read the full files to understand context (but see efficiency note below)
 4. **Form preliminary findings**: identify potential guideline violations and bugs from what you've read so far
@@ -43,7 +43,7 @@ You will receive:
 
 Focus exclusively on:
 
-- CLAUDE.md and project convention violations (naming, file organization, patterns)
+- Project-guideline and convention violations (naming, file organization, patterns)
 - Logic errors and incorrect conditions
 - Off-by-one errors and boundary issues
 - Null/undefined dereference risks

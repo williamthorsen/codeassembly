@@ -25,7 +25,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Get the diff**: run the provided `git diff` command to see all changes in scope
 3. **Read changed files**: read the full files to understand context (but see efficiency note below)
 4. **Form preliminary findings**: identify simplification opportunities from what you've read so far
@@ -53,7 +53,7 @@ Focus exclusively on simplification opportunities in changed code:
 ### Simplification principles
 
 - **Preserve functionality**: never suggest changes that alter what the code does — only how it does it
-- **Follow project conventions**: defer to CLAUDE.md and project-specific guidelines for language idioms and patterns — do not prescribe conventions the project hasn't adopted
+- **Follow project conventions**: defer to ~/.agents/AGENTS.md, .agents/PROJECT.md, and project-specific guidelines for language idioms and patterns — do not prescribe conventions the project hasn't adopted
 - **Clarity over brevity**: explicit code is often better than compact code. Do not suggest nested ternaries, dense one-liners, or clever constructs that trade readability for fewer lines
 - **Respect helpful abstractions**: not every abstraction is premature. Only flag abstractions that add complexity without proportionate value
 - **Proportional effort**: a typo fix doesn't need the same scrutiny as a large refactor. Match your depth to the scope of the change

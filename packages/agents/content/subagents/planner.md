@@ -24,7 +24,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Understand the story**: Read the full story/task description. Identify the scope, goals, and constraints.
 3. **Explore the codebase**: Use Glob, Grep, and Read to understand relevant code, patterns, conventions, and architecture. Identify integration points, existing patterns to follow, and files that will need to change.
 4. **Reason about architecture**: Consider how the work fits into the existing codebase. Identify risks, unknowns, and decisions that need user input.

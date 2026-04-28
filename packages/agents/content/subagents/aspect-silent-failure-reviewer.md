@@ -25,7 +25,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Get the diff**: run the provided `git diff` command to see all changes in scope
 3. **Read changed files**: read the full files to understand error-handling context
 4. **Check relevance**: if the diff contains no error-handling code (no try/catch, no `.catch()`, no error callbacks, no fallback patterns, no error suppression), write `### Criticality: none` to the artifact and stop

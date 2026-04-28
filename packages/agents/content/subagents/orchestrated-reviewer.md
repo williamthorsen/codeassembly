@@ -28,7 +28,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: read CLAUDE.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Get the diff**: run `git diff <merge-base-sha>..HEAD` to see all changes in scope, using the merge-base SHA provided in your task prompt.
 3. **Read changed files**: read the full files, not just diffs, to understand context
 4. **Evaluate against criteria**: apply review-criteria skill
