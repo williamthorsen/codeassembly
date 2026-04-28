@@ -39,8 +39,8 @@ importers:
         specifier: 0.12.0
         version: 0.12.0
       '@williamthorsen/release-kit':
-        specifier: 4.8.0
-        version: 4.8.0
+        specifier: 5.0.0
+        version: 5.0.0
       '@williamthorsen/strict-lint':
         specifier: 6.2.2
         version: 6.2.2(eslint@9.39.4(jiti@2.6.1))
@@ -1257,11 +1257,8 @@ packages:
     resolution: {integrity: sha512-+9/TGv7wmKJVe7QisvMTrn/veLMM1EizUL/JLZnzKP69Qc0VZtDSxpKP9Eqo5spYGjA9e4X2GlWc2ts7kvsb6A==}
     hasBin: true
 
-  '@williamthorsen/node-monorepo-core@0.2.7':
-    resolution: {integrity: sha512-udt9tAI9ty4NcXEizLm1d0OMmpr2Y4IrGfeMeJZf0Sj7v4sOjwkKOIVeEms/Jlw38ANFQZOaGl2agvJL2WZsZA==}
-
-  '@williamthorsen/release-kit@4.8.0':
-    resolution: {integrity: sha512-+lnf4jmZGreEyElU9OoXmQ6QvAorZuSPBptTsf1HaL51Ec1mb+3gNcYcLunHVdmQxjrV7PFoiqc1CVv2yjznCg==}
+  '@williamthorsen/release-kit@5.0.0':
+    resolution: {integrity: sha512-3fePkDG1fueNDO9r1mdogRdDegDCHu2qd0cj7XvsJCAhfGoAuUGwP7tAs4CswBtYOBF6keBTUjil014lWAdjPw==}
     engines: {node: '>=18.17.0'}
     hasBin: true
 
@@ -4405,11 +4402,9 @@ snapshots:
       js-yaml: 4.1.1
       zod: 4.3.6
 
-  '@williamthorsen/node-monorepo-core@0.2.7': {}
-
-  '@williamthorsen/release-kit@4.8.0':
+  '@williamthorsen/release-kit@5.0.0':
     dependencies:
-      '@williamthorsen/node-monorepo-core': 0.2.7
+      '@williamthorsen/nmr-core': 0.3.0
       glob: 13.0.6
       jiti: 2.6.1
       js-yaml: 4.1.1
