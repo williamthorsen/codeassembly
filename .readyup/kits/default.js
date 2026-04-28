@@ -2,12 +2,12 @@
 /* eslint-disable */
 
 
-// node_modules/.pnpm/readyup@0.17.0_esbuild@0.28.0/node_modules/readyup/dist/esm/authoring.js
+// node_modules/.pnpm/readyup@0.19.0_esbuild@0.28.0/node_modules/readyup/dist/esm/authoring.js
 function defineRdyKit(kit) {
   return kit;
 }
 
-// node_modules/.pnpm/readyup@0.17.0_esbuild@0.28.0/node_modules/readyup/dist/esm/check-utils/filesystem.js
+// node_modules/.pnpm/readyup@0.19.0_esbuild@0.28.0/node_modules/readyup/dist/esm/check-utils/filesystem.js
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -16,15 +16,6 @@ function readFile(relativePath) {
   if (!existsSync(fullPath)) return void 0;
   return readFileSync(fullPath, "utf8");
 }
-
-// node_modules/.pnpm/readyup@0.17.0_esbuild@0.28.0/node_modules/readyup/dist/esm/check-utils/git/run-git.js
-import { execFile } from "node:child_process";
-import { homedir } from "node:os";
-import { promisify } from "node:util";
-var execFileAsync = promisify(execFile);
-
-// node_modules/.pnpm/readyup@0.17.0_esbuild@0.28.0/node_modules/readyup/dist/esm/check-utils/hashing.js
-import { createHash } from "node:crypto";
 
 // .readyup/kits/default.ts
 var default_default = defineRdyKit({
