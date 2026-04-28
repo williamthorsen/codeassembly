@@ -1,27 +1,18 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import config from '@williamthorsen/eslint-config-typescript';
+import { globalIgnores } from 'eslint/config';
+
 const thisFilePath = fileURLToPath(import.meta.url);
 const thisDirPath = dirname(thisFilePath);
-
-import config from '@williamthorsen/eslint-config-typescript';
 
 /**
  * @type {import('eslint').Linter.FlatConfig[]}
  */
 export default [
   ...config,
-  {
-    // Completely ignore these files
-    ignores: [
-      '**/*.sh',
-      '**/.readyup/**/*.js',
-      '**/coverage/**',
-      '**/dist/**',
-      '**/local/**',
-      '**/content/skills/_platforms/**',
-    ],
-  },
+  globalIgnores(['**/*.sh', '.readyup/**/*.js', '**.playwright-mcp/**', '**/coverage/**', '**/dist/**', '**/local/**']),
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {
