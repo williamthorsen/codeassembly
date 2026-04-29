@@ -41,7 +41,7 @@ Create the ticket body describing WHAT needs to be done — problem, context, an
 {Optional enhancements}
 ```
 
-Also draft a short title (without ticket ID prefix) for use in step 5.
+Also draft a short title (without the `ticket_ref` prefix) for use in step 5.
 
 ### 3. Resolve platform
 
@@ -126,6 +126,11 @@ If `integrations.jira.enabled: true`, note that Jira creation needs additional c
 
 ### 6. Save local artifacts
 
+Compute `ticket_ref` for the heading from `ticket_id` and `ticket_ref_prefix` (both already in scope from step 1) using the same logic as `get-session-context`:
+
+- If `ticket_ref_prefix == '#'`: `ticket_ref = '#' + ticket_id`
+- Otherwise: `ticket_ref = ticket_id`
+
 Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 `mkdir -p` the target directory before writing.
@@ -136,7 +141,7 @@ Save the ticket as a ticket-level artifact:
 {YYYYMMDD-HHMMZ}_{slug}_ticket.md
 ```
 
-The ticket artifact heading should include the ticket ID: `# {ticket_id}: {title}`.
+The ticket artifact heading should include the ticket reference: `# {ticket_ref}: {title}`. On a GitHub-style project (`ticket_ref_prefix: '#'`) with issue number `461`, this renders as `# #461: {title}`.
 
 Example: `20260226-2130Z_role-type-architecture_ticket.md`
 
