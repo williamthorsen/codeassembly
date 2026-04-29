@@ -15,7 +15,7 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 Get `project_slug` and `artifact_base_dir` -- but NOT `ticket_id` (that comes from the platform in step 5).
 
 - Use `get-session-context` to obtain `project_slug` and `artifact_base_dir`
-- Read `project.ticket_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
+- Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
 
@@ -92,17 +92,19 @@ label_flags+=" --label \"{label_name}\""
 
 #### GitHub path
 
-Resolve the ticket prefix using `describe-change.sh`:
+Render the ticket title using `describe-change.sh`. Note that ticket creation does **not** pass `--ticket-ref` — the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
-json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type})
-change_prefix=$(echo "$json" | grep -o '"ticket_prefix":"[^"]*"' | cut -d'"' -f4)
+json=$({platform_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
+ticket_title=$(echo "$json" | grep -o '"ticket_title":"[^"]*"' | cut -d'"' -f4)
 ```
 
-Create the issue **without** the ticket ID prefix in the title. Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 4:
+Use `ticket_title` directly as the issue title — it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
+
+Write the body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the body into the shell command. Include `--label` flags if labels were resolved in step 4:
 
 ```bash
-url=$(gh issue create --title "${change_prefix}{title}" --body-file "$body_path"${label_flags})
+url=$(gh issue create --title "${ticket_title}" --body-file "$body_path"${label_flags})
 ```
 
 Extract the issue number from the returned URL:
@@ -111,9 +113,9 @@ Extract the issue number from the returned URL:
 number=$(echo "$url" | grep -oE '[0-9]+$')
 ```
 
-Construct the ticket ID from `ticket_prefix` (step 1) and `number`:
+Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
-- If `ticket_prefix` is configured: `ticket_id` = `{ticket_prefix}{number}` (e.g., prefix `MAC-` + `147` → `MAC-147`)
+- If `ticket_ref_prefix` is configured: `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., prefix `MAC-` + `147` → `MAC-147`)
 - If no prefix: `ticket_id` = `{number}` (e.g., `147`)
 
 #### Jira path (stub)

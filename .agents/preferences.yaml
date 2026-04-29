@@ -1,5 +1,7 @@
 artifacts:
   base_dir: ~/ai-artifacts
+commit:
+  title_format: '[{scope}|{type}: ]{title}'
 editors:
   - extensions: '*.md'
     name: Webstorm
@@ -7,11 +9,17 @@ editors:
 integrations:
   jira:
     enabled: false
+merge_commit:
+  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 platform: github
+pr:
+  title_format: '[{ticket_ref} ]{title}'
 project:
   slug: codeassembly
-  ticket_prefix: '#' # ignored in file names
+  ticket_ref_prefix: '#' # ignored in file names
 repository:
   default_remote:
     - name: origin
       default_branch: main
+ticket:
+  title_format: '{title}'

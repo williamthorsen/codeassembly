@@ -1,19 +1,31 @@
 #!/usr/bin/env bash
-# Resolve commit, ticket, and PR prefixes from preferences.
+# Render commit, ticket, PR, and merge-commit titles from declarative templates.
 #
-# Reads prefix conventions from `.agents/preferences.yaml` (project) with
+# Reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and
+# `merge_commit.title_format` from `.agents/preferences.yaml` (project) with
 # fallback to `~/.agents/preferences.yaml` (global), then to empty string.
 #
 # Usage:
-#   describe-change.sh [--scope SCOPE] [--type TYPE]
+#   describe-change.sh [--scope SCOPE] [--type TYPE] [--title TITLE] \
+#                      [--ticket-ref REF] [--pr-number N]
 #
-# Output: JSON object with `commit_prefix`, `ticket_prefix`, and `pr_prefix`.
-# Non-empty values include a trailing `: `.
+# Output: JSON object with `commit_title`, `ticket_title`, `pr_title`, and
+# `merge_commit_title`.
+#
+# Templates support five tokens — `{scope}`, `{type}`, `{title}`,
+# `{ticket_ref}`, `{pr_number}` — and optional groups via `[...]`. A `[...]`
+# group renders verbatim if every token inside resolves non-empty; otherwise
+# the entire group (literals included) drops. After substitution, runs of
+# multiple spaces are collapsed and leading/trailing whitespace is trimmed.
+# Nested `[...]` groups are not supported.
 
 set -euo pipefail
 
 scope=""
 type=""
+title=""
+ticket_ref=""
+pr_number=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -25,6 +37,18 @@ while [[ $# -gt 0 ]]; do
     type="$2"
     shift 2
     ;;
+  --title)
+    title="$2"
+    shift 2
+    ;;
+  --ticket-ref)
+    ticket_ref="$2"
+    shift 2
+    ;;
+  --pr-number)
+    pr_number="$2"
+    shift 2
+    ;;
   *)
     echo "Unknown option: $1" >&2
     exit 1
@@ -32,9 +56,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Parse a specific prefix value from a YAML file.
+# Parse a specific `title_format` value from a YAML file.
 # Reads line-by-line, tracks the current top-level section, and matches
-# `prefix:` within the target section (commit, ticket, or pr).
+# `title_format:` within the target section (commit, ticket, pr, merge_commit).
 # Outputs "FOUND:{value}" when the key is present (value may be empty),
 # or nothing when the key is absent. This lets callers distinguish
 # "key absent" from "key present with empty value."
@@ -57,18 +81,22 @@ parse_prefix() {
       continue
     fi
 
-    # Match prefix: within the target section
-    if [[ "$current_section" == "$section" && "$line" =~ ^[[:space:]]+prefix:[[:space:]]*(.*) ]]; then
+    # Match title_format: within the target section
+    if [[ "$current_section" == "$section" && "$line" =~ ^[[:space:]]+title_format:[[:space:]]*(.*) ]]; then
       local value="${BASH_REMATCH[1]}"
-      # Strip inline comments
-      value="${value%%#*}"
-      # Trim trailing whitespace
-      value="${value%"${value##*[![:space:]]}"}"
-      # Strip surrounding quotes
-      if [[ "$value" =~ ^\'(.*)\'$ ]]; then
+      # Strip surrounding quotes and any trailing inline comment.
+      # When the value is single- or double-quoted, capture the contents and
+      # discard the rest of the line (so `#` characters inside the quoted
+      # template are preserved). Otherwise, strip a `#` inline comment from
+      # the unquoted value.
+      if [[ "$value" =~ ^\'([^\']*)\'(.*)$ ]]; then
         value="${BASH_REMATCH[1]}"
-      elif [[ "$value" =~ ^\"(.*)\"$ ]]; then
+      elif [[ "$value" =~ ^\"([^\"]*)\"(.*)$ ]]; then
         value="${BASH_REMATCH[1]}"
+      else
+        value="${value%%#*}"
+        # Trim trailing whitespace from the unquoted value
+        value="${value%"${value##*[![:space:]]}"}"
       fi
       echo "FOUND:${value}"
       return
@@ -76,7 +104,7 @@ parse_prefix() {
   done <"$file"
 }
 
-# Resolve a prefix value by checking project, then global, then defaulting to empty.
+# Resolve a `title_format` value by checking project, then global, then defaulting to empty.
 # parse_prefix returns "FOUND:{value}" when the key is present, or empty when absent.
 # This lets an explicit empty value at the project level override a global non-empty value.
 resolve_prefix() {
@@ -100,43 +128,97 @@ resolve_prefix() {
   echo ""
 }
 
-# Format a prefix string from a convention template, scope, and type.
-# Convention placeholders: {scope}, {type}.
-# When convention is empty, always emit empty.
-# When only --type is provided, emit `{type}: ` regardless of convention.
-# When only --scope or neither is provided, emit empty.
-format_prefix() {
-  local convention="$1"
+# Render a title from a declarative template against the current token values.
+# Tokens: {scope}, {type}, {title}, {ticket_ref}, {pr_number}.
+# Empty template yields empty output. Each `[...]` group is dropped entirely
+# when any token reference inside resolves to empty; otherwise it renders
+# verbatim with tokens substituted. Final pass collapses runs of spaces and
+# trims leading/trailing whitespace. Unknown tokens are left as-is so typos
+# are visible. Nested `[...]` groups are not supported in v1.
+render_title() {
+  local template="$1"
 
-  # Empty convention means no prefix
-  if [[ -z "$convention" ]]; then
+  # Empty template means empty output
+  if [[ -z "$template" ]]; then
     echo ""
     return
   fi
 
-  # Neither scope nor type
-  if [[ -z "$scope" && -z "$type" ]]; then
+  # Process `[...]` groups left-to-right, non-overlapping
+  local result=""
+  local remaining="$template"
+  while [[ "$remaining" =~ ^([^[]*)\[([^]]*)\](.*)$ ]]; do
+    local before="${BASH_REMATCH[1]}"
+    local group="${BASH_REMATCH[2]}"
+    local after="${BASH_REMATCH[3]}"
+
+    result+="$(substitute_tokens "$before")"
+    result+="$(render_group "$group")"
+    remaining="$after"
+  done
+  # Substitute tokens in any trailing literal section
+  result+="$(substitute_tokens "$remaining")"
+
+  # Collapse runs of multiple spaces into a single space
+  while [[ "$result" == *"  "* ]]; do
+    result="${result//  / }"
+  done
+  # Trim leading and trailing whitespace
+  result="${result#"${result%%[![:space:]]*}"}"
+  result="${result%"${result##*[![:space:]]}"}"
+
+  echo "$result"
+}
+
+# Substitute the five known tokens with their argument values.
+# Unknown tokens (e.g., `{typo}`) are left as-is so the caller sees the typo.
+substitute_tokens() {
+  local s="$1"
+  s="${s//\{scope\}/$scope}"
+  s="${s//\{type\}/$type}"
+  s="${s//\{title\}/$title}"
+  s="${s//\{ticket_ref\}/$ticket_ref}"
+  s="${s//\{pr_number\}/$pr_number}"
+  echo "$s"
+}
+
+# Render the contents of a `[...]` group: drop the entire group if any token
+# reference inside resolves empty; otherwise substitute and return the literal
+# rendering. Only known tokens count toward the drop decision; unknown tokens
+# never trigger a drop (they are left as-is by `substitute_tokens`).
+render_group() {
+  local group="$1"
+
+  # If group references a token whose value is empty, drop the entire group
+  if group_has_empty_token "$group"; then
     echo ""
     return
   fi
 
-  # Only scope, no type
-  if [[ -n "$scope" && -z "$type" ]]; then
-    echo ""
-    return
-  fi
+  substitute_tokens "$group"
+}
 
-  # Only type, no scope
-  if [[ -z "$scope" && -n "$type" ]]; then
-    echo "${type}: "
-    return
-  fi
+# Return success (0) when the group references at least one known token whose
+# resolved value is empty. Iterates the five known tokens and checks each.
+group_has_empty_token() {
+  local group="$1"
 
-  # Both scope and type: substitute into convention
-  local result="$convention"
-  result="${result//\{scope\}/$scope}"
-  result="${result//\{type\}/$type}"
-  echo "${result}: "
+  if [[ "$group" == *"{scope}"* && -z "$scope" ]]; then
+    return 0
+  fi
+  if [[ "$group" == *"{type}"* && -z "$type" ]]; then
+    return 0
+  fi
+  if [[ "$group" == *"{title}"* && -z "$title" ]]; then
+    return 0
+  fi
+  if [[ "$group" == *"{ticket_ref}"* && -z "$ticket_ref" ]]; then
+    return 0
+  fi
+  if [[ "$group" == *"{pr_number}"* && -z "$pr_number" ]]; then
+    return 0
+  fi
+  return 1
 }
 
 # Escape backslashes and double quotes for safe JSON interpolation.
@@ -148,16 +230,20 @@ json_escape() {
 }
 
 main() {
-  commit_convention="$(resolve_prefix "commit")"
-  ticket_convention="$(resolve_prefix "ticket")"
-  pr_convention="$(resolve_prefix "pr")"
+  local commit_template ticket_template pr_template merge_commit_template
+  commit_template="$(resolve_prefix "commit")"
+  ticket_template="$(resolve_prefix "ticket")"
+  pr_template="$(resolve_prefix "pr")"
+  merge_commit_template="$(resolve_prefix "merge_commit")"
 
-  commit_prefix="$(json_escape "$(format_prefix "$commit_convention")")"
-  ticket_prefix="$(json_escape "$(format_prefix "$ticket_convention")")"
-  pr_prefix="$(json_escape "$(format_prefix "$pr_convention")")"
+  local commit_title ticket_title pr_title merge_commit_title
+  commit_title="$(json_escape "$(render_title "$commit_template")")"
+  ticket_title="$(json_escape "$(render_title "$ticket_template")")"
+  pr_title="$(json_escape "$(render_title "$pr_template")")"
+  merge_commit_title="$(json_escape "$(render_title "$merge_commit_template")")"
 
-  printf '{"commit_prefix":"%s","ticket_prefix":"%s","pr_prefix":"%s"}\n' \
-    "$commit_prefix" "$ticket_prefix" "$pr_prefix"
+  printf '{"commit_title":"%s","ticket_title":"%s","pr_title":"%s","merge_commit_title":"%s"}\n' \
+    "$commit_title" "$ticket_title" "$pr_title" "$merge_commit_title"
 }
 
 # Allow sourcing for testing without executing main.

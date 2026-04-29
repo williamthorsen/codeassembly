@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: Create a pull request by orchestrating change summary, prefix resolution, label resolution, and platform delegation
+description: Create a pull request by orchestrating change summary, title rendering, label resolution, and platform delegation
 user-invocable: true
 ---
 
@@ -42,27 +42,29 @@ Read the YAML frontmatter from the change summary. Extract `title`, `scope`, and
 
 If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type` was provided, use it instead of the frontmatter `type`.
 
-### 6. Resolve PR title prefix
+### 6. Render PR title
 
-If `type` is present (from frontmatter or override): call `describe-change.sh` to resolve the PR title prefix. Include `--scope` only when `scope` is also present:
-
-```bash
-# When both type and scope are present:
-json=$({platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type})
-
-# When only type is present (no scope):
-json=$({platform_home_dir}/scripts/describe-change.sh --type {type})
-```
+Call `describe-change.sh` to render the PR title from the configured `pr.title_format` template. Pass every input that is available — the template controls which tokens are required:
 
 ```bash
-pr_prefix=$(echo "$json" | grep -o '"pr_prefix":"[^"]*"' | cut -d'"' -f4)
+json=$({platform_home_dir}/scripts/describe-change.sh \
+  --title "{title}" \
+  --scope "{scope}" \
+  --type "{type}" \
+  --ticket-ref "{ticket_ref}")
 ```
 
-If `pr_prefix` is non-empty, prepend it to the title: `{pr_prefix}{title}`.
+Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved.
 
-If `type` is absent, use the bare title as-is. Do not call `describe-change.sh` without a type.
+```bash
+pr_title=$(echo "$json" | grep -o '"pr_title":"[^"]*"' | cut -d'"' -f4)
+```
 
-See [commit-format.md](../_data/commit-format.md) for prefix conventions.
+Use `pr_title` directly as the final PR title. Do not concatenate with `title` separately — the rendered output already includes it.
+
+If the script is not found, fall back to the bare `title` from the change summary.
+
+See [commit-format.md](../_data/commit-format.md) for the title-format model and supported tokens.
 
 ### 7. Resolve labels
 
@@ -95,7 +97,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 | Input               | Value                                                                                               |
 | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `title`             | Final title (with prefix if resolved)                                                               |
+| `title`             | Rendered `pr_title` from step 6 (or bare `title` if the script was unavailable)                     |
 | `body`              | Content from `## What` onward in the change summary                                                 |
 | `labels`            | Resolved label names (may be empty list)                                                            |
 | `base_branch`       | Bare branch name derived from `default_branch` (strip remote prefix, e.g., `origin/main` -> `main`) |
@@ -105,6 +107,6 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 ## Important
 
-- The orchestrator owns all decisions (scope, type, prefix, labels). Delegates own only execution (platform API calls).
+- The orchestrator owns all decisions (scope, type, title rendering, labels). Delegates own only execution (platform API calls).
 - Strip the remote prefix from `default_branch` (e.g., `origin/main` -> `main`) before passing to the delegate.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.

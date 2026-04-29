@@ -44,13 +44,13 @@ Use `summarize-change` to compose a good commit message. Save the description pe
 
 ## Commit format
 
-Follow [commit-format.md](../_data/commit-format.md). Use `describe-change.sh` to resolve the commit title prefix:
+Follow [commit-format.md](../_data/commit-format.md). Use `describe-change.sh` to render the full commit title:
 
 ```bash
-{platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}
+{platform_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}"
 ```
 
-Use the `commit_prefix` field from the JSON output as the title prefix.
+Use the `commit_title` field from the JSON output directly as the commit title — it already includes the rendered prefix (per the configured `commit.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
 
 ## Safety
 

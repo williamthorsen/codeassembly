@@ -10,16 +10,16 @@ Agent behavior is configured through `.agents/preferences.yaml` files. The resol
 2. **Global** — `~/.agents/preferences.yaml` in the user's home directory (personal defaults)
 3. **Default** — built-in fallback (documented per key below)
 
-Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `prefix: ''`) overrides a non-empty global value.
+Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
 
 ### Schema
 
 #### `project`
 
-| Key                     | Type   | Default                                      | Description                                                                                                                                            |
-| ----------------------- | ------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `project.slug`          | string | Bare directory name of the working directory | Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`.                                                                 |
-| `project.ticket_prefix` | string | `''`                                         | Prefix for bare issue numbers. Use `#` for GitHub issues, a Jira project key like `MAC-` for Jira tickets. Not included in file paths when set to `#`. |
+| Key                         | Type   | Default                                      | Description                                                                                                                                                                                                                            |
+| --------------------------- | ------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `project.slug`              | string | Bare directory name of the working directory | Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`.                                                                                                                                                 |
+| `project.ticket_ref_prefix` | string | `''`                                         | Prefix that appears at the start of `ticket_ref`. Use `#` for GitHub issues (added at render time, omitted from file paths) or a Jira project key like `MAC-` (part of the canonical ticket ID, included in file paths and templates). |
 
 #### `artifacts`
 
@@ -38,79 +38,110 @@ Project-level values take precedence over global. An explicitly empty value at t
 | `repository.default_remote[].default_branch` | string | `main`   | Default branch of the remote. Combined with the remote name to produce refs like `origin/main`. |
 | `repository.slug`                            | string | —        | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
 
-#### `commit`, `ticket`, `pr` — title prefix conventions
+#### `commit`, `ticket`, `pr`, `merge_commit` — title format conventions
 
-These three sections share the same structure. Each controls the prefix prepended to titles of commits, GitHub issues, and pull requests respectively.
+These four sections share the same structure. Each holds a declarative template that `describe-change.sh` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
 
-| Key             | Type   | Default | Description                                    |
-| --------------- | ------ | ------- | ---------------------------------------------- |
-| `commit.prefix` | string | `''`    | Convention template for commit title prefixes. |
-| `ticket.prefix` | string | `''`    | Convention template for issue title prefixes.  |
-| `pr.prefix`     | string | `''`    | Convention template for PR title prefixes.     |
+| Key                         | Type   | Default | Description                                 |
+| --------------------------- | ------ | ------- | ------------------------------------------- |
+| `commit.title_format`       | string | `''`    | Template for commit titles.                 |
+| `ticket.title_format`       | string | `''`    | Template for issue titles.                  |
+| `pr.title_format`           | string | `''`    | Template for pull-request titles.           |
+| `merge_commit.title_format` | string | `''`    | Template for the squash-merge commit title. |
 
-The prefix value is a **convention template** containing `{scope}` and `{type}` placeholders. The `describe-change.sh` script substitutes scope and type values into the template and appends `: ` to non-empty results.
+A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out — the corresponding rendered title will be the empty string. The `describe-change.sh` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_commit_title`.
 
-##### Available conventions
+##### Supported tokens
 
-| Convention          | With scope and type                  | With type only               |
-| ------------------- | ------------------------------------ | ---------------------------- |
-| `'{scope}\|{type}'` | `agents\|feat: Add script installer` | `feat: Add script installer` |
-| `'{type}({scope})'` | `feat(agents): Add script installer` | `feat: Add script installer` |
-| `'{type}'`          | `feat: Add script installer`         | `feat: Add script installer` |
-| `''`                | `Add script installer`               | `Add script installer`       |
+| Token          | Resolves to                                                                           |
+| -------------- | ------------------------------------------------------------------------------------- |
+| `{scope}`      | Change scope (workspace, package, module).                                            |
+| `{type}`       | Work type (`feat`, `fix`, `docs`, …).                                                 |
+| `{title}`      | Bare title text. Required in every template that should produce a non-empty title.    |
+| `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated. |
+| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge_commit.title_format`.  |
 
-When only `--type` is provided (no `--scope`), the output is always `{type}: ` regardless of which convention is configured. When only `--scope` or neither is provided, the output is empty.
+A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so typos surface in the output.
+
+##### Optional groups
+
+A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the entire group — literals included — drops. After substitution, runs of multiple spaces are collapsed and leading/trailing whitespace is trimmed. Groups are processed left-to-right; nesting is not supported.
+
+Example template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
+
+| Inputs                       | Output                              |
+| ---------------------------- | ----------------------------------- |
+| All five tokens populated    | `#466 agents\|feat: Add foo (#470)` |
+| No `{ticket_ref}`            | `agents\|feat: Add foo (#470)`      |
+| No `{scope}` and no `{type}` | `#466 Add foo (#470)`               |
+| No `{pr_number}`             | `#466 agents\|feat: Add foo`        |
+| Only `{title}`               | `Add foo`                           |
 
 ##### Examples
+
+Bare title (no prefix):
+
+```yaml
+commit:
+  title_format: '{title}'
+ticket:
+  title_format: '{title}'
+pr:
+  title_format: '{title}'
+```
+
+Produces: `Add script installer`
 
 Type-only prefix (conventional commits without scope):
 
 ```yaml
 commit:
-  prefix: '{type}'
+  title_format: '{type}: {title}'
 ticket:
-  prefix: '{type}'
+  title_format: '{type}: {title}'
 pr:
-  prefix: '{type}'
+  title_format: '{type}: {title}'
 ```
 
-Produces: `feat: Add script installer`, `fix: Resolve null pointer in parser`
+Produces: `feat: Add script installer`
 
-Scope-pipe-type prefix (monorepo convention):
+Scope-pipe-type prefix with optional drop (monorepo convention):
 
 ```yaml
 commit:
-  prefix: '{scope}|{type}'
+  title_format: '[{scope}|{type}: ]{title}'
 ```
 
-Produces: `agents|feat: Add script installer`, `root|fix: Update lockfile`
+Produces: `agents|feat: Add script installer` when scope and type are present, `Add script installer` when either is missing.
 
 Conventional commits with scope in parentheses:
 
 ```yaml
 commit:
-  prefix: '{type}({scope})'
+  title_format: '[{type}({scope}): ]{title}'
 ```
 
-Produces: `feat(agents): Add script installer`, `fix(core): Resolve null pointer`
+Produces: `feat(agents): Add script installer`
 
-No prefix:
+Squash-merge convention (the typical shape this repo uses):
 
 ```yaml
 commit:
-  prefix: ''
-```
-
-Produces: `Add script installer`
-
-Mixed — different conventions for commits and PRs:
-
-```yaml
-commit:
-  prefix: '{scope}|{type}'
+  title_format: '[{scope}|{type}: ]{title}'
+ticket:
+  title_format: '{title}'
 pr:
-  prefix: '{type}'
+  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
+merge_commit:
+  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
+
+Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' --pr-number 470`):
+
+- `commit_title`: `agents|feat: Add foo`
+- `ticket_title`: `Add foo`
+- `pr_title`: `#466 agents|feat: Add foo`
+- `merge_commit_title`: `#466 agents|feat: Add foo (#470)`
 
 ##### Scope values
 
@@ -180,7 +211,7 @@ editors:
 ```yaml
 project:
   slug: my-project
-  ticket_prefix: '#'
+  ticket_ref_prefix: '#'
 
 artifacts:
   base_dir: ~/ai-artifacts
@@ -195,11 +226,13 @@ repository:
       default_branch: main
 
 commit:
-  prefix: '{type}'
+  title_format: '[{scope}|{type}: ]{title}'
 ticket:
-  prefix: '{type}'
+  title_format: '{title}'
 pr:
-  prefix: '{type}'
+  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
+merge_commit:
+  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 
 integrations:
   jira:

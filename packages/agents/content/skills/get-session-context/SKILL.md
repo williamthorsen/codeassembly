@@ -38,17 +38,17 @@ Example: branch `MAC-130/agents/feat/branch-manifest` produces `.agents/MAC-130-
 }
 ```
 
-| Field               | Type               | Description                                                                                                                                      |
-| ------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ticket_id`         | `string` or `null` | Ticket ID extracted from branch name, or `null` if not derivable                                                                                 |
-| `ticket_ref`        | `string` or `null` | Display form of the ticket ID, with `#` prepended when `ticket_prefix == '#'`; equal to `ticket_id` otherwise; `null` when `ticket_id` is `null` |
-| `project_slug`      | `string`           | Project slug for artifact namespacing                                                                                                            |
-| `platform`          | `string`           | Development platform (`"github"` or `"bitbucket"`, default: `"github"`)                                                                          |
-| `default_branch`    | `string`           | Full remote reference for the default branch (e.g., `origin/main`)                                                                               |
-| `branch_name`       | `string`           | Raw branch name as it appears in `gitStatus`                                                                                                     |
-| `artifact_base_dir` | `string`           | Resolved absolute path for artifact storage (from preferences or default `~/ai-artifacts`)                                                       |
-| `artifact_paths`    | `object`           | Category suffix paths relative to the project directory (defaults: chats, devlogs, plans)                                                        |
-| `created_at`        | `string`           | ISO 8601 UTC timestamp of when the manifest was created                                                                                          |
+| Field               | Type               | Description                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ticket_id`         | `string` or `null` | Ticket ID extracted from branch name, or `null` if not derivable                                                                                                                                                                                                                                                                                                       |
+| `ticket_ref`        | `string` or `null` | Display form of the ticket ID, with `#` prepended when `ticket_ref_prefix == '#'`; equal to `ticket_id` otherwise; `null` when `ticket_id` is `null`. The `project.ticket_ref_prefix` setting represents whatever appears at the start of `ticket_ref` — part of the canonical ID for Jira-style projects (e.g., `MAC-`); added at render time for `#`-style projects. |
+| `project_slug`      | `string`           | Project slug for artifact namespacing                                                                                                                                                                                                                                                                                                                                  |
+| `platform`          | `string`           | Development platform (`"github"` or `"bitbucket"`, default: `"github"`)                                                                                                                                                                                                                                                                                                |
+| `default_branch`    | `string`           | Full remote reference for the default branch (e.g., `origin/main`)                                                                                                                                                                                                                                                                                                     |
+| `branch_name`       | `string`           | Raw branch name as it appears in `gitStatus`                                                                                                                                                                                                                                                                                                                           |
+| `artifact_base_dir` | `string`           | Resolved absolute path for artifact storage (from preferences or default `~/ai-artifacts`)                                                                                                                                                                                                                                                                             |
+| `artifact_paths`    | `object`           | Category suffix paths relative to the project directory (defaults: chats, devlogs, plans)                                                                                                                                                                                                                                                                              |
+| `created_at`        | `string`           | ISO 8601 UTC timestamp of when the manifest was created                                                                                                                                                                                                                                                                                                                |
 
 ## Resolution order
 
@@ -97,18 +97,18 @@ Extract the ticket ID from the **start** of the branch name using these rules:
 4. **Normalize to uppercase**: the ticket ID is always stored in uppercase (e.g., `mac-147` becomes `MAC-147`).
 5. The ticket ID pattern ends at the first `/` or `_` separator, or at the end of the branch name if it is the entire branch name. Do not continue matching past the first separator or into hyphenated descriptions. For example, `MAC-147-some-description` extracts `MAC-147` (the match stops before the second hyphen because `-s` does not continue the digits pattern), and `MAC-147/feat/foo` extracts `MAC-147`.
 6. If no prefixed ticket ID is found, check for a **bare issue number**: one or more digits anchored to the start of the branch name, terminated by `/`, `_`, or `-`, or at the end of the branch name if it is the entire name. Examples: `147/feat/something` -> `147`, `42_fix_login` -> `42`, `99` -> `99`. Do not match digits that appear after non-digit characters.
-7. If a bare issue number is found, extract `project.ticket_prefix` from `{prefs}`:
-   - If `ticket_prefix` is `#` (a GitHub display prefix): return the **bare number only**. The `#` character is a display convention, not an identifier component, and must not appear in file paths.
-   - If a Jira-style prefix is configured (e.g., `MAC-`): ticket ID = `{ticket_prefix}{number}` (e.g., prefix `MAC-` + number `147` -> `MAC-147`).
+7. If a bare issue number is found, extract `project.ticket_ref_prefix` from `{prefs}`:
+   - If `ticket_ref_prefix` is `#` (a GitHub display prefix): return the **bare number only**. The `#` character is a display convention, not an identifier component, and must not appear in file paths.
+   - If a Jira-style prefix is configured (e.g., `MAC-`): ticket ID = `{ticket_ref_prefix}{number}` (e.g., prefix `MAC-` + number `147` -> `MAC-147`).
    - If no prefix is configured: ticket ID = the number alone (e.g., `147`).
 8. If neither a prefixed ticket ID nor a bare issue number is found, the ticket ID is `null`.
 
 #### Ticket ref
 
-Derive the rendered display form of the ticket reference from the resolved `ticket_id` and `project.ticket_prefix`:
+Derive the rendered display form of the ticket reference from the resolved `ticket_id` and `project.ticket_ref_prefix`:
 
 - If `ticket_id` is `null`, `ticket_ref` is `null`.
-- Else if `ticket_prefix` is `#`, `ticket_ref` is `'#' + ticket_id` (e.g., `ticket_id = '312'` → `ticket_ref = '#312'`).
+- Else if `ticket_ref_prefix` is `#`, `ticket_ref` is `'#' + ticket_id` (e.g., `ticket_id = '312'` → `ticket_ref = '#312'`).
 - Otherwise, `ticket_ref` equals `ticket_id` (the prefix is already part of the stored ID, e.g., `MAC-147` → `MAC-147`).
 
 `ticket_ref` is the canonical form for rendering ticket references in human-facing text (PR bodies, commit footers, headings). `ticket_id` remains the form to use in file paths and identifiers.
@@ -123,7 +123,7 @@ Extract `project.slug` from `{prefs}`.
 
 If not found, fall back to `repository.slug` (deprecated field, found under the `repository:` section in `{prefs}`). If none of these are found, use the bare directory name of the working directory (from the `Working directory:` field in the system prompt environment block). For example, if the working directory is `/Users/william/repos/projects/codeassembly`, the default slug is `codeassembly`.
 
-Also extract `project.ticket_prefix` from `{prefs}` (e.g., `MAC-`). This value is used by the ticket ID extraction logic (step 7) when a bare issue number is found. If not present, no prefix is applied.
+Also extract `project.ticket_ref_prefix` from `{prefs}` (e.g., `MAC-`). This value is used by the ticket ID extraction logic (step 7) when a bare issue number is found. If not present, no prefix is applied.
 
 #### Platform
 
@@ -384,13 +384,13 @@ Branch: `a-1-test`
 #### 9. Bare issue number with configured prefix
 
 Branch: `147/feat/improve-parser`
-Preferences: `project.ticket_prefix: MAC-`
+Preferences: `project.ticket_ref_prefix: MAC-`
 
 **Derivation trace:**
 
 1. Ticket ID: No `[A-Z]{2,}-[0-9]+` match at start (begins with digits). No prefixed ticket ID.
 2. Bare issue number check: `147` found at start, terminated by `/`.
-3. Read `project.ticket_prefix` from preferences: `MAC-`.
+3. Read `project.ticket_ref_prefix` from preferences: `MAC-`.
 4. Construct ticket ID: `MAC-` + `147` = `MAC-147`.
 5. Everything after `147/` is the description: `feat/improve-parser`.
 
@@ -411,13 +411,13 @@ Preferences: `project.ticket_prefix: MAC-`
 #### 10. Bare issue number without configured prefix
 
 Branch: `42_fix_login-redirect`
-Preferences: no `project.ticket_prefix` configured
+Preferences: no `project.ticket_ref_prefix` configured
 
 **Derivation trace:**
 
 1. Ticket ID: No `[A-Z]{2,}-[0-9]+` match at start. No prefixed ticket ID.
 2. Bare issue number check: `42` found at start, terminated by `_`.
-3. No `project.ticket_prefix` in preferences.
+3. No `project.ticket_ref_prefix` in preferences.
 4. Ticket ID is `42` (number alone).
 5. Everything after `42_` is the description: `fix_login-redirect`.
 
@@ -438,13 +438,13 @@ Preferences: no `project.ticket_prefix` configured
 #### 11. Bare issue number with `#` display prefix
 
 Branch: `152`
-Preferences: `project.ticket_prefix: '#'`
+Preferences: `project.ticket_ref_prefix: '#'`
 
 **Derivation trace:**
 
 1. Ticket ID: No `[A-Z]{2,}-[0-9]+` match at start (begins with digits). No prefixed ticket ID.
 2. Bare issue number check: `152` found at start, at end of branch name.
-3. Read `project.ticket_prefix` from preferences: `#`.
+3. Read `project.ticket_ref_prefix` from preferences: `#`.
 4. Prefix is `#` (display-only convention). Return bare number: `152`.
 5. Ticket ref: prefix is `#`, so `ticket_ref = '#' + ticket_id = '#152'` (this is the demonstrative case where `ticket_ref` differs from `ticket_id`).
 6. After stripping the ticket ID, nothing remains. Description is empty.
