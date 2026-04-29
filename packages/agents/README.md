@@ -63,6 +63,8 @@ A template is a string containing literal text and any combination of the suppor
 
 A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so typos surface in the output.
 
+Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules. Unquoted values may have a trailing ` # comment` stripped, but a literal `#` in the middle of an unquoted template is preserved.
+
 ##### Optional groups
 
 A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the entire group — literals included — drops. After substitution, runs of multiple spaces are collapsed and leading/trailing whitespace is trimmed. Groups are processed left-to-right; nesting is not supported.

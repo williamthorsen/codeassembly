@@ -57,8 +57,10 @@ json=$({platform_home_dir}/scripts/describe-change.sh \
 Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`). Quote `--title` so titles with spaces and shell-special characters are preserved.
 
 ```bash
-pr_title=$(echo "$json" | grep -o '"pr_title":"[^"]*"' | cut -d'"' -f4)
+pr_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))")
 ```
+
+Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
 Use `pr_title` directly as the final PR title. Do not concatenate with `title` separately — the rendered output already includes it.
 

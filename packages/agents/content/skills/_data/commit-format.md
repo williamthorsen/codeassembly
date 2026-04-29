@@ -79,6 +79,8 @@ merge_commit:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
 
+Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules.
+
 | Template                       | Sample output                        |
 | ------------------------------ | ------------------------------------ |
 | `'{title}'`                    | `Add script installer`               |

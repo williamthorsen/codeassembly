@@ -96,8 +96,10 @@ Render the ticket title using `describe-change.sh`. Note that ticket creation do
 
 ```bash
 json=$({platform_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
-ticket_title=$(echo "$json" | grep -o '"ticket_title":"[^"]*"' | cut -d'"' -f4)
+ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))")
 ```
+
+Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
 Use `ticket_title` directly as the issue title — it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. If the script is not found, fall back to the bare `{title}`.
 

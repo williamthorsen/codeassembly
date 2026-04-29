@@ -189,6 +189,36 @@ test_parse() {
 When call test_parse
 The output should equal "FOUND:{type}: {title}"
 End
+
+It "preserves '#' in unquoted templates that lack a trailing comment"
+write_yaml() {
+  cat >"$tmpdir/prefs.yaml" <<'YAML'
+merge_commit:
+  title_format: {title} (#{pr_number})
+YAML
+}
+test_parse() {
+  write_yaml
+  parse_prefix "$tmpdir/prefs.yaml" "merge_commit"
+}
+When call test_parse
+The output should equal "FOUND:{title} (#{pr_number})"
+End
+
+It "strips a trailing ' # comment' from an unquoted value but preserves earlier '#'"
+write_yaml() {
+  cat >"$tmpdir/prefs.yaml" <<'YAML'
+merge_commit:
+  title_format: {title} (#{pr_number}) # squash-merge
+YAML
+}
+test_parse() {
+  write_yaml
+  parse_prefix "$tmpdir/prefs.yaml" "merge_commit"
+}
+When call test_parse
+The output should equal "FOUND:{title} (#{pr_number})"
+End
 End
 
 Describe "resolve_prefix"
@@ -391,6 +421,24 @@ scope="" type="" title="" ticket_ref="" pr_number=""
 When call render_title "literal text"
 The output should equal "literal text"
 End
+
+It "leaves an unknown token inside a group as-is without dropping the group"
+scope="" type="" title="Add foo" ticket_ref="" pr_number=""
+When call render_title "[{typo} ]{title}"
+The output should equal "{typo} Add foo"
+End
+
+It "drops a [{title}] group when title is empty"
+scope="" type="" title="" ticket_ref="" pr_number=""
+When call render_title "[{title}]"
+The output should equal ""
+End
+
+It "renders a [{title}] group when title is non-empty"
+scope="" type="" title="Add foo" ticket_ref="" pr_number=""
+When call render_title "[{title}]"
+The output should equal "Add foo"
+End
 End
 
 Describe "json_escape"
@@ -417,6 +465,36 @@ End
 It "returns empty for empty input"
 When call json_escape ""
 The output should equal ""
+End
+
+It "escapes a newline as the two-character sequence backslash-n"
+When call json_escape "$(printf 'line1\nline2')"
+The output should equal 'line1\nline2'
+End
+
+It "escapes a carriage return as backslash-r"
+When call json_escape "$(printf 'a\rb')"
+The output should equal 'a\rb'
+End
+
+It "escapes a tab as backslash-t"
+When call json_escape "$(printf 'a\tb')"
+The output should equal 'a\tb'
+End
+
+It "escapes a backspace as backslash-b"
+When call json_escape "$(printf 'a\bb')"
+The output should equal 'a\bb'
+End
+
+It "escapes a form feed as backslash-f"
+When call json_escape "$(printf 'a\fb')"
+The output should equal 'a\fb'
+End
+
+It "preserves the order of escaping so backslash and newline do not collide"
+When call json_escape "$(printf 'a\\\nb')"
+The output should equal 'a\\\nb'
 End
 End
 
@@ -546,5 +624,20 @@ run_script() {
 }
 When call run_script
 The output should equal '{"commit_title":"agents|feat","ticket_title":"","pr_title":"","merge_commit_title":""}'
+End
+
+It "produces parseable JSON when title contains a newline"
+write_prefs() {
+  cat >".agents/preferences.yaml" <<'YAML'
+commit:
+  title_format: '{title}'
+YAML
+}
+run_script() {
+  write_prefs
+  bash "$script" --title "$(printf 'line1\nline2')"
+}
+When call run_script
+The output should equal '{"commit_title":"line1\nline2","ticket_title":"","pr_title":"","merge_commit_title":""}'
 End
 End

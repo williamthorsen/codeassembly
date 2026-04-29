@@ -94,7 +94,9 @@ parse_prefix() {
       elif [[ "$value" =~ ^\"([^\"]*)\"(.*)$ ]]; then
         value="${BASH_REMATCH[1]}"
       else
-        value="${value%%#*}"
+        # Strip only the conventional ` # comment` form (space before `#`)
+        # so unquoted templates may contain a literal `#` (e.g., `#{pr_number}`).
+        value="${value%% #*}"
         # Trim trailing whitespace from the unquoted value
         value="${value%"${value##*[![:space:]]}"}"
       fi
@@ -221,11 +223,19 @@ group_has_empty_token() {
   return 1
 }
 
-# Escape backslashes and double quotes for safe JSON interpolation.
+# Escape backslashes, double quotes, and JSON-illegal control characters
+# (newline, carriage return, tab, backspace, form feed) for safe JSON
+# interpolation. Backslash must be escaped first so subsequent backslash
+# escapes (e.g., `\n`) are not double-escaped.
 json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
   s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"
+  s="${s//$'\r'/\\r}"
+  s="${s//$'\t'/\\t}"
+  s="${s//$'\b'/\\b}"
+  s="${s//$'\f'/\\f}"
   echo "$s"
 }
 
