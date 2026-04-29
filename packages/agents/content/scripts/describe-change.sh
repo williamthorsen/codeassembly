@@ -230,7 +230,10 @@ group_has_empty_token() {
 # Escape backslashes, double quotes, and JSON-illegal control characters
 # (newline, carriage return, tab, backspace, form feed) for safe JSON
 # interpolation. Backslash must be escaped first so subsequent backslash
-# escapes (e.g., `\n`) are not double-escaped.
+# escapes (e.g., `\n`) are not double-escaped. This is a title-grade
+# escaper — it does not handle the rest of U+0000–U+001F (e.g., ESC,
+# BEL). For arbitrary content (commit bodies, etc.) use a real JSON
+# encoder such as `python3 -c 'import sys,json; print(json.dumps(sys.stdin.read()))'`.
 json_escape() {
   local s="$1"
   s="${s//\\/\\\\}"
