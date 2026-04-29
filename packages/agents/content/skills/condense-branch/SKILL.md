@@ -47,9 +47,15 @@ Use `summarize-change` to compose a good commit message. Save the description pe
 Follow [commit-format.md](../_data/commit-format.md). Use `describe-change.sh` to render the full commit title:
 
 ```bash
-json=$({platform_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
+json=$({platform_home_dir}/scripts/describe-change.sh \
+  --title "{title}" \
+  --scope "{scope}" \
+  --type "{type}" \
+  --ticket-ref "{ticket_ref}")
 commit_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('commit_title',''))")
 ```
+
+Pass `--ticket-ref` from `get-session-context` so projects whose `commit.title_format` references `{ticket_ref}` render the ref correctly. Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`).
 
 Use a JSON parser (python3 above; `jq -r '.commit_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 

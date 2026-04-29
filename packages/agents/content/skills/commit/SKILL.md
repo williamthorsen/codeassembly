@@ -10,7 +10,7 @@ Commit titles and bodies are extracted into the changelog and, for release-notes
 
 ## Commit message format
 
-See `../_data/commit-format.md` for the full specification, including how to resolve the commit title prefix using `describe-change.sh`.
+See `../_data/commit-format.md` for the full specification, including how to render the commit title using `describe-change.sh`.
 
 ## Commit metadata
 

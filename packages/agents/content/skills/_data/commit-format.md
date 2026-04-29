@@ -79,7 +79,7 @@ merge_commit:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
 
-Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules.
+Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `#`, `:`, and `|` from YAML's own parsing rules. In an unquoted value a bare `#` (e.g., `#{pr_number}`) is preserved, but a space-hash sequence (`#`) is treated as the start of a YAML comment and silently truncates the rest of the template — `title_format: {title} # legacy` becomes `{title}` with no warning. When in doubt, quote.
 
 | Template                       | Sample output                        |
 | ------------------------------ | ------------------------------------ |

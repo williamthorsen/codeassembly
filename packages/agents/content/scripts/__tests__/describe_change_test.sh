@@ -439,6 +439,13 @@ scope="" type="" title="Add foo" ticket_ref="" pr_number=""
 When call render_title "[{title}]"
 The output should equal "Add foo"
 End
+
+It "warns on stderr when an unmatched '[' remains in the template"
+scope="" type="" title="Add foo" ticket_ref="" pr_number=""
+When call render_title "[{title} broken"
+The output should equal "[Add foo broken"
+The stderr should include "unmatched '['"
+End
 End
 
 Describe "json_escape"

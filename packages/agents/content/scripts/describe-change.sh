@@ -142,7 +142,6 @@ render_title() {
 
   # Empty template means empty output
   if [[ -z "$template" ]]; then
-    echo ""
     return
   fi
 
@@ -158,6 +157,12 @@ render_title() {
     result+="$(render_group "$group")"
     remaining="$after"
   done
+  # Warn on a stray `[` left in the residue: an unmatched opening bracket
+  # cannot start a group, so it falls through verbatim. Visible in output,
+  # but easy to misread as intentional — surface it to stderr.
+  if [[ "$remaining" == *'['* ]]; then
+    echo "describe-change.sh: warning: unmatched '[' in template: $template" >&2
+  fi
   # Substitute tokens in any trailing literal section
   result+="$(substitute_tokens "$remaining")"
 
@@ -193,7 +198,6 @@ render_group() {
 
   # If group references a token whose value is empty, drop the entire group
   if group_has_empty_token "$group"; then
-    echo ""
     return
   fi
 
