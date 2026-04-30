@@ -82,7 +82,7 @@ Resolve session context and the artifact directory before writing.
    {artifact_base_dir}/projects/{project_slug}/{artifact_paths.devlogs}/{filename}
    ```
 
-   Filename uses the existing project-scoped shape: `{YYYYMMDD-HHMMZ}_{concise-title-in-kebab-case}.md`.
+   Filename uses the standard ticket-level shape: `{YYYYMMDD-HHMMSSZ}_{concise-title-in-kebab-case}.md`.
 
 4. `mkdir -p` the target directory before writing.
 
@@ -112,4 +112,4 @@ Generation rules:
 ### Filename examples
 
 - Ticket-scoped: `20260418-153000Z_make-devlogs-ticket-scoped_devlog.md`
-- Project-scoped fallback: `20250809-1430Z_fix-csp-violation-preventing-script-injection.md`
+- Project-scoped fallback: `20250809-143000Z_fix-csp-violation-preventing-script-injection.md`

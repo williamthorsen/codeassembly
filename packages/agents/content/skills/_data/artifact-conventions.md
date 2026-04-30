@@ -94,7 +94,7 @@ Ticket-level artifacts and run directories both live here. Use `get-session-cont
 
 Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `wrap-ups` is hardcoded and cannot be overridden.
 
-Devlogs and wrap-ups are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `wrap-ups/` for wrap-ups). Project-scoped fallback devlog filenames retain the legacy `YYYYMMDD-HHMMZ` (no seconds) timestamp prefix for backward compatibility with pre-existing artifacts at that path; ticket-scoped devlogs and all wrap-ups use the standard `YYYYMMDD-HHMMSSZ` ticket-level shape.
+Devlogs and wrap-ups are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `wrap-ups/` for wrap-ups). All devlog and wrap-up filenames use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
 
 ## Naming conventions
 
