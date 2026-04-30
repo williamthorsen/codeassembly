@@ -209,7 +209,7 @@ Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phas
   2. {action} ({item references})
   ...
 
-What would you like to do? Reply with numbers, or adjust: "all", "1, 3", "skip"
+What would you like to do? Reply with numbers, or adjust: "all", "1, 3". To close a finding without a ticket, choose the "Drop findings" action — there is no bare "skip"; every finding listed must be routed by an explicit action.
 ```
 
 #### Formatting rules
@@ -260,10 +260,13 @@ Parse the user's response to the Phase 2b action menu and execute confirmed acti
 
 The user may respond with:
 
-- **Numbers only:** `"1, 3"` or `"all"` or `"skip"` — execute the referenced actions as-is
+- **Numbers only:** `"1, 3"` or `"all"` — execute the referenced actions as-is
 - **Per-item adjustments:** `"1 but combine F1+F2"` — execute the action with modifications
+- **Mixed disposition:** `"2 with F1+F2; drop S1"` — batch findings F1 and F2 via action 2, and route S1 through the "Drop findings" action
 - **Exclusions:** `"all except I2"` — execute everything, omitting specific items
 - **Custom instructions:** free-form text — interpret and confirm before executing
+
+There is no bare `"skip"` keyword for the findings pool: a finding is closed without a ticket only by selecting the "Drop findings" action, never by menu omission.
 
 If the response is ambiguous, ask for clarification before executing.
 
@@ -275,7 +278,7 @@ Process confirmed actions in this order:
 
 1. **Batch tickets for findings** — invoke `/create-ticket` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives — execute whichever the user selected, not both.
 2. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
-3. **Drop findings** — no tool is invoked. Record the dropped item IDs so they appear in the Phase 4 results report under "Skipped" and so the deferred-findings artifact (if written for other reasons) excludes them. Dropping is a deliberate, user-initiated close — the agent never drops findings on its own.
+3. **Drop findings** — no tool is invoked. Record the dropped item IDs so they appear in the Phase 4 results report under "Dropped" and so the deferred-findings artifact (if written for other reasons) excludes them. Dropping is a deliberate, user-initiated close — the agent never drops findings on its own.
 4. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
 5. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from `get-session-context`). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
 6. **Save session devlog** — invoke `/create-devlog`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
@@ -374,7 +377,7 @@ Insights, applied drive-by fixes, devlog references, and findings the user dropp
 ### Deferred findings
 - {path}
 
-### Skipped
+### Dropped
 - {item-ID}: {reason}
 ```
 
