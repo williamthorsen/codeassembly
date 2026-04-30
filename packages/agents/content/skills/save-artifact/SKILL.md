@@ -60,6 +60,7 @@ Run artifacts are saved by the skills that produce them (`review-change`, `respo
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
+- `wrap-up` — Record of deferred wrap-up findings (ticket-scoped when a ticket is in session; falls back to project-scoped `wrap-ups/` otherwise)
 
 ### Run artifacts
 
@@ -91,7 +92,7 @@ Create the directory if needed.
 
 Read `artifact_paths` from the `get-session-context` manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
-Devlogs use the `devlogs` category path only as a fallback — when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule, and `create-devlog/SKILL.md` for the devlog frontmatter shape.
+Devlogs and wrap-ups use their non-ticket category paths only as a fallback — when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule. For frontmatter shapes, see `create-devlog/SKILL.md` (devlogs) and the wrap-up step in `wrap-up/SKILL.md` (wrap-ups).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
