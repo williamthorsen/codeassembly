@@ -74,7 +74,7 @@ Want me to:
 
 When you deem appropriate, proactively dispatch subagents to perform tasks. Good examples:
 
-- An out-of-scope issue has arisen. A follow-up ticket is needed for it, and the content of the ticket is already known. Dispatch a subagent to create the ticket, while you and the developer move on.
+- A substantive out-of-scope issue has arisen, and a separate ticket is the right disposition under the three-lane model in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md) (the trivial **do now** and **batch later** lanes have already been ruled out, and the ticket content is already known). Dispatch a subagent to create the ticket while you and the developer move on. For trivial items, prefer the **do now** lane (apply on the current branch) or the **batch later** lane (queue for a future bundled ticket) rather than dispatching a subagent — those lanes carry far less per-ticket overhead.
 - You are discussing multiple issues with the developer, and some of them would benefit from research. Dispatch subagents for the research while you and the developer continue to discuss the other issues.
 
 ## Skill improvement

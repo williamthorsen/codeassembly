@@ -93,9 +93,11 @@ Record the source attribution for each item (e.g., "run-summary", "holistic revi
 
 For each finding (not legacy items or insights), assess its complexity using the [complexity classification](../_data/complexity-classification.md) rubric. Assign a level (1–4) based on the characteristics described in the rubric.
 
-Items at levels 1–2 (trivial or mechanical) are **quick-fix candidates** — simple enough for the agent to apply immediately without review. Tag these items for the quick-fix pass in Phase 2a.
+Items at levels 1–2 (trivial or mechanical) are **drive-by candidates** — simple enough for the agent to apply immediately on the current branch without review. Tag these items for the drive-by pass in Phase 2a, where branch-state and code-overlap guardrails determine whether they actually ship as drive-bys.
 
 Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
+
+The complexity assessment feeds into the cost-aware disposition flow described in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md): trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
 
 #### 1c. Scan for insights
 
@@ -126,35 +128,50 @@ Run `git status` and `git log --oneline {default_branch}..HEAD` to understand:
 - How many commits are on the branch?
 - Has a change summary already been generated? (Check for `*_change-summary.md` artifacts.)
 
-### Phase 2a: Quick fixes
+### Phase 2a: Drive-by fixes
 
-If any findings were tagged as quick-fix candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. Skip this phase entirely if no items qualify — do not show an empty section.
+If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model — see [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md) for the principle. Skip this phase entirely if no items qualify — do not show an empty section.
+
+#### Suitability check
+
+Before presenting candidates, evaluate the branch state. The drive-by lane is preferred when the branch can absorb a small additional change without obscuring its main work; it is not preferred when the branch is already large or when the candidate touches the same code as the branch's main work.
+
+Consult these signals (starting points, not rigid gates):
+
+- **Branch size** — `git diff --stat {default_branch}..HEAD`. Above ~10 files or ~500 lines of diff, treat the branch as already large; new drive-bys clear a higher bar. When the threshold is exceeded, prefer demoting candidates to Phase 2b's batch action rather than offering them as drive-bys.
+- **Code overlap** — for each candidate, check whether its target file appears in `git diff --name-only {default_branch}..HEAD`.
+  - **Same-file overlap** — caution: the reviewer must disentangle concerns within one diff. Prefer demoting unless the change is genuinely related to the branch's main work.
+  - **Different-file** — fine: changes in unrelated files are good drive-by candidates because the reviewer can skim past them.
+
+When the agent's judgment disagrees with a signal (e.g., the "large" branch is just a generated-file refresh), make the call and note the reasoning briefly to the user when presenting candidates.
 
 #### Output format
 
 ```
-### Quick fixes
+### Drive-by fixes
 
-These findings are simple enough to apply now:
-
-  {prefix} {ID}    {description}
+These findings are simple enough to apply now on the current branch:
 
   {prefix} {ID}    {description}
 
-Apply quick fixes? Reply "all", numbers, or "skip"
+  {prefix} {ID}    {description}
+
+Apply drive-by fixes? Reply "all", numbers, or "skip"
 ```
 
 #### Response handling
 
-- **Applied items**: make the changes and commit them with a message summarizing the fixes. Stage only the quick-fix changes — if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
-- **Skipped items**: demote back into the Findings section. They become eligible for the "Create tickets for findings" action in Phase 2b.
+- **Applied items**: make the changes and commit them with a message summarizing the fixes. Stage only the drive-by changes — if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
+- **Skipped items**: demote back into the Findings section. They become eligible for the batch-ticket and per-item ticket actions in Phase 2b.
 - **Partial selection** (e.g., `"1, 3"`): apply selected items, demote the rest.
 
 **Wait for the user to respond before proceeding.**
 
 ### Phase 2b: Inventory and action menu
 
-Present the user with an inventory of remaining addressable items and a numbered action menu. Only include sections that have at least one item. Items applied as quick fixes in Phase 2a do not appear here.
+Present the user with an inventory of remaining addressable items and a numbered action menu. Only include sections that have at least one item. Items applied as drive-by fixes in Phase 2a do not appear here.
+
+The action menu offers two distinct ticket-creation actions ("Batch tickets for findings" and "Create tickets for findings"); their conditions and recommendation rules — drawn from the cost-aware disposition model in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md) — are documented under [standard actions](#standard-actions) below.
 
 #### Output format
 
@@ -207,10 +224,13 @@ The actions menu is built dynamically based on which sections are populated:
 
 | Action                          | Offered when                               | Skill/tool invoked |
 | ------------------------------- | ------------------------------------------ | ------------------ |
+| Batch tickets for findings      | Findings section has ≥2 items              | `/create-ticket`   |
 | Create tickets for findings     | Findings section non-empty                 | `/create-ticket`   |
 | Create tickets for legacy items | Legacy section non-empty                   | `/create-ticket`   |
 | Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment` |
 | Save session devlog             | Always (unless trivial)                    | `/create-devlog`   |
+
+**Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives — only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. Both actions implement the **batch later** and **separate ticket** lanes from [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md).
 
 **Insight routing.** Each insight's destination determines where it appears in the action menu. Insights destined for `ticket comment` become part of the "Post insights to ticket" action — this action is independent and posts directly via `gh issue comment`. Insights destined for `devlog` are folded into the "Save session devlog" action and included automatically in the devlog content. This means devlog-bound insights only appear if the devlog action is selected, which is the correct dependency.
 
@@ -248,10 +268,11 @@ If the response is ambiguous, ask for clarification before executing.
 
 Process confirmed actions in this order:
 
-1. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
-2. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
-3. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from `get-session-context`). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
-4. **Save session devlog** — invoke `/create-devlog`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
+1. **Batch tickets for findings** — invoke `/create-ticket` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives — execute whichever the user selected, not both.
+2. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
+3. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
+4. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from `get-session-context`). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
+5. **Save session devlog** — invoke `/create-devlog`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 **Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.
 
@@ -269,14 +290,11 @@ Write a `deferred-findings` artifact capturing items that remain to be done. The
 
 ##### When to write
 
-Write the artifact if and only if at least one finding was deferred:
+Write the artifact if and only if at least one finding became a created ticket in Phase 3. The artifact's purpose is to cross-reference the wrap-up's findings to the tickets created from them, so that the developer can return to a single record and answer "what was deferred from this session, and where is it tracked?"
 
-- A finding became a created ticket in Phase 3 (deferred with tracking), OR
-- A finding was skipped from the action menu (deferred without tracking).
+Drive-by fixes that were applied in Phase 2a do not count — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded. Findings that the user explicitly dropped from the action menu do not count — by dropping them, the user closed them, not deferred them.
 
-Quick fixes that were applied in Phase 2a do not count — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded.
-
-If neither condition holds, skip writing entirely. Do not produce an empty artifact.
+If no ticket was created in Phase 3, skip writing entirely. Do not produce an empty artifact.
 
 ##### Where to write
 
@@ -314,23 +332,13 @@ Prepend YAML frontmatter, then the markdown body.
 - `run_id`: emit only when wrap-up was invoked from an orchestrated session — reuse the value Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3)
 - `branch`: from session context
 - `session_type`: the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`)
-- `counts.outstanding`: count of skipped findings
 - `counts.ticketed`: count of findings that became created tickets in Phase 3
 - `tickets_created`: list of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses. Omit when empty.
-- `outstanding_items`: list of `{id, prefix, summary}` for each skipped finding. Summary is a one-line distillation. Omit when empty.
 
-**Body** — emit only sections relevant to "what remains to be done":
+**Body** — emit the tickets-created cross-reference:
 
 ```markdown
 # Deferred findings: {Concise session description}
-
-## Outstanding
-
-{prefix} {ID} {description}
-_source: {origin}_
-
-{prefix} {ID} {description}
-_source: {origin}_
 
 ## Tickets created
 
@@ -338,9 +346,9 @@ _source: {origin}_
 - #{number}: addresses {prefix} {item-ID} — {ticket title}
 ```
 
-Render the "Outstanding" section from the same in-memory inventory the conversation report uses (Step 2 below) — do not re-derive from conversation, so the artifact and the report cannot drift.
+Render the "Tickets created" section from the same in-memory inventory the conversation report uses (Step 2 below) — do not re-derive from conversation, so the artifact and the report cannot drift.
 
-Omit any body section that has no items. Insights, applied quick fixes, and devlog references do not appear in the body.
+Insights, applied drive-by fixes, devlog references, and findings the user dropped do not appear in the body.
 
 #### Step 2: Present report
 
@@ -368,7 +376,7 @@ Omit empty sections (including "Deferred findings" when Step 1 produced no artif
 
 ### Phase 5: PR prompt
 
-After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits — whether from the session's earlier work, quick fixes applied in Phase 2a, or both — prompt the user to create a PR:
+After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits — whether from the session's earlier work, drive-by fixes applied in Phase 2a, or both — prompt the user to create a PR:
 
 ```
 Ready to create a PR? If yes, I'll use `/create-pr` to open the pull request. 👍🏼👎🏼
