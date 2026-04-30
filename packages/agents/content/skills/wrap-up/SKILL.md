@@ -341,8 +341,7 @@ Prepend YAML frontmatter, then the markdown body.
 - `run_id`: emit only when wrap-up was invoked from an orchestrated session — reuse the value Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3)
 - `branch`: from session context
 - `session_type`: the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`)
-- `counts.ticketed`: count of findings that became created tickets in Phase 3
-- `tickets_created`: list of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses. Omit when empty.
+- `tickets_created`: list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` for a single-finding ticket, `[F1, T2, R1]` for a batch ticket). Omit when empty.
 
 **Body** — emit the tickets-created cross-reference:
 

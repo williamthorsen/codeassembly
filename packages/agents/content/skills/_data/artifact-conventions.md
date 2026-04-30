@@ -192,7 +192,9 @@ commits: [<sha>, ...] # omit for working-tree devlogs
 
 ## Deferred-findings frontmatter
 
-Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, ticket counts, and a structured cross-reference of created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types. The artifact is written only when at least one finding became a created ticket; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
+Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, and a structured cross-reference of created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types. The artifact is written only when at least one finding became a created ticket; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
+
+**Single-finding case** — a ticket addressing one finding:
 
 ```yaml
 ---
@@ -205,26 +207,31 @@ ticket_id: <id> # omit when no ticket is in session
 run_id: <run id> # omit when not invoked from an orchestrated session
 branch: <branch name>
 session_type: <orchestrated | interactive-dev | review | research>
-counts:
-  ticketed: <n> # findings deferred to a created ticket
 tickets_created: # omit if empty
   - id: '<number>'
-    item: F1
+    items: [F1]
 ---
 ```
 
-| Field                      | Required | Description                                                                                                                              |
-| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                        |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                 |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                            |
-| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                    |
-| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                |
-| `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).  |
-| `branch`                   | yes      | Current branch name from session context.                                                                                                |
-| `session_type`             | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                         |
-| `counts.ticketed`          | yes      | Count of findings that became GitHub tickets.                                                                                            |
-| `tickets_created`          | no       | List of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses (e.g., F1, T2). Omitted when empty. |
+**Batch case** — a single ticket addressing multiple findings uses the same shape with additional IDs in `items`:
+
+```yaml
+tickets_created:
+  - id: '<number>'
+    items: [F1, T2, R1]
+```
+
+| Field                      | Required | Description                                                                                                                                                                              |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                                                                        |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                 |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                            |
+| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                                                                    |
+| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                                                                |
+| `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).                                                  |
+| `branch`                   | yes      | Current branch name from session context.                                                                                                                                                |
+| `session_type`             | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                                                                         |
+| `tickets_created`          | no       | List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` or `[F1, T2, R1]`). Omitted when empty. |
 
 ## run-index.json
 
