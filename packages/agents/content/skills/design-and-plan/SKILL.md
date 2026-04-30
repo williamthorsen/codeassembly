@@ -68,6 +68,7 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
    - Success criteria and edge cases
    - Prefer multiple choice when possible
    - Only one question per message
+   - When using numbered options, follow the [recommendation gradient](../collaboration/SKILL.md#asking-with-a-recommendation-gradient).
 
 ### Phase 3: Converge on a design
 
