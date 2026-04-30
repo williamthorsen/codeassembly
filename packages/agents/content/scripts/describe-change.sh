@@ -62,7 +62,7 @@ done
 # Outputs "FOUND:{value}" when the key is present (value may be empty),
 # or nothing when the key is absent. This lets callers distinguish
 # "key absent" from "key present with empty value."
-parse_prefix() {
+parse_title_format() {
   local file="$1"
   local section="$2"
   local current_section=""
@@ -107,21 +107,21 @@ parse_prefix() {
 }
 
 # Resolve a `title_format` value by checking project, then global, then defaulting to empty.
-# parse_prefix returns "FOUND:{value}" when the key is present, or empty when absent.
+# parse_title_format returns "FOUND:{value}" when the key is present, or empty when absent.
 # This lets an explicit empty value at the project level override a global non-empty value.
-resolve_prefix() {
+resolve_title_format() {
   local section="$1"
   local result
 
   # Project preferences
-  result="$(parse_prefix ".agents/preferences.yaml" "$section")"
+  result="$(parse_title_format ".agents/preferences.yaml" "$section")"
   if [[ "$result" == FOUND:* ]]; then
     echo "${result#FOUND:}"
     return
   fi
 
   # Global preferences
-  result="$(parse_prefix "$HOME/.agents/preferences.yaml" "$section")"
+  result="$(parse_title_format "$HOME/.agents/preferences.yaml" "$section")"
   if [[ "$result" == FOUND:* ]]; then
     echo "${result#FOUND:}"
     return
@@ -248,10 +248,10 @@ json_escape() {
 
 main() {
   local commit_template ticket_template pr_template merge_commit_template
-  commit_template="$(resolve_prefix "commit")"
-  ticket_template="$(resolve_prefix "ticket")"
-  pr_template="$(resolve_prefix "pr")"
-  merge_commit_template="$(resolve_prefix "merge_commit")"
+  commit_template="$(resolve_title_format "commit")"
+  ticket_template="$(resolve_title_format "ticket")"
+  pr_template="$(resolve_title_format "pr")"
+  merge_commit_template="$(resolve_title_format "merge_commit")"
 
   local commit_title ticket_title pr_title merge_commit_title
   commit_title="$(json_escape "$(render_title "$commit_template")")"
