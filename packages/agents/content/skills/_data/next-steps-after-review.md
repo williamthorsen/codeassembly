@@ -84,6 +84,8 @@ Complexity levels classify individual findings, but the recommendation applies t
 
 Each skill supplies its own recommendation context (e.g., finding counts and categories, severity of deviations). Apply these rules using that context.
 
+See [`ticket-creation-cost.md`](ticket-creation-cost.md) for the cost-aware disposition that governs whether a deferred finding becomes a separate ticket, joins a batch, or ships as a drive-by. The recommendation rules above pick the _implementation skill_; the cost reference applies to any finding that the user defers rather than addressing immediately.
+
 ## Combined output format
 
 When both sub-blocks are shown, present them as separate sections within a single next-steps block. The example below illustrates one possible arrangement — the recommendation rules in each sub-block determine which option is recommended:

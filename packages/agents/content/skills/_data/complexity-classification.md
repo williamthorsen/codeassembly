@@ -45,7 +45,7 @@ Each consuming skill defines its own threshold against this rubric. The threshol
 
 | Consumer                           | Threshold | Decision                                                           |
 | ---------------------------------- | --------- | ------------------------------------------------------------------ |
-| `wrap-up` quick-fix pass           | 1–2       | Apply immediately; skip ticket creation                            |
+| `wrap-up` drive-by pass            | 1–2       | Apply immediately on the current branch; skip ticket creation      |
 | `next-steps-after-plan`            | 1–2       | Recommend "implement directly" (no orchestration needed)           |
 | `next-steps-after-review`          | 1–2       | Recommend "implement directly" (findings are simple enough to fix) |
 | `orchestrated-architect` (planned) | 1–2       | Classify as `none`/`low` impact (minimal architectural guidance)   |
@@ -53,3 +53,5 @@ Each consuming skill defines its own threshold against this rubric. The threshol
 When characteristics span two levels, prefer the higher level. This is consistent with the "when uncertain, recommend the more thorough option" pattern used by consuming skills.
 
 Consumers above level 2 should use the level descriptions to inform their own routing logic rather than mapping mechanically to a single threshold.
+
+The complexity rubric and the [ticket-creation-cost](ticket-creation-cost.md) model compose: complexity drives orchestration-routing decisions (which skill picks the work up next), while ticket-creation-cost drives ticket-creation decisions (whether the work needs its own ticket at all).

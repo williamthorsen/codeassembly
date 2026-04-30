@@ -192,7 +192,7 @@ commits: [<sha>, ...] # omit for working-tree devlogs
 
 ## Deferred-findings frontmatter
 
-Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, item counts, and a structured index of outstanding work and created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types.
+Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, ticket counts, and a structured cross-reference of created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types. The artifact is written only when at least one finding became a created ticket; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
 
 ```yaml
 ---
@@ -206,32 +206,25 @@ run_id: <run id> # omit when not invoked from an orchestrated session
 branch: <branch name>
 session_type: <orchestrated | interactive-dev | review | research>
 counts:
-  outstanding: <n> # findings skipped without follow-up
   ticketed: <n> # findings deferred to a created ticket
 tickets_created: # omit if empty
   - id: '<number>'
     item: F1
-outstanding_items: # omit if empty
-  - id: T1
-    prefix: todo
-    summary: <one-line>
 ---
 ```
 
-| Field                      | Required | Description                                                                                                                                  |
-| -------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                            |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                     |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                |
-| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                        |
-| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                    |
-| `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).      |
-| `branch`                   | yes      | Current branch name from session context.                                                                                                    |
-| `session_type`             | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                             |
-| `counts.outstanding`       | yes      | Count of findings skipped from the action menu without follow-up.                                                                            |
-| `counts.ticketed`          | yes      | Count of findings that became GitHub tickets.                                                                                                |
-| `tickets_created`          | no       | List of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses (e.g., F1, T2). Omitted when empty.     |
-| `outstanding_items`        | no       | Compact index of skipped findings — `{id, prefix, summary}` per item. Enables cross-session discovery of "what remains to be done" via grep. |
+| Field                      | Required | Description                                                                                                                              |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                        |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                 |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                            |
+| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                    |
+| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                |
+| `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).  |
+| `branch`                   | yes      | Current branch name from session context.                                                                                                |
+| `session_type`             | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                         |
+| `counts.ticketed`          | yes      | Count of findings that became GitHub tickets.                                                                                            |
+| `tickets_created`          | no       | List of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses (e.g., F1, T2). Omitted when empty. |
 
 ## run-index.json
 
