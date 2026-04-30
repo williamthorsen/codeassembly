@@ -11,7 +11,7 @@ Analyze the current branch's changes since diverging from the default branch.
 ## Process
 
 1. **Gather context**:
-   - Use `get-session-context` to obtain `default_branch` and `ticket_id`; consult [work-types.md](../_data/work-types.md).
+   - Use `get-session-context` to obtain `default_branch`, `ticket_id`, and `ticket_ref`; consult [work-types.md](../_data/work-types.md).
 
 2. **Analyze changes**:
 
@@ -21,8 +21,8 @@ git diff $DEFAULT_BRANCH...HEAD
 
 Check commit messages for additional context.
 
-3. **Compose title**: `{ticket ID} {title}`
-   - Ticket ID appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
+3. **Compose title**: `{ticket_ref} {title}` (or just `{title}` when `ticket_ref` is null)
+   - The ticket reference appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
 
 4. **Write description** per the output format below
 
@@ -34,14 +34,14 @@ If expected information is missing, stop and ask the developer.
 
 ```markdown
 ---
-title: '{bare title without ticket ID}'
+title: '{bare title without `ticket_ref` prefix}'
 ticket_id: '{ticket ID from session context}'
 commit: '{short hash of HEAD}'
 scope: '{scope inferred from commit prefixes, or omitted if ambiguous}'
 type: '{work type inferred from commit prefixes, or omitted if ambiguous}'
 ---
 
-# {TICKET} {title}
+# {ticket_ref} {title}
 
 Commit: {short hash of HEAD}
 Timestamp: {YYYY-MM-DD HH:MMZ format}
@@ -103,6 +103,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ## Guidance
 
+- When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so they read naturally without it.
 - The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the headline (outcome in plain language), `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
@@ -114,7 +115,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 The YAML frontmatter provides machine-readable metadata for downstream consumers (e.g., `create-pr`).
 
-- **`title`**: The bare title without the ticket ID prefix. If the ticket is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`.
+- **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.
 - **`ticket_id`**: From `get-session-context`.
 - **`commit`**: Short hash of HEAD (`git rev-parse --short HEAD`).
 - **`scope`** and **`type`**: Infer from the commit message prefixes on the branch. Examine commits between the default branch and HEAD. If all (or the dominant majority of) commits share the same scope and type prefix (e.g., `agents|feat:`), use those values. If commits use mixed scopes or types with no clear dominant value, omit the ambiguous field entirely from the frontmatter. Omission is safe — downstream consumers treat missing fields as absent and skip the corresponding resolution step.

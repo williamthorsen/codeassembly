@@ -16,7 +16,7 @@ Act as a conscientious code reviewer for changes in the current scope.
 
 ## Process
 
-1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `project_slug`, and `artifact_base_dir`
+1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir`
 2. **Resolve ticket** _(branch scope only)_ — resolve the ticket source using this priority order:
    1. **Explicit argument** — if a `ticket` argument was provided, resolve it per the [Arguments](#arguments) table
    2. **Auto-resolve** — if no argument, scan `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` for the most recent `*_ticket.md` file and read it
@@ -60,10 +60,12 @@ Uniquely number all issues for easy reference. See [finding scheme](../_data/art
 
 ## Output format
 
+When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion (or `{ticket_ref} ` for commit scope) so the heading reads naturally without it — e.g., `# Code review: {description}` or `# Commit review: [{WORK_TYPE}] - {description}`.
+
 ### Branch scope
 
 ```markdown
-# Code review: {TICKET}: {description in imperative mood}
+# Code review: {ticket_ref}: {description in imperative mood}
 
 Commit: {short hash of HEAD}
 Timestamp: {YYYY-MM-DD HH:MM UTC}
@@ -140,7 +142,7 @@ Extract criteria from whatever structure the ticket uses (numbered lists, checkb
 ### Commit scope
 
 ```markdown
-# Commit review: {TICKET} [{WORK_TYPE}] - {description in imperative mood}
+# Commit review: {ticket_ref} [{WORK_TYPE}] - {description in imperative mood}
 
 Commit: {short hash}
 Timestamp: {YYYY-MM-DD HH:MM UTC}

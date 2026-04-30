@@ -19,7 +19,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 ## Process
 
-1. **Get context** using `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`
+1. **Get context** using `get-session-context` to obtain `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir`
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
@@ -80,8 +80,10 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 ## Output format
 
+When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads `# Change summary: {description}`.
+
 ```markdown
-# Change summary: {TICKET}: {description}
+# Change summary: {ticket_ref}: {description}
 
 Responding to: {filename of review being responded to}
 Timestamp: {YYYY-MM-DD HH:MM UTC}
