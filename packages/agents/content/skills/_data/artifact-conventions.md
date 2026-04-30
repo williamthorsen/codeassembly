@@ -18,12 +18,12 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/a
         │           └── ...
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md
+        ├── deferred-findings/
+        │   └── {timestamp}_{slug}_deferred-findings.md      ← project-scoped fallback when no ticket is in session
         ├── devlogs/
         │   └── {timestamp}_{concise-title}.md               ← project-scoped fallback when no ticket is in session
-        ├── plans/
-        │   └── {design-documents}.md
-        └── wrap-ups/
-            └── {timestamp}_{slug}_wrap-up.md                ← project-scoped fallback when no ticket is in session
+        └── plans/
+            └── {design-documents}.md
 ```
 
 ### Project slug
@@ -85,16 +85,16 @@ Ticket-level artifacts and run directories both live here. Use `get-session-cont
 
 ### Non-ticket paths
 
-| Category | Default path | Full default                                   |
-| -------- | ------------ | ---------------------------------------------- |
-| chats    | `chats`      | `{base_dir}/projects/{project-slug}/chats/`    |
-| devlogs  | `devlogs`    | `{base_dir}/projects/{project-slug}/devlogs/`  |
-| plans    | `plans`      | `{base_dir}/projects/{project-slug}/plans/`    |
-| wrap-ups | `wrap-ups`   | `{base_dir}/projects/{project-slug}/wrap-ups/` |
+| Category          | Default path        | Full default                                            |
+| ----------------- | ------------------- | ------------------------------------------------------- |
+| chats             | `chats`             | `{base_dir}/projects/{project-slug}/chats/`             |
+| deferred-findings | `deferred-findings` | `{base_dir}/projects/{project-slug}/deferred-findings/` |
+| devlogs           | `devlogs`           | `{base_dir}/projects/{project-slug}/devlogs/`           |
+| plans             | `plans`             | `{base_dir}/projects/{project-slug}/plans/`             |
 
-Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `wrap-ups` is hardcoded and cannot be overridden.
+Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `deferred-findings` is hardcoded and cannot be overridden.
 
-Devlogs and wrap-ups are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `wrap-ups/` for wrap-ups). All devlog and wrap-up filenames use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
+Devlogs and deferred-findings artifacts are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
 
 ## Naming conventions
 
@@ -190,9 +190,9 @@ commits: [<sha>, ...] # omit for working-tree devlogs
 | `branch`                   | yes      | Current branch name from session context.                                                                                                 |
 | `commits`                  | no       | List of short SHAs the devlog summarizes. Omitted for `working-tree` invocations; otherwise a single SHA or N SHAs depending on argument. |
 
-## Wrap-up frontmatter
+## Deferred-findings frontmatter
 
-Wrap-up artifacts include a YAML frontmatter block that records authoring origin, session linkage, item counts, and a structured index of outstanding work and created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types.
+Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, item counts, and a structured index of outstanding work and created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types.
 
 ```yaml
 ---
@@ -223,7 +223,7 @@ outstanding_items: # omit if empty
 | `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                            |
 | `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                     |
 | `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                |
-| `provenance.isInteractive` | yes      | Always `true` — wrap-ups are produced through an interactive flow.                                                                           |
+| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                        |
 | `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                    |
 | `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).      |
 | `branch`                   | yes      | Current branch name from session context.                                                                                                    |
@@ -636,7 +636,7 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
-- `wrap-up` — Record of deferred wrap-up findings (falls back to non-ticket path when no ticket is in session)
+- `deferred-findings` — Record of findings deferred during a `/wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 
 ### Non-ticket artifacts
 

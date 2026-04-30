@@ -50,7 +50,7 @@ Check these signals in order to classify the session:
 
 Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
 
-When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename — that is the latest run. Phase 3 passes this `run_id` through to `/create-devlog` as `--run-id`, and Phase 4 records it in the wrap-up artifact frontmatter, so both artifacts can link back to the run that produced the work.
+When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename — that is the latest run. Phase 3 passes this `run_id` through to `/create-devlog` as `--run-id`, and Phase 4 records it in the deferred-findings artifact frontmatter, so both artifacts can link back to the run that produced the work.
 
 #### 1b. Scan for deferred items
 
@@ -265,7 +265,7 @@ After all actions are processed, persist a record of deferred work and present a
 
 #### Step 1: Persist deferred record
 
-Write a `wrap-up` artifact capturing items that remain to be done. The artifact is the single record a developer can return to that answers "what was deferred from this session?"
+Write a `deferred-findings` artifact capturing items that remain to be done. The artifact is the single record a developer can return to that answers "what was deferred from this session?"
 
 ##### When to write
 
@@ -291,12 +291,12 @@ Resolve the artifact path:
 - **Project-scoped fallback** (when `ticket_id` is null):
 
   ```
-  {artifact_base_dir}/projects/{project_slug}/wrap-ups/{filename}
+  {artifact_base_dir}/projects/{project_slug}/deferred-findings/{filename}
   ```
 
-The `wrap-ups/` directory name is hardcoded; do not consult `artifact_paths` for it.
+The `deferred-findings/` directory name is hardcoded; do not consult `artifact_paths` for it.
 
-Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_wrap-up.md` (standard ticket-level shape; see [save-artifact](../save-artifact/SKILL.md#filename-formats)). Derive the slug per [save-artifact's slug generation rules](../save-artifact/SKILL.md#slug-generation). For non-ticket sessions where the branch description is empty, use the literal `wrap-up` as the slug.
+Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_deferred-findings.md` (standard ticket-level shape; see [save-artifact](../save-artifact/SKILL.md#filename-formats)). Derive the slug per [save-artifact's slug generation rules](../save-artifact/SKILL.md#slug-generation). For non-ticket sessions where the branch description is empty, use the literal `deferred-findings` as the slug.
 
 `mkdir -p` the target directory before writing.
 
@@ -304,7 +304,7 @@ Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_wrap-up.md` (standard ticket-level shape; s
 
 Prepend YAML frontmatter, then the markdown body.
 
-**Frontmatter** — see [Wrap-up frontmatter](../_data/artifact-conventions.md#wrap-up-frontmatter) for the field reference. Generation rules:
+**Frontmatter** — see [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the field reference. Generation rules:
 
 - `provenance.skill`: always `wrap-up`
 - `provenance.timestamp`: current UTC time in ISO 8601 format
@@ -322,7 +322,7 @@ Prepend YAML frontmatter, then the markdown body.
 **Body** — emit only sections relevant to "what remains to be done":
 
 ```markdown
-# Wrap-up: {Concise session description}
+# Deferred findings: {Concise session description}
 
 ## Outstanding
 
@@ -357,14 +357,14 @@ Omit any body section that has no items. Insights, applied quick fixes, and devl
 ### Devlog
 - {artifact path}
 
-### Wrap-up artifact
+### Deferred findings
 - {path}
 
 ### Skipped
 - {item-ID}: {reason}
 ```
 
-Omit empty sections (including "Wrap-up artifact" when Step 1 produced no artifact). Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
+Omit empty sections (including "Deferred findings" when Step 1 produced no artifact). Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
 
 ### Phase 5: PR prompt
 
