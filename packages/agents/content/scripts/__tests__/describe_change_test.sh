@@ -3,7 +3,7 @@
 # Source the script under test (main guard prevents execution).
 Include "$PROJECT_ROOT/content/scripts/describe-change.sh"
 
-Describe "parse_prefix"
+Describe "parse_title_format"
 setup_tmpdir() {
   tmpdir=$(mktemp -d)
 }
@@ -24,7 +24,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:{scope}|{type}: {title}"
@@ -39,14 +39,14 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal ""
 End
 
 It "returns nothing when file does not exist"
-When call parse_prefix "$tmpdir/nonexistent.yaml" "commit"
+When call parse_title_format "$tmpdir/nonexistent.yaml" "commit"
 The output should equal ""
 End
 
@@ -59,7 +59,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:"
@@ -74,7 +74,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:{type}({scope}): {title}"
@@ -89,7 +89,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:{scope}|{type}: {title}"
@@ -101,7 +101,7 @@ write_yaml() {
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:{type}: {title}"
@@ -116,7 +116,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:{scope}|{type}: {title}"
@@ -131,7 +131,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:"
@@ -150,7 +150,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "ticket"
+  parse_title_format "$tmpdir/prefs.yaml" "ticket"
 }
 When call test_parse
 The output should equal "FOUND:{title}"
@@ -167,7 +167,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "merge_commit"
+  parse_title_format "$tmpdir/prefs.yaml" "merge_commit"
 }
 When call test_parse
 The output should equal "FOUND:[{ticket_ref} ]{title}[ (#{pr_number})]"
@@ -184,7 +184,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "commit"
+  parse_title_format "$tmpdir/prefs.yaml" "commit"
 }
 When call test_parse
 The output should equal "FOUND:{type}: {title}"
@@ -199,7 +199,7 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "merge_commit"
+  parse_title_format "$tmpdir/prefs.yaml" "merge_commit"
 }
 When call test_parse
 The output should equal "FOUND:{title} (#{pr_number})"
@@ -214,14 +214,14 @@ YAML
 }
 test_parse() {
   write_yaml
-  parse_prefix "$tmpdir/prefs.yaml" "merge_commit"
+  parse_title_format "$tmpdir/prefs.yaml" "merge_commit"
 }
 When call test_parse
 The output should equal "FOUND:{title} (#{pr_number})"
 End
 End
 
-Describe "resolve_prefix"
+Describe "resolve_title_format"
 setup_tmpdir() {
   tmpdir=$(mktemp -d)
   # Override HOME and working directory to isolate preference resolution.
@@ -243,7 +243,7 @@ BeforeEach "setup_tmpdir"
 AfterEach "cleanup_tmpdir"
 
 It "returns empty when no preferences files exist"
-When call resolve_prefix "commit"
+When call resolve_title_format "commit"
 The output should equal ""
 End
 
@@ -256,7 +256,7 @@ YAML
 }
 test_resolve() {
   write_global
-  resolve_prefix "commit"
+  resolve_title_format "commit"
 }
 When call test_resolve
 The output should equal "{type}({scope}): {title}"
@@ -275,7 +275,7 @@ YAML
 }
 test_resolve() {
   write_both
-  resolve_prefix "commit"
+  resolve_title_format "commit"
 }
 When call test_resolve
 The output should equal "project-template"
@@ -294,7 +294,7 @@ YAML
 }
 test_resolve() {
   write_both
-  resolve_prefix "commit"
+  resolve_title_format "commit"
 }
 When call test_resolve
 The output should equal ""
