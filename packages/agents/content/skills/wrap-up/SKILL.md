@@ -296,7 +296,7 @@ Write a `deferred-findings` artifact capturing items that remain to be done. The
 
 ##### When to write
 
-Write the artifact if and only if at least one finding became a created ticket in Phase 3. The artifact's purpose is to cross-reference the wrap-up's findings to the tickets created from them, so that the developer can return to a single record and answer "what was deferred from this session, and where is it tracked?"
+Write the artifact if and only if at least one finding became a created ticket in Phase 3.
 
 Drive-by fixes that were applied in Phase 2a do not count — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded. Findings that the user routed to "Drop findings" do not count — dropping is an explicit user act that closes the finding rather than deferring it. The agent never treats menu omission as closure; every finding is routed by an explicit action (see [response parsing](#response-parsing)).
 

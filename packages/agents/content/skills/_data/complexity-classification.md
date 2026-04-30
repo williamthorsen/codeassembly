@@ -54,4 +54,4 @@ When characteristics span two levels, prefer the higher level. This is consisten
 
 Consumers above level 2 should use the level descriptions to inform their own routing logic rather than mapping mechanically to a single threshold.
 
-The complexity rubric and the [ticket-creation-cost](ticket-creation-cost.md) model compose: complexity drives orchestration-routing decisions (which skill picks the work up next), while ticket-creation-cost drives ticket-creation decisions (whether the work needs its own ticket at all). A level-1–2 finding can ship as a drive-by today; a level-3+ finding generally warrants a separate ticket but may join a batch when several share scope.
+The complexity rubric and the [ticket-creation-cost](ticket-creation-cost.md) model compose: complexity drives orchestration-routing decisions (which skill picks the work up next), while ticket-creation-cost drives ticket-creation decisions (whether the work needs its own ticket at all).
