@@ -43,13 +43,12 @@ Classify the complexity of a task, finding, or change to determine how it should
 
 Each consuming skill defines its own threshold against this rubric. The threshold indicates which levels qualify for the consumer's "simple enough" decision.
 
-| Consumer                           | Threshold | Decision                                                                       |
-| ---------------------------------- | --------- | ------------------------------------------------------------------------------ |
-| `wrap-up` drive-by pass            | 1–2       | Apply immediately on the current branch; skip ticket creation                  |
-| `next-steps-after-plan`            | 1–2       | Recommend "implement directly" (no orchestration needed)                       |
-| `next-steps-after-review`          | 1–2       | Recommend "implement directly" (findings are simple enough to fix)             |
-| `orchestrated-architect` (planned) | 1–2       | Classify as `none`/`low` impact (minimal architectural guidance)               |
-| `ticket-creation-cost`             | 1–2 vs 3+ | Route into the cost-aware three-lane model (do now / batch later / new ticket) |
+| Consumer                           | Threshold | Decision                                                           |
+| ---------------------------------- | --------- | ------------------------------------------------------------------ |
+| `wrap-up` drive-by pass            | 1–2       | Apply immediately on the current branch; skip ticket creation      |
+| `next-steps-after-plan`            | 1–2       | Recommend "implement directly" (no orchestration needed)           |
+| `next-steps-after-review`          | 1–2       | Recommend "implement directly" (findings are simple enough to fix) |
+| `orchestrated-architect` (planned) | 1–2       | Classify as `none`/`low` impact (minimal architectural guidance)   |
 
 When characteristics span two levels, prefer the higher level. This is consistent with the "when uncertain, recommend the more thorough option" pattern used by consuming skills.
 

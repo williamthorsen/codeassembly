@@ -226,11 +226,14 @@ The actions menu is built dynamically based on which sections are populated:
 | ------------------------------- | ------------------------------------------ | ------------------ |
 | Batch tickets for findings      | Findings section has ≥2 items              | `/create-ticket`   |
 | Create tickets for findings     | Findings section non-empty                 | `/create-ticket`   |
+| Drop findings                   | Findings section non-empty                 | (no-op)            |
 | Create tickets for legacy items | Legacy section non-empty                   | `/create-ticket`   |
 | Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment` |
 | Save session devlog             | Always (unless trivial)                    | `/create-devlog`   |
 
 **Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives — only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. Both actions implement the **batch later** and **separate ticket** lanes from [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md).
+
+**Dropping findings.** The "Drop findings" action is the explicit close-without-tracking lane. Use it when a finding has been considered and the user has decided it does not need a ticket. The action is a no-op (no ticket is created, no artifact entry is written) but it converts the user's intent into a deliberate, recorded choice rather than a menu omission. Every finding listed in the inventory must be routed by an explicit action — either ticketed (batched or per-item) or dropped. If the user's response leaves any finding unrouted, surface the orphans and ask before proceeding to Phase 3 (see [response parsing](#response-parsing)).
 
 **Insight routing.** Each insight's destination determines where it appears in the action menu. Insights destined for `ticket comment` become part of the "Post insights to ticket" action — this action is independent and posts directly via `gh issue comment`. Insights destined for `devlog` are folded into the "Save session devlog" action and included automatically in the devlog content. This means devlog-bound insights only appear if the devlog action is selected, which is the correct dependency.
 
@@ -264,15 +267,18 @@ The user may respond with:
 
 If the response is ambiguous, ask for clarification before executing.
 
+**Routing every finding.** Before invoking Phase 3, verify that every finding listed in the inventory is covered by an action the user selected — either a ticket-creation action (batch or per-item) or "Drop findings". If any finding is unrouted, surface the orphans by ID and ask the user to confirm whether to ticket or drop them. Do not silently close findings on menu omission.
+
 #### Execution order
 
 Process confirmed actions in this order:
 
 1. **Batch tickets for findings** — invoke `/create-ticket` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives — execute whichever the user selected, not both.
 2. **Tickets for findings** — invoke `/create-ticket` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
-3. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
-4. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from `get-session-context`). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
-5. **Save session devlog** — invoke `/create-devlog`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
+3. **Drop findings** — no tool is invoked. Record the dropped item IDs so they appear in the Phase 4 results report under "Skipped" and so the deferred-findings artifact (if written for other reasons) excludes them. Dropping is a deliberate, user-initiated close — the agent never drops findings on its own.
+4. **Tickets for legacy items** — invoke `/create-ticket` once per item. Label as technical debt or the appropriate category.
+5. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from `get-session-context`). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
+6. **Save session devlog** — invoke `/create-devlog`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 **Between each action**, briefly report the result (ticket URL, artifact path) before proceeding to the next.
 
@@ -292,7 +298,7 @@ Write a `deferred-findings` artifact capturing items that remain to be done. The
 
 Write the artifact if and only if at least one finding became a created ticket in Phase 3. The artifact's purpose is to cross-reference the wrap-up's findings to the tickets created from them, so that the developer can return to a single record and answer "what was deferred from this session, and where is it tracked?"
 
-Drive-by fixes that were applied in Phase 2a do not count — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded. Findings that the user explicitly dropped from the action menu do not count — by dropping them, the user closed them, not deferred them.
+Drive-by fixes that were applied in Phase 2a do not count — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded. Findings that the user routed to "Drop findings" do not count — dropping is an explicit user act that closes the finding rather than deferring it. The agent never treats menu omission as closure; every finding is routed by an explicit action (see [response parsing](#response-parsing)).
 
 If no ticket was created in Phase 3, skip writing entirely. Do not produce an empty artifact.
 
