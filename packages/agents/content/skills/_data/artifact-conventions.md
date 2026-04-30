@@ -18,6 +18,8 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/a
         │           └── ...
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md
+        ├── deferred-findings/
+        │   └── {timestamp}_{slug}_deferred-findings.md      ← project-scoped fallback when no ticket is in session
         ├── devlogs/
         │   └── {timestamp}_{concise-title}.md               ← project-scoped fallback when no ticket is in session
         └── plans/
@@ -83,15 +85,16 @@ Ticket-level artifacts and run directories both live here. Use `get-session-cont
 
 ### Non-ticket paths
 
-| Category | Default path | Full default                                  |
-| -------- | ------------ | --------------------------------------------- |
-| chats    | `chats`      | `{base_dir}/projects/{project-slug}/chats/`   |
-| devlogs  | `devlogs`    | `{base_dir}/projects/{project-slug}/devlogs/` |
-| plans    | `plans`      | `{base_dir}/projects/{project-slug}/plans/`   |
+| Category          | Default path        | Full default                                            |
+| ----------------- | ------------------- | ------------------------------------------------------- |
+| chats             | `chats`             | `{base_dir}/projects/{project-slug}/chats/`             |
+| deferred-findings | `deferred-findings` | `{base_dir}/projects/{project-slug}/deferred-findings/` |
+| devlogs           | `devlogs`           | `{base_dir}/projects/{project-slug}/devlogs/`           |
+| plans             | `plans`             | `{base_dir}/projects/{project-slug}/plans/`             |
 
-Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml.
+Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `deferred-findings` is hardcoded and cannot be overridden.
 
-Devlogs are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped `devlogs/` path above. Project-scoped fallback devlog filenames retain the legacy `YYYYMMDD-HHMMZ` (no seconds) timestamp prefix for backward compatibility with pre-existing artifacts at that path; ticket-scoped devlogs use the standard `YYYYMMDD-HHMMSSZ` ticket-level shape.
+Devlogs and deferred-findings artifacts are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
 
 ## Naming conventions
 
@@ -186,6 +189,49 @@ commits: [<sha>, ...] # omit for working-tree devlogs
 | `run_id`                   | no       | The orchestrated run ID. Present only when `/create-devlog` is invoked with `--run-id` (typically by `/wrap-up` for orchestrated runs).   |
 | `branch`                   | yes      | Current branch name from session context.                                                                                                 |
 | `commits`                  | no       | List of short SHAs the devlog summarizes. Omitted for `working-tree` invocations; otherwise a single SHA or N SHAs depending on argument. |
+
+## Deferred-findings frontmatter
+
+Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, item counts, and a structured index of outstanding work and created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types.
+
+```yaml
+---
+provenance:
+  skill: wrap-up
+  timestamp: <ISO 8601 UTC>
+  baseSha: <short SHA of origin/main> # omit if unresolvable
+  isInteractive: true
+ticket_id: <id> # omit when no ticket is in session
+run_id: <run id> # omit when not invoked from an orchestrated session
+branch: <branch name>
+session_type: <orchestrated | interactive-dev | review | research>
+counts:
+  outstanding: <n> # findings skipped without follow-up
+  ticketed: <n> # findings deferred to a created ticket
+tickets_created: # omit if empty
+  - id: '<number>'
+    item: F1
+outstanding_items: # omit if empty
+  - id: T1
+    prefix: todo
+    summary: <one-line>
+---
+```
+
+| Field                      | Required | Description                                                                                                                                  |
+| -------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                            |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                     |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                |
+| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                        |
+| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                    |
+| `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).      |
+| `branch`                   | yes      | Current branch name from session context.                                                                                                    |
+| `session_type`             | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                             |
+| `counts.outstanding`       | yes      | Count of findings skipped from the action menu without follow-up.                                                                            |
+| `counts.ticketed`          | yes      | Count of findings that became GitHub tickets.                                                                                                |
+| `tickets_created`          | no       | List of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses (e.g., F1, T2). Omitted when empty.     |
+| `outstanding_items`        | no       | Compact index of skipped findings — `{id, prefix, summary}` per item. Enables cross-session discovery of "what remains to be done" via grep. |
 
 ## run-index.json
 
@@ -590,6 +636,7 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
+- `deferred-findings` — Record of findings deferred during a `/wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 
 ### Non-ticket artifacts
 

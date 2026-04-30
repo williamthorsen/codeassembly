@@ -25,10 +25,10 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 5. **Save** as ticket-level artifact:
 
    ```
-   {YYYYMMDD-HHMMZ}_{slug}_plan.md
+   {YYYYMMDD-HHMMSSZ}_{slug}_plan.md
    ```
 
-   Example: `20260226-1430Z_oauth2-migration_plan.md`
+   Example: `20260226-143000Z_oauth2-migration_plan.md`
 
    `mkdir -p` the target directory before writing.
 

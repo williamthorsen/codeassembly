@@ -50,7 +50,7 @@ Check these signals in order to classify the session:
 
 Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
 
-When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename — that is the latest run. Phase 3 passes this `run_id` through to `/create-devlog` as `--run-id`, so the devlog frontmatter can link back to the run that produced the work.
+When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename — that is the latest run. Phase 3 passes this `run_id` through to `/create-devlog` as `--run-id`, and Phase 4 records it in the deferred-findings artifact frontmatter, so both artifacts can link back to the run that produced the work.
 
 #### 1b. Scan for deferred items
 
@@ -261,7 +261,88 @@ Before creating a ticket, check if an issue with a similar title already exists:
 
 ### Phase 4: Results
 
-After all actions are processed, present a concise report:
+After all actions are processed, persist a record of deferred work and present a concise conversation report.
+
+#### Step 1: Persist deferred record
+
+Write a `deferred-findings` artifact capturing items that remain to be done. The artifact is the single record a developer can return to that answers "what was deferred from this session?"
+
+##### When to write
+
+Write the artifact if and only if at least one finding was deferred:
+
+- A finding became a created ticket in Phase 3 (deferred with tracking), OR
+- A finding was skipped from the action menu (deferred without tracking).
+
+Quick fixes that were applied in Phase 2a do not count — they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count — they have already been recorded.
+
+If neither condition holds, skip writing entirely. Do not produce an empty artifact.
+
+##### Where to write
+
+Resolve the artifact path:
+
+- **Ticket-scoped** (when `ticket_id` from session context is non-null):
+
+  ```
+  {artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/{filename}
+  ```
+
+- **Project-scoped fallback** (when `ticket_id` is null):
+
+  ```
+  {artifact_base_dir}/projects/{project_slug}/deferred-findings/{filename}
+  ```
+
+The `deferred-findings/` directory name is hardcoded; do not consult `artifact_paths` for it.
+
+Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_deferred-findings.md` (standard ticket-level shape; see [save-artifact](../save-artifact/SKILL.md#filename-formats)). Derive the slug per [save-artifact's slug generation rules](../save-artifact/SKILL.md#slug-generation). For non-ticket sessions where the branch description is empty, use the literal `deferred-findings` as the slug.
+
+`mkdir -p` the target directory before writing.
+
+##### What to write
+
+Prepend YAML frontmatter, then the markdown body.
+
+**Frontmatter** — see [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the field reference. Generation rules:
+
+- `provenance.skill`: always `wrap-up`
+- `provenance.timestamp`: current UTC time in ISO 8601 format
+- `provenance.baseSha`: run `git rev-parse --short origin/main`. Omit the field if the command fails.
+- `provenance.isInteractive`: always `true`
+- `ticket_id`: emit only when non-null in session context
+- `run_id`: emit only when wrap-up was invoked from an orchestrated session — reuse the value Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3)
+- `branch`: from session context
+- `session_type`: the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`)
+- `counts.outstanding`: count of skipped findings
+- `counts.ticketed`: count of findings that became created tickets in Phase 3
+- `tickets_created`: list of `{id, item}` pairs cross-referencing each created ticket to the wrap-up item ID it addresses. Omit when empty.
+- `outstanding_items`: list of `{id, prefix, summary}` for each skipped finding. Summary is a one-line distillation. Omit when empty.
+
+**Body** — emit only sections relevant to "what remains to be done":
+
+```markdown
+# Deferred findings: {Concise session description}
+
+## Outstanding
+
+{prefix} {ID} {description}
+_source: {origin}_
+
+{prefix} {ID} {description}
+_source: {origin}_
+
+## Tickets created
+
+- #{number}: addresses {prefix} {item-ID} — {ticket title}
+- #{number}: addresses {prefix} {item-ID} — {ticket title}
+```
+
+Render the "Outstanding" section from the same in-memory inventory the conversation report uses (Step 2 below) — do not re-derive from conversation, so the artifact and the report cannot drift.
+
+Omit any body section that has no items. Insights, applied quick fixes, and devlog references do not appear in the body.
+
+#### Step 2: Present report
 
 ```
 ## Wrap-up complete
@@ -276,11 +357,14 @@ After all actions are processed, present a concise report:
 ### Devlog
 - {artifact path}
 
+### Deferred findings
+- {path}
+
 ### Skipped
 - {item-ID}: {reason}
 ```
 
-Omit empty sections. Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
+Omit empty sections (including "Deferred findings" when Step 1 produced no artifact). Use the item's original ID (F1, L1, I2) so the developer can cross-reference with the inventory.
 
 ### Phase 5: PR prompt
 

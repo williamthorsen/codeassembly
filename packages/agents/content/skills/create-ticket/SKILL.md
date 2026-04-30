@@ -138,12 +138,12 @@ Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_i
 Save the ticket as a ticket-level artifact:
 
 ```
-{YYYYMMDD-HHMMZ}_{slug}_ticket.md
+{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md
 ```
 
 The ticket artifact heading should include the ticket reference: `# {ticket_ref}: {title}`. On a GitHub-style project (`ticket_ref_prefix: '#'`) with issue number `461`, this renders as `# #461: {title}`.
 
-Example: `20260226-2130Z_role-type-architecture_ticket.md`
+Example: `20260226-213000Z_role-type-architecture_ticket.md`
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
@@ -152,7 +152,7 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 If a plan exists in conversation context, save it as a ticket-scoped artifact in the same directory:
 
 ```
-{YYYYMMDD-HHMMZ}_{slug}_plan.md
+{YYYYMMDD-HHMMSSZ}_{slug}_plan.md
 ```
 
 Then attach it as a comment on the remote issue. Write the comment body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern — do not inline the comment into the shell command:
