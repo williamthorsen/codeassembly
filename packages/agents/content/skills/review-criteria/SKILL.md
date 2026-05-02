@@ -35,73 +35,9 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 Focus findings (F/W/T) only on code authored in the current change — observations in pre-existing code belong in Legacy (suffix `-L`).
 
-## Finding scheme (F/W/T/R/S + legacy suffix)
+## Finding scheme
 
-Used by review-producing skills and agents for structured code review findings. Also documented in [artifact conventions](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for human reference. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
-
-| ID                 | Category       | Criticality | Merge-blocking?            |
-| ------------------ | -------------- | ----------- | -------------------------- |
-| `F{n}`             | FIXME          | `high`      | Always                     |
-| `W{n}`             | Warning        | `medium`    | Unless justified           |
-| `T{n}`             | TODO           | `low`       | Never (ticket if deferred) |
-| `R{n}`             | Recommendation | `low`       | Never (note if deferred)   |
-| `S{n}`             | Suggestion     | `none`      | Never (piggyback only)     |
-| `{F,W,T,R,S}{n}-L` | Legacy         | excluded    | Never                      |
-
-### Category criteria
-
-**FIXME (F)** — must fix before merge:
-
-- Bugs: incorrect logic, unhandled error paths, data loss risks
-- Security: injection, auth bypass, exposed secrets
-- Contract violations: breaking API changes, type unsafety
-- Test failures: tests that don't pass or don't test what they claim
-
-**Warning (W)** — questionable, may block merge:
-
-- Missing edge case handling that could cause runtime errors
-- Convention violations that affect maintainability
-- Decisions that seem wrong but may be intentional (require justification)
-- **Gate:** A warning must reflect a judgment call by the author, not a mechanical oversight. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning — classify as Suggestion at most.
-
-**TODO (T)** — should fix, not in this PR:
-
-- Missing or inadequate tests for new functionality
-- Performance issues with measurable impact
-- Incomplete error handling that won't cause immediate failures
-
-**Recommendation (R)** — advisable but discretionary:
-
-- Better patterns available in the codebase
-- Opportunities to reduce complexity
-- Architectural improvements worth considering
-
-**Suggestion (S)** — optional improvement:
-
-- Better naming or code organization
-- Additional test cases for edge cases
-- Documentation improvements
-
-**Legacy (-L suffix)** — pre-existing code observation:
-
-- Issues in code not authored in this branch — use the same severity letter as the equivalent author finding plus a `-L` suffix
-- Legacy findings share the numbering sequence with author findings of the same severity letter. Example: if a review has `F1`, `F2` (author findings), the first legacy FIXME is `F3-L`
-- Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
-- Frame as future opportunities, not current defects
-- Never count against the review score
-
-### Overall criticality mapping
-
-| Highest finding present    | Criticality | Meaning                    |
-| -------------------------- | ----------- | -------------------------- |
-| None, only S, or only `-L` | `none`      | No actionable findings     |
-| T and/or R (no W/F)        | `low`       | Deferrable items available |
-| W (no F)                   | `medium`    | Real issues to address     |
-| F                          | `high`      | Must fix before merge      |
-
-### Re-review severity escalation
-
-`S → R → T → W → F`. Legacy (`-L`) findings are never escalated.
+Findings use the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) — see that section for the table, category criteria, criticality mapping, and re-review escalation chain.
 
 ## PR comment format
 
