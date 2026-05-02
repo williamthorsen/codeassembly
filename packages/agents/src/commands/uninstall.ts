@@ -48,7 +48,7 @@ export async function uninstallCommand(
       }
 
       if (drift === 'modified' && !options.force) {
-        console.warn(`  Skipping modified file: ${entry.relativePath}`);
+        console.warn(`  ⚠️ Skipping modified file: ${entry.relativePath}`);
         skippedEntries.push(entry);
         continue;
       }
@@ -69,7 +69,7 @@ export async function uninstallCommand(
       };
     }
 
-    console.info(`  Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
+    console.info(`  ✅ Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
   }
 
   const updatedManifest: AgentsManifest = {
@@ -110,7 +110,7 @@ async function uninstallSharedGuidance(
     }
 
     if (drift === 'modified' && !options.force) {
-      console.warn(`  Skipping modified file: ~/.agents/${entry.relativePath}`);
+      console.warn(`  ⚠️ Skipping modified file: ~/.agents/${entry.relativePath}`);
       skippedEntries.push(entry);
       continue;
     }
@@ -120,7 +120,7 @@ async function uninstallSharedGuidance(
     removedCount++;
   }
 
-  console.info(`  Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
+  console.info(`  ✅ Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
 
   // Retain shared manifest only with the entries that were skipped
   if (skippedEntries.length > 0) {

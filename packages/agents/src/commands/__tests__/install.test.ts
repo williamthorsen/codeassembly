@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import yaml from 'js-yaml';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.js';
 import { readManifest } from '../../lib/manifest.js';
@@ -128,6 +128,34 @@ describe('installCommand', () => {
     // Modified file should be preserved (not overwritten)
     const afterReinstall = await readFile(agentPath, 'utf8');
     expect(afterReinstall).toBe(modifiedContent);
+  });
+
+  it('should prefix warn lines with ⚠️ and success summary lines with ✅', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    // First install to establish manifest, then modify a subagent so the next install emits a skip warning
+    await installCommand(makeOptions(), tempDir);
+    const agentPath = path.join(claudeHome, 'agents', 'orchestrated-coder.md');
+    const originalContent = await readFile(agentPath, 'utf8');
+    await writeFile(agentPath, `${originalContent}\n<!-- user modification -->\n`, 'utf8');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let warnLines: ReadonlyArray<string>;
+    let infoLines: ReadonlyArray<string>;
+    try {
+      await installCommand(makeOptions(), tempDir);
+      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
+      infoLines = infoSpy.mock.calls.map((call) => String(call[0]));
+    } finally {
+      warnSpy.mockRestore();
+      infoSpy.mockRestore();
+    }
+
+    expect(warnLines.some((line) => line.includes('⚠️ Skipping modified'))).toBe(true);
+    expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
   });
 
   it('should overwrite modified subagent files on re-install with --force', async () => {
