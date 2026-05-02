@@ -97,19 +97,21 @@ For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or 
 
 For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none` — `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
 
+Example invocation (shown for `strategy=squash`, `deletion_strategy=both` — `--delete-branch` is included **only** when `deletion_strategy == 'both'`):
+
 ```bash
 gh pr merge {pr_number} \
   --squash \
   --subject "{title}" \
   --body-file "$body_path" \
-  --delete-branch
+  --delete-branch  # only when deletion_strategy == 'both'
 ```
 
 If `gh pr merge` exits non-zero, surface its stderr to the user and exit non-zero. Do not retry, do not bypass with `--admin`.
 
 ### 6. Delete remote branch (when deletion_strategy is `remote`)
 
-Skip this step entirely when `deletion_strategy != 'remote'`. For `both`, the previous step's `--delete-branch` already handled it; for `none`, no deletion is requested.
+Skip this step entirely when `deletion_strategy` is not `remote` — `both` is handled by step 5's `--delete-branch`, and `none` requests no deletion.
 
 When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch — for same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it lives on the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
 
