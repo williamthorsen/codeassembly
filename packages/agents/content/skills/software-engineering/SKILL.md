@@ -22,7 +22,7 @@ Follow established software engineering best practices:
 
 ## Design evaluation
 
-When ranking design options, weight architectural and API merit decisively over effort, blast radius, and legacy consistency. See [design priorities](../_data/design-priorities.md).
+Rank design options on correctness — behavior, API quality, architectural soundness, testability, maintainability — and treat convenience considerations (effort, blast radius, consistency with existing code) as secondary. See [design priorities](../_data/design-priorities.md).
 
 ## Component API design
 

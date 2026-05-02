@@ -17,7 +17,7 @@ Render markers as plain text, never inside backticks — backticks shrink the gl
 
 ## Ranking criteria
 
-Rank design options by architectural and API merit; treat effort, blast radius, and legacy consistency as secondary context. The architecturally cleaner option carries the higher marker unless its advantage is genuinely marginal. See [design priorities](./design-priorities.md) for the full rule and a before/after example.
+Rank options on correctness — behavior, API quality, architectural soundness, testability, maintainability — and treat convenience considerations (effort, blast radius, consistency with existing code) as secondary. See [design priorities](./design-priorities.md) for the full rule and a before/after example.
 
 ## Format
 

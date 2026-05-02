@@ -1,33 +1,31 @@
 # Design priorities
 
-Rank design options by architectural and API merit; treat effort, blast radius, and legacy consistency as secondary context.
+Prioritize the right decision over the most convenient one.
 
 ## The principle
 
-When weighing design options, the **durable** properties of the system are decisive:
+Design options have two kinds of properties.
 
-- API quality and clarity of contracts
-- Architectural soundness — modularity, composability, separation of concerns
-- Single-responsibility principle and SOLID compliance
-- Testability
+**Correctness — what makes the design right:**
 
-The **secondary** properties — temporary or contingent — are not:
+- Behavioral correctness — does it produce the right results across the cases that matter?
+- API quality — clear contracts, expressive interfaces, sensible boundaries
+- Architectural soundness — modularity, separation of concerns, single responsibility, composability, SOLID
+- Testability — the design can be verified in isolation
+- Maintainability — the design holds up over time; clarity and evolvability under future requirements
 
-- Level of effort (lines changed, files touched)
-- Blast radius (number of callers updated, downstream tests requiring fixes)
-- Consistency with legacy code or pre-existing patterns
-- Avoidance of scope creep within the current task
+**Convenience — what makes the change easy now:**
+
+- Level of effort — diff size, lines changed, files touched
+- Blast radius — downstream callers, tests, or consumers requiring updates
+- Consistency with existing code — matching pre-existing patterns to avoid divergence
+- Scope minimization — leaving adjacent issues unaddressed because they weren't in the ticket
+
+Correctness ranks options. Convenience is secondary — a tiebreaker among correctness-equivalent options at most. If one option is correctness-superior, recommend it even when it is more work, touches more files, or diverges from surrounding code.
 
 ## Why
 
-The durable properties shape what it costs to live with the system over its remaining life. A clean API can be evolved; a tangled one accumulates patches around its tangle. The secondary properties are paid once, at the moment of change. Recommending the worse-architected option because the better one is more work biases the codebase toward decisions that are easy to make but hard to live with.
-
-## How to apply
-
-- The architecturally cleaner option ranks higher unless its advantage is genuinely marginal.
-- Effort, blast radius, and legacy consistency may appear as **secondary context** ("worth knowing the cost"), never as the **primary reason** to prefer one option over another.
-- If the better-architected option is more work, recommend it anyway and say so in the rationale. Do not down-rank it for being more work.
-- "It matches the surrounding code" is a legacy-consistency reason, not an architectural one. Use it only when surrounding code is itself well-architected.
+Correctness shapes what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience is paid once, at the moment of change.
 
 ## Before / after
 
@@ -36,22 +34,22 @@ A typical decision: a feature needs a new validation step. Two options:
 A. Add the validation as a method on the existing god-class that already owns adjacent concerns.
 B. Extract a small dedicated module with a narrow interface and inject it.
 
-**Effort-led ranking** (don't do this):
+**Convenience-led ranking** (don't do this):
 
 ```
 1. ■■■ Extend the god-class: ➕ minimal diff; ➕ no new files; ➕ matches surrounding code.
 2. ■□□ Extract a module: ➖ more files; ➖ touches injection sites.
 ```
 
-**API-led ranking** (do this):
+**Correctness-led ranking** (do this):
 
 ```
 1. ■■■ Extract a module: ➕ narrow interface; ➕ testable in isolation; ➕ untangles concerns the god-class already conflates.
-2. □□□ Extend the god-class: ➖ deepens an existing SRP violation; effort gain is one-off, complexity cost compounds.
+2. □□□ Extend the god-class: ➖ deepens an existing SRP violation; convenience gain is one-off, complexity cost compounds.
 ```
 
-The factual lists about each option are similar; the **ranking** flips because the criteria changed. The secondary considerations (diff size, file count) move to the cons of the over-coupled option, where they belong.
+The factual lists about each option are similar; the **ranking** flips because the criteria changed.
 
 ## Reconciliation
 
-This rule reinforces "push back on questionable legacy" — the guidance to examine, not preserve, carve-outs labelled "for backward compatibility" or "matches existing convention" when no concrete consumer would break under normalization. Both rules push the same direction: do not let temporary costs (effort, legacy consistency) outrank durable properties (architecture, API quality).
+This rule reinforces "push back on questionable legacy" — the guidance to examine, not preserve, carve-outs labelled "for backward compatibility" or "matches existing convention" when no concrete consumer would break under normalization.
