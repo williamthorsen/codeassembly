@@ -131,7 +131,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
       installedAt: new Date().toISOString(),
       entries,
     };
-    console.info(`  Installed ${entries.length} items for ${platformId}`);
+    console.info(`  ✅ Installed ${entries.length} items for ${platformId}`);
   }
 
   if (!options.dryRun) {
@@ -196,7 +196,9 @@ async function installSkills(
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(`  Warning: no platform-specific skills directory found for ${platformId}: ${platformSkillsSrcDir}`);
+    console.warn(
+      `  ⚠️ Warning: no platform-specific skills directory found for ${platformId}: ${platformSkillsSrcDir}`,
+    );
     platformDirEntries = [];
   }
 
@@ -250,7 +252,7 @@ async function installSkillEntry(
   if (existingEntry && !options.force) {
     const drift = await detectDrift(existingEntry, platformHome);
     if (drift === 'modified') {
-      console.warn(`  Skipping modified item: ${relativePath}`);
+      console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
       return existingEntry;
     }
   }
@@ -329,7 +331,7 @@ async function installSubagents(
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, platformPaths.platformHome);
       if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ${relativePath}`);
+        console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
         entries.push(existingEntry);
         continue;
       }
@@ -385,7 +387,7 @@ async function generatePromptsYml(
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(`  Warning: skills directory not found, skipping prompts.yml generation: ${paths.skillsDir}`);
+    console.warn(`  ⚠️ Warning: skills directory not found, skipping prompts.yml generation: ${paths.skillsDir}`);
     return undefined;
   }
 
@@ -458,7 +460,7 @@ async function generatePromptsYml(
   if (existingEntry && !options.force) {
     const drift = await detectDrift(existingEntry, paths.platformHome);
     if (drift === 'modified') {
-      console.warn(`  Skipping modified item: ${relativePath}`);
+      console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
       return existingEntry;
     }
   }
@@ -500,7 +502,7 @@ async function installScripts(
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(`  Warning: no scripts directory found at ${scriptsSrcDir}, skipping script installation`);
+    console.warn(`  ⚠️ Warning: no scripts directory found at ${scriptsSrcDir}, skipping script installation`);
     return [];
   }
 
@@ -533,7 +535,7 @@ async function installScripts(
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, platformHome);
       if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ${relativePath}`);
+        console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
         entries.push(existingEntry);
         continue;
       }
@@ -577,7 +579,7 @@ async function installSharedGuidance(
       throw error;
     }
     console.warn(
-      `  Warning: no shared guidance directory found at ${sharedSrcDir}, skipping shared guidance installation`,
+      `  ⚠️ Warning: no shared guidance directory found at ${sharedSrcDir}, skipping shared guidance installation`,
     );
     return undefined;
   }
@@ -613,7 +615,7 @@ async function installSharedGuidance(
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, sharedHome);
       if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ~/.agents/${entry}`);
+        console.warn(`  ⚠️ Skipping modified item: ~/.agents/${entry}`);
         entries.push(existingEntry);
         continue;
       }
@@ -641,7 +643,7 @@ async function installSharedGuidance(
     return undefined;
   }
 
-  console.info(`  Installed ${entries.length} shared guidance items`);
+  console.info(`  ✅ Installed ${entries.length} shared guidance items`);
 
   return {
     version: '0.1.0',
@@ -673,7 +675,7 @@ async function installPlatformGuidance(
       throw error;
     }
     console.warn(
-      `  Warning: no platform guidance directory found at ${guidanceSrcDir}, skipping platform guidance installation`,
+      `  ⚠️ Warning: no platform guidance directory found at ${guidanceSrcDir}, skipping platform guidance installation`,
     );
     return [];
   }
@@ -699,7 +701,7 @@ async function installPlatformGuidance(
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, platformPaths.platformHome);
       if (drift === 'modified') {
-        console.warn(`  Skipping modified item: ${platformConfig.homeDir}/${entry}`);
+        console.warn(`  ⚠️ Skipping modified item: ${platformConfig.homeDir}/${entry}`);
         entries.push(existingEntry);
         continue;
       }
