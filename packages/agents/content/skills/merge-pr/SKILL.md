@@ -70,6 +70,8 @@ git log {default_branch}..HEAD --format=%s
 
 Parse each subject line for the conventional `[scope|type: ]` prefix. Tally distinct values for each dimension; pick the dominant value when one accounts for the strict majority. Otherwise return no dominant value.
 
+Strip a leading `{ticket_ref} ` token before matching `[scope|type: ]` — some projects include the ticket reference in their `commit.title_format` (e.g., `'[{ticket_ref} ][{scope}|{type}: ]{title}'`), in which case the scope/type prefix appears after the ticket-ref token rather than at the start of the subject.
+
 If both reverse-lookup and commit-majority leave the dimension unresolved (or yield more than one candidate), mark it `AMBIGUOUS` and resolve at the approval gate.
 
 ### 4. Resolve strategy and delete-branch
@@ -114,7 +116,7 @@ Extract from the PR body (already in scope from step 2):
 2. Take everything from the line after the heading to the next `## ` heading (or end of body).
 3. Trim leading/trailing blank lines from the captured content. The captured content is the merge-commit body candidate.
 
-A captured body is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content.
+A captured body is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic — proceed with a shorter `## What` if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
 
 If the `## What` heading is missing or the captured body is thin, compose fresh content from commit messages and the diff:
 

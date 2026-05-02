@@ -28,7 +28,7 @@ Internal delegate that merges a pull request on GitHub. Called by `merge-pr` wit
 Use a single `gh pr view` call to fetch every field needed for validation:
 
 ```bash
-gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,headRepositoryOwner,baseRefName
+gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,isCrossRepository,baseRefName
 ```
 
 Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Do not regex-extract.
@@ -49,7 +49,20 @@ Refuse the merge with a specific reason on any of the following. Each refusal ex
 
 ### 3. Verify branch sync
 
-The orchestrator should already have run `git fetch`, but re-verify:
+The branch-sync check only makes sense when the **local current branch is the PR's head branch**. Otherwise (the user invoked with `--pr {n}` for a different branch, or the PR is from a fork) the local working copy is unrelated to what's being merged, and the comparison would produce a spurious refusal.
+
+Detect the case before running the check:
+
+```bash
+local_branch=$(git rev-parse --abbrev-ref HEAD)
+```
+
+Skip the sync check entirely when **either** of these is true:
+
+- `isCrossRepository` is `true` (PR is from a fork — `gh pr view --json isCrossRepository` returns `true` when the head repo differs from the base repo).
+- `local_branch` does not equal `headRefName`.
+
+When neither skip condition applies, run the sync check:
 
 ```bash
 git fetch origin
@@ -57,8 +70,6 @@ git rev-list --left-right --count "origin/{headRefName}...HEAD"
 ```
 
 If the counts differ from `0\t0`, refuse: "Local branch is out of sync with `origin/{headRefName}` (ahead {a}, behind {b}); push or pull before merging."
-
-Skip the sync check when `headRepositoryOwner` indicates the PR is from a fork — the local branch is unrelated.
 
 ### 4. Write merge-commit body to scratch file
 
@@ -80,7 +91,7 @@ Map `strategy` to the corresponding `gh pr merge` flag:
 
 For `squash`, pass `--subject "{title}"` so the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject` — GitHub composes its own subject for those strategies.
 
-For `body`, always pass `--body-file "$body_path"` — the body content matters for `squash` (becomes the commit body) and `merge` (becomes the merge-commit body). For `rebase` it is ignored by GitHub but is harmless to include.
+For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase` — rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` may surface a CLI error depending on the `gh` version, so omit it defensively.
 
 For `delete_branch`, append `--delete-branch` iff the boolean is true.
 
