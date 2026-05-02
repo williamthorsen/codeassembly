@@ -9,7 +9,7 @@ editors:
 integrations:
   jira:
     enabled: false
-merge_commit:
+merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 platform: github
 pr:

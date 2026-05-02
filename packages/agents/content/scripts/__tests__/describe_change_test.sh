@@ -156,18 +156,18 @@ When call test_parse
 The output should equal "FOUND:{title}"
 End
 
-It "matches the merge_commit section"
+It "matches the merge section"
 write_yaml() {
   cat >"$tmpdir/prefs.yaml" <<'YAML'
 commit:
   title_format: '{title}'
-merge_commit:
+merge:
   title_format: '[{ticket_ref} ]{title}[ (#{pr_number})]'
 YAML
 }
 test_parse() {
   write_yaml
-  parse_title_format "$tmpdir/prefs.yaml" "merge_commit"
+  parse_title_format "$tmpdir/prefs.yaml" "merge"
 }
 When call test_parse
 The output should equal "FOUND:[{ticket_ref} ]{title}[ (#{pr_number})]"
@@ -193,13 +193,13 @@ End
 It "preserves '#' in unquoted templates that lack a trailing comment"
 write_yaml() {
   cat >"$tmpdir/prefs.yaml" <<'YAML'
-merge_commit:
+merge:
   title_format: {title} (#{pr_number})
 YAML
 }
 test_parse() {
   write_yaml
-  parse_title_format "$tmpdir/prefs.yaml" "merge_commit"
+  parse_title_format "$tmpdir/prefs.yaml" "merge"
 }
 When call test_parse
 The output should equal "FOUND:{title} (#{pr_number})"
@@ -208,13 +208,13 @@ End
 It "strips a trailing ' # comment' from an unquoted value but preserves earlier '#'"
 write_yaml() {
   cat >"$tmpdir/prefs.yaml" <<'YAML'
-merge_commit:
+merge:
   title_format: {title} (#{pr_number}) # squash-merge
 YAML
 }
 test_parse() {
   write_yaml
-  parse_title_format "$tmpdir/prefs.yaml" "merge_commit"
+  parse_title_format "$tmpdir/prefs.yaml" "merge"
 }
 When call test_parse
 The output should equal "FOUND:{title} (#{pr_number})"
@@ -529,7 +529,7 @@ script="$PROJECT_ROOT/content/scripts/describe-change.sh"
 
 It "produces all four empty title fields when no preferences exist"
 When run bash "$script" --scope "agents" --type "feat" --title "Add foo"
-The output should equal '{"commit_title":"","ticket_title":"","pr_title":"","merge_commit_title":""}'
+The output should equal '{"commit_title":"","ticket_title":"","pr_title":"","merge_title":""}'
 The status should be success
 End
 
@@ -542,7 +542,7 @@ ticket:
   title_format: '{title}'
 pr:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
-merge_commit:
+merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 YAML
 }
@@ -551,7 +551,7 @@ run_script() {
   bash "$script" --scope "agents" --type "feat" --title "Add foo" --ticket-ref "#466" --pr-number "470"
 }
 When call run_script
-The output should equal '{"commit_title":"agents|feat: Add foo","ticket_title":"Add foo","pr_title":"#466 agents|feat: Add foo","merge_commit_title":"#466 agents|feat: Add foo (#470)"}'
+The output should equal '{"commit_title":"agents|feat: Add foo","ticket_title":"Add foo","pr_title":"#466 agents|feat: Add foo","merge_title":"#466 agents|feat: Add foo (#470)"}'
 End
 
 It "drops optional groups when their tokens are absent"
@@ -568,7 +568,7 @@ run_script() {
   bash "$script" --title "Add foo"
 }
 When call run_script
-The output should equal '{"commit_title":"Add foo","ticket_title":"","pr_title":"Add foo","merge_commit_title":""}'
+The output should equal '{"commit_title":"Add foo","ticket_title":"","pr_title":"Add foo","merge_title":""}'
 End
 
 It "treats an empty title_format as opt-out"
@@ -585,7 +585,7 @@ run_script() {
   bash "$script" --title "Add foo"
 }
 When call run_script
-The output should equal '{"commit_title":"","ticket_title":"Add foo","pr_title":"","merge_commit_title":""}'
+The output should equal '{"commit_title":"","ticket_title":"Add foo","pr_title":"","merge_title":""}'
 End
 
 It "produces all empty titles with no arguments"
@@ -600,7 +600,7 @@ run_script() {
   bash "$script"
 }
 When call run_script
-The output should equal '{"commit_title":"","ticket_title":"","pr_title":"","merge_commit_title":""}'
+The output should equal '{"commit_title":"","ticket_title":"","pr_title":"","merge_title":""}'
 End
 
 It "preserves JSON-special characters in title text through render"
@@ -615,7 +615,7 @@ run_script() {
   bash "$script" --title 'a"b\c'
 }
 When call run_script
-The output should equal '{"commit_title":"a\"b\\c","ticket_title":"","pr_title":"","merge_commit_title":""}'
+The output should equal '{"commit_title":"a\"b\\c","ticket_title":"","pr_title":"","merge_title":""}'
 End
 
 It "renders a template that has no {title} token (no implicit insertion)"
@@ -630,7 +630,7 @@ run_script() {
   bash "$script" --scope "agents" --type "feat" --title "Add foo"
 }
 When call run_script
-The output should equal '{"commit_title":"agents|feat","ticket_title":"","pr_title":"","merge_commit_title":""}'
+The output should equal '{"commit_title":"agents|feat","ticket_title":"","pr_title":"","merge_title":""}'
 End
 
 It "produces parseable JSON when title contains a newline"
@@ -645,6 +645,6 @@ run_script() {
   bash "$script" --title "$(printf 'line1\nline2')"
 }
 When call run_script
-The output should equal '{"commit_title":"line1\nline2","ticket_title":"","pr_title":"","merge_commit_title":""}'
+The output should equal '{"commit_title":"line1\nline2","ticket_title":"","pr_title":"","merge_title":""}'
 End
 End

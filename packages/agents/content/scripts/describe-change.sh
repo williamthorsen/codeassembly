@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Render commit, ticket, PR, and merge-commit titles from declarative templates.
+# Render commit, ticket, PR, and merge titles from declarative templates.
 #
 # Reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and
-# `merge_commit.title_format` from `.agents/preferences.yaml` (project) with
+# `merge.title_format` from `.agents/preferences.yaml` (project) with
 # fallback to `~/.agents/preferences.yaml` (global), then to empty string.
 #
 # Usage:
@@ -10,7 +10,7 @@
 #                      [--ticket-ref REF] [--pr-number N]
 #
 # Output: JSON object with `commit_title`, `ticket_title`, `pr_title`, and
-# `merge_commit_title`.
+# `merge_title`.
 #
 # Templates support five tokens — `{scope}`, `{type}`, `{title}`,
 # `{ticket_ref}`, `{pr_number}` — and optional groups via `[...]`. A `[...]`
@@ -58,7 +58,7 @@ done
 
 # Parse a specific `title_format` value from a YAML file.
 # Reads line-by-line, tracks the current top-level section, and matches
-# `title_format:` within the target section (commit, ticket, pr, merge_commit).
+# `title_format:` within the target section (commit, ticket, pr, merge).
 # Outputs "FOUND:{value}" when the key is present (value may be empty),
 # or nothing when the key is absent. This lets callers distinguish
 # "key absent" from "key present with empty value."
@@ -247,20 +247,20 @@ json_escape() {
 }
 
 main() {
-  local commit_template ticket_template pr_template merge_commit_template
+  local commit_template ticket_template pr_template merge_template
   commit_template="$(resolve_title_format "commit")"
   ticket_template="$(resolve_title_format "ticket")"
   pr_template="$(resolve_title_format "pr")"
-  merge_commit_template="$(resolve_title_format "merge_commit")"
+  merge_template="$(resolve_title_format "merge")"
 
-  local commit_title ticket_title pr_title merge_commit_title
+  local commit_title ticket_title pr_title merge_title
   commit_title="$(json_escape "$(render_title "$commit_template")")"
   ticket_title="$(json_escape "$(render_title "$ticket_template")")"
   pr_title="$(json_escape "$(render_title "$pr_template")")"
-  merge_commit_title="$(json_escape "$(render_title "$merge_commit_template")")"
+  merge_title="$(json_escape "$(render_title "$merge_template")")"
 
-  printf '{"commit_title":"%s","ticket_title":"%s","pr_title":"%s","merge_commit_title":"%s"}\n' \
-    "$commit_title" "$ticket_title" "$pr_title" "$merge_commit_title"
+  printf '{"commit_title":"%s","ticket_title":"%s","pr_title":"%s","merge_title":"%s"}\n' \
+    "$commit_title" "$ticket_title" "$pr_title" "$merge_title"
 }
 
 # Allow sourcing for testing without executing main.

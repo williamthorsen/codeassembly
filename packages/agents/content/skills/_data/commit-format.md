@@ -19,18 +19,18 @@ Run the `describe-change.sh` script with every input that is available; template
 
 All flags are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so titles with spaces or shell-special characters survive.
 
-The script reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and `merge_commit.title_format` from `.agents/preferences.yaml` (project) then `~/.agents/preferences.yaml` (global), falling back to empty string. It outputs JSON:
+The script reads `commit.title_format`, `ticket.title_format`, `pr.title_format`, and `merge.title_format` from `.agents/preferences.yaml` (project) then `~/.agents/preferences.yaml` (global), falling back to empty string. It outputs JSON:
 
 ```json
 {
   "commit_title": "agents|feat: Add script installer",
   "ticket_title": "Add script installer",
   "pr_title": "#466 agents|feat: Add script installer",
-  "merge_commit_title": "#466 agents|feat: Add script installer (#470)"
+  "merge_title": "#466 agents|feat: Add script installer (#470)"
 }
 ```
 
-Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title` for pull-request titles, and `merge_commit_title` for the squash-merge title shown in the merge UI. Each value is the fully rendered title — do not concatenate it with the bare `title`.
+Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title` for pull-request titles, and `merge_title` for the squash-merge title shown in the merge UI. Each value is the fully rendered title — do not concatenate it with the bare `title`.
 
 If the script is not found, fall back to the bare `--title` value.
 
@@ -42,7 +42,7 @@ If the script is not found, fall back to the bare `--title` value.
 | `{type}`       | Work type (`feat`, `fix`, `docs`, …).                                                 |
 | `{title}`      | Bare title text. Required in every template that should produce a non-empty title.    |
 | `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated. |
-| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge_commit.title_format`.  |
+| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.         |
 
 A template that omits `{title}` produces a title without the bare title text — `describe-change.sh` does not insert it implicitly. Unknown tokens (e.g., a typo like `{titel}`) are left as-is so the mistake is visible in the rendered output.
 
@@ -75,7 +75,7 @@ ticket:
   title_format: '{title}'
 pr:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
-merge_commit:
+merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
 
