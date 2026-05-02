@@ -686,14 +686,16 @@ A role can only disposition findings directed at it or its own prior findings. T
 
 Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
 
-| ID                 | Category       | Criticality | Merge-blocking?            |
-| ------------------ | -------------- | ----------- | -------------------------- |
-| `F{n}`             | FIXME          | `high`      | Always                     |
-| `W{n}`             | Warning        | `medium`    | Unless justified           |
-| `T{n}`             | TODO           | `low`       | Never (ticket if deferred) |
-| `R{n}`             | Recommendation | `low`       | Never (note if deferred)   |
-| `S{n}`             | Suggestion     | `none`      | Never (piggyback only)     |
-| `{F,W,T,R,S}{n}-L` | Legacy         | excluded    | Never                      |
+| ID                 | Category       | Icon | Criticality | Merge-blocking?            |
+| ------------------ | -------------- | ---- | ----------- | -------------------------- |
+| `F{n}`             | FIXME          | 🚨   | `high`      | Always                     |
+| `W{n}`             | Warning        | ⚠️   | `medium`    | Unless justified           |
+| `T{n}`             | TODO           | 📋   | `low`       | Never (ticket if deferred) |
+| `R{n}`             | Recommendation | 🧠   | `low`       | Never (note if deferred)   |
+| `S{n}`             | Suggestion     | ☝️   | `none`      | Never (piggyback only)     |
+| `{F,W,T,R,S}{n}-L` | Legacy         | 🔍   | excluded    | Never                      |
+
+Consumers that present or report findings (review skills, wrap-up, response artifacts) should render the icon alongside the prefix or category to give an at-a-glance severity cue. The Legacy row uses 🔍 regardless of underlying severity letter.
 
 ### Category criteria
 
@@ -709,6 +711,7 @@ Used by review-producing skills and agents for structured code review findings. 
 - Missing edge case handling that could cause runtime errors
 - Convention violations that affect maintainability
 - Decisions that seem wrong but may be intentional (require justification)
+- **Gate:** A warning must reflect a judgment call by the author, not a mechanical oversight. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning — classify as Suggestion at most.
 
 **TODO (T)** — should fix, not in this PR:
 
@@ -748,6 +751,16 @@ Used by review-producing skills and agents for structured code review findings. 
 ### Re-review severity escalation
 
 `S → R → T → W → F`. Legacy (`-L`) findings are never escalated.
+
+## Knowledge items
+
+Knowledge items capture observations and learnings worth preserving. They are not findings: they have no criticality, are never merge-blocking, and are never emitted by code review skills. They appear in housekeeping artifacts (wrap-up inventories, chat summaries, devlogs) where conveying knowledge — not assigning blame or action — is the point.
+
+| ID     | Category | Icon | Kind      |
+| ------ | -------- | ---- | --------- |
+| `I{n}` | Insight  | 💡   | knowledge |
+
+Consumers that present insights (`wrap-up`, `summarize-chat`) should render the icon alongside the prefix or label to mirror the convention used for findings.
 
 ## Artifact lifecycle
 

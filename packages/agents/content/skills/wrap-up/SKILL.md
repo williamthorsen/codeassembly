@@ -12,17 +12,17 @@ This skill is context-adaptive: it detects the session type and adjusts its reco
 
 ## Item vocabulary
 
-Items in the wrap-up output use spelled-out prefixes followed by a short ID. The prefix tells the developer the nature of the work at a glance. The ID provides a handle for referencing the item in instructions.
+Items in the wrap-up output use spelled-out prefixes followed by a short ID. The prefix tells the developer the nature of the work at a glance. The ID provides a handle for referencing the item in instructions. Each item also renders with an icon drawn from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) and [knowledge items](../_data/artifact-conventions.md#knowledge-items) tables — render the icon before the prefix so the reader gets an at-a-glance severity cue.
 
-| Prefix           | ID pattern         | Meaning                                        |
-| ---------------- | ------------------ | ---------------------------------------------- |
-| `fixme`          | `F{n}`             | Must fix — bugs, security issues, breakage     |
-| `warning`        | `W{n}`             | Questionable — may need action, needs judgment |
-| `todo`           | `T{n}`             | Should do — not urgent, can wait               |
-| `recommendation` | `R{n}`             | Advisable — discretionary improvement          |
-| `suggestion`     | `S{n}`             | Optional — nice-to-have                        |
-| `legacy`         | `{F,W,T,R,S}{n}-L` | Pre-existing — noticed in old code             |
-| `insight`        | `I{n}`             | Knowledge — pattern, gotcha, or learning       |
+| Prefix           | ID pattern         | Icon | Meaning                                        |
+| ---------------- | ------------------ | ---- | ---------------------------------------------- |
+| `fixme`          | `F{n}`             | 🚨   | Must fix — bugs, security issues, breakage     |
+| `warning`        | `W{n}`             | ⚠️   | Questionable — may need action, needs judgment |
+| `todo`           | `T{n}`             | 📋   | Should do — not urgent, can wait               |
+| `recommendation` | `R{n}`             | 🧠   | Advisable — discretionary improvement          |
+| `suggestion`     | `S{n}`             | ☝️   | Optional — nice-to-have                        |
+| `legacy`         | `{F,W,T,R,S}{n}-L` | 🔍   | Pre-existing — noticed in old code             |
+| `insight`        | `I{n}`             | 💡   | Knowledge — pattern, gotcha, or learning       |
 
 This vocabulary is consistent with the F/W/T/R/S classification (with `-L` suffix for legacy) used by review agents. The `insight` prefix extends it for knowledge items that aren't defects.
 
@@ -152,9 +152,9 @@ When the agent's judgment disagrees with a signal (e.g., the "large" branch is j
 
 These findings are simple enough to apply now on the current branch:
 
-  {prefix} {ID}    {description}
+  {icon} {prefix} {ID}    {description}
 
-  {prefix} {ID}    {description}
+  {icon} {prefix} {ID}    {description}
 
 Apply drive-by fixes? Reply "all", numbers, or "skip"
 ```
@@ -190,17 +190,17 @@ Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phas
 
 ### Findings
 
-  {prefix} {ID}    {description}
+  {icon} {prefix} {ID}    {description}
                     *source: {origin}*
 
 ### Legacy
 
-  legacy {ID}      {description}
+  🔍 legacy {ID}      {description}
                     *source: {origin}*
 
 ### Insights
 
-  insight {ID}     {description}
+  💡 insight {ID}     {description}
                     *destination: {target}*
 
 ### Actions

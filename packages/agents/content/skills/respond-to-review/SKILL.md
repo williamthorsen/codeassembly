@@ -95,7 +95,7 @@ Author: {Agent name} (model: {model})
 
 ## Dispositions
 
-### FIXMEs
+### FIXMEs 🚨
 
 #### F1: {title from review}
 
@@ -103,7 +103,7 @@ Author: {Agent name} (model: {model})
 - **Rationale:** {technical reasoning}
 - **Action taken:** {what was done, or what subset}
 
-### Warnings
+### Warnings ⚠️
 
 #### W1: {title from review}
 
@@ -111,7 +111,7 @@ Author: {Agent name} (model: {model})
 - **Rationale:** {technical reasoning}
 - **Action taken:** {what was done, or what subset}
 
-### TODOs
+### TODOs 📋
 
 #### T1: {title from review}
 
@@ -119,7 +119,7 @@ Author: {Agent name} (model: {model})
 - **Rationale:** {technical reasoning}
 - **Action taken:** {what was done, or what subset}
 
-### Recommendations
+### Recommendations 🧠
 
 #### R1: {title from review}
 
@@ -127,7 +127,7 @@ Author: {Agent name} (model: {model})
 - **Rationale:** {technical reasoning}
 - **Action taken:** {what was done, or what subset}
 
-### Suggestions
+### Suggestions ☝️
 
 #### S1: {title from review}
 
@@ -135,7 +135,7 @@ Author: {Agent name} (model: {model})
 - **Rationale:** {technical reasoning}
 - **Action taken:** {what was done, or what subset}
 
-### Legacy
+### Legacy 🔍
 
 #### F3-L: {title from review}
 
