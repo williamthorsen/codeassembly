@@ -9,6 +9,7 @@
 #     --base-ref REF \
 #     [--ticket-ref TOKEN] \
 #     [--label-map PATH]
+#   resolve-merge-options.sh --help
 #
 # Output: JSON object with one entry per dimension:
 #
@@ -27,12 +28,23 @@
 # The breaking-change marker `!` is stripped from type candidates after
 # collection (it rides on a separate `breaking` label).
 #
+# Label-map handling:
+#   - Missing file: silently skipped — resolution falls through to commit-majority.
+#   - Missing `types`/`scopes` section: silently treated as empty, falls through.
+#   - Syntactically invalid JSON: exits 1 with an error on stderr.
+#
 # Exit codes:
 #   0  Normal — JSON produced (regardless of resolved/ambiguous status).
-#   64 Usage error (missing/unknown flag).
-#   1  Runtime error (base-ref not found, label-map malformed).
+#   1  Usage error (missing/unknown flag) or runtime error (base-ref not found,
+#      label-map malformed).
 
 set -euo pipefail
+# Propagate failures from command substitutions ($(...)) under `set -e`.
+# Without this, a failing python helper inside `$(collect_label_candidates ...)`
+# would be swallowed and the script would silently fall through to commit-majority.
+shopt -s inherit_errexit
+
+readonly PROG="$(basename "$0")"
 
 cli_scope=""
 cli_type=""
@@ -77,12 +89,46 @@ parse_args() {
       label_map="$2"
       shift 2
       ;;
+    -h | --help)
+      show_usage 0
+      ;;
     *)
-      echo "Unknown option: $1" >&2
-      exit 64
+      echo "$PROG: unknown option: $1" >&2
+      show_usage
       ;;
     esac
   done
+}
+
+# Show command-line syntax. Exits with the supplied code (default 1) so callers
+# can pass `0` for explicit `--help`, or call bare for usage errors.
+show_usage() {
+  cat >&2 <<USAGE
+Resolve scope and type for a merge commit.
+
+Usage:
+  $PROG [--cli-scope SCOPE] [--cli-type TYPE] [--pr-label LABEL ...] \\
+        --base-ref REF [--ticket-ref TOKEN] [--label-map PATH]
+  $PROG --help
+
+Options:
+  --cli-scope SCOPE     Override the inferred scope.
+  --cli-type TYPE       Override the inferred type (trailing '!' stripped).
+  --pr-label LABEL      PR label (repeatable).
+  --base-ref REF        Required. Git ref against which commit-majority is
+                        evaluated (e.g. 'main' or 'origin/main').
+  --ticket-ref TOKEN    Ticket reference (e.g. '#494'). Stripped from the
+                        leading position of commit subjects before parsing.
+  --label-map PATH      Path to label-map JSON. Defaults to
+                        '.meta/label-map.json'.
+  -h, --help            Show this help.
+
+Output:
+  JSON on stdout with one entry per dimension:
+    {"scope":{"status":"resolved","value":"agents"},
+     "type": {"status":"ambiguous","candidates":["feat","fix"]}}
+USAGE
+  exit "${1:-1}"
 }
 
 # JSON-escape a string for embedding in JSON output. Title-grade — covers
@@ -121,19 +167,20 @@ collect_label_candidates() {
     return
   fi
 
-  python3 - "$section" "$label_map" "${pr_labels[@]}" <<'PYTHON'
+  python3 - "$PROG" "$section" "$label_map" "${pr_labels[@]}" <<'PYTHON'
 import json
 import sys
 
-section = sys.argv[1]
-path = sys.argv[2]
-labels = sys.argv[3:]
+prog = sys.argv[1]
+section = sys.argv[2]
+path = sys.argv[3]
+labels = sys.argv[4:]
 
 try:
     with open(path) as fh:
         data = json.load(fh)
 except (OSError, json.JSONDecodeError) as exc:
-    print(f"resolve-merge-options.sh: cannot read label-map: {exc}", file=sys.stderr)
+    print(f"{prog}: cannot read label-map: {exc}", file=sys.stderr)
     sys.exit(1)
 
 mapping = data.get(section, {})
@@ -283,12 +330,12 @@ main() {
   parse_args "$@"
 
   if [[ -z "$base_ref" ]]; then
-    echo "Missing required flag: --base-ref" >&2
-    exit 64
+    echo "$PROG: missing required flag: --base-ref" >&2
+    show_usage
   fi
 
   if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
-    echo "Base ref not found: $base_ref" >&2
+    echo "$PROG: base ref not found: $base_ref" >&2
     exit 1
   fi
 

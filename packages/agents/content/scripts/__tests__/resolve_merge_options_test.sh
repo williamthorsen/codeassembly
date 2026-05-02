@@ -447,14 +447,46 @@ script="$PROJECT_ROOT/content/scripts/resolve-merge-options.sh"
 
 It "errors out when --base-ref is missing"
 When run bash "$script"
-The status should equal 64
-The stderr should include "Missing required flag: --base-ref"
+The status should equal 1
+The stderr should include "resolve-merge-options.sh: missing required flag: --base-ref"
 End
 
 It "errors out when --base-ref does not exist in the repo"
 When run bash "$script" --base-ref "nonexistent"
 The status should equal 1
-The stderr should include "Base ref not found"
+The stderr should include "resolve-merge-options.sh: base ref not found"
+End
+
+It "errors out with status 1 on an unknown option"
+When run bash "$script" --base-ref "main" --bogus
+The status should equal 1
+The stderr should include "resolve-merge-options.sh: unknown option: --bogus"
+End
+
+It "errors out with status 1 when --label-map is malformed JSON"
+run_malformed() {
+  printf 'not-json' >"$tmpdir/bad-map.json"
+  bash "$script" \
+    --pr-label "feature" \
+    --base-ref "main" \
+    --label-map "$tmpdir/bad-map.json"
+}
+When run run_malformed
+The status should equal 1
+The stderr should include "resolve-merge-options.sh: cannot read label-map"
+End
+
+It "exits 0 and prints usage when --help is passed"
+When run bash "$script" --help
+The status should equal 0
+The stderr should include "Usage:"
+The stderr should include "--base-ref REF"
+End
+
+It "strips trailing bang from --cli-type end-to-end"
+When run bash "$script" --cli-scope "agents" --cli-type "feat!" --base-ref "main"
+The output should equal '{"scope":{"status":"resolved","value":"agents"},"type":{"status":"resolved","value":"feat"}}'
+The status should be success
 End
 
 It "resolves both dimensions from CLI overrides"
