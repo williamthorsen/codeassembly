@@ -12,28 +12,28 @@ Internal delegate that would merge a pull request on Bitbucket. Called by `merge
 
 ## Delegate interface
 
-| Input               | Type                            | Description                                     |
-| ------------------- | ------------------------------- | ----------------------------------------------- |
-| `pr_number`         | number                          | PR to merge                                     |
-| `title`             | string                          | Pre-rendered merge-commit title                 |
-| `body`              | string                          | Pre-composed merge-commit body                  |
-| `strategy`          | `squash` \| `merge` \| `rebase` | Concrete strategy (no `prompt` sentinel)        |
-| `delete_branch`     | boolean                         | Whether to delete the source branch after merge |
-| `ticket_id`         | string                          | Ticket ID for artifact path resolution          |
-| `project_slug`      | string                          | Project slug for artifact path resolution       |
-| `artifact_base_dir` | string                          | Base directory for artifact storage             |
+| Input               | Type                            | Description                               |
+| ------------------- | ------------------------------- | ----------------------------------------- |
+| `pr_number`         | number                          | PR to merge                               |
+| `title`             | string                          | Pre-rendered merge-commit title           |
+| `body`              | string                          | Pre-composed merge-commit body            |
+| `strategy`          | `squash` \| `merge` \| `rebase` | Concrete strategy (no `prompt` sentinel)  |
+| `deletion_strategy` | `both` \| `remote` \| `none`    | Which branches to delete after merge      |
+| `ticket_id`         | string                          | Ticket ID for artifact path resolution    |
+| `project_slug`      | string                          | Project slug for artifact path resolution |
+| `artifact_base_dir` | string                          | Base directory for artifact storage       |
 
 ## Process
 
-Print a notice listing the resolved title, body, strategy, and delete-branch decision, then exit successfully without invoking any Bitbucket API. The user merges manually using the Bitbucket UI or CLI.
+Print a notice listing the resolved title, body, strategy, and deletion strategy, then exit successfully without invoking any Bitbucket API. The user merges manually using the Bitbucket UI or CLI.
 
 ```
 Bitbucket merge is not yet implemented. Resolved values:
 
-  PR:            {pr_number}
-  Title:         {title}
-  Strategy:      {strategy}
-  Delete branch: {delete_branch}
+  PR:                 {pr_number}
+  Title:              {title}
+  Strategy:           {strategy}
+  Deletion strategy:  {deletion_strategy}
 
   Body:
   {body}

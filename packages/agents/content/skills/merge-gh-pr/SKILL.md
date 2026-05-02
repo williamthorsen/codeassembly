@@ -10,16 +10,16 @@ Internal delegate that merges a pull request on GitHub. Called by `merge-pr` wit
 
 ## Delegate interface
 
-| Input               | Type                            | Description                                     |
-| ------------------- | ------------------------------- | ----------------------------------------------- |
-| `pr_number`         | number                          | PR to merge                                     |
-| `title`             | string                          | Pre-rendered merge-commit title                 |
-| `body`              | string                          | Pre-composed merge-commit body                  |
-| `strategy`          | `squash` \| `merge` \| `rebase` | Concrete strategy (no `prompt` sentinel)        |
-| `delete_branch`     | boolean                         | Whether to delete the source branch after merge |
-| `ticket_id`         | string                          | Ticket ID for artifact path resolution          |
-| `project_slug`      | string                          | Project slug for artifact path resolution       |
-| `artifact_base_dir` | string                          | Base directory for artifact storage             |
+| Input               | Type                            | Description                               |
+| ------------------- | ------------------------------- | ----------------------------------------- |
+| `pr_number`         | number                          | PR to merge                               |
+| `title`             | string                          | Pre-rendered merge-commit title           |
+| `body`              | string                          | Pre-composed merge-commit body            |
+| `strategy`          | `squash` \| `merge` \| `rebase` | Concrete strategy (no `prompt` sentinel)  |
+| `deletion_strategy` | `both` \| `remote` \| `none`    | Which branches to delete after merge      |
+| `ticket_id`         | string                          | Ticket ID for artifact path resolution    |
+| `project_slug`      | string                          | Project slug for artifact path resolution |
+| `artifact_base_dir` | string                          | Base directory for artifact storage       |
 
 ## Process
 
@@ -28,10 +28,12 @@ Internal delegate that merges a pull request on GitHub. Called by `merge-pr` wit
 Use a single `gh pr view` call to fetch every field needed for validation:
 
 ```bash
-gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,isCrossRepository,baseRefName
+gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,isCrossRepository,baseRefName,headRepository,headRepositoryOwner
 ```
 
 Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Do not regex-extract.
+
+`headRepository` and `headRepositoryOwner` are needed by step 6's remote-deletion API call so that cross-repo PRs (`isCrossRepository == true`) target the correct head repo rather than the base repo.
 
 ### 2. Run pre-merge checks
 
@@ -93,7 +95,7 @@ For `squash`, pass `--subject "{title}"` so the rendered title becomes the merge
 
 For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase` — rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` may surface a CLI error depending on the `gh` version, so omit it defensively.
 
-For `delete_branch`, append `--delete-branch` iff the boolean is true.
+For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none` — `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
 
 ```bash
 gh pr merge {pr_number} \
@@ -105,7 +107,26 @@ gh pr merge {pr_number} \
 
 If `gh pr merge` exits non-zero, surface its stderr to the user and exit non-zero. Do not retry, do not bypass with `--admin`.
 
-### 6. Capture merge result
+### 6. Delete remote branch (when deletion_strategy is `remote`)
+
+Skip this step entirely when `deletion_strategy != 'remote'`. For `both`, the previous step's `--delete-branch` already handled it; for `none`, no deletion is requested.
+
+When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch — for same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it lives on the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
+
+```bash
+gh api -X DELETE "repos/{headRepositoryOwner.login}/{headRepository.name}/git/refs/heads/{headRefName}"
+```
+
+Capture stdout, stderr, and the exit code.
+
+- **On success:** set `remote_deletion_status = "deleted"`.
+- **On failure:** print `warning: failed to delete remote branch '{headRefName}': {stderr}` to stderr, but **do not** exit non-zero — the merge itself succeeded, and re-deleting a leftover branch is trivial. Set `remote_deletion_status = "deletion-failed: {first line of stderr}"`.
+
+For `deletion_strategy in {both, none}`, set `remote_deletion_status` directly from the strategy without making an API call: `both` → `"deleted"` (the prior `gh pr merge --delete-branch` handled it; if `gh pr merge` succeeded, the remote ref is gone); `none` → `"preserved"`.
+
+Symmetrically, set `local_deletion_status`: `both` → `"deleted"`; `remote` or `none` → `"preserved"`.
+
+### 7. Capture merge result
 
 Fetch the resulting commit SHA after the merge:
 
@@ -115,7 +136,7 @@ gh pr view {pr_number} --json mergeCommit,url,mergedAt
 
 Extract `mergeCommit.oid` (the merge commit SHA), `url` (PR URL), and `mergedAt` (ISO 8601 timestamp).
 
-### 7. Save merge artifact
+### 8. Save merge artifact
 
 Save a `merge` artifact in the ticket directory.
 
@@ -142,12 +163,19 @@ PR: {url}
 Merged at: {mergedAt}
 Merge commit: {mergeCommit.oid}
 Strategy: {strategy}
-Branch: {headRefName} ({deleted | preserved})
+Branch: {headRefName} (local: {local_deletion_status}, remote: {remote_deletion_status})
 
 ## Body
 
 {body as submitted}
 ```
+
+The branch line has four canonical renderings, depending on `deletion_strategy` and the outcome of the post-merge API call:
+
+- `Branch: my-branch (local: deleted, remote: deleted)` — `both`, success
+- `Branch: my-branch (local: preserved, remote: deleted)` — `remote`, success
+- `Branch: my-branch (local: preserved, remote: deletion-failed: {reason})` — `remote`, API call failed
+- `Branch: my-branch (local: preserved, remote: preserved)` — `none`
 
 ## Completion
 
@@ -155,7 +183,7 @@ Branch: {headRefName} ({deleted | preserved})
 Merged: {url}
 Commit: {mergeCommit.oid}
 Strategy: {strategy}
-Branch: {headRefName} ({deleted | preserved})
+Branch: {headRefName} (local: {local_deletion_status}, remote: {remote_deletion_status})
 Artifact saved: {artifact path}
 ```
 
