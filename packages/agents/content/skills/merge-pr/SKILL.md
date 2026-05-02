@@ -10,17 +10,17 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ## Optional arguments
 
-| Flag                  | Effect                                                       | Default                         |
-| --------------------- | ------------------------------------------------------------ | ------------------------------- |
-| `--pr {n}`            | Merge PR `{n}` instead of the PR for the current branch.     | PR for the current branch       |
-| `--scope {scope}`     | Override the inferred scope.                                 | inferred (see resolution below) |
-| `--type {type}`       | Override the inferred work type.                             | inferred (see resolution below) |
-| `--strategy {s}`      | Override the merge strategy: `squash`, `merge`, or `rebase`. | `squash`                        |
-| `--delete-branch {v}` | Override branch deletion: `yes` or `no`.                     | `yes`                           |
+| Flag              | Effect                                                       | Default                         |
+| ----------------- | ------------------------------------------------------------ | ------------------------------- |
+| `--pr {n}`        | Merge PR `{n}` instead of the PR for the current branch.     | PR for the current branch       |
+| `--scope {scope}` | Override the inferred scope.                                 | inferred (see resolution below) |
+| `--type {type}`   | Override the inferred work type.                             | inferred (see resolution below) |
+| `--strategy {s}`  | Override the merge strategy: `squash`, `merge`, or `rebase`. | `squash`                        |
+| `--delete {v}`    | Override branch deletion: `both`, `remote`, or `none`.       | `remote`                        |
 
 ## Reserved preference keys
 
-`merge.strategy` and `merge.delete_branch` are **reserved keys** in `.agents/preferences.yaml` and `~/.agents/preferences.yaml`. They are not yet honored — this iteration uses the hard-coded defaults above. Setting them in preferences has no effect; CLI overrides are the only way to change the values today. The keys are reserved so that adding preference-file lookup later is a localized, additive change that does not require renaming or re-shaping the configuration surface.
+`merge.strategy` and `merge.deletion_strategy` are **reserved keys** in `.agents/preferences.yaml` and `~/.agents/preferences.yaml`. They are not yet honored — this iteration uses the hard-coded defaults above. Setting them in preferences has no effect; CLI overrides are the only way to change the values today. The keys are reserved so that adding preference-file lookup later is a localized, additive change that does not require renaming or re-shaping the configuration surface.
 
 ## Process
 
@@ -68,14 +68,14 @@ The output is a JSON object with one entry per dimension:
 
 Read `.scope.status` and `.type.status` with python3 (or jq). When `status` is `"resolved"`, use `.value` as the concrete value. When `status` is `"ambiguous"`, carry the `candidates` array forward to the approval gate.
 
-### 4. Resolve strategy and delete-branch
+### 4. Resolve strategy and deletion strategy
 
 ```
-resolveStrategy(cliOverride):     return cliOverride ?? 'squash'
-resolveDeleteBranch(cliOverride): return cliOverride ?? true
+resolveStrategy(cliOverride):          return cliOverride ?? 'squash'
+resolveDeletionStrategy(cliOverride):  return cliOverride ?? 'remote'
 ```
 
-These are intentionally written as named functions with an explicit pipeline so adding preference-file lookup later means inserting one stage. Map `--delete-branch yes` → `true`, `--delete-branch no` → `false`.
+These are intentionally written as named functions with an explicit pipeline so adding preference-file lookup later means inserting one stage. `--delete both|remote|none` map directly to the same string values.
 
 ### 5. Render merge-commit title
 
@@ -135,7 +135,7 @@ Proposed merge for PR #{pr_number}:
 
   Title:    {merge_title}
   Strategy: {strategy}
-  Delete:   {delete_branch ? 'yes' : 'no'}
+  Delete:   {deletion_strategy}
 
   Body:
   {body}
@@ -163,7 +163,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 | `title`             | Rendered `merge_title` from step 5 (re-rendered after gate resolution) |
 | `body`              | Composed body from step 6                                              |
 | `strategy`          | Resolved strategy from step 4                                          |
-| `delete_branch`     | Resolved boolean from step 4                                           |
+| `deletion_strategy` | Resolved value from step 4 (`both` \| `remote` \| `none`)              |
 | `ticket_id`         | From session context                                                   |
 | `project_slug`      | From session context                                                   |
 | `artifact_base_dir` | From session context                                                   |
@@ -172,7 +172,7 @@ The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels 
 
 ## Important
 
-- The orchestrator owns all decisions (PR resolution, scope/type/strategy/delete-branch resolution, body composition, approval gate). Delegates own only execution (platform API calls + state validation).
-- Local state is intentionally untouched after the merge. Branch deletion happens on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later.
+- The orchestrator owns all decisions (PR resolution, scope/type/strategy/deletion-strategy resolution, body composition, approval gate). Delegates own only execution (platform API calls + state validation).
+- Local state is intentionally untouched after the merge. Branch deletion happens on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows — `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
