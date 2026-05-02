@@ -38,18 +38,18 @@ Project-level values take precedence over global. An explicitly empty value at t
 | `repository.default_remote[].default_branch` | string | `main`   | Default branch of the remote. Combined with the remote name to produce refs like `origin/main`. |
 | `repository.slug`                            | string | —        | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
 
-#### `commit`, `ticket`, `pr`, `merge_commit` — title format conventions
+#### `commit`, `ticket`, `pr`, `merge` — title format conventions
 
 These four sections share the same structure. Each holds a declarative template that `describe-change.sh` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
 
-| Key                         | Type   | Default | Description                                 |
-| --------------------------- | ------ | ------- | ------------------------------------------- |
-| `commit.title_format`       | string | `''`    | Template for commit titles.                 |
-| `ticket.title_format`       | string | `''`    | Template for issue titles.                  |
-| `pr.title_format`           | string | `''`    | Template for pull-request titles.           |
-| `merge_commit.title_format` | string | `''`    | Template for the squash-merge commit title. |
+| Key                   | Type   | Default | Description                                 |
+| --------------------- | ------ | ------- | ------------------------------------------- |
+| `commit.title_format` | string | `''`    | Template for commit titles.                 |
+| `ticket.title_format` | string | `''`    | Template for issue titles.                  |
+| `pr.title_format`     | string | `''`    | Template for pull-request titles.           |
+| `merge.title_format`  | string | `''`    | Template for the squash-merge commit title. |
 
-A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out — the corresponding rendered title will be the empty string. The `describe-change.sh` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_commit_title`.
+A template is a string containing literal text and any combination of the supported tokens listed below, with optional `[...]` groups for parts that should drop when their tokens are empty. An empty template is the explicit way to opt out — the corresponding rendered title will be the empty string. The `describe-change.sh` script outputs JSON with `commit_title`, `ticket_title`, `pr_title`, and `merge_title`.
 
 ##### Supported tokens
 
@@ -59,7 +59,7 @@ A template is a string containing literal text and any combination of the suppor
 | `{type}`       | Work type (`feat`, `fix`, `docs`, …).                                                 |
 | `{title}`      | Bare title text. Required in every template that should produce a non-empty title.    |
 | `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when no ticket is associated. |
-| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge_commit.title_format`.  |
+| `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.         |
 
 A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so typos surface in the output.
 
@@ -134,7 +134,7 @@ ticket:
   title_format: '{title}'
 pr:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
-merge_commit:
+merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 ```
 
@@ -143,7 +143,7 @@ Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' 
 - `commit_title`: `agents|feat: Add foo`
 - `ticket_title`: `Add foo`
 - `pr_title`: `#466 agents|feat: Add foo`
-- `merge_commit_title`: `#466 agents|feat: Add foo (#470)`
+- `merge_title`: `#466 agents|feat: Add foo (#470)`
 
 ##### Scope values
 
@@ -233,7 +233,7 @@ ticket:
   title_format: '{title}'
 pr:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}'
-merge_commit:
+merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
 
 integrations:
