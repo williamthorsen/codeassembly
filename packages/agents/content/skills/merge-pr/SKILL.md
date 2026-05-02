@@ -44,35 +44,29 @@ Capture `title` (PR title), `body` (PR body), `labels` (label objects), and `num
 
 ### 3. Resolve scope and type
 
-The resolution function for both scope and type follows the same pipeline:
-
-```
-resolve(cliOverride, prLabels, branchCommits):
-  if cliOverride is provided:
-    return cliOverride
-  candidates = reverseLookup(prLabels)        # via .meta/label-map.json
-  if exactly one candidate: return it
-  candidates = commitMajority(branchCommits)
-  if exactly one dominant value: return it
-  return AMBIGUOUS                            # resolved at approval gate
-```
-
-**Reverse-lookup** inverts `.meta/label-map.json`. Read the file with the Read tool; if it does not exist, skip directly to commit-majority.
-
-- For **type**: invert `label_map.types` (e.g., `feature` → `feat`, `dependencies` → `deps`). Match each PR label against the inverted map; collect distinct values. After collection, strip any trailing `!` from a candidate (the breaking-change marker is carried by a separate `breaking` label, not part of the type).
-- For **scope**: invert `label_map.scopes` (e.g., `scope:agents` → `agents`). Match each PR label against the inverted map; collect distinct values.
-
-**Commit-majority** examines commits between `default_branch` and `HEAD`:
+Invoke `resolve-merge-options.sh` to resolve both dimensions in one call. The script combines the CLI override, reverse-lookup against `.meta/label-map.json`, and commit-majority over `git log {default_branch}..HEAD --format=%s` per the rules documented in the script header.
 
 ```bash
-git log {default_branch}..HEAD --format=%s
+json=$({platform_home_dir}/scripts/resolve-merge-options.sh \
+  [--cli-scope "{cli_scope}"] \
+  [--cli-type "{cli_type}"] \
+  [--pr-label "{label_1}" --pr-label "{label_2}" ...] \
+  --base-ref "{default_branch}" \
+  [--ticket-ref "{ticket_ref}"])
 ```
 
-Parse each subject line for the conventional `[scope|type: ]` prefix. Tally distinct values for each dimension; pick the dominant value when one accounts for the strict majority. Otherwise return no dominant value.
+Omit `--cli-scope`/`--cli-type` when no override was provided. Pass each PR label from step 2 as a separate `--pr-label` flag (the repeated form is robust against label names that contain commas). Include `--ticket-ref` when `ticket_ref` is non-null in session context.
 
-Strip a leading `{ticket_ref} ` token before matching `[scope|type: ]` — some projects include the ticket reference in their `commit.title_format` (e.g., `'[{ticket_ref} ][{scope}|{type}: ]{title}'`), in which case the scope/type prefix appears after the ticket-ref token rather than at the start of the subject.
+The output is a JSON object with one entry per dimension:
 
-If both reverse-lookup and commit-majority leave the dimension unresolved (or yield more than one candidate), mark it `AMBIGUOUS` and resolve at the approval gate.
+```json
+{
+  "scope": { "status": "resolved", "value": "agents" },
+  "type": { "status": "ambiguous", "candidates": ["feat", "fix"] }
+}
+```
+
+Read `.scope.status` and `.type.status` with python3 (or jq). When `status` is `"resolved"`, use `.value` as the concrete value. When `status` is `"ambiguous"`, carry the `candidates` array forward to the approval gate.
 
 ### 4. Resolve strategy and delete-branch
 
@@ -102,7 +96,7 @@ json=$({platform_home_dir}/scripts/describe-change.sh \
 merge_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('merge_title',''))")
 ```
 
-Omit any flag whose value is empty, null, or `AMBIGUOUS` (the latter is resolved at the gate; this initial render is provisional).
+Omit any flag whose value is empty or null. For dimensions whose `status` from step 3 is `ambiguous`, omit the flag too — those are resolved at the gate, and this initial render is provisional.
 
 Use a JSON parser (python3 above; `jq -r '.merge_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes.
 
@@ -129,9 +123,9 @@ Write the composed body in **release-notes voice** (see `summarize-change`'s `##
 
 ### 7. Approval gate
 
-If `scope` or `type` is `AMBIGUOUS`, ask one question at a time before showing the final commit:
+If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:
 
-- For each ambiguous dimension, present a numbered list of candidates collected during resolution (label-derived + commit-majority candidates), plus an "other (specify)" option. Ask the user to pick.
+- For each ambiguous dimension, present a numbered list of the dimension's `candidates` array, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
 - After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
 
 Then render the proposed merge to the user:
@@ -174,7 +168,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 | `project_slug`      | From session context                                                   |
 | `artifact_base_dir` | From session context                                                   |
 
-The orchestrator never passes `prompt` or `AMBIGUOUS` to the delegate — sentinels are resolved upstream.
+The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate — all values are concrete by this point.
 
 ## Important
 
