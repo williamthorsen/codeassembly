@@ -73,7 +73,7 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
 ### Phase 3: Converge on a design
 
 1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.
-2. **When the solution is not obvious:** propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why.
+2. **When the solution is not obvious:** propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why. Rank options per [design priorities](../_data/design-priorities.md).
 3. **Present the design** in sections scaled to complexity. Ask after each section whether it looks right.
 4. **Get explicit approval** before proceeding.
 
