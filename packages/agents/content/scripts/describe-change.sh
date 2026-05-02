@@ -21,6 +21,8 @@
 
 set -euo pipefail
 
+readonly PROG="$(basename "$0")"
+
 scope=""
 type=""
 title=""
@@ -50,7 +52,7 @@ while [[ $# -gt 0 ]]; do
     shift 2
     ;;
   *)
-    echo "Unknown option: $1" >&2
+    echo "$PROG: unknown option: $1" >&2
     exit 1
     ;;
   esac
@@ -161,7 +163,7 @@ render_title() {
   # cannot start a group, so it falls through verbatim. Visible in output,
   # but easy to misread as intentional — surface it to stderr.
   if [[ "$remaining" == *'['* ]]; then
-    echo "describe-change.sh: warning: unmatched '[' in template: $template" >&2
+    echo "$PROG: warning: unmatched '[' in template: $template" >&2
   fi
   # Substitute tokens in any trailing literal section
   result+="$(substitute_tokens "$remaining")"
