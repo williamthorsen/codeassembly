@@ -21,21 +21,28 @@ Rank options on correctness — behavior, API quality, architectural soundness, 
 
 ## Format
 
-Marker, then option title and colon, then inline pros (`➕`) and cons (`➖`) separated by `;`. Lead with the strongest argument. One line per option when possible.
+Marker, then option title and colon. Each pro (`➕`) and con (`➖`) goes on its own line, indented by 3 spaces. Apply this even when an option has only one pro or con. Lead with the strongest argument. Use semicolons between items and a period on the last.
 
 ## Examples
 
 ```
 Want me to:
-1. ■□□ Use a single config file: ➕ minimal surface area; ➖ couples concerns.
-2. ■■■ Split into two configs: ➕ separates lifecycle and runtime concerns; ➕ matches existing repo pattern.
-3. □□□ Use three configs: ➖ over-decomposed for current scope.
+1. ■□□ Use a single config file:
+   ➕ minimal surface area;
+   ➖ couples concerns.
+2. ■■■ Split into two configs:
+   ➕ separates lifecycle and runtime concerns;
+   ➕ matches existing repo pattern.
+3. □□□ Use three configs:
+   ➖ over-decomposed for current scope.
 ```
 
 ```
 Want me to:
-1. Use camelCase: ➕ matches the host file's local style.
-2. Use kebab-case: ➕ matches the package's public API style.
+1. Use camelCase:
+   ➕ matches the host file's local style.
+2. Use kebab-case:
+   ➕ matches the package's public API style.
 ```
 
 ## Don'ts
