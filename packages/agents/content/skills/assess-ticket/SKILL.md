@@ -1,19 +1,19 @@
 ---
 name: assess-ticket
-description: Assess a ticket against the current codebase for drift, relevance, progress, and complexity, and prompt for follow-up actions
+description: Assess a ticket against the current codebase for drift, relevance, progress, advisability, and complexity, and prompt for follow-up actions
 user-invocable: true
 ---
 
 # Assess ticket
 
-Assess a ticket against the current codebase across four dimensions: drift, relevance, progress, and complexity. Produces a structured assessment with constrained verdicts and supporting evidence.
+Assess a ticket against the current codebase across five dimensions: drift, relevance, progress, advisability, and complexity. Produces a structured assessment with constrained verdicts and supporting evidence.
 
 **Announce at start:** "Using assess-ticket to assess {ticket reference} (mode: {mode})."
 
 ## Arguments
 
 - **Ticket source** (optional): issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
-- **Mode** (optional): `drift`, `relevance`, `progress`, `complexity`, or `all` (default: `all`)
+- **Mode** (optional): `drift`, `relevance`, `progress`, `advisability`, `complexity`, or `all` (default: `all`)
 
 ## Process
 
@@ -23,7 +23,7 @@ Resolve the ticket source using the [ticket source resolution](../_data/ticket-s
 
 ### 2. Investigate
 
-Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, complexity is investigated last so it benefits from context gathered during drift, relevance, and progress analysis. **Skip complexity when progress is `complete`** — complexity is forward-looking and has no value for finished work.
+Run the investigation for the requested mode (or all modes in order when mode is `all`). When mode is `all`, advisability is investigated after progress (synthesizing the prior dimensions' context), and complexity is investigated last so it benefits from context gathered during drift, relevance, progress, and advisability analysis. **Skip both advisability and complexity when progress is `complete`** — neither has value for finished work.
 
 #### Drift
 
@@ -79,6 +79,22 @@ Determine whether the described work has been implemented. The output format ada
 - 🟠 `partial` — some of the described work has been done but significant portions remain
 - 🔴 `none` — none of the described work is present in the codebase
 
+#### Advisability
+
+Determine whether the ticket should be implemented as written. Synthesize the four facets defined in [ticket evaluation](../_data/ticket-evaluation.md) (problem reality, scope correctness, solution soundness, title accuracy) against the codebase and ticket text.
+
+1. Apply each facet in turn — does the underlying observation hold? Is scope right at the appropriate class? Does the proposed solution treat the cause? Does the title accurately describe the work?
+2. Synthesize a verdict from the facet results.
+3. Emit one prose evidence bullet per concern surfaced. Bullets do not prefix facet names. Omit bullets entirely when the verdict is `advisable`.
+
+Bias toward `advisable` — for a recommendation dimension, false-positive concerns are noisier than false-negative passes. Default to `advisable` unless the codebase yields specific evidence of a facet concern.
+
+**Verdicts:**
+
+- 🟢 `advisable` — recommend implementing as written; all four facets pass scrutiny
+- 🟠 `questionable` — recommend with concerns; one or more facets surface issues warranting human review
+- 🔴 `inadvisable` — recommend against implementing as written; rework needed before proceeding
+
 #### Complexity
 
 Classify how complex the described work is relative to the current codebase. Reference the [complexity classification](../_data/complexity-classification.md) rubric for level definitions.
@@ -97,7 +113,7 @@ Classify how complex the described work is relative to the current codebase. Ref
 
 ### 3. Output
 
-Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all dimensions in order — omitting complexity when progress is `complete`.
+Format the assessment using the structure below. When a single mode is requested, output only that dimension's section (with the header and provenance line). When mode is `all`, output all dimensions in order — omitting both advisability and complexity when progress is `complete`.
 
 Obtain the base SHA via `git rev-parse --short HEAD`.
 
@@ -123,6 +139,11 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 - ✅ {Criterion met}
 - ✅ {Criterion met}
 - ❌ {Criterion not met}
+
+🧭 **Advisability:** {emoji} `{verdict}`
+
+- {Evidence bullet}
+- {Evidence bullet}
 
 🧩 **Complexity:** {emoji} `{label}`
 
@@ -152,6 +173,11 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 - {Evidence bullet}
 - {Evidence bullet}
 
+🧭 **Advisability:** {emoji} `{verdict}`
+
+- {Evidence bullet}
+- {Evidence bullet}
+
 🧩 **Complexity:** {emoji} `{label}`
 
 - {Evidence bullet}
@@ -164,7 +190,7 @@ After presenting the assessment output, evaluate whether any verdicts are non-ba
 
 ### Emoji mapping
 
-Drift, relevance, and progress use a **concern scale** — green means no concern, red means high concern:
+Drift, relevance, progress, and advisability use a **concern scale** — green means no concern, red means high concern:
 
 | Verdict position | Emoji |
 | ---------------- | ----- |
@@ -183,16 +209,18 @@ Complexity uses a **size scale** — emojis represent effort and scope, not conc
 
 ### Verdict reference
 
-| Dimension      | ⚪        | 🟢           | 🟠          | 🔴              |
-| -------------- | --------- | ------------ | ----------- | --------------- |
-| **Drift**      | —         | `none`       | `partial`   | `severe`        |
-| **Relevance**  | —         | `relevant`   | `uncertain` | `superseded`    |
-| **Progress**   | —         | `complete`   | `partial`   | `none`          |
-| **Complexity** | `trivial` | `mechanical` | `involved`  | `architectural` |
+| Dimension        | ⚪        | 🟢           | 🟠             | 🔴              |
+| ---------------- | --------- | ------------ | -------------- | --------------- |
+| **Drift**        | —         | `none`       | `partial`      | `severe`        |
+| **Relevance**    | —         | `relevant`   | `uncertain`    | `superseded`    |
+| **Progress**     | —         | `complete`   | `partial`      | `none`          |
+| **Advisability** | —         | `advisable`  | `questionable` | `inadvisable`   |
+| **Complexity**   | `trivial` | `mechanical` | `involved`     | `architectural` |
 
 ## Key principles
 
 - **Evidence over opinion** — every verdict must be supported by specific evidence (file paths, commit SHAs, code references)
 - **Prefer caution on relevance** — use `uncertain` when signals are ambiguous rather than committing to `superseded`
+- **Bias `advisable` absent evidence** — Advisability fires a next-steps prompt on every non-baseline verdict; default to `advisable` unless the codebase yields specific evidence of a facet concern
 - **Assessment first, action on request** — lead with the assessment; offer follow-up actions but do not execute without user selection
 - **Scale to ticket complexity** — a simple ticket gets a brief assessment; a complex ticket with many acceptance criteria gets a thorough one
