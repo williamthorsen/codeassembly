@@ -15,6 +15,10 @@ If you have no preference (pure taste call), omit markers from every option. Don
 
 Render markers as plain text, never inside backticks — backticks shrink the glyphs and hurt readability.
 
+## Ranking criteria
+
+Rank design options by architectural and API merit; treat effort, blast radius, and legacy consistency as secondary context. The architecturally cleaner option carries the higher marker unless its advantage is genuinely marginal. See [design priorities](./design-priorities.md) for the full rule and a before/after example.
+
 ## Format
 
 Marker, then option title and colon, then inline pros (`➕`) and cons (`➖`) separated by `;`. Lead with the strongest argument. One line per option when possible.

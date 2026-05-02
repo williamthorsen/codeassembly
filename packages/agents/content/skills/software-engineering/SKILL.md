@@ -20,6 +20,10 @@ Follow established software engineering best practices:
 - Apply SOLID principles
 - Minimize coupling between components
 
+## Design evaluation
+
+When ranking design options, weight architectural and API merit decisively over effort, blast radius, and legacy consistency. See [design priorities](../_data/design-priorities.md).
+
 ## Component API design
 
 ### Prefer minimal interfaces over full database types

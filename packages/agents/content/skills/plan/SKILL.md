@@ -51,6 +51,7 @@ Sections are optional — use only what's appropriate for the task.
 - Include concrete steps, not vague goals
 - Call out risks and unknowns explicitly
 - Keep the plan concise — detail belongs in implementation, not planning
+- When comparing approaches, rank options per [design priorities](../_data/design-priorities.md)
 
 ## Saving
 
