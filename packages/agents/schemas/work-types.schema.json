@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/williamthorsen/codeassembly/raw/agents-v0.1.0/packages/agents/schemas/work-types.schema.json",
+  "title": "Work types",
+  "description": "Canonical work-types taxonomy consumed by skill content and downstream changelog/release-notes tooling. Defines the work-type vocabulary, tier grouping, breaking-change policy, and changelog-eligibility flags.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "tiers", "types"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Semantic version of the data shape. Bump when the structure changes in a way that breaks downstream consumers.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Canonical tier vocabulary in precedence order (higher tier wins ties). Mirrored at `types[].tier`. Each position is pinned via `prefixItems` so that order is enforced structurally.",
+      "prefixItems": [
+        { "type": "string", "const": "public" },
+        { "type": "string", "const": "internal" },
+        { "type": "string", "const": "process" }
+      ],
+      "minItems": 3,
+      "maxItems": 3,
+      "items": false
+    },
+    "types": {
+      "type": "array",
+      "description": "The work-type records, in canonical render order. Order is meaningful: when ranking applicable types within a tier, earlier entries win.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "aliases", "tier", "emoji", "label", "breakingPolicy"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Canonical short identifier used in commit messages (e.g., `feat`, `fix`).",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "aliases": {
+            "type": "array",
+            "description": "Alternative identifiers that resolve to the same `key`. Globally unique across all types (asserted in test).",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            },
+            "uniqueItems": true
+          },
+          "tier": {
+            "type": "string",
+            "description": "Which tier this type belongs to. Drives precedence and grouping in skill content.",
+            "enum": ["public", "internal", "process"]
+          },
+          "emoji": {
+            "type": "string",
+            "description": "Single-character (or short) emoji used in section headers and changelog rendering.",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable category label used in section headings (e.g., `Features`, `Fixes`).",
+            "minLength": 1
+          },
+          "breakingPolicy": {
+            "type": "string",
+            "description": "Whether a breaking-change marker (`!`) is forbidden, optional, or required for this type.",
+            "enum": ["forbidden", "optional", "required"]
+          },
+          "excludedFromChangelog": {
+            "type": "boolean",
+            "description": "When true, commits of this type are omitted from the generated changelog (e.g., `fmt`)."
+          }
+        }
+      }
+    }
+  }
+}
