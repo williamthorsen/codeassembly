@@ -303,6 +303,32 @@ The status should equal 1
 The stderr should include "cannot read --lookup"
 End
 
+It "exits 1 with stderr message when --lookup contains no '## ' section headings"
+run_malformed_lookup() {
+  cat >malformed.md <<'MD'
+# Top-level title
+
+Some prose explaining the file but no package sections.
+Another paragraph here.
+MD
+  : >changed.txt
+  bash "$script" --changed-files changed.txt --lookup malformed.md
+}
+When call run_malformed_lookup
+The status should equal 1
+The stderr should include "no package sections"
+End
+
+It "exits 0 with empty stdout when --sidecar points to a nonexistent path"
+run_missing_sidecar() {
+  : >changed.txt
+  bash "$script" --sidecar "$tmpdir/nonexistent-sidecar.md" --changed-files changed.txt --lookup lookup.md
+}
+When call run_missing_sidecar
+The status should be success
+The output should equal ""
+End
+
 It "exits 1 with stderr message when --changed-files is missing"
 When run bash "$script" --lookup lookup.md
 The status should equal 1
@@ -331,5 +357,6 @@ The status should equal 0
 The output should include "Usage:"
 The output should include "--changed-files FILE"
 The output should include "--lookup PATH"
+The output should include "--sidecar PATH"
 End
 End

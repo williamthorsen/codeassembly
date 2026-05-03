@@ -200,7 +200,10 @@ file_matches_key() {
       continue
     fi
     if [[ ! -f "$file" ]]; then
-      # Deleted or otherwise absent — silently skip.
+      # File is absent (deleted, moved, or never existed) or unreadable
+      # (permission denied) — silently skip. The downstream `grep` also
+      # suppresses stderr to cover the rare case where `[[ -f ]]` succeeds
+      # but the file becomes unreadable between the check and the grep.
       continue
     fi
     if grep -qF \
@@ -280,6 +283,18 @@ main() {
 
   if [[ ! -r "$lookup" ]]; then
     echo "$PROG: cannot read --lookup: $lookup" >&2
+    exit 1
+  fi
+
+  # Structural validity: a lookup file with no `## ` section headings is
+  # malformed. The script can't infer any package keys from it, so the
+  # entire lookup mechanism would silently no-op. Fail loudly instead.
+  # `grep -c` exits 1 on zero matches; suppress that under `set -e` with
+  # `|| true` so we can branch on the count itself.
+  local heading_count
+  heading_count="$(grep -c '^## ' "$lookup" || true)"
+  if [[ "$heading_count" -eq 0 ]]; then
+    echo "$PROG: --lookup contains no package sections (expected '## <package-name>' headings): $lookup" >&2
     exit 1
   fi
 
