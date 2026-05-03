@@ -11,7 +11,7 @@ Analyze the current branch's changes since diverging from the default branch.
 ## Process
 
 1. **Gather context**:
-   - Use `get-session-context` to obtain `default_branch`, `ticket_id`, and `ticket_ref`; consult [work-types.md](../_data/work-types.md).
+   - Use `get-session-context` to obtain `default_branch`, `ticket_id`, and `ticket_ref`; consult [work-types.json](../_data/work-types.json).
 
 2. **Analyze changes**:
 
@@ -115,7 +115,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the headline (outcome in plain language), `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
-- Order Details subsections per `work-types.md` priority: Primary → Secondary → Tertiary
+- Order Details subsections per `work-types.json` tier order: public → internal → process
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 

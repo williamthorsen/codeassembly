@@ -14,7 +14,7 @@ See `../_data/commit-format.md` for the full specification, including how to ren
 
 ## Commit metadata
 
-- `WORK_TYPE` describes the category of work (see `../_data/work-types.md`)
+- `WORK_TYPE` describes the category of work (see `../_data/work-types.json`)
 
 ## Ticket ID
 
@@ -55,10 +55,24 @@ Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as
 
 ## Work types reference
 
-See `../_data/work-types.md` for the full list of work types ordered by priority:
+See `../_data/work-types.json` for the canonical taxonomy. Types are grouped into three tiers:
 
-1. **Primary**: fix, feat, internal
-2. **Secondary**: refactor, tests
-3. **Tertiary**: tooling, ci, deps, ai, docs, fmt
+- **Public** (consumer-facing): `feat`, `drop`, `deprecate`, `fix`, `sec`, `perf`
+- **Internal** (not consumer-facing): `internal`, `refactor`, `tests`
+- **Process** (tooling and supporting work): `tooling`, `ci`, `deps`, `ai`, `docs`, `fmt`
 
-Use the highest-applicable work type from the list.
+### Precedence
+
+Pick the type that best describes the commit's dominant purpose. When more than one type applies, tiebreak in favor of the higher tier (public > internal > process), then by earlier listing within a tier.
+
+### Breaking changes
+
+Whether a commit can carry a breaking-change marker (`!`, e.g., `feat!`, `drop!`) is governed per-type by the `breakingPolicy` field in `work-types.json`:
+
+- **`required`**: `drop` — removing a public surface is always breaking, so the marker is mandatory.
+- **`optional`**: `feat`, `sec` — additions or security work may or may not break consumers; mark with `!` when they do.
+- **`forbidden`**: all other types — these categories cannot introduce a breaking change. If your work would break consumers, it belongs under `feat`, `drop`, or `sec`.
+
+### AI agent instructions
+
+Instructions for AI agents (typically in Markdown format) should be treated equivalently to source code, not as documentation. Such instructions intended for use by other projects are considered consumer-facing.
