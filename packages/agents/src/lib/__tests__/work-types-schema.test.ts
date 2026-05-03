@@ -196,33 +196,108 @@ describe('work-types.schema.json', () => {
       [],
     );
   });
+
+  it('orders `types[]` keys in canonical render order', () => {
+    // Render order is load-bearing for downstream changelog/release-notes tooling. Schema cannot
+    // express a fixed-length sequence of keyed objects without verbose `prefixItems`; assert in-test.
+    const canonicalOrder = [
+      'feat',
+      'drop',
+      'deprecate',
+      'fix',
+      'sec',
+      'perf',
+      'internal',
+      'refactor',
+      'tests',
+      'tooling',
+      'ci',
+      'deps',
+      'ai',
+      'docs',
+      'fmt',
+    ];
+    const liveOrder = liveData.types.map((entry) => entry.key);
+    expect(liveOrder).toEqual(canonicalOrder);
+  });
+
+  it('orders top-level `tiers` in canonical precedence order', () => {
+    // Sanity check on top of the schema-level `prefixItems` constraint. Belt-and-braces: if the
+    // schema is ever weakened, this assertion still catches a misordered live file.
+    expect(liveData.tiers).toEqual(['public', 'internal', 'process']);
+  });
+
+  it('rejects a `tiers` array whose order does not match the canonical precedence', async () => {
+    // Guards the `prefixItems` constraint on `tiers`. The schema pins each position via `const`,
+    // so any reordering — even of the same three values — must fail validation.
+    const malformed: JsonValue = {
+      version: '1.0.0',
+      tiers: ['process', 'internal', 'public'],
+      types: [],
+    };
+    const output = await validate(schemaId, malformed, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
+
+  it('rejects a `key` value that violates the lowercase-kebab pattern', async () => {
+    // Guards `types[].key.pattern: ^[a-z][a-z0-9-]*$`. Uppercase and underscores are forbidden;
+    // a single counterexample is sufficient to exercise the constraint.
+    const malformed: JsonValue = {
+      version: '1.0.0',
+      tiers: ['public', 'internal', 'process'],
+      types: [
+        {
+          key: 'Feat',
+          aliases: ['feat_fix'],
+          tier: 'public',
+          emoji: '🎉',
+          label: 'Features',
+          breakingPolicy: 'optional',
+        },
+      ],
+    };
+    const output = await validate(schemaId, malformed, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
+
+  it('rejects a `version` value that is not a bare semver', async () => {
+    // Guards `version.pattern: ^\d+\.\d+\.\d+$`. The leading `v` is the canonical mistake to
+    // catch; if the constraint were widened, this rejection test would fail loudly.
+    const malformed: JsonValue = {
+      version: 'v1.0.0',
+      tiers: ['public', 'internal', 'process'],
+      types: [],
+    };
+    const output = await validate(schemaId, malformed, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
 });
 
 // region | Helpers
 
-/** Parses the schema JSON file, re-throwing parse errors with the file path included. */
+/** Reads and parses the schema JSON file, re-throwing read or parse errors with the file path included. */
 function parseSchemaFile(filePath: string): JsonSchemaDraft202012Object {
-  const text = readFileSync(filePath, 'utf8');
   let parsed: JsonSchemaDraft202012Object;
   try {
+    const text = readFileSync(filePath, 'utf8');
     // `JSON.parse` returns `any`; the typed local variable narrows without a type assertion.
     parsed = JSON.parse(text);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse schema at ${filePath}: ${message}`);
+    throw new Error(`Failed to read or parse schema at ${filePath}: ${message}`);
   }
   return parsed;
 }
 
-/** Reads and parses the live work-types data file, re-throwing parse errors with the file path. */
+/** Reads and parses the live work-types data file, re-throwing read or parse errors with the file path. */
 function parseLiveData(filePath: string): WorkTypesDocument {
-  const text = readFileSync(filePath, 'utf8');
   let parsed: WorkTypesDocument;
   try {
+    const text = readFileSync(filePath, 'utf8');
     parsed = JSON.parse(text);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to parse data at ${filePath}: ${message}`);
+    throw new Error(`Failed to read or parse data at ${filePath}: ${message}`);
   }
   return parsed;
 }

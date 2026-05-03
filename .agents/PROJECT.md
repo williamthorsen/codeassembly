@@ -80,7 +80,7 @@ content/
       case-conventions.md          # Naming conventions
       commit-format.md             # Commit title format specification
       git-commands.md              # Git command reference
-      work-types.md                # Commit work-type taxonomy
+      work-types.json              # Commit work-type taxonomy (JSON SSOT; companion schema at schemas/work-types.schema.json)
     _platforms/                    # Platform-specific skills (not installed to all platforms)
       claude/                      # Skills installed only to Claude Code
         {skill-name}/SKILL.md

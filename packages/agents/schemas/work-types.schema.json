@@ -14,14 +14,15 @@
     },
     "tiers": {
       "type": "array",
-      "description": "Canonical tier vocabulary in precedence order (higher tier wins ties). Mirrored at `types[].tier`.",
-      "items": {
-        "type": "string",
-        "enum": ["public", "internal", "process"]
-      },
+      "description": "Canonical tier vocabulary in precedence order (higher tier wins ties). Mirrored at `types[].tier`. Each position is pinned via `prefixItems` so that order is enforced structurally.",
+      "prefixItems": [
+        { "type": "string", "const": "public" },
+        { "type": "string", "const": "internal" },
+        { "type": "string", "const": "process" }
+      ],
       "minItems": 3,
       "maxItems": 3,
-      "uniqueItems": true
+      "items": false
     },
     "types": {
       "type": "array",
