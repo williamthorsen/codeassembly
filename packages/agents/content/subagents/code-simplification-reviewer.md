@@ -64,7 +64,7 @@ Write exactly this structure:
 (none yet)
 ```
 
-The literal string `(pending)` on the `### Criticality:` line is the interruption sentinel — it signals the artifact is mid-flight rather than finalized. Do not invent other placeholder strings.
+The literal string `(pending)` on the `### Criticality:` line is the interruption sentinel. The orchestrator distinguishes a mid-flight artifact from a finalized one by checking whether `### Criticality:` parses as a known enum value. Do not invent other placeholder strings.
 
 ### Interim writes (after each finding)
 
