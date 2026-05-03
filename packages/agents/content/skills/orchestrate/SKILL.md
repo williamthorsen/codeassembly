@@ -250,6 +250,7 @@ Prefix the status line with a colored emoji for visual distinction:
 Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`), construct the filename as `{NN}_{role}_{artifact}.md`, store the full path as a named variable (e.g., `{run-manifest-path}`, `{architecture-path}`), then increment `{seq}`.
 
 - **Multi-format pairs** (`.md` / `.json`): both files share the same sequence number. Increment `{seq}` once for the pair.
+- **Coder change-summary + optional reviewer-context sidecar**: share the same sequence number when both are present. If only the change-summary is written (no sidecar), the sequence number is consumed once. `{seq}` always increments by 1 for the Phase 3 coder dispatch — the sidecar is conditional and never consumes its own sequence number.
 - **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
 - **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
@@ -514,6 +515,9 @@ Pass the following engine-managed variables to the module:
 - `{plan-md-path}` — full path to orchestration-plan.md artifact (empty string if planning was skipped)
 - `{aspect_reviewers}` — resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
 - `{authored-by-pipeline}` — `true` when the pipeline spec includes `implementation`; `false` otherwise. Signals whether the code under review was authored by the orchestrated pipeline (used by the test reviewer for classification).
+- `{repo-root}` — repo root resolved via `git rev-parse --show-toplevel`. Used to anchor the reviewer-context helper script and lookup-table paths.
+- `{lookup-path}` — `{repo-root}/packages/agents/content/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
+- `{reviewer-context-sidecar-path}` — full path to the most recent `*_coder_reviewer-context.md` artifact (empty string if none).
 
 ### review-cycle: resolving `{models}`
 
@@ -524,6 +528,20 @@ Pass the fully resolved models map to the module. The module uses `{models.revie
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
 
 When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by sequence number, so the last entry in sorted order is the most recent). If no match is found, set `{change-summary-path}` to an empty string.
+
+### review-cycle: resolving `{reviewer-context-sidecar-path}`
+
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry where `role` is `coder` and `type` is `reviewer-context`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist, set to an empty string.
+
+When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_reviewer-context.md`. Select the most recent match by filename (lexicographic sort by sequence number). If no match is found, set `{reviewer-context-sidecar-path}` to an empty string.
+
+The sidecar is optional — its absence is the documented signal that nothing surprised the coder. An empty `{reviewer-context-sidecar-path}` is normal, not an error.
+
+### review-cycle: resolving `{repo-root}` and `{lookup-path}`
+
+`{repo-root}`: run `git rev-parse --show-toplevel` and store the result. Used to anchor file paths regardless of the orchestrator's working directory within the repo.
+
+`{lookup-path}`: `{repo-root}/packages/agents/content/skills/orchestrate/_data/reviewer-context-packages.md`. Used by the reviewer-context assembly step (see `modules/review-cycle.md`) as the static lookup table input to the helper script.
 
 ## Phase 1: Architecture (optional)
 
@@ -581,10 +599,26 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {m
 > {If architecture ran and impact > `none`: Architectural guidance: Read `{architecture-path}`}
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
+>
+> If during implementation you investigate a third-party API surface that surprises you, also write a reviewer-context sidecar to: `{run-dir}/{NN}_coder_reviewer-context.md`. See your agent definition's "Reviewer-context sidecar" section for trigger conditions and content shape. If nothing surprising came up, do not write the file. Both paths share the same `{NN}` — see the "Artifact sequencing" section.
 
 Pass all plan steps at once — the coder decides execution order.
 
-After: store the full path as `{change-summary-path}`; increment `{seq}`. Extract `Status` and `QualityGates` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the change-summary artifact.
+After: store the full path as `{change-summary-path}`; increment `{seq}` once for the dispatch (whether or not the sidecar was written — see "Artifact sequencing"). Extract `Status` and `QualityGates` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the change-summary artifact.
+
+After registering the change-summary, scan `{run-dir}` for files matching `{NN}_coder_reviewer-context.md` (the same `{NN}` consumed by the change-summary). If the file exists, call `register_artifact` for it with:
+
+```
+runDir: {run-dir}
+filename: {NN}_coder_reviewer-context.md
+role: coder
+roleType: author
+agent: orchestrated-coder
+type: reviewer-context
+phase: implementation
+```
+
+If the sidecar file does not exist, skip the registration silently — the absence is the documented signal that nothing surprised the coder.
 
 ## Review cycle (module)
 
