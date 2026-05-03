@@ -32,11 +32,11 @@ Project-level values take precedence over global. An explicitly empty value at t
 
 #### `repository`
 
-| Key                                          | Type   | Default  | Description                                                                                     |
-| -------------------------------------------- | ------ | -------- | ----------------------------------------------------------------------------------------------- |
-| `repository.default_remote[].name`           | string | `origin` | Name of the default git remote.                                                                 |
-| `repository.default_remote[].default_branch` | string | `main`   | Default branch of the remote. Combined with the remote name to produce refs like `origin/main`. |
-| `repository.slug`                            | string | —        | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
+| Key                                        | Type   | Default  | Description                                                                                     |
+| ------------------------------------------ | ------ | -------- | ----------------------------------------------------------------------------------------------- |
+| `repository.default_remote.name`           | string | `origin` | Name of the default git remote.                                                                 |
+| `repository.default_remote.default_branch` | string | `main`   | Default branch of the remote. Combined with the remote name to produce refs like `origin/main`. |
+| `repository.slug`                          | string | —        | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
 
 #### `commit`, `ticket`, `pr`, `merge` — title format conventions
 
@@ -224,8 +224,8 @@ artifacts:
 
 repository:
   default_remote:
-    - name: origin
-      default_branch: main
+    name: origin
+    default_branch: main
 
 commit:
   title_format: '[{scope}|{type}: ]{title}'
