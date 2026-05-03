@@ -19,6 +19,11 @@ When call is_scannable_extension "src/foo.js"
 The status should be success
 End
 
+It "accepts .jsx files"
+When call is_scannable_extension "src/foo.jsx"
+The status should be success
+End
+
 It "accepts .mjs files"
 When call is_scannable_extension "src/foo.mjs"
 The status should be success
@@ -325,6 +330,17 @@ run_missing_sidecar() {
   bash "$script" --sidecar "$tmpdir/nonexistent-sidecar.md" --changed-files changed.txt --lookup lookup.md
 }
 When call run_missing_sidecar
+The status should be success
+The output should equal ""
+End
+
+It "exits 0 with empty stdout when --sidecar points to an empty file"
+run_empty_sidecar() {
+  : >sidecar.md
+  : >changed.txt
+  bash "$script" --sidecar sidecar.md --changed-files changed.txt --lookup lookup.md
+}
+When call run_empty_sidecar
 The status should be success
 The output should equal ""
 End
