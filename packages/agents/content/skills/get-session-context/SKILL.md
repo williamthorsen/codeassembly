@@ -131,7 +131,7 @@ Extract the top-level `platform` key from `{prefs}`. If not found, default to `"
 
 #### Default branch
 
-Extract `repository.default_remote[0].name` and `repository.default_remote[0].default_branch` from `{prefs}`. Find the `repository:` section, then `default_remote:` (indented under it). The first list item starts with `- name:` (YAML list items begin with `-`). Extract the `name` value and the `default_branch` value from that list item.
+Extract `repository.default_remote.name` and `repository.default_remote.default_branch` from `{prefs}`. Find the `repository:` section, then `default_remote:` (indented under it). The `default_remote:` block contains scalar `name:` and `default_branch:` keys directly on indented lines beneath it (no list items). Extract the `name` value and the `default_branch` value from that block.
 
 Construct the full remote reference as `{name}/{default_branch}` (e.g., `origin/main`).
 

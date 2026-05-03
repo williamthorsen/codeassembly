@@ -19,7 +19,7 @@ project:
   ticket_ref_prefix: '#' # ignored in file names
 repository:
   default_remote:
-    - name: origin
-      default_branch: main
+    name: origin
+    default_branch: main
 ticket:
   title_format: '{title}'

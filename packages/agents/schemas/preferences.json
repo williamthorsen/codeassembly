@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/williamthorsen/codeassembly/raw/agents-v0.1.0/packages/agents/schemas/preferences.json",
+  "title": "Preferences",
+  "description": "Configuration consumed by orchestrated agent skills. Resolved from .agents/preferences.yaml at the project level, with ~/.agents/preferences.yaml as a global fallback.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference URI for editor tooling."
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Artifact storage configuration: where generated artifacts live and how they are categorized.",
+      "properties": {
+        "base_dir": {
+          "type": "string",
+          "description": "Root directory for all generated artifacts. Supports `~` expansion. Default: `~/ai-artifacts`."
+        },
+        "paths": {
+          "type": "object",
+          "description": "Maps artifact category names (e.g., `chats`, `devlogs`, `plans`) to subdirectory names relative to the project artifact directory. Any category key is permitted; values must be strings.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "commit": {
+      "type": "object",
+      "description": "Commit-title rendering configuration consumed by the `describe-change.sh` script.",
+      "properties": {
+        "title_format": {
+          "type": "string",
+          "description": "Template string used to render commit titles. Supports tokens such as `{scope}`, `{type}`, `{title}`, `{ticket_ref}` and optional `[...]` groups that drop when their tokens are empty."
+        }
+      },
+      "required": ["title_format"]
+    },
+    "editors": {
+      "type": "array",
+      "description": "Optional list of editor configurations mapping file extensions to an editor command.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Display name of the editor."
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to open files. The file path is appended as an argument."
+          },
+          "extensions": {
+            "type": "string",
+            "description": "Glob pattern for file types this editor handles (e.g., `*.md`)."
+          }
+        },
+        "required": ["name", "command", "extensions"]
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "description": "Per-integration configuration. Keys are integration names (e.g., `jira`, `github`, `linear`); each integration object must declare an `enabled` boolean.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the integration is enabled."
+          }
+        },
+        "required": ["enabled"]
+      }
+    },
+    "merge": {
+      "type": "object",
+      "description": "Squash-merge title rendering configuration for the `merge-pr` skill family.",
+      "properties": {
+        "title_format": {
+          "type": "string",
+          "description": "Template string used to render the squash-merge commit title. Supports the same token vocabulary as `commit.title_format`, plus `{pr_number}`."
+        },
+        "strategy": {
+          "type": "string",
+          "description": "Reserved key. Not yet honored by the `merge-pr` skill family — the skill currently performs squash merges unconditionally. Recorded here so the schema does not flag the key as unknown when projects opt to set it in anticipation of future support."
+        },
+        "delete_branch": {
+          "type": "boolean",
+          "description": "Reserved key. Not yet honored by the `merge-pr` skill family — branch deletion is currently controlled by command-line flags and platform defaults. Recorded here so the schema does not flag the key as unknown when projects opt to set it in anticipation of future support."
+        }
+      }
+    },
+    "orchestration": {
+      "type": "object",
+      "description": "Configuration for the multi-phase orchestration pipeline (review rounds, severity thresholds, MCP policy, model overrides).",
+      "properties": {
+        "max_review_rounds": {
+          "type": "integer",
+          "description": "Maximum iterative review rounds before marking the run `needs_manual_review`. Overridden by `--max-review-rounds`."
+        },
+        "approval_threshold": {
+          "type": "string",
+          "description": "Minimum finding severity required for code approval. Overridden by `--approval-threshold`.",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "budget_threshold": {
+          "type": "string",
+          "description": "Minimum finding severity for spending remaining review-round budget. Overridden by `--budget-threshold`.",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "models": {
+          "type": "object",
+          "description": "Per-role model overrides (e.g., `coder`, `architect`, `holistic_reviewer`). Any role key is permitted; values must be strings naming a model.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "mcp_policy": {
+          "type": "string",
+          "description": "How to handle MCP unavailability: `required` aborts, `optional` continues with a warning, `prompt` asks the developer."
+        }
+      }
+    },
+    "platform": {
+      "type": "string",
+      "description": "Development platform. Initial supported values are `github` and `bitbucket`; new platforms can be added additively.",
+      "enum": ["github", "bitbucket"]
+    },
+    "pr": {
+      "type": "object",
+      "description": "Pull-request title rendering configuration.",
+      "properties": {
+        "title_format": {
+          "type": "string",
+          "description": "Template string used to render pull-request titles. Supports the same token vocabulary as `commit.title_format`."
+        }
+      },
+      "required": ["title_format"]
+    },
+    "project": {
+      "type": "object",
+      "description": "Project identification configuration.",
+      "properties": {
+        "slug": {
+          "type": "string",
+          "description": "Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`."
+        },
+        "ticket_ref_prefix": {
+          "type": "string",
+          "description": "Prefix that appears at the start of `ticket_ref`. Use `#` for GitHub issues (added at render time, omitted from file paths) or a Jira project key like `MAC-` (part of the canonical ticket ID)."
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "description": "Repository configuration: default remote and (deprecated) project slug fallback.",
+      "properties": {
+        "default_remote": {
+          "type": "object",
+          "description": "Default git remote used when constructing remote refs such as `origin/main`.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the default git remote (e.g., `origin`)."
+            },
+            "default_branch": {
+              "type": "string",
+              "description": "Default branch of the remote (e.g., `main`)."
+            }
+          },
+          "required": ["name", "default_branch"]
+        },
+        "slug": {
+          "type": "string",
+          "description": "Deprecated. Use `project.slug` instead. Kept as a fallback."
+        }
+      }
+    },
+    "ticket": {
+      "type": "object",
+      "description": "Ticket (issue) title rendering configuration.",
+      "properties": {
+        "title_format": {
+          "type": "string",
+          "description": "Template string used to render ticket (issue) titles. Supports the same token vocabulary as `commit.title_format`."
+        }
+      },
+      "required": ["title_format"]
+    }
+  },
+  "additionalProperties": false
+}
