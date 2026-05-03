@@ -6,22 +6,25 @@ Orchestrate the parallel review, code-simplification-reviewer, and holistic revi
 
 The orchestrate engine must provide these context variables before entering this module:
 
-| Variable                     | Description                                                                                                         |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `{task}`                     | Task description                                                                                                    |
-| `{run-dir}`                  | Run directory returned by `init_run`                                                                                |
-| `{seq}`                      | Current artifact sequence counter (continue incrementing from this value)                                           |
-| `{ticket-requirements-path}` | Full path to ticket-requirements artifact (empty string if unavailable)                                             |
-| `{plan-md-path}`             | Full path to orchestration-plan.md artifact (empty string if planning was skipped)                                  |
-| `{merge-base-sha}`           | Concrete merge-base SHA for diffing                                                                                 |
-| `{change-summary-path}`      | Path to the most recent `coder_change-summary.md`                                                                   |
-| `{max-review-rounds}`        | Maximum iterative review rounds before `needs_manual_review`                                                        |
-| `{approval-threshold}`       | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                        |
-| `{budget-threshold}`         | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`)         |
-| `{models}`                   | Resolved model assignments map (see "Resolving models" in SKILL.md)                                                 |
-| `{mcp-available}`            | `true` when MCP tools are available; `false` when the engine is running without MCP                                 |
-| `{aspect_reviewers}`         | Aspect reviewer overrides from mode preset. Per-aspect: `false` = never activate, absent = use file-pattern default |
-| `{authored-by-pipeline}`     | `true` when the pipeline includes an implementation phase (code was authored by the pipeline); `false` otherwise    |
+| Variable                          | Description                                                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `{task}`                          | Task description                                                                                                    |
+| `{run-dir}`                       | Run directory returned by `init_run`                                                                                |
+| `{seq}`                           | Current artifact sequence counter (continue incrementing from this value)                                           |
+| `{ticket-requirements-path}`      | Full path to ticket-requirements artifact (empty string if unavailable)                                             |
+| `{plan-md-path}`                  | Full path to orchestration-plan.md artifact (empty string if planning was skipped)                                  |
+| `{merge-base-sha}`                | Concrete merge-base SHA for diffing                                                                                 |
+| `{change-summary-path}`           | Path to the most recent `coder_change-summary.md`                                                                   |
+| `{max-review-rounds}`             | Maximum iterative review rounds before `needs_manual_review`                                                        |
+| `{approval-threshold}`            | Findings at this level or above must be fixed for code approval (`low`, `medium`, or `high`)                        |
+| `{budget-threshold}`              | Remaining review-round budget is spent only on findings at this level or above (`low`, `medium`, or `high`)         |
+| `{models}`                        | Resolved model assignments map (see "Resolving models" in SKILL.md)                                                 |
+| `{mcp-available}`                 | `true` when MCP tools are available; `false` when the engine is running without MCP                                 |
+| `{aspect_reviewers}`              | Aspect reviewer overrides from mode preset. Per-aspect: `false` = never activate, absent = use file-pattern default |
+| `{authored-by-pipeline}`          | `true` when the pipeline includes an implementation phase (code was authored by the pipeline); `false` otherwise    |
+| `{repo-root}`                     | Repo root from `git rev-parse --show-toplevel`. Anchors the reviewer-context helper script and lookup-table paths   |
+| `{lookup-path}`                   | Path to the reviewer-context lookup table (`reviewer-context-packages.md`)                                          |
+| `{reviewer-context-sidecar-path}` | Path to the most recent coder-emitted reviewer-context sidecar (empty string if none)                               |
 
 ## Exit state
 
@@ -37,6 +40,51 @@ After this module completes, the orchestrate engine reads:
 Sub-phase state is recorded via `emit_event` calls at the points described in each sub-phase section below. Use `{run-dir}` for all MCP tool calls.
 
 **`get_run_state` fallback policy:** If any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary. This applies to every `get_run_state` call in this module.
+
+## Reviewer-context assembly
+
+Every reviewer dispatch and re-dispatch in this module includes a conditional `## Reviewer context` block in its prompt. This sub-section defines how the block is computed; each dispatch site below references it. Do not inline this logic at the dispatch sites — keep the assembly definition single-sourced here.
+
+The block is assembled from two independent sources by the helper script `{repo-root}/packages/agents/content/scripts/resolve-reviewer-context.sh`:
+
+1. The most recent coder-emitted sidecar artifact (`{reviewer-context-sidecar-path}`), if present.
+2. Static lookup-table entries from `{lookup-path}` whose package keys are statically imported or required by any changed file.
+
+### Steps
+
+1. **Recompute the changed-file list:** the dispatch site already has `{changed-files}` available (Phase 4 computes it once at the start of the parallel review; Phase 4a recomputes it before the simplifier dispatch; Phase 4b recomputes it before the holistic dispatch). Write the value to a temp file `{run-dir}/.tmp_changed-files.txt`. The temp file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
+
+2. **Invoke the helper script:** capture stdout into `{reviewer-context}` and redirect stderr to a temp file so the failure-handling step below can read it:
+
+   ```
+   # Only include --sidecar when {reviewer-context-sidecar-path} is non-empty;
+   # omit the flag entirely when the variable is an empty string.
+   bash {repo-root}/packages/agents/content/scripts/resolve-reviewer-context.sh \
+     --sidecar "{reviewer-context-sidecar-path}" \
+     --changed-files "{run-dir}/.tmp_changed-files.txt" \
+     --lookup "{lookup-path}" \
+     2>"{run-dir}/.tmp_reviewer-context-stderr.txt"
+   ```
+
+   The temp stderr file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
+
+3. **Inline conditionally:** if `{reviewer-context}` is non-empty, the dispatch's prompt template appends a final block:
+
+   ```
+   ## Reviewer context
+
+   {reviewer-context}
+   ```
+
+   If `{reviewer-context}` is empty, the entire `## Reviewer context` section is omitted from the prompt — do not emit an empty heading.
+
+### Failure handling
+
+If the helper script exits non-zero, record a one-line warning in the run summary (`reviewer-context resolver failed: {stderr excerpt}`) and proceed with `{reviewer-context}` set to empty. Read the first line of `{run-dir}/.tmp_reviewer-context-stderr.txt` as `{stderr excerpt}`; if that file is empty or missing, log the exit code in its place. **Do not abort the dispatch.** The slot is optional context, not required input — the reviewer can do its job without it. The slot is a budget-saver, not a correctness gate.
+
+### Re-computation policy
+
+The assembly is recomputed for each reviewer dispatch and re-dispatch — not cached. The script runs locally in well under a second, and recomputation ensures correctness when the changed-file set evolves between dispatches (e.g., after a coder fix cycle adds new files).
 
 ## Phase 4: Parallel review (required, max N iterations)
 
@@ -58,6 +106,8 @@ Before dispatching aspect reviewers, determine which ones are relevant to the ch
 ### Dispatch
 
 Before dispatching, compute the changed-file list once: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}`. Evaluate activation rules for each aspect reviewer.
+
+Run the reviewer-context assembly steps once (see "Reviewer-context assembly" above) and capture `{reviewer-context}`. The same value is appended to every reviewer prompt in this dispatch (core + activated aspects). The block is recomputed for the re-review pass, not cached.
 
 Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "review" } }`. Then emit one `reviewer_dispatched` event per dispatched reviewer:
 
@@ -86,6 +136,8 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 > Diff base (merge-base SHA): `{merge-base-sha}`
 >
 > Write your review to: `{run-dir}/{NN}_reviewer_review.md`
+>
+> {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit the entire block when `{reviewer-context}` is empty — do not emit an empty heading.}
 
 Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 20`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
 
@@ -99,6 +151,8 @@ Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 20`,
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
 > Write your findings to: `{run-dir}/{NN}_silent-failure-reviewer_silent-failure-review.md`
+>
+> {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
 Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 20`, `model: {models.aspect_test_reviewer}` (if activated):
 
@@ -116,6 +170,8 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 20`, `model: {
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
 > Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`
+>
+> {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
 Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 20`, `model: {models.aspect_code_reviewer}` (if activated):
 
@@ -129,6 +185,8 @@ Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 20`, `model: {
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
 > Write your findings to: `{run-dir}/{NN}_code-reviewer_code-review.md`
+>
+> {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
 ### Findings aggregation
 
@@ -209,9 +267,11 @@ Before dispatching re-review: call MCP tool `emit_event` with `{ runDir: {run-di
 
 If re-review is warranted, assign new `{NN}` values for each re-dispatched reviewer (same sequencing rules as initial dispatch — only activated reviewers consume sequence numbers). Update the named path variables (`{core-review-path}`, `{sf-review-path}`, `{test-review-path}`, `{code-review-path}`) to point to the new artifact files. Old review files are preserved on disk.
 
+Recompute `{changed-files}` (a coder fix cycle may have added or removed files) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. The re-review prompts use the freshly computed value — do not reuse the value captured at initial dispatch time. `{reviewer-context-sidecar-path}` does not need to be re-resolved here: fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear during a Phase 4 fix cycle.
+
 Send re-review Task calls in a single message (parallel) using the same prompts, models, and turn budgets as the initial dispatch but adding context:
 
-> {Same prompt as initial dispatch, with this addition:}
+> {Same prompt as initial dispatch — including the conditional `## Reviewer context` block from "Reviewer-context assembly" — with this addition:}
 >
 > This is a re-review after fixes were applied. Previous findings: {summary of this reviewer's original findings}. Coder's change summary: Read {change-summary-path}. Focus on verifying fixes and checking for regressions — not repeating previously resolved issues.
 
@@ -241,7 +301,7 @@ Call MCP tool emit_event with:
 
 After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplification-reviewer as a sequential final pass. The code-simplification-reviewer operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplification-reviewer failure should be recorded via `emit_event` but should NOT block progression to Phase 4b or fail the run.
 
-Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles).
+Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles). Then re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. `{reviewer-context-sidecar-path}` does not need to be re-resolved: fix-cycle coder prompts do not supply a sidecar path, so the value carried from Phase 4 dispatch remains current.
 
 Emit `phase_decision` for `codeSimplifier` before Phase 4a executes:
 
@@ -270,6 +330,8 @@ Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 15`, `
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
 > Write your findings to: `{run-dir}/{NN}_code-simplification-reviewer_code-simplification-review.md`
+>
+> {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
 After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
@@ -304,7 +366,7 @@ Call MCP tool emit_event with:
            reason: "{executed or skipped reason}" }
 ```
 
-If Phase 4b will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`.
+If Phase 4b will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: only the implementation phase coder supplies a sidecar, so the value carried from Phase 4 dispatch remains current.
 
 If Phase 4b is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
 
@@ -328,6 +390,8 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
 > Write your review to: `{run-dir}/{NN}_reviewer_holistic-review.md`
+>
+> {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
 Store the full path as `{holistic-review-path}`; increment `{seq}`. Call `register_artifact` for the holistic review artifact.
 
@@ -342,5 +406,7 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then re-review using remaining budget (opportunistic).
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
 - **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
+
+When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch.
 
 After: compute aggregate usage for the holistic phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4b (the holistic reviewer dispatch and, if applicable, coder fix and re-review cycles). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
