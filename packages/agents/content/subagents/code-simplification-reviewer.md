@@ -27,16 +27,71 @@ You will receive:
 
 1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Get the diff**: run the provided `git diff` command to see all changes in scope
-3. **Read changed files**: read the full files to understand context (but see efficiency note below)
-4. **Form preliminary findings**: identify simplification opportunities from what you've read so far
-5. **Write your artifact**: write the review file to the output path with your current findings and criticality classification — even if your analysis feels incomplete. A partial review is infinitely more valuable than no review.
-6. **Refine if turns remain**: if you have remaining turns, continue analysis and **update** the artifact with additional or revised findings. Do not start a new file — edit the existing one.
+3. **Write the scaffold (HARD-GATE)**: write the review scaffold to the orchestrator-supplied artifact path — see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
+4. **Read changed files**: read the full files to understand context (but see efficiency note below)
+5. **Iterate analysis and append findings**: as each finding crystallizes (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
+6. **Finalize**: in the reserved last 3 turns, replace `### Criticality: (pending)` with the aggregate enum (`none|low|medium|high`) and fill in `### Summary`.
 
 ### Efficiency
 
 - **Diff-first**: read the diff before reading full files. Only read full file contents for files where the diff reveals potential issues in your scope.
 - **Batch reads**: when reading multiple files, use parallel tool calls rather than sequential ones.
 - **Skip irrelevant files**: if the diff for a file shows only documentation, formatting, or test changes, skip reading its full content.
+
+## Incremental review writes
+
+<HARD-GATE>
+After reading project guidelines and obtaining the diff (typically 2-3 turns), your NEXT tool use MUST be a `Write` of the review scaffold to the orchestrator-supplied artifact path. Not a `Read`, not a `Grep`, not a `Bash` to inspect files — a `Write`. This guarantees a durable artifact exists at the canonical path even if your dispatch is interrupted by `max_turns` exhaustion or any other failure.
+</HARD-GATE>
+
+The review file is the orchestrator's primary state-transfer channel for this phase — the orchestrator reads it directly to decide whether to dispatch a coder fix cycle. A partial review listing findings discovered so far is strictly more useful than no review — interruption must never strand the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+
+You have `Write` but not `Edit`. Each update is a full overwrite of the artifact file with the growing findings list.
+
+### Scaffold (first write)
+
+Write exactly this structure:
+
+```markdown
+### Criticality: (pending)
+
+### Summary
+
+(pending)
+
+### Findings
+
+(none yet)
+```
+
+The literal string `(pending)` on the `### Criticality:` line is the interruption sentinel — it signals the artifact is mid-flight rather than finalized. Do not invent other placeholder strings.
+
+### Interim writes (after each finding)
+
+After each finding crystallizes, overwrite the artifact with the current findings appended under `### Findings`. `### Criticality:` stays `(pending)` and `### Summary` stays `(pending)` until finalize. Example interim form with one finding present:
+
+```markdown
+### Criticality: (pending)
+
+### Summary
+
+(pending)
+
+### Findings
+
+#### S1: Redundant null guard before optional chain
+
+- **Severity:** suggestion
+- **Location:** `src/utils/parser.ts:42`
+- **Description:** {what the simplification opportunity is}
+- **Recommendation:** {what to do}
+```
+
+### Finalize (reserved last 3 turns)
+
+Replace `### Criticality: (pending)` with the aggregate enum value (`none|low|medium|high`) and replace `### Summary`'s `(pending)` placeholder with the 1-2 sentence overall assessment.
+
+If the review concluded with no findings, the finalized form omits the `### Findings` block entirely — see the "If no findings" example in [Output format](#output-format).
 
 ## Scope
 
@@ -85,7 +140,7 @@ Classify the overall review into exactly one level (none/low/medium/high) per th
 
 ## Output format
 
-Write your review to the output path provided in your task prompt.
+The finalized form of the review file. See [Incremental review writes](#incremental-review-writes) for the scaffold and interim-write shapes — this section shows only the post-finalize structure.
 
 ```markdown
 ### Criticality: {none|low|medium|high}
@@ -134,5 +189,5 @@ If no findings:
 You have **15 turns** (API round-trips) to complete your work. Each time you call tools and receive results counts as one turn.
 
 <HARD-GATE>
-**Reserve your last 3 turns for writing your artifact file.** Writing your artifact is your primary deliverable — analysis that doesn't produce a written artifact is wasted work. If you are approaching your turn limit, stop analysis and write what you have.
+**Reserve your last 3 turns for finalizing your artifact.** Your review is built incrementally throughout the dispatch (see [Incremental review writes](#incremental-review-writes)) — the reserved turns are for replacing `### Criticality: (pending)` with the aggregate enum and replacing `### Summary`'s `(pending)` placeholder with the assessment. Not for writing the artifact from scratch. If you are approaching your turn limit, stop analysis and finalize what you have.
 </HARD-GATE>

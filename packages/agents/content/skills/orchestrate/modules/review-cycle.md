@@ -215,7 +215,7 @@ Then aggregate findings from all sources into a consolidated set.
 
 **Deduplication heuristics:** If multiple reviewers flag the same file and line range (within 3 lines) with similar descriptions, consolidate into a single finding attributed to all relevant reviewers. When in doubt, keep findings separate — false deduplication is worse than redundant findings. Read each reviewer's artifact file to access finding details for deduplication and the consolidated coder fix prompt.
 
-**Handling failures:** If an agent fails or times out, proceed with findings from the remaining agents and emit `reviewer_completed` with `status: "failed"` for that reviewer.
+**Handling failures:** If an agent fails or times out, proceed with findings from the remaining agents and emit `reviewer_completed` with `status: "failed"` for that reviewer. For partial-artifact handling — when a reviewer was interrupted mid-analysis but its incremental scaffold left findings on disk — see "Recovery from reviewer interruption" in `SKILL.md`'s Error handling section.
 
 Call `register_artifact` for each reviewer's artifact file.
 
