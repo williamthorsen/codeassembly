@@ -156,7 +156,7 @@ extract_section_body() {
   awk -v target="$key" '
     /^## / {
       current = substr($0, 4)
-      in_section = (current == target) ? 1 : 0
+      in_section = (current == target)
       next
     }
     in_section { print }
@@ -206,16 +206,7 @@ file_matches_key() {
       # but the file becomes unreadable between the check and the grep.
       continue
     fi
-    if grep -qF \
-      -e "${patterns[0]}" \
-      -e "${patterns[1]}" \
-      -e "${patterns[2]}" \
-      -e "${patterns[3]}" \
-      -e "${patterns[4]}" \
-      -e "${patterns[5]}" \
-      -e "${patterns[6]}" \
-      -e "${patterns[7]}" \
-      "$file" 2>/dev/null; then
+    if printf '%s\n' "${patterns[@]}" | grep -qFf - "$file" 2>/dev/null; then
       return 0
     fi
   done <"$changed_files"
