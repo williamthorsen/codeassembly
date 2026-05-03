@@ -12,7 +12,7 @@ const TYPE_MAP: Readonly<Record<string, string>> = {
   feat: 'feature',
   fix: 'fix',
   fmt: 'formatting',
-  internal: 'utility',
+  internal: 'internal',
   perf: 'performance',
   refactor: 'refactoring',
   sec: 'security',
@@ -20,15 +20,17 @@ const TYPE_MAP: Readonly<Record<string, string>> = {
   tooling: 'tooling',
 };
 
+const RELEASE_KIT_PACKAGE_NAME = '@williamthorsen/release-kit';
+
 interface GenerateLabelMapOptions {
   readonly force: boolean;
 }
 
 /**
- * Builds the `$schema` URL for the label-map JSON file using the agents package version.
+ * Builds the `$schema` URL for the label-map JSON file using the installed release-kit version.
  */
 function buildSchemaUrl(version: string): string {
-  return `https://github.com/williamthorsen/codeassembly/raw/agents-v${version}/packages/agents/schemas/label-map.json`;
+  return `https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v${version}/packages/release-kit/schemas/label-map.json`;
 }
 
 /**
@@ -66,28 +68,6 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
   return scopes;
 }
 
-/**
- * Resolves the `package.json` path relative to this module.
- *
- * In dev (`src/commands/`), two levels up reaches the package root.
- * In built output (`dist/esm/commands/`), three levels up reaches the package root.
- */
-async function resolvePackageJsonPath(): Promise<string> {
-  const thisDir = path.dirname(fileURLToPath(import.meta.url));
-
-  const primaryPath = path.resolve(thisDir, '../../package.json');
-  if (await pathExists(primaryPath)) {
-    return primaryPath;
-  }
-
-  const fallbackPath = path.resolve(thisDir, '../../../package.json');
-  if (await pathExists(fallbackPath)) {
-    return fallbackPath;
-  }
-
-  throw new Error(`Could not locate package.json. Searched:\n  ${primaryPath}\n  ${fallbackPath}`);
-}
-
 /** Checks whether a path exists on disk. */
 async function pathExists(filePath: string): Promise<boolean> {
   return stat(filePath)
@@ -96,20 +76,47 @@ async function pathExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * Reads the agents package version from `package.json`.
+ * Reads the installed `@williamthorsen/release-kit` version by walking up from this
+ * module's location, looking for `node_modules/@williamthorsen/release-kit/package.json`
+ * at each level — the same algorithm Node's own module resolver uses.
+ *
+ * A direct `require.resolve` is unsuitable because release-kit's `exports` map does not
+ * expose `./package.json` and only declares the `import` condition for its main entry.
+ * The walk handles pnpm hoisting (release-kit may live at the workspace root rather than
+ * as a sibling of the agents package) and works in both dev (`src/`) and built
+ * (`dist/esm/`) layouts.
  */
-async function readPackageVersion(): Promise<string> {
-  const packageJsonPath = await resolvePackageJsonPath();
-  const raw = await readFile(packageJsonPath, 'utf8');
-  const parsed: unknown = JSON.parse(raw);
-  if (typeof parsed !== 'object' || parsed === null || !('version' in parsed)) {
-    throw new Error('Unable to read version from package.json');
+export async function readReleaseKitVersion(): Promise<string> {
+  const thisDir = path.dirname(fileURLToPath(import.meta.url));
+
+  let dir = thisDir;
+  for (;;) {
+    const candidate = path.join(dir, 'node_modules', '@williamthorsen', 'release-kit', 'package.json');
+    if (await pathExists(candidate)) {
+      const raw = await readFile(candidate, 'utf8');
+      const parsed: unknown = JSON.parse(raw);
+      if (isReleaseKitPackageJson(parsed)) {
+        return parsed.version;
+      }
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      throw new Error(`Could not locate package.json for ${RELEASE_KIT_PACKAGE_NAME}`);
+    }
+    dir = parent;
   }
-  const { version } = parsed;
-  if (typeof version !== 'string') {
-    throw new TypeError('Invalid version field in package.json');
-  }
-  return version;
+}
+
+/** Type guard: `value` is release-kit's `package.json` (matches name and has a string `version`). */
+function isReleaseKitPackageJson(value: unknown): value is { readonly name: string; readonly version: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'name' in value &&
+    value.name === RELEASE_KIT_PACKAGE_NAME &&
+    'version' in value &&
+    typeof value.version === 'string'
+  );
 }
 
 /**
@@ -135,7 +142,7 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
     }
   }
 
-  const version = await readPackageVersion();
+  const version = await readReleaseKitVersion();
   const scopes = await deriveScopes(cwd);
 
   const labelMap = {
