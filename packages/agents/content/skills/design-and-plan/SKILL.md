@@ -70,6 +70,8 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
    - Only one question per message
    - When using numbered options, follow the [recommendation gradient](../_data/recommendation-gradient.md): mark each option with ■■■ / ■■□ / ■□□ / □□□ and list `➕` pros and `➖` cons per the format defined there.
 
+**Important:** Do not use interactive prompt mechanisms (pop-ups, arrow-key selectors, structured choice tools) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
+
 ### Phase 3: Converge on a design
 
 1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.
