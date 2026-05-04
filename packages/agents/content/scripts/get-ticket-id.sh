@@ -47,7 +47,9 @@ read_ticket_ref_prefix() {
   fi
 
   local line
-  line=$(grep 'ticket_ref_prefix:' "$file" 2>/dev/null | head -1) || true
+  # Anchor the match at the start of the line (allowing leading whitespace) so
+  # commented-out preference lines (`# ticket_ref_prefix: ...`) are skipped.
+  line=$(grep -E '^[[:space:]]*ticket_ref_prefix:' "$file" 2>/dev/null | head -1) || true
   if [[ -z "$line" ]]; then
     return
   fi
@@ -55,6 +57,12 @@ read_ticket_ref_prefix() {
   # Strip everything up through `ticket_ref_prefix:` and any leading whitespace.
   line="${line#*ticket_ref_prefix:}"
   line="${line#"${line%%[![:space:]]*}"}"
+
+  # No value (`ticket_ref_prefix:`) or a comment-only value
+  # (`ticket_ref_prefix: # note`) both resolve to empty.
+  if [[ -z "$line" || "$line" == "#"* ]]; then
+    return
+  fi
 
   # Quoted value: capture the contents between the matching quotes. This
   # preserves `#` characters that appear inside the value.

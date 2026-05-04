@@ -53,6 +53,11 @@ It "does not match a lowercase letter prefix"
 When call extract_jira_id "feat-2"
 The output should equal ""
 End
+
+It "does not match a lowercase Jira-style ID on an author-prefixed branch"
+When call extract_jira_id "wt/mac-130"
+The output should equal ""
+End
 End
 
 Describe "extract_bare_number"
@@ -194,6 +199,67 @@ When call read_ticket_ref_prefix "$tmpdir/nonexistent.yaml"
 The output should equal ""
 End
 
+It "returns empty when the value is absent"
+write_yaml() {
+  cat >"$tmpdir/prefs.yaml" <<'YAML'
+project:
+  ticket_ref_prefix:
+YAML
+}
+test_read() {
+  write_yaml
+  read_ticket_ref_prefix "$tmpdir/prefs.yaml"
+}
+When call test_read
+The output should equal ""
+End
+
+It "returns empty when the value is replaced by an inline comment"
+write_yaml() {
+  cat >"$tmpdir/prefs.yaml" <<'YAML'
+project:
+  ticket_ref_prefix: # legacy comment, no value
+YAML
+}
+test_read() {
+  write_yaml
+  read_ticket_ref_prefix "$tmpdir/prefs.yaml"
+}
+When call test_read
+The output should equal ""
+End
+
+It "skips a commented-out preference line and reads the active one below it"
+write_yaml() {
+  cat >"$tmpdir/prefs.yaml" <<'YAML'
+project:
+  # ticket_ref_prefix: 'OLD-'
+  ticket_ref_prefix: 'NEW-'
+YAML
+}
+test_read() {
+  write_yaml
+  read_ticket_ref_prefix "$tmpdir/prefs.yaml"
+}
+When call test_read
+The output should equal "NEW-"
+End
+
+It "returns empty when only a commented-out preference line is present"
+write_yaml() {
+  cat >"$tmpdir/prefs.yaml" <<'YAML'
+project:
+  # ticket_ref_prefix: 'OLD-'
+YAML
+}
+test_read() {
+  write_yaml
+  read_ticket_ref_prefix "$tmpdir/prefs.yaml"
+}
+When call test_read
+The output should equal ""
+End
+
 It "defaults to .agents/preferences.yaml in the current working directory"
 prepare() {
   mkdir -p "$tmpdir/workdir/.agents"
@@ -325,6 +391,12 @@ End
 It "returns empty for a plain word branch"
 When run bash "$script" "main"
 The output should equal ""
+The status should be success
+End
+
+It "prefers a Jira-style match over a leading bare number when both could apply"
+When run bash "$script" "123/MAC-456"
+The output should equal "MAC-456"
 The status should be success
 End
 
