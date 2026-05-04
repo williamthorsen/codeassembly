@@ -22,25 +22,13 @@ Extract a Jira-style ticket ID from the current context.
 
 ### From branch name
 
-In branch names, `_` and `/` are interchangeable separators (see `branch-format.md`). The regex below extracts correctly regardless of which separator is used.
+The script `{platform_home_dir}/scripts/get-ticket-id.sh` extracts a ticket ID from a branch name. It accepts an optional branch name (defaults to the current branch) and prints the resolved ticket ID, or an empty string when no ID can be derived.
 
-```bash
-branch_name="${1:-$(git branch --show-current)}"
-echo "$branch_name" | grep -oE '[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1
-```
+In branch names, `_` and `/` are interchangeable separators (see `branch-format.md`). The Jira-style match is unanchored, so it extracts the ID regardless of which separator is used or whether an author/scope prefix appears (e.g., `wt/COMPPLAN-795`, `feat/COMPPLAN-795-add-foo`).
 
-### From commit message
+When no Jira-style ID matches, the script falls back to a **bare issue number** anchored to the start of the branch name (terminated by `/`, `_`, `-`, or end-of-string). The anchor on the fallback prevents false matches against digits embedded in slugs like `feat/foo-2`.
 
-```bash
-commit="${1:-HEAD}"
-git log -1 --pretty=format:'%s' "$commit" | grep -oE '[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1
-```
-
-### From branch name: bare numeric branches
-
-If the Jira-style pattern `[A-Z]+-[0-9]+` does not match, check for a **bare issue number**: one or more digits anchored to the start of the branch name, terminated by `/`, `_`, `-`, or end-of-string.
-
-When a bare number is found, read `project.ticket_ref_prefix` from `.agents/preferences.yaml` to determine the returned ticket ID:
+When the bare-numeric fallback fires, the script reads `project.ticket_ref_prefix` from `.agents/preferences.yaml` to format the result:
 
 - If `ticket_ref_prefix` is `#`: return the **bare number only**. The `#` is a GitHub display convention and must not appear in file paths or returned values.
 - If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): return `{prefix}{number}` (e.g., `MAC-147`).
@@ -54,28 +42,14 @@ When a bare number is found, read `project.ticket_ref_prefix` from `.agents/pref
 
 ```bash
 branch_name="${1:-$(git branch --show-current)}"
+ticket_id=$({platform_home_dir}/scripts/get-ticket-id.sh "$branch_name")
+```
 
-# Try Jira-style first
-ticket_id=$(echo "$branch_name" | grep -oE '^[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1)
+### From commit message
 
-# Fall back to bare numeric
-if [ -z "$ticket_id" ]; then
-  bare_number=$(echo "$branch_name" | grep -oE '^[0-9]+' | head -1)
-  if [ -n "$bare_number" ]; then
-    # Read ticket_ref_prefix from preferences (yq or manual YAML parsing)
-    prefix=$(grep 'ticket_ref_prefix:' .agents/preferences.yaml 2>/dev/null \
-      | head -1 | sed "s/.*ticket_ref_prefix:[[:space:]]*['\"]\\{0,1\\}\\([^'\"]*\\)['\"]\\{0,1\\}/\\1/")
-    if [ "$prefix" = "#" ]; then
-      ticket_id="$bare_number"
-    elif [ -n "$prefix" ]; then
-      ticket_id="${prefix}${bare_number}"
-    else
-      ticket_id="$bare_number"
-    fi
-  fi
-fi
-
-echo "$ticket_id"
+```bash
+commit="${1:-HEAD}"
+git log -1 --pretty=format:'%s' "$commit" | grep -oE '[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1
 ```
 
 ### From current context (default)
