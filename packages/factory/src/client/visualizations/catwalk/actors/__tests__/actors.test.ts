@@ -416,8 +416,7 @@ describe('StationAgentActor', () => {
   it('pulses scale when constructed with working state', () => {
     const actor = new StationAgentActor({ id: 'a', role: 'arch', color: '#5555FF', state: 'working' }, vec(0, 0));
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 500);
+    actor.onPreUpdate(undefined, 500);
     expect(actor.scale.x).toBeGreaterThanOrEqual(1);
     expect(actor.scale.x).toBeLessThanOrEqual(1.08);
     expect(actor.scale.y).toBe(actor.scale.x);
@@ -461,8 +460,8 @@ describe('StationAgentActor', () => {
     expect(actor.actions.fade).toHaveBeenCalledWith(ACTIVE_OPACITY, expect.any(Number));
 
     // Simulate onPreUpdate — scale should pulse within range
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 500);
+
+    actor.onPreUpdate(undefined, 500);
     expect(actor.scale.x).toBeGreaterThanOrEqual(1);
     expect(actor.scale.x).toBeLessThanOrEqual(1.08);
     expect(actor.scale.y).toBe(actor.scale.x);
@@ -476,8 +475,8 @@ describe('StationAgentActor', () => {
     expect(actor.scale).toEqual({ x: 1, y: 1 });
 
     // After leaving working, onPreUpdate should not change scale (pulse is disabled).
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Engine param unused in test mock
-    actor.onPreUpdate(undefined as never, 500);
+
+    actor.onPreUpdate(undefined, 500);
     expect(actor.scale).toEqual({ x: 1, y: 1 });
   });
 
