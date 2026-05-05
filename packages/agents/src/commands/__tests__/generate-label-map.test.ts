@@ -1,11 +1,10 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { generateLabelMap, printGenerateUsage } from '../generate-label-map.js';
+import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.js';
 
 interface LabelMap {
   readonly $schema: string;
@@ -36,23 +35,19 @@ describe(generateLabelMap, () => {
     const parsed = parseLabelMap(result);
 
     expect(parsed.$schema).toMatch(
-      /^https:\/\/github\.com\/williamthorsen\/codeassembly\/raw\/agents-v[\d.]+\/packages\/agents\/schemas\/label-map\.json$/,
+      /^https:\/\/github\.com\/williamthorsen\/node-monorepo-tools\/raw\/release-kit-v[\d.]+\/packages\/release-kit\/schemas\/label-map\.json$/,
     );
     expect(parsed.types).toBeDefined();
     expect(parsed.scopes).toEqual({});
   });
 
-  it('embeds the actual package version in the $schema URL', async () => {
-    const thisDir = path.dirname(fileURLToPath(import.meta.url));
-    const packageJsonPath = path.resolve(thisDir, '../../../package.json');
-    const packageJsonRaw = await readFile(packageJsonPath, 'utf8');
-
-    const packageJsonParsed: { version: string } = JSON.parse(packageJsonRaw);
+  it('embeds the installed release-kit version in the $schema URL', async () => {
+    const releaseKitVersion = await readReleaseKitVersion();
 
     const result = await readGeneratedFile({ force: false }, tempDir);
     const parsed = parseLabelMap(result);
 
-    expect(parsed.$schema).toContain(`agents-v${packageJsonParsed.version}`);
+    expect(parsed.$schema).toContain(`release-kit-v${releaseKitVersion}`);
   });
 
   it('includes all canonical type mappings', async () => {
@@ -68,7 +63,7 @@ describe(generateLabelMap, () => {
       feat: 'feature',
       fix: 'fix',
       fmt: 'formatting',
-      internal: 'utility',
+      internal: 'internal',
       perf: 'performance',
       refactor: 'refactoring',
       sec: 'security',
