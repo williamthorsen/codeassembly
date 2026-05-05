@@ -14,9 +14,19 @@ When call extract_jira_id "wt/COMPPLAN-795"
 The output should equal "COMPPLAN-795"
 End
 
+It "extracts a Jira-style ID from a multi-character author prefix"
+When call extract_jira_id "wthorsen/MAC-130"
+The output should equal "MAC-130"
+End
+
 It "extracts a Jira-style ID followed by a description slug"
 When call extract_jira_id "wt/JIRA-123-and-some-message"
 The output should equal "JIRA-123"
+End
+
+It "stops at a description slug starting from position zero"
+When call extract_jira_id "MAC-147-some-description"
+The output should equal "MAC-147"
 End
 
 It "extracts a Jira-style ID embedded inside a slug with multiple separators"
@@ -24,14 +34,24 @@ When call extract_jira_id "feat/COMPPLAN-795-add-foo"
 The output should equal "COMPPLAN-795"
 End
 
-It "preserves the .{N} sub-ticket suffix"
+It "drops the .N sub-ticket suffix"
 When call extract_jira_id "COMPPLAN-795.2"
-The output should equal "COMPPLAN-795.2"
+The output should equal "COMPPLAN-795"
 End
 
-It "preserves the .{N} sub-ticket suffix on a prefixed branch"
+It "drops the .N sub-ticket suffix on a prefixed branch"
 When call extract_jira_id "wt/COMPPLAN-795.2/some-slug"
-The output should equal "COMPPLAN-795.2"
+The output should equal "COMPPLAN-795"
+End
+
+It "drops a sub-ticket suffix and description suffix together"
+When call extract_jira_id "wt/jira-123.1-some-suffix"
+The output should equal "JIRA-123"
+End
+
+It "stops at a hyphen-digit description suffix"
+When call extract_jira_id "jira-123-1"
+The output should equal "JIRA-123"
 End
 
 It "returns the first match when multiple Jira-style IDs appear"
@@ -39,23 +59,33 @@ When call extract_jira_id "FOO-1/touches-BAR-2"
 The output should equal "FOO-1"
 End
 
-It "returns empty when no Jira-style ID is present"
+It "extracts a kebab-prefixed lowercase ID anywhere in the branch"
 When call extract_jira_id "feat/foo-2"
-The output should equal ""
+The output should equal "FOO-2"
+End
+
+It "extracts a bare two-letter prefix lowercase ID"
+When call extract_jira_id "feat-2"
+The output should equal "FEAT-2"
+End
+
+It "extracts a lowercase Jira-style ID on an author-prefixed branch"
+When call extract_jira_id "wt/mac-130"
+The output should equal "MAC-130"
+End
+
+It "uppercases a mixed-case Jira-style ID"
+When call extract_jira_id "wt/compPlaN-795"
+The output should equal "COMPPLAN-795"
+End
+
+It "uppercases a bare lowercase Jira-style ID"
+When call extract_jira_id "jira-123"
+The output should equal "JIRA-123"
 End
 
 It "returns empty for a plain word branch"
 When call extract_jira_id "main"
-The output should equal ""
-End
-
-It "does not match a lowercase letter prefix"
-When call extract_jira_id "feat-2"
-The output should equal ""
-End
-
-It "does not match a lowercase Jira-style ID on an author-prefixed branch"
-When call extract_jira_id "wt/mac-130"
 The output should equal ""
 End
 End
@@ -340,9 +370,15 @@ The output should equal "COMPPLAN-795"
 The status should be success
 End
 
-It "preserves the sub-ticket suffix"
+It "drops the sub-ticket suffix"
 When run bash "$script" "COMPPLAN-795.2"
-The output should equal "COMPPLAN-795.2"
+The output should equal "COMPPLAN-795"
+The status should be success
+End
+
+It "uppercases a lowercase Jira-style branch"
+When run bash "$script" "wt/mac-130"
+The output should equal "MAC-130"
 The status should be success
 End
 
@@ -382,9 +418,9 @@ The output should equal "42"
 The status should be success
 End
 
-It "returns empty for a slug-embedded number with no leading bare number"
+It "extracts a kebab-prefixed lowercase ID anywhere in the branch"
 When run bash "$script" "feat/foo-2"
-The output should equal ""
+The output should equal "FOO-2"
 The status should be success
 End
 

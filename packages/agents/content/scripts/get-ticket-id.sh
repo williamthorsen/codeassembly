@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Extract a Jira-style ticket ID from a branch name.
 #
-# Tries the Jira-style pattern first (`[A-Z]+-[0-9]+` with an optional
-# `.{N}` sub-ticket suffix). Falls back to a bare-numeric match anchored
-# at the start of the branch name, formatted using `project.ticket_ref_prefix`
-# from `.agents/preferences.yaml`.
+# Tries the Jira-style pattern first (case-insensitive `[A-Za-z]{2,}-[0-9]+`,
+# uppercased on output). Falls back to a bare-numeric match anchored at the
+# start of the branch name, formatted using `project.ticket_ref_prefix` from
+# `.agents/preferences.yaml`.
 #
 # Usage:
 #   get-ticket-id.sh [BRANCH_NAME]
@@ -20,12 +20,15 @@ set -euo pipefail
 readonly PROG="$(basename "$0")"
 
 # Match a Jira-style ticket ID anywhere in the branch name. Returns the first
-# match or empty. Pattern: one or more uppercase letters, hyphen, one or more
-# digits, with an optional `.{N}` sub-ticket suffix. Deliberately unanchored
-# so author-prefixed branches (e.g., `wt/COMPPLAN-795`) match correctly.
+# match (uppercased) or empty. Pattern: two or more letters, hyphen, one or
+# more digits, matched case-insensitively. Deliberately unanchored so
+# author-prefixed branches (e.g., `wt/COMPPLAN-795`, `wthorsen/MAC-130`)
+# match correctly. The greedy `[0-9]+` boundary stops at the first non-digit,
+# so `.N` sub-ticket suffixes and `-description` suffixes are naturally
+# truncated. See `_data/ticket-id-extraction.md` for the canonical contract.
 extract_jira_id() {
   local branch_name="$1"
-  echo "$branch_name" | grep -oE '[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1 || true
+  echo "$branch_name" | grep -oiE '[A-Z]{2,}-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]' || true
 }
 
 # Match a bare-numeric prefix at the start of the branch name. Anchored

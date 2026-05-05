@@ -16,7 +16,9 @@ Extract a Jira-style ticket ID from the current context.
 
 ## Pattern
 
-`[A-Z]+-[0-9]+(\.[0-9]+)?` — matches `ABC-123`, `PT-1234`, `NMR-567.2`
+Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more letters, hyphen, digits — uppercased on output. Examples: `ABC-123`, `PT-1234`, `mac-130 → MAC-130`. Trailing `.N` sub-ticket and `-description` suffixes are tolerated in input but not part of the ID. See [`_data/ticket-id-extraction.md`](../_data/ticket-id-extraction.md) for the full contract and behavior table — it is the single source of truth shared with `get-session-context`.
+
+Note: kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract — branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
 
 ## Implementation
 
@@ -24,9 +26,9 @@ Extract a Jira-style ticket ID from the current context.
 
 The script `{platform_home_dir}/scripts/get-ticket-id.sh` extracts a ticket ID from a branch name. It accepts an optional branch name (defaults to the current branch) and prints the resolved ticket ID, or an empty string when no ID can be derived.
 
-In branch names, `_` and `/` are interchangeable separators (see `branch-format.md`). The Jira-style match is unanchored, so it extracts the ID regardless of which separator is used or whether an author/scope prefix appears (e.g., `wt/COMPPLAN-795`, `feat/COMPPLAN-795-add-foo`).
+In branch names, `_` and `/` are interchangeable separators (see `branch-format.md`). The Jira-style match is case-insensitive and unanchored, so it extracts the ID regardless of which separator is used or whether an author/scope prefix appears (e.g., `wt/COMPPLAN-795`, `wthorsen/MAC-130`, `feat/COMPPLAN-795-add-foo`). The result is uppercased before being returned.
 
-When no Jira-style ID matches, the script falls back to a **bare issue number** anchored to the start of the branch name (terminated by `/`, `_`, `-`, or end-of-string). The anchor on the fallback prevents false matches against digits embedded in slugs like `feat/foo-2`.
+When no Jira-style ID matches, the script falls back to a **bare issue number** anchored to the start of the branch name (terminated by `/`, `_`, `-`, or end-of-string). The anchor on the fallback prevents false matches against digits embedded in slugs that lack a Jira-style match.
 
 When the bare-numeric fallback fires, the script reads `project.ticket_ref_prefix` from `.agents/preferences.yaml` to format the result:
 
@@ -49,7 +51,7 @@ ticket_id=$({platform_home_dir}/scripts/get-ticket-id.sh "$branch_name")
 
 ```bash
 commit="${1:-HEAD}"
-git log -1 --pretty=format:'%s' "$commit" | grep -oE '[A-Z]+-[0-9]+(\.[0-9]+)?' | head -1
+git log -1 --pretty=format:'%s' "$commit" | grep -oiE '[A-Z]{2,}-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]'
 ```
 
 ### From current context (default)
