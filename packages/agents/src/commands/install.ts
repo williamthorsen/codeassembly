@@ -2,6 +2,7 @@ import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promis
 import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.js';
+import { expandIncludes } from '../lib/directive-expander.js';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.js';
 import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.js';
 import {
@@ -690,6 +691,13 @@ async function installPlatformGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(platformPaths.platformHome, entry);
 
+    // Resolve include directives at source-tree level. Run before the dry-run gate so missing
+    // targets, cycles, and out-of-tree references surface even when no files are written.
+    let expandedContent: string | undefined;
+    if (entry.endsWith('.md')) {
+      expandedContent = await expandIncludes(srcPath, contentDir);
+    }
+
     if (options.dryRun) {
       console.info(`    [copy] ${entry} (guidance)`);
       entries.push({ relativePath: entry, contentHash: 'dry-run', linked: false });
@@ -710,9 +718,12 @@ async function installPlatformGuidance(
     await unlinkIfSymlink(destPath);
     await copyItem(srcPath, destPath);
 
-    // Rewrite Markdown link targets and {platform_home_dir} templates so installed guidance
-    // contains only absolute paths — no convention required for agents to resolve links.
+    // For .md files, replace the freshly-copied content with the include-expanded content,
+    // then run downstream link rewriting and template/marker injection on the expanded text.
     if (entry.endsWith('.md')) {
+      if (expandedContent !== undefined) {
+        await writeFile(destPath, expandedContent, 'utf8');
+      }
       await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir);
       await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_platforms/${platformId}/${entry}`));
     }

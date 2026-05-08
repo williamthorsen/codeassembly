@@ -156,7 +156,9 @@ describe('guidance installation', () => {
       expect(existsSync(claudeMd)).toBe(true);
 
       const content = await readFile(claudeMd, 'utf8');
-      expect(content).toContain('@~/.agents/AGENTS.md');
+      expect(content).toContain('# Shared agent instructions');
+      expect(content).not.toContain('<!-- include:');
+      expect(content).not.toContain('@~/.agents/AGENTS.md');
     });
 
     it('installs AGENTS.md to ~/.rovodev/ for rovodev platform', async () => {
@@ -170,7 +172,25 @@ describe('guidance installation', () => {
       expect(existsSync(rovodevAgentsMd)).toBe(true);
 
       const content = await readFile(rovodevAgentsMd, 'utf8');
-      expect(content).toContain('@~/.agents/AGENTS.md');
+      expect(content).toContain('# Shared agent instructions');
+      expect(content).not.toContain('<!-- include:');
+      expect(content).not.toContain('@~/.agents/AGENTS.md');
+    });
+
+    it('inlines both shared and platform-specific content into rovodev AGENTS.md in source order', async () => {
+      const rovodevHome = path.join(tempDir, '.rovodev');
+      await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+      await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+      await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+
+      const content = await readFile(path.join(rovodevHome, 'AGENTS.md'), 'utf8');
+      const sharedHeader = '# Shared agent instructions';
+      const platformSection = '## Interaction style';
+      const sharedIndex = content.indexOf(sharedHeader);
+      const platformIndex = content.indexOf(platformSection);
+      expect(sharedIndex).toBeGreaterThanOrEqual(0);
+      expect(platformIndex).toBeGreaterThan(sharedIndex);
     });
 
     it('tracks platform guidance in platform manifest entries', async () => {
