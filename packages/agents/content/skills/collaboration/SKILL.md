@@ -28,10 +28,6 @@ When you do ask, prefer forms the user can answer unambiguously:
 - **A clean yes/no question** (end with `👍🏼👎🏼`).
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
 
-## Asking with a recommendation gradient
-
-When asking numbered clarifying questions with 2+ options, follow the [recommendation gradient](../_data/recommendation-gradient.md) format.
-
 ## Efficient context usage
 
 When you deem appropriate, proactively dispatch subagents to perform tasks. Good examples:
