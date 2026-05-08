@@ -31,12 +31,13 @@ Print a notice listing the resolved title, body, strategy, and deletion strategy
 Bitbucket merge is not yet implemented. Resolved values:
 
   PR:                 {pr_number}
-  Title:              {title}
+  Title:              ▶︎ {title} ◀︎
   Strategy:           {strategy}
   Deletion strategy:  {deletion_strategy}
 
-  Body:
+  ▼ Body
   {body}
+  ▲
 
 Merge manually via the Bitbucket UI, then re-run with `merge-pr` if you want a merge artifact saved locally.
 ```
