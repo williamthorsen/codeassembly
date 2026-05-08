@@ -21,28 +21,52 @@ Rank options on correctness — behavior, API quality, architectural soundness, 
 
 ## Format
 
-Marker, then option title and colon. Each pro (`➕`) and con (`➖`) goes on its own line, indented by 3 spaces. Apply this even when an option has only one pro or con. Lead with the strongest argument. Use semicolons between items and a period on the last.
+Marker, then option title and colon. Each pro (`➕`) and con (`➖`) goes on its own line, prefixed with 3 non-breaking-space characters (NBSP, U+00A0) for visual indent — regular ASCII spaces are commonly stripped or normalized in model output, so a visible character is needed to make the indent reliable. Apply this even when an option has only one pro or con. Lead with the strongest argument. Use semicolons between items and a period on the last.
+
+## Question identifiers
+
+When a single response contains 2+ option-style questions, prefix each question with `Q1`, `Q2`, etc., so the user can reference answers unambiguously (e.g., "Q1: option 2"). For a single option-style question, omit the identifier.
 
 ## Examples
+
+Single question with markers:
 
 ```
 Want me to:
 1. ■□□ Use a single config file:
-   ➕ minimal surface area;
-   ➖ couples concerns.
+   ➕ minimal surface area;
+   ➖ couples concerns.
 2. ■■■ Split into two configs:
-   ➕ separates lifecycle and runtime concerns;
-   ➕ matches existing repo pattern.
+   ➕ separates lifecycle and runtime concerns;
+   ➕ matches existing repo pattern.
 3. □□□ Use three configs:
-   ➖ over-decomposed for current scope.
+   ➖ over-decomposed for current scope.
 ```
+
+Single question without markers (pure taste call):
 
 ```
 Want me to:
 1. Use camelCase:
-   ➕ matches the host file's local style.
+   ➕ matches the host file's local style.
 2. Use kebab-case:
-   ➕ matches the package's public API style.
+   ➕ matches the package's public API style.
+```
+
+Multiple questions in one response (Q1/Q2 identifiers):
+
+```
+**Q1 — Naming convention?**
+1. Use camelCase:
+   ➕ matches the host file's local style.
+2. Use kebab-case:
+   ➕ matches the package's public API style.
+
+**Q2 — File location?**
+1. ■■□ Co-locate with consumer:
+   ➕ keeps related code close.
+2. ■□□ Place in shared utility module:
+   ➕ reusable across packages.
 ```
 
 ## Don'ts
