@@ -133,15 +133,18 @@ Then render the proposed merge to the user:
 ```
 Proposed merge for PR #{pr_number}:
 
-  Title:    {merge_title}
+  Title:    ▶︎ {merge_title} ◀︎
   Strategy: {strategy}
   Delete:   {deletion_strategy}
 
-  Body:
+  ▼ Body
   {body}
+  ▲
 
 Proceed with merge? 👍🏼👎🏼
 ```
+
+The triangle delimiters wrap the title and body — the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `Proceed with merge?` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
 
 If the user declines, stop with no API call and no artifact. If they approve, continue.
 
