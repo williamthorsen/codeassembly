@@ -21,7 +21,37 @@ Exhaustive list. Nothing else.
 
 `h1`, `h2`, `h3`, `h4`, `h5`, `h6`, `p`, `ul`, `ol`, `li`, `strong`, `em`, `code`, `pre`, `a`, `blockquote`, `hr`, `br`, `table`, `thead`, `tbody`, `tr`, `th`, `td`
 
-**Always strip `<ac:*>` constructs unconditionally.** These are Confluence storage-format extensions (e.g., `<ac:task-list>`, `<ac:structured-macro>`) and have no Jira analogue. Including them produces `INVALID_INPUT`. If you have been working with Confluence content in the same session, audit the payload before sending.
+**Always strip `<ac:*>` and `<ri:*>` constructs unconditionally.** These are Confluence storage-format extensions: `<ac:*>` for Confluence elements like task lists and structured macros (e.g., `<ac:task-list>`, `<ac:structured-macro>`); `<ri:*>` for resource identifiers (e.g., `<ri:user>`, `<ri:page>`, `<ri:attachment>`). They have no Jira analogue, and including them produces `INVALID_INPUT`. If you have been working with Confluence content in the same session, audit the payload before sending.
+
+## Composition rules
+
+These constraints govern how individually-allowed elements may be combined. Both elements may be valid on their own; the combination is rejected.
+
+### `<code>` combined with other inline marks
+
+Do not apply inline styling to `<code>` content. The following nesting patterns will be rejected, in **either** direction:
+
+- `<strong><code>X</code></strong>` and `<code><strong>X</strong></code>`
+- `<em><code>X</code></em>` and `<code><em>X</em></code>`
+- `<a ...><code>X</code></a>` and `<code><a ...>X</a></code>`
+- the same for `<strike>`, `<u>`, `<sub>`, `<sup>`
+
+The rule is symmetric — flipping the nesting order is not a workaround.
+
+**Why:** ADF represents inline styling as marks on text nodes, and the `code` mark is mutually exclusive with `strong`, `em`, `link`, `strike`, `underline`, `subsup`. Beyond the schema constraint, applying styling to monospace code has no defensible rendering — code is meant to display literal characters.
+
+**Workaround:** Move the `<code>` outside the styling wrapper so the two apply to different text runs, or drop the styling entirely.
+
+```html
+<!-- Wrong -->
+<strong><code>isDevMode</code> parameter</strong>
+
+<!-- Right (separate text runs) -->
+<strong>The </strong><code>isDevMode</code><strong> parameter</strong>
+
+<!-- Also right (drop the styling) -->
+<code>isDevMode</code> parameter
+```
 
 ## Character handling
 
@@ -74,6 +104,7 @@ If failures distribute across **unknown classes** (no clear pattern), the recove
 ## Antipatterns
 
 - Hand-authoring HTML containing constructs outside the allowlist.
+- Combining `<code>` with other inline marks on the same text run — see [Composition rules](#composition-rules).
 - Using named HTML entities other than `&amp;`, `&lt;`, `&gt;`.
 - Passing a file path to `description_html` / `comment_html`.
 - Retrying past the 4-retry cap.
