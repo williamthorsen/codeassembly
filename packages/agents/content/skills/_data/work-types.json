@@ -1,127 +1,133 @@
 {
-  "version": "1.0.0",
+  "markers": {
+    "breaking": {
+      "emoji": "🚨",
+      "label": "Breaking"
+    }
+  },
   "tiers": ["public", "internal", "process"],
   "types": [
     {
-      "key": "feat",
       "aliases": ["feature"],
-      "tier": "public",
+      "breakingPolicy": "optional",
       "emoji": "🎉",
+      "key": "feat",
       "label": "Features",
-      "breakingPolicy": "optional"
+      "tier": "public"
     },
     {
+      "aliases": [],
+      "breakingPolicy": "required",
+      "emoji": "🪦",
       "key": "drop",
+      "label": "Removed",
+      "tier": "public"
+    },
+    {
       "aliases": [],
-      "tier": "public",
-      "emoji": "🗑️",
-      "label": "Removals",
-      "breakingPolicy": "required"
-    },
-    {
-      "key": "deprecate",
-      "aliases": [],
-      "tier": "public",
-      "emoji": "⚠️",
-      "label": "Deprecations",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "fix",
-      "aliases": ["bugfix"],
-      "tier": "public",
-      "emoji": "🐛",
-      "label": "Fixes",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "sec",
-      "aliases": ["security"],
-      "tier": "public",
-      "emoji": "🔒",
-      "label": "Security",
-      "breakingPolicy": "optional"
-    },
-    {
-      "key": "perf",
-      "aliases": ["performance"],
-      "tier": "public",
-      "emoji": "⚡",
-      "label": "Performance",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "internal",
-      "aliases": ["utility"],
-      "tier": "internal",
-      "emoji": "🔧",
-      "label": "Internal functionality",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "refactor",
-      "aliases": [],
-      "tier": "internal",
-      "emoji": "♻️",
-      "label": "Refactoring",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "tests",
-      "aliases": ["test"],
-      "tier": "internal",
-      "emoji": "🧪",
-      "label": "Tests",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "tooling",
-      "aliases": [],
-      "tier": "process",
-      "emoji": "🛠️",
-      "label": "Tooling",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "ci",
-      "aliases": [],
-      "tier": "process",
-      "emoji": "🤖",
-      "label": "CI",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "deps",
-      "aliases": ["dep"],
-      "tier": "process",
-      "emoji": "📦",
-      "label": "Dependencies",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "ai",
-      "aliases": [],
-      "tier": "process",
-      "emoji": "🧠",
-      "label": "AI",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "docs",
-      "aliases": ["doc"],
-      "tier": "process",
-      "emoji": "📚",
-      "label": "Documentation",
-      "breakingPolicy": "forbidden"
-    },
-    {
-      "key": "fmt",
-      "aliases": [],
-      "tier": "process",
-      "emoji": "💅",
-      "label": "Formatting",
       "breakingPolicy": "forbidden",
-      "excludedFromChangelog": true
+      "emoji": "🗑️",
+      "key": "deprecate",
+      "label": "Deprecated",
+      "tier": "public"
+    },
+    {
+      "aliases": ["bugfix"],
+      "breakingPolicy": "forbidden",
+      "emoji": "🐛",
+      "key": "fix",
+      "label": "Bug fixes",
+      "tier": "public"
+    },
+    {
+      "aliases": ["security"],
+      "breakingPolicy": "optional",
+      "emoji": "🔒",
+      "key": "sec",
+      "label": "Security",
+      "tier": "public"
+    },
+    {
+      "aliases": ["performance"],
+      "breakingPolicy": "forbidden",
+      "emoji": "⚡",
+      "key": "perf",
+      "label": "Performance",
+      "tier": "public"
+    },
+    {
+      "aliases": ["utility"],
+      "breakingPolicy": "forbidden",
+      "emoji": "🏗️",
+      "key": "internal",
+      "label": "Internal features",
+      "tier": "internal"
+    },
+    {
+      "aliases": [],
+      "breakingPolicy": "forbidden",
+      "emoji": "♻️",
+      "key": "refactor",
+      "label": "Refactoring",
+      "tier": "internal"
+    },
+    {
+      "aliases": ["test"],
+      "breakingPolicy": "forbidden",
+      "emoji": "🧪",
+      "key": "tests",
+      "label": "Tests",
+      "tier": "internal"
+    },
+    {
+      "aliases": [],
+      "breakingPolicy": "forbidden",
+      "emoji": "⚙️",
+      "key": "tooling",
+      "label": "Tooling",
+      "tier": "process"
+    },
+    {
+      "aliases": [],
+      "breakingPolicy": "forbidden",
+      "emoji": "👷",
+      "key": "ci",
+      "label": "CI",
+      "tier": "process"
+    },
+    {
+      "aliases": ["dep"],
+      "breakingPolicy": "forbidden",
+      "emoji": "📦",
+      "key": "deps",
+      "label": "Dependencies",
+      "tier": "process"
+    },
+    {
+      "aliases": [],
+      "breakingPolicy": "forbidden",
+      "emoji": "🤖",
+      "key": "ai",
+      "label": "Agentic support",
+      "tier": "process"
+    },
+    {
+      "aliases": ["doc"],
+      "breakingPolicy": "forbidden",
+      "emoji": "📚",
+      "key": "docs",
+      "label": "Documentation",
+      "tier": "process"
+    },
+    {
+      "aliases": [],
+      "breakingPolicy": "forbidden",
+      "emoji": "🎨",
+      "excludedFromChangelog": true,
+      "key": "fmt",
+      "label": "Formatting",
+      "tier": "process"
     }
-  ]
+  ],
+  "version": "1.0.0"
 }

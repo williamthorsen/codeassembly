@@ -1,77 +1,103 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/williamthorsen/codeassembly/raw/agents-v0.1.0/packages/agents/schemas/work-types.schema.json",
-  "title": "Work types",
-  "description": "Canonical work-types taxonomy consumed by skill content and downstream changelog/release-notes tooling. Defines the work-type vocabulary, tier grouping, breaking-change policy, and changelog-eligibility flags.",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "required": ["version", "tiers", "types"],
+  "description": "Canonical work-types taxonomy consumed by skill content and downstream changelog/release-notes tooling. Defines the work-type vocabulary, tier grouping, breaking-change policy, changelog-eligibility flags, and cross-cutting section markers (e.g., the breaking-changes indicator).",
   "properties": {
-    "version": {
-      "type": "string",
-      "description": "Semantic version of the data shape. Bump when the structure changes in a way that breaks downstream consumers.",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    "markers": {
+      "additionalProperties": false,
+      "description": "Cross-cutting section markers used in PR descriptions and release-notes rendering. Orthogonal to `types[]` — these are not work types but visual indicators applied inline to individual entries within their work-type subsection. Add new markers as sibling keys under `markers`; each follows the same `{emoji, label}` shape.",
+      "properties": {
+        "breaking": {
+          "additionalProperties": false,
+          "description": "Marker for breaking-change entries. Consumed by `summarize-change` as an inline prefix (`{emoji} **{label}:**`, e.g., `🚨 **Breaking:**`) on individual `## Details` entries that describe a breaking change; the entry stays under its work-type subsection.",
+          "properties": {
+            "emoji": {
+              "description": "Glyph rendered at the start of the inline breaking-change prefix.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "label": {
+              "description": "Bare tag word rendered inside the inline prefix's bold construction (e.g., `**Breaking:**`). Singular — punctuation belongs to the rendering template.",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": ["emoji", "label"],
+          "type": "object"
+        }
+      },
+      "required": ["breaking"],
+      "type": "object"
     },
     "tiers": {
-      "type": "array",
       "description": "Canonical tier vocabulary in precedence order (higher tier wins ties). Mirrored at `types[].tier`. Each position is pinned via `prefixItems` so that order is enforced structurally.",
-      "prefixItems": [
-        { "type": "string", "const": "public" },
-        { "type": "string", "const": "internal" },
-        { "type": "string", "const": "process" }
-      ],
-      "minItems": 3,
+      "items": false,
       "maxItems": 3,
-      "items": false
+      "minItems": 3,
+      "prefixItems": [
+        { "const": "public", "type": "string" },
+        { "const": "internal", "type": "string" },
+        { "const": "process", "type": "string" }
+      ],
+      "type": "array"
     },
     "types": {
-      "type": "array",
       "description": "The work-type records, in canonical render order. Order is meaningful: when ranking applicable types within a tier, earlier entries win.",
       "items": {
-        "type": "object",
         "additionalProperties": false,
-        "required": ["key", "aliases", "tier", "emoji", "label", "breakingPolicy"],
         "properties": {
-          "key": {
-            "type": "string",
-            "description": "Canonical short identifier used in commit messages (e.g., `feat`, `fix`).",
-            "pattern": "^[a-z][a-z0-9-]*$"
-          },
           "aliases": {
-            "type": "array",
             "description": "Alternative identifiers that resolve to the same `key`. Globally unique across all types (asserted in test).",
             "items": {
-              "type": "string",
-              "pattern": "^[a-z][a-z0-9-]*$"
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "type": "string"
             },
+            "type": "array",
             "uniqueItems": true
           },
-          "tier": {
-            "type": "string",
-            "description": "Which tier this type belongs to. Drives precedence and grouping in skill content.",
-            "enum": ["public", "internal", "process"]
+          "breakingPolicy": {
+            "description": "Whether a breaking-change marker (`!`) is forbidden, optional, or required for this type.",
+            "enum": ["forbidden", "optional", "required"],
+            "type": "string"
           },
           "emoji": {
-            "type": "string",
             "description": "Single-character (or short) emoji used in section headers and changelog rendering.",
-            "minLength": 1
-          },
-          "label": {
-            "type": "string",
-            "description": "Human-readable category label used in section headings (e.g., `Features`, `Fixes`).",
-            "minLength": 1
-          },
-          "breakingPolicy": {
-            "type": "string",
-            "description": "Whether a breaking-change marker (`!`) is forbidden, optional, or required for this type.",
-            "enum": ["forbidden", "optional", "required"]
+            "minLength": 1,
+            "type": "string"
           },
           "excludedFromChangelog": {
-            "type": "boolean",
-            "description": "When true, commits of this type are omitted from the generated changelog (e.g., `fmt`)."
+            "description": "When true, commits of this type are omitted from the generated changelog (e.g., `fmt`).",
+            "type": "boolean"
+          },
+          "key": {
+            "description": "Canonical short identifier used in commit messages (e.g., `feat`, `fix`).",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "type": "string"
+          },
+          "label": {
+            "description": "Human-readable category label used in section headings (e.g., `Features`, `Fixes`).",
+            "minLength": 1,
+            "type": "string"
+          },
+          "tier": {
+            "description": "Which tier this type belongs to. Drives precedence and grouping in skill content.",
+            "enum": ["public", "internal", "process"],
+            "type": "string"
           }
-        }
-      }
+        },
+        "required": ["aliases", "breakingPolicy", "emoji", "key", "label", "tier"],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "version": {
+      "description": "Semantic version of the data shape. Bump when the structure changes in a way that breaks downstream consumers.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "type": "string"
     }
-  }
+  },
+  "required": ["markers", "tiers", "types", "version"],
+  "title": "Work types",
+  "type": "object"
 }
