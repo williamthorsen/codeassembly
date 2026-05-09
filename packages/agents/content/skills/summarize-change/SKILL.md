@@ -61,23 +61,23 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ## Details
 
-### Features
+### 🎉 Features
 
 {Only if applicable}
 
-### Fixes
+### 🐛 Bug fixes
 
 {Only if applicable}
 
-### Refactoring
+### ♻️ Refactoring
 
 {Only if applicable}
 
-### Tests
+### 🧪 Tests
 
 {Only if applicable}
 
-### Dependencies
+### 📦 Dependencies
 
 {Only if applicable}
 ```
@@ -88,7 +88,9 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - The change summary follows **newspaper style** — progressive disclosure from most to least essential: `## What` is the headline (outcome in plain language), `## Why` is the context (motivation and background), `## Details` is the full story (implementation mechanics)
 - Ignore auto-formatter and lint-fix changes
 - Omit inapplicable Details subsections
-- Order Details subsections per `work-types.json` tier order: public → internal → process
+- Subsection headings use `{emoji} {label}` from the matching [work-types.json](../_data/work-types.json) `types[]` entry. For any subsection not enumerated in the example template above, look up the entry by work-type key and use its `emoji` and `label`.
+- Order Details subsections per `work-types.json` tier order: public → internal → process.
+- Prefix any individual `## Details` entry that describes a breaking change with `🚨 **Breaking:** ` (drawn from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `). Trigger conditions: a commit with the `!` breaking marker (e.g., `feat!`) or a `BREAKING CHANGE:` footer. The entry stays under its work-type subsection — the prefix tags it inline rather than relocating it to a separate section.
 - `## What` and `## Why` are required; Details subsections are optional
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 

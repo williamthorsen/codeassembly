@@ -15,20 +15,32 @@ type JsonValue = string | number | boolean | null | { [key: string]: JsonValue }
 
 /** Shape of a single record under `types[]` — used to type the live JSON for cross-element checks. */
 interface WorkTypeRecord {
-  key: string;
   aliases: string[];
+  breakingPolicy: string;
+  emoji: string;
+  excludedFromChangelog?: boolean;
+  key: string;
+  label: string;
   tier: string;
+}
+
+/** Shape of a single marker record (cross-cutting section indicator). */
+interface MarkerRecord {
   emoji: string;
   label: string;
-  breakingPolicy: string;
-  excludedFromChangelog?: boolean;
+}
+
+/** Shape of the top-level `markers` block. */
+interface MarkersBlock {
+  breaking: MarkerRecord;
 }
 
 /** Shape of the live `work-types.json` document — used to type the live JSON for cross-element checks. */
 interface WorkTypesDocument {
-  version: string;
+  markers: MarkersBlock;
   tiers: string[];
   types: WorkTypeRecord[];
+  version: string;
 }
 
 /**
@@ -95,16 +107,16 @@ describe('work-types.schema.json', () => {
     },
     {
       description: 'rejects a type record missing a required field',
-      // Guards `types[].required: ["key", "aliases", "tier", "emoji", "label", "breakingPolicy"]`.
+      // Guards `types[].required: ["aliases", "breakingPolicy", "emoji", "key", "label", "tier"]`.
       // Builds a record without `breakingPolicy`.
       input: buildMinimalDoc({
         types: [
           {
-            key: 'feat',
             aliases: ['feature'],
-            tier: 'public',
             emoji: '🎉',
+            key: 'feat',
             label: 'Features',
+            tier: 'public',
           },
         ],
       }),
@@ -141,6 +153,48 @@ describe('work-types.schema.json', () => {
       // Guards `version.pattern: ^\d+\.\d+\.\d+$`. The leading `v` is the canonical mistake to
       // catch; if the constraint were widened, this rejection test would fail loudly.
       input: buildMinimalDoc({ version: 'v1.0.0' }),
+    },
+    {
+      description: 'rejects a document missing the `markers` top-level field',
+      // Guards top-level `required: ["markers", "tiers", "types", "version"]`. Constructed inline
+      // because `buildMinimalDoc` always supplies `markers`.
+      input: {
+        tiers: ['public', 'internal', 'process'],
+        types: [],
+        version: '1.0.0',
+      },
+    },
+    {
+      description: 'rejects a `markers` block missing the `breaking` field',
+      // Guards `markers.required: ["breaking"]`.
+      input: buildMinimalDoc({ markers: {} }),
+    },
+    {
+      description: 'rejects a `markers.breaking` record missing the `emoji` field',
+      // Guards `markers.breaking.required: ["emoji", "label"]`.
+      input: buildMinimalDoc({ markers: { breaking: { label: 'Breaking' } } }),
+    },
+    {
+      description: 'rejects a `markers.breaking` record missing the `label` field',
+      // Guards `markers.breaking.required: ["emoji", "label"]`.
+      input: buildMinimalDoc({ markers: { breaking: { emoji: '🚨' } } }),
+    },
+    {
+      description: 'rejects a `markers.breaking.emoji` that is an empty string',
+      // Guards `markers.breaking.properties.emoji.minLength: 1`.
+      input: buildMinimalDoc({ markers: { breaking: { emoji: '', label: 'Breaking' } } }),
+    },
+    {
+      description: 'rejects a `markers.breaking.label` that is an empty string',
+      // Guards `markers.breaking.properties.label.minLength: 1`.
+      input: buildMinimalDoc({ markers: { breaking: { emoji: '🚨', label: '' } } }),
+    },
+    {
+      description: 'rejects an unknown field on `markers.breaking`',
+      // Guards `markers.breaking.additionalProperties: false`.
+      input: buildMinimalDoc({
+        markers: { breaking: { emoji: '🚨', extra: 'nope', label: 'Breaking' } },
+      }),
     },
   ])('$description', async ({ input }) => {
     const output = await validate(schemaId, input, FLAG);
@@ -198,6 +252,15 @@ describe('work-types.schema.json', () => {
     // schema is ever weakened, this assertion still catches a misordered live file.
     expect(liveData.tiers).toEqual(['public', 'internal', 'process']);
   });
+
+  it('exposes `markers.breaking` with the canonical glyph and label', () => {
+    // The `summarize-change` skill template prefixes breaking-change entries with
+    // `{emoji} **{label}:**` (e.g., `🚨 **Breaking:**`) using these values directly.
+    // A silent rename of either field would still pass schema validation but break the
+    // downstream consumer; assert the values explicitly.
+    expect(liveData.markers.breaking.emoji).toBe('🚨');
+    expect(liveData.markers.breaking.label).toBe('Breaking');
+  });
 });
 
 // region | Helpers
@@ -209,9 +272,15 @@ describe('work-types.schema.json', () => {
  */
 function buildMinimalDoc(overrides: Record<string, JsonValue> = {}): JsonValue {
   return {
-    version: '1.0.0',
+    markers: {
+      breaking: {
+        emoji: '🚨',
+        label: 'Breaking',
+      },
+    },
     tiers: ['public', 'internal', 'process'],
     types: [],
+    version: '1.0.0',
     ...overrides,
   };
 }
@@ -222,12 +291,12 @@ function buildMinimalDoc(overrides: Record<string, JsonValue> = {}): JsonValue {
  */
 function buildTypeRecord(overrides: Record<string, JsonValue> = {}): JsonValue {
   return {
-    key: 'feat',
     aliases: [],
-    tier: 'public',
-    emoji: '🎉',
-    label: 'Features',
     breakingPolicy: 'optional',
+    emoji: '🎉',
+    key: 'feat',
+    label: 'Features',
+    tier: 'public',
     ...overrides,
   };
 }
