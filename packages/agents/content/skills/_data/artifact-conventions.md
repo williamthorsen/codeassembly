@@ -192,7 +192,7 @@ commits: [<sha>, ...] # omit for working-tree devlogs
 
 ## Deferred-findings frontmatter
 
-Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, and a structured cross-reference of created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types. The artifact is written only when at least one finding became a created ticket; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
+Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, and a structured cross-reference of created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types. The artifact is written when at least one finding became a created ticket or at least one finding was dropped; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
 
 **Single-finding case** — a ticket addressing one finding:
 
