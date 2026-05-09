@@ -261,7 +261,7 @@ The user may respond with:
 
 - **Numbers only:** `"1, 3"` or `"all"` — execute the referenced actions as-is
 - **Per-item adjustments:** `"1 but combine F1+F2"` — execute the action with modifications
-- **Multiple action selections:** `"1a (F1, F2); 3"` — apply action 1a to the listed items, then execute action 3
+- **Multiple action selections:** `"1a with F1+F2; 3"` — apply action 1a to F1 and F2, then execute action 3
 - **Exclusions:** `"all except I2"` — execute everything, omitting specific items
 - **Custom instructions:** free-form text — interpret and confirm before executing
 
@@ -370,8 +370,8 @@ Insights, applied drive-by fixes, and devlog references do not appear in the bod
 - {ticket-id}: {prefix} {item-ID} "{title}" — {URL or file path}
 
 ### Insights recorded
-- {item-ID}: posted to #{number}
-- {item-ID}: included in devlog
+- {prefix} {item-ID}: posted to #{number}
+- {prefix} {item-ID}: included in devlog
 
 ### Artifacts saved
 - {devlog path}
