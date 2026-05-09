@@ -35,7 +35,7 @@ Do not include the ticket ID in the commit title. The branch name carries it. In
 
 ## Body guidelines
 
-**Voice: release-notes voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. Apply the [release-notes voice](../_data/release-notes-voice.md): Per-sentence outcome test, identifier ban, mechanism routed away from the entry. The first paragraph of the body must stand alone as the changelog/release-notes entry; subsequent paragraphs may elaborate for the engaged reader who has clicked through.
+**Voice: release-notes voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. Apply the [release-notes voice](../_data/release-notes-voice.md): The per-sentence outcome test and the identifier ban. The first paragraph of the body must stand alone as the changelog/release-notes entry; subsequent paragraphs may elaborate for the engaged reader who has clicked through.
 
 **No hard line breaks.** Write each paragraph or list item as a single long line. Do not insert newlines to wrap at a column width. Every tool that renders commit messages handles wrapping; manual breaks produce ragged text.
 

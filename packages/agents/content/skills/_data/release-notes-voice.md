@@ -28,7 +28,7 @@ The entry is the lede; the PR is the article.
 
 ## Two rules
 
-Apply both. They are tight enough that a verbose draft cannot satisfy them on a literal read.
+Apply both. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
 
 ### Rule 1 — Per-sentence outcome test
 
@@ -45,7 +45,7 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **Indirect outcomes** (reliability, maintainability, performance) are permitted **only if specific**. "More reliable progress visibility during long runs" describes a real outcome a reader would notice; "improves reliability" or "modernizes the architecture" is generic puffery and is forbidden. The test: If the same sentence could be written about almost any change, it is too generic.
 
-**For `fix:` entries specifically.** A second sentence is warranted only when the fix carries user-facing behavior change or migration info beyond "the bug is gone." When you write it, describe what the user can now do (or no longer needs to do) — not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the fix? If yes, it is user-facing behavior; if no, it is mechanism.
+**For `fix:` entries specifically.** A second sentence is warranted only when the fix carries user-facing behavior change, migration info, or a non-trivial invariant worth confirming beyond "the bug is gone." When you write it, describe what the user can now do (or no longer needs to do) — not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the fix? If yes, it is user-facing behavior; if no, it is mechanism. The same test applies when considering a second sentence in any other work type — `feat:`, `refactor:`, `perf:`, etc.
 
 ### Rule 2 — Identifier ban
 
@@ -66,7 +66,7 @@ Banned:
 - Internal versioning ("v1 supports…", "v3 event-sourced format")
 - Output-format details (JSON keys, marker glyphs, header strings)
 
-When in doubt, leave the name out and describe the behavior. The one exception: A _removed_ user-facing identifier may be named when it is needed for migration ("the `--fix-low` flag is replaced by …").
+When in doubt, leave the name out and describe the behavior. The one exception: User-configurable surface needed for migration may be named — both _removed_ identifiers (so the user recognizes what's gone) and _new_ defaults (so the user knows where to find or move them). Examples: "The `--fix-low` flag is replaced by `--approval-threshold`."; "The default config file is now `.config/v11y-check.config.json`."
 
 ## Length
 
@@ -124,9 +124,9 @@ Cut: every schema field name, every default value, every internal file path, eve
 
 **Good:**
 
-> Fixes an issue where running `audit-deps`, `nmr`, or `release-kit` from the locally built `dist/esm/` after a `git pull` could report a stale version.
+> Fixes an issue where running `audit-deps`, `nmr`, or `release-kit` from the locally built `dist/esm/` after a `git pull` could report a stale version. A fresh `pnpm install` or rebuild is no longer required.
 
-Cut: The second sentence describes how the fix works. The reader does not need to know.
+Cut: the mechanism clause ("Each CLI now reads its version directly from its `package.json` at startup"). Survives: the migration info — the user no longer needs to rebuild — which the fix-specific guidance under Rule 1 marks as the warranted second-sentence case.
 
 ### Bad → Good — TMI feature
 
