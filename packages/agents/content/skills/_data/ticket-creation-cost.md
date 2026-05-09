@@ -19,7 +19,7 @@ For a one-line vocabulary fix or a two-line cleanup, the overhead can dwarf the 
 
 ## Three-lane disposition model
 
-Every finding the agent surfaces gets dispositioned into one of three lanes. The agent never silently drops or buries findings on threshold grounds; the user retains full discretion to drop any finding explicitly, but the agent does not pre-filter on cost.
+Every finding the agent surfaces gets dispositioned into one of three lanes. The agent never silently drops or buries findings on threshold grounds; the user retains full discretion to drop any finding, but the agent does not pre-filter on cost.
 
 ### Do now
 
