@@ -58,6 +58,8 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
     const lineNumber = i + 1;
     const resolved = path.resolve(path.dirname(filePath), target);
 
+    // Lexical containment check. Symlinks under contentDir that point outside are not realpath'd
+    // — source trees are not expected to contain symlinks; widen this guard if that changes.
     const relative = path.relative(contentDir, resolved);
     if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new DirectiveExpansionError(
@@ -75,7 +77,7 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
 
     const included = await expandFile(resolved, contentDir, visited);
     const includedLines = included.split('\n');
-    if (includedLines.length > 0 && includedLines[includedLines.length - 1] === '') {
+    if (includedLines.length > 0 && includedLines.at(-1) === '') {
       includedLines.pop();
     }
     out.push(...includedLines);

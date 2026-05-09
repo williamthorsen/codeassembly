@@ -175,6 +175,13 @@ describe('guidance installation', () => {
       expect(content).toContain('# Shared agent instructions');
       expect(content).not.toContain('<!-- include:');
       expect(content).not.toContain('@~/.agents/AGENTS.md');
+
+      // Standalone codeassembly-guidance.md is also installed under ~/.rovodev/, separate from
+      // being inlined into AGENTS.md, so ad-hoc references to that path continue to resolve.
+      const standaloneGuidance = path.join(rovodevHome, 'codeassembly-guidance.md');
+      expect(existsSync(standaloneGuidance)).toBe(true);
+      const standaloneContent = await readFile(standaloneGuidance, 'utf8');
+      expect(standaloneContent).toContain('## Interaction style');
     });
 
     it('inlines both shared and platform-specific content into rovodev AGENTS.md in source order', async () => {
@@ -484,6 +491,62 @@ describe('guidance installation', () => {
       expect(output).toContain('modified: AGENTS.md');
 
       infoSpy.mockRestore();
+    });
+  });
+
+  describe('include directive expansion errors', () => {
+    /**
+     * Builds the minimum content tree the install pipeline expects to traverse, so a test can
+     * inject a deliberately-broken platform guidance source file without depending on the real
+     * package content.
+     */
+    async function buildFakeContentTree(contentDir: string, options: { brokenClaudeBody: string }): Promise<void> {
+      await mkdir(path.join(contentDir, 'guidance', 'shared'), { recursive: true });
+      await mkdir(path.join(contentDir, 'guidance', '_platforms', 'claude'), { recursive: true });
+      await mkdir(path.join(contentDir, 'guidance', '_platforms', 'rovodev'), { recursive: true });
+      await mkdir(path.join(contentDir, 'skills'), { recursive: true });
+      await mkdir(path.join(contentDir, 'subagents'), { recursive: true });
+      await mkdir(path.join(contentDir, 'scripts'), { recursive: true });
+
+      await writeFile(path.join(contentDir, 'guidance', 'shared', 'AGENTS.md'), '# Fake shared\n', 'utf8');
+      await writeFile(
+        path.join(contentDir, 'guidance', '_platforms', 'claude', 'CLAUDE.md'),
+        options.brokenClaudeBody,
+        'utf8',
+      );
+    }
+
+    it('propagates a missing-target error from a platform source even in dry-run mode', async () => {
+      const contentDir = path.join(tempDir, 'fake-content');
+      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ./does-not-exist.md -->\n' });
+
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await expect(
+        installCommand(makeOptions({ platform: 'claude', dryRun: true }), tempDir, contentDir),
+      ).rejects.toMatchObject({
+        name: 'DirectiveExpansionError',
+        reason: 'not-found',
+      });
+
+      // No platform guidance file should be written in dry-run mode regardless of the failure.
+      expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
+    });
+
+    it('propagates an out-of-tree error during a real install', async () => {
+      const contentDir = path.join(tempDir, 'fake-content');
+      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ../../../../escape.md -->\n' });
+
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await expect(installCommand(makeOptions({ platform: 'claude' }), tempDir, contentDir)).rejects.toMatchObject({
+        name: 'DirectiveExpansionError',
+        reason: 'out-of-tree',
+      });
     });
   });
 });

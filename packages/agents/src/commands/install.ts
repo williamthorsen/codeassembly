@@ -34,8 +34,12 @@ import type {
 /**
  * Executes the install command, installing skills and subagents for the specified platforms.
  */
-export async function installCommand(options: InstallOptions, baseDir?: string): Promise<void> {
-  const contentDir = resolveContentDir();
+export async function installCommand(
+  options: InstallOptions,
+  baseDir?: string,
+  contentDirOverride?: string,
+): Promise<void> {
+  const contentDir = contentDirOverride ?? resolveContentDir();
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
   const platforms = resolvePlatformIds(options.platform, baseDir);
@@ -392,7 +396,6 @@ async function generatePromptsYml(
     return undefined;
   }
 
-  // eslint-disable-next-line n/no-unsupported-features/es-syntax -- project requires Node 22+
   const sortedSkillNames = [...skillDirEntries].toSorted();
 
   const promptEntries: Array<{ name: string; description: string; contentFile: string }> = [];
