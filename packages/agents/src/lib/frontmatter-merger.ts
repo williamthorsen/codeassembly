@@ -166,7 +166,6 @@ export function mergeFrontmatter(source: string, overlayYaml: string): string {
   }
 
   // Append new keys (not already in source) in sorted order
-  // eslint-disable-next-line n/no-unsupported-features/es-syntax -- project requires Node 22+
   const newKeys = Object.keys(overrides)
     .filter((key) => !applied.has(key))
     .toSorted();

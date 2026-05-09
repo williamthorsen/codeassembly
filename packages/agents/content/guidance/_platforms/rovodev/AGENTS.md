@@ -1,2 +1,2 @@
-@~/.agents/AGENTS.md
-@~/.rovodev/codeassembly-guidance.md
+<!-- include: ../../shared/AGENTS.md -->
+<!-- include: ./codeassembly-guidance.md -->
