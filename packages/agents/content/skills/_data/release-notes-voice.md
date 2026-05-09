@@ -45,6 +45,8 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **Indirect outcomes** (reliability, maintainability, performance) are permitted **only if specific**. "More reliable progress visibility during long runs" describes a real outcome a reader would notice; "improves reliability" or "modernizes the architecture" is generic puffery and is forbidden. The test: If the same sentence could be written about almost any change, it is too generic.
 
+**For `fix:` entries specifically.** A second sentence is warranted only when the fix carries user-facing behavior change or migration info beyond "the bug is gone." When you write it, describe what the user can now do (or no longer needs to do) — not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the fix? If yes, it is user-facing behavior; if no, it is mechanism.
+
 ### Rule 2 — Identifier ban
 
 The only identifiers that may appear are **top-level user-configurable surface**:
