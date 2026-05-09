@@ -39,19 +39,19 @@ Classify the complexity of a task, finding, or change to determine how it should
 - Modify dependency boundaries (add/remove/replace libraries)
 - Restructure control flow or state management across components
 
-## Consumer thresholds
+## Consumer levels
 
-Each consuming skill defines its own threshold against this rubric. The threshold indicates which levels qualify for the consumer's "simple enough" decision.
+Each consuming skill defines which complexity levels qualify for its "simple enough" decision against this rubric.
 
-| Consumer                           | Threshold | Decision                                                                                                                                                                                                                              |
-| ---------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `wrap-up` drive-by pass            | 1–2       | Apply immediately on the current branch; skip ticket creation                                                                                                                                                                         |
-| `next-steps-after-plan`            | 1–2       | For changes that would not benefit from review, recommend "Implement directly". For work where the verification surface fits a single review pass, recommend "Implement directly with follow-up review" (rule 2's broader criterion). |
-| `next-steps-after-review`          | 1–2       | Recommend "implement directly" (findings are simple enough to fix without further review)                                                                                                                                             |
-| `orchestrated-architect` (planned) | 1–2       | Classify as `none`/`low` impact (minimal architectural guidance)                                                                                                                                                                      |
+| Consumer                           | Levels | Decision                                                                                                                                                                                                                              |
+| ---------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wrap-up` drive-by pass            | 1–2    | Apply immediately on the current branch; skip ticket creation                                                                                                                                                                         |
+| `next-steps-after-plan`            | 1–2    | For changes that would not benefit from review, recommend "Implement directly". For work where the verification surface fits a single review pass, recommend "Implement directly with follow-up review" (rule 2's broader criterion). |
+| `next-steps-after-review`          | 1–2    | Recommend "implement directly" (findings are simple enough to fix without further review)                                                                                                                                             |
+| `orchestrated-architect` (planned) | 1–2    | Classify as `none`/`low` impact (minimal architectural guidance)                                                                                                                                                                      |
 
 When characteristics span two levels, prefer the higher level. This is consistent with the "when uncertain, recommend the more thorough option" pattern used by consuming skills.
 
-Consumers above level 2 should use the level descriptions to inform their own routing logic rather than mapping mechanically to a single threshold.
+Consumers above level 2 should use the level descriptions to inform their own routing logic rather than relying solely on this table.
 
 The complexity rubric and the [ticket-creation-cost](ticket-creation-cost.md) model compose: complexity drives orchestration-routing decisions (which skill picks the work up next), while ticket-creation-cost drives ticket-creation decisions (whether the work needs its own ticket at all).
