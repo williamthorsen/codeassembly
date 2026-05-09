@@ -6,19 +6,19 @@
   "properties": {
     "markers": {
       "additionalProperties": false,
-      "description": "Cross-cutting section markers used in PR descriptions and release-notes rendering. Orthogonal to `types[]` — these are not work types but visual indicators of cross-cutting concerns (e.g., the breaking-changes section).",
+      "description": "Cross-cutting section markers used in PR descriptions and release-notes rendering. Orthogonal to `types[]` — these are not work types but visual indicators applied inline to individual entries within their work-type subsection. Add new markers as sibling keys under `markers`; each follows the same `{emoji, label}` shape.",
       "properties": {
         "breaking": {
           "additionalProperties": false,
-          "description": "Marker for the breaking-changes section. Consumed by `summarize-change` to render the `🚨 Breaking changes` subsection of `## Details` when the branch contains breaking commits.",
+          "description": "Marker for breaking-change entries. Consumed by `summarize-change` as an inline prefix (`{emoji} **{label}:**`, e.g., `🚨 **Breaking:**`) on individual `## Details` entries that describe a breaking change; the entry stays under its work-type subsection.",
           "properties": {
             "emoji": {
-              "description": "Emoji rendered as the prefix of the breaking-changes section heading.",
+              "description": "Glyph rendered at the start of the inline breaking-change prefix.",
               "minLength": 1,
               "type": "string"
             },
             "label": {
-              "description": "Human-readable label rendered as the breaking-changes section heading.",
+              "description": "Bare tag word rendered inside the inline prefix's bold construction (e.g., `**Breaking:**`). Singular — punctuation belongs to the rendering template.",
               "minLength": 1,
               "type": "string"
             }
