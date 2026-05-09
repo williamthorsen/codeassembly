@@ -55,11 +55,11 @@ Branch names follow `{ticket}/{description}`. `_` is interchangeable with `/` as
 
 ## Work types reference
 
-See `../_data/work-types.json` for the canonical taxonomy. Types are grouped into three tiers:
+See `../_data/work-types.json` for the canonical taxonomy. Each type belongs to one of three tiers:
 
-- **Public** (consumer-facing): `feat`, `drop`, `deprecate`, `fix`, `sec`, `perf`
-- **Internal** (not consumer-facing): `internal`, `refactor`, `tests`
-- **Process** (tooling and supporting work): `tooling`, `ci`, `deps`, `ai`, `docs`, `fmt`
+- **Public** — consumer-facing.
+- **Internal** — not consumer-facing.
+- **Process** — tooling and supporting work.
 
 ### Precedence
 
