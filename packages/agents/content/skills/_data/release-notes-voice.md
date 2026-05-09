@@ -1,6 +1,6 @@
 # Release-notes voice
 
-This file defines the voice for changelog and release-notes entries — and for any artifact whose first paragraph is the entry point for a glancing reader. Used by:
+This file defines the voice for changelog and release-notes entries. The same voice may be adopted by any artifact whose first paragraph is the entry point for a glancing reader. Currently used by:
 
 - `summarize-change/SKILL.md` for the `## What` section
 - `commit/SKILL.md` for the commit body
@@ -36,8 +36,8 @@ For each sentence, ask: **does this describe what the change means for the reade
 
 - **Outcome** — something the reader will experience, see, or be able to do.
   Example: "Uploads no longer fail when the filename contains a colon."
-- **Stated invariant worth confirming** — an explicit assurance the reader can rely on, when relevant.
-  Examples: "Behavior is unchanged.", "Exit codes are unchanged.", "No migration required."
+- **Stated invariant worth confirming** — an explicit assurance that would be of interest to the reader, when relevant.
+  Examples: "Behavior is unchanged.", "No migration required."
 - **Migration info** — names of user-facing surface that has been added, removed, or renamed; steps the reader must take.
   Example: "The `--fix-low` flag is replaced by `--approval-threshold`."
 
@@ -45,7 +45,7 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **Indirect outcomes** (reliability, maintainability, performance) are permitted **only if specific**. "More reliable progress visibility during long runs" describes a real outcome a reader would notice; "improves reliability" or "modernizes the architecture" is generic puffery and is forbidden. The test: If the same sentence could be written about almost any change, it is too generic.
 
-**For `fix:` entries specifically.** A second sentence is warranted only when the fix carries user-facing behavior change, migration info, or a non-trivial invariant worth confirming beyond "the bug is gone." When you write it, describe what the user can now do (or no longer needs to do) — not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the fix? If yes, it is user-facing behavior; if no, it is mechanism. The same test applies when considering a second sentence in any other work type — `feat:`, `refactor:`, `perf:`, etc.
+**For `fix:` entries specifically.** A second sentence is warranted only when the fix carries user-facing behavior change, migration info, or a non-trivial invariant worth confirming beyond "the bug is gone." When you write it, describe what the user can now do (or no longer needs to do) — not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to second sentences in any work type, not just `fix:`.
 
 ### Rule 2 — Identifier ban
 
@@ -75,6 +75,8 @@ The entry is as long as needed to convey outcomes, invariants, and migration inf
 This is not a soft ceiling. It is the per-sentence test: Each sentence must pass Rule 1 and Rule 2. Four sentences is fine if each carries user-relevant content (a rename with multiple migration facts); one sentence is fine if one covers it.
 
 ## Examples
+
+Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes both; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
 
 ### Cross-type one-liners
 
