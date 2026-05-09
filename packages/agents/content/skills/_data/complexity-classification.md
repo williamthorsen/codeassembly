@@ -43,12 +43,12 @@ Classify the complexity of a task, finding, or change to determine how it should
 
 Each consuming skill defines which complexity levels qualify for its "simple enough" decision against this rubric.
 
-| Consumer                           | Levels | Decision                                                                                                                                                                                                                              |
-| ---------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `wrap-up` drive-by pass            | 1–2    | Apply immediately on the current branch; skip ticket creation                                                                                                                                                                         |
-| `next-steps-after-plan`            | 1–2    | For changes that would not benefit from review, recommend "Implement directly". For work where the verification surface fits a single review pass, recommend "Implement directly with follow-up review" (rule 2's broader criterion). |
-| `next-steps-after-review`          | 1–2    | Recommend "implement directly" (findings are simple enough to fix without further review)                                                                                                                                             |
-| `orchestrated-architect` (planned) | 1–2    | Classify as `none`/`low` impact (minimal architectural guidance)                                                                                                                                                                      |
+| Consumer                           | Levels | Decision                                                                                                                                                                                 |
+| ---------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wrap-up` drive-by pass            | 1–2    | Apply immediately on the current branch; skip ticket creation                                                                                                                            |
+| `next-steps-after-plan`            | 1–2    | Recommend "Implement directly with follow-up review". When a review pass would catch nothing meaningful (e.g., a typo or unused-import removal), recommend "Implement directly" instead. |
+| `next-steps-after-review`          | 1–2    | Recommend "implement directly" (findings are simple enough to fix without further review)                                                                                                |
+| `orchestrated-architect` (planned) | 1–2    | Classify as `none`/`low` impact (minimal architectural guidance)                                                                                                                         |
 
 When characteristics span two levels, prefer the higher level. This is consistent with the "when uncertain, recommend the more thorough option" pattern used by consuming skills.
 
