@@ -87,7 +87,6 @@ Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code
 - Questions are not instructions. When the user asks "Did you do X?", answer the question. Do not treat it as a request to do X.
 - Prefer ticket-driven development. When follow-up work, new features, or deferred items are identified, ask the user whether to create a GitHub issue rather than implementing ad hoc or silently deferring.
 - Changes should flow through the repository via branches and pull requests, not direct edits to the default branch.
-- Record insights as comments on the relevant GitHub issue, not just in conversation. Insights about conventions, API patterns, codebase discoveries, and architectural decisions have lasting value.
 - If you notice a recurring correction or convention emerging across multiple interactions, suggest codifying it as a rule in agent guidance.
 
 ## Artifacts
@@ -102,7 +101,3 @@ When creating an artifact (plan, devlog, review, change summary, chat summary, e
   Describe the change made by the commit.
   Never describe the process (e.g., "Address reviewer comments") that motivated the commit.
 - Ticket ID: Omit from title (branch carries it). Include at end of body only if branch spans multiple tickets.
-
-## PRs
-
-- Never include automated quality checks (CI, linting, type-checking, formatting) in PR test plans.
