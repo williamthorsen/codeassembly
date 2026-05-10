@@ -1,2 +1,15 @@
 coverage/
 dist/
+
+# Subagent partials and the files that consume them must preserve exact whitespace
+# around `<!-- include: ... -->` open/close directives and `<!-- children -->`
+# placeholders. Prettier's auto-insertion of blank lines around HTML-comment lines
+# breaks slot substitution semantics — see content/_partials/README.md.
+content/_partials/
+content/subagents/_partials/
+content/subagents/aspect-code-reviewer.md
+content/subagents/aspect-silent-failure-reviewer.md
+content/subagents/aspect-test-reviewer.md
+content/subagents/code-simplification-reviewer.md
+content/subagents/orchestrated-coder.md
+content/subagents/orchestrated-reviewer.md

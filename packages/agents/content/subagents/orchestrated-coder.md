@@ -125,92 +125,13 @@ completed
 
 ## Incremental change-summary writes
 
-<HARD-GATE>
-For multi-task plans (implementation mode) and for every review-response round, your FIRST implementation tool use MUST be a `Write` of the change-summary scaffold to the orchestrator-supplied artifact path. This guarantees a durable, structurally-complete artifact exists even if your dispatch is interrupted by `max_turns` exhaustion or any other failure.
+<!-- include: _partials/coder-writes-hard-gate.md / -->
 
-Single-task implementation plans are exempt — write the artifact once at the end.
-</HARD-GATE>
+<!-- include: _partials/coder-writes-prelude.md / -->
 
-The change-summary is the orchestrator's primary state-transfer channel. Review cycles, holistic review, and re-dispatched coders all read it. A partial summary listing which tasks are complete vs. pending is strictly more useful than a missing summary — interruption must never strand the orchestrator without one. Writing the summary file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+<!-- include: _partials/coder-writes-impl-scaffold.md / -->
 
-### Implementation-mode scaffold
-
-After reading the plan, extract each task's title and write exactly this structure:
-
-```markdown
-# Change summary — ticket #{N}
-
-## Status
-
-In progress — task 0 of {K}
-
-## Per-task summary
-
-### Task 0: {title} — pending
-
-### Task 1: {title} — pending
-
-...
-
-## Files changed
-
-(pending)
-
-## Quality gates
-
-(pending)
-
-## Deferred items
-
-(pending)
-```
-
-After completing each plan task, overwrite the file:
-
-- Update that task's section heading to `— completed|skipped|deferred`, followed by files changed, outcome, and notes.
-- Bump `## Status` to `In progress — task {N+1} of {K}`.
-
-Before your final structured return block, finalize:
-
-- `## Files changed` — aggregate list of all modified files.
-- `## Quality gates` — typecheck, lint, tests results.
-- `## Deferred items` — any intentional omissions or deviations from the plan.
-- `## Status` — `completed`.
-
-### Review-response-mode scaffold
-
-After reading the review, enumerate all finding IDs and write exactly this structure:
-
-```markdown
-# Change summary — round {R}
-
-## Status
-
-In progress — finding 0 of {F}
-
-## Findings addressed
-
-### F1: {title} — pending
-
-### F2: {title} — pending
-
-### W1: {title} — pending
-
-...
-
-## Quality gates
-
-(pending)
-```
-
-After addressing each finding, overwrite the file:
-
-- Replace that finding's `— pending` marker with the filled subsection:
-  - `**Status:** FIXED | NOT_FIXED | ALREADY_RESOLVED`
-  - `**Action:** {what was done, or why no change was made}`
-- Bump `## Status` to `In progress — finding {N+1} of {F}`.
-
-Before your final structured return block, finalize `## Quality gates` and set `## Status` to `completed`.
+<!-- include: _partials/coder-writes-review-scaffold.md / -->
 
 ## Reviewer-context sidecar
 

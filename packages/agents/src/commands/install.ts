@@ -188,6 +188,7 @@ async function installSkills(
       options,
       skillsPrefix,
       homeDir,
+      contentDir,
     );
     entries.push(result);
   }
@@ -221,6 +222,7 @@ async function installSkills(
       options,
       skillsPrefix,
       homeDir,
+      contentDir,
       '(platform-specific)',
     );
     entries.push(result);
@@ -245,8 +247,23 @@ async function installSkillEntry(
   options: InstallOptions,
   skillsPrefix: string,
   homeDir: string,
+  contentDir: string,
   label = '',
 ): Promise<ManifestEntry> {
+  // Eagerly resolve include directives at source-tree level. Run before the dry-run gate
+  // so missing targets, cycles, and out-of-tree references surface even when no files
+  // are written. Directory entries traverse their tree and cache each expanded `.md`
+  // file's content; file entries expand the file directly. The cached content is reused
+  // during the write phase below so each `.md` file is expanded exactly once per install.
+  const srcStats = await stat(srcPath);
+  let expandedFileContent: string | undefined;
+  let expandedDirContents: ReadonlyMap<string, string> | undefined;
+  if (srcStats.isDirectory()) {
+    expandedDirContents = await preExpandSkillDirectory(srcPath, contentDir);
+  } else if (srcPath.endsWith('.md')) {
+    expandedFileContent = await expandIncludes(srcPath, contentDir);
+  }
+
   if (options.dryRun) {
     console.info(`    [copy] ${relativePath}${label ? ` ${label}` : ''}`);
     return { relativePath, contentHash: 'dry-run', linked: false };
@@ -262,23 +279,103 @@ async function installSkillEntry(
     }
   }
 
-  await copyItem(srcPath, destPath);
-
-  // Rewrite Markdown paths, expand templates, and inject provenance markers for directories
-  const stats = await stat(srcPath);
-  if (stats.isDirectory()) {
+  if (srcStats.isDirectory()) {
+    // Per-file walk: write expanded `.md` files from the cache populated during the
+    // pre-expand pass, mirror the directory structure to the destination, and copy
+    // non-`.md` files plainly. The `_partials/` exclusion is applied during the walk.
+    // The cache is non-undefined here because srcStats.isDirectory() implies the
+    // directory branch above ran.
+    if (expandedDirContents === undefined) {
+      throw new Error(`Invariant violation: expandedDirContents undefined for directory ${srcPath}`);
+    }
+    await writeExpandedSkillDir(srcPath, destPath, expandedDirContents);
     const skillsDestDir = path.dirname(destPath);
     await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
-  } else if (destPath.endsWith('.md')) {
+  } else if (srcPath.endsWith('.md') && expandedFileContent !== undefined) {
+    // Single-file `.md` skill entries: write the previously expanded content directly.
+    // Skipping the verbatim copy avoids the expand-copy-expand-overwrite redundancy
+    // and ensures the validated content is the content written to disk (no second read).
+    await mkdir(path.dirname(destPath), { recursive: true });
+    await writeFile(destPath, expandedFileContent, 'utf8');
     await injectMarkerInFile(destPath, buildSourceUrl(sourceRelativeRoot));
+  } else {
+    // Single-file non-`.md` skill entries: plain copy, no expansion.
+    await copyItem(srcPath, destPath);
   }
 
   return {
     relativePath,
-    contentHash: stats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
+    contentHash: srcStats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
     linked: false,
   };
+}
+
+/**
+ * Eagerly walks a skill source directory, runs `expandIncludes` on each `.md` file to
+ * surface include errors before any file is written, and returns a map keyed by absolute
+ * source path with the expanded content. `_partials/` directories are skipped because
+ * their contents are referenced through includes, not installed. The returned map is
+ * consumed by `writeExpandedSkillDir` so each `.md` file is expanded once per install.
+ */
+async function preExpandSkillDirectory(srcDir: string, contentDir: string): Promise<Map<string, string>> {
+  const expandedBySrcPath = new Map<string, string>();
+  await collectExpansions(srcDir, contentDir, expandedBySrcPath);
+  return expandedBySrcPath;
+}
+
+async function collectExpansions(
+  srcDir: string,
+  contentDir: string,
+  expandedBySrcPath: Map<string, string>,
+): Promise<void> {
+  const entries = await readdir(srcDir);
+  for (const entry of entries) {
+    if (entry === '_partials' || entry.startsWith('.')) {
+      continue;
+    }
+    const fullPath = path.join(srcDir, entry);
+    const info = await stat(fullPath);
+    if (info.isDirectory()) {
+      await collectExpansions(fullPath, contentDir, expandedBySrcPath);
+    } else if (entry.endsWith('.md')) {
+      expandedBySrcPath.set(fullPath, await expandIncludes(fullPath, contentDir));
+    }
+  }
+}
+
+/**
+ * Recursively writes a skill source directory to the destination. `.md` files are
+ * read from the pre-computed expansion cache (populated by `preExpandSkillDirectory`);
+ * non-`.md` files are copied verbatim. `_partials/` subdirectories are skipped at any
+ * depth — their contents are include targets, not installed artifacts.
+ */
+async function writeExpandedSkillDir(
+  srcDir: string,
+  destDir: string,
+  expandedBySrcPath: ReadonlyMap<string, string>,
+): Promise<void> {
+  await mkdir(destDir, { recursive: true });
+  const entries = await readdir(srcDir);
+  for (const entry of entries) {
+    if (entry === '_partials' || entry.startsWith('.')) {
+      continue;
+    }
+    const srcPath = path.join(srcDir, entry);
+    const destPath = path.join(destDir, entry);
+    const info = await stat(srcPath);
+    if (info.isDirectory()) {
+      await writeExpandedSkillDir(srcPath, destPath, expandedBySrcPath);
+    } else if (entry.endsWith('.md')) {
+      const expanded = expandedBySrcPath.get(srcPath);
+      if (expanded === undefined) {
+        throw new Error(`Invariant violation: pre-expand cache missing entry for ${srcPath}`);
+      }
+      await writeFile(destPath, expanded, 'utf8');
+    } else {
+      await copyItem(srcPath, destPath);
+    }
+  }
 }
 
 /**
@@ -312,13 +409,18 @@ async function installSubagents(
   const entries: Array<ManifestEntry> = [];
 
   for (const entry of dirEntries) {
-    if (entry === '_data' || !entry.endsWith('.md')) {
+    if (entry === '_data' || entry === '_partials' || !entry.endsWith('.md')) {
       continue;
     }
 
     const srcPath = path.join(subagentsSrcDir, entry);
     const destPath = path.join(platformPaths.subagentsDir, entry);
     const relativePath = `${subagentsDirName}/${entry}`;
+
+    // Resolve include directives at source-tree level. Run before the dry-run gate so
+    // missing targets, cycles, and out-of-tree references surface even when no files
+    // are written. Mirrors the ordering in installPlatformGuidance.
+    const expandedSource = await expandIncludes(srcPath, contentDir);
 
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';
@@ -342,9 +444,8 @@ async function installSubagents(
       }
     }
 
-    // Read source, merge frontmatter, inject provenance marker, write to destination
-    const source = await readFile(srcPath, 'utf8');
-    const merged = mergeFrontmatter(source, overlayYaml);
+    // Pipeline: expand includes -> merge frontmatter -> inject provenance marker -> write.
+    const merged = mergeFrontmatter(expandedSource, overlayYaml);
     const withMarker = injectProvenanceMarker(merged, buildSourceUrl(`subagents/${entry}`));
     await mkdir(path.dirname(destPath), { recursive: true });
     await unlinkIfSymlink(destPath);

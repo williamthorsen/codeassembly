@@ -518,7 +518,7 @@ describe('guidance installation', () => {
 
     it('propagates a missing-target error from a platform source even in dry-run mode', async () => {
       const contentDir = path.join(tempDir, 'fake-content');
-      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ./does-not-exist.md -->\n' });
+      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ./does-not-exist.md / -->\n' });
 
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
@@ -537,7 +537,7 @@ describe('guidance installation', () => {
 
     it('propagates an out-of-tree error during a real install', async () => {
       const contentDir = path.join(tempDir, 'fake-content');
-      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ../../../../escape.md -->\n' });
+      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ../../../../escape.md / -->\n' });
 
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
