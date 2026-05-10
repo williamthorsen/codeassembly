@@ -4,11 +4,11 @@ Standard next-steps block for skills that produce or refine an implementation pl
 
 ## Options
 
-| #   | Emoji | Option             | Description                                       |
-| --- | ----- | ------------------ | ------------------------------------------------- |
-| 1   | 🧠    | Refine plan        | Review the plan for completeness and correctness  |
-| 2   | 🎶    | Orchestrate        | Run the full orchestrated development pipeline    |
-| 3   | 🚀    | Implement directly | Implement without orchestration (no review cycle) |
+| #   | Emoji | Option             | Description                                      |
+| --- | ----- | ------------------ | ------------------------------------------------ |
+| 1   | 🧠    | Refine plan        | Review the plan for completeness and correctness |
+| 2   | 🎶    | Orchestrate        | Run the full orchestrated development pipeline   |
+| 3   | 🚀    | Implement directly |                                                  |
 
 ## Output format
 
@@ -57,7 +57,7 @@ Select the recommended option by checking these rules in order and stopping at t
    - The plan has not been previously refined
    - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
 
-2. **Implement directly** — recommend when the work falls at [complexity levels 1–2](complexity-classification.md) (trivial or mechanical — e.g., single module, no cross-cutting renames or shared convention changes), or follows an established pattern closely enough that the coder's first pass is sufficient
+2. **Implement directly** — recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall through to rule 3.
 3. **Orchestrate** — all other cases (default)
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
