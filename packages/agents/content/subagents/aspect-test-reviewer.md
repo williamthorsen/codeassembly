@@ -51,8 +51,6 @@ The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts 
 
 The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — interruption must never strand the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
-<!-- include: _partials/review-writes-prelude.md / -->
-
 <!-- include: _partials/review-writes-scaffold.md / -->
 
 <!-- include: _partials/review-writes-interim.md -->
