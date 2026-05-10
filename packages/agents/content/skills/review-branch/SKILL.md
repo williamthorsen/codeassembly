@@ -19,6 +19,8 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 ## Process
 
+> **When invoked by `review-pr`:** Steps 1–3 are already complete — `review-pr` performed `get-session-context` and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope.
+
 1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir`.
 2. **Resolve diff base** — if `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
 3. **Resolve specification sources** — produce a list of spec sources (each a `{ source_type, label, content, criteria? }` record):
@@ -27,8 +29,6 @@ This skill is the canonical home of the shared review process. `review-pr` invok
    - **No source available**: leave the list empty. The "Specification compliance" section is omitted from the output.
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
-
-> **When invoked by `review-pr`:** `merge_base_sha` and `spec_sources` are provided by the caller. Skip steps 2 and 3 and use the provided values; the session-context values from step 1 (gathered by `review-pr`) remain in scope.
 
 4. **Read prior artifacts** — if a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
@@ -163,7 +163,7 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
-1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. If `ticket_id` is null (e.g., a branch with no recognizable ticket prefix), auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id) and use it for this review's directory. Never produce a path containing `tickets/null/`.
+1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id) — never construct a path with a literal `null` segment.
 2. Find or create a run directory:
    - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): save into it
    - **If no active run exists**: create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
