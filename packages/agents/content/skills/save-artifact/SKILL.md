@@ -43,7 +43,7 @@ Save AI-generated files with standardized naming conventions.
 - **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType` (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`). See [artifact-conventions.md](../_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy).
 - **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the complete artifact type list.
 
-Run artifacts are saved by the skills that produce them (`review-change`, `respond-to-review`). They handle run directory discovery and creation.
+Run artifacts are saved by the skills that produce them (`review-branch`, `respond-to-review`). They handle run directory discovery and creation.
 
 > **Note:** In orchestrated runs, the orchestrator is responsible for maintaining `run-index.json` — individual skills do not write to it directly.
 
