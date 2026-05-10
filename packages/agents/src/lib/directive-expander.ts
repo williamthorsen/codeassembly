@@ -97,9 +97,9 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
     const closeMatch = selfCloseMatch ? null : CLOSE_REGEX.exec(line);
     const openMatch = selfCloseMatch || closeMatch ? null : OPEN_REGEX.exec(line);
 
-    if (selfCloseMatch && selfCloseMatch[1] !== undefined) {
-      const target = selfCloseMatch[1];
-      const resolved = resolveTarget(filePath, contentDir, target, lineNumber);
+    const selfCloseTarget = selfCloseMatch?.[1];
+    if (selfCloseTarget !== undefined) {
+      const resolved = resolveTarget(filePath, contentDir, selfCloseTarget, lineNumber);
       const expanded = await expandPartialWithSlot(resolved, contentDir, visited, [], filePath, lineNumber);
       appendLines(stack, out, expanded);
       continue;
@@ -125,10 +125,10 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
       continue;
     }
 
-    if (openMatch && openMatch[1] !== undefined) {
-      const target = openMatch[1];
-      const resolved = resolveTarget(filePath, contentDir, target, lineNumber);
-      stack.push({ target, resolved, lineNumber, slotLines: [] });
+    const openTarget = openMatch?.[1];
+    if (openTarget !== undefined) {
+      const resolved = resolveTarget(filePath, contentDir, openTarget, lineNumber);
+      stack.push({ target: openTarget, resolved, lineNumber, slotLines: [] });
       continue;
     }
 
