@@ -465,12 +465,12 @@ Always pass `max_turns` explicitly to every Task call:
 | orchestrated-architect         |        30 |
 | orchestrated-planner           |        40 |
 | orchestrated-coder             |       150 |
-| orchestrated-reviewer          |        30 |
-| aspect-code-reviewer           |        20 |
-| aspect-silent-failure-reviewer |        20 |
-| aspect-test-reviewer           |        20 |
-| code-simplification-reviewer   |        15 |
-| orchestrated-reviewer (final)  |        30 |
+| orchestrated-reviewer          |        60 |
+| aspect-code-reviewer           |        45 |
+| aspect-silent-failure-reviewer |        45 |
+| aspect-test-reviewer           |        45 |
+| code-simplification-reviewer   |        30 |
+| orchestrated-reviewer (final)  |        60 |
 
 > **Note:** `code-simplification-reviewer` runs sequentially in Phase 4a after all parallel reviews converge — it is not an aspect reviewer and does not participate in the Phase 4 parallel dispatch or activation logic.
 
