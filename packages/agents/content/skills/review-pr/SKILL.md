@@ -74,7 +74,7 @@ Invoke `review-branch`'s review process with the resolved inputs:
 - The spec-source list is `spec_sources` from the delegate. The "Specification compliance" section in the review output renders one subsection per entry. For a typical PR, this list contains both the ticket (when one was resolved) and the PR description as a `pr_description` source.
 - The review heading uses `pr_metadata` to surface the PR number and URL alongside the ticket reference.
 
-The skill **does not duplicate** the review logic; it delegates to `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: session context (`ticket_ref`, `project_slug`, `artifact_base_dir`, `default_branch`) was gathered in step 1 above and remains in scope for the review header, scoring, and saving; `merge_base_sha` and `spec_sources` were resolved by the delegate and are passed in directly.
+Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: session context was gathered in step 1 above; `merge_base_sha` and `spec_sources` were resolved by the delegate.
 
 ### 6. Save and present next steps
 

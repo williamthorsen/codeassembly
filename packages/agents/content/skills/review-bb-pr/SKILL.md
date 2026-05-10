@@ -84,8 +84,6 @@ PR #{number}'s head commit is {short(source_commit_hash)} but HEAD is at {short(
 
 Use the first 7 characters for short SHAs. **Fail closed** — never proceed with mismatched state.
 
-The Bitbucket equivalent of `gh pr checkout` is not a single CLI subcommand, so the message lists the canonical fetch-and-checkout pair. Bitbucket does not expose a numeric `pull-requests/{n}/from` ref by default in every workflow — if a project uses a different convention, the user can substitute `git checkout {source_branch_name}` and pull the latest.
-
 ### 4. Resolve the diff base
 
 Apply this cascade:

@@ -8,7 +8,7 @@ user-invocable: false
 
 Internal delegate that handles the GitHub-specific work for `review-pr`: fetch PR metadata in a single `gh pr view` call, verify the local HEAD matches the PR's head commit, resolve the ticket from PR linked issues (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
 
-This skill does not run a review. The review logic lives in `review-branch`. This skill prepares inputs and verifies preconditions; it never produces findings, never saves a review artifact, and never calls anything beyond `gh` and `git`.
+This skill does not run a review. The review logic lives in `review-branch`.
 
 ## Delegate interface
 
@@ -84,8 +84,6 @@ Compute the merge-base once:
 ```bash
 merge_base_sha=$(git merge-base HEAD {diff_base})
 ```
-
-Cache `merge_base_sha` for the resolved-output record.
 
 ### 5. Resolve the ticket
 

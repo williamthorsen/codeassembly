@@ -8,7 +8,7 @@ user-invocable: true
 
 Act as a conscientious code reviewer for the changes on the current branch relative to a diff base. Review the diff `merge-base(HEAD, <diff-base>)..HEAD`.
 
-This skill is the canonical home of the shared review process. `review-pr` invokes the same review process after resolving platform-specific inputs (PR metadata, HEAD verification, ticket from PR linked issues, PR description as a second specification source). Do not re-add a commit-scope path: to review a specific commit or range, check out the desired commit and invoke `/review-branch --diff-base=<ref>~1`. Compilation, dependency installation, and test execution all require the working tree to match the commit being reviewed, so requiring a checkout is honest about the prerequisites and removes a redundant entry point.
+This skill is the canonical home of the shared review process. `review-pr` invokes the same review process after resolving platform-specific inputs (PR metadata, HEAD verification, ticket from PR linked issues, PR description as a second specification source).
 
 ## Arguments
 
@@ -155,7 +155,7 @@ Extract criteria from whatever structure the source uses (numbered lists, checkb
 
 ### Path resolution
 
-Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
+Use `artifact_base_dir`, `project_slug`, and `ticket_id` from step 1.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
