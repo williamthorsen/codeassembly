@@ -28,6 +28,8 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
 
+> **When invoked by `review-pr`:** `merge_base_sha` and `spec_sources` are provided by the caller. Skip steps 2 and 3 and use the provided values; the session-context values from step 1 (gathered by `review-pr`) remain in scope.
+
 4. **Read prior artifacts** — if a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
@@ -161,7 +163,7 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
-1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
+1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. If `ticket_id` is null (e.g., a branch with no recognizable ticket prefix), auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id) and use it for this review's directory. Never produce a path containing `tickets/null/`.
 2. Find or create a run directory:
    - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): save into it
    - **If no active run exists**: create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp

@@ -12,17 +12,17 @@ This is a thin entry skill: the shared review logic — diff analysis, finding g
 
 ## Arguments
 
-| Argument            | Description                                                                                                               | Default                                                |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `<pr_id>`           | Positional. PR number or full PR URL. URLs are parsed for `{owner}/{repo}#{number}` (GitHub) or the Bitbucket equivalent. | _(required)_                                           |
-| `--diff-base=<ref>` | Override the diff base. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                          | The PR's `baseRefName` (or Bitbucket equivalent)       |
-| `--ticket=<source>` | Override the auto-resolved ticket. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md).         | PR's first linked issue, then PR-body parse, then none |
+| Argument            | Description                                                                                                       | Default                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `<pr_id>`           | Positional. Full GitHub or Bitbucket PR URL, or a bare PR number.                                                 | _(required)_                                           |
+| `--diff-base=<ref>` | Override the diff base. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                  | The PR's `baseRefName` (or Bitbucket equivalent)       |
+| `--ticket=<source>` | Override the auto-resolved ticket. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md). | PR's first linked issue, then PR-body parse, then none |
 
 ## Process
 
 ### 1. Get session context
 
-Use `get-session-context` to obtain `project_slug`, `ticket_id`, `artifact_base_dir`, and `platform`.
+Use `get-session-context` to obtain `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, and `platform`. These values are carried forward into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
 
 ### 2. Detect platform
 
@@ -74,7 +74,7 @@ Invoke `review-branch`'s review process with the resolved inputs:
 - The spec-source list is `spec_sources` from the delegate. The "Specification compliance" section in the review output renders one subsection per entry. For a typical PR, this list contains both the ticket (when one was resolved) and the PR description as a `pr_description` source.
 - The review heading uses `pr_metadata` to surface the PR number and URL alongside the ticket reference.
 
-The skill **does not duplicate** the review logic; it delegates to `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts), passing the already-resolved spec sources and merge-base SHA so the inner steps 1–3 are short-circuited by inputs.
+The skill **does not duplicate** the review logic; it delegates to `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: session context (`ticket_ref`, `project_slug`, `artifact_base_dir`, `default_branch`) was gathered in step 1 above and remains in scope for the review header, scoring, and saving; `merge_base_sha` and `spec_sources` were resolved by the delegate and are passed in directly.
 
 ### 6. Save and present next steps
 
@@ -85,7 +85,7 @@ The skill **does not duplicate** the review logic; it delegates to `review-branc
 ### Review the PR for the current branch
 
 ```bash
-# Implicit PR id when the current branch has exactly one open PR.
+# Check out the PR branch first, then review it.
 gh pr checkout 1024
 /review-pr 1024
 ```
