@@ -292,7 +292,7 @@ async function installSkillEntry(
     const skillsDestDir = path.dirname(destPath);
     await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
-  } else if (destPath.endsWith('.md') && expandedFileContent !== undefined) {
+  } else if (srcPath.endsWith('.md') && expandedFileContent !== undefined) {
     // Single-file `.md` skill entries: write the previously expanded content directly.
     // Skipping the verbatim copy avoids the expand-copy-expand-overwrite redundancy
     // and ensures the validated content is the content written to disk (no second read).

@@ -29,7 +29,7 @@ const CHILDREN_PLACEHOLDER_REGEX = /^[ \t]*<!--[ \t]*children[ \t]*-->[ \t]*$/;
  * Matches a directive that uses `include:` syntax but does not match any recognized shape
  * (self-close, open, close). Used to reject unrecognized parameters with a structured error.
  */
-const ANY_INCLUDE_LIKE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t].*-->[ \t]*$/;
+const ANY_INCLUDE_LIKE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*.*-->[ \t]*$/;
 
 /** Reason an include directive failed to resolve, surfaced in error messages. */
 type FailureReason =
@@ -83,85 +83,88 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
   }
   visited.add(filePath);
 
-  const content = await readFile(filePath, 'utf8');
-  const lines = content.split('\n');
-  const out: Array<string> = [];
-  const stack: Array<OpenFrame> = [];
+  try {
+    const content = await readFile(filePath, 'utf8');
+    const lines = content.split('\n');
+    const out: Array<string> = [];
+    const stack: Array<OpenFrame> = [];
 
-  for (const [i, line] of lines.entries()) {
-    const lineNumber = i + 1;
+    for (const [i, line] of lines.entries()) {
+      const lineNumber = i + 1;
 
-    // Match in priority order: self-close, close, open. Self-close must precede open
-    // because both can match a path; the slash disambiguates.
-    const selfCloseMatch = SELF_CLOSE_REGEX.exec(line);
-    const closeMatch = selfCloseMatch ? null : CLOSE_REGEX.exec(line);
-    const openMatch = selfCloseMatch || closeMatch ? null : OPEN_REGEX.exec(line);
+      // Match in priority order: self-close, close, open. Self-close must precede open
+      // because both can match a path; the slash disambiguates.
+      const selfCloseMatch = SELF_CLOSE_REGEX.exec(line);
+      const closeMatch = selfCloseMatch ? null : CLOSE_REGEX.exec(line);
+      const openMatch = selfCloseMatch || closeMatch ? null : OPEN_REGEX.exec(line);
 
-    const selfCloseTarget = selfCloseMatch?.[1];
-    if (selfCloseTarget !== undefined) {
-      const resolved = resolveTarget(filePath, contentDir, selfCloseTarget, lineNumber);
-      const expanded = await expandPartialWithSlot(resolved, contentDir, visited, [], filePath, lineNumber);
-      appendLines(stack, out, expanded);
-      continue;
-    }
+      const selfCloseTarget = selfCloseMatch?.[1];
+      if (selfCloseTarget !== undefined) {
+        const resolved = resolveTarget(filePath, contentDir, selfCloseTarget, lineNumber);
+        const expanded = await expandPartialWithSlot(resolved, contentDir, visited, [], filePath, lineNumber);
+        appendLines(stack, out, expanded, filePath);
+        continue;
+      }
 
-    if (closeMatch) {
-      const frame = stack.pop();
-      if (!frame) {
+      if (closeMatch) {
+        const frame = stack.pop();
+        if (!frame) {
+          throw new DirectiveExpansionError(
+            `Orphan close directive (no matching open): ${filePath}:${lineNumber} reason=orphan-close`,
+            'orphan-close',
+          );
+        }
+        const expanded = await expandPartialWithSlot(
+          frame.resolved,
+          contentDir,
+          visited,
+          frame.slotLines,
+          filePath,
+          frame.lineNumber,
+        );
+        appendLines(stack, out, expanded, filePath);
+        continue;
+      }
+
+      const openTarget = openMatch?.[1];
+      if (openTarget !== undefined) {
+        const resolved = resolveTarget(filePath, contentDir, openTarget, lineNumber);
+        stack.push({ target: openTarget, resolved, lineNumber, slotLines: [] });
+        continue;
+      }
+
+      // If the line looks like an include directive but matched none of the recognized
+      // shapes, reject it as an unrecognized parameter. This catches typos like
+      // `<!-- include: path foo -->` or `<!-- include: path /bar -->`.
+      if (ANY_INCLUDE_LIKE_REGEX.test(line)) {
         throw new DirectiveExpansionError(
-          `Orphan close directive (no matching open): ${filePath}:${lineNumber} reason=orphan-close`,
-          'orphan-close',
+          `Include directive has unrecognized parameter: ${filePath}:${lineNumber} line="${line}" reason=unrecognized-parameter`,
+          'unrecognized-parameter',
         );
       }
-      const expanded = await expandPartialWithSlot(
-        frame.resolved,
-        contentDir,
-        visited,
-        frame.slotLines,
-        filePath,
-        frame.lineNumber,
-      );
-      appendLines(stack, out, expanded);
-      continue;
+
+      // Plain content line. If we're inside an open directive, accumulate it into the slot;
+      // otherwise emit it directly.
+      appendLines(stack, out, [line], filePath);
     }
 
-    const openTarget = openMatch?.[1];
-    if (openTarget !== undefined) {
-      const resolved = resolveTarget(filePath, contentDir, openTarget, lineNumber);
-      stack.push({ target: openTarget, resolved, lineNumber, slotLines: [] });
-      continue;
-    }
-
-    // If the line looks like an include directive but matched none of the recognized
-    // shapes, reject it as an unrecognized parameter. This catches typos like
-    // `<!-- include: path foo -->` or `<!-- include: path /bar -->`.
-    if (ANY_INCLUDE_LIKE_REGEX.test(line)) {
+    if (stack.length > 0) {
+      // `stack.length > 0` guarantees a frame exists; assert-style guard keeps the
+      // invariant explicit for future readers without producing a silently swallowed branch.
+      const frame = stack.at(-1);
+      if (frame === undefined) {
+        throw new Error(`Invariant violation: stack.length > 0 but stack[-1] is undefined in ${filePath}`);
+      }
       throw new DirectiveExpansionError(
-        `Include directive has unrecognized parameter: ${filePath}:${lineNumber} line="${line}" reason=unrecognized-parameter`,
-        'unrecognized-parameter',
+        `Unclosed open directive: ${filePath}:${frame.lineNumber} target="${frame.target}" reason=unclosed-open`,
+        'unclosed-open',
       );
     }
 
-    // Plain content line. If we're inside an open directive, accumulate it into the slot;
-    // otherwise emit it directly.
-    appendLines(stack, out, [line]);
+    return out.join('\n');
+  } finally {
+    visited.delete(filePath);
   }
-
-  if (stack.length > 0) {
-    // `stack.length > 0` guarantees a frame exists; assert-style guard keeps the
-    // invariant explicit for future readers without producing a silently swallowed branch.
-    const frame = stack.at(-1);
-    if (frame === undefined) {
-      throw new Error(`Invariant violation: stack.length > 0 but stack[-1] is undefined in ${filePath}`);
-    }
-    throw new DirectiveExpansionError(
-      `Unclosed open directive: ${filePath}:${frame.lineNumber} target="${frame.target}" reason=unclosed-open`,
-      'unclosed-open',
-    );
-  }
-
-  visited.delete(filePath);
-  return out.join('\n');
 }
 
 /**
@@ -244,9 +247,15 @@ async function expandPartialWithSlot(
 
 /**
  * Routes lines either to the top of the open-frame stack (accumulating slot content) or
- * to the output buffer when no frame is open.
+ * to the output buffer when no frame is open. `filePath` is included in invariant-failure
+ * messages so a runaway invariant violation points at the file under expansion.
  */
-function appendLines(stack: Array<OpenFrame>, out: Array<string>, linesToAppend: ReadonlyArray<string>): void {
+function appendLines(
+  stack: Array<OpenFrame>,
+  out: Array<string>,
+  linesToAppend: ReadonlyArray<string>,
+  filePath: string,
+): void {
   if (stack.length === 0) {
     out.push(...linesToAppend);
     return;
@@ -255,7 +264,7 @@ function appendLines(stack: Array<OpenFrame>, out: Array<string>, linesToAppend:
   // explicit for future readers without producing a silently swallowed branch.
   const top = stack.at(-1);
   if (top === undefined) {
-    throw new Error('Invariant violation: stack.length > 0 but stack[-1] is undefined');
+    throw new Error(`Invariant violation: stack.length > 0 but stack[-1] is undefined in ${filePath}`);
   }
   top.slotLines.push(...linesToAppend);
 }

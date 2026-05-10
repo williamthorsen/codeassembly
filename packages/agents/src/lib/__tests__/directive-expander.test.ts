@@ -393,5 +393,15 @@ describe(expandIncludes, () => {
         message: expect.stringContaining('host.md:1'),
       });
     });
+
+    it('throws unrecognized-parameter when no whitespace follows the colon', async () => {
+      const host = await writeSource('host.md', ['<!-- include:target.md unknown -->', ''].join('\n'));
+      await writeSource('target.md', 'X\n');
+
+      await expect(expandIncludes(host, contentDir)).rejects.toMatchObject({
+        reason: 'unrecognized-parameter',
+        message: expect.stringContaining('host.md:1'),
+      });
+    });
   });
 });
