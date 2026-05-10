@@ -59,6 +59,18 @@ B. Extract a small dedicated module with a narrow interface and inject it.
 
 The factual lists about each option are similar; the **ranking** flips because the criteria changed.
 
+## Designing as if from the beginning
+
+When designing a change, ask: _how would we have written this if the new behavior had been there from the start?_ Aim the design at that target.
+
+Three patterns signal a design that hasn't reached it:
+
+- **Workarounds** — changing surrounding code to accommodate a fix instead of changing the code that's wrong.
+- **Carve-outs** — special cases or conditional branches that exist because the change couldn't be integrated cleanly, not because the cases are genuinely distinct.
+- **Bolt-ons** — new modules or extension points appended alongside existing structure when the existing structure should have evolved to absorb the change.
+
+A fresh codebase wouldn't have these shapes; their presence means the change is sitting next to the system rather than within it. Reaching the target may require touching code outside the ticket's literal frame — renaming, restructuring, generalizing. That cost is real but bounded; the cost of carrying a poorly integrated change forward compounds.
+
 ## Reconciliation
 
-This rule reinforces "push back on questionable legacy" — the guidance to examine, not preserve, carve-outs labelled "for backward compatibility" or "matches existing convention" when no concrete consumer would break under normalization.
+These rules reinforce "push back on questionable legacy" — the guidance to examine, not preserve, carve-outs labelled "for backward compatibility" or "matches existing convention" when no concrete consumer would break under normalization.
