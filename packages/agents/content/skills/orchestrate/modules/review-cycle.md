@@ -86,6 +86,73 @@ If the helper script exits non-zero, record a one-line warning in the run summar
 
 The assembly is recomputed for each reviewer dispatch and re-dispatch — not cached. The script runs locally in well under a second, and recomputation ensures correctness when the changed-file set evolves between dispatches (e.g., after a coder fix cycle adds new files).
 
+## Constrained re-dispatch template
+
+When a reviewer dispatch is interrupted (typically `max_turns` exhaustion), the engine constructs a constrained retry prompt by splicing four ordered parts into the original dispatch shape. This sub-section defines the parts and their resolution rules; the "Retry-on-interruption hook" below describes when and how the template is applied.
+
+### Parts
+
+The retry prompt is assembled by prepending parts 1-3 above the original prompt body and appending part 4 at the end. The original prompt body — including any `## Reviewer context` block — is preserved verbatim.
+
+1. **Budget warning** (always present, prepended first):
+
+   ```
+   Investigation budget is tight — you must produce a structured return.
+   ```
+
+2. **File allow-list** (always present, prepended after the budget warning):
+
+   ```
+   Files to read (and only these): {file-allow-list}. Do NOT explore additional files.
+   ```
+
+3. **Negative scope guardrails** (prepended after the file allow-list, only when peer findings exist):
+
+   ```
+   The following reviewers already produced findings: {peer-coverage-summary}. Do NOT re-investigate those areas.
+   ```
+
+   Omit this block entirely when no peer findings are available — do not emit a header with no body.
+
+4. **Forced structured return** (always present, appended at the end of the prompt):
+
+   ```
+   You MUST produce a structured return — even if you only have time to verify N of M items, write the partial review and return.
+   ```
+
+### Resolution
+
+- **`{file-allow-list}`** — extracted from the interrupted reviewer's partial artifact at its original write-target path. Take all file paths cited in the partial's findings list (the `### Findings` section) and any paths cited elsewhere in the scaffold. Deduplicate. If the partial yields no file references, fall back to the full `{changed-files}` set computed at the dispatch site.
+- **`{peer-coverage-summary}`** — for Phase 4 retries, draw from peer reviewers in the same parallel batch whose Task return parsed cleanly with a finalized `### Criticality:` enum value. For Phase 4a and Phase 4b retries, draw from the Phase 4 batch's completed reviewers (always available by that point). Format as a comma-separated list of `{reviewer-name}: {one-line scope or focus area}` entries derived from each peer's findings file. If no peer findings are available, the negative-scope block is omitted entirely.
+
+## Retry-on-interruption hook
+
+After every reviewer dispatch (including selective re-reviews and Phase 4b re-reviews), the engine checks whether the dispatch was interrupted. On interruption, it dispatches one constrained retry using the "Constrained re-dispatch template" above, then proceeds with the retry's outcome.
+
+### Trigger
+
+The trigger is uniform across all five reviewers (`orchestrated-reviewer`, `aspect-code-reviewer`, `aspect-silent-failure-reviewer`, `aspect-test-reviewer`, `code-simplification-reviewer`):
+
+The artifact at the dispatch's write-target path contains `### Criticality: (pending)` (the literal interruption sentinel) instead of a finalized enum value (`none|low|medium|high`), or the artifact file is missing entirely.
+
+The `(pending)` sentinel is written by every reviewer subagent during its scaffold step (see each subagent's "Incremental review writes" section) and replaced with the finalized criticality only at the end of a successful run. Its presence at parse time is the canonical signal that the dispatch did not converge.
+
+### On trigger
+
+For each interrupted reviewer:
+
+1. Resolve template inputs per the "Constrained re-dispatch template" sub-section's rules — `{file-allow-list}` from the partial artifact, `{peer-coverage-summary}` from peers.
+2. Construct the retry prompt by splicing the four template parts into the original dispatch shape (same `subagent_type`, `max_turns`, `model`, write-target path, original prompt body including any `## Reviewer context` block).
+3. Dispatch one retry. Parse return via the same return-parsing rules as the initial dispatch and re-check the artifact for the `(pending)` sentinel.
+4. If the retry also exhausts (sentinel still present, or artifact still missing), fall through to the existing "Recovery from reviewer interruption" rule in `SKILL.md` — record the dispatch as `failed`, retain the partial findings list, and contribute `medium` criticality to aggregation.
+
+### Properties
+
+- **Round budget:** retries do **not** increment `reviewRoundsUsed`. They are recovery within an existing round, not a new round.
+- **Phase 4 retry timing:** in Phase 4's parallel batch, retries are dispatched after the entire batch completes (before findings aggregation), so peer reviewers' completed structured returns are available to populate `{peer-coverage-summary}`. Multiple Phase 4 retries dispatch in parallel.
+- **Phase 4a and 4b:** each phase's single reviewer retries serially (single retry, single re-dispatch). The retry of an initial Phase 4b dispatch is exempt from Phase 4b's "shares budget for re-review cycles" rule — the initial dispatch and its retry always run regardless of remaining `reviewRoundsUsed`.
+- **Selective re-review and Phase 4b re-review:** these dispatches are subject to the hook on the same terms as initial dispatches. A re-review can also exhaust.
+
 ## Phase 4: Parallel review (required, max N iterations)
 
 Dispatch the core reviewer and all aspect reviewers in parallel on the same code snapshot. All reviewers examine the initial implementation simultaneously, then findings are aggregated for a single fix cycle.
@@ -188,6 +255,10 @@ Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 45`, `model: {
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
+### Retry interrupted dispatches
+
+After the parallel batch returns and before parsing usage or aggregating findings, apply the "Retry-on-interruption hook" (see above) per-reviewer. Any reviewer whose artifact still contains the `### Criticality: (pending)` sentinel (or whose artifact is missing) is retried once with the constrained re-dispatch shape. Retries are dispatched in parallel when multiple reviewers were interrupted. Wait for all retries to complete before proceeding to "Findings aggregation".
+
 ### Findings aggregation
 
 After all dispatched reviewers complete, parse usage from each reviewer's Task result (see "Usage capture" in SKILL.md). Emit one `reviewer_completed` event per dispatched reviewer:
@@ -277,6 +348,8 @@ Send re-review Task calls in a single message (parallel) using the same prompts,
 
 If a re-reviewer fails or times out, treat its original findings as unverified and include them in the aggregated criticality at their original severity. Emit `reviewer_completed` with `status: "failed"` for that reviewer.
 
+After the parallel re-dispatch returns and before parsing usage, apply the "Retry-on-interruption hook" (see above) per re-reviewer. Re-reviews are subject to the hook on the same terms as initial dispatches.
+
 After re-reviews complete: parse usage from each re-reviewer's Task result (see "Usage capture" in SKILL.md). Aggregate usage across all re-review Task results by summing `tokens`, `toolUses`, and `durationMs` independently. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... }, tokens: {summed-tokens}, toolUses: {summed-toolUses}, durationMs: {summed-durationMs} } }`. Call `register_artifact` for each re-reviewer's artifact file.
 
 Aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
@@ -333,7 +406,7 @@ Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 30`, `
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
-After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
+After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Apply the "Retry-on-interruption hook" (see above) — the simplifier uses the same `### Criticality: (pending)` sentinel as the other reviewers; any partial artifact triggers one constrained retry before findings are read. Then read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
@@ -393,7 +466,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `model: 
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
-Store the full path as `{holistic-review-path}`; increment `{seq}`. Call `register_artifact` for the holistic review artifact.
+Store the full path as `{holistic-review-path}`; increment `{seq}`. Apply the "Retry-on-interruption hook" (see above) before flow-control parsing. The retry of an initial Phase 4b dispatch is exempt from Phase 4b's "shares budget for re-review cycles" rule — the initial dispatch and its retry always run regardless of remaining `reviewRoundsUsed`. Call `register_artifact` for the holistic review artifact.
 
 ### Flow control
 
@@ -407,6 +480,6 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 - **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
 - **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
 
-When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch.
+When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
 
 After: compute aggregate usage for the holistic phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4b (the holistic reviewer dispatch and, if applicable, coder fix and re-review cycles). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
