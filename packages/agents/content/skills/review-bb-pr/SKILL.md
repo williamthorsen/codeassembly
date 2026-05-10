@@ -36,7 +36,7 @@ On HEAD mismatch, do not return — exit non-zero with the mismatch error. `revi
 
 ## Bitbucket access
 
-Use the same access mechanism as `bb-pr-inline-comment` and `create-bitbucket-pr` — the Bitbucket Cloud REST API at `https://api.bitbucket.org/2.0/`. **Do not introduce a new client.** Authentication resolves in priority order:
+Use the same access mechanism as `bb-pr-inline-comment` — the Bitbucket Cloud REST API at `https://api.bitbucket.org/2.0/`. **Do not introduce a new client.** Authentication resolves in priority order:
 
 1. **Bot credentials (Basic auth):** `BITBUCKET_BOT_USERNAME` + `BITBUCKET_BOT_TOKEN` env vars.
 2. **API token (Bearer auth):** `BITBUCKET_API_TOKEN` env var.
