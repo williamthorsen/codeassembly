@@ -121,7 +121,7 @@ Send all activated Task calls in a single message so they run concurrently. Each
 
 Before dispatching, assign `{NN}` values and store named path variables for each activated reviewer using these names and this order: `{core-review-path}` (core reviewer, always), `{sf-review-path}` (silent-failure reviewer, if activated), `{test-review-path}` (test reviewer, if activated), `{code-review-path}` (code reviewer, if activated). Skipped reviewers do not consume a sequence number; increment `{seq}` only for activated reviewers.
 
-Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.reviewer}`:
+Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `model: {models.reviewer}`:
 
 > Review the code changes for the following task.
 >
@@ -139,7 +139,7 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: 
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit the entire block when `{reviewer-context}` is empty — do not emit an empty heading.}
 
-Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 20`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
+Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 45`, `model: {models.aspect_silent_failure_reviewer}` (if activated):
 
 > Review the code changes on this branch for error-handling and silent-failure issues.
 >
@@ -154,7 +154,7 @@ Call Task with `subagent_type: aspect-silent-failure-reviewer`, `max_turns: 20`,
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
-Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 20`, `model: {models.aspect_test_reviewer}` (if activated):
+Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 45`, `model: {models.aspect_test_reviewer}` (if activated):
 
 > Review the code changes on this branch for test-coverage quality, behavioral gaps, and missing edge cases.
 >
@@ -173,7 +173,7 @@ Call Task with `subagent_type: aspect-test-reviewer`, `max_turns: 20`, `model: {
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
-Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 20`, `model: {models.aspect_code_reviewer}` (if activated):
+Call Task with `subagent_type: aspect-code-reviewer`, `max_turns: 45`, `model: {models.aspect_code_reviewer}` (if activated):
 
 > Review the code changes on this branch for CLAUDE.md compliance, bugs, and logic errors.
 >
@@ -316,7 +316,7 @@ If Phase 4a will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, even
 
 If Phase 4a is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "skipped" } }`.
 
-Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 15`, `model: {models.code_simplification_reviewer}`:
+Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 30`, `model: {models.code_simplification_reviewer}`:
 
 > Review the code changes on this branch for simplification opportunities.
 >
@@ -370,7 +370,7 @@ If Phase 4b will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, even
 
 If Phase 4b is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
 
-Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 30`, `model: {models.holistic_reviewer}`:
+Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `model: {models.holistic_reviewer}`:
 
 > Perform a final review of all changes on this branch.
 >
