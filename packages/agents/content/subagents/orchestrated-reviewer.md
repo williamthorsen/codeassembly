@@ -45,60 +45,31 @@ You will receive:
 
 ## Incremental review writes
 
-<HARD-GATE>
-After reading project guidelines and obtaining the diff (typically 2-3 turns), your NEXT tool use MUST be a `Write` of the review scaffold to the orchestrator-supplied artifact path. Not a `Read`, not a `Grep`, not a `Bash` to inspect files — a `Write`. This guarantees a durable artifact exists at the canonical path even if your dispatch is interrupted by `max_turns` exhaustion or any other failure.
+<!-- include: _partials/review-writes-hard-gate.md -->
 
 The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts from a fresh empty scaffold.
-</HARD-GATE>
+<!-- /include -->
 
 The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review — interruption must never strand the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
-You have `Write` but not `Edit`. Each update is a full overwrite of the artifact file with the growing findings list.
+<!-- include: _partials/review-writes-prelude.md / -->
 
-### Scaffold (first write)
+<!-- include: _partials/review-writes-scaffold.md / -->
 
-Write exactly this structure:
-
-```markdown
-### Criticality: (pending)
-
-### Summary
-
-(pending)
-
-### Findings
-
-(none yet)
-```
-
-The literal string `(pending)` on the `### Criticality:` line is the interruption sentinel. The orchestrator distinguishes a mid-flight artifact from a finalized one by checking whether `### Criticality:` parses as a known enum value. Do not invent other placeholder strings.
-
-### Interim writes (after each finding)
-
-After each finding crystallizes, overwrite the artifact with the current findings appended under `### Findings`. `### Criticality:` stays `(pending)` and `### Summary` stays `(pending)` until finalize. Example interim form with one finding present:
-
-```markdown
-### Criticality: (pending)
-
-### Summary
-
-(pending)
-
-### Findings
-
+<!-- include: _partials/review-writes-interim.md -->
 #### F1: Null dereference in login handler
 
 - **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
-```
+<!-- /include -->
 
-### Finalize (reserved last 3 turns)
-
-Replace `### Criticality: (pending)` with the aggregate enum value (`none|low|medium|high`) and replace `### Summary`'s `(pending)` placeholder with the 1-2 sentence overall assessment. Then emit your structured return block.
+<!-- include: _partials/review-writes-finalize.md -->
+Then emit your structured return block.
 
 If the review concluded with no findings, the finalized form omits the `### Findings` block entirely — see the "If no findings" example in [Output format](#output-format).
+<!-- /include -->
 
 ## Finding format
 

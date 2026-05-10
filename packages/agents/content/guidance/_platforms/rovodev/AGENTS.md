@@ -1,2 +1,2 @@
-<!-- include: ../../shared/AGENTS.md -->
-<!-- include: ./codeassembly-guidance.md -->
+<!-- include: ../../shared/AGENTS.md / -->
+<!-- include: ./codeassembly-guidance.md / -->
