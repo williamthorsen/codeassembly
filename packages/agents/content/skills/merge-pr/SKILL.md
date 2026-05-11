@@ -119,7 +119,9 @@ git log {default_branch}..HEAD --format=%B
 git diff {default_branch}...HEAD --stat
 ```
 
-Write the composed body in **release-notes voice** — apply the [release-notes voice](../_data/release-notes-voice.md). Describe the accomplishment from the reader's standpoint, not the edits. One short paragraph is usually enough; add a follow-up paragraph only when the change is substantial.
+Describe the accomplishment from the reader's standpoint. One short paragraph is usually enough; add a follow-up paragraph only when the change is substantial.
+
+<!-- include: ../../_partials/voice-checklist.md / -->
 
 ### 7. Approval gate
 
