@@ -1,10 +1,8 @@
-# Git commit format
-
-## Commit title format
+# Title templates
 
 Commit titles, ticket titles, PR titles, and squash-merge titles are produced from declarative templates. Each surface has its own template, configured per repository and per user, and rendered by `describe-change.sh` from a small set of named tokens.
 
-### Rendering the title
+## Rendering the title
 
 Run the `describe-change.sh` script with every input that is available; templates control which tokens are required:
 
@@ -34,7 +32,7 @@ Use `commit_title` for commit titles, `ticket_title` for issue titles, `pr_title
 
 If the script is not found, fall back to the bare `--title` value.
 
-### Supported tokens
+## Supported tokens
 
 | Token          | Resolves to                                                                           |
 | -------------- | ------------------------------------------------------------------------------------- |
@@ -46,13 +44,13 @@ If the script is not found, fall back to the bare `--title` value.
 
 A template that omits `{title}` produces a title without the bare title text — `describe-change.sh` does not insert it implicitly. Unknown tokens (e.g., a typo like `{titel}`) are left as-is so the mistake is visible in the rendered output.
 
-### Optional groups via `[...]`
+## Optional groups via `[...]`
 
 A `[...]` group renders verbatim if every token reference inside resolves non-empty. If any inner token is empty, the entire group — literals included — drops. Groups are processed left-to-right and may not be nested.
 
 After substitution, a final whitespace pass collapses runs of multiple spaces into a single space and trims leading and trailing whitespace.
 
-#### Worked example
+### Worked example
 
 Template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
 
@@ -66,7 +64,7 @@ Template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
 
 The whitespace-collapse pass turns `  Add foo  ` into `Add foo` and prevents extra spaces from showing up next to dropped groups (e.g., `[{ticket_ref}] {title} [{pr_number}]` with only `{title}` populated renders as `Add foo`, not `  Add foo  `).
 
-### Common templates
+## Common templates
 
 ```yaml
 commit:
@@ -90,47 +88,12 @@ Quote `title_format` values in YAML (single or double quotes are both fine). Quo
 | `'[{ticket_ref} ]{title}'`     | `#466 Add script installer`          |
 | `'{title} ({ticket_ref})'`     | `Add script installer (#466)`        |
 
-### Scope
+## Scope values
 
-The scope identifies the part of the codebase affected by the commit:
+The `{scope}` token expects a value that identifies the part of the codebase affected. Surface-defined values:
 
 - In a monorepo, the scope is typically the workspace name or abbreviation.
-- Use `root` if the commit touches only files in the monorepo root.
-- Use `*` if the commit spans multiple workspaces, or root and one or more workspaces.
-- If a root change is tightly associated with only one workspace, don't count it as a root change.
+- Use `root` when the change touches only files at the monorepo root.
+- Use `*` when the change spans multiple workspaces, or root and one or more workspaces.
 
-Common example: if a package is added to `packages/workspace-a`, that updates the package lock file in root. Don't treat that as a change to root.
-
-## Title constraints
-
-- **72 characters max** (hard limit).
-- **Describes the code change, not what prompted it.** Ask: "what does the diff do?" Bad: "Address review findings". Good: "Add error logging to `handleStateUpdate`".
-- **Describes the outcome, not the mechanism.** The title feeds the changelog and, for release-notes-contributing work types, the release notes — a reader scanning those sees only the title. Ask: "what does this change deliver?" — not "what did I edit?" Bad: "Upgrade hono from v1 to v2". Good: "Upgrade hono to patch authentication vulnerability".
-- **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
-- **Only document what's in the diff.** External actions (e.g., updating a ticket) don't belong.
-
-Add `!` after the work type to indicate breaking changes: `agents|feat!: Remove deprecated API`
-
-## Ticket ID
-
-Do not include the ticket ID in the commit title. The branch name already carries it.
-
-Include the ticket ID at the end of the commit body only if the branch covers more than one ticket (rare).
-
-## Line length
-
-- **Title**: 72 characters max (hard limit).
-- **Body**: No hard wrapping. Write naturally — do not insert newlines to wrap at a column width.
-
-## Body formatting
-
-- **Release-notes voice.** The body is extracted into the changelog and (for release-notes-contributing work types) into release notes. Apply the [release-notes voice](release-notes-voice.md).
-- **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
-- **Use backticks for code identifiers.** Variable names, function names, class names, and file paths must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `src/lib/manifest.ts`.
-- **Never reference automated tests or CI.** Do not mention formatting, linting, unit tests, or typechecking as part of what the commit does.
-- **Never use review finding IDs.** Identifiers like F1, W2, T3 belong only in review documents — they are meaningless in `git log`.
-- **Break up large paragraphs.** Use a blank line between paragraphs. Prefer short, focused paragraphs over walls of text.
-
-## Branch naming
-
-See `branch-format.md` for branch naming conventions. Branch format: `{ticket}/{description}`.
+Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) lives with the consuming skill — see `commit/SKILL.md` for the commit-side rules.

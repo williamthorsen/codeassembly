@@ -270,7 +270,7 @@ describe('installCommand', () => {
     const dataContents = await readdir(path.join(claudeHome, 'skills', '_data'));
     expect(dataContents).toContain('artifact-conventions.md');
     expect(dataContents).toContain('next-steps-after-plan.md');
-    expect(dataContents).toContain('commit-format.md');
+    expect(dataContents).toContain('title-templates.md');
   });
 
   it('should generate prompts.yml for rovodev with valid YAML structure', async () => {
@@ -653,12 +653,12 @@ describe('installCommand', () => {
       await installCommand(makeOptions(), tempDir);
 
       // _data files have no frontmatter; marker should be HTML comment
-      const dataPath = path.join(claudeHome, 'skills', '_data', 'commit-format.md');
+      const dataPath = path.join(claudeHome, 'skills', '_data', 'title-templates.md');
       const content = await readFile(dataPath, 'utf8');
 
       expect(content.startsWith(HTML_MARKER_LINE_1)).toBe(true);
       expect(content).toContain(
-        '<!-- Source: https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/_data/commit-format.md -->',
+        '<!-- Source: https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/_data/title-templates.md -->',
       );
     });
 
@@ -746,13 +746,13 @@ describe('installCommand', () => {
 
       await installCommand(makeOptions(), tempDir);
       const firstSkill = await readFile(path.join(claudeHome, 'skills', 'commit', 'SKILL.md'), 'utf8');
-      const firstData = await readFile(path.join(claudeHome, 'skills', '_data', 'commit-format.md'), 'utf8');
+      const firstData = await readFile(path.join(claudeHome, 'skills', '_data', 'title-templates.md'), 'utf8');
       const firstSubagent = await readFile(path.join(claudeHome, 'agents', 'orchestrated-coder.md'), 'utf8');
       const firstShared = await readFile(path.join(tempDir, '.agents', 'AGENTS.md'), 'utf8');
 
       await installCommand(makeOptions(), tempDir);
       const secondSkill = await readFile(path.join(claudeHome, 'skills', 'commit', 'SKILL.md'), 'utf8');
-      const secondData = await readFile(path.join(claudeHome, 'skills', '_data', 'commit-format.md'), 'utf8');
+      const secondData = await readFile(path.join(claudeHome, 'skills', '_data', 'title-templates.md'), 'utf8');
       const secondSubagent = await readFile(path.join(claudeHome, 'agents', 'orchestrated-coder.md'), 'utf8');
       const secondShared = await readFile(path.join(tempDir, '.agents', 'AGENTS.md'), 'utf8');
 

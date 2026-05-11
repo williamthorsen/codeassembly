@@ -1,9 +1,10 @@
-# Release-notes voice
+# Lede voice
 
-This file defines the voice for changelog and release-notes entries. The same voice may be adopted by any artifact whose first paragraph is the entry point for a glancing reader. Currently used by:
+This file defines the voice for changelog and release-notes entries — and any other artifact whose first paragraph is the entry point for a glancing reader. The metaphor is journalism: the entry is the lede; the PR is the article. Currently used by:
 
 - `summarize-change/SKILL.md` for the `## What` section
-- `commit/SKILL.md` for the commit body
+- `commit/SKILL.md` for the commit title and body
+- `merge-pr/SKILL.md` for the merge commit body
 
 ## The reader
 
@@ -67,6 +68,22 @@ Banned:
 - Output-format details (JSON keys, marker glyphs, header strings)
 
 When in doubt, leave the name out and describe the behavior. The one exception: User-configurable surface needed for migration may be named — both _removed_ identifiers (so the user recognizes what's gone) and _new_ defaults (so the user knows where to find or move them). Examples: "The `--fix-low` flag is replaced by `--approval-threshold`."; "The default config file is now `.config/v11y-check.config.json`."
+
+## Title application
+
+A title is a single-sentence lede. Both rules apply, distilled:
+
+- **Outcome, not mechanism.** The title goes to changelogs and release notes — readers often see only the title. Ask "what does this change deliver?", not "what did I edit?". Bad: "Upgrade hono from v1 to v2." Good: "Upgrade hono to patch authentication vulnerability."
+- **The code change, not what prompted it.** Ask "what does the diff do?", not "why did I open the editor?". Bad: "Address review findings"; "Apply feedback"; "Incorporate suggestions". Good: "Add error logging to `handleStateUpdate`"; "Remove dead rejection handler".
+- **No ephemeral references.** If it would not make sense to a reader who has only `git log`, leave it out.
+- **Only what's in the diff.** External actions (updating a ticket, posting a comment, sending a notification) are not part of the change and do not belong in its title.
+
+## Body content discipline
+
+Body text — commit bodies, `## What`, merge-commit bodies — has two specific exclusions on top of the two rules:
+
+- **Never reference automated tests or CI.** Formatting, linting, typechecking, and unit tests run automatically. Mentioning them in the body is process noise, not user content.
+- **Never use review finding IDs.** Identifiers like `F1`, `W2`, `T3` belong only in review documents — they are meaningless in `git log` and to any future reader.
 
 ## Length
 
@@ -141,3 +158,15 @@ Cut: the mechanism clause ("Each CLI now reads its version directly from its `pa
 > Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. Exit code behavior is unchanged.
 
 Cut: marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message. Survives: outcome (visibility) plus invariant (exit codes unchanged).
+
+### Bad → Good — format/glyph adoption
+
+**Bad** (output-format details under Rule 2):
+
+> Adds work-type emojis to PR descriptions: `## Details` subsections now render as `### 🎉 Features`, `### 🐛 Bug fixes`, `### ♻️ Refactoring`, `### 🧪 Tests`, and `### 📦 Dependencies`. Breaking changes in any subsection get a `🚨 **Breaking:**` prefix on the entry's first line.
+
+**Good:**
+
+> Adds work-type emojis to PR-description section headings for at-a-glance scanning, and an inline marker on entries that introduce breaking changes.
+
+Cut: every specific emoji, every header string, every marker glyph — all output-format details. Survives: the outcome (scanability) and the fact that breaking changes carry a marker, without naming the marker. The trap with this pattern is the urge to enumerate the new visuals because they feel like the user-facing change; they aren't — the user-facing change is "things are easier to scan."

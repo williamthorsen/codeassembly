@@ -66,7 +66,7 @@ Use `pr_title` directly as the final PR title. Do not concatenate with `title` s
 
 If the script is not found, fall back to the bare `title` from the change summary.
 
-See [commit-format.md](../_data/commit-format.md) for the title-format model and supported tokens.
+See [title-templates.md](../_data/title-templates.md) for the title-format model and supported tokens.
 
 ### 7. Resolve labels
 

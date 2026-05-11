@@ -8,46 +8,41 @@ user-invocable: true
 
 Commit titles and bodies are extracted into the changelog and, for release-notes-contributing work types, into release notes. Commit bodies also feed the PR's `## What` section via the `summarize-change` skill. Write with those downstream surfaces in mind.
 
-## Commit message format
-
-See `../_data/commit-format.md` for the full specification, including how to render the commit title using `describe-change.sh`.
-
 ## Commit metadata
 
-- `WORK_TYPE` describes the category of work (see `../_data/work-types.json`)
+- `WORK_TYPE` describes the category of work (see `../_data/work-types.json`).
+
+## Commit title
+
+Render via `describe-change.sh` — see `../_data/title-templates.md` for the full template syntax, supported tokens, and rendering pipeline.
+
+- **72 characters max** (hard limit).
+- **Imperative, task-oriented voice.** "Add…", "Fix…", "Prevent…", "Enable…" — describing what the coder did. The title appears next to the PR number in release notes; it reads as the task. Distinct from the lede voice, which is declarative ("Adds…", "Fixes…").
+- For content discipline (outcome-not-mechanism, code-change-not-prompt, no ephemeral references, only what's in the diff), see the "Title application" section in [`lede-voice.md`](../_data/lede-voice.md).
+- Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
 
 ## Ticket ID
 
 Do not include the ticket ID in the commit title. The branch name carries it. Include it at the end of the commit body only if the branch covers more than one ticket (rare).
 
-## Line length
+## Commit body
 
-- **Title**: 72 characters max (hard limit).
-- **Body**: No hard wrapping. Write naturally — do not insert newlines to wrap at a column width.
+**Body voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. The first paragraph of the body must stand alone as the entry; subsequent paragraphs may elaborate for the engaged reader who has clicked through.
 
-## Title guidelines
+<!-- include: ../../_partials/voice-checklist.md / -->
 
-- **Imperative, task-oriented voice.** "Add…", "Fix…", "Prevent…", "Enable…" — describing what the coder did. The title appears next to the PR number in release notes; it reads as the task. This voice is distinct from the body voice, which is declarative (see below).
-- **Describes the code change, not what prompted it.** Ask: "what does the diff do?" — not "why did I open the editor?" Bad: "Address review findings", "Apply feedback", "Incorporate suggestions". Good: "Add error logging to handleStateUpdate", "Remove dead rejection handler".
-- **Describes the outcome, not the mechanism.** The title feeds the changelog and, for release-notes-contributing work types, the release notes — a reader scanning those sees only the title. Ask: "what does this change deliver?" — not "what did I edit?" Bad: "Upgrade hono from v1 to v2". Good: "Upgrade hono to patch authentication vulnerability".
-- **No ephemeral references.** If it won't make sense to a reader who has only `git log`, leave it out.
-- **Only document what's in the diff.** External actions (e.g., updating a ticket) are not part of the commit and don't belong in its message.
+### Body mechanics
 
-## Body guidelines
-
-**Voice: release-notes voice.** The commit body feeds the changelog, release notes (for release-notes-contributing types), and the PR's `## What` section. Apply the [release-notes voice](../_data/release-notes-voice.md): The per-sentence outcome test and the identifier ban. The first paragraph of the body must stand alone as the changelog/release-notes entry; subsequent paragraphs may elaborate for the engaged reader who has clicked through.
-
-**No hard line breaks.** Write each paragraph or list item as a single long line. Do not insert newlines to wrap at a column width. Every tool that renders commit messages handles wrapping; manual breaks produce ragged text.
-
-See `../_data/commit-format.md` for mechanical body formatting rules (punctuation, backtick formatting, paragraph structure, and what to omit).
+- **No hard line breaks.** Write each paragraph or list item as a single long line. Do not insert newlines to wrap at a column width. Every tool that renders commit messages handles wrapping; manual breaks produce ragged text.
+- **Punctuate list items.** Each bulleted item ends with a period, comma, or semicolon.
+- **Use backticks for code identifiers.** Variable names, function names, class names, and file paths must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `src/lib/manifest.ts`.
+- **Break up large paragraphs.** Use a blank line between paragraphs. Prefer short, focused paragraphs over walls of text.
 
 ## Changes touching multiple scopes
 
-- Use `root` if commit touches only files in monorepo root
-- Use `*` if commit comprises changes to multiple scopes, or root and one or more scopes
-- If a root change is tightly associated with only one scope, don't count it as a root change
+For the structural scope values (`root`, `*`, workspace name), see "Scope values" in [`../_data/title-templates.md`](../_data/title-templates.md).
 
-Common example: If a package is added to `packages/workspace-a`, that updates the package lock file in root. Don't treat that as a change to root.
+Commit-side application: when more than one scope-value would technically apply, use the closest fit. If a root change is tightly associated with only one workspace, count it as a workspace change rather than a root change. Common example: if a package is added to `packages/workspace-a`, that updates the package lock file in root — still treat the commit as a workspace change.
 
 ## Branch naming
 
