@@ -1,4 +1,4 @@
-Before saving, audit your draft against these two rules. (See [`lede-voice.md`](../_data/lede-voice.md) for full doctrine and worked examples.)
+Before saving, audit your draft against the two rules below. (See [`lede-voice.md`](../_data/lede-voice.md) for full doctrine and worked examples.)
 
 **Rule 1 — Each sentence must be one of:**
 

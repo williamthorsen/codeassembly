@@ -13,8 +13,8 @@ describe(rewriteMarkdownPaths, () => {
     {
       name: 'rewrites a relative ../_data/ link',
       fileRelPath: 'commit/SKILL.md',
-      content: 'See [commit-format.md](../_data/commit-format.md) for details.',
-      expected: 'See [commit-format.md](~/.claude/skills/_data/commit-format.md) for details.',
+      content: 'See [title-templates.md](../_data/title-templates.md) for details.',
+      expected: 'See [title-templates.md](~/.claude/skills/_data/title-templates.md) for details.',
     },
     {
       name: 'preserves anchor fragments',
@@ -45,8 +45,8 @@ describe(rewriteMarkdownPaths, () => {
     {
       name: 'leaves tilde-prefixed paths untouched',
       fileRelPath: 'commit/SKILL.md',
-      content: 'See [file](~/.claude/skills/_data/commit-format.md) for info.',
-      expected: 'See [file](~/.claude/skills/_data/commit-format.md) for info.',
+      content: 'See [file](~/.claude/skills/_data/title-templates.md) for info.',
+      expected: 'See [file](~/.claude/skills/_data/title-templates.md) for info.',
     },
     {
       name: 'handles nested file paths correctly',
@@ -75,9 +75,9 @@ describe(rewriteMarkdownPaths, () => {
     {
       name: 'rewrites multiple links in the same content',
       fileRelPath: 'commit/SKILL.md',
-      content: 'See [format](../_data/commit-format.md) and [types](../_data/work-types.md).',
+      content: 'See [format](../_data/title-templates.md) and [types](../_data/work-types.md).',
       expected:
-        'See [format](~/.claude/skills/_data/commit-format.md) and [types](~/.claude/skills/_data/work-types.md).',
+        'See [format](~/.claude/skills/_data/title-templates.md) and [types](~/.claude/skills/_data/work-types.md).',
     },
   ])('$name', ({ fileRelPath, content, expected }) => {
     expect(rewriteMarkdownPaths(content, fileRelPath, skillsPrefix)).toBe(expected);
@@ -141,12 +141,12 @@ describe(rewritePathsInDirectory, () => {
   it('rewrites relative links in .md files within a directory', async () => {
     const skillDir = path.join(skillsDestDir, 'commit');
     await mkdir(skillDir, { recursive: true });
-    await writeFile(path.join(skillDir, 'SKILL.md'), 'See [format](../_data/commit-format.md) for spec.', 'utf8');
+    await writeFile(path.join(skillDir, 'SKILL.md'), 'See [format](../_data/title-templates.md) for spec.', 'utf8');
 
     await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
-    expect(result).toBe('See [format](~/.claude/skills/_data/commit-format.md) for spec.');
+    expect(result).toBe('See [format](~/.claude/skills/_data/title-templates.md) for spec.');
   });
 
   it('recursively processes nested directories', async () => {
@@ -167,7 +167,7 @@ describe(rewritePathsInDirectory, () => {
   it('skips non-.md files', async () => {
     const skillDir = path.join(skillsDestDir, 'test-skill');
     await mkdir(skillDir, { recursive: true });
-    const originalContent = 'See [format](../_data/commit-format.md) for spec.';
+    const originalContent = 'See [format](../_data/title-templates.md) for spec.';
     await writeFile(path.join(skillDir, 'notes.txt'), originalContent, 'utf8');
 
     await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude');
@@ -205,7 +205,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      'See [format](../_data/commit-format.md). Run {platform_home_dir}/scripts/describe-change.sh.',
+      'See [format](../_data/title-templates.md). Run {platform_home_dir}/scripts/describe-change.sh.',
       'utf8',
     );
 
@@ -213,7 +213,7 @@ describe(rewritePathsInDirectory, () => {
 
     const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
     expect(result).toBe(
-      'See [format](~/.claude/skills/_data/commit-format.md). Run ~/.claude/scripts/describe-change.sh.',
+      'See [format](~/.claude/skills/_data/title-templates.md). Run ~/.claude/scripts/describe-change.sh.',
     );
   });
 
