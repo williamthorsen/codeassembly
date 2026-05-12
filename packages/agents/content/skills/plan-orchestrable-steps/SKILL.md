@@ -52,6 +52,7 @@ Read `{artifact-dir}/orchestration-plan.json`. Present to the user:
 - **Dependency graph**: which steps can run in parallel vs. which are sequential
 - **Risks**: items that need user attention
 - **Questions**: items the planner could not resolve from codebase analysis
+  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 ### 4. User feedback loop
 

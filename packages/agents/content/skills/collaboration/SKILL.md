@@ -42,6 +42,7 @@ When you do ask, prefer forms the user can answer unambiguously:
 
 - **A clean yes/no question** (end with `👍🏼👎🏼`).
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
+  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 ## Efficient context usage
 

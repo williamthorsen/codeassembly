@@ -88,16 +88,24 @@ Evaluate the finding counts:
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): skip user interaction. Proceed to step 5 with empty user answers.
 
-- **User questions present** (UserQuestions > 0): read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question as a numbered item:
+- **User questions present** (UserQuestions > 0): read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
   ```
   The plan review identified {UserQuestions} question(s) that need your input:
 
-  1. **C1: {title}** -- {question text}
-  2. **X2: {title}** -- {question text}
-  ...
+  **C1 — {title}**
+  {question text}
+  1. ■■■ {recommended option}:
+     ➕ {strongest argument};
+     ➕ {secondary argument}.
+  2. ■□□ {alternative option}:
+     ➕ {pro};
+     ➖ {con}.
 
-  Please answer these questions. You can respond with numbered answers (e.g., "1. Use toast notifications, 2. Follow the existing pattern in...") or as free-form text.
+  **X2 — {title}**
+  {open-ended question text — describe what you want in free-form text}
+
+  Please answer using the finding ID (e.g., "C1: option 2; X2: ..."), or respond in free-form text.
   ```
 
   Wait for the user's response. Capture their answers as `user_answers`.
