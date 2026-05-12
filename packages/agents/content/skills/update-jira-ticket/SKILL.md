@@ -14,6 +14,7 @@ Use whenever calling `update_jira_issue` (or `create_jira_issue`) with `descript
 2. **Convert Markdown to HTML using only the allowlist below.** Anything outside the allowlist must be omitted or rewritten.
 3. **Pass the HTML inline** to `description_html` or `comment_html`.
 4. **Never pass a file path** to `description_html` / `comment_html`. File-path mode is forbidden — it has been observed to fail with `INVALID_INPUT`.
+5. **Never include `version_message`** as an argument. It is not a parameter of `update_jira_issue` or `create_jira_issue` — including it triggers a validation failure and a wasted retry.
 
 ## Allowed elements
 
