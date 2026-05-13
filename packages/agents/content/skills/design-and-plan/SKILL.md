@@ -68,6 +68,7 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
    - Success criteria and edge cases
    - Prefer multiple choice when possible
    - Only one question per message
+   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 **Important:** Do not use interactive prompt mechanisms (pop-ups, arrow-key selectors, structured choice tools) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
 
@@ -75,6 +76,7 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
 
 1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.
 2. **When the solution is not obvious:** propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why. Rank options per [design priorities](../_data/design-priorities.md).
+   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 3. **Present the design** in sections scaled to complexity. Ask after each section whether it looks right.
 4. **Get explicit approval** before proceeding.
 

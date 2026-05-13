@@ -128,6 +128,7 @@ Describe the accomplishment from the reader's standpoint. One short paragraph is
 If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:
 
 - For each ambiguous dimension, present a numbered list of the dimension's `candidates` array, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
+  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
 
 Then render the proposed merge to the user:
