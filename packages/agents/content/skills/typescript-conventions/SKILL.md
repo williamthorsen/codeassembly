@@ -64,7 +64,7 @@ if (!isConfig(parsed)) {
 **NEVER write unsafe code:**
 
 - NEVER use `any` type
-- NEVER use non-null assertions without detailed justification
+- NEVER use non-null assertions; use real runtime assertions
 - NEVER promise type guarantees through generic parameters you cannot deliver
 - ALWAYS return `unknown` when you cannot guarantee the actual type
 - ALWAYS use proper type guards and runtime validation
