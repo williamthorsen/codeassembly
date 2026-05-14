@@ -2,7 +2,7 @@
 
 > **Note for maintainers:** Several skill bodies — including `collaboration/SKILL.md`, `design-and-plan/SKILL.md`, and `refine-plan/SKILL.md` — contain pointers back to this file at their question-asking steps. Those pointers duplicate the universal rule in `AGENTS.md` _intentionally_: agents follow behavioural rules more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
 
-For numbered clarifying questions with 2+ options, mark each option with a strength gradient and a brief rationale. Skip this format for yes/no questions and for next-steps menus (those use their own `🟢 recommended` convention).
+For numbered clarifying questions with 2+ options, mark each option with a strength gradient and a brief rationale. Skip this format for confirmation prompts and for next-steps menus (those use their own `🟢 recommended` convention).
 
 ## Markers
 
