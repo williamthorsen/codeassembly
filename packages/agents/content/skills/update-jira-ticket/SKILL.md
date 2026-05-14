@@ -20,7 +20,7 @@ Use whenever calling `update_jira_issue` (or `create_jira_issue`) with `descript
 
 Exhaustive list. Nothing else.
 
-`h1`, `h2`, `h3`, `h4`, `h5`, `h6`, `p`, `ul`, `ol`, `li`, `strong`, `em`, `code`, `pre`, `a`, `blockquote`, `hr`, `br`, `table`, `thead`, `tbody`, `tr`, `th`, `td`
+`h1`, `h2`, `h3`, `h4`, `h5`, `h6`, `p`, `ul`, `ol`, `li`, `strong`, `em`, `code`, `a`, `blockquote`, `hr`, `br`, `table`, `thead`, `tbody`, `tr`, `th`, `td`
 
 **Always strip `<ac:*>` and `<ri:*>` constructs unconditionally.** These are Confluence storage-format extensions: `<ac:*>` for Confluence elements like task lists and structured macros (e.g., `<ac:task-list>`, `<ac:structured-macro>`); `<ri:*>` for resource identifiers (e.g., `<ri:user>`, `<ri:page>`, `<ri:attachment>`). They have no Jira analogue, and including them produces `INVALID_INPUT`. If you have been working with Confluence content in the same session, audit the payload before sending.
 
@@ -53,6 +53,14 @@ The rule is symmetric — flipping the nesting order is not a workaround.
 <!-- Also right (drop the styling) -->
 <code>isDevMode</code> parameter
 ```
+
+### Multi-line code samples
+
+Do not wrap multi-line content in `<pre><code>`. The `<pre>` element is omitted from the allowlist entirely — multi-line `<pre><code>` blocks combining embedded newlines with quoted strings or apostrophes have been observed to trigger `INVALID_INPUT`.
+
+**Why:** ADF's `codeBlock` node accepts plain text, but the converter mishandles the combination of newlines and quote characters inside the `pre` block. Inline `<code>` in `<p>` survives the same characters, so the `<pre>` wrapper is the differentiator.
+
+**Workaround:** Render multi-line code as either multiple `<p><code>...</code></p>` paragraphs (one per logical line) or a single `<p>` with `<br>` separators between lines and inline `<code>` wrapping the code on each line. Single-line code is unchanged — continue to use inline `<code>` inside `<p>` or `<li>` as usual.
 
 ## Character handling
 
