@@ -37,17 +37,20 @@ Examples:
 
 When prompting the user for input, use visual markers to make prompts more noticeable:
 
-- **Any yes/no question** (approval, decisions, confirmations): End with `👍🏼👎🏼`.
+- **Confirmation prompts** (asking the user to confirm a proposed action): End with `👍🏼👎🏼`.
 - **All other questions** (open-ended, clarifications): End with `🤔`
-- **Numbered options (2+ choices)**: Follow the recommendation-gradient convention — mark each option ■■■/■■□/■□□/□□□ and list `➕` pros and `➖` cons. Skip the gradient for yes/no questions and next-steps menus. When a response contains 2+ option-style questions, prefix each with `Q1`, `Q2`, etc. Full spec: `_data/recommendation-gradient.md` in the agents skills tree.
+- **Numbered options (2+ choices)**: Follow the recommendation-gradient convention — mark each option ■■■/■■□/■□□/□□□ and list `➕` pros and `➖` cons. Skip the gradient for confirmation prompts and next-steps menus. When a response contains 2+ option-style questions, prefix each with `Q1`, `Q2`, etc. Full spec: `_data/recommendation-gradient.md` in the agents skills tree.
 
 Examples:
 
 - "Do you want me to start implementation? 👍🏼👎🏼"
 - "Does this design look correct? 👍🏼👎🏼"
 - "Should I proceed with this approach? 👍🏼👎🏼"
+- "Apply these revisions (say no if you'd like to adjust something else first)? 👍🏼👎🏼"
 - "Which color scheme would you prefer? 🤔"
 - "What additional features should I include? 🤔"
+
+**Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
 
 **Skill-local reinforcement.** Rules that govern how an agent presents output — like the numbered-options convention above — should also be referenced in the bodies of skills that perform that behaviour, at the step where the output is produced. Skill-local examples override global prose rules: agents imitate the nearest concrete example more reliably than they follow a directive read once at session start. Treat skill-local pointers to behavioural specs as load-bearing redundancy, not duplication — global rules only take effect if they are reflected in the skill's own examples.
 
