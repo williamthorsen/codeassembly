@@ -37,7 +37,7 @@ Examples:
 
 When prompting the user for input, use visual markers to make prompts more noticeable:
 
-- **Confirmation prompts** (you are asking the user to confirm a proposed action): End with `👍🏼👎🏼`. Phrasing is unconstrained — descriptive clauses about what declining would entail are allowed (e.g., "Apply these revisions (say no if you'd like to adjust something else first)?").
+- **Confirmation prompts** (asking the user to confirm a proposed action): End with `👍🏼👎🏼`.
 - **All other questions** (open-ended, clarifications): End with `🤔`
 - **Numbered options (2+ choices)**: Follow the recommendation-gradient convention — mark each option ■■■/■■□/■□□/□□□ and list `➕` pros and `➖` cons. Skip the gradient for confirmation prompts and next-steps menus. When a response contains 2+ option-style questions, prefix each with `Q1`, `Q2`, etc. Full spec: `_data/recommendation-gradient.md` in the agents skills tree.
 
@@ -50,15 +50,7 @@ Examples:
 - "Which color scheme would you prefer? 🤔"
 - "What additional features should I include? 🤔"
 
-### Comprehension contract for `👍🏼👎🏼` prompts
-
-The `👍🏼👎🏼` marker is your promise to the user: if they clearly affirm, you will proceed with the proposed action; if they do not clearly affirm, you will not. Interpret responses to a marked prompt as follows:
-
-- **Clear affirmation** — "yes", "yep", "yeah", "looks good", "go ahead", "approved", "ship it", 👍, an emoji thumbs-up, and similar unambiguous go-aheads. Proceed with the proposed action. Never re-ask a clear affirmation as ambiguous, even when the question contained an alternative clause like "or X".
-- **Clear negation** — "no", "nope", "not yet", "stop", "wait", 👎, and similar unambiguous declines. Do not proceed; await user direction.
-- **Anything else** — including positive-but-not-clearly-affirmative responses ("this is interesting", "looks like it could work", "I like where this is going, but…"). Treat as conversation, not as inferred affirmation. Engage with the substance; do not proceed with the proposed action.
-
-When in doubt, treat as conversation. The cost of one extra turn is small; the cost of inferring affirmation is high — the user has to interrupt to stop unwanted action.
+**Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
 
 **Skill-local reinforcement.** Rules that govern how an agent presents output — like the numbered-options convention above — should also be referenced in the bodies of skills that perform that behaviour, at the step where the output is produced. Skill-local examples override global prose rules: agents imitate the nearest concrete example more reliably than they follow a directive read once at session start. Treat skill-local pointers to behavioural specs as load-bearing redundancy, not duplication — global rules only take effect if they are reflected in the skill's own examples.
 
