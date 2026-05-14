@@ -40,7 +40,7 @@ Not every response needs to end with a question. When you're ready to continue w
 
 When you do ask, prefer forms the user can answer unambiguously:
 
-- **A confirmation prompt** (end with `👍🏼👎🏼`). The marker carries a fixed comprehension contract — a clear affirmation proceeds, a clear negation doesn't, anything else is conversation. Full spec in `shared/AGENTS.md § Prompt formatting`. (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+- **A confirmation prompt** (end with `👍🏼👎🏼`). The marker carries a fixed comprehension contract — a clear affirmation proceeds, a clear negation doesn't, anything else is conversation. Full spec in `AGENTS.md` under "Prompt formatting". (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
