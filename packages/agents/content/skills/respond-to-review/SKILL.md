@@ -66,10 +66,28 @@ For each finding, apply technical rigor:
 
 1. **Verify before accepting.** Read the actual code referenced in each finding. Do not accept a finding at face value.
 2. **Check correctness.** Is the reviewer's claim technically accurate for this specific codebase and context?
-3. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
-4. **Push back when warranted.** If a finding is incorrect, provide specific technical justification. "The reviewer may have a point" is not rigorous — either the finding is valid or it isn't.
-5. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
+3. **Check doctrinal compatibility for moves, promotions, and restructures.** When a recommendation is to move, promote, or restructure a rule between files, sections, or skills, read the destination's stated scope, voice, and principles in full and verify the rule fits — not just that it could syntactically live there. Reject moves that conflict with the destination's stated category, voice, or framing, regardless of how the destination would "read cleaner."
+4. **Treat hedging language as a signal.** When a recommendation grounds itself in "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
+5. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
+6. **Push back as the default for structural recommendations.** For SSOT-structural or cross-file-architectural recommendations, pushback is the default posture: the reviewer is making a structural claim that requires structural verification, and acceptance is the move that requires affirmative evidence. For other findings, if the finding is incorrect, provide specific technical justification — "the reviewer may have a point" is not rigorous.
+7. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
    </HARD-GATE>
+
+## Worked examples
+
+### Bad → Good — hedged move with doctrinal conflict
+
+**Review recommendation:** "Move `validateSessionToken` from `auth/validators.ts` into `shared/utils.ts`. It plausibly belongs in a general utility module — there's no current evidence the function needs auth-specific context."
+
+**Bad — uncritical acceptance:**
+
+> R1: ACCEPT. The function takes a string and returns a boolean, so it plausibly fits in a generic utilities module. Moving it consolidates similar helpers.
+
+The acceptance reads the function's signature but not the destination's stated invariant.
+
+**Good — doctrine-grounded REJECT:**
+
+> R1: REJECT. `shared/utils.ts` opens with `// Pure, framework-agnostic helpers with no domain knowledge.`, and the surrounding helpers (`debounce`, `formatBytes`, `clamp`) confirm that scope. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate the destination's stated purity invariant. The reviewer's "plausibly belongs" framing did not survive a read of the destination's actual doctrine. The function stays in `auth/validators.ts`.
 
 ## Disposition vocabulary
 
