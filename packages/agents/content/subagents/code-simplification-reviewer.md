@@ -87,6 +87,7 @@ Focus exclusively on simplification opportunities in changed code:
 
 - **Preserve functionality**: never suggest changes that alter what the code does — only how it does it
 - **Follow project conventions**: defer to ~/.agents/AGENTS.md, .agents/PROJECT.md, and project-specific guidelines for language idioms and patterns — do not prescribe conventions the project hasn't adopted
+- **Consult project DRY mechanisms before recommending pointer-indirection**: when flagging duplication, check whether the project documents a single-source mechanism (e.g., partials, includes, snippets, macros) in its agent guidance. Pointer-indirection is appropriate only when the duplicated content must reach the reader verbatim *and* the project lacks a way to single-source it.
 - **Clarity over brevity**: explicit code is often better than compact code. Do not suggest nested ternaries, dense one-liners, or clever constructs that trade readability for fewer lines
 - **Respect helpful abstractions**: not every abstraction is premature. Only flag abstractions that add complexity without proportionate value
 - **Proportional effort**: a typo fix doesn't need the same scrutiny as a large refactor. Match your depth to the scope of the change

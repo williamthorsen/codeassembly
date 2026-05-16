@@ -107,6 +107,12 @@ content/
 
 **Platform-specific skills:** Directories prefixed with `_` under `skills/` (e.g., `_data`, `_platforms`) are not regular skills and are not installed directly. Skills in `_platforms/{platformId}/` are installed only when the install target matches that platform. For Rovo Dev, the CLI also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
 
+#### Content authoring
+
+The `packages/agents/content/` tree supports **partials** — reusable Markdown fragments inlined at install time. The expander produces byte-identical installed output, so partials are the correct DRY mechanism even when "verbatim execution context" is a requirement. See `packages/agents/content/_partials/README.md` for the canonical reference.
+
+> Content that appears identically in 2+ skill/subagent files should be a partial whenever parallel copies would drift if maintained separately. Treat partials as the prose analogue of subroutines.
+
 #### The orchestration system
 
 The skills implement a multi-phase agentic development pipeline. Entry points:
