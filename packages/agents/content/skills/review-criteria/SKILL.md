@@ -43,8 +43,8 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 Conventions for how findings reference files and code locations.
 
-1. **Repo-relative path required when localizable.** When a finding refers to specific code, it must have a `- **Location:** ` line directly under the heading, with a repo-relative path. Example: `packages/devtools-panel/config/renderReleaseNotesHtml.ts:69-76`, not `renderReleaseNotesHtml.ts:69-76`.
-2. **Multi-range syntax.** Multiple ranges in the same file concatenate with comma separation, dropping the path on subsequent ranges: `path/to/file.ts:69-76, :152-155`.
+1. **Repo-relative path required when localizable.** When a finding refers to specific code, the `- **Location:** ` line must be the first bullet under the finding heading, with a repo-relative path. Example: `packages/devtools-panel/config/renderReleaseNotesHtml.ts:69-76`, not `renderReleaseNotesHtml.ts:69-76`.
+2. **Multi-range syntax.** Multiple ranges or single lines in the same file concatenate with comma separation, dropping the path on subsequent entries: `path/to/file.ts:42, :69-76, :152-155`.
 3. **Multiple files.** Findings that span multiple files use one `- **Location:** ` bullet per file.
 4. **Prose may abbreviate after the canonical reference.** Once `Location:` establishes the path, the Description and Recommendation may refer to the file by basename.
 

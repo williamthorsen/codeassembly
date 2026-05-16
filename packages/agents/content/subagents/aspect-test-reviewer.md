@@ -98,8 +98,11 @@ Each finding must include:
 
 - **ID**: sequential within category (F/W/T/R/S, with `-L` suffix for legacy — see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
+- **Severity**: one of `critical`, `warning`, `todo`, `recommendation`, `suggestion` (legacy variants append `(legacy)`)
 - **Description**: what the issue is
 - **Recommendation**: what to do about it
+
+See the "Finding references" section in the `review-criteria` skill for path-format rules (repo-relative paths, multi-range syntax, multi-file findings).
 
 ## Criticality classification
 
