@@ -178,6 +178,8 @@ Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInter
 
 ### Field definitions
 
+The table below lists only the universal fields. Artifact-specific extensions (`provenance.iteration`, `session_type`, `tickets_created`, `title`, `scope`, `type`, `responding_to`, etc.) are documented in the per-artifact sections below.
+
 | Field                      | Required | Description                                                                                                                                          |
 | -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                      |

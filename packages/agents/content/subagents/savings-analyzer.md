@@ -112,7 +112,7 @@ Resolve fields before writing the artifact:
 
 - `provenance.skill`: always `savings-analyzer`.
 - `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails. (Bash is not in your default tool set — if unavailable, omit the field.)
+- `provenance.baseSha`: passed in via your dispatch prompt — the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
 - `provenance.isInteractive`: always `false`.
 - `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
 - `ticket_id`, `ticket_ref`: passed in via your dispatch prompt. Omit when absent.
