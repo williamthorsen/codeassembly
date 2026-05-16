@@ -24,7 +24,6 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
    - Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (already obtained in step 2). `branch_name` is always present; `ticket_id` and `ticket_ref` are emitted only when non-null.
    - Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
    - Resolve `{pr}` via the shared dispatch in [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-     <!-- Inline rather than via _partials/pr-resolution-dispatch.md: the partial's bullets are 2-space-indented; this site is nested deeper (sub-bullet of a numbered step) and would render incorrectly with the partial body. -->
      - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
      - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
 
