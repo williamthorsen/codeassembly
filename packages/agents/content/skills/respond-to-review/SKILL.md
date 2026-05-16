@@ -64,13 +64,12 @@ For each finding, apply technical rigor:
 <HARD-GATE>
 **Anti-sycophancy rules for review response:**
 
-1. **Verify before accepting.** Read the actual code referenced in each finding. Do not accept a finding at face value.
+1. **Verify before accepting.** Read the actual code referenced in each finding. Do not accept a finding at face value. "The reviewer may have a point" is not rigorous — either the finding is valid or it isn't.
 2. **Check correctness.** Is the reviewer's claim technically accurate for this specific codebase and context?
-3. **Check doctrinal compatibility for moves, promotions, and restructures.** When a recommendation is to move, promote, or restructure a rule between files, sections, or skills, read the destination's stated scope, voice, and principles in full and verify the rule fits — not just that it could syntactically live there. Reject moves that conflict with the destination's stated category, voice, or framing, regardless of how the destination would "read cleaner."
-4. **Treat hedging language as a signal.** When a recommendation grounds itself in "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
-5. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
-6. **Push back as the default for structural recommendations.** For SSOT-structural or cross-file-architectural recommendations, pushback is the default posture: the reviewer is making a structural claim that requires structural verification, and acceptance is the move that requires affirmative evidence. For other findings, if the finding is incorrect, provide specific technical justification — "the reviewer may have a point" is not rigorous.
-7. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
+3. **Treat hedging language as a signal.** When a recommendation grounds itself in "plausibly", "arguably", "could", or "no current evidence against", treat the premise as an unverified hypothesis. Require independent verification before acceptance. If the premise cannot be verified, default to REJECT.
+4. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
+5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure a rule between files, sections, or skills, read the destination's stated scope, voice, and principles in full and verify the rule fits — not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, voice, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the rule and the move resolves a duplication or location problem the original placement created.
+6. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
    </HARD-GATE>
 
 ## Worked examples
@@ -81,13 +80,27 @@ For each finding, apply technical rigor:
 
 **Bad — uncritical acceptance:**
 
-> R1: ACCEPT. The function takes a string and returns a boolean, so it plausibly fits in a generic utilities module. Moving it consolidates similar helpers.
+> R1: ACCEPT. `validateSessionToken` is a small input-to-boolean function with no side effects; it composes naturally with the other helpers in `shared/utils.ts`. Moving it consolidates similar shape-based utilities.
 
-The acceptance reads the function's signature but not the destination's stated invariant.
+The acceptance reads the function's signature without reading the destination's doctrine.
 
 **Good — doctrine-grounded REJECT:**
 
-> R1: REJECT. `shared/utils.ts` opens with `// Pure, framework-agnostic helpers with no domain knowledge.`, and the surrounding helpers (`debounce`, `formatBytes`, `clamp`) confirm that scope. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate the destination's stated purity invariant. The reviewer's "plausibly belongs" framing did not survive a read of the destination's actual doctrine. The function stays in `auth/validators.ts`.
+> R1: REJECT. The helpers already in `shared/utils.ts` (`debounce`, `formatBytes`, `clamp`) all share a no-domain-knowledge shape; the file header confirms the invariant with `// Pure, framework-agnostic helpers with no domain knowledge.`. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate that invariant, whether read from the surrounding code or from the header. The reviewer's "plausibly belongs" framing did not survive a read of the destination's actual doctrine. The function stays in `auth/validators.ts`.
+
+### Bad → Good — structural move with destination doctrine satisfied
+
+**Review recommendation:** "Move the `MAX_RETRY_COUNT` constant from `network/http-client.ts` to `config/limits.ts`. It's hard-coded near the call site; `config/limits.ts` already holds `MAX_REQUEST_BYTES` and `MAX_CONNECTION_POOL_SIZE`, so grouping operational limits there reduces scatter."
+
+**Bad — reflexive rejection:**
+
+> R1: REJECT. Pushback is the default for structural recommendations. The current placement works.
+
+The rejection invokes the default posture but never reads the destination's doctrine to check whether the affirmative-evidence bar is met.
+
+**Good — doctrine-grounded ACCEPT:**
+
+> R1: ACCEPT. `config/limits.ts` is the documented home for numeric operational ceilings; its existing members (`MAX_REQUEST_BYTES`, `MAX_CONNECTION_POOL_SIZE`) confirm the category, and `MAX_RETRY_COUNT` shares that exact shape. The constant is currently referenced from three modules that each re-import it from `network/http-client.ts` — a location problem the original placement created. The destination's stated doctrine accommodates the rule, and the move resolves the duplication; both conditions for the carve-out are met.
 
 ## Disposition vocabulary
 
