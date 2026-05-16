@@ -137,8 +137,7 @@ Resolve fields before writing the artifact:
 - `branch`: passed in via your dispatch prompt, or run `git rev-parse --abbrev-ref HEAD`.
 - `commit`: run `git rev-parse --short HEAD` via Bash.
 - `pr`: resolve via the shared dispatch in the `pr-resolution` shared data doc. Run the platform-appropriate snippet via the Bash tool with `timeout: 5000`:
-  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
-  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+  <!-- include: ../_partials/pr-resolution-dispatch.md / -->
 
   On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in your text output.
 
