@@ -40,22 +40,14 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 ## Frontmatter resolution
 
-Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
 - `provenance.skill`: always `review-branch`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main`. Omit if it fails.
-- `provenance.isInteractive`: `true` for direct invocations; `false` when invoked by an orchestrated subagent.
-- `provenance.model`: the model identifier executing this skill (read from the environment block in the system prompt — the `model named ... model ID is ...` line).
-- `ticket_id`, `ticket_ref`: from session context. Omit when null.
-- `branch`: from session context (`branch_name`).
-- `commit`: run `git rev-parse --short HEAD`.
-- `pr`: resolve via [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
-
-- `author`: commit author(s) from `git log` on the reviewed commits.
+- `provenance.isInteractive`: always `true`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ## Review guidelines
 

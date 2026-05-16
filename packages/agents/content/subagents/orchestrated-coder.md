@@ -135,25 +135,14 @@ completed
 
 ## Frontmatter
 
-Every change-summary artifact you write begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc). The frontmatter is part of the scaffold and appears from the first write — see [Incremental change-summary writes](#incremental-change-summary-writes).
+The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-Resolve the following fields before your first write:
+<!-- include: ../_partials/frontmatter-via-script.md -->
 
 - `provenance.skill`: always `orchestrated-coder`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
 - `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
-- `ticket_id`, `ticket_ref`: passed in via your dispatch prompt. Omit when absent.
-- `branch`: passed in via your dispatch prompt, or run `git rev-parse --abbrev-ref HEAD`.
-- `commit`: run `git rev-parse --short HEAD` via Bash.
-- `pr`: resolve via the shared dispatch in the `pr-resolution` shared data doc. Run the platform-appropriate snippet via the Bash tool with `timeout: 5000`:
-<!-- include: ../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in your text output.
-- `run_id`: passed in via your dispatch prompt — the orchestrated run ID.
-
-The ticket-level branch change summary written via the `summarize-change` skill is a different artifact with its own frontmatter; this section governs only the in-run change-summary you write incrementally.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ## Reviewer-context sidecar
 

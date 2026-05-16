@@ -84,39 +84,14 @@ If the user provides feedback (not approval):
 
 When the user approves the plan:
 
-1. Resolve provenance and identity data:
-   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
-   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
-   - Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (obtained in step 1 of the Process above).
-   - Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
-   - Resolve `{pr}` via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-     - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
-     - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+1. Resolve frontmatter fields. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-     On non-empty output, set `{pr}` to the URL. On empty output (no PR exists), omit `pr:` — emit no warning. On non-zero exit, timeout, or other failure, omit `pr:` and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+   <!-- include: ../../_partials/frontmatter-via-script.md -->
+   - `provenance.skill`: always `plan-orchestrable-steps`.
+   - `provenance.isInteractive`: always `true`.
+   <!-- /include -->
 
-2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step -- the planner did not produce a markdown snapshot. Read the file. Prepend YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema and write back:
-
-   ```yaml
-   ---
-   provenance:
-     skill: plan-orchestrable-steps
-     timestamp: <timestamp>
-     baseSha: <baseSha>
-     isInteractive: true
-   ticket_id: <ticket_id>
-   ticket_ref: <ticket_ref>
-   branch: <branch_name>
-   commit: <commit>
-   pr: <pr>
-   ---
-   ```
-
-   Field-emission rules:
-   - Include `baseSha` only if resolved successfully.
-   - Include `ticket_id` and `ticket_ref` only when non-null in session context.
-   - Include `pr` only when the resolution returned a non-empty URL.
-   - `branch` and `commit` are always emitted.
+2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step — the planner did not produce a markdown snapshot. Read the file, prepend the resolved frontmatter, and write back.
 
 3. Output confirmation:
 

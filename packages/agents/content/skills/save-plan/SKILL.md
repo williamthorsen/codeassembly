@@ -18,16 +18,14 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 
 3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)
 
-4. **Resolve provenance and identity data**:
-   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
-   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
-   - Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (already obtained in step 2). `branch_name` is always present; `ticket_id` and `ticket_ref` are emitted only when non-null.
-   - Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
-   - Resolve `{pr}` via the shared dispatch in [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-     - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
-     - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+4. **Resolve frontmatter fields**:
 
-     On non-empty output, set `{pr}` to the URL. On empty output (no PR exists), omit the `pr:` line from the frontmatter — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line from the frontmatter and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+   The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions.
+
+   <!-- include: ../../_partials/frontmatter-via-script.md -->
+   - `provenance.skill`: always `plan-mode`.
+   - `provenance.isInteractive`: always `true`.
+   <!-- /include -->
 
 5. **Save** as ticket-level artifact:
 
@@ -38,29 +36,6 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
    Example: `20260226-143000Z_oauth2-migration_plan.md`
 
    `mkdir -p` the target directory before writing.
-
-   Prepend YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions:
-
-   ```yaml
-   ---
-   provenance:
-     skill: plan-mode
-     timestamp: <timestamp>
-     baseSha: <baseSha>
-     isInteractive: true
-   ticket_id: <ticket_id>
-   ticket_ref: <ticket_ref>
-   branch: <branch_name>
-   commit: <commit>
-   pr: <pr>
-   ---
-   ```
-
-   Field-emission rules:
-   - Include `baseSha` only if resolved successfully.
-   - Include `ticket_id` and `ticket_ref` only when non-null in session context.
-   - Include `pr` only when the resolution returned a non-empty URL.
-   - `branch` and `commit` are always emitted.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

@@ -95,29 +95,18 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 ### Frontmatter
 
-Prepend YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema to every newly created devlog. See [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter) for the devlog-specific extensions.
+The devlog frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the devlog-specific extensions listed in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter).
 
-Generation rules:
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
-- **`provenance` block** — always emitted.
-  - `skill`: always `create-devlog`.
-  - `timestamp`: current UTC time in ISO 8601 format.
-  - `baseSha`: run `git rev-parse --short origin/main`. Omit the field if the command fails (no remote, shallow clone). Mirrors `save-plan` behavior.
-  - `isInteractive`: always `true`.
-- **`branch`** — always emitted, taken from `branch_name` in session context.
-- **`commit`** — always emitted. Run `git rev-parse --short HEAD` and use its output.
-- **`pr`** — resolve via the shared dispatch in [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to the `pr:` line. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
-
-- **`ticket_id`** — emit only if non-null in session context. Omit otherwise.
-- **`ticket_ref`** — emit only when `ticket_id` is emitted; format as the display ref from session context (e.g., `#426` or `MAC-68`).
-- **`run_id`** — emit only if `--run-id={id}` was supplied as an argument. Do not perform any filesystem discovery to find a run directory; the caller is the source of truth.
-- **`commits`** — derived from the invocation argument; distinct from `commit` (HEAD short SHA):
+- `provenance.skill`: always `create-devlog`.
+- `provenance.isInteractive`: always `true`.
+- `run_id`: **override** the script's value. Emit only if `--run-id={id}` was supplied as an argument; the caller is the source of truth. Do not use the script's breadcrumb-derived value, and do not perform any filesystem discovery.
+- `commits` (devlog-specific extension; distinct from the universal `commit` field):
   - No argument (last commit): single short SHA from `git log -n 1 --format=%h`.
   - `<n>` (last N commits): list of N short SHAs from `git log -n {N} --format=%h`.
   - `working-tree`: omit the `commits` field entirely.
+  <!-- /include -->
 
 ### Filename examples
 

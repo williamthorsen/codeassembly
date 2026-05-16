@@ -75,21 +75,13 @@ Resolve artifact directory based on context.
 
 ### Frontmatter resolution
 
-Before writing, resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+The artifact frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
 - `provenance.skill`: always `plan`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main`; omit if it fails.
 - `provenance.isInteractive`: always `true`.
-- `ticket_id`, `ticket_ref`: from session context. Omit when null.
-- `branch`: from session context (`branch_name`).
-- `commit`: run `git rev-parse --short HEAD`.
-- `pr`: resolve via [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
-
-- `run_id`: emit only when invoked from within an orchestrated run (detected per the [Run context](#run-context) check below).
+<!-- /include -->
 
 ### Run context
 

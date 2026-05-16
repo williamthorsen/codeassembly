@@ -126,22 +126,14 @@ If the plan's assumptions all check out, omit this section.
 
 ## Frontmatter
 
-Resolve fields before writing the artifact:
+The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
+
+<!-- include: ../_partials/frontmatter-via-script.md -->
 
 - `provenance.skill`: always `orchestrated-architect`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
 - `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
-- `ticket_id`, `ticket_ref`: passed in via your dispatch prompt. Omit when absent.
-- `branch`: passed in via your dispatch prompt, or run `git rev-parse --abbrev-ref HEAD`.
-- `commit`: run `git rev-parse --short HEAD` via Bash.
-- `pr`: resolve via the shared dispatch in the `pr-resolution` shared data doc. Run the platform-appropriate snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in your text output.
-
-- `run_id`: passed in via your dispatch prompt — the orchestrated run ID.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ## Principles
 

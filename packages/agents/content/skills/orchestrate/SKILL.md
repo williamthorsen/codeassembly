@@ -741,21 +741,13 @@ Include:
 
 ### Run-manifest and run-summary frontmatter resolution
 
-This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic. Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
 - `provenance.skill`: always `orchestrate`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
 - `provenance.isInteractive`: always `false`.
-- `ticket_id`, `ticket_ref`: from session context. Omit when null.
-- `branch`: from session context (`branch_name`).
-- `commit`: run `git rev-parse --short HEAD` via Bash.
-- `pr`: resolve via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
-
-- `run_id`: the run ID for the current orchestrated run.
+<!-- /include -->
 
 The orchestrator's `provenance.model` is omitted — the run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 

@@ -147,35 +147,30 @@ Plan revision failed -- the plan-reviser did not complete successfully.
 
 Stop here. Do not attempt provenance update or report completion.
 
-Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
+Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
 
-The stamp writes the full canonical schema in one atomic write: the `provenance:` block (with `iteration` extension) plus the top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`). The behavior of the `provenance:` block depends on whether `{input-provenance}` is non-empty or empty; the top-level fields are resolved identically in both cases.
+The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
 
-**Resolve top-level canonical fields (both cases):**
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
-1. Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
-2. Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (already obtained in step 1.4 above). `branch_name` is always present; `ticket_id` and `ticket_ref` are emitted only when non-null.
-3. Detect whether the stamp is running inside an active run (`run-index.json` exists in a parent of the revision output path or in session context). If so, set `{run_id}` to the run ID; otherwise omit.
-4. Resolve `{pr}` via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-   - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
-   - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
 
-   On non-empty output, set `{pr}` to the URL. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+<!-- /include -->
 
-**Round-trip preservation:** when the input plan already carries top-level canonical fields (`branch`, `commit`, `pr`, etc.), they are **not** carried forward from the input — the stamp re-resolves them from current session context at stamp time. This is correct: the output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase casing convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write — there is no rename. The only provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches below).
+**Round-trip preservation:** the top-level canonical fields (`branch`, `commit`, `pr`, etc.) are always re-resolved from current session context via the script — they are not carried forward from `{input-provenance}`. This is correct: the output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write — there is no rename. Provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
 
 **When `{input-provenance}` is non-empty:**
 
-1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
+1. Use the script's `baseSha` as the new value. If the script omitted `baseSha`, preserve the original `baseSha` from `{input-provenance}`.
 2. Read the revised plan file at `{revision_output_path}`.
 3. Construct updated provenance:
    - `skill`: preserve from `{input-provenance}` (the original authoring skill)
    - `refinedBy`: set to `refine-plan`
-   - `timestamp`: current UTC time in ISO 8601 format
-   - `baseSha`: the newly resolved value (or preserved original)
+   - `timestamp`: use the script's `timestamp`
+   - `baseSha`: the script's value (or preserved original)
    - `isInteractive`: preserve from `{input-provenance}` if present
-   - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If `{input-provenance}.iteration` is absent, set to `2`.
-4. Prepend the unified YAML frontmatter (provenance block plus top-level canonical fields resolved above) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
+   - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If absent, set to `2`.
+4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
 
    ```yaml
    ---
@@ -195,20 +190,20 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
    ---
    ```
 
-   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if resolved or preserved from input. Include `ticket_id`, `ticket_ref`, `pr`, and `run_id` only when resolved.
+   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if available. Top-level fields follow the script's omit rules.
 
 **When `{input-provenance}` is empty:**
 
-1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
+1. Use the script's `baseSha`. If the script omitted it, omit it.
 2. Read the revised plan file at `{revision_output_path}`.
-3. Construct provenance with:
-   - `skill`: set to `unknown`
-   - `refinedBy`: set to `refine-plan`
-   - `timestamp`: current UTC time in ISO 8601 format
-   - `baseSha`: the resolved value (omit if command failed)
-   - `isInteractive`: always `true`. `refine-plan` is an interactive user-invocable skill (it presents review questions to the user in step 4 and waits for their answers); when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
-   - `iteration`: set to `2`
-4. Prepend the unified YAML frontmatter (provenance block plus top-level canonical fields resolved above) to the revised plan and write back:
+3. Construct provenance:
+   - `skill`: `unknown`
+   - `refinedBy`: `refine-plan`
+   - `timestamp`: script's value
+   - `baseSha`: script's value (omit when absent)
+   - `isInteractive`: always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
+   - `iteration`: `2`
+4. Prepend the unified YAML frontmatter and write back:
 
    ```yaml
    ---
@@ -227,8 +222,6 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
    run_id: 20260310-080000Z
    ---
    ```
-
-   Include `ticket_id`, `ticket_ref`, `pr`, and `run_id` only when resolved.
 
 ### 6. Offer ticket update if approach diverged
 

@@ -149,22 +149,14 @@ If a plan is also saved in step 7, it uses the same frontmatter shape with `prov
 
 ### Frontmatter resolution
 
-Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
 - `provenance.skill`: always `create-ticket`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
 - `provenance.isInteractive`: always `true`.
-- `provenance.model`: the model identifier executing this skill (read from the environment block in the system prompt).
-- `ticket_id`, `ticket_ref`: from the values computed in this step.
-- `branch`: from session context (`branch_name`).
-- `commit`: run `git rev-parse --short HEAD`.
-- `pr`: resolve via [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
-
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
-
-Follow [artifact conventions](../_data/artifact-conventions.md).
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ### 7. Save plan (if present)
 

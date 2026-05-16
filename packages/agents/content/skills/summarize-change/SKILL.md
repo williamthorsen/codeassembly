@@ -115,20 +115,11 @@ The block is structured as:
 
 ### Canonical-field resolution
 
-- **`provenance.skill`**: always `summarize-change`.
-- **`provenance.timestamp`**: current UTC time in ISO 8601 format.
-- **`provenance.baseSha`**: run `git rev-parse --short origin/main`; omit if it fails.
-- **`provenance.isInteractive`**: `true` for direct invocations.
-- **`provenance.model`**: the model identifier executing this skill (read from the environment block in the system prompt).
-- **`branch`**: from session context (`branch_name`).
-- **`commit`**: `git rev-parse --short HEAD`.
-- **`pr`**: resolve via [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-  <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
-  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
-
-- **`ticket_id`** and **`ticket_ref`**: from session context. Omit when null.
-- **`run_id`**: emit only when invoked from within an orchestrated run.
+- `provenance.skill`: always `summarize-change`.
+- `provenance.isInteractive`: always `true`.
+<!-- /include -->
 
 ### Consumer-field inference
 

@@ -202,43 +202,18 @@ Present the plan to the user. Revise until approved.
    - Target: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 
-2. Resolve provenance and identity data:
-   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
-   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
-   - Read `branch_name`, `ticket_id`, and `ticket_ref` from session context. `branch_name` is always present; `ticket_id` and `ticket_ref` are emitted only when non-null.
-   - Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
-   - Resolve `{pr}` via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
-     - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
-     - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+2. Resolve frontmatter fields for both artifacts. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-     On non-empty output, set `{pr}` to the URL. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+   <!-- include: ../../_partials/frontmatter-via-script.md -->
+   - `provenance.skill`: always `design-and-plan`.
+   - `provenance.isInteractive`: always `true`.
+   <!-- /include -->
 
-3. Save both artifacts following `save-artifact` naming conventions. Both artifacts begin with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema:
+3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
    - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md`
 
-   Prepend this YAML frontmatter to each artifact content:
-
-   ```yaml
-   ---
-   provenance:
-     skill: design-and-plan
-     timestamp: <timestamp>
-     baseSha: <baseSha>
-     isInteractive: true
-   ticket_id: <ticket_id>
-   ticket_ref: <ticket_ref>
-   branch: <branch_name>
-   commit: <commit>
-   pr: <pr>
-   ---
-   ```
-
-   Field-emission rules:
-   - Include `baseSha` only if resolved successfully.
-   - Include `ticket_id` and `ticket_ref` only when non-null in session context.
-   - Include `pr` only when the resolution returned a non-empty URL.
-   - `branch` and `commit` are always emitted.
+   Prepend the resolved frontmatter to each artifact content before writing.
 
 4. Report paths and present next steps.
 
