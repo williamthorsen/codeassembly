@@ -151,7 +151,7 @@ Resolve fields before writing the artifact:
 - `pr`: resolve via the shared dispatch in the `pr-resolution` shared data doc. Run the platform-appropriate snippet via the Bash tool with `timeout: 5000`:
   <!-- include: ../_partials/pr-resolution-dispatch.md / -->
 
-  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in your text output.
+  On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in your text output.
 
 - `run_id`: passed in via your dispatch prompt, when applicable.
 

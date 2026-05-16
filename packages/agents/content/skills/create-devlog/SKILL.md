@@ -109,7 +109,7 @@ Generation rules:
 - **`pr`** — resolve via the shared dispatch in [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
   <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
 
-  On non-empty output, write the URL to the `pr:` line. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+  On non-empty output, write the URL to the `pr:` line. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
 
 - **`ticket_id`** — emit only if non-null in session context. Omit otherwise.
 - **`ticket_ref`** — emit only when `ticket_id` is emitted; format as the display ref from session context (e.g., `#426` or `MAC-68`).

@@ -343,7 +343,7 @@ Prepend YAML frontmatter, then the markdown body.
 - `pr`: resolve via the shared dispatch in [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
   <!-- include: ../../_partials/pr-resolution-dispatch.md / -->
 
-  On non-empty output, write the URL to the `pr:` line. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+  On non-empty output, write the URL to the `pr:` line. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
 
 - `session_type`: the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`)
 - `tickets_created`: list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` for a single-finding ticket, `[F1, T2, R1]` for a batch ticket). Omit when empty.

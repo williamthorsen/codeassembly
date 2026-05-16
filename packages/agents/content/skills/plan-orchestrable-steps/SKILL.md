@@ -90,10 +90,11 @@ When the user approves the plan:
    - Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (obtained in step 1 of the Process above).
    - Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
    - Resolve `{pr}` via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+     <!-- Inline rather than via _partials/pr-resolution-dispatch.md: the partial's bullets are 2-space-indented; this site is nested deeper (sub-bullet of a numbered step) and would render incorrectly with the partial body. -->
      - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
      - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
 
-     On non-empty output, set `{pr}` to the URL. On empty output, non-zero exit, or timeout, omit `pr:` and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+     On non-empty output, set `{pr}` to the URL. On empty output (no PR exists), omit `pr:` — emit no warning. On non-zero exit, timeout, or other failure, omit `pr:` and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
 
 2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step -- the planner did not produce a markdown snapshot. Read the file. Prepend YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema and write back:
 

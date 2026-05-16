@@ -6,11 +6,12 @@ Shared contract for resolving the `pr:` frontmatter field at artifact write time
 
 - Resolution runs at artifact write time, against the current branch.
 - The Bash invocation uses a **5-second timeout** (`timeout: 5000` on the Bash tool) — cross-platform, no dependency on `gtimeout` / coreutils.
-- On any failure (CLI unavailable, auth error, network error, timeout, empty result), **omit** the `pr:` line from the frontmatter and emit the canonical warning text. **Never block the artifact write.**
+- On **empty output** (no PR exists for the branch — the lookup succeeded), **omit** the `pr:` line. Do **not** emit a warning. This is the normal pre-PR case.
+- On **failure** (CLI unavailable, auth error, network error, timeout, or any non-zero exit), **omit** the `pr:` line **and** emit the canonical warning text. **Never block the artifact write.**
 
 ### Canonical warning text
 
-Emit this exact string in the agent's text output when resolution fails:
+Emit this exact string in the agent's text output when resolution **fails** (non-zero exit, timeout, CLI/auth/network error). Do **not** emit it when the lookup succeeds with empty output (the no-PR case):
 
 ```
 Note: PR lookup failed; proceeding without pr field.
@@ -41,7 +42,7 @@ The skill reads `platform` from session context (set by `get-session-context`) a
 gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'
 ```
 
-Invoke via the Bash tool with `timeout: 5000`. On non-empty output, write the URL to the `pr:` frontmatter line. On empty output, non-zero exit, or timeout, omit `pr:` and emit the canonical warning.
+Invoke via the Bash tool with `timeout: 5000`. On non-empty output, write the URL to the `pr:` frontmatter line. On empty output (no PR exists), omit `pr:` silently — emit no warning. On non-zero exit, timeout, or other failure, omit `pr:` and emit the canonical warning.
 
 ### Bitbucket
 
@@ -52,7 +53,7 @@ curl --silent --fail \
   | jq --raw-output '.values[0].links.html.href // empty'
 ```
 
-Invoke via the Bash tool with `timeout: 5000`. The Bitbucket response exposes the PR URL at `links.html.href` — verified against [`review-bb-pr/SKILL.md`](../review-bb-pr/SKILL.md) (the field is captured at step 2 of that skill's process and surfaced as `url` in its resolved-output contract). On empty output, non-zero exit, or timeout, omit `pr:` and emit the canonical warning.
+Invoke via the Bash tool with `timeout: 5000`. The Bitbucket response exposes the PR URL at `links.html.href` — verified against [`review-bb-pr/SKILL.md`](../review-bb-pr/SKILL.md) (the field is captured at step 2 of that skill's process and surfaced as `url` in its resolved-output contract). On non-empty output, write the URL to `pr:`. On empty output (no PR exists), omit `pr:` silently — emit no warning. On non-zero exit, timeout, or other failure, omit `pr:` and emit the canonical warning.
 
 Bitbucket authentication resolves in the same priority order used by `review-bb-pr`:
 
@@ -68,6 +69,9 @@ Resolution failure is **never** a hard error. Skills that embed this contract mu
 
 1. Run the platform-appropriate snippet via the Bash tool with `timeout: 5000`.
 2. On non-empty output, write the URL verbatim as the `pr:` frontmatter value.
-3. On empty output, non-zero exit, timeout, or any other failure mode, omit the `pr:` line entirely (do not write `pr: null` or `pr: none`) and emit the canonical warning in the agent's text output. Continue with the artifact write.
+3. On **empty output** (no PR exists for the branch — the lookup succeeded), omit the `pr:` line entirely (do not write `pr: null` or `pr: none`) and emit **no** warning. This is the normal pre-PR case.
+4. On **failure** (non-zero exit, timeout, CLI/auth/network error, or any other failure mode), omit the `pr:` line entirely and emit the canonical warning in the agent's text output. Continue with the artifact write.
+
+Empty output is **not** a failure. Distinguishing it from a true failure prevents misleading "PR lookup failed" warnings on every pre-PR artifact write.
 
 The artifact is always written. The `pr:` field is best-effort metadata.

@@ -157,10 +157,11 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
 2. Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (already obtained in step 1.4 above). `branch_name` is always present; `ticket_id` and `ticket_ref` are emitted only when non-null.
 3. Detect whether the stamp is running inside an active run (`run-index.json` exists in a parent of the revision output path or in session context). If so, set `{run_id}` to the run ID; otherwise omit.
 4. Resolve `{pr}` via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+   <!-- Inline rather than via _partials/pr-resolution-dispatch.md: the partial's bullets are 2-space-indented; this site is nested deeper (sub-bullet of a numbered step) and would render incorrectly with the partial body. -->
    - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
    - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
 
-   On non-empty output, set `{pr}` to the URL. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+   On non-empty output, set `{pr}` to the URL. On empty output (no PR exists), omit the `pr:` line — emit no warning. On non-zero exit, timeout, or other failure, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
 
 **Round-trip preservation:** when the input plan already carries top-level canonical fields (`branch`, `commit`, `pr`, etc.), they are **not** carried forward from the input — the stamp re-resolves them from current session context at stamp time. This is correct: the output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase casing convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write — there is no rename. The only provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches below).
 
