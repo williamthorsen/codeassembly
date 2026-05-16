@@ -146,7 +146,7 @@ Write the plan JSON file to the path provided in the task prompt. Format:
 
 ## Frontmatter
 
-The Markdown plan artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc). The JSON sidecar (`orchestration-plan.json`) does not carry frontmatter — only the Markdown artifact does.
+The JSON sidecar (`orchestration-plan.json`) does not carry frontmatter — only the Markdown artifact does.
 
 Resolve fields before writing the artifact:
 

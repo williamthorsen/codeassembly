@@ -150,8 +150,6 @@ If the plan has no findings at all, write:
 
 ## Frontmatter
 
-The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
-
 Resolve fields before writing the artifact:
 
 - `provenance.skill`: always `plan-reviewer`.

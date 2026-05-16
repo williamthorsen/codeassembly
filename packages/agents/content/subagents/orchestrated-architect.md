@@ -126,8 +126,6 @@ If the plan's assumptions all check out, omit this section.
 
 ## Frontmatter
 
-The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
-
 Resolve fields before writing the artifact:
 
 - `provenance.skill`: always `orchestrated-architect`.
