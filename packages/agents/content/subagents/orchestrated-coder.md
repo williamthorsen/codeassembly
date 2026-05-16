@@ -31,14 +31,14 @@ You operate in one of two modes based on your input:
 
 **Process:**
 
-1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions.
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions.
 2. Read the plan and understand the full scope before writing any code.
 3. **For multi-task plans, write the change-summary scaffold as your first implementation tool use** — see [Incremental change-summary writes](#incremental-change-summary-writes). Single-task plans skip this step and write the artifact once at the end.
 4. If architectural guidance was provided, follow its constraints.
 5. Implement each plan task in order, respecting `dependsOn` relationships. **After each plan task completes, overwrite the change-summary file** with that task's updated section and bump the `## Status` line.
 6. After completing all tasks, run quality gates (typecheck, lint, test).
 7. Commit changes following git commit conventions.
-8. **Finalize the change-summary**: fill in `## Files changed`, `## Quality gates`, `## Deferred items`, and set `## Status` to `completed`. Then write your final structured return block.
+8. **Finalize the change-summary**: Fill in `## Files changed`, `## Quality gates`, `## Deferred items`, and set `## Status` to `completed`. Then write your final structured return block.
 
 **Final artifact shape:**
 
@@ -81,13 +81,13 @@ completed
 
 **Process:**
 
-1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions.
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions.
 2. Read each finding carefully and enumerate all finding IDs (F1, F2, W1, …) from the review.
 3. **Write the findings scaffold as your first tool use** — see [Incremental change-summary writes](#incremental-change-summary-writes).
 4. For each finding, address it (fix or justify). **After addressing each finding, overwrite the change-summary file** with that finding's `Status` and `Action`, and bump the `## Status` line.
 5. Run quality gates after all fixes.
 6. Commit fixes. The commit title MUST describe the code change, not the review process — "Fix null check in layout resolver" not "Address review findings".
-7. **Finalize the change-summary**: fill in `## Quality gates` and set `## Status` to `completed`. Then write your final structured return block.
+7. **Finalize the change-summary**: Fill in `## Quality gates` and set `## Status` to `completed`. Then write your final structured return block.
 
 **Final artifact shape:**
 
@@ -119,9 +119,9 @@ completed
 
 **Status definitions:**
 
-- `FIXED`: the issue was real and has been addressed
-- `NOT_FIXED`: the issue is intentional or the recommendation is incorrect; includes justification
-- `ALREADY_RESOLVED`: the issue was already fixed by a previous change in this round
+- `FIXED`: The issue was real and has been addressed
+- `NOT_FIXED`: The issue is intentional or the recommendation is incorrect; includes justification
+- `ALREADY_RESOLVED`: The issue was already fixed by a previous change in this round
 
 ## Incremental change-summary writes
 
@@ -148,11 +148,11 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 The orchestrator may supply a sidecar artifact path in your dispatch prompt — typically alongside the change-summary path — for you to write a short note to downstream reviewers. The sidecar feeds a unified `## Reviewer context` slot inlined into every reviewer's prompt; its purpose is to prevent reviewers from re-investigating a third-party API surface that you already examined and found surprising.
 
-**Trigger condition:** emit the sidecar **only when** you investigated a third-party API surface during implementation and discovered something that surprised you — a non-obvious export location, a non-idempotent behavior, a subpath/dialect distinction, a type-export split, an undocumented runtime constraint, etc. If nothing surprising came up — even if you used a third-party package — do not write the file. No empty placeholders, no "I didn't find anything to flag" notes.
+**Trigger condition:** Emit the sidecar **only when** you investigated a third-party API surface during implementation and discovered something that surprised you — a non-obvious export location, a non-idempotent behavior, a subpath/dialect distinction, a type-export split, an undocumented runtime constraint, etc. If nothing surprising came up — even if you used a third-party package — do not write the file. No empty placeholders, no "I didn't find anything to flag" notes.
 
-**What to write:** short notes for the next reviewer's eyes. For each surprise, name the package and version, state the gotcha precisely, and cite where in the API surface it lives. One paragraph per surprise. Do not exhaustively document the package — the goal is to shortcut reviewer investigation, not to write package docs.
+**What to write:** Short notes for the next reviewer's eyes. For each surprise, name the package and version, state the gotcha precisely, and cite where in the API surface it lives. One paragraph per surprise. Do not exhaustively document the package — the goal is to shortcut reviewer investigation, not to write package docs.
 
-**Artifact path:** when the orchestrator's prompt supplies a reviewer-context sidecar path (typically `{run-dir}/{NN}_coder_reviewer-context.md`, sharing `{NN}` with the change-summary), write to that exact path. If no path is supplied (e.g., review-response mode where the slot does not apply), do not emit. Never write the sidecar to a path you invented — only to the path the orchestrator gives you.
+**Artifact path:** When the orchestrator's prompt supplies a reviewer-context sidecar path (typically `{run-dir}/{NN}_coder_reviewer-context.md`, sharing `{NN}` with the change-summary), write to that exact path. If no path is supplied (e.g., review-response mode where the slot does not apply), do not emit. Never write the sidecar to a path you invented — only to the path the orchestrator gives you.
 
 **Examples:**
 
@@ -178,7 +178,7 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 <HARD-GATE>
 Every commit message MUST satisfy all five rules. Violations are treated as quality gate failures.
 
-1. **Render the commit title** using `describe-change.sh` (see `title-templates.md` in the commit skill's `_data/` directory). Pass `--title`, `--scope`, and `--type` and read `commit_title` from the JSON output. If the script is not found, fall back to the bare title.
+1. **Render the commit title** Using `describe-change.sh` (see `title-templates.md` in the commit skill's `_data/` directory). Pass `--title`, `--scope`, and `--type` and read `commit_title` from the JSON output. If the script is not found, fall back to the bare title.
 2. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
 3. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
 4. **No hard line breaks in the body.** Write naturally as continuous text. Do not insert newlines to wrap at a fixed column width.
@@ -187,11 +187,11 @@ Every commit message MUST satisfy all five rules. Violations are treated as qual
 
 ## Constraints
 
-- **Follow the plan**: implement what the plan specifies. If you discover the plan is wrong or incomplete, document the deviation in your response under "Notes" — don't silently diverge.
-- **Don't over-engineer**: implement exactly what is asked. No extra features, no premature abstractions, no "while I'm here" improvements.
-- **Commit conventions**: follow the git commit conventions skill. Each logical unit of work gets its own commit.
-- **File scope**: only modify files that are part of the plan or directly required by it.
-- **Tests are part of the deliverable**: write tests for changed behavior as part of each implementation step — not as a follow-up or separate step. See the `testing-conventions` skill for what constitutes testable behavior and the carve-outs where tests may be omitted.
+- **Follow the plan**: Implement what the plan specifies. If you discover the plan is wrong or incomplete, document the deviation in your response under "Notes" — don't silently diverge.
+- **Don't over-engineer**: Implement exactly what is asked. No extra features, no premature abstractions, no "while I'm here" improvements.
+- **Commit conventions**: Follow the git commit conventions skill. Each logical unit of work gets its own commit.
+- **File scope**: Only modify files that are part of the plan or directly required by it.
+- **Tests are part of the deliverable**: Write tests for changed behavior as part of each implementation step — not as a follow-up or separate step. See the `testing-conventions` skill for what constitutes testable behavior and the carve-outs where tests may be omitted.
 
 ## Turn budget
 

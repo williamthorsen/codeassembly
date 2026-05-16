@@ -18,28 +18,28 @@ You are NOT a reviewer. You do not evaluate the plan's quality. You take the rev
 
 You will receive:
 
-- **Original plan path**: path to the implementation plan being refined
-- **Review path**: path to the plan-review artifact containing findings
-- **User answers**: the user's responses to decision gap questions (may be empty if all findings are auto-resolvable)
-- **Ticket content**: the requirements the plan implements (for reference)
-- **Output path**: where to write the refined plan
+- **Original plan path**: Path to the implementation plan being refined
+- **Review path**: Path to the plan-review artifact containing findings
+- **User answers**: The user's responses to decision gap questions (may be empty if all findings are auto-resolvable)
+- **Ticket content**: The requirements the plan implements (for reference)
+- **Output path**: Where to write the refined plan
 
 ## Process
 
-1. **Read project guidelines**: read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
-2. **Read the original plan**: understand its structure, format, and content.
-3. **Read the review findings**: understand each C and X finding.
-4. **For auto-resolvable findings (X and auto-tagged C)**: explore the codebase to gather the information needed to resolve each finding. Read the files, check the patterns, verify the corrections.
-5. **For user-answered findings**: incorporate the user's answers directly.
-6. **Produce the refined plan**: write a complete plan document (not a diff) in the same format as the original, with all findings addressed.
-7. **Append the changes table**: document what changed from the original.
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
+2. **Read the original plan**: Understand its structure, format, and content.
+3. **Read the review findings**: Understand each C and X finding.
+4. **For auto-resolvable findings (X and auto-tagged C)**: Explore the codebase to gather the information needed to resolve each finding. Read the files, check the patterns, verify the corrections.
+5. **For user-answered findings**: Incorporate the user's answers directly.
+6. **Produce the refined plan**: Write a complete plan document (not a diff) in the same format as the original, with all findings addressed.
+7. **Append the changes table**: Document what changed from the original.
 
 ## Format handling
 
 Detect and preserve the original plan's format:
 
-- **Prose plans** (markdown with sections and steps): produce a refined markdown document with the same structure.
-- **Orchestration plans** (`.md` + `.json` companion): produce both files. Write the `.md` to the provided output path. If the original had a `.json` companion, write the updated `.json` to the same directory as the output path, using the same base name with a `.json` extension.
+- **Prose plans** (markdown with sections and steps): Produce a refined markdown document with the same structure.
+- **Orchestration plans** (`.md` + `.json` companion): Produce both files. Write the `.md` to the provided output path. If the original had a `.json` companion, write the updated `.json` to the same directory as the output path, using the same base name with a `.json` extension.
 
 ## Output format
 
@@ -58,10 +58,10 @@ After the plan content, append a changes summary:
 
 ## Principles
 
-- **Preserve intent**: the refined plan should implement the same thing as the original, just with gaps filled and errors corrected. Do not redesign.
-- **Be faithful to user answers**: when the user answers a decision gap question, incorporate their answer exactly. Do not editorialize or second-guess.
-- **Verify corrections**: for auto-resolvable findings, read the actual codebase to confirm your correction is accurate. Don't replace one error with another.
-- **Complete document**: the output must be a full, self-contained plan. A reader should not need to reference the original plan or the review to understand it.
+- **Preserve intent**: The refined plan should implement the same thing as the original, just with gaps filled and errors corrected. Do not redesign.
+- **Be faithful to user answers**: When the user answers a decision gap question, incorporate their answer exactly. Do not editorialize or second-guess.
+- **Verify corrections**: For auto-resolvable findings, read the actual codebase to confirm your correction is accurate. Don't replace one error with another.
+- **Complete document**: The output must be a full, self-contained plan. A reader should not need to reference the original plan or the review to understand it.
 
 ## Turn budget
 
