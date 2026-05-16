@@ -49,8 +49,8 @@ The review file is the orchestrator's primary state-transfer channel for this ph
 <!-- include: _partials/review-writes-interim.md -->
 #### S1: Redundant null guard before optional chain
 
-- **Severity:** suggestion
 - **Location:** `src/utils/parser.ts:42`
+- **Severity:** suggestion
 - **Description:** {what the simplification opportunity is}
 - **Recommendation:** {what to do}
 <!-- /include -->
@@ -93,8 +93,11 @@ Each finding must include:
 
 - **ID**: sequential within category (F/W/T/R/S, with `-L` suffix for legacy — see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
+- **Severity**: one of `critical`, `warning`, `todo`, `recommendation`, `suggestion` (legacy variants append `(legacy)`)
 - **Description**: what the simplification opportunity is
 - **Recommendation**: what to do about it
+
+See the "Finding references" section in the `review-criteria` skill for path-format rules (repo-relative paths, multi-range syntax, multi-file findings).
 
 ## Criticality classification
 
@@ -120,15 +123,15 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 
 #### S1: {title}
 
-- **Severity:** suggestion
 - **Location:** `src/utils/parser.ts:42`
+- **Severity:** suggestion
 - **Description:** {what the simplification opportunity is}
 - **Recommendation:** {what to do}
 
 #### W1: {title}
 
+- **Location:** `src/utils/parser.ts:78, :112-125`
 - **Severity:** warning
-- **Location:** `src/utils/parser.ts:78`
 - **Description:** {what the simplification opportunity is}
 - **Recommendation:** {what to do}
 ```

@@ -155,6 +155,7 @@ Author: {Agent name} (model: {model})
 
 - Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
+- File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) — use repo-relative paths
 - Legacy findings (IDs with `-L` suffix) use only ACCEPT (acknowledge the observation) or REJECT (disagree with the observation) — PARTIAL does not apply
 - If the review contains no actionable findings, produce a change summary noting that no findings require disposition and omit the Dispositions section
 - A change summary with dispositions only (no code changes) is valid — this is how the coder can close a run by dispositioning all remaining findings
