@@ -206,6 +206,7 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
    - `refinedBy`: set to `refine-plan`
    - `timestamp`: current UTC time in ISO 8601 format
    - `baseSha`: the resolved value (omit if command failed)
+   - `isInteractive`: always `true`. `refine-plan` is an interactive user-invocable skill (it presents review questions to the user in step 4 and waits for their answers); when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
    - `iteration`: set to `2`
 4. Prepend the unified YAML frontmatter (provenance block plus top-level canonical fields resolved above) to the revised plan and write back:
 
@@ -216,6 +217,7 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
      refinedBy: refine-plan
      timestamp: 2026-03-10T08:00:00Z
      baseSha: abc123def456...
+     isInteractive: true
      iteration: 2
    ticket_id: '537'
    ticket_ref: '#537'
