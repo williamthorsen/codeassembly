@@ -57,8 +57,8 @@ The review file is the orchestrator's primary state-transfer channel. A partial 
 <!-- include: _partials/review-writes-interim.md -->
 #### F1: Null dereference in login handler
 
-- **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
+- **Severity:** critical
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 <!-- /include -->
@@ -97,43 +97,43 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 
 #### F1: {title}
 
-- **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
+- **Severity:** critical
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 
 #### W1: {title}
 
+- **Location:** `src/auth/login.ts:78, :120-135`
 - **Severity:** warning
-- **Location:** `src/auth/login.ts:78`
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 
 #### T1: {title}
 
-- **Severity:** todo
 - **Location:** `src/auth/login.ts:95`
+- **Severity:** todo
 - **Description:** {what should be done}
 - **Recommendation:** {what to do in a follow-up PR}
 
 #### R1: {title}
 
-- **Severity:** recommendation
 - **Location:** `src/auth/login.ts:110`
+- **Severity:** recommendation
 - **Description:** {what could be improved}
 - **Recommendation:** {suggested approach}
 
 #### S1: {title}
 
-- **Severity:** suggestion
 - **Location:** `src/auth/login.ts:120`
+- **Severity:** suggestion
 - **Description:** {optional improvement}
 - **Recommendation:** {how to improve}
 
 #### F3-L: {title}
 
-- **Severity:** critical (legacy)
 - **Location:** `src/auth/utils.ts:15`
+- **Severity:** critical (legacy)
 - **Description:** {pre-existing issue observed}
 - **Recommendation:** {future opportunity}
 

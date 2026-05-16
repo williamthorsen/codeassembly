@@ -49,8 +49,8 @@ The review file is the orchestrator's primary state-transfer channel for this ph
 <!-- include: _partials/review-writes-interim.md -->
 #### S1: Redundant null guard before optional chain
 
-- **Severity:** suggestion
 - **Location:** `src/utils/parser.ts:42`
+- **Severity:** suggestion
 - **Description:** {what the simplification opportunity is}
 - **Recommendation:** {what to do}
 <!-- /include -->
@@ -120,15 +120,15 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 
 #### S1: {title}
 
-- **Severity:** suggestion
 - **Location:** `src/utils/parser.ts:42`
+- **Severity:** suggestion
 - **Description:** {what the simplification opportunity is}
 - **Recommendation:** {what to do}
 
 #### W1: {title}
 
+- **Location:** `src/utils/parser.ts:78, :112-125`
 - **Severity:** warning
-- **Location:** `src/utils/parser.ts:78`
 - **Description:** {what the simplification opportunity is}
 - **Recommendation:** {what to do}
 ```

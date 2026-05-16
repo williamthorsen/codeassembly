@@ -56,8 +56,8 @@ The review file is the orchestrator's primary state-transfer channel. A partial 
 <!-- include: _partials/review-writes-interim.md -->
 #### F1: New auth handler has no tests
 
-- **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
+- **Severity:** critical
 - **Description:** {what test coverage issue exists}
 - **Recommendation:** {what tests to add or fix}
 <!-- /include -->
@@ -125,15 +125,15 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 
 #### F1: {title}
 
-- **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
+- **Severity:** critical
 - **Description:** {what test coverage issue exists}
 - **Recommendation:** {what tests to add or fix}
 
 #### W1: {title}
 
+- **Location:** `src/auth/login.test.ts:78, :92-105`
 - **Severity:** warning
-- **Location:** `src/auth/login.test.ts:78`
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 ```

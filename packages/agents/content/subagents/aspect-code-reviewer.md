@@ -53,8 +53,8 @@ The review file is the orchestrator's primary state-transfer channel. A partial 
 <!-- include: _partials/review-writes-interim.md -->
 #### F1: Null dereference in login handler
 
-- **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
+- **Severity:** critical
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 <!-- /include -->
@@ -119,15 +119,15 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 
 #### F1: {title}
 
-- **Severity:** critical
 - **Location:** `src/auth/login.ts:42`
+- **Severity:** critical
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 
 #### W1: {title}
 
+- **Location:** `src/auth/login.ts:78, :120-135`
 - **Severity:** warning
-- **Location:** `src/auth/login.ts:78`
 - **Description:** {what is wrong}
 - **Recommendation:** {what to do}
 ```
