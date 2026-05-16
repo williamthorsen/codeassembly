@@ -25,7 +25,20 @@ This skill bridges the gap between receiving a code review and implementing fixe
 4. **Parse findings**: extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below
 6. **Write response** per the output format
-7. **Save** per the [Saving](#saving) section
+7. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
+8. **Save** per the [Saving](#saving) section
+
+## Frontmatter resolution
+
+The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `respond-to-review`.
+- `provenance.isInteractive`: always `true`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+- `responding_to` (response-artifact extension): the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
+<!-- /include -->
 
 ## Locating the review
 
@@ -82,12 +95,25 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads `# Change summary: {description}`.
 
-```markdown
-# Change summary: {ticket_ref}: {description}
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
 
-Responding to: {filename of review being responded to}
-Timestamp: {YYYY-MM-DD HH:MM UTC}
-Author: {Agent name} (model: {model})
+```markdown
+---
+provenance:
+  skill: respond-to-review
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: true
+  model: '{model id}'
+ticket_id: '{ticket ID from session context, omit if null}'
+ticket_ref: '{ticket display ref, omit if null}'
+branch: '{branch name from session context}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+responding_to: '{filename of the review being responded to}'
+---
+
+# Change summary: {ticket_ref}: {description}
 
 ## Changes made
 

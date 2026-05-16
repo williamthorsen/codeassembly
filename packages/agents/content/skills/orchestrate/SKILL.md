@@ -254,9 +254,23 @@ Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`),
 - **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
 - **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
-5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`:
+5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema (resolved per the [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) section below):
 
 ```markdown
+---
+provenance:
+  skill: orchestrate
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id}'
+---
+
 # Run manifest
 
 | Field        | Value              |
@@ -638,11 +652,34 @@ Dispatch the savings-analyzer subagent as a background Task and immediately proc
 - `subagent_type: savings-analyzer`
 - `max_turns: 15`
 - `model: {models.savings_analyzer}` (resolved from the `savings_analyzer` key, defaults to `haiku`)
-- `prompt:` Provide the run directory path (`{run-dir}`) and the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number). The subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory.
+- `prompt:` Provide:
+  - the run directory path (`{run-dir}`),
+  - the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number — the subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory),
+  - and the frontmatter values the subagent must stamp into its artifact. The `savings-analyzer` subagent has no Bash tool and cannot resolve these itself; the orchestrator has already resolved all of them while preparing the run-summary frontmatter (see [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) below) and forwards them verbatim:
+    - `branch` — from session context (`branch_name`).
+    - `commit` — short SHA of HEAD, already resolved for the run-summary.
+    - `baseSha` — short SHA of `origin/main`, already resolved for the run-summary. Omit if resolution failed.
+    - `pr` — full PR URL, already resolved for the run-summary. Omit if resolution failed.
+    - `ticket_id` and `ticket_ref` — from session context. Omit either when null.
+    - `run_id` — the run ID for the current orchestrated run.
 
-Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
+Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema:
 
 ```markdown
+---
+provenance:
+  skill: orchestrate
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id}'
+---
+
 # Orchestration summary
 
 ## Task
@@ -701,6 +738,18 @@ Include:
 
 {from git diff --name-only}
 ```
+
+### Run-manifest and run-summary frontmatter resolution
+
+This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `orchestrate`.
+- `provenance.isInteractive`: always `false`.
+<!-- /include -->
+
+The orchestrator's `provenance.model` is omitted — the run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 
 After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content — do not abbreviate or omit sections.
 

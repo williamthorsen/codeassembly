@@ -69,6 +69,17 @@ Then emit your structured return block.
 If the review concluded with no findings, the finalized form omits the `### Findings` block entirely — see the "If no findings" example in [Output format](#output-format).
 <!-- /include -->
 
+## Frontmatter
+
+The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
+
+<!-- include: ../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `orchestrated-reviewer`.
+- `provenance.isInteractive`: always `false`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
+
 ## Finding format
 
 Each finding must include:

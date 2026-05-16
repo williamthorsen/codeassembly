@@ -202,25 +202,18 @@ Present the plan to the user. Revise until approved.
    - Target: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 
-2. Resolve provenance data:
-   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
-   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
+2. Resolve frontmatter fields for both artifacts. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+   <!-- include: ../../_partials/frontmatter-via-script.md -->
+   - `provenance.skill`: always `design-and-plan`.
+   - `provenance.isInteractive`: always `true`.
+   <!-- /include -->
 
 3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
-   - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md` — prepend the following YAML frontmatter to the plan content:
+   - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md`
 
-   ```yaml
-   ---
-   provenance:
-     skill: design-and-plan
-     timestamp: <timestamp>
-     baseSha: <baseSha>
-     isInteractive: true
-   ---
-   ```
-
-   If `baseSha` could not be resolved, omit the `baseSha` line entirely.
+   Prepend the resolved frontmatter to each artifact content before writing.
 
 4. Report paths and present next steps.
 

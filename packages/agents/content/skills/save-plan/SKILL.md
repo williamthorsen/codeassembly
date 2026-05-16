@@ -18,9 +18,14 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 
 3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)
 
-4. **Resolve provenance data**:
-   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails (no remote, shallow clone), omit `baseSha` from the header.
-   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
+4. **Resolve frontmatter fields**:
+
+   The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions.
+
+   <!-- include: ../../_partials/frontmatter-via-script.md -->
+   - `provenance.skill`: always `plan-mode`.
+   - `provenance.isInteractive`: always `true`.
+   <!-- /include -->
 
 5. **Save** as ticket-level artifact:
 
@@ -31,20 +36,6 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
    Example: `20260226-143000Z_oauth2-migration_plan.md`
 
    `mkdir -p` the target directory before writing.
-
-   Prepend the following YAML frontmatter to the plan content:
-
-   ```yaml
-   ---
-   provenance:
-     skill: plan-mode
-     timestamp: <timestamp>
-     baseSha: <baseSha>
-     isInteractive: true
-   ---
-   ```
-
-   Include `baseSha` only if resolved successfully.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

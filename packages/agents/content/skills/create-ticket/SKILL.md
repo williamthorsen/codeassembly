@@ -141,11 +141,22 @@ Save the ticket as a ticket-level artifact:
 {YYYYMMDD-HHMMSSZ}_{slug}_ticket.md
 ```
 
-The ticket artifact heading should include the ticket reference: `# {ticket_ref}: {title}`. On a GitHub-style project (`ticket_ref_prefix: '#'`) with issue number `461`, this renders as `# #461: {title}`.
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. Resolve fields per [Frontmatter resolution](#frontmatter-resolution) below. The body heading should include the ticket reference: `# {ticket_ref}: {title}`. On a GitHub-style project (`ticket_ref_prefix: '#'`) with issue number `461`, this renders as `# #461: {title}`.
 
 Example: `20260226-213000Z_role-type-architecture_ticket.md`
 
-Follow [artifact conventions](../_data/artifact-conventions.md).
+If a plan is also saved in step 7, it uses the same frontmatter shape with `provenance.skill: create-ticket`.
+
+### Frontmatter resolution
+
+The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `create-ticket`.
+- `provenance.isInteractive`: always `true`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ### 7. Save plan (if present)
 

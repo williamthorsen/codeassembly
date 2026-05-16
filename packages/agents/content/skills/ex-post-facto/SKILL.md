@@ -20,7 +20,23 @@ git diff $DEFAULT_BRANCH...HEAD
 
 ## Output structure
 
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. See [Frontmatter resolution](#frontmatter-resolution) below for field resolution.
+
 ```markdown
+---
+provenance:
+  skill: ex-post-facto
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: true
+  model: '{model id}'
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+---
+
 # {Title}
 
 ## Description
@@ -58,6 +74,17 @@ git diff $DEFAULT_BRANCH...HEAD
 - Focus on what was broken and what needed fixing
 - Prioritize functional issues in "Must have"
 - Place code quality/maintenance items in "Should have"
+
+## Frontmatter resolution
+
+The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `ex-post-facto`.
+- `provenance.isInteractive`: always `true`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ## Saving
 

@@ -17,7 +17,7 @@ Summarize changes made in recent commits or the working tree.
 
 ## Output format
 
-The devlog file begins with YAML frontmatter (see [Frontmatter](#frontmatter) below) followed by the markdown body:
+The devlog file begins with YAML frontmatter conforming to the canonical schema (see [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the devlog-specific section, [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter)) followed by the markdown body:
 
 ```markdown
 ---
@@ -27,8 +27,11 @@ provenance:
   baseSha: 4f8b158
   isInteractive: true
 ticket_id: '426'
+ticket_ref: '#426'
 run_id: 20260419-012539Z
-branch: 426
+branch: 426/feat/example-branch
+commit: 1d2c3b4
+pr: https://github.com/williamthorsen/codeassembly/pull/591
 commits: [a1b2c3d, e4f5g6h]
 ---
 
@@ -92,22 +95,18 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 ### Frontmatter
 
-Prepend YAML frontmatter to every newly created devlog. The shape mirrors `save-plan`'s provenance block so a single parser handles both artifact types. See [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter) for the full field reference.
+The devlog frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the devlog-specific extensions listed in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter).
 
-Generation rules:
+<!-- include: ../../_partials/frontmatter-via-script.md -->
 
-- **`provenance` block** — always emitted.
-  - `skill`: always `create-devlog`.
-  - `timestamp`: current UTC time in ISO 8601 format.
-  - `baseSha`: run `git rev-parse --short origin/main`. Omit the field if the command fails (no remote, shallow clone). Mirrors `save-plan` behavior.
-  - `isInteractive`: always `true`.
-- **`branch`** — always emitted, taken from `branch_name` in session context.
-- **`ticket_id`** — emit only if non-null in session context. Omit otherwise.
-- **`run_id`** — emit only if `--run-id={id}` was supplied as an argument. Do not perform any filesystem discovery to find a run directory; the caller is the source of truth.
-- **`commits`** — derived from the invocation argument:
+- `provenance.skill`: always `create-devlog`.
+- `provenance.isInteractive`: always `true`.
+- `run_id`: **override** the script's value. Emit only if `--run-id={id}` was supplied as an argument; the caller is the source of truth. Do not use the script's breadcrumb-derived value, and do not perform any filesystem discovery.
+- `commits` (devlog-specific extension; distinct from the universal `commit` field):
   - No argument (last commit): single short SHA from `git log -n 1 --format=%h`.
   - `<n>` (last N commits): list of N short SHAs from `git log -n {N} --format=%h`.
   - `working-tree`: omit the `commits` field entirely.
+  <!-- /include -->
 
 ### Filename examples
 

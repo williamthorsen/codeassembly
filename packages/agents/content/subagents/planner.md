@@ -74,9 +74,24 @@ Write the machine-readable plan to `{plan-json-path}`:
 
 ## Output: orchestration-plan.md
 
-Write the human-readable plan to `{plan-md-path}`:
+Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar does not carry frontmatter.
 
 ```markdown
+---
+provenance:
+  skill: planner
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+  model: '{model id}'
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id, omit if not in a run}'
+---
+
 # Implementation Plan
 
 ## Overview
@@ -118,6 +133,17 @@ Write the human-readable plan to `{plan-md-path}`:
 
 - {Question the planner couldn't resolve from codebase analysis}
 ```
+
+## Frontmatter
+
+The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
+
+<!-- include: ../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `planner`.
+- `provenance.isInteractive`: always `false`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
 
 ## Resumption
 

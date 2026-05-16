@@ -329,17 +329,16 @@ Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_deferred-findings.md` (standard ticket-leve
 
 Prepend YAML frontmatter, then the markdown body.
 
-**Frontmatter** — see [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the field reference. Generation rules:
+**Frontmatter** — see [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) for the canonical schema and [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the artifact-specific extensions.
 
-- `provenance.skill`: always `wrap-up`
-- `provenance.timestamp`: current UTC time in ISO 8601 format
-- `provenance.baseSha`: run `git rev-parse --short origin/main`. Omit the field if the command fails.
-- `provenance.isInteractive`: always `true`
-- `ticket_id`: emit only when non-null in session context
-- `run_id`: emit only when wrap-up was invoked from an orchestrated session — reuse the value Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3)
-- `branch`: from session context
-- `session_type`: the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`)
-- `tickets_created`: list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` for a single-finding ticket, `[F1, T2, R1]` for a batch ticket). Omit when empty.
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `wrap-up`.
+- `provenance.isInteractive`: always `true`.
+- `run_id`: **override** the script's value — reuse the run ID Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
+- `session_type` (deferred-findings extension): the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
+- `tickets_created` (deferred-findings extension): list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list. Omit when empty.
+<!-- /include -->
 
 **Body** — emit the tickets-created cross-reference and the dropped-findings record:
 

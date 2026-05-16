@@ -84,22 +84,14 @@ If the user provides feedback (not approval):
 
 When the user approves the plan:
 
-1. Resolve provenance data:
-   - Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
-   - Set `{timestamp}` to the current UTC time in ISO 8601 format.
+1. Resolve frontmatter fields. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-2. Add provenance header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the provenance header step -- the planner did not produce a markdown snapshot. Read the file. Prepend the following YAML frontmatter and write back:
+   <!-- include: ../../_partials/frontmatter-via-script.md -->
+   - `provenance.skill`: always `plan-orchestrable-steps`.
+   - `provenance.isInteractive`: always `true`.
+   <!-- /include -->
 
-   ```yaml
-   ---
-   provenance:
-     skill: plan-orchestrable-steps
-     timestamp: <timestamp>
-     baseSha: <baseSha>
-   ---
-   ```
-
-   If `baseSha` could not be resolved, omit the `baseSha` line.
+2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step — the planner did not produce a markdown snapshot. Read the file, prepend the resolved frontmatter, and write back.
 
 3. Output confirmation:
 

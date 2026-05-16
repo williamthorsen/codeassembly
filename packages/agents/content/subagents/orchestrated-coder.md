@@ -133,6 +133,17 @@ completed
 
 <!-- include: _partials/coder-writes-review-scaffold.md / -->
 
+## Frontmatter
+
+The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
+
+<!-- include: ../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `orchestrated-coder`.
+- `provenance.isInteractive`: always `false`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+<!-- /include -->
+
 ## Reviewer-context sidecar
 
 The orchestrator may supply a sidecar artifact path in your dispatch prompt — typically alongside the change-summary path — for you to write a short note to downstream reviewers. The sidecar feeds a unified `## Reviewer context` slot inlined into every reviewer's prompt; its purpose is to prevent reviewers from re-investigating a third-party API surface that you already examined and found surprising.

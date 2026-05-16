@@ -147,20 +147,30 @@ Plan revision failed -- the plan-reviser did not complete successfully.
 
 Stop here. Do not attempt provenance update or report completion.
 
-Update the provenance header on the revised plan. The behavior depends on whether `{input-provenance}` is non-empty or empty.
+Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
+
+The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
+
+<!-- /include -->
+
+**Round-trip preservation:** the top-level canonical fields (`branch`, `commit`, `pr`, etc.) are always re-resolved from current session context via the script — they are not carried forward from `{input-provenance}`. This is correct: the output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write — there is no rename. Provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
 
 **When `{input-provenance}` is non-empty:**
 
-1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, preserve the original `baseSha` from `{input-provenance}`.
+1. Use the script's `baseSha` as the new value. If the script omitted `baseSha`, preserve the original `baseSha` from `{input-provenance}`.
 2. Read the revised plan file at `{revision_output_path}`.
 3. Construct updated provenance:
    - `skill`: preserve from `{input-provenance}` (the original authoring skill)
    - `refinedBy`: set to `refine-plan`
-   - `timestamp`: current UTC time in ISO 8601 format
-   - `baseSha`: the newly resolved value (or preserved original)
+   - `timestamp`: use the script's `timestamp`
+   - `baseSha`: the script's value (or preserved original)
    - `isInteractive`: preserve from `{input-provenance}` if present
-   - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If `{input-provenance}.iteration` is absent, set to `2`.
-4. Prepend the updated YAML frontmatter to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
+   - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If absent, set to `2`.
+4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
 
    ```yaml
    ---
@@ -171,22 +181,29 @@ Update the provenance header on the revised plan. The behavior depends on whethe
      baseSha: abc123def456...
      isInteractive: true
      iteration: 2
+   ticket_id: '537'
+   ticket_ref: '#537'
+   branch: 537/feat/example
+   commit: 1d2c3b4
+   pr: https://github.com/williamthorsen/codeassembly/pull/591
+   run_id: 20260310-080000Z
    ---
    ```
 
-   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if resolved or preserved from input.
+   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if available. Top-level fields follow the script's omit rules.
 
 **When `{input-provenance}` is empty:**
 
-1. Run `git rev-parse --short origin/main` via Bash to obtain `{baseSha}`. If the command fails, omit `baseSha`.
+1. Use the script's `baseSha`. If the script omitted it, omit it.
 2. Read the revised plan file at `{revision_output_path}`.
-3. Construct provenance with:
-   - `skill`: set to `unknown`
-   - `refinedBy`: set to `refine-plan`
-   - `timestamp`: current UTC time in ISO 8601 format
-   - `baseSha`: the resolved value (omit if command failed)
-   - `iteration`: set to `2`
-4. Prepend the YAML frontmatter to the revised plan and write back:
+3. Construct provenance:
+   - `skill`: `unknown`
+   - `refinedBy`: `refine-plan`
+   - `timestamp`: script's value
+   - `baseSha`: script's value (omit when absent)
+   - `isInteractive`: always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
+   - `iteration`: `2`
+4. Prepend the unified YAML frontmatter and write back:
 
    ```yaml
    ---
@@ -195,7 +212,14 @@ Update the provenance header on the revised plan. The behavior depends on whethe
      refinedBy: refine-plan
      timestamp: 2026-03-10T08:00:00Z
      baseSha: abc123def456...
+     isInteractive: true
      iteration: 2
+   ticket_id: '537'
+   ticket_ref: '#537'
+   branch: 537/feat/example
+   commit: 1d2c3b4
+   pr: https://github.com/williamthorsen/codeassembly/pull/591
+   run_id: 20260310-080000Z
    ---
    ```
 

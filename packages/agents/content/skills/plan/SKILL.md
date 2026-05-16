@@ -15,7 +15,23 @@ Create a structured plan document for analysis, design, or implementation work.
 
 ## Output format
 
+The plan begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
+
 ```markdown
+---
+provenance:
+  skill: plan
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: true
+ticket_id: '{ticket ID from session context, omit if null}'
+ticket_ref: '{ticket display ref, omit if null}'
+branch: '{branch name from session context}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id, omit when not in an orchestrated run}'
+---
+
 # Plan: {Descriptive title}
 
 **Date**: {YYYY-MM-DD HH:MM UTC}
@@ -55,7 +71,17 @@ Sections are optional — use only what's appropriate for the task.
 
 ## Saving
 
-Resolve artifact directory based on context:
+Resolve artifact directory based on context.
+
+### Frontmatter resolution
+
+The artifact frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
+
+<!-- include: ../../_partials/frontmatter-via-script.md -->
+
+- `provenance.skill`: always `plan`.
+- `provenance.isInteractive`: always `true`.
+<!-- /include -->
 
 ### Run context
 
