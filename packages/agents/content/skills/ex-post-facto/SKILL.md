@@ -20,7 +20,23 @@ git diff $DEFAULT_BRANCH...HEAD
 
 ## Output structure
 
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. See [Frontmatter resolution](#frontmatter-resolution) below for field resolution.
+
 ```markdown
+---
+provenance:
+  skill: ex-post-facto
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: true
+  model: '{model id}'
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+---
+
 # {Title}
 
 ## Description
@@ -58,6 +74,24 @@ git diff $DEFAULT_BRANCH...HEAD
 - Focus on what was broken and what needed fixing
 - Prioritize functional issues in "Must have"
 - Place code quality/maintenance items in "Should have"
+
+## Frontmatter resolution
+
+Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+
+- `provenance.skill`: always `ex-post-facto`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
+- `provenance.isInteractive`: always `true`.
+- `provenance.model`: the model identifier executing this skill (read from the environment block in the system prompt).
+- `ticket_id`, `ticket_ref`: from session context. Omit when null.
+- `branch`: from session context (`branch_name`).
+- `commit`: run `git rev-parse --short HEAD`.
+- `pr`: resolve via [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
 
 ## Saving
 

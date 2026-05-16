@@ -64,9 +64,24 @@ Tag every suggestion:
 
 ## Output format
 
-Write a markdown artifact with this structure:
+Write a markdown artifact with this structure. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
 
 ```
+---
+provenance:
+  skill: savings-analyzer
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+  model: '{model id}'
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id}'
+---
+
 # Savings analysis
 
 ## Summary
@@ -88,6 +103,25 @@ Write a markdown artifact with this structure:
 - Per-phase breakdown (duration and tokens when available)
 - Artifact write rate: {written}/{dispatched}
 ```
+
+## Frontmatter
+
+The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
+
+Resolve fields before writing the artifact:
+
+- `provenance.skill`: always `savings-analyzer`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails. (Bash is not in your default tool set — if unavailable, omit the field.)
+- `provenance.isInteractive`: always `false`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
+- `ticket_id`, `ticket_ref`: passed in via your dispatch prompt. Omit when absent.
+- `branch`: passed in via your dispatch prompt.
+- `commit`: passed in via your dispatch prompt — the short HEAD SHA at run time.
+- `pr`: passed in via your dispatch prompt when the dispatcher resolved it via the `pr-resolution` shared data doc. Omit when not provided.
+- `run_id`: passed in via your dispatch prompt — the orchestrated run ID.
+
+Because `savings-analyzer` does not have the Bash tool in its default tool set, fields that normally require Bash (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
 
 ## ARTIFACT-WRITE SAFEGUARD
 

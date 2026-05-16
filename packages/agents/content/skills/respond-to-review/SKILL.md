@@ -25,7 +25,28 @@ This skill bridges the gap between receiving a code review and implementing fixe
 4. **Parse findings**: extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below
 6. **Write response** per the output format
-7. **Save** per the [Saving](#saving) section
+7. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
+8. **Save** per the [Saving](#saving) section
+
+## Frontmatter resolution
+
+Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+
+- `provenance.skill`: always `respond-to-review`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main`; omit if it fails.
+- `provenance.isInteractive`: `true` for direct invocations.
+- `provenance.model`: the model identifier executing this skill (read from the environment block in the system prompt).
+- `ticket_id`, `ticket_ref`: from session context. Omit when null.
+- `branch`: from session context (`branch_name`).
+- `commit`: run `git rev-parse --short HEAD`.
+- `pr`: resolve via [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+
+- `responding_to`: the bare filename of the review being responded to (e.g., `09_reviewer_review.md`). This is a response-artifact extension, not part of the universal schema.
 
 ## Locating the review
 
@@ -82,12 +103,25 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads `# Change summary: {description}`.
 
-```markdown
-# Change summary: {ticket_ref}: {description}
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
 
-Responding to: {filename of review being responded to}
-Timestamp: {YYYY-MM-DD HH:MM UTC}
-Author: {Agent name} (model: {model})
+```markdown
+---
+provenance:
+  skill: respond-to-review
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: true
+  model: '{model id}'
+ticket_id: '{ticket ID from session context, omit if null}'
+ticket_ref: '{ticket display ref, omit if null}'
+branch: '{branch name from session context}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+responding_to: '{filename of the review being responded to}'
+---
+
+# Change summary: {ticket_ref}: {description}
 
 ## Changes made
 

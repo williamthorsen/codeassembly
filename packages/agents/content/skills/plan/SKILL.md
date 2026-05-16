@@ -15,7 +15,23 @@ Create a structured plan document for analysis, design, or implementation work.
 
 ## Output format
 
+The plan begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
+
 ```markdown
+---
+provenance:
+  skill: plan
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: true
+ticket_id: '{ticket ID from session context, omit if null}'
+ticket_ref: '{ticket display ref, omit if null}'
+branch: '{branch name from session context}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id, omit when not in an orchestrated run}'
+---
+
 # Plan: {Descriptive title}
 
 **Date**: {YYYY-MM-DD HH:MM UTC}
@@ -55,7 +71,26 @@ Sections are optional — use only what's appropriate for the task.
 
 ## Saving
 
-Resolve artifact directory based on context:
+Resolve artifact directory based on context.
+
+### Frontmatter resolution
+
+Before writing, resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+
+- `provenance.skill`: always `plan`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main`; omit if it fails.
+- `provenance.isInteractive`: always `true`.
+- `ticket_id`, `ticket_ref`: from session context. Omit when null.
+- `branch`: from session context (`branch_name`).
+- `commit`: run `git rev-parse --short HEAD`.
+- `pr`: resolve via [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+
+- `run_id`: emit only when invoked from within an orchestrated run (detected per the [Run context](#run-context) check below).
 
 ### Run context
 

@@ -329,15 +329,23 @@ Filename: `{YYYYMMDD-HHMMSSZ}_{slug}_deferred-findings.md` (standard ticket-leve
 
 Prepend YAML frontmatter, then the markdown body.
 
-**Frontmatter** — see [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the field reference. Generation rules:
+**Frontmatter** — see [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) for the canonical schema and [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the artifact-specific extensions. Generation rules:
 
 - `provenance.skill`: always `wrap-up`
 - `provenance.timestamp`: current UTC time in ISO 8601 format
 - `provenance.baseSha`: run `git rev-parse --short origin/main`. Omit the field if the command fails.
 - `provenance.isInteractive`: always `true`
 - `ticket_id`: emit only when non-null in session context
+- `ticket_ref`: emit only when `ticket_id` is emitted; format as the display ref from session context
 - `run_id`: emit only when wrap-up was invoked from an orchestrated session — reuse the value Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3)
 - `branch`: from session context
+- `commit`: run `git rev-parse --short HEAD`
+- `pr`: resolve via the shared dispatch in [`_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to the `pr:` line. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+
 - `session_type`: the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`)
 - `tickets_created`: list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` for a single-finding ticket, `[F1, T2, R1]` for a batch ticket). Omit when empty.
 

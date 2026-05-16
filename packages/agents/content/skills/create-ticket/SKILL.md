@@ -141,9 +141,29 @@ Save the ticket as a ticket-level artifact:
 {YYYYMMDD-HHMMSSZ}_{slug}_ticket.md
 ```
 
-The ticket artifact heading should include the ticket reference: `# {ticket_ref}: {title}`. On a GitHub-style project (`ticket_ref_prefix: '#'`) with issue number `461`, this renders as `# #461: {title}`.
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. Resolve fields per [Frontmatter resolution](#frontmatter-resolution) below. The body heading should include the ticket reference: `# {ticket_ref}: {title}`. On a GitHub-style project (`ticket_ref_prefix: '#'`) with issue number `461`, this renders as `# #461: {title}`.
 
 Example: `20260226-213000Z_role-type-architecture_ticket.md`
+
+If a plan is also saved in step 7, it uses the same frontmatter shape with `provenance.skill: create-ticket`.
+
+### Frontmatter resolution
+
+Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+
+- `provenance.skill`: always `create-ticket`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
+- `provenance.isInteractive`: always `true`.
+- `provenance.model`: the model identifier executing this skill (read from the environment block in the system prompt).
+- `ticket_id`, `ticket_ref`: from the values computed in this step.
+- `branch`: from session context (`branch_name`).
+- `commit`: run `git rev-parse --short HEAD`.
+- `pr`: resolve via [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

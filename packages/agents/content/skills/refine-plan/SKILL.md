@@ -147,7 +147,22 @@ Plan revision failed -- the plan-reviser did not complete successfully.
 
 Stop here. Do not attempt provenance update or report completion.
 
-Update the provenance header on the revised plan. The behavior depends on whether `{input-provenance}` is non-empty or empty.
+Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
+
+The stamp writes the full canonical schema in one atomic write: the `provenance:` block (with `iteration` extension) plus the top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`). The behavior of the `provenance:` block depends on whether `{input-provenance}` is non-empty or empty; the top-level fields are resolved identically in both cases.
+
+**Resolve top-level canonical fields (both cases):**
+
+1. Run `git rev-parse --short HEAD` via Bash to obtain `{commit}`.
+2. Read `branch_name`, `ticket_id`, and `ticket_ref` from session context (already obtained in step 1.4 above). `branch_name` is always present; `ticket_id` and `ticket_ref` are emitted only when non-null.
+3. Detect whether the stamp is running inside an active run (`run-index.json` exists in a parent of the revision output path or in session context). If so, set `{run_id}` to the run ID; otherwise omit.
+4. Resolve `{pr}` via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+   - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+   - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+   On non-empty output, set `{pr}` to the URL. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+
+**Round-trip preservation:** when the input plan already carries top-level canonical fields (`branch`, `commit`, `pr`, etc.), they are **not** carried forward from the input — the stamp re-resolves them from current session context at stamp time. This is correct: the output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase casing convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write — there is no rename. The only provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches below).
 
 **When `{input-provenance}` is non-empty:**
 
@@ -160,7 +175,7 @@ Update the provenance header on the revised plan. The behavior depends on whethe
    - `baseSha`: the newly resolved value (or preserved original)
    - `isInteractive`: preserve from `{input-provenance}` if present
    - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If `{input-provenance}.iteration` is absent, set to `2`.
-4. Prepend the updated YAML frontmatter to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
+4. Prepend the unified YAML frontmatter (provenance block plus top-level canonical fields resolved above) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
 
    ```yaml
    ---
@@ -171,10 +186,16 @@ Update the provenance header on the revised plan. The behavior depends on whethe
      baseSha: abc123def456...
      isInteractive: true
      iteration: 2
+   ticket_id: '537'
+   ticket_ref: '#537'
+   branch: 537/feat/example
+   commit: 1d2c3b4
+   pr: https://github.com/williamthorsen/codeassembly/pull/591
+   run_id: 20260310-080000Z
    ---
    ```
 
-   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if resolved or preserved from input.
+   Include `isInteractive` only if it was present in `{input-provenance}`. Include `baseSha` only if resolved or preserved from input. Include `ticket_id`, `ticket_ref`, `pr`, and `run_id` only when resolved.
 
 **When `{input-provenance}` is empty:**
 
@@ -186,7 +207,7 @@ Update the provenance header on the revised plan. The behavior depends on whethe
    - `timestamp`: current UTC time in ISO 8601 format
    - `baseSha`: the resolved value (omit if command failed)
    - `iteration`: set to `2`
-4. Prepend the YAML frontmatter to the revised plan and write back:
+4. Prepend the unified YAML frontmatter (provenance block plus top-level canonical fields resolved above) to the revised plan and write back:
 
    ```yaml
    ---
@@ -196,8 +217,16 @@ Update the provenance header on the revised plan. The behavior depends on whethe
      timestamp: 2026-03-10T08:00:00Z
      baseSha: abc123def456...
      iteration: 2
+   ticket_id: '537'
+   ticket_ref: '#537'
+   branch: 537/feat/example
+   commit: 1d2c3b4
+   pr: https://github.com/williamthorsen/codeassembly/pull/591
+   run_id: 20260310-080000Z
    ---
    ```
+
+   Include `ticket_id`, `ticket_ref`, `pr`, and `run_id` only when resolved.
 
 ### 6. Offer ticket update if approach diverged
 

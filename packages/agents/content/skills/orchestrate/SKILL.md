@@ -254,9 +254,23 @@ Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`),
 - **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
 - **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
-5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`:
+5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema (resolved per the [run-summary frontmatter resolution](#run-summary-frontmatter-resolution) section below):
 
 ```markdown
+---
+provenance:
+  skill: orchestrate
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id}'
+---
+
 # Run manifest
 
 | Field        | Value              |
@@ -640,9 +654,23 @@ Dispatch the savings-analyzer subagent as a background Task and immediately proc
 - `model: {models.savings_analyzer}` (resolved from the `savings_analyzer` key, defaults to `haiku`)
 - `prompt:` Provide the run directory path (`{run-dir}`) and the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number). The subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory.
 
-Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`:
+Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema:
 
 ```markdown
+---
+provenance:
+  skill: orchestrate
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id}'
+---
+
 # Orchestration summary
 
 ## Task
@@ -701,6 +729,27 @@ Include:
 
 {from git diff --name-only}
 ```
+
+### Run-summary frontmatter resolution
+
+Resolve the universal-schema fields documented in [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter):
+
+- `provenance.skill`: always `orchestrate`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
+- `provenance.isInteractive`: always `false`.
+- `ticket_id`, `ticket_ref`: from session context. Omit when null.
+- `branch`: from session context (`branch_name`).
+- `commit`: run `git rev-parse --short HEAD` via Bash.
+- `pr`: resolve via the shared dispatch in [`../_data/pr-resolution.md`](../_data/pr-resolution.md). Read `platform` from session context, then run the matching snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in the agent text output.
+
+- `run_id`: the run ID for the current orchestrated run.
+
+The orchestrator's `provenance.model` is omitted — the run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 
 After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content — do not abbreviate or omit sections.
 

@@ -148,69 +148,92 @@ Example run directory (full orchestrated run with iterative review):
   16_orchestrator_run-summary.md                        # Phase 5
 ```
 
-## Plan provenance
+## Universal artifact frontmatter
 
-Plan artifacts include a YAML frontmatter `provenance` block that records authoring origin and processing history. The orchestrator uses provenance to evaluate trust when plans are supplied externally.
-
-| Field           | Description                                                                                                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `skill`         | The skill that originally authored the plan (e.g., `design-and-plan`, `plan-orchestrable-steps`, `plan-mode`). Set to `unknown` when the authoring skill cannot be determined. |
-| `refinedBy`     | The skill that last processed/refined the plan (e.g., `refine-plan`). Absent if the plan has not been refined. Records processing, not authorship.                             |
-| `timestamp`     | ISO 8601 UTC timestamp of when provenance was last written or updated.                                                                                                         |
-| `baseSha`       | Short SHA of `origin/main` at provenance write time. Used for freshness evaluation. Omitted if unresolvable.                                                                   |
-| `isInteractive` | Present and `true` when the plan was produced through a structured interactive flow. Omitted otherwise.                                                                        |
-| `iteration`     | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements.                                                |
-
-## Devlog frontmatter
-
-Devlog artifacts include a YAML frontmatter block that records authoring origin and links the devlog to its ticket, run, branch, and commits. The shape mirrors plan provenance so a single frontmatter parser can serve both artifact types.
+All skill- and subagent-authored artifacts begin with a YAML frontmatter block conforming to the canonical schema below. A single shape lets one parser serve every artifact type, and a single source of truth keeps the per-artifact sections free of duplication.
 
 ```yaml
 ---
 provenance:
-  skill: create-devlog
-  timestamp: <ISO 8601 UTC>
-  baseSha: <short SHA of origin/main> # omit if unresolvable
-  isInteractive: true
-ticket_id: <id> # omit when no ticket is in session
-run_id: <run id> # omit when not invoked from an orchestrated wrap-up
-branch: <branch name>
-commits: [<sha>, ...] # omit for working-tree devlogs
+  skill: <skill-name> # required — the skill or subagent that wrote this artifact
+  timestamp: <ISO 8601 UTC> # required — write time
+  baseSha: <short SHA> # optional — short SHA of origin/main; omit if unresolvable
+  isInteractive: true|false # required — true for interactive flows, false for orchestrated dispatch
+  refinedBy: <skill-name> # optional — the skill that last processed/refined the artifact
+  model: <model id> # optional — present when an AI model authored the body
+ticket_id: <id> # optional — omit when no ticket is in session
+ticket_ref: <display ref> # optional — omit when ticket_id is null
+branch: <branch name> # required — raw branch_name from session context
+commit: <short SHA of HEAD> # required — short HEAD SHA at write time
+pr: <full URL> # optional — omit when no PR or lookup fails
+author: <name(s)> # optional — used by review artifacts
+commits: [<sha>, ...] # optional — used by devlogs
+run_id: <run id> # optional — present in orchestrated runs
 ---
 ```
 
-| Field                      | Required | Description                                                                                                                               |
-| -------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | Always `create-devlog`.                                                                                                                   |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the devlog was written.                                                                                    |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                             |
-| `provenance.isInteractive` | yes      | Always `true` — devlogs are produced interactively or via an interactive wrap-up.                                                         |
-| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session (research/exploration sessions).                                 |
-| `run_id`                   | no       | The orchestrated run ID. Present only when `/create-devlog` is invoked with `--run-id` (typically by `/wrap-up` for orchestrated runs).   |
-| `branch`                   | yes      | Current branch name from session context.                                                                                                 |
-| `commits`                  | no       | List of short SHAs the devlog summarizes. Omitted for `working-tree` invocations; otherwise a single SHA or N SHAs depending on argument. |
+### Field naming convention
+
+Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInteractive`, `refinedBy`). All other top-level keys use **snake_case** (e.g., `ticket_id`, `ticket_ref`, `run_id`). This split preserves the existing convention used by 544+ historical artifacts and the consumers (`refine-plan`, orchestrator trust evaluation) that read them, while keeping the rest of the schema consistent with the surrounding snake_case YAML.
+
+### Field definitions
+
+| Field                      | Required | Description                                                                                                                                          |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                      |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                             |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                        |
+| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                     |
+| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                        |
+| `provenance.model`         | no       | The model identifier authoring the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                              |
+| `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                |
+| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                       |
+| `branch`                   | yes      | Current branch name from session context. Written as-is — no sanitization.                                                                           |
+| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                      |
+| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Omitted when no PR exists or lookup fails — see [PR resolution](pr-resolution.md). |
+| `author`                   | no       | Human author of the work. Used by review artifacts where the reviewing surface records the code author.                                              |
+| `commits`                  | no       | List of short SHAs the artifact summarizes. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                |
+| `run_id`                   | no       | Orchestrated run ID. Present in orchestrated runs and in artifacts that link back to one.                                                            |
+
+### `commit` vs. `commits`
+
+`commit` is a singular top-level field holding the short HEAD SHA at write time. Every artifact has one. `commits` is an optional list used only by devlogs, recording the SHAs whose changes the devlog summarizes. The two coexist and never conflict.
+
+### PR resolution
+
+Skills resolve `pr` at write time via the shared dispatch documented in [`pr-resolution.md`](pr-resolution.md). On failure, the `pr:` line is omitted and the skill emits the canonical warning text — the artifact write itself is never blocked.
+
+## Plan provenance
+
+This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extension:
+
+| Field                  | Required | Description                                                                                                                     |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.iteration` | no       | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements. |
+
+Plan-specific `provenance.skill` values include `design-and-plan`, `plan-orchestrable-steps`, `plan-mode`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
+
+## Devlog frontmatter
+
+This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter). Devlogs typically populate `commits` (the SHAs the devlog summarizes) in addition to the universally-required fields. `provenance.skill` is `create-devlog`; `provenance.isInteractive` is `true`. `commits` is omitted for `working-tree` invocations.
 
 ## Deferred-findings frontmatter
 
-Deferred-findings artifacts include a YAML frontmatter block that records authoring origin, session linkage, and a structured cross-reference of created tickets. The shape extends devlog frontmatter so a single parser can serve both artifact types. The artifact is written when at least one finding became a created ticket or at least one finding was dropped; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
+This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extensions. The artifact is written when at least one finding became a created ticket or at least one finding was dropped; see [`wrap-up/SKILL.md`](../wrap-up/SKILL.md) Phase 4 Step 1 for the write conditions.
+
+| Field             | Required | Description                                                                                                                                                                              |
+| ----------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_type`    | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                                                                         |
+| `tickets_created` | no       | List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` or `[F1, T2, R1]`). Omitted when empty. |
+
+`provenance.skill` is `wrap-up`; `provenance.isInteractive` is `true`.
 
 **Single-finding case** — a ticket addressing one finding:
 
 ```yaml
----
-provenance:
-  skill: wrap-up
-  timestamp: <ISO 8601 UTC>
-  baseSha: <short SHA of origin/main> # omit if unresolvable
-  isInteractive: true
-ticket_id: <id> # omit when no ticket is in session
-run_id: <run id> # omit when not invoked from an orchestrated session
-branch: <branch name>
-session_type: <orchestrated | interactive-dev | review | research>
-tickets_created: # omit if empty
+tickets_created:
   - id: '<number>'
     items: [F1]
----
 ```
 
 **Batch case** — a single ticket addressing multiple findings uses the same shape with additional IDs in `items`:
@@ -221,17 +244,17 @@ tickets_created:
     items: [F1, T2, R1]
 ```
 
-| Field                      | Required | Description                                                                                                                                                                              |
-| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | Always `wrap-up`.                                                                                                                                                                        |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                 |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                            |
-| `provenance.isInteractive` | yes      | Always `true` — deferred-findings artifacts are produced through an interactive flow.                                                                                                    |
-| `ticket_id`                | no       | The ticket ID from session context. Omitted when no ticket is in session.                                                                                                                |
-| `run_id`                   | no       | The orchestrated run ID. Present only when wrap-up was invoked from an orchestrated session (the basename of the latest run directory).                                                  |
-| `branch`                   | yes      | Current branch name from session context.                                                                                                                                                |
-| `session_type`             | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                                                                         |
-| `tickets_created`          | no       | List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list (e.g., `[F1]` or `[F1, T2, R1]`). Omitted when empty. |
+## Change-summary frontmatter
+
+This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extensions consumed by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`):
+
+| Field   | Required | Description                                                                                      |
+| ------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `title` | yes      | The change-summary title, used as the proposed PR title.                                         |
+| `scope` | yes      | The scope segment for the commit/PR title (e.g., `agents`, `factory`, `root`).                   |
+| `type`  | yes      | The work type (see `work-types.json`) for the commit/PR title (e.g., `feat`, `fix`, `refactor`). |
+
+The unified frontmatter shape places `provenance:` first, then top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`), then the consumer extensions (`title`, `scope`, `type`). `commit:` and `ticket_id:` appear exactly once each and serve a dual role: canonical identity fields that downstream consumers may also read. This is the canonical example for any future skill that carries consumer-specific fields alongside canonical ones.
 
 ## run-index.json
 

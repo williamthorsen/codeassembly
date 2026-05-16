@@ -44,9 +44,24 @@ You will receive:
 
 ## Output: plan (Markdown)
 
-Write the plan Markdown file to the path provided in the task prompt. Format:
+Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). Format:
 
 ```markdown
+---
+provenance:
+  skill: orchestrated-planner
+  timestamp: '{ISO 8601 UTC timestamp}'
+  baseSha: '{short SHA of origin/main, omit if unresolvable}'
+  isInteractive: false
+  model: '{model id}'
+ticket_id: '{ticket id, omit if absent}'
+ticket_ref: '{ticket display ref, omit if absent}'
+branch: '{current branch name}'
+commit: '{short hash of HEAD}'
+pr: '{full PR URL, omit if not resolved}'
+run_id: '{run id}'
+---
+
 # Implementation Plan
 
 ## Overview
@@ -128,6 +143,28 @@ Write the plan JSON file to the path provided in the task prompt. Format:
   ]
 }
 ```
+
+## Frontmatter
+
+The Markdown plan artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc). The JSON sidecar (`orchestration-plan.json`) does not carry frontmatter — only the Markdown artifact does.
+
+Resolve fields before writing the artifact:
+
+- `provenance.skill`: always `orchestrated-planner`.
+- `provenance.timestamp`: current UTC time in ISO 8601 format.
+- `provenance.baseSha`: run `git rev-parse --short origin/main` via Bash; omit if it fails.
+- `provenance.isInteractive`: always `false`.
+- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
+- `ticket_id`, `ticket_ref`: passed in via your dispatch prompt. Omit when absent.
+- `branch`: passed in via your dispatch prompt, or run `git rev-parse --abbrev-ref HEAD`.
+- `commit`: run `git rev-parse --short HEAD` via Bash.
+- `pr`: resolve via the shared dispatch in the `pr-resolution` shared data doc. Run the platform-appropriate snippet via the Bash tool with `timeout: 5000`:
+  - **GitHub:** `gh pr list --head "$BRANCH" --state all --json url --jq '.[0].url // empty'`
+  - **Bitbucket:** the `curl` snippet in `pr-resolution.md` against `https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests?q=source.branch.name="{branch}"`, extracting `.values[0].links.html.href`.
+
+  On non-empty output, write the URL to `pr:`. On empty output, non-zero exit, or timeout, omit the `pr:` line and emit `Note: PR lookup failed; proceeding without pr field.` in your text output.
+
+- `run_id`: passed in via your dispatch prompt — the orchestrated run ID.
 
 ## Constraints
 
