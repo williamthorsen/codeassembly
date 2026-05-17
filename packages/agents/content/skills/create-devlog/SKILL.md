@@ -17,24 +17,9 @@ Summarize changes made in recent commits or the working tree.
 
 ## Output format
 
-The devlog file begins with YAML frontmatter conforming to the canonical schema (see [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the devlog-specific section, [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter)) followed by the markdown body:
+The devlog file begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the devlog-specific extensions in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter). The body following the frontmatter has this structure:
 
 ```markdown
----
-provenance:
-  skill: create-devlog
-  timestamp: 2026-04-18T15:30:00Z
-  baseSha: 4f8b158
-  isInteractive: true
-ticket_id: '426'
-ticket_ref: '#426'
-run_id: 20260419-012539Z
-branch: 426/feat/example-branch
-commit: 1d2c3b4
-pr: https://github.com/williamthorsen/codeassembly/pull/591
-commits: [a1b2c3d, e4f5g6h]
----
-
 # Devlog: {Concise description}
 
 **Date**: {YYYY-MM-DD HH:MM UTC}
@@ -97,16 +82,28 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 The devlog frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the devlog-specific extensions listed in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter).
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Resolve `$run_id_arg` from the `--run-id={id}` argument (empty when not supplied). Resolve the `commits` extension according to the mode:
 
-- `provenance.skill`: always `create-devlog`.
-- `provenance.isInteractive`: always `true`.
-- `run_id`: **override** the script's value. Emit only if `--run-id={id}` was supplied as an argument; the caller is the source of truth. Do not use the script's breadcrumb-derived value, and do not perform any filesystem discovery.
-- `commits` (devlog-specific extension; distinct from the universal `commit` field):
-  - No argument (last commit): single short SHA from `git log -n 1 --format=%h`.
-  - `<n>` (last N commits): list of N short SHAs from `git log -n {N} --format=%h`.
-  - `working-tree`: omit the `commits` field entirely.
-  <!-- /include -->
+- No argument (last commit): `commits_arg=$(git log -n 1 --format=%h)`.
+- `<n>` (last N commits): `commits_arg=$(git log -n N --format=%h | paste -sd, -)`.
+- `working-tree`: do not pass `--extra-list commits=...`.
+
+Run via Bash, substituting the resolved arguments:
+
+```bash
+resolve-frontmatter.sh \
+  --skill create-devlog \
+  --interactive true \
+  --model "$MODEL_ID" \
+  --extra-list "commits=$commits_arg" \
+  --override "run_id=$run_id_arg"
+```
+
+(Omit the `--extra-list commits=...` argument entirely in `working-tree` mode; quoting `run_id=$run_id_arg` ensures the empty-value force-omit case works when no `--run-id` was supplied.)
+
+Prepend the script's output verbatim to the artifact body. Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ### Filename examples
 

@@ -205,6 +205,15 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 Skills resolve `pr` at write time via the shared dispatch documented in [`pr-resolution.md`](pr-resolution.md). On failure, the `pr:` line is omitted and the skill emits the canonical warning text — the artifact write itself is never blocked.
 
+### Bespoke frontmatter composition
+
+Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Two sites are deliberate exceptions and opt into `--format json` to compose the YAML block themselves:
+
+- `refine-plan` — the `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input has no provenance). The shell flag surface cannot express this conditional logic cleanly.
+- `wrap-up` (deferred-findings artifact) — `tickets_created` is a list of `{id, items}` objects, a structure that has no clean CLI expression and is best composed in the skill's own logic.
+
+These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround — keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
+
 ## Plan provenance
 
 This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extension:

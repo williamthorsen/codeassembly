@@ -138,12 +138,11 @@ run_id: '{run id, omit if not in a run}'
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-<!-- include: ../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
 
-- `provenance.skill`: Always `planner`.
-- `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run `resolve-frontmatter.sh --skill planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Resumption
 

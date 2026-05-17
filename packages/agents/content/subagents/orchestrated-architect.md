@@ -58,24 +58,9 @@ Classify the task into exactly one impact level:
 
 Write your analysis to the file path provided in your task prompt using the {tool:Write} tool. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
 
-The document MUST include:
+The body following the frontmatter MUST include:
 
 ```markdown
----
-provenance:
-  skill: orchestrated-architect
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 ### Impact level: {none|low|medium|high}
 
 ### Summary
@@ -128,12 +113,11 @@ If the plan's assumptions all check out, omit this section.
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-<!-- include: ../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
 
-- `provenance.skill`: Always `orchestrated-architect`.
-- `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run `resolve-frontmatter.sh --skill orchestrated-architect --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Principles
 

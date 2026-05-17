@@ -151,11 +151,13 @@ Stamp the revised plan with frontmatter conforming to the [universal artifact fr
 
 The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields. The top-level fields come from the script; the `provenance:` block is computed from `{input-provenance}` plus the stamping logic below.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+This site uses `--format json` because the `provenance:` block is case-branched on the input artifact's existing provenance — see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
+
+Run `resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `platform`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
-
-<!-- /include -->
 
 **Round-trip preservation:** the top-level canonical fields (`branch`, `commit`, `pr`, etc.) are always re-resolved from current session context via the script — they are not carried forward from `{input-provenance}`. This is correct: the output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write — there is no rename. Provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
 

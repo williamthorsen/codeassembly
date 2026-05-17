@@ -23,23 +23,11 @@ Replace `/Users/{username}/` with `~/` in file paths. Remove similar personal in
 
 ## Output format
 
-The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. See [Frontmatter resolution](#frontmatter-resolution) below for field resolution.
+The artifact begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section below.
+
+The body following the frontmatter has this structure:
 
 ```markdown
----
-provenance:
-  skill: summarize-chat
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: true
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
----
-
 # {Descriptive title}
 
 ## Problem
@@ -83,12 +71,11 @@ Use these to mark significant sections:
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
 
-- `provenance.skill`: always `summarize-chat`.
-- `provenance.isInteractive`: always `true`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run `resolve-frontmatter.sh --skill summarize-chat --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Saving
 

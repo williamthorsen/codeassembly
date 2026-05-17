@@ -64,24 +64,11 @@ Tag every suggestion:
 
 ## Output format
 
-Write a markdown artifact with this structure. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
+Write a markdown artifact with this structure. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) — see the [Frontmatter](#frontmatter) section below for field resolution.
+
+The body following the frontmatter MUST include:
 
 ```
----
-provenance:
-  skill: savings-analyzer
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 # Savings analysis
 
 ## Summary

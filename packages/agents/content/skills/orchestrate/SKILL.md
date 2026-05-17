@@ -743,11 +743,9 @@ Include:
 
 This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Run `resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
 
-- `provenance.skill`: always `orchestrate`.
-- `provenance.isInteractive`: always `false`.
-<!-- /include -->
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 The orchestrator's `provenance.model` is omitted — the run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 

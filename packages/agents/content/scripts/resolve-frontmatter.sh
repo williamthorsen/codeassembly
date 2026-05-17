@@ -1,43 +1,54 @@
 #!/usr/bin/env bash
-# Emit the canonical artifact-frontmatter fields as a single JSON object.
+# Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
 # Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced by the
 # `get-session-context` skill) for session-level fields and runs git +
-# platform-specific PR lookup for the rest. Skills consume the JSON output
-# to populate the universal portion of their artifact frontmatter without
+# platform-specific PR lookup for the rest. Skills consume the output to
+# populate the universal portion of their artifact frontmatter without
 # repeating the underlying shell logic.
 #
 # Usage:
-#   resolve-frontmatter.sh
+#   resolve-frontmatter.sh --skill NAME --interactive true|false [...]
+#   resolve-frontmatter.sh --format json
 #   resolve-frontmatter.sh --help
 #
-# Output (stdout): a JSON object with these keys, all optional except
-# `branch`, `commit`, `platform`, and `timestamp`:
+# Flags:
+#   --skill NAME              provenance.skill value (required in yaml mode).
+#   --interactive true|false  provenance.isInteractive value (required in yaml mode).
+#   --model ID                provenance.model value (optional).
+#   --extra KEY=VALUE         Append a scalar extension key (repeatable).
+#                             Values may contain `=`; split on the first `=`.
+#   --extra-list KEY=v1,v2,…  Append a flow-list extension key (repeatable).
+#                             Values are split on `,`.
+#   --override KEY=VALUE      Force a canonical/provenance field to VALUE.
+#                             Empty VALUE force-omits the key.
+#   --format yaml|json        Output format (default `yaml`).
+#   --help, -h                Show usage and exit 0.
 #
-#   branch        Raw branch name from session context.
-#   commit        Short SHA of HEAD.
-#   baseSha       Short SHA of `origin/{default_branch}`. Omitted if the
-#                 ref is unresolvable (shallow clone, no remote, etc.).
-#   pr            Full PR URL for the current branch. Omitted when no PR
-#                 exists (lookup returned empty) AND on lookup failure
-#                 (timeout, non-zero exit, auth error, etc.).
-#   ticket_id     From session context. Omitted when null.
-#   ticket_ref    From session context. Omitted when null.
-#   platform      `github` or `bitbucket`, from session context.
-#   timestamp     Current UTC ISO 8601 timestamp.
-#   run_id        Active orchestrated-run ID, read from
-#                 `.claude/tmp/active-run-dir` (basename) when present.
-#                 Omitted otherwise.
+# Output (yaml mode, stdout): a complete YAML frontmatter block including
+# `---` delimiters. Field order:
+#
+#   provenance:
+#     skill, timestamp, baseSha, isInteractive, model     (camelCase)
+#   ticket_id, ticket_ref, branch, commit, pr, run_id     (snake_case)
+#   {--extra / --extra-list extensions in insertion order}
+#
+# Output (json mode, stdout): a single JSON object — backward-compatible
+# with prior `--format json` (default) callers. Keys: branch, commit,
+# baseSha, pr, ticket_id, ticket_ref, platform, timestamp, run_id.
+#
+# Omission rules (both formats): any key whose resolved value is empty is
+# omitted entirely. `--override KEY=` with empty value force-omits even
+# when the script resolved a value.
 #
 # Warnings (stderr): when PR resolution fails (not when it returns empty),
 # emits the canonical warning `Note: PR lookup failed; proceeding without
-# pr field.` so the caller can surface it in agent text output. Empty
-# output is the normal no-PR case and emits no warning.
+# pr field.` so the caller can surface it in agent text output.
 #
 # Exit codes:
-#   0  Always when a JSON object is emitted (even with reduced fields).
-#   1  Missing branch manifest — caller must invoke `get-session-context`
-#      first. Not in a git repo. Missing `jq`.
+#   0  Success.
+#   1  Missing branch manifest (run `get-session-context` first), not in a
+#      git repo, missing `jq`, or required-arg violation in yaml mode.
 
 set -euo pipefail
 
@@ -49,26 +60,93 @@ show_usage() {
   local exit_code="${1:-1}"
   cat <<EOF
 Usage:
-  $PROG
+  $PROG --skill NAME --interactive true|false [--model ID]
+       [--extra KEY=VALUE ...] [--extra-list KEY=v1,v2,... ...]
+       [--override KEY=VALUE ...] [--format yaml|json]
+  $PROG --format json
   $PROG --help
 
-Emit canonical artifact-frontmatter fields as a JSON object on stdout.
-See script header for full field list and failure semantics.
+Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
+See script header for field list, ordering, and omission semantics.
 EOF
   exit "$exit_code"
 }
 
 # Main flow
 main() {
-  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    show_usage 0
+  # -- Argument parsing --
+  local format="yaml"
+  local skill="" model=""
+  local interactive=""
+  local interactive_set=false
+  declare -a extra_keys=()
+  declare -A extra_values=()
+  declare -A extra_kinds=()
+  declare -A overrides=()
+
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+    --help | -h)
+      show_usage 0
+      ;;
+    --format)
+      [[ "$#" -ge 2 ]] || fail "missing value for --format"
+      format="$2"
+      shift 2
+      ;;
+    --skill)
+      [[ "$#" -ge 2 ]] || fail "missing value for --skill"
+      skill="$2"
+      shift 2
+      ;;
+    --interactive)
+      [[ "$#" -ge 2 ]] || fail "missing value for --interactive"
+      interactive="$2"
+      interactive_set=true
+      shift 2
+      ;;
+    --model)
+      [[ "$#" -ge 2 ]] || fail "missing value for --model"
+      model="$2"
+      shift 2
+      ;;
+    --extra)
+      [[ "$#" -ge 2 ]] || fail "missing value for --extra"
+      add_extra "scalar" "$2" extra_keys extra_values extra_kinds
+      shift 2
+      ;;
+    --extra-list)
+      [[ "$#" -ge 2 ]] || fail "missing value for --extra-list"
+      add_extra "list" "$2" extra_keys extra_values extra_kinds
+      shift 2
+      ;;
+    --override)
+      [[ "$#" -ge 2 ]] || fail "missing value for --override"
+      add_override "$2" overrides
+      shift 2
+      ;;
+    *)
+      echo "$PROG: unexpected argument: $1" >&2
+      show_usage 1
+      ;;
+    esac
+  done
+
+  case "$format" in
+  yaml | json) ;;
+  *) fail "unknown --format: $format (expected yaml|json)" ;;
+  esac
+
+  if [[ "$format" == "yaml" ]]; then
+    [[ -n "$skill" ]] || fail "--skill is required in yaml mode"
+    [[ "$interactive_set" == "true" ]] || fail "--interactive is required in yaml mode"
+    case "$interactive" in
+    true | false) ;;
+    *) fail "--interactive must be true or false (got: $interactive)" ;;
+    esac
   fi
 
-  if [[ "$#" -gt 0 ]]; then
-    echo "$PROG: unexpected argument: $1" >&2
-    show_usage 1
-  fi
-
+  # -- Resolve session-level values --
   require_commands jq git
 
   local branch
@@ -92,8 +170,73 @@ main() {
   run_id=$(resolve_run_id)
   timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-  emit_json "$branch" "$commit" "$base_sha" "$pr_url" \
-    "$ticket_id" "$ticket_ref" "$platform" "$timestamp" "$run_id"
+  # -- Apply overrides --
+  branch=$(apply_override "branch" "$branch" overrides)
+  commit=$(apply_override "commit" "$commit" overrides)
+  base_sha=$(apply_override "baseSha" "$base_sha" overrides)
+  pr_url=$(apply_override "pr" "$pr_url" overrides)
+  ticket_id=$(apply_override "ticket_id" "$ticket_id" overrides)
+  ticket_ref=$(apply_override "ticket_ref" "$ticket_ref" overrides)
+  platform=$(apply_override "platform" "$platform" overrides)
+  timestamp=$(apply_override "timestamp" "$timestamp" overrides)
+  run_id=$(apply_override "run_id" "$run_id" overrides)
+
+  if [[ "$format" == "json" ]]; then
+    emit_json "$branch" "$commit" "$base_sha" "$pr_url" \
+      "$ticket_id" "$ticket_ref" "$platform" "$timestamp" "$run_id"
+  else
+    emit_yaml \
+      "$skill" "$timestamp" "$base_sha" "$interactive" "$model" \
+      "$ticket_id" "$ticket_ref" "$branch" "$commit" "$pr_url" "$run_id" \
+      extra_keys extra_values extra_kinds
+  fi
+}
+
+# Append an extension key/value to the caller's ordered list. Splits the
+# argument once on the first `=`. `kind` is either `scalar` or `list`.
+add_extra() {
+  local kind="$1" arg="$2"
+  local -n keys_ref="$3"
+  local -n values_ref="$4"
+  local -n kinds_ref="$5"
+  local key value
+  if [[ "$arg" != *"="* ]]; then
+    fail "--extra/--extra-list argument missing '=': $arg"
+  fi
+  key="${arg%%=*}"
+  value="${arg#*=}"
+  [[ -n "$key" ]] || fail "--extra/--extra-list argument has empty key"
+  if [[ -z "${kinds_ref[$key]:-}" ]]; then
+    keys_ref+=("$key")
+  fi
+  values_ref["$key"]="$value"
+  kinds_ref["$key"]="$kind"
+}
+
+# Record an override key=value. Empty value force-omits the key on emit.
+add_override() {
+  local arg="$1"
+  local -n overrides_ref="$2"
+  local key value
+  if [[ "$arg" != *"="* ]]; then
+    fail "--override argument missing '=': $arg"
+  fi
+  key="${arg%%=*}"
+  value="${arg#*=}"
+  [[ -n "$key" ]] || fail "--override argument has empty key"
+  overrides_ref["$key"]="$value"
+}
+
+# Return the overridden value when the key has been overridden, otherwise
+# the resolved value. The empty-string override force-omits.
+apply_override() {
+  local key="$1" resolved="$2"
+  local -n overrides_ref="$3"
+  if [[ -n "${overrides_ref[$key]+set}" ]]; then
+    printf '%s' "${overrides_ref[$key]}"
+  else
+    printf '%s' "$resolved"
+  fi
 }
 
 # Print short SHA of `default_branch` (e.g., `origin/main`) or empty if
@@ -279,6 +422,137 @@ emit_json() {
     + (if $ticket_ref == "" then {} else { ticket_ref: $ticket_ref } end)
     + (if $run_id     == "" then {} else { run_id:     $run_id     } end)
     '
+}
+
+# Emit the canonical YAML frontmatter block, including `---` delimiters.
+# Empty values are omitted. Field order is fixed: provenance block, then
+# canonical top-level fields, then caller-supplied extensions in
+# insertion order.
+emit_yaml() {
+  local skill="$1" timestamp="$2" base_sha="$3" interactive="$4" model="$5"
+  local ticket_id="$6" ticket_ref="$7" branch="$8" commit="$9" pr_url="${10}" run_id="${11}"
+  local -n yaml_extra_keys="${12}"
+  local -n yaml_extra_values="${13}"
+  local -n yaml_extra_kinds="${14}"
+
+  printf '%s\n' "---"
+
+  # provenance block
+  printf '%s\n' "provenance:"
+  emit_yaml_indented_scalar "skill" "$skill"
+  emit_yaml_indented_scalar "timestamp" "$timestamp"
+  [[ -n "$base_sha" ]] && emit_yaml_indented_scalar "baseSha" "$base_sha"
+  # isInteractive is a boolean — emit unquoted true|false.
+  printf '  %s: %s\n' "isInteractive" "$interactive"
+  [[ -n "$model" ]] && emit_yaml_indented_scalar "model" "$model"
+
+  # canonical top-level fields
+  [[ -n "$ticket_id" ]] && emit_yaml_scalar "ticket_id" "$ticket_id"
+  [[ -n "$ticket_ref" ]] && emit_yaml_scalar "ticket_ref" "$ticket_ref"
+  emit_yaml_scalar "branch" "$branch"
+  emit_yaml_scalar "commit" "$commit"
+  [[ -n "$pr_url" ]] && emit_yaml_scalar "pr" "$pr_url"
+  [[ -n "$run_id" ]] && emit_yaml_scalar "run_id" "$run_id"
+
+  # extension fields in insertion order
+  local key kind value
+  for key in "${yaml_extra_keys[@]+"${yaml_extra_keys[@]}"}"; do
+    value="${yaml_extra_values[$key]}"
+    kind="${yaml_extra_kinds[$key]}"
+    if [[ "$kind" == "list" ]]; then
+      emit_yaml_flow_list "$key" "$value"
+    else
+      emit_yaml_scalar "$key" "$value"
+    fi
+  done
+
+  printf '%s\n' "---"
+}
+
+# Emit a top-level YAML `key: value` line, auto-quoting the value as needed.
+emit_yaml_scalar() {
+  local key="$1" value="$2"
+  printf '%s: %s\n' "$key" "$(yaml_quote "$value")"
+}
+
+# Emit an indented YAML `key: value` line inside the provenance block.
+emit_yaml_indented_scalar() {
+  local key="$1" value="$2"
+  printf '  %s: %s\n' "$key" "$(yaml_quote "$value")"
+}
+
+# Emit a top-level YAML flow list: `key: [v1, v2, v3]`. Empty value emits
+# an empty flow list `key: []`. Elements are split on `,` and each is
+# passed through `yaml_quote`.
+emit_yaml_flow_list() {
+  local key="$1" raw="$2"
+  if [[ -z "$raw" ]]; then
+    printf '%s: []\n' "$key"
+    return
+  fi
+  local IFS=','
+  # shellcheck disable=SC2206
+  local -a parts=( $raw )
+  local out="" i
+  for ((i = 0; i < ${#parts[@]}; i++)); do
+    if [[ "$i" -gt 0 ]]; then
+      out+=", "
+    fi
+    out+="$(yaml_quote "${parts[$i]}")"
+  done
+  printf '%s: [%s]\n' "$key" "$out"
+}
+
+# Return the value either bare or single-quoted depending on YAML
+# auto-quoting rules. The predicate quotes when the value contains any of
+# the unsafe glyphs (`# : [ ] { } , & * ! | > < ? % @ \` ` `), has leading
+# or trailing whitespace, is empty, or begins with `-` / `?` / `:`.
+# Embedded single quotes are doubled inside the quoted form.
+yaml_quote() {
+  local v="$1"
+  if needs_yaml_quoting "$v"; then
+    local escaped="${v//\'/\'\'}"
+    printf "'%s'" "$escaped"
+  else
+    printf '%s' "$v"
+  fi
+}
+
+# Decide whether `v` needs single-quote wrapping. Returns 0 (true) when
+# quoting is required, 1 otherwise.
+#
+# YAML parses `:` as a key indicator only when followed by whitespace or
+# end-of-value, so URLs like `https://...` are safe bare. `#` is always
+# treated as a comment introducer in YAML 1.1/1.2 (the spec is permissive
+# about the preceding context), so we quote any value containing `#`.
+needs_yaml_quoting() {
+  local v="$1"
+  # Empty values must be quoted.
+  [[ -z "$v" ]] && return 0
+  # Leading or trailing whitespace.
+  [[ "$v" =~ ^[[:space:]] ]] && return 0
+  [[ "$v" =~ [[:space:]]$ ]] && return 0
+  # Leading sigils that YAML interprets specially.
+  case "$v" in
+  -* | \?* | :*) return 0 ;;
+  esac
+  # Colon followed by whitespace anywhere is a key indicator.
+  [[ "$v" =~ :[[:space:]] ]] && return 0
+  # Trailing colon is the value-end form of a key indicator.
+  [[ "$v" == *: ]] && return 0
+  # Glyphs anywhere in the value that demand quoting.
+  case "$v" in
+  *'#'* | *'['* | *']'* | *'{'* | *'}'* \
+    | *','* | *'&'* | *'*'* | *'!'* | *'|'* | *'>'* | *'<'* \
+    | *'?'* | *'%'* | *'@'* | *'`'* | *"'"* | *'"'*)
+    return 0
+    ;;
+  esac
+  # Values that look like YAML booleans/null or numbers stay bare per the
+  # current predicate. The predicate's value space is the schema's
+  # canonical fields and known extensions; expand here if a future
+  # extension introduces ambiguity.
+  return 1
 }
 
 # Require each named command to be on PATH. Exits 1 with a clear message

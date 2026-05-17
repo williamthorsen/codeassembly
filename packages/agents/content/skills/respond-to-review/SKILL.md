@@ -32,13 +32,21 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
 
-- `provenance.skill`: always `respond-to-review`.
-- `provenance.isInteractive`: always `true`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-- `responding_to` (response-artifact extension): the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
-<!-- /include -->
+Run via Bash:
+
+```bash
+resolve-frontmatter.sh \
+  --skill respond-to-review \
+  --interactive true \
+  --model "$MODEL_ID" \
+  --extra "responding_to=$review_filename"
+```
+
+Prepend the script's output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Locating the review
 
@@ -126,24 +134,11 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads `# Change summary: {description}`.
 
-The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
+The artifact begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
+
+The body following the frontmatter has this structure:
 
 ```markdown
----
-provenance:
-  skill: respond-to-review
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: true
-  model: '{model id}'
-ticket_id: '{ticket ID from session context, omit if null}'
-ticket_ref: '{ticket display ref, omit if null}'
-branch: '{branch name from session context}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-responding_to: '{filename of the review being responded to}'
----
-
 # Change summary: {ticket_ref}: {description}
 
 ## Changes made
