@@ -13,6 +13,7 @@
     "fmt:all:check": "pnpm run fmt:sh:check && pnpm run fmt:check",
     "fmt:sh": "shfmt --write **/*.sh",
     "fmt:sh:check": "shfmt --list **/*.sh",
+    "test:post": "pnpm run test:sh",
     "test:sh": "shellspec content/scripts/"
   },
   "dependencies": {
