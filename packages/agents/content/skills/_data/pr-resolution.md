@@ -1,13 +1,13 @@
 # PR resolution
 
-Shared contract for resolving the `pr:` frontmatter field at artifact write time. Skills do not invoke `gh` or `curl` directly — they call `scripts/resolve-frontmatter.sh`, which implements this contract once and emits the resolved `pr:` value (along with all other canonical frontmatter fields) as part of its JSON output. This document defines the contract the script obeys; consumers do not embed dispatch snippets directly.
+Shared contract for resolving the `pr:` frontmatter field at artifact write time. Skills do not invoke `gh` or `curl` directly — they call `scripts/resolve-frontmatter.sh`, which implements this contract once and emits the resolved `pr:` value (along with all other canonical frontmatter fields) as part of its output. This document defines the contract the script obeys; consumers do not embed dispatch snippets directly.
 
 ## Contract
 
 - Resolution runs at artifact write time, against the current branch.
 - The Bash invocation uses a **5-second timeout** (`timeout: 5000` on the Bash tool when calling the script; the script itself wraps the platform CLI in `timeout`/`gtimeout` when available).
-- On **empty output** (no PR exists for the branch — the lookup succeeded), the script omits the `pr` field from its JSON output. Consumers must omit the `pr:` line from frontmatter. Do **not** emit a warning. This is the normal pre-PR case.
-- On **failure** (CLI unavailable, auth error, network error, timeout, or any non-zero exit), the script omits the `pr` field from its JSON output and emits the canonical warning to stderr. Consumers must omit the `pr:` line **and** surface the warning in the agent's text output. **Never block the artifact write.**
+- On **empty output** (no PR exists for the branch — the lookup succeeded), the script omits the `pr` field from its output. Consumers must omit the `pr:` line from frontmatter. Do **not** emit a warning. This is the normal pre-PR case.
+- On **failure** (CLI unavailable, auth error, network error, timeout, or any non-zero exit), the script omits the `pr` field from its output and emits the canonical warning to stderr. Consumers must omit the `pr:` line **and** surface the warning in the agent's text output. **Never block the artifact write.**
 
 ### Canonical warning text
 
