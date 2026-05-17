@@ -45,8 +45,8 @@
 #
 # Exit codes:
 #   0  Success.
-#   1  Missing branch manifest (run `get-session-context` first), not in a
-#      git repo, missing `jq`, or required-arg violation in yaml mode.
+#   1  Missing branch manifest (run `get-session-context` first), not in a git repo, missing `jq`, or
+#      required-arg violation in yaml mode.
 
 set -euo pipefail
 
@@ -353,8 +353,12 @@ resolve_run_id() {
 }
 
 # Run a command with a timeout.
-# Uses `timeout` or `gtimeout` when available; otherwise, runs without a timeout (the agent's Bash-tool timeout still
-# applies). The command and its arguments are passed verbatim.
+# Backend chain: `timeout` -> `gtimeout` -> a Perl fork+wait wrapper -> loud failure.
+# The Perl fallback keeps the contract on stock macOS, where GNU `timeout` is absent. It forks a
+# child that `exec`s the wrapped command, installs a SIGALRM handler in the parent that sends
+# SIGTERM to the child, and waits for the child's exit. Mirroring real `timeout(1)`'s structure
+# avoids bash's "Alarm clock" job-control noise that a bare `alarm + exec` would emit on timeout.
+# The final `fail` branch is a sentinel — Perl ships with macOS and every mainstream Linux distribution.
 run_with_timeout() {
   local secs="$1"
   shift
@@ -362,8 +366,20 @@ run_with_timeout() {
     timeout "${secs}s" "$@"
   elif command -v gtimeout >/dev/null 2>&1; then
     gtimeout "${secs}s" "$@"
+  elif command -v perl >/dev/null 2>&1; then
+    perl -e '
+      my $secs = shift @ARGV;
+      my $pid = fork;
+      defined $pid or die "fork: $!\n";
+      if ($pid == 0) { exec { $ARGV[0] } @ARGV; die "exec: $!\n" }
+      local $SIG{ALRM} = sub { kill "TERM", $pid };
+      alarm $secs;
+      waitpid $pid, 0;
+      my $r = $?;
+      exit($r & 127 ? 128 + ($r & 127) : $r >> 8);
+    ' "$secs" "$@"
   else
-    "$@"
+    fail "no timeout mechanism available (need timeout, gtimeout, or perl on PATH)"
   fi
 }
 

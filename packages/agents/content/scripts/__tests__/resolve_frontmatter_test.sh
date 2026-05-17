@@ -118,11 +118,11 @@ End
 Describe "resolve_run_id"
 setup_tmpdir() {
   tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null
+  pushd "$tmpdir" >/dev/null || exit
 }
 
 cleanup_tmpdir() {
-  popd >/dev/null
+  popd >/dev/null || exit
   rm -rf "$tmpdir"
 }
 
@@ -148,6 +148,46 @@ When call resolve_pr_url "nope" "main"
 The stderr should include "Note: PR lookup failed; proceeding without pr field."
 The stderr should include "(unknown platform: nope)"
 The output should equal ""
+End
+End
+
+Describe "run_with_timeout"
+It "returns the wrapped command's stdout when it completes inside the timeout"
+When call run_with_timeout 5 echo "hello"
+The output should equal "hello"
+The status should be success
+End
+
+It "exits non-zero when the wrapped command exceeds the timeout"
+# `sleep 2` against a 1-second budget; bounded test runtime ~1s. The exact exit code varies by backend (124 from GNU
+# `timeout`, 142 from a Perl SIGALRM), so the assertion deliberately covers only the non-zero contract.
+When run run_with_timeout 1 sleep 2
+The status should be failure
+End
+
+It "uses the Perl alarm fallback when neither timeout nor gtimeout is on PATH"
+perl_fallback_run() {
+  local bin_dir
+  bin_dir=$(mktemp -d)
+  # Symlink only perl and sleep into the restricted PATH;
+  # intentionally omits timeout and gtimeout to exercise the Perl branch.
+  ln -s "$(command -v perl)" "$bin_dir/perl"
+  ln -s "$(command -v sleep)" "$bin_dir/sleep"
+  PATH="$bin_dir" run_with_timeout 1 sleep 2
+}
+When run perl_fallback_run
+The status should be failure
+End
+
+It "fails loudly when no timeout backend is on PATH"
+no_backend_run() {
+  local empty_dir
+  empty_dir=$(mktemp -d)
+  PATH="$empty_dir" run_with_timeout 1 true
+}
+When run no_backend_run
+The status should equal 1
+The stderr should include "no timeout mechanism available"
 End
 End
 
@@ -611,11 +651,11 @@ End
 Describe "main"
 setup_main_validation() {
   tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null
+  pushd "$tmpdir" >/dev/null || exit
 }
 
 cleanup_main_validation() {
-  popd >/dev/null
+  popd >/dev/null || exit
   rm -rf "$tmpdir"
 }
 
@@ -650,9 +690,8 @@ End
 Describe "main end-to-end"
 setup_main_e2e() {
   tmpdir=$(mktemp -d)
-  pushd "$tmpdir" >/dev/null
-  # Initialize a minimal git repository so `current_branch` and
-  # `git rev-parse --short HEAD` succeed.
+  pushd "$tmpdir" >/dev/null || exit
+  # Initialize a minimal git repository so `current_branch` and `git rev-parse --short HEAD` succeed.
   git init --quiet --initial-branch=main .
   git config user.email "test@example.com"
   git config user.name "Test"
@@ -680,7 +719,7 @@ SH
 
 cleanup_main_e2e() {
   PATH="$ORIGINAL_PATH"
-  popd >/dev/null
+  popd >/dev/null || exit
   rm -rf "$tmpdir"
 }
 

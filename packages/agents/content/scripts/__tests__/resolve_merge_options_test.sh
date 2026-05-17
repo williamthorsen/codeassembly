@@ -44,7 +44,10 @@ End
 
 Describe "strict_majority"
 It "returns empty for empty input"
-When call strict_majority
+test_majority() {
+  : | strict_majority
+}
+When call test_majority
 The output should equal ""
 End
 
@@ -201,7 +204,7 @@ Describe "collect_commit_tally"
 setup_repo() {
   tmpdir=$(mktemp -d)
   original_pwd="$PWD"
-  cd "$tmpdir"
+  cd "$tmpdir" || exit
   git init -q -b main
   git config user.email "t@t"
   git config user.name "t"
@@ -212,7 +215,7 @@ setup_repo() {
 }
 
 cleanup_repo() {
-  cd "$original_pwd"
+  cd "$original_pwd" || exit
   rm -rf "$tmpdir"
 }
 
@@ -314,7 +317,7 @@ Describe "resolve_dimension"
 setup_repo() {
   tmpdir=$(mktemp -d)
   original_pwd="$PWD"
-  cd "$tmpdir"
+  cd "$tmpdir" || exit
   git init -q -b main
   git config user.email "t@t"
   git config user.name "t"
@@ -421,7 +424,7 @@ Describe "end-to-end JSON output"
 setup_repo() {
   tmpdir=$(mktemp -d)
   original_pwd="$PWD"
-  cd "$tmpdir"
+  cd "$tmpdir" || exit
   git init -q -b main
   git config user.email "t@t"
   git config user.name "t"
@@ -436,7 +439,7 @@ JSON
 }
 
 cleanup_repo() {
-  cd "$original_pwd"
+  cd "$original_pwd" || exit
   rm -rf "$tmpdir"
 }
 
