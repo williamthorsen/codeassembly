@@ -16,9 +16,9 @@ Return all session metadata as a single object by reading a cached manifest file
 .agents/{sanitized-branch}.branch-manifest.json
 ```
 
-The branch name is sanitized for filesystem safety: replace `/` with `-`. Do not replace `_` (it is a valid filename character).
+The branch name is sanitized for filesystem safety: Replace `/` with `-`. Do not replace `_` (it is a valid filename character).
 
-Example: branch `MAC-130/agents/feat/branch-manifest` produces `.agents/MAC-130-agents-feat-branch-manifest.branch-manifest.json`.
+Example: Branch `MAC-130/agents/feat/branch-manifest` produces `.agents/MAC-130-agents-feat-branch-manifest.branch-manifest.json`.
 
 **Backward compatibility:** When checking for an existing manifest, first look for `.branch-manifest.json` (new). If not found, also check `.manifest.json` (old). If the old format is found, read and return it as-is. Always write new manifests with the `.branch-manifest.json` extension.
 
@@ -59,7 +59,7 @@ Check for an existing manifest file before performing any derivation.
 1. Read the current branch name from the `gitStatus` field in the system prompt. Match the line `Current branch: {name}` and take the text after the colon and space, trimmed of leading and trailing whitespace.
 2. If `gitStatus` is absent or does not contain a `Current branch:` line, return an error: "Cannot determine branch name: gitStatus not available in system prompt."
 3. If the branch name is empty or the gitStatus indicates a detached HEAD state, return an error: "Detached HEAD: this skill requires an active branch. Create or check out a branch before invoking this skill."
-4. Sanitize the branch name: trim any leading or trailing whitespace, then replace every `/` with `-`. After replacing, remove any trailing `-` characters.
+4. Sanitize the branch name: Trim any leading or trailing whitespace, then replace every `/` with `-`. After replacing, remove any trailing `-` characters.
 5. Use the Read tool to attempt reading `.agents/{sanitized-branch}.branch-manifest.json`.
 6. If the file exists and contains valid JSON, check for stale schema (see [Immutability contract](#immutability-contract)). If the schema is current (all required fields present, including `platform`, `artifact_base_dir`, `artifact_paths`, and `ticket_ref`), return the manifest object. Done.
 7. If the file does not exist, use the Read tool to attempt reading `.agents/{sanitized-branch}.manifest.json` (old format).
@@ -81,7 +81,7 @@ If no valid manifest exists (or the existing manifest has a stale schema), deriv
 
 All field sections below extract values from `{prefs}`. Do not re-read the files or specify fallback chains — the merge has already resolved precedence.
 
-To extract a YAML value: read line by line. When you encounter a top-level key (no leading whitespace, e.g., `project:`), subsequent indented lines belong to that section until the next non-indented line. Match the target key within that section and take the value after the colon, trimmed of leading/trailing whitespace and quotes.
+To extract a YAML value: Read line by line. When you encounter a top-level key (no leading whitespace, e.g., `project:`), subsequent indented lines belong to that section until the next non-indented line. Match the target key within that section and take the value after the colon, trimmed of leading/trailing whitespace and quotes.
 
 #### Branch name
 
@@ -92,15 +92,15 @@ Use the raw branch name extracted from `gitStatus` in step 1.
 Extract the ticket ID from the branch name using these rules. See [`_data/ticket-id-extraction.md`](../_data/ticket-id-extraction.md) for the canonical contract shared with the `get-ticket-id` skill.
 
 1. Search the branch name for a pattern matching: **two or more letters** (minimum 2), then a hyphen, then one or more digits. **Single-letter prefixes are not valid ticket IDs**: `a-1`, `x-99`, `b-123-test` must not match. Valid prefixes have at least two letters: `PT-1`, `MAC-147`, `ab-5`.
-2. The match is **unanchored**: the pattern is searched anywhere in the branch name, and the **first occurrence wins**. For example, `wt/MAC-130` matches `MAC-130`, `wthorsen/MAC-130` matches `MAC-130`, and `feat/foo-2` matches `foo-2` (the kebab-case prefix `foo` plus digits forms a valid Jira-style shape).
-3. The match is **case-insensitive**: both `MAC-147` and `mac-147` are valid matches.
-4. **Normalize to uppercase**: the ticket ID is always stored in uppercase (e.g., `mac-147` becomes `MAC-147`, `wt/compPlaN-795` becomes `COMPPLAN-795`).
+2. The match is **unanchored**: The pattern is searched anywhere in the branch name, and the **first occurrence wins**. For example, `wt/MAC-130` matches `MAC-130`, `wthorsen/MAC-130` matches `MAC-130`, and `feat/foo-2` matches `foo-2` (the kebab-case prefix `foo` plus digits forms a valid Jira-style shape).
+3. The match is **case-insensitive**: Both `MAC-147` and `mac-147` are valid matches.
+4. **Normalize to uppercase**: The ticket ID is always stored in uppercase (e.g., `mac-147` becomes `MAC-147`, `wt/compPlaN-795` becomes `COMPPLAN-795`).
 5. The match terminates naturally at the first non-digit character following the digits — this can be `/`, `_`, `.`, `-` followed by a non-digit, or end-of-string. Trailing `.N` (sub-ticket) and `-description` segments are tolerated in input but are **not** part of the canonical ID. For example, `MAC-147-some-description` extracts `MAC-147` (the match stops before `-s` because `-s` does not continue the digits pattern); `NMR-567.2/fix/regression` extracts `NMR-567` (the match stops at `.`); `jira-123-1` extracts `JIRA-123` (the match stops before `-1` because `-1` is a description suffix beginning with hyphen-digit, not a continuation of the original digits run).
 6. If no prefixed ticket ID is found, check for a **bare issue number**: one or more digits anchored to the start of the branch name, terminated by `/`, `_`, or `-`, or at the end of the branch name if it is the entire name. Examples: `147/feat/something` -> `147`, `42_fix_login` -> `42`, `99` -> `99`. Do not match digits that appear after non-digit characters.
 7. If a bare issue number is found, extract `project.ticket_ref_prefix` from `{prefs}`:
-   - If `ticket_ref_prefix` is `#` (a GitHub display prefix): return the **bare number only**. The `#` character is a display convention, not an identifier component, and must not appear in file paths.
-   - If a Jira-style prefix is configured (e.g., `MAC-`): ticket ID = `{ticket_ref_prefix}{number}` (e.g., prefix `MAC-` + number `147` -> `MAC-147`).
-   - If no prefix is configured: ticket ID = the number alone (e.g., `147`).
+   - If `ticket_ref_prefix` is `#` (a GitHub display prefix): Return the **bare number only**. The `#` character is a display convention, not an identifier component, and must not appear in file paths.
+   - If a Jira-style prefix is configured (e.g., `MAC-`): Ticket ID = `{ticket_ref_prefix}{number}` (e.g., prefix `MAC-` + number `147` -> `MAC-147`).
+   - If no prefix is configured: Ticket ID = the number alone (e.g., `147`).
 8. If neither a prefixed ticket ID nor a bare issue number is found, the ticket ID is `null`.
 
 #### Ticket ref
@@ -172,8 +172,8 @@ After deriving all fields, persist the manifest using the Write tool.
 
 Once created, a manifest file is never overwritten under normal circumstances. It captures the session context at creation time. There are two exception categories that trigger re-derivation:
 
-1. **Corrupt manifest** (invalid JSON): the file cannot be parsed. Delete it and re-derive all fields.
-2. **Stale-schema manifest** (valid JSON but missing required fields): the manifest was created under an older schema version that did not include fields now required (e.g., `platform`, `artifact_base_dir`, `artifact_paths`, `ticket_ref`). Delete it and re-derive all fields.
+1. **Corrupt manifest** (invalid JSON): The file cannot be parsed. Delete it and re-derive all fields.
+2. **Stale-schema manifest** (valid JSON but missing required fields): The manifest was created under an older schema version that did not include fields now required (e.g., `platform`, `artifact_base_dir`, `artifact_paths`, `ticket_ref`). Delete it and re-derive all fields.
 
 In both cases, the existing file is deleted and the full derivation process runs to produce a new manifest with the current schema. This is a one-time cost per branch when the schema evolves.
 
@@ -201,7 +201,7 @@ Branch: `MAC-130/agents/feat/branch-manifest`
 
 **Derivation trace:**
 
-1. Ticket ID: branch starts with `MAC-130` (letters-hyphen-digits). Extract `MAC-130`.
+1. Ticket ID: Branch starts with `MAC-130` (letters-hyphen-digits). Extract `MAC-130`.
 2. Everything after `MAC-130/` is the description: `agents/feat/branch-manifest`.
 
 ```json
@@ -247,7 +247,7 @@ Branch: `mac-147`
 
 **Derivation trace:**
 
-1. Ticket ID: branch starts with `mac-147` (letters-hyphen-digits, case-insensitive). Extract and normalize to uppercase: `MAC-147`.
+1. Ticket ID: Branch starts with `mac-147` (letters-hyphen-digits, case-insensitive). Extract and normalize to uppercase: `MAC-147`.
 2. After stripping the ticket ID, nothing remains. Description is empty.
 
 ```json
@@ -270,8 +270,8 @@ Branch: `experiment/try-new-parser`
 
 **Derivation trace:**
 
-1. Ticket ID: the unanchored case-insensitive search for `[A-Z]{2,}-[0-9]+` finds no match — the branch contains no digits. No prefixed ticket ID.
-2. Bare issue number check: first character `e` is not a digit. No bare number found.
+1. Ticket ID: The unanchored case-insensitive search for `[A-Z]{2,}-[0-9]+` finds no match — the branch contains no digits. No prefixed ticket ID.
+2. Bare issue number check: First character `e` is not a digit. No bare number found.
 3. Ticket ID is `null`. The full branch name is treated as the description (not stored separately in the manifest).
 
 ```json
@@ -319,7 +319,7 @@ Branch: `NMR-567.2/fix/regression`
 
 **Derivation trace:**
 
-1. Ticket ID: the case-insensitive `[A-Z]{2,}-[0-9]+` match starts at `N` and consumes `NMR-567`. The greedy digit run terminates at `.` because `.` is not a digit, so `.2` is not captured. Result: `NMR-567`.
+1. Ticket ID: The case-insensitive `[A-Z]{2,}-[0-9]+` match starts at `N` and consumes `NMR-567`. The greedy digit run terminates at `.` because `.` is not a digit, so `.2` is not captured. Result: `NMR-567`.
 2. The remainder of the branch name (`.2/fix/regression`) is treated as the description; the leading `.2` is preserved verbatim because the description is everything after the canonical ticket ID.
 
 ```json
@@ -365,8 +365,8 @@ Branch: `a-1-test`
 
 **Derivation trace:**
 
-1. Ticket ID: the unanchored case-insensitive search for `[A-Z]{2,}-[0-9]+` finds no match. The only letter-hyphen-digit shape in the string is `a-1`, but `a` is only one letter and the pattern requires **two or more letters** before the hyphen. The trailing `-test` has no digits. No match.
-2. Bare issue number check: first character `a` is not a digit. No bare number found.
+1. Ticket ID: The unanchored case-insensitive search for `[A-Z]{2,}-[0-9]+` finds no match. The only letter-hyphen-digit shape in the string is `a-1`, but `a` is only one letter and the pattern requires **two or more letters** before the hyphen. The trailing `-test` has no digits. No match.
+2. Bare issue number check: First character `a` is not a digit. No bare number found.
 3. Ticket ID is `null`. The full branch name is treated as the description (not stored separately in the manifest).
 
 ```json
@@ -413,7 +413,7 @@ Preferences: `project.ticket_ref_prefix: MAC-`
 #### 10. Bare issue number without configured prefix
 
 Branch: `42_fix_login-redirect`
-Preferences: no `project.ticket_ref_prefix` configured
+Preferences: No `project.ticket_ref_prefix` configured
 
 **Derivation trace:**
 
@@ -448,7 +448,7 @@ Preferences: `project.ticket_ref_prefix: '#'`
 2. Bare issue number check: `152` found at start, at end of branch name.
 3. Read `project.ticket_ref_prefix` from preferences: `#`.
 4. Prefix is `#` (display-only convention). Return bare number: `152`.
-5. Ticket ref: prefix is `#`, so `ticket_ref = '#' + ticket_id = '#152'` (this is the demonstrative case where `ticket_ref` differs from `ticket_id`).
+5. Ticket ref: Prefix is `#`, so `ticket_ref = '#' + ticket_id = '#152'` (this is the demonstrative case where `ticket_ref` differs from `ticket_id`).
 6. After stripping the ticket ID, nothing remains. Description is empty.
 
 ```json
@@ -471,7 +471,7 @@ Branch: `wt/mac-130`
 
 **Derivation trace:**
 
-1. Ticket ID: the unanchored case-insensitive search finds `mac-130` after the `wt/` author prefix. Normalize to uppercase: `MAC-130`.
+1. Ticket ID: The unanchored case-insensitive search finds `mac-130` after the `wt/` author prefix. Normalize to uppercase: `MAC-130`.
 2. The branch name starts with `wt/`, not the ticket ID, so the description is the entire branch name minus the matched ticket. In practice, this manifest does not store a separate `description` field; the raw `branch_name` is preserved as-is.
 
 ```json

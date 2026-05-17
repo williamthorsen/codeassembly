@@ -56,7 +56,7 @@ Resolve session context and the artifact directory before writing.
 ### Path resolution
 
 1. Call `get-session-context` to obtain `ticket_id`, `project_slug`, `artifact_base_dir`, `artifact_paths`, and `branch_name`.
-2. If `ticket_id` is non-null: save as a ticket-level artifact at:
+2. If `ticket_id` is non-null: Save as a ticket-level artifact at:
 
    ```
    {artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/{filename}
@@ -64,7 +64,7 @@ Resolve session context and the artifact directory before writing.
 
    Filename uses the ticket-level shape: `{YYYYMMDD-HHMMSSZ}_{slug}_devlog.md`.
 
-3. Else (no ticket — research/exploration sessions): save to the project-scoped fallback at:
+3. Else (no ticket — research/exploration sessions): Save to the project-scoped fallback at:
 
    ```
    {artifact_base_dir}/projects/{project_slug}/{artifact_paths.devlogs}/{filename}

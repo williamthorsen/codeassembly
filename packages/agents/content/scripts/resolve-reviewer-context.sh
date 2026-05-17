@@ -15,19 +15,19 @@
 #     --lookup PATH
 #   resolve-reviewer-context.sh --help
 #
-# Output (stdout): markdown block ready to inline directly under the
+# Output (stdout): Markdown block ready to inline directly under the
 # reviewer prompt's `## Reviewer context` heading. Empty when neither
 # source produces content. The script never emits the `## Reviewer
 # context` heading itself — the orchestrator wraps the output and skips
 # the wrapping when the output is empty.
 #
 # Logic:
-#   - Sidecar (if non-empty file): print as-is followed by a blank line.
-#   - Lookup: parse sections by `^## ` headers; for each lookup key, scan
+#   - Sidecar (if non-empty file): Print as-is followed by a blank line.
+#   - Lookup: Parse sections by `^## ` headers; for each lookup key, scan
 #     the changed-file list for any matching `import` / `require` of that
 #     package. Emit matched sections in lookup-table declaration order.
 #
-# Match scope: only files with extensions `.ts`, `.tsx`, `.js`, `.jsx`,
+# Match scope: Only files with extensions `.ts`, `.tsx`, `.js`, `.jsx`,
 # `.mts`, `.cts`, `.mjs`, `.cjs` are scanned. Files listed in
 # `--changed-files` that no longer exist in the working tree (e.g.,
 # deleted) are silently skipped.
@@ -40,7 +40,7 @@
 # Subpath imports (e.g., `pkg/lib`) match the bare-key entry — the gotcha
 # usually lives in or near the subpath. Dynamic imports (`await
 # import('pkg')`), rebound names, and re-exports are not matched. v1
-# acceptable: any single static reference is enough signal that the
+# acceptable: Any single static reference is enough signal that the
 # package is in scope.
 #
 # Exit codes:
@@ -82,7 +82,7 @@ parse_args() {
       show_usage 0
       ;;
     *)
-      echo "$PROG: unknown option: $1" >&2
+      echo "$PROG: Unknown option: $1" >&2
       show_usage
       ;;
     esac
@@ -258,26 +258,26 @@ main() {
   parse_args "$@"
 
   if [[ -z "$changed_files" ]]; then
-    echo "$PROG: missing required flag: --changed-files" >&2
+    echo "$PROG: Missing required flag: --changed-files" >&2
     show_usage
   fi
 
   if [[ -z "$lookup" ]]; then
-    echo "$PROG: missing required flag: --lookup" >&2
+    echo "$PROG: Missing required flag: --lookup" >&2
     show_usage
   fi
 
   if [[ ! -r "$changed_files" ]]; then
-    echo "$PROG: cannot read --changed-files: $changed_files" >&2
+    echo "$PROG: Cannot read --changed-files: $changed_files" >&2
     exit 1
   fi
 
   if [[ ! -r "$lookup" ]]; then
-    echo "$PROG: cannot read --lookup: $lookup" >&2
+    echo "$PROG: Cannot read --lookup: $lookup" >&2
     exit 1
   fi
 
-  # Structural validity: a lookup file with no `## ` section headings is
+  # Structural validity: A lookup file with no `## ` section headings is
   # malformed. The script can't infer any package keys from it, so the
   # entire lookup mechanism would silently no-op. Fail loudly instead.
   # `grep -c` exits 1 on zero matches; suppress that under `set -e` with

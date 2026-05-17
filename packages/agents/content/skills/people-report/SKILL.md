@@ -15,7 +15,7 @@ Generate HR analytics reports from employee data provided as CSV paste or file p
 
 ## Arguments
 
-- `--report-type` (optional): comma-separated list of report types to generate. Valid values: `headcount`, `attrition`, `diversity`, `org-health`. When omitted, prompt the user interactively.
+- `--report-type` (optional): Comma-separated list of report types to generate. Valid values: `headcount`, `attrition`, `diversity`, `org-health`. When omitted, prompt the user interactively.
 
 ## Report types
 

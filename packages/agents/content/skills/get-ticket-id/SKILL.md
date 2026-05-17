@@ -18,7 +18,7 @@ Extract a Jira-style ticket ID from the current context.
 
 Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more letters, hyphen, digits — uppercased on output. Examples: `ABC-123`, `PT-1234`, `mac-130 → MAC-130`. Trailing `.N` sub-ticket and `-description` suffixes are tolerated in input but not part of the ID. See [`_data/ticket-id-extraction.md`](../_data/ticket-id-extraction.md) for the full contract and behavior table — it is the single source of truth shared with `get-session-context`.
 
-Note: kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract — branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
+Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract — branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
 
 ## Implementation
 
@@ -32,9 +32,9 @@ When no Jira-style ID matches, the script falls back to a **bare issue number** 
 
 When the bare-numeric fallback fires, the script reads `project.ticket_ref_prefix` from `.agents/preferences.yaml` to format the result:
 
-- If `ticket_ref_prefix` is `#`: return the **bare number only**. The `#` is a GitHub display convention and must not appear in file paths or returned values.
-- If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): return `{prefix}{number}` (e.g., `MAC-147`).
-- If no `ticket_ref_prefix` is configured: return the bare number (e.g., `42`).
+- If `ticket_ref_prefix` is `#`: Return the **bare number only**. The `#` is a GitHub display convention and must not appear in file paths or returned values.
+- If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): Return `{prefix}{number}` (e.g., `MAC-147`).
+- If no `ticket_ref_prefix` is configured: Return the bare number (e.g., `42`).
 
 | Branch         | `ticket_ref_prefix` | Returned ticket ID |
 | -------------- | ------------------- | ------------------ |
@@ -62,4 +62,4 @@ git log -1 --pretty=format:'%s' "$commit" | grep -oiE '[A-Z]{2,}-[0-9]+' | head 
 | Found         | Different     | Use branch ticket; ask developer to confirm |
 | Found         | None          | Return branch ticket ID                     |
 | None          | Found         | Return commit ticket ID                     |
-| None          | None          | Error: no ticket ID found                   |
+| None          | None          | Error: No ticket ID found                   |

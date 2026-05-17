@@ -12,7 +12,7 @@ Classify a ticket's complexity by examining the described work against the curre
 
 ## Arguments
 
-- **Ticket source** (optional): issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
+- **Ticket source** (optional): Issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
 
 ## Process
 

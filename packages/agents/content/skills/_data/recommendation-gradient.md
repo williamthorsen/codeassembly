@@ -1,6 +1,6 @@
 # Recommendation gradient
 
-> **Note for maintainers:** Several skill bodies — including `collaboration/SKILL.md`, `design-and-plan/SKILL.md`, and `refine-plan/SKILL.md` — contain pointers back to this file at their question-asking steps. Those pointers duplicate the universal rule in `AGENTS.md` _intentionally_: agents follow behavioural rules more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
+> **Note for maintainers:** Several skill bodies — including `collaboration/SKILL.md`, `design-and-plan/SKILL.md`, and `refine-plan/SKILL.md` — contain pointers back to this file at their question-asking steps. Those pointers duplicate the universal rule in `AGENTS.md` _intentionally_: Agents follow behavioural rules more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
 
 For numbered clarifying questions with 2+ options, mark each option with a strength gradient and a brief rationale. Skip this format for confirmation prompts and for next-steps menus (those use their own `🟢 recommended` convention).
 
@@ -27,7 +27,7 @@ Marker, then option title and colon. Each pro (`➕`) and con (`➖`) goes on it
 
 ## Question identifiers
 
-When a single response contains 2+ option-style questions, prefix each question with an identifier so the user can reference answers unambiguously (e.g., "Q1: option 2"). Default to `Q1`, `Q2`, etc. When the skill's underlying data already carries stable identifiers — for example, `refine-plan` presents questions tied to plan-review findings like `C1`, `X2` — use those identifiers in place of `Q1/Q2` so the cross-skill mapping is preserved. For a single option-style question, omit the identifier.
+When a single response contains 2+ option-style questions, prefix each question with an identifier so the user can reference answers unambiguously (e.g., "Q1: Option 2"). Default to `Q1`, `Q2`, etc. When the skill's underlying data already carries stable identifiers — for example, `refine-plan` presents questions tied to plan-review findings like `C1`, `X2` — use those identifiers in place of `Q1/Q2` so the cross-skill mapping is preserved. For a single option-style question, omit the identifier.
 
 ## Examples
 

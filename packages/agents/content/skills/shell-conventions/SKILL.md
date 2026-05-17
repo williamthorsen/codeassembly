@@ -18,7 +18,7 @@ set -euo pipefail
 
 # script-name.sh — One-line purpose.
 #
-# Extended description: what the script does, behavioral notes,
+# Extended description: What the script does, behavioral notes,
 # composability characteristics.
 #
 # Usage:
@@ -39,7 +39,7 @@ main() {
     case $opt in
     h) show_usage 0 ;;
     *)
-      echo "$PROG: unknown option -$OPTARG" >&2
+      echo "$PROG: Unknown option -$OPTARG" >&2
       show_usage
       ;;
     esac
@@ -142,7 +142,7 @@ while [[ $# -gt 0 ]]; do
   --size) SPLIT_SIZE="$2"; shift ;;
   --dry-run) DRY_RUN=true ;;
   -h | --help) show_usage 0 ;;
-  -*) echo "$PROG: unknown option $1" >&2; show_usage ;;
+  -*) echo "$PROG: Unknown option $1" >&2; show_usage ;;
   *) POSITIONAL="$1" ;;
   esac
   shift
@@ -160,22 +160,22 @@ cmd="$1"; shift
 case "$cmd" in
 list) do_list ;;
 prune) do_prune ;;
-*) echo "$PROG: unknown command '$cmd'" >&2; show_usage ;;
+*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage ;;
 esac
 ```
 
 ## Error messages
 
 - **Always to stderr**: `echo "..." >&2`
-- **Prefix with `$PROG:`**: so piped output identifies the source.
-- **Be actionable**: tell the user what to do, not just what went wrong.
+- **Prefix with `$PROG:`**, so that piped output identifies the source.
+- **Be actionable**: Tell the user what to do, not just what went wrong.
 
 ```bash
 # Bad
-echo "Error: not found"
+echo "Error: Not found"
 
 # Good
-echo "$PROG: stable worktree not found at $path" >&2
+echo "$PROG: Stable worktree not found at $path" >&2
 echo "Create it with: git worktree add $path main" >&2
 ```
 
@@ -186,7 +186,7 @@ Preflight-check external commands before using them:
 ```bash
 for cmd in wt jq; do
   if ! command -v "$cmd" &>/dev/null; then
-    echo "$PROG: required command '$cmd' not found" >&2
+    echo "$PROG: Required command '$cmd' not found" >&2
     exit 127
   fi
 done

@@ -108,7 +108,7 @@ Each finding must include:
 
 - **ID**: Sequential within category (F/W/T/R/S, with `-L` suffix for legacy; see `review-criteria` skill for the full finding scheme)
 - **Location**: `file/path.ts:42` (file and line number)
-- **Severity**: one of `critical`, `warning`, `todo`, `recommendation`, `suggestion` (legacy variants append `(legacy)`)
+- **Severity**: One of `critical`, `warning`, `todo`, `recommendation`, `suggestion` (legacy variants append `(legacy)`)
 - **Description**: What the issue is
 - **Recommendation**: What to do about it
 
@@ -158,7 +158,7 @@ If no source files require test coverage, or no findings:
 
 ### Summary
 
-{Brief explanation: either no testable source changes, or test coverage reviewed with no issues found}
+{Brief explanation: Either no testable source changes, or test coverage reviewed with no issues found}
 ```
 
 ## Re-review protocol

@@ -10,19 +10,19 @@ Run a full development workflow by invoking the `orchestrate` engine with the co
 
 ## Arguments
 
-- Task description (required): what to implement
-- `--effort=<low|medium|high>`: select an effort level (default: `medium`)
-- `--max-review-rounds=N`: maximum iterative review rounds (default: from effort preset)
-- `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch)
-- `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: from effort preset)
-- `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: from effort preset)
-- `--architecture=<required|optional|absent>`: override architecture phase requirement (default: `optional`)
-- `--planning=<required|optional|absent>`: override planning phase requirement (default: `optional`)
-- `--models=<key:model,...>`: model assignment overrides (e.g., `--models=coder:sonnet`)
+- Task description (required): What to implement
+- `--effort=<low|medium|high>`: Select an effort level (default: `medium`)
+- `--max-review-rounds=N`: Maximum iterative review rounds (default: from effort preset)
+- `--diff-base=<ref>`: Reference to diff against for reviews (default: project's default branch)
+- `--approval-threshold=<low|medium|high>`: Findings at this level or above must be fixed for code approval (default: from effort preset)
+- `--budget-threshold=<low|medium|high>`: Remaining review-round budget is spent only on findings at this level or above (default: from effort preset)
+- `--architecture=<required|optional|absent>`: Override architecture phase requirement (default: `optional`)
+- `--planning=<required|optional|absent>`: Override planning phase requirement (default: `optional`)
+- `--models=<key:model,...>`: Model assignment overrides (e.g., `--models=coder:sonnet`)
 
 ### Deprecated arguments
 
-- `--mode=<vibe|lite|strict>`: deprecated. Use `--effort` instead. If both `--mode` and `--effort` are specified, `--effort` takes precedence. If only `--mode` is specified, map: `vibe` → `low`, `lite` → `medium`, `strict` → `high`.
+- `--mode=<vibe|lite|strict>`: Deprecated. Use `--effort` instead. If both `--mode` and `--effort` are specified, `--effort` takes precedence. If only `--mode` is specified, map: `vibe` → `low`, `lite` → `medium`, `strict` → `high`.
 
 ## Effort presets
 
@@ -37,7 +37,7 @@ Effort defines a ceiling on permitted investment. The orchestrator right-sizes t
 | architecture       | optional | optional           | optional |
 | planning           | optional | optional           | optional |
 
-The rule: effort level inverts to threshold level; review infrastructure scales proportionally. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
+The rule: Effort level inverts to threshold level; review infrastructure scales proportionally. Architecture and planning are always orchestrator-discretion — even at high effort, a one-line fix does not need architectural review.
 
 ### Effort x findings
 
@@ -62,15 +62,15 @@ For all effort-affected settings, values resolve in this order (highest priority
 
 ### Piggybacking rule
 
-Universal coder behavior, not effort-specific: during any fix cycle, also address none-severity suggestions in files already being modified. Do not seek out suggestions in untouched files. Thresholds control whether to initiate fix cycles; piggybacking controls what happens within one.
+Universal coder behavior, not effort-specific: During any fix cycle, also address none-severity suggestions in files already being modified. Do not seek out suggestions in untouched files. Thresholds control whether to initiate fix cycles; piggybacking controls what happens within one.
 
 ### Deferred-item handling
 
 When findings are below the effort's approval threshold:
 
-- **T (TODO) deferred**: wrap-up creates a ticket. Tracked debt, not forgotten.
-- **R (Recommendation) deferred**: noted in run summary. Discretionary, no ticket.
-- **S (Suggestion) deferred**: not tracked. Ephemeral.
+- **T (TODO) deferred**: Wrap-up creates a ticket. Tracked debt, not forgotten.
+- **R (Recommendation) deferred**: Noted in run summary. Discretionary, no ticket.
+- **S (Suggestion) deferred**: Not tracked. Ephemeral.
 
 ## Pipeline
 
@@ -89,11 +89,11 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 
 ## Process
 
-1. **Resolve effort**: if `--effort` is provided, look up the effort preset from the table above. If `--mode` is provided without `--effort`, map to effort level (`vibe` → `low`, `lite` → `medium`, `strict` → `high`). Default: `medium`.
-2. **Apply overrides**: for each setting, apply the resolution cascade — explicit CLI arguments override effort presets, which override preferences, which override engine defaults.
-3. **Resolve aspect reviewers**: based on the effort preset's `aspect-reviewers` setting (`disabled`, `auto`, or `always`), set the `orchestration.aspect_reviewers` configuration. `disabled` sets all aspects to `false`. `always` sets all aspects to `true`. `auto` omits the configuration (engine uses default file-pattern activation).
-4. **Build pipeline**: apply any `--architecture` or `--planning` overrides to the pipeline table. If not overridden, use `optional` for both.
-5. **Invoke the engine**: invoke the `orchestrate` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) directly.
+1. **Resolve effort**: If `--effort` is provided, look up the effort preset from the table above. If `--mode` is provided without `--effort`, map to effort level (`vibe` → `low`, `lite` → `medium`, `strict` → `high`). Default: `medium`.
+2. **Apply overrides**: For each setting, apply the resolution cascade — explicit CLI arguments override effort presets, which override preferences, which override engine defaults.
+3. **Resolve aspect reviewers**: Based on the effort preset's `aspect-reviewers` setting (`disabled`, `auto`, or `always`), set the `orchestration.aspect_reviewers` configuration. `disabled` sets all aspects to `false`. `always` sets all aspects to `true`. `auto` omits the configuration (engine uses default file-pattern activation).
+4. **Build pipeline**: Apply any `--architecture` or `--planning` overrides to the pipeline table. If not overridden, use `optional` for both.
+5. **Invoke the engine**: Invoke the `orchestrate` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) directly.
 
 ## After the run
 

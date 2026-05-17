@@ -26,10 +26,10 @@ When no ticket source is provided, attempt to derive the ticket from the current
    a. Read `project.ticket_ref_prefix` from `.agents/preferences.yaml`.
 
    b. **If `ticket_id` is purely numeric** (e.g., `357`):
-   - If `ticket_ref_prefix` is `#` or absent: the ID is a platform issue number. Determine the platform using the [platform resolution cascade](#platform-resolution-cascade). For GitHub, fetch issue `357`.
-   - If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): the full Jira key is `{prefix}{number}` (e.g., `MAC-357`). The platform is Jira (or whichever platform hosts that project).
+   - If `ticket_ref_prefix` is `#` or absent: The ID is a platform issue number. Determine the platform using the [platform resolution cascade](#platform-resolution-cascade). For GitHub, fetch issue `357`.
+   - If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): The full Jira key is `{prefix}{number}` (e.g., `MAC-357`). The platform is Jira (or whichever platform hosts that project).
 
-   c. **If `ticket_id` contains a prefix** (e.g., `MAC-42`): the ID is a Jira-style key. The platform is Jira (or whichever platform hosts that project).
+   c. **If `ticket_id` contains a prefix** (e.g., `MAC-42`): The ID is a Jira-style key. The platform is Jira (or whichever platform hosts that project).
 
    d. If the platform still cannot be determined, ask the user.
 

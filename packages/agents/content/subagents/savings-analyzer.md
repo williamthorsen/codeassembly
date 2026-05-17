@@ -18,11 +18,11 @@ You receive:
 
 ## Process
 
-1. **Read run-index.json** -- extract effort, thresholds, model config
-2. **Read run-log.jsonl** -- parse all events
-3. **Check artifact files** -- use {tool:Glob} to list files in the run directory; note which agents produced artifacts and which did not
-4. **Analyze** -- apply the three-question framework (see below)
-5. **Write artifact** -- write `{NN}_analyst_savings-analysis.md` to the run directory
+1. **Read run-index.json**: Extract effort, thresholds, model config
+2. **Read run-log.jsonl**: Parse all events
+3. **Check artifact files**: Use {tool:Glob} to list files in the run directory; note which agents produced artifacts and which did not
+4. **Analyze**: Apply the three-question framework (see below)
+5. **Write artifact**: Write `{NN}_analyst_savings-analysis.md` to the run directory
 
 ## Data quality
 

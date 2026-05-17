@@ -47,7 +47,7 @@ Refuse the merge with a specific reason on any of the following. Each refusal ex
 | `mergeStateStatus` | `"BLOCKED"`                                                  | "PR #{n} is blocked (failing required checks or missing required reviews)." |
 | `reviewDecision`   | `"CHANGES_REQUESTED"` or `"REVIEW_REQUIRED"` (when required) | "PR #{n} has unresolved review requirements."                               |
 
-**Failure-mode policy:** when a required field is missing or null in the JSON response (older `gh` versions, repository configurations that don't expose the field), **fail closed**: refuse with "Cannot determine merge state for PR #{n} — verify and merge manually." Never proceed when state is inconclusive.
+**Failure-mode policy:** when a required field is missing or null in the JSON response (older `gh` versions, repository configurations that don't expose the field), **fail closed**: Refuse with "Cannot determine merge state for PR #{n} — verify and merge manually." Never proceed when state is inconclusive.
 
 ### 3. Verify branch sync
 
@@ -122,7 +122,7 @@ gh api -X DELETE "repos/{headRepositoryOwner.login}/{headRepository.name}/git/re
 Capture stdout, stderr, and the exit code.
 
 - **On success:** set `remote_deletion_status = "deleted"`.
-- **On failure:** print `warning: failed to delete remote branch '{headRefName}': {stderr}` to stderr, but **do not** exit non-zero — the merge itself succeeded, and re-deleting a leftover branch is trivial. Set `remote_deletion_status = "deletion-failed: {first line of stderr}"`.
+- **On failure:** print `warning: Failed to delete remote branch '{headRefName}': {stderr}` to stderr, but **do not** exit non-zero — the merge itself succeeded, and re-deleting a leftover branch is trivial. Set `remote_deletion_status = "deletion-failed: {first line of stderr}"`.
 
 For `deletion_strategy in {both, none}`, set `remote_deletion_status` directly from the strategy without making an API call: `both` → `"deleted"` (the prior `gh pr merge --delete-branch` handled it; if `gh pr merge` succeeded, the remote ref is gone); `none` → `"preserved"`.
 

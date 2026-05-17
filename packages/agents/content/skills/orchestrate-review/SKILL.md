@@ -10,9 +10,9 @@ Run the review cycle on existing branch changes by invoking the `orchestrate` en
 
 ## Use cases
 
-- **Post-implementation review**: code was written manually or by a non-orchestrated agent and needs the full review cycle (parallel review, code-simplification-reviewer, holistic review).
-- **Re-review after manual fixes**: a previous orchestrated run exited with `needs_manual_review`, fixes were applied manually, and a fresh review cycle is needed.
-- **External PR review**: review changes on a branch that was created outside the orchestration workflow.
+- **Post-implementation review**: Code was written manually or by a non-orchestrated agent and needs the full review cycle (parallel review, code-simplification-reviewer, holistic review).
+- **Re-review after manual fixes**: A previous orchestrated run exited with `needs_manual_review`, fixes were applied manually, and a fresh review cycle is needed.
+- **External PR review**: Review changes on a branch that was created outside the orchestration workflow.
 
 Use `orchestrate-dev` instead when you need the full development workflow (architecture, planning, implementation, and review).
 
@@ -23,11 +23,11 @@ Use `orchestrate-dev` instead when you need the full development workflow (archi
 
 ## Arguments
 
-- Task description (required): what the branch changes accomplish
-- `--max-review-rounds=N`: maximum iterative review rounds (default: 3)
-- `--diff-base=<ref>`: reference to diff against for reviews (default: project's default branch)
-- `--approval-threshold=<low|medium|high>`: findings at this level or above must be fixed for code approval (default: `low`)
-- `--budget-threshold=<low|medium|high>`: remaining review-round budget is spent only on findings at this level or above (default: `low`)
+- Task description (required): What the branch changes accomplish
+- `--max-review-rounds=N`: Maximum iterative review rounds (default: 3)
+- `--diff-base=<ref>`: Reference to diff against for reviews (default: project's default branch)
+- `--approval-threshold=<low|medium|high>`: Findings at this level or above must be fixed for code approval (default: `low`)
+- `--budget-threshold=<low|medium|high>`: Remaining review-round budget is spent only on findings at this level or above (default: `low`)
 
 ## Pipeline
 
@@ -41,7 +41,7 @@ review-cycle (required)
 
 ## Process
 
-1. **Validate prerequisites**: run `git diff --name-only {merge-base-sha}..HEAD` (where `{merge-base-sha}` is resolved from `--diff-base` or the project's default branch) and confirm output is non-empty. If empty, exit with error: "No changes to review on this branch relative to the diff base." Verify a task description is provided and non-empty.
-2. **Invoke the engine**: invoke the `orchestrate` skill with the pipeline specification above and pass through all arguments unchanged. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table above **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute. No additional structured format is needed beyond this table.
+1. **Validate prerequisites**: Run `git diff --name-only {merge-base-sha}..HEAD` (where `{merge-base-sha}` is resolved from `--diff-base` or the project's default branch) and confirm output is non-empty. If empty, exit with error: "No changes to review on this branch relative to the diff base." Verify a task description is provided and non-empty.
+2. **Invoke the engine**: Invoke the `orchestrate` skill with the pipeline specification above and pass through all arguments unchanged. The agent reads both this wrapper and the orchestrate engine instructions in the same conversation context. The pipeline table above **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) and uses them directly to determine which phases to execute. No additional structured format is needed beyond this table.
 
 Phases absent from the pipeline are handled by the engine's standard disposition logic. The `{change-summary-path}` is resolved from the most recent `coder_change-summary.md` in the artifact directory if one exists from a prior run, or empty if this is the first run for this ticket (see the engine's context preparation section for resolution logic).

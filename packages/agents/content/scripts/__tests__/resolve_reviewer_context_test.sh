@@ -195,13 +195,13 @@ End
 It "emits only the sidecar content when no lookup keys match"
 run_sidecar_only() {
   cat >sidecar.md <<'SM'
-Coder note: handler X swallows errors when Y is undefined.
+Coder note: Handler X swallows errors when Y is undefined.
 SM
   : >changed.txt
   bash "$script" --sidecar sidecar.md --changed-files changed.txt --lookup lookup.md
 }
 When call run_sidecar_only
-The output should equal "Coder note: handler X swallows errors when Y is undefined."
+The output should equal "Coder note: Handler X swallows errors when Y is undefined."
 The status should be success
 End
 
@@ -237,7 +237,7 @@ End
 It "emits sidecar content first, then a blank separator, then a matched lookup section"
 run_both() {
   cat >sidecar.md <<'SM'
-Coder note: handler X swallows errors when Y is undefined.
+Coder note: Handler X swallows errors when Y is undefined.
 SM
   cat >src/foo.ts <<'TS'
 import { FLAG } from '@hyperjump/json-schema';
@@ -246,7 +246,7 @@ TS
   bash "$script" --sidecar sidecar.md --changed-files changed.txt --lookup lookup.md
 }
 When call run_both
-The line 1 of output should equal "Coder note: handler X swallows errors when Y is undefined."
+The line 1 of output should equal "Coder note: Handler X swallows errors when Y is undefined."
 The line 2 of output should equal ""
 The line 3 of output should equal "## @hyperjump/json-schema"
 The output should include "First gotcha."
@@ -305,7 +305,7 @@ run_missing_lookup() {
 }
 When call run_missing_lookup
 The status should equal 1
-The stderr should include "cannot read --lookup"
+The stderr should include "Cannot read --lookup"
 End
 
 It "exits 1 with stderr message when --lookup contains no '## ' section headings"
@@ -348,7 +348,7 @@ End
 It "exits 1 with stderr message when --changed-files is missing"
 When run bash "$script" --lookup lookup.md
 The status should equal 1
-The stderr should include "missing required flag: --changed-files"
+The stderr should include "Missing required flag: --changed-files"
 End
 
 It "exits 1 with stderr message when --lookup is missing"
@@ -358,13 +358,13 @@ run_missing_lookup_flag() {
 }
 When call run_missing_lookup_flag
 The status should equal 1
-The stderr should include "missing required flag: --lookup"
+The stderr should include "Missing required flag: --lookup"
 End
 
 It "exits 1 with stderr message on an unknown option"
 When run bash "$script" --bogus
 The status should equal 1
-The stderr should include "unknown option: --bogus"
+The stderr should include "Unknown option: --bogus"
 End
 
 It "exits 0 and prints usage to stdout when --help is passed"

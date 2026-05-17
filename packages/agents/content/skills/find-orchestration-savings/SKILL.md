@@ -10,7 +10,7 @@ Analyze a completed orchestrated run to identify cost-saving opportunities while
 
 ## Arguments
 
-- Run directory path (optional): path to the run directory to analyze. If omitted, resolved from session context (most recent run in the current project's artifact directory).
+- Run directory path (optional): Path to the run directory to analyze. If omitted, resolved from session context (most recent run in the current project's artifact directory).
 
 ## Process
 
@@ -24,7 +24,7 @@ Analyze a completed orchestrated run to identify cost-saving opportunities while
 
 3. **Dispatch the savings-analyzer subagent** via Task tool:
    - Model: `haiku`
-   - Prompt: provide the run directory path and the next available sequence number for the artifact filename
+   - Prompt: Provide the run directory path and the next available sequence number for the artifact filename
    - The subagent reads the event log, applies the analysis framework, and writes the artifact
 
 4. **Present chat summary:** After the subagent completes, read the artifact and present the top 3 findings in conversation.
@@ -36,4 +36,4 @@ This skill is also invoked automatically during Phase 5 (summary) of orchestrate
 - The run directory is known from the active run context
 - The sequence number follows the run-summary artifact
 - The model is Haiku (configured via the `savings_analyzer` model key, defaulting to `haiku`)
-- Zero added latency: the analysis runs as a background Task while the orchestrator writes the run summary
+- Zero added latency: The analysis runs as a background Task while the orchestrator writes the run summary

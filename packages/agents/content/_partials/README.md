@@ -78,7 +78,7 @@ When a placeholder names a tool not present in the overlay's `_tools:` mapping, 
 
 When a partial contains `<!-- children -->`, expansion removes that line and inserts the caller's slot lines verbatim — no leading-trim, no trailing-trim, no blank-line collapsing. Partial authors control the spacing on their side; caller authors control the spacing on theirs.
 
-A consequence: avoid placing blank lines on both sides of a `<!-- children -->` boundary. If the partial has a blank line above `<!-- children -->` and the caller's slot content begins with a blank line, the result is two consecutive blank lines.
+A consequence: Avoid placing blank lines on both sides of a `<!-- children -->` boundary. If the partial has a blank line above `<!-- children -->` and the caller's slot content begins with a blank line, the result is two consecutive blank lines.
 
 ## Common patterns
 

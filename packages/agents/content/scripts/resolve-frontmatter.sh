@@ -23,7 +23,7 @@
 #   --format yaml|json        Output format (default `yaml`).
 #   --help, -h                Show usage and exit 0.
 #
-# Output (yaml mode, stdout): a complete YAML frontmatter block including
+# Output (yaml mode, stdout): A complete YAML frontmatter block including
 # `---` delimiters. Field order:
 #
 #   provenance:
@@ -39,7 +39,7 @@
 # omitted entirely. `--override KEY=` with empty value force-omits even
 # when the script resolved a value.
 #
-# Warnings (stderr): when PR resolution fails (not when it returns empty),
+# Warnings (stderr): When PR resolution fails (not when it returns empty),
 # emits the canonical warning `Note: PR lookup failed; proceeding without
 # pr field.` so the caller can surface it in agent text output.
 #
@@ -124,7 +124,7 @@ main() {
       shift 2
       ;;
     *)
-      echo "$PROG: unexpected argument: $1" >&2
+      echo "$PROG: Unexpected argument: $1" >&2
       show_usage 1
       ;;
     esac
@@ -399,7 +399,7 @@ read_manifest() {
   cat "$path"
 }
 
-# Sanitizes a branch name for filesystem use: replace `/` with `-` and trims any trailing `-` characters.
+# Sanitizes a branch name for filesystem use: Replaces `/` with `-` and trims any trailing `-` characters.
 # Mirrors `get-session-context` behavior.
 sanitize_branch() {
   local branch="$1"

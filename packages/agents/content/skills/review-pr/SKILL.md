@@ -8,7 +8,7 @@ user-invocable: true
 
 Review a pull request on the appropriate platform. Detects the platform, dispatches to a delegate (`review-gh-pr` or `review-bb-pr`) that fetches PR metadata, verifies HEAD matches the PR's head commit, and resolves specification sources, then invokes the shared review process from `review-branch` with the resolved inputs.
 
-This is a thin entry skill: the shared review logic — diff analysis, finding generation, "Specification compliance" rendering, artifact saving — lives in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
+This is a thin entry skill: The shared review logic — diff analysis, finding generation, "Specification compliance" rendering, artifact saving — lives in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
 
 ## Arguments
 
@@ -74,7 +74,7 @@ Invoke `review-branch`'s review process with the resolved inputs:
 - The spec-source list is `spec_sources` from the delegate. The "Specification compliance" section in the review output renders one subsection per entry. For a typical PR, this list contains both the ticket (when one was resolved) and the PR description as a `pr_description` source.
 - The review heading uses `pr_metadata` to surface the PR number and URL alongside the ticket reference.
 
-Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: session context was gathered in step 1 above; `merge_base_sha` and `spec_sources` were resolved by the delegate.
+Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: Session context was gathered in step 1 above; `merge_base_sha` and `spec_sources` were resolved by the delegate.
 
 ### 6. Save and present next steps
 

@@ -29,7 +29,7 @@ Correctness shapes what it costs to live with the system over its remaining life
 
 ## Before / after
 
-A typical decision: a feature needs a new validation step. Two options:
+A typical decision: A feature needs a new validation step. Two options:
 
 A. Add the validation as a method on the existing god-class that already owns adjacent concerns.
 B. Extract a small dedicated module with a narrow interface and inject it.

@@ -63,8 +63,8 @@ The recommendation rules below determine which option is recommended — bold th
 
 Options that invoke a skill include context-clearing guidance:
 
-- **Design and plan** and **Orchestrate**: prepend "Clear context and use..." — the plan/ticket artifact is self-contained, and orchestration dispatches fresh subagents.
-- **Implement directly**: no "Clear context" prefix — conversation history is valuable for manual implementation.
+- **Design and plan** and **Orchestrate**: Prepend "Clear context and use..." — the plan/ticket artifact is self-contained, and orchestration dispatches fresh subagents.
+- **Implement directly**: No "Clear context" prefix — conversation history is valuable for manual implementation.
 
 Skill names for each option:
 

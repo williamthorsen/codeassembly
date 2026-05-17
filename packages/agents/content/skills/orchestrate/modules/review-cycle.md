@@ -161,8 +161,8 @@ Dispatch the core reviewer and all aspect reviewers in parallel on the same code
 
 Before dispatching aspect reviewers, determine which ones are relevant to the change. The core reviewer (`orchestrated-reviewer`) always runs. Each aspect reviewer's activation is resolved in two steps:
 
-1. **Check `{aspect_reviewers}` override**: if the reviewer has an explicit `false` in the `{aspect_reviewers}` map, skip it.
-2. **Apply file-pattern default**: if no override exists (key absent from `{aspect_reviewers}`), activate based on the changed-file list:
+1. **Check `{aspect_reviewers}` override**: If the reviewer has an explicit `false` in the `{aspect_reviewers}` map, skip it.
+2. **Apply file-pattern default**: If no override exists (key absent from `{aspect_reviewers}`), activate based on the changed-file list:
 
 | Aspect reviewer                                          | File-pattern default                                                                                            | Skip reason                     |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- |
@@ -176,7 +176,7 @@ Before dispatching, compute the changed-file list once: `git diff --name-only {m
 
 Run the reviewer-context assembly steps once (see "Reviewer-context assembly" above) and capture `{reviewer-context}`. The same value is appended to every reviewer prompt in this dispatch (core + activated aspects). The block is recomputed for the re-review pass, not cached.
 
-Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "review" } }`. Then emit one `reviewer_dispatched` event per dispatched reviewer:
+Before: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "review" } }`. Then emit one `reviewer_dispatched` event per dispatched reviewer:
 
 ```
 Call MCP tool emit_event with:
@@ -296,15 +296,15 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 
 Before applying these rules, check the iteration budget. If N iterations have been reached, exit with `needs_manual_review` regardless of criticality. Otherwise, use the aggregated criticality and the two thresholds to determine next steps:
 
-- **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then run selective re-review. These findings must be fixed for code approval.
-- **criticality >= approval_threshold** AND no review rounds remain: exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
-- **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then run selective re-review. These findings are opportunistic — worth fixing if budget allows.
-- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
-- **criticality < budget_threshold**: proceed to Phase 4a (report only, no fix attempt). This includes `none` (no actionable findings from any reviewer).
+- **criticality >= approval_threshold** AND review rounds remain: Delegate fixes to coder, then run selective re-review. These findings must be fixed for code approval.
+- **criticality >= approval_threshold** AND no review rounds remain: Exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
+- **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then run selective re-review. These findings are opportunistic — worth fixing if budget allows.
+- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
+- **criticality < budget_threshold**: Proceed to Phase 4a (report only, no fix attempt). This includes `none` (no actionable findings from any reviewer).
 
 ### Consolidated coder fixes
 
-Before: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_started", iteration: {N} } }`.
+Before: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_started", iteration: {N} } }`.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
@@ -326,7 +326,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {m
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: update `{change-summary-path}` to the new file; increment `{seq}`. Parse usage from the coder's Task result (see "Usage capture" in SKILL.md). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N}, tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs} } }`. Call `register_artifact` for the coder's change-summary artifact.
+After: Update `{change-summary-path}` to the new file; increment `{seq}`. Parse usage from the coder's Task result (see "Usage capture" in SKILL.md). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "coder_fix_completed", iteration: {N}, tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs} } }`. Call `register_artifact` for the coder's change-summary artifact.
 
 ### Selective re-review
 
@@ -334,11 +334,11 @@ After the coder fix cycle, call MCP tool `get_run_state` with `{ runDir: {run-di
 
 Determine which reviewers' findings were addressed by examining the coder's change summary. Only re-dispatch reviewers whose findings the coder acted on — skip reviewers whose findings were already `none` or whose findings were deferred. Re-review is warranted whenever the coder acted on findings from one or more reviewers; the scope of re-review is limited to those reviewers.
 
-Before dispatching re-review: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_dispatched", reviewers: ["{name}", ...] } }`.
+Before dispatching re-review: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_dispatched", reviewers: ["{name}", ...] } }`.
 
 If re-review is warranted, assign new `{NN}` values for each re-dispatched reviewer (same sequencing rules as initial dispatch — only activated reviewers consume sequence numbers). Update the named path variables (`{core-review-path}`, `{sf-review-path}`, `{test-review-path}`, `{code-review-path}`) to point to the new artifact files. Old review files are preserved on disk.
 
-Recompute `{changed-files}` (a coder fix cycle may have added or removed files) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. The re-review prompts use the freshly computed value — do not reuse the value captured at initial dispatch time. `{reviewer-context-sidecar-path}` does not need to be re-resolved here: fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear during a Phase 4 fix cycle.
+Recompute `{changed-files}` (a coder fix cycle may have added or removed files) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. The re-review prompts use the freshly computed value — do not reuse the value captured at initial dispatch time. `{reviewer-context-sidecar-path}` does not need to be re-resolved here: Fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear during a Phase 4 fix cycle.
 
 Send re-review Task calls in a single message (parallel) using the same prompts, models, and turn budgets as the initial dispatch but adding context:
 
@@ -350,18 +350,18 @@ If a re-reviewer fails or times out, treat its original findings as unverified a
 
 After the parallel re-dispatch returns and before parsing usage, apply the "Retry-on-interruption hook" (see above) per re-reviewer. Re-reviews are subject to the hook on the same terms as initial dispatches.
 
-After re-reviews complete: parse usage from each re-reviewer's Task result (see "Usage capture" in SKILL.md). Aggregate usage across all re-review Task results by summing `tokens`, `toolUses`, and `durationMs` independently. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... }, tokens: {summed-tokens}, toolUses: {summed-toolUses}, durationMs: {summed-durationMs} } }`. Call `register_artifact` for each re-reviewer's artifact file.
+After re-reviews complete: Parse usage from each re-reviewer's Task result (see "Usage capture" in SKILL.md). Aggregate usage across all re-review Task results by summing `tokens`, `toolUses`, and `durationMs` independently. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... }, tokens: {summed-tokens}, toolUses: {summed-toolUses}, durationMs: {summed-durationMs} } }`. Call `register_artifact` for each re-reviewer's artifact file.
 
-Aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
+Aggregate findings again using the same rules. If new actionable findings emerge and review rounds remain (< N), loop back: Run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
 
 ### Loop termination
 
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `reviewRoundsUsed` from state rather than relying on conversation-tracked iteration count.
 
-- After N iterations unresolved (where N is the configured `max-review-rounds`): exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
-- Structural issues: may return to Planning once per run.
+- After N iterations unresolved (where N is the configured `max-review-rounds`): Exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs — if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
+- Structural issues: May return to Planning once per run.
 
-At phase completion (converged or `needs_manual_review`): compute aggregate usage for the entire review phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4 (all reviewer dispatches, coder fix cycles, and re-reviews). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Then emit `phase_decision` for `parallelReview`:
+At phase completion (converged or `needs_manual_review`): Compute aggregate usage for the entire review phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4 (all reviewer dispatches, coder fix cycles, and re-reviews). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Then emit `phase_decision` for `parallelReview`:
 
 ```
 Call MCP tool emit_event with:
@@ -374,7 +374,7 @@ Call MCP tool emit_event with:
 
 After Phase 4 converges (aggregated criticality is below both thresholds, or after fix cycles reduce criticality below the approval threshold, or when the review budget is exhausted with remaining findings below the approval threshold), run code-simplification-reviewer as a sequential final pass. The code-simplification-reviewer operates on code that has passed all reviews — its purpose is polish, not correctness. Skip Phase 4a if Phase 4 exited with `needs_manual_review`. Code-simplification-reviewer failure should be recorded via `emit_event` but should NOT block progression to Phase 4b or fail the run.
 
-Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles). Then re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. `{reviewer-context-sidecar-path}` does not need to be re-resolved: fix-cycle coder prompts do not supply a sidecar path, so the value carried from Phase 4 dispatch remains current.
+Before dispatching code-simplification-reviewer, recompute the changed-file list: `git diff --name-only {merge-base-sha}..HEAD`. Store as `{changed-files}` (replaces the value computed at Phase 4 start, which may be stale after fix cycles). Then re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so the value carried from Phase 4 dispatch remains current.
 
 Emit `phase_decision` for `codeSimplifier` before Phase 4a executes:
 
@@ -385,9 +385,9 @@ Call MCP tool emit_event with:
            reason: "{executed or skipped reason}" }
 ```
 
-If Phase 4a will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "simplifier" } }`.
+If Phase 4a will run: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "simplifier" } }`.
 
-If Phase 4a is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "skipped" } }`.
+If Phase 4a is skipped: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "skipped" } }`.
 
 Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 30`, `model: {models.code_simplification_reviewer}`:
 
@@ -406,7 +406,7 @@ Call Task with `subagent_type: code-simplification-reviewer`, `max_turns: 30`, `
 >
 > {If `{reviewer-context}` is non-empty, append: `## Reviewer context\n\n{reviewer-context}` (see "Reviewer-context assembly" above). Omit when empty.}
 
-After: store the full path as `{simplifier-review-path}`; increment `{seq}`. Apply the "Retry-on-interruption hook" (see above) — the simplifier uses the same `### Criticality: (pending)` sentinel as the other reviewers; any partial artifact triggers one constrained retry before findings are read. Then read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
+After: Store the full path as `{simplifier-review-path}`; increment `{seq}`. Apply the "Retry-on-interruption hook" (see above) — the simplifier uses the same `### Criticality: (pending)` sentinel as the other reviewers; any partial artifact triggers one constrained retry before findings are read. Then read the findings file. Code-simplification-reviewer findings are NOT re-reviewed by other agents. If the code-simplification-reviewer produced actionable findings, run one coder fix cycle. If the coder fix cycle fails, emit `phase_completed` with `status: "failed"` and proceed to Phase 4b.
 
 Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
@@ -420,7 +420,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {m
 >
 > Write your response to: `{run-dir}/{NN}_coder_change-summary.md`
 
-After: if a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Compute aggregate usage for the simplifier phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4a (the code-simplification-reviewer dispatch and, if applicable, the coder fix cycle). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the code-simplification-reviewer review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
+After: If a coder fix cycle ran, update `{change-summary-path}` to the new file; increment `{seq}`. Compute aggregate usage for the simplifier phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4a (the code-simplification-reviewer dispatch and, if applicable, the coder fix cycle). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "simplifier", status: "completed", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { actionableFindings: true|false, coderFixCycleRan: true|false } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the code-simplification-reviewer review artifact. If a coder fix cycle ran, also call `register_artifact` for the coder change-summary artifact.
 
 ## Phase 4b: Final comprehensive review
 
@@ -439,9 +439,9 @@ Call MCP tool emit_event with:
            reason: "{executed or skipped reason}" }
 ```
 
-If Phase 4b will run: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: only the implementation phase coder supplies a sidecar, so the value carried from Phase 4 dispatch remains current.
+If Phase 4b will run: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "holistic" } }`. Recompute `{changed-files}` (`git diff --name-only {merge-base-sha}..HEAD`) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}` for this dispatch. `{reviewer-context-sidecar-path}` does not need to be re-resolved: only the implementation phase coder supplies a sidecar, so the value carried from Phase 4 dispatch remains current.
 
-If Phase 4b is skipped: call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
+If Phase 4b is skipped: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "skipped" } }`. Set `{review-status}` to `needs_manual_review` and exit the module.
 
 Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `model: {models.holistic_reviewer}`:
 
@@ -455,10 +455,10 @@ Call Task with `subagent_type: orchestrated-reviewer`, `max_turns: 60`, `model: 
 >
 > Focus on:
 >
-> - Objective alignment: do the changes accomplish the stated task? Is anything missing? Are there changes that don't serve the objective?
-> - Integration risk: could these changes break existing behavior? Test interactions between changed and unchanged code with concrete scenarios.
-> - Completeness: trace task requirements to implementation — is every requirement addressed?
-> - Unintended consequences: what could go wrong at system boundaries? Second-order effects?
+> - Objective alignment: Do the changes accomplish the stated task? Is anything missing? Are there changes that don't serve the objective?
+> - Integration risk: Could these changes break existing behavior? Test interactions between changed and unchanged code with concrete scenarios.
+> - Completeness: Trace task requirements to implementation — is every requirement addressed?
+> - Unintended consequences: What could go wrong at system boundaries? Second-order effects?
 >
 > Use `git diff {merge-base-sha}..HEAD` to see all branch changes.
 >
@@ -474,12 +474,12 @@ Extract `Criticality` using Task return parsing (see SKILL.md).
 
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read total `reviewRoundsUsed` across Phase 4 and 4b combined for the budget decision below.
 
-- **criticality >= approval_threshold** AND review rounds remain: delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
-- **criticality >= approval_threshold** AND no review rounds remain: delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
-- **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: delegate fixes to coder, then re-review using remaining budget (opportunistic).
-- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: set `{review-status}` to `converged` (findings do not block approval).
-- **criticality < budget_threshold**: set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
+- **criticality >= approval_threshold** AND review rounds remain: Delegate fixes to coder, then re-review using remaining budget — apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
+- **criticality >= approval_threshold** AND no review rounds remain: Delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted — the holistic review is a final sanity check, not a gating review.
+- **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then re-review using remaining budget (opportunistic).
+- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Set `{review-status}` to `converged` (findings do not block approval).
+- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none` (no actionable findings).
 
-When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
+When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
 
-After: compute aggregate usage for the holistic phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4b (the holistic reviewer dispatch and, if applicable, coder fix and re-review cycles). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
+After: Compute aggregate usage for the holistic phase by summing `tokens`, `toolUses`, and `durationMs` across all Task calls within Phase 4b (the holistic reviewer dispatch and, if applicable, coder fix and re-review cycles). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.

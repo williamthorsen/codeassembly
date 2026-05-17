@@ -80,7 +80,7 @@ Next steps:
   3. 💬 {Comment action}
 ```
 
-## Example: combined output
+## Example: Combined output
 
 Assessment produces drift: `partial`, relevance: `relevant` (baseline), progress: `partial`:
 
@@ -92,7 +92,7 @@ Next steps:
 
 Action 1 combines drift and progress update triggers into a single option. Action 2 comes from progress. Relevance is baseline and contributes nothing.
 
-## Example: distinct ♻️ flavors
+## Example: Distinct ♻️ flavors
 
 Assessment produces drift: `partial` and advisability: `questionable` (other dimensions baseline):
 

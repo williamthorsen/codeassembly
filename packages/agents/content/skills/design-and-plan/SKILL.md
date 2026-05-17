@@ -12,9 +12,9 @@ Interactive design exploration followed by ticket refinement and implementation 
 
 ## Arguments
 
-- Task source (required): issue URL, shorthand reference (`#99`, `issue 99`), file path, or description of what to build
-- `--check-staleness` (optional): always run the relevancy check, regardless of the heuristic
-- `--skip-staleness` (optional): never run the relevancy check, regardless of the heuristic
+- Task source (required): Issue URL, shorthand reference (`#99`, `issue 99`), file path, or description of what to build
+- `--check-staleness` (optional): Always run the relevancy check, regardless of the heuristic
+- `--skip-staleness` (optional): Never run the relevancy check, regardless of the heuristic
 
 ## Overview
 
@@ -53,8 +53,8 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
 
 **After the check** — interpret the drift verdict:
 
-- 🟢 `none`: continue silently into Phase 2.
-- 🟠 `partial` or 🔴 `severe`: present the assessment findings to the user. Ask whether to proceed as-is, adjust the scope, or stop.
+- 🟢 `none`: Continue silently into Phase 2.
+- 🟠 `partial` or 🔴 `severe`: Present the assessment findings to the user. Ask whether to proceed as-is, adjust the scope, or stop.
 
 ### Phase 2: Understand the task
 
@@ -115,8 +115,8 @@ Present the ticket to the user. Revise until approved.
 
 **Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent.
 
-- GitHub: write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
-- Other platforms: note that automated update is not yet supported; suggest manual update
+- GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
+- Other platforms: Note that automated update is not yet supported; suggest manual update
 
 ### Phase 5: Generate implementation plan
 
@@ -159,9 +159,9 @@ Produce a plan that gives a competent coder everything they need — and enough 
 
 - {How to know this task is done}
 
-Apply the same test criterion convention here: when a task creates or modifies testable behavior, include a test criterion in its acceptance criteria. This ensures the test requirement propagates from the ticket through to the plan's per-task level, where the coder and reviewers consume it.
+Apply the same test criterion convention here: When a task creates or modifies testable behavior, include a test criterion in its acceptance criteria. This ensures the test requirement propagates from the ticket through to the plan's per-task level, where the coder and reviewers consume it.
 
-Apply the same documentation criterion convention here: when a task adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), include a criterion for updating documentation, help text, and usage examples — including removal of references to anything that no longer exists.
+Apply the same documentation criterion convention here: When a task adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), include a criterion for updating documentation, help text, and usage examples — including removal of references to anything that no longer exists.
 
 ### Task 2: {Name}
 
@@ -230,9 +230,9 @@ Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its o
 
 ## Key principles
 
-- **One question at a time** — don't overwhelm
-- **Multiple choice preferred** — easier to answer when possible
-- **YAGNI ruthlessly** — cut unnecessary scope from designs
-- **Scale to complexity** — a simple task gets a short design and a short plan
-- **Plan for engineers, not transcribers** — communicate decisions, not ceremony
-- **The ticket is the contract** — if facts on the ground differ from the plan, the ticket's acceptance criteria are the source of truth
+- **One question at a time**: Don't overwhelm
+- **Multiple choice preferred**: Easier to answer when possible
+- **YAGNI ruthlessly**: Cut unnecessary scope from designs
+- **Scale to complexity**: A simple task gets a short design and a short plan
+- **Plan for engineers, not transcribers**: Communicate decisions, not ceremony
+- **The ticket is the contract**: If facts on the ground differ from the plan, the ticket's acceptance criteria are the source of truth

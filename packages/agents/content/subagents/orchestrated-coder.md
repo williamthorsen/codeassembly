@@ -178,7 +178,7 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 Every commit message MUST satisfy all five rules. Violations are treated as quality gate failures.
 
 1. **Render the commit title** Using `describe-change.sh` (see `title-templates.md` in the commit skill's `_data/` directory). Pass `--title`, `--scope`, and `--type` and read `commit_title` from the JSON output. If the script is not found, fall back to the bare title.
-2. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
+2. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: Describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
 3. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
 4. **No hard line breaks in the body.** Write naturally as continuous text. Do not insert newlines to wrap at a fixed column width.
 5. **Use backtick formatting for code identifiers.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks — e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.

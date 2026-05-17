@@ -451,19 +451,19 @@ script="$PROJECT_ROOT/content/scripts/resolve-merge-options.sh"
 It "errors out when --base-ref is missing"
 When run bash "$script"
 The status should equal 1
-The stderr should include "resolve-merge-options.sh: missing required flag: --base-ref"
+The stderr should include "resolve-merge-options.sh: Missing required flag: --base-ref"
 End
 
 It "errors out when --base-ref does not exist in the repo"
 When run bash "$script" --base-ref "nonexistent"
 The status should equal 1
-The stderr should include "resolve-merge-options.sh: base ref not found"
+The stderr should include "resolve-merge-options.sh: Base ref not found"
 End
 
 It "errors out with status 1 on an unknown option"
 When run bash "$script" --base-ref "main" --bogus
 The status should equal 1
-The stderr should include "resolve-merge-options.sh: unknown option: --bogus"
+The stderr should include "resolve-merge-options.sh: Unknown option: --bogus"
 End
 
 It "errors out with status 1 when --label-map is malformed JSON"
@@ -476,7 +476,7 @@ run_malformed() {
 }
 When run run_malformed
 The status should equal 1
-The stderr should include "resolve-merge-options.sh: cannot read label-map"
+The stderr should include "resolve-merge-options.sh: Cannot read label-map"
 End
 
 It "exits 0 and prints usage when --help is passed"

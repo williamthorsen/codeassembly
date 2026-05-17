@@ -16,8 +16,8 @@ Present all three options as a numbered list. The recommendation rules below det
 
 Options that invoke a skill include context-clearing guidance:
 
-- **Refine plan** and **Orchestrate**: prepend "Clear context and use..." — the plan artifact is self-contained, and orchestration dispatches fresh subagents, so prior conversation wastes tokens and can introduce bias.
-- **Implement directly**: no "Clear context" prefix — conversation history is valuable for manual implementation.
+- **Refine plan** and **Orchestrate**: Prepend "Clear context and use..." — the plan artifact is self-contained, and orchestration dispatches fresh subagents, so prior conversation wastes tokens and can introduce bias.
+- **Implement directly**: No "Clear context" prefix — conversation history is valuable for manual implementation.
 
 Example:
 
@@ -57,9 +57,9 @@ Select the recommended option by checking these rules in order and stopping at t
    - The plan has not been previously refined
    - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
 
-2. **Implement directly** — recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall through to rule 3.
+2. **Implement directly** — recommend when the work's verification surface fits a single end-of-work review pass: Single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall through to rule 3.
 3. **Orchestrate** — all other cases (default)
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
 
-See [`ticket-creation-cost.md`](ticket-creation-cost.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: the rules here pick the next-step _skill_; the cost reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
+See [`ticket-creation-cost.md`](ticket-creation-cost.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; the cost reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.

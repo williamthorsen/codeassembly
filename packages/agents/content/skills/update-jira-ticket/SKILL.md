@@ -99,10 +99,10 @@ Use only if `INVALID_INPUT` still fires after following the rules above.
    ```
 
    - `timestamp`: ISO 8601 UTC.
-   - `skill`: literal string `update-jira-ticket`.
-   - `project_slug`: basename of the repo root (or whatever convention the agent already uses for artefact paths in this session).
-   - `failing_fragment`: the smallest payload fragment that reproduced `INVALID_INPUT`.
-   - `notes`: free-form. Name the suspected trigger class if recognisable, otherwise leave empty.
+   - `skill`: Literal string `update-jira-ticket`.
+   - `project_slug`: Basename of the repo root (or whatever convention the agent already uses for artefact paths in this session).
+   - `failing_fragment`: The smallest payload fragment that reproduced `INVALID_INPUT`.
+   - `notes`: Free-form. Name the suspected trigger class if recognisable, otherwise leave empty.
 
 ## Escalation criterion
 

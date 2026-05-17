@@ -20,7 +20,7 @@ set -euo pipefail
 readonly PROG="$(basename "$0")"
 
 # Match a Jira-style ticket ID anywhere in the branch name. Returns the first
-# match (uppercased) or empty. Pattern: two or more letters, hyphen, one or
+# match (uppercased) or empty. Pattern: Two or more letters, hyphen, one or
 # more digits, matched case-insensitively. Deliberately unanchored so
 # author-prefixed branches (e.g., `wt/COMPPLAN-795`, `wthorsen/MAC-130`)
 # match correctly. The greedy `[0-9]+` boundary stops at the first non-digit,
@@ -67,7 +67,7 @@ read_ticket_ref_prefix() {
     return
   fi
 
-  # Quoted value: capture the contents between the matching quotes. This
+  # Quoted value: Capture the contents between the matching quotes. This
   # preserves `#` characters that appear inside the value.
   if [[ "$line" =~ ^\'([^\']*)\' ]]; then
     echo "${BASH_REMATCH[1]}"
@@ -78,17 +78,17 @@ read_ticket_ref_prefix() {
     return
   fi
 
-  # Unquoted value: strip a trailing ` # comment` and surrounding whitespace.
+  # Unquoted value: Strip a trailing ` # comment` and surrounding whitespace.
   line="${line%% #*}"
   line="${line%"${line##*[![:space:]]}"}"
   echo "$line"
 }
 
 # Combine a bare number with the configured prefix to produce a ticket ID.
-# - `#` prefix: return the bare number alone (the `#` is a GitHub display
+# - `#` prefix: Return the bare number alone (the `#` is a GitHub display
 #   convention and must not appear in returned values or file paths).
-# - Other non-empty prefix: return `{prefix}{number}` (e.g., `MAC-147`).
-# - Empty prefix: return the bare number unchanged.
+# - Other non-empty prefix: Return `{prefix}{number}` (e.g., `MAC-147`).
+# - Empty prefix: Return the bare number unchanged.
 format_bare_ticket_id() {
   local bare_number="$1"
   local prefix="$2"

@@ -10,7 +10,7 @@ Decompose a story or task into independently orchestrable implementation steps. 
 
 ## Arguments
 
-- Story/task description (required): what to decompose into implementation steps
+- Story/task description (required): What to decompose into implementation steps
 
 ## Visibility
 
@@ -47,20 +47,20 @@ Call Task with `subagent_type: planner`, `max_turns: 40`:
 
 Read `{artifact-dir}/orchestration-plan.json`. Present to the user:
 
-- **Overview**: the story summary
-- **Steps**: numbered list with titles, file counts, and dependency info
-- **Dependency graph**: which steps can run in parallel vs. which are sequential
-- **Risks**: items that need user attention
-- **Questions**: items the planner could not resolve from codebase analysis
+- **Overview**: The story summary
+- **Steps**: Numbered list with titles, file counts, and dependency info
+- **Dependency graph**: Which steps can run in parallel vs. which are sequential
+- **Risks**: Items that need user attention
+- **Questions**: Items the planner could not resolve from codebase analysis
   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 ### 4. User feedback loop
 
 Wait for user input. The user may:
 
-- **Answer questions**: provide answers to the planner's questions
-- **Give feedback**: request changes to step scope, ordering, or granularity
-- **Approve**: confirm the plan is ready
+- **Answer questions**: Provide answers to the planner's questions
+- **Give feedback**: Request changes to step scope, ordering, or granularity
+- **Approve**: Confirm the plan is ready
 
 If the user provides feedback (not approval):
 

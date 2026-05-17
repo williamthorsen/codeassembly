@@ -29,9 +29,9 @@
 # collection (it rides on a separate `breaking` label).
 #
 # Label-map handling:
-#   - Missing file: silently skipped — resolution falls through to commit-majority.
-#   - Missing `types`/`scopes` section: silently treated as empty, falls through.
-#   - Syntactically invalid JSON: exits 1 with an error on stderr.
+#   - Missing file: Silently skipped; resolution falls through to commit-majority.
+#   - Missing `types`/`scopes` section: Silently treated as empty, falls through.
+#   - Syntactically invalid JSON: Exits 1 with an error on stderr.
 #
 # Exit codes:
 #   0  Normal — JSON produced (regardless of resolved/ambiguous status).
@@ -93,7 +93,7 @@ parse_args() {
       show_usage 0
       ;;
     *)
-      echo "$PROG: unknown option: $1" >&2
+      echo "$PROG: Unknown option: $1" >&2
       show_usage
       ;;
     esac
@@ -180,7 +180,7 @@ try:
     with open(path) as fh:
         data = json.load(fh)
 except (OSError, json.JSONDecodeError) as exc:
-    print(f"{prog}: cannot read label-map: {exc}", file=sys.stderr)
+    print(f"{prog}: Cannot read label-map: {exc}", file=sys.stderr)
     sys.exit(1)
 
 mapping = data.get(section, {})
@@ -330,12 +330,12 @@ main() {
   parse_args "$@"
 
   if [[ -z "$base_ref" ]]; then
-    echo "$PROG: missing required flag: --base-ref" >&2
+    echo "$PROG: Missing required flag: --base-ref" >&2
     show_usage
   fi
 
   if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
-    echo "$PROG: base ref not found: $base_ref" >&2
+    echo "$PROG: Base ref not found: $base_ref" >&2
     exit 1
   fi
 

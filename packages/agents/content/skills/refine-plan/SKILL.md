@@ -10,8 +10,8 @@ Perform a single review-and-revise round on a saved implementation plan, checkin
 
 ## Arguments
 
-- Plan file path (required): path to a saved plan artifact (e.g., the `{timestamp}_{slug}_plan.md` from `/save-plan`)
-- Ticket source (required): file path or URL (GitHub issue URL, Jira URL, etc.)
+- Plan file path (required): Path to a saved plan artifact (e.g., the `{timestamp}_{slug}_plan.md` from `/save-plan`)
+- Ticket source (required): File path or URL (GitHub issue URL, Jira URL, etc.)
 
 ## Visibility
 
@@ -65,9 +65,9 @@ Call Task with `subagent_type: plan-reviewer`, `max_turns: 30`:
 
 Parse the return block:
 
-- `Status`: must be `completed`
-- `AutoResolvable`: integer count of auto-resolvable findings
-- `UserQuestions`: integer count of findings requiring user input
+- `Status`: Must be `completed`
+- `AutoResolvable`: Integer count of auto-resolvable findings
+- `UserQuestions`: Integer count of findings requiring user input
 
 `-- Refine plan -- {AutoResolvable + UserQuestions} findings ({AutoResolvable} auto-resolvable, {UserQuestions} require user input)`
 
@@ -75,7 +75,7 @@ Parse the return block:
 
 Evaluate the finding counts:
 
-- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): skip the reviser entirely. Report that the plan needs no refinement, then present next steps.
+- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): Skip the reviser entirely. Report that the plan needs no refinement, then present next steps.
 
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
@@ -86,9 +86,9 @@ Evaluate the finding counts:
   Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. The plan was just reviewed with no issues — use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}` — no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
   </HARD-GATE>
 
-- **0 user questions** (UserQuestions = 0, AutoResolvable > 0): skip user interaction. Proceed to step 5 with empty user answers.
+- **0 user questions** (UserQuestions = 0, AutoResolvable > 0): Skip user interaction. Proceed to step 5 with empty user answers.
 
-- **User questions present** (UserQuestions > 0): read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+- **User questions present** (UserQuestions > 0): Read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
   ```
   The plan review identified {UserQuestions} question(s) that need your input:
@@ -105,7 +105,7 @@ Evaluate the finding counts:
   **X2 — {title}**
   {open-ended question text — describe what you want in free-form text}
 
-  Please answer using the finding ID (e.g., "C1: option 2; X2: ..."), or respond in free-form text.
+  Please answer using the finding ID (e.g., "C1: Option 2; X2: ..."), or respond in free-form text.
   ```
 
   Wait for the user's response. Capture their answers as `user_answers`.
@@ -133,8 +133,8 @@ Call Task with `subagent_type: plan-reviser`, `max_turns: 30`:
 
 Parse the return block:
 
-- `Status`: must be `completed`
-- `Artifact`: path to the refined plan
+- `Status`: Must be `completed`
+- `Artifact`: Path to the refined plan
 
 `-- Refine plan -- revision complete`
 
@@ -166,11 +166,11 @@ The `provenance:` block is **not** populated from the script. Construct it manua
 1. Use the script's `baseSha` as the new value. If the script omitted `baseSha`, preserve the original `baseSha` from `{input-provenance}`.
 2. Read the revised plan file at `{revision_output_path}`.
 3. Construct updated provenance:
-   - `skill`: preserve from `{input-provenance}` (the original authoring skill)
-   - `refinedBy`: set to `refine-plan`
-   - `timestamp`: use the script's `timestamp`
-   - `baseSha`: the script's value (or preserved original)
-   - `isInteractive`: preserve from `{input-provenance}` if present
+   - `skill`: Preserve from `{input-provenance}` (the original authoring skill)
+   - `refinedBy`: Set to `refine-plan`
+   - `timestamp`: Use the script's `timestamp`
+   - `baseSha`: The script's value (or preserved original)
+   - `isInteractive`: Preserve from `{input-provenance}` if present
    - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If absent, set to `2`.
 4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
 
@@ -201,9 +201,9 @@ The `provenance:` block is **not** populated from the script. Construct it manua
 3. Construct provenance:
    - `skill`: `unknown`
    - `refinedBy`: `refine-plan`
-   - `timestamp`: script's value
-   - `baseSha`: script's value (omit when absent)
-   - `isInteractive`: always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
+   - `timestamp`: Script's value
+   - `baseSha`: Script's value (omit when absent)
+   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill — when it stamps a plan that arrived without prior provenance, the stamp itself is always produced inside that interactive session.
    - `iteration`: `2`
 4. Prepend the unified YAML frontmatter and write back:
 
@@ -231,10 +231,10 @@ Compare the revised plan's approach/solution with the source ticket's solution s
 
 **Material divergence** means a different technical approach (e.g., build-time flag changed to runtime detection) or changed scope boundaries (features added or removed). **Non-divergence** means refined details within the same approach (e.g., different function names, reordered steps).
 
-- For GitHub tickets (resolved via `gh issue view` in step 1): offer to update by writing the revised body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
-- For file-based tickets: offer to update the file directly
+- For GitHub tickets (resolved via `gh issue view` in step 1): Offer to update by writing the revised body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
+- For file-based tickets: Offer to update the file directly
 
-This is a shared-state action — do not update without explicit consent. If the user declines, continue to step 7.
+This is a shared-state action; do not update without explicit consent. If the user declines, continue to step 7.
 
 ### 7. Report completion and present next steps
 
@@ -250,7 +250,7 @@ Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its o
 
 ## Edge cases
 
-- **Ticket URL unreachable**: report error with the URL and suggest verifying access (e.g., `gh auth status` for GitHub URLs).
+- **Ticket URL unreachable**: Report error with the URL and suggest verifying access (e.g., `gh auth status` for GitHub URLs).
 
 ## Constraints
 

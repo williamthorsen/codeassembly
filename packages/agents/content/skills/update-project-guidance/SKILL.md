@@ -117,7 +117,7 @@ Generate `.agents/PROJECT.md` using the standard structure below. Include only s
 
 ## Gotchas
 
-{Non-obvious things that trip up agents: build order dependencies, tools with surprising behavior, naming inconsistencies, common mistakes.}
+{Non-obvious things that trip up agents: Build-order dependencies, tools with surprising behavior, naming inconsistencies, common mistakes.}
 ```
 
 <HARD-GATE>

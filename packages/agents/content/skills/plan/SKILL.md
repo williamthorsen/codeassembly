@@ -10,8 +10,8 @@ Create a structured plan document for analysis, design, or implementation work.
 
 ## Arguments
 
-- Task or problem description (required): what to plan for
-- `--role=<role>` (optional): agent role for run artifact naming (default: `agent`)
+- Task or problem description (required): What to plan for
+- `--role=<role>` (optional): Agent role for run artifact naming (default: `agent`)
 
 ## Output format
 

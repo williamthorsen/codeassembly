@@ -24,19 +24,19 @@ Resolve the SQLite database path in this order:
 
 ## Process
 
-1. **Verify database exists**: check that the resolved database file exists. If not, report an error:
+1. **Verify database exists**: Check that the resolved database file exists. If not, report an error:
 
    ```
    Error: Vibelassian database not found at {path}
    ```
 
-2. **Fetch task metadata**: run the [context query](#context-query) to get task details. If no row is returned, report an error:
+2. **Fetch task metadata**: Run the [context query](#context-query) to get task details. If no row is returned, report an error:
 
    ```
    Error: Task {task-id} not found in the Vibelassian database
    ```
 
-3. **Fetch conversation**: run the [core query](#core-query), applying optional filters. If zero rows are returned, display:
+3. **Fetch conversation**: Run the [core query](#core-query), applying optional filters. If zero rows are returned, display:
 
    ```
    No messages found for task {task-id}.

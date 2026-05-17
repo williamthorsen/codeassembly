@@ -41,9 +41,9 @@ Also determine:
 
 **Scope:**
 
-- Security fixes: always a dedicated fast-track PR
-- Patches/minors: batch in one PR
-- Majors: if 2 or fewer, include in same PR as sequential commits; if more, separate PR per major
+- Security fixes: Always a dedicated fast-track PR
+- Patches/minors: Batch in one PR
+- Majors: If 2 or fewer, include in same PR as sequential commits; if more, separate PR per major
 
 **Execution order** — follow the dependency graph, foundations first:
 

@@ -33,6 +33,8 @@ Examples:
 - "Frontend: Static Excalibur scene" not "Frontend: Static Excalibur Scene"
 - "Customizing the Status Adapter for your backend", not "Customizing the Status Adapter for Your Backend"
 
+Capitalize the first word after a colon, unless the colon falls mid-sentence and introduces a fragment or list.
+
 ## Prompt formatting
 
 When prompting the user for input, use visual markers to make prompts more noticeable:
@@ -52,7 +54,7 @@ Examples:
 
 **Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
 
-**Skill-local reinforcement.** Rules that govern how an agent presents output — like the numbered-options convention above — should also be referenced in the bodies of skills that perform that behaviour, at the step where the output is produced. Skill-local examples override global prose rules: agents imitate the nearest concrete example more reliably than they follow a directive read once at session start. Treat skill-local pointers to behavioural specs as load-bearing redundancy, not duplication — global rules only take effect if they are reflected in the skill's own examples.
+**Skill-local reinforcement.** Rules that govern how an agent presents output — like the numbered-options convention above — should also be referenced in the bodies of skills that perform that behaviour, at the step where the output is produced. Skill-local examples override global prose rules: Agents imitate the nearest concrete example more reliably than they follow a directive read once at session start. Treat skill-local pointers to behavioural specs as load-bearing redundancy, not duplication — global rules only take effect if they are reflected in the skill's own examples.
 
 ## Code descriptions
 
@@ -77,7 +79,7 @@ Why it matters:
 
 - Other sessions, file watchers, CI, release tooling, or IDE extensions on the user's machine can observe in-progress mutations, even if you intend to clean up after.
 - Some projects treat new tags/commits as release signals. Once the artifact exists, downstream effects may fire before you can undo it — and some release configurations are immutable (published tags produce permanent artifacts).
-- "I can just clean up afterward" is not a substitute for never creating the artifact: between create and cleanup, anything else on the machine can act on it.
+- "I can just clean up afterward" is not a substitute for never creating the artifact: Between create and cleanup, anything else on the machine can act on it.
 
 Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code checks on pure-read commands) are safe in the working repo. Anything that writes — even "just for a second" — is not.
 

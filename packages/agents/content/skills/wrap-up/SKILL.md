@@ -8,7 +8,7 @@ user-invocable: true
 
 Post-session housekeeping. Assess what happened during the session, present an inventory of addressable items with a numbered action menu, and delegate to existing skills after user confirmation.
 
-This skill is context-adaptive: it detects the session type and adjusts its recommendations, but the user always confirms before anything executes.
+This skill is context-adaptive: It detects the session type and adjusts its recommendations, but the user always confirms before anything executes.
 
 ## Item vocabulary
 
@@ -58,8 +58,8 @@ Deferred items are things that were identified during the session but intentiona
 
 **Structured sources** (high confidence):
 
-- **Run-summary artifact**: if an orchestrated run was detected, read the most recent `*_orchestrator_run-summary.md` in the run directory. Extract items from the `## Deferred items` section. Each item becomes an inventory entry.
-- **Review artifacts**: extract unresolved T (TODO) and R (Recommendation) findings from review artifacts that were not addressed in subsequent coder responses.
+- **Run-summary artifact**: If an orchestrated run was detected, read the most recent `*_orchestrator_run-summary.md` in the run directory. Extract items from the `## Deferred items` section. Each item becomes an inventory entry.
+- **Review artifacts**: Extract unresolved T (TODO) and R (Recommendation) findings from review artifacts that were not addressed in subsequent coder responses.
 
 **Conversation scanning** (heuristic — may produce false positives):
 
@@ -83,8 +83,8 @@ For each match, extract a short description of what was deferred and why (if sta
 For each deferred item found, assign a prefix from the item vocabulary based on the nature of the work:
 
 - Items from **review artifacts** retain their original classification (F/W/T/R/S). If the source used severity-tagged legacy IDs (e.g., `F3-L`), map to the corresponding prefix but assign a fresh number.
-- Items from **run-summary** `## Deferred items` section: read the item description and classify based on severity. Work explicitly deferred by the architect/planner is typically `todo`. Bugs or failures are `fixme`. Improvements are `recommendation` or `suggestion`.
-- Items from **conversation scanning**: classify based on the context in which they were deferred. "We should fix X" → `fixme` or `todo`. "It would be nice to Y" → `suggestion`. "Consider Z approach" → `recommendation`.
+- Items from **run-summary** `## Deferred items` section: Read the item description and classify based on severity. Work explicitly deferred by the architect/planner is typically `todo`. Bugs or failures are `fixme`. Improvements are `recommendation` or `suggestion`.
+- Items from **conversation scanning**: Classify based on the context in which they were deferred. "We should fix X" → `fixme` or `todo`. "It would be nice to Y" → `suggestion`. "Consider Z approach" → `recommendation`.
 - **Legacy items** (pre-existing issues not authored in this branch) get the `legacy` prefix and are collected into a separate section. These come from review artifacts with `-L` suffix IDs, or from conversation observations about old code.
 
 Record the source attribution for each item (e.g., "run-summary", "holistic review", "conversation").
@@ -97,7 +97,7 @@ Items at levels 1–2 (trivial or mechanical) are **drive-by candidates** — si
 
 Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
 
-The complexity assessment feeds into the cost-aware disposition flow described in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md): trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
+The complexity assessment feeds into the cost-aware disposition flow described in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md): Trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
 
 #### 1c. Scan for insights
 
@@ -138,10 +138,10 @@ Before presenting candidates, evaluate the branch state. The drive-by lane is pr
 
 Consult these signals (starting points, not rigid gates):
 
-- **Branch size** — `git diff --stat {default_branch}..HEAD`. Above ~10 files or ~500 lines of diff, treat the branch as already large; new drive-bys clear a higher bar. When the threshold is exceeded, prefer demoting candidates to Phase 2b's batch action rather than offering them as drive-bys.
-- **Code overlap** — for each candidate, check whether its target file appears in `git diff --name-only {default_branch}..HEAD`.
-  - **Same-file overlap** — caution: the reviewer must disentangle concerns within one diff. Prefer demoting unless the change is genuinely related to the branch's main work.
-  - **Different-file** — fine: changes in unrelated files are good drive-by candidates because the reviewer can skim past them.
+- **Branch size**: `git diff --stat {default_branch}..HEAD`. Above ~10 files or ~500 lines of diff, treat the branch as already large; new drive-bys clear a higher bar. When the threshold is exceeded, prefer demoting candidates to Phase 2b's batch action rather than offering them as drive-bys.
+- **Code overlap** For each candidate, check whether its target file appears in `git diff --name-only {default_branch}..HEAD`.
+  - **Same-file overlap**: Exercise caution. The reviewer must disentangle concerns within one diff. Prefer demoting unless the change is genuinely related to the branch's main work.
+  - **Different-file**: This is fine. Changes in unrelated files are good drive-by candidates because the reviewer can skim past them.
 
 When the agent's judgment disagrees with a signal (e.g., the "large" branch is just a generated-file refresh), make the call and note the reasoning briefly to the user when presenting candidates.
 
@@ -161,9 +161,9 @@ Apply drive-by fixes? Reply "all", numbers, or "skip"
 
 #### Response handling
 
-- **Applied items**: make the changes and commit them with a message summarizing the fixes. Stage only the drive-by changes — if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
-- **Skipped items**: demote back into the Findings section. They become eligible for the batch-ticket and per-item ticket actions in Phase 2b.
-- **Partial selection** (e.g., `"1, 3"`): apply selected items, demote the rest.
+- **Applied items**: Make the changes and commit them with a message summarizing the fixes. Stage only the drive-by changes — if uncommitted work from earlier in the session exists, keep it separate. Remove applied items from the findings pool. They do not appear in Phase 2b.
+- **Skipped items**: Demote back into the Findings section. They become eligible for the batch-ticket and per-item ticket actions in Phase 2b.
+- **Partial selection** (e.g., `"1, 3"`): Apply selected items, demote the rest.
 
 **Wait for the user to respond before proceeding.**
 
@@ -181,10 +181,10 @@ The action menu offers two distinct ticket-creation actions ("Batch tickets for 
 {Summary of what was built or changed — the outcome, not the process.
 
 Derive from session type:
-- **Orchestrated**: paraphrase the "What was built" section of the run-summary
-- **Interactive dev**: summarize the actual code changes (`git diff` against the default branch)
-- **Review**: summarize what was reviewed and the key outcomes (approved, changes requested, etc.)
-- **Research/exploration**: summarize what was explored and key findings
+- **Orchestrated**: Paraphrase the "What was built" section of the run-summary
+- **Interactive dev**: Summarize the actual code changes (`git diff` against the default branch)
+- **Review**: Summarize what was reviewed and the key outcomes (approved, changes requested, etc.)
+- **Research/exploration**: Summarize what was explored and key findings
 
 Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or carries a lesson for future runs — e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge — mention it briefly after the outcome summary.}
 
@@ -345,15 +345,15 @@ Set these skill-specific values inline (not in the script's output):
 - `session_type` (deferred-findings extension): the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
 - `tickets_created` (deferred-findings extension): list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list. Omit when empty.
 
-**Body** — emit the tickets-created cross-reference and the dropped-findings record:
+**Body** — Emit the tickets-created cross-reference and the dropped-findings record:
 
 ```markdown
 # Deferred findings: {Concise session description}
 
 ## Tickets created
 
-- #{number}: addresses {prefix} {item-ID} — {ticket title}
-- #{number}: addresses {prefix} {item-ID} — {ticket title}
+- #{number}: Addresses {prefix} {item-ID} — {ticket title}
+- #{number}: Addresses {prefix} {item-ID} — {ticket title}
 
 ## Dropped
 
@@ -374,8 +374,8 @@ Insights, applied drive-by fixes, and devlog references do not appear in the bod
 - {ticket-id}: {prefix} {item-ID} "{title}" — {URL or file path}
 
 ### Insights recorded
-- {prefix} {item-ID}: posted to #{number}
-- {prefix} {item-ID}: included in devlog
+- {prefix} {item-ID}: Posted to #{number}
+- {prefix} {item-ID}: Included in devlog
 
 ### Artifacts saved
 - {devlog path}

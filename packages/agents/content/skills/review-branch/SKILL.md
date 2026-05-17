@@ -22,21 +22,21 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 > **When invoked by `review-pr`:** Steps 1–3 are already complete — `review-pr` performed `get-session-context` and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope.
 
 1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir`.
-2. **Resolve diff base** — if `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
-3. **Resolve specification sources** — produce a list of spec sources (each a `{ source_type, label, content, criteria? }` record):
-   - **Explicit `--ticket=<source>`**: resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source.
-   - **Auto-resolve**: if `--ticket` was omitted and `ticket_id` is non-null, scan `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` for the most recent `*_ticket.md` file and append it as a `ticket` source.
-   - **No source available**: leave the list empty. The "Specification compliance" section is omitted from the output.
+2. **Resolve diff base** — If `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
+3. **Resolve specification sources** — Produce a list of spec sources (each a `{ source_type, label, content, criteria? }` record):
+   - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source.
+   - **Auto-resolve**: If `--ticket` was omitted and `ticket_id` is non-null, scan `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` for the most recent `*_ticket.md` file and append it as a `ticket` source.
+   - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
 
-4. **Read prior artifacts** — if a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
+4. **Read prior artifacts**: If a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
 7. **Assign a score** out of 10.
-8. **Resolve frontmatter fields** before saving — see [Frontmatter resolution](#frontmatter-resolution).
+8. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 9. **Save the review** per the [Saving](#saving) section.
-10. **Present next steps** — after saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, and whether specification compliance gaps or unplanned work were identified. The next-steps prompt is interactive output only and is not saved in the review artifact.
+10. **Present next steps**: After saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, and whether specification compliance gaps or unplanned work were identified. The next-steps prompt is interactive output only and is not saved in the review artifact.
 
 ## Frontmatter resolution
 
@@ -194,8 +194,8 @@ The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
 1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id) — never construct a path with a literal `null` segment.
 2. Find or create a run directory:
-   - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): save into it
-   - **If no active run exists**: create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
+   - **If an active run exists** (the most recent run directory whose `run-index.json` has `context.branch` matching the current branch AND `completedAt` is absent): Save into it
+   - **If no active run exists**: Create a new run directory named `{timestamp}-interactive` where timestamp matches this review's timestamp
 3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files — the chronological sequence of files is the history.

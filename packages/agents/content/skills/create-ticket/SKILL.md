@@ -186,7 +186,7 @@ The implementer should verify assumptions and adapt as needed._
 Plan artifact: `{saved plan path}`
 ```
 
-### Fallback: no remote platform
+### Fallback: No remote platform
 
 If remote ticket creation fails or no platform is available, fall back to an auto-generated ticket ID: `{YYYYMMDD}-{4 random hex}` (e.g., `20260226-a3f2`). Save local artifacts using this ID. Log a warning that the remote ticket was not created.
 

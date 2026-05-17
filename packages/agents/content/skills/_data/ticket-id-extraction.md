@@ -29,7 +29,7 @@ The following inputs are the test oracle for both implementations.
 Two of these cases are surprising in isolation but follow directly from the contract:
 
 - `feat-2 → FEAT-2`: `feat` is a valid two-or-more-letter prefix, so `feat-2` matches the Jira-style shape. Branch slugs that happen to start with a kebab-case word followed by a digit will be picked up as ticket IDs.
-- `feat/foo-2 → FOO-2`: the match is unanchored, so `foo-2` later in the string matches even though `feat/` does not.
+- `feat/foo-2 → FOO-2`: The match is unanchored, so `foo-2` later in the string matches even though `feat/` does not.
 
 This is intentional — case-insensitive unanchored matching is the price of supporting `wt/mac-130` and `wthorsen/MAC-130` uniformly. Callers that want stricter shapes should not rely on this contract; use the bare-numeric fallback (described below) instead.
 

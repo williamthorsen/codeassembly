@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]]; do
     shift 2
     ;;
   *)
-    echo "$PROG: unknown option: $1" >&2
+    echo "$PROG: Unknown option: $1" >&2
     exit 1
     ;;
   esac
@@ -159,11 +159,11 @@ render_title() {
     result+="$(render_group "$group")"
     remaining="$after"
   done
-  # Warn on a stray `[` left in the residue: an unmatched opening bracket
+  # Warn on a stray `[` left in the residue: An unmatched opening bracket
   # cannot start a group, so it falls through verbatim. Visible in output,
   # but easy to misread as intentional — surface it to stderr.
   if [[ "$remaining" == *'['* ]]; then
-    echo "$PROG: warning: unmatched '[' in template: $template" >&2
+    echo "$PROG: Warning: Unmatched '[' in template: $template" >&2
   fi
   # Substitute tokens in any trailing literal section
   result+="$(substitute_tokens "$remaining")"
@@ -191,7 +191,7 @@ substitute_tokens() {
   echo "$s"
 }
 
-# Render the contents of a `[...]` group: drop the entire group if any token
+# Render the contents of a `[...]` group: Drop the entire group if any token
 # reference inside resolves empty; otherwise substitute and return the literal
 # rendering. Only known tokens count toward the drop decision; unknown tokens
 # never trigger a drop (they are left as-is by `substitute_tokens`).

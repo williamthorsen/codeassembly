@@ -36,11 +36,11 @@ main() {
     m) comment="$OPTARG" ;;
     h) show_usage 0 ;;
     :)
-      echo "$PROG: option -$OPTARG requires an argument" >&2
+      echo "$PROG: Option -$OPTARG requires an argument" >&2
       exit 1
       ;;
     *)
-      echo "$PROG: unknown option -$OPTARG" >&2
+      echo "$PROG: Unknown option -$OPTARG" >&2
       show_usage
       ;;
     esac
@@ -50,7 +50,7 @@ main() {
   # Check dependencies
   for cmd in curl jq git; do
     if ! command -v "$cmd" &>/dev/null; then
-      echo "$PROG: required command '$cmd' not found" >&2
+      echo "$PROG: Required command '$cmd' not found" >&2
       exit 127
     fi
   done
@@ -58,7 +58,7 @@ main() {
   # Read comment from stdin if not provided via -m
   if [[ -z "$comment" ]]; then
     if [[ -t 0 ]]; then
-      echo "$PROG: no comment provided; use -m or pipe to stdin" >&2
+      echo "$PROG: No comment provided; use -m or pipe to stdin" >&2
       exit 1
     fi
     comment="$(cat)"
@@ -92,7 +92,7 @@ main() {
 
   # Validate line is a positive integer
   if [[ ! "$line" =~ ^[1-9][0-9]*$ ]]; then
-    echo "$PROG: line number must be a positive integer, got '$line'" >&2
+    echo "$PROG: Line number must be a positive integer, got '$line'" >&2
     exit 1
   fi
 
@@ -171,7 +171,7 @@ detect_workspace_repo() {
   remote_url="$(git remote get-url origin 2>/dev/null || true)"
 
   if [[ -z "$remote_url" ]]; then
-    echo "$PROG: cannot auto-detect workspace/repo — no git remote 'origin' found" >&2
+    echo "$PROG: Cannot auto-detect workspace/repo — no git remote 'origin' found" >&2
     exit 1
   fi
 
@@ -184,7 +184,7 @@ detect_workspace_repo() {
     ws="${BASH_REMATCH[1]}"
     repo="${BASH_REMATCH[2]}"
   else
-    echo "$PROG: cannot parse workspace/repo from remote URL: $remote_url" >&2
+    echo "$PROG: Cannot parse workspace/repo from remote URL: $remote_url" >&2
     exit 1
   fi
 
@@ -195,7 +195,7 @@ detect_workspace_repo() {
 # Resolve authentication credentials.
 # Sets auth_style ("basic" or "bearer") and auth_token in the caller's scope.
 resolve_auth() {
-  # Priority 1: bot credentials (Basic auth)
+  # Priority 1: Bot credentials (Basic auth)
   if [[ -n "${BITBUCKET_BOT_USERNAME:-}" && -n "${BITBUCKET_BOT_TOKEN:-}" ]]; then
     auth_style="basic"
     return
@@ -219,7 +219,7 @@ resolve_auth() {
     fi
   fi
 
-  echo "$PROG: no authentication configured" >&2
+  echo "$PROG: No authentication configured" >&2
   echo "  Set BITBUCKET_BOT_USERNAME + BITBUCKET_BOT_TOKEN, or" >&2
   echo "  Set BITBUCKET_API_TOKEN, or" >&2
   echo "  Add macOS keychain entry 'bitbucket-api-token'" >&2
@@ -234,7 +234,7 @@ detect_pr_id() {
   branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
 
   if [[ -z "$branch" || "$branch" == "HEAD" ]]; then
-    echo "$PROG: cannot auto-detect PR ID — not on a named branch" >&2
+    echo "$PROG: Cannot auto-detect PR ID — not on a named branch" >&2
     exit 1
   fi
 
@@ -250,12 +250,12 @@ detect_pr_id() {
   count=$(echo "$body" | jq '.size')
 
   if [[ "$count" -eq 0 ]]; then
-    echo "$PROG: no open pull request found for branch '$branch'" >&2
+    echo "$PROG: No open pull request found for branch '$branch'" >&2
     exit 1
   fi
 
   if [[ "$count" -gt 1 ]]; then
-    echo "$PROG: multiple open pull requests found for branch '$branch':" >&2
+    echo "$PROG: Multiple open pull requests found for branch '$branch':" >&2
     echo "$body" | jq -r '.values[] | "  PR #\(.id): \(.title)"' >&2
     exit 1
   fi

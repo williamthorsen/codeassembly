@@ -12,7 +12,7 @@ Assess a ticket against the current codebase across five dimensions: drift, rele
 
 ## Arguments
 
-- **Ticket source** (optional): issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
+- **Ticket source** (optional): Issue URL, shorthand reference (`#99`, `issue 99`), file path, or plain text. When omitted, auto-resolved from the environment (see [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve)).
 - **Mode** (optional): `drift`, `relevance`, `progress`, `advisability`, `complexity`, or `all` (default: `all`)
 
 ## Process

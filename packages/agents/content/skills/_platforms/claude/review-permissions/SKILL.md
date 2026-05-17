@@ -12,9 +12,9 @@ Recommend modifications to `~/.claude/settings.json` permissions based on comman
 
 1. **Read current settings** from `~/.claude/settings.json` → `permissions`
 2. **Review commands executed** in this session
-3. **Identify gaps**: commands that needed manual approval or were missing from the list
+3. **Identify gaps**: Commands that needed manual approval or were missing from the list
 4. **Recommend additions**, following the consolidation strategy below
-5. **Check deny list**: do not recommend additions that conflict with `permissions.deny`
+5. **Check deny list**: Do not recommend additions that conflict with `permissions.deny`
 6. **Output a proposed diff** to `settings.json`
 
 ## Current strategy

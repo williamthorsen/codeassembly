@@ -94,7 +94,7 @@ Ticket-level artifacts and run directories both live here. Use `get-session-cont
 
 Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `deferred-findings` is hardcoded and cannot be overridden.
 
-Devlogs and deferred-findings artifacts are dual-homed: when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
+Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of where they land.
 
 ## Naming conventions
 
@@ -129,21 +129,21 @@ Example run directory (full orchestrated run with iterative review):
 ```
 {base_dir}/projects/williamthorsen-configs-macos/tickets/MAC-68/20260221-034100Z-orchestrated/
   run-index.json
-  01_orchestrator_run-manifest.md                       # initialization
-  02_orchestrator_ticket-requirements.md                # initialization (optional)
+  01_orchestrator_run-manifest.md                       # Initialization
+  02_orchestrator_ticket-requirements.md                # Initialization (optional)
   03_architect_architecture.md                          # Phase 1 (optional)
   04_planner_orchestration-plan.md                      # Phase 2 (optional)
   04_planner_orchestration-plan.json                    # Phase 2 (same seq — same artifact, two formats)
   05_coder_change-summary.md                            # Phase 3
-  06_reviewer_review.md                                 # Phase 4: iteration 1
-  07_silent-failure-reviewer_silent-failure-review.md   # Phase 4: iteration 1
-  08_test-reviewer_test-review.md                       # Phase 4: iteration 1
-  09_code-reviewer_code-review.md                       # Phase 4: iteration 1
-  10_coder_change-summary.md                            # Phase 4: coder fix
-  11_reviewer_review.md                                 # Phase 4: re-review (iteration 2)
-  12_code-reviewer_code-review.md                       # Phase 4: re-review (iteration 2)
+  06_reviewer_review.md                                 # Phase 4: Iteration 1
+  07_silent-failure-reviewer_silent-failure-review.md   # Phase 4: Iteration 1
+  08_test-reviewer_test-review.md                       # Phase 4: Iteration 1
+  09_code-reviewer_code-review.md                       # Phase 4: Iteration 1
+  10_coder_change-summary.md                            # Phase 4: Coder fix
+  11_reviewer_review.md                                 # Phase 4: Re-review (iteration 2)
+  12_code-reviewer_code-review.md                       # Phase 4: Re-review (iteration 2)
   13_code-simplification-reviewer_code-simplification-review.md # Phase 4a
-  14_coder_change-summary.md                            # Phase 4a: coder fix
+  14_coder_change-summary.md                            # Phase 4a: Coder fix
   15_reviewer_holistic-review.md                        # Phase 4b
   16_orchestrator_run-summary.md                        # Phase 5
 ```
@@ -579,7 +579,7 @@ Phase values use camelCase and match the keys in the `phases` object:
 
 The `version` field distinguishes schema formats: absent = v1 (`status.json` era), `2` = v2 (inline state in `run-index.json`), `3` = v3 (event-sourced). New orchestrated runs use v3. Existing v2 runs remain valid.
 
-## V3 format: event-sourced runs
+## V3 format: Event-sourced runs
 
 V3 separates static run metadata from dynamic state. The `run-index.json` file contains only the header; all state transitions are recorded as events in a companion `run-log.jsonl` file.
 
@@ -647,15 +647,15 @@ V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
 | `architecture`               | Architectural impact assessment and integration guidance  | No                                     |
 | `change-summary`             | What changed + dispositions on prior findings (if any)    | Yes, when responding to a prior review |
 | `code-review`                | Aspect review: CLAUDE.md compliance, bugs, logic errors   | No                                     |
-| `code-simplification-review` | Aspect review: simplification opportunities and dead code | No                                     |
+| `code-simplification-review` | Aspect review: Simplification opportunities and dead code | No                                     |
 | `holistic-review`            | Holistic review after iterative convergence               | Only for own prior findings            |
 | `orchestration-plan`         | Structured orchestration steps (.md and .json variants)   | No                                     |
 | `plan`                       | Implementation plan document                              | No                                     |
 | `review`                     | Code review findings + dispositions on own prior findings | Only for own prior findings            |
 | `run-manifest`               | Immutable record of run initial conditions                | No                                     |
 | `run-summary`                | Final summary of the orchestrated run                     | No                                     |
-| `silent-failure-review`      | Aspect review: error handling and silent failure analysis | No                                     |
-| `test-review`                | Aspect review: test coverage quality and behavioral gaps  | No                                     |
+| `silent-failure-review`      | Aspect review: Error handling and silent failure analysis | No                                     |
+| `test-review`                | Aspect review: Test coverage quality and behavioral gaps  | No                                     |
 
 The first `coder_change-summary` in a run has no dispositions (nothing to respond to). Subsequent ones embed dispositions alongside the change summary.
 
@@ -682,9 +682,9 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 
 Orchestrated runs begin with `orchestrator_run-manifest` as the first artifact, recording the run's initial conditions. Interactive runs allow either role to produce the first artifact. Common patterns:
 
-- Orchestrated: orchestrator produces `orchestrator_run-manifest`, then coder produces `coder_change-summary`
-- Interactive: coder produces `coder_change-summary`, then reviewer produces `reviewer_review`
-- Interactive: reviewer produces `reviewer_review` directly (human is the coder)
+- Orchestrated: Orchestrator produces `orchestrator_run-manifest`, then coder produces `coder_change-summary`
+- Interactive: Coder produces `coder_change-summary`, then reviewer produces `reviewer_review`
+- Interactive: Reviewer produces `reviewer_review` directly (human is the coder)
 
 ### Iteration pattern
 
@@ -735,10 +735,10 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 
 **FIXME (F)** — must fix before merge:
 
-- Bugs: incorrect logic, unhandled error paths, data loss risks
-- Security: injection, auth bypass, exposed secrets
-- Contract violations: breaking API changes, type unsafety
-- Test failures: tests that don't pass or don't test what they claim
+- Bugs: Incorrect logic, unhandled error paths, data loss risks
+- Security: Injection, auth bypass, exposed secrets
+- Contract violations: Breaking API changes, type unsafety
+- Test failures: Tests that don't pass or don't test what they claim
 
 **Warning (W)** — questionable, may block merge:
 
@@ -768,7 +768,7 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 **Legacy (-L suffix)** — pre-existing code observation:
 
 - Issues in code not authored in this branch — use the same severity letter as the equivalent author finding plus a `-L` suffix
-- Legacy findings share the numbering sequence with author findings of the same severity letter. Example: if a review has `F1`, `F2` (author findings), the first legacy FIXME is `F3-L`
+- Legacy findings share the numbering sequence with author findings of the same severity letter. Example: If a review has `F1`, `F2` (author findings), the first legacy FIXME is `F3-L`
 - Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
 - Frame as future opportunities, not current defects
 - Never count against the review score
@@ -788,7 +788,7 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: they have no criticality, are never merge-blocking, and are never emitted by code review skills. They appear in housekeeping artifacts (wrap-up inventories, chat summaries, devlogs) where conveying knowledge — not assigning blame or action — is the point.
+Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality, are never merge-blocking, and are never emitted by code review skills. They appear in housekeeping artifacts (wrap-up inventories, chat summaries, devlogs) where conveying knowledge — not assigning blame or action — is the point.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
@@ -798,8 +798,8 @@ Consumers that present insights (`wrap-up`, `summarize-chat`) should render the 
 
 ## Artifact lifecycle
 
-- **Active**: artifact is current and relevant
-- **Stale**: branch has been merged or deleted, and artifact is 30+ days old
+- **Active**: Artifact is current and relevant
+- **Stale**: Branch has been merged or deleted, and artifact is 30+ days old
 
 ## Portability
 

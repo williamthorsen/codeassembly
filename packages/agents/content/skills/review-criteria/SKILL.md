@@ -10,14 +10,14 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 
 ## Examine
 
-- **Correctness**: logic errors, unhandled error paths, data loss risks
-- **Conventions**: adherence to codebase patterns and project standards
-- **Edge cases**: boundary conditions, empty collections, zero values, undefined states
-- **Test coverage**: adequate tests for new functionality; tests that verify behavior, not just coverage
-- **Clarity**: naming, documentation, and instructions convey unambiguous intent
-- **Contracts**: documented behaviors match implementations; implicit assumptions are explicit
-- **Type safety**: type issues that affect correctness or maintainability
-- **Modern patterns**: current best practices over outdated approaches
+- **Correctness**: Logic errors, unhandled error paths, data loss risks
+- **Conventions**: Adherence to codebase patterns and project standards
+- **Edge cases**: Boundary conditions, empty collections, zero values, undefined states
+- **Test coverage**: Adequate tests for new functionality; tests that verify behavior, not just coverage
+- **Clarity**: Naming, documentation, and instructions convey unambiguous intent
+- **Contracts**: Documented behaviors match implementations; implicit assumptions are explicit
+- **Type safety**: Type issues that affect correctness or maintainability
+- **Modern patterns**: Current best practices over outdated approaches
 
 ## Skip
 

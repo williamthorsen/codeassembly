@@ -6,7 +6,7 @@ user-invocable: false
 
 # Review Bitbucket pull request
 
-Internal delegate that handles the Bitbucket-specific work for `review-pr`: fetch PR metadata via the Bitbucket REST API, verify the local HEAD matches the PR's head commit, resolve the ticket (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
+Internal delegate that handles the Bitbucket-specific work for `review-pr`: Fetch PR metadata via the Bitbucket REST API, verify the local HEAD matches the PR's head commit, resolve the ticket (with body-parse fallback), and prepare the spec-source list. Returns a resolved-input record that `review-pr` passes to `review-branch`'s shared review process.
 
 This skill does not run a review. The review logic lives in `review-branch`.
 
