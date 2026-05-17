@@ -75,6 +75,26 @@ It "emits run_id when present"
 When call emit_json "main" "abc1234" "" "" "" "" "github" "2026-05-16T00:00:00Z" "20260516-143946Z"
 The output should include '"run_id": "20260516-143946Z"'
 End
+
+It "emits a fully-populated argument set in canonical key order"
+expected_json() {
+  cat <<'JSON'
+{
+  "branch": "main",
+  "commit": "abc1234",
+  "platform": "github",
+  "timestamp": "2026-05-16T00:00:00Z",
+  "baseSha": "deadbee",
+  "pr": "https://github.com/x/y/pull/1",
+  "ticket_id": "537",
+  "ticket_ref": "#537",
+  "run_id": "20260516-143946Z"
+}
+JSON
+}
+When call emit_json "main" "abc1234" "deadbee" "https://github.com/x/y/pull/1" "537" "#537" "github" "2026-05-16T00:00:00Z" "20260516-143946Z"
+The output should equal "$(expected_json)"
+End
 End
 
 Describe "warn_pr_failure"
@@ -227,6 +247,46 @@ End
 
 It "returns true for values containing backtick"
 When call needs_yaml_quoting "a\`b"
+The status should be success
+End
+
+It "returns true for values containing an asterisk"
+When call needs_yaml_quoting "a*b"
+The status should be success
+End
+
+It "returns true for values containing an ampersand"
+When call needs_yaml_quoting "a&b"
+The status should be success
+End
+
+It "returns true for values containing an exclamation mark"
+When call needs_yaml_quoting "a!b"
+The status should be success
+End
+
+It "returns true for values containing a greater-than sign"
+When call needs_yaml_quoting "a>b"
+The status should be success
+End
+
+It "returns true for values containing a less-than sign"
+When call needs_yaml_quoting "a<b"
+The status should be success
+End
+
+It "returns true for values containing a percent sign"
+When call needs_yaml_quoting "a%b"
+The status should be success
+End
+
+It "returns true for values containing an at sign"
+When call needs_yaml_quoting "a@b"
+The status should be success
+End
+
+It "returns true for values containing a double quote"
+When call needs_yaml_quoting 'a"b'
 The status should be success
 End
 End
@@ -487,5 +547,100 @@ When call emit_yaml \
   "" "" "main" "abc1234" "" "" \
   yaml_keys yaml_values yaml_kinds
 The output should include "title: 'Add: feature'"
+End
+End
+
+Describe "main"
+setup_main_validation() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null
+}
+
+cleanup_main_validation() {
+  popd >/dev/null
+  rm -rf "$tmpdir"
+}
+
+BeforeEach "setup_main_validation"
+AfterEach "cleanup_main_validation"
+
+It "exits non-zero with a diagnostic when --skill is missing in yaml mode"
+When run main --format yaml --interactive true
+The status should be failure
+The stderr should include "--skill is required"
+End
+
+It "exits non-zero with a diagnostic when --interactive is missing in yaml mode"
+When run main --format yaml --skill foo
+The status should be failure
+The stderr should include "--interactive is required"
+End
+
+It "exits non-zero with a diagnostic when --format is xml"
+When run main --format xml --skill foo --interactive true
+The status should be failure
+The stderr should include "unknown --format"
+End
+
+It "exits non-zero with a diagnostic when --interactive value is neither true nor false"
+When run main --format yaml --skill foo --interactive maybe
+The status should be failure
+The stderr should include "--interactive must be true or false"
+End
+End
+
+Describe "main end-to-end"
+setup_main_e2e() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null
+  # Initialize a minimal git repository so `current_branch` and
+  # `git rev-parse --short HEAD` succeed.
+  git init --quiet --initial-branch=main .
+  git config user.email "test@example.com"
+  git config user.name "Test"
+  git commit --allow-empty --quiet -m "initial"
+  # Write the branch manifest the script reads for session-level fields.
+  mkdir -p .agents
+  cat >.agents/main.branch-manifest.json <<'JSON'
+{
+  "platform": "github",
+  "ticket_id": "537",
+  "ticket_ref": "#537",
+  "default_branch": "HEAD"
+}
+JSON
+  # Stub `gh` to return empty (no PR), so the test is hermetic.
+  mkdir -p bin
+  cat >bin/gh <<'SH'
+#!/usr/bin/env bash
+exit 0
+SH
+  chmod +x bin/gh
+  ORIGINAL_PATH="$PATH"
+  PATH="$tmpdir/bin:$PATH"
+}
+
+cleanup_main_e2e() {
+  PATH="$ORIGINAL_PATH"
+  popd >/dev/null
+  rm -rf "$tmpdir"
+}
+
+BeforeEach "setup_main_e2e"
+AfterEach "cleanup_main_e2e"
+
+It "emits extension fields end-to-end and force-omits run_id via --override KEY="
+When run main \
+  --skill foo \
+  --interactive true \
+  --extra "alpha=1" \
+  --extra-list "tags=a,b" \
+  --override "run_id="
+The status should be success
+The output should include "skill: foo"
+The output should include "isInteractive: true"
+The output should include "alpha: 1"
+The output should include "tags: [a, b]"
+The output should not include "run_id"
 End
 End

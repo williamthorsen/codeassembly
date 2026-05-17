@@ -95,11 +95,11 @@ resolve-frontmatter.sh \
   --skill create-devlog \
   --interactive true \
   --model "$MODEL_ID" \
-  --extra-list "commits=$commits_arg" \
+  ${commits_arg:+--extra-list "commits=$commits_arg"} \
   --override "run_id=$run_id_arg"
 ```
 
-(Omit the `--extra-list commits=...` argument entirely in `working-tree` mode; quoting `run_id=$run_id_arg` ensures the empty-value force-omit case works when no `--run-id` was supplied.)
+The `${commits_arg:+--extra-list "commits=$commits_arg"}` form expands to the flag only when `$commits_arg` is non-empty, so the `working-tree` mode (where `$commits_arg` is unset) naturally omits the `commits` field rather than emitting `commits: []`. Quoting `run_id=$run_id_arg` ensures the empty-value force-omit case works when no `--run-id` was supplied.
 
 Prepend the script's output verbatim to the artifact body. Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
 

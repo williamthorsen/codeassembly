@@ -109,9 +109,11 @@ resolve-frontmatter.sh \
   --interactive true \
   --model "$MODEL_ID" \
   --extra "title=$title" \
-  --extra "scope=$scope" \
-  --extra "type=$type"
+  ${scope:+--extra "scope=$scope"} \
+  ${type:+--extra "type=$type"}
 ```
+
+The `${var:+--extra "key=$var"}` form expands to the flag only when `$var` is non-empty, so an unresolved `scope` or `type` is naturally omitted from the emitted frontmatter.
 
 Prepend the script's output verbatim to the artifact body.
 

@@ -208,6 +208,8 @@ add_extra() {
   [[ -n "$key" ]] || fail "--extra/--extra-list argument has empty key"
   if [[ -z "${kinds_ref[$key]:-}" ]]; then
     keys_ref+=("$key")
+  else
+    warn "duplicate --extra/--extra-list key '$key': replacing previous value"
   fi
   values_ref["$key"]="$value"
   kinds_ref["$key"]="$kind"
@@ -460,8 +462,12 @@ emit_yaml() {
     value="${yaml_extra_values[$key]}"
     kind="${yaml_extra_kinds[$key]}"
     if [[ "$kind" == "list" ]]; then
+      # Flow-list extensions intentionally emit `key: []` for empty values
+      # (see `emit_yaml_flow_list`); only scalar extensions are subject to
+      # the canonical-field omission rule.
       emit_yaml_flow_list "$key" "$value"
     else
+      [[ -n "$value" ]] || continue
       emit_yaml_scalar "$key" "$value"
     fi
   done
@@ -491,8 +497,13 @@ emit_yaml_flow_list() {
     return
   fi
   local IFS=','
+  # Disable globbing around the word-split so list elements containing
+  # glob metacharacters (`*`, `?`, `[...]`) are not expanded against the
+  # filesystem before `yaml_quote` sees them.
+  set -f
   # shellcheck disable=SC2206
   local -a parts=( $raw )
+  set +f
   local out="" i
   for ((i = 0; i < ${#parts[@]}; i++)); do
     if [[ "$i" -gt 0 ]]; then
@@ -568,6 +579,13 @@ require_commands() {
 fail() {
   echo "$PROG: $1" >&2
   exit 1
+}
+
+# Print a non-fatal warning to stderr. Used for soft-failure conditions
+# where the script should continue with degraded behavior (e.g., a
+# duplicate optional-extension key that overwrites an earlier value).
+warn() {
+  echo "$PROG: warning: $1" >&2
 }
 
 # Guard against execution when sourced (e.g., from shellspec tests).
