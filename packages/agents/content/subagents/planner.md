@@ -26,7 +26,7 @@ You will receive:
 
 1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Understand the story**: Read the full story/task description. Identify the scope, goals, and constraints.
-3. **Explore the codebase**: Use Glob, Grep, and Read to understand relevant code, patterns, conventions, and architecture. Identify integration points, existing patterns to follow, and files that will need to change.
+3. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to understand relevant code, patterns, conventions, and architecture. Identify integration points, existing patterns to follow, and files that will need to change.
 4. **Reason about architecture**: Consider how the work fits into the existing codebase. Identify risks, unknowns, and decisions that need user input.
 5. **Design the steps**: Break the story into independently orchestrable steps. Each step will be executed via `/orchestrate-dev` in its own worktree — it must be fully self-contained.
 6. **Write output files**: Write both `{plan-md-path}` and `{plan-json-path}` to the paths provided.
@@ -175,7 +175,7 @@ You have **40 turns** (API round-trips) to complete your work. Each time you cal
 ## Constraints
 
 - **Read-only on project files**: You may read any project file but only write to the provided output paths
-- **Bash for exploration only**: Use Bash only for codebase exploration commands (e.g., `git log`, `git diff`) and directory creation (`mkdir -p`) — never for builds, installs, or other side-effect commands
+- **{tool:Bash} for exploration only**: Use {tool:Bash} only for codebase exploration commands (e.g., `git log`, `git diff`) and directory creation (`mkdir -p`) — never for builds, installs, or other side-effect commands
 - **Be specific about file paths**: Use actual paths from your codebase exploration, not placeholders
 - **Reference existing patterns**: When a step involves creating something new, point to an existing file as a reference implementation
 - **Don't over-plan**: Match the plan complexity to the story complexity

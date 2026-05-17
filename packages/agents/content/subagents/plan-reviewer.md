@@ -28,7 +28,7 @@ You will receive:
 1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Read the plan**: Read the full plan file. If orchestration format, also check for a `.json` companion.
 3. **Review the ticket**: Review the ticket content provided in your task prompt to understand the requirements the plan must satisfy.
-4. **Explore the codebase**: Use Glob, Grep, and Read to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
+4. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
 5. **Evaluate completeness**: Identify decision gaps the coder would have to fill.
 6. **Evaluate correctness**: Identify factual errors and structural issues.
 7. **Map requirements coverage**: Trace each requirement to a plan step.

@@ -21,6 +21,7 @@ import {
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
+import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import type {
   AgentsManifest,
   InstallOptions,
@@ -79,8 +80,14 @@ export async function installCommand(
 
     const entries: Array<ManifestEntry> = [];
 
-    // Install skills (shared + platform-specific)
+    // Load the platform overlay once per platform. The raw YAML feeds the frontmatter merger
+    // (subagents only); the parsed `_tools:` mapping feeds the body-text placeholder rewriter
+    // (subagents and skills).
     const platformConfig = PLATFORMS[platformId];
+    const overlayYaml = await readOverlay(contentDir, platformConfig.frontmatterFile);
+    const toolMapping = loadToolMapping(overlayYaml);
+
+    // Install skills (shared + platform-specific)
     const skillsPrefix = `${platformConfig.homeDir}/${platformConfig.skillsDir}`;
     const skillEntries = await installSkills(
       contentDir,
@@ -91,11 +98,20 @@ export async function installCommand(
       platformId,
       skillsPrefix,
       platformConfig.homeDir,
+      toolMapping,
     );
     entries.push(...skillEntries);
 
     // Install subagents with merged frontmatter
-    const subagentEntries = await installSubagents(contentDir, paths, platformId, existingByPath, options);
+    const subagentEntries = await installSubagents(
+      contentDir,
+      paths,
+      platformId,
+      existingByPath,
+      options,
+      overlayYaml,
+      toolMapping,
+    );
     entries.push(...subagentEntries);
 
     // Install scripts
@@ -168,6 +184,7 @@ async function installSkills(
   platformId: PlatformId,
   skillsPrefix: string,
   homeDir: string,
+  toolMapping: ReadonlyMap<string, string>,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const skillsSrcDir = path.join(contentDir, 'skills');
   const dirEntries = await readdir(skillsSrcDir);
@@ -189,6 +206,7 @@ async function installSkills(
       skillsPrefix,
       homeDir,
       contentDir,
+      toolMapping,
     );
     entries.push(result);
   }
@@ -223,6 +241,7 @@ async function installSkills(
       skillsPrefix,
       homeDir,
       contentDir,
+      toolMapping,
       '(platform-specific)',
     );
     entries.push(result);
@@ -248,20 +267,24 @@ async function installSkillEntry(
   skillsPrefix: string,
   homeDir: string,
   contentDir: string,
+  toolMapping: ReadonlyMap<string, string>,
   label = '',
 ): Promise<ManifestEntry> {
   // Eagerly resolve include directives at source-tree level. Run before the dry-run gate
   // so missing targets, cycles, and out-of-tree references surface even when no files
   // are written. Directory entries traverse their tree and cache each expanded `.md`
-  // file's content; file entries expand the file directly. The cached content is reused
-  // during the write phase below so each `.md` file is expanded exactly once per install.
+  // file's content; file entries expand the file directly. After expansion, apply the
+  // tool-name rewriter in-memory so the cached content carries the final body text the
+  // write phase will emit — no second disk pass, no read-back-from-disk.
   const srcStats = await stat(srcPath);
   let expandedFileContent: string | undefined;
   let expandedDirContents: ReadonlyMap<string, string> | undefined;
   if (srcStats.isDirectory()) {
-    expandedDirContents = await preExpandSkillDirectory(srcPath, contentDir);
+    const rawExpanded = await preExpandSkillDirectory(srcPath, contentDir);
+    expandedDirContents = rewriteToolNamesInExpansionMap(rawExpanded, contentDir, toolMapping);
   } else if (srcPath.endsWith('.md')) {
-    expandedFileContent = await expandIncludes(srcPath, contentDir);
+    const expanded = await expandIncludes(srcPath, contentDir);
+    expandedFileContent = rewriteToolNames(expanded, toolMapping, relativeFromContent(contentDir, srcPath));
   }
 
   if (options.dryRun) {
@@ -389,20 +412,11 @@ async function installSubagents(
   platformId: PlatformId,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
+  overlayYaml: string,
+  toolMapping: ReadonlyMap<string, string>,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const subagentsSrcDir = path.join(contentDir, 'subagents');
   const platformConfig = PLATFORMS[platformId];
-  const overlayPath = path.join(subagentsSrcDir, '_data', platformConfig.frontmatterFile);
-
-  let overlayYaml: string;
-  try {
-    overlayYaml = await readFile(overlayPath, 'utf8');
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    overlayYaml = '';
-  }
 
   const dirEntries = await readdir(subagentsSrcDir);
   const subagentsDirName = platformConfig.subagentsDir;
@@ -444,9 +458,12 @@ async function installSubagents(
       }
     }
 
-    // Pipeline: expand includes -> merge frontmatter -> inject provenance marker -> write.
+    // Pipeline: expand includes -> merge frontmatter -> rewrite tool-name placeholders ->
+    // inject provenance marker -> write.
+    const sourceLabel = `subagents/${entry}`;
     const merged = mergeFrontmatter(expandedSource, overlayYaml);
-    const withMarker = injectProvenanceMarker(merged, buildSourceUrl(`subagents/${entry}`));
+    const rewritten = rewriteToolNames(merged, toolMapping, sourceLabel);
+    const withMarker = injectProvenanceMarker(rewritten, buildSourceUrl(sourceLabel));
     await mkdir(path.dirname(destPath), { recursive: true });
     await unlinkIfSymlink(destPath);
     await writeFile(destPath, withMarker, 'utf8');
@@ -847,4 +864,48 @@ async function installPlatformGuidance(
  */
 function isEnoent(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+}
+
+/**
+ * Returns a POSIX-style path label for a skill source file relative to `contentDir`, used as
+ * the `contextLabel` argument to `rewriteToolNames` so install errors include a stable,
+ * platform-independent file reference.
+ */
+function relativeFromContent(contentDir: string, srcPath: string): string {
+  return path.relative(contentDir, srcPath).split(path.sep).join('/');
+}
+
+/**
+ * Returns a new map mirroring `rawExpanded`, with every value processed through the tool-name
+ * rewriter. The map is preserved by-reference (same keys, same iteration order); only the
+ * string values change. Each entry's `contextLabel` is its content-relative POSIX path so an
+ * unmapped placeholder surfaces a usable file reference.
+ */
+function rewriteToolNamesInExpansionMap(
+  rawExpanded: ReadonlyMap<string, string>,
+  contentDir: string,
+  toolMapping: ReadonlyMap<string, string>,
+): Map<string, string> {
+  const rewritten = new Map<string, string>();
+  for (const [absSrcPath, content] of rawExpanded) {
+    const label = relativeFromContent(contentDir, absSrcPath);
+    rewritten.set(absSrcPath, rewriteToolNames(content, toolMapping, label));
+  }
+  return rewritten;
+}
+
+/**
+ * Reads a subagent overlay YAML file. Returns an empty string when the file does not exist,
+ * preserving the prior in-loop behavior that treated a missing overlay as a no-op.
+ */
+async function readOverlay(contentDir: string, frontmatterFile: string): Promise<string> {
+  const overlayPath = path.join(contentDir, 'subagents', '_data', frontmatterFile);
+  try {
+    return await readFile(overlayPath, 'utf8');
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    return '';
+  }
 }

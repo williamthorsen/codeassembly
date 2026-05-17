@@ -20,7 +20,7 @@ You receive:
 
 1. **Read run-index.json** -- extract effort, thresholds, model config
 2. **Read run-log.jsonl** -- parse all events
-3. **Check artifact files** -- use Glob to list files in the run directory; note which agents produced artifacts and which did not
+3. **Check artifact files** -- use {tool:Glob} to list files in the run directory; note which agents produced artifacts and which did not
 4. **Analyze** -- apply the three-question framework (see below)
 5. **Write artifact** -- write `{NN}_analyst_savings-analysis.md` to the run directory
 
@@ -121,7 +121,7 @@ Resolve fields before writing the artifact:
 - `pr`: passed in via your dispatch prompt when the dispatcher resolved it via the `pr-resolution` shared data doc. Omit when not provided.
 - `run_id`: passed in via your dispatch prompt — the orchestrated run ID.
 
-Because `savings-analyzer` does not have the Bash tool in its default tool set, fields that normally require Bash (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
+Because `savings-analyzer` does not have the {tool:Bash} tool in its default tool set, fields that normally require {tool:Bash} (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
 
 ## ARTIFACT-WRITE SAFEGUARD
 
