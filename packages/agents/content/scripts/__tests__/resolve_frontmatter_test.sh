@@ -381,6 +381,20 @@ When run add_extra "scalar" "=value" extra_keys extra_values extra_kinds
 The status should be failure
 The stderr should include "empty key"
 End
+
+It "warns and overwrites when the same key is added twice"
+add_extra "scalar" "key=first" extra_keys extra_values extra_kinds
+add_extra_again() {
+  add_extra "scalar" "key=second" extra_keys extra_values extra_kinds
+  # Emit observable state on stdout for the assertion to inspect.
+  echo "value=${extra_values[key]}"
+  echo "count=${#extra_keys[@]}"
+}
+When call add_extra_again
+The stderr should include "duplicate"
+The output should include "value=second"
+The output should include "count=1"
+End
 End
 
 Describe "apply_override"
@@ -547,6 +561,50 @@ When call emit_yaml \
   "" "" "main" "abc1234" "" "" \
   yaml_keys yaml_values yaml_kinds
 The output should include "title: 'Add: feature'"
+End
+
+It "omits scalar extensions whose value is empty"
+yaml_keys+=("empty_field")
+yaml_values[empty_field]=""
+yaml_kinds[empty_field]="scalar"
+When call emit_yaml \
+  "summarize-change" "2026-05-16T00:00:00Z" "deadbee" "true" "" \
+  "" "" "main" "abc1234" "" "" \
+  yaml_keys yaml_values yaml_kinds
+The output should not include "empty_field"
+End
+End
+
+Describe "add_override"
+add_override_setup() {
+  unset overrides
+  declare -gA overrides=()
+}
+
+BeforeEach "add_override_setup"
+
+It "records the override when the argument is well-formed"
+add_override "branch=custom" overrides
+When call echo "${overrides[branch]}"
+The output should equal "custom"
+End
+
+It "records an empty value (force-omit) when the argument is KEY="
+add_override "run_id=" overrides
+When call test "${overrides[run_id]+set}" = "set"
+The status should be success
+End
+
+It "fails when the argument has no equals sign"
+When run add_override "bad_arg" overrides
+The status should be failure
+The stderr should include "missing '='"
+End
+
+It "fails when the key is empty"
+When run add_override "=value" overrides
+The status should be failure
+The stderr should include "empty key"
 End
 End
 

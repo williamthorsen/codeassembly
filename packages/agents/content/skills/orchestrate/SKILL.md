@@ -254,23 +254,9 @@ Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`),
 - **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
 - **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
-5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema (resolved per the [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) section below):
+5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema (resolved per the [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) section below). The frontmatter conforms to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
 ```markdown
----
-provenance:
-  skill: orchestrate
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 # Run manifest
 
 | Field        | Value              |
@@ -663,23 +649,9 @@ Dispatch the savings-analyzer subagent as a background Task and immediately proc
     - `ticket_id` and `ticket_ref` — from session context. Omit either when null.
     - `run_id` — the run ID for the current orchestrated run.
 
-Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema:
+Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The frontmatter conforms to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
 ```markdown
----
-provenance:
-  skill: orchestrate
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 # Orchestration summary
 
 ## Task

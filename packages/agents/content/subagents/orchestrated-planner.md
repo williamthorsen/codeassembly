@@ -44,24 +44,9 @@ You will receive:
 
 ## Output: Plan (Markdown)
 
-Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). Format:
+Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The frontmatter conforms to the canonical schema — see the canonical example in the `artifact-conventions` data doc. Format:
 
 ```markdown
----
-provenance:
-  skill: orchestrated-planner
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 # Implementation Plan
 
 ## Overview
