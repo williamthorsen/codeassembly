@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 # Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
-# Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced by the
-# `get-session-context` skill) for session-level fields and runs git +
-# platform-specific PR lookup for the rest. Skills consume the output to
-# populate the universal portion of their artifact frontmatter without
-# repeating the underlying shell logic.
+# Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced by the `get-session-context` skill) for
+# session-level fields and runs git + platform-specific PR lookup for the rest. Skills consume the output to
+# populate the universal portion of their artifact frontmatter without repeating the underlying shell logic.
 #
 # Usage:
 #   resolve-frontmatter.sh --skill NAME --interactive true|false [...]
@@ -192,7 +190,21 @@ main() {
   fi
 }
 
-# Append an extension key/value to the caller's ordered list. Splits the
+# Parses a `KEY=VALUE` argument into the caller's `key` and `value` variables.
+# The `flag` argument is used only for error messages. Fails when `=` is missing or the key portion is empty.
+parse_key_value() {
+  local arg="$1" flag="$2"
+  local -n key_out="$3"
+  local -n value_out="$4"
+  if [[ "$arg" != *"="* ]]; then
+    fail "$flag argument missing '=': $arg"
+  fi
+  key_out="${arg%%=*}"
+  value_out="${arg#*=}"
+  [[ -n "$key_out" ]] || fail "$flag argument has empty key"
+}
+
+# Appends an extension key/value to the caller's ordered list. Splits the
 # argument once on the first `=`. `kind` is either `scalar` or `list`.
 add_extra() {
   local kind="$1" arg="$2"
@@ -200,12 +212,7 @@ add_extra() {
   local -n values_ref="$4"
   local -n kinds_ref="$5"
   local key value
-  if [[ "$arg" != *"="* ]]; then
-    fail "--extra/--extra-list argument missing '=': $arg"
-  fi
-  key="${arg%%=*}"
-  value="${arg#*=}"
-  [[ -n "$key" ]] || fail "--extra/--extra-list argument has empty key"
+  parse_key_value "$arg" "--extra/--extra-list" key value
   if [[ -z "${kinds_ref[$key]:-}" ]]; then
     keys_ref+=("$key")
   else
@@ -215,22 +222,17 @@ add_extra() {
   kinds_ref["$key"]="$kind"
 }
 
-# Record an override key=value. Empty value force-omits the key on emit.
+# Records an override key=value. Empty value force-omits the key on emit.
 add_override() {
   local arg="$1"
   local -n overrides_ref="$2"
   local key value
-  if [[ "$arg" != *"="* ]]; then
-    fail "--override argument missing '=': $arg"
-  fi
-  key="${arg%%=*}"
-  value="${arg#*=}"
-  [[ -n "$key" ]] || fail "--override argument has empty key"
+  parse_key_value "$arg" "--override" key value
   overrides_ref["$key"]="$value"
 }
 
-# Return the overridden value when the key has been overridden, otherwise
-# the resolved value. The empty-string override force-omits.
+# Returns the overridden value when the key has been overridden, otherwise the resolved value.
+# The empty-string override force-omits.
 apply_override() {
   local key="$1" resolved="$2"
   local -n overrides_ref="$3"
@@ -241,16 +243,15 @@ apply_override() {
   fi
 }
 
-# Print short SHA of `default_branch` (e.g., `origin/main`) or empty if
-# unresolvable. A shallow clone or missing remote silently degrades to empty.
+# Prints short SHA of `default_branch` (e.g., `origin/main`) or empty if unresolvable.
+# A shallow clone or missing remote silently degrades to empty.
 resolve_base_sha() {
   local ref="$1"
   git rev-parse --short "$ref" 2>/dev/null || true
 }
 
-# Print the PR URL for the current branch, or empty if no PR or lookup
-# failed. Distinguishes empty-output (silent) from failure (canonical
-# warning emitted to stderr).
+# Prints the PR URL for the current branch, or empty if no PR or lookup failed.
+# Distinguishes empty-output (silent) from failure (canonical warning emitted to stderr).
 resolve_pr_url() {
   local platform="$1"
   local branch="$2"
@@ -261,8 +262,8 @@ resolve_pr_url() {
   esac
 }
 
-# GitHub PR lookup via `gh pr list`. Uses --state all so closed and merged
-# PRs are resolvable for post-merge artifact writes.
+# Looks up a GitHub PR via `gh pr list`.
+# Uses --state all so closed and merged PRs are resolvable for post-merge artifact writes.
 resolve_github_pr() {
   local branch="$1"
   if ! command -v gh >/dev/null 2>&1; then
@@ -280,7 +281,7 @@ resolve_github_pr() {
   printf '%s' "$result"
 }
 
-# Bitbucket PR lookup via Bitbucket Cloud REST API.
+# Looks up a Bitbucket PR via Bitbucket Cloud REST API.
 resolve_bitbucket_pr() {
   local branch="$1"
   if ! command -v curl >/dev/null 2>&1; then
@@ -310,9 +311,8 @@ resolve_bitbucket_pr() {
   printf '%s' "$result"
 }
 
-# Resolve a Bitbucket auth header from environment or macOS keychain. Echoes
-# the full `Authorization:` header value or returns non-zero when no
-# credentials are available.
+# Resolves a Bitbucket auth header from environment or macOS keychain.
+# Echoes the full `Authorization:` header value or returns non-zero when no credentials are available.
 bitbucket_auth_header() {
   if [[ -n "${BITBUCKET_BOT_USERNAME:-}" && -n "${BITBUCKET_BOT_TOKEN:-}" ]]; then
     local basic
@@ -334,18 +334,16 @@ bitbucket_auth_header() {
   return 1
 }
 
-# Emit the canonical PR-lookup-failed warning to stderr. The first argument
-# is an internal diagnostic that is also written to stderr after the
-# canonical line so debug context is available without affecting callers
-# that match the canonical phrasing.
+# Emits the canonical PR-lookup-failed warning to stderr.
+# The first argument is an internal diagnostic that is also written to stderr after the canonical line,
+# so that debug context is available without affecting callers that match the canonical phrasing.
 warn_pr_failure() {
   echo "$CANONICAL_WARNING" >&2
   echo "  ($1)" >&2
 }
 
-# Resolve the active run ID by reading the breadcrumb written by the
-# orchestrate engine at `.claude/tmp/active-run-dir`. Empty when no
-# orchestrated run is active.
+# Resolves the active run ID by reading the breadcrumb written by the orchestrate engine at
+# `.claude/tmp/active-run-dir`. Empty when no orchestrated run is active.
 resolve_run_id() {
   local breadcrumb=".claude/tmp/active-run-dir"
   [[ -r "$breadcrumb" ]] || return 0
@@ -354,8 +352,8 @@ resolve_run_id() {
   basename "$run_dir"
 }
 
-# Run a command with a timeout. Uses `timeout` or `gtimeout` when available,
-# otherwise runs without a timeout (the agent's Bash-tool timeout still
+# Run a command with a timeout.
+# Uses `timeout` or `gtimeout` when available; otherwise, runs without a timeout (the agent's Bash-tool timeout still
 # applies). The command and its arguments are passed verbatim.
 run_with_timeout() {
   local secs="$1"
@@ -369,12 +367,12 @@ run_with_timeout() {
   fi
 }
 
-# Get the current branch name. Returns non-zero outside a git repository.
+# Gets the current branch name. Returns non-zero outside a git repository.
 current_branch() {
   git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
-# Read the branch manifest for the given branch. Echoes the JSON content.
+# Reads the branch manifest for the given branch. Echoes the JSON content.
 # Returns non-zero when the manifest is missing.
 read_manifest() {
   local branch="$1"
@@ -385,8 +383,8 @@ read_manifest() {
   cat "$path"
 }
 
-# Sanitize a branch name for filesystem use: replace `/` with `-` and trim
-# any trailing `-` characters. Mirrors `get-session-context` behavior.
+# Sanitizes a branch name for filesystem use: replace `/` with `-` and trims any trailing `-` characters.
+# Mirrors `get-session-context` behavior.
 sanitize_branch() {
   local branch="$1"
   branch="${branch//\//-}"
@@ -394,9 +392,8 @@ sanitize_branch() {
   printf '%s' "$branch"
 }
 
-# Construct the JSON output from resolved values. Optional fields are
-# omitted (rather than emitted as null or empty) so consumers can rely on
-# `has(field)` semantics.
+# Constructs the JSON output from resolved values.
+# Optional fields are omitted (rather than emitted as null or empty) so consumers can rely on `has(field)` semantics.
 emit_json() {
   local branch="$1" commit="$2" base_sha="$3" pr_url="$4"
   local ticket_id="$5" ticket_ref="$6" platform="$7" timestamp="$8" run_id="$9"
@@ -426,10 +423,8 @@ emit_json() {
     '
 }
 
-# Emit the canonical YAML frontmatter block, including `---` delimiters.
-# Empty values are omitted. Field order is fixed: provenance block, then
-# canonical top-level fields, then caller-supplied extensions in
-# insertion order.
+# Emits the canonical YAML frontmatter block, including `---` delimiters. Empty values are omitted.
+# Field order is fixed: Provenance block, canonical top-level fields, caller-supplied extensions in insertion order.
 emit_yaml() {
   local skill="$1" timestamp="$2" base_sha="$3" interactive="$4" model="$5"
   local ticket_id="$6" ticket_ref="$7" branch="$8" commit="$9" pr_url="${10}" run_id="${11}"
@@ -439,7 +434,7 @@ emit_yaml() {
 
   printf '%s\n' "---"
 
-  # provenance block
+  # Provenance block
   printf '%s\n' "provenance:"
   emit_yaml_indented_scalar "skill" "$skill"
   emit_yaml_indented_scalar "timestamp" "$timestamp"
@@ -448,7 +443,7 @@ emit_yaml() {
   printf '  %s: %s\n' "isInteractive" "$interactive"
   [[ -n "$model" ]] && emit_yaml_indented_scalar "model" "$model"
 
-  # canonical top-level fields
+  # Canonical top-level fields
   [[ -n "$ticket_id" ]] && emit_yaml_scalar "ticket_id" "$ticket_id"
   [[ -n "$ticket_ref" ]] && emit_yaml_scalar "ticket_ref" "$ticket_ref"
   emit_yaml_scalar "branch" "$branch"
@@ -456,15 +451,14 @@ emit_yaml() {
   [[ -n "$pr_url" ]] && emit_yaml_scalar "pr" "$pr_url"
   [[ -n "$run_id" ]] && emit_yaml_scalar "run_id" "$run_id"
 
-  # extension fields in insertion order
+  # Extension fields in insertion order
   local key kind value
   for key in "${yaml_extra_keys[@]+"${yaml_extra_keys[@]}"}"; do
     value="${yaml_extra_values[$key]}"
     kind="${yaml_extra_kinds[$key]}"
     if [[ "$kind" == "list" ]]; then
       # Flow-list extensions intentionally emit `key: []` for empty values
-      # (see `emit_yaml_flow_list`); only scalar extensions are subject to
-      # the canonical-field omission rule.
+      # (see `emit_yaml_flow_list`); only scalar extensions are subject to the canonical-field omission rule.
       emit_yaml_flow_list "$key" "$value"
     else
       [[ -n "$value" ]] || continue
@@ -487,9 +481,8 @@ emit_yaml_indented_scalar() {
   printf '  %s: %s\n' "$key" "$(yaml_quote "$value")"
 }
 
-# Emit a top-level YAML flow list: `key: [v1, v2, v3]`. Empty value emits
-# an empty flow list `key: []`. Elements are split on `,` and each is
-# passed through `yaml_quote`.
+# Emits a top-level YAML flow list: `key: [v1, v2, v3]`.
+# Empty value emits an empty flow list `key: []`. Elements are split on `,` and each is passed through `yaml_quote`.
 emit_yaml_flow_list() {
   local key="$1" raw="$2"
   if [[ -z "$raw" ]]; then
@@ -497,9 +490,8 @@ emit_yaml_flow_list() {
     return
   fi
   local IFS=','
-  # Disable globbing around the word-split so list elements containing
-  # glob metacharacters (`*`, `?`, `[...]`) are not expanded against the
-  # filesystem before `yaml_quote` sees them.
+  # Disable globbing around the word-split so that list elements containing glob metacharacters (`*`, `?`, `[...]`)
+  # are not expanded against the filesystem before `yaml_quote` sees them.
   set -f
   # shellcheck disable=SC2206
   local -a parts=( $raw )
@@ -514,10 +506,12 @@ emit_yaml_flow_list() {
   printf '%s: [%s]\n' "$key" "$out"
 }
 
-# Return the value either bare or single-quoted depending on YAML
-# auto-quoting rules. The predicate quotes when the value contains any of
-# the unsafe glyphs (`# : [ ] { } , & * ! | > < ? % @ \` ` `), has leading
-# or trailing whitespace, is empty, or begins with `-` / `?` / `:`.
+# Returns the value either bare or single-quoted depending on YAML auto-quoting rules.
+# The predicate quotes when the value
+# - contains any of the unsafe glyphs (`# : [ ] { } , & * ! | > < ? % @ \` ` `),
+# - has leading or trailing whitespace,
+# - is empty, or
+# - begins with `-` / `?` / `:`.
 # Embedded single quotes are doubled inside the quoted form.
 yaml_quote() {
   local v="$1"
@@ -529,13 +523,11 @@ yaml_quote() {
   fi
 }
 
-# Decide whether `v` needs single-quote wrapping. Returns 0 (true) when
-# quoting is required, 1 otherwise.
+# Decides whether `v` needs single-quote wrapping. Returns 0 (true) when quoting is required, 1 otherwise.
 #
-# YAML parses `:` as a key indicator only when followed by whitespace or
-# end-of-value, so URLs like `https://...` are safe bare. `#` is always
-# treated as a comment introducer in YAML 1.1/1.2 (the spec is permissive
-# about the preceding context), so we quote any value containing `#`.
+# YAML parses `:` as a key indicator only when followed by whitespace or end-of-value,
+# so URLs like `https://...` are safe bare. `#` is always treated as a comment introducer in YAML 1.1/1.2 (the spec is
+# permissive about the preceding context), so we quote any value containing `#`.
 needs_yaml_quoting() {
   local v="$1"
   # Empty values must be quoted.
@@ -543,9 +535,10 @@ needs_yaml_quoting() {
   # Leading or trailing whitespace.
   [[ "$v" =~ ^[[:space:]] ]] && return 0
   [[ "$v" =~ [[:space:]]$ ]] && return 0
-  # Leading sigils that YAML interprets specially.
+  # Leading sigils that YAML interprets specially. `?` as a leading
+  # character is handled by the glyphs-anywhere case below.
   case "$v" in
-  -* | \?* | :*) return 0 ;;
+  -* | :*) return 0 ;;
   esac
   # Colon followed by whitespace anywhere is a key indicator.
   [[ "$v" =~ :[[:space:]] ]] && return 0
@@ -559,15 +552,13 @@ needs_yaml_quoting() {
     return 0
     ;;
   esac
-  # Values that look like YAML booleans/null or numbers stay bare per the
-  # current predicate. The predicate's value space is the schema's
-  # canonical fields and known extensions; expand here if a future
-  # extension introduces ambiguity.
+  # Values that look like YAML booleans/null or numbers stay bare per the current predicate.
+  # The predicate's value space is the schema's canonical fields and known extensions;
+  # expand here if a future extension introduces ambiguity.
   return 1
 }
 
-# Require each named command to be on PATH. Exits 1 with a clear message
-# when one is missing.
+# Require each named command to be on PATH. Exits 1 with a clear message when one is missing.
 require_commands() {
   local cmd
   for cmd in "$@"; do
@@ -581,9 +572,9 @@ fail() {
   exit 1
 }
 
-# Print a non-fatal warning to stderr. Used for soft-failure conditions
-# where the script should continue with degraded behavior (e.g., a
-# duplicate optional-extension key that overwrites an earlier value).
+# Prints a non-fatal warning to stderr.
+# Used for soft-failure conditions where the script should continue with degraded behavior (e.g., a duplicate
+# optional-extension key that overwrites an earlier value).
 warn() {
   echo "$PROG: warning: $1" >&2
 }
