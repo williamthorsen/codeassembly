@@ -32,7 +32,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
 
 Run via Bash:
 
@@ -134,7 +134,7 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads `# Change summary: {description}`.
 
-The artifact begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
+The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
 
 The body following the frontmatter has this structure:
 

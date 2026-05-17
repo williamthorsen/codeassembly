@@ -23,7 +23,7 @@ Replace `/Users/{username}/` with `~/` in file paths. Remove similar personal in
 
 ## Output format
 
-The artifact begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section below.
+The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section below.
 
 The body following the frontmatter has this structure:
 
@@ -71,7 +71,7 @@ Use these to mark significant sections:
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 Run `resolve-frontmatter.sh --skill summarize-chat --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 

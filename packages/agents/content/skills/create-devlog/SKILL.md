@@ -17,7 +17,7 @@ Summarize changes made in recent commits or the working tree.
 
 ## Output format
 
-The devlog file begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the devlog-specific extensions in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter). The body following the frontmatter has this structure:
+The devlog file begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the devlog-specific extensions in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter). The body following the frontmatter has this structure:
 
 ```markdown
 # Devlog: {Concise description}
@@ -86,7 +86,7 @@ Resolve `$run_id_arg` from the `--run-id={id}` argument (empty when not supplied
 
 - No argument (last commit): `commits_arg=$(git log -n 1 --format=%h)`.
 - `<n>` (last N commits): `commits_arg=$(git log -n N --format=%h | paste -sd, -)`.
-- `working-tree`: do not pass `--extra-list commits=...`.
+- `working-tree`: Do not pass `--extra-list commits=...`.
 
 Run via Bash, substituting the resolved arguments:
 
@@ -101,7 +101,7 @@ resolve-frontmatter.sh \
 
 The `${commits_arg:+--extra-list "commits=$commits_arg"}` form expands to the flag only when `$commits_arg` is non-empty, so the `working-tree` mode (where `$commits_arg` is unset) naturally omits the `commits` field rather than emitting `commits: []`. Quoting `run_id=$run_id_arg` ensures the empty-value force-omit case works when no `--run-id` was supplied.
 
-Prepend the script's output verbatim to the artifact body. Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Prepend the script's output verbatim to the artifact body. Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 

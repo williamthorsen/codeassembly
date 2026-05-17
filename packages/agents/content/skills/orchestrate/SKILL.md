@@ -254,7 +254,7 @@ Before writing each artifact: format `{seq}` as two zero-padded digits (`{NN}`),
 - **Skipped or conditional artifacts**: do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
 - **Subagents**: receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
-5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema (resolved per the [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) section below). The frontmatter conforms to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
+5. **Write run-manifest artifact** to `{run-dir}/{NN}_orchestrator_run-manifest.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema (resolved per the [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) section below). The frontmatter conforms to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
 ```markdown
 # Run manifest
@@ -332,9 +332,9 @@ The `{externalPlan}` flag and extracted plan content were already determined in 
 
 Emit a `phase_decision` event for every known phase. Iterate through the complete set of known phases (`architecture`, `planning`, `implementation`, `review-cycle`) — not just the phases present in the pipeline:
 
-1. **Phase absent from pipeline**: emit `phase_decision` with `run: false` and `reason: "absent"`.
-2. **Phase present with requirement `required`**: phase always runs. Emit `phase_decision` with `run: true` and `reason: "executed"`.
-3. **Phase present with requirement `optional`**: apply phase-specific skip logic (below). Emit `phase_decision` with `run: true/false` and `reason: "executed"` or `"skipped: {reason}"`.
+1. **Phase absent from pipeline**: Emit `phase_decision` with `run: false` and `reason: "absent"`.
+2. **Phase present with requirement `required`**: Phase always runs. Emit `phase_decision` with `run: true` and `reason: "executed"`.
+3. **Phase present with requirement `optional`**: Apply phase-specific skip logic (below). Emit `phase_decision` with `run: true/false` and `reason: "executed"` or `"skipped: {reason}"`.
 
 For each phase decision, call MCP tool `emit_event`:
 
@@ -374,11 +374,11 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
 1. **Check for JSON companion:** If the external plan file has a JSON companion (same directory, same base name or `orchestration-plan.json`), read it and use it as `{plan-json-content}`. Skip markdown parsing — the JSON is already structured.
 
 2. **Parse markdown to JSON** (if no companion): Parse the external plan's `### Task N:` sections. For each task section, extract:
-   - `title`: text after `### Task N: `
-   - `files`: lines under `**Files:**` (strip `- Create: `, `- Modify: `, `- Test: ` prefixes)
-   - `dependsOn`: parse `**Depends on:** Step N` or `**Depends on:** Steps N, M` references, converting to integer IDs
-   - `acceptanceCriteria`: bullet items under `**Acceptance criteria:**`
-   - `description`: remaining text in the section (between the title and the first recognized sub-heading)
+   - `title`: Text after `### Task N: `
+   - `files`: Lines under `**Files:**` (strip `- Create: `, `- Modify: `, `- Test: ` prefixes)
+   - `dependsOn`: Parse `**Depends on:** Step N` or `**Depends on:** Steps N, M` references, converting to integer IDs
+   - `acceptanceCriteria`: Bullet items under `**Acceptance criteria:**`
+   - `description`: Remaining text in the section (between the title and the first recognized sub-heading)
 
    If a task section lacks any of these sub-headings, use empty values: `[]` for arrays, `""` for strings.
 
@@ -400,7 +400,7 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
    }
    ```
 
-3. **Guard: zero-steps fallback.** If `{plan-json-content}` has an empty `steps` array (length 0):
+3. **Guard: Zero-steps fallback.** If `{plan-json-content}` has an empty `steps` array (length 0):
 
    a. Emit a corrective `phase_decision` event for planning:
 
@@ -408,7 +408,7 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
    Call MCP tool emit_event with:
      runDir: {run-dir}
      event: { event: "phase_decision", phase: "planning", run: true,
-              reason: "fallback: high-trust plan produced zero steps — running planning in adoption mode" }
+              reason: "fallback: High-trust plan produced zero steps — running planning in adoption mode" }
    ```
 
    b. Set `{planTrust}` to `"medium"`. Do not increment `{seq}`.
@@ -444,7 +444,7 @@ When `{planTrust}` is `"high"` and Planning is skipped, the orchestrator produce
    phase: initialization
    ```
 
-6. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: the `phase_decision` for planning was already emitted in the "Skip logic" section above with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
+6. **Store paths:** Store full paths as `{plan-md-path}` and `{plan-json-path}` for downstream phases. Note: The `phase_decision` for planning was already emitted in the "Skip logic" section above with `reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. Do not emit a second `phase_decision` here.
 
 ## Authority hierarchy
 
@@ -649,7 +649,7 @@ Dispatch the savings-analyzer subagent as a background Task and immediately proc
     - `ticket_id` and `ticket_ref` — from session context. Omit either when null.
     - `run_id` — the run ID for the current orchestrated run.
 
-Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The frontmatter conforms to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
+Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. The frontmatter conforms to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
 ```markdown
 # Orchestration summary

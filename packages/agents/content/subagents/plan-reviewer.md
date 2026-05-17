@@ -65,7 +65,7 @@ Each finding is tagged with a resolution type:
 
 ## Output format
 
-Write the review to the output path provided in your task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) — see the [Frontmatter](#frontmatter) section below for field resolution.
+Write the review to the output path provided in your task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc); see the [Frontmatter](#frontmatter) section below for field resolution.
 
 **Section organization:** Sections are grouped by **resolution type** (auto vs user), not by finding category (C vs X). Place every `auto`-tagged finding -- whether C or X -- in "Auto-resolvable findings". Place every `user`-tagged finding -- whether C or X -- in "Decision gaps". Every finding in "Decision gaps" must include a **Question** field.
 
@@ -137,7 +137,7 @@ If the plan has no findings at all, write:
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 Run `resolve-frontmatter.sh --skill plan-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 

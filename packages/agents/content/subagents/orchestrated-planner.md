@@ -44,7 +44,7 @@ You will receive:
 
 ## Output: Plan (Markdown)
 
-Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The frontmatter conforms to the canonical schema — see the canonical example in the `artifact-conventions` data doc. Format:
+Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc. Format:
 
 ```markdown
 # Implementation Plan
@@ -133,7 +133,7 @@ Write the plan JSON file to the path provided in the task prompt. Format:
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 Run `resolve-frontmatter.sh --skill orchestrated-planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 

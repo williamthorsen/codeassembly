@@ -15,7 +15,7 @@ Create a structured plan document for analysis, design, or implementation work.
 
 ## Output format
 
-The plan begins with YAML frontmatter conforming to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps live in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
+The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps live in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
 
 The body following the frontmatter has this structure:
 

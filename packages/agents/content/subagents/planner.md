@@ -74,7 +74,7 @@ Write the machine-readable plan to `{plan-json-path}`:
 
 ## Output: orchestration-plan.md
 
-Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar does not carry frontmatter. The frontmatter conforms to the canonical schema — see the canonical example in the `artifact-conventions` data doc.
+Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar does not carry frontmatter. The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc.
 
 ```markdown
 # Implementation Plan
@@ -123,7 +123,7 @@ Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 Run `resolve-frontmatter.sh --skill planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 

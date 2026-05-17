@@ -20,7 +20,7 @@ git diff $DEFAULT_BRANCH...HEAD
 
 ## Output structure
 
-The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. See [Frontmatter resolution](#frontmatter-resolution) below for field resolution. The frontmatter conforms to the canonical schema — see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
+The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. See [Frontmatter resolution](#frontmatter-resolution) below for field resolution. The frontmatter conforms to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
 ```markdown
 # {Title}
@@ -65,7 +65,7 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 Run `resolve-frontmatter.sh --skill ex-post-facto --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 

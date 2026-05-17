@@ -151,7 +151,7 @@ If a plan is also saved in step 7, it uses the same frontmatter shape with `prov
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block — the line `model named ... model ID is ...`.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
 Run `resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
