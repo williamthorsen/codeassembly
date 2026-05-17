@@ -1,6 +1,6 @@
 # Lede voice
 
-This file defines the voice for changelog and release-notes entries — and any other artifact whose first paragraph is the entry point for a glancing reader. The metaphor is journalism: the entry is the lede; the PR is the article. Currently used by:
+This file defines the voice for changelog and release-notes entries — and any other artifact whose first paragraph is the entry point for a glancing reader. The metaphor is journalism: The entry is the lede; the PR is the article. Currently used by:
 
 - `summarize-change/SKILL.md` for the `## What` section
 - `commit/SKILL.md` for the commit title and body
@@ -27,19 +27,43 @@ The tier shifts the register; it does not lower the bar. The glancing-reader fra
 
 The entry is the lede; the PR is the article.
 
+## Voice: Narrate the change, don't describe the state
+
+The lede announces a delta, not a snapshot. The reader's question is "what changed?", not "how does the system work now?". Phrasing that answers the second question implicitly leaves the reader to do work the entry should have done.
+
+Verb choice and temporal framing make the delta explicit:
+
+- **Prefer change verbs** that name the modification: `introduces`, `adds`, `fixes`, `improves`, `refines`, `modifies`, `replaces`, `removes`.
+- **Use "now"/"no longer" markers** when describing a behavioral change to an existing surface, not just a new addition.
+- **Avoid neutral state verbs** that describe the post-change system as if it had always behaved that way: `canonicalizes`, `handles`, `provides`, `supports` — when used as flat descriptions rather than as part of a "now does X" or "supports a new Y" frame.
+
+The two rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass both rules and still read like documentation rather than an announcement.
+
+**Bad → Good — change-narrating voice**
+
+**Bad** (compliant but state-describing):
+
+> A tag-alias map at `.kb/tag-aliases.yaml` canonicalizes secondary frontmatter tags. The migration script writes canonical forms only, and `pnpm run check:notes` warns when committed frontmatter contains a known alias, naming the suggested canonical form.
+
+**Good:**
+
+> Introduces a tag alias map that sets the canonical form of secondary frontmatter tags. The migration script now writes only these forms, and the `check:notes` script now warns when committed frontmatter uses a known alias instead of the canonical form.
+
+Both drafts pass Rule 1 and Rule 2. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
+
 ## Two rules
 
 Apply both. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
 
-### Rule 1 — Per-sentence outcome test
+### Rule 1: Per-sentence outcome test
 
-For each sentence, ask: **does this describe what the change means for the reader?** Three permissible categories:
+For each sentence, ask: **Does this describe what the change means for the reader?** Three permissible categories:
 
-- **Outcome** — something the reader will experience, see, or be able to do.
+- **Outcome**: Something the reader will experience, see, or be able to do.
   Example: "Uploads no longer fail when the filename contains a colon."
-- **Stated invariant worth confirming** — an explicit assurance that would be of interest to the reader, when relevant.
+- **Stated invariant worth confirming**: An explicit assurance that would be of interest to the reader, when relevant.
   Examples: "Behavior is unchanged.", "No migration required."
-- **Migration info** — names of user-facing surface that has been added, removed, or renamed; steps the reader must take.
+- **Migration info**: Names of user-facing surface that has been added, removed, or renamed; steps the reader must take.
   Example: "The `--fix-low` flag is replaced by `--approval-threshold`."
 
 If a sentence describes how the change was implemented (mechanism, internal data structures, code paths, refactor mechanics, output-format details, internal counts), cut it. Mechanism belongs in `## Details` and the PR.
@@ -48,7 +72,7 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed" — specifically, user-facing behavior change, migration info, or a non-trivial invariant worth confirming. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
 
-### Rule 2 — Identifier ban
+### Rule 2: Identifier ban
 
 The only identifiers that may appear are **top-level user-configurable surface**:
 
@@ -67,7 +91,21 @@ Banned:
 - Internal versioning ("v1 supports…", "v3 event-sourced format")
 - Output-format details (JSON keys, marker glyphs, header strings)
 
-When in doubt, leave the name out and describe the behavior. The one exception: User-configurable surface needed for migration may be named — both _removed_ identifiers (so the user recognizes what's gone) and _new_ defaults (so the user knows where to find or move them). Examples: "The `--fix-low` flag is replaced by `--approval-threshold`."; "The default config file is now `.config/v11y-check.config.json`."
+When in doubt, leave the name out and describe the behavior. **Allowed is not the same as worth it** — even an identifier on the permitted list earns its place only if the reader needs to act on it. Name a top-level config-file path when the reader has to create, edit, or move it; don't name it just to acknowledge that one exists. The headline question is whether the word does work for the reader, not whether the rule lets you include it.
+
+The one exception to the ban: User-configurable surface needed for migration may be named — both _removed_ identifiers (so the user recognizes what's gone) and _new_ defaults (so the user knows where to find or move them). Examples: "The `--fix-low` flag is replaced by `--approval-threshold`."; "The default config file is now `.config/v11y-check.config.json`."
+
+## Jargon at the lede
+
+Compression to a term of art saves words for a reader who already knows the term. For a reader who doesn't, it forces them to either skip the entry or do dictionary work the writer should have done. The lede is often the one place a reader meets the concept — spend the few extra words so the prose teaches as it announces.
+
+**Define while naming.** Compress only when the audience definitely shares the term. Otherwise, prefer the explained form even if it's longer:
+
+- `canonicalizes secondary tags` → `sets the canonical form of secondary tags`
+- `idempotent rebuilds` → `rebuilds can be rerun safely`
+- `serializes state to a side-channel` → `writes state to a separate file so the main flow stays clean`
+
+This is the softer companion to Rule 2. Rule 2 bans internal _identifiers_ (function names, internal subsystem names); the jargon rule covers internal _vocabulary_ — terminology that demands prior knowledge is friction at the lede even when no name is involved.
 
 ## Title application
 
@@ -80,7 +118,7 @@ A title is a single-sentence lede. Both rules apply, distilled:
 
 ## Body content discipline
 
-Body text — commit bodies, `## What`, merge-commit bodies — has two specific exclusions on top of the two rules:
+Body text — that is, the text used in commit bodies, merge-commit bodies, and the `## What` section of a change summary — is subject to these proscriptions in addition to the two rules:
 
 - **Never reference automated tests or CI.** Formatting, linting, typechecking, and unit tests run automatically. Mentioning them in the body is process noise, not user content.
 - **Never use review finding IDs.** Identifiers like `F1`, `W2`, `T3` belong only in review documents — they are meaningless in `git log` and to any future reader.
@@ -105,25 +143,25 @@ The voice is the same across every work type; only the subject changes:
 - `refactor:` "Consolidates API handlers on a shared HTTP client, reducing per-request connection overhead."
 - `deps:` "Upgrades to Node 22 and drops support for Node 18, which reached end of life."
 
-### Good — public tier, multi-fact rename
+### Good: Public tier, multi-fact rename
 
 > The package previously published as `@williamthorsen/audit-deps` has been renamed to `v11y-check`. The CLI command is now `v11y-check`, and the default config file is `.config/v11y-check.config.json`. Existing users should install `v11y-check` in place of `@williamthorsen/audit-deps`, rename their config file, and update any scripts that invoke `audit-deps`. Behavior is unchanged.
 
 Why it works: Every sentence is migration info or invariant. All identifiers named are user-facing surface. The reader knows exactly what to do.
 
-### Good — public tier, low-action feature
+### Good: Public tier, low-action feature
 
 > Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
 
 Why it works: The user knows the feature exists, who it's for, and roughly what it does. The schema, default filename, and field names belong in the docs they will consult when using it.
 
-### Good — internal tier
+### Good: Internal tier
 
 > Code changes flowing through the orchestrated pipeline now require accompanying tests, and reviewers flag missing tests as blockers.
 
 Why it works: Outcome (new requirement) plus consequence (review behavior). No internal skill names, no per-file enumeration.
 
-### Bad → Good — mechanism cut
+### Bad → Good: Mechanism cut
 
 **Bad** (schema-naming and mechanism, ~120 words):
 
@@ -133,9 +171,9 @@ Why it works: Outcome (new requirement) plus consequence (review behavior). No i
 
 > Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
 
-Cut: every schema field name, every default value, every internal file path, every "how it works" sentence. Survives: the feature exists, who it's for, what it does.
+Cut: Every schema field name, every default value, every internal file path, every "how it works" sentence. Survives: The feature exists, who it's for, what it does.
 
-### Bad → Good — over-elaborated fix
+### Bad → Good: Over-elaborated fix
 
 **Bad:**
 
@@ -145,9 +183,9 @@ Cut: every schema field name, every default value, every internal file path, eve
 
 > Fixes an issue where running `audit-deps`, `nmr`, or `release-kit` from the locally built `dist/esm/` after a `git pull` could report a stale version. A fresh `pnpm install` or rebuild is no longer required.
 
-Cut: the mechanism clause ("Each CLI now reads its version directly from its `package.json` at startup"). Survives: the migration info — the user no longer needs to rebuild — which the fix-specific guidance under Rule 1 marks as the warranted second-sentence case.
+Cut: The mechanism clause ("Each CLI now reads its version directly from its `package.json` at startup"). Survives: The migration info — the user no longer needs to rebuild — which the fix-specific guidance under Rule 1 marks as the warranted second-sentence case.
 
-### Bad → Good — TMI feature
+### Bad → Good: TMI feature
 
 **Bad** (output-format details):
 
@@ -157,16 +195,28 @@ Cut: the mechanism clause ("Each CLI now reads its version directly from its `pa
 
 > Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. Exit code behavior is unchanged.
 
-Cut: marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message. Survives: outcome (visibility) plus invariant (exit codes unchanged).
+Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message. Survives: Outcome (visibility) plus invariant (exit codes unchanged).
 
-### Bad → Good — format/glyph adoption
+### Bad → Good: Format/glyph adoption
 
 **Bad** (output-format details under Rule 2):
 
-> Adds work-type emojis to PR descriptions: `## Details` subsections now render as `### 🎉 Features`, `### 🐛 Bug fixes`, `### ♻️ Refactoring`, `### 🧪 Tests`, and `### 📦 Dependencies`. Breaking changes in any subsection get a `🚨 **Breaking:**` prefix on the entry's first line.
+> Adds work-type emojis to PR descriptions: `## Details` subsections now render as `### 🎉 Features`, `### 🐛 Bug fixes`, `### ♻️ Refactoring`, `### 🧪 Tests`, and `### 📦 Dependencies`. Breaking changes in any subsection get a `🚨 **Breaking:**` Prefix on the entry's first line.
 
 **Good:**
 
 > Adds work-type emojis to PR-description section headings for at-a-glance scanning, and an inline marker on entries that introduce breaking changes.
 
-Cut: every specific emoji, every header string, every marker glyph — all output-format details. Survives: the outcome (scanability) and the fact that breaking changes carry a marker, without naming the marker. The trap with this pattern is the urge to enumerate the new visuals because they feel like the user-facing change; they aren't — the user-facing change is "things are easier to scan."
+Cut: Every specific emoji, every header string, every marker glyph — all output-format details. Survives: The outcome (scanability) and the fact that breaking changes carry a marker, without naming the marker. The trap with this pattern is the urge to enumerate the new visuals because they feel like the user-facing change; they aren't — the user-facing change is "things are easier to scan."
+
+### Bad → Good: Allowed identifier, no payoff
+
+**Bad** (both rules pass; identifier is allowed; but the file path buries the outcome):
+
+> Adds a `.changelog-overrides.json` file to the repo root that lets `release-kit` consumers skip or correct historical changelog entries.
+
+**Good:**
+
+> Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
+
+Both drafts use only allowed identifiers (`.changelog-overrides.json` is a top-level config-file path; `release-kit` is a package name). The Bad version leads with the file, treating the path as a fact worth announcing. The Good version names "an overrides file" without specifying the default filename — the reader who goes to use the feature will find the filename in the docs they consult. The judgment isn't allowed-vs-banned; it's earning-its-words-vs-not.
