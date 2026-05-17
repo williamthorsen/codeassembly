@@ -74,24 +74,9 @@ Write the machine-readable plan to `{plan-json-path}`:
 
 ## Output: orchestration-plan.md
 
-Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar does not carry frontmatter.
+Write the human-readable plan to `{plan-md-path}`. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The JSON sidecar does not carry frontmatter. The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc.
 
 ```markdown
----
-provenance:
-  skill: planner
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id, omit if not in a run}'
----
-
 # Implementation Plan
 
 ## Overview
@@ -138,12 +123,11 @@ run_id: '{run id, omit if not in a run}'
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-<!-- include: ../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-- `provenance.skill`: Always `planner`.
-- `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run `resolve-frontmatter.sh --skill planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Resumption
 

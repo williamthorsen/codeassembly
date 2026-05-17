@@ -44,24 +44,9 @@ You will receive:
 
 ## Output: Plan (Markdown)
 
-Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). Format:
+Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). The frontmatter conforms to the canonical schema; see the canonical example in the `artifact-conventions` data doc. Format:
 
 ```markdown
----
-provenance:
-  skill: orchestrated-planner
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 # Implementation Plan
 
 ## Overview
@@ -148,12 +133,11 @@ Write the plan JSON file to the path provided in the task prompt. Format:
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-<!-- include: ../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-- `provenance.skill`: Always `orchestrated-planner`.
-- `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run `resolve-frontmatter.sh --skill orchestrated-planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Constraints
 

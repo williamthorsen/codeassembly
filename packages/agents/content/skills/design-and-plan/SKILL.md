@@ -204,10 +204,9 @@ Present the plan to the user. Revise until approved.
 
 2. Resolve frontmatter fields for both artifacts. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-   <!-- include: ../../_partials/frontmatter-via-script.md -->
-   - `provenance.skill`: always `design-and-plan`.
-   - `provenance.isInteractive`: always `true`.
-   <!-- /include -->
+   Run `resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body.
+
+   If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`

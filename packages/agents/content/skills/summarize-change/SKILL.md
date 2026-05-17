@@ -32,27 +32,11 @@ If expected information is missing, stop and ask the developer.
 
 ## Output format
 
-The artifact begins with a single YAML frontmatter block that unifies canonical fields from the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) with change-summary-specific consumer fields documented at [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter). Ordering: `provenance:` first, then top-level canonical fields, then consumer fields. `commit:` and `ticket_id:` appear exactly once each.
+The artifact begins with a single YAML frontmatter block that unifies canonical fields from the canonical schema with change-summary-specific consumer fields; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the consumer-field extensions in [Change-summary frontmatter](../_data/artifact-conventions.md#change-summary-frontmatter). Ordering: `provenance:` first, then top-level canonical fields, then consumer fields. `commit:` and `ticket_id:` appear exactly once each. Field-resolution steps live in the [Canonical-field resolution](#canonical-field-resolution) section below.
+
+The body following the frontmatter has this structure:
 
 ```markdown
----
-provenance:
-  skill: summarize-change
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: true
-  model: '{model id}'
-branch: '{branch name from session context}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-ticket_id: '{ticket ID from session context, omit if null}'
-ticket_ref: '{ticket display ref, omit if null}'
-run_id: '{run id, omit when not in an orchestrated run}'
-title: '{bare title without `ticket_ref` prefix}'
-scope: '{scope inferred from commit prefixes, or omitted if ambiguous}'
-type: '{work type inferred from commit prefixes, or omitted if ambiguous}'
----
-
 # {ticket_ref} {title}
 
 ## What
@@ -115,11 +99,25 @@ The block is structured as:
 
 ### Canonical-field resolution
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$title`, `$scope`, and `$type` from the consumer-field inference below (omit a flag if the corresponding value cannot be inferred unambiguously).
 
-- `provenance.skill`: always `summarize-change`.
-- `provenance.isInteractive`: always `true`.
-<!-- /include -->
+Run via Bash:
+
+```bash
+resolve-frontmatter.sh \
+  --skill summarize-change \
+  --interactive true \
+  --model "$MODEL_ID" \
+  --extra "title=$title" \
+  ${scope:+--extra "scope=$scope"} \
+  ${type:+--extra "type=$type"}
+```
+
+The `${var:+--extra "key=$var"}` form expands to the flag only when `$var` is non-empty, so an unresolved `scope` or `type` is naturally omitted from the emitted frontmatter.
+
+Prepend the script's output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ### Consumer-field inference
 

@@ -42,12 +42,21 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$author` from `git log --format='%an' "$default_branch..HEAD" | sort -u | paste -sd, -` (unique authors of the commits under review).
 
-- `provenance.skill`: always `review-branch`.
-- `provenance.isInteractive`: always `true`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run via Bash:
+
+```bash
+resolve-frontmatter.sh \
+  --skill review-branch \
+  --interactive true \
+  --model "$MODEL_ID" \
+  --extra "author=$author"
+```
+
+Prepend the script's output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Review guidelines
 
@@ -78,24 +87,11 @@ Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the cano
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it — e.g., `# Code review: {description}`.
 
-The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema:
+The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. Pass `--extra "author=$author"` to the script to populate the review-artifact `author` field.
+
+The body following the frontmatter has this structure:
 
 ```markdown
----
-provenance:
-  skill: review-branch
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: true
-  model: '{model id}'
-ticket_id: '{ticket ID from session context, omit if null}'
-ticket_ref: '{ticket display ref, omit if null}'
-branch: '{branch name from session context}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-author: '{commit author(s)}'
----
-
 # Code review: {ticket_ref}: {description in imperative mood}
 
 ## Summary of changes

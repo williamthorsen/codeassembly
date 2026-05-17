@@ -15,23 +15,11 @@ Create a structured plan document for analysis, design, or implementation work.
 
 ## Output format
 
-The plan begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
+The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps live in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
+
+The body following the frontmatter has this structure:
 
 ```markdown
----
-provenance:
-  skill: plan
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: true
-ticket_id: '{ticket ID from session context, omit if null}'
-ticket_ref: '{ticket display ref, omit if null}'
-branch: '{branch name from session context}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id, omit when not in an orchestrated run}'
----
-
 # Plan: {Descriptive title}
 
 **Date**: {YYYY-MM-DD HH:MM UTC}
@@ -77,11 +65,9 @@ Resolve artifact directory based on context.
 
 The artifact frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+Run `resolve-frontmatter.sh --skill plan --interactive true` via Bash. Prepend the output verbatim to the artifact body.
 
-- `provenance.skill`: always `plan`.
-- `provenance.isInteractive`: always `true`.
-<!-- /include -->
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ### Run context
 

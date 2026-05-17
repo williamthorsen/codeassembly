@@ -65,26 +65,11 @@ Each finding is tagged with a resolution type:
 
 ## Output format
 
-Write the review to the output path provided in your task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
+Write the review to the output path provided in your task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc); see the [Frontmatter](#frontmatter) section below for field resolution.
 
 **Section organization:** Sections are grouped by **resolution type** (auto vs user), not by finding category (C vs X). Place every `auto`-tagged finding -- whether C or X -- in "Auto-resolvable findings". Place every `user`-tagged finding -- whether C or X -- in "Decision gaps". Every finding in "Decision gaps" must include a **Question** field.
 
 ```markdown
----
-provenance:
-  skill: plan-reviewer
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id, omit if not in a run}'
----
-
 # Plan review
 
 ## Summary
@@ -152,12 +137,11 @@ If the plan has no findings at all, write:
 
 The artifact's frontmatter conforms to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc).
 
-<!-- include: ../_partials/frontmatter-via-script.md -->
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-- `provenance.skill`: Always `plan-reviewer`.
-- `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
-<!-- /include -->
+Run `resolve-frontmatter.sh --skill plan-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Principles
 

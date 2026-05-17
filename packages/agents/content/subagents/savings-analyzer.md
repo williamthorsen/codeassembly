@@ -64,24 +64,11 @@ Tag every suggestion:
 
 ## Output format
 
-Write a markdown artifact with this structure. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
+Write a markdown artifact with this structure. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc); see the [Frontmatter](#frontmatter) section below for field resolution.
+
+The body following the frontmatter MUST include:
 
 ```
----
-provenance:
-  skill: savings-analyzer
-  timestamp: '{ISO 8601 UTC timestamp}'
-  baseSha: '{short SHA of origin/main, omit if unresolvable}'
-  isInteractive: false
-  model: '{model id}'
-ticket_id: '{ticket id, omit if absent}'
-ticket_ref: '{ticket display ref, omit if absent}'
-branch: '{current branch name}'
-commit: '{short hash of HEAD}'
-pr: '{full PR URL, omit if not resolved}'
-run_id: '{run id}'
----
-
 # Savings analysis
 
 ## Summary
@@ -114,7 +101,7 @@ Resolve fields before writing the artifact:
 - `provenance.timestamp`: Current UTC time in ISO 8601 format.
 - `provenance.baseSha`: Passed in via your dispatch prompt — the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
 - `provenance.isInteractive`: Always `false`.
-- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block: Look for the line `model named ... model ID is ...` and use the model ID value.
 - `ticket_id`, `ticket_ref`: Passed in via your dispatch prompt. Omit when absent.
 - `branch`: Passed in via your dispatch prompt.
 - `commit`: Passed in via your dispatch prompt — the short HEAD SHA at run time.

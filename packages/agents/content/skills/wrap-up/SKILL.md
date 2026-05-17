@@ -331,14 +331,19 @@ Prepend YAML frontmatter, then the markdown body.
 
 **Frontmatter** — see [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) for the canonical schema and [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the artifact-specific extensions.
 
-<!-- include: ../../_partials/frontmatter-via-script.md -->
+This site uses `--format json` because `tickets_created` is a list-of-objects extension that has no clean CLI expression; see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
+
+Run `resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `platform`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
+
+If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
+
+Set these skill-specific values inline (not in the script's output):
 
 - `provenance.skill`: always `wrap-up`.
 - `provenance.isInteractive`: always `true`.
 - `run_id`: **override** the script's value — reuse the run ID Phase 1a captured (also passed to `/create-devlog --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
 - `session_type` (deferred-findings extension): the classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
 - `tickets_created` (deferred-findings extension): list of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs it addresses. `items` is always a list. Omit when empty.
-<!-- /include -->
 
 **Body** — emit the tickets-created cross-reference and the dropped-findings record:
 
