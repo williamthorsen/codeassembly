@@ -140,9 +140,9 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 <!-- include: ../_partials/frontmatter-via-script.md -->
 
-- `provenance.skill`: always `planner`.
-- `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+- `provenance.skill`: Always `planner`.
+- `provenance.isInteractive`: Always `false`.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
 <!-- /include -->
 
 ## Resumption

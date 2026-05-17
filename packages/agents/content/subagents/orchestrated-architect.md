@@ -36,7 +36,7 @@ Classify the task into exactly one impact level:
 - Task follows an existing, well-established pattern
 - Touches 1-2 files in a single module
 - No new dependencies or interfaces
-- Example: adding a new utility function following existing conventions
+- Example: Adding a new utility function following existing conventions
 
 ### `medium`
 
@@ -44,7 +44,7 @@ Classify the task into exactly one impact level:
 - Touches multiple modules or layers
 - Creates new interfaces or modifies existing contracts
 - Requires coordination between components
-- Example: adding a new API endpoint with validation, persistence, and tests
+- Example: Adding a new API endpoint with validation, persistence, and tests
 
 ### `high`
 
@@ -52,7 +52,7 @@ Classify the task into exactly one impact level:
 - Introduces new infrastructure or cross-cutting concerns
 - Changes affect many downstream consumers
 - Risk of breaking existing functionality
-- Example: migrating state management, changing database schema, adding a new service layer
+- Example: Migrating state management, changing database schema, adding a new service layer
 
 ## Output format
 
@@ -90,7 +90,7 @@ Include these sections ONLY when the impact level warrants them:
 ```markdown
 ### Guidance
 
-{Specific guidance for the coder: which patterns to follow, which files to reference as examples, which conventions apply}
+{Specific guidance for the coder: Which patterns to follow, which files to reference as examples, which conventions apply}
 ```
 
 **If `medium` or higher:**
@@ -98,11 +98,11 @@ Include these sections ONLY when the impact level warrants them:
 ```markdown
 ### Constraints
 
-{Architectural constraints that must be respected: existing interfaces, naming conventions, module boundaries, dependency rules}
+{Architectural constraints that must be respected: Existing interfaces, naming conventions, module boundaries, dependency rules}
 
 ### Risks
 
-{What could go wrong: race conditions, breaking changes, performance implications, migration concerns}
+{What could go wrong: Race conditions, breaking changes, performance implications, migration concerns}
 ```
 
 **If `high`:**
@@ -130,9 +130,9 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 <!-- include: ../_partials/frontmatter-via-script.md -->
 
-- `provenance.skill`: always `orchestrated-architect`.
-- `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+- `provenance.skill`: Always `orchestrated-architect`.
+- `provenance.isInteractive`: Always `false`.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
 <!-- /include -->
 
 ## Principles

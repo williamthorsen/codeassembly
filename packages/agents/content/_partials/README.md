@@ -12,7 +12,7 @@ Three include shapes are recognized. Each must occupy a full line, with optional
 | ------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- |
 | Self-close    | `<!-- include: path / -->`                       | Inline a partial with no slot content (or use the partial's empty-slot defaults). |
 | Open + close  | `<!-- include: path -->` ... `<!-- /include -->` | Inline a partial and pass slot content into its `<!-- children -->` placeholder.  |
-| Children slot | `<!-- children -->`                              | Inside a partial: marks where the caller's slot content is substituted.           |
+| Children slot | `<!-- children -->`                              | Inside a partial: Marks where the caller's slot content is substituted.           |
 
 Self-close is matched before open so that a path with a trailing slash is read correctly as a self-close, not as an open directive whose path ends with a slash.
 
@@ -82,7 +82,7 @@ A consequence: avoid placing blank lines on both sides of a `<!-- children -->` 
 
 ## Common patterns
 
-### Bare self-close — no slot
+### Bare self-close — No slot
 
 Use when the partial has no `<!-- children -->` placeholder, or when the caller wants the partial's empty-slot rendering:
 

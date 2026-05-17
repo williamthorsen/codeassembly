@@ -9,10 +9,10 @@ import type { InstallOptions } from '../../lib/types.js';
 import { installCommand } from '../install.js';
 
 /**
- * Integration coverage for the `{tool:NAME}` placeholder rewriter. Builds a synthetic content
- * tree with deliberately-targeted placeholders, runs the install pipeline against it, and
- * asserts both the success path (Rovo Dev rewrites prose to mapped names) and the failure
- * path (an unmapped placeholder aborts install with a file-and-line-anchored error).
+ * Integration coverage for the `{tool:NAME}` placeholder rewriter. Builds a synthetic content tree with
+ * deliberately-targeted placeholders, runs the install pipeline against it, and asserts both the success path
+ * (Rovo Dev rewrites prose to mapped names) and the failure path (an unmapped placeholder aborts install with a
+ * file-and-line-anchored error).
  */
 describe('tool-name placeholder rewriting end-to-end', () => {
   let tempDir: string;

@@ -3,8 +3,8 @@
 # Body-text tool-name mapping for the {tool:NAME} placeholder rewriter.
 # Authoring guide: ../../_partials/README.md (Tool-name placeholders).
 # Keys are canonical PascalCase tool names; values are platform-native names.
-# `Glob` has no exact Rovo Dev counterpart — `expand_folder` is the closest
-# directory-exploration analogue, accepted as the mapping for prose contexts.
+# `Glob` has no exact Rovo Dev counterpart: `expand_folder` is the closest directory-exploration analogue, accepted as
+# the mapping for prose contexts.
 _tools:
   Bash: bash
   Edit: find_and_replace_code

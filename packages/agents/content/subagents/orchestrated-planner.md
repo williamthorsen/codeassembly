@@ -42,7 +42,7 @@ You will receive:
 - **Test coverage in acceptance criteria**: When a step creates or modifies testable behavior, its acceptance criteria must include test coverage. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
 - **Documentation coverage in acceptance criteria**: When a step adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
 
-## Output: plan (Markdown)
+## Output: Plan (Markdown)
 
 Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). Format:
 
@@ -116,7 +116,7 @@ run_id: '{run id}'
 These four actions (Adopted, Revised, Dropped, Added) are the canonical vocabulary. Map merge, split, and reorder operations to "Revised" — they all produce revised steps from the reference.
 ```
 
-## Output: plan (JSON)
+## Output: Plan (JSON)
 
 Write the plan JSON file to the path provided in the task prompt. Format:
 
@@ -150,9 +150,9 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 <!-- include: ../_partials/frontmatter-via-script.md -->
 
-- `provenance.skill`: always `orchestrated-planner`.
-- `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+- `provenance.skill`: Always `orchestrated-planner`.
+- `provenance.isInteractive`: Always `false`.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
 <!-- /include -->
 
 ## Constraints

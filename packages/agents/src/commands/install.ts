@@ -80,9 +80,8 @@ export async function installCommand(
 
     const entries: Array<ManifestEntry> = [];
 
-    // Load the platform overlay once per platform. The raw YAML feeds the frontmatter merger
-    // (subagents only); the parsed `_tools:` mapping feeds the body-text placeholder rewriter
-    // (subagents and skills).
+    // Load the platform overlay once per platform. The raw YAML feeds the frontmatter merger (subagents only);
+    // the parsed `_tools:` mapping feeds the body-text placeholder rewriter (subagents and skills).
     const platformConfig = PLATFORMS[platformId];
     const overlayYaml = await readOverlay(contentDir, platformConfig.frontmatterFile);
     const toolMapping = loadToolMapping(overlayYaml);
@@ -168,12 +167,12 @@ export async function installCommand(
 
 /**
  * Installs skill directories from content/skills/ into the target skills directory.
- * Shared skills (top-level entries) are installed for all platforms. Platform-specific
- * skills from `_platforms/{platformId}/` are installed only for the matching platform.
+ * Shared skills (top-level entries) are installed for all platforms.
+ * Platform-specific skills from `_platforms/{platformId}/` are installed only for the matching platform.
  * The `_platforms` directory is skipped (handled by dedicated platform-specific logic below).
  *
- * If a previously installed item has been modified by the user, it is skipped unless
- * `--force` is set, mirroring the uninstall command's drift-checking behavior.
+ * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
+ * mirroring the uninstall command's drift-checking behavior.
  */
 async function installSkills(
   contentDir: string,
@@ -252,9 +251,8 @@ async function installSkills(
 
 /**
  * Installs a single skill entry (directory or file) from source to destination.
- * Skills are always copied and rewritten (never symlinked), because they require
- * path transformation at install time — the same pattern subagents use for
- * frontmatter merging.
+ * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time
+ * — the same pattern subagents use for frontmatter merging.
  */
 async function installSkillEntry(
   srcPath: string,
@@ -270,11 +268,11 @@ async function installSkillEntry(
   toolMapping: ReadonlyMap<string, string>,
   label = '',
 ): Promise<ManifestEntry> {
-  // Eagerly resolve include directives at source-tree level. Run before the dry-run gate
-  // so missing targets, cycles, and out-of-tree references surface even when no files
-  // are written. Directory entries traverse their tree and cache each expanded `.md`
-  // file's content; file entries expand the file directly. After expansion, apply the
-  // tool-name rewriter in-memory so the cached content carries the final body text the
+  // Eagerly resolves include directives at source-tree level. Run before the dry-run gate so missing targets, cycles,
+  // and out-of-tree references surface even when no files are written.
+  // Directory entries traverse their tree and cache each expanded `.md` file's content;
+  // file entries expand the file directly.
+  // After expansion, applies the tool-name rewriter in-memory so the cached content carries the final body text the
   // write phase will emit — no second disk pass, no read-back-from-disk.
   const srcStats = await stat(srcPath);
   let expandedFileContent: string | undefined;
@@ -303,11 +301,10 @@ async function installSkillEntry(
   }
 
   if (srcStats.isDirectory()) {
-    // Per-file walk: write expanded `.md` files from the cache populated during the
-    // pre-expand pass, mirror the directory structure to the destination, and copy
-    // non-`.md` files plainly. The `_partials/` exclusion is applied during the walk.
-    // The cache is non-undefined here because srcStats.isDirectory() implies the
-    // directory branch above ran.
+    // Per-file walk: Writes expanded `.md` files from the cache populated during the pre-expand pass,
+    // mirrors the directory structure to the destination, and copies non-`.md` files plainly.
+    // The `_partials/` exclusion is applied during the walk.
+    // The cache is non-undefined here because srcStats.isDirectory() implies the directory branch above ran.
     if (expandedDirContents === undefined) {
       throw new Error(`Invariant violation: expandedDirContents undefined for directory ${srcPath}`);
     }
@@ -335,11 +332,10 @@ async function installSkillEntry(
 }
 
 /**
- * Eagerly walks a skill source directory, runs `expandIncludes` on each `.md` file to
- * surface include errors before any file is written, and returns a map keyed by absolute
- * source path with the expanded content. `_partials/` directories are skipped because
- * their contents are referenced through includes, not installed. The returned map is
- * consumed by `writeExpandedSkillDir` so each `.md` file is expanded once per install.
+ * Eagerly walks a skill source directory, runs `expandIncludes` on each `.md` file to surface include errors before
+ * any file is written, and returns a map keyed by absolute source path with the expanded content.
+ * `_partials/` directories are skipped because their contents are referenced through includes, not installed.
+ * The returned map is consumed by `writeExpandedSkillDir` so each `.md` file is expanded once per install.
  */
 async function preExpandSkillDirectory(srcDir: string, contentDir: string): Promise<Map<string, string>> {
   const expandedBySrcPath = new Map<string, string>();
@@ -368,10 +364,9 @@ async function collectExpansions(
 }
 
 /**
- * Recursively writes a skill source directory to the destination. `.md` files are
- * read from the pre-computed expansion cache (populated by `preExpandSkillDirectory`);
- * non-`.md` files are copied verbatim. `_partials/` subdirectories are skipped at any
- * depth — their contents are include targets, not installed artifacts.
+ * Recursively writes a skill source directory to the destination. `.md` files are read from the pre-computed expansion
+ * cache (populated by `preExpandSkillDirectory`); non-`.md` files are copied verbatim.
+ * `_partials/` subdirectories are skipped at any depth — their contents are include targets, not installed artifacts.
  */
 async function writeExpandedSkillDir(
   srcDir: string,
@@ -403,8 +398,8 @@ async function writeExpandedSkillDir(
 
 /**
  * Installs subagent .md files with platform-specific frontmatter merging.
- * If a previously installed item has been modified by the user, it is skipped unless
- * `--force` is set, mirroring the uninstall command's drift-checking behavior.
+ * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
+ * mirroring the uninstall command's drift-checking behavior.
  */
 async function installSubagents(
   contentDir: string,
@@ -431,9 +426,8 @@ async function installSubagents(
     const destPath = path.join(platformPaths.subagentsDir, entry);
     const relativePath = `${subagentsDirName}/${entry}`;
 
-    // Resolve include directives at source-tree level. Run before the dry-run gate so
-    // missing targets, cycles, and out-of-tree references surface even when no files
-    // are written. Mirrors the ordering in installPlatformGuidance.
+    // Resolve include directives at source-tree level. Run before the dry-run gate so missing targets, cycles, and
+    // out-of-tree references surface even when no files are written. Mirrors the ordering in installPlatformGuidance.
     const expandedSource = await expandIncludes(srcPath, contentDir);
 
     if (options.dryRun) {
@@ -458,7 +452,7 @@ async function installSubagents(
       }
     }
 
-    // Pipeline: expand includes -> merge frontmatter -> rewrite tool-name placeholders ->
+    // Pipeline: Expand includes -> merge frontmatter -> rewrite tool-name placeholders ->
     // inject provenance marker -> write.
     const sourceLabel = `subagents/${entry}`;
     const merged = mergeFrontmatter(expandedSource, overlayYaml);
@@ -480,8 +474,8 @@ async function installSubagents(
 }
 
 /**
- * Generates `prompts.yml` for Rovo Dev, which is the skill discovery file that lists
- * all user-invocable skills. Skills with `user-invocable: false` are excluded.
+ * Generates `prompts.yml` for Rovo Dev, which is the skill discovery file that lists all user-invocable skills.
+ * Skills with `user-invocable: false` are excluded.
  *
  * The file is written to `{platformHome}/prompts.yml` and tracked in the manifest.
  */
@@ -562,9 +556,8 @@ async function generatePromptsYml(
     });
   }
 
-  // Build YAML content with deterministic template literals.
-  // Description values are single-quoted with internal single quotes escaped (doubled)
-  // to prevent YAML-special characters from producing invalid output.
+  // Build YAML content with deterministic template literals. Description values are single-quoted with internal single
+  // quotes escaped (doubled) to prevent YAML-special characters from producing invalid output.
   const yamlLines = ['prompts:'];
   for (const entry of promptEntries) {
     const escapedDescription = entry.description.replaceAll("'", "''");
@@ -605,8 +598,7 @@ async function generatePromptsYml(
 /**
  * Installs script files from content/scripts/ into the target scripts directory.
  * Scripts are flat files (no frontmatter, no platform-specific variants).
- * Copied scripts receive the executable bit (0o755); symlinked scripts inherit
- * the source's permissions.
+ * Copied scripts receive the executable bit (0o755); symlinked scripts inherit the source's permissions.
  */
 async function installScripts(
   contentDir: string,
@@ -775,10 +767,9 @@ async function installSharedGuidance(
 }
 
 /**
- * Installs platform-specific guidance files from `content/guidance/_platforms/{platformId}/`
- * into the platform home directory. Platform guidance is always copied and rewritten (never
- * symlinked), because install-time path rewriting produces absolute link targets that agents
- * can resolve without knowing a path convention.
+ * Installs platform-specific guidance files from `content/guidance/_platforms/{platformId}/` into the platform
+ * home directory. Platform guidance is always copied and rewritten (never symlinked), because install-time path
+ * rewriting produces absolute link targets that agents can resolve without knowing a path convention.
  */
 async function installPlatformGuidance(
   contentDir: string,
@@ -839,8 +830,8 @@ async function installPlatformGuidance(
     await unlinkIfSymlink(destPath);
     await copyItem(srcPath, destPath);
 
-    // For .md files, replace the freshly-copied content with the include-expanded content,
-    // then run downstream link rewriting and template/marker injection on the expanded text.
+    // For .md files, replace the freshly-copied content with the include-expanded content, then run downstream link
+    // rewriting and template/marker injection on the expanded text.
     if (entry.endsWith('.md')) {
       if (expandedContent !== undefined) {
         await writeFile(destPath, expandedContent, 'utf8');
@@ -867,19 +858,17 @@ function isEnoent(error: unknown): boolean {
 }
 
 /**
- * Returns a POSIX-style path label for a skill source file relative to `contentDir`, used as
- * the `contextLabel` argument to `rewriteToolNames` so install errors include a stable,
- * platform-independent file reference.
+ * Returns a POSIX-style path label for a skill source file relative to `contentDir`, used as the `contextLabel`
+ * argument to `rewriteToolNames` so install errors include a stable, platform-independent file reference.
  */
 function relativeFromContent(contentDir: string, srcPath: string): string {
   return path.relative(contentDir, srcPath).split(path.sep).join('/');
 }
 
 /**
- * Returns a new map mirroring `rawExpanded`, with every value processed through the tool-name
- * rewriter. The map is preserved by-reference (same keys, same iteration order); only the
- * string values change. Each entry's `contextLabel` is its content-relative POSIX path so an
- * unmapped placeholder surfaces a usable file reference.
+ * Returns a new map mirroring `rawExpanded`, with every value processed through the tool-name rewriter.
+ * The map is preserved by-reference (same keys, same iteration order); only the string values change. Each entry's
+ * `contextLabel` is its content-relative POSIX path, so an unmapped placeholder surfaces a usable file reference.
  */
 function rewriteToolNamesInExpansionMap(
   rawExpanded: ReadonlyMap<string, string>,
@@ -894,10 +883,7 @@ function rewriteToolNamesInExpansionMap(
   return rewritten;
 }
 
-/**
- * Reads a subagent overlay YAML file. Returns an empty string when the file does not exist,
- * preserving the prior in-loop behavior that treated a missing overlay as a no-op.
- */
+/** Reads a subagent overlay YAML file. Returns an empty string when the file does not exist. */
 async function readOverlay(contentDir: string, frontmatterFile: string): Promise<string> {
   const overlayPath = path.join(contentDir, 'subagents', '_data', frontmatterFile);
   try {

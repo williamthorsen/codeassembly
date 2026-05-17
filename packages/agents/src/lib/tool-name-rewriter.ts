@@ -1,9 +1,8 @@
 import yaml from 'js-yaml';
 
 /**
- * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder whose
- * canonical name has no entry in the supplied mapping. Caught by the install
- * pipeline and surfaced as a fatal install error.
+ * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder whose canonical name has no entry in the
+ * supplied mapping. Caught by the install pipeline and surfaced as a fatal install error.
  */
 export class ToolNameRewriteError extends Error {
   override readonly name = 'ToolNameRewriteError';
@@ -26,10 +25,9 @@ export class ToolNameRewriteError extends Error {
 const PLACEHOLDER_RE = /\{tool:([A-Za-z][A-Za-z0-9_]*)\}/g;
 
 /**
- * Replaces every `{tool:NAME}` placeholder in `content` with the value bound to `NAME` in `mapping`.
- * An unmapped name throws `ToolNameRewriteError` with the canonical name, `contextLabel`, and the
- * 1-based line number of the offending match. There is no identity pass-through; every match must
- * resolve through the mapping or the call fails.
+ * Replaces every `{tool:NAME}` placeholder in `content` with the value bound to `NAME` in `mapping`. An unmapped name
+ * throws `ToolNameRewriteError` with the canonical name, `contextLabel`, and the 1-based line number of the offending
+ * match. There is no identity pass-through; every match must resolve through the mapping or the call fails.
  */
 export function rewriteToolNames(content: string, mapping: ReadonlyMap<string, string>, contextLabel: string): string {
   return content.replace(PLACEHOLDER_RE, (_match: string, toolName: string, offset: number): string => {
@@ -42,9 +40,8 @@ export function rewriteToolNames(content: string, mapping: ReadonlyMap<string, s
 }
 
 /**
- * Parses the top-level `_tools:` key out of an overlay YAML document into a canonical → platform
- * name `Map`. Missing, null, or empty `_tools:` returns an empty `Map`. A non-object `_tools:` or
- * any non-string entry throws.
+ * Parses the top-level `_tools:` key out of an overlay YAML document into a canonical → platform name `Map`.
+ * Missing, null, or empty `_tools:` returns an empty `Map`. A non-object `_tools:` or any non-string entry throws.
  */
 export function loadToolMapping(overlayYaml: string): Map<string, string> {
   if (overlayYaml.trim() === '') {
