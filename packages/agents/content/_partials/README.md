@@ -12,7 +12,7 @@ Three include shapes are recognized. Each must occupy a full line, with optional
 | ------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- |
 | Self-close    | `<!-- include: path / -->`                       | Inline a partial with no slot content (or use the partial's empty-slot defaults). |
 | Open + close  | `<!-- include: path -->` ... `<!-- /include -->` | Inline a partial and pass slot content into its `<!-- children -->` placeholder.  |
-| Children slot | `<!-- children -->`                              | Inside a partial: marks where the caller's slot content is substituted.           |
+| Children slot | `<!-- children -->`                              | Inside a partial: Marks where the caller's slot content is substituted.           |
 
 Self-close is matched before open so that a path with a trailing slash is read correctly as a self-close, not as an open directive whose path ends with a slash.
 
@@ -41,11 +41,38 @@ For each `.md` source file the install pipeline performs, in order:
 
 1. **Expand includes.** `expandIncludes(srcPath, contentDir)` resolves all directive shapes recursively and substitutes slot content.
 2. **Merge frontmatter** (subagents only). Platform-specific frontmatter overrides from `_data/{platform}.yml` are merged into the source's frontmatter.
-3. **Inject the provenance marker.** A `GENERATED FILE` comment is added at the top of the output, with a `Source:` link to the original file.
-4. **Rewrite paths** (skills only, post-write). Bare-relative Markdown links are rewritten to absolute platform paths.
-5. **Write the destination file.**
+3. **Rewrite tool-name placeholders.** `rewriteToolNames(content, mapping)` replaces each `{tool:NAME}` placeholder using the platform's `_tools:` mapping from the same overlay YAML. An unmapped name is a fatal install error anchored to the source file and line. See [Tool-name placeholders](#tool-name-placeholders).
+4. **Inject the provenance marker.** A `GENERATED FILE` comment is added at the top of the output, with a `Source:` link to the original file.
+5. **Rewrite paths** (skills only, post-write). Bare-relative Markdown links are rewritten to absolute platform paths.
+6. **Write the destination file.**
+
+For subagents, all steps run on the in-memory merged string before write. For directory-form skills, step 3 runs on each value of the in-memory `expandedDirContents` map before `writeExpandedSkillDir` writes files to disk; step 5 (path rewriting) then runs as a second pass over the written tree. For flat-file skills, step 3 runs on `expandedFileContent` before `writeFile`.
 
 Expansion runs before the dry-run gate, so missing partials, cycles, and out-of-tree references surface even when no files would be written.
+
+## Tool-name placeholders
+
+Subagent and skill body text reference tools using the `{tool:NAME}` placeholder so the same source can install for platforms that name their tools differently. `NAME` is the canonical (Claude) tool name (`Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`). The install pipeline rewrites each placeholder using the platform's `_tools:` mapping, which lives at the top of each overlay YAML at `content/subagents/_data/{platform}.yml`.
+
+```yaml
+# content/subagents/_data/rovodev.yml
+_tools:
+  Bash: bash
+  Edit: find_and_replace_code
+  Glob: expand_folder
+  Grep: grep
+  Read: open_files
+  Write: create_file
+```
+
+When a placeholder names a tool not present in the overlay's `_tools:` mapping, the rewriter aborts install with a fatal error anchored to the source file and line. There is no identity pass-through — every match must resolve through the mapping. This catches typos (e.g., `{tool:Reed}`) and out-of-date placeholders at install time rather than at agent runtime.
+
+**Authoring guidance:**
+
+- Use `{tool:NAME}` for body prose that names a tool *as a tool*, not for English verbs ("Read the file", "Write a paragraph", "Read project guidelines" are not migrated).
+- Preserve surrounding context: `` `Write` `` becomes `` `{tool:Write}` ``; bare `Write` becomes `{tool:Write}`.
+- Do **not** use placeholders in frontmatter `tools:` values. Frontmatter is replaced wholesale by the overlay merger; placeholders there would create two overlapping mechanisms.
+- The placeholder mechanism is body-only, applied to subagent and skill `.md` files. Guidance files (`content/guidance/`) are not wired through the rewriter.
 
 ## Verbatim slot substitution
 
@@ -55,7 +82,7 @@ A consequence: avoid placing blank lines on both sides of a `<!-- children -->` 
 
 ## Common patterns
 
-### Bare self-close — no slot
+### Bare self-close — No slot
 
 Use when the partial has no `<!-- children -->` placeholder, or when the caller wants the partial's empty-slot rendering:
 

@@ -20,7 +20,7 @@ You receive:
 
 1. **Read run-index.json** -- extract effort, thresholds, model config
 2. **Read run-log.jsonl** -- parse all events
-3. **Check artifact files** -- use Glob to list files in the run directory; note which agents produced artifacts and which did not
+3. **Check artifact files** -- use {tool:Glob} to list files in the run directory; note which agents produced artifacts and which did not
 4. **Analyze** -- apply the three-question framework (see below)
 5. **Write artifact** -- write `{NN}_analyst_savings-analysis.md` to the run directory
 
@@ -110,18 +110,18 @@ The artifact begins with YAML frontmatter conforming to the universal artifact f
 
 Resolve fields before writing the artifact:
 
-- `provenance.skill`: always `savings-analyzer`.
-- `provenance.timestamp`: current UTC time in ISO 8601 format.
-- `provenance.baseSha`: passed in via your dispatch prompt — the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
-- `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
-- `ticket_id`, `ticket_ref`: passed in via your dispatch prompt. Omit when absent.
-- `branch`: passed in via your dispatch prompt.
-- `commit`: passed in via your dispatch prompt — the short HEAD SHA at run time.
-- `pr`: passed in via your dispatch prompt when the dispatcher resolved it via the `pr-resolution` shared data doc. Omit when not provided.
-- `run_id`: passed in via your dispatch prompt — the orchestrated run ID.
+- `provenance.skill`: Always `savings-analyzer`.
+- `provenance.timestamp`: Current UTC time in ISO 8601 format.
+- `provenance.baseSha`: Passed in via your dispatch prompt — the orchestrator resolves `git rev-parse --short origin/main` for the run-summary and forwards it. Omit if not provided.
+- `provenance.isInteractive`: Always `false`.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — look for the line `model named ... model ID is ...` and use the model ID value.
+- `ticket_id`, `ticket_ref`: Passed in via your dispatch prompt. Omit when absent.
+- `branch`: Passed in via your dispatch prompt.
+- `commit`: Passed in via your dispatch prompt — the short HEAD SHA at run time.
+- `pr`: Passed in via your dispatch prompt when the dispatcher resolved it via the `pr-resolution` shared data doc. Omit when not provided.
+- `run_id`: Passed in via your dispatch prompt — the orchestrated run ID.
 
-Because `savings-analyzer` does not have the Bash tool in its default tool set, fields that normally require Bash (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
+Because `savings-analyzer` does not have the {tool:Bash} tool in its default tool set, fields that normally require {tool:Bash} (`baseSha`, `commit`, `pr`) are sourced from the dispatch prompt rather than resolved on demand. The dispatcher is responsible for passing these values.
 
 ## ARTIFACT-WRITE SAFEGUARD
 

@@ -15,7 +15,7 @@ You are NOT a planner or coder. You do not write implementation plans or code. Y
 
 1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Understand the task**: Read the task description carefully. Identify what is being asked.
-3. **Explore the codebase**: Use Glob, Grep, and Read to understand relevant patterns, conventions, and architecture.
+3. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to understand relevant patterns, conventions, and architecture.
 4. **Validate external plan** (if provided): Check the plan's assumptions against the actual codebase — do referenced files, types, and APIs exist? Does the approach align with established patterns? Are there existing utilities the plan overlooks? Flag invalid assumptions explicitly. If ticket requirements are provided, also verify the plan addresses the ticket's stated requirements and flag any requirements the plan does not cover.
 5. **Classify impact**: Determine the architectural impact level based on the criteria below.
 6. **Write guidance**: Produce a structured analysis document.
@@ -36,7 +36,7 @@ Classify the task into exactly one impact level:
 - Task follows an existing, well-established pattern
 - Touches 1-2 files in a single module
 - No new dependencies or interfaces
-- Example: adding a new utility function following existing conventions
+- Example: Adding a new utility function following existing conventions
 
 ### `medium`
 
@@ -44,7 +44,7 @@ Classify the task into exactly one impact level:
 - Touches multiple modules or layers
 - Creates new interfaces or modifies existing contracts
 - Requires coordination between components
-- Example: adding a new API endpoint with validation, persistence, and tests
+- Example: Adding a new API endpoint with validation, persistence, and tests
 
 ### `high`
 
@@ -52,11 +52,11 @@ Classify the task into exactly one impact level:
 - Introduces new infrastructure or cross-cutting concerns
 - Changes affect many downstream consumers
 - Risk of breaking existing functionality
-- Example: migrating state management, changing database schema, adding a new service layer
+- Example: Migrating state management, changing database schema, adding a new service layer
 
 ## Output format
 
-Write your analysis to the file path provided in your task prompt using the Write tool. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
+Write your analysis to the file path provided in your task prompt using the {tool:Write} tool. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution).
 
 The document MUST include:
 
@@ -90,7 +90,7 @@ Include these sections ONLY when the impact level warrants them:
 ```markdown
 ### Guidance
 
-{Specific guidance for the coder: which patterns to follow, which files to reference as examples, which conventions apply}
+{Specific guidance for the coder: Which patterns to follow, which files to reference as examples, which conventions apply}
 ```
 
 **If `medium` or higher:**
@@ -98,11 +98,11 @@ Include these sections ONLY when the impact level warrants them:
 ```markdown
 ### Constraints
 
-{Architectural constraints that must be respected: existing interfaces, naming conventions, module boundaries, dependency rules}
+{Architectural constraints that must be respected: Existing interfaces, naming conventions, module boundaries, dependency rules}
 
 ### Risks
 
-{What could go wrong: race conditions, breaking changes, performance implications, migration concerns}
+{What could go wrong: Race conditions, breaking changes, performance implications, migration concerns}
 ```
 
 **If `high`:**
@@ -130,9 +130,9 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 <!-- include: ../_partials/frontmatter-via-script.md -->
 
-- `provenance.skill`: always `orchestrated-architect`.
-- `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+- `provenance.skill`: Always `orchestrated-architect`.
+- `provenance.isInteractive`: Always `false`.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
 <!-- /include -->
 
 ## Principles

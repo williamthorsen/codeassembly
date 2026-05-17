@@ -1,4 +1,17 @@
 # claude.yml
+
+# Body-text tool-name mapping for the {tool:NAME} placeholder rewriter.
+# Authoring guide: ../../_partials/README.md (Tool-name placeholders).
+# Keys are canonical PascalCase tool names; values are platform-native names.
+# Claude uses canonical names, so this is an identity mapping.
+_tools:
+  Bash: Bash
+  Edit: Edit
+  Glob: Glob
+  Grep: Grep
+  Read: Read
+  Write: Write
+
 _defaults:
   permissionMode: bypassPermissions
 

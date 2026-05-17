@@ -27,7 +27,7 @@ You will receive:
 
 1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
 2. **Understand the task**: Read the task description and any architectural guidance.
-3. **Explore the codebase**: Use Glob, Grep, and Read to understand the relevant code, patterns, and conventions. Identify the files that will need to change.
+3. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to understand the relevant code, patterns, and conventions. Identify the files that will need to change.
 4. **Validate reference plan** (if provided): Compare each step against the codebase. Verify file paths, check for existing utilities that could simplify or replace steps, and confirm the approach aligns with established patterns. Address any assumption issues flagged by the architect. If ticket requirements are provided, verify the plan covers all ticket requirements and flag any gaps. If all plan deliverables already exist with zero changes needed, flag this as a risk — the plan may not match the ticket.
 5. **Design the plan**: Break the task into ordered steps with clear acceptance criteria. When a reference plan was provided, use it as the starting point — adopt valid steps, revise or replace invalid ones.
 6. **Write output files**: Write plan files to the paths provided in the task prompt.
@@ -42,7 +42,7 @@ You will receive:
 - **Test coverage in acceptance criteria**: When a step creates or modifies testable behavior, its acceptance criteria must include test coverage. See the `testing-conventions` skill for what constitutes testable behavior and the narrow carve-outs where tests may be omitted.
 - **Documentation coverage in acceptance criteria**: When a step adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
 
-## Output: plan (Markdown)
+## Output: Plan (Markdown)
 
 Write the plan Markdown file to the path provided in the task prompt. The artifact begins with YAML frontmatter conforming to the universal artifact frontmatter schema (defined in the `artifact-conventions` shared data doc) (see [Frontmatter](#frontmatter) below for field resolution). Format:
 
@@ -116,7 +116,7 @@ run_id: '{run id}'
 These four actions (Adopted, Revised, Dropped, Added) are the canonical vocabulary. Map merge, split, and reorder operations to "Revised" — they all produce revised steps from the reference.
 ```
 
-## Output: plan (JSON)
+## Output: Plan (JSON)
 
 Write the plan JSON file to the path provided in the task prompt. Format:
 
@@ -150,9 +150,9 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 <!-- include: ../_partials/frontmatter-via-script.md -->
 
-- `provenance.skill`: always `orchestrated-planner`.
-- `provenance.isInteractive`: always `false`.
-- `provenance.model`: the model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
+- `provenance.skill`: Always `orchestrated-planner`.
+- `provenance.isInteractive`: Always `false`.
+- `provenance.model`: The model identifier you are executing under. Read this from your system-prompt environment block — the line `model named ... model ID is ...`.
 <!-- /include -->
 
 ## Constraints

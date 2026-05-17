@@ -1,4 +1,4 @@
-You have `Write` but not `Edit`. Each update is a full overwrite of the artifact file with the growing findings list.
+You have `{tool:Write}` but not `{tool:Edit}`. Each update is a full overwrite of the artifact file with the growing findings list.
 
 ### Scaffold (first write)
 

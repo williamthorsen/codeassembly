@@ -1,4 +1,18 @@
 # rovodev.yml
+
+# Body-text tool-name mapping for the {tool:NAME} placeholder rewriter.
+# Authoring guide: ../../_partials/README.md (Tool-name placeholders).
+# Keys are canonical PascalCase tool names; values are platform-native names.
+# `Glob` has no exact Rovo Dev counterpart: `expand_folder` is the closest directory-exploration analogue, accepted as
+# the mapping for prose contexts.
+_tools:
+  Bash: bash
+  Edit: find_and_replace_code
+  Glob: expand_folder
+  Grep: grep
+  Read: open_files
+  Write: create_file
+
 _defaults:
   tools: [bash, create_file, expand_code_chunks, expand_folder, grep, open_files]
 
