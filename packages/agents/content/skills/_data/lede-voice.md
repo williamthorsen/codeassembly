@@ -57,12 +57,10 @@ Apply both. They are tight enough that a verbose draft cannot satisfy them on a 
 
 ### Rule 1: Per-sentence outcome test
 
-For each sentence, ask: **Does this describe what the change means for the reader?** Three permissible categories:
+For each sentence, ask: **Does this describe what the change means for the reader?** Two permissible categories:
 
 - **Outcome**: Something the reader will experience, see, or be able to do.
   Example: "Uploads no longer fail when the filename contains a colon."
-- **Stated invariant worth confirming**: An explicit assurance that would be of interest to the reader, when relevant.
-  Examples: "Behavior is unchanged.", "No migration required."
 - **Migration info**: Names of user-facing surface that has been added, removed, or renamed; steps the reader must take.
   Example: "The `--fix-low` flag is replaced by `--approval-threshold`."
 
@@ -70,7 +68,7 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **Indirect outcomes** (reliability, maintainability, performance) are permitted **only if specific**. "More reliable progress visibility during long runs" describes a real outcome a reader would notice; "improves reliability" or "modernizes the architecture" is generic puffery and is forbidden. The test: If the same sentence could be written about almost any change, it is too generic.
 
-**For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed" — specifically, user-facing behavior change, migration info, or a non-trivial invariant worth confirming. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
+**For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed"; specifically, user-facing behavior change or migration info. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
 
 ### Rule 2: Identifier ban
 
@@ -125,7 +123,7 @@ Body text — that is, the text used in commit bodies, merge-commit bodies, and 
 
 ## Length
 
-The entry is as long as needed to convey outcomes, invariants, and migration info — and not one word longer.
+The entry is as long as needed to convey outcomes and migration info — and not one word longer.
 
 This is not a soft ceiling. It is the per-sentence test: Each sentence must pass Rule 1 and Rule 2. Four sentences is fine if each carries user-relevant content (a rename with multiple migration facts); one sentence is fine if one covers it.
 
@@ -145,9 +143,9 @@ The voice is the same across every work type; only the subject changes:
 
 ### Good: Public tier, multi-fact rename
 
-> The package previously published as `@williamthorsen/audit-deps` has been renamed to `v11y-check`. The CLI command is now `v11y-check`, and the default config file is `.config/v11y-check.config.json`. Existing users should install `v11y-check` in place of `@williamthorsen/audit-deps`, rename their config file, and update any scripts that invoke `audit-deps`. Behavior is unchanged.
+> The package previously published as `@williamthorsen/audit-deps` has been renamed to `v11y-check`. The CLI command is now `v11y-check`, and the default config file is `.config/v11y-check.config.json`. Existing users should install `v11y-check` in place of `@williamthorsen/audit-deps`, rename their config file, and update any scripts that invoke `audit-deps`.
 
-Why it works: Every sentence is migration info or invariant. All identifiers named are user-facing surface. The reader knows exactly what to do.
+Why it works: Every sentence is migration info. All identifiers named are user-facing surface. The reader knows exactly what to do.
 
 ### Good: Public tier, low-action feature
 
@@ -193,9 +191,9 @@ Cut: The mechanism clause ("Each CLI now reads its version directly from its `pa
 
 **Good:**
 
-> Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. Exit code behavior is unchanged.
+> Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. The check fails only on above-threshold, non-allowlisted vulnerabilities.
 
-Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message. Survives: Outcome (visibility) plus invariant (exit codes unchanged).
+Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message; the closing "Exit code behavior is unchanged" is recast as a positive statement of the failure criterion. Survives: Outcome (visibility) plus the explicit failure criterion.
 
 ### Bad → Good: Format/glyph adoption
 
