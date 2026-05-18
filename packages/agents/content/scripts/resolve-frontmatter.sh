@@ -45,8 +45,9 @@
 #
 # Exit codes:
 #   0  Success.
-#   1  Missing branch manifest (run `get-session-context` first), not in a git repo, missing `jq`, or
-#      required-arg violation in yaml mode.
+#   1  Missing branch manifest (precondition violated; dispatcher must invoke the get-session-context skill before
+#      subagent dispatch; see artifact-conventions.md § Subagent dispatch precondition), not in a git repo,
+#      missing `jq`, or required-arg violation in yaml mode.
 
 set -euo pipefail
 
@@ -151,7 +152,10 @@ main() {
   branch=$(current_branch) || fail "not in a git repository"
 
   local manifest
-  manifest=$(read_manifest "$branch") || fail "branch manifest not found at .agents/$(sanitize_branch "$branch").branch-manifest.json — run get-session-context first"
+  manifest=$(read_manifest "$branch") || fail "$(printf '%s\n%s\n%s' \
+    "branch manifest missing at .agents/$(sanitize_branch "$branch").branch-manifest.json" \
+    "Precondition violated: the dispatcher must invoke the \`get-session-context\` skill in this cwd before dispatching a subagent that calls this script." \
+    "Subagents cannot invoke skills, so they cannot create the manifest themselves. See packages/agents/content/skills/_data/artifact-conventions.md § Subagent dispatch precondition.")"
 
   local commit
   commit=$(git rev-parse --short HEAD 2>/dev/null) || fail "could not resolve HEAD commit"

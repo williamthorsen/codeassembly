@@ -214,6 +214,22 @@ Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh
 
 These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround — keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
+## Subagent dispatch precondition
+
+Subagents that produce frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is created exclusively by the `get-session-context` skill, which is not available to subagents (they are tool-restricted to `{tool:Read}, {tool:Grep}, {tool:Glob}, {tool:Bash}, {tool:Write}` to prevent reviewer agents in `/orchestrate-dev` workflows from reaching beyond their purview).
+
+The dispatcher, the skill or main agent that invokes the subagent via the {tool:Task} tool, must invoke `get-session-context` in the current working directory before dispatching any subagent that calls `resolve-frontmatter.sh`. The manifest must exist when the subagent runs; the subagent cannot create it itself.
+
+Current dispatchers:
+
+| Dispatcher                | Location                                                                   |
+| ------------------------- | -------------------------------------------------------------------------- |
+| `orchestrate`             | `packages/agents/content/skills/orchestrate/SKILL.md` (Phase 1 step 1)     |
+| `refine-plan`             | `packages/agents/content/skills/refine-plan/SKILL.md` (step 4)             |
+| `plan-orchestrable-steps` | `packages/agents/content/skills/plan-orchestrable-steps/SKILL.md` (step 1) |
+
+When authoring a new dispatcher: Ensure that `get-session-context` is invoked as the first step, before any {tool:Task} tool dispatch. `resolve-frontmatter.sh` hard-fails inside the subagent if the precondition is unmet, with a message identifying the violation.
+
 ## Plan provenance
 
 This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extension:
