@@ -48,7 +48,7 @@
     "lefthook": "2.1.6",
     "prettier": "3.8.3",
     "readyup": "0.20.0",
-    "tsx": "4.22.1",
+    "tsx": "4.21.0",
     "typescript": "5.9.3",
     "typescript-eslint": "8.59.3",
     "v11y-check": "0.7.0",

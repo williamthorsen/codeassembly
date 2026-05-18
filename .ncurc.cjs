@@ -15,6 +15,18 @@ function filterResults(packageName, versioningMetadata) {
     return false;
   }
 
+  // tsx 4.22.x breaks CJS require() of .json files (e.g. ajv/dist/refs/data.json),
+  // crashing the MCP stdio smoke test. Tracked in
+  // https://github.com/williamthorsen/codeassembly/issues/612 — re-allow once a fixed
+  // version ships and the ticket is resolved.
+  if (
+    packageName === 'tsx' &&
+    versioningMetadata.upgradedVersionSemver.major === '4' &&
+    versioningMetadata.upgradedVersionSemver.minor === '22'
+  ) {
+    return false;
+  }
+
   return true;
 }
 
