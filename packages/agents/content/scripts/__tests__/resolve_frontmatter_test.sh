@@ -260,6 +260,11 @@ When call needs_yaml_quoting ":leading"
 The status should be success
 End
 
+It "returns true for a value of exactly a colon"
+When call needs_yaml_quoting ":"
+The status should be success
+End
+
 It "returns false for URLs (no special chars under predicate)"
 When call needs_yaml_quoting "https://github.com/x/y/pull/1"
 The status should be failure
@@ -377,6 +382,11 @@ End
 It "auto-quotes elements that contain unsafe glyphs"
 When call emit_yaml_flow_list "refs" "main,#537"
 The output should equal "refs: [main, '#537']"
+End
+
+It "doubles embedded single quotes in list elements"
+When call emit_yaml_flow_list "refs" "it's,safe"
+The output should equal "refs: ['it''s', safe]"
 End
 End
 
@@ -531,6 +541,14 @@ The output should include "branch: main"
 The output should include "commit: abc1234"
 The output should include "pr: https://github.com/x/y/pull/1"
 The output should include "run_id: 20260516-143946Z"
+End
+
+It "emits canonical top-level fields in fixed order"
+When call emit_yaml \
+  "skill-x" "2026-05-16T00:00:00Z" "deadbee" "false" "" \
+  "537" "#537" "main" "abc1234" "https://github.com/x/y/pull/1" "20260516-143946Z" \
+  yaml_keys yaml_values yaml_kinds
+The output should match pattern "*ticket_id*ticket_ref*branch*commit*pr*run_id*"
 End
 
 It "omits empty top-level fields"
