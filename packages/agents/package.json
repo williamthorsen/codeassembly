@@ -14,7 +14,7 @@
     "fmt:sh": "shfmt --write **/*.sh",
     "fmt:sh:check": "shfmt --list **/*.sh",
     "test:post": "pnpm run test:sh",
-    "test:sh": "shellspec content/scripts/"
+    "test:sh": "bash scripts/test-sh.sh"
   },
   "dependencies": {
     "js-yaml": "4.1.1"
