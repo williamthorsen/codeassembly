@@ -550,17 +550,17 @@ Each role maps to one of five workflow-function types:
 
 ### Artifact entry fields
 
-| Field       | Required | Description                                                                             |
-| ----------- | -------- | --------------------------------------------------------------------------------------- |
-| `filename`  | yes      | Artifact filename (without directory path)                                              |
-| `role`      | yes      | Filename role segment (e.g., `reviewer`, `code-reviewer`)                               |
-| `roleType`  | yes      | Workflow function (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`)  |
-| `agent`     | yes      | Task tool `subagent_type` value (e.g., `orchestrated-reviewer`, `aspect-code-reviewer`) |
-| `type`      | yes      | Artifact type (e.g., `review`, `change-summary`)                                        |
-| `phase`     | yes      | Phase that produced this artifact (camelCase, matches `phases` object keys)             |
-| `createdAt` | yes      | ISO 8601 timestamp                                                                      |
-| `iteration` | no       | Review iteration number (for `parallelReview` phase)                                    |
-| `note`      | no       | Free-text context about the artifact                                                    |
+| Field       | Required | Description                                                                               |
+| ----------- | -------- | ----------------------------------------------------------------------------------------- |
+| `filename`  | yes      | Artifact filename (without directory path)                                                |
+| `role`      | yes      | Filename role segment (e.g., `reviewer`, `code-reviewer`)                                 |
+| `roleType`  | yes      | Workflow function (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`)    |
+| `agent`     | yes      | {tool:Task} `subagent_type` value (e.g., `orchestrated-reviewer`, `aspect-code-reviewer`) |
+| `type`      | yes      | Artifact type (e.g., `review`, `change-summary`)                                          |
+| `phase`     | yes      | Phase that produced this artifact (camelCase, matches `phases` object keys)               |
+| `createdAt` | yes      | ISO 8601 timestamp                                                                        |
+| `iteration` | no       | Review iteration number (for `parallelReview` phase)                                      |
+| `note`      | no       | Free-text context about the artifact                                                      |
 
 ### Phase values
 
@@ -597,7 +597,7 @@ Companion file in the same run directory. Each line is a JSON object (JSONL form
 
 ### Event types
 
-All 13 valid event types and their required fields. Fields suffixed with `?` are optional — usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs where the orchestrator captures Task result metrics; older runs omit them:
+All 13 valid event types and their required fields. Fields suffixed with `?` are optional — usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs where the orchestrator captures {tool:Task} result metrics; older runs omit them:
 
 | Event type             | Key fields                                                                                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |

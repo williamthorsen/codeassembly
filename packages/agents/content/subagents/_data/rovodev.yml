@@ -11,6 +11,7 @@ _tools:
   Glob: expand_folder
   Grep: grep
   Read: open_files
+  Task: invoke_subagent
   Write: create_file
 
 _defaults:

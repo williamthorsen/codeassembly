@@ -22,7 +22,7 @@ Analyze a completed orchestrated run to identify cost-saving opportunities while
 
 2. **Verify the run directory** contains `run-log.jsonl` and `run-index.json`. If either is missing, report and exit.
 
-3. **Dispatch the savings-analyzer subagent** via Task tool:
+3. **Dispatch the savings-analyzer subagent** via {tool:Task}:
    - Model: `haiku`
    - Prompt: Provide the run directory path and the next available sequence number for the artifact filename
    - The subagent reads the event log, applies the analysis framework, and writes the artifact
@@ -31,9 +31,9 @@ Analyze a completed orchestrated run to identify cost-saving opportunities while
 
 ## Auto-trigger integration
 
-This skill is also invoked automatically during Phase 5 (summary) of orchestrated runs. The orchestrate engine dispatches the savings-analyzer subagent as a background Task while the orchestrator writes the run-summary inline. When auto-triggered:
+This skill is also invoked automatically during Phase 5 (summary) of orchestrated runs. The orchestrate engine dispatches the savings-analyzer subagent as a background {tool:Task} while the orchestrator writes the run-summary inline. When auto-triggered:
 
 - The run directory is known from the active run context
 - The sequence number follows the run-summary artifact
 - The model is Haiku (configured via the `savings_analyzer` model key, defaulting to `haiku`)
-- Zero added latency: The analysis runs as a background Task while the orchestrator writes the run summary
+- Zero added latency: The analysis runs as a background {tool:Task} while the orchestrator writes the run summary

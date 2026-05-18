@@ -6,8 +6,8 @@ Resolve a ticket source argument into ticket content and metadata. Skills that a
 
 | Input form                                                  | Resolution                                                        |
 | ----------------------------------------------------------- | ----------------------------------------------------------------- |
-| URL to a known platform (GitHub, Jira, etc.)                | Use platform CLI or WebFetch to retrieve issue content            |
-| Other URL                                                   | WebFetch the URL content                                          |
+| URL to a known platform (GitHub, Jira, etc.)                | Use platform CLI if available; otherwise, fetch the URL content   |
+| Other URL                                                   | Fetch the URL content                                             |
 | Shorthand reference (`#99`, `issue 99`, `GitHub issue #99`) | Resolve platform (see below), then fetch via platform CLI         |
 | File path                                                   | Read the file                                                     |
 | Plain text                                                  | Use as-is                                                         |
