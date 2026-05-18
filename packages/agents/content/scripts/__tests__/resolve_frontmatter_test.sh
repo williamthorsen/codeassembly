@@ -705,6 +705,41 @@ The stderr should include "--interactive must be true or false"
 End
 End
 
+Describe "main missing manifest"
+setup_missing_manifest() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null || exit
+  git init --quiet --initial-branch=main .
+  git config user.email "test@example.com"
+  git config user.name "Test"
+  git commit --allow-empty --quiet -m "initial"
+  # Deliberately do NOT create .agents/main.branch-manifest.json.
+}
+
+cleanup_missing_manifest() {
+  popd >/dev/null || exit
+  rm -rf "$tmpdir"
+}
+
+BeforeEach "setup_missing_manifest"
+AfterEach "cleanup_missing_manifest"
+
+It "exits non-zero when the branch manifest is missing"
+When run main --skill foo --interactive true
+The status should be failure
+The stderr should be present
+End
+
+It "indicts the dispatcher in the missing-manifest error"
+When run main --skill foo --interactive true
+The status should be failure
+The stderr should include "branch manifest missing"
+The stderr should include "dispatcher must invoke"
+The stderr should include "get-session-context"
+The stderr should include "Subagent dispatch precondition"
+End
+End
+
 Describe "main end-to-end"
 setup_main_e2e() {
   tmpdir=$(mktemp -d)
