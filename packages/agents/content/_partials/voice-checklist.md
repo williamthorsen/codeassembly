@@ -5,7 +5,6 @@ These two rules are what this checklist tests. They do **not** cover register (c
 **Rule 1: Each sentence must be one of the following:**
 
 - **Outcome**: What the reader will experience, see, or be able to do.
-- **Stated invariant**: Explicit assurance worth confirming ("Behavior is unchanged."; "No migration required.").
 - **Migration info**: Names of user-facing surface added, removed, or renamed; steps the reader must take.
 
 Cut any sentence describing mechanism (internal data, code paths, refactor mechanics, output-format details, internal counts). Indirect outcomes (reliability, performance) are permitted only if specific.
@@ -18,5 +17,5 @@ Cut any sentence describing mechanism (internal data, code paths, refactor mecha
 
 **Audit before save:**
 
-1. For each sentence, classify it: Outcome, Invariant, or Migration. Rewrite anything that fits none.
+1. For each sentence, classify it: Outcome or Migration. Rewrite anything that fits none.
 2. For each identifier, confirm it's in the allowed list. Drop or rephrase anything that isn't.
