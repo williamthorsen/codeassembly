@@ -19,7 +19,7 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 
 ### Output format
 
-Render the list in [recommendation-gradient](./recommendation-gradient.md) form: each option carries a marker (■■■/■■□/■□□/□□□) and one or two `➕` pro / `➖` con lines. The recommendation rules below determine which markers apply.
+Render the list in [recommendation-gradient](./recommendation-gradient.md) form. Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted; see the [recommendation gradient's don'ts](./recommendation-gradient.md#donts) for the rule.
 
 Example (rendered for the recommendation case):
 
@@ -28,15 +28,11 @@ Next steps:
 
 Deviations from ticket:
 1. 📝 ■■□ Update ticket:
-   ➕ keeps the ticket as the source of truth for what was built;
-   ➖ adds a step before merging.
    Use the `design-and-plan` skill with ticket: {ticket_source}
-2. ⏭️ ■□□ Leave as-is:
-   ➕ ships faster;
-   ➖ ticket drifts from reality.
+2. ⏭️ ■□□ Leave as-is
 ```
 
-When the recommendation rules indicate no preference, omit markers from both options per the gradient's pure-taste-call form; the pros/cons lines remain.
+When the recommendation rules indicate no preference, omit markers from both options per the gradient's pure-taste-call form.
 
 ### Recommendation rules
 
@@ -60,7 +56,7 @@ Shown when the review contains actionable findings (F, W, or T categories).
 
 ### Output format
 
-Render the list in [recommendation-gradient](./recommendation-gradient.md) form: each option carries a marker (■■■/■■□/■□□/□□□) and one or two `➕` pro / `➖` con lines. The recommendation rules below determine which option earns the strongest marker. Include all known paths (ticket) in each option line; omit paths that are not available in the current context.
+Render the list in [recommendation-gradient](./recommendation-gradient.md) form. Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "fixes touch three modules with downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted; see the [recommendation gradient's don'ts](./recommendation-gradient.md#donts) for the rule. Include all known paths (ticket) in each option line; omit paths that are not available in the current context.
 
 Example (rendered for the default case, where the recommendation rules below select Orchestrate):
 
@@ -69,21 +65,12 @@ Next steps:
 
 Actionable findings:
 1. 🧠 ■□□ Design and plan:
-   ➕ resets the approach when findings indicate the strategy is off;
-   ➖ heaviest path; reuses work only if the plan changes substantively.
    Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
 2. 🎶 ■■□ Orchestrate:
-   ➕ structured review pass on a fresh context;
-   ➕ best when the findings' fixes span multiple modules or have downstream effects;
-   ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
 3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   ➕ pairs localized fixes with one targeted review pass to verify the corrections;
-   ➕ keeps fix context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
-4. 🚀 ■□□ Implement directly:
-   ➕ shortest path for trivial findings (typo fix, unused-import removal) where a re-review would catch nothing;
-   ➖ unsuitable for findings whose fixes would benefit from review.
+4. 🚀 ■□□ Implement directly
 ```
 
 Options that invoke a skill include context-clearing guidance:
@@ -126,28 +113,15 @@ Next steps:
 
 Deviations from ticket:
 1. 📝 ■■□ Update ticket:
-   ➕ keeps the ticket as the source of truth for what was built;
-   ➖ adds a step before merging.
    Use the `design-and-plan` skill with ticket: {ticket_source}
-2. ⏭️ ■□□ Leave as-is:
-   ➕ ships faster;
-   ➖ ticket drifts from reality.
+2. ⏭️ ■□□ Leave as-is
 
 Actionable findings:
 1. 🧠 ■□□ Design and plan:
-   ➕ resets the approach when findings indicate the strategy is off;
-   ➖ heaviest path; reuses work only if the plan changes substantively.
    Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
 2. 🎶 ■■□ Orchestrate:
-   ➕ structured review pass on a fresh context;
-   ➕ best when the findings' fixes span multiple modules or have downstream effects;
-   ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
 3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   ➕ pairs localized fixes with one targeted review pass to verify the corrections;
-   ➕ keeps fix context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
-4. 🚀 ■□□ Implement directly:
-   ➕ shortest path for trivial findings (typo fix, unused-import removal) where a re-review would catch nothing;
-   ➖ unsuitable for findings whose fixes would benefit from review.
+4. 🚀 ■□□ Implement directly
 ```

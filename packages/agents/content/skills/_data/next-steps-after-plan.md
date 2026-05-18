@@ -13,7 +13,7 @@ Standard next-steps block for skills that produce or refine an implementation pl
 
 ## Output format
 
-Present all four options as a numbered list in [recommendation-gradient](./recommendation-gradient.md) form: each option carries a strength marker (■■■/■■□/■□□/□□□) and one or two `➕` pro / `➖` con lines. The recommendation rules below determine which option earns the strongest marker. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
+Present all four options as a numbered list in [recommendation-gradient](./recommendation-gradient.md) form. Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted; see the [recommendation gradient's don'ts](./recommendation-gradient.md#donts) for the rule. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
 
 Options that invoke a skill include context-clearing guidance:
 
@@ -25,26 +25,17 @@ Example (rendered for the default case, where the recommendation rules below sel
 ```
 Next steps:
 1. 🧠 ■□□ Refine plan:
-   ➕ catches structural issues before implementation;
-   ➖ adds another round when the plan is already precise.
    Clear context and use the `refine-plan` skill with
    plan: {plan_path},
    ticket: {ticket_source}
 2. 🎶 ■■□ Orchestrate:
-   ➕ structured review pass on a fresh context;
-   ➕ best when the work's consequences ripple beyond the immediate change site;
-   ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with
    plan: {plan_path},
    ticket: {ticket_source}
 3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   ➕ pairs bounded single-package work with one targeted review pass;
-   ➕ keeps implementation context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with
    ticket: {ticket_source}
-4. 🚀 ■□□ Implement directly:
-   ➕ shortest path for genuinely trivial work (typo, unused-import removal, single-file mechanical rename);
-   ➖ unsuitable for work whose consequences would benefit from review.
+4. 🚀 ■□□ Implement directly
 ```
 
 Skill names for each option:

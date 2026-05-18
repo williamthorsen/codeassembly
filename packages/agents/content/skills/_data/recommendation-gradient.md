@@ -103,3 +103,4 @@ Multiple questions in one response (Q1/Q2 identifiers):
 - No tiebreaker text for equal-strength options. The developer picks the number.
 - No partial marking. Once any option carries a marker, every option carries one.
 - Cap at ■■□ unless you'd push back. Use ■■■ only when you'd actively object if the developer chose otherwise.
+- No generic pros or cons. Each `➕` and `➖` must speak to the specific decision at hand (this plan, these findings, this design choice). Restatements of an option's inherent properties ("longer wall time", "structured review pass", "ships faster") are noise; the option's name and marker already communicate them. When no context-specific reasoning applies, omit pros and cons entirely — the marker alone is sufficient.
