@@ -23,11 +23,11 @@ Same surface phrasing, two correct renderings:
 > Want me to:
 >
 > 1. ■■□ Extract the helper now:
->    ➕ enables reuse across the next two call sites;
->    ➖ adds a file and a name to maintain.
+>       ➕ enables reuse across the next two call sites;
+>       ➖ adds a file and a name to maintain.
 > 2. ■□□ Keep it inline:
->    ➕ minimal surface area today;
->    ➖ duplicates the next time the pattern recurs.
+>       ➕ minimal surface area today;
+>       ➖ duplicates the next time the pattern recurs.
 
 Both "yes" (extract) and "no" (inline) are concrete agent actions with their own tradeoffs.
 
