@@ -25,6 +25,73 @@ The output should equal "MAC-130_foo"
 End
 End
 
+Describe "resolve_manifest_path"
+setup_repo() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null || exit
+  git init --quiet --initial-branch=main .
+  git config user.email "test@example.com"
+  git config user.name "Test"
+  git commit --allow-empty --quiet -m "initial"
+}
+
+cleanup_repo() {
+  popd >/dev/null || exit
+  rm -rf "$tmpdir"
+}
+
+setup_no_repo() {
+  tmpdir=$(mktemp -d)
+  pushd "$tmpdir" >/dev/null || exit
+}
+
+cleanup_no_repo() {
+  popd >/dev/null || exit
+  rm -rf "$tmpdir"
+}
+
+Context "inside a git repository"
+BeforeEach "setup_repo"
+AfterEach "cleanup_repo"
+
+It "returns the repo-root-anchored absolute path for a simple branch"
+# Resolve symlinks so the comparison matches `git rev-parse --show-toplevel`, which always reports the canonical path
+# (e.g. on macOS `/tmp` -> `/private/tmp`).
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+When call resolve_manifest_path "main"
+The output should equal "$resolved_tmpdir/.agents/main.branch-manifest.json"
+The status should be success
+End
+
+It "returns the same absolute path when invoked from a nested subdirectory"
+mkdir -p packages/nested/deep
+pushd packages/nested/deep >/dev/null
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+result=$(resolve_manifest_path "main")
+popd >/dev/null
+When call echo "$result"
+The output should equal "$resolved_tmpdir/.agents/main.branch-manifest.json"
+End
+
+It "applies sanitize_branch semantics to the branch token"
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+When call resolve_manifest_path "feat/foo/bar"
+The output should equal "$resolved_tmpdir/.agents/feat-foo-bar.branch-manifest.json"
+End
+End
+
+Context "outside a git repository"
+BeforeEach "setup_no_repo"
+AfterEach "cleanup_no_repo"
+
+It "returns non-zero with empty stdout outside a git repository"
+When call resolve_manifest_path "main"
+The output should equal ""
+The status should be failure
+End
+End
+End
+
 Describe "emit_json"
 It "always emits branch, commit, platform, and timestamp"
 When call emit_json "main" "abc1234" "" "" "" "" "github" "2026-05-16T00:00:00Z" ""
@@ -738,6 +805,14 @@ The stderr should include "dispatcher must invoke"
 The stderr should include "get-session-context"
 The stderr should include "Subagent dispatch precondition"
 End
+
+It "includes the absolute path in the missing-manifest error"
+# `git rev-parse --show-toplevel` returns the canonical path, so resolve symlinks in the expected value.
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+When run main --skill foo --interactive true
+The status should be failure
+The stderr should include "$resolved_tmpdir/.agents/main.branch-manifest.json"
+End
 End
 
 Describe "main end-to-end"
@@ -792,5 +867,17 @@ The output should include "isInteractive: true"
 The output should include "alpha: 1"
 The output should include "tags: [a, b]"
 The output should not include "run_id"
+End
+
+It "resolves the manifest when invoked from a nested subdirectory"
+mkdir -p packages/nested/deep
+pushd packages/nested/deep >/dev/null
+result=$(main --skill foo --interactive true --override "run_id=" 2>&1)
+status=$?
+popd >/dev/null
+When call test "$status" -eq 0
+The status should be success
+The variable result should include "skill: foo"
+The variable result should include "ticket_id: 537"
 End
 End

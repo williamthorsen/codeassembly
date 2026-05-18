@@ -151,9 +151,12 @@ main() {
   local branch
   branch=$(current_branch) || fail "not in a git repository"
 
+  local manifest_path
+  manifest_path=$(resolve_manifest_path "$branch") || fail "could not resolve repo root for manifest lookup"
+
   local manifest
   manifest=$(read_manifest "$branch") || fail "$(printf '%s\n%s\n%s' \
-    "branch manifest missing at .agents/$(sanitize_branch "$branch").branch-manifest.json" \
+    "branch manifest missing at $manifest_path" \
     "Precondition violated: the dispatcher must invoke the \`get-session-context\` skill in this cwd before dispatching a subagent that calls this script." \
     "Subagents cannot invoke skills, so they cannot create the manifest themselves. See packages/agents/content/skills/_data/artifact-conventions.md § Subagent dispatch precondition.")"
 
@@ -392,13 +395,24 @@ current_branch() {
   git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
+# Resolves the absolute path to the branch manifest for the given branch.
+# Anchors at the repo root via `git rev-parse --show-toplevel`, so the lookup is independent of the caller's cwd.
+# Inside a git worktree, this returns the worktree's `.agents/` path — matching where `get-session-context` writes
+# the manifest. Returns non-zero outside a git repository.
+resolve_manifest_path() {
+  local branch="$1"
+  local sanitized repo_root
+  sanitized=$(sanitize_branch "$branch")
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+  printf '%s/.agents/%s.branch-manifest.json' "$repo_root" "$sanitized"
+}
+
 # Reads the branch manifest for the given branch. Echoes the JSON content.
-# Returns non-zero when the manifest is missing.
+# Returns non-zero when the manifest is missing or the path cannot be resolved.
 read_manifest() {
   local branch="$1"
-  local sanitized
-  sanitized=$(sanitize_branch "$branch")
-  local path=".agents/$sanitized.branch-manifest.json"
+  local path
+  path=$(resolve_manifest_path "$branch") || return 1
   [[ -r "$path" ]] || return 1
   cat "$path"
 }
