@@ -8,7 +8,7 @@ Standard next-steps block for skills that produce or refine an implementation pl
 | --- | ----- | ---------------------------------------- | ----------------------------------------------------------------------- |
 | 1   | 🧠    | Refine plan                              | Review the plan for completeness and correctness                        |
 | 2   | 🎶    | Orchestrate                              | Run the full orchestrated development pipeline                          |
-| 3   | 🚀    | Implement directly with follow-up review | Implement, then run a single end-of-work review pass as a separate step |
+| 3   | 🔍    | Implement directly with follow-up review | Implement, then run a single end-of-work review pass as a separate step |
 | 4   | 🚀    | Implement directly                       | Implement without a follow-up review (reserved for trivial work)        |
 
 ## Output format
@@ -37,7 +37,7 @@ Next steps:
    Clear context and use the `orchestrate-dev` skill with
    plan: {plan_path},
    ticket: {ticket_source}
-3. 🚀 ■□□ Implement directly with follow-up review:
+3. 🔍 ■□□ Implement directly with follow-up review:
    ➕ pairs bounded single-package work with one targeted review pass;
    ➕ keeps implementation context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with
@@ -51,7 +51,7 @@ Skill names for each option:
 
 - 🧠 **Refine plan** -> `refine-plan`
 - 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🚀 **Implement directly with follow-up review** -> no plan-time skill invocation; implement manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
+- 🔍 **Implement directly with follow-up review** -> no plan-time skill invocation; implement manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
 - 🚀 **Implement directly** -> no skill invocation; implement manually or ask the agent to begin
 
 ## Recommendation rules

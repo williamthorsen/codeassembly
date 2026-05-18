@@ -15,7 +15,7 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 | #   | Emoji | Option        | Description                                          |
 | --- | ----- | ------------- | ---------------------------------------------------- |
 | 1   | 📝    | Update ticket | Revise the ticket to match the actual implementation |
-| 2   |       | Leave as-is   | Accept the deviation without updating the ticket     |
+| 2   | ⏭️    | Leave as-is   | Accept the deviation without updating the ticket     |
 
 ### Output format
 
@@ -31,7 +31,7 @@ Deviations from ticket:
    ➕ keeps the ticket as the source of truth for what was built;
    ➖ adds a step before merging.
    Use the `design-and-plan` skill with ticket: {ticket_source}
-2. ■□□ Leave as-is:
+2. ⏭️ ■□□ Leave as-is:
    ➕ ships faster;
    ➖ ticket drifts from reality.
 ```
@@ -55,7 +55,7 @@ Shown when the review contains actionable findings (F, W, or T categories).
 | --- | ----- | ---------------------------------------- | ------------------------------------------------------------------------------ |
 | 1   | 🧠    | Design and plan                          | Rethink the approach before fixing                                             |
 | 2   | 🎶    | Orchestrate                              | Run the full orchestrated development pipeline                                 |
-| 3   | 🚀    | Implement directly with follow-up review | Fix the findings, then run a single end-of-work review pass as a separate step |
+| 3   | 🔍    | Implement directly with follow-up review | Fix the findings, then run a single end-of-work review pass as a separate step |
 | 4   | 🚀    | Implement directly                       | Fix the findings without a follow-up review (reserved for trivial findings)    |
 
 ### Output format
@@ -77,7 +77,7 @@ Actionable findings:
    ➕ best when the findings' fixes span multiple modules or have downstream effects;
    ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-3. 🚀 ■□□ Implement directly with follow-up review:
+3. 🔍 ■□□ Implement directly with follow-up review:
    ➕ pairs localized fixes with one targeted review pass to verify the corrections;
    ➕ keeps fix context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
@@ -95,7 +95,7 @@ Skill names for each option:
 
 - 🧠 **Design and plan** -> `design-and-plan`
 - 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🚀 **Implement directly with follow-up review** -> no fix-time skill invocation; implement fixes manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
+- 🔍 **Implement directly with follow-up review** -> no fix-time skill invocation; implement fixes manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
 - 🚀 **Implement directly** -> no skill invocation; implement fixes manually or ask the agent to begin
 
 ### Recommendation rules
@@ -129,7 +129,7 @@ Deviations from ticket:
    ➕ keeps the ticket as the source of truth for what was built;
    ➖ adds a step before merging.
    Use the `design-and-plan` skill with ticket: {ticket_source}
-2. ■□□ Leave as-is:
+2. ⏭️ ■□□ Leave as-is:
    ➕ ships faster;
    ➖ ticket drifts from reality.
 
@@ -143,7 +143,7 @@ Actionable findings:
    ➕ best when the findings' fixes span multiple modules or have downstream effects;
    ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-3. 🚀 ■□□ Implement directly with follow-up review:
+3. 🔍 ■□□ Implement directly with follow-up review:
    ➕ pairs localized fixes with one targeted review pass to verify the corrections;
    ➕ keeps fix context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
