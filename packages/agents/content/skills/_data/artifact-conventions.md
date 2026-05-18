@@ -216,9 +216,9 @@ These two sites read the script's JSON output, then write the YAML frontmatter t
 
 ## Subagent dispatch precondition
 
-Subagents that produce frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is created exclusively by the `get-session-context` skill, which is not available to subagents (they are tool-restricted to `Read, Grep, Glob, Bash, Write` to prevent reviewer agents in `/orchestrate-dev` workflows from reaching beyond their purview).
+Subagents that produce frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is created exclusively by the `get-session-context` skill, which is not available to subagents (they are tool-restricted to `{tool:Read}, {tool:Grep}, {tool:Glob}, {tool:Bash}, {tool:Write}` to prevent reviewer agents in `/orchestrate-dev` workflows from reaching beyond their purview).
 
-The dispatcher, the skill or main agent that invokes the subagent via the Task tool, must invoke `get-session-context` in the current working directory before dispatching any subagent that calls `resolve-frontmatter.sh`. The manifest must exist when the subagent runs; the subagent cannot create it itself.
+The dispatcher, the skill or main agent that invokes the subagent via the {tool:Task} tool, must invoke `get-session-context` in the current working directory before dispatching any subagent that calls `resolve-frontmatter.sh`. The manifest must exist when the subagent runs; the subagent cannot create it itself.
 
 Current dispatchers:
 
@@ -228,7 +228,7 @@ Current dispatchers:
 | `refine-plan`             | `packages/agents/content/skills/refine-plan/SKILL.md` (step 4)             |
 | `plan-orchestrable-steps` | `packages/agents/content/skills/plan-orchestrable-steps/SKILL.md` (step 1) |
 
-When authoring a new dispatcher: invoke `get-session-context` as the first step, before any Task tool dispatch. `resolve-frontmatter.sh` hard-fails inside the subagent if the precondition is unmet, with a message identifying the violation.
+When authoring a new dispatcher: Ensure that `get-session-context` is invoked as the first step, before any {tool:Task} tool dispatch. `resolve-frontmatter.sh` hard-fails inside the subagent if the precondition is unmet, with a message identifying the violation.
 
 ## Plan provenance
 
