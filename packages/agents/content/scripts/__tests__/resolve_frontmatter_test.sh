@@ -136,7 +136,7 @@ End
 
 It "returns the run-dir basename when the breadcrumb exists"
 mkdir -p .claude/tmp
-echo "/some/path/20260516-143946Z" > .claude/tmp/active-run-dir
+echo "/some/path/20260516-143946Z" >.claude/tmp/active-run-dir
 When call resolve_run_id
 The output should equal "20260516-143946Z"
 End

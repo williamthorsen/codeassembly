@@ -302,8 +302,8 @@ resolve_bitbucket_pr() {
   local url result rc
   url="https://api.bitbucket.org/2.0/repositories/$workspace/$repo/pullrequests?q=source.branch.name=\"$branch\"&state=OPEN,MERGED,DECLINED"
   result=$(run_with_timeout "$PR_LOOKUP_TIMEOUT" \
-    curl --silent --fail --header "$auth" "$url" 2>/dev/null \
-    | jq --raw-output '.values[0].links.html.href // empty' 2>/dev/null) || rc=$?
+    curl --silent --fail --header "$auth" "$url" 2>/dev/null |
+    jq --raw-output '.values[0].links.html.href // empty' 2>/dev/null) || rc=$?
   if [[ "${rc:-0}" -ne 0 ]]; then
     warn_pr_failure "curl/jq exited with code ${rc:-?}"
     return
@@ -348,7 +348,7 @@ resolve_run_id() {
   local breadcrumb=".claude/tmp/active-run-dir"
   [[ -r "$breadcrumb" ]] || return 0
   local run_dir
-  run_dir=$(< "$breadcrumb")
+  run_dir=$(<"$breadcrumb")
   basename "$run_dir"
 }
 
@@ -510,7 +510,7 @@ emit_yaml_flow_list() {
   # are not expanded against the filesystem before `yaml_quote` sees them.
   set -f
   # shellcheck disable=SC2206
-  local -a parts=( $raw )
+  local -a parts=($raw)
   set +f
   local out="" i
   for ((i = 0; i < ${#parts[@]}; i++)); do
@@ -562,9 +562,9 @@ needs_yaml_quoting() {
   [[ "$v" == *: ]] && return 0
   # Glyphs anywhere in the value that demand quoting.
   case "$v" in
-  *'#'* | *'['* | *']'* | *'{'* | *'}'* \
-    | *','* | *'&'* | *'*'* | *'!'* | *'|'* | *'>'* | *'<'* \
-    | *'?'* | *'%'* | *'@'* | *'`'* | *"'"* | *'"'*)
+  *'#'* | *'['* | *']'* | *'{'* | *'}'* | \
+    *','* | *'&'* | *'*'* | *'!'* | *'|'* | *'>'* | *'<'* | \
+    *'?'* | *'%'* | *'@'* | *'`'* | *"'"* | *'"'*)
     return 0
     ;;
   esac
