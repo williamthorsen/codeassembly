@@ -1,4 +1,4 @@
-# claude.yml
+# claude.yaml
 
 # Body-text tool-name mapping for the {tool:NAME} placeholder rewriter.
 # Authoring guide: ../../_partials/README.md (Tool-name placeholders).

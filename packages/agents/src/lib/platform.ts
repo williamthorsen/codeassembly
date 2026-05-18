@@ -12,7 +12,7 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     skillsDir: 'skills',
     subagentsDir: 'agents',
     scriptsDir: 'scripts',
-    frontmatterFile: 'claude.yml',
+    frontmatterFile: 'claude.yaml',
   },
   rovodev: {
     id: 'rovodev',
@@ -20,7 +20,7 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     skillsDir: 'skills',
     subagentsDir: 'subagents',
     scriptsDir: 'scripts',
-    frontmatterFile: 'rovodev.yml',
+    frontmatterFile: 'rovodev.yaml',
   },
 };
 
