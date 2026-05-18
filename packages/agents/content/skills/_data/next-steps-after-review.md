@@ -2,7 +2,7 @@
 
 Standard next-steps block for skills that produce a code review. Skills reference this file to maintain a consistent format and recommendation logic.
 
-The next-steps block has two independent sub-blocks. Each is shown only when its condition is met. If neither condition is met, no next-steps block appears. Whether one or both sub-blocks are shown, always wrap the output in a `Next steps:` header.
+The next-steps block has three independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header.
 
 Use `~/`-relative paths where possible and absolute paths otherwise.
 
@@ -40,6 +40,79 @@ When the recommendation rules indicate no preference, omit markers from both opt
 2. **No recommendation** (omit markers from both options): deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). The user decides.
 
 When uncertain, recommend updating the ticket.
+
+## Source divergence sub-block
+
+Shown when the consistency section of the review reports a `partial` or `severe` verdict. The option set varies by case (which spec source the implementation matches, drawn from the consistency-section table — see `review-branch/SKILL.md` § Specification consistency).
+
+### Options
+
+The base option pool is:
+
+| Emoji | Option                           | Action                                                                                    |
+| ----- | -------------------------------- | ----------------------------------------------------------------------------------------- |
+| 📝    | Update PR description            | Edit the PR description to match the implementation                                       |
+| 📝    | Update ticket                    | Use `align-ticket-with-implementation` to ratify the implementation as the ticket's truth |
+| 📝    | Update ticket and PR description | Use `align-ticket-with-implementation`, then edit the PR description as a separate step   |
+| 🧠    | Revisit design                   | Use `design-and-plan` to reconcile the implementation and specs                           |
+| ⏭️    | Leave as-is                      | Accept the divergence                                                                     |
+
+Each case renders three of these options; the specific options and their ordering are shown in the Output format section.
+
+### Output format
+
+Render the list in [recommendation-gradient](./recommendation-gradient.md) form. Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker per case. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a context-specific tradeoff (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted; see the [recommendation gradient's don'ts](./recommendation-gradient.md#donts) for the rule.
+
+Case 2 — implementation matches ticket; PR description is the stale source:
+
+```
+Source divergence:
+1. 📝 ■■□ Update PR description:
+   Edit the PR description to match the implementation, which matches the ticket.
+2. 🧠 ■□□ Revisit design:
+   Use the `design-and-plan` skill with ticket: {ticket_source}
+3. ⏭️ ■□□ Leave as-is
+```
+
+Case 3 — implementation matches PR description; ticket is the stale source:
+
+```
+Source divergence:
+1. 📝 ■■□ Update ticket:
+   Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth.
+2. 🧠 ■□□ Revisit design:
+   Use the `design-and-plan` skill with ticket: {ticket_source}
+3. ⏭️ ■□□ Leave as-is
+```
+
+Case 4 — implementation matches neither source (severe):
+
+```
+Source divergence:
+1. 🧠 ■■□ Revisit design:
+   Use the `design-and-plan` skill with ticket: {ticket_source}; the implementation diverged from both specs, so reconciliation is needed.
+2. 📝 ■□□ Update ticket and PR description:
+   Use the `align-ticket-with-implementation` skill to ratify the implementation as the new shared source of truth (edit the PR description as a separate step).
+3. ⏭️ ■□□ Leave as-is
+```
+
+Source-divergence options preserve conversation context because the divergence diagnosis from the review is the seed for whichever reconciliation action is taken.
+
+### Recommendation rules
+
+In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one — update it to match reality. When the implementation matches neither, `design-and-plan` is the corrective: it handles both reconciliation cases (drift was intentional → ratify in the ticket; drift was unintended → plan against current reality with the existing code as material).
+
+Determine the case from the implementation column of the consistency-section table:
+
+| Implementation column shows                   | Verdict      | Case | Recommended option    |
+| --------------------------------------------- | ------------ | ---- | --------------------- |
+| `🟢 ticket, 🟠/🔴 PR` on every divergent row  | 🟠 `partial` | 2    | Update PR description |
+| `🟠/🔴 ticket, 🟢 PR` on every divergent row  | 🟠 `partial` | 3    | Update ticket         |
+| `🟠/🔴 ticket, 🟠/🔴 PR` on any divergent row | 🔴 `severe`  | 4    | Revisit design        |
+
+### Marker strengths
+
+The recommended option carries the ■■□ marker. Other options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the recommended option only when you would actively push back against any other choice. See [recommendation-gradient markers](./recommendation-gradient.md#markers) for the full marker table and worked examples of the ■■■ and □□□ cases.
 
 ## Findings sub-block
 
@@ -106,7 +179,7 @@ See [`ticket-creation-cost.md`](ticket-creation-cost.md) for the cost-aware disp
 
 ## Combined output format
 
-When both sub-blocks are shown, present them as separate sections within a single next-steps block. The example below illustrates one possible arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. The example below illustrates one possible arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
 
 ```
 Next steps:
@@ -115,6 +188,13 @@ Deviations from ticket:
 1. 📝 ■■□ Update ticket:
    Use the `design-and-plan` skill with ticket: {ticket_source}
 2. ⏭️ ■□□ Leave as-is
+
+Source divergence:
+1. 📝 ■■□ Update ticket:
+   Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth.
+2. 🧠 ■□□ Revisit design:
+   Use the `design-and-plan` skill with ticket: {ticket_source}
+3. ⏭️ ■□□ Leave as-is
 
 Actionable findings:
 1. 🧠 ■□□ Design and plan:
