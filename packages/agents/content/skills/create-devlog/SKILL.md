@@ -91,7 +91,7 @@ Resolve `$run_id_arg` from the `--run-id={id}` argument (empty when not supplied
 Run via Bash, substituting the resolved arguments:
 
 ```bash
-resolve-frontmatter.sh \
+{platform_home_dir}/scripts/resolve-frontmatter.sh \
   --skill create-devlog \
   --interactive true \
   --model "$MODEL_ID" \

@@ -627,6 +627,11 @@ async function installScripts(
       continue;
     }
 
+    // Skip non-script files (e.g. README.md); only `.sh` helpers ship to platform homes.
+    if (!entry.endsWith('.sh')) {
+      continue;
+    }
+
     const srcPath = path.join(scriptsSrcDir, entry);
 
     // Skip directories (e.g. __tests__)

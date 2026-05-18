@@ -715,7 +715,7 @@ Include:
 
 This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
 
-Run `resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
+Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
 
 If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
