@@ -39,9 +39,9 @@ Capitalize the first word after a colon, unless the colon falls mid-sentence and
 
 When prompting the user for input, use visual markers to make prompts more noticeable:
 
-- **Confirmation prompts** (asking the user to confirm a proposed action): End with `👍🏼👎🏼`.
+- **Confirmation prompts** (the user's response is approve-or-redirect; "no" means "let's adjust or discuss," not a concrete alternative action): End with `👍🏼👎🏼`.
 - **All other questions** (open-ended, clarifications): End with `🤔`
-- **Numbered options (2+ choices)**: Follow the recommendation-gradient convention — mark each option ■■■/■■□/■□□/□□□ and list `➕` pros and `➖` cons. Skip the gradient for confirmation prompts and next-steps menus. When a response contains 2+ option-style questions, prefix each with `Q1`, `Q2`, etc. Full spec: `_data/recommendation-gradient.md` in the agents skills tree.
+- **Numbered options (2 or more choices)**: Follow the recommendation-gradient convention, marking each option ■■■/■■□/■□□/□□□ and listing `➕` pros and `➖` cons. This covers every option-style list with substantive tradeoffs, including templated next-steps menus and yes/no choices where both paths are concrete actions (rendered as a 2-option gradient list rather than `👍🏼👎🏼`). When a response contains 2+ option-style questions, prefix each with `Q1`, `Q2`, etc. Full spec: `_data/recommendation-gradient.md` in the agents skills tree.
 
 Examples:
 

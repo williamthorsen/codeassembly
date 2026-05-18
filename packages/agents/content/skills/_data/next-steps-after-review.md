@@ -19,20 +19,29 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 
 ### Output format
 
+Render the list in [recommendation-gradient](./recommendation-gradient.md) form: each option carries a marker (■■■/■■□/■□□/□□□) and one or two `➕` pro / `➖` con lines. The recommendation rules below determine which markers apply.
+
+Example (rendered for the recommendation case):
+
 ```
 Next steps:
 
 Deviations from ticket:
-  1. 📝 **Update ticket** (🟢 recommended): Use the `design-and-plan` skill with ticket: {ticket_source}
-  2. Leave as-is
+  1. 📝 ■■□ Update ticket:
+     ➕ keeps the ticket as the source of truth for what was built;
+     ➖ adds a step before merging.
+     Use the `design-and-plan` skill with ticket: {ticket_source}
+  2. ■□□ Leave as-is:
+     ➕ ships faster;
+     ➖ ticket drifts from reality.
 ```
 
-`Leave as-is` never receives the bold label or `(🟢 recommended)` marker -- it is the passive alternative, not a recommendation.
+When the recommendation rules indicate no preference, omit markers from both options per the gradient's pure-taste-call form; the pros/cons lines remain.
 
 ### Recommendation rules
 
-1. **Recommend "Update ticket"** (bold label + `(🟢 recommended)`) -- acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured
-2. **No recommendation** -- deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). Present both options without bold labels or `(🟢 recommended)`; the user decides.
+1. **Recommend "Update ticket"** (■■□ on Update ticket, ■□□ on Leave as-is): acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured.
+2. **No recommendation** (omit markers from both options): deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). The user decides.
 
 When uncertain, recommend updating the ticket.
 
@@ -50,21 +59,31 @@ Shown when the review contains actionable findings (F, W, or T categories).
 
 ### Output format
 
+Render the list in [recommendation-gradient](./recommendation-gradient.md) form: each option carries a marker (■■■/■■□/■□□/□□□) and one or two `➕` pro / `➖` con lines. The recommendation rules below determine which option earns the strongest marker. Include all known paths (ticket) in each option line; omit paths that are not available in the current context.
+
+Example (rendered for the default case, where the recommendation rules below select Orchestrate):
+
 ```
 Next steps:
 
 Actionable findings:
-  1. 🧠 Design and plan: Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
-  2. 🎶 **Orchestrate** (🟢 recommended): Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-  3. 🚀 Implement directly
+  1. 🧠 ■□□ Design and plan:
+     ➕ resets the approach when findings indicate the strategy is off;
+     ➖ heaviest path; reuses work only if the plan changes substantively.
+     Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
+  2. 🎶 ■■□ Orchestrate:
+     ➕ structured review pass on a fresh context;
+     ➖ longer wall time and higher token spend.
+     Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
+  3. 🚀 ■□□ Implement directly:
+     ➕ fastest path when findings are localized and obvious;
+     ➖ no independent review pass.
 ```
-
-The recommendation rules below determine which option is recommended — bold that option's label and append `(🟢 recommended)`. Include all known paths (ticket) in each option line; omit paths that are not available in the current context.
 
 Options that invoke a skill include context-clearing guidance:
 
-- **Design and plan** and **Orchestrate**: Prepend "Clear context and use..." — the plan/ticket artifact is self-contained, and orchestration dispatches fresh subagents.
-- **Implement directly**: No "Clear context" prefix — conversation history is valuable for manual implementation.
+- **Design and plan** and **Orchestrate**: Prepend "Clear context and use..." because the plan/ticket artifact is self-contained and orchestration dispatches fresh subagents.
+- **Implement directly**: No "Clear context" prefix; conversation history is valuable for manual implementation.
 
 Skill names for each option:
 
@@ -74,7 +93,7 @@ Skill names for each option:
 
 ### Recommendation rules
 
-Select the recommended option using these rules in priority order:
+Select the recommended option using these rules in priority order. The selected option carries the ■■□ marker in the rendered output; the other two options carry ■□□ by default. Downgrade to □□□ only when a specific alternative carries a clear drawback in the current context.
 
 1. **Design and plan** -- findings suggest the approach needs rethinking — [complexity level 4](complexity-classification.md) (e.g., architectural issues, fundamental design problems, multiple FIXMEs that point to a flawed strategy)
 2. **Orchestrate** -- findings are non-trivial but the approach is sound — [complexity level 3](complexity-classification.md) (e.g., a mix of warnings and TODOs, or FIXMEs that are localized fixes)
@@ -88,17 +107,30 @@ See [`ticket-creation-cost.md`](ticket-creation-cost.md) for the cost-aware disp
 
 ## Combined output format
 
-When both sub-blocks are shown, present them as separate sections within a single next-steps block. The example below illustrates one possible arrangement — the recommendation rules in each sub-block determine which option is recommended:
+When both sub-blocks are shown, present them as separate sections within a single next-steps block. The example below illustrates one possible arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
 
 ```
 Next steps:
 
 Deviations from ticket:
-  1. 📝 **Update ticket** (🟢 recommended): Use the `design-and-plan` skill with ticket: {ticket_source}
-  2. Leave as-is
+  1. 📝 ■■□ Update ticket:
+     ➕ keeps the ticket as the source of truth for what was built;
+     ➖ adds a step before merging.
+     Use the `design-and-plan` skill with ticket: {ticket_source}
+  2. ■□□ Leave as-is:
+     ➕ ships faster;
+     ➖ ticket drifts from reality.
 
 Actionable findings:
-  1. 🧠 Design and plan: Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
-  2. 🎶 **Orchestrate** (🟢 recommended): Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-  3. 🚀 Implement directly
+  1. 🧠 ■□□ Design and plan:
+     ➕ resets the approach when findings indicate the strategy is off;
+     ➖ heaviest path; reuses work only if the plan changes substantively.
+     Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
+  2. 🎶 ■■□ Orchestrate:
+     ➕ structured review pass on a fresh context;
+     ➖ longer wall time and higher token spend.
+     Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
+  3. 🚀 ■□□ Implement directly:
+     ➕ fastest path when findings are localized and obvious;
+     ➖ no independent review pass.
 ```

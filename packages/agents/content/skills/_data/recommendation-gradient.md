@@ -2,7 +2,34 @@
 
 > **Note for maintainers:** Several skill bodies — including `collaboration/SKILL.md`, `design-and-plan/SKILL.md`, and `refine-plan/SKILL.md` — contain pointers back to this file at their question-asking steps. Those pointers duplicate the universal rule in `AGENTS.md` _intentionally_: Agents follow behavioural rules more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
 
-For numbered clarifying questions with 2+ options, mark each option with a strength gradient and a brief rationale. Skip this format for confirmation prompts and for next-steps menus (those use their own `🟢 recommended` convention).
+For numbered option-style questions with 2 or more choices, mark each option with a strength gradient and a brief rationale. The gradient applies to every list with substantive tradeoffs, including templated next-steps menus and substantive binary choices.
+
+## Confirmation prompts vs. substantive binaries
+
+Reserve `👍🏼👎🏼` for confirmation prompts, where the agent has proposed a single action and the user's response is approve-or-redirect. "No" means "let's adjust or discuss," not a concrete alternative agent action.
+
+A yes/no choice where both paths carry substantive tradeoffs uses the gradient with two numbered options instead. "No" then designates a concrete alternative agent action with its own consequences worth weighing.
+
+Same surface phrasing, two correct renderings:
+
+**Procedural (confirmation prompt):**
+
+> Apply these revisions? 👍🏼👎🏼
+
+"No" leads to discussion or revision; there is no enumerated alternative action.
+
+**Substantive (gradient list):**
+
+> Want me to:
+>
+> 1. ■■□ Extract the helper now:
+>    ➕ enables reuse across the next two call sites;
+>    ➖ adds a file and a name to maintain.
+> 2. ■□□ Keep it inline:
+>    ➕ minimal surface area today;
+>    ➖ duplicates the next time the pattern recurs.
+
+Both "yes" (extract) and "no" (inline) are concrete agent actions with their own tradeoffs.
 
 ## Markers
 

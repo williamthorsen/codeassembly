@@ -12,26 +12,32 @@ Standard next-steps block for skills that produce or refine an implementation pl
 
 ## Output format
 
-Present all three options as a numbered list. The recommendation rules below determine which option is recommended — bold that option's label and append `(🟢 recommended)`. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
+Present all three options as a numbered list in [recommendation-gradient](./recommendation-gradient.md) form: Each option carries a strength marker (■■■/■■□/■□□/□□□) and one or two `➕` pro / `➖` con lines. The recommendation rules below determine which option earns the strongest marker. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
 
 Options that invoke a skill include context-clearing guidance:
 
-- **Refine plan** and **Orchestrate**: Prepend "Clear context and use..." — the plan artifact is self-contained, and orchestration dispatches fresh subagents, so prior conversation wastes tokens and can introduce bias.
-- **Implement directly**: No "Clear context" prefix — conversation history is valuable for manual implementation.
+- **Refine plan** and **Orchestrate**: Prepend "Clear context and use..." because the plan artifact is self-contained and orchestration dispatches fresh subagents; prior conversation wastes tokens and can introduce bias.
+- **Implement directly**: No "Clear context" prefix; conversation history is valuable for manual implementation.
 
-Example:
+Example (rendered for the default case, where the recommendation rules below select Orchestrate):
 
 ```
 Next steps:
-  1. 🧠 Refine plan:
+  1. 🧠 ■□□ Refine plan:
+     ➕ catches structural issues before implementation;
+     ➖ adds another round when the plan is already precise.
      Clear context and use the `refine-plan` skill with
      plan: {plan_path},
      ticket: {ticket_source}
-  2. 🎶 **Orchestrate** (recommended):
+  2. 🎶 ■■□ Orchestrate:
+     ➕ structured review pass on a fresh context;
+     ➖ longer wall time and higher token spend.
      Clear context and use the `orchestrate-dev` skill with
      plan: {plan_path},
      ticket: {ticket_source}
-  3. 🚀 Implement directly
+  3. 🚀 ■□□ Implement directly:
+     ➕ fastest path when the plan is tight;
+     ➖ no independent review pass.
 ```
 
 Skill names for each option:
@@ -42,7 +48,7 @@ Skill names for each option:
 
 ## Recommendation rules
 
-Select the recommended option by checking these rules in order and stopping at the first match.
+Select the recommended option by checking these rules in order and stopping at the first match. The selected option carries the ■■□ marker in the rendered output; the other two options carry ■□□ by default. Downgrade to □□□ only when a specific alternative carries a clear drawback in the current context (the same rule applies in reverse: upgrade to ■■■ only when you would actively push back if the user picked otherwise).
 
 1. **Refine plan** — recommend when both of the following are true:
 
