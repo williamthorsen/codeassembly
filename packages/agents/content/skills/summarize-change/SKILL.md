@@ -24,9 +24,24 @@ Check commit messages for additional context.
 3. **Compose title**: `{ticket_ref} {title}` (or just `{title}` when `ticket_ref` is null)
    - The ticket reference appears in the change summary title (for identification) but must never appear in commit titles (per `commit` skill)
 
-4. **Write description** per the output format below
+4. **Compose `## Why` and `## Details`** per the output format below. These sections you compose directly. The lede (`## What`) comes from a separate dispatch in step 6, so the factual substance must exist first.
 
-5. **Save** per the [Saving](#saving) section
+5. **Resolve tier**: From [work-types.json](../_data/work-types.json), look up the `tier` (`public`, `internal`, or `process`) corresponding to the resolved `type`. If `type` could not be inferred, default the tier to `internal`.
+
+6. **Compose `## What` via `changelog-writer`**: Dispatch the `changelog-writer` subagent via the {tool:Task} tool in `write` mode. Pass a prompt of this shape:
+
+   ```
+   mode: write
+   type: {resolved type}
+   tier: {tier from step 5}
+   scope: {resolved scope, if available}
+   description: |
+     {1-3 sentence factual summary of what changed — derived from the substance composed in step 4}
+   ```
+
+   Use the subagent's returned text verbatim as the content of the `## What` section. Do not edit, prepend to, or append to it. The subagent owns voice; you own facts. If the subagent returns an error message (missing-field or similar), correct the dispatch inputs and retry.
+
+7. **Save** per the [Saving](#saving) section.
 
 If expected information is missing, stop and ask the developer.
 
@@ -41,9 +56,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{This section becomes a changelog entry — and, for public-tier work (per [work-types.json](../_data/work-types.json)), a release note. Mechanism, internal naming, and refactor mechanics belong in `## Details`.}
-
-<!-- include: ../../_partials/voice-checklist.md / -->
+{Content returned by the `changelog-writer` dispatch in Process step 6. Use the returned text verbatim; do not edit, prepend, or append.}
 
 ## Why
 
