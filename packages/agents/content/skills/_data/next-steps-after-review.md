@@ -55,7 +55,7 @@ Shown when the review contains actionable findings (F, W, or T categories).
 | --- | ----- | ---------------------------------------- | ------------------------------------------------------------------------------ |
 | 1   | 🧠    | Design and plan                          | Rethink the approach before fixing                                             |
 | 2   | 🎶    | Orchestrate                              | Run the full orchestrated development pipeline                                 |
-| 3   | 🔍    | Implement directly with follow-up review | Fix the findings, then run a single end-of-work review pass as a separate step |
+| 3   | 🚀🔍  | Implement directly with follow-up review | Fix the findings, then run a single end-of-work review pass as a separate step |
 | 4   | 🚀    | Implement directly                       | Fix the findings without a follow-up review (reserved for trivial findings)    |
 
 ### Output format
@@ -77,7 +77,7 @@ Actionable findings:
    ➕ best when the findings' fixes span multiple modules or have downstream effects;
    ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-3. 🔍 ■□□ Implement directly with follow-up review:
+3. 🚀🔍 ■□□ Implement directly with follow-up review:
    ➕ pairs localized fixes with one targeted review pass to verify the corrections;
    ➕ keeps fix context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
@@ -95,7 +95,7 @@ Skill names for each option:
 
 - 🧠 **Design and plan** -> `design-and-plan`
 - 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🔍 **Implement directly with follow-up review** -> no fix-time skill invocation; implement fixes manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
+- 🚀🔍 **Implement directly with follow-up review** -> no fix-time skill invocation; implement fixes manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
 - 🚀 **Implement directly** -> no skill invocation; implement fixes manually or ask the agent to begin
 
 ### Recommendation rules
@@ -109,7 +109,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
 ### Marker strengths
 
-The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
+The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice. See [recommendation-gradient markers](./recommendation-gradient.md#markers) for the full marker table and worked examples of the ■■■ and □□□ cases.
 
 Complexity levels classify individual findings, but the recommendation applies to the collection. Multiple low-level findings that together indicate a design flaw may warrant a higher recommendation than any single finding's level suggests. When uncertain between two options, recommend the more thorough one.
 
@@ -143,7 +143,7 @@ Actionable findings:
    ➕ best when the findings' fixes span multiple modules or have downstream effects;
    ➖ longer wall time and higher token spend.
    Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-3. 🔍 ■□□ Implement directly with follow-up review:
+3. 🚀🔍 ■□□ Implement directly with follow-up review:
    ➕ pairs localized fixes with one targeted review pass to verify the corrections;
    ➕ keeps fix context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}

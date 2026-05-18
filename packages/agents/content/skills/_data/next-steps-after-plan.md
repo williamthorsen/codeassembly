@@ -8,7 +8,7 @@ Standard next-steps block for skills that produce or refine an implementation pl
 | --- | ----- | ---------------------------------------- | ----------------------------------------------------------------------- |
 | 1   | 🧠    | Refine plan                              | Review the plan for completeness and correctness                        |
 | 2   | 🎶    | Orchestrate                              | Run the full orchestrated development pipeline                          |
-| 3   | 🔍    | Implement directly with follow-up review | Implement, then run a single end-of-work review pass as a separate step |
+| 3   | 🚀🔍  | Implement directly with follow-up review | Implement, then run a single end-of-work review pass as a separate step |
 | 4   | 🚀    | Implement directly                       | Implement without a follow-up review (reserved for trivial work)        |
 
 ## Output format
@@ -37,7 +37,7 @@ Next steps:
    Clear context and use the `orchestrate-dev` skill with
    plan: {plan_path},
    ticket: {ticket_source}
-3. 🔍 ■□□ Implement directly with follow-up review:
+3. 🚀🔍 ■□□ Implement directly with follow-up review:
    ➕ pairs bounded single-package work with one targeted review pass;
    ➕ keeps implementation context warm; resets to a fresh context for the review.
    Implement directly, then clear context and use the `review-branch` skill with
@@ -51,7 +51,7 @@ Skill names for each option:
 
 - 🧠 **Refine plan** -> `refine-plan`
 - 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🔍 **Implement directly with follow-up review** -> no plan-time skill invocation; implement manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
+- 🚀🔍 **Implement directly with follow-up review** -> no plan-time skill invocation; implement manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
 - 🚀 **Implement directly** -> no skill invocation; implement manually or ask the agent to begin
 
 ## Recommendation rules
@@ -71,13 +71,13 @@ Select the recommended option by checking these rules in order and stopping at t
    - The plan has not been previously refined
    - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
 
-2. **Implement directly with follow-up review** — recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake.
+2. **Implement directly with follow-up review** — recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. The default for non-trivial bounded work; trivial work at complexity levels 1–2 falls to rule 3.
 3. **Implement directly** — recommend instead of rule 2 when the work is trivial enough that a review pass would catch nothing meaningful (e.g., a typo fix, unused-import removal, single-file mechanical rename). Complexity levels 1–2 trivial only.
 4. **Orchestrate** — all other cases (default). Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall here.
 
 ### Marker strengths
 
-The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
+The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice. See [recommendation-gradient markers](./recommendation-gradient.md#markers) for the full marker table and worked examples of the ■■■ and □□□ cases.
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
 
