@@ -40,7 +40,7 @@ The `_partials` directory itself never appears in installed output.
 For each `.md` source file the install pipeline performs, in order:
 
 1. **Expand includes.** `expandIncludes(srcPath, contentDir)` resolves all directive shapes recursively and substitutes slot content.
-2. **Merge frontmatter** (subagents only). Platform-specific frontmatter overrides from `_data/{platform}.yml` are merged into the source's frontmatter.
+2. **Merge frontmatter** (subagents only). Platform-specific frontmatter overrides from `_data/{platform}.yaml` are merged into the source's frontmatter.
 3. **Rewrite tool-name placeholders.** `rewriteToolNames(content, mapping)` replaces each `{tool:NAME}` placeholder using the platform's `_tools:` mapping from the same overlay YAML. An unmapped name is a fatal install error anchored to the source file and line. See [Tool-name placeholders](#tool-name-placeholders).
 4. **Inject the provenance marker.** A `GENERATED FILE` comment is added at the top of the output, with a `Source:` link to the original file.
 5. **Rewrite paths** (skills only, post-write). Bare-relative Markdown links are rewritten to absolute platform paths.
@@ -52,10 +52,10 @@ Expansion runs before the dry-run gate, so missing partials, cycles, and out-of-
 
 ## Tool-name placeholders
 
-Subagent and skill body text reference tools using the `{tool:NAME}` placeholder so the same source can install for platforms that name their tools differently. `NAME` is the canonical (Claude) tool name (`Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`). The install pipeline rewrites each placeholder using the platform's `_tools:` mapping, which lives at the top of each overlay YAML at `content/subagents/_data/{platform}.yml`.
+Subagent and skill body text reference tools using the `{tool:NAME}` placeholder so the same source can install for platforms that name their tools differently. `NAME` is the canonical (Claude) tool name (`Read`, `Write`, `Edit`, `Bash`, `Grep`, `Glob`). The install pipeline rewrites each placeholder using the platform's `_tools:` mapping, which lives at the top of each overlay YAML at `content/subagents/_data/{platform}.yaml`.
 
 ```yaml
-# content/subagents/_data/rovodev.yml
+# content/subagents/_data/rovodev.yaml
 _tools:
   Bash: bash
   Edit: find_and_replace_code

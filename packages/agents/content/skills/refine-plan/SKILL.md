@@ -15,7 +15,7 @@ Perform a single review-and-revise round on a saved implementation plan, checkin
 
 ## Visibility
 
-Before every Task call and after every phase completion, output a status line:
+Before every {tool:Task} call and after every phase completion, output a status line:
 
 - **Before dispatch:** `-- Refine plan -- delegating to {agent}...`
 - **After completion:** `-- Refine plan -- {summary}`
@@ -29,7 +29,7 @@ Before every Task call and after every phase completion, output a status line:
 3. Resolve the ticket source:
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
-   - Other URL -> use WebFetch to retrieve content.
+   - Other URL -> Fetch the URL content.
 4. Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`.
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
@@ -51,7 +51,7 @@ Set the review output path: `{artifact_dir}/{timestamp}_{slug}_plan-review.md`
 
 `-- Refine plan -- delegating to plan-reviewer...`
 
-Call Task with `subagent_type: plan-reviewer`, `max_turns: 30`:
+Call {tool:Task} with `subagent_type: plan-reviewer`, `max_turns: 30`:
 
 > Review the following implementation plan for completeness and correctness.
 >
@@ -118,7 +118,7 @@ Set the revision output path: `{artifact_dir}/{new_timestamp}_{slug}_plan-v2.md`
 
 `-- Refine plan -- delegating to plan-reviser...`
 
-Call Task with `subagent_type: plan-reviser`, `max_turns: 30`:
+Call {tool:Task} with `subagent_type: plan-reviser`, `max_turns: 30`:
 
 > Revise the following implementation plan based on review findings and user answers.
 >
@@ -138,7 +138,7 @@ Parse the return block:
 
 `-- Refine plan -- revision complete`
 
-If the plan-reviser Task failed or the return block does not have `Status: completed`, skip the provenance update and report the failure:
+If the plan-reviser {tool:Task} failed or the return block does not have `Status: completed`, skip the provenance update and report the failure:
 
 ```
 Plan revision failed -- the plan-reviser did not complete successfully.

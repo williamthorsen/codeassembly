@@ -30,7 +30,7 @@ describe('tool-name placeholder rewriting end-to-end', () => {
 
     // Minimal Rovo Dev overlay with a complete _tools: mapping.
     await writeFile(
-      path.join(contentDir, 'subagents', '_data', 'rovodev.yml'),
+      path.join(contentDir, 'subagents', '_data', 'rovodev.yaml'),
       [
         '_tools:',
         '  Bash: bash',

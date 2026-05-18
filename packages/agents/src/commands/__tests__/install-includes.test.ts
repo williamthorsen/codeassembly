@@ -57,7 +57,7 @@ describe('install with include directives', () => {
       '# Claude guidance\n',
       'utf8',
     );
-    await writeFile(path.join(contentDir, 'subagents', '_data', 'claude.yml'), '_defaults: {}\n', 'utf8');
+    await writeFile(path.join(contentDir, 'subagents', '_data', 'claude.yaml'), '_defaults: {}\n', 'utf8');
 
     for (const [name, body] of Object.entries(options.subagents ?? {})) {
       await writeFile(path.join(contentDir, 'subagents', name), body, 'utf8');

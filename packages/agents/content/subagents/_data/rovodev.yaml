@@ -1,4 +1,4 @@
-# rovodev.yml
+# rovodev.yaml
 
 # Body-text tool-name mapping for the {tool:NAME} placeholder rewriter.
 # Authoring guide: ../../_partials/README.md (Tool-name placeholders).
@@ -11,6 +11,7 @@ _tools:
   Glob: expand_folder
   Grep: grep
   Read: open_files
+  Task: invoke_subagent
   Write: create_file
 
 _defaults:

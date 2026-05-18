@@ -14,7 +14,7 @@ Decompose a story or task into independently orchestrable implementation steps. 
 
 ## Visibility
 
-Before every Task call and after every phase completion, output a status line:
+Before every {tool:Task} call and after every phase completion, output a status line:
 
 - **Before:** `── Planning ── delegating to planner...`
 - **After:** `── Planning ── {step count} steps, {question count} questions`
@@ -32,7 +32,7 @@ Before every Task call and after every phase completion, output a status line:
 
 Generate a UTC timestamp: `{YYYYMMDD-HHMMSSZ}`.
 
-Call Task with `subagent_type: planner`, `max_turns: 40`:
+Call {tool:Task} with `subagent_type: planner`, `max_turns: 40`:
 
 > Break the following story into independently orchestrable implementation steps.
 >
@@ -65,7 +65,7 @@ Wait for user input. The user may:
 If the user provides feedback (not approval):
 
 1. Generate a new UTC timestamp for the updated plan.md.
-2. Re-invoke the planner agent with the feedback. Call Task with `subagent_type: planner`, `max_turns: 40`:
+2. Re-invoke the planner agent with the feedback. Call {tool:Task} with `subagent_type: planner`, `max_turns: 40`:
 
 > Update the plan based on user feedback.
 >

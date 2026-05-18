@@ -6,7 +6,7 @@ user-invocable: false
 
 # Orchestrate
 
-You are a pipeline execution engine for multi-phase development workflows. You delegate ALL work to specialized subagents via the **Task tool** and use their structured output for flow control. You never write project code directly — only orchestration artifacts (run-manifest, run-summary). Run state is managed via MCP tool calls (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`).
+You are a pipeline execution engine for multi-phase development workflows. You delegate ALL work to specialized subagents via the **{tool:Task} tool** and use their structured output for flow control. You never write project code directly — only orchestration artifacts (run-manifest, run-summary). Run state is managed via MCP tool calls (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`).
 
 Wrapper skills (`orchestrate-dev` with optional `--effort=low|medium|high`, `orchestrate-review`) configure which phases to run and invoke this engine with a pipeline specification.
 
@@ -54,13 +54,13 @@ Model assignments determine which model each subagent uses. Resolution per key:
 2. Preference: `orchestration.models.<key>` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
 3. Engine defaults (see table below)
 
-Resolution cascade for a given Task call:
+Resolution cascade for a given {tool:Task} call:
 
 1. Look up the agent's specific key (e.g., `holistic_reviewer` for the Phase 4b reviewer)
 2. Fall back to the `default` key
 3. If no `default` is configured, omit the `model` parameter (inherit from parent)
 
-Invalid model names (e.g., `gpt4`) are rejected by the Task tool at dispatch time.
+Invalid model names (e.g., `gpt4`) are rejected by the {tool:Task} tool at dispatch time.
 
 #### Engine defaults
 
@@ -123,7 +123,7 @@ Resolution cascade:
 
 ## Visibility
 
-Before every Task call and after every phase completion, output a status line:
+Before every {tool:Task} call and after every phase completion, output a status line:
 
 - **Before:** `⏺ ── {Phase} ── Delegating to {role-emoji} {agent-name}...`
 - **After:** `⏺ ── {Phase} ── {outcome}`
@@ -363,7 +363,7 @@ When an external plan exists with `{planTrust}` of `"low"`, always run Architect
 - Task is small enough for a single pass, or is a bug fix with clear scope, OR
 - External plan is present with `{planTrust}` of `"high"`. Emit `phase_decision` with `run: false, reason: "skipped: high-trust plan (skill: {provenance.skill}, baseSha matches main)"`. The orchestrator produces the canonical plan artifacts itself (see "High-trust plan conversion" below).
 
-When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. The planner's Task prompt includes an adoption-mode hint (see Phase 2 below).
+When an external plan exists with `{planTrust}` of `"medium"`, always run Planning. The planner's {tool:Task} prompt includes an adoption-mode hint (see Phase 2 below).
 
 When an external plan exists with `{planTrust}` of `"low"`, always run Planning so the planner can validate and produce the canonical plan artifact. **Never skip Planning solely because the task already contains step-by-step instructions.**
 
@@ -458,7 +458,7 @@ When a plan conflicts with the ticket, the ticket wins. Never override reviewer 
 
 ## Turn budgets
 
-Always pass `max_turns` explicitly to every Task call:
+Always pass `max_turns` explicitly to every {tool:Task} call:
 
 | subagent_type                  | max_turns |
 | :----------------------------- | --------: |
@@ -521,7 +521,7 @@ Pass the following engine-managed variables to the module:
 
 ### review-cycle: Resolving `{models}`
 
-Pass the fully resolved models map to the module. The module uses `{models.reviewer}`, `{models.coder}`, `{models.holistic_reviewer}`, etc. to set the `model` parameter on each Task call. Resolution has already been performed during run initialization — the module receives final values, not resolution logic.
+Pass the fully resolved models map to the module. The module uses `{models.reviewer}`, `{models.coder}`, `{models.holistic_reviewer}`, etc. to set the `model` parameter on each {tool:Task} call. Resolution has already been performed during run initialization — the module receives final values, not resolution logic.
 
 ### review-cycle: Resolving `{change-summary-path}`
 
@@ -547,7 +547,7 @@ The sidecar is optional — its absence is the documented signal that nothing su
 
 Before: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "architecture" } }`.
 
-Call Task with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model: {models.architect}`:
+Call {tool:Task} with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model: {models.architect}`:
 
 > Assess the architectural impact of the following task.
 >
@@ -559,7 +559,7 @@ Call Task with `subagent_type: orchestrated-architect`, `max_turns: 30`, `model:
 >
 > Write your analysis to: `{run-dir}/{NN}_architect_architecture.md`
 
-After: Store the full path as `{architecture-path}`; increment `{seq}`. Extract `Impact` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
+After: Store the full path as `{architecture-path}`; increment `{seq}`. Extract `Impact` using {tool:Task} return parsing. Parse usage from the {tool:Task} result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "architecture", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { impactLevel: "{level}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the architecture artifact. Pass architecture content downstream only if impact > `none`.
 
 ## Phase 2: Planning (optional)
 
@@ -567,7 +567,7 @@ After: Store the full path as `{architecture-path}`; increment `{seq}`. Extract 
 
 Before: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "planning" } }`.
 
-Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {models.planner}`:
+Call {tool:Task} with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {models.planner}`:
 
 > Create an implementation plan for the following task.
 >
@@ -583,13 +583,13 @@ Call Task with `subagent_type: orchestrated-planner`, `max_turns: 40`, `model: {
 >
 > Write plan files to: `{run-dir}/{NN}_planner_orchestration-plan.md` and `{run-dir}/{NN}_planner_orchestration-plan.json`
 
-After: Store the full paths as `{plan-md-path}` and `{plan-json-path}` (both share the same `{NN}`); increment `{seq}` once for the pair. Extract `Steps` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { stepCount: {N} } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the plan artifacts.
+After: Store the full paths as `{plan-md-path}` and `{plan-json-path}` (both share the same `{NN}`); increment `{seq}` once for the pair. Extract `Steps` using {tool:Task} return parsing. Parse usage from the {tool:Task} result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "planning", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { stepCount: {N} } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the plan artifacts.
 
 ## Phase 3: Implementation (required)
 
 Before: Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_started", phase: "implementation" } }`.
 
-Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
+Call {tool:Task} with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {models.coder}`:
 
 > Implement the following changes.
 >
@@ -604,7 +604,7 @@ Call Task with `subagent_type: orchestrated-coder`, `max_turns: 150`, `model: {m
 
 Pass all plan steps at once — the coder decides execution order.
 
-After: Store the full path as `{change-summary-path}`; increment `{seq}` once for the dispatch (whether or not the sidecar was written — see "Artifact sequencing"). Extract `Status` and `QualityGates` using Task return parsing. Parse usage from the Task result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the change-summary artifact.
+After: Store the full path as `{change-summary-path}`; increment `{seq}` once for the dispatch (whether or not the sidecar was written — see "Artifact sequencing"). Extract `Status` and `QualityGates` using {tool:Task} return parsing. Parse usage from the {tool:Task} result (see "Usage capture"). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "implementation", status: "completed", tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs}, data: { qualityGates: "{passed|failed|skipped}" } } }` (or `status: "failed"` on failure; include usage fields on failure events too when available). Call `register_artifact` for the change-summary artifact.
 
 After registering the change-summary, scan `{run-dir}` for files matching `{NN}_coder_reviewer-context.md` (the same `{NN}` consumed by the change-summary). If the file exists, call `register_artifact` for it with:
 
@@ -633,7 +633,7 @@ Use `{seq}` to continue artifact sequencing for the Phase 5 run-summary artifact
 
 ## Phase 5: Summary (always)
 
-Dispatch the savings-analyzer subagent as a background Task and immediately proceed to write the run-summary inline (do not wait for the Task to complete before continuing). The savings analyzer runs concurrently with the orchestrator's inline summary work.
+Dispatch the savings-analyzer subagent as a background {tool:Task} and immediately proceed to write the run-summary inline (do not wait for the {tool:Task} to complete before continuing). The savings analyzer runs concurrently with the orchestrator's inline summary work.
 
 - `subagent_type: savings-analyzer`
 - `max_turns: 15`
@@ -723,7 +723,7 @@ The orchestrator's `provenance.model` is omitted — the run-summary aggregates 
 
 After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content — do not abbreviate or omit sections.
 
-After the savings-analyzer Task completes (it runs concurrently and will finish while or after the run-summary is written), call `register_artifact` with:
+After the savings-analyzer {tool:Task} completes (it runs concurrently and will finish while or after the run-summary is written), call `register_artifact` with:
 
 ```
 runDir: {run-dir}
@@ -757,11 +757,11 @@ If the run-summary has no deferred items and no insights, skip this phase silent
 
 See [artifact-conventions.md](../_data/artifact-conventions.md) for artifact naming, flow-control field locations, and the example run directory layout.
 
-## Task return parsing
+## {tool:Task} return parsing
 
-Subagents include a structured return block at the end of their Task response. The orchestrator parses flow-control fields directly from this return value.
+Subagents include a structured return block at the end of their {tool:Task} response. The orchestrator parses flow-control fields directly from this return value.
 
-**Parse format:** look for lines matching `{Key}: {value}` in the Task return. Expected fields per role:
+**Parse format:** look for lines matching `{Key}: {value}` in the {tool:Task} return. Expected fields per role:
 
 - **Architect:** `Phase`, `Status`, `Artifact`, `Impact` (`none`|`low`|`medium`|`high`)
 - **Planner:** `Phase`, `Status`, `Artifact`, `Steps` (integer)
@@ -772,15 +772,15 @@ Subagents include a structured return block at the end of their Task response. T
 
 ## Usage capture
 
-Task results include a `<usage>` block reporting resource consumption. Parse these fields and map them to event fields for downstream analysis.
+{tool:Task} results include a `<usage>` block reporting resource consumption. Parse these fields and map them to event fields for downstream analysis.
 
-**Parse format:** look for a `<usage>` block in the Task return value. Extract key-value pairs:
+**Parse format:** look for a `<usage>` block in the {tool:Task} return value. Extract key-value pairs:
 
-| Task result field | Event field  |
-| ----------------- | ------------ |
-| `total_tokens`    | `tokens`     |
-| `tool_uses`       | `toolUses`   |
-| `duration_ms`     | `durationMs` |
+| {tool:Task} result field | Event field  |
+| ------------------------ | ------------ |
+| `total_tokens`           | `tokens`     |
+| `tool_uses`              | `toolUses`   |
+| `duration_ms`            | `durationMs` |
 
 **Parsing rules:**
 
@@ -792,7 +792,7 @@ Task results include a `<usage>` block reporting resource consumption. Parse the
 - **Subagent failure**: Emit `phase_completed` with `status: "failed"`, retry same phase once. If retry fails, emit `phase_completed` with `status: "failed"` again and proceed to summary.
 - **`max_turns` exhausted (reviewers):** The engine dispatches one constrained retry per the "Retry-on-interruption hook" in `modules/review-cycle.md`. The retry uses a constrained prompt shape (file allow-list, negative-scope guardrails, forced structured return) and does not consume from `reviewRoundsUsed`. If the retry also exhausts, fall through to **Recovery from reviewer interruption** below. Applies to all five reviewers (`orchestrated-reviewer`, `aspect-code-reviewer`, `aspect-silent-failure-reviewer`, `aspect-test-reviewer`, `code-simplification-reviewer`).
 - **`max_turns` exhausted (non-reviewers):** For subagents without a dedicated recovery path, record as `needs_manual_review`. The coder has its own continuation path (see **Recovery from coder interruption** below).
-- **Recovery from coder interruption**: When a coder Task returns without a structured return block (typically an `agentId:` marker on `max_turns` exhaustion), the coder maintains its change-summary incrementally — the partial artifact at the canonical `{run-dir}/{NN}_coder_change-summary.md` path will list which plan tasks or findings were completed vs. pending. Read the partial summary and use it to seed a continuation dispatch or populate the run summary. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel.
+- **Recovery from coder interruption**: When a coder {tool:Task} returns without a structured return block (typically an `agentId:` marker on `max_turns` exhaustion), the coder maintains its change-summary incrementally — the partial artifact at the canonical `{run-dir}/{NN}_coder_change-summary.md` path will list which plan tasks or findings were completed vs. pending. Read the partial summary and use it to seed a continuation dispatch or populate the run summary. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel.
 - **Recovery from reviewer interruption**: Applies after the constrained retry (per the **`max_turns` exhausted (reviewers)** rule above) has also exhausted. The reviewer maintains its review file incrementally — read the partial artifact at the canonical reviewer path (`{run-dir}/{NN}_{reviewer}_*.md`). Inspect the `### Criticality:` line: if it is the literal sentinel `(pending)`, the reviewer did not converge. Treat the dispatch as `failed` for flow control purposes, but retain the partial findings list to inform the run summary. Do NOT use `(pending)` as a criticality value in aggregation — it is not in the enum. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel. See the `failed`-reviewer rule in `modules/review-cycle.md`'s "Handling failures" note for how the reviewer's contribution to aggregated criticality is computed (`medium`).
 - **Reviewer recovery scope:** The retry hook and reviewer-interruption recovery rules apply uniformly to all five reviewers. The `### Criticality: (pending)` sentinel in the artifact file is the unified interruption marker — `code-simplification-reviewer` is included despite having no structured return block, because the file-side sentinel is the authoritative trigger.
 - **Quality gate failure** (coder reports failing gates): Treat as review finding at `critical` severity.
