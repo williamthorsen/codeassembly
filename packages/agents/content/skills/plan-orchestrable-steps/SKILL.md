@@ -86,7 +86,7 @@ When the user approves the plan:
 
 1. Resolve frontmatter fields. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-   Run `resolve-frontmatter.sh --skill plan-orchestrable-steps --interactive true` via Bash. Prepend the output verbatim to the artifact body.
+   Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill plan-orchestrable-steps --interactive true` via Bash. Prepend the output verbatim to the artifact body.
 
    If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 

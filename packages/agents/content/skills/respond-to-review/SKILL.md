@@ -37,7 +37,7 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 Run via Bash:
 
 ```bash
-resolve-frontmatter.sh \
+{platform_home_dir}/scripts/resolve-frontmatter.sh \
   --skill respond-to-review \
   --interactive true \
   --model "$MODEL_ID" \
