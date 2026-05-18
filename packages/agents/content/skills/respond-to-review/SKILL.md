@@ -78,37 +78,66 @@ For each finding, apply technical rigor:
 4. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
 5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits — not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem the original placement created.
 6. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
+7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. There is no `ACCEPT (follow-up)`: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
    </HARD-GATE>
 
 ## Worked examples
 
-### Bad → Good — hedged move with doctrinal conflict
+### Bad → Good: Hedged move with doctrinal conflict
 
 **Review recommendation:** "Move `validateSessionToken` from `auth/validators.ts` into `shared/utils.ts`. It plausibly belongs in a general utility module — there's no current evidence the function needs auth-specific context."
 
-**Bad — uncritical acceptance:**
+**Bad: Uncritical acceptance:**
 
 > R1: ACCEPT. `validateSessionToken` is a small input-to-boolean function with no side effects; it composes naturally with the other helpers in `shared/utils.ts`. Moving it consolidates similar shape-based utilities.
 
 The acceptance reads the function's signature without reading the destination's doctrine.
 
-**Good — doctrine-grounded REJECT:**
+**Good: Doctrine-grounded REJECT:**
 
 > R1: REJECT. The helpers already in `shared/utils.ts` (`debounce`, `formatBytes`, `clamp`) all share a no-domain-knowledge shape; the file header confirms the invariant with `// Pure, framework-agnostic helpers with no domain knowledge.`. `validateSessionToken` imports `SessionContext` from `auth/types.ts` and decodes a JWT against an auth-specific schema — both violate that invariant, whether read from the surrounding code or from the header. The reviewer's "plausibly belongs" framing did not survive a read of the destination's actual doctrine. The function stays in `auth/validators.ts`.
 
-### Bad → Good — structural move with destination doctrine satisfied
+### Bad → Good: Structural move with destination doctrine satisfied
 
 **Review recommendation:** "Move the `MAX_RETRY_COUNT` constant from `network/http-client.ts` to `config/limits.ts`. It's hard-coded near the call site; `config/limits.ts` already holds `MAX_REQUEST_BYTES` and `MAX_CONNECTION_POOL_SIZE`, so grouping operational limits there reduces scatter."
 
-**Bad — reflexive rejection:**
+**Bad: Reflexive rejection:**
 
 > R1: REJECT. Pushback is the default for structural recommendations. The current placement works.
 
 The rejection invokes the default posture but never reads the destination's doctrine to check whether the affirmative-evidence bar is met.
 
-**Good — doctrine-grounded ACCEPT:**
+**Good: Doctrine-grounded ACCEPT:**
 
 > R1: ACCEPT. `config/limits.ts` is the documented home for numeric operational ceilings; its existing members (`MAX_REQUEST_BYTES`, `MAX_CONNECTION_POOL_SIZE`) confirm the category, and `MAX_RETRY_COUNT` shares that exact shape. The constant is currently referenced from three modules that each re-import it from `network/http-client.ts` — a location problem the original placement created. The destination's stated doctrine accommodates the rule, and the move resolves the duplication; both conditions for the carve-out are met.
+
+### Bad → Good: Deferral-framed recommendation, change does not belong
+
+**Review recommendation:** "S1: `memoize` in `utils/memoize.ts` doesn't accept a TTL. Consider a follow-up to add an optional `ttlMs` parameter for time-bounded caching. No action this PR."
+
+**Bad: Adopts framing as disposition:**
+
+> S1: ACCEPT (follow-up). The reviewer is right that TTL is useful for some cases; we'll create a ticket and defer.
+
+The disposition was lifted from the reviewer's handling suggestion; no substance check occurred, and `ACCEPT (follow-up)` is not a valid disposition.
+
+**Good: Substance check, then REJECT:**
+
+> S1: REJECT. The file header reads `// Pure memoization keyed on argument identity. For time-bounded caching, use timed-cache.ts.`, and `timed-cache.ts` is the documented home for the exact behavior the reviewer is suggesting we add. Adding TTL to `memoize` would muddle the two abstractions and break the invariant the file states explicitly. The change does not belong. The reviewer's "consider a follow-up" framing was a priority signal, not a license to defer the substance question.
+
+### Bad → Good: Deferral-framed recommendation, change belongs (timing decided separately)
+
+**Review recommendation:** "T1: `createApiKey` doesn't validate that `scopes` is a non-empty array. Consider a follow-up to add a guard. No action this PR — out of scope for the storage refactor."
+
+**Bad: Collapses substance and timing:**
+
+> T1: ACCEPT (follow-up). The reviewer is right; we'll create a ticket. Out of scope for this PR.
+
+The disposition conflates two decisions: whether the change belongs (substance), and whether it ships in this PR (timing). `ACCEPT (follow-up)` is not a valid disposition.
+
+**Good: Substance check (ACCEPT), then separate timing decision:**
+
+> T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard ships in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not held as a maybe.
 
 ## Disposition vocabulary
 
