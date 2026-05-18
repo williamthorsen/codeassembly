@@ -36,7 +36,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 7. **Assign a score** out of 10.
 8. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 9. **Save the review** per the [Saving](#saving) section.
-10. **Present next steps**: After saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, and whether specification compliance gaps or unplanned work were identified. The next-steps prompt is interactive output only and is not saved in the review artifact.
+10. **Present next steps**: After saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact.
 
 ## Frontmatter resolution
 
@@ -172,6 +172,40 @@ Extract criteria from whatever structure the source uses (numbered lists, checkb
 #### Assessment
 
 {1-2 sentence summary of alignment between the implementation and this source.}
+
+## Specification consistency
+
+{Omit this entire section when fewer than two spec sources are present. Otherwise assess semantic alignment across (ticket, PR description, implementation) and render the verdict line plus the per-aspect table below. Include the Details subsection only for rows whose Summary cell cannot carry the explanation.}
+
+🔗 **Consistency:** {emoji} `{verdict}`
+
+| #   | Aspect         | Ticket  | PR description | Implementation             | Summary                                   |
+| --- | -------------- | ------- | -------------- | -------------------------- | ----------------------------------------- |
+| D1  | {aspect label} | {state} | {state}        | {ticket-state}, {PR-state} | {one-line synthesis with concrete values} |
+
+Verdict scale (max across all rows): 🟢 `none` (all three aligned — section omitted entirely) / 🟠 `partial` (implementation aligns with one spec source but not the other) / 🔴 `severe` (implementation aligns with neither, or sources contradict each other on a central claim).
+
+Cell encoding:
+
+| Symbol      | Meaning                                          |
+| ----------- | ------------------------------------------------ |
+| ⚫ baseline | This source defines the aspect on this row       |
+| ⚪ omitted  | This source has no claim to compare              |
+| 🟢 {ref}    | Matches the named reference (semantic alignment) |
+| 🟠 {ref}    | Partial mismatch with the named reference        |
+| 🔴 {ref}    | Severe mismatch with the named reference         |
+
+Baseline-selection rule: ticket is baseline when it mentions the aspect; otherwise PR description is baseline. An aspect introduced only by the implementation belongs in `## Specification compliance`'s "Unplanned work" sub-section, not here.
+
+Implementation-column ordering: always `{ticket-state}, {PR-state}` regardless of which is meaningful, so the scan rhythm stays consistent across rows.
+
+Only rows where at least two of (ticket, PR description, implementation) differ belong in this table. Fully-aligned aspects appear in `## Specification compliance`, not here.
+
+### Details
+
+**D{n} — {aspect label}.** {Free-form prose elaborating aspects the Summary cell cannot fit. Each entry keys to a `D{n}` ID for cross-reference.}
+
+Paraphrasing is not divergence — evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to surface through the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
 ```
 
 ## Scoring

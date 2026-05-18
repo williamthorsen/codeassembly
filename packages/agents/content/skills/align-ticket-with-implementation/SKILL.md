@@ -1,12 +1,12 @@
 ---
-name: ex-post-facto
-description: Write issue ticket for already-completed work based on branch changes
+name: align-ticket-with-implementation
+description: Align an issue ticket with the current branch's implementation
 user-invocable: true
 ---
 
-# Ex post facto ticket
+# Align ticket with implementation
 
-Write an issue ticket (e.g., Jira issue) describing the issues that would have needed to be fixed, had the current branch changes not been made.
+Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe what the current branch's implementation accomplishes.
 
 ## Process
 
@@ -67,7 +67,7 @@ The artifact's frontmatter conforms to the [universal artifact frontmatter](../_
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill ex-post-facto --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill align-ticket-with-implementation --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
