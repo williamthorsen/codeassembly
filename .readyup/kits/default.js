@@ -1,23 +1,11 @@
 /** @noformat — @generated. Do not edit. Compiled by rdy. */
 /* eslint-disable */
+export const __readyupVersion = "0.21.0";
 
-
-// node_modules/.pnpm/readyup@0.20.0_esbuild@0.28.0/node_modules/readyup/dist/esm/authoring.js
-function defineRdyKit(kit) {
-  return kit;
-}
-
-// node_modules/.pnpm/readyup@0.20.0_esbuild@0.28.0/node_modules/readyup/dist/esm/check-utils/filesystem.js
-import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-function readFile(relativePath) {
-  const fullPath = join(process.cwd(), relativePath);
-  if (!existsSync(fullPath)) return void 0;
-  return readFileSync(fullPath, "utf8");
-}
 
 // .readyup/kits/default.ts
+import { defineRdyKit } from "readyup";
+import { readFile } from "readyup/check-utils";
 var default_default = defineRdyKit({
   checklists: [
     {

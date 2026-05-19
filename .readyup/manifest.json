@@ -4,8 +4,9 @@
     {
       "name": "default",
       "path": "kits/default.js",
+      "readyupVersion": "0.21.0",
       "source": "kits/default.ts",
-      "targetHash": "d91fa20e"
+      "targetHash": "7120921d"
     }
   ]
 }

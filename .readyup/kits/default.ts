@@ -1,4 +1,5 @@
-import { defineRdyKit, readFile } from 'readyup';
+import { defineRdyKit } from 'readyup';
+import { readFile } from 'readyup/check-utils';
 
 /**
  * Default internal rdy kit for the codeassembly monorepo.
