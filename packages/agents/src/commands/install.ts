@@ -1,10 +1,10 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { resolveContentDir } from '../lib/content-resolver.js';
-import { expandIncludes } from '../lib/directive-expander.js';
-import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.js';
-import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.js';
+import { resolveContentDir } from '../lib/content-resolver.ts';
+import { expandIncludes } from '../lib/directive-expander.ts';
+import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
+import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.ts';
 import {
   computeContentHash,
   detectDrift,
@@ -518,10 +518,13 @@ async function generatePromptsYml(
     try {
       skillContent = await readFile(skillMdPath, 'utf8');
     } catch (error: unknown) {
-      if (!isEnoent(error)) {
-        throw error;
+      // Tolerate any non-directory entry in the destination skills directory (e.g. a `.DS_Store` left by Finder):
+      // joining `SKILL.md` onto a regular file raises `ENOTDIR`; a directory without `SKILL.md` raises `ENOENT`.
+      // Either way the entry is not a skill and should be skipped.
+      if (isMissingSkill(error)) {
+        continue;
       }
-      continue;
+      throw error;
     }
 
     const { lines } = parseFrontmatter(skillContent);
@@ -860,6 +863,14 @@ async function installPlatformGuidance(
  */
 function isEnoent(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+}
+
+/** True when a `readFile` of `SKILL.md` raised `ENOENT` (file absent) or `ENOTDIR` (parent segment is a regular file). */
+function isMissingSkill(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return false;
+  }
+  return error.code === 'ENOENT' || error.code === 'ENOTDIR';
 }
 
 /**
