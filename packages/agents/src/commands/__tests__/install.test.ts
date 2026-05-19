@@ -6,11 +6,11 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveContentDir } from '../../lib/content-resolver.js';
-import { readManifest } from '../../lib/manifest.js';
-import { getManifestPath } from '../../lib/manifest.js';
-import type { InstallOptions } from '../../lib/types.js';
-import { installCommand } from '../install.js';
+import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { readManifest } from '../../lib/manifest.ts';
+import { getManifestPath } from '../../lib/manifest.ts';
+import type { InstallOptions } from '../../lib/types.ts';
+import { installCommand } from '../install.ts';
 
 describe('installCommand', () => {
   let tempDir: string;
@@ -34,7 +34,7 @@ describe('installCommand', () => {
     };
   }
 
-  it('should error when target skills directory is a symlink', async () => {
+  it('throws when target skills directory is a symlink', async () => {
     // Set up the claude home directory with a symlinked skills dir
     const claudeHome = path.join(tempDir, '.claude');
     const realSkills = path.join(tempDir, 'real-skills');
@@ -45,7 +45,7 @@ describe('installCommand', () => {
     await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow('Target directory is a symlink');
   });
 
-  it('should install skills and subagents in dry-run mode without writing files', async () => {
+  it('installs skills and subagents in dry-run mode without writing files', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -61,7 +61,7 @@ describe('installCommand', () => {
     expect(skillsContents).toHaveLength(0);
   });
 
-  it('should install skills and subagents with merged frontmatter', async () => {
+  it('installs skills and subagents with merged frontmatter', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -94,7 +94,7 @@ describe('installCommand', () => {
     expect(claudeManifest?.entries.length).toBeGreaterThan(0);
   });
 
-  it('should be idempotent - running twice produces the same result', async () => {
+  it('is idempotent', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -108,7 +108,7 @@ describe('installCommand', () => {
     expect(secondContent).toBe(firstContent);
   });
 
-  it('should skip modified subagent files on re-install without --force', async () => {
+  it('skips modified subagent files on re-install without --force', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -130,7 +130,7 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(modifiedContent);
   });
 
-  it('should prefix warn lines with ⚠️ and success summary lines with ✅', async () => {
+  it('prefixes warn lines with ⚠️ and success summary lines with ✅', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -158,7 +158,7 @@ describe('installCommand', () => {
     expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
   });
 
-  it('should overwrite modified subagent files on re-install with --force', async () => {
+  it('overwrites modified subagent files on re-install with --force', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -181,7 +181,7 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(originalContent);
   });
 
-  it('should copy skills even when link mode is enabled', async () => {
+  it('copies skills even when link mode is enabled', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -225,7 +225,7 @@ describe('installCommand', () => {
     }
   });
 
-  it('should install claude-specific skills and exclude rovodev-specific skills', async () => {
+  it('installs claude-specific skills and exclude rovodev-specific skills', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -240,7 +240,7 @@ describe('installCommand', () => {
     expect(skillsContents).not.toContain('systematic-debugging');
   });
 
-  it('should install rovodev-specific skills and exclude claude-specific skills', async () => {
+  it('installs rovodev-specific skills and excludes claude-specific skills', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -255,7 +255,7 @@ describe('installCommand', () => {
     expect(skillsContents).not.toContain('review-permissions');
   });
 
-  it('should install _data support directory but not _platforms', async () => {
+  it('installs _data support directory but not _platforms', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -273,7 +273,7 @@ describe('installCommand', () => {
     expect(dataContents).toContain('title-templates.md');
   });
 
-  it('should generate prompts.yml for rovodev with valid YAML structure', async () => {
+  it('generates prompts.yml for rovodev with valid YAML structure', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -340,7 +340,44 @@ describe('installCommand', () => {
     expect(skillNames).toContain('create-pr');
   });
 
-  it('should track prompts.yml in the manifest for rovodev', async () => {
+  it('tolerates stray entries (e.g. .DS_Store) in the destination skills directory', async () => {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    const rovodevSkills = path.join(rovodevHome, 'skills');
+    await mkdir(rovodevSkills, { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+
+    // Both stray entries exercise the same path: joining `SKILL.md` onto a regular file raises ENOTDIR,
+    // which the catch swallows. The two shapes (dotfile + plain) cover the common (.DS_Store) and the
+    // general (any non-directory entry) cases through one mechanism.
+    await writeFile(path.join(rovodevSkills, '.DS_Store'), '', 'utf8');
+    await writeFile(path.join(rovodevSkills, 'stray-file'), '', 'utf8');
+
+    await expect(installCommand(makeOptions({ platform: 'rovodev' }), tempDir)).resolves.toBeUndefined();
+
+    const promptsPath = path.join(rovodevHome, 'prompts.yml');
+    const content = await readFile(promptsPath, 'utf8');
+    const parsed: unknown = yaml.load(content);
+
+    if (typeof parsed !== 'object' || parsed === null || !('prompts' in parsed)) {
+      throw new Error('Expected parsed YAML to have a prompts key');
+    }
+    if (!Array.isArray(parsed.prompts)) {
+      throw new TypeError('Expected prompts to be an array');
+    }
+    const prompts: Array<unknown> = parsed.prompts;
+    const skillNames = prompts.map((entry) => {
+      if (typeof entry !== 'object' || entry === null || !('name' in entry)) {
+        throw new Error('Expected prompt entry with name');
+      }
+      return entry.name;
+    });
+
+    expect(prompts.length).toBeGreaterThan(0);
+    expect(skillNames).not.toContain('.DS_Store');
+    expect(skillNames).not.toContain('stray-file');
+  });
+
+  it('tracks prompts.yml in the manifest for rovodev', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -357,7 +394,7 @@ describe('installCommand', () => {
     expect(promptsEntry?.contentHash).toMatch(/^sha256:/);
   });
 
-  it('should NOT generate prompts.yml for claude', async () => {
+  it('does NOT generate prompts.yml for claude', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -368,7 +405,7 @@ describe('installCommand', () => {
     expect(existsSync(promptsPath)).toBe(false);
   });
 
-  it('should skip modified shared skill on re-install without --force (rovodev)', async () => {
+  it('skips modified shared skill on re-install without --force (rovodev)', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -391,7 +428,7 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(modifiedContent);
   });
 
-  it('should overwrite modified subagent on re-install with --force (rovodev)', async () => {
+  it('overwrites modified subagent on re-install with --force (rovodev)', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -414,7 +451,7 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(originalContent);
   });
 
-  it('should skip modified prompts.yml on re-install without --force', async () => {
+  it('skips modified prompts.yml on re-install without --force', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -436,7 +473,7 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(modifiedContent);
   });
 
-  it('should regenerate modified prompts.yml on re-install with --force', async () => {
+  it('regenerates modified prompts.yml on re-install with --force', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -459,7 +496,7 @@ describe('installCommand', () => {
     expect(afterReinstall).toBe(originalContent);
   });
 
-  it('should install rovodev in dry-run mode without writing prompts.yml or manifest', async () => {
+  it('installs rovodev in dry-run mode without writing prompts.yml or manifest', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -479,7 +516,7 @@ describe('installCommand', () => {
     expect(existsSync(promptsPath)).toBe(false);
   });
 
-  it('should copy platform-specific skills even in link mode', async () => {
+  it('copies platform-specific skills even in link mode', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -500,7 +537,7 @@ describe('installCommand', () => {
     expect(reviewPermEntry?.linked).toBe(false);
   });
 
-  it('should strip surrounding quotes from skill descriptions in prompts.yml', async () => {
+  it('strips surrounding quotes from skill descriptions in prompts.yml', async () => {
     const rovodevHome = path.join(tempDir, '.rovodev');
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
@@ -566,7 +603,7 @@ describe('installCommand', () => {
     expect(doubleQuotedEntry.description).toBe('A double-quoted description');
   });
 
-  it('should rewrite relative Markdown link paths to absolute in copy mode', async () => {
+  it('rewrites relative Markdown link paths to absolute in copy mode', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -584,7 +621,7 @@ describe('installCommand', () => {
     expect(content).not.toMatch(/\]\(\.\.\/_data\//);
   });
 
-  it('should preserve anchor fragments in rewritten paths', async () => {
+  it('preserves anchor fragments in rewritten paths', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -600,7 +637,7 @@ describe('installCommand', () => {
     expect(content).toContain('~/.claude/skills/_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix');
   });
 
-  it('should rewrite paths in skills even in link mode', async () => {
+  it('rewrites paths in skills even in link mode', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -764,7 +801,7 @@ describe('installCommand', () => {
   });
 
   describe('installScripts', () => {
-    it('should place script files in the scripts directory after install', async () => {
+    it('places script files in the scripts directory after install', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -777,7 +814,7 @@ describe('installCommand', () => {
       expect(scriptFiles).toContain('describe-change.sh');
     });
 
-    it('should set executable permissions on copied scripts', async () => {
+    it('sets executable permissions on copied scripts', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -789,7 +826,7 @@ describe('installCommand', () => {
       expect(mode).toBe(0o755);
     });
 
-    it('should record script entries with sha256 hash and linked: false in copy mode', async () => {
+    it('records script entries with sha256 hash and linked: false in copy mode', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -807,7 +844,7 @@ describe('installCommand', () => {
       }
     });
 
-    it('should record script entries with linked: true in link mode', async () => {
+    it('records script entries with linked: true in link mode', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -824,7 +861,7 @@ describe('installCommand', () => {
       }
     });
 
-    it('should skip modified script on re-install without --force', async () => {
+    it('skips modified script on re-install without --force', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -845,7 +882,7 @@ describe('installCommand', () => {
       expect(afterReinstall).toBe(modifiedContent);
     });
 
-    it('should overwrite modified script on re-install with --force', async () => {
+    it('overwrites modified script on re-install with --force', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -867,7 +904,7 @@ describe('installCommand', () => {
       expect(afterReinstall).toBe(originalContent);
     });
 
-    it('should not create scripts directory in dry-run mode', async () => {
+    it('does not create scripts directory in dry-run mode', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
