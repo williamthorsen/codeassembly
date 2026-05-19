@@ -22,7 +22,6 @@ The orchestrate engine must provide these context variables before entering this
 | `{mcp-available}`                 | `true` when MCP tools are available; `false` when the engine is running without MCP                                 |
 | `{aspect_reviewers}`              | Aspect reviewer overrides from mode preset. Per-aspect: `false` = never activate, absent = use file-pattern default |
 | `{authored-by-pipeline}`          | `true` when the pipeline includes an implementation phase (code was authored by the pipeline); `false` otherwise    |
-| `{repo-root}`                     | Repo root from `git rev-parse --show-toplevel`. Anchors the reviewer-context helper script and lookup-table paths   |
 | `{lookup-path}`                   | Path to the reviewer-context lookup table (`reviewer-context-packages.md`)                                          |
 | `{reviewer-context-sidecar-path}` | Path to the most recent coder-emitted reviewer-context sidecar (empty string if none)                               |
 

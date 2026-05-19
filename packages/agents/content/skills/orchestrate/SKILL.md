@@ -515,8 +515,7 @@ Pass the following engine-managed variables to the module:
 - `{plan-md-path}`: full path to orchestration-plan.md artifact (empty string if planning was skipped)
 - `{aspect_reviewers}`: resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
 - `{authored-by-pipeline}`: `true` when the pipeline spec includes `implementation`; `false` otherwise. Signals whether the code under review was authored by the orchestrated pipeline (used by the test reviewer for classification).
-- `{repo-root}`: Repo root resolved via `git rev-parse --show-toplevel`. Used to anchor the reviewer-context helper script and lookup-table paths.
-- `{lookup-path}`: `{repo-root}/packages/agents/content/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
+- `{lookup-path}`: `{platform_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
 - `{reviewer-context-sidecar-path}`: Full path to the most recent `*_coder_reviewer-context.md` artifact (empty string if none).
 
 ### review-cycle: Resolving `{models}`
@@ -537,11 +536,9 @@ When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{
 
 The sidecar is optional — its absence is the documented signal that nothing surprised the coder. An empty `{reviewer-context-sidecar-path}` is normal, not an error.
 
-### review-cycle: Resolving `{repo-root}` and `{lookup-path}`
+### review-cycle: Resolving `{lookup-path}`
 
-`{repo-root}`: Run `git rev-parse --show-toplevel` and store the result. Used to anchor file paths regardless of the orchestrator's working directory within the repo.
-
-`{lookup-path}`: `{repo-root}/packages/agents/content/skills/orchestrate/_data/reviewer-context-packages.md`. Used by the reviewer-context assembly step (see `modules/review-cycle.md`) as the static lookup table input to the helper script.
+`{lookup-path}`: `{platform_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Used by the reviewer-context assembly step (see `modules/review-cycle.md`) as the static lookup table input to the helper script.
 
 ## Phase 1: Architecture (optional)
 

@@ -158,7 +158,7 @@ main() {
   manifest=$(read_manifest "$branch") || fail "$(printf '%s\n%s\n%s' \
     "branch manifest missing at $manifest_path" \
     "Precondition violated: the dispatcher must invoke the \`get-session-context\` skill in this cwd before dispatching a subagent that calls this script." \
-    "Subagents cannot invoke skills, so they cannot create the manifest themselves. See packages/agents/content/skills/_data/artifact-conventions.md § Subagent dispatch precondition.")"
+    "Subagents cannot invoke skills, so they cannot create the manifest themselves. See artifact-conventions.md § Subagent dispatch precondition.")"
 
   local commit
   commit=$(git rev-parse --short HEAD 2>/dev/null) || fail "could not resolve HEAD commit"

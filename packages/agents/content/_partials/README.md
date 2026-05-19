@@ -24,6 +24,16 @@ Include paths are resolved relative to the directive-bearing file's directory in
 
 A partial's own includes are resolved relative to that partial's directory, not the caller's. This means a deeply nested partial can include a sibling partial without knowing where its caller lives.
 
+## Path references in installed content
+
+Installable content is rewritten at install time. Author cross-references in one of three forms, depending on intent:
+
+- **Runtime references** — paths the agent reads or executes at runtime. Use `{platform_home_dir}/...` inside inline code or CLI examples (e.g., `{platform_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{platform_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths.
+- **Source-tree citations** — prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
+- **Self-referential prose** about the source tree itself (e.g., this paragraph) is treated as a source-tree citation.
+
+The `content-path-conventions` regression test flags any raw `packages/agents/content/` string in installable Markdown outside the allowlist.
+
 ## Partial locations
 
 Partials are stored in `_partials/` directories. The directory is recognized at any depth and is excluded from the install copy:
