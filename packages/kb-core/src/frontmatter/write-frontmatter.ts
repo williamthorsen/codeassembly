@@ -44,7 +44,7 @@ export function writeFrontmatter(input: { frontmatter: Frontmatter; body: string
 
 // region | Helpers
 
-/** Renders an `extra` entry, delegating arrays and objects to the `yaml` serializer. */
+/** Renders an `extra` entry, delegating non-string scalars, arrays, and objects to the `yaml` serializer. */
 function renderExtraEntry(key: string, value: unknown): string[] {
   if (typeof value === 'string') {
     return [`${key}: ${renderScalar(value)}`];
@@ -53,7 +53,7 @@ function renderExtraEntry(key: string, value: unknown): string[] {
     return [`${key}:`];
   }
   if (typeof value === 'number' || typeof value === 'boolean') {
-    return [`${key}: ${String(value)}`];
+    return [`${key}: ${stringify(value, SCALAR_STRINGIFY_OPTIONS).replace(/\n$/, '')}`];
   }
   if (Array.isArray(value) && value.every((item) => typeof item === 'string')) {
     return [`${key}: ${renderFlowList(value)}`];

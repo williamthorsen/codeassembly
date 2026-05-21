@@ -137,4 +137,75 @@ describe('frontmatter round-trip idempotence', () => {
 
     expect(reparsed.frontmatter?.extra.note).toBe(value);
   });
+
+  // `renderExtraEntry`'s non-string branches. A numeric `extra` value must
+  // route through `yaml.stringify`, not `String()`: `String(Infinity)` emits
+  // `Infinity`, which the YAML core schema re-parses as the string "Infinity".
+  it.each([42, -7, 0, 1.5, -0.25, 1000, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NaN])(
+    'preserves a numeric extra field whose value is %s',
+    (count) => {
+      const frontmatter: Frontmatter = {
+        title: 'a note',
+        type: 'howto',
+        created: '2026-05-01',
+        updated: '2026-05-14',
+        tags: [],
+        extra: { count },
+      };
+
+      const rendered = writeFrontmatter({ frontmatter, body: '' });
+      const reparsed = parseNoteContent({ content: rendered });
+
+      expect(reparsed.frontmatter?.extra.count).toBe(count);
+    },
+  );
+
+  it.each([true, false])('preserves a boolean extra field whose value is %s', (flag) => {
+    const frontmatter: Frontmatter = {
+      title: 'a note',
+      type: 'howto',
+      created: '2026-05-01',
+      updated: '2026-05-14',
+      tags: [],
+      extra: { flag },
+    };
+
+    const rendered = writeFrontmatter({ frontmatter, body: '' });
+    const reparsed = parseNoteContent({ content: rendered });
+
+    expect(reparsed.frontmatter?.extra.flag).toBe(flag);
+  });
+
+  it('preserves a null extra field', () => {
+    const frontmatter: Frontmatter = {
+      title: 'a note',
+      type: 'howto',
+      created: '2026-05-01',
+      updated: '2026-05-14',
+      tags: [],
+      extra: { maybe: null },
+    };
+
+    const rendered = writeFrontmatter({ frontmatter, body: '' });
+    const reparsed = parseNoteContent({ content: rendered });
+
+    expect(reparsed.frontmatter?.extra.maybe).toBeNull();
+  });
+
+  it('preserves a structured extra field through the yaml serializer', () => {
+    const meta = { nested: 'value', count: 3, flags: [true, false] };
+    const frontmatter: Frontmatter = {
+      title: 'a note',
+      type: 'howto',
+      created: '2026-05-01',
+      updated: '2026-05-14',
+      tags: [],
+      extra: { meta },
+    };
+
+    const rendered = writeFrontmatter({ frontmatter, body: '' });
+    const reparsed = parseNoteContent({ content: rendered });
+
+    expect(reparsed.frontmatter?.extra.meta).toEqual(meta);
+  });
 });
