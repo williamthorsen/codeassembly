@@ -1,16 +1,21 @@
-import { Document } from 'yaml';
+import { Document, stringify } from 'yaml';
 
 import type { Frontmatter } from '../types.js';
 
 const FENCE = '---';
-// A scalar that starts with one of these characters and contains no YAML-unsafe
-// run can be emitted unquoted.
-const SAFE_START = /^[A-Za-z0-9_./]/;
-const UNSAFE_RUN = /:\s|^\s|\s$|^[!&*?|>%@`"'#-]|[:#]\s*$/;
-// YAML core-schema reserved keywords. A string whose entire value is one of
-// these parses back as a non-string (null or boolean) when emitted unquoted, so
-// it must always be quoted to survive a write-then-parse round trip.
-const YAML_CORE_KEYWORDS = new Set(['null', '~', 'true', 'false']);
+// Stringify options for single string scalars. `schema: 'core'` matches the
+// parser in `parse-note.ts`, so the library quotes exactly the strings that
+// would otherwise re-parse as a non-string (numbers, the special floats
+// `.inf`/`.nan`, booleans, `null`/`~`). `defaultStringType: 'PLAIN'` keeps
+// round-trip-safe strings unquoted; `singleQuote: true` selects single quotes
+// when quoting is unavoidable.
+const SCALAR_STRINGIFY_OPTIONS = {
+  schema: 'core',
+  defaultStringType: 'PLAIN',
+  defaultKeyType: 'PLAIN',
+  singleQuote: true,
+  lineWidth: 0,
+} as const;
 
 /**
  * Render frontmatter plus a body back to a note string. Fields are emitted in
@@ -62,18 +67,22 @@ function renderExtraEntry(key: string, value: unknown): string[] {
   return doc.toString({ lineWidth: 0 }).trimEnd().split('\n');
 }
 
-/** Render a string scalar, single-quoting only when YAML safety requires it. */
+/**
+ * Render a string scalar, delegating the quoting decision to the `yaml`
+ * library's `core`-schema stringifier so the result re-parses to the same
+ * string. The library quotes only when a plain scalar would round-trip to a
+ * non-string — covering YAML core integers, floats (including `.inf`/`.nan`),
+ * booleans, and `null`/`~` — and leaves safe strings unquoted. A value
+ * containing a newline yields a multi-line block scalar, which cannot occupy a
+ * single `key: value` line; such values fall back to an inline single-quoted
+ * form to preserve the renderer's one-line-per-field layout.
+ */
 function renderScalar(value: string): string {
-  if (value === '') {
-    return "''";
+  const rendered = stringify(value, SCALAR_STRINGIFY_OPTIONS).replace(/\n$/, '');
+  if (rendered.includes('\n')) {
+    return `'${value.replaceAll("'", "''")}'`;
   }
-  if (YAML_CORE_KEYWORDS.has(value)) {
-    return `'${value}'`;
-  }
-  if (SAFE_START.test(value) && !UNSAFE_RUN.test(value) && !value.includes(': ')) {
-    return value;
-  }
-  return `'${value.replaceAll("'", "''")}'`;
+  return rendered;
 }
 
 /** Render a string array as a flow-style `[a, b, c]` sequence. */

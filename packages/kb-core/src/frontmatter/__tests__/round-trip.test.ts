@@ -72,4 +72,45 @@ describe('frontmatter round-trip idempotence', () => {
       expect(reparsed.frontmatter?.title).toBe(keyword);
     },
   );
+
+  // A string value placed in `extra` bypasses `stringValue`'s number-to-string
+  // coercion on re-read, so it is where unquoted numeric- or keyword-looking
+  // strings actually corrupt: the YAML core schema re-parses them as numbers,
+  // booleans, or null unless `renderScalar` quotes them.
+  it.each([
+    '42',
+    '-7',
+    '+13',
+    '0',
+    '1.5',
+    '-0.25',
+    '1e3',
+    '1E-4',
+    '.5',
+    '.inf',
+    '.Inf',
+    '.INF',
+    '-.inf',
+    '.nan',
+    '.NaN',
+    '.NAN',
+    'null',
+    '~',
+    'true',
+    'false',
+  ])('preserves a string-typed extra field whose value is the YAML-ambiguous literal %s', (literal) => {
+    const frontmatter: Frontmatter = {
+      title: 'a note',
+      type: 'howto',
+      created: '2026-05-01',
+      updated: '2026-05-14',
+      tags: [],
+      extra: { token: literal },
+    };
+
+    const rendered = writeFrontmatter({ frontmatter, body: '' });
+    const reparsed = parseNoteContent({ content: rendered });
+
+    expect(reparsed.frontmatter?.extra.token).toBe(literal);
+  });
 });

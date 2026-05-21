@@ -44,10 +44,10 @@ describe(writeFrontmatter, () => {
     expect(parseNoteContent({ content: output }).frontmatter?.tags).toEqual([]);
   });
 
-  it('single-quotes a title that starts with a leading hyphen', () => {
+  it('round-trips a title that starts with a leading hyphen', () => {
     const output = writeFrontmatter({ frontmatter: makeFrontmatter({ title: '-hyphen start' }), body: '' });
 
-    expect(output).toContain("title: '-hyphen start'");
+    expect(parseNoteContent({ content: output }).frontmatter?.title).toBe('-hyphen start');
   });
 
   it('places one blank line between the closing fence and the body', () => {
