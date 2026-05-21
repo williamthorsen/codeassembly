@@ -10,18 +10,24 @@ const KB_DIR_NAME = '.kb';
  * Returns `null` when the walk reaches the filesystem root without a hit.
  */
 export async function findKbRoot(input: { startDir: string }): Promise<KbRoot | null> {
-  let current = resolve(input.startDir);
-
-  for (;;) {
+  for (const current of ancestorDirs(input.startDir)) {
     const kbDir = join(current, KB_DIR_NAME);
     if (await isDirectory(kbDir)) {
       return { path: current, kbDir, via: 'ancestor-walk' };
     }
-    const parent = dirname(current);
-    if (parent === current) {
-      return null;
-    }
+  }
+  return null;
+}
+
+/** Yields `startDir` (resolved) and each of its ancestor directories up to the filesystem root. */
+function* ancestorDirs(startDir: string): Generator<string> {
+  let current = resolve(startDir);
+  yield current;
+  let parent = dirname(current);
+  while (parent !== current) {
     current = parent;
+    yield current;
+    parent = dirname(current);
   }
 }
 
