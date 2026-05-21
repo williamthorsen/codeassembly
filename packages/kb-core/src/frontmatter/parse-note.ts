@@ -54,8 +54,9 @@ export async function parseNote(input: { path: string }): Promise<ParsedNote> {
 }
 
 /**
- * Parses a note and return its raw `yaml.Document` alongside the slice metadata.
- * Internal to the package; the rules layer uses this to map node positions onto source line numbers without re-parsing.
+ * Parses a note and returns its raw `yaml.Document` alongside the slice metadata.
+ *
+ * @internal - Exported to allow testing
  */
 export function parseNoteWithDocument(
   content: string,
@@ -67,7 +68,9 @@ export function parseNoteWithDocument(
 
 /**
  * Builds the raw `yaml.Document` for an already-parsed note's frontmatter, or `null` when the note has no frontmatter
- * block. Internal to the package; the rules layer uses this to obtain position metadata for a `ParsedNote`.
+ * block.
+ *
+ * @internal
  */
 export function documentFor(note: ParsedNote): FrontmatterDocument | null {
   if (note.frontmatterRaw === null) {

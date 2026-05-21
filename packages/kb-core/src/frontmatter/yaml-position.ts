@@ -10,15 +10,20 @@ import type { FrontmatterRaw } from '../types.ts';
 
 /**
  * The raw `yaml.Document` for a note's frontmatter, paired with the slice
- * metadata needed to map node offsets onto source line numbers. Produced by
- * `parseNote` and consumed by the rules layer; not part of the public API.
+ * metadata needed to map node offsets onto source line numbers.
+ *
+ * @internal
  */
 export interface FrontmatterDocument {
   doc: Document.Parsed;
   raw: FrontmatterRaw;
 }
 
-/** Find a top-level mapping pair by string key; returns `null` when absent. */
+/**
+ * Find a top-level mapping pair by string key; returns `null` when absent.
+ *
+ * @internal
+ */
 export function findPair(doc: Document.Parsed, key: string): Pair | null {
   const contents = doc.contents;
   if (!isMap(contents)) return null;
@@ -31,7 +36,7 @@ export function findPair(doc: Document.Parsed, key: string): Pair | null {
 }
 
 /** Translate a YAML node offset (into the raw frontmatter slice) to a 1-based note line number. */
-export function noteLineOf(offset: number, raw: FrontmatterRaw): number {
+function noteLineOf(offset: number, raw: FrontmatterRaw): number {
   let line = 0;
   for (let index = 0; index < offset && index < raw.text.length; index += 1) {
     if (raw.text[index] === '\n') line += 1;
@@ -43,6 +48,8 @@ export function noteLineOf(offset: number, raw: FrontmatterRaw): number {
  * Source line of a pair's value. Falls back to the key's line when the value
  * range is missing (empty values) and to the line after the opening fence
  * when neither range is available.
+ *
+ * @internal
  */
 export function valueLine(pair: Pair, raw: FrontmatterRaw): number {
   if (isScalar(pair.value) && pair.value.range) {
@@ -54,7 +61,11 @@ export function valueLine(pair: Pair, raw: FrontmatterRaw): number {
   return raw.startLine + 1;
 }
 
-/** Source line of a sequence item, falling back to the supplied line when the item has no range. */
+/**
+ * Source line of a sequence item, falling back to the supplied line when the item has no range.
+ *
+ * @internal
+ */
 export function itemLine(item: Scalar, raw: FrontmatterRaw, fallbackLine: number): number {
   if (item.range) {
     return noteLineOf(item.range[0], raw);
