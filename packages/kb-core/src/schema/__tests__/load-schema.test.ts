@@ -43,6 +43,18 @@ describe(loadSchema, () => {
   it('rejects a per-KB file that lists a field in both required and optional', async () => {
     await expect(loadSchema({ kbRoot: kbRootAt('field-in-both') })).rejects.toThrow(/owner.*both/);
   });
+
+  it('rejects a .kb/schema.yaml with malformed YAML, naming the source path', async () => {
+    await expect(loadSchema({ kbRoot: kbRootAt('malformed-yaml') })).rejects.toThrow(
+      /malformed-yaml.*schema\.yaml: malformed YAML —/s,
+    );
+  });
+
+  it('rejects a structurally invalid .kb/schema.yaml, naming the source path', async () => {
+    await expect(loadSchema({ kbRoot: kbRootAt('invalid-structure') })).rejects.toThrow(
+      /invalid-structure.*schema\.yaml: invalid schema\.yaml —/s,
+    );
+  });
 });
 
 describe(narrowTypes, () => {

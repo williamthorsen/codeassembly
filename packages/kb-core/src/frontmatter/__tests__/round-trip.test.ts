@@ -14,7 +14,7 @@ const ROUND_TRIP_FIXTURES = ['howto-typical.md', 'unusual-whitespace.md', 'with-
 
 /** Parse a fixture and assert its frontmatter parsed, returning the note narrowed. */
 async function parseFixture(fixture: string): Promise<ParsedNote & { frontmatter: Frontmatter }> {
-  const note = parseNoteContent(await readFile(join(FIXTURES_DIR, fixture), 'utf8'));
+  const note = parseNoteContent({ content: await readFile(join(FIXTURES_DIR, fixture), 'utf8') });
   expect(note.frontmatter).not.toBeNull();
   if (note.frontmatter === null) {
     throw new Error(`fixture ${fixture} did not parse frontmatter`);
@@ -29,7 +29,7 @@ describe('frontmatter round-trip idempotence', () => {
       const original = await parseFixture(fixture);
 
       const rendered = writeFrontmatter({ frontmatter: original.frontmatter, body: original.body });
-      const reparsed = parseNoteContent(rendered);
+      const reparsed = parseNoteContent({ content: rendered });
 
       expect(reparsed.frontmatter).toEqual(original.frontmatter);
     },
@@ -38,7 +38,7 @@ describe('frontmatter round-trip idempotence', () => {
   it('renders and re-parses to a stable form across two write cycles', async () => {
     const first = await parseFixture('howto-typical.md');
     const renderedOnce = writeFrontmatter({ frontmatter: first.frontmatter, body: first.body });
-    const second = parseNoteContent(renderedOnce);
+    const second = parseNoteContent({ content: renderedOnce });
     expect(second.frontmatter).not.toBeNull();
     if (second.frontmatter === null) throw new Error('second parse lost frontmatter');
     const renderedTwice = writeFrontmatter({ frontmatter: second.frontmatter, body: second.body });
@@ -49,8 +49,27 @@ describe('frontmatter round-trip idempotence', () => {
   it('preserves optional fields through a round-trip', async () => {
     const original = await parseFixture('with-extra-fields.md');
     const rendered = writeFrontmatter({ frontmatter: original.frontmatter, body: original.body });
-    const reparsed = parseNoteContent(rendered);
+    const reparsed = parseNoteContent({ content: rendered });
 
     expect(reparsed.frontmatter?.extra).toEqual(original.frontmatter.extra);
   });
+
+  it.each(['null', '~', 'true', 'false'])(
+    'preserves a string field whose value is the YAML reserved keyword %s',
+    (keyword) => {
+      const frontmatter: Frontmatter = {
+        title: keyword,
+        type: 'howto',
+        created: '2026-05-01',
+        updated: '2026-05-14',
+        tags: [],
+        extra: {},
+      };
+
+      const rendered = writeFrontmatter({ frontmatter, body: '' });
+      const reparsed = parseNoteContent({ content: rendered });
+
+      expect(reparsed.frontmatter?.title).toBe(keyword);
+    },
+  );
 });

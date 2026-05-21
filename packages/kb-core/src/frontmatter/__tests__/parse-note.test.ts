@@ -13,7 +13,7 @@ async function readFixture(name: string): Promise<string> {
 
 describe(parseNoteContent, () => {
   it('when frontmatter is well-formed, returns typed required fields', async () => {
-    const note = parseNoteContent(await readFixture('howto-typical.md'));
+    const note = parseNoteContent({ content: await readFixture('howto-typical.md') });
 
     expect(note.frontmatter).toEqual({
       title: 'How to rebase onto main',
@@ -27,7 +27,7 @@ describe(parseNoteContent, () => {
 
   it('when a note has no opening fence, returns null frontmatter and the whole content as body', async () => {
     const content = await readFixture('no-frontmatter.md');
-    const note = parseNoteContent(content);
+    const note = parseNoteContent({ content });
 
     expect(note.frontmatter).toBeNull();
     expect(note.frontmatterRaw).toBeNull();
@@ -36,7 +36,7 @@ describe(parseNoteContent, () => {
   });
 
   it('when the frontmatter block is empty, returns null frontmatter but a non-null raw slice', async () => {
-    const note = parseNoteContent(await readFixture('empty-block.md'));
+    const note = parseNoteContent({ content: await readFixture('empty-block.md') });
 
     expect(note.frontmatter).toBeNull();
     expect(note.frontmatterRaw).not.toBeNull();
@@ -45,7 +45,7 @@ describe(parseNoteContent, () => {
   });
 
   it('when the YAML is malformed, records a parse error and does not throw', async () => {
-    const note = parseNoteContent(await readFixture('malformed-yaml.md'));
+    const note = parseNoteContent({ content: await readFixture('malformed-yaml.md') });
 
     expect(note.frontmatter).toBeNull();
     expect(note.frontmatterRaw?.parseError).toBeDefined();
@@ -53,7 +53,7 @@ describe(parseNoteContent, () => {
   });
 
   it('when frontmatter uses irregular spacing and block-style tags, parses fields normally', async () => {
-    const note = parseNoteContent(await readFixture('unusual-whitespace.md'));
+    const note = parseNoteContent({ content: await readFixture('unusual-whitespace.md') });
 
     expect(note.frontmatter?.title).toBe('Note with irregular spacing');
     expect(note.frontmatter?.type).toBe('howto');
@@ -61,7 +61,7 @@ describe(parseNoteContent, () => {
   });
 
   it('when a note carries optional fields, preserves them in the extra map', async () => {
-    const note = parseNoteContent(await readFixture('with-extra-fields.md'));
+    const note = parseNoteContent({ content: await readFixture('with-extra-fields.md') });
 
     expect(note.frontmatter?.extra).toEqual({
       'last-verified': '2026-05-10',
@@ -71,8 +71,8 @@ describe(parseNoteContent, () => {
   });
 
   it('keeps a YYYY-MM-DD date field as a string rather than a Date object', () => {
-    const note = parseNoteContent(
-      [
+    const note = parseNoteContent({
+      content: [
         '---',
         'title: Dated note',
         'type: howto',
@@ -82,28 +82,28 @@ describe(parseNoteContent, () => {
         '---',
         '',
       ].join('\n'),
-    );
+    });
 
     expect(typeof note.frontmatter?.created).toBe('string');
     expect(note.frontmatter?.created).toBe('2026-05-14');
   });
 
   it('records the body start line after the closing fence', async () => {
-    const note = parseNoteContent(await readFixture('howto-typical.md'));
+    const note = parseNoteContent({ content: await readFixture('howto-typical.md') });
 
     expect(note.bodyStartLine).toBe(8);
     expect(note.body).toMatch(/^\n# How to rebase onto main/);
   });
 
   it('reports the closing fence line in the raw slice metadata', async () => {
-    const note = parseNoteContent(await readFixture('howto-typical.md'));
+    const note = parseNoteContent({ content: await readFixture('howto-typical.md') });
 
     expect(note.frontmatterRaw?.startLine).toBe(1);
     expect(note.frontmatterRaw?.endLine).toBe(7);
   });
 
   it('when only an opening fence exists, treats the note as frontmatter-free', () => {
-    const note = parseNoteContent('---\ntitle: never closed\n\nbody text');
+    const note = parseNoteContent({ content: '---\ntitle: never closed\n\nbody text' });
 
     expect(note.frontmatter).toBeNull();
     expect(note.frontmatterRaw).toBeNull();

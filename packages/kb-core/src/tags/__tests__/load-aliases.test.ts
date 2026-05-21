@@ -1,9 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { loadAliases, parseAliases } from '../load-aliases.js';
+
+// Mock `readFile` with a passthrough to the real implementation so most tests
+// hit disk normally; the non-ENOENT propagation test overrides it per-call.
+vi.mock('node:fs/promises', async () => {
+  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises');
+  return { ...actual, readFile: vi.fn(actual.readFile) };
+});
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 
@@ -57,9 +64,21 @@ describe(parseAliases, () => {
   it('throws naming the source when the top level is not a mapping', () => {
     expect(() => parseAliases('- just\n- a\n- list\n', 'list.yaml')).toThrow(/list\.yaml.*mapping/);
   });
+
+  it('throws naming the source when the YAML is syntactically malformed', async () => {
+    const text = await readFixture('syntactically-malformed.yaml');
+
+    expect(() => parseAliases(text, 'syntactically-malformed.yaml')).toThrow(
+      /syntactically-malformed\.yaml: malformed YAML —/,
+    );
+  });
 });
 
 describe(loadAliases, () => {
+  afterEach(() => {
+    vi.mocked(readFile).mockClear();
+  });
+
   function kbRootAt(path: string) {
     return { path, kbDir: join(path, '.kb'), via: 'ancestor-walk' as const };
   }
@@ -73,5 +92,12 @@ describe(loadAliases, () => {
 
   it('rejects when the KB root has no tag-aliases file', async () => {
     await expect(loadAliases({ kbRoot: kbRootAt('/no/such/kb') })).rejects.toThrow();
+  });
+
+  it('propagates a non-ENOENT read error unchanged', async () => {
+    const ioError = Object.assign(new Error('permission denied'), { code: 'EACCES' });
+    vi.mocked(readFile).mockRejectedValueOnce(ioError);
+
+    await expect(loadAliases({ kbRoot: kbRootAt('/some/kb') })).rejects.toThrow(/permission denied/);
   });
 });

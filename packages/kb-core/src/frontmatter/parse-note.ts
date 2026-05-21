@@ -11,9 +11,11 @@ const REQUIRED_KEYS = ['title', 'type', 'created', 'updated', 'tags'] as const;
 /**
  * Parse a note from a literal string into a `ParsedNote` carrying typed
  * frontmatter. Parse errors are recorded in `frontmatterRaw.parseError`, never
- * thrown — the rule layer decides how to report them.
+ * thrown — the rule layer decides how to report them. `path` defaults to
+ * `<string>` and labels the result for diagnostics.
  */
-export function parseNoteContent(content: string, path = '<string>'): ParsedNote {
+export function parseNoteContent(input: { content: string; path?: string }): ParsedNote {
+  const { content, path = '<string>' } = input;
   const lines = content.split('\n');
   if (lines[0] !== FENCE) {
     return { path, content, frontmatter: null, frontmatterRaw: null, body: content, bodyStartLine: 1 };
@@ -48,7 +50,7 @@ export function parseNoteContent(content: string, path = '<string>'): ParsedNote
  */
 export async function parseNote(input: { path: string }): Promise<ParsedNote> {
   const content = await readFile(input.path, 'utf8');
-  return parseNoteContent(content, input.path);
+  return parseNoteContent({ content, path: input.path });
 }
 
 /**
@@ -60,7 +62,7 @@ export function parseNoteWithDocument(
   content: string,
   path = '<string>',
 ): { note: ParsedNote; document: FrontmatterDocument | null } {
-  const note = parseNoteContent(content, path);
+  const note = parseNoteContent({ content, path });
   return { note, document: documentFor(note) };
 }
 

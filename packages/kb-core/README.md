@@ -111,7 +111,7 @@ Illegal overrides throw at load time, naming the offending field.
 
 ## Frontmatter parsing and writing
 
-`parseNote({ path })` (or `parseNoteContent(content)`) parses a note into a
+`parseNote({ path })` (or `parseNoteContent({ content })`) parses a note into a
 `ParsedNote` carrying typed `Frontmatter`: the five required fields are
 strongly typed and any other fields are preserved in an `extra` map.
 `writeFrontmatter({ frontmatter, body })` renders it back to a note string with

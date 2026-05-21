@@ -12,7 +12,18 @@ const thisDirPath = dirname(thisFilePath);
  */
 export default [
   ...config,
-  globalIgnores(['**/*.sh', '.readyup/**/*.js', '**.playwright-mcp/**', '**/coverage/**', '**/dist/**', '**/local/**']),
+  globalIgnores([
+    '**/*.sh',
+    '.readyup/**/*.js',
+    '**.playwright-mcp/**',
+    '**/coverage/**',
+    '**/dist/**',
+    '**/local/**',
+    // Test fixtures that are intentionally syntactically broken — linting them
+    // would flag the very defect they exist to exercise.
+    '**/__tests__/**/fixtures/**/malformed-yaml/**',
+    '**/__tests__/**/fixtures/**/syntactically-malformed.*',
+  ]),
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {

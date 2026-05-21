@@ -7,6 +7,10 @@ const FENCE = '---';
 // run can be emitted unquoted.
 const SAFE_START = /^[A-Za-z0-9_./]/;
 const UNSAFE_RUN = /:\s|^\s|\s$|^[!&*?|>%@`"'#-]|[:#]\s*$/;
+// YAML core-schema reserved keywords. A string whose entire value is one of
+// these parses back as a non-string (null or boolean) when emitted unquoted, so
+// it must always be quoted to survive a write-then-parse round trip.
+const YAML_CORE_KEYWORDS = new Set(['null', '~', 'true', 'false']);
 
 /**
  * Render frontmatter plus a body back to a note string. Fields are emitted in
@@ -62,6 +66,9 @@ function renderExtraEntry(key: string, value: unknown): string[] {
 function renderScalar(value: string): string {
   if (value === '') {
     return "''";
+  }
+  if (YAML_CORE_KEYWORDS.has(value)) {
+    return `'${value}'`;
   }
   if (SAFE_START.test(value) && !UNSAFE_RUN.test(value) && !value.includes(': ')) {
     return value;

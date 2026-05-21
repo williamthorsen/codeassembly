@@ -89,4 +89,10 @@ describe('tagAliasRule', () => {
 
     expect(findings).toEqual([]);
   });
+
+  it('no-ops when the frontmatter block has a YAML parse error', async () => {
+    const findings = await checkFixture('malformed-yaml', ALIASES);
+
+    expect(findings).toEqual([]);
+  });
 });

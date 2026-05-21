@@ -84,4 +84,16 @@ describe(loadKbConfig, () => {
       /dup-default.*alpha.*beta/s,
     );
   });
+
+  it('throws naming the source file when a registry contains malformed YAML', async () => {
+    await expect(
+      loadKbConfig({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') }),
+    ).rejects.toThrow(/malformed-yaml.*kb\.yaml: malformed YAML —/s);
+  });
+
+  it('throws naming the source file when a registry entry omits its required path', async () => {
+    await expect(loadKbConfig({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') })).rejects.toThrow(
+      /bad-structure.*kb\.yaml: invalid kb\.yaml —/s,
+    );
+  });
 });

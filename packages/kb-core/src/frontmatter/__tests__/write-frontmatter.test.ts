@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Frontmatter } from '../../types.js';
+import { parseNoteContent } from '../parse-note.js';
 import { writeFrontmatter } from '../write-frontmatter.js';
 
 function makeFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
@@ -34,6 +35,19 @@ describe(writeFrontmatter, () => {
     const output = writeFrontmatter({ frontmatter: makeFrontmatter({ tags: ['a', 'b', 'c'] }), body: '' });
 
     expect(output).toContain('tags: [a, b, c]');
+  });
+
+  it('renders an empty tags list as tags: [] that re-parses to an empty list', () => {
+    const output = writeFrontmatter({ frontmatter: makeFrontmatter({ tags: [] }), body: '' });
+
+    expect(output).toContain('tags: []');
+    expect(parseNoteContent({ content: output }).frontmatter?.tags).toEqual([]);
+  });
+
+  it('single-quotes a title that starts with a leading hyphen', () => {
+    const output = writeFrontmatter({ frontmatter: makeFrontmatter({ title: '-hyphen start' }), body: '' });
+
+    expect(output).toContain("title: '-hyphen start'");
   });
 
   it('places one blank line between the closing fence and the body', () => {

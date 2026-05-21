@@ -22,7 +22,7 @@ const VALID_NOTE = [
 
 describe(runRules, () => {
   it('returns an empty array when the rule list is empty', () => {
-    const note = parseNoteContent(VALID_NOTE, 'note.md');
+    const note = parseNoteContent({ content: VALID_NOTE, path: 'note.md' });
 
     expect(runRules({ rules: [], notes: [note], schema: defaultSchema })).toEqual([]);
   });
@@ -32,7 +32,7 @@ describe(runRules, () => {
   });
 
   it('concatenates findings across rules for a single note', () => {
-    const note = parseNoteContent(VALID_NOTE, 'note.md');
+    const note = parseNoteContent({ content: VALID_NOTE, path: 'note.md' });
     const findings = runRules({
       rules: [frontmatterRule, tagAliasRule],
       notes: [note],
@@ -45,8 +45,8 @@ describe(runRules, () => {
   });
 
   it('groups all findings for one note before moving to the next', () => {
-    const noteA = parseNoteContent('# no frontmatter A', 'a.md');
-    const noteB = parseNoteContent('# no frontmatter B', 'b.md');
+    const noteA = parseNoteContent({ content: '# no frontmatter A', path: 'a.md' });
+    const noteB = parseNoteContent({ content: '# no frontmatter B', path: 'b.md' });
     const findings = runRules({
       rules: [frontmatterRule],
       notes: [noteA, noteB],
@@ -57,7 +57,7 @@ describe(runRules, () => {
   });
 
   it('lets the tag-alias rule no-op when no alias map is supplied', () => {
-    const note = parseNoteContent(VALID_NOTE, 'note.md');
+    const note = parseNoteContent({ content: VALID_NOTE, path: 'note.md' });
     const findings = runRules({
       rules: [frontmatterRule, tagAliasRule],
       notes: [note],

@@ -1,0 +1,3 @@
+kbs:
+  solo:
+    description: A KB entry missing its required path field

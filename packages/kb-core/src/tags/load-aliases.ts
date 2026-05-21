@@ -27,7 +27,13 @@ export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> 
  * `contextLabel` prefixed onto every message.
  */
 export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasMap {
-  const parsed: unknown = parse(text);
+  let parsed: unknown;
+  try {
+    parsed = parse(text);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`${contextLabel}: malformed YAML — ${message}`);
+  }
   if (!isRecord(parsed)) {
     throw new Error(`${contextLabel}: top-level must be a mapping`);
   }

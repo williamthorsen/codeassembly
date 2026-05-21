@@ -26,14 +26,22 @@ function normalize(findings: readonly Finding[]): Finding[] {
   });
 }
 
-describe('rules parity with the vault check-notes golden', () => {
+// `expected-findings.json` records the output of the ported `frontmatter` and
+// `tag-alias` rules over the vendored `notes/` fixtures. The port was derived
+// from the vault's `scripts/check-notes/` source read via `gh api` (the vault
+// was not checked out locally). This golden is a regression guard against
+// unintended rule drift, not an independent proof that the port matches the
+// vault — see `fixtures/parity/README.md` for the full provenance.
+describe('rules regression guard against the ported check-notes golden', () => {
   it('produces exactly the findings recorded in expected-findings.json', async () => {
     const expected: Finding[] = JSON.parse(await readFile(join(PARITY_DIR, 'expected-findings.json'), 'utf8'));
     const aliases = parseAliases(await readFile(join(PARITY_DIR, 'tag-aliases.yaml'), 'utf8'));
 
     const noteFiles = (await readdir(NOTES_DIR)).filter((name) => name.endsWith('.md')).toSorted();
     const notes = await Promise.all(
-      noteFiles.map(async (name) => parseNoteContent(await readFile(join(NOTES_DIR, name), 'utf8'), name)),
+      noteFiles.map(async (name) =>
+        parseNoteContent({ content: await readFile(join(NOTES_DIR, name), 'utf8'), path: name }),
+      ),
     );
 
     const actual = runRules({
