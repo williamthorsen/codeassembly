@@ -1,0 +1,1 @@
+# A KB root with no .kb/schema.yaml override; loadSchema returns the default.

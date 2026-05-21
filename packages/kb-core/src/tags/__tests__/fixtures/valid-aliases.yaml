@@ -1,0 +1,4 @@
+aliases:
+  git: [git-sparse-checkout, version-control, vcs]
+  nodejs: [node.js, node]
+  testing-library: [react-testing-library, tl]

@@ -1,0 +1,4 @@
+kbs:
+  solo:
+    path: ./solo-kb
+    description: The only KB, declared by the user

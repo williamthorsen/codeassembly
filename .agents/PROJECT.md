@@ -2,12 +2,13 @@
 
 ## Project structure
 
-This is a pnpm monorepo centered around agentic code-orchestration flows. It contains four packages:
+This is a pnpm monorepo centered around agentic code-orchestration flows. It contains five packages:
 
 - **Run-core** (`packages/run-core/`) — canonical domain model, Zod schemas, and data parsing for orchestration runs; foundational library consumed by other packages
 - **MCP** (`packages/mcp/`) — MCP server exposing run-management tools (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`) built on run-core
 - **Agents** (`packages/agents/`) — CLI tool and content library of reusable AI agent skills and subagent definitions that power orchestrated development workflows
 - **Factory** (`packages/factory/`) — web-based visualization that renders orchestration runs as an interactive 2D game scene
+- **KB-core** (`packages/kb-core/`) — knowledge-base foundation library: discovery, registry loading, schema resolution, frontmatter parsing, tags, and validation rules
 
 The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents is independent (it produces the artifact files that run-core parses). Co-locating all four ensures schema changes can be made atomically.
 
@@ -190,6 +191,14 @@ packages/factory/src/
 - **Run statuses:** `in_progress`, `completed`, `failed`, `needs_manual_review`
 
 **Connection to agents:** Factory's `status-adapter.ts` parses the `run-index.json` files that the orchestration engine writes. The schema is defined in `content/skills/_data/artifact-conventions.md` (agents) and represented as TypeScript types in `shared/types/canonical.ts` (factory). When the schema changes, both must be updated together.
+
+### KB-core (`packages/kb-core/`)
+
+Foundation library for knowledge-base tooling, consumed by the planned `@codeassembly/kb-mcp` server and the `kb-retrieve`, `kb-add`, and `kb-curate` skills. Exposes five subpath entries — `discovery`, `schema`, `frontmatter`, `tags`, `rules` — covering KB discovery and `kb.yaml` registry loading, default-schema resolution with narrow-only per-KB overrides, note frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
+
+**Package:** `@codeassembly/kb-core` (private)
+
+The package README documents the `kb.yaml` configuration schema and merge semantics, the default schema, and the error model — consult it before declaring a KB or consuming the library.
 
 ## Common commands
 

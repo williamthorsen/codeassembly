@@ -1,0 +1,4 @@
+kbs:
+  homed:
+    path: ~/homed-kb
+    description: A KB whose path expands against the home directory

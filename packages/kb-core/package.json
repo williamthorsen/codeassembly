@@ -1,0 +1,51 @@
+{
+  "name": "@codeassembly/kb-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Knowledge-base foundation: discovery, config, schema, frontmatter parsing, tags, and validation rules",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/esm/index.js",
+      "types": "./src/index.ts"
+    },
+    "./discovery": {
+      "source": "./src/discovery/index.ts",
+      "import": "./dist/esm/discovery/index.js",
+      "types": "./src/discovery/index.ts"
+    },
+    "./frontmatter": {
+      "source": "./src/frontmatter/index.ts",
+      "import": "./dist/esm/frontmatter/index.js",
+      "types": "./src/frontmatter/index.ts"
+    },
+    "./rules": {
+      "source": "./src/rules/index.ts",
+      "import": "./dist/esm/rules/index.js",
+      "types": "./src/rules/index.ts"
+    },
+    "./schema": {
+      "source": "./src/schema/index.ts",
+      "import": "./dist/esm/schema/index.js",
+      "types": "./src/schema/index.ts"
+    },
+    "./tags": {
+      "source": "./src/tags/index.ts",
+      "import": "./dist/esm/tags/index.js",
+      "types": "./src/tags/index.ts"
+    }
+  },
+  "main": "./dist/esm/index.js",
+  "scripts": {
+    "build": "nmr compile",
+    "prepare": "nmr compile"
+  },
+  "dependencies": {
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

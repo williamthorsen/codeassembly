@@ -1,0 +1,75 @@
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+import { parse } from 'yaml';
+
+import type { AliasMap, KbRoot } from '../types.js';
+
+/** Relative location of the tag-aliases file within a KB root. */
+export const ALIASES_FILE = join('.kb', 'tag-aliases.yaml');
+
+/**
+ * Load `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`. The thin
+ * I/O wrapper around {@link parseAliases}; structural defects throw with the
+ * file path included.
+ */
+export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> {
+  const path = join(input.kbRoot.path, ALIASES_FILE);
+  const text = await readFile(path, 'utf8');
+  return parseAliases(text, path);
+}
+
+/**
+ * Parse a tag-aliases registry from a string into an `AliasMap`. Aliases are
+ * lowercased on insertion so callers can look up case-insensitively. Throws on
+ * any structural defect — non-object top level, missing `aliases` key,
+ * non-string entries, self-aliases, or cross-canonical collisions — with
+ * `contextLabel` prefixed onto every message.
+ */
+export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasMap {
+  const parsed: unknown = parse(text);
+  if (!isRecord(parsed)) {
+    throw new Error(`${contextLabel}: top-level must be a mapping`);
+  }
+  if (!('aliases' in parsed)) {
+    throw new Error(`${contextLabel}: missing required "aliases" key`);
+  }
+  const aliasesBlock = parsed.aliases;
+  if (!isRecord(aliasesBlock)) {
+    throw new Error(`${contextLabel}: "aliases" must be a mapping of canonical to alias list`);
+  }
+
+  const map = new Map<string, string>();
+  for (const [canonical, value] of Object.entries(aliasesBlock)) {
+    if (!Array.isArray(value)) {
+      throw new TypeError(`${contextLabel}: "${canonical}" must be a list of alias strings`);
+    }
+    const seenInCanonical = new Set<string>();
+    for (const entry of value) {
+      if (typeof entry !== 'string') {
+        throw new TypeError(`${contextLabel}: alias entries under "${canonical}" must be string values`);
+      }
+      const alias = entry.toLowerCase();
+      if (alias === canonical.toLowerCase()) {
+        throw new Error(`${contextLabel}: alias "${entry}" equals its canonical "${canonical}"`);
+      }
+      if (seenInCanonical.has(alias)) {
+        throw new Error(`${contextLabel}: alias "${entry}" is listed twice under canonical "${canonical}"`);
+      }
+      seenInCanonical.add(alias);
+      const existing = map.get(alias);
+      if (existing !== undefined && existing !== canonical) {
+        throw new Error(
+          `${contextLabel}: alias "${entry}" appears under multiple canonicals ("${existing}" and "${canonical}")`,
+        );
+      }
+      map.set(alias, canonical);
+    }
+  }
+  return map;
+}
+
+/** Type guard for a non-null, non-array object. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}

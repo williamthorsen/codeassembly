@@ -1,0 +1,8 @@
+kbs:
+  shared:
+    path: ./user-shared-kb
+    description: User-global shared KB
+    default: true
+  user-only:
+    path: ~/user-only-kb
+    description: A KB declared only by the user
