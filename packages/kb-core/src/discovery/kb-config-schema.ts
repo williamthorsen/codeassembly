@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-// Zod schema for the on-disk `kb.yaml` registry. A registry declares zero or
-// more knowledge bases under `kbs`, keyed by name. Each entry's `path` is
-// required; everything else is optional forward-compat surface.
+// Zod schema for the on-disk `kb.yaml` registry.
+// A registry declares zero or more knowledge bases under `kbs`, keyed by name.
+// Each entry's `path` is required; everything else is optional forward-compatible surface.
 
 /** Schema for a single KB entry as written in `kb.yaml`. */
 export const kbConfigFileEntrySchema = z.object({

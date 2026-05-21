@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
-// Zod schema describing the strongly-typed frontmatter contract. Used to
-// validate that a parsed `Frontmatter` carries the required fields with the
-// expected primitive shapes before a consumer treats it as trusted input.
+// Zod schema describing the strongly-typed frontmatter contract. Used to validate that a parsed `Frontmatter` carries
+// the required fields with the expected primitive shapes before a consumer treats it as trusted input.
 
 /** Schema for the required-field core of a note's frontmatter. */
 export const frontmatterSchema = z.object({

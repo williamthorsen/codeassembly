@@ -17,12 +17,12 @@ export type {
   KbRoot,
   ParsedNote,
   Schema,
-} from './types.js';
+} from './types.ts';
 
 // Default schema constant
-export { defaultSchema } from './schema/default-schema.js';
+export { defaultSchema } from './schema/default-schema.ts';
 
 // Rule constants and the rule contract
-export { frontmatterRule } from './rules/frontmatter-rule.js';
-export { tagAliasRule } from './rules/tag-alias-rule.js';
-export type { KbRule, KbRuleInput } from './rules/types.js';
+export { frontmatterRule } from './rules/frontmatter-rule.ts';
+export { tagAliasRule } from './rules/tag-alias-rule.ts';
+export type { KbRule, KbRuleInput } from './rules/types.ts';

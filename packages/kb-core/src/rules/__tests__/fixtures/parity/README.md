@@ -1,7 +1,8 @@
 # Rules parity fixtures
 
-This directory holds a frozen golden used by `parity.test.ts` to guard the
-`frontmatter` and `tag-alias` rules against silent behavior drift.
+This directory holds a frozen golden used by `parity.test.ts` to prove the
+`frontmatter` and `tag-alias` rules match their upstream `check-notes` source
+and to guard them against silent behavior drift.
 
 ## Layout
 
@@ -17,38 +18,50 @@ This directory holds a frozen golden used by `parity.test.ts` to guard the
 
 The `frontmatter` and `tag-alias` rules in `@codeassembly/kb-core` are a port
 of `scripts/check-notes/` in `github.com/williamthorsen/vaults.coding`. The
-vault was not checked out locally; its `scripts/check-notes/` source was read
-via `gh api` and the finding codes, severities, messages, and ordering were
-reimplemented from that source. The vault's `wikilinks.*` and `paths.*` rules
-are out of scope and intentionally excluded from this port.
+vault's `wikilinks.*` and `paths.*` rules are out of scope and intentionally
+excluded from this port.
 
-`expected-findings.json` records the output of these _ported_ rules over the
-vendored `notes/` fixtures. It was captured by running the port, not copied
-from the vault's own `check-notes` output. Consequently the golden is a
-**regression guard**: it pins the ported rules' behavior so any unintended
-drift is caught. It is **not an independent correctness proof** — if a message
-or severity was mis-ported, the golden faithfully records the mis-ported value.
-Verifying that the port matches the vault's behavior is a code-review concern
-against the `gh api`-fetched source, not something this golden asserts.
+`expected-findings.json` is captured from the vault's **real** `check-notes`
+rules — not from the kb-core port. The capture runs the vault's own
+`parseNote`, `frontmatterRule`, and `tagAliasRule` over the vendored `notes/`
+fixtures, feeding them inputs equivalent to kb-core's (the `defaultSchema`
+type/required/optional sets and the aliases parsed from `tag-aliases.yaml`), so
+the only thing compared is rule logic. The golden was captured against vault
+commit `128ce97`.
+
+Because the golden is the upstream rules' output, `parity.test.ts` is a genuine
+**parity proof**: kb-core's `runRules` over the same fixtures must reproduce it
+exactly. A mis-port would surface as a test failure, not be silently baked in.
+The golden also doubles as a regression guard against future drift in either
+direction.
 
 The fixtures are vendored copies — they do not track the vault. They drift
 only when this package's rules are intentionally changed.
 
 ## Regenerating the golden
 
-`expected-findings.json` is captured, not hand-edited. Refresh it only after an
-intentional rule change (or after adding a note fixture):
+`expected-findings.json` is captured from the vault, not hand-edited. Refresh it
+only after an intentional, upstream-mirrored rule change (or after adding a note
+fixture):
 
-1. Run the rules over every note in `notes/`, applying `defaultSchema` and the
-   aliases parsed from `tag-aliases.yaml`.
-2. Concatenate the `frontmatterRule` and `tagAliasRule` findings per note.
-3. Sort by `path`, then `line`, then `rule`.
-4. Write the sorted array as pretty-printed JSON (2-space indent) to
+1. Locate or clone `github.com/williamthorsen/vaults.coding`, and install its
+   dependencies (`pnpm install`) if `node_modules` is absent.
+2. In a throwaway directory (outside both repos), write a harness that imports
+   the vault's `parseNote`/`parseNoteContent` (`scripts/check-notes/lib/`), its
+   `frontmatterRule` and `tagAliasRule` (`scripts/check-notes/rules/`), and its
+   `loadAliases` (`scripts/canonicalize-tag/`).
+3. Build a `RuleContext` with a schema equivalent to kb-core's `defaultSchema`,
+   the aliases parsed from this directory's `tag-aliases.yaml`, and an empty
+   `vaultIndex` map (`frontmatterRule` and `tagAliasRule` do not read it).
+4. Parse every note in `notes/`, run both rules, and collect the findings.
+5. Filter to rule codes starting with `frontmatter.` (this keeps
+   `frontmatter.tag-alias` and drops any `wikilinks.*`/`paths.*` findings).
+6. Sort by `path`, then `line`, then `rule`.
+7. Write the sorted array as pretty-printed JSON (2-space indent) to
    `expected-findings.json`.
+8. Run the harness with the vault's toolchain (e.g. its `tsx`).
 
-The regenerated golden records whatever the current rules produce. It does not
-prove parity with the vault; if a behavior change was intentional, update the
-rules first and let the new golden capture it. If the goal is to keep the port
-faithful to the vault, re-check the rule logic against the upstream
-`scripts/check-notes/` source (fetched via `gh api`) — the golden cannot
-substitute for that review.
+The harness is throwaway and is not committed — kb-core stays self-contained,
+with no build-time dependency on a local vault checkout. After regenerating,
+`parity.test.ts` must pass: kb-core's `runRules` output must equal the new
+golden.

@@ -3,9 +3,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import type { Frontmatter, ParsedNote } from '../../types.js';
-import { parseNoteContent } from '../parse-note.js';
-import { writeFrontmatter } from '../write-frontmatter.js';
+import type { Frontmatter, ParsedNote } from '../../types.ts';
+import { parseNoteContent } from '../parse-note.ts';
+import { writeFrontmatter } from '../write-frontmatter.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 

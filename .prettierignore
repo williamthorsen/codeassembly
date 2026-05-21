@@ -1,9 +1,10 @@
 pnpm-lock.yaml
 
-# Subagent partials and the files that consume them must preserve exact whitespace
-# around `<!-- include: ... -->` open/close directives and `<!-- children -->`
-# placeholders. Prettier's auto-insertion of blank lines around HTML-comment lines
-# breaks slot substitution semantics — see packages/agents/content/_partials/README.md.
+# Subagent partials and the files that consume them must preserve exact whitespace around
+# `<!-- include: ... -->` open/close directives and
+# `<!-- children -->` placeholders.
+# Prettier's auto-insertion of blank lines around HTML-comment lines # breaks slot substitution semantics;
+# see packages/agents/content/_partials/README.md.
 packages/agents/content/_partials/
 packages/agents/content/subagents/_partials/
 packages/agents/content/subagents/aspect-code-reviewer.md
@@ -13,7 +14,7 @@ packages/agents/content/subagents/code-simplification-reviewer.md
 packages/agents/content/subagents/orchestrated-coder.md
 packages/agents/content/subagents/orchestrated-reviewer.md
 
-# Test fixtures that are intentionally syntactically malformed YAML — Prettier
-# cannot parse them, and reformatting would erase the defect they exist to test.
+# Test fixtures that are intentionally syntactically malformed YAML.
+# Prettier cannot parse them, and reformatting would erase the defect they exist to test.
 packages/kb-core/src/**/__tests__/**/fixtures/**/malformed-yaml/
 packages/kb-core/src/**/__tests__/**/fixtures/**/syntactically-malformed.*

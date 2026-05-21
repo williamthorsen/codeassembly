@@ -1,8 +1,8 @@
 import { isScalar, isSeq } from 'yaml';
 
-import { findPair, valueLine } from '../frontmatter/yaml-position.js';
-import type { Finding } from '../types.js';
-import type { KbRule, KbRuleInput } from './types.js';
+import { findPair, valueLine } from '../frontmatter/yaml-position.ts';
+import type { Finding } from '../types.ts';
+import type { KbRule, KbRuleInput } from './types.ts';
 
 const DATE_FIELDS = ['created', 'updated', 'last-verified'] as const;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

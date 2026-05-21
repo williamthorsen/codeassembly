@@ -1,13 +1,12 @@
-import { documentFor } from '../frontmatter/parse-note.js';
-import type { AliasMap, Finding, ParsedNote, Schema } from '../types.js';
-import type { KbRule } from './types.js';
+import { documentFor } from '../frontmatter/parse-note.ts';
+import type { AliasMap, Finding, ParsedNote, Schema } from '../types.ts';
+import type { KbRule } from './types.ts';
 
 /**
  * Run a set of rules over a set of notes and return the concatenated findings.
  *
- * Iterates notes in the outer loop and rules in the inner loop, so all
- * findings for one note are grouped before the next. An empty rule list or
- * empty note list yields `[]`. When `aliases` is omitted, rules that depend on
+ * Iterates notes in the outer loop and rules in the inner loop, so that all findings for one note are grouped before
+ * the next. An empty rule list or empty note list yields `[]`. When `aliases` is omitted, rules that depend on
  * the alias map (e.g. the tag-alias rule) no-op.
  */
 export function runRules(input: {

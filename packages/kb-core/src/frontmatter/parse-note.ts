@@ -2,18 +2,17 @@ import { readFile } from 'node:fs/promises';
 
 import { type Document, isMap, isPair, isScalar, isSeq, parseDocument } from 'yaml';
 
-import { isRecord } from '../type-guards.js';
-import type { Frontmatter, FrontmatterRaw, ParsedNote } from '../types.js';
-import { type FrontmatterDocument } from './yaml-position.js';
+import { isRecord } from '../type-guards.ts';
+import type { Frontmatter, FrontmatterRaw, ParsedNote } from '../types.ts';
+import { type FrontmatterDocument } from './yaml-position.ts';
 
 const FENCE = '---';
 const REQUIRED_KEYS = ['title', 'type', 'created', 'updated', 'tags'] as const;
 
 /**
- * Parse a note from a literal string into a `ParsedNote` carrying typed
- * frontmatter. Parse errors are recorded in `frontmatterRaw.parseError`, never
- * thrown — the rule layer decides how to report them. `path` defaults to
- * `<string>` and labels the result for diagnostics.
+ * Parse a note from a literal string into a `ParsedNote` carrying typed frontmatter.
+ * Parse errors are recorded in `frontmatterRaw.parseError`, never thrown — the rule layer decides how to report them.
+ * `path` defaults to `<string>` and labels the result for diagnostics.
  */
 export function parseNoteContent(input: { content: string; path?: string }): ParsedNote {
   const { content, path = '<string>' } = input;
@@ -27,8 +26,8 @@ export function parseNoteContent(input: { content: string; path?: string }): Par
   }
 
   const text = lines.slice(1, endIndex).join('\n');
-  // `schema: 'core'` disables the YAML 1.1 timestamp tag so date fields surface
-  // as strings rather than JS `Date` objects, keeping validator input uniform.
+  // `schema: 'core'` disables the YAML 1.1 timestamp tag so date fields surface as strings rather than JS `Date`
+  // objects, keeping validator input uniform.
   const doc = parseDocument(text, { schema: 'core' });
   const parseError = doc.errors[0]?.message;
   const frontmatterRaw: FrontmatterRaw = {
@@ -46,8 +45,8 @@ export function parseNoteContent(input: { content: string; path?: string }): Par
 }
 
 /**
- * Read a note from disk and parse it into a `ParsedNote`. I/O errors (e.g. a
- * missing file) are thrown; YAML parse errors are not.
+ * Reads a note from disk and parse it into a `ParsedNote`. I/O errors (e.g. a missing file) are thrown;
+ * YAML parse errors are not.
  */
 export async function parseNote(input: { path: string }): Promise<ParsedNote> {
   const content = await readFile(input.path, 'utf8');
@@ -55,9 +54,8 @@ export async function parseNote(input: { path: string }): Promise<ParsedNote> {
 }
 
 /**
- * Parse a note and return its raw `yaml.Document` alongside the slice
- * metadata. Internal to the package — the rules layer uses this to map node
- * positions onto source line numbers without re-parsing.
+ * Parses a note and return its raw `yaml.Document` alongside the slice metadata.
+ * Internal to the package; the rules layer uses this to map node positions onto source line numbers without re-parsing.
  */
 export function parseNoteWithDocument(
   content: string,
@@ -68,9 +66,8 @@ export function parseNoteWithDocument(
 }
 
 /**
- * Build the raw `yaml.Document` for an already-parsed note's frontmatter, or
- * `null` when the note has no frontmatter block. Internal to the package; the
- * rules layer uses this to obtain position metadata for a `ParsedNote`.
+ * Builds the raw `yaml.Document` for an already-parsed note's frontmatter, or `null` when the note has no frontmatter
+ * block. Internal to the package; the rules layer uses this to obtain position metadata for a `ParsedNote`.
  */
 export function documentFor(note: ParsedNote): FrontmatterDocument | null {
   if (note.frontmatterRaw === null) {
@@ -82,7 +79,36 @@ export function documentFor(note: ParsedNote): FrontmatterDocument | null {
 
 // region | Helpers
 
-/** Project a parsed YAML document onto the typed `Frontmatter` shape. */
+/** Coerces a sequence node into a string array, dropping non-string items. */
+function stringList(value: unknown): string[] {
+  if (!isSeq(value)) {
+    return [];
+  }
+  const result: string[] = [];
+  for (const item of value.items) {
+    if (isScalar(item) && typeof item.value === 'string') {
+      result.push(item.value);
+    }
+  }
+  return result;
+}
+
+/** Coerces a scalar node value to a string, treating absent values as empty. */
+function stringValue(value: unknown): string {
+  if (!isScalar(value)) {
+    return '';
+  }
+  const raw = value.value;
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (typeof raw === 'number' || typeof raw === 'boolean' || typeof raw === 'bigint') {
+    return String(raw);
+  }
+  return '';
+}
+
+/** Projects a parsed YAML document onto the typed `Frontmatter` shape. */
 function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
   const contents = doc.contents;
   if (!isMap(contents)) {
@@ -128,35 +154,6 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
   }
 
   return { title, type, created, updated, tags, extra };
-}
-
-/** Coerce a scalar node value to a string, treating absent values as empty. */
-function stringValue(value: unknown): string {
-  if (!isScalar(value)) {
-    return '';
-  }
-  const raw = value.value;
-  if (typeof raw === 'string') {
-    return raw;
-  }
-  if (typeof raw === 'number' || typeof raw === 'boolean' || typeof raw === 'bigint') {
-    return String(raw);
-  }
-  return '';
-}
-
-/** Coerce a sequence node into a string array, dropping non-string items. */
-function stringList(value: unknown): string[] {
-  if (!isSeq(value)) {
-    return [];
-  }
-  const result: string[] = [];
-  for (const item of value.items) {
-    if (isScalar(item) && typeof item.value === 'string') {
-      result.push(item.value);
-    }
-  }
-  return result;
 }
 
 // endregion | Helpers

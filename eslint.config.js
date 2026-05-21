@@ -19,8 +19,7 @@ export default [
     '**/coverage/**',
     '**/dist/**',
     '**/local/**',
-    // Test fixtures that are intentionally syntactically broken — linting them
-    // would flag the very defect they exist to exercise.
+    // Ignore test fixtures that are intentionally syntactically broken.
     '**/__tests__/**/fixtures/**/malformed-yaml/**',
     '**/__tests__/**/fixtures/**/syntactically-malformed.*',
   ]),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AliasMap } from '../../types.js';
-import { canonicalize, findAliasFor } from '../canonicalize.js';
+import type { AliasMap } from '../../types.ts';
+import { canonicalize, findAliasFor } from '../canonicalize.ts';
 
 const ALIASES: AliasMap = new Map([
   ['git-sparse-checkout', 'git'],

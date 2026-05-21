@@ -1,14 +1,13 @@
 import { stat } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import type { KbRoot } from '../types.js';
+import type { KbRoot } from '../types.ts';
 
 const KB_DIR_NAME = '.kb';
 
 /**
- * Walk up the directory tree from `startDir`, returning the first ancestor
- * that contains a `.kb/` directory as a `KbRoot`. Returns `null` when the walk
- * reaches the filesystem root without a hit.
+ * Walks up the directory tree from `startDir` & returns the first ancestor containing a `.kb/` directory as a `KbRoot`.
+ * Returns `null` when the walk reaches the filesystem root without a hit.
  */
 export async function findKbRoot(input: { startDir: string }): Promise<KbRoot | null> {
   let current = resolve(input.startDir);

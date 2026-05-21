@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { parseNote, parseNoteContent } from '../parse-note.js';
+import { parseNote, parseNoteContent } from '../parse-note.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 

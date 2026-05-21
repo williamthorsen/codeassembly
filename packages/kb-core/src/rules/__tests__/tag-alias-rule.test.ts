@@ -3,10 +3,10 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { parseNoteWithDocument } from '../../frontmatter/parse-note.js';
-import { defaultSchema } from '../../schema/default-schema.js';
-import type { AliasMap, Finding } from '../../types.js';
-import { tagAliasRule } from '../tag-alias-rule.js';
+import { parseNoteWithDocument } from '../../frontmatter/parse-note.ts';
+import { defaultSchema } from '../../schema/default-schema.ts';
+import type { AliasMap, Finding } from '../../types.ts';
+import { tagAliasRule } from '../tag-alias-rule.ts';
 
 const RULE_CASES_DIR = join(import.meta.dirname, 'fixtures', 'rule-cases');
 

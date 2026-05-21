@@ -2,7 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { findKbRoot } from '../find-kb-root.js';
+import { findKbRoot } from '../find-kb-root.ts';
 
 const NESTED_PROJECT = join(import.meta.dirname, 'fixtures', 'nested-project');
 

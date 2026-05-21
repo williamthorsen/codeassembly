@@ -3,16 +3,15 @@ import { join } from 'node:path';
 
 import { parse } from 'yaml';
 
-import { isRecord } from '../type-guards.js';
-import type { AliasMap, KbRoot } from '../types.js';
+import { isRecord } from '../type-guards.ts';
+import type { AliasMap, KbRoot } from '../types.ts';
 
 /** Relative location of the tag-aliases file within a KB root. */
 export const ALIASES_FILE = join('.kb', 'tag-aliases.yaml');
 
 /**
- * Load `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`. The thin
- * I/O wrapper around {@link parseAliases}; structural defects throw with the
- * file path included.
+ * Loads `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`.
+ * The thin I/O wrapper around {@link parseAliases}; structural defects throw with the file path included.
  */
 export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> {
   const path = join(input.kbRoot.path, ALIASES_FILE);
@@ -21,11 +20,10 @@ export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> 
 }
 
 /**
- * Parse a tag-aliases registry from a string into an `AliasMap`. Aliases are
- * lowercased on insertion so callers can look up case-insensitively. Throws on
- * any structural defect — non-object top level, missing `aliases` key,
- * non-string entries, self-aliases, or cross-canonical collisions — with
- * `contextLabel` prefixed onto every message.
+ * Parses a tag-aliases registry from a string into an `AliasMap`.
+ * Aliases are lowercased on insertion so callers can look up case-insensitively.
+ * Throws on any structural defect — non-object top level, missing `aliases` key, non-string entries, self-aliases,
+ * or cross-canonical collisions — with `contextLabel` prefixed onto every message.
  */
 export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasMap {
   let parsed: unknown;

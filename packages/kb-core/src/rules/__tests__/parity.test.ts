@@ -3,13 +3,13 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { parseNoteContent } from '../../frontmatter/parse-note.js';
-import { defaultSchema } from '../../schema/default-schema.js';
-import { parseAliases } from '../../tags/load-aliases.js';
-import type { Finding } from '../../types.js';
-import { frontmatterRule } from '../frontmatter-rule.js';
-import { runRules } from '../run-rules.js';
-import { tagAliasRule } from '../tag-alias-rule.js';
+import { parseNoteContent } from '../../frontmatter/parse-note.ts';
+import { defaultSchema } from '../../schema/default-schema.ts';
+import { parseAliases } from '../../tags/load-aliases.ts';
+import type { Finding } from '../../types.ts';
+import { frontmatterRule } from '../frontmatter-rule.ts';
+import { runRules } from '../run-rules.ts';
+import { tagAliasRule } from '../tag-alias-rule.ts';
 
 const PARITY_DIR = join(import.meta.dirname, 'fixtures', 'parity');
 const NOTES_DIR = join(PARITY_DIR, 'notes');
@@ -26,13 +26,13 @@ function normalize(findings: readonly Finding[]): Finding[] {
   });
 }
 
-// `expected-findings.json` records the output of the ported `frontmatter` and
-// `tag-alias` rules over the vendored `notes/` fixtures. The port was derived
-// from the vault's `scripts/check-notes/` source read via `gh api` (the vault
-// was not checked out locally). This golden is a regression guard against
-// unintended rule drift, not an independent proof that the port matches the
-// vault — see `fixtures/parity/README.md` for the full provenance.
-describe('rules regression guard against the ported check-notes golden', () => {
+// `expected-findings.json` is captured from the vault's real `check-notes`
+// rules (`github.com/williamthorsen/vaults.coding`, commit 128ce97) run over
+// the vendored `notes/` fixtures. Because the golden is the upstream rules'
+// own output, this test is a genuine parity proof: kb-core's ported rules must
+// reproduce it exactly. It also guards against future drift in either
+// direction — see `fixtures/parity/README.md` for the capture procedure.
+describe('rules parity proof against the real check-notes golden', () => {
   it('produces exactly the findings recorded in expected-findings.json', async () => {
     const expected: Finding[] = JSON.parse(await readFile(join(PARITY_DIR, 'expected-findings.json'), 'utf8'));
     const aliases = parseAliases(await readFile(join(PARITY_DIR, 'tag-aliases.yaml'), 'utf8'));

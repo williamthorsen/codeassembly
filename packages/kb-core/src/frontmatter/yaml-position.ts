@@ -1,6 +1,6 @@
 import { type Document, isMap, isPair, isScalar, type Pair, type Scalar } from 'yaml';
 
-import type { FrontmatterRaw } from '../types.js';
+import type { FrontmatterRaw } from '../types.ts';
 
 // Internal bridge between the `yaml` package's CST/Document API and source line
 // numbers. The rules layer reports findings against note line numbers; the

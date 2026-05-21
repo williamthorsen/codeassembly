@@ -1,9 +1,8 @@
 // Shared type vocabulary for @codeassembly/kb-core.
 //
-// This file is the documented exception to the "types live with their
-// provider" convention: the modules below all consume the same shapes, so
-// co-locating them keeps the contract single-sourced. It is types-only and
-// produces no runtime emissions.
+// This file is the documented exception to the "types live with their provider" convention:
+// The modules below all consume the same shapes, so co-locating them keeps the contract single-sourced.
+// It is types-only and produces no runtime emissions.
 
 /** A discovered knowledge-base root and how it was found. */
 export interface KbRoot {

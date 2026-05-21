@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultSchema } from '../default-schema.js';
+import { defaultSchema } from '../default-schema.ts';
 
 describe('defaultSchema', () => {
   it('exposes the four Diátaxis types', () => {

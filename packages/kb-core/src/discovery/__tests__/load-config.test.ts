@@ -2,7 +2,7 @@ import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { loadKbConfig } from '../load-config.js';
+import { loadKbConfig } from '../load-config.ts';
 
 const MERGE_DIR = join(import.meta.dirname, 'fixtures', 'config-merge');
 const HOME = join(MERGE_DIR, 'home');

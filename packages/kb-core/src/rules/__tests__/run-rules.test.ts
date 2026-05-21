@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseNoteContent } from '../../frontmatter/parse-note.js';
-import { defaultSchema } from '../../schema/default-schema.js';
-import type { AliasMap } from '../../types.js';
-import { frontmatterRule } from '../frontmatter-rule.js';
-import { runRules } from '../run-rules.js';
-import { tagAliasRule } from '../tag-alias-rule.js';
+import { parseNoteContent } from '../../frontmatter/parse-note.ts';
+import { defaultSchema } from '../../schema/default-schema.ts';
+import type { AliasMap } from '../../types.ts';
+import { frontmatterRule } from '../frontmatter-rule.ts';
+import { runRules } from '../run-rules.ts';
+import { tagAliasRule } from '../tag-alias-rule.ts';
 
 const ALIASES: AliasMap = new Map([['vcs', 'git']]);
 

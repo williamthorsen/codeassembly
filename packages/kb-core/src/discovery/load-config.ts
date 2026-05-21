@@ -4,9 +4,9 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 
 import { parse } from 'yaml';
 
-import { isEnoent } from '../type-guards.js';
-import type { KbConfig, KbConfigEntry } from '../types.js';
-import { kbConfigFileSchema } from './kb-config-schema.js';
+import { isEnoent } from '../type-guards.ts';
+import type { KbConfig, KbConfigEntry } from '../types.ts';
+import { kbConfigFileSchema } from './kb-config-schema.ts';
 
 const USER_CONFIG_RELATIVE = join('.claude', 'kb.yaml');
 const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
@@ -15,11 +15,10 @@ const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
  * Load and merge the user-global (`~/.claude/kb.yaml`) and project-local
  * (`.agents/kb.yaml`) KB registries into a normalized `KbConfig`.
  *
- * Project entries replace user entries by name on collision and append new
- * names. Within a single file, relative `path` values resolve against that
- * file's directory and a leading `~/` expands against `$HOME`. Both files are
- * optional; when neither exists the result has no entries. Malformed YAML, a
- * structural defect, or two entries marked `default: true` in one file throw.
+ * Project entries replace user entries by name on collision and append new names.
+ * Within a single file, relative `path` values resolve against that file's directory and a leading `~/` expands
+ * against `$HOME`. Both files are optional; when neither exists the result has no entries.
+ * Malformed YAML, a structural defect, or two entries marked `default: true` in one file throw.
  */
 export async function loadKbConfig(
   input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
@@ -47,9 +46,8 @@ export async function loadKbConfig(
 // region | Helpers
 
 /**
- * Read and validate one registry file. Returns `undefined` when the file is
- * absent; throws on malformed YAML, a structural defect, or a duplicate
- * `default: true`.
+ * Read and validate one registry file. Returns `undefined` when the file is absent;
+ * throws on malformed YAML, a structural defect, or a duplicate `default: true`.
  */
 async function loadConfigFile(
   path: string,
@@ -108,10 +106,9 @@ async function loadConfigFile(
 }
 
 /**
- * Merge user entries with project entries: project replaces by name and
- * appends new names. When the merged set still carries both a user-sourced and
- * a project-sourced default, the project default wins and the user default
- * flag is cleared.
+ * Merge user entries with project entries: project replaces by name and appends new names.
+ * When the merged set still carries both a user-sourced and a project-sourced default,
+ * the project default wins and the user default flag is cleared.
  */
 function mergeEntries(userEntries: KbConfigEntry[], projectEntries: KbConfigEntry[]): KbConfigEntry[] {
   const byName = new Map<string, KbConfigEntry>();

@@ -2,9 +2,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import type { KbRoot } from '../../types.js';
-import { defaultSchema } from '../default-schema.js';
-import { extendOptional, extendRequired, loadSchema, narrowTypes } from '../load-schema.js';
+import type { KbRoot } from '../../types.ts';
+import { defaultSchema } from '../default-schema.ts';
+import { extendOptional, extendRequired, loadSchema, narrowTypes } from '../load-schema.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 

@@ -1,17 +1,17 @@
 import { isScalar, isSeq } from 'yaml';
 
-import { findPair, itemLine, valueLine } from '../frontmatter/yaml-position.js';
-import { findAliasFor } from '../tags/canonicalize.js';
-import type { Finding } from '../types.js';
-import type { KbRule, KbRuleInput } from './types.js';
+import { findPair, itemLine, valueLine } from '../frontmatter/yaml-position.ts';
+import { findAliasFor } from '../tags/canonicalize.ts';
+import type { Finding } from '../types.ts';
+import type { KbRule, KbRuleInput } from './types.ts';
 
 /**
- * Warn when a note's `tags` list contains a known alias, naming the canonical
- * form. Emits one warning per aliased tag in YAML-list order. Unknown tags
- * (neither canonical nor alias) are new vocabulary and are not flagged.
+ * Warn when a note's `tags` list contains a known alias, naming the canonical form.
+ * Emits one warning per aliased tag in YAML-list order.
+ * Unknown tags (neither canonical nor alias) are new vocabulary and are not flagged.
  *
- * No-ops when no aliases are configured, and defers structural complaints
- * (missing frontmatter, non-list tags) to {@link frontmatterRule}.
+ * No-ops when no aliases are configured, and defers structural complaints (missing frontmatter, non-list tags) to
+ * {@link frontmatterRule}.
  */
 export const tagAliasRule: KbRule = {
   name: 'tag-alias',

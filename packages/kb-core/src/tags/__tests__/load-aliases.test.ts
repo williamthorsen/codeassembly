@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { loadAliases, parseAliases } from '../load-aliases.js';
+import { loadAliases, parseAliases } from '../load-aliases.ts';
 
 // Mock `readFile` with a passthrough to the real implementation so most tests
 // hit disk normally; the non-ENOENT propagation test overrides it per-call.
