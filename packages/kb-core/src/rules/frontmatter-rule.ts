@@ -122,16 +122,10 @@ function validateDate(value: string): string | null {
   if (!DATE_PATTERN.test(value)) {
     return `expected YYYY-MM-DD, got "${value}"`;
   }
-  const parts = value.split('-');
-  const yearText = parts[0];
-  const monthText = parts[1];
-  const dayText = parts[2];
-  if (yearText === undefined || monthText === undefined || dayText === undefined) {
-    return `expected YYYY-MM-DD, got "${value}"`;
-  }
-  const year = Number(yearText);
-  const month = Number(monthText);
-  const day = Number(dayText);
+  // The regex match guarantees fixed-width segments, so slice yields plain strings.
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
   const roundTrip = new Date(Date.UTC(year, month - 1, day));
   const isRealDate =
     roundTrip.getUTCFullYear() === year && roundTrip.getUTCMonth() === month - 1 && roundTrip.getUTCDate() === day;

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { parse } from 'yaml';
 
+import { isRecord } from '../type-guards.js';
 import type { AliasMap, KbRoot } from '../types.js';
 
 /** Relative location of the tag-aliases file within a KB root. */
@@ -73,9 +74,4 @@ export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasM
     }
   }
   return map;
-}
-
-/** Type guard for a non-null, non-array object. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

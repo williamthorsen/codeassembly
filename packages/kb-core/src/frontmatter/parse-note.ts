@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { type Document, isMap, isPair, isScalar, isSeq, parseDocument } from 'yaml';
 
+import { isRecord } from '../type-guards.js';
 import type { Frontmatter, FrontmatterRaw, ParsedNote } from '../types.js';
 import { type FrontmatterDocument } from './yaml-position.js';
 
@@ -91,7 +92,7 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
   // `toJS` collapses every node to a plain JS value, so the `extra` map carries
   // serializable data rather than `yaml` AST nodes with positional metadata.
   const plain: unknown = doc.toJS();
-  const plainRecord = isPlainRecord(plain) ? plain : {};
+  const plainRecord = isRecord(plain) ? plain : {};
 
   const extra: Record<string, unknown> = {};
   let title = '';
@@ -127,11 +128,6 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
   }
 
   return { title, type, created, updated, tags, extra };
-}
-
-/** Type guard for a non-null, non-array object. */
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Coerce a scalar node value to a string, treating absent values as empty. */

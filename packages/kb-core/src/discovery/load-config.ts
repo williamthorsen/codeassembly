@@ -37,7 +37,9 @@ export async function loadKbConfig(
 
   const sources: KbConfig['sources'] = {};
   if (userEntries !== undefined) sources.user = userConfigPath;
-  if (projectEntries !== undefined && projectConfigPath !== undefined) sources.project = projectConfigPath;
+  if (projectConfigPath !== undefined && projectEntries !== undefined) {
+    sources.project = projectConfigPath;
+  }
 
   return { entries: merged, sources };
 }
