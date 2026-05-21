@@ -7,7 +7,6 @@ import type { Frontmatter, FrontmatterRaw, ParsedNote } from '../types.ts';
 import { type FrontmatterDocument } from './yaml-position.ts';
 
 const FENCE = '---';
-const REQUIRED_KEYS = ['title', 'type', 'created', 'updated', 'tags'] as const;
 
 /**
  * Parse a note from a literal string into a `ParsedNote` carrying typed frontmatter.
@@ -160,6 +159,3 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
 }
 
 // endregion | Helpers
-
-/** The set of frontmatter keys that are required by the default schema. */
-export const REQUIRED_FRONTMATTER_KEYS: readonly string[] = REQUIRED_KEYS;

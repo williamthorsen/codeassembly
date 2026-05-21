@@ -135,15 +135,9 @@ function validateDate(value: string): string | null {
   return null;
 }
 
-/** Render a scalar date value as a string, normalizing a `Date` back to ISO `YYYY-MM-DD`. */
+/** Coerces a scalar date value to a string. */
 function toDateString(value: unknown): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (value instanceof Date) {
-    return value.toISOString().slice(0, 10);
-  }
-  return String(value);
+  return typeof value === 'string' ? value : String(value);
 }
 
 // endregion | Helpers
