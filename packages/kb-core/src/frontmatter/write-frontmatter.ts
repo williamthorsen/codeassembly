@@ -74,13 +74,14 @@ function renderExtraEntry(key: string, value: unknown): string[] {
  * non-string — covering YAML core integers, floats (including `.inf`/`.nan`),
  * booleans, and `null`/`~` — and leaves safe strings unquoted. A value
  * containing a newline yields a multi-line block scalar, which cannot occupy a
- * single `key: value` line; such values fall back to an inline single-quoted
- * form to preserve the renderer's one-line-per-field layout.
+ * single `key: value` line; such values are re-rendered as a double-quoted
+ * scalar, whose `\n` escapes keep the value on one line and round-trip the
+ * embedded newlines faithfully.
  */
 function renderScalar(value: string): string {
   const rendered = stringify(value, SCALAR_STRINGIFY_OPTIONS).replace(/\n$/, '');
   if (rendered.includes('\n')) {
-    return `'${value.replaceAll("'", "''")}'`;
+    return stringify(value, { ...SCALAR_STRINGIFY_OPTIONS, defaultStringType: 'QUOTE_DOUBLE' }).replace(/\n$/, '');
   }
   return rendered;
 }

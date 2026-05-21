@@ -113,4 +113,28 @@ describe('frontmatter round-trip idempotence', () => {
 
     expect(reparsed.frontmatter?.extra.token).toBe(literal);
   });
+
+  // A string containing a literal newline would, under a single-quoted YAML
+  // scalar, fold its embedded newlines (a single `\n` becomes a space, blank
+  // lines collapse). `renderScalar` must emit such values as double-quoted
+  // scalars whose `\n` escapes both stay on one line and re-parse exactly.
+  it.each([
+    ['a single embedded newline', 'first\nsecond'],
+    ['a blank line', 'a\n\nb'],
+    ['leading and trailing newlines', '\nedge\n'],
+  ])('preserves a multi-line string-typed extra field with %s', (_label, value) => {
+    const frontmatter: Frontmatter = {
+      title: 'a note',
+      type: 'howto',
+      created: '2026-05-01',
+      updated: '2026-05-14',
+      tags: [],
+      extra: { note: value },
+    };
+
+    const rendered = writeFrontmatter({ frontmatter, body: '' });
+    const reparsed = parseNoteContent({ content: rendered });
+
+    expect(reparsed.frontmatter?.extra.note).toBe(value);
+  });
 });
