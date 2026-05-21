@@ -3,19 +3,29 @@ import { join } from 'node:path';
 
 import { parse } from 'yaml';
 
-import { isRecord } from '../type-guards.ts';
+import { isEnoent, isRecord } from '../type-guards.ts';
 import type { AliasMap, KbRoot } from '../types.ts';
 
 /** Relative location of the tag-aliases file within a KB root. */
 export const ALIASES_FILE = join('.kb', 'tag-aliases.yaml');
 
 /**
- * Loads `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`.
+ * Loads `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`, returning an empty map when the file is absent.
  * The thin I/O wrapper around {@link parseAliases}; structural defects throw with the file path included.
  */
 export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> {
   const path = join(input.kbRoot.path, ALIASES_FILE);
-  const text = await readFile(path, 'utf8');
+
+  let text: string;
+  try {
+    text = await readFile(path, 'utf8');
+  } catch (error) {
+    if (isEnoent(error)) {
+      return new Map();
+    }
+    throw error;
+  }
+
   return parseAliases(text, path);
 }
 

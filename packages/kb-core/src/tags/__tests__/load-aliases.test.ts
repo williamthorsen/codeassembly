@@ -90,8 +90,8 @@ describe(loadAliases, () => {
     expect(map.get('reactjs')).toBe('react');
   });
 
-  it('rejects when the KB root has no tag-aliases file', async () => {
-    await expect(loadAliases({ kbRoot: kbRootAt('/no/such/kb') })).rejects.toThrow();
+  it('returns an empty map when the KB root has no tag-aliases file', async () => {
+    expect(await loadAliases({ kbRoot: kbRootAt('/no/such/kb') })).toEqual(new Map());
   });
 
   it('propagates a non-ENOENT read error unchanged', async () => {
