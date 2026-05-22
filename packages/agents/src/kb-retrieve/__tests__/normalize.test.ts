@@ -52,6 +52,16 @@ describe(normalizeHits, () => {
     expect(candidates[0]?.lastVerifiedAgeDays).toBeNull();
   });
 
+  it('reports a null last-verified age when the field is not a parseable date', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NORMALIZE, 'unparseable-date.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.lastVerifiedAgeDays).toBeNull();
+  });
+
   it('follows a multi-hop superseded-by chain to the canonical successor', async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(NOTES_VAULT, 'old-guide.md'))],
@@ -86,13 +96,14 @@ describe(normalizeHits, () => {
     expect(candidates[0]?.supersession.diagnostic).toMatch(/cycle/);
   });
 
-  it('reports a dangling superseded-by target in a diagnostic', async () => {
+  it('reports a dangling superseded-by target with a null canonical path', async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(NORMALIZE, 'dangling.md'))],
       filters: {},
       now: NOW,
     });
 
+    expect(candidates[0]?.supersession).toMatchObject({ superseded: true, canonicalPath: null });
     expect(candidates[0]?.supersession.diagnostic).toMatch(/not readable/);
   });
 
