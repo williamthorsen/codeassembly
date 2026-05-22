@@ -1,3 +1,4 @@
+import type { KbConfig } from '@codeassembly/kb-core';
 import { findKbRoot, loadKbConfig } from '@codeassembly/kb-core/discovery';
 
 import type { ScopedKb } from './types.ts';
@@ -17,7 +18,7 @@ import type { ScopedKb } from './types.ts';
 export async function resolveScope(input: { startDir: string; allKbs: boolean; home?: string }): Promise<ScopedKb[]> {
   const [discovered, config] = await Promise.all([
     findKbRoot({ startDir: input.startDir }),
-    loadKbConfig({
+    loadKbConfigSafely({
       projectDir: input.startDir,
       ...(input.home !== undefined && { home: input.home }),
     }),
@@ -51,3 +52,25 @@ export async function resolveScope(input: { startDir: string; allKbs: boolean; h
 
   return scoped;
 }
+
+// region | Helpers
+
+/**
+ * Load the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config.
+ *
+ * A defective project- or user-level `kb.yaml` would otherwise throw out of `resolveScope` and break the
+ * structured `RetrieveResult` contract that every other failure path through `runRetrieve` honors. The
+ * empty result is reported through the standard no-KB diagnostic instead.
+ */
+async function loadKbConfigSafely(input: { projectDir: string; home?: string }): Promise<KbConfig> {
+  try {
+    return await loadKbConfig({
+      projectDir: input.projectDir,
+      ...(input.home !== undefined && { home: input.home }),
+    });
+  } catch {
+    return { entries: [], sources: {} };
+  }
+}
+
+// endregion | Helpers

@@ -9,6 +9,7 @@ const PROJECT_KB = join(FIXTURES, 'project-kb');
 const VAULT_A = join(FIXTURES, 'vault-a');
 const VAULT_B = join(FIXTURES, 'vault-b');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
+const MALFORMED_REGISTRY = join(FIXTURES, 'malformed-registry');
 const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
 // A home directory with no `.claude/kb.yaml`, so the user-global registry resolves empty.
 const HOME_EMPTY = FIXTURES;
@@ -52,5 +53,12 @@ describe(resolveScope, () => {
     const scoped = await resolveScope({ startDir: '/', allKbs: false, home: HOME_EMPTY });
 
     expect(scoped).toEqual([]);
+  });
+
+  it('degrades a malformed registry to an empty registry instead of throwing', async () => {
+    const scoped = await resolveScope({ startDir: MALFORMED_REGISTRY, allKbs: false, home: HOME_EMPTY });
+
+    // The malformed `.agents/kb.yaml` yields no registry entries; the discovered `.kb` root still resolves.
+    expect(scoped).toEqual([{ name: null, path: MALFORMED_REGISTRY, via: 'discovery' }]);
   });
 });
