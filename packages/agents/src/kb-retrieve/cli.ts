@@ -1,6 +1,8 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
+import { realpathSync } from 'node:fs';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import { normalizeHits } from './normalize.ts';
 import { recallNotes } from './recall.ts';
@@ -129,8 +131,25 @@ function matchValueFlag(arg: string): { key: keyof RecallFilters; inlineValue: s
   return null;
 }
 
+/**
+ * Return true when this module is the process entry point. Both sides are resolved through
+ * `realpathSync` so a symlinked invocation path (e.g. a `mktemp` directory under `/var` that resolves
+ * to `/private/var`) still matches.
+ */
+function isEntryPoint(): boolean {
+  const entry = process.argv[1];
+  if (entry === undefined) {
+    return false;
+  }
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
+  } catch {
+    return false;
+  }
+}
+
 // Run as a script, but not when imported by tests.
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isEntryPoint()) {
   await main();
 }
 
