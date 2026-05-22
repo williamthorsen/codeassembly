@@ -203,13 +203,22 @@ function escapeRegExp(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
-/** Return true when the path exists and is a directory. */
+/**
+ * Return true when the path exists and is a directory.
+ *
+ * A genuinely absent path (`ENOENT` / `ENOTDIR`) is reported as `false` so the KB is skipped quietly.
+ * Any other `stat` failure — most importantly a permission error (`EACCES` / `EPERM`) on a path that
+ * does exist — is re-thrown so it surfaces rather than being silently indistinguishable from absence.
+ */
 async function isExistingDirectory(path: string): Promise<boolean> {
   try {
     const stats = await stat(path);
     return stats.isDirectory();
-  } catch {
-    return false;
+  } catch (error) {
+    if (isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR')) {
+      return false;
+    }
+    throw error;
   }
 }
 
@@ -218,9 +227,14 @@ function isExitCode(error: unknown, code: number): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
 }
 
+/** Return true when the error carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
+function isErrorCode(error: unknown, code: string): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
+}
+
 /** Return true when the error indicates the `rg` binary could not be spawned. */
 function isMissingBinary(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+  return isErrorCode(error, 'ENOENT');
 }
 
 // endregion | Helpers
