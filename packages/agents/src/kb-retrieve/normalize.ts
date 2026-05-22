@@ -88,7 +88,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }):
   const type = frontmatter !== null && frontmatter.type !== '' ? frontmatter.type : null;
   const tags = frontmatter?.tags ?? [];
   const lastVerifiedAgeDays = computeAgeDays(extractString(frontmatter?.extra, 'last-verified'), now);
-  const supersession = await resolveSupersession({ path: hit.path, note, now });
+  const supersession = await resolveSupersession({ path: hit.path, note });
 
   const candidate: Candidate = {
     path: hit.path,
@@ -111,7 +111,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }):
  * inspected for a further `superseded-by`. A repeated path or an unreadable hop ends the walk; cycles are
  * reported in the `diagnostic` field rather than throwing.
  */
-async function resolveSupersession(input: { path: string; note: ParsedNote; now: Date }): Promise<Supersession> {
+async function resolveSupersession(input: { path: string; note: ParsedNote }): Promise<Supersession> {
   const firstHop = extractString(input.note.frontmatter?.extra, 'superseded-by');
   if (firstHop === null) {
     return { superseded: false, canonicalPath: null };
