@@ -28,6 +28,20 @@ describe(recallNotes, () => {
     expect(matchedBasenames(hits)).toEqual(['legacy-runbook.md']);
   });
 
+  it('attributes each hit to its source KB name and path', async () => {
+    const hits = await recallNotes({ query: 'backpressure', scopedKbs: notesVaultScope });
+
+    expect(hits[0]?.kbName).toBe('notes');
+    expect(hits[0]?.kbPath).toBe(NOTES_VAULT);
+  });
+
+  it('propagates a null kbName for a discovered KB with no registry entry', async () => {
+    const scope: ScopedKb[] = [{ name: null, path: NOTES_VAULT, via: 'discovery' }];
+    const hits = await recallNotes({ query: 'backpressure', scopedKbs: scope });
+
+    expect(hits[0]?.kbName).toBeNull();
+  });
+
   it('treats each query term disjunctively', async () => {
     const hits = await recallNotes({ query: 'backpressure dependency', scopedKbs: notesVaultScope });
 
