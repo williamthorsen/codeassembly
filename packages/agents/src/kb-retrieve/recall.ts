@@ -188,7 +188,7 @@ function parseRipgrepLine(line: string, searchDir: string): { path: string; cont
     return null;
   }
   const boundary = /[:-]\d+[:-]/.exec(line.slice(searchDir.length));
-  if (boundary === undefined || boundary === null) {
+  if (boundary === null) {
     return null;
   }
   const fieldStart = searchDir.length + boundary.index;
