@@ -26,7 +26,7 @@ A value-bearing flag accepts both `--type howto` and `--type=howto`.
 
 ### Scope
 
-By default the helper searches two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's default-marked knowledge base (the global vault). `--all-kbs` widens the search to every knowledge base declared in the merged `kb.yaml` registry.
+By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's default-marked knowledge base (the global vault). When neither source resolves, or the two resolve to the same path, the default scope contains fewer than two. `--all-kbs` widens the search to every knowledge base declared in the merged `kb.yaml` registry.
 
 ## Runtime dependencies
 
