@@ -10,7 +10,7 @@ This is a pnpm monorepo centered around agentic code-orchestration flows. It con
 - **Factory** (`packages/factory/`) — web-based visualization that renders orchestration runs as an interactive 2D game scene
 - **KB-core** (`packages/kb-core/`) — knowledge-base foundation library: discovery, registry loading, schema resolution, frontmatter parsing, tags, and validation rules
 
-The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents is independent (it produces the artifact files that run-core parses). Co-locating all four ensures schema changes can be made atomically.
+The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents depends on **kb-core**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
 
 ### Run-core (`packages/run-core/`)
 

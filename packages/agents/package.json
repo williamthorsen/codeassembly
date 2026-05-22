@@ -17,6 +17,7 @@
     "test:sh": "bash scripts/test-sh.sh"
   },
   "dependencies": {
+    "@codeassembly/kb-core": "workspace:*",
     "js-yaml": "4.1.1"
   },
   "devDependencies": {
