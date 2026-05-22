@@ -43,6 +43,14 @@ describe(parseArgs, () => {
   it('throws on an unknown flag', () => {
     expect(() => parseArgs(['query', '--bogus'])).toThrow(/unknown flag/);
   });
+
+  it('returns an empty query for empty argv', () => {
+    expect(parseArgs([]).query).toBe('');
+  });
+
+  it('leaves allKbs false for empty argv', () => {
+    expect(parseArgs([]).allKbs).toBe(false);
+  });
 });
 
 describe(runRetrieve, () => {
