@@ -8,7 +8,7 @@
     "codeassembly-agents": "bin/codeassembly-agents.js"
   },
   "scripts": {
-    "build": "nmr compile && tsx scripts/copy-content.ts",
+    "build": "nmr compile && tsx scripts/bundle-skill-helpers.ts && tsx scripts/copy-content.ts",
     "fmt:all": "pnpm run fmt && pnpm run fmt:sh",
     "fmt:all:check": "pnpm run fmt:sh:check && pnpm run fmt:check",
     "fmt:sh": "shfmt --write **/*.sh",

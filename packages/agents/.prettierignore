@@ -1,6 +1,9 @@
 coverage/
 dist/
 
+# Generated esbuild bundle of the kb-retrieve helper, not authored source.
+content/skills/kb-retrieve/kb-retrieve.mjs
+
 # Subagent partials and the files that consume them must preserve exact whitespace
 # around `<!-- include: ... -->` open/close directives and `<!-- children -->`
 # placeholders. Prettier's auto-insertion of blank lines around HTML-comment lines
