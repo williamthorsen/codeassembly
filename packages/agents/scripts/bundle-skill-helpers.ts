@@ -12,21 +12,24 @@
  * skills extend it by appending an entry.
  */
 import path from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { build } from 'esbuild';
 
-const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+/** Absolute path to the `@codeassembly/agents` package root. */
+export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** One skill helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
-interface BundleTarget {
+export interface BundleTarget {
   /** Path to the helper's entry module, relative to the package root. */
   entry: string;
   /** Path to the bundled output, relative to the package root. */
   outFile: string;
 }
 
-const targets: BundleTarget[] = [
+/** Every skill helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
+export const targets: BundleTarget[] = [
   {
     entry: 'src/kb-retrieve/cli.ts',
     outFile: 'content/skills/kb-retrieve/kb-retrieve.mjs',
@@ -38,19 +41,26 @@ const targets: BundleTarget[] = [
 const requireShim =
   "import { createRequire as __cjsCreateRequire } from 'node:module';\nconst require = __cjsCreateRequire(import.meta.url);";
 
-for (const target of targets) {
-  const outFile = path.join(packageRoot, target.outFile);
-  await build({
-    entryPoints: [path.join(packageRoot, target.entry)],
-    outfile: outFile,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'es2022',
-    banner: { js: requireShim },
-    // Resolve `@codeassembly/kb-core` (and any future workspace dep) from its `source` `.ts` export
-    // condition so the bundle does not require those packages to be pre-built.
-    conditions: ['source'],
-  });
-  console.info(`Bundled ${target.entry} -> ${target.outFile}`);
+/** Bundle every skill helper in `targets`, writing each `.mjs` into its skill's content directory. */
+export async function bundleSkillHelpers(): Promise<void> {
+  for (const target of targets) {
+    await build({
+      entryPoints: [path.join(packageRoot, target.entry)],
+      outfile: path.join(packageRoot, target.outFile),
+      bundle: true,
+      platform: 'node',
+      format: 'esm',
+      target: 'es2022',
+      banner: { js: requireShim },
+      // Resolve `@codeassembly/kb-core` (and any future workspace dep) from its `source` `.ts` export
+      // condition so the bundle does not require those packages to be pre-built.
+      conditions: ['source'],
+    });
+    console.info(`Bundled ${target.entry} -> ${target.outFile}`);
+  }
+}
+
+// Run as a build step, but stay importable (the smoke test reuses `targets` and `bundleSkillHelpers`).
+if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  await bundleSkillHelpers();
 }
