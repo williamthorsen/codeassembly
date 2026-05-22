@@ -82,7 +82,7 @@ async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
 async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHit[]> {
   const pattern = input.terms.map(escapeRegExp).join('|');
   const stdout = await runRipgrep({ pattern, searchDir: input.kb.path });
-  const matches = parseRipgrepOutput(stdout);
+  const matches = parseRipgrepOutput({ stdout, searchDir: input.kb.path });
 
   const byPath = new Map<string, RawHit>();
   for (const match of matches) {
@@ -112,7 +112,8 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
         '!.kb/**',
         '--context',
         String(SNIPPET_CONTEXT_LINES),
-        '--heading',
+        '--no-heading',
+        '--with-filename',
         '--line-number',
         '--color',
         'never',
@@ -135,50 +136,66 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
 }
 
 /**
- * Parse ripgrep `--heading` output into one entry per note, with a snippet built from the matching line
- * and its captured context neighbors.
+ * Parse ripgrep `--no-heading --with-filename` output into one entry per note, with a snippet built from
+ * the matching line and its captured context neighbors.
+ *
+ * Each output line has the unambiguous form `<path><sep><lineNumber><sep><content>`, where `<sep>` is
+ * `:` for a matched line and `-` for a context line. Because every path is rooted at `searchDir`, the
+ * `<sep><digits><sep>` line-number field is located by scanning from the end of the known prefix — a
+ * note path may itself contain digit-prefixed segments without being misclassified.
  */
-function parseRipgrepOutput(stdout: string): Array<{ path: string; snippet: string }> {
-  if (stdout.trim() === '') {
+function parseRipgrepOutput(input: { stdout: string; searchDir: string }): Array<{ path: string; snippet: string }> {
+  if (input.stdout.trim() === '') {
     return [];
   }
 
   const entries: Array<{ path: string; snippet: string }> = [];
-  let currentPath: string | null = null;
-  let snippetLines: string[] = [];
+  const byPath = new Map<string, string[]>();
 
-  function flush(): void {
-    if (currentPath !== null && snippetLines.length > 0) {
-      entries.push({ path: currentPath, snippet: snippetLines.join(' ').trim() });
-    }
-  }
-
-  for (const line of stdout.split('\n')) {
-    if (line === '') {
+  for (const line of input.stdout.split('\n')) {
+    if (line === '' || line === '--') {
+      // ripgrep separates context groups with `--`; blank lines carry no match data.
       continue;
     }
-    if (line === '--') {
-      // ripgrep separates context groups with `--`; the first group is enough for the snippet.
+    const parsed = parseRipgrepLine(line, input.searchDir);
+    if (parsed === null) {
       continue;
     }
-    if (!/^\s*\d+[-:]/.test(line)) {
-      // A heading line: a file path.
-      flush();
-      currentPath = line;
+    let snippetLines = byPath.get(parsed.path);
+    if (snippetLines === undefined) {
       snippetLines = [];
-      continue;
+      byPath.set(parsed.path, snippetLines);
+      entries.push({ path: parsed.path, snippet: '' });
     }
     if (snippetLines.length < SNIPPET_CONTEXT_LINES * 2 + 1) {
-      snippetLines.push(stripLineNumberPrefix(line));
+      snippetLines.push(parsed.content);
     }
   }
-  flush();
-  return entries;
+
+  return entries.map((entry) => ({
+    path: entry.path,
+    snippet: (byPath.get(entry.path) ?? []).join(' ').trim(),
+  }));
 }
 
-/** Drop ripgrep's `<n>:` or `<n>-` line-number prefix from a content line. */
-function stripLineNumberPrefix(line: string): string {
-  return line.replace(/^\s*\d+[-:]/, '').trim();
+/**
+ * Split one ripgrep output line into its note path and content. The line-number field is the first
+ * `<sep><digits><sep>` run at or after the end of the `searchDir` prefix; `null` for a line that does not
+ * belong to a file rooted at `searchDir`.
+ */
+function parseRipgrepLine(line: string, searchDir: string): { path: string; content: string } | null {
+  if (!line.startsWith(searchDir)) {
+    return null;
+  }
+  const boundary = /[:-]\d+[:-]/.exec(line.slice(searchDir.length));
+  if (boundary === undefined || boundary === null) {
+    return null;
+  }
+  const fieldStart = searchDir.length + boundary.index;
+  return {
+    path: line.slice(0, fieldStart),
+    content: line.slice(fieldStart + boundary[0].length),
+  };
 }
 
 /** Escape regex metacharacters so query terms are matched literally inside ripgrep's alternation. */

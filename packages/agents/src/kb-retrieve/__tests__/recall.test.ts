@@ -21,6 +21,13 @@ describe(recallNotes, () => {
     expect(matchedBasenames(hits)).toEqual(['streams.md']);
   });
 
+  it('returns a note stored under a digit-prefixed directory', async () => {
+    // A path segment such as `2024-archive` must not be misread as a ripgrep content line.
+    const hits = await recallNotes({ query: 'quobble', scopedKbs: notesVaultScope });
+
+    expect(matchedBasenames(hits)).toEqual(['legacy-runbook.md']);
+  });
+
   it('treats each query term disjunctively', async () => {
     const hits = await recallNotes({ query: 'backpressure dependency', scopedKbs: notesVaultScope });
 
