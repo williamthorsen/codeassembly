@@ -82,7 +82,7 @@ async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
 async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHit[]> {
   const pattern = input.terms.map(escapeRegExp).join('|');
   const stdout = await runRipgrep({ pattern, searchDir: input.kb.path });
-  const matches = parseRipgrepOutput({ stdout, searchDir: input.kb.path });
+  const matches = parseRipgrepOutput(stdout);
 
   const byPath = new Map<string, RawHit>();
   for (const match of matches) {
@@ -112,11 +112,7 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
         '!.kb/**',
         '--context',
         String(SNIPPET_CONTEXT_LINES),
-        '--no-heading',
-        '--with-filename',
-        '--line-number',
-        '--color',
-        'never',
+        '--json',
         input.pattern,
         input.searchDir,
       ],
@@ -136,28 +132,27 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
 }
 
 /**
- * Parse ripgrep `--no-heading --with-filename` output into one entry per note, with a snippet built from
- * the matching line and its captured context neighbors.
+ * Parse ripgrep `--json` output into one entry per note, with a snippet built from the matching line and
+ * its captured context neighbors.
  *
- * Each output line has the unambiguous form `<path><sep><lineNumber><sep><content>`, where `<sep>` is
- * `:` for a matched line and `-` for a context line. Because every path is rooted at `searchDir`, the
- * `<sep><digits><sep>` line-number field is located by scanning from the end of the known prefix — a
- * note path may itself contain digit-prefixed segments without being misclassified.
+ * ripgrep `--json` emits one JSON event object per output line (`begin`, `match`, `context`, `end`,
+ * `summary`). The `match` and `context` events carry the note path and line text in structured fields,
+ * so the path is unambiguous regardless of date-patterned directory or filename segments. Non-event
+ * lines and other event types are skipped.
  */
-function parseRipgrepOutput(input: { stdout: string; searchDir: string }): Array<{ path: string; snippet: string }> {
-  if (input.stdout.trim() === '') {
+function parseRipgrepOutput(stdout: string): Array<{ path: string; snippet: string }> {
+  if (stdout.trim() === '') {
     return [];
   }
 
   const entries: Array<{ path: string; snippet: string }> = [];
   const byPath = new Map<string, string[]>();
 
-  for (const line of input.stdout.split('\n')) {
-    if (line === '' || line === '--') {
-      // ripgrep separates context groups with `--`; blank lines carry no match data.
+  for (const line of stdout.split('\n')) {
+    if (line === '') {
       continue;
     }
-    const parsed = parseRipgrepLine(line, input.searchDir);
+    const parsed = parseRipgrepEvent(line);
     if (parsed === null) {
       continue;
     }
@@ -179,23 +174,51 @@ function parseRipgrepOutput(input: { stdout: string; searchDir: string }): Array
 }
 
 /**
- * Split one ripgrep output line into its note path and content. The line-number field is the first
- * `<sep><digits><sep>` run at or after the end of the `searchDir` prefix; `null` for a line that does not
- * belong to a file rooted at `searchDir`.
+ * Extract the note path and line text from one ripgrep `--json` event line; `null` for any line that is
+ * not a `match` or `context` event (`begin`/`end`/`summary` events and unparseable lines are skipped).
  */
-function parseRipgrepLine(line: string, searchDir: string): { path: string; content: string } | null {
-  if (!line.startsWith(searchDir)) {
+function parseRipgrepEvent(line: string): { path: string; content: string } | null {
+  let event: unknown;
+  try {
+    event = JSON.parse(line);
+  } catch {
     return null;
   }
-  const boundary = /[:-]\d+[:-]/.exec(line.slice(searchDir.length));
-  if (boundary === null) {
+  if (!isRipgrepLineEvent(event)) {
     return null;
   }
-  const fieldStart = searchDir.length + boundary.index;
-  return {
-    path: line.slice(0, fieldStart),
-    content: line.slice(fieldStart + boundary[0].length),
-  };
+  return { path: event.data.path.text, content: event.data.lines.text.replace(/\n$/, '') };
+}
+
+/** Shape of a ripgrep `--json` `match` or `context` event, narrowed to the fields this parser reads. */
+interface RipgrepLineEvent {
+  data: { path: { text: string }; lines: { text: string } };
+}
+
+/** Return true when the parsed value is a ripgrep `match` or `context` event with the expected fields. */
+function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return false;
+  }
+  if (value.type !== 'match' && value.type !== 'context') {
+    return false;
+  }
+  if (!('data' in value) || typeof value.data !== 'object' || value.data === null) {
+    return false;
+  }
+  const { data } = value;
+  return (
+    'path' in data &&
+    typeof data.path === 'object' &&
+    data.path !== null &&
+    'text' in data.path &&
+    typeof data.path.text === 'string' &&
+    'lines' in data &&
+    typeof data.lines === 'object' &&
+    data.lines !== null &&
+    'text' in data.lines &&
+    typeof data.lines.text === 'string'
+  );
 }
 
 /** Escape regex metacharacters so query terms are matched literally inside ripgrep's alternation. */
