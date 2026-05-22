@@ -1,0 +1,9 @@
+required:
+  - title
+  - type
+  - created
+  - updated
+  - tags
+  - owner
+optional:
+  - owner

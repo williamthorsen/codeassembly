@@ -1,0 +1,114 @@
+[
+  {
+    "path": "05-missing-frontmatter.md",
+    "line": 1,
+    "rule": "frontmatter.missing",
+    "severity": "error",
+    "message": "no frontmatter block found"
+  },
+  {
+    "path": "06-malformed-yaml.md",
+    "line": 1,
+    "rule": "frontmatter.parse",
+    "severity": "error",
+    "message": "YAML parse error: Flow sequence in block collection must be sufficiently indented and end with a ] at line 4, column 1:\n\ntags: [git, rebase\ncreated: 2026-04-12\n^\n"
+  },
+  {
+    "path": "07-empty-block.md",
+    "line": 1,
+    "rule": "frontmatter.empty",
+    "severity": "error",
+    "message": "frontmatter block is empty"
+  },
+  {
+    "path": "08-missing-required.md",
+    "line": 4,
+    "rule": "frontmatter.required",
+    "severity": "error",
+    "message": "missing required field: created"
+  },
+  {
+    "path": "08-missing-required.md",
+    "line": 4,
+    "rule": "frontmatter.required",
+    "severity": "error",
+    "message": "missing required field: updated"
+  },
+  {
+    "path": "08-missing-required.md",
+    "line": 4,
+    "rule": "frontmatter.required",
+    "severity": "error",
+    "message": "missing required field: tags"
+  },
+  {
+    "path": "09-unknown-type.md",
+    "line": 3,
+    "rule": "frontmatter.type",
+    "severity": "error",
+    "message": "\"postmortem\" not in vocabulary [howto, concept, reference, tutorial]"
+  },
+  {
+    "path": "10-bad-date-format.md",
+    "line": 4,
+    "rule": "frontmatter.date",
+    "severity": "error",
+    "message": "created: expected YYYY-MM-DD, got \"2026/04/12\""
+  },
+  {
+    "path": "11-bad-date-calendar.md",
+    "line": 5,
+    "rule": "frontmatter.date",
+    "severity": "error",
+    "message": "updated: \"2026-02-30\" is not a real calendar date"
+  },
+  {
+    "path": "12-tags-not-list.md",
+    "line": 6,
+    "rule": "frontmatter.tags",
+    "severity": "error",
+    "message": "tags must be a list"
+  },
+  {
+    "path": "13-aliased-tags.md",
+    "line": 6,
+    "rule": "frontmatter.tag-alias",
+    "severity": "warning",
+    "message": "tag \"vcs\" is an alias — use canonical form \"git\""
+  },
+  {
+    "path": "13-aliased-tags.md",
+    "line": 6,
+    "rule": "frontmatter.tag-alias",
+    "severity": "warning",
+    "message": "tag \"reactjs\" is an alias — use canonical form \"react\""
+  },
+  {
+    "path": "14-multi-defect.md",
+    "line": 3,
+    "rule": "frontmatter.type",
+    "severity": "error",
+    "message": "\"explainer\" not in vocabulary [howto, concept, reference, tutorial]"
+  },
+  {
+    "path": "14-multi-defect.md",
+    "line": 4,
+    "rule": "frontmatter.date",
+    "severity": "error",
+    "message": "created: \"2026-13-01\" is not a real calendar date"
+  },
+  {
+    "path": "14-multi-defect.md",
+    "line": 5,
+    "rule": "frontmatter.tag-alias",
+    "severity": "warning",
+    "message": "tag \"node.js\" is an alias — use canonical form \"nodejs\""
+  },
+  {
+    "path": "14-multi-defect.md",
+    "line": 6,
+    "rule": "frontmatter.required",
+    "severity": "error",
+    "message": "missing required field: updated"
+  }
+]

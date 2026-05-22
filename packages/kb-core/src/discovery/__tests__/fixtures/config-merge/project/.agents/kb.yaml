@@ -1,0 +1,8 @@
+kbs:
+  shared:
+    path: ./project-shared-kb
+    description: Project-local override of the shared KB
+  project-only:
+    path: ./project-only-kb
+    description: A KB declared only by the project
+    default: true

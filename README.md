@@ -10,5 +10,5 @@ See [`.agents/PROJECT.md`](.agents/PROJECT.md) for project structure, commands, 
 
 ```bash
 pnpm install
-pnpm run check  # Run all checks (typecheck, format, lint, test)
+nmr check  # Run all checks (typecheck, format, lint, test)
 ```

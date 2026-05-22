@@ -1,0 +1,2 @@
+# Marker file: presence of this .kb/ directory is what findKbRoot detects.
+types: [howto, concept, reference, tutorial]
