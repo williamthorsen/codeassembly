@@ -28,6 +28,22 @@ describe(recallNotes, () => {
     expect(matchedBasenames(hits)).toEqual(['legacy-runbook.md']);
   });
 
+  it('returns a note whose filename is date-patterned', async () => {
+    // A filename such as `2026-05-01-meeting-notes.md` must not have its `-05-` run misread
+    // as the ripgrep line-number field.
+    const hits = await recallNotes({ query: 'flummox', scopedKbs: notesVaultScope });
+
+    expect(matchedBasenames(hits)).toEqual(['2026-05-01-meeting-notes.md']);
+  });
+
+  it('returns a note stored under a date-patterned directory', async () => {
+    // A directory such as `2026-06-01` must not have its `-06-` run misread as the
+    // ripgrep line-number field.
+    const hits = await recallNotes({ query: 'grumbletwist', scopedKbs: notesVaultScope });
+
+    expect(matchedBasenames(hits)).toEqual(['daily-log.md']);
+  });
+
   it('attributes each hit to its source KB name and path', async () => {
     const hits = await recallNotes({ query: 'backpressure', scopedKbs: notesVaultScope });
 
