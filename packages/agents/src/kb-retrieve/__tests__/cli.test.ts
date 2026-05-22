@@ -36,6 +36,10 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['query', '--type'])).toThrow(/--type requires a value/);
   });
 
+  it('throws when a value-bearing flag has an empty inline value', () => {
+    expect(() => parseArgs(['query', '--type='])).toThrow(/--type requires a value/);
+  });
+
   it('throws on an unknown flag', () => {
     expect(() => parseArgs(['query', '--bogus'])).toThrow(/unknown flag/);
   });

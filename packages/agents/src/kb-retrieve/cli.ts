@@ -46,7 +46,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
         value = argv[index + 1] ?? null;
         index += 1;
       }
-      if (value === null || value.startsWith('--')) {
+      if (value === null || value === '' || value.startsWith('--')) {
         throw new Error(`--${key} requires a value`);
       }
       filters[key] = value;
