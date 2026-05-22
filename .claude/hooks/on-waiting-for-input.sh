@@ -12,9 +12,9 @@ INPUT=$(cat)
 REASON=$(echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('notification_type',''))" 2>/dev/null || echo "")
 
 case "$REASON" in
-  permission_prompt|elicitation_dialog|idle_prompt) ;;
-  *) exit 0 ;;
+permission_prompt | elicitation_dialog | idle_prompt) ;;
+*) exit 0 ;;
 esac
 
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-echo "{\"t\":\"$TIMESTAMP\",\"event\":\"waiting_for_input\",\"reason\":\"$REASON\"}" >> "$LOG_FILE"
+echo "{\"t\":\"$TIMESTAMP\",\"event\":\"waiting_for_input\",\"reason\":\"$REASON\"}" >>"$LOG_FILE"

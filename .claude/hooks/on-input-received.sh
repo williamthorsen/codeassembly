@@ -9,4 +9,4 @@ LOG_FILE="$RUN_DIR/run-log.jsonl"
 [ -f "$LOG_FILE" ] || exit 0
 
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-echo "{\"t\":\"$TIMESTAMP\",\"event\":\"input_received\"}" >> "$LOG_FILE"
+echo "{\"t\":\"$TIMESTAMP\",\"event\":\"input_received\"}" >>"$LOG_FILE"
