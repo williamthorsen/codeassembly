@@ -90,6 +90,18 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBe('no notes matched the query');
   });
 
+  it('distinguishes filtered-out matches from a no-hit query in the diagnostic', async () => {
+    const result = await runRetrieve({
+      argv: ['backpressure', '--folder', 'zzz-nonexistent'],
+      startDir: NOTES_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    expect(result.candidates).toEqual([]);
+    expect(result.diagnostic).toBe('all matches were filtered out');
+  });
+
   it('reports a diagnostic when no knowledge base is configured or discovered', async () => {
     const result = await runRetrieve({ argv: ['anything'], startDir: '/', now: NOW, home: FIXTURES });
 

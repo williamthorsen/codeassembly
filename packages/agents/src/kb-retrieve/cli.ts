@@ -151,7 +151,9 @@ export async function runRetrieve(input: {
 
   const result: RetrieveResult = { candidates, scopedKbs };
   if (candidates.length === 0) {
-    result.diagnostic = 'no notes matched the query';
+    // Distinguish a query that found nothing from a query that found hits which were then excluded by
+    // `--type` / `--tag` / `--folder`, so the caller knows whether to broaden the query or drop a filter.
+    result.diagnostic = hits.length === 0 ? 'no notes matched the query' : 'all matches were filtered out';
   }
   return result;
 }

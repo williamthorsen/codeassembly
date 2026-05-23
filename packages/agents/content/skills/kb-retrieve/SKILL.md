@@ -73,6 +73,7 @@ When the helper returns a `diagnostic` and no candidates, report the empty resul
 
 - `no knowledge base configured or discovered` — no `.kb/` folder was found and no registry is configured.
 - `no notes matched the query` — the knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
+- `all matches were filtered out` — the knowledge bases were searched and found hits, but every hit was excluded by `--type`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
 
 ## Completion
 
