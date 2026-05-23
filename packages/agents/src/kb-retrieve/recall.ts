@@ -139,8 +139,10 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
  * `summary`). The `match` and `context` events carry the note path and line text in structured fields,
  * so the path is unambiguous regardless of date-patterned directory or filename segments. Non-event
  * lines and other event types are skipped.
+ *
+ * Exported for direct unit testing of edge cases (malformed lines, snippet-line cap).
  */
-function parseRipgrepOutput(stdout: string): Array<{ path: string; snippet: string }> {
+export function parseRipgrepOutput(stdout: string): Array<{ path: string; snippet: string }> {
   if (stdout.trim() === '') {
     return [];
   }

@@ -2,7 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { recallNotes } from '../recall.ts';
+import { parseRipgrepOutput, recallNotes } from '../recall.ts';
 import type { ScopedKb } from '../types.ts';
 
 const NOTES_VAULT = join(import.meta.dirname, 'fixtures', 'notes-vault');
@@ -97,5 +97,22 @@ describe(recallNotes, () => {
     const hits = await recallNotes({ query: 'backpressure', scopedKbs: scope });
 
     expect(matchedBasenames(hits)).toEqual(['streams.md']);
+  });
+});
+
+describe(parseRipgrepOutput, () => {
+  it('skips a malformed JSON line and still returns valid matches', () => {
+    // A line that is not valid JSON must be dropped silently so a single corrupted
+    // event does not lose the surrounding valid matches in the same stream.
+    const stream = [
+      '{"type":"begin","data":{"path":{"text":"./a.md"}}}',
+      'not json',
+      String.raw`{"type":"match","data":{"path":{"text":"./a.md"},"lines":{"text":"hello world\n"},"line_number":1,"absolute_offset":0,"submatches":[]}}`,
+      '{"type":"end","data":{"path":{"text":"./a.md"},"binary_offset":null,"stats":{}}}',
+    ].join('\n');
+
+    const entries = parseRipgrepOutput(stream);
+
+    expect(entries).toEqual([{ path: './a.md', snippet: 'hello world' }]);
   });
 });
