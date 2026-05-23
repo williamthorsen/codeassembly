@@ -40,6 +40,27 @@ export async function normalizeHits(input: {
 
 // region | Helpers
 
+/** Computes whole days between a `YYYY-MM-DD` date string and `now`; `null` for an absent or unparseable value. */
+function computeAgeDays(dateValue: string | null, now: Date): number | null {
+  if (dateValue === null) {
+    return null;
+  }
+  const parsed = Date.parse(`${dateValue}T00:00:00Z`);
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+  return Math.floor((now.getTime() - parsed) / MILLISECONDS_PER_DAY);
+}
+
+/** Reads a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
+function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
+  if (extra === undefined) {
+    return null;
+  }
+  const value = extra[key];
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+}
+
 /** Parse a note from disk, returning `null` when the file cannot be read. */
 async function parseNoteSafely(path: string): Promise<ParsedNote | null> {
   try {
@@ -75,33 +96,6 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
     }
   }
   return true;
-}
-
-/** Projects a parsed note and its hit metadata onto a normalized candidate. */
-async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }): Promise<Candidate> {
-  const { hit, note, now } = input;
-  const frontmatter = note.frontmatter;
-
-  const title = frontmatter !== null && frontmatter.title !== '' ? frontmatter.title : basename(hit.path);
-  const type = frontmatter !== null && frontmatter.type !== '' ? frontmatter.type : null;
-  const tags = frontmatter?.tags ?? [];
-  const lastVerifiedAgeDays = computeAgeDays(extractString(frontmatter?.extra, 'last-verified'), now);
-  const supersession = await resolveSupersession({ path: hit.path, note });
-
-  const candidate: Candidate = {
-    path: hit.path,
-    title,
-    type,
-    tags,
-    snippet: hit.snippet,
-    lastVerifiedAgeDays,
-    supersession,
-    kbName: hit.kbName,
-  };
-  if (frontmatter === null) {
-    candidate.diagnostic = 'frontmatter missing or malformed; degraded to a low-signal candidate';
-  }
-  return candidate;
 }
 
 /**
@@ -149,25 +143,31 @@ async function resolveSupersession(input: { path: string; note: ParsedNote }): P
   return { superseded: true, canonicalPath };
 }
 
-/** Computes whole days between a `YYYY-MM-DD` date string and `now`; `null` for an absent or unparseable value. */
-function computeAgeDays(dateValue: string | null, now: Date): number | null {
-  if (dateValue === null) {
-    return null;
-  }
-  const parsed = Date.parse(`${dateValue}T00:00:00Z`);
-  if (Number.isNaN(parsed)) {
-    return null;
-  }
-  return Math.floor((now.getTime() - parsed) / MILLISECONDS_PER_DAY);
-}
+/** Projects a parsed note and its hit metadata onto a normalized candidate. */
+async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }): Promise<Candidate> {
+  const { hit, note, now } = input;
+  const frontmatter = note.frontmatter;
 
-/** Reads a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
-function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
-  if (extra === undefined) {
-    return null;
+  const title = frontmatter !== null && frontmatter.title !== '' ? frontmatter.title : basename(hit.path);
+  const type = frontmatter !== null && frontmatter.type !== '' ? frontmatter.type : null;
+  const tags = frontmatter?.tags ?? [];
+  const lastVerifiedAgeDays = computeAgeDays(extractString(frontmatter?.extra, 'last-verified'), now);
+  const supersession = await resolveSupersession({ path: hit.path, note });
+
+  const candidate: Candidate = {
+    path: hit.path,
+    title,
+    type,
+    tags,
+    snippet: hit.snippet,
+    lastVerifiedAgeDays,
+    supersession,
+    kbName: hit.kbName,
+  };
+  if (frontmatter === null) {
+    candidate.diagnostic = 'frontmatter missing or malformed; degraded to a low-signal candidate';
   }
-  const value = extra[key];
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+  return candidate;
 }
 
 // endregion | Helpers

@@ -44,13 +44,9 @@ export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] 
 
 // region | Helpers
 
-/** Splits a query string into lowercase search terms, dropping empties. */
-function tokenizeQuery(query: string): string[] {
-  return query
-    .toLowerCase()
-    .split(/\s+/)
-    .map((term) => term.trim())
-    .filter((term) => term.length > 0);
+/** Escape regex metacharacters so query terms are matched literally inside ripgrep's alternation. */
+function escapeRegExp(term: string): string {
+  return term.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 /**
@@ -68,6 +64,71 @@ function expandTerms(baseTerms: string[], aliases: AliasMap): string[] {
   return [...expanded];
 }
 
+/**
+ * Returns true when the path exists and is a directory.
+ *
+ * A genuinely absent path (`ENOENT` / `ENOTDIR`) is reported as `false` so the KB is skipped quietly.
+ * Any other `stat` failure — most importantly a permission error (`EACCES` / `EPERM`) on a path that
+ * does exist — is re-thrown so it surfaces rather than being silently indistinguishable from absence.
+ */
+async function isExistingDirectory(path: string): Promise<boolean> {
+  try {
+    const stats = await stat(path);
+    return stats.isDirectory();
+  } catch (error) {
+    if (isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR')) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/** Returns true when the error carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
+function isErrorCode(error: unknown, code: string): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
+}
+
+/** Returns true when the error is a child-process failure with the given exit code. */
+function isExitCode(error: unknown, code: number): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
+}
+
+/** Returns true when the error indicates the `rg` binary could not be spawned. */
+function isMissingBinary(error: unknown): boolean {
+  return isErrorCode(error, 'ENOENT');
+}
+
+/** Shape of a ripgrep `--json` `match` or `context` event, narrowed to the fields this parser reads. */
+interface RipgrepLineEvent {
+  data: { path: { text: string }; lines: { text: string } };
+}
+
+/** Returns true when the parsed value is a ripgrep `match` or `context` event with the expected fields. */
+function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
+    return false;
+  }
+  if (value.type !== 'match' && value.type !== 'context') {
+    return false;
+  }
+  if (!('data' in value) || typeof value.data !== 'object' || value.data === null) {
+    return false;
+  }
+  const { data } = value;
+  return (
+    'path' in data &&
+    typeof data.path === 'object' &&
+    data.path !== null &&
+    'text' in data.path &&
+    typeof data.path.text === 'string' &&
+    'lines' in data &&
+    typeof data.lines === 'object' &&
+    data.lines !== null &&
+    'text' in data.lines &&
+    typeof data.lines.text === 'string'
+  );
+}
+
 /** Loads a KB's `tag-aliases.yaml`, returning an empty map when the file is absent or unreadable. */
 async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   try {
@@ -78,57 +139,21 @@ async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   }
 }
 
-/** Runs a single ripgrep invocation across one KB and collect its hits, de-duplicated by note path. */
-async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHit[]> {
-  const pattern = input.terms.map(escapeRegExp).join('|');
-  const stdout = await runRipgrep({ pattern, searchDir: input.kb.path });
-  const matches = parseRipgrepOutput(stdout);
-
-  const byPath = new Map<string, RawHit>();
-  for (const match of matches) {
-    if (byPath.has(match.path)) {
-      continue;
-    }
-    byPath.set(match.path, {
-      path: match.path,
-      kbName: input.kb.name,
-      kbPath: input.kb.path,
-      snippet: match.snippet,
-    });
-  }
-  return [...byPath.values()];
-}
-
-/** Invokes ripgrep over `*.md` files and return its stdout; an empty match set yields an empty string. */
-async function runRipgrep(input: { pattern: string; searchDir: string }): Promise<string> {
+/**
+ * Extracts the note path and line text from one ripgrep `--json` event line; `null` for any line that is not a `match`
+ * or `context` event (`begin`/`end`/`summary` events and unparseable lines are skipped).
+ */
+function parseRipgrepEvent(line: string): { path: string; content: string } | null {
+  let event: unknown;
   try {
-    const { stdout } = await execFileAsync(
-      'rg',
-      [
-        '--ignore-case',
-        '--glob',
-        '*.md',
-        '--glob',
-        '!.kb/**',
-        '--context',
-        String(SNIPPET_CONTEXT_LINES),
-        '--json',
-        input.pattern,
-        input.searchDir,
-      ],
-      { maxBuffer: 32 * 1024 * 1024 },
-    );
-    return stdout;
-  } catch (error) {
-    // ripgrep exits 1 when no matches are found — that is an empty result, not a failure.
-    if (isExitCode(error, 1)) {
-      return '';
-    }
-    if (isMissingBinary(error)) {
-      throw new Error('kb-retrieve requires ripgrep (`rg`) on PATH. Install it and retry.');
-    }
-    throw error;
+    event = JSON.parse(line);
+  } catch {
+    return null;
   }
+  if (!isRipgrepLineEvent(event)) {
+    return null;
+  }
+  return { path: event.data.path.text, content: event.data.lines.text.replace(/\n$/, '') };
 }
 
 /**
@@ -175,91 +200,66 @@ export function parseRipgrepOutput(stdout: string): Array<{ path: string; snippe
   }));
 }
 
-/**
- * Extracts the note path and line text from one ripgrep `--json` event line; `null` for any line that is not a `match`
- * or `context` event (`begin`/`end`/`summary` events and unparseable lines are skipped).
- */
-function parseRipgrepEvent(line: string): { path: string; content: string } | null {
-  let event: unknown;
+/** Invokes ripgrep over `*.md` files and return its stdout; an empty match set yields an empty string. */
+async function runRipgrep(input: { pattern: string; searchDir: string }): Promise<string> {
   try {
-    event = JSON.parse(line);
-  } catch {
-    return null;
-  }
-  if (!isRipgrepLineEvent(event)) {
-    return null;
-  }
-  return { path: event.data.path.text, content: event.data.lines.text.replace(/\n$/, '') };
-}
-
-/** Shape of a ripgrep `--json` `match` or `context` event, narrowed to the fields this parser reads. */
-interface RipgrepLineEvent {
-  data: { path: { text: string }; lines: { text: string } };
-}
-
-/** Returns true when the parsed value is a ripgrep `match` or `context` event with the expected fields. */
-function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
-  if (typeof value !== 'object' || value === null || !('type' in value)) {
-    return false;
-  }
-  if (value.type !== 'match' && value.type !== 'context') {
-    return false;
-  }
-  if (!('data' in value) || typeof value.data !== 'object' || value.data === null) {
-    return false;
-  }
-  const { data } = value;
-  return (
-    'path' in data &&
-    typeof data.path === 'object' &&
-    data.path !== null &&
-    'text' in data.path &&
-    typeof data.path.text === 'string' &&
-    'lines' in data &&
-    typeof data.lines === 'object' &&
-    data.lines !== null &&
-    'text' in data.lines &&
-    typeof data.lines.text === 'string'
-  );
-}
-
-/** Escape regex metacharacters so query terms are matched literally inside ripgrep's alternation. */
-function escapeRegExp(term: string): string {
-  return term.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-}
-
-/**
- * Returns true when the path exists and is a directory.
- *
- * A genuinely absent path (`ENOENT` / `ENOTDIR`) is reported as `false` so the KB is skipped quietly.
- * Any other `stat` failure — most importantly a permission error (`EACCES` / `EPERM`) on a path that
- * does exist — is re-thrown so it surfaces rather than being silently indistinguishable from absence.
- */
-async function isExistingDirectory(path: string): Promise<boolean> {
-  try {
-    const stats = await stat(path);
-    return stats.isDirectory();
+    const { stdout } = await execFileAsync(
+      'rg',
+      [
+        '--ignore-case',
+        '--glob',
+        '*.md',
+        '--glob',
+        '!.kb/**',
+        '--context',
+        String(SNIPPET_CONTEXT_LINES),
+        '--json',
+        input.pattern,
+        input.searchDir,
+      ],
+      { maxBuffer: 32 * 1024 * 1024 },
+    );
+    return stdout;
   } catch (error) {
-    if (isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR')) {
-      return false;
+    // ripgrep exits 1 when no matches are found — that is an empty result, not a failure.
+    if (isExitCode(error, 1)) {
+      return '';
+    }
+    if (isMissingBinary(error)) {
+      throw new Error('kb-retrieve requires ripgrep (`rg`) on PATH. Install it and retry.');
     }
     throw error;
   }
 }
 
-/** Returns true when the error is a child-process failure with the given exit code. */
-function isExitCode(error: unknown, code: number): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
+/** Runs a single ripgrep invocation across one KB and collect its hits, de-duplicated by note path. */
+async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHit[]> {
+  const pattern = input.terms.map(escapeRegExp).join('|');
+  const stdout = await runRipgrep({ pattern, searchDir: input.kb.path });
+  const matches = parseRipgrepOutput(stdout);
+
+  const byPath = new Map<string, RawHit>();
+  for (const match of matches) {
+    if (byPath.has(match.path)) {
+      continue;
+    }
+    byPath.set(match.path, {
+      path: match.path,
+      kbName: input.kb.name,
+      kbPath: input.kb.path,
+      snippet: match.snippet,
+    });
+  }
+  return [...byPath.values()];
 }
 
-/** Returns true when the error carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
-function isErrorCode(error: unknown, code: string): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
-}
-
-/** Returns true when the error indicates the `rg` binary could not be spawned. */
-function isMissingBinary(error: unknown): boolean {
-  return isErrorCode(error, 'ENOENT');
+/** Splits a query string into lowercase search terms, dropping empties. */
+function tokenizeQuery(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length > 0);
 }
 
 // endregion | Helpers

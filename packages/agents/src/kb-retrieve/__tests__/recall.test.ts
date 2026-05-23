@@ -9,11 +9,6 @@ const NOTES_VAULT = join(import.meta.dirname, 'fixtures', 'notes-vault');
 
 const notesVaultScope: ScopedKb[] = [{ name: 'notes', path: NOTES_VAULT, via: 'discovery' }];
 
-/** Collect the basenames of the matched note paths for order-independent assertions. */
-function matchedBasenames(hits: ReadonlyArray<{ path: string }>): string[] {
-  return hits.map((hit) => hit.path.split('/').at(-1) ?? '').toSorted();
-}
-
 describe(recallNotes, () => {
   it('returns notes whose body contains a query term', async () => {
     const hits = await recallNotes({ query: 'backpressure', scopedKbs: notesVaultScope });
@@ -126,3 +121,8 @@ describe(parseRipgrepOutput, () => {
     expect(entries).toEqual([{ path: './a.md', snippet: 'hello world' }]);
   });
 });
+
+/** Collects the basenames of the matched note paths for order-independent assertions. */
+function matchedBasenames(hits: ReadonlyArray<{ path: string }>): string[] {
+  return hits.map((hit) => hit.path.split('/').at(-1) ?? '').toSorted();
+}

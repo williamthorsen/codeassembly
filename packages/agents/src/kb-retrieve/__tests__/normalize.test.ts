@@ -10,11 +10,6 @@ const NORMALIZE = join(import.meta.dirname, 'fixtures', 'normalize');
 // A fixed clock so freshness ages are deterministic across test runs.
 const NOW = new Date('2026-05-01T00:00:00Z');
 
-/** Build a `RawHit` for a fixture note path. */
-function hitFor(path: string): RawHit {
-  return { path, kbName: 'fixtures', kbPath: NOTES_VAULT, snippet: 'snippet text' };
-}
-
 describe(normalizeHits, () => {
   it('projects a well-formed note onto a candidate carrying its frontmatter fields', async () => {
     const candidates = await normalizeHits({
@@ -160,3 +155,8 @@ describe(normalizeHits, () => {
     expect(candidates).toEqual([]);
   });
 });
+
+/** Builds a `RawHit` for a fixture note path. */
+function hitFor(path: string): RawHit {
+  return { path, kbName: 'fixtures', kbPath: NOTES_VAULT, snippet: 'snippet text' };
+}

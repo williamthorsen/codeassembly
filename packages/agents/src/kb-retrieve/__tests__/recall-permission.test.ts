@@ -16,13 +16,6 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 const NOTES_VAULT = join(import.meta.dirname, 'fixtures', 'notes-vault');
 const scope: ScopedKb[] = [{ name: 'notes', path: NOTES_VAULT, via: 'discovery' }];
 
-/** Build a Node filesystem error carrying the given `code`. */
-function fsError(code: string): NodeJS.ErrnoException {
-  const error: NodeJS.ErrnoException = new Error(`mock ${code}`);
-  error.code = code;
-  return error;
-}
-
 describe('recallNotes permission handling', () => {
   it('skips a KB directory that is genuinely absent (ENOENT)', async () => {
     mockedStat.mockRejectedValue(fsError('ENOENT'));
@@ -40,3 +33,10 @@ describe('recallNotes permission handling', () => {
     await expect(recallNotes({ query: 'backpressure', scopedKbs: scope })).rejects.toThrow(/EACCES/);
   });
 });
+
+/** Builds a Node filesystem error carrying the given `code`. */
+function fsError(code: string): NodeJS.ErrnoException {
+  const error: NodeJS.ErrnoException = new Error(`mock ${code}`);
+  error.code = code;
+  return error;
+}
