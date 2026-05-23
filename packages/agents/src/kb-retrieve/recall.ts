@@ -14,12 +14,12 @@ const execFileAsync = promisify(execFile);
 const SNIPPET_CONTEXT_LINES = 1;
 
 /**
- * Run ripgrep over the note bodies and frontmatter of every in-scope KB and return the raw hits.
+ * Runs ripgrep over the note bodies and frontmatter of every in-scope KB and return the raw hits.
  *
- * The query is tokenized on whitespace; each term is also expanded through the KB's `tag-aliases.yaml`
- * so a query term that is a known alias additionally matches notes carrying its canonical tag. Terms are
- * combined disjunctively — a note matching any term is a hit. Each note appears at most once per KB; its
- * snippet is drawn from the first matching line and its immediate neighbors.
+ * The query is tokenized on whitespace; each term is also expanded through the KB's `tag-aliases.yaml` so that a query
+ * term that is a known alias additionally matches notes carrying its canonical tag. Terms are combined disjunctively:
+ * A note matching any term is a hit. Each note appears at most once per KB; its snippet is drawn from the first
+ * matching line and its immediate neighbors.
  *
  * ripgrep is required on `PATH`; an absent binary throws with a remediation hint.
  */
@@ -44,7 +44,7 @@ export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] 
 
 // region | Helpers
 
-/** Split a query string into lowercase search terms, dropping empties. */
+/** Splits a query string into lowercase search terms, dropping empties. */
 function tokenizeQuery(query: string): string[] {
   return query
     .toLowerCase()
@@ -54,8 +54,8 @@ function tokenizeQuery(query: string): string[] {
 }
 
 /**
- * Expand each base term with its canonical tag form. When a term is a known alias, the canonical tag is
- * added as an extra search term; notes carry canonical tags only, so this lets an alias query match them.
+ * Expands each base term with its canonical tag form. When a term is a known alias, the canonical tag is added as an
+ * extra search term; notes carry canonical tags only, so this lets an alias query match them.
  */
 function expandTerms(baseTerms: string[], aliases: AliasMap): string[] {
   const expanded = new Set(baseTerms);
@@ -68,7 +68,7 @@ function expandTerms(baseTerms: string[], aliases: AliasMap): string[] {
   return [...expanded];
 }
 
-/** Load a KB's `tag-aliases.yaml`, returning an empty map when the file is absent or unreadable. */
+/** Loads a KB's `tag-aliases.yaml`, returning an empty map when the file is absent or unreadable. */
 async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   try {
     return await loadAliases({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
@@ -78,7 +78,7 @@ async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   }
 }
 
-/** Run a single ripgrep invocation across one KB and collect its hits, de-duplicated by note path. */
+/** Runs a single ripgrep invocation across one KB and collect its hits, de-duplicated by note path. */
 async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHit[]> {
   const pattern = input.terms.map(escapeRegExp).join('|');
   const stdout = await runRipgrep({ pattern, searchDir: input.kb.path });
@@ -99,7 +99,7 @@ async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHi
   return [...byPath.values()];
 }
 
-/** Invoke ripgrep over `*.md` files and return its stdout; an empty match set yields an empty string. */
+/** Invokes ripgrep over `*.md` files and return its stdout; an empty match set yields an empty string. */
 async function runRipgrep(input: { pattern: string; searchDir: string }): Promise<string> {
   try {
     const { stdout } = await execFileAsync(
@@ -132,8 +132,8 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
 }
 
 /**
- * Parse ripgrep `--json` output into one entry per note, with a snippet built from the matching line and
- * its captured context neighbors.
+ * Parses ripgrep `--json` output into one entry per note, with a snippet built from the matching line and its
+ * captured context neighbors.
  *
  * ripgrep `--json` emits one JSON event object per output line (`begin`, `match`, `context`, `end`,
  * `summary`). The `match` and `context` events carry the note path and line text in structured fields,
@@ -176,8 +176,8 @@ export function parseRipgrepOutput(stdout: string): Array<{ path: string; snippe
 }
 
 /**
- * Extract the note path and line text from one ripgrep `--json` event line; `null` for any line that is
- * not a `match` or `context` event (`begin`/`end`/`summary` events and unparseable lines are skipped).
+ * Extracts the note path and line text from one ripgrep `--json` event line; `null` for any line that is not a `match`
+ * or `context` event (`begin`/`end`/`summary` events and unparseable lines are skipped).
  */
 function parseRipgrepEvent(line: string): { path: string; content: string } | null {
   let event: unknown;
@@ -197,7 +197,7 @@ interface RipgrepLineEvent {
   data: { path: { text: string }; lines: { text: string } };
 }
 
-/** Return true when the parsed value is a ripgrep `match` or `context` event with the expected fields. */
+/** Returns true when the parsed value is a ripgrep `match` or `context` event with the expected fields. */
 function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
   if (typeof value !== 'object' || value === null || !('type' in value)) {
     return false;
@@ -229,7 +229,7 @@ function escapeRegExp(term: string): string {
 }
 
 /**
- * Return true when the path exists and is a directory.
+ * Returns true when the path exists and is a directory.
  *
  * A genuinely absent path (`ENOENT` / `ENOTDIR`) is reported as `false` so the KB is skipped quietly.
  * Any other `stat` failure — most importantly a permission error (`EACCES` / `EPERM`) on a path that
@@ -247,17 +247,17 @@ async function isExistingDirectory(path: string): Promise<boolean> {
   }
 }
 
-/** Return true when the error is a child-process failure with the given exit code. */
+/** Returns true when the error is a child-process failure with the given exit code. */
 function isExitCode(error: unknown, code: number): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
 }
 
-/** Return true when the error carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
+/** Returns true when the error carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
 function isErrorCode(error: unknown, code: string): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
 }
 
-/** Return true when the error indicates the `rg` binary could not be spawned. */
+/** Returns true when the error indicates the `rg` binary could not be spawned. */
 function isMissingBinary(error: unknown): boolean {
   return isErrorCode(error, 'ENOENT');
 }

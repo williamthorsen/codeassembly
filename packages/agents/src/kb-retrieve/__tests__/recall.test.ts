@@ -29,16 +29,14 @@ describe(recallNotes, () => {
   });
 
   it('returns a note whose filename is date-patterned', async () => {
-    // A filename such as `2026-05-01-meeting-notes.md` must not have its `-05-` run misread
-    // as the ripgrep line-number field.
+    // A filename such as 2026-05-01-meeting-notes.md must not have its `-05-` run misread as ripgrep line number.
     const hits = await recallNotes({ query: 'flummox', scopedKbs: notesVaultScope });
 
     expect(matchedBasenames(hits)).toEqual(['2026-05-01-meeting-notes.md']);
   });
 
   it('returns a note stored under a date-patterned directory', async () => {
-    // A directory such as `2026-06-01` must not have its `-06-` run misread as the
-    // ripgrep line-number field.
+    // A directory such as `2026-06-01` must not have its `-06-` run misread as the ripgrep line-number field.
     const hits = await recallNotes({ query: 'grumbletwist', scopedKbs: notesVaultScope });
 
     expect(matchedBasenames(hits)).toEqual(['daily-log.md']);
@@ -90,11 +88,10 @@ describe(recallNotes, () => {
   });
 
   it('returns a single hit and a capped snippet for a note with multiple matches', async () => {
-    // `multi-match.md` carries the unique term on two non-adjacent lines so ripgrep emits
-    // more than three line events for the file. The note must surface as one hit (not
-    // duplicated per match), and its snippet must include only the first match's window —
-    // the second match falls beyond the `SNIPPET_CONTEXT_LINES * 2 + 1` = 3 line cap in
-    // `parseRipgrepOutput`.
+    // multi-match.md carries the unique term on two non-adjacent lines, so ripgrep emits more than three line events
+    // for the file.
+    // The note must surface as one hit (not duplicated per match), and its snippet must include only the 1st match's
+    // window; the 2nd match falls beyond the `SNIPPET_CONTEXT_LINES * 2 + 1` = 3 line cap in `parseRipgrepOutput`.
     const hits = await recallNotes({ query: 'thunderfish', scopedKbs: notesVaultScope });
 
     expect(matchedBasenames(hits)).toEqual(['multi-match.md']);
@@ -115,8 +112,8 @@ describe(recallNotes, () => {
 
 describe(parseRipgrepOutput, () => {
   it('skips a malformed JSON line and still returns valid matches', () => {
-    // A line that is not valid JSON must be dropped silently so a single corrupted
-    // event does not lose the surrounding valid matches in the same stream.
+    // A line that is not valid JSON must be dropped silently, so that a single corrupted event does not lose the
+    // surrounding valid matches in the same stream.
     const stream = [
       '{"type":"begin","data":{"path":{"text":"./a.md"}}}',
       'not json',

@@ -1,9 +1,8 @@
 // Shape of the kb-retrieve helper's candidate table and the inputs the helper modules exchange.
 //
-// The candidate table is the helper's stable contract with `SKILL.md`: the helper performs mechanical
-// recall and emits raw signals (freshness age, tags, supersession), and the agent ranks and presents.
-// The shape is deliberately backend-agnostic so a future non-ripgrep recall can populate the same
-// structure without changing `SKILL.md`.
+// The candidate table is the helper's stable contract with `SKILL.md`: the helper performs mechanical recall and emits
+// raw signals (freshness age, tags, supersession), and the agent ranks and presents. The shape is deliberately
+// backend-agnostic so a future non-ripgrep recall can populate the same structure without changing `SKILL.md`.
 
 /** A knowledge base resolved as in-scope for the current query. */
 export interface ScopedKb {

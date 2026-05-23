@@ -1,11 +1,11 @@
 /**
- * Post-build smoke test: build every skill helper bundle and run each `.mjs` under `node`, asserting it
- * exits 0 and prints valid JSON to stdout.
+ * Post-build smoke test: Build every skill helper bundle and run each `.mjs` under `node`, asserting it exits 0 and
+ * prints valid JSON to stdout.
  *
- * Unit tests run the TypeScript source through vitest and never exercise the bundled artifact. The
- * bundle carries a `createRequire` banner, the `format: 'esm'` option, and the `conditions: ['source']`
- * resolution setting; a regression to any of them would crash the installed helper at load time,
- * undetected by the unit suite. This test runs the built bundle exactly as an installed skill would.
+ * Unit tests run the TypeScript source through vitest and never exercise the bundled artifact. The bundle carries a
+ * `createRequire` banner, the `format: 'esm'` option, and the `conditions: ['source']` resolution setting; a
+ * regression to any of them would crash the installed helper at load time, undetected by the unit suite.
+ * This test runs the built bundle exactly as an installed skill would.
  */
 import { execFile } from 'node:child_process';
 import path from 'node:path';

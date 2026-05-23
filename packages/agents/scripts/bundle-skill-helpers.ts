@@ -2,14 +2,14 @@
  * Build step: bundle each skill's TypeScript helper into a single self-contained `.mjs` placed inside
  * the skill's content directory.
  *
- * A skill installs to a platform directory outside the monorepo, so it cannot import a private workspace
- * package. esbuild bundles the helper with `@codeassembly/kb-core` and its `yaml` / `zod` dependencies
- * inlined, producing a file that runs under `node` with no monorepo packages present on disk. The bundle
- * is written into `content/skills/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
+ * A skill installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
+ * esbuild bundles the helper with `@codeassembly/kb-core` and its `yaml` / `zod` dependencies inlined, producing
+ * a file that runs under `node` with no monorepo packages present on disk.
+ * The bundle is written into `content/skills/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
  * and the dev and built layouts both ship the helper.
  *
- * The bundle list is a plain array of `{ entry, outFile }` pairs; the sibling kb-add and kb-curate
- * skills extend it by appending an entry.
+ * The bundle list is a plain array of `{ entry, outFile }` pairs;
+ * the sibling kb-add and kb-curate skills extend it by appending an entry.
  */
 import path from 'node:path';
 import process from 'node:process';
@@ -36,12 +36,12 @@ export const targets: BundleTarget[] = [
   },
 ];
 
-// A CommonJS dependency (`yaml`) reaches Node built-ins via bare `require('process')` calls. esbuild's
-// ESM output otherwise has no `require`, so this banner restores a real one via `createRequire`.
+// A CommonJS dependency (`yaml`) reaches Node built-ins via bare `require('process')` calls.
+// esbuild's ESM output otherwise has no `require`, so this banner restores a real one via `createRequire`.
 const requireShim =
   "import { createRequire as __cjsCreateRequire } from 'node:module';\nconst require = __cjsCreateRequire(import.meta.url);";
 
-/** Bundle every skill helper in `targets`, writing each `.mjs` into its skill's content directory. */
+/** Bundles every skill helper in `targets`, writing each `.mjs` into its skill's content directory. */
 export async function bundleSkillHelpers(): Promise<void> {
   for (const target of targets) {
     await build({

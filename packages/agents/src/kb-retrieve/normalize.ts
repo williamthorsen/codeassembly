@@ -12,13 +12,12 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const MAX_SUPERSESSION_HOPS = 32;
 
 /**
- * Normalize raw ripgrep hits into the candidate table.
+ * Normalizes raw ripgrep hits into the candidate table.
  *
- * Each hit's frontmatter is parsed; the `--type`, `--tag`, and `--folder` filters are applied as
- * post-filters on the parsed frontmatter and the note path; a `superseded-by` chain is followed to the
- * canonical successor with a cycle guard; and `last-verified` is converted to an age in whole days
- * against `now`. Notes with missing or malformed frontmatter degrade to a low-signal candidate carrying
- * a diagnostic rather than being dropped.
+ * Each hit's frontmatter is parsed; the `--type`, `--tag`, and `--folder` filters are applied as post-filters on the
+ * parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
+ * guard; and `last-verified` is converted to an age in whole days against `now`. Notes with missing or malformed
+ * frontmatter degrade to a low-signal candidate carrying a diagnostic rather than being dropped.
  */
 export async function normalizeHits(input: {
   hits: RawHit[];
@@ -51,9 +50,8 @@ async function parseNoteSafely(path: string): Promise<ParsedNote | null> {
 }
 
 /**
- * Apply the mechanical `--type`, `--tag`, and `--folder` filters. A note with no parseable frontmatter
- * fails `--type` and `--tag` (it carries no typed fields) but is still subject to the path-based
- * `--folder` filter.
+ * Applies the mechanical `--type`, `--tag`, and `--folder` filters. A note with no parseable frontmatter fails
+ * `--type` and `--tag` (it carries no typed fields) but is still subject to the path-based `--folder` filter.
  */
 function passesFilters(input: { note: ParsedNote; path: string; filters: RecallFilters }): boolean {
   const { note, path, filters } = input;
@@ -79,7 +77,7 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
   return true;
 }
 
-/** Project a parsed note and its hit metadata onto a normalized candidate. */
+/** Projects a parsed note and its hit metadata onto a normalized candidate. */
 async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }): Promise<Candidate> {
   const { hit, note, now } = input;
   const frontmatter = note.frontmatter;
@@ -107,9 +105,9 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }):
 }
 
 /**
- * Follow a note's `superseded-by` chain to its canonical successor. Each hop's frontmatter is parsed and
- * inspected for a further `superseded-by`. A repeated path or an unreadable hop ends the walk; cycles are
- * reported in the `diagnostic` field rather than throwing.
+ * Follows a note's `superseded-by` chain to its canonical successor. Each hop's frontmatter is parsed and inspected
+ * for a further `superseded-by`. A repeated path or an unreadable hop ends the walk; cycles are reported in the
+ * `diagnostic` field rather than throwing.
  */
 async function resolveSupersession(input: { path: string; note: ParsedNote }): Promise<Supersession> {
   const firstHop = extractString(input.note.frontmatter?.extra, 'superseded-by');
@@ -151,7 +149,7 @@ async function resolveSupersession(input: { path: string; note: ParsedNote }): P
   return { superseded: true, canonicalPath };
 }
 
-/** Compute whole days between a `YYYY-MM-DD` date string and `now`; `null` for an absent or unparseable value. */
+/** Computes whole days between a `YYYY-MM-DD` date string and `now`; `null` for an absent or unparseable value. */
 function computeAgeDays(dateValue: string | null, now: Date): number | null {
   if (dateValue === null) {
     return null;
@@ -163,7 +161,7 @@ function computeAgeDays(dateValue: string | null, now: Date): number | null {
   return Math.floor((now.getTime() - parsed) / MILLISECONDS_PER_DAY);
 }
 
-/** Read a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
+/** Reads a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
 function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
   if (extra === undefined) {
     return null;

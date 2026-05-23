@@ -4,13 +4,13 @@ import { findKbRoot, loadKbConfig } from '@codeassembly/kb-core/discovery';
 import type { ScopedKb } from './types.ts';
 
 /**
- * Resolve which knowledge bases a query should search.
+ * Resolves which knowledge bases a query should search.
  *
- * Default scope is the `.kb/`-discovered KB nearest `startDir` plus the registry's default-marked KB
- * (the global vault). `allKbs` widens scope to every entry in the merged `kb.yaml` registry. Entries are
- * de-duplicated by absolute path so a discovered KB that also appears in the registry is searched once.
- * When neither a `.kb/` root nor any registry entry is found, the result is empty — callers report that
- * as an empty result rather than an error.
+ * Default scope is the `.kb/`-discovered KB nearest `startDir` plus registry's default-marked KB (the global vault).
+ * `allKbs` widens scope to every entry in the merged `kb.yaml` registry.
+ * Entries are de-duplicated by absolute path so a discovered KB that also appears in the registry is searched once.
+ * When neither a `.kb/` root nor any registry entry is found, the result is empty — callers report that as an empty
+ * result rather than an error.
  *
  * `home` overrides the directory the user-global `kb.yaml` is read from; it defaults to the real `$HOME`
  * and exists so tests can isolate registry resolution from the developer's environment.
@@ -56,11 +56,11 @@ export async function resolveScope(input: { startDir: string; allKbs: boolean; h
 // region | Helpers
 
 /**
- * Load the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config.
+ * Loads the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config.
  *
- * A defective project- or user-level `kb.yaml` would otherwise throw out of `resolveScope` and break the
- * structured `RetrieveResult` contract that every other failure path through `runRetrieve` honors. The
- * empty result is reported through the standard no-KB diagnostic instead.
+ * A defective project- or user-level `kb.yaml` would otherwise throw out of `resolveScope` and break the structured
+ * `RetrieveResult` contract that every other failure path through `runRetrieve` honors. The empty result is reported
+ * through the standard no-KB diagnostic instead.
  */
 async function loadKbConfigSafely(input: { projectDir: string; home?: string }): Promise<KbConfig> {
   try {
