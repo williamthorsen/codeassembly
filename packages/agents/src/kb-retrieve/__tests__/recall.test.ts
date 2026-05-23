@@ -89,6 +89,19 @@ describe(recallNotes, () => {
     expect(hits[0]?.snippet).toContain('backpressure');
   });
 
+  it('returns a single hit and a capped snippet for a note with multiple matches', async () => {
+    // `multi-match.md` carries the unique term on two non-adjacent lines so ripgrep emits
+    // more than three line events for the file. The note must surface as one hit (not
+    // duplicated per match), and its snippet must include only the first match's window —
+    // the second match falls beyond the `SNIPPET_CONTEXT_LINES * 2 + 1` = 3 line cap in
+    // `parseRipgrepOutput`.
+    const hits = await recallNotes({ query: 'thunderfish', scopedKbs: notesVaultScope });
+
+    expect(matchedBasenames(hits)).toEqual(['multi-match.md']);
+    expect(hits[0]?.snippet).toContain('first thunderfish');
+    expect(hits[0]?.snippet).not.toContain('second thunderfish');
+  });
+
   it('skips a scoped KB whose path does not exist on disk', async () => {
     const scope: ScopedKb[] = [
       { name: 'missing', path: join(NOTES_VAULT, 'no-such-dir'), via: 'registry-all' },
