@@ -30,6 +30,10 @@ export type WriteOutcome = WriteSuccess | WriteFailure;
  * The target folder is created with `mkdir -p` semantics when absent. On filename collision the function returns a
  * structured error without modifying anything on disk. Otherwise the note is written atomically via a same-directory
  * temp file plus `rename`, so a process kill mid-write cannot leave a partial file at the destination path.
+ *
+ * The collision check is not atomic with the subsequent rename: a second invocation that completes between the
+ * `pathExists` probe and the final rename will be silently overwritten. Single-user CLI use is safe; concurrent
+ * invocations against the same KB must be serialized by the caller.
  */
 export async function writeNote(input: {
   kbPath: string;
