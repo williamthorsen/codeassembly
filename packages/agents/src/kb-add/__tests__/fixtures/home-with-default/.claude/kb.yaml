@@ -5,3 +5,6 @@ kbs:
     path: ../../vault-b
     description: Fixture global vault
     default: true
+  named-vault-a:
+    path: ../../vault-a
+    description: Fixture vault A registered by name
