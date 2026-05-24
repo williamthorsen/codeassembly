@@ -73,20 +73,25 @@ In default mode, present the proposed KB, folder, type, title, tags, and body to
 
 ### 7. Invoke the helper
 
-Pipe the composed body to the bundled helper:
+Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies legible without the quoting and escaping gymnastics that `echo "$BODY"` invites once the note contains backticks, blank lines, or shell metacharacters:
 
 ```bash
-echo "$BODY" | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
+cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
   --type <type> --title "<title>" \
   [--kb <name>] [--folder <kb-relative-folder>] \
   [--tags <comma,separated>] [--last-verified YYYY-MM-DD]
+<note body, may span multiple lines and contain any characters>
+EOF
 ```
 
 Or, when the skill directory is known:
 
 ```bash
-echo "$BODY" | node {platform_home_dir}/skills/kb-add/kb-add.mjs \
+cat <<'EOF' | node {platform_home_dir}/skills/kb-add/kb-add.mjs \
   --type howto --title "Configure pnpm workspaces" --tags "pnpm,workspaces"
+Configure pnpm workspaces by adding a `pnpm-workspace.yaml` at the repo
+root that lists each package directory under `packages:`.
+EOF
 ```
 
 The helper prints a JSON object to stdout:
