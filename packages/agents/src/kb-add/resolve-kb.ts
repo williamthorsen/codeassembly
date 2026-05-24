@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 import type { KbConfig, KbConfigEntry } from '@codeassembly/kb-core';
 import { findKbRoot, loadKbConfig } from '@codeassembly/kb-core/discovery';
 
@@ -62,11 +64,13 @@ export async function resolveKb(input: {
 // region | Helpers
 
 /**
- * Loads the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config.
+ * Loads the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config and emitting
+ * a warning to stderr so the operator can see why the registry did not contribute entries.
  *
  * A defective project- or user-level `kb.yaml` would otherwise throw out of `resolveKb` and break the structured
- * `AddResult` contract that every other failure path honors. The empty result surfaces through the standard
- * no-KB-resolvable outcome instead.
+ * `AddResult` contract that every other failure path honors. Without the warning, a permission error or YAML
+ * defect looked identical to "no config file at all," which made the resulting `no-kb-resolvable` failure hard
+ * to diagnose.
  */
 async function loadKbConfigSafely(input: { projectDir: string; home?: string }): Promise<KbConfig> {
   try {
@@ -74,7 +78,9 @@ async function loadKbConfigSafely(input: { projectDir: string; home?: string }):
       projectDir: input.projectDir,
       ...(input.home !== undefined && { home: input.home }),
     });
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-add: warning: could not load kb.yaml registry: ${message}\n`);
     return { entries: [], sources: {} };
   }
 }

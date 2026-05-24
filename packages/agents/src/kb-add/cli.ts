@@ -5,6 +5,7 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
+import type { AliasMap, KbRoot } from '@codeassembly/kb-core';
 import { loadSchema } from '@codeassembly/kb-core/schema';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
@@ -135,10 +136,7 @@ export async function runAdd(input: {
   const kb = resolved.kb;
 
   const kbRoot = { path: kb.path, kbDir: `${kb.path}/.kb`, via: 'ancestor-walk' as const };
-  const [schema, aliases] = await Promise.all([
-    loadSchema({ kbRoot }),
-    loadAliases({ kbRoot }).catch(() => new Map<string, string>()),
-  ]);
+  const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
 
   const prep = prepareNote({ args, schema, aliases, now: input.now });
   if (!prep.ok) {
@@ -168,6 +166,9 @@ export async function runAdd(input: {
         message: `a note already exists at the target path; pick a different title or merge into the existing note`,
         details: { existingPath: write.existingPath },
       };
+    }
+    if (write.reason === 'invalid-folder') {
+      return { ok: false, error: 'invalid-args', message: write.message };
     }
     return { ok: false, error: 'invalid-title', message: write.message };
   }
@@ -211,6 +212,21 @@ function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | nu
     }
   }
   return null;
+}
+
+/**
+ * Loads tag aliases, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map and emitting a warning
+ * to stderr so the operator can see why canonicalization was skipped. Without the warning, an aliases-load failure
+ * looked indistinguishable from "no aliases defined" and silently shipped uncanonicalized tags.
+ */
+async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasMap> {
+  try {
+    return await loadAliases({ kbRoot: input.kbRoot });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-add: warning: could not load tag aliases: ${message}\n`);
+    return new Map();
+  }
 }
 
 /** Splits a comma-separated tag string into individual tags, dropping empties and trimming whitespace. */

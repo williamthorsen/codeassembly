@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -42,6 +42,10 @@ describe(composeFilename, () => {
 
   it('rejects a title containing a newline', () => {
     expect(composeFilename('foo\nbar')).toMatchObject({ ok: false, reason: 'invalid-title' });
+  });
+
+  it('rejects a title containing a carriage return', () => {
+    expect(composeFilename('foo\rbar')).toMatchObject({ ok: false, reason: 'invalid-title' });
   });
 
   it('rejects a literal . or .. title', () => {
@@ -109,6 +113,28 @@ describe(writeNote, () => {
     expect(content).toBe('pre-existing content\n');
   });
 
+  it('refuses to overwrite an existing file under a nested folder and preserves its content', async () => {
+    const nestedDir = join(kbPath, 'languages', 'typescript');
+    await mkdir(nestedDir, { recursive: true });
+    await writeFile(join(nestedDir, 'Generics.md'), 'pre-existing nested content\n', 'utf8');
+
+    const outcome = await writeNote({
+      kbPath,
+      folder: 'languages/typescript',
+      title: 'Generics',
+      frontmatter: baseFrontmatter,
+      body: 'New body.\n',
+    });
+
+    expect(outcome).toEqual({
+      ok: false,
+      reason: 'collision',
+      existingPath: join(nestedDir, 'Generics.md'),
+    });
+    const content = await readFile(join(nestedDir, 'Generics.md'), 'utf8');
+    expect(content).toBe('pre-existing nested content\n');
+  });
+
   it('returns invalid-title for a path-separator title without writing', async () => {
     const outcome = await writeNote({
       kbPath,
@@ -134,5 +160,46 @@ describe(writeNote, () => {
 
     const entries = await readdir(kbPath);
     expect(entries).toEqual(['Hello.md']);
+  });
+
+  it('refuses a folder that escapes the KB root via .. without writing or creating directories', async () => {
+    const outcome = await writeNote({
+      kbPath,
+      folder: '../../etc',
+      title: 'Escape',
+      frontmatter: baseFrontmatter,
+      body: 'Body.\n',
+    });
+
+    expect(outcome).toMatchObject({ ok: false, reason: 'invalid-folder' });
+    const entries = await readdir(kbPath);
+    expect(entries).toEqual([]);
+  });
+
+  it('refuses a folder that uses nested .. to climb out of the KB root', async () => {
+    const outcome = await writeNote({
+      kbPath,
+      folder: 'a/../../sibling',
+      title: 'Escape',
+      frontmatter: baseFrontmatter,
+      body: 'Body.\n',
+    });
+
+    expect(outcome).toMatchObject({ ok: false, reason: 'invalid-folder' });
+  });
+
+  it('accepts a folder that uses .. but stays inside the KB root', async () => {
+    const outcome = await writeNote({
+      kbPath,
+      folder: 'a/b/..',
+      title: 'Inside',
+      frontmatter: baseFrontmatter,
+      body: '',
+    });
+
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) {
+      expect(outcome.path).toBe(join(kbPath, 'a', 'Inside.md'));
+    }
   });
 });

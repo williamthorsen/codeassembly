@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 
 import type { Frontmatter } from '@codeassembly/kb-core';
 import { writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
@@ -14,6 +14,7 @@ export interface WriteSuccess {
 /** Categorical write failures the helper surfaces as structured results. */
 export type WriteFailure =
   | { ok: false; reason: 'invalid-title'; message: string }
+  | { ok: false; reason: 'invalid-folder'; message: string }
   | { ok: false; reason: 'collision'; existingPath: string };
 
 /** The outcome of attempting to write a prepared note. */
@@ -43,6 +44,13 @@ export async function writeNote(input: {
   }
 
   const targetDir = input.folder === null ? input.kbPath : join(input.kbPath, input.folder);
+  if (!isWithinKb({ kbPath: input.kbPath, targetDir })) {
+    return {
+      ok: false,
+      reason: 'invalid-folder',
+      message: `folder "${input.folder ?? ''}" resolves outside the KB root`,
+    };
+  }
   const targetPath = join(targetDir, filenameOutcome.filename);
 
   if (await pathExists(targetPath)) {
@@ -78,8 +86,9 @@ export function composeFilename(
   if (trimmed.includes('\n') || trimmed.includes('\r')) {
     return { ok: false, reason: 'invalid-title', message: 'title cannot contain newlines' };
   }
-  // The destination directory is computed from `kbPath` + `folder`, so a `.` or `..` title would write to the parent
-  // directory under a misleading filename. Reject it.
+  // `composeFilename` appends `.md`, so a `.` title becomes `.md` and `..` becomes `..md`. Those are hidden-file
+  // names that an agent cannot have meant to choose — and on case-insensitive filesystems they collide with
+  // existing dotfiles. Reject so the title-to-filename mapping stays predictable.
   if (trimmed === '.' || trimmed === '..') {
     return { ok: false, reason: 'invalid-title', message: `title cannot be "${trimmed}"` };
   }
@@ -112,6 +121,20 @@ async function pathExists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * Returns true when `targetDir` resolves to a location inside the KB root (or to the root itself).
+ * Compares fully resolved paths so `..` segments or symlink-style escapes are caught before any directory is
+ * created or any file is written.
+ */
+function isWithinKb(input: { kbPath: string; targetDir: string }): boolean {
+  const resolvedRoot = resolve(input.kbPath);
+  const resolvedTarget = resolve(input.targetDir);
+  if (resolvedTarget === resolvedRoot) {
+    return true;
+  }
+  return resolvedTarget.startsWith(resolvedRoot + sep);
 }
 
 // endregion | Helpers
