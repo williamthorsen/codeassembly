@@ -187,7 +187,9 @@ export async function runAdd(input: {
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches.
+ * symlinked invocation path still matches. On a `realpathSync` failure (broken symlink, permission denied) the
+ * function emits a warning to stderr and returns `false`, matching the degrade-with-warning pattern used by
+ * `loadAliasesWithWarning` and `loadKbConfigSafely` so silent skips do not hide environment problems.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -196,7 +198,9 @@ function isEntryPoint(): boolean {
   }
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-add: warning: could not determine entry point: ${message}\n`);
     return false;
   }
 }
