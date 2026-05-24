@@ -35,7 +35,10 @@ export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: 
   const { args, schema, aliases, now } = input;
 
   const originalTags = [...args.tags];
-  const canonicalTags = originalTags.map((tag) => canonicalize(tag, aliases));
+  // Canonicalization can collapse distinct inputs (`node.js`, `node`) onto the same canonical (`nodejs`). Keep the
+  // original list intact for the audit trail and deduplicate the written tag list in first-occurrence order so the
+  // note doesn't ship `['nodejs', 'nodejs']`.
+  const canonicalTags = dedupeInOrder(originalTags.map((tag) => canonicalize(tag, aliases)));
   const today = formatUtcDate(now);
 
   const extra: Record<string, unknown> = {};
@@ -62,6 +65,20 @@ export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: 
 }
 
 // region | Helpers
+
+/** Returns `values` with duplicate entries dropped, preserving first-occurrence order. */
+function dedupeInOrder(values: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    if (seen.has(value)) {
+      continue;
+    }
+    seen.add(value);
+    result.push(value);
+  }
+  return result;
+}
 
 /** Formats a `Date` as a UTC `YYYY-MM-DD` string. */
 function formatUtcDate(date: Date): string {

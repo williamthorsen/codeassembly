@@ -42,9 +42,24 @@ describe(prepareNote, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
+      // Original tag list is preserved verbatim for the audit trail, including aliases that collapse onto the same
+      // canonical. The written tag list deduplicates in first-occurrence order so the note does not ship
+      // semantically duplicate tags like `['nodejs', 'streams', 'nodejs']`.
       expect(result.prepared.originalTags).toEqual(['node.js', 'streams', 'node']);
-      expect(result.prepared.canonicalTags).toEqual(['nodejs', 'streams', 'nodejs']);
-      expect(result.prepared.frontmatter.tags).toEqual(['nodejs', 'streams', 'nodejs']);
+      expect(result.prepared.canonicalTags).toEqual(['nodejs', 'streams']);
+      expect(result.prepared.frontmatter.tags).toEqual(['nodejs', 'streams']);
+    }
+  });
+
+  it('deduplicates exact-repeat canonical tags in first-occurrence order', () => {
+    // Same canonical input twice should resolve to one tag, not two.
+    const args: ParsedArgs = { ...baseArgs, tags: ['streams', 'streams', 'nodejs'] };
+    const result = prepareNote({ args, schema: defaultSchema, aliases, now: NOW });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.originalTags).toEqual(['streams', 'streams', 'nodejs']);
+      expect(result.prepared.canonicalTags).toEqual(['streams', 'nodejs']);
     }
   });
 
