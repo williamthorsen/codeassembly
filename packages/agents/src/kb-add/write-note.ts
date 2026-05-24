@@ -113,14 +113,26 @@ async function atomicWrite(input: { targetPath: string; content: string }): Prom
   }
 }
 
-/** Returns true when a file or directory exists at the path. */
+/**
+ * Returns true when a file or directory exists at the path. ENOENT is the only "not found" signal — any other
+ * `stat` error (permission denied, I/O error, etc.) is re-thrown so the caller sees the real failure rather
+ * than a false "no collision, safe to write" answer.
+ */
 async function pathExists(path: string): Promise<boolean> {
   try {
     await stat(path);
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (isEnoent(error)) {
+      return false;
+    }
+    throw error;
   }
+}
+
+/** Returns true when `error` is a Node ENOENT filesystem error. */
+function isEnoent(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }
 
 /**
