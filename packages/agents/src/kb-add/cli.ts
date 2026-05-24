@@ -1,6 +1,7 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
@@ -135,7 +136,7 @@ export async function runAdd(input: {
   }
   const kb = resolved.kb;
 
-  const kbRoot = { path: kb.path, kbDir: `${kb.path}/.kb`, via: 'ancestor-walk' as const };
+  const kbRoot = { path: kb.path, kbDir: join(kb.path, '.kb'), via: 'ancestor-walk' as const };
   const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
 
   const prep = prepareNote({ args, schema, aliases, now: input.now });
