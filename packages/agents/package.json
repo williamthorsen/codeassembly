@@ -8,15 +8,17 @@
     "codeassembly-agents": "bin/codeassembly-agents.js"
   },
   "scripts": {
-    "build": "nmr compile && tsx scripts/copy-content.ts",
+    "build": "nmr compile && tsx scripts/bundle-skill-helpers.ts && tsx scripts/copy-content.ts",
     "fmt:all": "pnpm run fmt && pnpm run fmt:sh",
     "fmt:all:check": "pnpm run fmt:sh:check && pnpm run fmt:check",
     "fmt:sh": "shfmt --write **/*.sh",
     "fmt:sh:check": "shfmt --list **/*.sh",
-    "test:post": "pnpm run test:sh",
-    "test:sh": "bash scripts/test-sh.sh"
+    "test:post": "pnpm run test:sh && pnpm run test:smoke",
+    "test:sh": "bash scripts/test-sh.sh",
+    "test:smoke": "tsx scripts/smoke-test-skill-helpers.ts"
   },
   "dependencies": {
+    "@codeassembly/kb-core": "workspace:*",
     "js-yaml": "4.1.1"
   },
   "devDependencies": {
@@ -24,6 +26,6 @@
     "@types/js-yaml": "4.0.9"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24"
   }
 }

@@ -20,4 +20,5 @@ jobs:
     uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v5
     with:
       check-command: 'pnpm exec nmr build && pnpm exec nmr check:strict'
+      setup-command: 'sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep'
       node-version: '24.14.1'

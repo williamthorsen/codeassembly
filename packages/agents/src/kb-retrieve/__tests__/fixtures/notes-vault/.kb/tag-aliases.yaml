@@ -1,0 +1,4 @@
+# Tag-alias fixture for recall expansion tests.
+aliases:
+  nodejs: [node.js, node]
+  react: [reactjs, react.js]
