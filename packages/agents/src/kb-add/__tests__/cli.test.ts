@@ -1,12 +1,15 @@
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
 import { Readable } from 'node:stream';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runAdd } from '../cli.ts';
+
+const FIXTURES = join(import.meta.dirname, 'fixtures');
 
 /** Run a child process with a string body piped to stdin; resolve with its stdout and exit code. */
 async function runChild(input: {
@@ -277,6 +280,45 @@ describe(runAdd, () => {
     // Confirm no file landed at the KB root either.
     const entries = await readdir(kbPath);
     expect(entries.filter((name) => name !== '.kb')).toEqual([]);
+  });
+
+  it('warns on stderr and falls back to an empty alias map when tag-aliases.yaml is malformed', async () => {
+    // Stand up a fresh KB and copy in the intentionally malformed tag-aliases.yaml fixture, so the write
+    // itself stays in an isolated tempdir while the alias-load arm hits a real parse failure.
+    const kbPath = await makeKb();
+    await copyFile(
+      join(FIXTURES, 'malformed-aliases', '.kb', 'tag-aliases.yaml'),
+      join(kbPath, '.kb', 'tag-aliases.yaml'),
+    );
+
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await runAdd({
+        // `nodejs` would canonicalize to `node` if the aliases loaded; with the empty-map fallback it stays as-is.
+        argv: ['--type', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
+        stdin: bodyStream('Body.\n'),
+        startDir: kbPath,
+        now: NOW,
+        home: kbPath,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // Empty-map fallback fired: canonicalTags equals originalTags (no rewriting happened).
+        expect(result.originalTags).toEqual(['node.js', 'react']);
+        expect(result.canonicalTags).toEqual(['node.js', 'react']);
+        expect(result.frontmatter.tags).toEqual(['node.js', 'react']);
+      }
+
+      const stderrCalls = stderrSpy.mock.calls
+        .map((call) => call[0])
+        .filter((arg): arg is string => typeof arg === 'string');
+      const warningLine = stderrCalls.find((line) => line.includes('could not load tag aliases'));
+      expect(warningLine).toBeDefined();
+      expect(warningLine).toMatch(/^kb-add: warning: could not load tag aliases: /);
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 
   it('subprocess smoke: piping a body into the built bundle produces a written note and well-shaped JSON', async () => {
