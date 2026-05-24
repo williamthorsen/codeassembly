@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { Frontmatter } from '@codeassembly/kb-core';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { composeFilename, writeNote } from '../write-note.ts';
 
@@ -57,13 +57,10 @@ describe(composeFilename, () => {
 describe(writeNote, () => {
   let kbPath: string;
 
+  // Each test gets a fresh temp directory; we intentionally leave artifacts in `tmpdir` so a failed test's state
+  // is available for inspection.
   beforeEach(async () => {
     kbPath = await mkdtemp(join(tmpdir(), 'kb-add-write-'));
-  });
-
-  afterEach(async () => {
-    // The test runs in a temp directory; leaving artifacts is harmless but a cleanup keeps `tmpdir` tidy.
-    // A failed test may leave state for inspection — that's a known tradeoff.
   });
 
   it('writes a note at KB root when no folder is given', async () => {

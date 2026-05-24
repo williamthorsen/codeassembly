@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import type { KbConfig, KbConfigEntry } from '@codeassembly/kb-core';
+import type { KbConfig } from '@codeassembly/kb-core';
 import { findKbRoot, loadKbConfig } from '@codeassembly/kb-core/discovery';
 
 import type { ResolvedKb } from './types.ts';
@@ -39,7 +39,7 @@ export async function resolveKb(input: {
 
   const discovered = await findKbRoot({ startDir: input.startDir });
   if (discovered !== null) {
-    const registryMatch = matchByPath(config.entries, discovered.path);
+    const registryMatch = config.entries.find((entry) => entry.path === discovered.path);
     return {
       ok: true,
       kb: {
@@ -83,11 +83,6 @@ async function loadKbConfigSafely(input: { projectDir: string; home?: string }):
     process.stderr.write(`kb-add: warning: could not load kb.yaml registry: ${message}\n`);
     return { entries: [], sources: {} };
   }
-}
-
-/** Returns the registry entry whose absolute path matches `path`, or `undefined` when there is no match. */
-function matchByPath(entries: readonly KbConfigEntry[], path: string): KbConfigEntry | undefined {
-  return entries.find((entry) => entry.path === path);
 }
 
 // endregion | Helpers

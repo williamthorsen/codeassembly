@@ -237,17 +237,17 @@ function parseTagList(value: string): string[] {
     .filter((tag) => tag.length > 0);
 }
 
-/** Reads a readable stream to completion as a UTF-8 string. */
+/**
+ * Reads a readable stream to completion as a UTF-8 string. Callers pass `process.stdin` (binary mode) or a
+ * `Readable.from([Buffer])`, both of which emit `Buffer` chunks.
+ */
 async function readAll(stream: Readable): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of stream) {
-    if (Buffer.isBuffer(chunk)) {
-      chunks.push(chunk);
-    } else if (typeof chunk === 'string') {
-      chunks.push(Buffer.from(chunk, 'utf8'));
-    } else {
-      chunks.push(Buffer.from(String(chunk), 'utf8'));
+    if (!Buffer.isBuffer(chunk)) {
+      throw new TypeError('readAll: expected Buffer chunks (stream must be in binary mode)');
     }
+    chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString('utf8');
 }
