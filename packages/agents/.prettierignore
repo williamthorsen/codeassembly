@@ -1,7 +1,8 @@
 coverage/
 dist/
 
-# Generated esbuild bundle of the kb-retrieve helper, not authored source.
+# Generated esbuild bundles of the kb-add and kb-retrieve helpers, not authored source.
+content/skills/kb-add/kb-add.mjs
 content/skills/kb-retrieve/kb-retrieve.mjs
 
 # Test fixture that is intentionally syntactically malformed YAML. Prettier cannot
