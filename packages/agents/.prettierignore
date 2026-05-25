@@ -1,9 +1,10 @@
 coverage/
 dist/
 
-# Generated esbuild bundles of the kb-add and kb-retrieve helpers, not authored source.
+# Generated esbuild bundles of skill helpers, not authored source.
 content/skills/kb-add/kb-add.mjs
 content/skills/kb-retrieve/kb-retrieve.mjs
+content/skills/update-jira-ticket/update-jira-ticket.mjs
 
 # Test fixtures that are intentionally syntactically malformed YAML. Prettier cannot
 # parse them, and reformatting would erase the defect they exist to test.

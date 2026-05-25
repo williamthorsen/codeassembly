@@ -8,8 +8,9 @@
  * The bundle is written into `content/skills/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
  * and the dev and built layouts both ship the helper.
  *
- * The bundle list is a plain array of `{ entry, outFile }` pairs;
- * the sibling kb-add and kb-curate skills extend it by appending an entry.
+ * The bundle list is a plain array of `BundleTarget` entries; new skills register themselves by appending one.
+ * Each entry may carry an optional `smokeTest` clause that pipes a specific payload and asserts on the result;
+ * absent that, the smoke test runs the bundle with no args and empty stdin.
  */
 import path from 'node:path';
 import process from 'node:process';
@@ -26,6 +27,18 @@ export interface BundleTarget {
   entry: string;
   /** Path to the bundled output, relative to the package root. */
   outFile: string;
+  /** Optional per-bundle smoke-test invocation. When absent, the bundle is run with no args and empty stdin. */
+  smokeTest?: SmokeTestInvocation;
+}
+
+/** How the smoke test should invoke a bundle. Stdin is piped only when `stdin` is provided. */
+export interface SmokeTestInvocation {
+  /** Argv to pass to the bundled `.mjs`. Defaults to no args. */
+  args?: readonly string[];
+  /** UTF-8 body to pipe on stdin. Defaults to leaving stdin closed (EOF immediately). */
+  stdin?: string;
+  /** Optional structural assertion run against the parsed stdout JSON. Throw to signal failure. */
+  assertResult?: (result: unknown) => void;
 }
 
 /** Every skill helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
@@ -38,7 +51,38 @@ export const targets: BundleTarget[] = [
     entry: 'src/kb-retrieve/cli.ts',
     outFile: 'content/skills/kb-retrieve/kb-retrieve.mjs',
   },
+  {
+    entry: 'src/update-jira-ticket/cli.ts',
+    outFile: 'content/skills/update-jira-ticket/update-jira-ticket.mjs',
+    smokeTest: {
+      stdin: '<p><strong><code>x</code></strong></p>',
+      assertResult: assertCompositionViolationFinding,
+    },
+  },
 ];
+
+/** Type guard: narrows `value` to a plain object with unknown property values. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/** Assert the parsed smoke-test result reports a composition-code-inline-mark finding. */
+function assertCompositionViolationFinding(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result');
+  }
+  if (result.ok !== false) {
+    throw new Error(`expected ok: false, got ${JSON.stringify(result.ok)}`);
+  }
+  const findings = result.findings;
+  if (!Array.isArray(findings) || findings.length === 0) {
+    throw new Error('expected non-empty findings array');
+  }
+  const rules = findings.map((entry: unknown) => (isRecord(entry) ? entry.rule : undefined));
+  if (!rules.includes('composition-code-inline-mark')) {
+    throw new Error(`expected composition-code-inline-mark finding; got rules: ${JSON.stringify(rules)}`);
+  }
+}
 
 // A CommonJS dependency (`yaml`) reaches Node built-ins via bare `require('process')` calls.
 // esbuild's ESM output otherwise has no `require`, so this banner restores a real one via `createRequire`.
