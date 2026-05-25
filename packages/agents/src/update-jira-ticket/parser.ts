@@ -7,6 +7,16 @@
 //
 // Malformed input (unbalanced quotes, runaway `<`) is tolerated — the tokenizer prefers progress over
 // strictness, since the goal is finding known-bad patterns, not validating that the HTML is well-formed.
+//
+// Known limitations (intentional; documented here so future contributors don't quietly "fix" them):
+//   - HTML comments (`<!-- ... -->`), CDATA sections (`<![CDATA[ ... ]]>`), and `<!DOCTYPE ...>` declarations are
+//     not recognized; their `<!` prefix falls through `isTagStartChar`, so the surrounding text is scanned as
+//     usual and any tag-shaped content inside them WILL be tokenized as real tags. Jira-bound HTML in this
+//     codebase does not carry these constructs, so the false-positive surface is theoretical.
+//   - `walkTokens` only pops the ancestor stack on a matching close tag. An unclosed `<code>` followed by a
+//     sibling `<strong>` will register the `<strong>` as nested under the `<code>` and fire a composition
+//     finding. This is fail-loud by design: an imbalanced payload almost certainly indicates a generation
+//     bug, and surfacing it as a finding is preferable to silently auto-balancing.
 
 /** A single open-tag token. Self-closing variants like `<br>` or `<hr/>` set `selfClosing: true`. */
 export interface OpenTagToken {

@@ -189,4 +189,22 @@ describe(check, () => {
       expectClean('<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>D</td></tr></tbody></table>');
     });
   });
+
+  describe('documented parser limitations', () => {
+    // These tests lock in the tokenizer's intentional behavior at known edges; see the parser.ts header.
+    // If a future change "fixes" any of these, the test will fail and force a conscious doctrine change.
+
+    it('tokenizes tag-shaped content inside HTML comments as real tags (no comment handling)', () => {
+      // `<!--` is not a recognized tag start, so the surrounding text continues to be scanned and the inner
+      // `<strong><code>` is tokenized as nested tags. Jira HTML in this codebase does not carry comments,
+      // so this false-positive surface is theoretical — but the behavior is documented and worth locking in.
+      expectFinding('<p>before <!-- <strong><code>x</code></strong> --> after</p>', 'composition-code-inline-mark');
+    });
+
+    it('treats sibling tags after an unclosed ancestor as nested under that ancestor', () => {
+      // Unclosed `<code>` followed by `<strong>` registers the `<strong>` as nested under `<code>`,
+      // firing the composition rule. This is fail-loud on imbalanced input, not a bug.
+      expectFinding('<p><code>x<p><strong>y</strong></p>', 'composition-code-inline-mark');
+    });
+  });
 });
