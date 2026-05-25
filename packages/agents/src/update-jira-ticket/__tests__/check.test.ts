@@ -175,8 +175,14 @@ describe(check, () => {
       expect(rules).toContain('pre-multiline');
     });
 
-    it('does not flag tag-like substrings inside attribute values', () => {
+    it('does not flag tag-like substrings inside attribute values (entity form)', () => {
       expectClean('<p><a href="https://x.test" title="X &lt; Y">link</a></p>');
+    });
+
+    it('does not flag literal angle brackets inside quoted attribute values', () => {
+      // Regression guard for the parser's quote-awareness: literal `<Y>` inside a quoted attribute value must not be
+      // tokenized as a tag, so no `disallowed-element` finding for `<Y>` should be produced.
+      expectClean('<p><a href="https://x.test" title="X<Y>Z">link</a></p>');
     });
 
     it('does not flag any allowlisted tag', () => {
