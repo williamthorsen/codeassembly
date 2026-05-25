@@ -6,6 +6,7 @@
 // pretty-printed JSON. Exit 0 for both `ok: true` and `ok: false` (recoverable findings are not system errors);
 // exit 1 only when the invocation itself is wrong (unreadable stdin).
 
+import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
@@ -38,6 +39,26 @@ async function main(): Promise<void> {
 }
 
 // Run as a CLI when invoked directly; stay importable for tests.
-if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (isEntryPoint()) {
   await main();
+}
+
+/**
+ * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
+ * symlinked invocation path (e.g. a `--link` install of the agents skill bundle) still matches. On a `realpathSync`
+ * failure (broken symlink, permission denied) the function emits a warning to stderr and returns `false`, matching
+ * the pattern in `src/kb-add/cli.ts` so silent skips do not hide environment problems.
+ */
+function isEntryPoint(): boolean {
+  const entry = process.argv[1];
+  if (entry === undefined) {
+    return false;
+  }
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`update-jira-ticket: warning: could not determine entry point: ${message}\n`);
+    return false;
+  }
 }
