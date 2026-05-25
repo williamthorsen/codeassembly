@@ -125,7 +125,7 @@ Use only if `INVALID_INPUT` still fires after the pre-flight checker returned `o
 
 ### 1. Surface the failure to the user
 
-Do not create a probe ticket silently. Present the situation to the user and let them choose how to proceed. Use the recommendation-gradient format (see `_data/recommendation-gradient.md`):
+Do not create a probe ticket silently. Present the situation to the user and let them choose how to proceed, using numbered options with ■■■/■■□/■□□/□□□ strength markers and `➕`/`➖` tradeoff lines:
 
 > Jira rejected this payload and the pre-flight checker found no known issues. This is likely a new failure class. How should I proceed?
 >
