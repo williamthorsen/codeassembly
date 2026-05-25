@@ -160,18 +160,24 @@ export async function runAdd(input: {
   });
 
   if (!write.ok) {
-    if (write.reason === 'collision') {
-      return {
-        ok: false,
-        error: 'collision',
-        message: `a note already exists at the target path; pick a different title or merge into the existing note`,
-        details: { existingPath: write.existingPath },
-      };
+    switch (write.reason) {
+      case 'collision':
+        return {
+          ok: false,
+          error: 'collision',
+          message: `a note already exists at the target path; pick a different title or merge into the existing note`,
+          details: { existingPath: write.existingPath },
+        };
+      case 'invalid-folder':
+        return { ok: false, error: 'invalid-args', message: write.message };
+      case 'invalid-title':
+        return { ok: false, error: 'invalid-title', message: write.message };
+      default: {
+        // Exhaustiveness check: a new WriteFailure reason will surface here at compile time.
+        const _exhaustive: never = write;
+        throw new Error(`unhandled WriteFailure: ${JSON.stringify(_exhaustive)}`);
+      }
     }
-    if (write.reason === 'invalid-folder') {
-      return { ok: false, error: 'invalid-args', message: write.message };
-    }
-    return { ok: false, error: 'invalid-title', message: write.message };
   }
 
   return {
