@@ -5,8 +5,6 @@
 import { lineOf, type Token, walkTokens } from './parser.ts';
 import type { Finding } from './types.ts';
 
-export type { OpenTagToken } from './parser.ts';
-
 /** Allowlisted element names. Mirrors the SKILL.md allowlist exactly; this is the canonical source of truth. */
 export const ALLOWED_ELEMENTS = new Set([
   'h1',
