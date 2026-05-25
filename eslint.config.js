@@ -20,6 +20,7 @@ export default [
     '**/dist/**',
     '**/local/**',
     // Ignore test fixtures that are intentionally syntactically broken.
+    '**/__tests__/**/fixtures/**/malformed-aliases/**',
     '**/__tests__/**/fixtures/**/malformed-yaml/**',
     '**/__tests__/**/fixtures/**/malformed-registry/**',
     '**/__tests__/**/fixtures/**/syntactically-malformed.*',

@@ -1,11 +1,13 @@
 coverage/
 dist/
 
-# Generated esbuild bundle of the kb-retrieve helper, not authored source.
+# Generated esbuild bundles of the kb-add and kb-retrieve helpers, not authored source.
+content/skills/kb-add/kb-add.mjs
 content/skills/kb-retrieve/kb-retrieve.mjs
 
-# Test fixture that is intentionally syntactically malformed YAML. Prettier cannot
-# parse it, and reformatting would erase the defect it exists to test.
+# Test fixtures that are intentionally syntactically malformed YAML. Prettier cannot
+# parse them, and reformatting would erase the defect they exist to test.
+src/**/__tests__/**/fixtures/malformed-aliases/
 src/**/__tests__/**/fixtures/malformed-registry/
 
 # Subagent partials and the files that consume them must preserve exact whitespace

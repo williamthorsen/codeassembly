@@ -1,0 +1,10 @@
+# Project-local registry fixture: two registered KBs, one marked default, plus an explicit-only entry.
+# Paths are relative to this file's directory (`project-kb/.agents/`).
+kbs:
+  vault-a:
+    path: ../../vault-a
+    description: Fixture vault A
+    default: true
+  vault-b:
+    path: ../../vault-b
+    description: Fixture vault B

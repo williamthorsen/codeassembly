@@ -1,0 +1,5 @@
+# Intentionally malformed YAML to exercise loadKbConfigSafely's defensive catch arm.
+# The unclosed flow mapping triggers a parse error in `loadKbConfig`, which the helper swallows
+# and degrades to an empty config so the no-kb-resolvable outcome surfaces normally.
+kbs:
+  broken: {path: ./broken-kb

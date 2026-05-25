@@ -194,7 +194,7 @@ packages/factory/src/
 
 ### KB-core (`packages/kb-core/`)
 
-Foundation library for knowledge-base tooling, consumed by the planned `@codeassembly/kb-mcp` server and the `kb-retrieve`, `kb-add`, and `kb-curate` skills. Exposes five subpath entries — `discovery`, `schema`, `frontmatter`, `tags`, `rules` — covering KB discovery and `kb.yaml` registry loading, default-schema resolution with narrow-only per-KB overrides, note frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
+Foundation library for knowledge-base tooling, consumed by the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@codeassembly/kb-mcp` server. Exposes five subpath entries — `discovery`, `schema`, `frontmatter`, `tags`, `rules` — covering KB discovery and `kb.yaml` registry loading, default-schema resolution with narrow-only per-KB overrides, note frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
 
 **Package:** `@codeassembly/kb-core` (private)
 

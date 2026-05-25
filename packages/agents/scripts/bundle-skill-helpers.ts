@@ -31,6 +31,10 @@ export interface BundleTarget {
 /** Every skill helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
 export const targets: BundleTarget[] = [
   {
+    entry: 'src/kb-add/cli.ts',
+    outFile: 'content/skills/kb-add/kb-add.mjs',
+  },
+  {
     entry: 'src/kb-retrieve/cli.ts',
     outFile: 'content/skills/kb-retrieve/kb-retrieve.mjs',
   },

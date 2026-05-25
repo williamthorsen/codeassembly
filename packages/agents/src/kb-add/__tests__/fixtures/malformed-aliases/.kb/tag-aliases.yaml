@@ -1,0 +1,5 @@
+# Intentionally malformed YAML to exercise loadAliasesWithWarning's defensive catch arm.
+# The unclosed flow mapping triggers a parse error in `loadAliases`, which the helper swallows
+# and degrades to an empty alias map so the write still succeeds with uncanonicalized tags.
+aliases:
+  nodejs: [node.js, node
