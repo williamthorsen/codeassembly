@@ -18,13 +18,7 @@ Rules for how code is structured, organized, and documented.
 
 ## Documentation
 
-### Required documentation
-
-**Functions, classes, and components MUST have concise descriptions** - This is mandatory. Even if the purpose seems obvious today, future readers need context.
-
-- Every function must have a description
-- Every class must have a description
-- Every component must have a description
+The positive baseline for descriptions on functions, methods, classes, and components lives in [`comment-discipline.md`](../_data/comment-discipline.md). The subsections below cover documentation form.
 
 ### JSDoc parameters
 
@@ -51,6 +45,12 @@ Do not use multi-line boxed separators (`// --------` / `// Label` / `// -------
   function findAgent(...) { ... }
   // endregion | Helpers
   ```
+
+## Code comments
+
+Comments are written for the future reader, not the recent conversation. The full rule set (positive baseline, ten deletion rules, carve-outs for test comments and `eslint-disable` rationales) lives in [`comment-discipline.md`](../_data/comment-discipline.md).
+
+<!-- include: ../../_partials/comment-audit-checklist.md / -->
 
 ## Naming
 

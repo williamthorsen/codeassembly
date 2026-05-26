@@ -79,7 +79,17 @@ Focus exclusively on simplification opportunities in changed code:
 - Premature abstractions that don't earn their weight
 - Overly defensive patterns (redundant null checks, unnecessary try/catch wrappers, excessive validation of trusted internal inputs)
 - Unnecessary nesting and complexity
-- Redundant comments that describe obvious code
+- Comment-discipline violations. See `{platform_home_dir}/skills/_data/comment-discipline.md` for the full taxonomy. Common patterns to flag:
+  - Comments that restate or paraphrase the code below them
+  - Tutorial-style file headers that duplicate per-function JSDoc
+  - Conversation memorialization (references to chat-time reasoning, tickets, or PRs in code comments)
+  - Defensive prose about unreachable cases (encode as type or assertion instead)
+  - Re-teaching of the library being used
+  - The same fact documented in two places
+  - Process commentary ("centralizes the typing boundary," "future readers should note…")
+  - Domain leaks in shared/common code
+  - Inline "what" comments that describe what the code does instead of explaining why a non-obvious decision was made
+  - `eslint-disable` rationales that explain the surrounding decision rather than the specific suppression
 - Logic that can be consolidated without sacrificing clarity
 
 ### Simplification principles
@@ -115,8 +125,8 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:
 
 - `none`: Code is already clean and well-structured — no simplification opportunities
-- `low`: Minor opportunities (e.g., a few redundant comments, one unused import)
-- `medium`: Several meaningful simplification opportunities that would improve readability
+- `low`: Minor opportunities (e.g., a handful of redundant or paraphrasing comments, one unused import)
+- `medium`: Several meaningful simplification opportunities, including file-header-scale comment violations (tutorial headers, repeated conversation memorialization, broad library re-teaching)
 - `high`: Pervasive unnecessary complexity indicating the code needs a simplification pass
 
 ## Output format
