@@ -189,13 +189,13 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
   // Type-narrow the fields most load-bearing for downstream code paths. A hand-edited or
   // corrupt manifest that passed presence checks but failed these is treated as stale and
   // recomposed, matching the "stale-schema overwrite" path.
-  if (!isStringOrNull(value['ticket_id']) || !isStringOrNull(value['ticket_ref'])) {
+  if (!isStringOrNull(value.ticket_id) || !isStringOrNull(value.ticket_ref)) {
     return false;
   }
-  if (!isRecord(value['artifact_paths'])) {
+  if (!isRecord(value.artifact_paths)) {
     return false;
   }
-  if (value['platform'] !== 'github' && value['platform'] !== 'bitbucket') {
+  if (value.platform !== 'github' && value.platform !== 'bitbucket') {
     return false;
   }
   return true;
