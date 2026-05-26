@@ -11248,12 +11248,40 @@ function mergeTopLevel(global, project) {
 async function assertValidatesAgainstSchema(merged) {
   ensureSchemaRegistered();
   const jsonValue = toJsonValue(merged);
-  const output = await validate(SCHEMA_ID, jsonValue, FLAG);
+  const output = await validate(SCHEMA_ID, jsonValue, "BASIC");
   if (!output.valid) {
-    throw new Error(
-      `preferences failed schema validation against ${SCHEMA_ID}. Check the contents of .agents/preferences.yaml (or the global ~/.agents/preferences.yaml).`
-    );
+    throw new Error(formatValidationErrorMessage(output.errors));
   }
+}
+function formatValidationErrorMessage(errors) {
+  const tail = `Check the contents of .agents/preferences.yaml (or the global ~/.agents/preferences.yaml).`;
+  const error = pickMostSpecificError(errors);
+  if (!error) {
+    return `preferences failed schema validation against ${SCHEMA_ID}. ${tail}`;
+  }
+  const location = formatInstanceLocation(error.instanceLocation);
+  return `preferences failed schema validation at ${location} (failed keyword: ${error.keyword}). ${tail}`;
+}
+function pickMostSpecificError(errors) {
+  if (!errors) {
+    return void 0;
+  }
+  let best;
+  for (const candidate of errors) {
+    if (best === void 0 || candidate.instanceLocation.length > best.instanceLocation.length) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+function formatInstanceLocation(raw) {
+  const fragmentIndex = raw.indexOf("#");
+  const pointer = fragmentIndex !== -1 ? raw.slice(fragmentIndex + 1) : raw;
+  const decoded = decodeURI(pointer);
+  if (decoded === "" || decoded === "/") {
+    return '"(root)"';
+  }
+  return `"${decoded.replace(/^\//, "")}"`;
 }
 function ensureSchemaRegistered() {
   if (!hasSchema(SCHEMA_ID)) {
@@ -11440,26 +11468,19 @@ function parseArgs(argv) {
     if (arg === void 0) {
       continue;
     }
-    switch (arg) {
-      case "--branch":
-        branch = consumeValue(argv, i, "--branch");
-        i += 1;
-        continue;
-      case "--cwd":
-        cwd2 = consumeValue(argv, i, "--cwd");
-        i += 1;
-        continue;
-      case "--home":
-        home = consumeValue(argv, i, "--home");
-        i += 1;
-        continue;
-      default:
-        break;
-    }
-    if (arg.startsWith("--branch=")) {
+    if (arg === "--branch") {
+      branch = consumeValue(argv, i, "--branch");
+      i += 1;
+    } else if (arg.startsWith("--branch=")) {
       branch = arg.slice("--branch=".length);
+    } else if (arg === "--cwd") {
+      cwd2 = consumeValue(argv, i, "--cwd");
+      i += 1;
     } else if (arg.startsWith("--cwd=")) {
       cwd2 = arg.slice("--cwd=".length);
+    } else if (arg === "--home") {
+      home = consumeValue(argv, i, "--home");
+      i += 1;
     } else if (arg.startsWith("--home=")) {
       home = arg.slice("--home=".length);
     } else {
