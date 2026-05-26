@@ -399,8 +399,8 @@ current_branch() {
 
 # Resolves the absolute path to the branch manifest for the given branch.
 # Anchors at the repo root via `git rev-parse --show-toplevel`, so the lookup is independent of the caller's cwd.
-# Inside a git worktree, this returns the worktree's `.agents/` path — matching where `get-session-context` writes
-# the manifest. Returns non-zero outside a git repository.
+# Inside a git worktree, this returns the worktree's `.agents/` path — matching where the bundled
+# `derive-session-context` helper writes the manifest. Returns non-zero outside a git repository.
 resolve_manifest_path() {
   local branch="$1"
   local sanitized repo_root
@@ -467,7 +467,7 @@ resolve_bundle_path() {
 }
 
 # Sanitizes a branch name for filesystem use: Replaces `/` with `-` and trims any trailing `-` characters.
-# Mirrors `get-session-context` behavior.
+# Mirrors the sanitization performed by the bundled `derive-session-context` helper.
 sanitize_branch() {
   local branch="$1"
   branch="${branch//\//-}"

@@ -10,8 +10,9 @@ const CWD = '/Users/test/repos/codeassembly';
 const DEFAULT_PATHS = { chats: 'chats', devlogs: 'devlogs', plans: 'plans' };
 
 describe(composeManifest, () => {
-  // Each it() below corresponds to a numbered worked example in
-  // packages/agents/content/skills/get-session-context/SKILL.md.
+  // Each it() below corresponds to a numbered worked example originally documented in the
+  // now-retired `get-session-context` skill. The cases are preserved here as the test oracle for
+  // the manifest composer; see `_data/ticket-id-extraction.md` for the canonical extraction rules.
 
   it('1: structured branch with workspace and work-type segments', () => {
     const prefs: ResolvedPreferences = { project: { slug: 'configs-macos' } };

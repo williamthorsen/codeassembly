@@ -1,5 +1,13 @@
 pnpm-lock.yaml
 
+# Generated esbuild bundles of skill helpers, not authored source. Prettier exhibits a
+# non-idempotent reformatting bug on long ternary expressions emitted by the bundler (the
+# `yaml` package surfaces the pattern), so the bundles are excluded at the root level too.
+packages/agents/content/skills/derive-session-context/derive-session-context.mjs
+packages/agents/content/skills/kb-add/kb-add.mjs
+packages/agents/content/skills/kb-retrieve/kb-retrieve.mjs
+packages/agents/content/skills/update-jira-ticket/update-jira-ticket.mjs
+
 # Subagent partials and the files that consume them must preserve exact whitespace around
 # `<!-- include: ... -->` open/close directives and
 # `<!-- children -->` placeholders.

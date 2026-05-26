@@ -41,7 +41,7 @@ export interface TicketIdResult {
   readonly ticket_ref: string | null;
 }
 
-/** Branch-manifest JSON object — matches the schema documented in `get-session-context/SKILL.md`. */
+/** Branch-manifest JSON object — the canonical session-context manifest persisted at `.agents/{sanitized-branch}.branch-manifest.json`. */
 export interface BranchManifest {
   readonly ticket_id: string | null;
   readonly ticket_ref: string | null;

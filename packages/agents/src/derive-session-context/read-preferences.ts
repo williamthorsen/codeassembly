@@ -90,10 +90,10 @@ async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | 
  * Top-level merge of two preference objects: For each top-level key present in `project`, the
  * project value replaces the global value verbatim. Top-level keys only in `global` are retained.
  *
- * The merge is deliberately shallow (top-level only). This matches the documented contract in
- * `get-session-context/SKILL.md` ("project-level values always win" at the section level) and
- * avoids surprising deep-merge behavior for fields like `artifacts.paths`, where a project that
- * sets one path key would otherwise inherit the others from the global file.
+ * The merge is deliberately shallow (top-level only). Project-level values always win at the
+ * section level. Shallow merge avoids surprising deep-merge behavior for fields like
+ * `artifacts.paths`, where a project that sets one path key would otherwise inherit the others
+ * from the global file.
  */
 function mergeTopLevel(global: unknown, project: unknown): Record<string, unknown> {
   const result: Record<string, unknown> = {};

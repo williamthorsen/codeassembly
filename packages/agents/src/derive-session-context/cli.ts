@@ -123,8 +123,8 @@ export async function deriveSessionContext(input: {
 
 /**
  * Sanitizes a branch name for filesystem use: replace `/` with `-`, trim trailing `-`.
- * Mirrors the existing `get-session-context` skill's contract so previously-written manifests
- * remain reachable. Underscores are deliberately preserved.
+ * Mirrors the sanitization performed by `resolve-frontmatter.sh` so previously-written manifests
+ * remain reachable. Underscores are deliberately preserved (see `_data/branch-format.md`).
  *
  * @internal Exported for testing.
  */
@@ -213,38 +213,48 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   let home: string | null = null;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--branch') {
-      const value = argv[i + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error('--branch requires a value');
-      }
-      branch = value;
-      i += 1;
-    } else if (arg === '--cwd') {
-      const value = argv[i + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error('--cwd requires a value');
-      }
-      cwd = value;
-      i += 1;
-    } else if (arg === '--home') {
-      const value = argv[i + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error('--home requires a value');
-      }
-      home = value;
-      i += 1;
-    } else if (arg !== undefined && arg.startsWith('--branch=')) {
+    if (arg === undefined) {
+      continue;
+    }
+    switch (arg) {
+      case '--branch':
+        branch = consumeValue(argv, i, '--branch');
+        i += 1;
+        continue;
+
+      case '--cwd':
+        cwd = consumeValue(argv, i, '--cwd');
+        i += 1;
+        continue;
+
+      case '--home':
+        home = consumeValue(argv, i, '--home');
+        i += 1;
+        continue;
+
+      default:
+        break;
+    }
+    if (arg.startsWith('--branch=')) {
       branch = arg.slice('--branch='.length);
-    } else if (arg !== undefined && arg.startsWith('--cwd=')) {
+    } else if (arg.startsWith('--cwd=')) {
       cwd = arg.slice('--cwd='.length);
-    } else if (arg !== undefined && arg.startsWith('--home=')) {
+    } else if (arg.startsWith('--home=')) {
       home = arg.slice('--home='.length);
-    } else if (arg !== undefined) {
+    } else {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
   return { branch, cwd, home };
+}
+
+/** Reads the value following a space-delimited flag at `index`. Throws when missing. */
+function consumeValue(argv: readonly string[], index: number, flag: string): string {
+  const value = argv[index + 1];
+  if (value === undefined || value.startsWith('--')) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return value;
 }
 
 // Run as a script. Importable for tests because the file uses `isMain()` rather than a top-level
