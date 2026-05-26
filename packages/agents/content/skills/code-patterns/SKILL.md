@@ -60,7 +60,8 @@ Follow the naming rules in [naming-conventions.md](../_data/naming-conventions.m
 
 ### Test structure
 
-- **Use parameterized tests** with `it.each([...])` to avoid verbose, repetitive test cases
+Test-structure rules (parameterization, helpers, signal-to-noise) live in [`testing-conventions/SKILL.md`](../testing-conventions/SKILL.md).
+
 - **Use function/class reference as describe argument** - `describe(myFunction, ...)` instead of `describe('myFunction', ...)`
 - **Place tests in `__tests__` directory** as sibling to the file being tested
 
