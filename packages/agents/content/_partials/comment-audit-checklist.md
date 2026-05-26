@@ -5,7 +5,8 @@ Before saving, audit each new or modified comment.
 - If no, delete it.
 - If yes, confirm the kept comment does not violate any deletion rule:
   - Restates or paraphrases the surrounding code.
-  - References the conversation, a ticket, or a PR.
+  - References the conversation that produced the code (we discussed, as agreed, this approach was chosen because).
+  - References ephemeral artifacts (a ticket, a PR, a sibling file recoverable by grep).
   - Documents the library being used.
   - Explains an unreachable case (encode as a type or assertion instead).
   - Duplicates a fact covered elsewhere.
