@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
+import { FLAG, hasSchema, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
 import { parse as parseYaml } from 'yaml';
 
 // Inline the preferences schema at bundle time. esbuild resolves the `.json` import via its built-in
@@ -129,22 +129,18 @@ async function assertValidatesAgainstSchema(merged: Record<string, unknown>): Pr
 }
 
 /**
- * Registers the inlined schema if not already registered. The library throws on duplicate
- * registration, so the catch swallows that one case and lets any other error propagate. The
- * library does not export a typed duplicate-error class; the message text is matched instead.
+ * Registers the inlined schema if not already registered. Uses `hasSchema` to gate the call so the
+ * duplicate-registration error never surfaces, avoiding the previous string-match guard that
+ * depended on `@hyperjump/json-schema`'s internal error wording. `hasSchema` checks the library's
+ * global schema registry, so registrations from earlier vitest runs or repeated CLI invocations
+ * within a single process are correctly recognized.
  */
 function ensureSchemaRegistered(): void {
   if (schemaRegistered) {
     return;
   }
-  try {
+  if (!hasSchema(SCHEMA_ID)) {
     registerSchema(preferencesSchema, SCHEMA_ID);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const isDuplicateRegistration = message.includes('already been registered') && message.includes(SCHEMA_ID);
-    if (!isDuplicateRegistration) {
-      throw error;
-    }
   }
   schemaRegistered = true;
 }

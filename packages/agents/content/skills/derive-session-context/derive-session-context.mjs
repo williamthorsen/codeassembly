@@ -8644,6 +8644,7 @@ var registerSchema = (schema, retrievalUri, contextDialectId) => {
   }
   schemaRegistry[retrievalUri ? toAbsoluteIri(retrievalUri) : document.baseUri] = document;
 };
+var hasSchema = (uri4) => uri4 in schemaRegistry;
 var buildSchemaDocument = (schema, id62, dialectId, embedded = {}) => {
   if (typeof schema.$schema === "string") {
     dialectId = schema.$schema;
@@ -11259,14 +11260,8 @@ function ensureSchemaRegistered() {
   if (schemaRegistered) {
     return;
   }
-  try {
+  if (!hasSchema(SCHEMA_ID)) {
     registerSchema(preferences_default, SCHEMA_ID);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const isDuplicateRegistration = message.includes("already been registered") && message.includes(SCHEMA_ID);
-    if (!isDuplicateRegistration) {
-      throw error;
-    }
   }
   schemaRegistered = true;
 }
@@ -11430,38 +11425,43 @@ function parseArgs(argv) {
   let home = null;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === "--branch") {
-      const value3 = argv[i + 1];
-      if (value3 === void 0 || value3.startsWith("--")) {
-        throw new Error("--branch requires a value");
-      }
-      branch = value3;
-      i += 1;
-    } else if (arg === "--cwd") {
-      const value3 = argv[i + 1];
-      if (value3 === void 0 || value3.startsWith("--")) {
-        throw new Error("--cwd requires a value");
-      }
-      cwd2 = value3;
-      i += 1;
-    } else if (arg === "--home") {
-      const value3 = argv[i + 1];
-      if (value3 === void 0 || value3.startsWith("--")) {
-        throw new Error("--home requires a value");
-      }
-      home = value3;
-      i += 1;
-    } else if (arg !== void 0 && arg.startsWith("--branch=")) {
+    if (arg === void 0) {
+      continue;
+    }
+    switch (arg) {
+      case "--branch":
+        branch = consumeValue(argv, i, "--branch");
+        i += 1;
+        continue;
+      case "--cwd":
+        cwd2 = consumeValue(argv, i, "--cwd");
+        i += 1;
+        continue;
+      case "--home":
+        home = consumeValue(argv, i, "--home");
+        i += 1;
+        continue;
+      default:
+        break;
+    }
+    if (arg.startsWith("--branch=")) {
       branch = arg.slice("--branch=".length);
-    } else if (arg !== void 0 && arg.startsWith("--cwd=")) {
+    } else if (arg.startsWith("--cwd=")) {
       cwd2 = arg.slice("--cwd=".length);
-    } else if (arg !== void 0 && arg.startsWith("--home=")) {
+    } else if (arg.startsWith("--home=")) {
       home = arg.slice("--home=".length);
-    } else if (arg !== void 0) {
+    } else {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
   return { branch, cwd: cwd2, home };
+}
+function consumeValue(argv, index, flag) {
+  const value3 = argv[index + 1];
+  if (value3 === void 0 || value3.startsWith("--")) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return value3;
 }
 if (isMain()) {
   await main();
@@ -11477,7 +11477,7 @@ function isMain() {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`derive-session-context: warning: could not determine entry point: ${message}
 `);
-    return false;
+    return true;
   }
 }
 export {

@@ -272,8 +272,12 @@ function isMain(): boolean {
   try {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
+    // Fall back to `true` rather than `false`: a broken symlink during entry-point resolution
+    // most plausibly means we *are* the entry point (the CLI is being invoked through a stale link).
+    // Returning `false` here would silently no-op the CLI; running `main()` defensively at worst
+    // runs the script on an unexpected import, which surfaces an error rather than a silent skip.
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`derive-session-context: warning: could not determine entry point: ${message}\n`);
-    return false;
+    return true;
   }
 }
