@@ -14,6 +14,8 @@
  * Flags:
  *   --branch <name>   Override branch lookup (used by tests and the smoke harness).
  *   --cwd <path>      Override working directory (used by tests).
+ *   --home <path>     Override home directory for `~/.agents/preferences.yaml` lookup.
+ *                     Defaults to `os.homedir()`.
  */
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -47,6 +49,7 @@ const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
 interface ParsedArgs {
   readonly branch: string | null;
   readonly cwd: string | null;
+  readonly home: string | null;
 }
 
 /** Top-level runner: parses args, derives the manifest, writes JSON to stdout. */
@@ -56,7 +59,12 @@ async function main(): Promise<void> {
     const cwd = parsed.cwd ?? process.cwd();
     const branch = parsed.branch ?? (await resolveCurrentBranch(cwd));
 
-    const manifest = await deriveSessionContext({ cwd, branch, now: new Date() });
+    const manifest = await deriveSessionContext({
+      cwd,
+      branch,
+      now: new Date(),
+      ...(parsed.home !== null && { home: parsed.home }),
+    });
     process.stdout.write(`${JSON.stringify(manifest, null, 2)}\n`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -202,6 +210,7 @@ async function resolveCurrentBranch(cwd: string): Promise<string> {
 export function parseArgs(argv: readonly string[]): ParsedArgs {
   let branch: string | null = null;
   let cwd: string | null = null;
+  let home: string | null = null;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--branch') {
@@ -218,15 +227,24 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       }
       cwd = value;
       i += 1;
+    } else if (arg === '--home') {
+      const value = argv[i + 1];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error('--home requires a value');
+      }
+      home = value;
+      i += 1;
     } else if (arg !== undefined && arg.startsWith('--branch=')) {
       branch = arg.slice('--branch='.length);
     } else if (arg !== undefined && arg.startsWith('--cwd=')) {
       cwd = arg.slice('--cwd='.length);
+    } else if (arg !== undefined && arg.startsWith('--home=')) {
+      home = arg.slice('--home='.length);
     } else if (arg !== undefined) {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  return { branch, cwd };
+  return { branch, cwd, home };
 }
 
 // Run as a script. Importable for tests because the file uses `isMain()` rather than a top-level

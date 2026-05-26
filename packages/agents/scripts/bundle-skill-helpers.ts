@@ -92,12 +92,13 @@ function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
   mkdirSync(path.join(fixtureDir, '.agents'), { recursive: true });
   writeFileSync(path.join(fixtureDir, '.agents', 'preferences.yaml'), 'project:\n  slug: smoke-test-project\n', 'utf8');
   return {
-    args: ['--branch', 'MAC-999/feat/smoke-fixture', '--cwd', fixtureDir],
+    // `--home` points at the fixture so the deriver does not read the developer's real
+    // `~/.agents/preferences.yaml` (whose schema-validity is environment-specific). Using the flag
+    // rather than the `HOME` env var avoids breaking PATH-resolution tools (e.g., asdf shims) that
+    // depend on the real `HOME`.
+    args: ['--branch', 'MAC-999/feat/smoke-fixture', '--cwd', fixtureDir, '--home', fixtureDir],
     assertResult: assertDeriveSessionContextOutput,
     cwd: fixtureDir,
-    // Point `HOME` at the fixture dir too, so the deriver's `~/.agents/preferences.yaml` lookup
-    // resolves to a non-existent file (hermetic) rather than to the developer's real home.
-    env: { ...process.env, HOME: fixtureDir },
   };
 }
 

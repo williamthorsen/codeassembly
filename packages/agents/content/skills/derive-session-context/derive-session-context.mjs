@@ -11346,7 +11346,12 @@ async function main() {
     const parsed = parseArgs(process.argv.slice(2));
     const cwd2 = parsed.cwd ?? process.cwd();
     const branch = parsed.branch ?? (await resolveCurrentBranch(cwd2));
-    const manifest = await deriveSessionContext({ cwd: cwd2, branch, now: /* @__PURE__ */ new Date() });
+    const manifest = await deriveSessionContext({
+      cwd: cwd2,
+      branch,
+      now: /* @__PURE__ */ new Date(),
+      ...(parsed.home !== null && { home: parsed.home }),
+    });
     process.stdout.write(`${JSON.stringify(manifest, null, 2)}
 `);
   } catch (error) {
@@ -11449,6 +11454,7 @@ async function resolveCurrentBranch(cwd2) {
 function parseArgs(argv) {
   let branch = null;
   let cwd2 = null;
+  let home = null;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--branch') {
@@ -11465,15 +11471,24 @@ function parseArgs(argv) {
       }
       cwd2 = value3;
       i += 1;
+    } else if (arg === '--home') {
+      const value3 = argv[i + 1];
+      if (value3 === void 0 || value3.startsWith('--')) {
+        throw new Error('--home requires a value');
+      }
+      home = value3;
+      i += 1;
     } else if (arg !== void 0 && arg.startsWith('--branch=')) {
       branch = arg.slice('--branch='.length);
     } else if (arg !== void 0 && arg.startsWith('--cwd=')) {
       cwd2 = arg.slice('--cwd='.length);
+    } else if (arg !== void 0 && arg.startsWith('--home=')) {
+      home = arg.slice('--home='.length);
     } else if (arg !== void 0) {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  return { branch, cwd: cwd2 };
+  return { branch, cwd: cwd2, home };
 }
 if (isMain()) {
   await main();

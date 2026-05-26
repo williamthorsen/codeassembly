@@ -10,22 +10,31 @@ const NOW = new Date('2026-05-26T02:07:41Z');
 
 describe(parseArgs, () => {
   it('returns null fields when no args are supplied', () => {
-    expect(parseArgs([])).toEqual({ branch: null, cwd: null });
+    expect(parseArgs([])).toEqual({ branch: null, cwd: null, home: null });
   });
 
-  it('parses --branch and --cwd as separate-token flags', () => {
-    expect(parseArgs(['--branch', 'main', '--cwd', '/tmp/foo'])).toEqual({
+  it('parses --branch, --cwd, and --home as separate-token flags', () => {
+    expect(parseArgs(['--branch', 'main', '--cwd', '/tmp/foo', '--home', '/tmp/home'])).toEqual({
       branch: 'main',
       cwd: '/tmp/foo',
+      home: '/tmp/home',
     });
   });
 
   it('parses --branch=value inline form', () => {
-    expect(parseArgs(['--branch=main'])).toEqual({ branch: 'main', cwd: null });
+    expect(parseArgs(['--branch=main'])).toEqual({ branch: 'main', cwd: null, home: null });
+  });
+
+  it('parses --home=value inline form', () => {
+    expect(parseArgs(['--home=/tmp/x'])).toEqual({ branch: null, cwd: null, home: '/tmp/x' });
   });
 
   it('throws when --branch has no value', () => {
     expect(() => parseArgs(['--branch'])).toThrow(/--branch requires a value/);
+  });
+
+  it('throws when --home has no value', () => {
+    expect(() => parseArgs(['--home'])).toThrow(/--home requires a value/);
   });
 
   it('throws on unknown arguments', () => {
