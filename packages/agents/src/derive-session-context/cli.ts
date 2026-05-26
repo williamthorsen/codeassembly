@@ -245,29 +245,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     if (arg === undefined) {
       continue;
     }
-    switch (arg) {
-      case '--branch':
-        branch = consumeValue(argv, i, '--branch');
-        i += 1;
-        continue;
-
-      case '--cwd':
-        cwd = consumeValue(argv, i, '--cwd');
-        i += 1;
-        continue;
-
-      case '--home':
-        home = consumeValue(argv, i, '--home');
-        i += 1;
-        continue;
-
-      default:
-        break;
-    }
-    if (arg.startsWith('--branch=')) {
+    if (arg === '--branch') {
+      branch = consumeValue(argv, i, '--branch');
+      i += 1;
+    } else if (arg.startsWith('--branch=')) {
       branch = arg.slice('--branch='.length);
+    } else if (arg === '--cwd') {
+      cwd = consumeValue(argv, i, '--cwd');
+      i += 1;
     } else if (arg.startsWith('--cwd=')) {
       cwd = arg.slice('--cwd='.length);
+    } else if (arg === '--home') {
+      home = consumeValue(argv, i, '--home');
+      i += 1;
     } else if (arg.startsWith('--home=')) {
       home = arg.slice('--home='.length);
     } else {
