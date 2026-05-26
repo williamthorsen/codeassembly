@@ -1,6 +1,6 @@
 Before saving, audit each new or modified comment.
 
-**The deletion test.** For each comment, ask: *would a competent reviewer reading the code lose anything if I deleted this comment?*
+**The deletion test.** For each comment, ask: *Would a competent reviewer reading the code lose anything if I deleted this comment?*
 
 - If no, delete it.
 - If yes, confirm the kept comment does not violate any deletion rule:

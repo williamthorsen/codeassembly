@@ -78,13 +78,10 @@ The before/after below is a representative composite drawn from observed cases. 
 
 ```tsx
 // Originally added for TICKET-123 / PR #456 to lock in the focus affordance.
-// This test mirrors the regression assertion in `Sibling.spec.tsx`.
-// We discussed making the assertion more direct, but the styled behavior
-// isn't observable in jsdom, so we assert on the className instead.
+// This test mirrors the regression assertion in `Sibling.spec.tsx`. We discussed making the assertion more direct,
+// but the styled behavior isn't observable in jsdom, so we assert on the className instead.
 // Future readers should note that removing this test will regress the affordance.
-// eslint-disable-next-line jest/no-conditional-expect -- needed because this
-// test exercises both the focused and unfocused branches and we wanted to keep
-// them in one test for parity with the Sibling.spec.tsx structure.
+// eslint-disable-next-line jest/no-conditional-expect -- needed because this test exercises both the focused and unfocused branches and we wanted to keep them in one test for parity with the Sibling.spec.tsx structure
 it('applies the focused class to the selected option', () => {
   // ...
 });
@@ -95,7 +92,7 @@ it('applies the focused class to the selected option', () => {
 ```tsx
 it('applies the focused class to the selected option', () => {
   // Asserts on className because the styled focus state is not observable in jsdom.
-  // eslint-disable-next-line jest/no-conditional-expect -- focused and unfocused branches share one test.
+  // eslint-disable-next-line jest/no-conditional-expect -- focused and unfocused branches share one test
   // ...
 });
 ```
