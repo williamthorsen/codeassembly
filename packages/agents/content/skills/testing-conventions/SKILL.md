@@ -67,6 +67,28 @@ Comment discipline applies to test files the same as to source. The full rule se
 
 Everything else is over-commenting. Test names already communicate intent; assertions communicate the check.
 
+## Test structure
+
+Tests should make their variation easy to see. When N adjacent tests differ only in one input but share a wall of identical setup, the reader has to diff three or four nearly-identical render calls to find what's actually being tested. The fix is not "delete things"; it's "factor the shared part out so the variation reads as variation."
+
+This is the same signal-buried-in-noise failure mode that [`comment-discipline.md`](../_data/comment-discipline.md) addresses on the comment side. Different mechanism, same principle.
+
+### Rules
+
+1. **Test bodies should be mostly variation and assertion, not setup.** Any prop, fixture, or boilerplate identical across N adjacent tests is noise. Factor it into a default-bearing helper, or collapse the tests into a single parameterized test where the variation reads as a table.
+2. **Use `it.each` when N adjacent tests differ only in a small set of inputs and the body is structurally identical.** Use a named helper when the variation is bigger, when shared setup should disappear into a helper signature, or when assertion shapes differ per case.
+3. **Test the rule, not the data.** Prefer counts, predicates, and structural assertions (`expect(getVisibleChipCount()).toBe(N)`, `expect(queryPillElement()).toBeInTheDocument()`) over enumerating specific fixture labels in every row. Assert specific data flow _once_, in a focused test, not per row of a table.
+
+### Diagnostic
+
+Before writing a third test in the same `describe` block, scan the previous two: How many tokens does a reader have to diff to find what's actually different between them? If the answer is more than a handful, the signal is buried. Parameterize the trio or extract a helper before continuing.
+
+### When N copies are right
+
+The smell is shared _setup with one variable_, not shared _shape with different intents_. Three tests that read as genuinely distinct behavioral claims should stay as three `it` blocks even if their bodies superficially resemble each other. Do not collapse distinct intents into a table.
+
+<!-- include: ../../_partials/test-structure-audit-checklist.md / -->
+
 ## Additional patterns
 
 ### Omit "should" from test names
