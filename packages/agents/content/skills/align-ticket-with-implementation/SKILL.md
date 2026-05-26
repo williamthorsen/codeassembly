@@ -10,7 +10,7 @@ Produce or revise an issue ticket (e.g., GitHub issue, Jira issue) to describe w
 
 ## Process
 
-1. **Analyze branch changes** using `get-session-context` to obtain `default_branch`:
+1. **Analyze branch changes**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout, then run:
 
 ```bash
 git diff $DEFAULT_BRANCH...HEAD
@@ -75,7 +75,7 @@ If the script's stderr contains `Note: PR lookup failed; proceeding without pr f
 
 ### Path resolution
 
-Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; read `artifact_base_dir`, `project_slug`, and `ticket_id` from it (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

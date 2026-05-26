@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
-# Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced by the `get-session-context` skill) for
-# session-level fields and runs git + platform-specific PR lookup for the rest. Skills consume the output to
-# populate the universal portion of their artifact frontmatter without repeating the underlying shell logic.
+# Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced on demand by the bundled `derive-session-context`
+# helper) for session-level fields and runs git + platform-specific PR lookup for the rest. Skills consume the
+# output to populate the universal portion of their artifact frontmatter without repeating the underlying shell
+# logic. When the manifest is absent, the script invokes the bundled deriver to create it — no precondition
+# applies to callers (main agents, subagents, and bash scripts can all rely on the same fast path).
 #
 # Usage:
 #   resolve-frontmatter.sh --skill NAME --interactive true|false [...]
@@ -45,9 +47,8 @@
 #
 # Exit codes:
 #   0  Success.
-#   1  Missing branch manifest (precondition violated; dispatcher must invoke the get-session-context skill before
-#      subagent dispatch; see artifact-conventions.md § Subagent dispatch precondition), not in a git repo,
-#      missing `jq`, or required-arg violation in yaml mode.
+#   1  Not in a git repository, missing required commands (`jq`, `git`), required-arg violation in yaml mode, or
+#      the bundled `derive-session-context` helper itself failed.
 
 set -euo pipefail
 
@@ -155,10 +156,11 @@ main() {
   manifest_path=$(resolve_manifest_path "$branch") || fail "could not resolve repo root for manifest lookup"
 
   local manifest
-  manifest=$(read_manifest "$branch") || fail "$(printf '%s\n%s\n%s' \
-    "branch manifest missing at $manifest_path" \
-    "Precondition violated: the dispatcher must invoke the \`get-session-context\` skill in this cwd before dispatching a subagent that calls this script." \
-    "Subagents cannot invoke skills, so they cannot create the manifest themselves. See artifact-conventions.md § Subagent dispatch precondition.")"
+  if ! manifest=$(read_manifest "$branch"); then
+    if ! manifest=$(derive_manifest); then
+      fail "could not read or derive branch manifest"
+    fi
+  fi
 
   local commit
   commit=$(git rev-parse --short HEAD 2>/dev/null) || fail "could not resolve HEAD commit"
@@ -397,8 +399,8 @@ current_branch() {
 
 # Resolves the absolute path to the branch manifest for the given branch.
 # Anchors at the repo root via `git rev-parse --show-toplevel`, so the lookup is independent of the caller's cwd.
-# Inside a git worktree, this returns the worktree's `.agents/` path — matching where `get-session-context` writes
-# the manifest. Returns non-zero outside a git repository.
+# Inside a git worktree, this returns the worktree's `.agents/` path — matching where the bundled
+# `derive-session-context` helper writes the manifest. Returns non-zero outside a git repository.
 resolve_manifest_path() {
   local branch="$1"
   local sanitized repo_root
@@ -408,21 +410,86 @@ resolve_manifest_path() {
 }
 
 # Reads the branch manifest for the given branch. Echoes the JSON content.
-# Returns non-zero when the manifest is missing or the path cannot be resolved.
+# Returns non-zero when the manifest is missing, the path cannot be resolved, or the file content
+# is not valid JSON. Treating corrupt content as a cache miss lets the caller fall through to
+# `derive_manifest`, which recomposes from scratch — matching the recovery behavior on the TS side.
 read_manifest() {
   local branch="$1"
-  local path
+  local path content
   path=$(resolve_manifest_path "$branch") || return 1
   [[ -r "$path" ]] || return 1
-  cat "$path"
+  content=$(cat "$path")
+  jq empty <<<"$content" 2>/dev/null || return 1
+  printf '%s\n' "$content"
+}
+
+# Invokes the bundled `derive-session-context` helper to compose the branch manifest on demand.
+# Echoes the JSON manifest emitted on the helper's stdout. On failure, the helper's stderr is
+# surfaced verbatim to the caller's stderr and the function returns non-zero.
+#
+# Bundle location: `../skills/derive-session-context/derive-session-context.mjs`, anchored relative
+# to this script's own install path (e.g., `~/.claude/scripts/resolve-frontmatter.sh` -> bundle at
+# `~/.claude/skills/derive-session-context/derive-session-context.mjs`). The install layout shared
+# by Claude Code and Rovo Dev makes this relative-pair invariant. Tests that source this script
+# rather than executing it directly can set `RESOLVE_FRONTMATTER_BUNDLE_PATH` to point at an
+# alternate location.
+derive_manifest() {
+  local bundle_path
+  bundle_path="$(resolve_bundle_path)"
+  if [[ ! -r "$bundle_path" ]]; then
+    echo "$PROG: bundled deriver not found at $bundle_path" >&2
+    return 1
+  fi
+  if ! command -v node >/dev/null 2>&1; then
+    echo "$PROG: 'node' command not found on PATH; cannot run bundled deriver at $bundle_path" >&2
+    return 1
+  fi
+  # Anchor the deriver's cwd at the repo root so its manifest write lands at the same path
+  # `read_manifest` looks at (`{repo_root}/.agents/{branch}.branch-manifest.json`). Without this,
+  # a call from a subdirectory would write to `{subdir}/.agents/` while the reader looks at the
+  # repo root, causing every call to re-invoke the deriver and stranding stale manifests in
+  # unintended subdirectories.
+  local repo_root
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    echo "$PROG: could not resolve repo root for deriver invocation" >&2
+    return 1
+  }
+  # Tests can set RESOLVE_FRONTMATTER_BUNDLE_ARGS to pass extra args to the deriver (e.g.,
+  # `--home /tmp/xyz` to isolate the global preferences lookup from the developer's real home).
+  # In production no extra args are needed beyond `--cwd`.
+  if [[ -n "${RESOLVE_FRONTMATTER_BUNDLE_ARGS:-}" ]]; then
+    # shellcheck disable=SC2086 -- intentional word-splitting of the args string.
+    node "$bundle_path" --cwd "$repo_root" $RESOLVE_FRONTMATTER_BUNDLE_ARGS
+  else
+    node "$bundle_path" --cwd "$repo_root"
+  fi
+}
+
+# Resolves the absolute path to the bundled `derive-session-context.mjs`.
+# Honors `RESOLVE_FRONTMATTER_BUNDLE_PATH` when set (used by shellspec tests that source this
+# script rather than executing it directly); otherwise computes the path relative to this script's
+# own install location.
+resolve_bundle_path() {
+  if [[ -n "${RESOLVE_FRONTMATTER_BUNDLE_PATH:-}" ]]; then
+    printf '%s' "$RESOLVE_FRONTMATTER_BUNDLE_PATH"
+    return 0
+  fi
+  local source_path script_dir
+  source_path="${BASH_SOURCE[0]:-$0}"
+  script_dir="$(cd "$(dirname "$source_path")" && pwd)"
+  printf '%s/../skills/derive-session-context/derive-session-context.mjs' "$script_dir"
 }
 
 # Sanitizes a branch name for filesystem use: Replaces `/` with `-` and trims any trailing `-` characters.
-# Mirrors `get-session-context` behavior.
+# Mirrors the sanitization performed by the bundled `derive-session-context` helper; the two must agree
+# on the manifest filename. Loops the trailing-hyphen strip rather than using `${branch%%-}` (which only
+# strips one) so a branch like `feat//` produces `feat` in both implementations.
 sanitize_branch() {
   local branch="$1"
   branch="${branch//\//-}"
-  branch="${branch%%-}"
+  while [[ "$branch" == *- ]]; do
+    branch="${branch%-}"
+  done
   printf '%s' "$branch"
 }
 

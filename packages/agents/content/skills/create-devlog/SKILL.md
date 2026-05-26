@@ -55,7 +55,7 @@ Resolve session context and the artifact directory before writing.
 
 ### Path resolution
 
-1. Call `get-session-context` to obtain `ticket_id`, `project_slug`, `artifact_base_dir`, `artifact_paths`, and `branch_name`.
+1. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `project_slug`, `artifact_base_dir`, `artifact_paths`, and `branch_name` from it.
 2. If `ticket_id` is non-null: Save as a ticket-level artifact at:
 
    ```
@@ -74,7 +74,7 @@ Resolve session context and the artifact directory before writing.
 
 4. `mkdir -p` the target directory before writing.
 
-`get-session-context` returns `ticket_id: null` for branches without a recognizable ticket prefix (e.g., `experiment/foo`). Treat null as "no ticket" — never produce a path containing `tickets/null/`.
+The bundled session-context deriver returns `ticket_id: null` for branches without a recognizable ticket prefix (e.g., `experiment/foo`). Treat null as "no ticket" — never produce a path containing `tickets/null/`.
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

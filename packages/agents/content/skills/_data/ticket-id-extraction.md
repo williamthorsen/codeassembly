@@ -1,6 +1,6 @@
 # Ticket ID extraction (Jira-style)
 
-This is the canonical contract for extracting a Jira-style ticket ID from a branch name or commit message subject. Both the `get-ticket-id` skill (Bash) and the `get-session-context` skill (zero-Bash spec) implement this contract; downstream callers rely on the two implementations producing identical results for the same input.
+This is the canonical contract for extracting a Jira-style ticket ID from a branch name or commit message subject. Both the `get-ticket-id` skill (Bash) and the `derive-session-context` bundled TypeScript helper implement this contract; downstream callers rely on the two implementations producing identical results for the same input.
 
 ## Contract
 
@@ -35,4 +35,4 @@ This is intentional — case-insensitive unanchored matching is the price of sup
 
 ## Bare-numeric fallback (out of scope)
 
-When no Jira-style ID matches, the `get-ticket-id` script falls back to a **bare numeric prefix** anchored at the start of the input, formatted via `project.ticket_ref_prefix` from `.agents/preferences.yaml`. That fallback is a separate, orthogonal feature for `#`-style projects and is not covered by this contract. See `extract_bare_number` in `packages/agents/content/scripts/get-ticket-id.sh` for the implementation, and `get-session-context/SKILL.md` rules 6–7 for the spec equivalent.
+When no Jira-style ID matches, the `get-ticket-id` script falls back to a **bare numeric prefix** anchored at the start of the input, formatted via `project.ticket_ref_prefix` from `.agents/preferences.yaml`. That fallback is a separate, orthogonal feature for `#`-style projects and is not covered by this contract. See `extract_bare_number` in `packages/agents/content/scripts/get-ticket-id.sh` for the bash implementation and `extract-ticket-id.ts` in `packages/agents/src/derive-session-context/` for the equivalent TypeScript implementation.

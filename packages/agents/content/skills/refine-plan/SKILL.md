@@ -30,7 +30,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
    - Other URL -> Fetch the URL content.
-4. Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`.
+4. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
 

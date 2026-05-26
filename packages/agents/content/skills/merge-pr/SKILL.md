@@ -26,7 +26,7 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ### 1. Get session context
 
-Use `get-session-context` to obtain `ticket_ref`, `branch_name`, `default_branch`, `platform`, `project_slug`, `ticket_id`, and `artifact_base_dir`.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `platform`, `project_slug`, `ticket_id`, and `artifact_base_dir` from it.
 
 ### 2. Resolve PR number
 

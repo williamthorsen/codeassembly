@@ -17,7 +17,7 @@ Create a pull request on the appropriate platform. This is the user-facing entry
 
 ### 1. Get session context
 
-Use `get-session-context` to obtain `ticket_id`, `ticket_ref`, `project_slug`, `platform`, `default_branch`, `branch_name`, and `artifact_base_dir`.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `platform`, `default_branch`, `branch_name`, and `artifact_base_dir` from it.
 
 ### 2. Check branch sync
 

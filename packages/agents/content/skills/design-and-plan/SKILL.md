@@ -204,7 +204,7 @@ Present the plan to the user. Revise until approved.
 ### Phase 6: Save artifacts and stop
 
 1. Resolve artifact directory using `save-artifact` conventions:
-   - Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
+   - Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
    - Target: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 

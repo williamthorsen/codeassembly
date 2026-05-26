@@ -11,7 +11,7 @@ Analyze the current branch's changes since diverging from the default branch.
 ## Process
 
 1. **Gather context**:
-   - Use `get-session-context` to obtain `default_branch`, `ticket_id`, and `ticket_ref`; consult [work-types.json](../_data/work-types.json).
+   - Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_id`, and `ticket_ref` from the manifest JSON emitted on stdout; consult [work-types.json](../_data/work-types.json).
 
 2. **Analyze changes**:
 
@@ -145,7 +145,7 @@ When used as a PR description, include **from `## What` onward only** — omit t
 
 ### Path resolution
 
-Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

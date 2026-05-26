@@ -48,7 +48,12 @@ async function runBundle(target: BundleTarget): Promise<string> {
   const args = invocation.args ?? [];
 
   return new Promise<string>((resolve, reject) => {
-    const child = spawn(process.execPath, [bundlePath, ...args]);
+    // Pass `cwd` and `env` only when supplied so existing entries continue to inherit the parent's environment.
+    const spawnOptions: { cwd?: string; env?: NodeJS.ProcessEnv } = {
+      ...(invocation.cwd !== undefined && { cwd: invocation.cwd }),
+      ...(invocation.env !== undefined && { env: invocation.env }),
+    };
+    const child = spawn(process.execPath, [bundlePath, ...args], spawnOptions);
     const stdoutChunks: Buffer[] = [];
     const stderrChunks: Buffer[] = [];
     child.stdout.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));

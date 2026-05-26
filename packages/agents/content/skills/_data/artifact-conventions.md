@@ -4,7 +4,7 @@ Standards for AI-generated artifact storage, naming, and lifecycle.
 
 ## Directory structure
 
-All artifacts live under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Use `get-session-context` to resolve `artifact_base_dir`:
+All artifacts live under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Invoke the bundled session-context deriver (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) to resolve `artifact_base_dir`:
 
 ```
 {base_dir}/
@@ -28,7 +28,7 @@ All artifacts live under a configurable base directory (`base_dir`, default `~/a
 
 ### Project slug
 
-Always present under `projects/`, even when `{base_dir}/` is inside the project. Constant structure enables simple directory sync for export. Use `get-session-context` to obtain `project_slug`.
+Always present under `projects/`, even when `{base_dir}/` is inside the project. Constant structure enables simple directory sync for export. Invoke the bundled session-context deriver to obtain `project_slug`.
 
 ### Ticket ID
 
@@ -59,9 +59,9 @@ Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored pat
 
 ## Path resolution
 
-Skills resolve artifact directories by invoking `get-session-context` and reading `artifact_base_dir` and `project_slug` from the manifest. This is the canonical method for all artifact path resolution.
+Skills resolve artifact directories by invoking the bundled session-context deriver (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON it emits on stdout. This is the canonical method for all artifact path resolution. The deriver writes the manifest to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect; subsequent invocations short-circuit by reading the cached manifest.
 
-For contexts where the manifest is unavailable (e.g., standalone scripts without skill access), the manual fallback is:
+For contexts where neither the deriver nor a cached manifest is available (e.g., standalone scripts without Node.js), the manual fallback is:
 
 1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
 2. If not found there, read from `~/.agents/preferences.yaml`
@@ -75,7 +75,7 @@ For contexts where the manifest is unavailable (e.g., standalone scripts without
 {base_dir}/projects/{project-slug}/tickets/{ticket-id}/
 ```
 
-Ticket-level artifacts and run directories both live here. Use `get-session-context` to obtain `ticket_id`.
+Ticket-level artifacts and run directories both live here. Invoke the bundled session-context deriver to obtain `ticket_id`.
 
 ### Run paths
 
@@ -214,21 +214,21 @@ Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh
 
 These two sites read the script's JSON output, then write the YAML frontmatter themselves. The pattern is intentional, not a workaround — keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
-## Subagent dispatch precondition
+## Manifest creation
 
-Subagents that produce frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is created exclusively by the `get-session-context` skill, which is not available to subagents (they are tool-restricted to `{tool:Read}, {tool:Grep}, {tool:Glob}, {tool:Bash}, {tool:Write}` to prevent reviewer agents in `/orchestrate-dev` workflows from reaching beyond their purview).
+Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and shipped as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose toolbelt includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
-The dispatcher, the skill or main agent that invokes the subagent via the {tool:Task} tool, must invoke `get-session-context` in the current working directory before dispatching any subagent that calls `resolve-frontmatter.sh`. The manifest must exist when the subagent runs; the subagent cannot create it itself.
+There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path; failure to find one becomes a recovery, not a hard stop.
 
-Current dispatchers:
+Invocation surface:
 
-| Dispatcher                | Location                                                                   |
-| ------------------------- | -------------------------------------------------------------------------- |
-| `orchestrate`             | `packages/agents/content/skills/orchestrate/SKILL.md` (Phase 1 step 1)     |
-| `refine-plan`             | `packages/agents/content/skills/refine-plan/SKILL.md` (step 4)             |
-| `plan-orchestrable-steps` | `packages/agents/content/skills/plan-orchestrable-steps/SKILL.md` (step 1) |
+```bash
+node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs
+```
 
-When authoring a new dispatcher: Ensure that `get-session-context` is invoked as the first step, before any {tool:Task} tool dispatch. `resolve-frontmatter.sh` hard-fails inside the subagent if the precondition is unmet, with a message identifying the violation.
+The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
+
+When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first — the deriver is the single derivation surface and is safe to call from any context.
 
 ## Plan provenance
 

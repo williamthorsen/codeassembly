@@ -23,6 +23,13 @@ It "preserves underscores"
 When call sanitize_branch "MAC-130_foo"
 The output should equal "MAC-130_foo"
 End
+
+It "strips all trailing hyphens produced by consecutive slash replacement"
+# `feat//` -> `feat--` after `/` replacement; loop must strip both to match the TS deriver,
+# which computes the manifest filename via the same sanitization.
+When call sanitize_branch "feat//"
+The output should equal "feat"
+End
 End
 
 Describe "resolve_manifest_path"
@@ -772,7 +779,7 @@ The stderr should include "--interactive must be true or false"
 End
 End
 
-Describe "main missing manifest"
+Describe "main missing manifest invokes the bundled deriver"
 setup_missing_manifest() {
   tmpdir=$(mktemp -d)
   pushd "$tmpdir" >/dev/null || exit
@@ -780,10 +787,29 @@ setup_missing_manifest() {
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
-  # Deliberately do NOT create .agents/main.branch-manifest.json.
+  # Deliberately do NOT create .agents/main.branch-manifest.json — the deriver should write one.
+  # Point the bundle resolver at the on-disk bundle. shellspec sources this script via `Include`,
+  # so the script's own `BASH_SOURCE[0]`-based path computation resolves to the shellspec runner
+  # rather than the agents content tree.
+  export RESOLVE_FRONTMATTER_BUNDLE_PATH="$PROJECT_ROOT/content/skills/derive-session-context/derive-session-context.mjs"
+  # Pass --home pointing at the tmpdir so the deriver does not read the developer's real
+  # `~/.agents/preferences.yaml` (whose schema-validity is environment-specific). Using a flag
+  # instead of HOME env override avoids breaking PATH-resolution tools (e.g., asdf shims).
+  export RESOLVE_FRONTMATTER_BUNDLE_ARGS="--home $tmpdir"
+  # Stub `gh` to return empty (no PR), so the test is hermetic.
+  mkdir -p bin
+  cat >bin/gh <<'SH'
+#!/usr/bin/env bash
+exit 0
+SH
+  chmod +x bin/gh
+  ORIGINAL_PATH="$PATH"
+  PATH="$tmpdir/bin:$PATH"
 }
 
 cleanup_missing_manifest() {
+  PATH="$ORIGINAL_PATH"
+  unset RESOLVE_FRONTMATTER_BUNDLE_PATH RESOLVE_FRONTMATTER_BUNDLE_ARGS
   popd >/dev/null || exit
   rm -rf "$tmpdir"
 }
@@ -791,27 +817,56 @@ cleanup_missing_manifest() {
 BeforeEach "setup_missing_manifest"
 AfterEach "cleanup_missing_manifest"
 
-It "exits non-zero when the branch manifest is missing"
-When run main --skill foo --interactive true
-The status should be failure
-The stderr should be present
-End
-
-It "indicts the dispatcher in the missing-manifest error"
-When run main --skill foo --interactive true
-The status should be failure
-The stderr should include "branch manifest missing"
-The stderr should include "dispatcher must invoke"
-The stderr should include "get-session-context"
-The stderr should include "Subagent dispatch precondition"
-End
-
-It "includes the absolute path in the missing-manifest error"
-# `git rev-parse --show-toplevel` returns the canonical path, so resolve symlinks in the expected value.
+It "derives and writes the manifest on cache miss, then succeeds"
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
-When run main --skill foo --interactive true
-The status should be failure
-The stderr should include "$resolved_tmpdir/.agents/main.branch-manifest.json"
+When run main --skill foo --interactive true --override "run_id="
+The status should be success
+The output should include "skill: foo"
+The output should include "branch: main"
+# After the deriver runs, the manifest file should exist at the canonical path.
+The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
+End
+
+It "derives the manifest at the repo root when invoked from a nested subdirectory"
+# Regression: `derive_manifest` previously omitted `--cwd`, so the deriver wrote to
+# the caller's working directory while `read_manifest` looked at the repo root. Every
+# call from a subdirectory re-ran the deriver and stranded manifests in nested `.agents/`
+# folders. The fix anchors the deriver at `git rev-parse --show-toplevel`.
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+mkdir -p packages/nested/deep
+subdir_run() {
+  pushd packages/nested/deep >/dev/null
+  main --skill foo --interactive true --override "run_id="
+  local rc=$?
+  popd >/dev/null
+  return $rc
+}
+When run subdir_run
+The status should be success
+The output should include "skill: foo"
+The output should include "branch: main"
+# Manifest must land at the repo root, not the subdirectory.
+The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
+The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.json" should not be exist
+End
+
+It "recovers when the cached manifest contains corrupt JSON"
+# Seed a corrupt `.branch-manifest.json` — `read_manifest`'s `jq empty` guard treats it
+# as a cache miss and falls through to `derive_manifest`, which recomposes the manifest
+# from preferences + git state. Mirrors the TS-side `tryReadManifest` recovery contract.
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+mkdir -p .agents
+printf '{ "ticket_id": "broken' >.agents/main.branch-manifest.json
+When run main --skill foo --interactive true --override "run_id="
+The status should be success
+The output should include "skill: foo"
+The output should include "branch: main"
+# The deriver emits a stderr diagnostic when it overwrites the corrupt file so an operator can
+# distinguish a normal cache miss from recurring corruption. Assert that it surfaces.
+The stderr should include "manifest"
+The stderr should include "is corrupt"
+# After recovery, the manifest should now be valid JSON readable by jq.
+The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 End
 End
 

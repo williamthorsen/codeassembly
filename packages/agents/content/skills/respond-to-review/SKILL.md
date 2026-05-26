@@ -19,7 +19,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 ## Process
 
-1. **Get context** using `get-session-context` to obtain `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir`
+1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir` from it.
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
@@ -245,7 +245,7 @@ The body following the frontmatter has this structure:
 
 ### Path resolution
 
-Use `get-session-context` to obtain `artifact_base_dir` and `project_slug`.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir` and `project_slug` from the manifest JSON emitted on stdout (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
