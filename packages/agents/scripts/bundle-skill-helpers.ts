@@ -102,7 +102,7 @@ function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
   };
 }
 
-/** Assert the deriver emitted the expected `ticket_id` and `project_slug` for the smoke fixture. */
+/** Assert the deriver emitted the expected field set for the smoke fixture. */
 function assertDeriveSessionContextOutput(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from derive-session-context');
@@ -115,6 +115,20 @@ function assertDeriveSessionContextOutput(result: unknown): void {
   }
   if (result.branch_name !== 'MAC-999/feat/smoke-fixture') {
     throw new Error(`expected branch_name "MAC-999/feat/smoke-fixture", got ${JSON.stringify(result.branch_name)}`);
+  }
+  // `artifact_base_dir` is resolved by `resolveBaseDir`: the default `~/ai-artifacts` is expanded
+  // against the `--home` flag (set to the fixture dir in `makeDeriveSessionContextSmokeTest`).
+  // The bundled deriver is the only end-to-end path that exercises this expansion against a real
+  // `os.homedir()`-equivalent argument, so the smoke test is the natural place to assert it.
+  if (typeof result.artifact_base_dir !== 'string' || !result.artifact_base_dir.includes('ai-artifacts')) {
+    throw new Error(
+      `expected artifact_base_dir to include "ai-artifacts", got ${JSON.stringify(result.artifact_base_dir)}`,
+    );
+  }
+  // `default_branch` comes from `composeManifest`'s remote-name resolution; the smoke fixture has
+  // no `repository.default_remote` configured, so the default `origin/main` should surface.
+  if (result.default_branch !== 'origin/main') {
+    throw new Error(`expected default_branch "origin/main", got ${JSON.stringify(result.default_branch)}`);
   }
 }
 

@@ -54,6 +54,9 @@ describe(readPreferences, () => {
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
     expect(result.preferences.platform).toBe('github');
     expect(result.preferences.project?.slug).toBe('my-project');
+    // Both sources contributed; confirm the merge does not clear `sources.global`.
+    expect(result.sources.project).toBeDefined();
+    expect(result.sources.global).toBeDefined();
   });
 
   it('throws with a file-anchored message on malformed YAML', async () => {
