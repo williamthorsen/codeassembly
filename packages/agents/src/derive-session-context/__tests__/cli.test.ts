@@ -29,6 +29,10 @@ describe(parseArgs, () => {
     expect(parseArgs(['--home=/tmp/x'])).toEqual({ branch: null, cwd: null, home: '/tmp/x' });
   });
 
+  it('parses --cwd=value inline form', () => {
+    expect(parseArgs(['--cwd=/tmp/foo'])).toEqual({ branch: null, cwd: '/tmp/foo', home: null });
+  });
+
   it('throws when --branch has no value', () => {
     expect(() => parseArgs(['--branch'])).toThrow(/--branch requires a value/);
   });
@@ -57,6 +61,12 @@ describe(sanitizeBranch, () => {
 
   it('trims surrounding whitespace before processing', () => {
     expect(sanitizeBranch('  feat/foo  ')).toBe('feat-foo');
+  });
+
+  it('strips all trailing hyphens produced by consecutive slash replacement', () => {
+    // Regression: a single-strip (`s.replace(/-$/, '')`) would yield `feat-`. The bash
+    // sanitizer (`sanitize_branch` in `resolve-frontmatter.sh`) loops to match this.
+    expect(sanitizeBranch('feat//')).toBe('feat');
   });
 });
 

@@ -23,6 +23,13 @@ It "preserves underscores"
 When call sanitize_branch "MAC-130_foo"
 The output should equal "MAC-130_foo"
 End
+
+It "strips all trailing hyphens produced by consecutive slash replacement"
+# `feat//` -> `feat--` after `/` replacement; loop must strip both to match the TS deriver,
+# which computes the manifest filename via the same sanitization.
+When call sanitize_branch "feat//"
+The output should equal "feat"
+End
 End
 
 Describe "resolve_manifest_path"
@@ -818,6 +825,29 @@ The output should include "skill: foo"
 The output should include "branch: main"
 # After the deriver runs, the manifest file should exist at the canonical path.
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
+End
+
+It "derives the manifest at the repo root when invoked from a nested subdirectory"
+# Regression: `derive_manifest` previously omitted `--cwd`, so the deriver wrote to
+# the caller's working directory while `read_manifest` looked at the repo root. Every
+# call from a subdirectory re-ran the deriver and stranded manifests in nested `.agents/`
+# folders. The fix anchors the deriver at `git rev-parse --show-toplevel`.
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+mkdir -p packages/nested/deep
+subdir_run() {
+  pushd packages/nested/deep >/dev/null
+  main --skill foo --interactive true --override "run_id="
+  local rc=$?
+  popd >/dev/null
+  return $rc
+}
+When run subdir_run
+The status should be success
+The output should include "skill: foo"
+The output should include "branch: main"
+# Manifest must land at the repo root, not the subdirectory.
+The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
+The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.json" should not be exist
 End
 End
 

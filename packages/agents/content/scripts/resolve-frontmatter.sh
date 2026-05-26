@@ -440,14 +440,24 @@ derive_manifest() {
     echo "$PROG: 'node' command not found on PATH; cannot run bundled deriver at $bundle_path" >&2
     return 1
   fi
+  # Anchor the deriver's cwd at the repo root so its manifest write lands at the same path
+  # `read_manifest` looks at (`{repo_root}/.agents/{branch}.branch-manifest.json`). Without this,
+  # a call from a subdirectory would write to `{subdir}/.agents/` while the reader looks at the
+  # repo root, causing every call to re-invoke the deriver and stranding stale manifests in
+  # unintended subdirectories.
+  local repo_root
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    echo "$PROG: could not resolve repo root for deriver invocation" >&2
+    return 1
+  }
   # Tests can set RESOLVE_FRONTMATTER_BUNDLE_ARGS to pass extra args to the deriver (e.g.,
   # `--home /tmp/xyz` to isolate the global preferences lookup from the developer's real home).
-  # In production no extra args are needed; the deriver reads from `process.cwd()` and `os.homedir()`.
+  # In production no extra args are needed beyond `--cwd`.
   if [[ -n "${RESOLVE_FRONTMATTER_BUNDLE_ARGS:-}" ]]; then
     # shellcheck disable=SC2086 -- intentional word-splitting of the args string.
-    node "$bundle_path" $RESOLVE_FRONTMATTER_BUNDLE_ARGS
+    node "$bundle_path" --cwd "$repo_root" $RESOLVE_FRONTMATTER_BUNDLE_ARGS
   else
-    node "$bundle_path"
+    node "$bundle_path" --cwd "$repo_root"
   fi
 }
 
@@ -467,11 +477,15 @@ resolve_bundle_path() {
 }
 
 # Sanitizes a branch name for filesystem use: Replaces `/` with `-` and trims any trailing `-` characters.
-# Mirrors the sanitization performed by the bundled `derive-session-context` helper.
+# Mirrors the sanitization performed by the bundled `derive-session-context` helper; the two must agree
+# on the manifest filename. Loops the trailing-hyphen strip rather than using `${branch%%-}` (which only
+# strips one) so a branch like `feat//` produces `feat` in both implementations.
 sanitize_branch() {
   local branch="$1"
   branch="${branch//\//-}"
-  branch="${branch%%-}"
+  while [[ "$branch" == *- ]]; do
+    branch="${branch%-}"
+  done
   printf '%s' "$branch"
 }
 
