@@ -79,7 +79,7 @@ If the script's stderr contains `Note: PR lookup failed; proceeding without pr f
 
 ## Saving
 
-Resolve artifact directory using `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths`. The chats path is `artifact_paths.chats` (default: `chats`).
+Resolve artifact directory by invoking `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths` from the manifest JSON emitted on stdout. The chats path is `artifact_paths.chats` (default: `chats`).
 
 Full path: `{artifact_base_dir}/projects/{project_slug}/{chats_path}/`
 

@@ -14,7 +14,7 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 
 Get `project_slug` and `artifact_base_dir` -- but NOT `ticket_id` (that comes from the platform in step 5).
 
-- Use `get-session-context` to obtain `project_slug` and `artifact_base_dir`
+- Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
@@ -126,7 +126,7 @@ If `integrations.jira.enabled: true`, note that Jira creation needs additional c
 
 ### 6. Save local artifacts
 
-Compute `ticket_ref` for the heading from `ticket_id` and `ticket_ref_prefix` (both already in scope from step 1) using the same logic as `get-session-context`:
+Compute `ticket_ref` for the heading from `ticket_id` and `ticket_ref_prefix` (both already in scope from step 1) using the same logic the bundled deriver applies:
 
 - If `ticket_ref_prefix == '#'`: `ticket_ref = '#' + ticket_id`
 - Otherwise: `ticket_ref = ticket_id`

@@ -24,7 +24,7 @@ If branch exists, increment version number.
 
 4. **Condense commits**:
 
-   Use `get-session-context` to obtain `default_branch`.
+   Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout.
 
    ```bash
    git reset --soft $(git merge-base {default_branch} HEAD)
@@ -55,7 +55,7 @@ json=$({platform_home_dir}/scripts/describe-change.sh \
 commit_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('commit_title',''))")
 ```
 
-Pass `--ticket-ref` from `get-session-context` so projects whose `commit.title_format` references `{ticket_ref}` render the ref correctly. Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`).
+Pass `--ticket-ref` from the bundled session-context deriver so projects whose `commit.title_format` references `{ticket_ref}` render the ref correctly. Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`).
 
 Use a JSON parser (python3 above; `jq -r '.commit_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 

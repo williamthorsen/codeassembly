@@ -13,7 +13,7 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 1. **Extract plan content** from conversation context (the most recent plan discussed or produced)
 
 2. **Resolve artifact path**:
-   - Use `get-session-context` to obtain `ticket_id`, `project_slug`, and `artifact_base_dir`
+   - Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout
    - Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)

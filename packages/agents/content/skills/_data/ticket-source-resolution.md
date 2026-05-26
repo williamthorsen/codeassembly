@@ -19,7 +19,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 ### Steps
 
-1. **Get the ticket ID** from `get-session-context` → `ticket_id`. If `ticket_id` is `null`, auto-resolve fails — ask the user for a ticket source.
+1. **Get the ticket ID** by invoking the bundled session-context deriver (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `ticket_id` from the manifest JSON emitted on stdout. If `ticket_id` is `null`, auto-resolve fails — ask the user for a ticket source.
 
 2. **Determine the platform and construct the fetch identifier:**
 

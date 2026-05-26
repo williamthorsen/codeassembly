@@ -27,7 +27,7 @@ Wrapper skills (`orchestrate-dev` with optional `--effort=low|medium|high`, `orc
 
 2. **Task description** (required): What to implement
 3. `--max-review-rounds=N`: Maximum iterative review rounds before marking needs_manual_review (default: 3)
-4. `--diff-base=<ref>`: Reference to diff against for reviews (default: project's default branch via `get-session-context`)
+4. `--diff-base=<ref>`: Reference to diff against for reviews (default: project's default branch from the session-context manifest)
 5. `--approval-threshold=<low|medium|high>`: Findings at this level or above must be fixed for code approval (default: `low`)
 6. `--budget-threshold=<low|medium|high>`: Remaining review-round budget is spent only on findings at this level or above (default: `low`)
 7. `--models=<key:model,...>`: Model assignment overrides, comma-separated (e.g., `--models=coder:opus,default:sonnet`)
@@ -152,7 +152,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
 ## Run initialization
 
-1. **Get context**: Use `get-session-context` to obtain `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir`. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one.
+1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
 3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
 
@@ -232,7 +232,7 @@ Prefix the status line with a colored emoji for visual distinction:
    - `optional`: Print one-line notice "MCP unavailable — continuing without tracking" and proceed.
 
    **Fallback local context generation** (when policy permits continuing without MCP):
-   - Use `artifact_base_dir` from the `get-session-context` manifest as `{base-dir}`.
+   - Use `artifact_base_dir` from the session-context manifest as `{base-dir}`.
    - Generate `{timestamp}` as current UTC time in ISO 8601.
    - Derive a local timestamp prefix by stripping punctuation from `{timestamp}`: `YYYYMMDD-HHMMSSZ` format.
    - Use `{ticket-id}` from step 1 if available, otherwise generate as `{YYYYMMDD}-{4 random hex chars}`.

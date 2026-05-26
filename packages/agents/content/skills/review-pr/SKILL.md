@@ -22,7 +22,7 @@ This is a thin entry skill: The shared review logic — diff analysis, finding g
 
 ### 1. Get session context
 
-Use `get-session-context` to obtain `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, and `platform`. These values are carried forward into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, and `platform` from it. These values are carried forward into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
 
 ### 2. Detect platform
 

@@ -34,7 +34,7 @@ The GitHub dispatch passes `--state all` so closed and merged PRs are resolvable
 
 ## Platform dispatch
 
-The skill reads `platform` from session context (set by `get-session-context`) and runs the matching snippet below. Both snippets read the current branch from `git rev-parse --abbrev-ref HEAD` (or use the `branch_name` already in session context) and produce a single URL string or empty output.
+The skill reads `platform` from session context (the manifest written by the bundled session-context deriver at `.agents/{sanitized-branch}.branch-manifest.json`) and runs the matching snippet below. Both snippets read the current branch from `git rev-parse --abbrev-ref HEAD` (or use the `branch_name` already in session context) and produce a single URL string or empty output.
 
 ### GitHub
 

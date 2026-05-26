@@ -19,9 +19,9 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 ## Process
 
-> **When invoked by `review-pr`:** Steps 1–3 are already complete — `review-pr` performed `get-session-context` and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope.
+> **When invoked by `review-pr`:** Steps 1–3 are already complete — `review-pr` already invoked the bundled session-context deriver and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope.
 
-1. **Get context** using `get-session-context` to obtain `default_branch`, `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir`.
+1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir` from it.
 2. **Resolve diff base** — If `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
 3. **Resolve specification sources** — Produce a list of spec sources (each a `{ source_type, label, content, criteria? }` record):
    - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source.

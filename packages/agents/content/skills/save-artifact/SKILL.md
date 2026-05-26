@@ -78,7 +78,7 @@ Run artifacts are saved by the skills that produce them (`review-branch`, `respo
 
 ## Path resolution
 
-Resolve the artifact directory before saving. Use `get-session-context` to obtain `artifact_base_dir`, `project_slug`, and `ticket_id`.
+Resolve the artifact directory before saving. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout.
 
 ### Ticket-scoped path
 
@@ -90,7 +90,7 @@ Create the directory if needed.
 
 ### Non-ticket paths
 
-Read `artifact_paths` from the `get-session-context` manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
+Read `artifact_paths` from the session-context manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
 Devlogs and deferred-findings artifacts use their non-ticket category paths only as a fallback — when a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule. For frontmatter shapes, see `create-devlog/SKILL.md` (devlogs) and the deferred-findings step in `wrap-up/SKILL.md` (deferred-findings).
 
