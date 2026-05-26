@@ -88,6 +88,7 @@ Focus exclusively on simplification opportunities in changed code:
   - The same fact documented in two places
   - Process commentary ("centralizes the typing boundary," "future readers should note…")
   - Domain leaks in shared/common code
+  - Inline "what" comments that describe what the code does instead of explaining why a non-obvious decision was made
   - `eslint-disable` rationales that explain the surrounding decision rather than the specific suppression
 - Logic that can be consolidated without sacrificing clarity
 
