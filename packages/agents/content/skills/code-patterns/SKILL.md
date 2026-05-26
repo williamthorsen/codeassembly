@@ -52,6 +52,12 @@ Do not use multi-line boxed separators (`// --------` / `// Label` / `// -------
   // endregion | Helpers
   ```
 
+## Code comments
+
+Comments are written for the future reader, not the recent conversation. The full rule set (positive baseline, ten deletion rules, carve-outs for test comments and `eslint-disable` rationales) lives in [`comment-discipline.md`](../_data/comment-discipline.md).
+
+<!-- include: ../../_partials/comment-audit-checklist.md / -->
+
 ## Naming
 
 Follow the naming rules in [naming-conventions.md](../_data/naming-conventions.md): no abbreviations, unit-of-measure suffixes on numerics, verb-led function names, boolean prefixes (`is`, `has`, `should`, `does`).
