@@ -1,0 +1,91 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { readPreferences } from '../read-preferences.ts';
+
+describe(readPreferences, () => {
+  let workRoot: string;
+  let projectDir: string;
+  let homeDir: string;
+
+  beforeEach(async () => {
+    workRoot = await mkdtemp(path.join(tmpdir(), 'derive-session-context-prefs-'));
+    projectDir = path.join(workRoot, 'project');
+    homeDir = path.join(workRoot, 'home');
+    await mkdir(projectDir, { recursive: true });
+    await mkdir(homeDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(workRoot, { recursive: true, force: true });
+  });
+
+  it('returns an empty preferences object when neither file exists', async () => {
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences).toEqual({});
+    expect(result.sources).toEqual({});
+  });
+
+  it('reads project-only preferences', async () => {
+    await writeProjectYaml(projectDir, 'project:\n  slug: my-project\n  ticket_ref_prefix: "#"\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.project).toEqual({ slug: 'my-project', ticket_ref_prefix: '#' });
+    expect(result.sources.project).toBe(path.join(projectDir, '.agents', 'preferences.yaml'));
+    expect(result.sources.global).toBeUndefined();
+  });
+
+  it('reads global-only preferences', async () => {
+    await writeGlobalYaml(homeDir, 'platform: github\nproject:\n  slug: global-default\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.platform).toBe('github');
+    expect(result.preferences.project?.slug).toBe('global-default');
+    expect(result.sources.global).toBe(path.join(homeDir, '.agents', 'preferences.yaml'));
+    expect(result.sources.project).toBeUndefined();
+  });
+
+  it('merges with project values winning over global at the top-level key', async () => {
+    // The project file replaces the entire `project:` section. Top-level keys not set at the
+    // project level (like `platform:`) come from the global file.
+    await writeGlobalYaml(homeDir, 'platform: github\nproject:\n  slug: global-default\n');
+    await writeProjectYaml(projectDir, 'project:\n  slug: my-project\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.platform).toBe('github');
+    expect(result.preferences.project?.slug).toBe('my-project');
+  });
+
+  it('throws with a file-anchored message on malformed YAML', async () => {
+    await writeProjectYaml(projectDir, 'project:\n  slug: [unclosed list\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/malformed YAML/);
+  });
+
+  it('throws on schema-validation failure', async () => {
+    // Unknown top-level key violates the schema's `additionalProperties: false` root constraint.
+    await writeProjectYaml(projectDir, 'mystery_key: "mystery value"\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/schema validation/);
+  });
+
+  it('throws on schema-violating enum value', async () => {
+    // `platform: gitlab` violates the `platform` enum (`github` | `bitbucket`).
+    await writeProjectYaml(projectDir, 'platform: gitlab\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/schema validation/);
+  });
+});
+
+// region | Helpers
+
+async function writeProjectYaml(projectDir: string, body: string): Promise<void> {
+  const agentsDir = path.join(projectDir, '.agents');
+  await mkdir(agentsDir, { recursive: true });
+  await writeFile(path.join(agentsDir, 'preferences.yaml'), body, 'utf8');
+}
+
+async function writeGlobalYaml(homeDir: string, body: string): Promise<void> {
+  const agentsDir = path.join(homeDir, '.agents');
+  await mkdir(agentsDir, { recursive: true });
+  await writeFile(path.join(agentsDir, 'preferences.yaml'), body, 'utf8');
+}
+
+// endregion | Helpers

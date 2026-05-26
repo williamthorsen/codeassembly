@@ -12,6 +12,8 @@
  * Each entry may carry an optional `smokeTest` clause that pipes a specific payload and asserts on the result;
  * absent that, the smoke test runs the bundle with no args and empty stdin.
  */
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +39,18 @@ export interface SmokeTestInvocation {
   args?: readonly string[];
   /** UTF-8 body to pipe on stdin. Defaults to leaving stdin closed (EOF immediately). */
   stdin?: string;
+  /**
+   * Working directory passed to `spawn`. Defaults to inheriting the parent's cwd. Bundles whose
+   * output depends on the surrounding filesystem (preferences files, branch manifest) should
+   * point this at a self-contained fixture directory so the smoke test is hermetic.
+   */
+  cwd?: string;
+  /**
+   * Environment-variable overrides passed to `spawn`. Bundles that read the ambient `HOME` (e.g.,
+   * to discover `~/.agents/preferences.yaml`) should set `HOME` here to keep the smoke test from
+   * depending on the developer's actual home directory contents.
+   */
+  env?: NodeJS.ProcessEnv;
   /** Optional structural assertion run against the parsed stdout JSON. Throw to signal failure. */
   assertResult?: (result: unknown) => void;
 }
@@ -59,7 +73,49 @@ export const targets: BundleTarget[] = [
       assertResult: assertCompositionViolationFinding,
     },
   },
+  {
+    entry: 'src/derive-session-context/cli.ts',
+    outFile: 'content/skills/derive-session-context/derive-session-context.mjs',
+    smokeTest: makeDeriveSessionContextSmokeTest(),
+  },
 ];
+
+/**
+ * Builds a fixture directory containing a minimal preferences file and returns a `SmokeTestInvocation`
+ * that drives the deriver against it with a known branch name. The deriver's output depends on the
+ * surrounding cwd and the current git branch, so the smoke test cannot use the ambient environment.
+ * `mkdtempSync` runs at module load and the directory is process-lifetime — short-lived OS temp
+ * directories are reclaimed without explicit cleanup.
+ */
+function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), 'derive-session-context-smoke-'));
+  mkdirSync(path.join(fixtureDir, '.agents'), { recursive: true });
+  writeFileSync(path.join(fixtureDir, '.agents', 'preferences.yaml'), 'project:\n  slug: smoke-test-project\n', 'utf8');
+  return {
+    args: ['--branch', 'MAC-999/feat/smoke-fixture', '--cwd', fixtureDir],
+    assertResult: assertDeriveSessionContextOutput,
+    cwd: fixtureDir,
+    // Point `HOME` at the fixture dir too, so the deriver's `~/.agents/preferences.yaml` lookup
+    // resolves to a non-existent file (hermetic) rather than to the developer's real home.
+    env: { ...process.env, HOME: fixtureDir },
+  };
+}
+
+/** Assert the deriver emitted the expected `ticket_id` and `project_slug` for the smoke fixture. */
+function assertDeriveSessionContextOutput(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result from derive-session-context');
+  }
+  if (result.ticket_id !== 'MAC-999') {
+    throw new Error(`expected ticket_id "MAC-999", got ${JSON.stringify(result.ticket_id)}`);
+  }
+  if (result.project_slug !== 'smoke-test-project') {
+    throw new Error(`expected project_slug "smoke-test-project", got ${JSON.stringify(result.project_slug)}`);
+  }
+  if (result.branch_name !== 'MAC-999/feat/smoke-fixture') {
+    throw new Error(`expected branch_name "MAC-999/feat/smoke-fixture", got ${JSON.stringify(result.branch_name)}`);
+  }
+}
 
 /** Type guard: narrows `value` to a plain object with unknown property values. */
 function isRecord(value: unknown): value is Record<string, unknown> {
