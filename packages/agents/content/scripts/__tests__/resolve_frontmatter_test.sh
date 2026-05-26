@@ -849,6 +849,25 @@ The output should include "branch: main"
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.json" should not be exist
 End
+
+It "recovers when the cached manifest contains corrupt JSON"
+# Seed a corrupt `.branch-manifest.json` — `read_manifest`'s `jq empty` guard treats it
+# as a cache miss and falls through to `derive_manifest`, which recomposes the manifest
+# from preferences + git state. Mirrors the TS-side `tryReadManifest` recovery contract.
+resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
+mkdir -p .agents
+printf '{ "ticket_id": "broken' >.agents/main.branch-manifest.json
+When run main --skill foo --interactive true --override "run_id="
+The status should be success
+The output should include "skill: foo"
+The output should include "branch: main"
+# The deriver emits a stderr diagnostic when it overwrites the corrupt file so an operator can
+# distinguish a normal cache miss from recurring corruption. Assert that it surfaces.
+The stderr should include "manifest"
+The stderr should include "is corrupt"
+# After recovery, the manifest should now be valid JSON readable by jq.
+The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
+End
 End
 
 Describe "main end-to-end"

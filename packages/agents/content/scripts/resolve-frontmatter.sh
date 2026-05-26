@@ -410,13 +410,17 @@ resolve_manifest_path() {
 }
 
 # Reads the branch manifest for the given branch. Echoes the JSON content.
-# Returns non-zero when the manifest is missing or the path cannot be resolved.
+# Returns non-zero when the manifest is missing, the path cannot be resolved, or the file content
+# is not valid JSON. Treating corrupt content as a cache miss lets the caller fall through to
+# `derive_manifest`, which recomposes from scratch — matching the recovery behavior on the TS side.
 read_manifest() {
   local branch="$1"
-  local path
+  local path content
   path=$(resolve_manifest_path "$branch") || return 1
   [[ -r "$path" ]] || return 1
-  cat "$path"
+  content=$(cat "$path")
+  jq empty <<<"$content" 2>/dev/null || return 1
+  printf '%s\n' "$content"
 }
 
 # Invokes the bundled `derive-session-context` helper to compose the branch manifest on demand.
