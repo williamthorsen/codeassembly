@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -156,8 +156,9 @@ describe(deriveSessionContext, () => {
     expect(result.branch_name).toBe('main');
   });
 
-  it('reads an old-format `.manifest.json` when no new-format file exists', async () => {
+  it('reads an old-format `.manifest.json` and migrates it to the new-format path', async () => {
     const oldPath = path.join(workDir, '.agents', 'main.manifest.json');
+    const newPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await mkdir(path.dirname(oldPath), { recursive: true });
     const seeded = {
       ticket_id: 'OLD-1',
@@ -179,6 +180,36 @@ describe(deriveSessionContext, () => {
       home: workDir,
     });
     expect(result.project_slug).toBe('old-format');
+
+    // Migration: after a successful old-format read, the new-format file is also written so
+    // subsequent calls hit the fast path. Without this, every call re-invokes the deriver.
+    const migrated = JSON.parse(await readFile(newPath, 'utf8'));
+    expect(migrated).toEqual(seeded);
+  });
+
+  it('rejects with a write error when `.agents/` is not writable', async () => {
+    // Pre-create `.agents/` as read-only so the deriver's `writeFile` step fails.
+    // Skipped on root, where chmod restrictions are bypassed and the write would succeed.
+    if (process.getuid?.() === 0) {
+      return;
+    }
+    const agentsDir = path.join(workDir, '.agents');
+    await mkdir(agentsDir, { recursive: true });
+    try {
+      await chmod(agentsDir, 0o555);
+      // Sanity check: confirm the directory is in fact unwritable in this environment
+      // (some filesystems / CI runners ignore chmod on the test user's own directories).
+      try {
+        await access(path.join(agentsDir, '.write-probe'));
+      } catch {
+        // expected: the probe file does not exist. We rely on the writeFile inside the
+        // deriver to surface EACCES; the access call here is just a placeholder for clarity.
+      }
+      await expect(deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir })).rejects.toThrow();
+    } finally {
+      // Restore permissions so afterEach cleanup can remove the directory tree.
+      await chmod(agentsDir, 0o755);
+    }
   });
 
   it('throws a detached-HEAD error when the branch is empty', async () => {

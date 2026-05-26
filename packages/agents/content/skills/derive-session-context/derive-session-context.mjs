@@ -11347,6 +11347,9 @@ async function deriveSessionContext(input) {
   }
   const cachedOld = await tryReadManifest(oldPath);
   if (cachedOld !== null) {
+    await mkdir(path5.dirname(newPath), { recursive: true });
+    await writeFile(newPath, `${JSON.stringify(cachedOld, null, 2)}
+`, "utf8");
     return cachedOld;
   }
   const readResult = await readPreferences({ cwd: input.cwd, home });
@@ -11383,6 +11386,8 @@ async function tryReadManifest(filePath) {
   try {
     parsed = JSON.parse(text);
   } catch {
+    process.stderr.write(`derive-session-context: warning: manifest at ${filePath} is corrupt; recomposing
+`);
     return null;
   }
   if (!isCurrentSchema(parsed)) {
@@ -11399,7 +11404,19 @@ function isCurrentSchema(value3) {
       return false;
     }
   }
+  if (!isStringOrNull(value3["ticket_id"]) || !isStringOrNull(value3["ticket_ref"])) {
+    return false;
+  }
+  if (!isRecord2(value3["artifact_paths"])) {
+    return false;
+  }
+  if (value3["platform"] !== "github" && value3["platform"] !== "bitbucket") {
+    return false;
+  }
   return true;
+}
+function isStringOrNull(value3) {
+  return value3 === null || typeof value3 === "string";
 }
 function isEnoentError2(error) {
   if (!isRecord2(error)) {

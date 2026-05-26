@@ -100,8 +100,12 @@ export async function deriveSessionContext(input: {
   }
 
   // Backward compatibility: read an existing valid manifest at the old path (`.manifest.json`).
+  // When found, also migrate it to the new-format path so subsequent calls hit the fast path
+  // above and stop re-invoking the deriver on every call.
   const cachedOld = await tryReadManifest(oldPath);
   if (cachedOld !== null) {
+    await mkdir(path.dirname(newPath), { recursive: true });
+    await writeFile(newPath, `${JSON.stringify(cachedOld, null, 2)}\n`, 'utf8');
     return cachedOld;
   }
 
@@ -155,7 +159,10 @@ async function tryReadManifest(filePath: string): Promise<BranchManifest | null>
   try {
     parsed = JSON.parse(text);
   } catch {
-    // Corrupt manifest: caller composes afresh.
+    // Corrupt manifest: caller composes afresh. Surface a one-line diagnostic so an operator
+    // can distinguish a normal cache miss (ENOENT) from a recurring storage problem (every call
+    // recomposes because the cached file keeps becoming corrupt).
+    process.stderr.write(`derive-session-context: warning: manifest at ${filePath} is corrupt; recomposing\n`);
     return null;
   }
   if (!isCurrentSchema(parsed)) {
@@ -164,7 +171,12 @@ async function tryReadManifest(filePath: string): Promise<BranchManifest | null>
   return parsed;
 }
 
-/** True when `value` is an object containing every required manifest field. */
+/**
+ * True when `value` is an object containing every required manifest field with the right type.
+ * Hand-rolled type narrowing rather than Zod because the schema is small, stable, and Zod is not
+ * in use elsewhere in this module. Fields not checked here (e.g., `project_slug`, `branch_name`)
+ * are present-but-unchecked; the downstream consumers tolerate `unknown` for those.
+ */
 function isCurrentSchema(value: unknown): value is BranchManifest {
   if (!isRecord(value)) {
     return false;
@@ -174,7 +186,24 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
       return false;
     }
   }
+  // Type-narrow the fields most load-bearing for downstream code paths. A hand-edited or
+  // corrupt manifest that passed presence checks but failed these is treated as stale and
+  // recomposed, matching the "stale-schema overwrite" path.
+  if (!isStringOrNull(value['ticket_id']) || !isStringOrNull(value['ticket_ref'])) {
+    return false;
+  }
+  if (!isRecord(value['artifact_paths'])) {
+    return false;
+  }
+  if (value['platform'] !== 'github' && value['platform'] !== 'bitbucket') {
+    return false;
+  }
   return true;
+}
+
+/** True when `value` is a string or `null` (matches the `string | null` union in `BranchManifest`). */
+function isStringOrNull(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
 }
 
 /** True when `error` carries the Node `ENOENT` errno. */
