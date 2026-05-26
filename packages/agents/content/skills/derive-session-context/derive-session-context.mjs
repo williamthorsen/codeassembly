@@ -11194,7 +11194,6 @@ var preferences_default = {
 };
 
 // src/derive-session-context/read-preferences.ts
-var schemaRegistered = false;
 var SCHEMA_ID = preferences_default.$id;
 async function readPreferences(input) {
   const home = input.home ?? homedir();
@@ -11257,13 +11256,9 @@ async function assertValidatesAgainstSchema(merged) {
   }
 }
 function ensureSchemaRegistered() {
-  if (schemaRegistered) {
-    return;
-  }
   if (!hasSchema(SCHEMA_ID)) {
     registerSchema(preferences_default, SCHEMA_ID);
   }
-  schemaRegistered = true;
 }
 function isRecord(value3) {
   return typeof value3 === "object" && value3 !== null && !Array.isArray(value3);

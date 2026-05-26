@@ -19,13 +19,7 @@ import type { PreferencesReadResult } from './types.ts';
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
 
-/**
- * Track whether the schema has been registered. `@hyperjump/json-schema` throws on duplicate
- * registration, but vitest watch mode and repeated CLI invocations within a single process both
- * re-enter this module path. The flag keeps the registration idempotent.
- */
-let schemaRegistered = false;
-const SCHEMA_ID: string = preferencesSchema.$id;
+const SCHEMA_ID = preferencesSchema.$id;
 
 /**
  * Reads project and global preferences files (both optional), merges them with project values
@@ -129,20 +123,15 @@ async function assertValidatesAgainstSchema(merged: Record<string, unknown>): Pr
 }
 
 /**
- * Registers the inlined schema if not already registered. Uses `hasSchema` to gate the call so the
- * duplicate-registration error never surfaces, avoiding the previous string-match guard that
- * depended on `@hyperjump/json-schema`'s internal error wording. `hasSchema` checks the library's
- * global schema registry, so registrations from earlier vitest runs or repeated CLI invocations
- * within a single process are correctly recognized.
+ * Registers the inlined schema if not already registered. `hasSchema` checks the library's global
+ * schema registry, so registrations from earlier vitest runs or repeated CLI invocations within a
+ * single process are correctly recognized — avoiding the duplicate-registration error that
+ * `@hyperjump/json-schema` throws on re-registration.
  */
 function ensureSchemaRegistered(): void {
-  if (schemaRegistered) {
-    return;
-  }
   if (!hasSchema(SCHEMA_ID)) {
     registerSchema(preferencesSchema, SCHEMA_ID);
   }
-  schemaRegistered = true;
 }
 
 /** Narrows `value` to a plain object with unknown property values. */
