@@ -11404,13 +11404,13 @@ function isCurrentSchema(value3) {
       return false;
     }
   }
-  if (!isStringOrNull(value3["ticket_id"]) || !isStringOrNull(value3["ticket_ref"])) {
+  if (!isStringOrNull(value3.ticket_id) || !isStringOrNull(value3.ticket_ref)) {
     return false;
   }
-  if (!isRecord2(value3["artifact_paths"])) {
+  if (!isRecord2(value3.artifact_paths)) {
     return false;
   }
-  if (value3["platform"] !== "github" && value3["platform"] !== "bitbucket") {
+  if (value3.platform !== "github" && value3.platform !== "bitbucket") {
     return false;
   }
   return true;
