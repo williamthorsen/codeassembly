@@ -70,10 +70,22 @@ describe(readPreferences, () => {
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/schema validation/);
   });
 
-  it('throws on schema-violating enum value', async () => {
-    // `platform: gitlab` violates the `platform` enum (`github` | `bitbucket`).
+  it('throws on schema-violating enum value with the offending key in the message', async () => {
+    // `platform: gitlab` violates the `platform` enum (`github` | `bitbucket`). The thrown message
+    // must name the failing key path so the developer can find the offending line in their YAML.
     await writeProjectYaml(projectDir, 'platform: gitlab\n');
-    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/schema validation/);
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/at "platform"/);
+  });
+
+  it('points at deeply nested keys in the validation error message', async () => {
+    // `repository.default_remote.name` is declared `type: string` in the schema; supplying an
+    // integer triggers a type violation at a nested instance location. The thrown message must
+    // surface that nested path so a typo or wrong-type value can be located without reading the
+    // whole file.
+    await writeProjectYaml(projectDir, 'repository:\n  default_remote:\n    name: 1234\n    default_branch: main\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
+      /at "repository\/default_remote\/name"/,
+    );
   });
 });
 

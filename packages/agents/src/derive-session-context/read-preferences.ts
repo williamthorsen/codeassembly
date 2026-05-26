@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { FLAG, hasSchema, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
+import { hasSchema, type OutputUnit, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
 import { parse as parseYaml } from 'yaml';
 
 // Inline the preferences schema at bundle time. esbuild resolves the `.json` import via its built-in
@@ -106,20 +106,67 @@ function mergeTopLevel(global: unknown, project: unknown): Record<string, unknow
 
 /**
  * Registers the inlined preferences schema (idempotent) and runs validation against `merged`.
- * Throws when validation fails, with a message naming the schema ID for diagnostics.
+ * Throws when validation fails, with a message identifying the offending key path.
  */
 async function assertValidatesAgainstSchema(merged: Record<string, unknown>): Promise<void> {
   ensureSchemaRegistered();
   // The validator's parameter is `Json`; convert the merged record through `toJsonValue` so it
   // arrives as a fully-typed `JsonValue` shape (no `any` assertion needed at the call site).
   const jsonValue = toJsonValue(merged);
-  const output = await validate(SCHEMA_ID, jsonValue, FLAG);
+  // `BASIC` output emits a flat list of `OutputUnit` entries, each carrying `keyword` and
+  // `instanceLocation`. `FLAG` would only return `{valid: boolean}`, leaving no way to surface
+  // the offending key in the thrown message.
+  const output = await validate(SCHEMA_ID, jsonValue, 'BASIC');
   if (!output.valid) {
-    throw new Error(
-      `preferences failed schema validation against ${SCHEMA_ID}. ` +
-        `Check the contents of .agents/preferences.yaml (or the global ~/.agents/preferences.yaml).`,
-    );
+    throw new Error(formatValidationErrorMessage(output.errors));
   }
+}
+
+/**
+ * Renders a user-facing message naming the offending key path and the failed schema keyword. Falls
+ * back to a generic message when the error list is empty or unparseable.
+ */
+function formatValidationErrorMessage(errors: readonly OutputUnit[] | undefined): string {
+  const tail = `Check the contents of .agents/preferences.yaml (or the global ~/.agents/preferences.yaml).`;
+  const error = pickMostSpecificError(errors);
+  if (!error) {
+    return `preferences failed schema validation against ${SCHEMA_ID}. ${tail}`;
+  }
+  const location = formatInstanceLocation(error.instanceLocation);
+  return `preferences failed schema validation at ${location} (failed keyword: ${error.keyword}). ${tail}`;
+}
+
+/**
+ * Picks the most informative error from a `BASIC`-output error list. Hyperjump emits parent
+ * errors before child errors, so the deepest `instanceLocation` is the most specific one — that
+ * is what a user typing into a YAML file most wants to know.
+ */
+function pickMostSpecificError(errors: readonly OutputUnit[] | undefined): OutputUnit | undefined {
+  if (!errors) {
+    return undefined;
+  }
+  let best: OutputUnit | undefined;
+  for (const candidate of errors) {
+    if (best === undefined || candidate.instanceLocation.length > best.instanceLocation.length) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * Formats an `instanceLocation` for human-readable display. Hyperjump emits the location as
+ * `{baseUri}#{json-pointer}` (e.g., `#/platform`); strip the URI and the leading `/`. The root
+ * instance renders as `"(root)"`.
+ */
+function formatInstanceLocation(raw: string): string {
+  const fragmentIndex = raw.indexOf('#');
+  const pointer = fragmentIndex !== -1 ? raw.slice(fragmentIndex + 1) : raw;
+  const decoded = decodeURI(pointer);
+  if (decoded === '' || decoded === '/') {
+    return '"(root)"';
+  }
+  return `"${decoded.replace(/^\//, '')}"`;
 }
 
 /**
