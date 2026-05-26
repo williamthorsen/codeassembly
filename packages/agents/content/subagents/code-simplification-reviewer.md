@@ -90,6 +90,10 @@ Focus exclusively on simplification opportunities in changed code:
   - Domain leaks in shared/common code
   - Inline "what" comments that describe what the code does instead of explaining why a non-obvious decision was made
   - `eslint-disable` rationales that explain the surrounding decision rather than the specific suppression
+- Test-structure violations. See `{platform_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
+  - Adjacent tests with near-identical setup where only one input varies (parameterize with `it.each` or extract a helper)
+  - Specific-fixture-label assertions repeated per row when the rule is a count or predicate
+  - Helpers whose parameters the test bodies still re-specify (the abstraction failed to absorb the duplication)
 - Logic that can be consolidated without sacrificing clarity
 
 ### Simplification principles
@@ -125,8 +129,8 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:
 
 - `none`: Code is already clean and well-structured — no simplification opportunities
-- `low`: Minor opportunities (e.g., a handful of redundant or paraphrasing comments, one unused import)
-- `medium`: Several meaningful simplification opportunities, including file-header-scale comment violations (tutorial headers, repeated conversation memorialization, broad library re-teaching)
+- `low`: Minor opportunities (e.g., a handful of redundant or paraphrasing comments, one or two adjacent-test runs with shared-setup duplication, one unused import)
+- `medium`: Several meaningful simplification opportunities, including file-header-scale comment violations (tutorial headers, repeated conversation memorialization, broad library re-teaching) or pervasive shared-setup duplication across a spec file
 - `high`: Pervasive unnecessary complexity indicating the code needs a simplification pass
 
 ## Output format
