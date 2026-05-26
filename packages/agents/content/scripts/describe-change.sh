@@ -21,6 +21,13 @@
 
 set -euo pipefail
 
+# Treat `&` as literal in the replacement side of `${var//pat/repl}`.
+# Bash 5.2+ enables `patsub_replacement` by default, which expands `&` to the
+# matched text (sed-like), corrupting any caller-supplied value (e.g., a title
+# containing `&`) substituted via `substitute_tokens`. The `|| true` keeps the
+# script working on bash 5.1 and earlier, where the option does not exist.
+shopt -u patsub_replacement 2>/dev/null || true
+
 readonly PROG="$(basename "$0")"
 
 scope=""
