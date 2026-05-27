@@ -107,9 +107,13 @@ When the ticket needs work, produce or update it to capture the proposed approac
 - [ ] {Criterion 2}
 ```
 
-**❌ Out of scope here.** Example of what doesn't belong under `## Proposed solution`:
+**❌ Bad** — `## Proposed solution` that combines file paths, a type declaration, and procedural steps:
 
-> Modify line 42 of `payload.ts` to use a `Map<string, T>`, then re-export from `helpers.ts`.
+> Modify `src/api/errors.ts` to add a new type `interface ApiError { code: string; message: string; details?: Record<string, unknown>; }`. Then update `src/api/handler.ts` to wrap every caught exception with `serializeError()`, and replace existing `throw new Error(...)` calls with `throw new ApiError(...)`.
+
+**✅ Good** — same decision, outcome-shaped:
+
+> API responses use a structured error envelope (machine-readable code, human-readable message, optional details map) for all caught exceptions. Existing throw sites are migrated to the new envelope; bare-error responses are no longer produced.
 
 File paths, line numbers, code, and syntax-level prescription belong in the implementation plan.
 
