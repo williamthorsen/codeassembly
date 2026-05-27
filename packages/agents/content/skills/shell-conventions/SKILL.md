@@ -232,13 +232,14 @@ Agent-specific modules live in `agents/functions/`:
 
 ## Common mistakes
 
-| Mistake                            | Fix                                                                                                      |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `set -e` alone                     | Use `set -euo pipefail` — `-u` catches typos in variable names, `pipefail` catches mid-pipeline failures |
-| `usage()` as function name         | Use `show_usage()` — functions start with verbs                                                          |
-| `show_usage` always exits 1        | Accept exit code parameter: `exit "${1:-1}"`                                                             |
-| `which cmd` to check availability  | Use `command -v cmd` (POSIX-portable)                                                                    |
-| Error messages to stdout           | Always `>&2`                                                                                             |
-| Interpolating user input into `jq` | Use `jq --arg name "$value"` for safe binding                                                            |
-| Hard-coded values that vary        | Accept as arguments or use `readonly` defaults at the top                                                |
-| Duplicating logic across scripts   | Extract to `functions/` and source it                                                                    |
+| Mistake                                | Fix                                                                                                          |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `set -e` alone                         | Use `set -euo pipefail` — `-u` catches typos in variable names, `pipefail` catches mid-pipeline failures     |
+| `usage()` as function name             | Use `show_usage()` — functions start with verbs                                                              |
+| `show_usage` always exits 1            | Accept exit code parameter: `exit "${1:-1}"`                                                                 |
+| `which cmd` to check availability      | Use `command -v cmd` (POSIX-portable)                                                                        |
+| Error messages to stdout               | Always `>&2`                                                                                                 |
+| Interpolating user input into `jq`     | Use `jq --arg name "$value"` for safe binding                                                                |
+| `${var//pat/repl}` with dynamic `repl` | Add `shopt -u patsub_replacement 2>/dev/null \|\| true`; bash 5.2+ expands `&` in `repl` to the matched text |
+| Hard-coded values that vary            | Accept as arguments or use `readonly` defaults at the top                                                    |
+| Duplicating logic across scripts       | Extract to `functions/` and source it                                                                        |

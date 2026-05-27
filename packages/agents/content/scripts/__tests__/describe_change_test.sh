@@ -314,6 +314,12 @@ When call render_title "{title}"
 The output should equal "Add foo"
 End
 
+It "preserves a literal '&' in a substituted token (bash 5.2+ patsub_replacement)"
+scope="" type="" title="Add A & B" ticket_ref="" pr_number=""
+When call render_title "{title}"
+The output should equal "Add A & B"
+End
+
 It "substitutes the {scope} token alone"
 scope="agents" type="" title="" ticket_ref="" pr_number=""
 When call render_title "{scope}"
