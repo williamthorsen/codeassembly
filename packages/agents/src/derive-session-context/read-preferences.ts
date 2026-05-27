@@ -1,33 +1,28 @@
 /**
- * Read `.agents/preferences.yaml` (project-local) and `~/.agents/preferences.yaml` (global),
- * merge with project-overrides-global precedence, validate against `schemas/preferences.json`,
- * and return a typed object alongside the source paths that were actually read.
+ * Read `.agents/preferences.yaml` (project-local) and `~/.agents/preferences.yaml` (global), merge
+ * with project-overrides-global precedence, project to the typed shape the deriver consumes, and
+ * return that alongside the source paths actually read.
+ *
+ * Unknown sibling keys at any depth are tolerated. Schema validation is an authoring-time concern,
+ * not a read-time one.
  */
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { hasSchema, type OutputUnit, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
 import { parse as parseYaml } from 'yaml';
 
-// Inline the preferences schema at bundle time. esbuild resolves the `.json` import via its built-in
-// JSON loader, embedding the parsed object directly in the `.mjs`. tsx in dev mode also supports the
-// import attribute, so the source-tree run works identically to the bundled run.
-import preferencesSchema from '../../schemas/preferences.json' with { type: 'json' };
-import type { PreferencesReadResult } from './types.ts';
-
-/** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
-type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
-
-const SCHEMA_ID = preferencesSchema.$id;
+import type { PreferencesReadResult, ResolvedPreferences } from './types.ts';
 
 /**
  * Reads project and global preferences files (both optional), merges them with project values
- * winning over global, validates against `schemas/preferences.json`, and returns the typed result.
+ * winning over global, projects to the typed `ResolvedPreferences` shape by reading only the
+ * fields the deriver consumes, and returns the result.
  *
  * - Missing files (project or global) are not errors — treated as empty and the other source is used.
  * - Malformed YAML throws with a message that names the offending file.
- * - Schema-validation failure throws with a message identifying the offending key path.
+ * - Wrong type or out-of-enum value on a consumed field throws with a key-path-anchored message.
+ * - Unknown sibling keys at any depth pass through silently.
  */
 export async function readPreferences(input: { cwd: string; home?: string }): Promise<PreferencesReadResult> {
   const home = input.home ?? homedir();
@@ -38,8 +33,7 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
   const global = await readOptionalYaml(globalPath);
 
   const merged = mergeTopLevel(global?.value, project?.value);
-
-  await assertValidatesAgainstSchema(merged);
+  const preferences = projectPreferences(merged);
 
   const sources: PreferencesReadResult['sources'] = {
     ...(project !== null && { project: projectPath }),
@@ -47,7 +41,7 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
   };
 
   return {
-    preferences: merged,
+    preferences,
     sources,
   };
 }
@@ -105,79 +99,132 @@ function mergeTopLevel(global: unknown, project: unknown): Record<string, unknow
 }
 
 /**
- * Registers the inlined preferences schema (idempotent) and runs validation against `merged`.
- * Throws when validation fails, with a message identifying the offending key path.
+ * Walks `merged` and returns a typed `ResolvedPreferences` populated from the fields the deriver
+ * consumes. Unknown sibling keys at any depth are ignored. Throws when a consumed field has the
+ * wrong type or an out-of-enum value, with a key-path-anchored message.
  */
-async function assertValidatesAgainstSchema(merged: Record<string, unknown>): Promise<void> {
-  ensureSchemaRegistered();
-  // The validator's parameter is `Json`; convert the merged record through `toJsonValue` so it
-  // arrives as a fully-typed `JsonValue` shape (no `any` assertion needed at the call site).
-  const jsonValue = toJsonValue(merged);
-  // `BASIC` output emits a flat list of `OutputUnit` entries, each carrying `keyword` and
-  // `instanceLocation`. `FLAG` would only return `{valid: boolean}`, leaving no way to surface
-  // the offending key in the thrown message.
-  const output = await validate(SCHEMA_ID, jsonValue, 'BASIC');
-  if (!output.valid) {
-    throw new Error(formatValidationErrorMessage(output.errors));
-  }
-}
+function projectPreferences(merged: Record<string, unknown>): ResolvedPreferences {
+  const result: WritablePreferences = {};
 
-/**
- * Renders a user-facing message naming the offending key path and the failed schema keyword. Falls
- * back to a generic message when the error list is empty or unparseable.
- */
-function formatValidationErrorMessage(errors: readonly OutputUnit[] | undefined): string {
-  const tail = `Check the contents of .agents/preferences.yaml (or the global ~/.agents/preferences.yaml).`;
-  const error = pickMostSpecificError(errors);
-  if (!error) {
-    return `preferences failed schema validation against ${SCHEMA_ID}. ${tail}`;
+  if (merged.platform !== undefined) {
+    result.platform = expectPlatform(merged.platform);
   }
-  const location = formatInstanceLocation(error.instanceLocation);
-  return `preferences failed schema validation at ${location} (failed keyword: ${error.keyword}). ${tail}`;
-}
 
-/**
- * Picks the most informative error from a `BASIC`-output error list. Hyperjump emits parent
- * errors before child errors, so the deepest `instanceLocation` is the most specific one — that
- * is what a user typing into a YAML file most wants to know.
- */
-function pickMostSpecificError(errors: readonly OutputUnit[] | undefined): OutputUnit | undefined {
-  if (!errors) {
-    return undefined;
-  }
-  let best: OutputUnit | undefined;
-  for (const candidate of errors) {
-    if (best === undefined || candidate.instanceLocation.length > best.instanceLocation.length) {
-      best = candidate;
+  if (merged.project !== undefined) {
+    const section = expectRecord(merged.project, 'project');
+    const project: WritablePreferences['project'] = {};
+    if (section.slug !== undefined) {
+      project.slug = expectString(section.slug, 'project.slug');
     }
+    if (section.ticket_ref_prefix !== undefined) {
+      project.ticket_ref_prefix = expectString(section.ticket_ref_prefix, 'project.ticket_ref_prefix');
+    }
+    result.project = project;
   }
-  return best;
+
+  if (merged.repository !== undefined) {
+    const section = expectRecord(merged.repository, 'repository');
+    const repository: WritablePreferences['repository'] = {};
+    if (section.slug !== undefined) {
+      repository.slug = expectString(section.slug, 'repository.slug');
+    }
+    if (section.default_remote !== undefined) {
+      const remoteSection = expectRecord(section.default_remote, 'repository.default_remote');
+      const defaultRemote: NonNullable<WritablePreferences['repository']>['default_remote'] = {};
+      if (remoteSection.name !== undefined) {
+        defaultRemote.name = expectString(remoteSection.name, 'repository.default_remote.name');
+      }
+      if (remoteSection.default_branch !== undefined) {
+        defaultRemote.default_branch = expectString(
+          remoteSection.default_branch,
+          'repository.default_remote.default_branch',
+        );
+      }
+      repository.default_remote = defaultRemote;
+    }
+    result.repository = repository;
+  }
+
+  if (merged.artifacts !== undefined) {
+    const section = expectRecord(merged.artifacts, 'artifacts');
+    const artifacts: WritablePreferences['artifacts'] = {};
+    if (section.base_dir !== undefined) {
+      artifacts.base_dir = expectString(section.base_dir, 'artifacts.base_dir');
+    }
+    if (section.paths !== undefined) {
+      const pathsSection = expectRecord(section.paths, 'artifacts.paths');
+      const paths: Record<string, string> = {};
+      for (const [key, value] of Object.entries(pathsSection)) {
+        paths[key] = expectString(value, `artifacts.paths.${key}`);
+      }
+      artifacts.paths = paths;
+    }
+    result.artifacts = artifacts;
+  }
+
+  return result;
+}
+
+/** Mutable mirror of `ResolvedPreferences` used during projection construction. */
+interface WritablePreferences {
+  platform?: 'github' | 'bitbucket';
+  project?: {
+    slug?: string;
+    ticket_ref_prefix?: string;
+  };
+  repository?: {
+    slug?: string;
+    default_remote?: {
+      name?: string;
+      default_branch?: string;
+    };
+  };
+  artifacts?: {
+    base_dir?: string;
+    paths?: Record<string, string>;
+  };
 }
 
 /**
- * Formats an `instanceLocation` for human-readable display. Hyperjump emits the location as
- * `{baseUri}#{json-pointer}` (e.g., `#/platform`); strip the URI and the leading `/`. The root
- * instance renders as `"(root)"`.
+ * Narrows `value` to the `platform` enum. Throws with the offending key path when the value is
+ * neither `"github"` nor `"bitbucket"`.
  */
-function formatInstanceLocation(raw: string): string {
-  const fragmentIndex = raw.indexOf('#');
-  const pointer = fragmentIndex !== -1 ? raw.slice(fragmentIndex + 1) : raw;
-  const decoded = decodeURI(pointer);
-  if (decoded === '' || decoded === '/') {
-    return '"(root)"';
+function expectPlatform(value: unknown): 'github' | 'bitbucket' {
+  if (value === 'github' || value === 'bitbucket') {
+    return value;
   }
-  return `"${decoded.replace(/^\//, '')}"`;
+  throw new Error(`preferences: 'platform' must be "github" or "bitbucket" (got ${formatValue(value)})`);
+}
+
+/** Narrows `value` to `string`. Throws with the offending key path when the value is not a string. */
+function expectString(value: unknown, keyPath: string): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  throw new Error(`preferences: '${keyPath}' must be a string (got ${formatValue(value)})`);
+}
+
+/** Narrows `value` to a plain object. Throws with the offending key path when the value is not one. */
+function expectRecord(value: unknown, keyPath: string): Record<string, unknown> {
+  if (isRecord(value)) {
+    return value;
+  }
+  throw new Error(`preferences: '${keyPath}' must be an object (got ${formatValue(value)})`);
 }
 
 /**
- * Registers the inlined schema if not already registered. `hasSchema` checks the library's global
- * schema registry, so registrations from earlier vitest runs or repeated CLI invocations within a
- * single process are correctly recognized — avoiding the duplicate-registration error that
- * `@hyperjump/json-schema` throws on re-registration.
+ * Renders an unknown value for an error message. Strings are quoted; everything else goes through
+ * `JSON.stringify` so arrays, numbers, booleans, and `null` render distinguishably. Symbols and
+ * other non-serializable values fall back to `String(value)`.
  */
-function ensureSchemaRegistered(): void {
-  if (!hasSchema(SCHEMA_ID)) {
-    registerSchema(preferencesSchema, SCHEMA_ID);
+function formatValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
   }
 }
 
@@ -192,38 +239,6 @@ function isEnoentError(error: unknown): boolean {
     return false;
   }
   return error.code === 'ENOENT';
-}
-
-/**
- * Recursively converts an arbitrary JSON-compatible value (e.g., the output of `JSON.parse` or
- * `yaml.parse`) into the structural `JsonValue` shape. Throws if a non-JSON value (function,
- * symbol, `undefined`, `bigint`) is encountered — none of these can occur in valid YAML or JSON,
- * so the throw is a defensive guard rather than an expected path.
- */
-function toJsonValue(value: unknown): JsonValue {
-  if (value === null) {
-    return null;
-  }
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (typeof value === 'number') {
-    return value;
-  }
-  if (typeof value === 'boolean') {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    return value.map((entry) => toJsonValue(entry));
-  }
-  if (isRecord(value)) {
-    const result: { [key: string]: JsonValue } = {};
-    for (const [key, entry] of Object.entries(value)) {
-      result[key] = toJsonValue(entry);
-    }
-    return result;
-  }
-  throw new TypeError(`unexpected non-JSON value of type ${typeof value}`);
 }
 
 // endregion | Helpers

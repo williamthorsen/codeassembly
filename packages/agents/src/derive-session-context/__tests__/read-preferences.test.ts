@@ -64,27 +64,61 @@ describe(readPreferences, () => {
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/malformed YAML/);
   });
 
-  it('throws on schema-validation failure', async () => {
-    // Unknown top-level key violates the schema's `additionalProperties: false` root constraint.
+  it('tolerates unknown top-level keys', async () => {
     await writeProjectYaml(projectDir, 'mystery_key: "mystery value"\n');
-    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/schema validation/);
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences).toEqual({});
   });
 
-  it('throws on schema-violating enum value with the offending key in the message', async () => {
-    // `platform: gitlab` violates the `platform` enum (`github` | `bitbucket`). The thrown message
-    // must name the failing key path so the developer can find the offending line in their YAML.
+  it('tolerates unknown keys inside nested sections', async () => {
+    await writeProjectYaml(projectDir, 'artifacts:\n  enabled: true\n  base_dir: ~/foo\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.artifacts).toEqual({ base_dir: '~/foo' });
+  });
+
+  it('tolerates a mix of unknown top-level and nested keys', async () => {
+    await writeProjectYaml(
+      projectDir,
+      [
+        'artifacts:',
+        '  enabled: true',
+        '  base_dir: ~/ai-artifacts',
+        'merge_commit:',
+        "  title_format: '[{ticket_ref}] {title}'",
+        'platform: github',
+        'project:',
+        '  slug: my-project',
+        'worktrees:',
+        '  location: sibling',
+        '',
+      ].join('\n'),
+    );
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences).toEqual({
+      artifacts: { base_dir: '~/ai-artifacts' },
+      platform: 'github',
+      project: { slug: 'my-project' },
+    });
+  });
+
+  it('throws with the offending key path when `platform` is outside the allowed enum', async () => {
     await writeProjectYaml(projectDir, 'platform: gitlab\n');
-    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/at "platform"/);
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
+      /'platform' must be "github" or "bitbucket"/,
+    );
   });
 
-  it('points at deeply nested keys in the validation error message', async () => {
-    // `repository.default_remote.name` is declared `type: string` in the schema; supplying an
-    // integer triggers a type violation at a nested instance location. The thrown message must
-    // surface that nested path so a typo or wrong-type value can be located without reading the
-    // whole file.
+  it('throws with the offending key path when a consumed string field has the wrong type', async () => {
+    await writeProjectYaml(projectDir, 'artifacts:\n  base_dir: 42\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
+      /'artifacts\.base_dir' must be a string/,
+    );
+  });
+
+  it('throws with the offending key path when a consumed nested string field has the wrong type', async () => {
     await writeProjectYaml(projectDir, 'repository:\n  default_remote:\n    name: 1234\n    default_branch: main\n');
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
-      /at "repository\/default_remote\/name"/,
+      /'repository\.default_remote\.name' must be a string/,
     );
   });
 });

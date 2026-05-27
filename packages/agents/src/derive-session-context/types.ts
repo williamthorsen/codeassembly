@@ -1,6 +1,6 @@
 /** Shared types for the session-context deriver. */
 
-/** Resolved preferences object — narrow projection of `schemas/preferences.json` covering the fields the deriver consumes. */
+/** A narrow projection of `schemas/preferences.json` covering the fields the deriver consumes. */
 export interface ResolvedPreferences {
   /** Top-level `platform` (`"github"` or `"bitbucket"`); may be undefined when not configured. */
   readonly platform?: 'github' | 'bitbucket';
@@ -26,7 +26,10 @@ export interface ResolvedPreferences {
 
 /** Result of reading and merging the project and global preferences files. */
 export interface PreferencesReadResult {
-  /** The merged, schema-validated preferences object. */
+  /**
+   * The merged preferences, projected to the fields the deriver consumes.
+   * Unknown sibling keys at any depth are dropped; wrong-typed consumed fields throw at read time.
+   */
   readonly preferences: ResolvedPreferences;
   /** Source-file paths actually present and read (project, global). */
   readonly sources: {
@@ -41,7 +44,7 @@ export interface TicketIdResult {
   readonly ticket_ref: string | null;
 }
 
-/** Branch-manifest JSON object — the canonical session-context manifest persisted at `.agents/{sanitized-branch}.branch-manifest.json`. */
+/** The canonical session-context manifest persisted at `.agents/{sanitized-branch}.branch-manifest.json`. */
 export interface BranchManifest {
   readonly ticket_id: string | null;
   readonly ticket_ref: string | null;
