@@ -60,7 +60,9 @@ Follow the naming rules in [naming-conventions.md](../_data/naming-conventions.m
 
 ### Test structure
 
-Test-structure rules (parameterization, helpers, signal-to-noise) live in [`testing-conventions/SKILL.md`](../testing-conventions/SKILL.md).
+Rules live in [`testing-conventions/SKILL.md`](../testing-conventions/SKILL.md): parameterization, helpers, and signal-to-noise as the bar for both.
+
+### Test organization
 
 - **Use function/class reference as describe argument** - `describe(myFunction, ...)` instead of `describe('myFunction', ...)`
 - **Place tests in `__tests__` directory** as sibling to the file being tested
