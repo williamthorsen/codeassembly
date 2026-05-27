@@ -82,7 +82,7 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
 
 ### Phase 4: Refine the ticket
 
-If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately — and brainstorming didn't surface changes — confirm with the user and adopt it as-is. Skip the rewrite. Only add or revise sections where the Q&A revealed gaps or shifts in understanding.
+If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately — and brainstorming didn't surface changes — you may adopt the source as-is. Skip the rewrite. Only add or revise sections where the Q&A revealed gaps or shifts in understanding. Proceed to the pre-presentation audit and user confirmation at the end of this phase.
 
 When the ticket needs work, produce or update it to capture the proposed approach:
 
@@ -120,6 +120,19 @@ File paths, line numbers, code, and syntax-level prescription belong in the impl
 **Test criterion convention:** when a ticket involves code changes to testable behavior, the acceptance criteria must include a test criterion (e.g., "New/modified behavior in this change is covered by tests"). Omit the test criterion only when the change falls entirely within the carve-outs defined in the `testing-conventions` skill.
 
 **Documentation criterion convention:** when a ticket involves changes that add, remove, or rename user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), the acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
+
+<HARD-GATE>
+Before presenting the ticket to the user, audit your draft for plan-shaped content. This audit applies whether you wrote a new draft or adopted the source ticket as-is — a plan-shaped source ticket cannot pass through unaltered. If you find any of the following, return to the rewrite path and re-render in the four required sections:
+
+- A `## Tasks`, `## Implementation`, `## Files`, `## Plan`, or `## Steps` section
+- A file path (e.g., `src/lib/foo.ts`)
+- A fenced code block
+- A type, interface, function, or method declaration
+- A regex literal or string literal prescribing syntax
+- Step-by-step procedural instructions ("first do X, then Y")
+
+The ticket should read intelligibly to a stakeholder who never opens the codebase.
+</HARD-GATE>
 
 Present the ticket to the user. Revise until approved.
 
