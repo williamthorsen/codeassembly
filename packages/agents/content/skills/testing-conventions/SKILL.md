@@ -87,6 +87,8 @@ Before writing a third test in the same `describe` block, scan the previous two:
 
 The smell is shared _setup with one variable_, not shared _shape with different intents_. Three tests that read as genuinely distinct behavioral claims should stay as three `it` blocks even if their bodies superficially resemble each other. Do not collapse distinct intents into a table.
 
+### Audit before save
+
 <!-- include: ../../_partials/test-structure-audit-checklist.md / -->
 
 ## Additional patterns
