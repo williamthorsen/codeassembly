@@ -1,10 +1,7 @@
 # User-global registry fixture used to verify the user config is read when no project registry exists.
-# Paths are relative to this file's directory (`home-with-default/.claude/`).
+# Paths are relative to this file's directory (`home-with-default/.agents/`).
 kbs:
   global-vault:
     path: ../../vault-b
     description: Fixture global vault
     default: true
-  named-vault-a:
-    path: ../../vault-a
-    description: Fixture vault A registered by name

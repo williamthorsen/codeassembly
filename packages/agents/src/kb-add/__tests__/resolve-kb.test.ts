@@ -11,7 +11,7 @@ const VAULT_A = join(FIXTURES, 'vault-a');
 const VAULT_B = join(FIXTURES, 'vault-b');
 const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
 const HOME_MALFORMED = join(FIXTURES, 'malformed-registry');
-// A home directory with no `.claude/kb.yaml`, so the user-global registry resolves empty.
+// A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveKb, () => {
@@ -86,7 +86,7 @@ describe(resolveKb, () => {
   });
 
   it('degrades a malformed user-global registry to an empty config rather than throwing', async () => {
-    // HOME_MALFORMED contains a syntactically invalid `.claude/kb.yaml`. The helper must swallow the parse
+    // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`. The helper must swallow the parse
     // error and surface a structured result — here, the no-kb-resolvable failure for a startDir with no `.kb/`
     // marker — rather than letting the throw escape `resolveKb`.
     const result = await resolveKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
