@@ -108,7 +108,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['foo.md', '--bogus'])).toThrow(/unknown flag/);
   });
 
-  it('throws when --retag has no value', () => {
+  it('throws when --retag has no value at all (end of argv)', () => {
     expect(() => parseArgs(['foo.md', '--retag'])).toThrow(/--retag requires a value/);
   });
 
@@ -116,8 +116,24 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['foo.md', '--retag', '--bump-updated'])).toThrow(/--retag requires a value/);
   });
 
+  it('treats --retag="" as an explicit clear and yields an empty tag list', () => {
+    const parsed = parseArgs(['foo.md', '--retag=']);
+
+    expect(parsed).toEqual({ operation: 'retag', path: 'foo.md', tags: [] });
+  });
+
+  it('treats --retag "" as an explicit clear and yields an empty tag list', () => {
+    const parsed = parseArgs(['foo.md', '--retag', '']);
+
+    expect(parsed).toEqual({ operation: 'retag', path: 'foo.md', tags: [] });
+  });
+
   it('throws when --supersede-with has no value', () => {
     expect(() => parseArgs(['foo.md', '--supersede-with'])).toThrow(/--supersede-with requires a value/);
+  });
+
+  it('throws when --supersede-with is given an empty value', () => {
+    expect(() => parseArgs(['foo.md', '--supersede-with='])).toThrow(/--supersede-with requires a value/);
   });
 });
 
@@ -384,6 +400,27 @@ describe(runEdit, () => {
     }
     // Old note untouched.
     const onDisk = await readFile(oldPath, 'utf8');
+    expect(onDisk).toBe(SAMPLE_NOTE);
+  });
+
+  it('rejects self-supersession (same path for old and new) with invalid-args', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+
+    const result = await runEdit({
+      argv: [notePath, '--supersede-with', notePath],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('invalid-args');
+      expect(result.message).toMatch(/distinct paths/);
+    }
+    // Original note untouched: no superseded-by or supersedes pointers, no deprecated tag.
+    const onDisk = await readFile(notePath, 'utf8');
     expect(onDisk).toBe(SAMPLE_NOTE);
   });
 

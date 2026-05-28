@@ -1,21 +1,19 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
-import { randomBytes } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, Finding, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb-core';
-import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
-import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
+import type { AliasMap, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb-core';
+import { writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
 import { loadSchema } from '@codeassembly/kb-core/schema';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { commitSupersede } from './commit-supersede.ts';
 import { loadNote } from './load-note.ts';
 import { append } from './operations/append.ts';
 import { bumpUpdated } from './operations/bump-updated.ts';
@@ -23,7 +21,7 @@ import { retag } from './operations/retag.ts';
 import { prepareSupersedeWith } from './operations/supersede-with.ts';
 import { verify } from './operations/verify.ts';
 import type { EditResult, EditSingleSuccess, EditSupersedeSuccess, OperationName, ParsedArgs } from './types.ts';
-import { writeBackNote } from './write-back.ts';
+import { validateFrontmatter, writeBackNote } from './write-back.ts';
 
 /** Operation flag → operation name. Order is the documented surface order in SKILL.md. */
 const OPERATION_FLAGS = [
@@ -323,6 +321,14 @@ async function runSupersedeWith(input: {
   const oldPath = absoluteNotePath({ path: input.args.path, startDir: input.startDir });
   const newPath = absoluteNotePath({ path: input.args.newPath, startDir: input.startDir });
 
+  if (oldPath === newPath) {
+    return {
+      ok: false,
+      error: 'invalid-args',
+      message: `supersede chain requires distinct paths; got the same path for old and new: ${oldPath}`,
+    };
+  }
+
   const oldKb = await resolveKbForPath({ notePath: oldPath, ...(input.home !== undefined && { home: input.home }) });
   if (!oldKb.ok) {
     return oldKb.failure;
@@ -371,8 +377,8 @@ async function runSupersedeWith(input: {
   const oldRendered = writeFrontmatter({ frontmatter: prepared.old.frontmatter, body: prepared.old.body });
   const newRendered = writeFrontmatter({ frontmatter: prepared.new.frontmatter, body: prepared.new.body });
 
-  const oldFindings = validateRendered({ content: oldRendered, path: oldPath, schema });
-  const newFindings = validateRendered({ content: newRendered, path: newPath, schema });
+  const oldFindings = validateFrontmatter({ content: oldRendered, path: oldPath, schema });
+  const newFindings = validateFrontmatter({ content: newRendered, path: newPath, schema });
   const allFindings = [...oldFindings, ...newFindings];
   if (allFindings.length > 0) {
     return {
@@ -409,84 +415,6 @@ async function runSupersedeWith(input: {
     newFrontmatter: prepared.new.frontmatter,
   };
   return success;
-}
-
-/**
- * Renders a frontmatter+body string and runs the frontmatter rule against it, returning error-severity findings.
- * Mirrors the validation inside `writeBackNote` but runs detached from the write so two notes can be validated
- * before either rename happens.
- */
-function validateRendered(input: { content: string; path: string; schema: Schema }): Finding[] {
-  const parsed = parseNoteContent({ content: input.content, path: input.path });
-  return runRules({ rules: [frontmatterRule], notes: [parsed], schema: input.schema }).filter(
-    (finding) => finding.severity === 'error',
-  );
-}
-
-/**
- * Commits two pre-validated note writes with best-effort atomicity.
- *
- * Sequence:
- *  1. Write both temp files (no destination mutated yet).
- *  2. Rename temp-old → oldPath. On failure, cleanup both temps and re-throw.
- *  3. Rename temp-new → newPath. On failure: write the captured original bytes to a new temp and rename it onto
- *     oldPath to undo step 2. If the rollback fails, return `{ ok: false }` so the caller can surface
- *     `partial-supersede`.
- *
- * System errors during step 1 or step 2's failure-handling propagate (caller's main catch).
- */
-async function commitSupersede(input: {
-  oldPath: string;
-  newPath: string;
-  oldOriginalContent: string;
-  oldNewContent: string;
-  newNewContent: string;
-}): Promise<{ ok: true } | { ok: false; message: string }> {
-  const oldTmp = `${input.oldPath}.${randomBytes(8).toString('hex')}.tmp`;
-  const newTmp = `${input.newPath}.${randomBytes(8).toString('hex')}.tmp`;
-
-  await writeFile(oldTmp, input.oldNewContent, 'utf8');
-  try {
-    await writeFile(newTmp, input.newNewContent, 'utf8');
-  } catch (error) {
-    await unlink(oldTmp).catch(() => {});
-    throw error;
-  }
-
-  try {
-    await rename(oldTmp, input.oldPath);
-  } catch (error) {
-    await unlink(oldTmp).catch(() => {});
-    await unlink(newTmp).catch(() => {});
-    throw error;
-  }
-
-  try {
-    await rename(newTmp, input.newPath);
-    return { ok: true };
-  } catch (renameError) {
-    await unlink(newTmp).catch(() => {});
-    const originalMessage = renameError instanceof Error ? renameError.message : String(renameError);
-    const rollback = await tryRollbackOld({ oldPath: input.oldPath, originalContent: input.oldOriginalContent });
-    if (rollback.ok) {
-      // Rollback succeeded: the world is consistent again. Re-throw so the failure surfaces as a system error.
-      throw renameError;
-    }
-    return { ok: false, message: originalMessage };
-  }
-}
-
-/** Restores the captured original bytes to `oldPath` via temp + rename. Returns ok on success. */
-async function tryRollbackOld(input: { oldPath: string; originalContent: string }): Promise<{ ok: boolean }> {
-  const rollbackTmp = `${input.oldPath}.${randomBytes(8).toString('hex')}.rollback.tmp`;
-  try {
-    await writeFile(rollbackTmp, input.originalContent, 'utf8');
-    await rename(rollbackTmp, input.oldPath);
-    return { ok: true };
-  } catch {
-    await unlink(rollbackTmp).catch(() => {});
-    return { ok: false };
-  }
 }
 
 /** Reads a readable stream to completion as a UTF-8 string. */
@@ -528,10 +456,14 @@ function scanArgv(argv: readonly string[]): { positional: string | null; selecte
       }
       let value: string | null = matched.inlineValue;
       if (matched.takesValue && value === null) {
+        // Inline `--flag=value` already provided the value; otherwise consume the next argv slot. Empty inline
+        // values (`--flag=` or `--flag ""`) are intentionally allowed at this layer — each op decides whether
+        // empty is meaningful (`--retag ""` clears tags) or downstream-rejected (`--supersede-with ""` fails
+        // path resolution).
         value = argv[index + 1] ?? null;
         index += 1;
       }
-      if (matched.takesValue && (value === null || value === '' || value.startsWith('--'))) {
+      if (matched.takesValue && (value === null || value.startsWith('--'))) {
         throw new Error(`${matched.flag} requires a value`);
       }
       selectedOps.push({ name: matched.name, value });
@@ -584,7 +516,9 @@ function composeParsedArgs(input: { positional: string | null; selectedOps: Sele
       }
       return { operation: 'retag', path: positional, tags: parseTagList(op.value) };
     case 'supersede-with':
-      if (op.value === null) {
+      // Empty `--supersede-with` value is rejected here so it surfaces as a clear `invalid-args`, not a confusing
+      // EISDIR downstream when `''` resolves to the start directory.
+      if (op.value === null || op.value === '') {
         throw new Error('--supersede-with requires a value');
       }
       return { operation: 'supersede-with', path: positional, newPath: op.value };

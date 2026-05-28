@@ -5,6 +5,19 @@ import type { Finding, Frontmatter, Schema } from '@codeassembly/kb-core';
 import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
 import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
 
+/**
+ * Validates a rendered note string against the destination KB's schema, returning error-severity findings.
+ * Round-trips through `parseNoteContent` so the rule sees a real `ParsedNote` carrying a `yaml.Document` and the
+ * raw text positions it expects. Used by `writeBackNote` and by the supersede orchestrator (which needs to validate
+ * both notes before either rename runs).
+ */
+export function validateFrontmatter(input: { content: string; path: string; schema: Schema }): Finding[] {
+  const parsed = parseNoteContent({ content: input.content, path: input.path });
+  return runRules({ rules: [frontmatterRule], notes: [parsed], schema: input.schema }).filter(
+    (finding) => finding.severity === 'error',
+  );
+}
+
 /** Successful write-back: the note has been re-rendered and atomically replaced. */
 export interface WriteBackSuccess {
   ok: true;
@@ -42,9 +55,7 @@ export async function writeBackNote(input: {
 }): Promise<WriteBackOutcome> {
   const content = writeFrontmatter({ frontmatter: input.frontmatter, body: input.body });
 
-  const parsed = parseNoteContent({ content, path: input.path });
-  const findings = runRules({ rules: [frontmatterRule], notes: [parsed], schema: input.schema });
-  const errorFindings = findings.filter((finding) => finding.severity === 'error');
+  const errorFindings = validateFrontmatter({ content, path: input.path, schema: input.schema });
   if (errorFindings.length > 0) {
     return { ok: false, reason: 'schema-validation', findings: errorFindings };
   }
