@@ -1,0 +1,63 @@
+import type { Frontmatter } from '@codeassembly/kb-core';
+import { describe, expect, it } from 'vitest';
+
+import { verify } from '../verify.ts';
+
+const NOW = new Date('2026-05-24T14:35:00Z');
+
+function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
+  return {
+    title: 'Example',
+    type: 'howto',
+    created: '2026-05-01',
+    updated: '2026-05-01',
+    tags: ['example'],
+    extra: {},
+    ...overrides,
+  };
+}
+
+describe(verify, () => {
+  it('sets last-verified to today (UTC) and does not bump updated', () => {
+    const result = verify({ frontmatter: frontmatter(), body: 'body', now: NOW });
+
+    expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24');
+    expect(result.frontmatter.updated).toBe('2026-05-01');
+  });
+
+  it('adds last-verified when the field is absent', () => {
+    const fm = frontmatter({ extra: {} });
+
+    const result = verify({ frontmatter: fm, body: 'b', now: NOW });
+
+    expect(result.frontmatter.extra).toEqual({ 'last-verified': '2026-05-24' });
+  });
+
+  it('overwrites an existing last-verified value', () => {
+    const fm = frontmatter({ extra: { 'last-verified': '2026-01-15' } });
+
+    const result = verify({ frontmatter: fm, body: 'b', now: NOW });
+
+    expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24');
+  });
+
+  it('preserves other extra fields when adding last-verified', () => {
+    const fm = frontmatter({ extra: { 'applies-to': 'node 24', sources: ['docs.example.com'] } });
+
+    const result = verify({ frontmatter: fm, body: 'b', now: NOW });
+
+    expect(result.frontmatter.extra).toEqual({
+      'applies-to': 'node 24',
+      sources: ['docs.example.com'],
+      'last-verified': '2026-05-24',
+    });
+  });
+
+  it('does not mutate the input frontmatter', () => {
+    const fm = frontmatter();
+
+    verify({ frontmatter: fm, body: 'b', now: NOW });
+
+    expect(fm.extra).toEqual({});
+  });
+});

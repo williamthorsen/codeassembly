@@ -245,6 +245,39 @@ describe(runAdd, () => {
     expect(content).toBe('pre-existing\n');
   });
 
+  it('returns readonly-kb when the explicit --kb names a readonly registry entry', async () => {
+    // Stand up an isolated HOME with a `.agents/kb.yaml` declaring the only writable target as readonly.
+    // runAdd resolves through resolveWritableKb, so the refusal surfaces as a top-level readonly-kb error
+    // without ever touching disk inside the KB.
+    const kbPath = await makeKb();
+    const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-readonly-'));
+    await mkdir(join(homeDir, '.agents'), { recursive: true });
+    await writeFile(
+      join(homeDir, '.agents', 'kb.yaml'),
+      `kbs:\n  locked:\n    path: ${kbPath}\n    readonly: true\n`,
+      'utf8',
+    );
+
+    const result = await runAdd({
+      argv: ['--kb', 'locked', '--type', 'howto', '--title', 'Refused'],
+      stdin: bodyStream(''),
+      // startDir avoids the KB so discovery does not produce a writable fallback.
+      startDir: homeDir,
+      now: NOW,
+      home: homeDir,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('readonly-kb');
+      expect(result.details?.readonlyKbName).toBe('locked');
+      expect(result.details?.readonlyKbPath).toBe(kbPath);
+    }
+    // No note should have landed in the readonly KB.
+    const entries = await readdir(kbPath);
+    expect(entries.filter((name) => name !== '.kb')).toEqual([]);
+  });
+
   it('returns invalid-args when --title is missing', async () => {
     const kbPath = await makeKb();
 

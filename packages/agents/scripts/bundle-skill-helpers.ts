@@ -62,6 +62,11 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/kb-add/kb-add.mjs',
   },
   {
+    entry: 'src/kb-edit/cli.ts',
+    outFile: 'content/skills/kb-edit/kb-edit.mjs',
+    smokeTest: makeKbEditSmokeTest(),
+  },
+  {
     entry: 'src/kb-retrieve/cli.ts',
     outFile: 'content/skills/kb-retrieve/kb-retrieve.mjs',
   },
@@ -135,6 +140,53 @@ function assertDeriveSessionContextOutput(result: unknown): void {
 /** Type guard: narrows `value` to a plain object with unknown property values. */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+/**
+ * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle with
+ * `--bump-updated` against it. Exercises the load → mutate → write-back pipeline end to end, which is the only
+ * code path that wires the bundled `parseNote`, schema loader, and atomic write together. `HOME` is overridden to
+ * the fixture dir so the dev's real `~/.claude/kb.yaml` does not pollute KB resolution.
+ *
+ * The fixture is process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
+ * directories without explicit cleanup. The seed note's `updated:` field is bumped by every invocation;
+ * `--bump-updated` is idempotent at the field level so re-runs within the same day are no-ops on disk.
+ */
+function makeKbEditSmokeTest(): SmokeTestInvocation {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-edit-smoke-'));
+  mkdirSync(path.join(fixtureDir, '.kb'), { recursive: true });
+  const notePath = path.join(fixtureDir, 'Smoke.md');
+  writeFileSync(
+    notePath,
+    '---\ntitle: Smoke\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\n---\n\nSmoke body.\n',
+    'utf8',
+  );
+  return {
+    args: [notePath, '--bump-updated'],
+    cwd: fixtureDir,
+    env: { ...process.env, HOME: fixtureDir },
+    assertResult: assertKbEditSmokeResult,
+  };
+}
+
+/** Assert the kb-edit smoke produced an ok bump-updated result with a today-shaped `updated:` field. */
+function assertKbEditSmokeResult(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result from kb-edit');
+  }
+  if (result.ok !== true) {
+    throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
+  }
+  if (result.operation !== 'bump-updated') {
+    throw new Error(`expected operation 'bump-updated', got ${JSON.stringify(result.operation)}`);
+  }
+  const frontmatter = result.frontmatter;
+  if (!isRecord(frontmatter)) {
+    throw new TypeError('expected frontmatter object on kb-edit result');
+  }
+  if (typeof frontmatter.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.updated)) {
+    throw new Error(`expected updated to be YYYY-MM-DD, got ${JSON.stringify(frontmatter.updated)}`);
+  }
 }
 
 /** Assert the parsed smoke-test result reports a composition-code-inline-mark finding. */

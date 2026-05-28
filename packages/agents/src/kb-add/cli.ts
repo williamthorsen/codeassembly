@@ -10,8 +10,8 @@ import type { AliasMap, KbRoot } from '@codeassembly/kb-core';
 import { loadSchema } from '@codeassembly/kb-core/schema';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
+import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { prepareNote } from './prepare-note.ts';
-import { resolveKb } from './resolve-kb.ts';
 import type { AddResult, ParsedArgs } from './types.ts';
 import { writeNote } from './write-note.ts';
 
@@ -115,24 +115,40 @@ export async function runAdd(input: {
     return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
   }
 
-  const resolved = await resolveKb({
+  const resolved = await resolveWritableKb({
     startDir: input.startDir,
     explicitKb: args.kb,
     ...(input.home !== undefined && { home: input.home }),
   });
   if (!resolved.ok) {
-    const failure: AddResult = {
-      ok: false,
-      error: 'no-kb-resolvable',
-      message:
-        resolved.requestedKb === null
-          ? 'no .kb/ discovered, no registry default configured, and no --kb supplied'
-          : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
-    };
-    if (resolved.requestedKb !== null) {
-      failure.details = { requestedKb: resolved.requestedKb };
+    switch (resolved.reason) {
+      case 'no-kb-resolvable': {
+        const failure: AddResult = {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message:
+            resolved.requestedKb === null
+              ? 'no .kb/ discovered, no registry default configured, and no --kb supplied'
+              : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+        };
+        if (resolved.requestedKb !== null) {
+          failure.details = { requestedKb: resolved.requestedKb };
+        }
+        return failure;
+      }
+      case 'readonly-kb':
+        return {
+          ok: false,
+          error: 'readonly-kb',
+          message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; writes are refused`,
+          details: { readonlyKbName: resolved.kbName, readonlyKbPath: resolved.kbPath },
+        };
+      default: {
+        // Exhaustiveness check: a new ResolveKbOutcome variant will surface here at compile time.
+        const _exhaustive: never = resolved;
+        throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
+      }
     }
-    return failure;
   }
   const kb = resolved.kb;
 

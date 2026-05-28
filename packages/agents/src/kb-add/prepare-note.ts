@@ -3,6 +3,7 @@ import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontm
 import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
 import { canonicalize } from '@codeassembly/kb-core/tags';
 
+import { dedupeInOrder, formatUtcDate } from '../kb-shared/note-helpers.ts';
 import type { ParsedArgs, PreparedNote } from './types.ts';
 
 /** Successful preparation: a fully-typed `Frontmatter` plus the canonicalization audit trail. */
@@ -65,25 +66,6 @@ export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: 
 }
 
 // region | Helpers
-
-/** Returns `values` with duplicate entries dropped, preserving first-occurrence order. */
-function dedupeInOrder(values: readonly string[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const value of values) {
-    if (seen.has(value)) {
-      continue;
-    }
-    seen.add(value);
-    result.push(value);
-  }
-  return result;
-}
-
-/** Formats a `Date` as a UTC `YYYY-MM-DD` string. */
-function formatUtcDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 /** Renders the frontmatter to a note string, re-parses it, and runs the frontmatter rule against the parsed shape. */
 function validate(input: { frontmatter: Frontmatter; schema: Schema }): Finding[] {
