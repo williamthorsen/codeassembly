@@ -8,11 +8,11 @@ import { isEnoent } from '../type-guards.ts';
 import type { KbConfig, KbConfigEntry } from '../types.ts';
 import { kbConfigFileSchema } from './kb-config-schema.ts';
 
-const USER_CONFIG_RELATIVE = join('.claude', 'kb.yaml');
+const USER_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 
 /**
- * Load and merge the user-global (`~/.claude/kb.yaml`) and project-local
+ * Load and merge the user-global (`~/.agents/kb.yaml`) and project-local
  * (`.agents/kb.yaml`) KB registries into a normalized `KbConfig`.
  *
  * Project entries replace user entries by name on collision and append new names.

@@ -34,7 +34,7 @@ const root = await findKbRoot({ startDir: process.cwd() });
 
 A KB registry declares one or more knowledge bases. `loadKbConfig` reads two optional registry files and merges them:
 
-- **user-global** — `~/.claude/kb.yaml`
+- **user-global** — `~/.agents/kb.yaml`
 - **project-local** — `<projectDir>/.agents/kb.yaml`
 
 ```yaml
