@@ -1,11 +1,24 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { EditResult, OperationName, ParsedArgs } from './types.ts';
+import type { AliasMap, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb-core';
+import { loadSchema } from '@codeassembly/kb-core/schema';
+import { loadAliases } from '@codeassembly/kb-core/tags';
+
+import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { loadNote } from './load-note.ts';
+import { append } from './operations/append.ts';
+import { bumpUpdated } from './operations/bump-updated.ts';
+import { retag } from './operations/retag.ts';
+import { verify } from './operations/verify.ts';
+import type { EditResult, EditSingleSuccess, OperationName, ParsedArgs } from './types.ts';
+import { writeBackNote } from './write-back.ts';
 
 /** Operation flag → operation name. Order is the documented surface order in SKILL.md. */
 const OPERATION_FLAGS = [
@@ -22,6 +35,7 @@ async function main(): Promise<void> {
     const result = await runEdit({
       argv: process.argv.slice(2),
       stdin: process.stdin,
+      startDir: process.cwd(),
       now: new Date(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -53,15 +67,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end. Tasks 3-5 wire in the load/operation/write pipeline; the scaffolding currently
- * returns `invalid-args` for any parsed input so the structured contract is exercisable from day one. The `now`,
- * `stdin`, and `home` plumbing is in place so later tasks can connect operations without changing this signature.
+ * Runs the helper end to end: parses args, resolves the writable KB that owns the note, loads the note and the
+ * KB's schema/aliases, dispatches to the operation module, and atomically writes the result back. Recoverable
+ * failures (no KB, readonly KB, note not found, note parse error, schema validation, op-side rejections) become
+ * structured `{ ok: false, ... }` results. System failures (out-of-disk, EPERM) propagate to `main`'s try/catch.
+ *
+ * `--supersede-with` is rejected with `invalid-args` here pending Task 5.
  *
  * @internal - Exported to allow testing.
  */
-export function runEdit(input: {
+export async function runEdit(input: {
   argv: readonly string[];
   stdin: Readable;
+  startDir: string;
   now: Date;
   home?: string;
 }): Promise<EditResult> {
@@ -69,26 +87,230 @@ export function runEdit(input: {
   try {
     args = parseArgs(input.argv);
   } catch (error) {
-    return Promise.resolve({
+    return {
       ok: false,
       error: 'invalid-args',
       message: error instanceof Error ? error.message : String(error),
-    });
+    };
   }
 
-  // Suppress unused-variable warnings until Tasks 3-5 wire these in.
-  void input.stdin;
-  void input.now;
-  void input.home;
+  if (args.operation === 'supersede-with') {
+    return { ok: false, error: 'invalid-args', message: '--supersede-with is not yet implemented' };
+  }
 
-  return Promise.resolve({
-    ok: false,
-    error: 'invalid-args',
-    message: `operation "${args.operation}" is not yet implemented`,
+  const notePath = absoluteNotePath({ path: args.path, startDir: input.startDir });
+
+  const kbOutcome = await resolveKbForPath({ notePath, ...(input.home !== undefined && { home: input.home }) });
+  if (!kbOutcome.ok) {
+    return kbOutcome.failure;
+  }
+
+  const loadOutcome = await loadNote({ path: notePath });
+  if (!loadOutcome.ok) {
+    return loadFailureToResult(loadOutcome);
+  }
+
+  const { schema, aliases } = await loadKbContext({ kb: kbOutcome.kb });
+
+  const prepared = await prepareOperation({
+    args,
+    note: loadOutcome.note,
+    aliases,
+    now: input.now,
+    stdin: input.stdin,
   });
+  if (!prepared.ok) {
+    return prepared.failure;
+  }
+
+  const writeOutcome = await writeBackNote({
+    path: notePath,
+    frontmatter: prepared.frontmatter,
+    body: prepared.body,
+    schema,
+  });
+  if (!writeOutcome.ok) {
+    return {
+      ok: false,
+      error: 'schema-validation',
+      message: `frontmatter did not pass schema validation: ${writeOutcome.findings.map((f) => f.message).join('; ')}`,
+      details: { findings: writeOutcome.findings },
+    };
+  }
+
+  const success: EditSingleSuccess = {
+    ok: true,
+    operation: args.operation,
+    path: notePath,
+    kb: kbOutcome.kb,
+    frontmatter: prepared.frontmatter,
+  };
+  if (prepared.originalTags !== undefined) {
+    success.originalTags = prepared.originalTags;
+  }
+  if (prepared.canonicalTags !== undefined) {
+    success.canonicalTags = prepared.canonicalTags;
+  }
+  return success;
 }
 
 // region | Helpers
+
+/** Resolves a possibly-relative note path against the caller's start directory. */
+function absoluteNotePath(input: { path: string; startDir: string }): string {
+  return isAbsolute(input.path) ? input.path : resolve(input.startDir, input.path);
+}
+
+/**
+ * Resolves the writable KB that owns the note at `notePath`. Walks up from the note's directory, not the
+ * caller's cwd, so the KB context tracks where the note lives rather than where the helper was invoked.
+ * Maps resolver failures (`no-kb-resolvable`, `readonly-kb`) onto top-level `EditResult` failures.
+ */
+async function resolveKbForPath(input: {
+  notePath: string;
+  home?: string;
+}): Promise<{ ok: true; kb: ResolvedKb } | { ok: false; failure: EditResult }> {
+  const resolved = await resolveWritableKb({
+    startDir: dirname(input.notePath),
+    explicitKb: null,
+    ...(input.home !== undefined && { home: input.home }),
+  });
+  if (resolved.ok) {
+    return { ok: true, kb: resolved.kb };
+  }
+  switch (resolved.reason) {
+    case 'no-kb-resolvable':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message: `no .kb/ discovered for note at ${input.notePath}`,
+        },
+      };
+    case 'readonly-kb':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'readonly-kb',
+          message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; writes are refused`,
+          details: { readonlyKbName: resolved.kbName, readonlyKbPath: resolved.kbPath },
+        },
+      };
+    default: {
+      const _exhaustive: never = resolved;
+      throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+/** Loads schema and aliases for a resolved KB. Falls back to an empty alias map on a malformed aliases file. */
+async function loadKbContext(input: { kb: ResolvedKb }): Promise<{ schema: Schema; aliases: AliasMap }> {
+  const kbRoot: KbRoot = { path: input.kb.path, kbDir: `${input.kb.path}/.kb`, via: 'ancestor-walk' };
+  const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
+  return { schema, aliases };
+}
+
+/**
+ * Loads tag aliases, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map and emitting a warning
+ * to stderr so the operator can see why canonicalization was skipped.
+ */
+async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasMap> {
+  try {
+    return await loadAliases({ kbRoot: input.kbRoot });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-edit: warning: could not load tag aliases: ${message}\n`);
+    return new Map();
+  }
+}
+
+/** Translates a `loadNote` failure outcome into a top-level `EditResult`. */
+function loadFailureToResult(outcome: Exclude<Awaited<ReturnType<typeof loadNote>>, { ok: true }>): EditResult {
+  if (outcome.reason === 'note-not-found') {
+    return {
+      ok: false,
+      error: 'note-not-found',
+      message: `no file at ${outcome.path}`,
+      details: { missingPath: outcome.path },
+    };
+  }
+  return {
+    ok: false,
+    error: 'note-parse',
+    message: `could not parse frontmatter at ${outcome.path}: ${outcome.parseError}`,
+    details: { parseError: outcome.parseError },
+  };
+}
+
+/** Shape returned by `prepareOperation`: a mutated frontmatter+body plus optional per-op metadata. */
+interface PreparedOperation {
+  ok: true;
+  frontmatter: Frontmatter;
+  body: string;
+  originalTags?: string[];
+  canonicalTags?: string[];
+}
+
+/** Dispatches an operation to its module and returns the prepared write payload, or a top-level failure. */
+async function prepareOperation(input: {
+  args: Exclude<ParsedArgs, { operation: 'supersede-with' }>;
+  note: ParsedNote;
+  aliases: AliasMap;
+  now: Date;
+  stdin: Readable;
+}): Promise<PreparedOperation | { ok: false; failure: EditResult }> {
+  const frontmatter = nonNullFrontmatter(input.note);
+  const body = input.note.body;
+
+  switch (input.args.operation) {
+    case 'bump-updated': {
+      const result = bumpUpdated({ frontmatter, body, now: input.now });
+      return { ok: true, ...result };
+    }
+    case 'verify': {
+      const result = verify({ frontmatter, body, now: input.now });
+      return { ok: true, ...result };
+    }
+    case 'retag': {
+      const result = retag({ frontmatter, body, tags: input.args.tags, aliases: input.aliases, now: input.now });
+      return { ok: true, ...result };
+    }
+    case 'append': {
+      const addition = await readAll(input.stdin);
+      const result = append({ frontmatter, body, addition, now: input.now });
+      if (!result.ok) {
+        return { ok: false, failure: { ok: false, error: 'invalid-args', message: result.message } };
+      }
+      return { ok: true, frontmatter: result.frontmatter, body: result.body };
+    }
+    default: {
+      const _exhaustive: never = input.args;
+      throw new Error(`unhandled operation: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+/** Pulls the typed frontmatter off a loaded note; loadNote guarantees it is non-null at this point. */
+function nonNullFrontmatter(note: ParsedNote): Frontmatter {
+  if (note.frontmatter === null) {
+    throw new Error(`internal error: note at ${note.path} unexpectedly has null frontmatter after loadNote`);
+  }
+  return note.frontmatter;
+}
+
+/** Reads a readable stream to completion as a UTF-8 string. */
+async function readAll(stream: Readable): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    if (!Buffer.isBuffer(chunk)) {
+      throw new TypeError('readAll: expected Buffer chunks (stream must be in binary mode)');
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
 
 /** A captured operation flag: its canonical name plus the value (if any) that followed it. */
 interface SelectedOp {
