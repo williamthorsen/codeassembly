@@ -1,12 +1,16 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
+import { randomBytes } from 'node:crypto';
 import { realpathSync } from 'node:fs';
+import { rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb-core';
+import type { AliasMap, Finding, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb-core';
+import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
+import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
 import { loadSchema } from '@codeassembly/kb-core/schema';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
@@ -16,8 +20,9 @@ import { loadNote } from './load-note.ts';
 import { append } from './operations/append.ts';
 import { bumpUpdated } from './operations/bump-updated.ts';
 import { retag } from './operations/retag.ts';
+import { prepareSupersedeWith } from './operations/supersede-with.ts';
 import { verify } from './operations/verify.ts';
-import type { EditResult, EditSingleSuccess, OperationName, ParsedArgs } from './types.ts';
+import type { EditResult, EditSingleSuccess, EditSupersedeSuccess, OperationName, ParsedArgs } from './types.ts';
 import { writeBackNote } from './write-back.ts';
 
 /** Operation flag → operation name. Order is the documented surface order in SKILL.md. */
@@ -72,8 +77,6 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  * failures (no KB, readonly KB, note not found, note parse error, schema validation, op-side rejections) become
  * structured `{ ok: false, ... }` results. System failures (out-of-disk, EPERM) propagate to `main`'s try/catch.
  *
- * `--supersede-with` is rejected with `invalid-args` here pending Task 5.
- *
  * @internal - Exported to allow testing.
  */
 export async function runEdit(input: {
@@ -95,7 +98,12 @@ export async function runEdit(input: {
   }
 
   if (args.operation === 'supersede-with') {
-    return { ok: false, error: 'invalid-args', message: '--supersede-with is not yet implemented' };
+    return runSupersedeWith({
+      args,
+      startDir: input.startDir,
+      now: input.now,
+      ...(input.home !== undefined && { home: input.home }),
+    });
   }
 
   const notePath = absoluteNotePath({ path: args.path, startDir: input.startDir });
@@ -298,6 +306,187 @@ function nonNullFrontmatter(note: ParsedNote): Frontmatter {
     throw new Error(`internal error: note at ${note.path} unexpectedly has null frontmatter after loadNote`);
   }
   return note.frontmatter;
+}
+
+/**
+ * Orchestrates `--supersede-with`: resolves and validates both paths into the same KB, prepares the in-memory
+ * edits, validates both resulting frontmatters against the schema, then commits both writes with best-effort
+ * atomicity. On the second rename's failure, the captured original bytes of the old note are restored. If
+ * restoration also fails, the result surfaces as `partial-supersede` with both paths in `details`.
+ */
+async function runSupersedeWith(input: {
+  args: Extract<ParsedArgs, { operation: 'supersede-with' }>;
+  startDir: string;
+  now: Date;
+  home?: string;
+}): Promise<EditResult> {
+  const oldPath = absoluteNotePath({ path: input.args.path, startDir: input.startDir });
+  const newPath = absoluteNotePath({ path: input.args.newPath, startDir: input.startDir });
+
+  const oldKb = await resolveKbForPath({ notePath: oldPath, ...(input.home !== undefined && { home: input.home }) });
+  if (!oldKb.ok) {
+    return oldKb.failure;
+  }
+  const newKb = await resolveKbForPath({ notePath: newPath, ...(input.home !== undefined && { home: input.home }) });
+  if (!newKb.ok) {
+    return newKb.failure;
+  }
+  if (oldKb.kb.path !== newKb.kb.path) {
+    return {
+      ok: false,
+      error: 'invalid-args',
+      message: `supersede chain requires both notes in the same KB; old is in ${oldKb.kb.path}, new is in ${newKb.kb.path}`,
+    };
+  }
+
+  const oldLoad = await loadNote({ path: oldPath });
+  if (!oldLoad.ok) {
+    return loadFailureToResult(oldLoad);
+  }
+  const newLoad = await loadNote({ path: newPath });
+  if (!newLoad.ok) {
+    if (newLoad.reason === 'note-not-found') {
+      return {
+        ok: false,
+        error: 'supersede-target-missing',
+        message: `--supersede-with target does not exist: ${newPath}`,
+        details: { missingPath: newPath },
+      };
+    }
+    return loadFailureToResult(newLoad);
+  }
+
+  const { schema, aliases } = await loadKbContext({ kb: oldKb.kb });
+
+  const prepared = prepareSupersedeWith({
+    oldNote: oldLoad.note,
+    oldFrontmatter: nonNullFrontmatter(oldLoad.note),
+    newNote: newLoad.note,
+    newFrontmatter: nonNullFrontmatter(newLoad.note),
+    kbPath: oldKb.kb.path,
+    aliases,
+    now: input.now,
+  });
+
+  const oldRendered = writeFrontmatter({ frontmatter: prepared.old.frontmatter, body: prepared.old.body });
+  const newRendered = writeFrontmatter({ frontmatter: prepared.new.frontmatter, body: prepared.new.body });
+
+  const oldFindings = validateRendered({ content: oldRendered, path: oldPath, schema });
+  const newFindings = validateRendered({ content: newRendered, path: newPath, schema });
+  const allFindings = [...oldFindings, ...newFindings];
+  if (allFindings.length > 0) {
+    return {
+      ok: false,
+      error: 'schema-validation',
+      message: `frontmatter did not pass schema validation: ${allFindings.map((f) => f.message).join('; ')}`,
+      details: { findings: allFindings },
+    };
+  }
+
+  const commitOutcome = await commitSupersede({
+    oldPath,
+    newPath,
+    oldOriginalContent: oldLoad.note.content,
+    oldNewContent: oldRendered,
+    newNewContent: newRendered,
+  });
+  if (!commitOutcome.ok) {
+    return {
+      ok: false,
+      error: 'partial-supersede',
+      message: `supersede-with: failed to commit and could not roll back; both notes may be in an inconsistent state. Original error: ${commitOutcome.message}`,
+      details: { oldPath, newPath },
+    };
+  }
+
+  const success: EditSupersedeSuccess = {
+    ok: true,
+    operation: 'supersede-with',
+    oldPath,
+    newPath,
+    kb: oldKb.kb,
+    oldFrontmatter: prepared.old.frontmatter,
+    newFrontmatter: prepared.new.frontmatter,
+  };
+  return success;
+}
+
+/**
+ * Renders a frontmatter+body string and runs the frontmatter rule against it, returning error-severity findings.
+ * Mirrors the validation inside `writeBackNote` but runs detached from the write so two notes can be validated
+ * before either rename happens.
+ */
+function validateRendered(input: { content: string; path: string; schema: Schema }): Finding[] {
+  const parsed = parseNoteContent({ content: input.content, path: input.path });
+  return runRules({ rules: [frontmatterRule], notes: [parsed], schema: input.schema }).filter(
+    (finding) => finding.severity === 'error',
+  );
+}
+
+/**
+ * Commits two pre-validated note writes with best-effort atomicity.
+ *
+ * Sequence:
+ *  1. Write both temp files (no destination mutated yet).
+ *  2. Rename temp-old → oldPath. On failure, cleanup both temps and re-throw.
+ *  3. Rename temp-new → newPath. On failure: write the captured original bytes to a new temp and rename it onto
+ *     oldPath to undo step 2. If the rollback fails, return `{ ok: false }` so the caller can surface
+ *     `partial-supersede`.
+ *
+ * System errors during step 1 or step 2's failure-handling propagate (caller's main catch).
+ */
+async function commitSupersede(input: {
+  oldPath: string;
+  newPath: string;
+  oldOriginalContent: string;
+  oldNewContent: string;
+  newNewContent: string;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  const oldTmp = `${input.oldPath}.${randomBytes(8).toString('hex')}.tmp`;
+  const newTmp = `${input.newPath}.${randomBytes(8).toString('hex')}.tmp`;
+
+  await writeFile(oldTmp, input.oldNewContent, 'utf8');
+  try {
+    await writeFile(newTmp, input.newNewContent, 'utf8');
+  } catch (error) {
+    await unlink(oldTmp).catch(() => {});
+    throw error;
+  }
+
+  try {
+    await rename(oldTmp, input.oldPath);
+  } catch (error) {
+    await unlink(oldTmp).catch(() => {});
+    await unlink(newTmp).catch(() => {});
+    throw error;
+  }
+
+  try {
+    await rename(newTmp, input.newPath);
+    return { ok: true };
+  } catch (renameError) {
+    await unlink(newTmp).catch(() => {});
+    const originalMessage = renameError instanceof Error ? renameError.message : String(renameError);
+    const rollback = await tryRollbackOld({ oldPath: input.oldPath, originalContent: input.oldOriginalContent });
+    if (rollback.ok) {
+      // Rollback succeeded: the world is consistent again. Re-throw so the failure surfaces as a system error.
+      throw renameError;
+    }
+    return { ok: false, message: originalMessage };
+  }
+}
+
+/** Restores the captured original bytes to `oldPath` via temp + rename. Returns ok on success. */
+async function tryRollbackOld(input: { oldPath: string; originalContent: string }): Promise<{ ok: boolean }> {
+  const rollbackTmp = `${input.oldPath}.${randomBytes(8).toString('hex')}.rollback.tmp`;
+  try {
+    await writeFile(rollbackTmp, input.originalContent, 'utf8');
+    await rename(rollbackTmp, input.oldPath);
+    return { ok: true };
+  } catch {
+    await unlink(rollbackTmp).catch(() => {});
+    return { ok: false };
+  }
 }
 
 /** Reads a readable stream to completion as a UTF-8 string. */

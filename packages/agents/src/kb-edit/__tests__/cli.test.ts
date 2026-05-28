@@ -336,13 +336,41 @@ describe(runEdit, () => {
     }
   });
 
-  it('returns invalid-args for --supersede-with until Task 5 wires it in', async () => {
-    const { kbPath, notePath } = await makeKbWithNote();
+  it('commits both writes on --supersede-with and surfaces KB-relative pointers', async () => {
+    const { kbPath, notePath: oldPath } = await makeKbWithNote();
     const newPath = join(kbPath, 'New.md');
-    await writeFile(newPath, SAMPLE_NOTE, 'utf8');
+    await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'Replacement'), 'utf8');
 
     const result = await runEdit({
-      argv: [notePath, '--supersede-with', newPath],
+      argv: [oldPath, '--supersede-with', newPath],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'supersede-with') {
+      expect(result.oldFrontmatter.extra['superseded-by']).toBe('New.md');
+      expect(result.newFrontmatter.extra.supersedes).toBe('Sample.md');
+      expect(result.oldFrontmatter.tags).toContain('deprecated');
+      expect(result.oldFrontmatter.updated).toBe(TODAY);
+      expect(result.newFrontmatter.updated).toBe(TODAY);
+    }
+
+    const oldOnDisk = await readFile(oldPath, 'utf8');
+    const newOnDisk = await readFile(newPath, 'utf8');
+    expect(oldOnDisk).toContain('superseded-by: New.md');
+    expect(newOnDisk).toContain('supersedes: Sample.md');
+    expect(oldOnDisk).toContain('deprecated');
+  });
+
+  it('returns supersede-target-missing when the new path does not exist', async () => {
+    const { kbPath, notePath: oldPath } = await makeKbWithNote();
+    const missingNew = join(kbPath, 'NoSuch.md');
+
+    const result = await runEdit({
+      argv: [oldPath, '--supersede-with', missingNew],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
@@ -351,8 +379,110 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
+      expect(result.error).toBe('supersede-target-missing');
+      expect(result.details?.missingPath).toBe(missingNew);
+    }
+    // Old note untouched.
+    const onDisk = await readFile(oldPath, 'utf8');
+    expect(onDisk).toBe(SAMPLE_NOTE);
+  });
+
+  it('rejects cross-KB supersession with invalid-args', async () => {
+    const { kbPath: kbA, notePath: oldPath } = await makeKbWithNote();
+    const { kbPath: kbB } = await makeKbWithNote();
+    const newPath = join(kbB, 'New.md');
+    await writeFile(newPath, SAMPLE_NOTE, 'utf8');
+
+    const result = await runEdit({
+      argv: [oldPath, '--supersede-with', newPath],
+      stdin: bodyStream(''),
+      startDir: kbA,
+      now: NOW,
+      home: kbA,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
       expect(result.error).toBe('invalid-args');
-      expect(result.message).toMatch(/not yet implemented/);
+      expect(result.message).toMatch(/same KB/);
+    }
+    expect(await readFile(oldPath, 'utf8')).toBe(SAMPLE_NOTE);
+  });
+
+  it('does not commit either write when validation of the resulting frontmatter fails', async () => {
+    const { kbPath, notePath: oldPath } = await makeKbWithNote();
+    const newPath = join(kbPath, 'BadType.md');
+    // New note has a type outside the schema vocabulary; supersede-with validates both before either rename.
+    await writeFile(
+      newPath,
+      '---\ntitle: x\ntype: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      'utf8',
+    );
+
+    const result = await runEdit({
+      argv: [oldPath, '--supersede-with', newPath],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('schema-validation');
+    }
+    // Both files untouched.
+    const oldAfter = await readFile(oldPath, 'utf8');
+    expect(oldAfter).toBe(SAMPLE_NOTE);
+  });
+
+  it('canonicalizes the deprecated tag against the KB alias map', async () => {
+    const { kbPath, notePath: oldPath } = await makeKbWithNote();
+    const newPath = join(kbPath, 'New.md');
+    await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'Replacement'), 'utf8');
+    // Declare an alias so `deprecated` canonicalizes to `archived` when added to the old note.
+    await writeFile(join(kbPath, '.kb', 'tag-aliases.yaml'), 'aliases:\n  archived: [deprecated]\n', 'utf8');
+
+    const result = await runEdit({
+      argv: [oldPath, '--supersede-with', newPath],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'supersede-with') {
+      expect(result.oldFrontmatter.tags).toContain('archived');
+      expect(result.oldFrontmatter.tags).not.toContain('deprecated');
+    }
+  });
+
+  it('is idempotent on the deprecated tag when it is already present', async () => {
+    const kbPath = await mkdtemp(join(tmpdir(), 'kb-edit-cli-dep-'));
+    await mkdir(join(kbPath, '.kb'), { recursive: true });
+    const oldPath = join(kbPath, 'Old.md');
+    const newPath = join(kbPath, 'New.md');
+    // Old note already carries the deprecated tag; supersede-with should not duplicate it.
+    await writeFile(
+      oldPath,
+      '---\ntitle: Old\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [legacy, deprecated]\n---\n\nbody\n',
+      'utf8',
+    );
+    await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'New'), 'utf8');
+
+    const result = await runEdit({
+      argv: [oldPath, '--supersede-with', newPath],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'supersede-with') {
+      const occurrences = result.oldFrontmatter.tags.filter((t) => t === 'deprecated');
+      expect(occurrences).toHaveLength(1);
     }
   });
 });
