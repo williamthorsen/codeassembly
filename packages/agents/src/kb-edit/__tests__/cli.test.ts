@@ -284,9 +284,9 @@ describe(runEdit, () => {
   it('returns readonly-kb when the note resolves into a readonly registry entry', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
     const homeDir = await mkdtemp(join(tmpdir(), 'kb-edit-readonly-home-'));
-    await mkdir(join(homeDir, '.claude'), { recursive: true });
+    await mkdir(join(homeDir, '.agents'), { recursive: true });
     await writeFile(
-      join(homeDir, '.claude', 'kb.yaml'),
+      join(homeDir, '.agents', 'kb.yaml'),
       `kbs:\n  locked:\n    path: ${kbPath}\n    readonly: true\n`,
       'utf8',
     );
