@@ -1,0 +1,12 @@
+# User-global registry fixture that registers vault-readonly by name (without making it the default)
+# alongside a writable default. Exercises explicit-flag readonly refusal and discovered-path readonly refusal.
+# Paths are relative to this file's directory (`home-readonly-named/.claude/`).
+kbs:
+  writable-default:
+    path: ../../vault-b
+    description: Writable default vault
+    default: true
+  readonly-named:
+    path: ../../vault-readonly
+    description: Readonly vault registered by name
+    readonly: true

@@ -6,6 +6,8 @@
 
 import type { Finding, Frontmatter } from '@codeassembly/kb-core';
 
+import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+
 /** Parsed command-line invocation of the kb-add helper. */
 export interface ParsedArgs {
   /** Optional explicit KB name; when set, wins over discovery and registry-default. */
@@ -20,16 +22,6 @@ export interface ParsedArgs {
   tags: string[];
   /** Optional `last-verified` date (`YYYY-MM-DD`). */
   lastVerified: string | null;
-}
-
-/** A knowledge base resolved as the write target. */
-export interface ResolvedKb {
-  /** The KB's display name. `null` for a `.kb/`-discovered KB with no registry entry. */
-  name: string | null;
-  /** Absolute path to the KB's root directory. */
-  path: string;
-  /** Which selection rule fired. */
-  source: 'explicit' | 'discovered' | 'registry-default';
 }
 
 /** The prepared note ready to be written: the rendered frontmatter, the body, and the canonicalization audit trail. */
@@ -69,7 +61,13 @@ export interface AddFailure {
 }
 
 /** Categorical error codes the helper can return without an unexpected throw. */
-export type AddErrorCode = 'no-kb-resolvable' | 'invalid-args' | 'invalid-title' | 'schema-validation' | 'collision';
+export type AddErrorCode =
+  | 'no-kb-resolvable'
+  | 'invalid-args'
+  | 'invalid-title'
+  | 'schema-validation'
+  | 'collision'
+  | 'readonly-kb';
 
 /** Per-error structured details. */
 export interface AddErrorDetails {
@@ -79,7 +77,14 @@ export interface AddErrorDetails {
   findings?: Finding[];
   /** Name of the explicit KB that did not resolve, set when `error: 'no-kb-resolvable'` after `--kb` was supplied. */
   requestedKb?: string;
+  /** Registry name of the readonly KB that refused the write, set when `error: 'readonly-kb'`. */
+  readonlyKbName?: string;
+  /** Absolute path of the readonly KB that refused the write, set when `error: 'readonly-kb'`. */
+  readonlyKbPath?: string;
 }
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type AddResult = AddSuccess | AddFailure;
+
+// Re-export so existing kb-add consumers don't need to learn the kb-shared path.
+export type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

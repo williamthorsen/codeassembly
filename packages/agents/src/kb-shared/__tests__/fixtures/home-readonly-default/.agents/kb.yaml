@@ -1,0 +1,13 @@
+# User-global registry fixture for readonly enforcement.
+# The default-marked entry is also readonly so resolveWritableKb must refuse to fall back to it.
+# A second non-default writable entry exists so the registry is non-empty.
+# Paths are relative to this file's directory (`home-readonly-default/.claude/`).
+kbs:
+  readonly-default:
+    path: ../../vault-readonly
+    description: Fixture readonly default vault
+    default: true
+    readonly: true
+  also-writable:
+    path: ../../vault-b
+    description: Non-default writable vault
