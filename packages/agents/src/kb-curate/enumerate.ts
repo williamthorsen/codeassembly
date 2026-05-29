@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
+import process from 'node:process';
 
 import type { ParsedNote } from '@codeassembly/kb-core';
 import { parseNoteContent } from '@codeassembly/kb-core/frontmatter';
@@ -22,8 +23,9 @@ function shouldSkipDir(name: string): boolean {
  *
  * Dot-prefixed directories and `node_modules` are skipped. Notes with malformed or absent frontmatter are kept —
  * `parseNoteContent` degrades them to `frontmatter: null` rather than throwing, so they remain valid wikilink
- * targets and surface their own `frontmatter.*` findings downstream. Each note's `path` is absolute so fixes can
- * operate on the file directly; `relativePath` is the slash-separated path from the KB root.
+ * targets and surface their own `frontmatter.*` findings downstream. A note that cannot be read (permission or
+ * encoding error) is skipped with a stderr warning rather than aborting the whole walk. Each note's `path` is
+ * absolute so fixes can operate on the file directly; `relativePath` is the slash-separated path from the KB root.
  */
 export async function enumerateNotes(kbRoot: string): Promise<EnumeratedNote[]> {
   const notes: EnumeratedNote[] = [];
@@ -43,9 +45,14 @@ async function walk(root: string, dir: string, out: EnumeratedNote[]): Promise<v
     }
     if (!entry.name.endsWith('.md')) continue;
     const absolutePath = join(dir, entry.name);
-    const content = await readFile(absolutePath, 'utf8');
-    const note = parseNoteContent({ content, path: absolutePath });
-    out.push({ note, relativePath: relative(root, absolutePath).split(sep).join('/') });
+    try {
+      const content = await readFile(absolutePath, 'utf8');
+      const note = parseNoteContent({ content, path: absolutePath });
+      out.push({ note, relativePath: relative(root, absolutePath).split(sep).join('/') });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`kb-curate: warning: could not read note ${absolutePath}; skipping: ${message}\n`);
+    }
   }
 }
 
