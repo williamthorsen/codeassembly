@@ -1,6 +1,3 @@
-// Shared wikilink-scanning primitives. Both the `wikilinks` rule (detection) and the kb-curate skill's
-// path-rewrite sweep (remediation) import these, so the two never diverge on what counts as a link.
-
 /**
  * Match `[[Target]]` and `![[Target]]` (embeds). A backslash-escaped `\[[…]]` is excluded. Scan the body so that
  * frontmatter wikilink-looking text (e.g. inside a description) is not flagged.

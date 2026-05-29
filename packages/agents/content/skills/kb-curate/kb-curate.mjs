@@ -22668,7 +22668,7 @@ function rewriteLink(input) {
   if (resolved === void 0 || resolved.size !== 1) {
     return null;
   }
-  const [onlyPath] = [...resolved];
+  const [onlyPath] = resolved;
   if (onlyPath === void 0) {
     return null;
   }

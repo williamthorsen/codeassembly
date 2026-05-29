@@ -198,9 +198,6 @@ function assertKbEditSmokeResult(result: unknown): void {
  * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle read-only
  * over it. Exercises the resolve → enumerate → detect pipeline end to end. `HOME` is overridden to the fixture dir
  * so the dev's real registry does not pollute KB resolution.
- *
- * The fixture is process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
- * directories without explicit cleanup. The run is read-only, so re-runs do not mutate the seed note.
  */
 function makeKbCurateSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-curate-smoke-'));

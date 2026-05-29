@@ -79,7 +79,7 @@ function rewriteLink(input: {
   if (resolved === undefined || resolved.size !== 1) {
     return null;
   }
-  const [onlyPath] = [...resolved];
+  const [onlyPath] = resolved;
   if (onlyPath === undefined) {
     return null;
   }
