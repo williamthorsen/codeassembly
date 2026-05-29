@@ -21,12 +21,15 @@ export interface RewriteResult {
 /**
  * Rewrites path-only stale wikilinks in a note body to the canonical vault-relative target.
  *
- * A link is a rewrite candidate iff its basename resolves to **exactly one** vault note (`index.size === 1`) and the
- * written target differs from that note's canonical vault-relative path (sans `.md`). The rewrite preserves any
- * `|alias`, `#anchor`, and the embed (`!`) prefix, and keeps the path-qualified style (it does not strip to a bare
- * basename). Unresolved (zero matches) and ambiguous (multiple matches) links are never rewritten. Links inside
- * fenced or inline code are skipped, using the same masking the `wikilinks` rule uses so detection and remediation
- * never diverge on what counts as a link.
+ * A link is a rewrite candidate iff it is **path-qualified** (its target contains a `/`), its basename resolves to
+ * **exactly one** vault note (`index.size === 1`), and the written target differs from that note's canonical
+ * vault-relative path (sans `.md`). Only stale path prefixes are repaired: a bare-basename link that resolves
+ * uniquely (e.g. `[[Foo]]`) is left untouched, because it is a valid link the `wikilinks` rule emits no finding for —
+ * rewriting it would mutate links the report never flagged and flip a bare-basename vault's link style en masse.
+ * The rewrite preserves any `|alias`, `#anchor`, and the embed (`!`) prefix, and keeps the path-qualified style (it
+ * does not strip to a bare basename). Unresolved (zero matches) and ambiguous (multiple matches) links are never
+ * rewritten. Links inside fenced or inline code are skipped, using the same masking the `wikilinks` rule uses so
+ * detection and remediation never diverge on what counts as a link.
  */
 export function rewriteWikilinks(input: { body: string; vaultIndex: VaultIndex }): RewriteResult {
   const { body, vaultIndex } = input;
@@ -73,6 +76,11 @@ function rewriteLink(input: {
   const { fullMatch, inner, vaultIndex } = input;
   const target = extractTarget(inner);
   if (target === null || hasNonMarkdownExtension(target)) {
+    return null;
+  }
+  // Only repair stale path prefixes. A bare basename (no `/`) that resolves uniquely is a valid link the
+  // `wikilinks` rule never flags, so leave it alone rather than path-qualifying links the report never surfaced.
+  if (!target.includes('/')) {
     return null;
   }
   const resolved = vaultIndex.get(lookupKey(target));

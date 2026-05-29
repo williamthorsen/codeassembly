@@ -22093,7 +22093,7 @@ async function loadKbConfigSafely(input) {
 }
 
 // src/kb-curate/apply.ts
-import { writeFile } from "node:fs/promises";
+import { readFile as readFile2, writeFile } from "node:fs/promises";
 import { basename as basename2 } from "node:path";
 
 // src/kb-curate/apply/canonicalize-tags.ts
@@ -22664,6 +22664,9 @@ function rewriteLink(input) {
   if (target === null || hasNonMarkdownExtension(target)) {
     return null;
   }
+  if (!target.includes("/")) {
+    return null;
+  }
   const resolved = vaultIndex.get(lookupKey(target));
   if (resolved === void 0 || resolved.size !== 1) {
     return null;
@@ -22714,7 +22717,20 @@ async function rewriteStalePathLinks(input) {
   for (const entry of input.notes) {
     const result = rewriteWikilinks({ body: entry.note.body, vaultIndex });
     if (!result.changed) continue;
-    const newContent = replaceBody(entry.note.content, entry.note.body, result.body);
+    let currentContent;
+    try {
+      currentContent = await readFile2(entry.note.path, "utf8");
+    } catch (error51) {
+      fixes.push({
+        path: entry.note.path,
+        rule: "wikilinks.path-rewrite",
+        ok: false,
+        operation: "rewrite-wikilink",
+        message: error51 instanceof Error ? error51.message : String(error51)
+      });
+      continue;
+    }
+    const newContent = replaceBody(currentContent, entry.note.body, result.body);
     if (newContent === null) {
       fixes.push({
         path: entry.note.path,
@@ -22781,7 +22797,7 @@ var defaultSchema = Object.freeze(schema);
 
 // ../kb-core/src/schema/load-schema.ts
 var import_yaml6 = __toESM(require_dist(), 1);
-import { readFile as readFile2 } from "node:fs/promises";
+import { readFile as readFile3 } from "node:fs/promises";
 import { join as join4 } from "node:path";
 var SCHEMA_FILE = join4(".kb", "schema.yaml");
 var schemaFileShape = external_exports.object({
@@ -22793,7 +22809,7 @@ async function loadSchema(input) {
   const path = join4(input.kbRoot.path, SCHEMA_FILE);
   let text;
   try {
-    text = await readFile2(path, "utf8");
+    text = await readFile3(path, "utf8");
   } catch (error51) {
     if (isEnoent(error51)) {
       return defaultSchema;
@@ -22854,14 +22870,14 @@ function narrowTypes(defaults, perKb) {
 
 // ../kb-core/src/tags/load-aliases.ts
 var import_yaml7 = __toESM(require_dist(), 1);
-import { readFile as readFile3 } from "node:fs/promises";
+import { readFile as readFile4 } from "node:fs/promises";
 import { join as join5 } from "node:path";
 var ALIASES_FILE = join5(".kb", "tag-aliases.yaml");
 async function loadAliases(input) {
   const path = join5(input.kbRoot.path, ALIASES_FILE);
   let text;
   try {
-    text = await readFile3(path, "utf8");
+    text = await readFile4(path, "utf8");
   } catch (error51) {
     if (isEnoent(error51)) {
       return /* @__PURE__ */ new Map();
@@ -23133,7 +23149,7 @@ async function loadAliasesWithWarning(input) {
 }
 
 // src/kb-curate/enumerate.ts
-import { readdir, readFile as readFile4 } from "node:fs/promises";
+import { readdir, readFile as readFile5 } from "node:fs/promises";
 import { join as join7, relative, sep } from "node:path";
 import process5 from "node:process";
 
@@ -23178,7 +23194,7 @@ async function walk(root, dir, out) {
     if (!entry.name.endsWith(".md")) continue;
     const absolutePath = join7(dir, entry.name);
     try {
-      const content = await readFile4(absolutePath, "utf8");
+      const content = await readFile5(absolutePath, "utf8");
       const note = parseNoteContent({ content, path: absolutePath });
       out.push({ note, relativePath: relative(root, absolutePath).split(sep).join("/") });
     } catch (error51) {

@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 
 import type { Finding, VaultIndex } from '@codeassembly/kb-core';
@@ -18,7 +18,9 @@ import type { AppliedFix } from './types.ts';
  *   resolves to exactly one note. These touch the body, not the frontmatter, so they are written inline.
  *
  * Returns the fixes in tag-then-wikilink order. The vault index for the rewrite sweep is built from the enumerated
- * notes' paths.
+ * notes' paths. The inline writer re-reads each note from disk immediately before rewriting, so when a note has both
+ * fixes the tag canonicalization that ran first (and rewrote the frontmatter on disk) is preserved rather than
+ * clobbered by the stale enumeration snapshot.
  */
 export async function applyFixes(input: {
   kbPath: string;
@@ -56,7 +58,23 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
   for (const entry of input.notes) {
     const result = rewriteWikilinks({ body: entry.note.body, vaultIndex });
     if (!result.changed) continue;
-    const newContent = replaceBody(entry.note.content, entry.note.body, result.body);
+    // Re-read current on-disk content rather than splicing into the enumeration snapshot: a tag fix that ran
+    // earlier in this run rewrote the frontmatter on disk, and writing from the stale snapshot would silently
+    // revert it. The body is untouched by the tag fix, so the snapshot's body still anchors the replacement.
+    let currentContent: string;
+    try {
+      currentContent = await readFile(entry.note.path, 'utf8');
+    } catch (error) {
+      fixes.push({
+        path: entry.note.path,
+        rule: 'wikilinks.path-rewrite',
+        ok: false,
+        operation: 'rewrite-wikilink',
+        message: error instanceof Error ? error.message : String(error),
+      });
+      continue;
+    }
+    const newContent = replaceBody(currentContent, entry.note.body, result.body);
     if (newContent === null) {
       fixes.push({
         path: entry.note.path,
@@ -109,10 +127,10 @@ function buildRelativeIndex(notes: readonly EnumeratedNote[]): VaultIndex {
 }
 
 /**
- * Rebuilds a note's full content with a rewritten body. The body is the suffix of `content` after the frontmatter
- * block; replacing the final occurrence preserves the frontmatter verbatim (the rewrite never touches the
- * frontmatter, and a note body cannot precede its own frontmatter). Returns `null` when `oldBody` is not found
- * verbatim in `content`, so the caller skips the write rather than persisting a frontmatter-stripped file.
+ * Rebuilds a note's full content with a rewritten body. `content` is the current on-disk content; the body is its
+ * suffix after the frontmatter block, so replacing the final occurrence preserves whatever frontmatter is currently
+ * on disk verbatim (including a tag canonicalization applied earlier this run). Returns `null` when `oldBody` is not
+ * found verbatim in `content`, so the caller skips the write rather than persisting a frontmatter-stripped file.
  */
 function replaceBody(content: string, oldBody: string, newBody: string): string | null {
   const bodyStart = content.lastIndexOf(oldBody);

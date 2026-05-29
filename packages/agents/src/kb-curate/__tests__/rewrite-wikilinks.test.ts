@@ -37,15 +37,15 @@ describe(rewriteWikilinks, () => {
     expect(result.body).toBe('Embed ![[tools/Foo]] here.');
   });
 
-  it('qualifies a bare-basename link to its canonical path when the basename resolves uniquely', () => {
+  it('leaves a uniquely-resolving bare-basename link untouched (only stale path prefixes are repaired)', () => {
     const result = rewriteWikilinks({
       body: 'See [[Foo]].',
       vaultIndex: indexOf([['Foo', ['tools/Foo.md']]]),
     });
 
-    expect(result.changed).toBe(true);
-    expect(result.body).toBe('See [[tools/Foo]].');
-    expect(result.rewrites).toEqual([{ from: 'Foo', to: 'tools/Foo' }]);
+    expect(result.changed).toBe(false);
+    expect(result.body).toBe('See [[Foo]].');
+    expect(result.rewrites).toEqual([]);
   });
 
   it('leaves a link already at its canonical path unchanged', () => {
