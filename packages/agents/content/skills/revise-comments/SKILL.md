@@ -10,7 +10,7 @@ Apply the comment-discipline audit to a target file set. Edits comments in place
 
 ## Invocation
 
-- `/revise-comments` — default target is files changed on the current branch, including committed and uncommitted work.
+- `/revise-comments` — default target is files committed on the current branch relative to the default branch. To audit uncommitted work, pass explicit paths (`/revise-comments .` covers the working tree).
 - `/revise-comments <path> [<path>...]` — explicit file or directory targets. Directories are processed recursively.
 - `/revise-comments --dry-run [...]` — produce the summary without applying edits. Triage and dry-run are unified under this flag.
 
@@ -20,15 +20,10 @@ Apply the comment-discipline audit to a target file set. Edits comments in place
 
 2. **Resolve the target file set.**
 
-   With no argument, the target is the union of files changed on the current branch (committed, staged, unstaged, and untracked). Obtain `default_branch` via `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
+   With no argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `$default_branch` via `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
 
    ```bash
-   (
-     git diff --name-only --diff-filter=AMR "$(git merge-base "$default_branch" HEAD)..HEAD"
-     git diff --name-only --diff-filter=AMR
-     git diff --cached --name-only --diff-filter=AMR
-     git ls-files --others --exclude-standard
-   ) | sort -u
+   git diff --name-only "$default_branch...HEAD"
    ```
 
    With explicit arguments: for each argument, if it is a file, add it to the set; if it is a directory, list its contents via `git ls-files <dir>` and `git ls-files --others --exclude-standard <dir>`, then add the comment-supporting files from that listing. The `git ls-files` form respects `.gitignore`, so `node_modules/`, `dist/`, and other non-authored trees stay out of the set.
