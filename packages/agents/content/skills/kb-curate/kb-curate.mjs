@@ -23148,7 +23148,15 @@ async function enumerateNotes(kbRoot) {
   return notes;
 }
 async function walk(root, dir, out) {
-  const entries = await readdir(dir, { withFileTypes: true });
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch (error51) {
+    const message = error51 instanceof Error ? error51.message : String(error51);
+    process5.stderr.write(`kb-curate: warning: could not read directory ${dir}; skipping: ${message}
+`);
+    return;
+  }
   for (const entry of entries) {
     if (entry.isDirectory()) {
       if (shouldSkipDir(entry.name)) continue;

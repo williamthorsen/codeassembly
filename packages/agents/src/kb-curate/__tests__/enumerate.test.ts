@@ -2,9 +2,30 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { enumerateNotes } from '../enumerate.ts';
+
+/** Directories whose `readdir` should reject; cleared between tests. */
+const unreadableDirs = new Set<string>();
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>();
+  return {
+    ...actual,
+    readdir: (path: Parameters<typeof actual.readdir>[0], options: Parameters<typeof actual.readdir>[1]) => {
+      if (typeof path === 'string' && unreadableDirs.has(path)) {
+        return Promise.reject(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' }));
+      }
+      return actual.readdir(path, options);
+    },
+  };
+});
+
+afterEach(() => {
+  unreadableDirs.clear();
+  vi.restoreAllMocks();
+});
 
 async function makeVault(files: Record<string, string>): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'kb-curate-enumerate-'));
@@ -64,5 +85,21 @@ describe(enumerateNotes, () => {
     const notes = await enumerateNotes(root);
 
     expect(notes.map((entry) => entry.relativePath)).toEqual(['note.md']);
+  });
+
+  it('skips an unreadable subdirectory and still returns the readable notes', async () => {
+    const root = await makeVault({ 'top.md': VALID, 'restricted/inside.md': VALID });
+    const blockedDir = join(root, 'restricted');
+    unreadableDirs.add(blockedDir);
+    const warnings: string[] = [];
+    vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
+      warnings.push(String(chunk));
+      return true;
+    });
+
+    const notes = await enumerateNotes(root);
+
+    expect(notes.map((entry) => entry.relativePath)).toEqual(['top.md']);
+    expect(warnings.join('')).toContain(`could not read directory ${blockedDir}`);
   });
 });
