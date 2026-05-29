@@ -1,9 +1,9 @@
 import { join } from 'node:path';
 import process from 'node:process';
 
-import type { AliasMap, Finding, KbRoot } from '@codeassembly/kb-core';
+import type { AliasMap, Finding, KbRoot, Schema } from '@codeassembly/kb-core';
 import { frontmatterRule, pathsRule, runRules, tagAliasRule, wikilinksRule } from '@codeassembly/kb-core/rules';
-import { loadSchema } from '@codeassembly/kb-core/schema';
+import { defaultSchema, loadSchema } from '@codeassembly/kb-core/schema';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
 import { detectStaleness } from './detect-staleness.ts';
@@ -29,7 +29,7 @@ export async function detectFindings(input: {
 }): Promise<Finding[]> {
   const { kbPath, notes, now, staleAfterDays } = input;
   const kbRoot: KbRoot = { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' };
-  const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
+  const [schema, aliases] = await Promise.all([loadSchemaWithWarning({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
 
   const parsedNotes = notes.map((entry) => entry.note);
   const findings: Finding[] = [
@@ -58,6 +58,20 @@ function sortFindings(findings: readonly Finding[]): Finding[] {
     if (a.rule === b.rule) return 0;
     return a.rule < b.rule ? -1 : 1;
   });
+}
+
+/**
+ * Loads the effective schema, degrading a malformed or unreadable `schema.yaml` to {@link defaultSchema} and emitting
+ * a warning to stderr so a corrupt schema file does not block findings unrelated to schema validation.
+ */
+async function loadSchemaWithWarning(input: { kbRoot: KbRoot }): Promise<Schema> {
+  try {
+    return await loadSchema({ kbRoot: input.kbRoot });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-curate: warning: could not load schema; using the default schema: ${message}\n`);
+    return defaultSchema;
+  }
 }
 
 /**
