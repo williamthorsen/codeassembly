@@ -70,6 +70,18 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed"; specifically, user-facing behavior change or migration info. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
 
+**For documentation changes specifically.** The outcome is not the change to the documentation; the outcome is what readers of the doc will now know, be able to do, or be guided away from.
+
+**Bad** (mechanism: names the edit site and the refactor move):
+
+> The stale one-line mention of table-driven tests in the `code-patterns` skill is replaced by a pointer to the new canonical source.
+
+**Good:**
+
+> Guidance on table-driven tests is now consolidated in one place, so readers no longer follow a stale stub to outdated advice.
+
+The Bad version describes a refactor move ("X is replaced by a pointer") and names the internal edit site — both mechanism. The Good version names what readers now get (current guidance, no stale stub) and survives the counterfactual: A different restructuring that still routed readers to current guidance would yield the same sentence.
+
 ### Rule 2: Identifier ban
 
 The only identifiers that may appear are **top-level user-configurable surface**:

@@ -1,6 +1,6 @@
 Before saving, audit your draft against the two rules below.
 
-These two rules are what this checklist tests. They do **not** cover register (change-narrating voice — `introduces`, `now`, `no longer`) or jargon discipline (define-while-naming). Those judgments aren't checklist-able and need the worked examples — read the `## Voice` and `## Jargon at the lede` sections of [`lede-voice.md`](../_data/lede-voice.md) before drafting.
+These two rules are what this checklist tests. They do **not** cover register (change-narrating voice — `introduces`, `now`, `no longer`) or jargon discipline (define-while-naming). Those judgments aren't checklist-able and need the worked examples — read the `## Voice` and `## Jargon at the lede` sections of [`lede-voice.md`](../_data/lede-voice.md) before drafting. For a documentation change, also read the doc-PR carve-out under Rule 1: the outcome is what readers of the doc will now do or know, not what the doc says.
 
 **Rule 1: Each sentence must be one of the following:**
 
