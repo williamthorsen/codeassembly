@@ -24,9 +24,9 @@ Apply the comment-discipline audit to a target file set. Edits comments in place
 
    ```bash
    (
-     git diff --name-only --diff-filter=AM "$(git merge-base "$default_branch" HEAD)..HEAD"
-     git diff --name-only --diff-filter=AM
-     git diff --cached --name-only --diff-filter=AM
+     git diff --name-only --diff-filter=AMR "$(git merge-base "$default_branch" HEAD)..HEAD"
+     git diff --name-only --diff-filter=AMR
+     git diff --cached --name-only --diff-filter=AMR
      git ls-files --others --exclude-standard
    ) | sort -u
    ```
