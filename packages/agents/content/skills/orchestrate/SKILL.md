@@ -642,7 +642,6 @@ Dispatch the savings-analyzer subagent as a background {tool:Task} and immediate
     - `branch` — from session context (`branch_name`).
     - `commit` — short SHA of HEAD, already resolved for the run-summary.
     - `baseSha` — short SHA of `origin/main`, already resolved for the run-summary. Omit if resolution failed.
-    - `pr` — full PR URL, already resolved for the run-summary. Omit if resolution failed.
     - `ticket_id` and `ticket_ref` — from session context. Omit either when null.
     - `run_id` — the run ID for the current orchestrated run.
 
@@ -713,8 +712,6 @@ Include:
 This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
-
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 The orchestrator's `provenance.model` is omitted — the run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 

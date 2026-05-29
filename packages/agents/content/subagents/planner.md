@@ -127,8 +127,6 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ## Resumption
 
 When resumed with user feedback, you should:

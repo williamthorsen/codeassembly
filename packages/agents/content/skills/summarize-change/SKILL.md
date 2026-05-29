@@ -130,8 +130,6 @@ The `${var:+--extra "key=$var"}` form expands to the flag only when `$var` is no
 
 Prepend the script's output verbatim to the artifact body.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ### Consumer-field inference
 
 - **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.

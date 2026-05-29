@@ -88,8 +88,6 @@ When the user approves the plan:
 
    Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill plan-orchestrable-steps --interactive true` via Bash. Prepend the output verbatim to the artifact body.
 
-   If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step — the planner did not produce a markdown snapshot. Read the file, prepend the resolved frontmatter, and write back.
 
 3. Output confirmation:

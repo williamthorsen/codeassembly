@@ -137,8 +137,6 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-planner --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ## Constraints
 
 - **Read-only on project files**: You may read any project file but only write to the artifact directory
