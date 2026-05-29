@@ -31,6 +31,25 @@ Common but problematic approaches that should be avoided in favor of proper solu
 - **Don't accept "good enough" solutions** - If it creates maintenance burden, it's not good enough
 - **Avoid band-aid fixes** - Address root causes rather than symptoms
 
+### Suppression directives
+
+- **A suppression directive — a comment that tells a linter or type checker to ignore a specific warning — is a design signal, not a workaround.** The rule flagged the code because it matched a pattern that is usually wrong.
+- **Try these in order before suppressing inline:** (1) change the code so the rule no longer triggers — usually the right answer; (2) reconfigure the rule if its default is wrong for the project; (3) define a scoped exception for a whole category that is legitimately exempt. Suppress inline only as a last resort — when the case is genuinely local and none of the above fits, such as an external boundary where the real type can't be known.
+- **Every suppression you introduce carries a rationale** naming the rule, why it doesn't apply here, and what alternatives you rejected. Restating the rule is not a rationale.
+
+```ts
+// ❌ Suppress the warning
+// eslint-disable-next-line complexity -- does a lot
+function classify(order) {
+  /* long, deeply nested */
+}
+
+// ✅ Change the code so the rule no longer triggers
+function classify(order) {
+  return isExpedited(order) ? classifyExpedited(order) : classifyStandard(order);
+}
+```
+
 ### Error handling
 
 - **Don't place non-failing code inside try/catch blocks** - Only wrap operations that can actually throw errors
