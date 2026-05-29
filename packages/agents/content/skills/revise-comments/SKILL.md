@@ -66,7 +66,8 @@ revise-comments summary
 src/lib/payload.ts
 | Line | Action    | Rule                                       |
 | ---- | --------- | ------------------------------------------ |
-| 1-2  | deleted   | 7: tutorial-style file header              |
+| 1    | deleted   | 7: tutorial-style file header              |
+| 2    | deleted   | 3: ephemeral artifact reference            |
 | 6    | rewritten | 2, 8: conversation + process commentary    |
 | 8    | kept      | 10: "why" inline                           |
 ```
@@ -120,7 +121,8 @@ revise-comments summary
 src/lib/payload.ts
 | Line | Action    | Rule                                       |
 | ---- | --------- | ------------------------------------------ |
-| 1-2  | deleted   | 7: tutorial-style file header              |
+| 1    | deleted   | 7: tutorial-style file header              |
+| 2    | deleted   | 3: ephemeral artifact reference            |
 | 6    | rewritten | 2, 8: conversation + process commentary    |
 | 8    | kept      | 10: "why" inline                           |
 ```
