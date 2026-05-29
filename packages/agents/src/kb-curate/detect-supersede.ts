@@ -98,6 +98,10 @@ function asymmetricFindings(input: { path: string; graph: ReadonlyMap<string, Su
 function cycleFindings(input: { notes: readonly ParsedNote[]; graph: ReadonlyMap<string, SupersedeNode> }): Finding[] {
   const { notes, graph } = input;
   const onCycle = new Set<string>();
+  // The supersede graph is functional: each note has at most one outgoing `superseded-by` edge, so every walk
+  // follows a unique successor chain. A node is only ever marked `visited` by the walk that follows that chain, and
+  // if the chain contains a cycle the `onStack` check below catches it within the same walk. A real cycle therefore
+  // cannot be skipped by the shared `visited` set, so a single shared set is safe here (no two-color DFS needed).
   const visited = new Set<string>();
 
   for (const note of notes) {
