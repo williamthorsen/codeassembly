@@ -76,7 +76,6 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill aspect-test-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
-
 ## Scope
 
 Focus exclusively on:
