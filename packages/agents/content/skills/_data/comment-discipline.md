@@ -62,6 +62,8 @@ Explain only why this specific lint rule is being suppressed here. Not the surro
 Good: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.`
 Bad: `// eslint-disable-next-line no-explicit-any -- this test locks in the affordance for users with screen readers, see PR #456 for context.`
 
+This carve-out governs the _comment_ — it permits keeping a tight rationale. It does not endorse the suppression itself; whether a suppression is justified at all is an `anti-patterns` question.
+
 ## Economy
 
 Lines of code are lines of code, even when they are comments. They have to be maintained, scanned during review, and trusted as accurate. Every comment must earn its weight against that cost.

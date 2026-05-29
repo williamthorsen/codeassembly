@@ -22,6 +22,7 @@ Evaluation criteria for code review. Apply proportionally — match depth to ris
 ## Skip
 
 - Lint or formatting issues (automated tools handle these) — e.g., unused imports, missing semicolons, import order, whitespace. Do not create findings for issues that CI linters will catch; at most mention them in passing prose.
+- Author-introduced suppression directives are in scope. A new lint/type suppression added in this change defaults to a Warning (⚠️) unless its rationale demonstrates a legitimate carve-out (see `anti-patterns`). Pre-existing suppressions in unchanged code remain Legacy.
 - Pre-existing issues in unchanged code (categorize as Legacy if noted)
 
 ## Logic verification
