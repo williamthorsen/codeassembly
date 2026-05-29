@@ -109,3 +109,10 @@ export interface Finding {
 
 /** A lowercase-keyed map from tag alias to its canonical form. */
 export type AliasMap = ReadonlyMap<string, string>;
+
+/**
+ * A vault-wide lookup from a note basename (without the `.md` extension) to the set of note paths that share it.
+ * A single-path entry resolves a wikilink unambiguously; a multi-path entry is ambiguous. Consumed by cross-note
+ * rules (e.g. `wikilinks`) that need context beyond the single note under validation.
+ */
+export type VaultIndex = ReadonlyMap<string, ReadonlySet<string>>;

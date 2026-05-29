@@ -17,12 +17,18 @@ export type {
   KbRoot,
   ParsedNote,
   Schema,
+  VaultIndex,
 } from './types.ts';
 
 // Default schema constant
 export { defaultSchema } from './schema/default-schema.ts';
 
+// Vault index builder
+export { buildVaultIndex } from './index/build-vault-index.ts';
+
 // Rule constants and the rule contract
 export { frontmatterRule } from './rules/frontmatter-rule.ts';
+export { pathsRule } from './rules/paths-rule.ts';
 export { tagAliasRule } from './rules/tag-alias-rule.ts';
 export type { KbRule, KbRuleInput } from './rules/types.ts';
+export { wikilinksRule } from './rules/wikilinks-rule.ts';
