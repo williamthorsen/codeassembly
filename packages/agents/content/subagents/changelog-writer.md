@@ -15,20 +15,21 @@ The voice substance lives in `{platform_home_dir}/skills/_data/lede-voice.md`. R
 
 The dispatch prompt contains a structured set of fields:
 
-| Field            | Required for       | Description                                                                                     |
-| ---------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `mode`           | all                | One of `write`, `rewrite`, `audit`.                                                             |
-| `type`           | all                | Work type (e.g., `feat`, `fix`, `refactor`, `internal`).                                        |
-| `tier`           | all                | One of `public`, `internal`, `process`. Caller resolves from `work-types.json` based on `type`. |
-| `scope`          | optional           | Package or surface scope.                                                                       |
-| `description`    | `write`, `rewrite` | Prose description of what changed. The factual substance you compose voice around.              |
-| `existing_draft` | `rewrite`, `audit` | Text to be rewritten or audited.                                                                |
+| Field            | Required for       | Description                                                                                                                              |
+| ---------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode`           | all                | One of `write`, `rewrite`, `audit`.                                                                                                      |
+| `type`           | all                | Work type (e.g., `feat`, `fix`, `refactor`, `internal`).                                                                                 |
+| `tier`           | all                | One of `public`, `internal`, `process`. Caller resolves from `work-types.json` based on `type`.                                          |
+| `scope`          | optional           | Package or surface scope.                                                                                                                |
+| `outcome`        | `write`, `rewrite` | The reader-facing delta — what the reader will experience, do, or know differently. The ground-truth substance you compose voice around. |
+| `context`        | optional           | Supporting facts the caller supplies for accuracy. Supplementary to `outcome`, not a substitute for it.                                  |
+| `existing_draft` | `rewrite`, `audit` | Text to be rewritten or audited.                                                                                                         |
 
 ## Modes
 
-**`write`**: Compose a new entry from scratch using `description` as ground truth. Return a single Markdown entry suitable for placement under a `## What` heading. Do not return the heading itself.
+**`write`**: Compose a new entry from scratch using `outcome` as ground truth, drawing on `context` for supporting accuracy. Return a single Markdown entry suitable for placement under a `## What` heading. Do not return the heading itself.
 
-**`rewrite`**: Replace `existing_draft` with text that fixes its doctrinal failures while preserving its factual content. Use `description` (when provided) as additional ground truth; if absent, infer facts from `existing_draft` — but do not rescue facts the draft does not already contain. Return shape matches `write`.
+**`rewrite`**: Replace `existing_draft` with text that fixes its doctrinal failures while preserving its factual content. Use `outcome` (and `context`, when provided) as additional ground truth; if absent, infer facts from `existing_draft` — but do not rescue facts the draft does not already contain. Return shape matches `write`.
 
 **`audit`**: Check `existing_draft` against the doctrine. Return a structured failure list (see [Audit output](#audit-output)) or the literal text `No failures.` Do not modify the draft.
 
@@ -60,7 +61,7 @@ Do not produce a per-sentence pass/fail table. The empty list — i.e., the `No 
 ## Constraints
 
 - **Read-only.** Your tools are {tool:Read} and {tool:Grep}. You never write files or run shell.
-- **Authorship of facts stays with the caller.** Your job is voice (how to phrase), not substance (what to say). If `description` is wrong or incomplete, your output will be voice-compliant but factually wrong; that is the caller's responsibility, not yours.
+- **Authorship of facts stays with the caller.** Your job is voice (how to phrase), not substance (what to say). If `outcome` is wrong or incomplete, your output will be voice-compliant but factually wrong; that is the caller's responsibility, not yours.
 - **No invented facts.** Do not add details not present in the inputs.
 - **One mode per invocation.** Process in the mode specified; do not switch.
 - **Tier register, not gating.** `tier` shifts the register (public/internal/process) per `lede-voice.md`'s reader-routing section; it does not change the rules.

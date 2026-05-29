@@ -35,11 +35,17 @@ Check commit messages for additional context.
    type: {resolved type}
    tier: {tier from step 5}
    scope: {resolved scope, if available}
-   description: |
-     {1-3 sentence factual summary of what changed — derived from the substance composed in step 4}
+   outcome: |
+     {What the reader will experience, do, or know differently — outcome-framed, not a diff enumeration. Derived from the substance composed in step 4.}
+   context: |
+     {Optional supporting facts the subagent may need for accuracy.}
    ```
 
+   Lead with the outcome before naming files: `outcome` is the reader-facing delta the lede must carry; `context` is supplementary material the subagent may draw on for accuracy.
+
    Use the subagent's returned text verbatim as the content of the `## What` section. Do not edit, prepend to, or append to it. The subagent owns voice; you own facts. If the subagent returns an error message (missing-field or similar), correct the dispatch inputs and retry.
+
+   Verbatim governs voice ownership, not quality acceptance. If the returned text fails the doctrine — a banned identifier, a mechanism-shaped sentence, or generic puffery — correct the dispatch inputs (chiefly re-articulating `outcome`) and redispatch rather than shipping the failure. Correct the inputs and redispatch; do not hand-edit the subagent's output.
 
 7. **Save** per the [Saving](#saving) section.
 
@@ -56,7 +62,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{Content returned by the `changelog-writer` dispatch in Process step 6. Use the returned text verbatim; do not edit, prepend, or append.}
+{Content returned by the `changelog-writer` dispatch in Process step 6. Use the returned text verbatim; do not edit, prepend, or append. If it fails the doctrine, correct the dispatch inputs and redispatch (see step 6).}
 
 ## Why
 
