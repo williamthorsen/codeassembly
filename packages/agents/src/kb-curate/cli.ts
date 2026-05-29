@@ -168,7 +168,8 @@ async function resolveKb(input: {
 
   if (resolved.reason === 'readonly-kb') {
     if (!input.requireWritable) {
-      return { ok: true, kb: { name: resolved.kbName, path: resolved.kbPath, source: 'registry-default' } };
+      const source = input.explicitKb !== null ? 'explicit' : 'registry-default';
+      return { ok: true, kb: { name: resolved.kbName, path: resolved.kbPath, source } };
     }
     return {
       ok: false,
