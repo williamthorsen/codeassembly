@@ -75,8 +75,6 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill summarize-chat --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ## Saving
 
 Resolve artifact directory by invoking `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths` from the manifest JSON emitted on stdout. The chats path is `artifact_paths.chats` (default: `chats`).

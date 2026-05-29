@@ -107,6 +107,10 @@ Pass the following inputs to the selected delegate per the delegate interface:
 | `project_slug`      | From session context                                                                                |
 | `artifact_base_dir` | From session context                                                                                |
 
+### 11. Backfill the PR URL into the change summary
+
+The delegate reports the created PR's URL (its `PR created: {URL}` line). Stamp it into the change summary from step 3 so the artifact carries a backlink to its PR: insert a `pr: {URL}` line into the change summary's YAML frontmatter, immediately after the `commit:` line. Skip the insertion when a `pr:` line is already present, so a re-run never duplicates it. PR URLs need no quoting in YAML.
+
 ## Important
 
 - The orchestrator owns all decisions (scope, type, title rendering, labels). Delegates own only execution (platform API calls).

@@ -141,8 +141,6 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-coder --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ## Reviewer-context sidecar
 
 The orchestrator may supply a sidecar artifact path in your dispatch prompt — typically alongside the change-summary path — for you to write a short note to downstream reviewers. The sidecar feeds a unified `## Reviewer context` slot inlined into every reviewer's prompt; its purpose is to prevent reviewers from re-investigating a third-party API surface that you already examined and found surprising.

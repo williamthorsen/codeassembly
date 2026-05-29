@@ -103,8 +103,6 @@ The `${commits_arg:+--extra-list "commits=$commits_arg"}` form expands to the fl
 
 Prepend the script's output verbatim to the artifact body. Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ### Filename examples
 
 - Ticket-scoped: `20260418-153000Z_make-devlogs-ticket-scoped_devlog.md`

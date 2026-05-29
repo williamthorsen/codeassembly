@@ -171,24 +171,6 @@ The output should equal "$(expected_json)"
 End
 End
 
-Describe "warn_pr_failure"
-It "emits the canonical warning on stderr"
-When call warn_pr_failure "test reason"
-The stderr should include "Note: PR lookup failed; proceeding without pr field."
-End
-
-It "appends a diagnostic line on stderr"
-When call warn_pr_failure "test reason"
-The stderr should include "(test reason)"
-End
-
-It "produces no stdout"
-When call warn_pr_failure "test reason"
-The output should equal ""
-The stderr should be present
-End
-End
-
 Describe "resolve_run_id"
 setup_tmpdir() {
   tmpdir=$(mktemp -d)
@@ -213,55 +195,6 @@ mkdir -p .claude/tmp
 echo "/some/path/20260516-143946Z" >.claude/tmp/active-run-dir
 When call resolve_run_id
 The output should equal "20260516-143946Z"
-End
-End
-
-Describe "resolve_pr_url"
-It "produces a canonical warning on stderr for unknown platforms"
-When call resolve_pr_url "nope" "main"
-The stderr should include "Note: PR lookup failed; proceeding without pr field."
-The stderr should include "(unknown platform: nope)"
-The output should equal ""
-End
-End
-
-Describe "run_with_timeout"
-It "returns the wrapped command's stdout when it completes inside the timeout"
-When call run_with_timeout 5 echo "hello"
-The output should equal "hello"
-The status should be success
-End
-
-It "exits non-zero when the wrapped command exceeds the timeout"
-# `sleep 2` against a 1-second budget; bounded test runtime ~1s. The exact exit code varies by backend (124 from GNU
-# `timeout`, 142 from a Perl SIGALRM), so the assertion deliberately covers only the non-zero contract.
-When run run_with_timeout 1 sleep 2
-The status should be failure
-End
-
-It "uses the Perl alarm fallback when neither timeout nor gtimeout is on PATH"
-perl_fallback_run() {
-  local bin_dir
-  bin_dir=$(mktemp -d)
-  # Symlink only perl and sleep into the restricted PATH;
-  # intentionally omits timeout and gtimeout to exercise the Perl branch.
-  ln -s "$(command -v perl)" "$bin_dir/perl"
-  ln -s "$(command -v sleep)" "$bin_dir/sleep"
-  PATH="$bin_dir" run_with_timeout 1 sleep 2
-}
-When run perl_fallback_run
-The status should be failure
-End
-
-It "fails loudly when no timeout backend is on PATH"
-no_backend_run() {
-  local empty_dir
-  empty_dir=$(mktemp -d)
-  PATH="$empty_dir" run_with_timeout 1 true
-}
-When run no_backend_run
-The status should equal 1
-The stderr should include "no timeout mechanism available"
 End
 End
 
@@ -796,19 +729,9 @@ setup_missing_manifest() {
   # `~/.agents/preferences.yaml` (whose schema-validity is environment-specific). Using a flag
   # instead of HOME env override avoids breaking PATH-resolution tools (e.g., asdf shims).
   export RESOLVE_FRONTMATTER_BUNDLE_ARGS="--home $tmpdir"
-  # Stub `gh` to return empty (no PR), so the test is hermetic.
-  mkdir -p bin
-  cat >bin/gh <<'SH'
-#!/usr/bin/env bash
-exit 0
-SH
-  chmod +x bin/gh
-  ORIGINAL_PATH="$PATH"
-  PATH="$tmpdir/bin:$PATH"
 }
 
 cleanup_missing_manifest() {
-  PATH="$ORIGINAL_PATH"
   unset RESOLVE_FRONTMATTER_BUNDLE_PATH RESOLVE_FRONTMATTER_BUNDLE_ARGS
   popd >/dev/null || exit
   rm -rf "$tmpdir"
@@ -889,19 +812,9 @@ setup_main_e2e() {
   "default_branch": "HEAD"
 }
 JSON
-  # Stub `gh` to return empty (no PR), so the test is hermetic.
-  mkdir -p bin
-  cat >bin/gh <<'SH'
-#!/usr/bin/env bash
-exit 0
-SH
-  chmod +x bin/gh
-  ORIGINAL_PATH="$PATH"
-  PATH="$tmpdir/bin:$PATH"
 }
 
 cleanup_main_e2e() {
-  PATH="$ORIGINAL_PATH"
   popd >/dev/null || exit
   rm -rf "$tmpdir"
 }
@@ -922,6 +835,22 @@ The output should include "isInteractive: true"
 The output should include "alpha: 1"
 The output should include "tags: [a, b]"
 The output should not include "run_id"
+End
+
+It "emits pr only when supplied via --override pr="
+When run main \
+  --skill foo \
+  --interactive true \
+  --override "run_id=" \
+  --override "pr=https://github.com/o/r/pull/7"
+The status should be success
+The output should include "pr: https://github.com/o/r/pull/7"
+End
+
+It "omits pr when no --override pr is given"
+When run main --skill foo --interactive true --override "run_id="
+The status should be success
+The output should not include "pr:"
 End
 
 It "resolves the manifest when invoked from a nested subdirectory"

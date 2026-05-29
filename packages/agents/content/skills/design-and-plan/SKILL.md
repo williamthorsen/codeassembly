@@ -212,8 +212,6 @@ Present the plan to the user. Revise until approved.
 
    Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body.
 
-   If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
    - Plan: `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md`

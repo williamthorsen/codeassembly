@@ -42,7 +42,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$author` from `git log --format='%an' "$default_branch..HEAD" | sort -u | paste -sd, -` (unique authors of the commits under review).
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve `$author` from `git log --format='%an' "$default_branch..HEAD" | sort -u | paste -sd, -` (unique authors of the commits under review). When invoked via `review-pr`, set `$pr_url` to `pr_metadata.url` (the PR under review); otherwise leave it empty.
 
 Run via Bash:
 
@@ -51,12 +51,11 @@ Run via Bash:
   --skill review-branch \
   --interactive true \
   --model "$MODEL_ID" \
-  --extra "author=$author"
+  --extra "author=$author" \
+  ${pr_url:+--override "pr=$pr_url"}
 ```
 
-Prepend the script's output verbatim to the artifact body.
-
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
+Prepend the script's output verbatim to the artifact body. The `pr:` field is populated only when reviewing a PR (via `review-pr`); a direct ticket-only review omits it.
 
 ## Review guidelines
 

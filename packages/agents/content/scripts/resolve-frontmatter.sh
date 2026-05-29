@@ -2,7 +2,7 @@
 # Emit canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
 # Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced on demand by the bundled `derive-session-context`
-# helper) for session-level fields and runs git + platform-specific PR lookup for the rest. Skills consume the
+# helper) for session-level fields and runs git for the rest. Skills consume the
 # output to populate the universal portion of their artifact frontmatter without repeating the underlying shell
 # logic. When the manifest is absent, the script invokes the bundled deriver to create it — no precondition
 # applies to callers (main agents, subagents, and bash scripts can all rely on the same fast path).
@@ -41,9 +41,8 @@
 # omitted entirely. `--override KEY=` with empty value force-omits even
 # when the script resolved a value.
 #
-# Warnings (stderr): When PR resolution fails (not when it returns empty),
-# emits the canonical warning `Note: PR lookup failed; proceeding without
-# pr field.` so the caller can surface it in agent text output.
+# The `pr` field is not resolved by this script. It is populated only when a
+# caller passes `--override pr=<url>`; PR-aware skills supply the URL they hold.
 #
 # Exit codes:
 #   0  Success.
@@ -53,8 +52,6 @@
 set -euo pipefail
 
 readonly PROG="$(basename "$0")"
-readonly CANONICAL_WARNING='Note: PR lookup failed; proceeding without pr field.'
-readonly PR_LOOKUP_TIMEOUT=5
 
 show_usage() {
   local exit_code="${1:-1}"
@@ -173,7 +170,7 @@ main() {
 
   local base_sha pr_url run_id timestamp
   base_sha=$(resolve_base_sha "$default_branch")
-  pr_url=$(resolve_pr_url "$platform" "$branch")
+  pr_url=""
   run_id=$(resolve_run_id)
   timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
@@ -259,98 +256,6 @@ resolve_base_sha() {
   git rev-parse --short "$ref" 2>/dev/null || true
 }
 
-# Prints the PR URL for the current branch, or empty if no PR or lookup failed.
-# Distinguishes empty-output (silent) from failure (canonical warning emitted to stderr).
-resolve_pr_url() {
-  local platform="$1"
-  local branch="$2"
-  case "$platform" in
-  github) resolve_github_pr "$branch" ;;
-  bitbucket) resolve_bitbucket_pr "$branch" ;;
-  *) warn_pr_failure "unknown platform: $platform" ;;
-  esac
-}
-
-# Looks up a GitHub PR via `gh pr list`.
-# Uses --state all so closed and merged PRs are resolvable for post-merge artifact writes.
-resolve_github_pr() {
-  local branch="$1"
-  if ! command -v gh >/dev/null 2>&1; then
-    warn_pr_failure "gh CLI not available"
-    return
-  fi
-  local result rc
-  result=$(run_with_timeout "$PR_LOOKUP_TIMEOUT" \
-    gh pr list --head "$branch" --state all --json url --jq '.[0].url // empty' 2>/dev/null) || rc=$?
-  if [[ "${rc:-0}" -ne 0 ]]; then
-    warn_pr_failure "gh exited with code ${rc:-?}"
-    return
-  fi
-  # Empty result is the normal no-PR case — silent.
-  printf '%s' "$result"
-}
-
-# Looks up a Bitbucket PR via Bitbucket Cloud REST API.
-resolve_bitbucket_pr() {
-  local branch="$1"
-  if ! command -v curl >/dev/null 2>&1; then
-    warn_pr_failure "curl not available"
-    return
-  fi
-  local workspace repo auth
-  workspace="${BITBUCKET_WORKSPACE:-}"
-  repo="${BITBUCKET_REPO:-}"
-  if [[ -z "$workspace" || -z "$repo" ]]; then
-    warn_pr_failure "BITBUCKET_WORKSPACE / BITBUCKET_REPO not set"
-    return
-  fi
-  auth=$(bitbucket_auth_header) || {
-    warn_pr_failure "no Bitbucket credentials configured"
-    return
-  }
-  local url result rc
-  url="https://api.bitbucket.org/2.0/repositories/$workspace/$repo/pullrequests?q=source.branch.name=\"$branch\"&state=OPEN,MERGED,DECLINED"
-  result=$(run_with_timeout "$PR_LOOKUP_TIMEOUT" \
-    curl --silent --fail --header "$auth" "$url" 2>/dev/null |
-    jq --raw-output '.values[0].links.html.href // empty' 2>/dev/null) || rc=$?
-  if [[ "${rc:-0}" -ne 0 ]]; then
-    warn_pr_failure "curl/jq exited with code ${rc:-?}"
-    return
-  fi
-  printf '%s' "$result"
-}
-
-# Resolves a Bitbucket auth header from environment or macOS keychain.
-# Echoes the full `Authorization:` header value or returns non-zero when no credentials are available.
-bitbucket_auth_header() {
-  if [[ -n "${BITBUCKET_BOT_USERNAME:-}" && -n "${BITBUCKET_BOT_TOKEN:-}" ]]; then
-    local basic
-    basic=$(printf '%s:%s' "$BITBUCKET_BOT_USERNAME" "$BITBUCKET_BOT_TOKEN" | base64)
-    printf 'Authorization: Basic %s' "$basic"
-    return 0
-  fi
-  if [[ -n "${BITBUCKET_API_TOKEN:-}" ]]; then
-    printf 'Authorization: Bearer %s' "$BITBUCKET_API_TOKEN"
-    return 0
-  fi
-  if command -v security >/dev/null 2>&1; then
-    local token
-    token=$(security find-generic-password -a "$USER" -s "bitbucket-api-token" -w 2>/dev/null) || return 1
-    [[ -n "$token" ]] || return 1
-    printf 'Authorization: Bearer %s' "$token"
-    return 0
-  fi
-  return 1
-}
-
-# Emits the canonical PR-lookup-failed warning to stderr.
-# The first argument is an internal diagnostic that is also written to stderr after the canonical line,
-# so that debug context is available without affecting callers that match the canonical phrasing.
-warn_pr_failure() {
-  echo "$CANONICAL_WARNING" >&2
-  echo "  ($1)" >&2
-}
-
 # Resolves the active run ID by reading the breadcrumb written by the orchestrate engine at
 # `.claude/tmp/active-run-dir`. Empty when no orchestrated run is active.
 resolve_run_id() {
@@ -359,37 +264,6 @@ resolve_run_id() {
   local run_dir
   run_dir=$(<"$breadcrumb")
   basename "$run_dir"
-}
-
-# Run a command with a timeout.
-# Backend chain: `timeout` -> `gtimeout` -> a Perl fork+wait wrapper -> loud failure.
-# The Perl fallback keeps the contract on stock macOS, where GNU `timeout` is absent. It forks a
-# child that `exec`s the wrapped command, installs a SIGALRM handler in the parent that sends
-# SIGTERM to the child, and waits for the child's exit. Mirroring real `timeout(1)`'s structure
-# avoids bash's "Alarm clock" job-control noise that a bare `alarm + exec` would emit on timeout.
-# The final `fail` branch is a sentinel — Perl ships with macOS and every mainstream Linux distribution.
-run_with_timeout() {
-  local secs="$1"
-  shift
-  if command -v timeout >/dev/null 2>&1; then
-    timeout "${secs}s" "$@"
-  elif command -v gtimeout >/dev/null 2>&1; then
-    gtimeout "${secs}s" "$@"
-  elif command -v perl >/dev/null 2>&1; then
-    perl -e '
-      my $secs = shift @ARGV;
-      my $pid = fork;
-      defined $pid or die "fork: $!\n";
-      if ($pid == 0) { exec { $ARGV[0] } @ARGV; die "exec: $!\n" }
-      local $SIG{ALRM} = sub { kill "TERM", $pid };
-      alarm $secs;
-      waitpid $pid, 0;
-      my $r = $?;
-      exit($r & 127 ? 128 + ($r & 127) : $r >> 8);
-    ' "$secs" "$@"
-  else
-    fail "no timeout mechanism available (need timeout, gtimeout, or perl on PATH)"
-  fi
 }
 
 # Gets the current branch name. Returns non-zero outside a git repository.

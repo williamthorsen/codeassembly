@@ -117,8 +117,6 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-architect --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
-
 ## Principles
 
 - **Discover, don't invent.** Your job is to find existing patterns in the codebase, not to propose new architecture. If the codebase already has a way of doing something, the task should follow that way.
