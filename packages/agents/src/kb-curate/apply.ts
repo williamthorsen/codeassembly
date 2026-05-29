@@ -57,6 +57,16 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
     const result = rewriteWikilinks({ body: entry.note.body, vaultIndex });
     if (!result.changed) continue;
     const newContent = replaceBody(entry.note.content, entry.note.body, result.body);
+    if (newContent === null) {
+      fixes.push({
+        path: entry.note.path,
+        rule: 'wikilinks.path-rewrite',
+        ok: false,
+        operation: 'rewrite-wikilink',
+        message: 'body anchor not found in note content; skipping rewrite to avoid frontmatter loss',
+      });
+      continue;
+    }
     try {
       await writeFile(entry.note.path, newContent, 'utf8');
       fixes.push({
@@ -101,12 +111,13 @@ function buildRelativeIndex(notes: readonly EnumeratedNote[]): VaultIndex {
 /**
  * Rebuilds a note's full content with a rewritten body. The body is the suffix of `content` after the frontmatter
  * block; replacing the final occurrence preserves the frontmatter verbatim (the rewrite never touches the
- * frontmatter, and a note body cannot precede its own frontmatter).
+ * frontmatter, and a note body cannot precede its own frontmatter). Returns `null` when `oldBody` is not found
+ * verbatim in `content`, so the caller skips the write rather than persisting a frontmatter-stripped file.
  */
-function replaceBody(content: string, oldBody: string, newBody: string): string {
+function replaceBody(content: string, oldBody: string, newBody: string): string | null {
   const bodyStart = content.lastIndexOf(oldBody);
   if (bodyStart === -1) {
-    return newBody;
+    return null;
   }
   return content.slice(0, bodyStart) + newBody + content.slice(bodyStart + oldBody.length);
 }
