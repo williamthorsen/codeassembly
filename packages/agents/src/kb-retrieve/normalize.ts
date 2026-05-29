@@ -3,10 +3,8 @@ import { basename, dirname, isAbsolute, resolve } from 'node:path';
 import type { ParsedNote } from '@codeassembly/kb-core/frontmatter';
 import { parseNote } from '@codeassembly/kb-core/frontmatter';
 
+import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 import type { Candidate, RawHit, RecallFilters, Supersession } from './types.ts';
-
-/** Whole-day divisor for converting a date delta in milliseconds to an age in days. */
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** Upper bound on `superseded-by` hops, guarding against a chain cycle. */
 const MAX_SUPERSESSION_HOPS = 32;
@@ -39,18 +37,6 @@ export async function normalizeHits(input: {
 }
 
 // region | Helpers
-
-/** Computes whole days between a `YYYY-MM-DD` date string and `now`; `null` for an absent or unparseable value. */
-function computeAgeDays(dateValue: string | null, now: Date): number | null {
-  if (dateValue === null) {
-    return null;
-  }
-  const parsed = Date.parse(`${dateValue}T00:00:00Z`);
-  if (Number.isNaN(parsed)) {
-    return null;
-  }
-  return Math.floor((now.getTime() - parsed) / MILLISECONDS_PER_DAY);
-}
 
 /** Reads a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
 function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
