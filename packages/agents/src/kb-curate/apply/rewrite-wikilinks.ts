@@ -31,6 +31,12 @@ export interface RewriteResult {
 export function rewriteWikilinks(input: { body: string; vaultIndex: VaultIndex }): RewriteResult {
   const { body, vaultIndex } = input;
   const masked = maskInlineCode(maskFencedCode(body));
+  // The splice loop derives offsets from `masked` but applies them to `body`, which is only sound while masking is
+  // a same-length substitution. Guard the invariant so a future masking change that alters length fails loudly
+  // rather than silently corrupting bodies.
+  if (masked.length !== body.length) {
+    throw new Error('code masking changed body length; wikilink rewrite offsets would be invalid');
+  }
   const rewrites: Array<{ from: string; to: string }> = [];
 
   // Walk matches on the masked body to decide rewritability, but splice replacements into the original body so the
