@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 import type { AppliedFix } from '../types.ts';
 
+/** Milliseconds to wait for the `kb-edit` subprocess before killing it and failing the fix. */
+const KB_EDIT_TIMEOUT_MS = 30_000;
+
 /** Outcome of invoking the kb-edit subprocess. */
 export type RetagOutcome = { ok: true } | { ok: false; message: string };
 
@@ -68,12 +71,27 @@ function resolveKbEditPath(): string | null {
   return existsSync(candidate) ? candidate : null;
 }
 
-/** Runs `node <args>` to completion, parsing the JSON stdout and treating `{ ok: false }` or a non-zero exit as failure. */
+/**
+ * Runs `node <args>` to completion, parsing the JSON stdout and treating `{ ok: false }` or a non-zero exit as
+ * failure. A child that does not exit within {@link KB_EDIT_TIMEOUT_MS} is killed and the fix fails, so a hung
+ * `kb-edit` cannot stall the whole `--apply` run.
+ */
 const runNode: RetagRunner = (args) =>
   new Promise((resolve) => {
     const child = spawn(process.execPath, [...args], { stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
+    let settled = false;
+    function settle(outcome: RetagOutcome): void {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(outcome);
+    }
+    const timer = setTimeout(() => {
+      child.kill();
+      settle({ ok: false, message: `kb-edit timed out after ${KB_EDIT_TIMEOUT_MS}ms` });
+    }, KB_EDIT_TIMEOUT_MS);
     child.stdout.on('data', (chunk: Buffer) => {
       stdout += chunk.toString('utf8');
     });
@@ -81,24 +99,24 @@ const runNode: RetagRunner = (args) =>
       stderr += chunk.toString('utf8');
     });
     child.on('error', (error) => {
-      resolve({ ok: false, message: `failed to spawn kb-edit: ${error.message}` });
+      settle({ ok: false, message: `failed to spawn kb-edit: ${error.message}` });
     });
     child.on('close', (code) => {
       if (code !== 0) {
-        resolve({ ok: false, message: `kb-edit exited ${code ?? 'null'}: ${stderr.trim()}` });
+        settle({ ok: false, message: `kb-edit exited ${code ?? 'null'}: ${stderr.trim()}` });
         return;
       }
       try {
         const parsed: unknown = JSON.parse(stdout);
         if (isRecord(parsed) && parsed.ok === true) {
-          resolve({ ok: true });
+          settle({ ok: true });
           return;
         }
         const message =
           isRecord(parsed) && typeof parsed.message === 'string' ? parsed.message : 'kb-edit reported a non-ok result';
-        resolve({ ok: false, message });
+        settle({ ok: false, message });
       } catch {
-        resolve({ ok: false, message: `could not parse kb-edit output: ${stdout.trim()}` });
+        settle({ ok: false, message: `could not parse kb-edit output: ${stdout.trim()}` });
       }
     });
   });
