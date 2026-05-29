@@ -35,6 +35,15 @@ describe(detectSupersede, () => {
     expect(findings[0]?.severity).toBe('error');
   });
 
+  it('flags supersede.dangling referencing the supersedes field when supersedes points outside the vault', () => {
+    const findings = detectSupersede([note('New', { supersedes: 'Gone.md' })]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.rule).toBe('supersede.dangling');
+    expect(findings[0]?.severity).toBe('error');
+    expect(findings[0]?.message).toContain('supersedes');
+  });
+
   it('flags supersede.asymmetric when the successor does not point back', () => {
     const old = note('Old', { supersededBy: 'New.md' });
     const fresh = note('New');

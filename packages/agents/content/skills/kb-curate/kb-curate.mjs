@@ -7365,7 +7365,7 @@ var require_dist = __commonJS({
 
 // src/kb-curate/cli.ts
 import { realpathSync } from "node:fs";
-import process5 from "node:process";
+import process6 from "node:process";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // src/kb-shared/resolve-writable-kb.ts
@@ -22102,6 +22102,7 @@ import { existsSync } from "node:fs";
 import { dirname as dirname3, join as join3 } from "node:path";
 import process3 from "node:process";
 import { fileURLToPath } from "node:url";
+var KB_EDIT_TIMEOUT_MS = 3e4;
 async function canonicalizeTags(input) {
   const { notePath, currentTags } = input;
   const kbEditPath = input.kbEditPath === void 0 ? resolveKbEditPath() : input.kbEditPath;
@@ -22137,6 +22138,17 @@ var runNode = (args) => new Promise((resolve4) => {
   const child = spawn(process3.execPath, [...args], { stdio: ["ignore", "pipe", "pipe"] });
   let stdout = "";
   let stderr = "";
+  let settled = false;
+  function settle(outcome) {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    resolve4(outcome);
+  }
+  const timer = setTimeout(() => {
+    child.kill();
+    settle({ ok: false, message: `kb-edit timed out after ${KB_EDIT_TIMEOUT_MS}ms` });
+  }, KB_EDIT_TIMEOUT_MS);
   child.stdout.on("data", (chunk) => {
     stdout += chunk.toString("utf8");
   });
@@ -22144,23 +22156,23 @@ var runNode = (args) => new Promise((resolve4) => {
     stderr += chunk.toString("utf8");
   });
   child.on("error", (error51) => {
-    resolve4({ ok: false, message: `failed to spawn kb-edit: ${error51.message}` });
+    settle({ ok: false, message: `failed to spawn kb-edit: ${error51.message}` });
   });
   child.on("close", (code) => {
     if (code !== 0) {
-      resolve4({ ok: false, message: `kb-edit exited ${code ?? "null"}: ${stderr.trim()}` });
+      settle({ ok: false, message: `kb-edit exited ${code ?? "null"}: ${stderr.trim()}` });
       return;
     }
     try {
       const parsed = JSON.parse(stdout);
       if (isRecord2(parsed) && parsed.ok === true) {
-        resolve4({ ok: true });
+        settle({ ok: true });
         return;
       }
       const message = isRecord2(parsed) && typeof parsed.message === "string" ? parsed.message : "kb-edit reported a non-ok result";
-      resolve4({ ok: false, message });
+      settle({ ok: false, message });
     } catch {
-      resolve4({ ok: false, message: `could not parse kb-edit output: ${stdout.trim()}` });
+      settle({ ok: false, message: `could not parse kb-edit output: ${stdout.trim()}` });
     }
   });
 });
@@ -22333,6 +22345,79 @@ function toDateString(value) {
   return typeof value === "string" ? value : String(value);
 }
 
+// ../kb-core/src/rules/wikilink-parse.ts
+var WIKILINK = /(?<!\\)!?\[\[([^\]\n]+?)\]\]/g;
+var NON_MD_EXTENSIONS = /* @__PURE__ */ new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".svg",
+  ".webp",
+  ".pdf",
+  ".mp3",
+  ".mp4",
+  ".mov",
+  ".wav"
+]);
+function extractTarget(inner) {
+  const beforeAlias = inner.split("|", 1)[0] ?? "";
+  const beforeAnchor = beforeAlias.split("#", 1)[0] ?? "";
+  const trimmed = beforeAnchor.trim();
+  return trimmed === "" ? null : trimmed;
+}
+function hasNonMarkdownExtension(target) {
+  const dotIndex = target.lastIndexOf(".");
+  if (dotIndex === -1) return false;
+  const ext = target.slice(dotIndex).toLowerCase();
+  if (ext === ".md") return false;
+  return NON_MD_EXTENSIONS.has(ext);
+}
+function lookupKey(target) {
+  const withoutExtension = target.endsWith(".md") ? target.slice(0, -3) : target;
+  const segments = withoutExtension.split("/");
+  return segments.at(-1) ?? withoutExtension;
+}
+function countNewlines(text, upTo) {
+  let count = 0;
+  for (let index = 0; index < upTo && index < text.length; index += 1) {
+    if (text[index] === "\n") count += 1;
+  }
+  return count;
+}
+function maskInlineCode(body) {
+  return body.replace(/`+[^`\n]+?`+/g, (match) => " ".repeat(match.length));
+}
+function maskFencedCode(body) {
+  const lines = body.split("\n");
+  let inFence = false;
+  let fenceChar = "";
+  let fenceLength = 0;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    const fenceMatch = line.match(FENCE_LINE);
+    if (fenceMatch) {
+      const marker = fenceMatch[1] ?? "";
+      const char = marker[0] ?? "";
+      if (!inFence) {
+        inFence = true;
+        fenceChar = char;
+        fenceLength = marker.length;
+        continue;
+      }
+      if (char === fenceChar && marker.length >= fenceLength) {
+        inFence = false;
+        fenceChar = "";
+        fenceLength = 0;
+        continue;
+      }
+    }
+    if (inFence) lines[index] = " ".repeat(line.length);
+  }
+  return lines.join("\n");
+}
+var FENCE_LINE = /^\s{0,3}(`{3,}|~{3,})/;
+
 // ../kb-core/src/rules/paths-rule.ts
 var pathsRule = {
   name: "paths",
@@ -22353,13 +22438,6 @@ var pathsRule = {
   }
 };
 var USER_HOME = /\/Users\/[A-Za-z0-9_.-]+\//g;
-function countNewlines(text, upTo) {
-  let count = 0;
-  for (let index = 0; index < upTo && index < text.length; index += 1) {
-    if (text[index] === "\n") count += 1;
-  }
-  return count;
-}
 
 // ../kb-core/src/frontmatter/parse-note.ts
 var import_yaml4 = __toESM(require_dist(), 1);
@@ -22515,79 +22593,6 @@ var tagAliasRule = {
   }
 };
 
-// ../kb-core/src/rules/wikilink-parse.ts
-var WIKILINK = /(?<!\\)!?\[\[([^\]\n]+?)\]\]/g;
-var NON_MD_EXTENSIONS = /* @__PURE__ */ new Set([
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".gif",
-  ".svg",
-  ".webp",
-  ".pdf",
-  ".mp3",
-  ".mp4",
-  ".mov",
-  ".wav"
-]);
-function extractTarget(inner) {
-  const beforeAlias = inner.split("|", 1)[0] ?? "";
-  const beforeAnchor = beforeAlias.split("#", 1)[0] ?? "";
-  const trimmed = beforeAnchor.trim();
-  return trimmed === "" ? null : trimmed;
-}
-function hasNonMarkdownExtension(target) {
-  const dotIndex = target.lastIndexOf(".");
-  if (dotIndex === -1) return false;
-  const ext = target.slice(dotIndex).toLowerCase();
-  if (ext === ".md") return false;
-  return NON_MD_EXTENSIONS.has(ext);
-}
-function lookupKey(target) {
-  const withoutExtension = target.endsWith(".md") ? target.slice(0, -3) : target;
-  const segments = withoutExtension.split("/");
-  return segments.at(-1) ?? withoutExtension;
-}
-function countNewlines2(text, upTo) {
-  let count = 0;
-  for (let index = 0; index < upTo && index < text.length; index += 1) {
-    if (text[index] === "\n") count += 1;
-  }
-  return count;
-}
-function maskInlineCode(body) {
-  return body.replace(/`+[^`\n]+?`+/g, (match) => " ".repeat(match.length));
-}
-function maskFencedCode(body) {
-  const lines = body.split("\n");
-  let inFence = false;
-  let fenceChar = "";
-  let fenceLength = 0;
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index] ?? "";
-    const fenceMatch = line.match(FENCE_LINE);
-    if (fenceMatch) {
-      const marker = fenceMatch[1] ?? "";
-      const char = marker[0] ?? "";
-      if (!inFence) {
-        inFence = true;
-        fenceChar = char;
-        fenceLength = marker.length;
-        continue;
-      }
-      if (char === fenceChar && marker.length >= fenceLength) {
-        inFence = false;
-        fenceChar = "";
-        fenceLength = 0;
-        continue;
-      }
-    }
-    if (inFence) lines[index] = " ".repeat(line.length);
-  }
-  return lines.join("\n");
-}
-var FENCE_LINE = /^\s{0,3}(`{3,}|~{3,})/;
-
 // ../kb-core/src/rules/wikilinks-rule.ts
 var wikilinksRule = {
   name: "wikilinks",
@@ -22605,7 +22610,7 @@ var wikilinksRule = {
       if (target === null) continue;
       if (hasNonMarkdownExtension(target)) continue;
       const resolved = vaultIndex.get(lookupKey(target));
-      const line = note.bodyStartLine + countNewlines2(body, match.index);
+      const line = note.bodyStartLine + countNewlines(body, match.index);
       if (resolved === void 0 || resolved.size === 0) {
         findings.push({
           path: note.path,
@@ -22632,6 +22637,9 @@ var wikilinksRule = {
 function rewriteWikilinks(input) {
   const { body, vaultIndex } = input;
   const masked = maskInlineCode(maskFencedCode(body));
+  if (masked.length !== body.length) {
+    throw new Error("code masking changed body length; wikilink rewrite offsets would be invalid");
+  }
   const rewrites = [];
   let result = "";
   let lastIndex = 0;
@@ -22707,6 +22715,16 @@ async function rewriteStalePathLinks(input) {
     const result = rewriteWikilinks({ body: entry.note.body, vaultIndex });
     if (!result.changed) continue;
     const newContent = replaceBody(entry.note.content, entry.note.body, result.body);
+    if (newContent === null) {
+      fixes.push({
+        path: entry.note.path,
+        rule: "wikilinks.path-rewrite",
+        ok: false,
+        operation: "rewrite-wikilink",
+        message: "body anchor not found in note content; skipping rewrite to avoid frontmatter loss"
+      });
+      continue;
+    }
     try {
       await writeFile(entry.note.path, newContent, "utf8");
       fixes.push({
@@ -22744,7 +22762,7 @@ function buildRelativeIndex(notes) {
 function replaceBody(content, oldBody, newBody) {
   const bodyStart = content.lastIndexOf(oldBody);
   if (bodyStart === -1) {
-    return newBody;
+    return null;
   }
   return content.slice(0, bodyStart) + newBody + content.slice(bodyStart + oldBody.length);
 }
@@ -22917,7 +22935,8 @@ function computeAgeDays(dateValue, now) {
 function detectStaleness(input) {
   const { note, now, staleAfterDays } = input;
   const lastVerified = extractString(note.frontmatter?.extra, "last-verified");
-  if (lastVerified === null) {
+  const ageDays = lastVerified === null ? null : computeAgeDays(lastVerified, now);
+  if (ageDays === null) {
     return [
       {
         path: note.path,
@@ -22927,8 +22946,7 @@ function detectStaleness(input) {
       }
     ];
   }
-  const ageDays = computeAgeDays(lastVerified, now);
-  if (ageDays !== null && ageDays > staleAfterDays) {
+  if (ageDays > staleAfterDays) {
     return [
       {
         path: note.path,
@@ -23057,7 +23075,7 @@ function resolveRef2(note, key) {
 async function detectFindings(input) {
   const { kbPath, notes, now, staleAfterDays } = input;
   const kbRoot = { path: kbPath, kbDir: join6(kbPath, ".kb"), via: "ancestor-walk" };
-  const [schema2, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
+  const [schema2, aliases] = await Promise.all([loadSchemaWithWarning({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
   const parsedNotes = notes.map((entry) => entry.note);
   const findings = [
     ...runRules({
@@ -23081,6 +23099,16 @@ function sortFindings(findings) {
     return a.rule < b.rule ? -1 : 1;
   });
 }
+async function loadSchemaWithWarning(input) {
+  try {
+    return await loadSchema({ kbRoot: input.kbRoot });
+  } catch (error51) {
+    const message = error51 instanceof Error ? error51.message : String(error51);
+    process4.stderr.write(`kb-curate: warning: could not load schema; using the default schema: ${message}
+`);
+    return defaultSchema;
+  }
+}
 async function loadAliasesWithWarning(input) {
   try {
     return await loadAliases({ kbRoot: input.kbRoot });
@@ -23095,6 +23123,7 @@ async function loadAliasesWithWarning(input) {
 // src/kb-curate/enumerate.ts
 import { readdir, readFile as readFile4 } from "node:fs/promises";
 import { join as join7, relative, sep } from "node:path";
+import process5 from "node:process";
 
 // ../kb-core/src/frontmatter/frontmatter-schema.ts
 var frontmatterSchema = external_exports.object({
@@ -23128,9 +23157,15 @@ async function walk(root, dir, out) {
     }
     if (!entry.name.endsWith(".md")) continue;
     const absolutePath = join7(dir, entry.name);
-    const content = await readFile4(absolutePath, "utf8");
-    const note = parseNoteContent({ content, path: absolutePath });
-    out.push({ note, relativePath: relative(root, absolutePath).split(sep).join("/") });
+    try {
+      const content = await readFile4(absolutePath, "utf8");
+      const note = parseNoteContent({ content, path: absolutePath });
+      out.push({ note, relativePath: relative(root, absolutePath).split(sep).join("/") });
+    } catch (error51) {
+      const message = error51 instanceof Error ? error51.message : String(error51);
+      process5.stderr.write(`kb-curate: warning: could not read note ${absolutePath}; skipping: ${message}
+`);
+    }
   }
 }
 
@@ -23139,17 +23174,17 @@ var DEFAULT_STALE_AFTER_DAYS = 90;
 async function main() {
   try {
     const result = await runCurate({
-      argv: process5.argv.slice(2),
-      startDir: process5.cwd(),
+      argv: process6.argv.slice(2),
+      startDir: process6.cwd(),
       now: /* @__PURE__ */ new Date()
     });
-    process5.stdout.write(`${JSON.stringify(result, null, 2)}
+    process6.stdout.write(`${JSON.stringify(result, null, 2)}
 `);
   } catch (error51) {
     const message = error51 instanceof Error ? error51.message : String(error51);
-    process5.stderr.write(`kb-curate: ${message}
+    process6.stderr.write(`kb-curate: ${message}
 `);
-    process5.exit(1);
+    process6.exit(1);
   }
 }
 if (isEntryPoint()) {
@@ -23239,7 +23274,8 @@ async function resolveKb(input) {
   }
   if (resolved.reason === "readonly-kb") {
     if (!input.requireWritable) {
-      return { ok: true, kb: { name: resolved.kbName, path: resolved.kbPath, source: "registry-default" } };
+      const source = input.explicitKb !== null ? "explicit" : "registry-default";
+      return { ok: true, kb: { name: resolved.kbName, path: resolved.kbPath, source } };
     }
     return {
       ok: false,
@@ -23287,7 +23323,7 @@ function parseStaleAfter(value) {
   return days;
 }
 function isEntryPoint() {
-  const entry = process5.argv[1];
+  const entry = process6.argv[1];
   if (entry === void 0) {
     return false;
   }
@@ -23295,7 +23331,7 @@ function isEntryPoint() {
     return realpathSync(fileURLToPath2(import.meta.url)) === realpathSync(entry);
   } catch (error51) {
     const message = error51 instanceof Error ? error51.message : String(error51);
-    process5.stderr.write(`kb-curate: warning: could not determine entry point: ${message}
+    process6.stderr.write(`kb-curate: warning: could not determine entry point: ${message}
 `);
     return false;
   }

@@ -40,6 +40,13 @@ describe(detectStaleness, () => {
     expect(detectStaleness({ note: recent, now: NOW, staleAfterDays: 5 })[0]?.rule).toBe('verification.stale');
   });
 
+  it('flags verification.unmarked when last-verified is present but not a parseable date', () => {
+    const findings = detectStaleness({ note: note('last-verified: not-a-date\n'), now: NOW, staleAfterDays: 90 });
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.rule).toBe('verification.unmarked');
+  });
+
   it('treats a malformed-frontmatter note as unmarked', () => {
     const broken = parseNoteContent({ content: '---\ntitle: [bad\n---\n\nBody.\n', path: 'Broken.md' });
 

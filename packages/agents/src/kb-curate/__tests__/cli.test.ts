@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -92,6 +92,41 @@ describe(runCurate, () => {
     expect(result.mode).toBe('report');
     expect(Array.isArray(result.findings)).toBe(true);
     expect(result.applied).toBeUndefined();
+  });
+
+  it('rewrites a stale path-qualified wikilink under --apply and reports the per-finding outcome', async () => {
+    const linking = `${VALID.slice(0, -1)}See [[old/Foo]].\n`;
+    const { kbPath, home } = await makeVault({
+      'Linker.md': linking,
+      'tools/Foo.md': VALID,
+    });
+
+    const result = await runCurate({ argv: ['--apply'], startDir: kbPath, now: NOW, home });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mode).toBe('apply');
+    expect(Array.isArray(result.applied)).toBe(true);
+    const rewrite = result.applied?.find((fix) => fix.operation === 'rewrite-wikilink');
+    expect(rewrite).toMatchObject({ ok: true, operation: 'rewrite-wikilink' });
+    const rewritten = await readFile(join(kbPath, 'Linker.md'), 'utf8');
+    expect(rewritten).toContain('[[tools/Foo]]');
+  });
+
+  it('reports a per-finding failure under --apply when the kb-edit sibling is absent for a tag-alias fix', async () => {
+    const aliased = VALID.replace('tags: [x]', 'tags: [todo-item]');
+    const { kbPath, home } = await makeVault({
+      'Note.md': aliased,
+      '.kb/tag-aliases.yaml': 'aliases:\n  todo:\n    - todo-item\n',
+    });
+
+    const result = await runCurate({ argv: ['--apply'], startDir: kbPath, now: NOW, home });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mode).toBe('apply');
+    const retag = result.applied?.find((fix) => fix.operation === 'kb-edit --retag');
+    expect(retag).toMatchObject({ ok: false, operation: 'kb-edit --retag' });
   });
 
   it('curates a readonly KB in report mode without refusing', async () => {
