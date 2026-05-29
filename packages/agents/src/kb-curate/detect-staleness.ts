@@ -5,7 +5,8 @@ import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 /**
  * Reports verification-staleness findings for one note, both at `warning` severity:
  *
- * - `verification.unmarked` — the note carries no `last-verified` field (or it is absent/unparseable).
+ * - `verification.unmarked` — the note carries no `last-verified` field, or its value is absent or unparseable as a
+ *   date. An unparseable stamp is treated the same as a missing one rather than being silently accepted as fresh.
  * - `verification.stale` — `last-verified` is older than `staleAfterDays` whole days before `now`.
  *
  * `now` is injected for testability, mirroring `kb-retrieve`'s normalizer. A note with no parseable frontmatter has
@@ -14,8 +15,9 @@ import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 export function detectStaleness(input: { note: ParsedNote; now: Date; staleAfterDays: number }): Finding[] {
   const { note, now, staleAfterDays } = input;
   const lastVerified = extractString(note.frontmatter?.extra, 'last-verified');
+  const ageDays = lastVerified === null ? null : computeAgeDays(lastVerified, now);
 
-  if (lastVerified === null) {
+  if (ageDays === null) {
     return [
       {
         path: note.path,
@@ -26,8 +28,7 @@ export function detectStaleness(input: { note: ParsedNote; now: Date; staleAfter
     ];
   }
 
-  const ageDays = computeAgeDays(lastVerified, now);
-  if (ageDays !== null && ageDays > staleAfterDays) {
+  if (ageDays > staleAfterDays) {
     return [
       {
         path: note.path,
