@@ -67,6 +67,11 @@ export const targets: BundleTarget[] = [
     smokeTest: makeKbEditSmokeTest(),
   },
   {
+    entry: 'src/kb-curate/cli.ts',
+    outFile: 'content/skills/kb-curate/kb-curate.mjs',
+    smokeTest: makeKbCurateSmokeTest(),
+  },
+  {
     entry: 'src/kb-retrieve/cli.ts',
     outFile: 'content/skills/kb-retrieve/kb-retrieve.mjs',
   },
@@ -186,6 +191,46 @@ function assertKbEditSmokeResult(result: unknown): void {
   }
   if (typeof frontmatter.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.updated)) {
     throw new Error(`expected updated to be YYYY-MM-DD, got ${JSON.stringify(frontmatter.updated)}`);
+  }
+}
+
+/**
+ * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle read-only
+ * over it. Exercises the resolve → enumerate → detect pipeline end to end. `HOME` is overridden to the fixture dir
+ * so the dev's real registry does not pollute KB resolution.
+ *
+ * The fixture is process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
+ * directories without explicit cleanup. The run is read-only, so re-runs do not mutate the seed note.
+ */
+function makeKbCurateSmokeTest(): SmokeTestInvocation {
+  const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-curate-smoke-'));
+  mkdirSync(path.join(fixtureDir, '.kb'), { recursive: true });
+  writeFileSync(
+    path.join(fixtureDir, 'Smoke.md'),
+    '---\ntitle: Smoke\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\n---\n\nSmoke body.\n',
+    'utf8',
+  );
+  return {
+    args: [],
+    cwd: fixtureDir,
+    env: { ...process.env, HOME: fixtureDir },
+    assertResult: assertKbCurateSmokeResult,
+  };
+}
+
+/** Assert the kb-curate smoke produced an ok read-only report with an array-valued `findings`. */
+function assertKbCurateSmokeResult(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result from kb-curate');
+  }
+  if (result.ok !== true) {
+    throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
+  }
+  if (result.mode !== 'report') {
+    throw new Error(`expected mode 'report', got ${JSON.stringify(result.mode)}`);
+  }
+  if (!Array.isArray(result.findings)) {
+    throw new TypeError(`expected findings to be an array, got ${JSON.stringify(result.findings)}`);
   }
 }
 
