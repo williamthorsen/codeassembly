@@ -757,6 +757,8 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 
 ### Category criteria
 
+**Authored-choice gate (W/T/R/S):** A proposed change must be a genuine improvement, not merely an alternative — a valid authored choice is not a defect. The per-category criteria set the evidence bar.
+
 **FIXME (F)** — must fix before merge:
 
 - Bugs: Incorrect logic, unhandled error paths, data loss risks
@@ -769,7 +771,7 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 - Missing edge case handling that could cause runtime errors
 - Convention violations that affect maintainability
 - Decisions that seem wrong but may be intentional (require justification)
-- **Gate:** A warning must reflect a judgment call by the author, not a mechanical oversight. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning — classify as Suggestion at most.
+- **Gate:** A warning must reflect a judgment call by the author about a defensible risk of functional or maintainability harm, not a mechanical oversight or a cosmetic issue. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning — classify as Suggestion at most. If the issue has no defensible risk of functional or maintainability harm (e.g., a typo in a comment), do not raise it at any tier.
 
 **TODO (T)** — should fix, not in this PR:
 
@@ -782,12 +784,14 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 - Better patterns available in the codebase
 - Opportunities to reduce complexity
 - Architectural improvements worth considering
+- **Gate:** Raise only when the change is plausibly better — improved clarity, reduced complexity, better-aligned pattern. "Another valid way to write it" does not qualify.
 
 **Suggestion (S)** — optional improvement:
 
 - Better naming or code organization
 - Additional test cases for edge cases
 - Documentation improvements
+- **Gate:** Raise only when the change aligns with a codebase convention the code violates, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify.
 
 **Legacy (-L suffix)** — pre-existing code observation:
 
