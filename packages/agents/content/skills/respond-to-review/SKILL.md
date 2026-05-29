@@ -32,7 +32,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`). If that review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink; otherwise leave it empty.
 
 Run via Bash:
 
@@ -41,12 +41,11 @@ Run via Bash:
   --skill respond-to-review \
   --interactive true \
   --model "$MODEL_ID" \
-  --extra "responding_to=$review_filename"
+  --extra "responding_to=$review_filename" \
+  ${pr_url:+--override "pr=$pr_url"}
 ```
 
 Prepend the script's output verbatim to the artifact body.
-
-If the script's stderr contains `Note: PR lookup failed; proceeding without pr field.`, surface that line in your text output once.
 
 ## Locating the review
 
