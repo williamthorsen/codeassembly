@@ -22933,10 +22933,13 @@ function computeAgeDays(dateValue, now) {
 
 // src/kb-curate/detect-staleness.ts
 function detectStaleness(input) {
-  const { note, now, staleAfterDays } = input;
+  const { note, now, staleAfterDays, vaultUsesVerification: vaultUsesVerification2 } = input;
   const lastVerified = extractString(note.frontmatter?.extra, "last-verified");
   const ageDays = lastVerified === null ? null : computeAgeDays(lastVerified, now);
   if (ageDays === null) {
+    if (!vaultUsesVerification2) {
+      return [];
+    }
     return [
       {
         path: note.path,
@@ -22957,6 +22960,12 @@ function detectStaleness(input) {
     ];
   }
   return [];
+}
+function vaultUsesVerification(notes, now) {
+  return notes.some((note) => {
+    const lastVerified = extractString(note.frontmatter?.extra, "last-verified");
+    return lastVerified !== null && computeAgeDays(lastVerified, now) !== null;
+  });
 }
 function extractString(extra, key) {
   if (extra === void 0) {
@@ -23077,6 +23086,7 @@ async function detectFindings(input) {
   const kbRoot = { path: kbPath, kbDir: join6(kbPath, ".kb"), via: "ancestor-walk" };
   const [schema2, aliases] = await Promise.all([loadSchemaWithWarning({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
   const parsedNotes = notes.map((entry) => entry.note);
+  const usesVerification = vaultUsesVerification(parsedNotes, now);
   const findings = [
     ...runRules({
       rules: [frontmatterRule, tagAliasRule, wikilinksRule, pathsRule],
@@ -23084,7 +23094,9 @@ async function detectFindings(input) {
       schema: schema2,
       aliases
     }),
-    ...parsedNotes.flatMap((note) => detectStaleness({ note, now, staleAfterDays })),
+    ...parsedNotes.flatMap(
+      (note) => detectStaleness({ note, now, staleAfterDays, vaultUsesVerification: usesVerification })
+    ),
     ...detectSupersede(parsedNotes)
   ];
   return sortFindings(findings);

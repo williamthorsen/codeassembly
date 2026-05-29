@@ -80,6 +80,30 @@ describe(detectFindings, () => {
     expect(rules).toContain('paths.user-home');
   });
 
+  it('reports no verification.unmarked findings when no note uses verification', async () => {
+    const root = await makeVault({
+      'A.md': '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [git]\n---\n\nBody.\n',
+      'B.md': '---\ntitle: B\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [git]\n---\n\nBody.\n',
+    });
+
+    const rules = (await detectIn(root)).map((finding) => finding.rule);
+
+    expect(rules).not.toContain('verification.unmarked');
+  });
+
+  it('reports verification.unmarked for unmarked notes when some note uses verification', async () => {
+    const root = await makeVault({
+      'Marked.md': CLEAN,
+      'Unmarked.md':
+        '---\ntitle: Unmarked\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [git]\n---\n\nBody.\n',
+    });
+
+    const unmarked = (await detectIn(root)).filter((finding) => finding.rule === 'verification.unmarked');
+
+    expect(unmarked).toHaveLength(1);
+    expect(unmarked[0]?.path.endsWith('Unmarked.md')).toBe(true);
+  });
+
   it('reports verification staleness past the threshold', async () => {
     const root = await makeVault({
       'Stale.md':

@@ -37,18 +37,20 @@ The knowledge base is resolved the same way as `kb-add`: `--kb <name>` (explicit
 
 The helper reports findings across five categories. Each finding carries a rule code and a severity aligned with the `kb-core` rule contract.
 
-| Rule code               | Severity | Meaning                                                           |
-| ----------------------- | -------- | ----------------------------------------------------------------- |
-| `wikilinks.unresolved`  | error    | A `[[Target]]` does not resolve to any vault note.                |
-| `wikilinks.ambiguous`   | warning  | A `[[Target]]` basename matches more than one note.               |
-| `paths.user-home`       | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.              |
-| `frontmatter.tag-alias` | warning  | A `tags` entry is a known alias of a canonical tag.               |
-| `frontmatter.*`         | error    | Other frontmatter defects (missing, parse, required, type, date). |
-| `verification.unmarked` | warning  | The note has no `last-verified` field.                            |
-| `verification.stale`    | warning  | `last-verified` is older than `--stale-after` days.               |
-| `supersede.dangling`    | error    | A `superseded-by`/`supersedes` target is not a vault note.        |
-| `supersede.cycle`       | error    | The note participates in a `superseded-by` loop.                  |
-| `supersede.asymmetric`  | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.    |
+| Rule code               | Severity | Meaning                                                                                |
+| ----------------------- | -------- | -------------------------------------------------------------------------------------- |
+| `wikilinks.unresolved`  | error    | A `[[Target]]` does not resolve to any vault note.                                     |
+| `wikilinks.ambiguous`   | warning  | A `[[Target]]` basename matches more than one note.                                    |
+| `paths.user-home`       | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                   |
+| `frontmatter.tag-alias` | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
+| `frontmatter.*`         | error    | Other frontmatter defects (missing, parse, required, type, date).                      |
+| `verification.unmarked` | warning  | The note has no `last-verified` field; reported only when the vault uses verification. |
+| `verification.stale`    | warning  | `last-verified` is older than `--stale-after` days.                                    |
+| `supersede.dangling`    | error    | A `superseded-by`/`supersedes` target is not a vault note.                             |
+| `supersede.cycle`       | error    | The note participates in a `superseded-by` loop.                                       |
+| `supersede.asymmetric`  | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.                         |
+
+`verification.unmarked` is self-configuring: it is reported only when the vault actually uses verification — that is, when at least one note carries a well-formed `last-verified` value. In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so a vault whose only verification-ish value is unparseable reports no unmarked findings. `verification.stale` is unaffected: a note with a stale `last-verified` is always flagged.
 
 ## Remediation under `--apply`
 

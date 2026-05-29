@@ -6,7 +6,7 @@ import { frontmatterRule, pathsRule, runRules, tagAliasRule, wikilinksRule } fro
 import { defaultSchema, loadSchema } from '@codeassembly/kb-core/schema';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
-import { detectStaleness } from './detect-staleness.ts';
+import { detectStaleness, vaultUsesVerification } from './detect-staleness.ts';
 import { detectSupersede } from './detect-supersede.ts';
 import type { EnumeratedNote } from './enumerate.ts';
 
@@ -32,6 +32,7 @@ export async function detectFindings(input: {
   const [schema, aliases] = await Promise.all([loadSchemaWithWarning({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
 
   const parsedNotes = notes.map((entry) => entry.note);
+  const usesVerification = vaultUsesVerification(parsedNotes, now);
   const findings: Finding[] = [
     ...runRules({
       rules: [frontmatterRule, tagAliasRule, wikilinksRule, pathsRule],
@@ -39,7 +40,9 @@ export async function detectFindings(input: {
       schema,
       aliases,
     }),
-    ...parsedNotes.flatMap((note) => detectStaleness({ note, now, staleAfterDays })),
+    ...parsedNotes.flatMap((note) =>
+      detectStaleness({ note, now, staleAfterDays, vaultUsesVerification: usesVerification }),
+    ),
     ...detectSupersede(parsedNotes),
   ];
 
