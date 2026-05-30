@@ -44,6 +44,22 @@ When you do ask, prefer forms the user can answer unambiguously:
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
+**Never use an interactive selector to pose the question.** Calling `{tool:AskUserQuestion}` (or any pop-up / arrow-key picker) cannot render the strength markers or pros and cons the gradient requires, so it silently discards the convention. Always write the choice as plain text in the message body.
+
+Not this — an interactive picker, flat label plus description, no markers:
+
+> `{tool:AskUserQuestion}`: "Which config layout?" with options "Single file" / "Two configs".
+
+This — a numbered gradient list in the message body:
+
+> Want me to:
+>
+> 1. ■□□ Use a single config file:
+>       ➕ minimal surface area;
+>       ➖ couples concerns.
+> 2. ■■□ Split into two configs:
+>       ➕ separates lifecycle and runtime concerns.
+
 ## Efficient context usage
 
 When you deem appropriate, proactively dispatch subagents to perform tasks. Good examples:

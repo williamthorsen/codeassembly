@@ -37,7 +37,7 @@ Capitalize the first word after a colon, unless the colon falls mid-sentence and
 
 ## Prompt formatting
 
-When prompting the user for input, use visual markers to make prompts more noticeable:
+When prompting the user for input, never use interactive UI controls (pop-up, arrow-key, or structured-choice selectors); use plain text, with options as a numbered list. Use visual markers to make prompts more noticeable:
 
 - **Confirmation prompts** (the user's response is approve-or-redirect; "no" means "let's adjust or discuss," not a concrete alternative action): End with `👍🏼👎🏼`.
 - **All other questions** (open-ended, clarifications): End with `🤔`
