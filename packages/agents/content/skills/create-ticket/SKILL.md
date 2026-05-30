@@ -26,19 +26,7 @@ Create the ticket body describing WHAT needs to be done — problem, context, an
 
 {What needs to be done and why — the problem and its context}
 
-## Acceptance criteria
-
-### Must have
-
-{Critical requirements}
-
-### Should have
-
-{Important but not blocking}
-
-### Nice to have
-
-{Optional enhancements}
+<!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
 ```
 
 Also draft a short title (without the `ticket_ref` prefix) for use in step 5.

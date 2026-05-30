@@ -34,19 +34,7 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 - {Issue 1}
 - {Issue 2}
 
-## Acceptance criteria
-
-### Must have
-
-{Critical fixes required for functionality}
-
-### Should have
-
-{Important improvements - include single "Fix lint" item if applicable}
-
-### Nice to have
-
-{Optional enhancements}
+<!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
 
 ## Context
 
@@ -55,7 +43,6 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 ## Guidance
 
-- Do not mention linting violations in detail - use single "Fix lint" item if needed
 - Keep tone professional but concise
 - Focus on what was broken and what needed fixing
 - Prioritize functional issues in "Must have"

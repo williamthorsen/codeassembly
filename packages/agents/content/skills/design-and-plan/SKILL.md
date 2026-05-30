@@ -101,10 +101,7 @@ When the ticket needs work, produce or update it to capture the proposed approac
 
 {The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, what tradeoffs were chosen. Keep this section outcome-shaped: Specific code, syntax, and file-level technique belong in the plan, not here.}
 
-## Acceptance criteria
-
-- [ ] {Criterion 1}
-- [ ] {Criterion 2}
+<!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
 ```
 
 **❌ Out of scope here.** Example of what doesn't belong under `## Proposed solution`:
