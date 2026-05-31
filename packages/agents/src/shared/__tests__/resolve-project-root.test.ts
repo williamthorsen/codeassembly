@@ -26,6 +26,14 @@ describe(resolveProjectRoot, () => {
     expect(resolveProjectRoot({ cwd: '/explicit/override', startDir: scratch })).toBe('/explicit/override');
   });
 
+  it('treats an empty cwd override as unset and falls through to the git root', () => {
+    execFileSync('git', ['-C', scratch, 'init', '--quiet']);
+
+    // The `--cwd=` flag form yields an empty string; it must not anchor at `''` but fall through to
+    // the git-root lookup, matching the no-override behavior.
+    expect(resolveProjectRoot({ cwd: '', startDir: scratch })).toBe(realpathSync(scratch));
+  });
+
   it('resolves the git repo root when invoked from a subdirectory', async () => {
     execFileSync('git', ['-C', scratch, 'init', '--quiet']);
     const subdir = path.join(scratch, 'packages', 'nested');
