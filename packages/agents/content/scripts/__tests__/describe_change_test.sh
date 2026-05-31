@@ -653,4 +653,22 @@ run_script() {
 When call run_script
 The output should equal '{"commit_title":"line1\nline2","ticket_title":"","pr_title":"","merge_title":""}'
 End
+
+It "reads project preferences from the repo root when invoked from a subdirectory"
+prepare() {
+  cat >".agents/preferences.yaml" <<'YAML'
+commit:
+  title_format: '{title}'
+YAML
+  git -C "$tmpdir/workdir" init --quiet
+  mkdir -p "$tmpdir/workdir/packages/nested"
+  cd "$tmpdir/workdir/packages/nested"
+}
+run_script() {
+  prepare
+  bash "$script" --title "Add foo"
+}
+When call run_script
+The output should equal '{"commit_title":"Add foo","ticket_title":"","pr_title":"","merge_title":""}'
+End
 End

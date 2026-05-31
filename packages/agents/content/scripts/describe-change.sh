@@ -65,6 +65,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve the project preferences file, anchored at the git repo root so the lookup does not depend on the
+# caller's working directory. Falls back to the current directory when not inside a git repository, preserving
+# the prior relative-path behavior.
+project_preferences_file() {
+  local root
+  root="$(git rev-parse --show-toplevel 2>/dev/null)" || root="$PWD"
+  printf '%s/.agents/preferences.yaml' "$root"
+}
+
 # Parse a specific `title_format` value from a YAML file.
 # Reads line-by-line, tracks the current top-level section, and matches
 # `title_format:` within the target section (commit, ticket, pr, merge).
@@ -123,7 +132,7 @@ resolve_title_format() {
   local result
 
   # Project preferences
-  result="$(parse_title_format ".agents/preferences.yaml" "$section")"
+  result="$(parse_title_format "$(project_preferences_file)" "$section")"
   if [[ "$result" == FOUND:* ]]; then
     echo "${result#FOUND:}"
     return

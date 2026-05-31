@@ -450,4 +450,22 @@ run_script() {
 When call run_script
 The output should equal "525"
 End
+
+It "reads preferences from the repo root when invoked from a subdirectory"
+prepare() {
+  git -C "$tmpdir/workdir" init --quiet
+  cat >"$tmpdir/workdir/.agents/preferences.yaml" <<'YAML'
+project:
+  ticket_ref_prefix: 'MAC-'
+YAML
+  mkdir -p "$tmpdir/workdir/packages/nested"
+  cd "$tmpdir/workdir/packages/nested"
+}
+run_script() {
+  prepare
+  bash "$script" "147"
+}
+When call run_script
+The output should equal "MAC-147"
+End
 End
