@@ -1,6 +1,8 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { isEnoent } from '@codeassembly/kb-core';
+
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
@@ -856,13 +858,6 @@ async function installPlatformGuidance(
   }
 
   return entries;
-}
-
-/**
- * Type guard that checks whether an error is a Node.js ENOENT error.
- */
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }
 
 /** True when a `readFile` of `SKILL.md` raised `ENOENT` (file absent) or `ENOTDIR` (parent segment is a regular file). */

@@ -1,8 +1,9 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, rename, stat, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, rename, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
 import type { Frontmatter } from '@codeassembly/kb-core';
+import { pathExists } from '@codeassembly/kb-core/filesystem';
 import { writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
 
 /** Successful write: the absolute path the note landed at. */
@@ -115,28 +116,6 @@ async function atomicWrite(input: { targetPath: string; content: string }): Prom
     await unlink(tempPath).catch(() => {});
     throw error;
   }
-}
-
-/**
- * Returns true when a file or directory exists at the path. ENOENT is the only "not found" signal — any other
- * `stat` error (permission denied, I/O error, etc.) is re-thrown so the caller sees the real failure rather
- * than a false "no collision, safe to write" answer.
- */
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await stat(path);
-    return true;
-  } catch (error) {
-    if (isEnoent(error)) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/** Returns true when `error` is a Node ENOENT filesystem error. */
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }
 
 /**

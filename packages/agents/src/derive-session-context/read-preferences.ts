@@ -10,6 +10,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
+import { isEnoent } from '@codeassembly/kb-core';
 import { parse as parseYaml } from 'yaml';
 
 import type { PreferencesReadResult, ResolvedPreferences } from './types.ts';
@@ -57,7 +58,7 @@ async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | 
   try {
     text = await readFile(filePath, 'utf8');
   } catch (error) {
-    if (isEnoentError(error)) {
+    if (isEnoent(error)) {
       return null;
     }
     throw error;
@@ -231,14 +232,6 @@ function formatValue(value: unknown): string {
 /** Narrows `value` to a plain object with unknown property values. */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** True when `error` carries the Node `ENOENT` errno. */
-function isEnoentError(error: unknown): boolean {
-  if (!isRecord(error)) {
-    return false;
-  }
-  return error.code === 'ENOENT';
 }
 
 // endregion | Helpers

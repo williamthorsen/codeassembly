@@ -2,6 +2,9 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isEnoent } from '@codeassembly/kb-core';
+import { pathExists } from '@codeassembly/kb-core/filesystem';
+
 /** Canonical mapping from commit type keys to human-readable label values. */
 const TYPE_MAP: Readonly<Record<string, string>> = {
   ai: 'ai',
@@ -68,13 +71,6 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
   return scopes;
 }
 
-/** Checks whether a path exists on disk. */
-async function pathExists(filePath: string): Promise<boolean> {
-  return stat(filePath)
-    .then(() => true)
-    .catch(() => false);
-}
-
 /**
  * Reads the installed `@williamthorsen/release-kit` version by walking up from this
  * module's location, looking for `node_modules/@williamthorsen/release-kit/package.json`
@@ -92,7 +88,7 @@ export async function readReleaseKitVersion(): Promise<string> {
   let dir = thisDir;
   for (;;) {
     const candidate = path.join(dir, 'node_modules', '@williamthorsen', 'release-kit', 'package.json');
-    if (await pathExists(candidate)) {
+    if (await pathExists(candidate, { treatErrorsAsAbsent: true })) {
       const raw = await readFile(candidate, 'utf8');
       const parsed: unknown = JSON.parse(raw);
       if (isReleaseKitPackageJson(parsed)) {
@@ -170,11 +166,4 @@ Targets:
 
 Options:
   --force      Overwrite an existing file`);
-}
-
-/**
- * Type guard that checks whether an error is a Node.js ENOENT error.
- */
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 }

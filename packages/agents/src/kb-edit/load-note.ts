@@ -1,4 +1,5 @@
 import type { ParsedNote } from '@codeassembly/kb-core';
+import { isEnoent } from '@codeassembly/kb-core';
 import { parseNote } from '@codeassembly/kb-core/frontmatter';
 
 /** Successful load: a fully-parsed note with valid frontmatter. */
@@ -51,12 +52,3 @@ export async function loadNote(input: { path: string }): Promise<LoadOutcome> {
 
   return { ok: true, note: parsed };
 }
-
-// region | Helpers
-
-/** Returns true when `error` is a Node ENOENT filesystem error. */
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
-}
-
-// endregion | Helpers
