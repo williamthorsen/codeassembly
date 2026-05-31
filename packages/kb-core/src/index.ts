@@ -20,9 +20,6 @@ export type {
   VaultIndex,
 } from './types.ts';
 
-// Error-code type guards
-export { isEnoent, isErrorCode } from './type-guards.ts';
-
 // Default schema constant
 export { defaultSchema } from './schema/default-schema.ts';
 

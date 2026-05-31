@@ -6,14 +6,14 @@ import { isErrorCode } from '../type-guards.ts';
 /** Controls which `stat` failures a filesystem-existence check treats as "absent". */
 export interface ExistsOptions {
   /**
-   * Stat-error codes treated as "absent" (the helper returns `false`). Any other failure is re-thrown so a
-   * genuine error — most importantly a permission denial on a path that does exist — is not silently read as
-   * absence. Defaults to `['ENOENT']`.
+   * Stat-error codes treated as "absent" (the helper returns `false`). Any other failure is re-thrown so a genuine
+   * error — most importantly a permission denial on a path that does exist — is not silently read as absence.
+   * Defaults to `['ENOENT']`.
    */
   absentCodes?: readonly string[];
   /**
-   * When `true`, every `stat` failure is treated as "absent" (`false`), including permission errors. Reserved
-   * for best-effort probes such as an ancestor walk, where an unreadable path should be skipped rather than
+   * When `true`, every `stat` failure is treated as "absent" (`false`), including permission errors.
+   * Reserved for best-effort probes such as an ancestor walk, where an unreadable path should be skipped rather than
    * abort the operation. Takes precedence over `absentCodes`.
    */
   treatErrorsAsAbsent?: boolean;
