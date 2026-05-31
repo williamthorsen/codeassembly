@@ -243,7 +243,7 @@ BeforeEach "setup_tmpdir"
 AfterEach "cleanup_tmpdir"
 
 It "returns empty when no preferences files exist"
-When call resolve_title_format "commit"
+When call resolve_title_format "commit" ".agents/preferences.yaml"
 The output should equal ""
 End
 
@@ -256,7 +256,7 @@ YAML
 }
 test_resolve() {
   write_global
-  resolve_title_format "commit"
+  resolve_title_format "commit" ".agents/preferences.yaml"
 }
 When call test_resolve
 The output should equal "{type}({scope}): {title}"
@@ -275,7 +275,7 @@ YAML
 }
 test_resolve() {
   write_both
-  resolve_title_format "commit"
+  resolve_title_format "commit" ".agents/preferences.yaml"
 }
 When call test_resolve
 The output should equal "project-template"
@@ -294,7 +294,7 @@ YAML
 }
 test_resolve() {
   write_both
-  resolve_title_format "commit"
+  resolve_title_format "commit" ".agents/preferences.yaml"
 }
 When call test_resolve
 The output should equal ""
@@ -519,6 +519,9 @@ setup_tmpdir() {
   export HOME="$tmpdir/home"
   mkdir -p "$HOME/.agents"
   mkdir -p "$tmpdir/workdir/.agents"
+  # Make workdir a real repo so the resolver anchors there and the not-a-repo diagnostic stays
+  # silent; cases that need the not-a-repo path run from a separate uninitialized directory.
+  git -C "$tmpdir/workdir" init --quiet
   cd "$tmpdir/workdir"
 }
 
@@ -660,7 +663,6 @@ prepare() {
 commit:
   title_format: '{title}'
 YAML
-  git -C "$tmpdir/workdir" init --quiet
   mkdir -p "$tmpdir/workdir/packages/nested"
   cd "$tmpdir/workdir/packages/nested"
 }
@@ -670,5 +672,19 @@ run_script() {
 }
 When call run_script
 The output should equal '{"commit_title":"Add foo","ticket_title":"","pr_title":"","merge_title":""}'
+End
+
+It "warns to stderr when invoked outside a git repository"
+# Run from a sibling directory that is deliberately not a repo so the resolver falls back to the
+# working directory and must announce the misanchor on stderr rather than failing silently.
+run_outside_repo() {
+  mkdir -p "$tmpdir/outside/.agents"
+  cd "$tmpdir/outside"
+  bash "$script" --title "Add foo"
+}
+When call run_outside_repo
+The output should equal '{"commit_title":"","ticket_title":"","pr_title":"","merge_title":""}'
+The stderr should include "not inside a git repository"
+The status should be success
 End
 End
