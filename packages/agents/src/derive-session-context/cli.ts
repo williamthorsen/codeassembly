@@ -26,6 +26,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { composeManifest } from './compose-manifest.ts';
 import { readPreferences } from './read-preferences.ts';
 import type { BranchManifest } from './types.ts';
@@ -150,7 +151,7 @@ async function tryReadManifest(filePath: string): Promise<BranchManifest | null>
   try {
     text = await readFile(filePath, 'utf8');
   } catch (error) {
-    if (isEnoentError(error)) {
+    if (isEnoent(error)) {
       return null;
     }
     throw error;
@@ -204,19 +205,6 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
 /** True when `value` is a string or `null` (matches the `string | null` union in `BranchManifest`). */
 function isStringOrNull(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
-}
-
-/** True when `error` carries the Node `ENOENT` errno. */
-function isEnoentError(error: unknown): boolean {
-  if (!isRecord(error)) {
-    return false;
-  }
-  return error.code === 'ENOENT';
-}
-
-/** Narrows `value` to a plain object with unknown property values. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Resolves the current branch name via `git -C {cwd} branch --show-current`. */

@@ -22,6 +22,7 @@ import {
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
+import { isEnoent, isErrorCode } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   InstallOptions,
@@ -858,19 +859,9 @@ async function installPlatformGuidance(
   return entries;
 }
 
-/**
- * Type guard that checks whether an error is a Node.js ENOENT error.
- */
-function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
-}
-
 /** True when a `readFile` of `SKILL.md` raised `ENOENT` (file absent) or `ENOTDIR` (parent segment is a regular file). */
 function isMissingSkill(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null || !('code' in error)) {
-    return false;
-  }
-  return error.code === 'ENOENT' || error.code === 'ENOTDIR';
+  return isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR');
 }
 
 /**

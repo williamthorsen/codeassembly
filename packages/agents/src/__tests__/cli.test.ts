@@ -3,6 +3,8 @@ import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
+import { isRecord } from '../lib/type-guards.ts';
+
 const execFileAsync = promisify(execFile);
 
 const CLI_PATH = new URL('../cli.ts', import.meta.url).pathname;
@@ -15,7 +17,12 @@ interface ExecError {
 
 /** Type guard for child_process exec errors. */
 function isExecError(error: unknown): error is ExecError {
-  return typeof error === 'object' && error !== null && 'stdout' in error && 'stderr' in error && 'code' in error;
+  return (
+    isRecord(error) &&
+    typeof error.stdout === 'string' &&
+    typeof error.stderr === 'string' &&
+    typeof error.code === 'number'
+  );
 }
 
 interface CliResult {

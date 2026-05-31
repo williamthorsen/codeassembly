@@ -1,11 +1,12 @@
 import { execFile } from 'node:child_process';
-import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
+import { directoryExists } from '@codeassembly/kb-core/filesystem';
 import type { AliasMap } from '@codeassembly/kb-core/tags';
 import { loadAliases } from '@codeassembly/kb-core/tags';
 
+import { isErrorCode, isRecord } from '../lib/type-guards.ts';
 import type { RawHit, ScopedKb } from './types.ts';
 
 const execFileAsync = promisify(execFile);
@@ -43,7 +44,7 @@ export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] 
   const hits: RawHit[] = [];
   const missingKbs: ScopedKb[] = [];
   for (const kb of input.scopedKbs) {
-    if (!(await isExistingDirectory(kb.path))) {
+    if (!(await directoryExists(kb.path, { absentCodes: ['ENOENT', 'ENOTDIR'] }))) {
       missingKbs.push(kb);
       continue;
     }
@@ -77,33 +78,9 @@ function expandTerms(baseTerms: string[], aliases: AliasMap): string[] {
   return [...expanded];
 }
 
-/**
- * Returns true when the path exists and is a directory.
- *
- * A genuinely absent path (`ENOENT` / `ENOTDIR`) is reported as `false` so the KB is skipped quietly.
- * Any other `stat` failure — most importantly a permission error (`EACCES` / `EPERM`) on a path that
- * does exist — is re-thrown so it surfaces rather than being silently indistinguishable from absence.
- */
-async function isExistingDirectory(path: string): Promise<boolean> {
-  try {
-    const stats = await stat(path);
-    return stats.isDirectory();
-  } catch (error) {
-    if (isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR')) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/** Returns true when the error carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
-function isErrorCode(error: unknown, code: string): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
-}
-
 /** Returns true when the error is a child-process failure with the given exit code. */
 function isExitCode(error: unknown, code: number): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
+  return isRecord(error) && error.code === code;
 }
 
 /** Returns true when the error indicates the `rg` binary could not be spawned. */
@@ -118,26 +95,20 @@ interface RipgrepLineEvent {
 
 /** Returns true when the parsed value is a ripgrep `match` or `context` event with the expected fields. */
 function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
-  if (typeof value !== 'object' || value === null || !('type' in value)) {
+  if (!isRecord(value) || !('type' in value)) {
     return false;
   }
   if (value.type !== 'match' && value.type !== 'context') {
     return false;
   }
-  if (!('data' in value) || typeof value.data !== 'object' || value.data === null) {
+  if (!isRecord(value.data)) {
     return false;
   }
   const { data } = value;
   return (
-    'path' in data &&
-    typeof data.path === 'object' &&
-    data.path !== null &&
-    'text' in data.path &&
+    isRecord(data.path) &&
     typeof data.path.text === 'string' &&
-    'lines' in data &&
-    typeof data.lines === 'object' &&
-    data.lines !== null &&
-    'text' in data.lines &&
+    isRecord(data.lines) &&
     typeof data.lines.text === 'string'
   );
 }

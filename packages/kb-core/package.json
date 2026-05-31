@@ -15,6 +15,11 @@
       "import": "./dist/esm/discovery/index.js",
       "types": "./src/discovery/index.ts"
     },
+    "./filesystem": {
+      "source": "./src/filesystem/index.ts",
+      "import": "./dist/esm/filesystem/index.js",
+      "types": "./src/filesystem/index.ts"
+    },
     "./frontmatter": {
       "source": "./src/frontmatter/index.ts",
       "import": "./dist/esm/frontmatter/index.js",

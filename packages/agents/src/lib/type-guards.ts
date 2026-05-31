@@ -14,16 +14,15 @@ export function isEnoent(error: unknown): boolean {
   return isErrorCode(error, 'ENOENT');
 }
 
-/** Type guard for a non-null object. */
-function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
 /**
  * Type guard for a non-null, non-array object.
- *
  * @internal
  */
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return isObject(value) && !Array.isArray(value);
+}
+
+/** Type guard for a non-null object; the looser building block the exported guards are defined in terms of. */
+function isObject(value: unknown): value is Record<PropertyKey, unknown> {
+  return typeof value === 'object' && value !== null;
 }

@@ -1,5 +1,7 @@
 import yaml from 'js-yaml';
 
+import { isRecord } from './type-guards.ts';
+
 /**
  * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder whose canonical name has no entry in the
  * supplied mapping. Caught by the install pipeline and surfaced as a fatal install error.
@@ -22,7 +24,7 @@ export class ToolNameRewriteError extends Error {
 }
 
 /** Matches `{tool:NAME}` placeholders. NAME starts with a letter, then letters/digits/underscores. */
-const PLACEHOLDER_RE = /\{tool:([A-Za-z][A-Za-z0-9_]*)\}/g;
+const PLACEHOLDER_RE = /\{tool:([A-Za-z][A-Za-z0-9_]*)}/g;
 
 /**
  * Replaces every `{tool:NAME}` placeholder in `content` with the value bound to `NAME` in `mapping`. An unmapped name
@@ -67,10 +69,6 @@ export function loadToolMapping(overlayYaml: string): Map<string, string> {
     mapping.set(key, value);
   }
   return mapping;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function computeLine(content: string, offset: number): number {

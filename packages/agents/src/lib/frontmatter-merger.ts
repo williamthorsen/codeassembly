@@ -1,5 +1,7 @@
 import yaml from 'js-yaml';
 
+import { isRecord } from './type-guards.ts';
+
 /**
  * Result of parsing a markdown file's frontmatter.
  */
@@ -10,13 +12,6 @@ interface ParsedFrontmatter {
   readonly agentName: string;
   /** Everything after the closing `---`, including the leading newline. */
   readonly body: string;
-}
-
-/**
- * Type guard: checks if a value is a non-null object (record-like).
- */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**
@@ -140,13 +135,12 @@ export function mergeFrontmatter(source: string, overlayYaml: string): string {
   }
 
   // Replace matching keys in-place.
-  // LIMITATION: This line-based replacement only handles scalar and inline-sequence
-  // values (e.g., `tools: [a, b, c]`). If an overlay key targets a YAML block sequence
-  // in the source (e.g., `skills:` followed by indented `- item` lines), only the key
-  // line is replaced while the continuation lines remain, producing malformed YAML.
+  // LIMITATION: This line-based replacement only handles scalar and inline-sequence values (e.g., `tools: [a, b, c]`).
+  // If an overlay key targets a YAML block sequence in the source (e.g., `skills:` followed by indented `- item`
+  // lines), only the key line is replaced while the continuation lines remain, producing malformed YAML.
   // Current overlay files avoid this by using inline flow-sequence notation exclusively.
-  // If block-sequence overrides are needed in the future, replace this with structured
-  // YAML parsing (e.g., js-yaml load/dump) instead of line-by-line replacement.
+  // If block-sequence overrides are needed in the future, replace this with structured YAML parsing (e.g., js-yaml
+  // load/dump) instead of line-by-line replacement.
   const applied = new Set<string>();
   const mergedLines: Array<string> = [];
 

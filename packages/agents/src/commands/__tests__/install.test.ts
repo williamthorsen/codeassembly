@@ -9,10 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import { readManifest } from '../../lib/manifest.ts';
 import { getManifestPath } from '../../lib/manifest.ts';
+import { isRecord } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 
-describe('installCommand', () => {
+describe(installCommand, () => {
   let tempDir: string;
 
   beforeEach(async () => {
@@ -291,8 +292,7 @@ describe('installCommand', () => {
     expect(typeof parsed).toBe('object');
     expect(parsed !== null).toBe(true);
 
-    // Narrow to record shape at runtime to satisfy no-type-assertions lint rule
-    if (typeof parsed !== 'object' || parsed === null || !('prompts' in parsed)) {
+    if (!isRecord(parsed) || !('prompts' in parsed)) {
       throw new Error('Expected parsed YAML to have a prompts key');
     }
     const doc = parsed;
@@ -582,9 +582,7 @@ describe('installCommand', () => {
     const prompts: Array<unknown> = doc.prompts;
 
     // Find the single-quoted synthetic skill entry
-    const singleQuotedEntry = prompts.find(
-      (e) => typeof e === 'object' && e !== null && 'name' in e && e.name === 'synthetic-quoted',
-    );
+    const singleQuotedEntry = prompts.find((e) => isRecord(e) && e.name === 'synthetic-quoted');
     if (typeof singleQuotedEntry !== 'object' || singleQuotedEntry === null || !('description' in singleQuotedEntry)) {
       throw new Error('Expected synthetic-quoted entry with description');
     }
@@ -593,9 +591,7 @@ describe('installCommand', () => {
     expect(singleQuotedEntry.description).toBe("A skill with an apostrophe: it's useful");
 
     // Find the double-quoted synthetic skill entry
-    const doubleQuotedEntry = prompts.find(
-      (e) => typeof e === 'object' && e !== null && 'name' in e && e.name === 'synthetic-double-quoted',
-    );
+    const doubleQuotedEntry = prompts.find((e) => isRecord(e) && e.name === 'synthetic-double-quoted');
     if (typeof doubleQuotedEntry !== 'object' || doubleQuotedEntry === null || !('description' in doubleQuotedEntry)) {
       throw new Error('Expected synthetic-double-quoted entry with description');
     }
@@ -618,7 +614,7 @@ describe('installCommand', () => {
     expect(content).toContain('~/.claude/skills/_data/naming-conventions.md');
 
     // No remaining relative ../_data/ Markdown link references should exist
-    expect(content).not.toMatch(/\]\(\.\.\/_data\//);
+    expect(content).not.toMatch(/]\(\.\.\/_data\//);
   });
 
   it('preserves anchor fragments in rewritten paths', async () => {
