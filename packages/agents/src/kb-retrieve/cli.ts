@@ -146,7 +146,7 @@ export async function runRetrieve(input: {
     // A malformed registry that contributes no entries reads identically to "no registry" in `scopedKbs`, so name
     // the failure in the diagnostic to distinguish a defect to fix from an absent registry.
     const diagnostic =
-      registryError === undefined ? 'no knowledge base configured or discovered' : `registry invalid: ${registryError}`;
+      registryError === undefined ? 'no knowledge base configured or discovered' : formatRegistryInvalid(registryError);
     return { candidates: [], scopedKbs: [], warnings: composeWarnings({ registryError, missingKbs: [] }), diagnostic };
   }
 
@@ -178,7 +178,7 @@ export async function runRetrieve(input: {
 function composeWarnings(input: { registryError: string | undefined; missingKbs: ScopedKb[] }): string[] {
   const warnings: string[] = [];
   if (input.registryError !== undefined) {
-    warnings.push(`registry invalid: ${input.registryError}`);
+    warnings.push(formatRegistryInvalid(input.registryError));
   }
   for (const kb of input.missingKbs) {
     warnings.push(
@@ -188,6 +188,11 @@ function composeWarnings(input: { registryError: string | undefined; missingKbs:
     );
   }
   return warnings;
+}
+
+/** Single source for the malformed-registry message, shared by the empty-scope diagnostic and the warnings channel so the two cannot drift. */
+function formatRegistryInvalid(registryError: string): string {
+  return `registry invalid: ${registryError}`;
 }
 
 // endregion | Helpers
