@@ -42,9 +42,7 @@ export async function resolveWritableKb(input: {
   explicitKb: string | null;
   home?: string;
 }): Promise<ResolveKbOutcome> {
-  // Degrade a malformed or unreadable registry to an empty config: a defective project- or user-level `kb.yaml`
-  // would otherwise throw out of `resolveWritableKb` and break the structured result contract every other failure
-  // path honors. Warn to stderr so a permission error or YAML defect is distinguishable from "no config file at all,"
+  // Warn to stderr so a permission error or YAML defect is distinguishable from "no config file at all,"
   // which would otherwise make the resulting `no-kb-resolvable` failure hard to diagnose.
   const { config, error } = await tryLoadKbConfig({
     projectDir: input.startDir,
