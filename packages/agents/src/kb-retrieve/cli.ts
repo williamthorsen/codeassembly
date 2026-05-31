@@ -155,7 +155,7 @@ export async function runRetrieve(input: {
 
   // `scopedKbs` reports the KBs actually searched, so exclude any whose path was missing; the dead paths surface in
   // `warnings` instead.
-  const searchedKbs = inScopeKbs.filter((kb) => !missingKbs.includes(kb));
+  const searchedKbs = inScopeKbs.filter((kb) => !missingKbs.some((missing) => missing.path === kb.path));
 
   const result: RetrieveResult = {
     candidates,
