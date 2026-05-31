@@ -1,10 +1,11 @@
-/**
- * Checks whether an error is an ENOENT (no such file or directory) filesystem error.
- *
- * @internal
- */
+/** Returns true when `error` carries the given Node `code` string (e.g. `'ENOENT'`, `'EACCES'`). */
+export function isErrorCode(error: unknown, code: string): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
+}
+
+/** Checks whether an error is an ENOENT (no such file or directory) filesystem error. */
 export function isEnoent(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
+  return isErrorCode(error, 'ENOENT');
 }
 
 /**
