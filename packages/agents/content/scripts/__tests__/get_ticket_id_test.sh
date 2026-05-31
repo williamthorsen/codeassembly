@@ -290,9 +290,10 @@ When call test_read
 The output should equal ""
 End
 
-It "defaults to .agents/preferences.yaml in the current working directory"
+It "defaults to the preferences file at the git repo root"
 prepare() {
   mkdir -p "$tmpdir/workdir/.agents"
+  git -C "$tmpdir/workdir" init --quiet
   cat >"$tmpdir/workdir/.agents/preferences.yaml" <<'YAML'
 project:
   ticket_ref_prefix: 'MAC-'
@@ -332,6 +333,9 @@ setup_tmpdir() {
   tmpdir=$(mktemp -d)
   original_pwd="$PWD"
   mkdir -p "$tmpdir/workdir/.agents"
+  # Make workdir a real repo so the resolver anchors there and the not-a-repo diagnostic stays
+  # silent; cases that need the not-a-repo path run from a separate uninitialized directory.
+  git -C "$tmpdir/workdir" init --quiet
   cd "$tmpdir/workdir"
 }
 
@@ -344,7 +348,7 @@ BeforeEach "setup_tmpdir"
 AfterEach "cleanup_tmpdir"
 
 # Each end-to-end case runs the script as a child process so the
-# preferences-file lookup honors the test's working directory.
+# preferences-file lookup honors the resolved repo root.
 
 It "returns COMPPLAN-795 for an author-prefixed branch"
 When run bash "$script" "wt/COMPPLAN-795"
@@ -449,5 +453,36 @@ run_script() {
 }
 When call run_script
 The output should equal "525"
+End
+
+It "reads preferences from the repo root when invoked from a subdirectory"
+prepare() {
+  cat >"$tmpdir/workdir/.agents/preferences.yaml" <<'YAML'
+project:
+  ticket_ref_prefix: 'MAC-'
+YAML
+  mkdir -p "$tmpdir/workdir/packages/nested"
+  cd "$tmpdir/workdir/packages/nested"
+}
+run_script() {
+  prepare
+  bash "$script" "147"
+}
+When call run_script
+The output should equal "MAC-147"
+End
+
+It "warns to stderr when a bare number is resolved outside a git repository"
+# Run from a sibling directory that is deliberately not a repo so the prefix lookup falls back to
+# the working directory and must announce the misanchor on stderr rather than failing silently.
+run_outside_repo() {
+  mkdir -p "$tmpdir/outside"
+  cd "$tmpdir/outside"
+  bash "$script" "147"
+}
+When call run_outside_repo
+The output should equal "147"
+The stderr should include "not inside a git repository"
+The status should be success
 End
 End

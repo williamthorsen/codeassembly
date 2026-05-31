@@ -13,7 +13,10 @@
  *
  * Flags:
  *   --branch <name>   Override branch lookup (used by tests and the smoke harness).
- *   --cwd <path>      Override working directory (used by tests).
+ *   --cwd <path>      Caller-supplied base directory for repo-relative paths (`.agents/`). When omitted, the base
+ *                     resolves to the git repo root (worktree-aware), falling back to the current working directory.
+ *                     Callers that already hold the root (e.g. `resolve-frontmatter.sh`) pass it explicitly; tests
+ *                     use it for isolation. See `resolveProjectRoot` for the full precedence.
  *   --home <path>     Override home directory for `~/.agents/preferences.yaml` lookup.
  *                     Defaults to `os.homedir()`.
  */
@@ -27,6 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
+import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
 import { composeManifest } from './compose-manifest.ts';
 import { readPreferences } from './read-preferences.ts';
 import type { BranchManifest } from './types.ts';
@@ -57,7 +61,7 @@ interface ParsedArgs {
 async function main(): Promise<void> {
   try {
     const parsed = parseArgs(process.argv.slice(2));
-    const cwd = parsed.cwd ?? process.cwd();
+    const cwd = resolveProjectRoot({ cwd: parsed.cwd });
     const branch = parsed.branch ?? (await resolveCurrentBranch(cwd));
 
     const manifest = await deriveSessionContext({

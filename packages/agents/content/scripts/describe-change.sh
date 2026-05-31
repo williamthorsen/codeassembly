@@ -65,6 +65,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Resolve the project preferences file, anchored at the git repo root so the lookup does not depend on the
+# caller's working directory. Falls back to the current directory when not inside a git repository, emitting a
+# stderr diagnostic so a misanchored run is debuggable rather than silent.
+project_preferences_file() {
+  local root
+  if ! root="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+    root="$PWD"
+    printf '%s: not inside a git repository; anchoring .agents/ lookup at %s\n' "$PROG" "$root" >&2
+  fi
+  printf '%s/.agents/preferences.yaml' "$root"
+}
+
 # Parse a specific `title_format` value from a YAML file.
 # Reads line-by-line, tracks the current top-level section, and matches
 # `title_format:` within the target section (commit, ticket, pr, merge).
@@ -118,12 +130,15 @@ parse_title_format() {
 # Resolve a `title_format` value by checking project, then global, then defaulting to empty.
 # parse_title_format returns "FOUND:{value}" when the key is present, or empty when absent.
 # This lets an explicit empty value at the project level override a global non-empty value.
+# The project preferences path is resolved once by the caller and passed in, so the git-root
+# lookup (and its not-a-repo diagnostic) runs once per invocation rather than once per section.
 resolve_title_format() {
   local section="$1"
+  local project_prefs_file="$2"
   local result
 
   # Project preferences
-  result="$(parse_title_format ".agents/preferences.yaml" "$section")"
+  result="$(parse_title_format "$project_prefs_file" "$section")"
   if [[ "$result" == FOUND:* ]]; then
     echo "${result#FOUND:}"
     return
@@ -256,11 +271,15 @@ json_escape() {
 }
 
 main() {
+  # Resolve the project preferences path once so the git-root lookup runs a single time.
+  local project_prefs_file
+  project_prefs_file="$(project_preferences_file)"
+
   local commit_template ticket_template pr_template merge_template
-  commit_template="$(resolve_title_format "commit")"
-  ticket_template="$(resolve_title_format "ticket")"
-  pr_template="$(resolve_title_format "pr")"
-  merge_template="$(resolve_title_format "merge")"
+  commit_template="$(resolve_title_format "commit" "$project_prefs_file")"
+  ticket_template="$(resolve_title_format "ticket" "$project_prefs_file")"
+  pr_template="$(resolve_title_format "pr" "$project_prefs_file")"
+  merge_template="$(resolve_title_format "merge" "$project_prefs_file")"
 
   local commit_title ticket_title pr_title merge_title
   commit_title="$(json_escape "$(render_title "$commit_template")")"
