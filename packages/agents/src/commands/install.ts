@@ -1,7 +1,7 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { isEnoent } from '@codeassembly/kb-core';
+import { isEnoent, isErrorCode } from '@codeassembly/kb-core';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
@@ -862,10 +862,7 @@ async function installPlatformGuidance(
 
 /** True when a `readFile` of `SKILL.md` raised `ENOENT` (file absent) or `ENOTDIR` (parent segment is a regular file). */
 function isMissingSkill(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null || !('code' in error)) {
-    return false;
-  }
-  return error.code === 'ENOENT' || error.code === 'ENOTDIR';
+  return isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR');
 }
 
 /**
