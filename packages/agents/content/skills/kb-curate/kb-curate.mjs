@@ -21959,6 +21959,14 @@ async function loadKbConfig(input = {}) {
   }
   return { entries: merged, sources };
 }
+async function tryLoadKbConfig(input = {}) {
+  try {
+    return { config: await loadKbConfig(input) };
+  } catch (error51) {
+    const message = error51 instanceof Error ? error51.message : String(error51);
+    return { config: { entries: [], sources: {} }, error: message };
+  }
+}
 async function loadConfigFile(path, source, home) {
   let text;
   try {
@@ -22037,10 +22045,14 @@ function expandTilde(value, home) {
 
 // src/kb-shared/resolve-writable-kb.ts
 async function resolveWritableKb(input) {
-  const config2 = await loadKbConfigSafely({
+  const { config: config2, error: error51 } = await tryLoadKbConfig({
     projectDir: input.startDir,
     ...input.home !== void 0 && { home: input.home }
   });
+  if (error51 !== void 0) {
+    process2.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${error51}
+`);
+  }
   if (input.explicitKb !== null) {
     const match = config2.entries.find((entry) => entry.name === input.explicitKb);
     if (match === void 0) {
@@ -22077,19 +22089,6 @@ async function resolveWritableKb(input) {
     };
   }
   return { ok: false, reason: "no-kb-resolvable", requestedKb: null };
-}
-async function loadKbConfigSafely(input) {
-  try {
-    return await loadKbConfig({
-      projectDir: input.projectDir,
-      ...input.home !== void 0 && { home: input.home }
-    });
-  } catch (error51) {
-    const message = error51 instanceof Error ? error51.message : String(error51);
-    process2.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${message}
-`);
-    return { entries: [], sources: {} };
-  }
 }
 
 // src/kb-curate/apply.ts

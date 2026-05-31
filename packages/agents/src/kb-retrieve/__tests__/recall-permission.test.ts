@@ -21,9 +21,10 @@ describe('recallNotes permission handling', () => {
     mockedStat.mockRejectedValue(fsError('ENOENT'));
 
     const { recallNotes } = await import('../recall.ts');
-    const hits = await recallNotes({ query: 'backpressure', scopedKbs: scope });
+    const { hits, missingKbs } = await recallNotes({ query: 'backpressure', scopedKbs: scope });
 
     expect(hits).toEqual([]);
+    expect(missingKbs).toEqual(scope);
   });
 
   it('throws when a KB directory exists but is permission-denied (EACCES)', async () => {

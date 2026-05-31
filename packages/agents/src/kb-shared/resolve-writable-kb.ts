@@ -1,7 +1,6 @@
 import process from 'node:process';
 
-import type { KbConfig } from '@codeassembly/kb-core';
-import { findKbRoot, loadKbConfig } from '@codeassembly/kb-core/discovery';
+import { findKbRoot, tryLoadKbConfig } from '@codeassembly/kb-core/discovery';
 
 /** A knowledge base resolved as the write target. */
 export interface ResolvedKb {
@@ -43,10 +42,17 @@ export async function resolveWritableKb(input: {
   explicitKb: string | null;
   home?: string;
 }): Promise<ResolveKbOutcome> {
-  const config = await loadKbConfigSafely({
+  // Degrade a malformed or unreadable registry to an empty config: a defective project- or user-level `kb.yaml`
+  // would otherwise throw out of `resolveWritableKb` and break the structured result contract every other failure
+  // path honors. Warn to stderr so a permission error or YAML defect is distinguishable from "no config file at all,"
+  // which would otherwise make the resulting `no-kb-resolvable` failure hard to diagnose.
+  const { config, error } = await tryLoadKbConfig({
     projectDir: input.startDir,
     ...(input.home !== undefined && { home: input.home }),
   });
+  if (error !== undefined) {
+    process.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${error}\n`);
+  }
 
   if (input.explicitKb !== null) {
     const match = config.entries.find((entry) => entry.name === input.explicitKb);
@@ -88,29 +94,3 @@ export async function resolveWritableKb(input: {
 
   return { ok: false, reason: 'no-kb-resolvable', requestedKb: null };
 }
-
-// region | Helpers
-
-/**
- * Loads the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config and emitting
- * a warning to stderr so the operator can see why the registry did not contribute entries.
- *
- * A defective project- or user-level `kb.yaml` would otherwise throw out of `resolveWritableKb` and break the
- * structured result contract that every other failure path honors. Without the warning, a permission error or YAML
- * defect looked identical to "no config file at all," which made the resulting `no-kb-resolvable` failure hard
- * to diagnose.
- */
-async function loadKbConfigSafely(input: { projectDir: string; home?: string }): Promise<KbConfig> {
-  try {
-    return await loadKbConfig({
-      projectDir: input.projectDir,
-      ...(input.home !== undefined && { home: input.home }),
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${message}\n`);
-    return { entries: [], sources: {} };
-  }
-}
-
-// endregion | Helpers

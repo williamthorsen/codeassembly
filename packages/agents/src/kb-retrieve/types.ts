@@ -52,8 +52,10 @@ export interface RecallFilters {
 export interface RetrieveResult {
   /** The normalized candidates, one per matched note. */
   candidates: Candidate[];
-  /** The knowledge bases that were searched. */
+  /** The knowledge bases that were actually searched: in-scope KBs minus any whose path did not exist on disk. */
   scopedKbs: ScopedKb[];
+  /** Registry-health problems (malformed registry, dead entry paths), always present and possibly empty. */
+  warnings: string[];
   /** A run-level diagnostic, set when scope is empty or no notes matched. */
   diagnostic?: string;
 }

@@ -52,7 +52,8 @@ node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setu
 The helper prints a JSON object to stdout:
 
 - `candidates` — an array of candidate notes, each with `path`, `title`, `type`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`.
-- `scopedKbs` — the knowledge bases that were searched.
+- `scopedKbs` — the knowledge bases that were actually searched.
+- `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
 
 ### 2. Rank the candidates
@@ -69,11 +70,19 @@ Present the ranked notes, each showing `path`, `title`, `snippet`, and `type`. A
 
 ### 4. Report empty results plainly
 
-When the helper returns a `diagnostic` and no candidates, report the empty result plainly — do not treat it as an error:
+When the helper returns a `diagnostic` and no candidates, report the empty result plainly — do not treat it as an error. `diagnostic` explains **why the result is empty**:
 
 - `no knowledge base configured or discovered` — no `.kb/` folder was found and no registry is configured.
+- `registry invalid: …` — the only configured `kb.yaml` registry failed to load, so no knowledge base could be searched; this is a setup problem to fix, not a missing-notes outcome.
 - `no notes matched the query` — the knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
 - `all matches were filtered out` — the knowledge bases were searched and found hits, but every hit was excluded by `--type`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
+
+### 5. Relay registry-health warnings
+
+`warnings` is separate from `diagnostic`: it reports **what is wrong with the registry**, and it is present even when candidates are returned. Always relay any warning to the user as a setup problem to fix — not as a failed query — so a degraded registry does not silently shrink the search:
+
+- `registry invalid: …` — the `kb.yaml` registry could not be loaded; entries it would have contributed are missing from the search.
+- `… path does not exist: …` — a registry entry names a knowledge base whose directory is absent on disk, so that KB was skipped; the entry or the directory needs fixing.
 
 ## Completion
 

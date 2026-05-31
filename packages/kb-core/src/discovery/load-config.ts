@@ -43,6 +43,34 @@ export async function loadKbConfig(
   return { entries: merged, sources };
 }
 
+/** The outcome of a no-throw registry load: the resolved config plus a captured error message when loading failed. */
+export interface KbConfigLoadResult {
+  /** The merged registry, or an empty config when loading threw. */
+  config: KbConfig;
+  /** The thrown error's message, present only when `loadKbConfig` failed. */
+  error?: string;
+}
+
+/**
+ * Load the merged `kb.yaml` registry without throwing, capturing any failure message instead of presenting it.
+ *
+ * On success — including the legitimate "no registry files present" case, which `loadKbConfig` already returns as an
+ * empty config — `error` is absent. On a malformed file, a schema violation, a duplicate `default: true`, or a
+ * non-ENOENT read failure, the result degrades to an empty config and carries the thrown message in `error`. Each
+ * caller decides whether and how to surface that message; this wrapper neither writes to stderr nor builds a
+ * diagnostic.
+ */
+export async function tryLoadKbConfig(
+  input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
+): Promise<KbConfigLoadResult> {
+  try {
+    return { config: await loadKbConfig(input) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { config: { entries: [], sources: {} }, error: message };
+  }
+}
+
 // region | Helpers
 
 /**

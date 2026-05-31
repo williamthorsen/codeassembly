@@ -2,7 +2,7 @@ import { join, resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { loadKbConfig } from '../load-config.ts';
+import { loadKbConfig, tryLoadKbConfig } from '../load-config.ts';
 
 const MERGE_DIR = join(import.meta.dirname, 'fixtures', 'config-merge');
 const HOME = join(MERGE_DIR, 'home');
@@ -95,5 +95,56 @@ describe(loadKbConfig, () => {
     await expect(loadKbConfig({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') })).rejects.toThrow(
       /bad-structure.*kb\.yaml: invalid kb\.yaml —/s,
     );
+  });
+});
+
+describe(tryLoadKbConfig, () => {
+  it('returns the merged config with no error for a valid registry', async () => {
+    const result = await tryLoadKbConfig({ home: HOME, projectDir: PROJECT });
+
+    expect(result.error).toBeUndefined();
+    expect(result.config.entries.map((entry) => entry.name).toSorted()).toEqual([
+      'project-only',
+      'shared',
+      'user-only',
+    ]);
+  });
+
+  it('returns an empty config with no error when neither registry file exists', async () => {
+    const result = await tryLoadKbConfig({ home: '/no/such/home', projectDir: '/no/such/project' });
+
+    expect(result.error).toBeUndefined();
+    expect(result.config.entries).toEqual([]);
+    expect(result.config.sources).toEqual({});
+  });
+
+  it('captures the error and degrades to an empty config for a malformed file', async () => {
+    const result = await tryLoadKbConfig({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'malformed-yaml') });
+
+    expect(result.error).toMatch(/malformed YAML —/);
+    expect(result.config).toEqual({ entries: [], sources: {} });
+  });
+
+  it('captures the error for a schema violation', async () => {
+    const result = await tryLoadKbConfig({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') });
+
+    expect(result.error).toMatch(/invalid kb\.yaml —/);
+    expect(result.config.entries).toEqual([]);
+  });
+
+  it('captures the error for a duplicate default', async () => {
+    const result = await tryLoadKbConfig({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'dup-default') });
+
+    expect(result.error).toMatch(/multiple KB entries marked default: true/);
+    expect(result.config.entries).toEqual([]);
+  });
+
+  it('captures the error for a non-ENOENT read failure', async () => {
+    // Point `userConfigPath` at an existing directory; reading it yields EISDIR, a read failure that is not ENOENT
+    // and so must be captured rather than treated as an absent file.
+    const result = await tryLoadKbConfig({ userConfigPath: MERGE_DIR, home: '/no/such/home' });
+
+    expect(result.error).toBeDefined();
+    expect(result.config.entries).toEqual([]);
   });
 });

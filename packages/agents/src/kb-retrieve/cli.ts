@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { normalizeHits } from './normalize.ts';
 import { recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
-import type { RecallFilters, RetrieveResult } from './types.ts';
+import type { RecallFilters, RetrieveResult, ScopedKb } from './types.ts';
 
 /** Parsed command-line invocation of the kb-retrieve helper. */
 export interface ParsedArgs {
@@ -134,28 +134,60 @@ export async function runRetrieve(input: {
   const { query, allKbs, filters } = parseArgs(input.argv);
 
   if (query === '') {
-    return { candidates: [], scopedKbs: [], diagnostic: 'no query provided' };
+    return { candidates: [], scopedKbs: [], warnings: [], diagnostic: 'no query provided' };
   }
 
-  const scopedKbs = await resolveScope({
+  const { kbs: inScopeKbs, registryError } = await resolveScope({
     startDir: input.startDir,
     allKbs,
     ...(input.home !== undefined && { home: input.home }),
   });
-  if (scopedKbs.length === 0) {
-    return { candidates: [], scopedKbs, diagnostic: 'no knowledge base configured or discovered' };
+  if (inScopeKbs.length === 0) {
+    // A malformed registry that contributes no entries reads identically to "no registry" in `scopedKbs`, so name
+    // the failure in the diagnostic to distinguish a defect to fix from an absent registry.
+    const diagnostic =
+      registryError === undefined ? 'no knowledge base configured or discovered' : `registry invalid: ${registryError}`;
+    return { candidates: [], scopedKbs: [], warnings: composeWarnings({ registryError, missingKbs: [] }), diagnostic };
   }
 
-  const hits = await recallNotes({ query, scopedKbs });
+  const { hits, missingKbs } = await recallNotes({ query, scopedKbs: inScopeKbs });
   const candidates = await normalizeHits({ hits, filters, now: input.now });
 
-  const result: RetrieveResult = { candidates, scopedKbs };
+  // `scopedKbs` reports the KBs actually searched, so exclude any whose path was missing; the dead paths surface in
+  // `warnings` instead.
+  const searchedKbs = inScopeKbs.filter((kb) => !missingKbs.includes(kb));
+
+  const result: RetrieveResult = {
+    candidates,
+    scopedKbs: searchedKbs,
+    warnings: composeWarnings({ registryError, missingKbs }),
+  };
   if (candidates.length === 0) {
     // Distinguish a query that found nothing from a query that found hits which were then excluded by
     // `--type` / `--tag` / `--folder`, so the caller knows whether to broaden the query or drop a filter.
     result.diagnostic = hits.length === 0 ? 'no notes matched the query' : 'all matches were filtered out';
   }
   return result;
+}
+
+/**
+ * Phrases the operator-facing registry-health warnings in deterministic order: the malformed-registry warning first,
+ * then one dead-path warning per missing KB in registry/scope order. A named entry reports its name and path; a
+ * registry-less discovered KB (`name === null`, only reachable under a TOCTOU race) reports just its path.
+ */
+function composeWarnings(input: { registryError: string | undefined; missingKbs: ScopedKb[] }): string[] {
+  const warnings: string[] = [];
+  if (input.registryError !== undefined) {
+    warnings.push(`registry invalid: ${input.registryError}`);
+  }
+  for (const kb of input.missingKbs) {
+    warnings.push(
+      kb.name === null
+        ? `discovered KB path does not exist: ${kb.path}`
+        : `registry KB "${kb.name}" path does not exist: ${kb.path}`,
+    );
+  }
+  return warnings;
 }
 
 // endregion | Helpers

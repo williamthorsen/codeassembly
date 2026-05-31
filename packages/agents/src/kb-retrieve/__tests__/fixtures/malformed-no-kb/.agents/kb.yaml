@@ -1,0 +1,6 @@
+# Malformed registry fixture with no discoverable `.kb/` root, so scope is empty and only the registry error remains.
+kbs:
+  vault-a:
+    path: ../../vault-a
+   default: true
+  : [unterminated

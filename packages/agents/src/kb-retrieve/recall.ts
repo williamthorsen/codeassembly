@@ -13,6 +13,14 @@ const execFileAsync = promisify(execFile);
 /** Number of context lines captured on each side of a ripgrep match for the snippet. */
 const SNIPPET_CONTEXT_LINES = 1;
 
+/** The recall outcome: the raw hits plus the in-scope KBs that were skipped because their path did not exist. */
+export interface RecallResult {
+  /** The raw ripgrep hits across every searched KB. */
+  hits: RawHit[];
+  /** In-scope KBs skipped because their path was absent (`ENOENT` / `ENOTDIR`) on disk. */
+  missingKbs: ScopedKb[];
+}
+
 /**
  * Runs ripgrep over the note bodies and frontmatter of every in-scope KB and return the raw hits.
  *
@@ -21,17 +29,22 @@ const SNIPPET_CONTEXT_LINES = 1;
  * A note matching any term is a hit. Each note appears at most once per KB; its snippet is drawn from the first
  * matching line and its immediate neighbors.
  *
+ * An in-scope KB whose path is absent (`ENOENT` / `ENOTDIR`) is skipped and reported in `missingKbs` so callers can
+ * surface the dead path; a permission error (`EACCES` / `EPERM`) on a path that does exist still throws.
+ *
  * ripgrep is required on `PATH`; an absent binary throws with a remediation hint.
  */
-export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] }): Promise<RawHit[]> {
+export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] }): Promise<RecallResult> {
   const baseTerms = tokenizeQuery(input.query);
   if (baseTerms.length === 0) {
-    return [];
+    return { hits: [], missingKbs: [] };
   }
 
   const hits: RawHit[] = [];
+  const missingKbs: ScopedKb[] = [];
   for (const kb of input.scopedKbs) {
     if (!(await isExistingDirectory(kb.path))) {
+      missingKbs.push(kb);
       continue;
     }
     const aliases = await loadAliasesForKb(kb.path);
@@ -39,7 +52,7 @@ export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] 
     const kbHits = await searchKb({ kb, terms });
     hits.push(...kbHits);
   }
-  return hits;
+  return { hits, missingKbs };
 }
 
 // region | Helpers
