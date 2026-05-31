@@ -6,6 +6,7 @@
 # `Glob` has no exact Rovo Dev counterpart: `expand_folder` is the closest directory-exploration analogue, accepted as
 # the mapping for prose contexts.
 _tools:
+  AskUserQuestion: ask_user_questions
   Bash: bash
   Edit: find_and_replace_code
   Glob: expand_folder

@@ -5,6 +5,7 @@
 # Keys are canonical PascalCase tool names; values are platform-native names.
 # Claude uses canonical names, so this is an identity mapping.
 _tools:
+  AskUserQuestion: AskUserQuestion
   Bash: Bash
   Edit: Edit
   Glob: Glob

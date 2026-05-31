@@ -70,7 +70,7 @@ Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift
    - Only one question per message
    - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
-**Important:** Do not use interactive prompt mechanisms (pop-ups, arrow-key selectors, structured choice tools) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
+**Important:** Do not use `{tool:AskUserQuestion}` or any interactive selector (pop-up, arrow-key, structured-choice) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
 
 ### Phase 3: Converge on a design
 
