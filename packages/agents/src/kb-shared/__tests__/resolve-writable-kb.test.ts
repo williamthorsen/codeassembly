@@ -15,6 +15,7 @@ const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
 const HOME_MALFORMED = join(FIXTURES, 'malformed-registry');
 const HOME_READONLY_DEFAULT = join(FIXTURES, 'home-readonly-default');
 const HOME_READONLY_NAMED = join(FIXTURES, 'home-readonly-named');
+const HOME_SINGLE_DEFAULT = join(FIXTURES, 'home-single-default');
 // A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
 const HOME_EMPTY = FIXTURES;
 
@@ -65,6 +66,15 @@ describe(resolveWritableKb, () => {
     expect(result).toEqual({
       ok: true,
       kb: { name: 'vault-b', path: VAULT_B, source: 'explicit' },
+    });
+  });
+
+  it('resolves --kb for a single-entry registry whose sole entry is the default (regression: #684)', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: 'coding', home: HOME_SINGLE_DEFAULT });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'coding', path: VAULT_B, source: 'explicit' },
     });
   });
 
