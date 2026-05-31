@@ -16,18 +16,19 @@ const HOME_EMPTY = FIXTURES;
 
 describe(resolveScope, () => {
   it('default scope is the discovered KB plus the registry default', async () => {
-    const scoped = await resolveScope({ startDir: PROJECT_KB, allKbs: false, home: HOME_EMPTY });
+    const { kbs, registryError } = await resolveScope({ startDir: PROJECT_KB, allKbs: false, home: HOME_EMPTY });
 
-    expect(scoped).toEqual([
+    expect(kbs).toEqual([
       { name: null, path: PROJECT_KB, via: 'discovery' },
       { name: 'vault-a', path: VAULT_A, via: 'registry-default' },
     ]);
+    expect(registryError).toBeUndefined();
   });
 
   it('--all-kbs widens scope to every registered KB', async () => {
-    const scoped = await resolveScope({ startDir: PROJECT_KB, allKbs: true, home: HOME_EMPTY });
+    const { kbs } = await resolveScope({ startDir: PROJECT_KB, allKbs: true, home: HOME_EMPTY });
 
-    expect(scoped).toEqual([
+    expect(kbs).toEqual([
       { name: null, path: PROJECT_KB, via: 'discovery' },
       { name: 'vault-a', path: VAULT_A, via: 'registry-all' },
       { name: 'vault-b', path: VAULT_B, via: 'registry-all' },
@@ -35,30 +36,36 @@ describe(resolveScope, () => {
   });
 
   it('returns only the discovered KB when no registry is configured', async () => {
-    const scoped = await resolveScope({ startDir: NOTES_VAULT, allKbs: false, home: HOME_EMPTY });
+    const { kbs } = await resolveScope({ startDir: NOTES_VAULT, allKbs: false, home: HOME_EMPTY });
 
-    expect(scoped).toEqual([{ name: null, path: NOTES_VAULT, via: 'discovery' }]);
+    expect(kbs).toEqual([{ name: null, path: NOTES_VAULT, via: 'discovery' }]);
   });
 
   it('reads the user-global registry when no project registry exists', async () => {
-    const scoped = await resolveScope({ startDir: NOTES_VAULT, allKbs: false, home: HOME_WITH_DEFAULT });
+    const { kbs } = await resolveScope({ startDir: NOTES_VAULT, allKbs: false, home: HOME_WITH_DEFAULT });
 
-    expect(scoped).toEqual([
+    expect(kbs).toEqual([
       { name: null, path: NOTES_VAULT, via: 'discovery' },
       { name: 'global-vault', path: VAULT_B, via: 'registry-default' },
     ]);
   });
 
   it('returns an empty scope when neither a .kb root nor a registry is found', async () => {
-    const scoped = await resolveScope({ startDir: '/', allKbs: false, home: HOME_EMPTY });
+    const { kbs, registryError } = await resolveScope({ startDir: '/', allKbs: false, home: HOME_EMPTY });
 
-    expect(scoped).toEqual([]);
+    expect(kbs).toEqual([]);
+    expect(registryError).toBeUndefined();
   });
 
-  it('degrades a malformed registry to an empty registry instead of throwing', async () => {
-    const scoped = await resolveScope({ startDir: MALFORMED_REGISTRY, allKbs: false, home: HOME_EMPTY });
+  it('degrades a malformed registry to an empty registry and reports the load error', async () => {
+    const { kbs, registryError } = await resolveScope({
+      startDir: MALFORMED_REGISTRY,
+      allKbs: false,
+      home: HOME_EMPTY,
+    });
 
     // The malformed `.agents/kb.yaml` yields no registry entries; the discovered `.kb` root still resolves.
-    expect(scoped).toEqual([{ name: null, path: MALFORMED_REGISTRY, via: 'discovery' }]);
+    expect(kbs).toEqual([{ name: null, path: MALFORMED_REGISTRY, via: 'discovery' }]);
+    expect(registryError).toMatch(/kb\.yaml/);
   });
 });

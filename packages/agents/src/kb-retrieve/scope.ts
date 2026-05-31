@@ -1,7 +1,14 @@
-import type { KbConfig } from '@codeassembly/kb-core';
-import { findKbRoot, loadKbConfig } from '@codeassembly/kb-core/discovery';
+import { findKbRoot, tryLoadKbConfig } from '@codeassembly/kb-core/discovery';
 
 import type { ScopedKb } from './types.ts';
+
+/** The resolved query scope: the in-scope KBs plus a captured registry-load error when one occurred. */
+export interface ScopeResult {
+  /** The knowledge bases the query should search. */
+  kbs: ScopedKb[];
+  /** The `kb.yaml` load error message, present only when the registry was malformed or unreadable. */
+  registryError?: string;
+}
 
 /**
  * Resolves which knowledge bases a query should search.
@@ -9,16 +16,19 @@ import type { ScopedKb } from './types.ts';
  * Default scope is the `.kb/`-discovered KB nearest `startDir` plus registry's default-marked KB (the global vault).
  * `allKbs` widens scope to every entry in the merged `kb.yaml` registry.
  * Entries are de-duplicated by absolute path so a discovered KB that also appears in the registry is searched once.
- * When neither a `.kb/` root nor any registry entry is found, the result is empty — callers report that as an empty
+ * When neither a `.kb/` root nor any registry entry is found, the scope is empty; callers report that as an empty
  * result rather than an error.
+ *
+ * A malformed or unreadable registry degrades to no registry entries; its captured message is returned as
+ * `registryError` for the caller to surface, never formatted or printed here.
  *
  * `home` overrides the directory the user-global `kb.yaml` is read from; it defaults to the real `$HOME`
  * and exists so tests can isolate registry resolution from the developer's environment.
  */
-export async function resolveScope(input: { startDir: string; allKbs: boolean; home?: string }): Promise<ScopedKb[]> {
-  const [discovered, config] = await Promise.all([
+export async function resolveScope(input: { startDir: string; allKbs: boolean; home?: string }): Promise<ScopeResult> {
+  const [discovered, { config, error: registryError }] = await Promise.all([
     findKbRoot({ startDir: input.startDir }),
-    loadKbConfigSafely({
+    tryLoadKbConfig({
       projectDir: input.startDir,
       ...(input.home !== undefined && { home: input.home }),
     }),
@@ -50,27 +60,5 @@ export async function resolveScope(input: { startDir: string; allKbs: boolean; h
     }
   }
 
-  return scoped;
+  return { kbs: scoped, ...(registryError !== undefined && { registryError }) };
 }
-
-// region | Helpers
-
-/**
- * Loads the merged `kb.yaml` registry, degrading a malformed or unreadable registry to an empty config.
- *
- * A defective project- or user-level `kb.yaml` would otherwise throw out of `resolveScope` and break the structured
- * `RetrieveResult` contract that every other failure path through `runRetrieve` honors. The empty result is reported
- * through the standard no-KB diagnostic instead.
- */
-async function loadKbConfigSafely(input: { projectDir: string; home?: string }): Promise<KbConfig> {
-  try {
-    return await loadKbConfig({
-      projectDir: input.projectDir,
-      ...(input.home !== undefined && { home: input.home }),
-    });
-  } catch {
-    return { entries: [], sources: {} };
-  }
-}
-
-// endregion | Helpers

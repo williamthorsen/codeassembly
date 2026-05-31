@@ -1,6 +1,7 @@
 import { join } from 'node:path';
+import process from 'node:process';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { resolveWritableKb } from '../resolve-writable-kb.ts';
 
@@ -92,9 +93,19 @@ describe(resolveWritableKb, () => {
     // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`. The helper must swallow the parse
     // error and surface a structured result — here, the no-kb-resolvable failure for a startDir with no `.kb/`
     // marker — rather than letting the throw escape `resolveWritableKb`.
-    const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
 
-    expect(result).toEqual({ ok: false, reason: 'no-kb-resolvable', requestedKb: null });
+      expect(result).toEqual({ ok: false, reason: 'no-kb-resolvable', requestedKb: null });
+
+      const warningLine = stderrSpy.mock.calls
+        .map((call) => call[0])
+        .find((arg): arg is string => typeof arg === 'string' && arg.includes('could not load kb.yaml registry:'));
+      expect(warningLine).toMatch(/could not load kb\.yaml registry:/);
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 
   it('degrades a malformed user-global registry while still honoring a discovered KB', async () => {

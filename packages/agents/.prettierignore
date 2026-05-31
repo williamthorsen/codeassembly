@@ -12,6 +12,7 @@ content/skills/update-jira-ticket/update-jira-ticket.mjs
 # Test fixtures that are intentionally syntactically malformed YAML. Prettier cannot
 # parse them, and reformatting would erase the defect they exist to test.
 src/**/__tests__/**/fixtures/malformed-aliases/
+src/**/__tests__/**/fixtures/malformed-no-kb/
 src/**/__tests__/**/fixtures/malformed-registry/
 
 # Subagent partials and the files that consume them must preserve exact whitespace

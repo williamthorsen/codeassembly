@@ -28,4 +28,5 @@ packages/agents/content/subagents/orchestrated-reviewer.md
 packages/kb-core/src/**/__tests__/**/fixtures/**/malformed-yaml/
 packages/kb-core/src/**/__tests__/**/fixtures/**/syntactically-malformed.*
 packages/agents/src/**/__tests__/**/fixtures/malformed-aliases/
+packages/agents/src/**/__tests__/**/fixtures/malformed-no-kb/
 packages/agents/src/**/__tests__/**/fixtures/malformed-registry/
