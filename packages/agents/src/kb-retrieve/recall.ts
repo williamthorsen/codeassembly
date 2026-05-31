@@ -29,8 +29,8 @@ export interface RecallResult {
  * A note matching any term is a hit. Each note appears at most once per KB; its snippet is drawn from the first
  * matching line and its immediate neighbors.
  *
- * An in-scope KB whose path is absent (`ENOENT` / `ENOTDIR`) is skipped and reported in `missingKbs` so callers can
- * surface the dead path; a permission error (`EACCES` / `EPERM`) on a path that does exist still throws.
+ * An in-scope KB whose path is absent (`ENOENT` / `ENOTDIR`) is skipped and reported in `missingKbs` so that callers
+ * can surface the dead path; a permission error (`EACCES` / `EPERM`) on a path that does exist still throws.
  *
  * ripgrep is required on `PATH`; an absent binary throws with a remediation hint.
  */

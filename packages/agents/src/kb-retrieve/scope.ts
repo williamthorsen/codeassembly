@@ -16,7 +16,7 @@ export interface ScopeResult {
  * Default scope is the `.kb/`-discovered KB nearest `startDir` plus registry's default-marked KB (the global vault).
  * `allKbs` widens scope to every entry in the merged `kb.yaml` registry.
  * Entries are de-duplicated by absolute path so a discovered KB that also appears in the registry is searched once.
- * When neither a `.kb/` root nor any registry entry is found, the scope is empty — callers report that as an empty
+ * When neither a `.kb/` root nor any registry entry is found, the scope is empty; callers report that as an empty
  * result rather than an error.
  *
  * A malformed or unreadable registry degrades to no registry entries; its captured message is returned as

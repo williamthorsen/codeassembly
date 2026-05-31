@@ -70,19 +70,19 @@ Present the ranked notes, each showing `path`, `title`, `snippet`, and `type`. A
 
 ### 4. Report empty results plainly
 
-When the helper returns a `diagnostic` and no candidates, report the empty result plainly — do not treat it as an error. `diagnostic` explains **why the result is empty**:
+When the helper returns a `diagnostic` and no candidates, report the empty result plainly; do not treat it as an error. `diagnostic` explains **why the result is empty**:
 
-- `no knowledge base configured or discovered` — no `.kb/` folder was found and no registry is configured.
-- `registry invalid: …` — the only configured `kb.yaml` registry failed to load, so no knowledge base could be searched; this is a setup problem to fix, not a missing-notes outcome.
-- `no notes matched the query` — the knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`. An empty `warnings` array is the reliable signal that the in-scope KBs were actually searched and genuinely held nothing; when `warnings` is non-empty, a registry-health problem (a malformed registry or dead KB paths) may explain the empty or partial result even though the diagnostic reads `no notes matched the query`, so read `warnings` before concluding the query simply found nothing.
-- `all matches were filtered out` — the knowledge bases were searched and found hits, but every hit was excluded by `--type`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
+- `no knowledge base configured or discovered`: No `.kb/` folder was found and no registry is configured.
+- `registry invalid: …`: The only configured `kb.yaml` registry failed to load, so no knowledge base could be searched; this is a setup problem to fix, not a missing-notes outcome.
+- `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`. An empty `warnings` array is the reliable signal that the in-scope KBs were actually searched and genuinely held nothing; when `warnings` is non-empty, a registry-health problem (a malformed registry or dead KB paths) may explain the empty or partial result even though the diagnostic reads `no notes matched the query`, so read `warnings` before concluding the query simply found nothing.
+- `all matches were filtered out`: The knowledge bases were searched and found hits, but every hit was excluded by `--type`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
 
 ### 5. Relay registry-health warnings
 
-`warnings` is separate from `diagnostic`: it reports **what is wrong with the registry**, and it is present even when candidates are returned. Always relay any warning to the user as a setup problem to fix — not as a failed query — so a degraded registry does not silently shrink the search:
+`warnings` is separate from `diagnostic`: It reports **what is wrong with the registry**, and it is present even when candidates are returned. Always relay any warning to the user as a setup problem to fix — not as a failed query — so a degraded registry does not silently shrink the search:
 
-- `registry invalid: …` — the `kb.yaml` registry could not be loaded; entries it would have contributed are missing from the search.
-- `… path does not exist: …` — a registry entry names a knowledge base whose directory is absent on disk, so that KB was skipped; the entry or the directory needs fixing.
+- `registry invalid: …`: The `kb.yaml` registry could not be loaded; entries it would have contributed are missing from the search.
+- `… path does not exist: …`: A registry entry names a knowledge base whose directory is absent on disk, so that KB was skipped; the entry or the directory needs fixing.
 
 ## Completion
 
