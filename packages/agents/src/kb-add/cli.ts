@@ -212,7 +212,7 @@ export async function runAdd(input: {
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure (broken symlink, permission denied) the
  * function emits a warning to stderr and returns `false`, matching the degrade-with-warning pattern used by
- * `loadAliasesWithWarning` and `loadKbConfigSafely` so silent skips do not hide environment problems.
+ * `loadAliasesWithWarning` and `resolveWritableKb` so silent skips do not hide environment problems.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
