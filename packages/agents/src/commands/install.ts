@@ -1,8 +1,6 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { isEnoent, isErrorCode } from '@codeassembly/kb-core';
-
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
@@ -24,6 +22,7 @@ import {
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
+import { isEnoent, isErrorCode } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   InstallOptions,

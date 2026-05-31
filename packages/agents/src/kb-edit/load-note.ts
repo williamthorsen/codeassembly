@@ -1,6 +1,7 @@
 import type { ParsedNote } from '@codeassembly/kb-core';
-import { isEnoent } from '@codeassembly/kb-core';
 import { parseNote } from '@codeassembly/kb-core/frontmatter';
+
+import { isEnoent } from '../lib/type-guards.ts';
 
 /** Successful load: a fully-parsed note with valid frontmatter. */
 export interface LoadSuccess {

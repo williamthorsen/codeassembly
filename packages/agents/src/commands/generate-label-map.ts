@@ -2,8 +2,9 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { isEnoent } from '@codeassembly/kb-core';
 import { pathExists } from '@codeassembly/kb-core/filesystem';
+
+import { isEnoent, isRecord } from '../lib/type-guards.ts';
 
 /** Canonical mapping from commit type keys to human-readable label values. */
 const TYPE_MAP: Readonly<Record<string, string>> = {
@@ -105,14 +106,7 @@ export async function readReleaseKitVersion(): Promise<string> {
 
 /** Type guard: `value` is release-kit's `package.json` (matches name and has a string `version`). */
 function isReleaseKitPackageJson(value: unknown): value is { readonly name: string; readonly version: string } {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'name' in value &&
-    value.name === RELEASE_KIT_PACKAGE_NAME &&
-    'version' in value &&
-    typeof value.version === 'string'
-  );
+  return isRecord(value) && value.name === RELEASE_KIT_PACKAGE_NAME && typeof value.version === 'string';
 }
 
 /**

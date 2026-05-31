@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { isRecord } from '../../lib/type-guards.ts';
 import type { AppliedFix } from '../types.ts';
 
 /** Milliseconds to wait for the `kb-edit` subprocess before killing it and failing the fix. */
@@ -120,10 +121,5 @@ const runNode: RetagRunner = (args) =>
       }
     });
   });
-
-/** Narrows a value to a plain object with unknown property values. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
 
 // endregion | Helpers

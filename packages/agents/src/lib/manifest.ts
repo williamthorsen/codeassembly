@@ -4,6 +4,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
+import { isRecord } from './type-guards.ts';
 import type { AgentsManifest, ManifestEntry } from './types.js';
 
 /** Shared guidance home directory relative to the user's home. */
@@ -13,16 +14,10 @@ const SHARED_HOME_DIR = '.agents';
  * Type guard for AgentsManifest.
  */
 function isAgentsManifest(value: unknown): value is AgentsManifest {
-  if (typeof value !== 'object' || value === null) {
+  if (!isRecord(value)) {
     return false;
   }
-  return (
-    'schemaVersion' in value &&
-    typeof value.schemaVersion === 'number' &&
-    'platforms' in value &&
-    typeof value.platforms === 'object' &&
-    value.platforms !== null
-  );
+  return typeof value.schemaVersion === 'number' && isRecord(value.platforms);
 }
 
 /** Default manifest directory relative to home. */

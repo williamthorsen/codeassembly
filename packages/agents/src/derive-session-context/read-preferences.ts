@@ -10,9 +10,9 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { isEnoent } from '@codeassembly/kb-core';
 import { parse as parseYaml } from 'yaml';
 
+import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import type { PreferencesReadResult, ResolvedPreferences } from './types.ts';
 
 /**
@@ -228,10 +228,3 @@ function formatValue(value: unknown): string {
     return String(value);
   }
 }
-
-/** Narrows `value` to a plain object with unknown property values. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-// endregion | Helpers
