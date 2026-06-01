@@ -142,7 +142,13 @@ function assertDeriveSessionContextOutput(result: unknown): void {
   }
 }
 
-/** Type guard: narrows `value` to a plain object with unknown property values. */
+/**
+ * Type guard: narrows `value` to a plain object with unknown property values.
+ *
+ * Intentionally kept local rather than imported from `src/lib/type-guards.ts`: this build
+ * script sits outside the runtime surface, and importing runtime source into build tooling
+ * would couple the two for the sake of a one-line guard.
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }

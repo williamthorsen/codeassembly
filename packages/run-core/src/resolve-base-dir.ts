@@ -4,12 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 
 import yaml from 'js-yaml';
 
-/**
- * Type guard: checks if a value is a non-null, non-array object (record-like).
- */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+import { isRecord } from './type-guards.js';
 
 /**
  * Expand a leading `~/` prefix to the home directory.

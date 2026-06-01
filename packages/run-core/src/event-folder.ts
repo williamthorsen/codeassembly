@@ -1,3 +1,4 @@
+import { isRecord } from './type-guards.js';
 import type {
   ArchitecturePhase,
   ArtifactEntry,
@@ -33,10 +34,6 @@ function isQualityGatesRecord(value: Record<string, unknown>): value is QualityG
     (value.lint === undefined || typeof value.lint === 'string') &&
     (value.tests === undefined || typeof value.tests === 'string')
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Build a UsageMetrics object from an event's optional usage fields, or return undefined if none are present. */

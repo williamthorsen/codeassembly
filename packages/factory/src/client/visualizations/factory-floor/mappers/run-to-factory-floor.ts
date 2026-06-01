@@ -7,7 +7,8 @@ import {
   isPhaseEvaluated,
   isPhasePresentInData,
 } from '../../../../shared/phase-inference.js';
-import type { CanonicalRunStatus, ParallelReviewPhase, Phases } from '../../../../shared/types/canonical.js';
+import type { CanonicalRunStatus, Phases } from '../../../../shared/types/canonical.js';
+import { extractReviewerNames } from '../../shared/artifact-utils.js';
 import type {
   AgentAnimationState,
   AgentConfig,
@@ -58,49 +59,6 @@ const PHASE_ID: Record<string, string> = {
 
 function isPresent<T>(value: T | null | undefined): value is T {
   return value !== undefined && value !== null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-/** Extract reviewer names from any known parallelReview data shape. */
-function extractReviewerNames(parallelReview: ParallelReviewPhase): string[] {
-  const reviewers = parallelReview.reviewers;
-  if (isPresent(reviewers) && Object.keys(reviewers).length > 0) {
-    return Object.keys(reviewers);
-  }
-
-  const iterations = parallelReview.iterations;
-  if (isPresent(iterations) && iterations.length > 0) {
-    const names = new Set<string>();
-    for (const iteration of iterations) {
-      if ('perReviewer' in iteration) {
-        const perReviewer: unknown = iteration.perReviewer;
-        if (isRecord(perReviewer)) {
-          for (const name of Object.keys(perReviewer)) {
-            names.add(name);
-          }
-        }
-      }
-      if (Array.isArray(iteration.reviewers)) {
-        for (const name of iteration.reviewers) {
-          names.add(name);
-        }
-      }
-    }
-    if (names.size > 0) return Array.from(names);
-  }
-
-  if ('reviewerDetails' in parallelReview) {
-    const reviewerDetails: unknown = parallelReview.reviewerDetails;
-    if (isRecord(reviewerDetails)) {
-      const keys = Object.keys(reviewerDetails);
-      if (keys.length > 0) return keys;
-    }
-  }
-
-  return [];
 }
 
 // -- Phase status accessors --
