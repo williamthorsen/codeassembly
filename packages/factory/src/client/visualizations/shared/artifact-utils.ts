@@ -1,5 +1,6 @@
 import { ARTIFACT_COLORS } from '../../../shared/constants/artifact-colors.js';
 import type { ParallelReviewPhase } from '../../../shared/types/canonical.js';
+import { isRecord } from './type-guards.js';
 
 // region | Type guards
 
@@ -9,11 +10,6 @@ import type { ParallelReviewPhase } from '../../../shared/types/canonical.js';
  */
 export function isPresent<T>(value: T | null | undefined): value is T {
   return value !== undefined && value !== null;
-}
-
-/** Narrow an unknown value to a non-null object (safe for `Object.keys`). */
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 // endregion | Type guards

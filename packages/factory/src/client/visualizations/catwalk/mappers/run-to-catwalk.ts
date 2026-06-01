@@ -8,6 +8,7 @@ import {
   isPhasePresentInData,
 } from '../../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, ParallelReviewPhase, Phases } from '../../../../shared/types/canonical.js';
+import { isRecord } from '../../shared/type-guards.js';
 import type {
   AgentAnimationState,
   AgentConfig,
@@ -67,11 +68,6 @@ const PHASE_ID: Record<string, string> = {
  */
 function isPresent<T>(value: T | null | undefined): value is T {
   return value !== undefined && value !== null;
-}
-
-/** Narrow an unknown value to a non-null object (safe for `Object.keys`). */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 /**

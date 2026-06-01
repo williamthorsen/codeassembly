@@ -8,6 +8,7 @@ import {
   isPhasePresentInData,
 } from '../../../../shared/phase-inference.js';
 import type { CanonicalRunStatus, ParallelReviewPhase, Phases } from '../../../../shared/types/canonical.js';
+import { isRecord } from '../../shared/type-guards.js';
 import type {
   AgentAnimationState,
   AgentConfig,
@@ -58,10 +59,6 @@ const PHASE_ID: Record<string, string> = {
 
 function isPresent<T>(value: T | null | undefined): value is T {
   return value !== undefined && value !== null;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }
 
 /** Extract reviewer names from any known parallelReview data shape. */
