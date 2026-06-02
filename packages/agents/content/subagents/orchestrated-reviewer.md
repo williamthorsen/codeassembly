@@ -141,14 +141,14 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 - **Description:** {Optional improvement}
 - **Recommendation:** {How to improve}
 
-#### F3-L: {title}
+#### F2-L: {title}
 
 - **Location:** `src/auth/utils.ts:15`
 - **Severity:** critical (legacy)
 - **Description:** {Pre-existing issue observed}
 - **Recommendation:** {Future opportunity}
 
-{Use the same pattern for all severity letters: `W2-L` with `warning (legacy)`, `T1-L` with `todo (legacy)`, etc.}
+{Use the same pattern for all severity letters: `W2-L` with `warning (legacy)`, `T2-L` with `todo (legacy)`, etc.}
 ```
 
 If no findings, write:

@@ -78,7 +78,7 @@ Uniquely number all issues for easy reference. See [finding scheme](../_data/art
 - TODOs: `T{n}` — should fix, can wait for next PR
 - Recommendations: `R{n}` — advisable but discretionary
 - Suggestions: `S{n}` — optional improvement
-- Legacy: `{F,W,T,R,S}{n}-L` — observation in pre-existing code, not authored in this change. Uses the same severity letter as the equivalent author finding plus a `-L` suffix (e.g., `F3-L`, `W2-L`)
+- Legacy: `{F,W,T,R,S}{n}-L` — observation in pre-existing code, not authored in this change. Same severity letter as the equivalent author finding; number it from that letter's shared sequence first, then append `-L` as a marker (e.g., after `F1`, `F2`, the first legacy FIXME is `F3-L`)
 
 ## Output format
 

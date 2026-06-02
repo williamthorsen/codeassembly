@@ -217,7 +217,7 @@ The body following the frontmatter has this structure:
 
 ### Legacy 🔍
 
-#### F3-L: {title from review}
+#### F2-L: {title from review}
 
 - **Disposition:** ACCEPT | REJECT
 - **Rationale:** {reasoning}
