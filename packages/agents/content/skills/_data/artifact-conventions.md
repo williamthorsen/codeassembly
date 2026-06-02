@@ -793,10 +793,10 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 - Documentation improvements
 - **Gate:** Raise only when the change aligns with a codebase convention the code violates, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify.
 
-**Legacy (-L suffix)** — pre-existing code observation:
+**Legacy (`-L` suffix)** — pre-existing code observation:
 
-- Issues in code not authored in this branch — use the same severity letter as the equivalent author finding plus a `-L` suffix
-- Legacy findings share the numbering sequence with author findings of the same severity letter. Example: If a review has `F1`, `F2` (author findings), the first legacy FIXME is `F3-L`
+- Issues in code not authored in this branch — use the same severity letter as the equivalent author finding.
+- The `-L` is a marker, not part of the ID — the ID is the number in front of it. Assign that number from the shared per-letter sequence as if this were an author finding, then append `-L`. Example: after author findings `F1`, `F2`, the first legacy FIXME is `F3-L`.
 - Set the `**Severity:**` field to `{severity} (legacy)` — e.g., `critical (legacy)`, `warning (legacy)`, `suggestion (legacy)`
 - Frame as future opportunities, not current defects
 - Never count against the review score
