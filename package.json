@@ -29,10 +29,10 @@
     "@testing-library/dom": "10.4.1",
     "@types/eslint": "9.6.1",
     "@types/node": "24.12.4",
-    "@typescript/native-preview": "7.0.0-dev.20260527.2",
+    "@typescript/native-preview": "7.0.0-dev.20260603.1",
     "@vitejs/plugin-react": "6.0.2",
-    "@vitest/coverage-v8": "4.1.7",
-    "@vitest/eslint-plugin": "1.6.18",
+    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/eslint-plugin": "1.6.19",
     "@williamthorsen/eslint-config-typescript": "5.17.5",
     "@williamthorsen/nmr": "0.14.1",
     "@williamthorsen/release-kit": "5.3.1",
@@ -50,10 +50,10 @@
     "readyup": "0.21.0",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.60.0",
+    "typescript-eslint": "8.60.1",
     "v11y-check": "0.7.1",
-    "vite": "8.0.14",
-    "vitest": "4.1.7"
+    "vite": "8.0.16",
+    "vitest": "4.1.8"
   },
   "packageManager": "pnpm@10.34.1",
   "engines": {
