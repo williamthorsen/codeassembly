@@ -15,6 +15,8 @@ export interface ParsedArgs {
   query: string;
   /** Whether `--all-kbs` widened scope to every registered KB. */
   allKbs: boolean;
+  /** The registry name from `--store`/`--kb`, scoping recall to that store alone (no cwd-walk); `null` when absent. */
+  storeName: string | null;
   /** The mechanical filters from `--type`, `--tag`, `--folder`. */
   filters: RecallFilters;
 }
@@ -58,6 +60,19 @@ function isEntryPoint(): boolean {
   }
 }
 
+/** Matches the `--store`/`--kb` store-scope flag, returning the matched flag name and any inline `=value`. */
+function matchStoreFlag(arg: string): { flag: 'store' | 'kb'; inlineValue: string | null } | null {
+  for (const flag of ['store', 'kb'] as const) {
+    if (arg === `--${flag}`) {
+      return { flag, inlineValue: null };
+    }
+    if (arg.startsWith(`--${flag}=`)) {
+      return { flag, inlineValue: arg.slice(`--${flag}=`.length) };
+    }
+  }
+  return null;
+}
+
 /** Matches a `--type`/`--tag`/`--folder` flag, returning its key and any inline `=value`. */
 function matchValueFlag(arg: string): { key: keyof RecallFilters; inlineValue: string | null } | null {
   for (const key of ['type', 'tag', 'folder'] as const) {
@@ -81,6 +96,7 @@ function matchValueFlag(arg: string): { key: keyof RecallFilters; inlineValue: s
 export function parseArgs(argv: readonly string[]): ParsedArgs {
   const queryParts: string[] = [];
   let allKbs = false;
+  let storeName: string | null = null;
   const filters: RecallFilters = {};
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -90,6 +106,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
     if (arg === '--all-kbs') {
       allKbs = true;
+      continue;
+    }
+    const storeFlag = matchStoreFlag(arg);
+    if (storeFlag !== null) {
+      let value = storeFlag.inlineValue;
+      if (value === null) {
+        value = argv[index + 1] ?? null;
+        index += 1;
+      }
+      if (value === null || value === '' || value.startsWith('--')) {
+        throw new Error(`--${storeFlag.flag} requires a value`);
+      }
+      storeName = value;
       continue;
     }
     const valueFlag = matchValueFlag(arg);
@@ -112,7 +141,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     queryParts.push(arg);
   }
 
-  return { query: queryParts.join(' ').trim(), allKbs, filters };
+  return { query: queryParts.join(' ').trim(), allKbs, storeName, filters };
 }
 
 /**
@@ -131,22 +160,31 @@ export async function runRetrieve(input: {
   now: Date;
   home?: string;
 }): Promise<RetrieveResult> {
-  const { query, allKbs, filters } = parseArgs(input.argv);
+  const { query, allKbs, storeName, filters } = parseArgs(input.argv);
 
   if (query === '') {
     return { candidates: [], scopedKbs: [], warnings: [], diagnostic: 'no query provided' };
   }
 
-  const { kbs: inScopeKbs, registryError } = await resolveScope({
+  const {
+    kbs: inScopeKbs,
+    registryError,
+    storeNotFound,
+  } = await resolveScope({
     startDir: input.startDir,
     allKbs,
+    ...(storeName !== null && { storeName }),
     ...(input.home !== undefined && { home: input.home }),
   });
   if (inScopeKbs.length === 0) {
     // A malformed registry that contributes no entries reads identically to "no registry" in `scopedKbs`, so name
     // the failure in the diagnostic to distinguish a defect to fix from an absent registry.
     const diagnostic =
-      registryError === undefined ? 'no knowledge base configured or discovered' : formatRegistryInvalid(registryError);
+      storeNotFound !== undefined
+        ? `store "${storeNotFound}" is not registered in kb.yaml`
+        : registryError === undefined
+          ? 'no knowledge base configured or discovered'
+          : formatRegistryInvalid(registryError);
     return { candidates: [], scopedKbs: [], warnings: composeWarnings({ registryError, missingKbs: [] }), diagnostic };
   }
 

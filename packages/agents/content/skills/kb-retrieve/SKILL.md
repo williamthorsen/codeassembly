@@ -1,6 +1,6 @@
 ---
 name: kb-retrieve
-description: Query the knowledge base for notes relevant to a task and return a ranked list with freshness and supersession signals
+description: Query the knowledge base for notes relevant to a task and return a ranked list with freshness, recurrence, and supersession signals
 user-invocable: true
 ---
 
@@ -18,6 +18,7 @@ The split is deliberate: the helper is wide and mechanical; the ranking is narro
 | ----------- | ---------------------------------------------------------------------------------------- | -------- |
 | `<query>`   | The free-text search query. All non-flag tokens are joined into the query string.        | Yes      |
 | `--all-kbs` | Widen the search to every registered knowledge base, not just the default scope.         | No       |
+| `--store`   | Scope the search to a single registered knowledge base by name (alias: `--kb`).          | No       |
 | `--type`    | Keep only notes whose frontmatter `type` matches (e.g. `howto`, `concept`, `reference`). | No       |
 | `--tag`     | Keep only notes carrying this tag (canonical or alias form), matched case-insensitively. | No       |
 | `--folder`  | Keep only notes whose path contains this folder segment.                                 | No       |
@@ -27,6 +28,8 @@ A value-bearing flag accepts both `--type howto` and `--type=howto`.
 ### Scope
 
 By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's default-marked knowledge base (the global vault). When neither source resolves, or the two resolve to the same path, the default scope contains fewer than two. `--all-kbs` widens the search to every knowledge base declared in the merged `kb.yaml` registry.
+
+`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone — no `.kb/` discovery walk runs, so a project-local `.kb/` the helper happened to be invoked near never enters scope. Use it to query a named store directly, such as the `codeassembly` event store. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
 
 ## Runtime dependencies
 
@@ -40,7 +43,7 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 Invoke the co-located bundled helper with `node`, passing the query and any flags through verbatim:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-retrieve.mjs" <query> [--all-kbs] [--type <type>] [--tag <tag>] [--folder <folder>]
+node "$(dirname "$SKILL_PATH")/kb-retrieve.mjs" <query> [--all-kbs] [--store <name>] [--type <type>] [--tag <tag>] [--folder <folder>]
 ```
 
 Or, when the skill directory is known:
@@ -51,7 +54,7 @@ node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setu
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of candidate notes, each with `path`, `title`, `type`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`.
+- `candidates` — an array of candidate notes, each with `path`, `title`, `type`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. An event-kind candidate also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched events share its `repo`+`type` group). These three are absent on assertion-kind notes.
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
@@ -59,6 +62,11 @@ The helper prints a JSON object to stdout:
 ### 2. Rank the candidates
 
 Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag, type, and folder overlap with the query are **evidence**, not terms in a weighted sum — a note in the right folder with the wrong intent ranks below a note that directly answers the question. Read each `snippet` to judge whether the note actually addresses the query rather than merely mentioning its terms.
+
+Ranking is kind-aware once relevance is established:
+
+- **Assertion-kind notes** (no `capturedAt`) rank by freshness: a recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal.
+- **Event-kind candidates** (those carrying `capturedAt`) rank by recurrence, then recency: a candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo`+`type` context and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched events sharing the group, not a precise cluster — treat it as a strong-but-soft signal.
 
 ### 3. Present a ranked list
 

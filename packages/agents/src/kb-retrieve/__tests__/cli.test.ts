@@ -48,6 +48,22 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['query', '--bogus'])).toThrow(/unknown flag/);
   });
 
+  it('parses --store as the store-scope name', () => {
+    expect(parseArgs(['query', '--store', 'codeassembly']).storeName).toBe('codeassembly');
+  });
+
+  it('parses --kb as an alias for the store-scope name', () => {
+    expect(parseArgs(['query', '--kb=codeassembly']).storeName).toBe('codeassembly');
+  });
+
+  it('leaves storeName null when no store flag is given', () => {
+    expect(parseArgs(['query']).storeName).toBeNull();
+  });
+
+  it('throws when --store has no value', () => {
+    expect(() => parseArgs(['query', '--store'])).toThrow(/--store requires a value/);
+  });
+
   it('returns an empty query for empty argv', () => {
     expect(parseArgs([]).query).toBe('');
   });
@@ -114,6 +130,18 @@ describe(runRetrieve, () => {
     expect(result.scopedKbs).toEqual([]);
     expect(result.warnings).toEqual([]);
     expect(result.diagnostic).toBe('no knowledge base configured or discovered');
+  });
+
+  it('reports an unregistered-store diagnostic when --store names no registry entry', async () => {
+    const result = await runRetrieve({
+      argv: ['anything', '--store', 'no-such-store'],
+      startDir: NOTES_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    expect(result.scopedKbs).toEqual([]);
+    expect(result.diagnostic).toBe('store "no-such-store" is not registered in kb.yaml');
   });
 
   it('reports a diagnostic when the query is blank', async () => {
