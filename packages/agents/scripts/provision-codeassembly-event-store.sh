@@ -93,10 +93,16 @@ install_schema() {
 }
 
 # Register the store (non-default) in the user-global registry, without overwriting an existing entry.
+#
+# The append targets the end of the file, so `kbs:` must be the final top-level key for the indented block to land
+# inside its mapping. The function bails with the manual entry whenever that constraint does not hold rather than
+# producing a structurally valid but semantically misplaced entry.
 register_store() {
   local vault_dir="$1" registry="$2" dry_run="$3"
 
-  if [[ -f "${registry}" ]] && grep -qE "^[[:space:]]+${STORE_NAME}:[[:space:]]*$" "${registry}"; then
+  # Match the entry only when it sits at the two-space indent inside the `kbs:` mapping, so a `codeassembly:` sub-key
+  # nested under a different top-level block does not falsely satisfy the idempotency guard.
+  if [[ -f "${registry}" ]] && store_registered_under_kbs "${registry}"; then
     echo "${PROG}: registry already contains \"${STORE_NAME}\" in ${registry} — leaving untouched."
     return 0
   fi
@@ -114,10 +120,36 @@ register_store() {
     echo "${PROG}: ${registry} has no top-level \`kbs:\` key; add the entry below manually:" >&2
     print_registry_entry "${vault_dir}" >&2
     exit 1
+  elif ! kbs_is_last_top_level_key "${registry}"; then
+    echo "${PROG}: ${registry} has top-level keys after \`kbs:\`; appending would place the store outside the \`kbs:\` mapping." >&2
+    echo "${PROG}: move \`kbs:\` to the end of the file or add the entry below manually under \`kbs:\`:" >&2
+    print_registry_entry "${vault_dir}" >&2
+    exit 1
   fi
 
   print_registry_entry "${vault_dir}" >>"${registry}"
   echo "${PROG}: registered \"${STORE_NAME}\" in ${registry}."
+}
+
+# Return success when the store is registered as a two-space-indented key inside the `kbs:` mapping. Scans only the
+# lines from `kbs:` to the next top-level key, so a `codeassembly:` sub-key under a different top-level block (e.g.
+# `projects:`) does not falsely match.
+store_registered_under_kbs() {
+  local registry="$1"
+  awk -v store="${STORE_NAME}" '
+    /^kbs:[[:space:]]*$/ { in_kbs = 1; next }
+    in_kbs && /^[^[:space:]#]/ { in_kbs = 0 }
+    in_kbs && $0 ~ "^  " store ":[[:space:]]*$" { found = 1 }
+    END { exit found ? 0 : 1 }
+  ' "${registry}"
+}
+
+# Return success when `kbs:` is the last top-level key in the registry, so an appended block lands inside its mapping.
+# A top-level key is a line beginning in column zero with a non-comment key; the last such line must be `kbs:`.
+kbs_is_last_top_level_key() {
+  local registry="$1" last_top_level_key
+  last_top_level_key="$(grep -nE '^[^[:space:]#].*:' "${registry}" | tail -n 1)"
+  [[ "${last_top_level_key}" =~ :kbs:[[:space:]]*$ ]]
 }
 
 # Emit the two-space-indented registry block for the store.
