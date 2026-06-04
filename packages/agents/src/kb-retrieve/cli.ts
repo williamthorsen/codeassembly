@@ -179,17 +179,13 @@ export async function runRetrieve(input: {
   if (inScopeKbs.length === 0) {
     // A malformed registry that contributes no entries reads identically to "no registry" in `scopedKbs`, so name
     // the failure in the diagnostic to distinguish a defect to fix from an absent registry.
-    const diagnostic =
-      storeNotFound !== undefined
-        ? `store "${storeNotFound}" is not registered in kb.yaml`
-        : registryError === undefined
-          ? 'no knowledge base configured or discovered'
-          : formatRegistryInvalid(registryError);
+    const diagnostic = emptyScopeDiagnostic({ storeNotFound, registryError });
     return { candidates: [], scopedKbs: [], warnings: composeWarnings({ registryError, missingKbs: [] }), diagnostic };
   }
 
   const { hits, missingKbs } = await recallNotes({ query, scopedKbs: inScopeKbs });
-  const candidates = await normalizeHits({ hits, filters, now: input.now });
+  const unreadableHitWarnings: string[] = [];
+  const candidates = await normalizeHits({ hits, filters, now: input.now, warnings: unreadableHitWarnings });
 
   // `scopedKbs` reports the KBs actually searched, so exclude any whose path was missing; the dead paths surface in
   // `warnings` instead.
@@ -198,7 +194,7 @@ export async function runRetrieve(input: {
   const result: RetrieveResult = {
     candidates,
     scopedKbs: searchedKbs,
-    warnings: composeWarnings({ registryError, missingKbs }),
+    warnings: [...composeWarnings({ registryError, missingKbs }), ...unreadableHitWarnings],
   };
   if (candidates.length === 0) {
     // Distinguish a query that found nothing from a query that found hits which were then excluded by
@@ -231,6 +227,17 @@ function composeWarnings(input: { registryError: string | undefined; missingKbs:
 /** Single source for the malformed-registry message, shared by the empty-scope diagnostic and the warnings channel so the two cannot drift. */
 function formatRegistryInvalid(registryError: string): string {
   return `registry invalid: ${registryError}`;
+}
+
+/** Phrases the run-level diagnostic for an empty scope: a named store-not-found, a malformed registry, or no KB at all. */
+function emptyScopeDiagnostic(input: { storeNotFound: string | undefined; registryError: string | undefined }): string {
+  if (input.storeNotFound !== undefined) {
+    return `store "${input.storeNotFound}" is not registered in kb.yaml`;
+  }
+  if (input.registryError !== undefined) {
+    return formatRegistryInvalid(input.registryError);
+  }
+  return 'no knowledge base configured or discovered';
 }
 
 // endregion | Helpers

@@ -155,6 +155,22 @@ describe(normalizeHits, () => {
 
     expect(candidates).toEqual([]);
   });
+
+  it('surfaces a warning for a hit whose note file cannot be read', async () => {
+    const warnings: string[] = [];
+    const missingPath = join(NOTES_VAULT, 'no-such-note.md');
+
+    const candidates = await normalizeHits({
+      hits: [hitFor(missingPath)],
+      filters: {},
+      now: NOW,
+      warnings,
+    });
+
+    expect(candidates).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(`note at "${missingPath}" could not be read`);
+  });
 });
 
 describe('normalizeHits over event-kind records', () => {
@@ -207,6 +223,29 @@ describe('normalizeHits over event-kind records', () => {
     expect(byTitle.get('Noticed a flaky retry under fake timers')).toBe(2);
     expect(byTitle.get('Another observation in the same repo and type')).toBe(2);
     expect(byTitle.get('A mistake in a different repo')).toBe(1);
+  });
+
+  it('stamps a lone no-repo event with occurrences 1', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-no-repo-a.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.repo).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBe(1);
+  });
+
+  it('groups two no-repo events of the same type into a shared empty-repo recurrence group', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-no-repo-a.md')), hitFor(join(EVENTS, 'event-no-repo-b.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    const byTitle = new Map(candidates.map((candidate) => [candidate.title, candidate.occurrences]));
+    expect(byTitle.get('An observation captured outside a git remote')).toBe(2);
+    expect(byTitle.get('Another observation captured outside a git remote')).toBe(2);
   });
 });
 
