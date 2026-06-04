@@ -7,6 +7,7 @@ import type { RawHit } from '../types.ts';
 
 const NOTES_VAULT = join(import.meta.dirname, 'fixtures', 'notes-vault');
 const NORMALIZE = join(import.meta.dirname, 'fixtures', 'normalize');
+const EVENTS = join(import.meta.dirname, 'fixtures', 'events');
 // A fixed clock so freshness ages are deterministic across test runs.
 const NOW = new Date('2026-05-01T00:00:00Z');
 
@@ -153,6 +154,98 @@ describe(normalizeHits, () => {
     });
 
     expect(candidates).toEqual([]);
+  });
+
+  it('surfaces a warning for a hit whose note file cannot be read', async () => {
+    const warnings: string[] = [];
+    const missingPath = join(NOTES_VAULT, 'no-such-note.md');
+
+    const candidates = await normalizeHits({
+      hits: [hitFor(missingPath)],
+      filters: {},
+      now: NOW,
+      warnings,
+    });
+
+    expect(candidates).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain(`note at "${missingPath}" could not be read`);
+  });
+});
+
+describe('normalizeHits over event-kind records', () => {
+  it('surfaces an event summary as the candidate title rather than the ULID basename', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-a.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.title).toBe('Noticed a flaky retry under fake timers');
+  });
+
+  it('carries captured-at and repo onto an event candidate', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-a.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.capturedAt).toBe('2026-05-20T10:00:00.000Z');
+    expect(candidates[0]?.repo).toBe('owner/repo-x');
+  });
+
+  it('does not set event signals on a non-event note', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NOTES_VAULT, 'new-guide.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+    expect(candidates[0]?.repo).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBeUndefined();
+  });
+
+  it('stamps occurrences with the size of each repo+type recurrence group', async () => {
+    const candidates = await normalizeHits({
+      hits: [
+        hitFor(join(EVENTS, 'event-a.md')),
+        hitFor(join(EVENTS, 'event-b.md')),
+        hitFor(join(EVENTS, 'event-c.md')),
+      ],
+      filters: {},
+      now: NOW,
+    });
+
+    const byTitle = new Map(candidates.map((candidate) => [candidate.title, candidate.occurrences]));
+    // event-a and event-b share owner/repo-x + observation (group size 2); event-c is alone in owner/repo-y + mistake.
+    expect(byTitle.get('Noticed a flaky retry under fake timers')).toBe(2);
+    expect(byTitle.get('Another observation in the same repo and type')).toBe(2);
+    expect(byTitle.get('A mistake in a different repo')).toBe(1);
+  });
+
+  it('stamps a lone no-repo event with occurrences 1', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-no-repo-a.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.repo).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBe(1);
+  });
+
+  it('groups two no-repo events of the same type into a shared empty-repo recurrence group', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-no-repo-a.md')), hitFor(join(EVENTS, 'event-no-repo-b.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    const byTitle = new Map(candidates.map((candidate) => [candidate.title, candidate.occurrences]));
+    expect(byTitle.get('An observation captured outside a git remote')).toBe(2);
+    expect(byTitle.get('Another observation captured outside a git remote')).toBe(2);
   });
 });
 

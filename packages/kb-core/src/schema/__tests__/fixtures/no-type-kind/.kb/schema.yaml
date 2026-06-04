@@ -1,0 +1,6 @@
+kinds:
+  marker:
+    recall: freshness
+    required: [id, label]
+    optional: [note]
+    types: {}

@@ -68,4 +68,38 @@ describe(resolveScope, () => {
     expect(kbs).toEqual([{ name: null, path: MALFORMED_REGISTRY, via: 'discovery' }]);
     expect(registryError).toMatch(/kb\.yaml/);
   });
+
+  it('scopes to a single named store via registry-named when --store is set', async () => {
+    const { kbs } = await resolveScope({
+      startDir: PROJECT_KB,
+      allKbs: false,
+      storeName: 'global-vault',
+      home: HOME_WITH_DEFAULT,
+    });
+
+    expect(kbs).toEqual([{ name: 'global-vault', path: VAULT_B, via: 'registry-named' }]);
+  });
+
+  it('suppresses the cwd-walk so a discoverable project-local .kb/ does not enter scope', async () => {
+    const { kbs } = await resolveScope({
+      startDir: PROJECT_KB,
+      allKbs: false,
+      storeName: 'global-vault',
+      home: HOME_WITH_DEFAULT,
+    });
+
+    expect(kbs.some((kb) => kb.path === PROJECT_KB)).toBe(false);
+  });
+
+  it('returns an empty scope with storeNotFound when the named store is unregistered', async () => {
+    const { kbs, storeNotFound } = await resolveScope({
+      startDir: PROJECT_KB,
+      allKbs: false,
+      storeName: 'no-such-store',
+      home: HOME_WITH_DEFAULT,
+    });
+
+    expect(kbs).toEqual([]);
+    expect(storeNotFound).toBe('no-such-store');
+  });
 });

@@ -1,7 +1,8 @@
 import { isScalar, isSeq } from 'yaml';
 
 import { findPair, valueLine } from '../frontmatter/yaml-position.ts';
-import type { Finding } from '../types.ts';
+import { resolveRequiredForType } from '../schema/load-schema.ts';
+import type { Finding, Schema } from '../types.ts';
 import type { KbRule, KbRuleInput } from './types.ts';
 
 const DATE_FIELDS = ['created', 'updated', 'last-verified'] as const;
@@ -57,7 +58,9 @@ export const frontmatterRule: KbRule = {
       return findings;
     }
 
-    for (const field of schema.required) {
+    const typePair = findPair(doc, 'type');
+
+    for (const field of resolveRequired(schema, typePair)) {
       if (findPair(doc, field) === null) {
         findings.push({
           path: note.path,
@@ -69,7 +72,6 @@ export const frontmatterRule: KbRule = {
       }
     }
 
-    const typePair = findPair(doc, 'type');
     if (typePair !== null && isScalar(typePair.value)) {
       const value = typePair.value.value;
       if (typeof value !== 'string' || !schema.types.includes(value)) {
@@ -116,6 +118,23 @@ export const frontmatterRule: KbRule = {
 };
 
 // region | Helpers
+
+/**
+ * Resolves the required-field set a note is validated against. Under a kind-aware schema, the set is the note's
+ * `type`'s effective required fields (the kind spine plus the type's additions); under a legacy schema, or when the
+ * type is unknown to the kind-aware vocabulary, it falls back to the flat `schema.required`. The `type`-vocabulary
+ * check elsewhere in the rule reports an unknown type separately, so the fallback never silently widens validation.
+ */
+function resolveRequired(schema: Schema, typePair: ReturnType<typeof findPair>): readonly string[] {
+  if (schema.kinds === undefined) {
+    return schema.required;
+  }
+  const type = typePair !== null && isScalar(typePair.value) ? typePair.value.value : undefined;
+  if (typeof type !== 'string') {
+    return schema.required;
+  }
+  return resolveRequiredForType(schema, type) ?? schema.required;
+}
 
 /** Validate that a value is a real UTC `YYYY-MM-DD` calendar date; returns an error message or `null`. */
 function validateDate(value: string): string | null {

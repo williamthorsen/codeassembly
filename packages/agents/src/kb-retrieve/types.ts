@@ -22,6 +22,15 @@ export interface Candidate {
   supersession: Supersession;
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
+  /** ISO-8601 capture timestamp for an event-kind record; `undefined` for non-event records. */
+  capturedAt?: string;
+  /** `owner/name` repository for an event-kind record; `undefined` when absent or for non-event records. */
+  repo?: string;
+  /**
+   * For an event-kind candidate, the number of query-matched events sharing its `repo`+`type` recurrence group; a
+   * coarse recurrence signal the agent ranks on. `undefined` for non-event candidates.
+   */
+  occurrences?: number;
   /** A diagnostic note for this candidate, e.g. malformed frontmatter degraded to a low-signal hit. */
   diagnostic?: string;
 }
@@ -67,7 +76,7 @@ export interface ScopedKb {
   /** Absolute path to the KB's root directory. */
   path: string;
   /** How the KB entered scope. */
-  via: 'discovery' | 'registry-default' | 'registry-all';
+  via: 'discovery' | 'registry-default' | 'registry-all' | 'registry-named';
 }
 
 /** A note's supersession status, surfaced as a raw signal for the agent to route on. */

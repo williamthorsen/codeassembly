@@ -1,0 +1,19 @@
+kinds:
+  event:
+    immutable: true
+    recall: recurrence-recency
+    required: [id, type, captured-at, session, cwd, repo, summary]
+    optional: [skill, model, tags, owner, locality, severity]
+    types:
+      observation: {}
+      mistake:
+        required: [correction]
+  assertion:
+    recall: freshness
+    required: [title, type, created, updated, tags]
+    optional: [last-verified, applies-to, sources, supersedes, superseded-by]
+    types:
+      howto: {}
+      concept: {}
+      reference: {}
+      tutorial: {}

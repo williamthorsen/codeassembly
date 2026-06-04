@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 import { parseNoteWithDocument } from '../../frontmatter/parse-note.ts';
 import { defaultSchema } from '../../schema/default-schema.ts';
-import type { Finding } from '../../types.ts';
+import { loadSchema } from '../../schema/load-schema.ts';
+import type { Finding, KbRoot, Schema } from '../../types.ts';
 import { frontmatterRule } from '../frontmatter-rule.ts';
 
 const RULE_CASES_DIR = join(import.meta.dirname, 'fixtures', 'rule-cases');
@@ -105,5 +106,121 @@ describe('frontmatterRule', () => {
     const { note, document } = parseNoteWithDocument(content, 'valid.md');
 
     expect(frontmatterRule.check({ note, document, schema: defaultSchema })).toEqual([]);
+  });
+});
+
+describe('frontmatterRule under a kind-aware schema', () => {
+  function kindAwareSchema(): Promise<Schema> {
+    const path = join(import.meta.dirname, '..', '..', 'schema', '__tests__', 'fixtures', 'kind-aware');
+    const kbRoot: KbRoot = { path, kbDir: join(path, '.kb'), via: 'ancestor-walk' };
+    return loadSchema({ kbRoot });
+  }
+
+  function checkAgainst(content: string, schema: Schema): Finding[] {
+    const { note, document } = parseNoteWithDocument(content, 'event.md');
+    return frontmatterRule.check({ note, document, schema });
+  }
+
+  it('rejects a mistake event missing its added correction field', async () => {
+    const schema = await kindAwareSchema();
+    const content = [
+      '---',
+      'id: 01HZ',
+      'type: mistake',
+      'captured-at: 2026-06-04T00:00:00Z',
+      'session: abc',
+      'cwd: /tmp',
+      'repo: owner/name',
+      'summary: A mistake without its correction',
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+
+    const required = checkAgainst(content, schema).filter((finding) => finding.rule === 'frontmatter.required');
+
+    expect(required).toHaveLength(1);
+    expect(required[0]?.message).toBe('missing required field: correction');
+  });
+
+  it('accepts a mistake event that carries its correction field', async () => {
+    const schema = await kindAwareSchema();
+    const content = [
+      '---',
+      'id: 01HZ',
+      'type: mistake',
+      'captured-at: 2026-06-04T00:00:00Z',
+      'session: abc',
+      'cwd: /tmp',
+      'repo: owner/name',
+      'summary: A mistake with its correction',
+      'correction: Do it the other way',
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+
+    expect(checkAgainst(content, schema)).toEqual([]);
+  });
+
+  it('accepts an observation event carrying only the kind spine', async () => {
+    const schema = await kindAwareSchema();
+    const content = [
+      '---',
+      'id: 01HZ',
+      'type: observation',
+      'captured-at: 2026-06-04T00:00:00Z',
+      'session: abc',
+      'cwd: /tmp',
+      'repo: owner/name',
+      'summary: Something noticed',
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+
+    expect(checkAgainst(content, schema)).toEqual([]);
+  });
+
+  it('does not require updated for an immutable event kind', async () => {
+    const schema = await kindAwareSchema();
+    const content = [
+      '---',
+      'id: 01HZ',
+      'type: observation',
+      'captured-at: 2026-06-04T00:00:00Z',
+      'session: abc',
+      'cwd: /tmp',
+      'repo: owner/name',
+      'summary: No updated field present',
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+
+    const required = checkAgainst(content, schema).filter((finding) => finding.rule === 'frontmatter.required');
+
+    expect(required.map((finding) => finding.message)).not.toContain('missing required field: updated');
+  });
+
+  it('rejects a type not declared by any kind', async () => {
+    const schema = await kindAwareSchema();
+    const content = [
+      '---',
+      'id: 01HZ',
+      'type: postmortem',
+      'captured-at: 2026-06-04T00:00:00Z',
+      'session: abc',
+      'cwd: /tmp',
+      'repo: owner/name',
+      'summary: Unknown type',
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+
+    const typeFinding = checkAgainst(content, schema).find((finding) => finding.rule === 'frontmatter.type');
+
+    expect(typeFinding?.message).toContain('postmortem');
   });
 });

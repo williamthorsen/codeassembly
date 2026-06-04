@@ -15,8 +15,11 @@ export type {
   KbConfig,
   KbConfigEntry,
   KbRoot,
+  KindSchema,
+  KindsSchema,
   ParsedNote,
   Schema,
+  TypeSchema,
   VaultIndex,
 } from './types.ts';
 
