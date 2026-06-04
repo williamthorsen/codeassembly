@@ -41,7 +41,14 @@ export interface KbConfig {
   };
 }
 
-/** A note-type-and-field schema for a knowledge base. */
+/**
+ * A note-type-and-field schema for a knowledge base.
+ *
+ * The flat `types`/`required`/`optional` fields are always populated and describe the union of the store's vocabulary,
+ * keeping legacy consumers working unchanged. A kind-aware store additionally carries `kinds`: when present, per-type
+ * required-field validation and per-kind recall policy are driven by it, and the flat fields are derived as the union
+ * across every declared kind and type.
+ */
 export interface Schema {
   /** Allowed `type` field values. */
   types: readonly string[];
@@ -49,6 +56,31 @@ export interface Schema {
   required: readonly string[];
   /** Field names a note may optionally declare. */
   optional: readonly string[];
+  /** Per-kind, per-type vocabulary; present only for kind-aware stores (a `.kb/schema.yaml` that declares `kinds:`). */
+  kinds?: KindsSchema;
+}
+
+/** The kind-aware vocabulary of a store, keyed by kind name (e.g. `event`, `assertion`). */
+export type KindsSchema = Readonly<Record<string, KindSchema>>;
+
+/** A single kind's shared vocabulary, recall policy, immutability, and its constituent types. */
+export interface KindSchema {
+  /** Field names required by every type of this kind (the shared spine). */
+  required: readonly string[];
+  /** Field names any type of this kind may optionally declare. */
+  optional: readonly string[];
+  /** How recall ranks records of this kind, e.g. `freshness` or `recurrence-recency`. */
+  recall: string;
+  /** When true, records of this kind are write-once and carry no `updated`/`last-verified` fields. */
+  immutable: boolean;
+  /** The kind's constituent types, each declaring any required fields it adds on top of the kind's shared set. */
+  types: Readonly<Record<string, TypeSchema>>;
+}
+
+/** A single type's contribution to its kind: the required fields it adds on top of the kind's shared spine. */
+export interface TypeSchema {
+  /** Field names this type requires beyond its kind's shared `required` set. */
+  required: readonly string[];
 }
 
 /** Strongly-typed frontmatter for a note. */
