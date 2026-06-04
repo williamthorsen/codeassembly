@@ -102,9 +102,6 @@ export const targets: BundleTarget[] = [
  * resolve-by-name → load kind-aware schema → validate spine → write pipeline end to end, which is the only path that
  * wires the bundled resolver, schema loader, and immutable write together. The store's own `schema.yaml` declares the
  * `event` kind, so the per-type required-set validation is genuinely run.
- *
- * The fixtures are process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
- * directories without explicit cleanup.
  */
 function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'capture-event-store-'));

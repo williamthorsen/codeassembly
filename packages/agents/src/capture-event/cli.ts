@@ -45,7 +45,6 @@ async function main(): Promise<void> {
   }
 }
 
-// Run as a script, but not when imported by tests.
 if (isEntryPoint()) {
   await main();
 }
