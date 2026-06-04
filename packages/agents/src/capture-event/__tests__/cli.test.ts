@@ -12,10 +12,10 @@ import { normalizeRemoteUrl, parseArgs, runCapture } from '../cli.ts';
 const execFileAsync = promisify(execFile);
 
 /** Initialize a throwaway git repo with a single named remote, so `resolveRepo` can derive an `owner/name`. */
-async function makeRepoWithRemote(remoteUrl: string): Promise<string> {
+async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Promise<string> {
   const repo = await mkdtemp(join(tmpdir(), 'capture-cli-repo-'));
   await execFileAsync('git', ['-C', repo, 'init', '--quiet']);
-  await execFileAsync('git', ['-C', repo, 'remote', 'add', 'origin', remoteUrl]);
+  await execFileAsync('git', ['-C', repo, 'remote', 'add', remoteName, remoteUrl]);
   return repo;
 }
 
@@ -25,8 +25,8 @@ const KIND_AWARE_SCHEMA = `kinds:
   event:
     immutable: true
     recall: recurrence-recency
-    required: [id, type, captured-at, session, cwd, repo, summary]
-    optional: [skill, model, tags, owner, locality, severity]
+    required: [id, type, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, owner, locality, severity]
     types:
       observation: {}
       mistake:
@@ -122,6 +122,10 @@ describe(normalizeRemoteUrl, () => {
     expect(normalizeRemoteUrl('https://gitlab.com/group/subgroup/project.git')).toBe('subgroup/project');
   });
 
+  it('returns undefined for a single-segment URL with no owner/name pair', () => {
+    expect(normalizeRemoteUrl('https://github.com/onlyone.git')).toBeUndefined();
+  });
+
   it('returns undefined for an unparseable URL', () => {
     expect(normalizeRemoteUrl('not-a-url')).toBeUndefined();
   });
@@ -151,6 +155,69 @@ describe(runCapture, () => {
       expect(written).toContain('summary: Noticed a thing');
       expect(written).toContain('session: session-xyz');
       expect(written).toContain('repo: williamthorsen/codeassembly');
+    }
+  });
+
+  it('resolves repo via the first-remote fallback when origin is absent', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git', 'upstream');
+
+    const result = await runCapture({
+      argv: ['--type', 'observation', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const written = await readFile(result.path, 'utf8');
+      expect(written).toContain('repo: williamthorsen/codeassembly');
+    }
+  });
+
+  it('writes an observation event with repo absent when cwd has no git remote', async () => {
+    const { home } = await makeStore('codeassembly');
+    const bareDir = await mkdtemp(join(tmpdir(), 'capture-cli-norepo-'));
+
+    const result = await runCapture({
+      argv: ['--type', 'observation', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: bareDir,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const written = await readFile(result.path, 'utf8');
+      expect(written).not.toMatch(/^repo:/m);
+    }
+  });
+
+  it('writes to the registered store, not a .kb in cwd, when capturing from a directory holding one', async () => {
+    const { storePath, home } = await makeStore('codeassembly');
+    const cwdWithKb = await mkdtemp(join(tmpdir(), 'capture-cli-cwdkb-'));
+    await mkdir(join(cwdWithKb, '.kb'), { recursive: true });
+    await writeFile(join(cwdWithKb, '.kb', 'schema.yaml'), KIND_AWARE_SCHEMA, 'utf8');
+
+    const result = await runCapture({
+      argv: ['--store', 'codeassembly', '--type', 'observation', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: cwdWithKb,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.path.startsWith(storePath)).toBe(true);
+      const cwdEntries = await readdir(cwdWithKb);
+      expect(cwdEntries).not.toContain('events');
     }
   });
 

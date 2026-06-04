@@ -13,6 +13,7 @@ import { loadSchema } from '@codeassembly/kb-core/schema';
 import { ulid } from 'ulid';
 
 import { resolveStoreByName } from '../kb-shared/resolve-store-by-name.ts';
+import { isEnoent } from '../lib/type-guards.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
@@ -238,25 +239,30 @@ async function resolveRepo(cwd: string): Promise<string | undefined> {
   return normalizeRemoteUrl(url);
 }
 
-/** Reads the preferred remote's fetch URL via `git remote`, preferring `origin`. Returns `undefined` on any failure. */
+/**
+ * Reads the preferred remote's fetch URL via `git remote`, preferring `origin` and falling back to the first listed
+ * remote. Returns `undefined` for the expected best-effort cases (no remote, unparseable URL, non-git directory). When
+ * the `git` binary itself is unavailable (`ENOENT`), it emits a one-line warning before returning `undefined`, so a
+ * broken environment is distinguished from an absent remote rather than silently suppressed.
+ */
 async function resolveRemoteUrl(cwd: string): Promise<string | undefined> {
   try {
     const { stdout: remotes } = await execFileAsync('git', ['-C', cwd, 'remote']);
-    const names = remotes
+    const [first, ...rest] = remotes
       .split('\n')
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
-    if (names.length === 0) {
+    if (first === undefined) {
       return undefined;
     }
-    const preferred = names.includes('origin') ? 'origin' : names[0];
-    if (preferred === undefined) {
-      return undefined;
-    }
+    const preferred = [first, ...rest].includes('origin') ? 'origin' : first;
     const { stdout: url } = await execFileAsync('git', ['-C', cwd, 'remote', 'get-url', preferred]);
     const trimmed = url.trim();
     return trimmed.length > 0 ? trimmed : undefined;
-  } catch {
+  } catch (error) {
+    if (isEnoent(error)) {
+      process.stderr.write('capture-event: warning: git is not available; omitting repo from the event\n');
+    }
     return undefined;
   }
 }
