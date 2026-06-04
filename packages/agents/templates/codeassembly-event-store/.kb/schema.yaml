@@ -8,8 +8,10 @@ kinds:
   event:
     immutable: true
     recall: recurrence-recency
-    required: [id, type, captured-at, session, cwd, repo, summary]
-    optional: [skill, model, tags, owner, locality, severity]
+    # `repo` is best-effort: capture resolves it from the git remote when one exists but never blocks on it, so it
+    # stays optional rather than joining the required spine.
+    required: [id, type, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, owner, locality, severity]
     types:
       observation: {}
       mistake:

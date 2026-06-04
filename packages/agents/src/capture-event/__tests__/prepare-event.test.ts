@@ -13,8 +13,8 @@ const KIND_AWARE_SCHEMA = `kinds:
   event:
     immutable: true
     recall: recurrence-recency
-    required: [id, type, captured-at, session, cwd, repo, summary]
-    optional: [skill, model, tags, owner, locality, severity]
+    required: [id, type, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, owner, locality, severity]
     types:
       observation: {}
       mistake:
@@ -116,7 +116,7 @@ describe(prepareEvent, () => {
     }
   });
 
-  it('omits repo when context has no resolvable remote', () => {
+  it('writes an event with repo absent when the context has no resolvable remote', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: { session: 'session-abc', cwd: '/tmp/work' },
@@ -126,10 +126,10 @@ describe(prepareEvent, () => {
       body: '',
     });
 
-    // The spine requires repo, so a missing remote fails validation rather than silently writing an empty field.
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.findings.map((finding) => finding.message)).toContain('missing required field: repo');
+    // `repo` is best-effort: a missing remote omits the field and still passes validation.
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.content).not.toMatch(/^repo:/m);
     }
   });
 
