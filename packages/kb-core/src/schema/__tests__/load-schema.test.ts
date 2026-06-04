@@ -93,6 +93,38 @@ describe(loadSchema, () => {
     // `created`/`updated` belong only to the assertion kind, so they are not required for event-kind types.
     expect(schema.kinds?.event?.required).not.toContain('created');
   });
+
+  it.each(['no-schema', 'narrowed-types', 'adds-required'])(
+    'leaves kinds undefined for the legacy %s fixture (no kind-aware opt-in)',
+    async (fixture) => {
+      const schema = await loadSchema({ kbRoot: kbRootAt(fixture) });
+
+      expect(schema.kinds).toBeUndefined();
+    },
+  );
+
+  it('contributes a no-type kind spine to the flat required union', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('no-type-kind') });
+
+    expect(schema.required).toContain('id');
+    expect(schema.required).toContain('label');
+  });
+
+  it('exposes a no-type kind with an empty types map and its declared spine', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('no-type-kind') });
+
+    expect(schema.kinds?.marker?.types).toEqual({});
+    expect(schema.kinds?.marker?.required).toEqual(['id', 'label']);
+  });
+
+  it('treats an empty kinds block as a kind-aware opt-in with an empty vocabulary', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('empty-kinds') });
+
+    expect(schema.kinds).toEqual({});
+    expect(schema.types).toEqual([]);
+    expect(schema.required).toEqual([]);
+    expect(schema.optional).toEqual([]);
+  });
 });
 
 describe(resolveRequiredForType, () => {

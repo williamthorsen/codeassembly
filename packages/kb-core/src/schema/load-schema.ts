@@ -41,10 +41,13 @@ const schemaFileShape = z.object({
  * Loads the effective schema for a KB root. Returns {@link defaultSchema} verbatim when no `.kb/schema.yaml` exists.
  *
  * A file that declares `kinds:` opts into kind-aware mode: the declared vocabulary replaces the bundled defaults
- * outright, and the flat `types`/`required`/`optional` fields are derived as the union across every kind and type.
+ * outright, and the flat `types`/`required`/`optional` fields are derived as the union across every kind and type. An
+ * empty `kinds: {}` block is a deliberate (if degenerate) opt-in: it yields a kind-aware schema with an empty
+ * vocabulary (`kinds: {}`, empty flat fields), never a silent fall-through to the legacy path.
  *
  * A file without `kinds:` runs the legacy narrow-only merge (types may only be narrowed, required may only be
- * extended, optional is unioned with no required overlap), producing byte-identical behavior to before.
+ * extended, optional is unioned with no required overlap), producing byte-identical behavior to before — and leaving
+ * `schema.kinds` undefined.
  *
  * Illegal overrides throw with the offending field named.
  */
@@ -125,11 +128,17 @@ function buildKindAwareSchema(rawKinds: z.infer<typeof schemaFileShape>['kinds']
     const kindOptional = rawKind.optional ?? [];
     const types: Record<string, { required: readonly string[] }> = {};
 
+    // Contribute the kind's shared spine to the flat union unconditionally, so a kind declaring no types still
+    // strengthens the flat `required` validation.
+    for (const field of kindRequired) {
+      allRequired.add(field);
+    }
+
     for (const [typeName, rawType] of Object.entries(rawKind.types)) {
       const typeRequired = rawType.required ?? [];
       types[typeName] = { required: typeRequired };
       allTypes.add(typeName);
-      for (const field of [...kindRequired, ...typeRequired]) {
+      for (const field of typeRequired) {
         allRequired.add(field);
       }
     }
