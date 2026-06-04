@@ -117,13 +117,13 @@ export function resolveRequiredForType(schema: Schema, type: string): readonly s
  * each type's added `required` are normalized, then the flat `types`/`required`/`optional` fields are derived as the
  * union across every kind and type so legacy flat-field consumers keep working.
  */
-function buildKindAwareSchema(rawKinds: z.infer<typeof schemaFileShape>['kinds']): Schema {
+function buildKindAwareSchema(rawKinds: Record<string, z.infer<typeof kindShape>>): Schema {
   const kinds: Record<string, KindSchema> = {};
   const allTypes = new Set<string>();
   const allRequired = new Set<string>();
   const allOptional = new Set<string>();
 
-  for (const [kindName, rawKind] of Object.entries(rawKinds ?? {})) {
+  for (const [kindName, rawKind] of Object.entries(rawKinds)) {
     const kindRequired = rawKind.required ?? [];
     const kindOptional = rawKind.optional ?? [];
     const types: Record<string, { required: readonly string[] }> = {};
