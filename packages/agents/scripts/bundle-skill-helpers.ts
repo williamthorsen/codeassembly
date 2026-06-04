@@ -12,6 +12,7 @@
  * Each entry may carry an optional `smokeTest` clause that pipes a specific payload and asserts on the result;
  * absent that, the smoke test runs the bundle with no args and empty stdin.
  */
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -88,7 +89,78 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/derive-session-context/derive-session-context.mjs',
     smokeTest: makeDeriveSessionContextSmokeTest(),
   },
+  {
+    entry: 'src/capture-event/cli.ts',
+    outFile: 'content/skills/capture-event/capture-event.mjs',
+    smokeTest: makeCaptureEventSmokeTest(),
+  },
 ];
+
+/**
+ * Stands up a kind-aware event store plus an isolated home registering it, and a throwaway git repo with an `origin`
+ * remote, then returns a `SmokeTestInvocation` that captures a single `observation` against them. Exercises the full
+ * resolve-by-name → load kind-aware schema → validate spine → write pipeline end to end, which is the only path that
+ * wires the bundled resolver, schema loader, and immutable write together. The store's own `schema.yaml` declares the
+ * `event` kind, so the per-type required-set validation is genuinely run.
+ *
+ * The fixtures are process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
+ * directories without explicit cleanup.
+ */
+function makeCaptureEventSmokeTest(): SmokeTestInvocation {
+  const storePath = mkdtempSync(path.join(tmpdir(), 'capture-event-store-'));
+  mkdirSync(path.join(storePath, '.kb'), { recursive: true });
+  writeFileSync(
+    path.join(storePath, '.kb', 'schema.yaml'),
+    [
+      'kinds:',
+      '  event:',
+      '    immutable: true',
+      '    recall: recurrence-recency',
+      '    required: [id, type, captured-at, session, cwd, repo, summary]',
+      '    optional: [skill, model, tags, owner, locality, severity]',
+      '    types:',
+      '      observation: {}',
+      '      mistake:',
+      '        required: [correction]',
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+
+  const home = mkdtempSync(path.join(tmpdir(), 'capture-event-home-'));
+  mkdirSync(path.join(home, '.agents'), { recursive: true });
+  writeFileSync(path.join(home, '.agents', 'kb.yaml'), `kbs:\n  codeassembly:\n    path: ${storePath}\n`, 'utf8');
+
+  const repo = mkdtempSync(path.join(tmpdir(), 'capture-event-repo-'));
+  execFileSync('git', ['-C', repo, 'init', '--quiet']);
+  execFileSync('git', ['-C', repo, 'remote', 'add', 'origin', 'git@github.com:williamthorsen/codeassembly.git']);
+
+  return {
+    args: ['--type', 'observation', '--summary', 'Smoke-test observation'],
+    cwd: repo,
+    env: { ...process.env, HOME: home, CLAUDE_CODE_SESSION_ID: 'smoke-session' },
+    assertResult: assertCaptureEventSmokeResult,
+  };
+}
+
+/** Assert the capture-event smoke produced an ok result with a ULID id, ISO-8601 capturedAt, and a written path. */
+function assertCaptureEventSmokeResult(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result from capture-event');
+  }
+  if (result.ok !== true) {
+    throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
+  }
+  if (typeof result.id !== 'string' || !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(result.id)) {
+    throw new Error(`expected a ULID-shaped id, got ${JSON.stringify(result.id)}`);
+  }
+  if (typeof result.capturedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(result.capturedAt)) {
+    throw new Error(`expected an ISO-8601 capturedAt, got ${JSON.stringify(result.capturedAt)}`);
+  }
+  if (typeof result.path !== 'string' || !result.path.endsWith(`${result.id}.md`)) {
+    throw new Error(`expected a written record path ending in {id}.md, got ${JSON.stringify(result.path)}`);
+  }
+}
 
 /**
  * Builds a fixture directory containing a minimal preferences file and returns a `SmokeTestInvocation`
