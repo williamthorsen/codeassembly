@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, stat } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -26,5 +26,23 @@ describe(writeEvent, () => {
 
     const dirStat = await stat(join(storePath, 'events'));
     expect(dirStat.isDirectory()).toBe(true);
+  });
+
+  it('refuses to overwrite an existing record with the same id', async () => {
+    const storePath = await mkdtemp(join(tmpdir(), 'capture-write-'));
+
+    await writeEvent({ storePath, id: ID, content: CONTENT });
+
+    await expect(writeEvent({ storePath, id: ID, content: 'overwrite attempt' })).rejects.toThrow();
+    expect(await readFile(join(storePath, 'events', `${ID}.md`), 'utf8')).toBe(CONTENT);
+  });
+
+  it('leaves no temp files in the events directory after a successful write', async () => {
+    const storePath = await mkdtemp(join(tmpdir(), 'capture-write-'));
+
+    await writeEvent({ storePath, id: ID, content: CONTENT });
+
+    const entries = await readdir(join(storePath, 'events'));
+    expect(entries).toEqual([`${ID}.md`]);
   });
 });

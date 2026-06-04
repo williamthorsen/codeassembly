@@ -1,14 +1,14 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, rename, unlink, writeFile } from 'node:fs/promises';
+import { link, mkdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 /**
- * Writes an event record to `{storePath}/events/{id}.md` atomically. The `events/` directory is created with
- * `mkdir -p` semantics when absent. The write goes through a same-directory temp file plus `rename`, so a process kill
- * mid-write cannot leave a partial file at the destination.
- *
- * No collision-merge branch exists: ULID keys are unique at capture cadence, so the destination is treated as fresh.
- * A `rename` failure (permission, disk) propagates to the caller after a best-effort temp-file cleanup.
+ * Writes an event record to `{storePath}/events/{id}.md`, creating `events/` with `mkdir -p` semantics when absent.
+ * The content is staged in a same-directory temp file and committed with an exclusive hard `link`, so the write is
+ * both crash-safe (a kill mid-write cannot leave a partial file at the destination) and immutable: linking fails with
+ * `EEXIST` when a record already occupies the id, surfacing a collision rather than silently overwriting an existing
+ * event. ULID keys make a collision practically impossible, but the store is append-only, so the guarantee is
+ * enforced rather than assumed. The temp file is removed whether the link succeeds or fails.
  */
 export async function writeEvent(input: { storePath: string; id: string; content: string }): Promise<string> {
   const targetDir = join(input.storePath, 'events');
@@ -18,10 +18,9 @@ export async function writeEvent(input: { storePath: string; id: string; content
   const tempPath = `${targetPath}.${randomBytes(8).toString('hex')}.tmp`;
   await writeFile(tempPath, input.content, 'utf8');
   try {
-    await rename(tempPath, targetPath);
-  } catch (error) {
+    await link(tempPath, targetPath);
+  } finally {
     await unlink(tempPath).catch(() => {});
-    throw error;
   }
 
   return targetPath;
