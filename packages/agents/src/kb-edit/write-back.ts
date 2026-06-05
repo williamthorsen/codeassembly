@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { rename, unlink, writeFile } from 'node:fs/promises';
 
-import type { Finding, Frontmatter, Schema } from '@codeassembly/kb-core';
-import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
-import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
+import type { Finding, Frontmatter, Schema } from '@codeassembly/kb';
+import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter';
+import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
 
 /**
  * Validates a rendered note string against the destination KB's schema, returning error-severity findings.

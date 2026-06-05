@@ -21,8 +21,8 @@ packages/agents/content/subagents/orchestrated-reviewer.md
 
 # Test fixtures that are intentionally syntactically malformed YAML.
 # Prettier cannot parse them, and reformatting would erase the defect they exist to test.
-packages/kb-core/src/**/__tests__/**/fixtures/**/malformed-yaml/
-packages/kb-core/src/**/__tests__/**/fixtures/**/syntactically-malformed.*
+packages/kb/src/**/__tests__/**/fixtures/**/malformed-yaml/
+packages/kb/src/**/__tests__/**/fixtures/**/syntactically-malformed.*
 packages/agents/src/**/__tests__/**/fixtures/malformed-aliases/
 packages/agents/src/**/__tests__/**/fixtures/malformed-no-kb/
 packages/agents/src/**/__tests__/**/fixtures/malformed-registry/

@@ -2,8 +2,8 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { Frontmatter, Schema } from '@codeassembly/kb-core';
-import { defaultSchema } from '@codeassembly/kb-core';
+import type { Frontmatter, Schema } from '@codeassembly/kb';
+import { defaultSchema } from '@codeassembly/kb';
 import { describe, expect, it } from 'vitest';
 
 import { writeBackNote } from '../write-back.ts';

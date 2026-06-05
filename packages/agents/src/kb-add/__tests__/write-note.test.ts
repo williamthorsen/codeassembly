@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/prom
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { Frontmatter } from '@codeassembly/kb-core';
+import type { Frontmatter } from '@codeassembly/kb';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { composeFilename, writeNote } from '../write-note.ts';

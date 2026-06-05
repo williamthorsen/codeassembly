@@ -1,4 +1,4 @@
-# @codeassembly/kb-core
+# @codeassembly/kb
 
 Foundation library for knowledge-base tooling.
 Provides knowledge-base discovery, registry loading, schema resolution, frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
@@ -25,14 +25,14 @@ The library throws on errors; success/failure shaping is left to consumers.
 `findKbRoot({ startDir })` walks ancestor directories looking for a `.kb/` folder and returns the first match (or `null` at the filesystem root).
 
 ```ts
-import { findKbRoot } from '@codeassembly/kb-core/discovery';
+import { findKbRoot } from '@codeassembly/kb/discovery';
 
 const root = await findKbRoot({ startDir: process.cwd() });
 ```
 
 ## The `kb.yaml` registry
 
-A KB registry declares one or more knowledge bases. `loadKbConfig` reads two optional registry files and merges them:
+A KB registry declares one or more knowledge bases. `loadKbRegistry` reads two optional registry files and merges them:
 
 - **user-global** — `~/.agents/kb.yaml`
 - **project-local** — `<projectDir>/.agents/kb.yaml`
@@ -61,7 +61,7 @@ Configuration keys, per KB entry under `kbs.<name>`:
 
 ### Merge semantics
 
-`loadKbConfig` merges the two registries by KB name:
+`loadKbRegistry` merges the two registries by KB name:
 
 - Project entries **replace** user entries with the same name.
 - Project entries with a new name are **appended**.
@@ -70,10 +70,10 @@ Configuration keys, per KB entry under `kbs.<name>`:
 - Path existence is not checked at load time.
 
 ```ts
-import { loadKbConfig } from '@codeassembly/kb-core/discovery';
+import { loadKbRegistry } from '@codeassembly/kb/discovery';
 
-const config = await loadKbConfig({ projectDir: process.cwd() });
-// config.entries: KbConfigEntry[] with absolute, resolved paths
+const config = await loadKbRegistry({ projectDir: process.cwd() });
+// config.entries: KbRegistryEntry[] with absolute, resolved paths
 ```
 
 ## The default schema
@@ -118,14 +118,14 @@ missing files (when a path is given) throw.
 The `KbRule` interface is the extension point for future rules.
 
 ```ts
-import { frontmatterRule, runRules, tagAliasRule } from '@codeassembly/kb-core/rules';
+import { frontmatterRule, runRules, tagAliasRule } from '@codeassembly/kb/rules';
 
 const findings = runRules({ rules: [frontmatterRule, tagAliasRule], notes, schema, aliases });
 ```
 
 ## Error and exception model
 
-Validation rules **return** findings — they never throw. Loaders (`loadKbConfig`, `loadSchema`, `loadAliases`) **throw** on structural defects, malformed YAML, or illegal overrides, with the offending file path and key named in the message.
+Validation rules **return** findings — they never throw. Loaders (`loadKbRegistry`, `loadSchema`, `loadAliases`) **throw** on structural defects, malformed YAML, or illegal overrides, with the offending file path and key named in the message.
 I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability

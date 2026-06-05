@@ -1,4 +1,4 @@
-import type { Finding, ParsedNote } from '@codeassembly/kb-core';
+import type { Finding, ParsedNote } from '@codeassembly/kb';
 
 import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 

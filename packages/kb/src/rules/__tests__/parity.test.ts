@@ -29,7 +29,7 @@ function normalize(findings: readonly Finding[]): Finding[] {
 // `expected-findings.json` is captured from the vault's real `check-notes`
 // rules (`github.com/williamthorsen/vaults.coding`, commit 128ce97) run over
 // the vendored `notes/` fixtures. Because the golden is the upstream rules'
-// own output, this test is a genuine parity proof: kb-core's ported rules must
+// own output, this test is a genuine parity proof: kb's ported rules must
 // reproduce it exactly. It also guards against future drift in either
 // direction — see `fixtures/parity/README.md` for the capture procedure.
 describe('rules parity proof against the real check-notes golden', () => {

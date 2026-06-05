@@ -5,7 +5,7 @@
 // `{ ok: false, error, details? }`; successes return `{ ok: true, ... }`. System errors (out-of-disk, permission
 // denied) are out of band: they print to stderr and exit non-zero.
 
-import type { Finding, Frontmatter } from '@codeassembly/kb-core';
+import type { Finding, Frontmatter } from '@codeassembly/kb';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 

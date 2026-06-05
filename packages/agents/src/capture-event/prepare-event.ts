@@ -1,6 +1,6 @@
-import type { Finding, Schema } from '@codeassembly/kb-core';
-import { parseNoteContent } from '@codeassembly/kb-core/frontmatter';
-import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
+import type { Finding, Schema } from '@codeassembly/kb';
+import { parseNoteContent } from '@codeassembly/kb/frontmatter';
+import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
 import { stringify } from 'yaml';
 
 import type { CaptureContext, ParsedArgs } from './types.ts';

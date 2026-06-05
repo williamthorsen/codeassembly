@@ -1,4 +1,4 @@
-import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb-core';
+import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb';
 import { describe, expect, it } from 'vitest';
 
 import { prepareSupersedeWith } from '../supersede-with.ts';

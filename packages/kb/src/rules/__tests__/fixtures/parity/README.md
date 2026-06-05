@@ -16,21 +16,21 @@ and to guard them against silent behavior drift.
 
 ## Provenance
 
-The `frontmatter` and `tag-alias` rules in `@codeassembly/kb-core` are a port
+The `frontmatter` and `tag-alias` rules in `@codeassembly/kb` are a port
 of `scripts/check-notes/` in `github.com/williamthorsen/vaults.coding`. The
 vault's `wikilinks.*` and `paths.*` rules are out of scope and intentionally
 excluded from this port.
 
 `expected-findings.json` is captured from the vault's **real** `check-notes`
-rules — not from the kb-core port. The capture runs the vault's own
+rules — not from the kb port. The capture runs the vault's own
 `parseNote`, `frontmatterRule`, and `tagAliasRule` over the vendored `notes/`
-fixtures, feeding them inputs equivalent to kb-core's (the `defaultSchema`
+fixtures, feeding them inputs equivalent to kb's (the `defaultSchema`
 type/required/optional sets and the aliases parsed from `tag-aliases.yaml`), so
 the only thing compared is rule logic. The golden was captured against vault
 commit `128ce97`.
 
 Because the golden is the upstream rules' output, `parity.test.ts` is a genuine
-**parity proof**: kb-core's `runRules` over the same fixtures must reproduce it
+**parity proof**: kb's `runRules` over the same fixtures must reproduce it
 exactly. A mis-port would surface as a test failure, not be silently baked in.
 The golden also doubles as a regression guard against future drift in either
 direction.
@@ -50,7 +50,7 @@ fixture):
    the vault's `parseNote`/`parseNoteContent` (`scripts/check-notes/lib/`), its
    `frontmatterRule` and `tagAliasRule` (`scripts/check-notes/rules/`), and its
    `loadAliases` (`scripts/canonicalize-tag/`).
-3. Build a `RuleContext` with a schema equivalent to kb-core's `defaultSchema`,
+3. Build a `RuleContext` with a schema equivalent to kb's `defaultSchema`,
    the aliases parsed from this directory's `tag-aliases.yaml`, and an empty
    `vaultIndex` map (`frontmatterRule` and `tagAliasRule` do not read it).
 4. Parse every note in `notes/`, run both rules, and collect the findings.
@@ -61,7 +61,7 @@ fixture):
    `expected-findings.json`.
 8. Run the harness with the vault's toolchain (e.g. its `tsx`).
 
-The harness is throwaway and is not committed — kb-core stays self-contained,
+The harness is throwaway and is not committed — kb stays self-contained,
 with no build-time dependency on a local vault checkout. After regenerating,
-`parity.test.ts` must pass: kb-core's `runRules` output must equal the new
+`parity.test.ts` must pass: kb's `runRules` output must equal the new
 golden.

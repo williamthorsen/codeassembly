@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 
-import type { Finding, VaultIndex } from '@codeassembly/kb-core';
+import type { Finding, VaultIndex } from '@codeassembly/kb';
 
 import { canonicalizeTags } from './apply/canonicalize-tags.ts';
 import { rewriteWikilinks } from './apply/rewrite-wikilinks.ts';

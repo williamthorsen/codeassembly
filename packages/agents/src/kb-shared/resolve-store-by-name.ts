@@ -1,4 +1,4 @@
-import { tryLoadKbConfig } from '@codeassembly/kb-core/discovery';
+import { tryLoadKbRegistry } from '@codeassembly/kb/discovery';
 
 /** A knowledge base resolved by registry name. */
 export interface ResolvedStore {
@@ -34,7 +34,7 @@ export async function resolveStoreByName(input: {
   projectDir?: string;
   home?: string;
 }): Promise<ResolveStoreOutcome> {
-  const { config } = await tryLoadKbConfig({
+  const { config } = await tryLoadKbRegistry({
     ...(input.projectDir !== undefined && { projectDir: input.projectDir }),
     ...(input.home !== undefined && { home: input.home }),
   });

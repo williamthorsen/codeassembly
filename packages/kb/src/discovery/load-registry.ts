@@ -5,36 +5,36 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { parse } from 'yaml';
 
 import { isEnoent } from '../type-guards.ts';
-import type { KbConfig, KbConfigEntry } from '../types.ts';
-import { kbConfigFileSchema } from './kb-config-schema.ts';
+import type { KbRegistry, KbRegistryEntry } from '../types.ts';
+import { kbRegistryFileSchema } from './kb-registry-schema.ts';
 
 const USER_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 
 /**
  * Load and merge the user-global (`~/.agents/kb.yaml`) and project-local
- * (`.agents/kb.yaml`) KB registries into a normalized `KbConfig`.
+ * (`.agents/kb.yaml`) KB registries into a normalized `KbRegistry`.
  *
  * Project entries replace user entries by name on collision and append new names.
  * Within a single file, relative `path` values resolve against that file's directory and a leading `~/` expands
  * against `$HOME`. Both files are optional; when neither exists the result has no entries.
  * Malformed YAML, a structural defect, or two entries marked `default: true` in one file throw.
  */
-export async function loadKbConfig(
+export async function loadKbRegistry(
   input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
-): Promise<KbConfig> {
+): Promise<KbRegistry> {
   const home = input.home ?? homedir();
   const userConfigPath = input.userConfigPath ?? join(home, USER_CONFIG_RELATIVE);
   const projectConfigPath =
     input.projectDir === undefined ? undefined : join(input.projectDir, PROJECT_CONFIG_RELATIVE);
 
-  const userEntries = await loadConfigFile(userConfigPath, 'user', home);
+  const userEntries = await loadRegistryFile(userConfigPath, 'user', home);
   const projectEntries =
-    projectConfigPath === undefined ? undefined : await loadConfigFile(projectConfigPath, 'project', home);
+    projectConfigPath === undefined ? undefined : await loadRegistryFile(projectConfigPath, 'project', home);
 
   const merged = mergeEntries(userEntries?.entries ?? [], projectEntries?.entries ?? []);
 
-  const sources: KbConfig['sources'] = {};
+  const sources: KbRegistry['sources'] = {};
   if (userEntries !== undefined) sources.user = userConfigPath;
   if (projectConfigPath !== undefined && projectEntries !== undefined) {
     sources.project = projectConfigPath;
@@ -44,27 +44,27 @@ export async function loadKbConfig(
 }
 
 /** The outcome of a no-throw registry load: the resolved config plus a captured error message when loading failed. */
-export interface KbConfigLoadResult {
+export interface KbRegistryLoadResult {
   /** The merged registry, or an empty config when loading threw. */
-  config: KbConfig;
-  /** The thrown error's message, present only when `loadKbConfig` failed. */
+  config: KbRegistry;
+  /** The thrown error's message, present only when `loadKbRegistry` failed. */
   error?: string;
 }
 
 /**
  * Load the merged `kb.yaml` registry without throwing, capturing any failure message instead of presenting it.
  *
- * On success — including the legitimate "no registry files present" case, which `loadKbConfig` already returns as an
+ * On success — including the legitimate "no registry files present" case, which `loadKbRegistry` already returns as an
  * empty config — `error` is absent. On a malformed file, a schema violation, a duplicate `default: true`, or a
  * non-ENOENT read failure, the result degrades to an empty config and carries the thrown message in `error`. Each
  * caller decides whether and how to surface that message; this wrapper neither writes to stderr nor builds a
  * diagnostic.
  */
-export async function tryLoadKbConfig(
+export async function tryLoadKbRegistry(
   input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
-): Promise<KbConfigLoadResult> {
+): Promise<KbRegistryLoadResult> {
   try {
-    return { config: await loadKbConfig(input) };
+    return { config: await loadKbRegistry(input) };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { config: { entries: [], sources: {} }, error: message };
@@ -77,11 +77,11 @@ export async function tryLoadKbConfig(
  * Read and validate one registry file. Returns `undefined` when the file is absent;
  * throws on malformed YAML, a structural defect, or a duplicate `default: true`.
  */
-async function loadConfigFile(
+async function loadRegistryFile(
   path: string,
-  source: KbConfigEntry['source'],
+  source: KbRegistryEntry['source'],
   home: string,
-): Promise<{ entries: KbConfigEntry[] } | undefined> {
+): Promise<{ entries: KbRegistryEntry[] } | undefined> {
   let text: string;
   try {
     text = await readFile(path, 'utf8');
@@ -103,13 +103,13 @@ async function loadConfigFile(
     return { entries: [] };
   }
 
-  const result = kbConfigFileSchema.safeParse(parsed);
+  const result = kbRegistryFileSchema.safeParse(parsed);
   if (!result.success) {
     throw new Error(`${path}: invalid kb.yaml — ${result.error.issues[0]?.message ?? 'unknown error'}`);
   }
 
   const configDir = dirname(path);
-  const entries: KbConfigEntry[] = [];
+  const entries: KbRegistryEntry[] = [];
   const defaults: string[] = [];
 
   for (const [name, fileEntry] of Object.entries(result.data.kbs ?? {})) {
@@ -138,8 +138,8 @@ async function loadConfigFile(
  * When the merged set still carries both a user-sourced and a project-sourced default,
  * the project default wins and the user default flag is cleared.
  */
-function mergeEntries(userEntries: KbConfigEntry[], projectEntries: KbConfigEntry[]): KbConfigEntry[] {
-  const byName = new Map<string, KbConfigEntry>();
+function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistryEntry[]): KbRegistryEntry[] {
+  const byName = new Map<string, KbRegistryEntry>();
   for (const entry of userEntries) {
     byName.set(entry.name, entry);
   }

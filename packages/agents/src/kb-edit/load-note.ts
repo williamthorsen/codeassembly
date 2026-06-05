@@ -1,5 +1,5 @@
-import type { ParsedNote } from '@codeassembly/kb-core';
-import { parseNote } from '@codeassembly/kb-core/frontmatter';
+import type { ParsedNote } from '@codeassembly/kb';
+import { parseNote } from '@codeassembly/kb/frontmatter';
 
 import { isEnoent } from '../lib/type-guards.ts';
 
@@ -21,7 +21,7 @@ export type LoadOutcome = LoadSuccess | LoadFailure;
  * Reads a note from disk and parses its frontmatter, surfacing the two failure modes kb-edit cares about as
  * categorical results.
  *
- * `ENOENT` becomes `note-not-found`; a YAML parse error recorded by kb-core's parser becomes `note-parse`. Other
+ * `ENOENT` becomes `note-not-found`; a YAML parse error recorded by kb's parser becomes `note-parse`. Other
  * I/O errors (permission denied, EIO) re-throw so callers can surface them as system errors via the main process's
  * stderr/exit path. A note with no frontmatter block at all also resolves as `note-parse`, since kb-edit cannot
  * mutate frontmatter that isn't there.

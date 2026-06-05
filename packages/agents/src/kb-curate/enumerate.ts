@@ -2,8 +2,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import process from 'node:process';
 
-import type { ParsedNote } from '@codeassembly/kb-core';
-import { parseNoteContent } from '@codeassembly/kb-core/frontmatter';
+import type { ParsedNote } from '@codeassembly/kb';
+import { parseNoteContent } from '@codeassembly/kb/frontmatter';
 
 /** A parsed note together with its vault-relative path, used for index keying and canonical wikilink targets. */
 export interface EnumeratedNote {

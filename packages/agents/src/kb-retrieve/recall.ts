@@ -2,9 +2,9 @@ import { execFile } from 'node:child_process';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
-import { directoryExists } from '@codeassembly/kb-core/filesystem';
-import type { AliasMap } from '@codeassembly/kb-core/tags';
-import { loadAliases } from '@codeassembly/kb-core/tags';
+import { directoryExists } from '@codeassembly/kb/filesystem';
+import type { AliasMap } from '@codeassembly/kb/tags';
+import { loadAliases } from '@codeassembly/kb/tags';
 
 import { isErrorCode, isRecord } from '../lib/type-guards.ts';
 import type { RawHit, ScopedKb } from './types.ts';

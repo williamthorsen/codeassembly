@@ -1,6 +1,6 @@
 # Kind-aware schema for the `codeassembly` knowledge store.
 #
-# Declaring `kinds:` opts the store into kind-aware validation (see @codeassembly/kb-core): the declared vocabulary
+# Declaring `kinds:` opts the store into kind-aware validation (see @codeassembly/kb): the declared vocabulary
 # replaces the bundled default schema, each kind carries a shared required spine that its types extend, and recall
 # ranks per kind. The `event` kind is immutable and ULID-keyed (written by capture-event); the `assertion` kind is
 # the existing note vocabulary expressed in the new form.

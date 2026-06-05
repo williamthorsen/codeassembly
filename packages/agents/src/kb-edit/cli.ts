@@ -6,10 +6,10 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb-core';
-import { writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
-import { loadSchema } from '@codeassembly/kb-core/schema';
-import { loadAliases } from '@codeassembly/kb-core/tags';
+import type { AliasMap, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb';
+import { writeFrontmatter } from '@codeassembly/kb/frontmatter';
+import { loadSchema } from '@codeassembly/kb/schema';
+import { loadAliases } from '@codeassembly/kb/tags';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';

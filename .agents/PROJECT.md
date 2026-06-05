@@ -8,9 +8,9 @@ This is a pnpm monorepo centered around agentic code-orchestration flows. It con
 - **MCP** (`packages/mcp/`) — MCP server exposing run-management tools (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`) built on run-core
 - **Agents** (`packages/agents/`) — CLI tool and content library of reusable AI agent skills and subagent definitions that power orchestrated development workflows
 - **Factory** (`packages/factory/`) — web-based visualization that renders orchestration runs as an interactive 2D game scene
-- **KB-core** (`packages/kb-core/`) — knowledge-base foundation library: discovery, registry loading, schema resolution, frontmatter parsing, tags, and validation rules
+- **KB** (`packages/kb/`) — knowledge-base foundation library: discovery, registry loading, schema resolution, frontmatter parsing, tags, and validation rules
 
-The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents depends on **kb-core**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
+The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents depends on **kb**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
 
 ### Run-core (`packages/run-core/`)
 
@@ -192,11 +192,11 @@ packages/factory/src/
 
 **Connection to agents:** Factory's `status-adapter.ts` parses the `run-index.json` files that the orchestration engine writes. The schema is defined in `content/skills/_data/artifact-conventions.md` (agents) and represented as TypeScript types in `shared/types/canonical.ts` (factory). When the schema changes, both must be updated together.
 
-### KB-core (`packages/kb-core/`)
+### KB (`packages/kb/`)
 
 Foundation library for knowledge-base tooling, consumed by the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@codeassembly/kb-mcp` server. Exposes five subpath entries — `discovery`, `schema`, `frontmatter`, `tags`, `rules` — covering KB discovery and `kb.yaml` registry loading, default-schema resolution with narrow-only per-KB overrides, note frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
 
-**Package:** `@codeassembly/kb-core` (private)
+**Package:** `@codeassembly/kb` (private)
 
 The package README documents the `kb.yaml` configuration schema and merge semantics, the default schema, and the error model — consult it before declaring a KB or consuming the library.
 

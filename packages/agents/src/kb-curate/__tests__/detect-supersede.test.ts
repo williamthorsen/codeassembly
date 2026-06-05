@@ -1,5 +1,5 @@
-import type { ParsedNote } from '@codeassembly/kb-core';
-import { parseNoteContent } from '@codeassembly/kb-core/frontmatter';
+import type { ParsedNote } from '@codeassembly/kb';
+import { parseNoteContent } from '@codeassembly/kb/frontmatter';
 import { describe, expect, it } from 'vitest';
 
 import { detectSupersede } from '../detect-supersede.ts';

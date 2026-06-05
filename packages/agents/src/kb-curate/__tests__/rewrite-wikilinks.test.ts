@@ -1,4 +1,4 @@
-import type { VaultIndex } from '@codeassembly/kb-core';
+import type { VaultIndex } from '@codeassembly/kb';
 import { describe, expect, it } from 'vitest';
 
 import { rewriteWikilinks } from '../apply/rewrite-wikilinks.ts';

@@ -1,7 +1,7 @@
-import type { AliasMap, Schema } from '@codeassembly/kb-core';
-import { defaultSchema } from '@codeassembly/kb-core';
-import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
-import { parseAliases } from '@codeassembly/kb-core/tags';
+import type { AliasMap, Schema } from '@codeassembly/kb';
+import { defaultSchema } from '@codeassembly/kb';
+import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter';
+import { parseAliases } from '@codeassembly/kb/tags';
 import { describe, expect, it } from 'vitest';
 
 import { prepareNote } from '../prepare-note.ts';

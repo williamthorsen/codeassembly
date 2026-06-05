@@ -30,12 +30,12 @@ The knowledge base is resolved the same way as `kb-add`: `--kb <name>` (explicit
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb-core`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
 - **Sibling `kb-edit.mjs`** — required only for `--apply` tag canonicalization. The helper resolves it next to its own bundle; if the skills are deployed without co-location, tag fixes fail with a clear message while the read-only report and the wikilink sweep are unaffected.
 
 ## Detection categories
 
-The helper reports findings across five categories. Each finding carries a rule code and a severity aligned with the `kb-core` rule contract.
+The helper reports findings across five categories. Each finding carries a rule code and a severity aligned with the `@codeassembly/kb` rule contract.
 
 | Rule code               | Severity | Meaning                                                                                |
 | ----------------------- | -------- | -------------------------------------------------------------------------------------- |

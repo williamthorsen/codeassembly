@@ -33,7 +33,7 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb-core`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
 - **`ripgrep` (`rg`)** — the recall backend; the helper exits with a remediation hint when it is missing.
 
 ## Process

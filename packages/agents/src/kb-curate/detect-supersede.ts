@@ -1,6 +1,6 @@
 import { dirname, isAbsolute, resolve } from 'node:path';
 
-import type { Finding, ParsedNote } from '@codeassembly/kb-core';
+import type { Finding, ParsedNote } from '@codeassembly/kb';
 
 /** A note's resolved supersession edges, keyed by absolute path. */
 interface SupersedeNode {

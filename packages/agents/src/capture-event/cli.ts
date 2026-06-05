@@ -8,8 +8,8 @@ import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-import type { KbRoot } from '@codeassembly/kb-core';
-import { loadSchema } from '@codeassembly/kb-core/schema';
+import type { KbRoot } from '@codeassembly/kb';
+import { loadSchema } from '@codeassembly/kb/schema';
 import { ulid } from 'ulid';
 
 import { resolveStoreByName } from '../kb-shared/resolve-store-by-name.ts';

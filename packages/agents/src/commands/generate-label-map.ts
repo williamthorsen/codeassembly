@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { pathExists } from '@codeassembly/kb-core/filesystem';
+import { pathExists } from '@codeassembly/kb/filesystem';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 

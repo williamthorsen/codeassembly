@@ -33,7 +33,7 @@ The destination knowledge base is inferred by walking up from the note's directo
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb-core`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
 
 ## Modes
 

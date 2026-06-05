@@ -1,10 +1,10 @@
 import { join } from 'node:path';
 import process from 'node:process';
 
-import type { AliasMap, Finding, KbRoot, Schema } from '@codeassembly/kb-core';
-import { frontmatterRule, pathsRule, runRules, tagAliasRule, wikilinksRule } from '@codeassembly/kb-core/rules';
-import { defaultSchema, loadSchema } from '@codeassembly/kb-core/schema';
-import { loadAliases } from '@codeassembly/kb-core/tags';
+import type { AliasMap, Finding, KbRoot, Schema } from '@codeassembly/kb';
+import { frontmatterRule, pathsRule, runRules, tagAliasRule, wikilinksRule } from '@codeassembly/kb/rules';
+import { defaultSchema, loadSchema } from '@codeassembly/kb/schema';
+import { loadAliases } from '@codeassembly/kb/tags';
 
 import { detectStaleness, vaultUsesVerification } from './detect-staleness.ts';
 import { detectSupersede } from './detect-supersede.ts';
@@ -13,8 +13,8 @@ import type { EnumeratedNote } from './enumerate.ts';
 /**
  * Produces the full finding set across all five detection categories for a KB:
  *
- * - `frontmatter.*` and `frontmatter.tag-alias` (from kb-core's `frontmatterRule` / `tagAliasRule`).
- * - `wikilinks.*` and `paths.*` (from kb-core's ported cross-note rules).
+ * - `frontmatter.*` and `frontmatter.tag-alias` (from kb's `frontmatterRule` / `tagAliasRule`).
+ * - `wikilinks.*` and `paths.*` (from kb's ported cross-note rules).
  * - `verification.*` (curate-local staleness, threshold `staleAfterDays`).
  * - `supersede.*` (curate-local graph validation).
  *
@@ -51,7 +51,7 @@ export async function detectFindings(input: {
 
 // region | Helpers
 
-/** Sorts findings by path, then line, then rule, matching the ordering kb-core's parity golden uses. */
+/** Sorts findings by path, then line, then rule, matching the ordering kb's parity golden uses. */
 function sortFindings(findings: readonly Finding[]): Finding[] {
   return findings.toSorted((a, b) => {
     if (a.path !== b.path) return a.path < b.path ? -1 : 1;

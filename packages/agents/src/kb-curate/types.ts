@@ -4,7 +4,7 @@
 // KB under `--apply`, invalid args) return `{ ok: false, error, message }`; successes return `{ ok: true, ... }`
 // carrying the findings and, under `--apply`, the per-fix results. System errors print to stderr and exit non-zero.
 
-import type { Finding } from '@codeassembly/kb-core';
+import type { Finding } from '@codeassembly/kb';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 

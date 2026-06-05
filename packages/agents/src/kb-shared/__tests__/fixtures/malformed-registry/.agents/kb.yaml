@@ -1,5 +1,5 @@
-# Intentionally malformed YAML to exercise tryLoadKbConfig's captured-error path.
-# The unclosed flow mapping triggers a parse error in `loadKbConfig`, which the helper captures
+# Intentionally malformed YAML to exercise tryLoadKbRegistry's captured-error path.
+# The unclosed flow mapping triggers a parse error in `loadKbRegistry`, which the helper captures
 # and degrades to an empty config; `resolveWritableKb` then surfaces the failure as a stderr warning.
 kbs:
   broken: {path: ./broken-kb
