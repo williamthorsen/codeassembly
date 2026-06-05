@@ -1,4 +1,4 @@
-import { parseNoteContent } from '@codeassembly/kb-core/frontmatter';
+import { parseNoteContent } from '@codeassembly/kb/frontmatter';
 import { describe, expect, it } from 'vitest';
 
 import { detectStaleness, vaultUsesVerification } from '../detect-staleness.ts';

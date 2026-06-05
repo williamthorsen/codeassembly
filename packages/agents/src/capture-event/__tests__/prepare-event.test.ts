@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { KbRoot, Schema } from '@codeassembly/kb-core';
-import { loadSchema } from '@codeassembly/kb-core/schema';
+import type { KbRoot, Schema } from '@codeassembly/kb';
+import { loadSchema } from '@codeassembly/kb/schema';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { prepareEvent } from '../prepare-event.ts';

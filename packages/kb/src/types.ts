@@ -1,4 +1,4 @@
-// Shared type vocabulary for @codeassembly/kb-core.
+// Shared type vocabulary for @codeassembly/kb.
 //
 // This file is the documented exception to the "types live with their provider" convention:
 // The modules below all consume the same shapes, so co-locating them keeps the contract single-sourced.
@@ -15,7 +15,7 @@ export interface KbRoot {
 }
 
 /** A single knowledge base declared in a `kb.yaml` registry, normalized in memory. */
-export interface KbConfigEntry {
+export interface KbRegistryEntry {
   /** The KB's name, lifted from the `kbs` map key. */
   name: string;
   /** Absolute path to the KB's root directory (tilde expanded, relative resolved). */
@@ -31,9 +31,9 @@ export interface KbConfigEntry {
 }
 
 /** The merged, normalized KB registry. */
-export interface KbConfig {
+export interface KbRegistry {
   /** All KB entries, user entries merged with project overrides. */
-  entries: KbConfigEntry[];
+  entries: KbRegistryEntry[];
   /** Absolute paths of the registry files that contributed entries. */
   sources: {
     user?: string;

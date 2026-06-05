@@ -1,4 +1,4 @@
-import type { Frontmatter } from '@codeassembly/kb-core';
+import type { Frontmatter } from '@codeassembly/kb';
 import { describe, expect, it } from 'vitest';
 
 import { append } from '../append.ts';

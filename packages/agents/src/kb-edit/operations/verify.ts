@@ -1,4 +1,4 @@
-import type { Frontmatter } from '@codeassembly/kb-core';
+import type { Frontmatter } from '@codeassembly/kb';
 
 import { formatUtcDate } from '../../kb-shared/note-helpers.ts';
 

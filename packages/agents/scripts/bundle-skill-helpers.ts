@@ -3,7 +3,7 @@
  * the skill's content directory.
  *
  * A skill installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
- * esbuild bundles the helper with `@codeassembly/kb-core` and its `yaml` / `zod` dependencies inlined, producing
+ * esbuild bundles the helper with `@codeassembly/kb` and its `yaml` / `zod` dependencies inlined, producing
  * a file that runs under `node` with no monorepo packages present on disk.
  * The bundle is written into `content/skills/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
  * and the dev and built layouts both ship the helper.
@@ -340,7 +340,7 @@ export async function bundleSkillHelpers(): Promise<void> {
       format: 'esm',
       target: 'es2022',
       banner: { js: requireShim },
-      // Resolve `@codeassembly/kb-core` (and any future workspace dep) from its `source` `.ts` export
+      // Resolve `@codeassembly/kb` (and any future workspace dep) from its `source` `.ts` export
       // condition so the bundle does not require those packages to be pre-built.
       conditions: ['source'],
     });

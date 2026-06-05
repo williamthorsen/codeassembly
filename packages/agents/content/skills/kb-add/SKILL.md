@@ -31,7 +31,7 @@ By default the helper writes to the knowledge base discovered by walking up from
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb-core`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
 
 ## Modes
 

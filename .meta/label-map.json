@@ -19,6 +19,7 @@
   "scopes": {
     "agents": "scope:agents",
     "factory": "scope:factory",
+    "kb": "scope:kb",
     "mcp": "scope:mcp",
     "run-core": "scope:run-core",
     "root": "scope:root"

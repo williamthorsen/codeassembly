@@ -1,4 +1,4 @@
-import { findKbRoot, tryLoadKbConfig } from '@codeassembly/kb-core/discovery';
+import { findKbRoot, tryLoadKbRegistry } from '@codeassembly/kb/discovery';
 
 import type { ScopedKb } from './types.ts';
 
@@ -38,7 +38,7 @@ export async function resolveScope(input: {
 }): Promise<ScopeResult> {
   // A named store resolves by registry lookup only — no discovery, no ancestor walk.
   if (input.storeName !== undefined) {
-    const { config, error: registryError } = await tryLoadKbConfig({
+    const { config, error: registryError } = await tryLoadKbRegistry({
       ...(input.home !== undefined && { home: input.home }),
     });
     const match = config.entries.find((entry) => entry.name === input.storeName);
@@ -57,7 +57,7 @@ export async function resolveScope(input: {
 
   const [discovered, { config, error: registryError }] = await Promise.all([
     findKbRoot({ startDir: input.startDir }),
-    tryLoadKbConfig({
+    tryLoadKbRegistry({
       projectDir: input.startDir,
       ...(input.home !== undefined && { home: input.home }),
     }),

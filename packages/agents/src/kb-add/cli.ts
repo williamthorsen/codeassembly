@@ -6,9 +6,9 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, KbRoot } from '@codeassembly/kb-core';
-import { loadSchema } from '@codeassembly/kb-core/schema';
-import { loadAliases } from '@codeassembly/kb-core/tags';
+import type { AliasMap, KbRoot } from '@codeassembly/kb';
+import { loadSchema } from '@codeassembly/kb/schema';
+import { loadAliases } from '@codeassembly/kb/tags';
 
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { prepareNote } from './prepare-note.ts';

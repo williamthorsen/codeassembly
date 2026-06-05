@@ -2,9 +2,9 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, rename, unlink, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
-import type { Frontmatter } from '@codeassembly/kb-core';
-import { pathExists } from '@codeassembly/kb-core/filesystem';
-import { writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
+import type { Frontmatter } from '@codeassembly/kb';
+import { pathExists } from '@codeassembly/kb/filesystem';
+import { writeFrontmatter } from '@codeassembly/kb/frontmatter';
 
 /** Successful write: the absolute path the note landed at. */
 export interface WriteSuccess {

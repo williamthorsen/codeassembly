@@ -14,7 +14,7 @@ let missingPath: string;
 let throughFilePath: string;
 
 beforeAll(async () => {
-  dir = await mkdtemp(join(tmpdir(), 'kb-core-exists-'));
+  dir = await mkdtemp(join(tmpdir(), 'kb-exists-'));
   filePath = join(dir, 'file.txt');
   subdirPath = join(dir, 'subdir');
   missingPath = join(dir, 'absent');

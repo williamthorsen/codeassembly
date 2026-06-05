@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/kb-core",
+  "name": "@codeassembly/kb",
   "version": "0.1.0",
   "private": true,
   "description": "Knowledge-base foundation: discovery, config, schema, frontmatter parsing, tags, and validation rules",

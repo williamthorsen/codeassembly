@@ -5,7 +5,7 @@ import { z } from 'zod';
 // Each entry's `path` is required; everything else is optional forward-compatible surface.
 
 /** Schema for a single KB entry as written in `kb.yaml`. */
-export const kbConfigFileEntrySchema = z.object({
+export const kbRegistryFileEntrySchema = z.object({
   path: z.string().min(1),
   description: z.string().optional(),
   default: z.boolean().optional(),
@@ -13,12 +13,12 @@ export const kbConfigFileEntrySchema = z.object({
 });
 
 /** Schema for the full `kb.yaml` file. */
-export const kbConfigFileSchema = z.object({
-  kbs: z.record(z.string(), kbConfigFileEntrySchema).optional(),
+export const kbRegistryFileSchema = z.object({
+  kbs: z.record(z.string(), kbRegistryFileEntrySchema).optional(),
 });
 
 /** The validated on-disk entry shape. */
-export type KbConfigFileEntry = z.infer<typeof kbConfigFileEntrySchema>;
+export type KbRegistryFileEntry = z.infer<typeof kbRegistryFileEntrySchema>;
 
 /** The validated on-disk file shape. */
-export type KbConfigFile = z.infer<typeof kbConfigFileSchema>;
+export type KbRegistryFile = z.infer<typeof kbRegistryFileSchema>;

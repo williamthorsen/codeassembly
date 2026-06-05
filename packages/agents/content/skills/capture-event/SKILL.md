@@ -43,7 +43,7 @@ The helper resolves the store by registry name only — it never walks the worki
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb-core`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
 
 ## Process
 

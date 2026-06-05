@@ -1,4 +1,4 @@
-import type { VaultIndex } from '@codeassembly/kb-core';
+import type { VaultIndex } from '@codeassembly/kb';
 import {
   extractTarget,
   hasNonMarkdownExtension,
@@ -6,7 +6,7 @@ import {
   maskFencedCode,
   maskInlineCode,
   WIKILINK,
-} from '@codeassembly/kb-core/rules';
+} from '@codeassembly/kb/rules';
 
 /** The result of sweeping one note's body for stale path-qualified wikilinks. */
 export interface RewriteResult {

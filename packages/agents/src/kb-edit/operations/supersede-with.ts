@@ -1,7 +1,7 @@
 import { relative } from 'node:path';
 
-import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb-core';
-import { canonicalize } from '@codeassembly/kb-core/tags';
+import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb';
+import { canonicalize } from '@codeassembly/kb/tags';
 
 import { dedupeInOrder, formatUtcDate } from '../../kb-shared/note-helpers.ts';
 

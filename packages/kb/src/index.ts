@@ -1,4 +1,4 @@
-// Root barrel for @codeassembly/kb-core.
+// Root barrel for @codeassembly/kb.
 //
 // Re-exports the types and constants used most widely across consumers. The
 // behavioral surface lives behind the five subpath entries (`./discovery`,
@@ -12,8 +12,8 @@ export type {
   FindingSeverity,
   Frontmatter,
   FrontmatterRaw,
-  KbConfig,
-  KbConfigEntry,
+  KbRegistry,
+  KbRegistryEntry,
   KbRoot,
   KindSchema,
   KindsSchema,

@@ -67,6 +67,9 @@
 - name: scope:factory
   color: 00ff96
   description: factory package
+- name: scope:kb
+  color: 00ff96
+  description: kb package
 - name: scope:mcp
   color: 00ff96
   description: mcp package

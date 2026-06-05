@@ -1,7 +1,7 @@
-import type { AliasMap, Finding, Frontmatter, Schema } from '@codeassembly/kb-core';
-import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb-core/frontmatter';
-import { frontmatterRule, runRules } from '@codeassembly/kb-core/rules';
-import { canonicalize } from '@codeassembly/kb-core/tags';
+import type { AliasMap, Finding, Frontmatter, Schema } from '@codeassembly/kb';
+import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter';
+import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
+import { canonicalize } from '@codeassembly/kb/tags';
 
 import { dedupeInOrder, formatUtcDate } from '../kb-shared/note-helpers.ts';
 import type { ParsedArgs, PreparedNote } from './types.ts';
@@ -24,11 +24,11 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 /**
  * Composes a typed `Frontmatter` from parsed CLI args, fills in UTC `created` and `updated` dates, canonicalizes
  * tags via the supplied alias map, and validates the result against the destination KB's schema using the
- * `frontmatterRule` from kb-core.
+ * `frontmatterRule` from kb.
  *
  * Validation is performed by round-tripping the rendered frontmatter through `parseNoteContent` and feeding the parsed
  * note through `runRules`. The round trip is the cheapest way to give the rule a real `ParsedNote` carrying valid
- * `frontmatterRaw` and an actual `yaml.Document` without reaching into kb-core internals.
+ * `frontmatterRaw` and an actual `yaml.Document` without reaching into kb internals.
  *
  * When any finding has `severity: 'error'`, the outcome is `{ ok: false, findings }` and nothing is written.
  */

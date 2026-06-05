@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import { findKbRoot, tryLoadKbConfig } from '@codeassembly/kb-core/discovery';
+import { findKbRoot, tryLoadKbRegistry } from '@codeassembly/kb/discovery';
 
 /** A knowledge base resolved as the write target. */
 export interface ResolvedKb {
@@ -44,7 +44,7 @@ export async function resolveWritableKb(input: {
 }): Promise<ResolveKbOutcome> {
   // Warn to stderr so a permission error or YAML defect is distinguishable from "no config file at all,"
   // which would otherwise make the resulting `no-kb-resolvable` failure hard to diagnose.
-  const { config, error } = await tryLoadKbConfig({
+  const { config, error } = await tryLoadKbRegistry({
     projectDir: input.startDir,
     ...(input.home !== undefined && { home: input.home }),
   });

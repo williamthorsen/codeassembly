@@ -1,0 +1,7 @@
+coverage/
+dist/
+
+# Test fixtures that are intentionally syntactically malformed YAML. Prettier cannot
+# parse them, and reformatting would erase the defect they exist to test.
+src/**/__tests__/**/fixtures/**/malformed-yaml/
+src/**/__tests__/**/fixtures/**/syntactically-malformed.*
