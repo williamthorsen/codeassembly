@@ -87,7 +87,7 @@ install_schema() {
     return 0
   fi
 
-  mkdir -p "${vault_dir}/.kb" "${vault_dir}/events"
+  mkdir -p "${vault_dir}/.kb" "${vault_dir}/content/events"
   cp "${TEMPLATE_SCHEMA}" "${schema_dest}"
   echo "${PROG}: installed schema at ${schema_dest}."
 }
