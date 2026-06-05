@@ -16,6 +16,7 @@ This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cros
 
 - **Observation** — you noticed something worth recalling later: a behavior, a pattern, a refinement, a surprising API surface, a workaround. Problem→solution and pattern-plus-refinement are useful shapes, but an observation may simply be an observation; do not force it into a template.
 - **Mistake** — the user corrected something a clearer skill definition or note would have prevented. Quote the correction verbatim and name the artifact in play (the skill, file, or convention that should have been clearer).
+- **Solved-problem episode** — a problem you hit and resolved. This is an `observation`, not a separate type: capture it with `--type observation` and `--tags fix` (plus any topical tags), putting the problem and its resolution in the body. The `fix` tag is what lets you recall past fixes as a group later.
 
 ## Arguments
 
