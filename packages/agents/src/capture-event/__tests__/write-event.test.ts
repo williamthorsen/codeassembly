@@ -10,21 +10,21 @@ const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
 const CONTENT = '---\nid: 01HZ\ntype: observation\n---\n\nBody.\n';
 
 describe(writeEvent, () => {
-  it('writes the record to events/{id}.md under the store root', async () => {
+  it('writes the record to content/events/{id}.md under the store root', async () => {
     const storePath = await mkdtemp(join(tmpdir(), 'capture-write-'));
 
     const path = await writeEvent({ storePath, id: ID, content: CONTENT });
 
-    expect(path).toBe(join(storePath, 'events', `${ID}.md`));
+    expect(path).toBe(join(storePath, 'content', 'events', `${ID}.md`));
     expect(await readFile(path, 'utf8')).toBe(CONTENT);
   });
 
-  it('creates the events directory when it does not exist', async () => {
+  it('creates the content/events directory when it does not exist', async () => {
     const storePath = await mkdtemp(join(tmpdir(), 'capture-write-'));
 
     await writeEvent({ storePath, id: ID, content: CONTENT });
 
-    const dirStat = await stat(join(storePath, 'events'));
+    const dirStat = await stat(join(storePath, 'content', 'events'));
     expect(dirStat.isDirectory()).toBe(true);
   });
 
@@ -34,15 +34,15 @@ describe(writeEvent, () => {
     await writeEvent({ storePath, id: ID, content: CONTENT });
 
     await expect(writeEvent({ storePath, id: ID, content: 'overwrite attempt' })).rejects.toThrow();
-    expect(await readFile(join(storePath, 'events', `${ID}.md`), 'utf8')).toBe(CONTENT);
+    expect(await readFile(join(storePath, 'content', 'events', `${ID}.md`), 'utf8')).toBe(CONTENT);
   });
 
-  it('leaves no temp files in the events directory after a successful write', async () => {
+  it('leaves no temp files in the content/events directory after a successful write', async () => {
     const storePath = await mkdtemp(join(tmpdir(), 'capture-write-'));
 
     await writeEvent({ storePath, id: ID, content: CONTENT });
 
-    const entries = await readdir(join(storePath, 'events'));
+    const entries = await readdir(join(storePath, 'content', 'events'));
     expect(entries).toEqual([`${ID}.md`]);
   });
 });

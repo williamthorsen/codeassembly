@@ -217,7 +217,7 @@ describe(runCapture, () => {
     if (result.ok) {
       expect(result.path.startsWith(storePath)).toBe(true);
       const cwdEntries = await readdir(cwdWithKb);
-      expect(cwdEntries).not.toContain('events');
+      expect(cwdEntries).not.toContain('content');
     }
   });
 
@@ -239,7 +239,7 @@ describe(runCapture, () => {
       expect(result.findings?.map((finding) => finding.message)).toContain('missing required field: correction');
     }
     const entries = await readdir(storePath);
-    expect(entries).not.toContain('events');
+    expect(entries).not.toContain('content');
   });
 
   it('fails when the named store is not registered', async () => {

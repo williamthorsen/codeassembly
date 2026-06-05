@@ -2,12 +2,7 @@ coverage/
 dist/
 
 # Generated esbuild bundles of skill helpers, not authored source.
-content/skills/derive-session-context/derive-session-context.mjs
-content/skills/kb-add/kb-add.mjs
-content/skills/kb-curate/kb-curate.mjs
-content/skills/kb-edit/kb-edit.mjs
-content/skills/kb-retrieve/kb-retrieve.mjs
-content/skills/update-jira-ticket/update-jira-ticket.mjs
+content/skills/**/*.mjs
 
 # Test fixtures that are intentionally syntactically malformed YAML. Prettier cannot
 # parse them, and reformatting would erase the defect they exist to test.

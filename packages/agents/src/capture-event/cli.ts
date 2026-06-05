@@ -52,7 +52,7 @@ if (isEntryPoint()) {
 /**
  * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store by registry
  * name, loads its kind-aware schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`,
- * best-effort `repo`), validates the per-type required set, and writes `events/{id}.md` immutably.
+ * best-effort `repo`), validates the per-type required set, and writes `content/events/{id}.md` immutably.
  *
  * Recoverable failures (invalid args, unregistered or readonly store, schema validation) become structured
  * `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.

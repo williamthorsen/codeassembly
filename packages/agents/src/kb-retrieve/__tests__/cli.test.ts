@@ -86,6 +86,19 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBeUndefined();
   });
 
+  it('recalls an event stored under content/events/ and classifies it as an event', async () => {
+    const result = await runRetrieve({
+      argv: ['phantomwidget'],
+      startDir: NOTES_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    const event = result.candidates.find((candidate) => candidate.path.includes(join('content', 'events')));
+    expect(event).toBeDefined();
+    expect(event?.capturedAt).toBe('2026-04-20T09:00:00.000Z');
+  });
+
   it('applies the --type filter to the candidate table', async () => {
     const result = await runRetrieve({
       argv: ['deployment', '--type', 'howto'],
