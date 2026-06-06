@@ -5,8 +5,8 @@ import { parseFrontmatter } from './frontmatter-merger.ts';
 
 /**
  * Frontmatter schema for a rulebook source file. The operational fields drive the resolver; unknown keys
- * (e.g. future classification metadata) are tolerated rather than rejected. `delivery` is normalized to an
- * array, and `version` is treated as an opaque string, never parsed as semver.
+ * (e.g. future classification metadata) are accepted but dropped, not preserved on the parsed object.
+ * `delivery` is normalized to an array, and `version` is treated as an opaque string, never parsed as semver.
  */
 export const RulebookFrontmatterSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug must be lowercase kebab-case (e.g. shell-conventions)'),
