@@ -1,5 +1,6 @@
 ---
 title: React hooks reference
+recordType: assertion
 type: reference
 created: 2026-02-01
 updated: 2026-02-01

@@ -10,7 +10,7 @@ export interface Candidate {
   path: string;
   /** Note title from frontmatter, or the file basename when frontmatter is missing or malformed. */
   title: string;
-  /** Note `type` from frontmatter, or `null` when missing or malformed. */
+  /** The note's Diátaxis `type` facet from its extra fields, or `null` when absent. */
   type: string | null;
   /** Canonical tags from frontmatter. */
   tags: string[];
@@ -22,13 +22,13 @@ export interface Candidate {
   supersession: Supersession;
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
-  /** ISO-8601 capture timestamp for an event-kind record; `undefined` for non-event records. */
+  /** ISO-8601 capture timestamp for an event record; `undefined` for non-event records. */
   capturedAt?: string;
-  /** `owner/name` repository for an event-kind record; `undefined` when absent or for non-event records. */
+  /** `owner/name` repository for an event record; `undefined` when absent or for non-event records. */
   repo?: string;
   /**
-   * For an event-kind candidate, the number of query-matched events sharing its `repo`+`type` recurrence group; a
-   * coarse recurrence signal the agent ranks on. `undefined` for non-event candidates.
+   * For an event candidate, the number of query-matched events sharing its `repo` recurrence group; a coarse
+   * recurrence signal the agent ranks on. `undefined` for non-event candidates.
    */
   occurrences?: number;
   /** A diagnostic note for this candidate, e.g. malformed frontmatter degraded to a low-signal hit. */
@@ -49,7 +49,7 @@ export interface RawHit {
 
 /** The mechanical filters applied to the candidate set, parsed from `--type`, `--tag`, `--folder`. */
 export interface RecallFilters {
-  /** Restrict to notes whose frontmatter `type` matches, case-insensitively. */
+  /** Restrict to notes whose Diátaxis `type` facet (in extra) matches, case-insensitively. */
   type?: string;
   /** Restrict to notes carrying this tag (canonical or alias), case-insensitively. */
   tag?: string;

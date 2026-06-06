@@ -1,6 +1,6 @@
 ---
+recordType: event
 id: 01HZDDDDDDDDDDDDDDDDDDDDDD
-type: observation
 captured-at: 2026-05-23T10:00:00.000Z
 session: session-4
 cwd: /tmp/no-remote

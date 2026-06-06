@@ -54,7 +54,7 @@ node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setu
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of candidate notes, each with `path`, `title`, `type`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. An event-kind candidate also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched events share its `repo`+`type` group). These three are absent on assertion-kind notes.
+- `candidates` — an array of candidate notes, each with `path`, `title`, `type`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. An event candidate also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched events share its `repo`). These three are absent on assertion notes.
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
@@ -63,10 +63,10 @@ The helper prints a JSON object to stdout:
 
 Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag, type, and folder overlap with the query are **evidence**, not terms in a weighted sum — a note in the right folder with the wrong intent ranks below a note that directly answers the question. Read each `snippet` to judge whether the note actually addresses the query rather than merely mentioning its terms.
 
-Ranking is kind-aware once relevance is established:
+Ranking is by record type once relevance is established:
 
-- **Assertion-kind notes** (no `capturedAt`) rank by freshness: a recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal.
-- **Event-kind candidates** (those carrying `capturedAt`) rank by recurrence, then recency: a candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo`+`type` context and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched events sharing the group, not a precise cluster — treat it as a strong-but-soft signal.
+- **Assertion notes** (no `capturedAt`) rank by freshness: a recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal.
+- **Event candidates** (those carrying `capturedAt`) rank by recurrence, then recency: a candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo` and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched events sharing the group, not a precise cluster — treat it as a strong-but-soft signal.
 
 ### 3. Present a ranked list
 
