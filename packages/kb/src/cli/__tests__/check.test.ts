@@ -2,9 +2,17 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { check } from '../../check/check.ts';
 import { run } from '../run.ts';
+
+// Mock `check` with a passthrough to the real implementation so most tests run
+// against real stores; the non-loader-error pass-through test overrides it per-call.
+vi.mock('../../check/check.ts', async () => {
+  const actual = await vi.importActual<typeof import('../../check/check.ts')>('../../check/check.ts');
+  return { ...actual, check: vi.fn(actual.check) };
+});
 
 const VALID = '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 const MISSING_UPDATED = '---\ntitle: Bad\ntype: howto\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
@@ -30,6 +38,10 @@ async function makeHome(name: string, storePath: string): Promise<string> {
 }
 
 describe(run, () => {
+  afterEach(() => {
+    vi.mocked(check).mockClear();
+  });
+
   it('exits 0 with a clean-run line when there are no findings', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
 
@@ -96,6 +108,31 @@ describe(run, () => {
     expect(result.stderr).toContain('config.yaml');
   });
 
+  it('exits 2 when tag-aliases.yaml is malformed', async () => {
+    const store = await makeStore({
+      'content/Clean.md': VALID,
+      '.kb/tag-aliases.yaml': 'aliases: [unterminated\n',
+    });
+
+    const result = await run({ argv: ['check'], cwd: store });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('tag-aliases.yaml');
+  });
+
+  it('exits 0 with the warning shown when only warning-severity findings are present', async () => {
+    const aliased = VALID.replace('tags: [x]', 'tags: [vcs]');
+    const store = await makeStore({
+      'content/Aliased.md': aliased,
+      '.kb/tag-aliases.yaml': 'aliases:\n  git: [vcs]\n',
+    });
+
+    const result = await run({ argv: ['check'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('warning frontmatter.tag-alias');
+  });
+
   it('resolves a store by --kb from the registry and emits the JSON shape', async () => {
     const store = await makeStore({ 'content/Bad.md': MISSING_UPDATED });
     const home = await makeHome('coding', store);
@@ -160,5 +197,12 @@ describe(run, () => {
 
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('unknown command');
+  });
+
+  it('propagates a non-loader error from check rather than swallowing it as a config error', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    vi.mocked(check).mockRejectedValueOnce(new Error('rule engine crashed'));
+
+    await expect(run({ argv: ['check'], cwd: store })).rejects.toThrow(/rule engine crashed/);
   });
 });

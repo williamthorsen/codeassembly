@@ -1,8 +1,10 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { KbLoaderError } from '../../config/kb-loader-error.ts';
 import { loadAliases, parseAliases } from '../load-aliases.ts';
 
 // Mock `readFile` with a passthrough to the real implementation so most tests
@@ -99,5 +101,13 @@ describe(loadAliases, () => {
     vi.mocked(readFile).mockRejectedValueOnce(ioError);
 
     await expect(loadAliases({ kbRoot: kbRootAt('/some/kb') })).rejects.toThrow(/permission denied/);
+  });
+
+  it('rejects with a KbLoaderError when tag-aliases.yaml is structurally malformed', async () => {
+    const kbPath = await mkdtemp(join(tmpdir(), 'kb-aliases-malformed-'));
+    await mkdir(join(kbPath, '.kb'), { recursive: true });
+    await writeFile(join(kbPath, '.kb', 'tag-aliases.yaml'), 'aliases: [unterminated\n', 'utf8');
+
+    await expect(loadAliases({ kbRoot: kbRootAt(kbPath) })).rejects.toThrow(KbLoaderError);
   });
 });
