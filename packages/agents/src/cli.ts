@@ -3,8 +3,10 @@
 import process from 'node:process';
 
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.js';
+import { initCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.js';
 import { statusCommand } from './commands/status.js';
+import { syncCommand } from './commands/sync.ts';
 import { uninstallCommand } from './commands/uninstall.js';
 import type { InstallOptions, PlatformId } from './lib/types.js';
 
@@ -112,6 +114,8 @@ function printUsage(): void {
 
 Commands:
   install          Install guidance, skills, and subagents into platform directories
+  init             Scaffold an empty .agents/rulebooks.yaml in the current project
+  sync             Resolve .agents/rulebooks.yaml and materialize declared rulebooks
   uninstall        Remove installed guidance, skills, and subagents
   status           Show the current state of installed items
   generate <target> Generate a configuration file (e.g., label-map)
@@ -120,7 +124,7 @@ Options:
   --platform <name>  Target platform: claude, rovodev, or all (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite modified files (install/uninstall)
-  --dry-run          Show what would be done without making changes (install only)
+  --dry-run          Show what would be done without making changes (install, sync)
   --help, -h         Show this help message`);
 }
 
@@ -139,6 +143,12 @@ async function main(): Promise<void> {
     switch (command) {
       case 'install':
         await installCommand(options);
+        break;
+      case 'init':
+        await initCommand(options);
+        break;
+      case 'sync':
+        await syncCommand(options);
         break;
       case 'uninstall':
         await uninstallCommand({ platform: options.platform, force: options.force });
