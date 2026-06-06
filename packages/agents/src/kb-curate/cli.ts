@@ -4,11 +4,15 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import type { Finding } from '@codeassembly/kb';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
+import { check } from '@codeassembly/kb/check';
+import { isKbLoaderError } from '@codeassembly/kb/config';
+
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { applyFixes } from './apply.ts';
-import { detectFindings } from './detect.ts';
-import { enumerateNotes } from './enumerate.ts';
+import { detectCurateFindings, sortFindings } from './detect.ts';
 import type { CurateResult, CurateSummary, ParsedArgs } from './types.ts';
 
 /** Default staleness threshold in whole days when `--stale-after` is not supplied. */
@@ -110,29 +114,51 @@ export async function runCurate(input: {
   }
   const kb = kbOutcome.kb;
 
-  const enumerated = await enumerateNotes(kb.path);
-  const findings = await detectFindings({
-    kbPath: kb.path,
-    notes: enumerated,
-    now: input.now,
-    staleAfterDays: args.staleAfterDays,
-  });
-
-  if (!args.apply) {
-    return { ok: true, mode, kb, findings, summary: summarize(findings) };
+  let checked;
+  try {
+    checked = await curateCheck({ kbRoot: kb.path, now: input.now, staleAfterDays: args.staleAfterDays });
+  } catch (error) {
+    // Catch only a loader defect (malformed config/schema/aliases); any other throw from `check` — an enumeration
+    // or rule crash — must surface as a real failure rather than being relabeled as a config error.
+    if (isKbLoaderError(error)) {
+      return { ok: false, error: 'invalid-config', message: error.message };
+    }
+    throw error;
   }
 
-  const applyOutcome = await applyFixes({ kbPath: kb.path, notes: enumerated, findings });
-  const residual = await detectFindings({
-    kbPath: kb.path,
-    notes: await enumerateNotes(kb.path),
-    now: input.now,
-    staleAfterDays: args.staleAfterDays,
-  });
-  return { ok: true, mode, kb, findings: residual, summary: summarize(residual), applied: applyOutcome };
+  if (!args.apply) {
+    return { ok: true, mode, kb, findings: checked.findings, summary: summarize(checked.findings) };
+  }
+
+  const applyOutcome = await applyFixes({ kbPath: kb.path, notes: checked.notes, findings: checked.findings });
+  const residual = await curateCheck({ kbRoot: kb.path, now: input.now, staleAfterDays: args.staleAfterDays });
+  return {
+    ok: true,
+    mode,
+    kb,
+    findings: residual.findings,
+    summary: summarize(residual.findings),
+    applied: applyOutcome,
+  };
 }
 
 // region | Helpers
+
+/**
+ * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration: the generic
+ * frontmatter/tag-alias/wikilink/path findings come from `check`, and verification-staleness plus supersede-graph
+ * findings are detected here. The combined set is sorted by path, then line, then rule. A loader defect propagates as
+ * a `KbLoaderError` for the caller to map to `invalid-config`.
+ */
+async function curateCheck(input: {
+  kbRoot: string;
+  now: Date;
+  staleAfterDays: number;
+}): Promise<{ notes: readonly EnumeratedNote[]; findings: Finding[] }> {
+  const { notes, findings: base } = await check({ kbRoot: input.kbRoot });
+  const curateFindings = detectCurateFindings({ notes, now: input.now, staleAfterDays: input.staleAfterDays });
+  return { notes, findings: sortFindings([...base, ...curateFindings]) };
+}
 
 /** Partitions a finding set into total, error, and warning counts. */
 function summarize(findings: readonly { severity: 'error' | 'warning' }[]): CurateSummary {

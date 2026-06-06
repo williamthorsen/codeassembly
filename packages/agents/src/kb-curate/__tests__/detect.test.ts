@@ -2,82 +2,40 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { enumerateNotes } from '@codeassembly/kb/check';
+import { defaultKbConfig } from '@codeassembly/kb/config';
 import { describe, expect, it } from 'vitest';
 
-import { detectFindings } from '../detect.ts';
-import { enumerateNotes } from '../enumerate.ts';
+import { detectCurateFindings, sortFindings } from '../detect.ts';
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
-/** Stands up a temp vault with the given note files and an alias map, returning its root. */
-async function makeVault(files: Record<string, string>, aliases?: string): Promise<string> {
+/** Stands up a temp vault, writing each file under `content/` so the default targets enumerate it. */
+async function makeVault(files: Record<string, string>): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'kb-curate-detect-'));
   await mkdir(join(root, '.kb'), { recursive: true });
-  if (aliases !== undefined) {
-    await writeFile(join(root, '.kb', 'tag-aliases.yaml'), aliases, 'utf8');
-  }
   for (const [relativePath, content] of Object.entries(files)) {
-    const full = join(root, relativePath);
+    const full = join(root, 'content', relativePath);
     await mkdir(join(full, '..'), { recursive: true });
     await writeFile(full, content, 'utf8');
   }
   return root;
 }
 
+/** Enumerates a vault under the default targets and runs the curate-only detectors. */
 async function detectIn(root: string, staleAfterDays = 90) {
-  const notes = await enumerateNotes(root);
-  return detectFindings({ kbPath: root, notes, now: NOW, staleAfterDays });
+  const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
+  return detectCurateFindings({ notes, now: NOW, staleAfterDays });
 }
 
 const CLEAN =
   '---\ntitle: Clean\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-25\ntags: [git]\n---\n\nA clean note with no defects.\n';
 
-describe(detectFindings, () => {
-  it('produces no findings for a clean vault', async () => {
+describe(detectCurateFindings, () => {
+  it('produces no curate findings for a clean vault', async () => {
     const root = await makeVault({ 'Clean.md': CLEAN });
 
     expect(await detectIn(root)).toEqual([]);
-  });
-
-  it('reports a frontmatter finding for a missing required field', async () => {
-    const root = await makeVault({
-      'Bad.md':
-        '---\ntitle: Bad\ntype: howto\ncreated: 2026-05-01\nlast-verified: 2026-05-25\ntags: [git]\n---\n\nMissing updated.\n',
-    });
-
-    const rules = (await detectIn(root)).map((finding) => finding.rule);
-
-    expect(rules).toContain('frontmatter.required');
-  });
-
-  it('reports a tag-alias finding when a tag is an alias', async () => {
-    const root = await makeVault(
-      {
-        'Aliased.md':
-          '---\ntitle: Aliased\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-25\ntags: [vcs]\n---\n\nBody.\n',
-      },
-      'aliases:\n  git: [vcs]\n',
-    );
-
-    const rules = (await detectIn(root)).map((finding) => finding.rule);
-
-    expect(rules).toContain('frontmatter.tag-alias');
-  });
-
-  it('reports an unresolved wikilink', async () => {
-    const root = await makeVault({ 'Links.md': `${CLEAN}\nSee [[Ghost note]].\n` });
-
-    const rules = (await detectIn(root)).map((finding) => finding.rule);
-
-    expect(rules).toContain('wikilinks.unresolved');
-  });
-
-  it('reports a hardcoded user-home path', async () => {
-    const root = await makeVault({ 'Paths.md': `${CLEAN}\nRun cd /Users/someone/repos here.\n` });
-
-    const rules = (await detectIn(root)).map((finding) => finding.rule);
-
-    expect(rules).toContain('paths.user-home');
   });
 
   it('reports no verification.unmarked findings when no note uses verification', async () => {
@@ -125,16 +83,20 @@ describe(detectFindings, () => {
 
     expect(rules).toContain('supersede.dangling');
   });
+});
 
-  it('sorts findings by path, then line, then rule', async () => {
-    const root = await makeVault({
-      'b.md': `${CLEAN}\nSee [[Ghost]].\n`,
-      'a.md': `${CLEAN}\nSee [[AlsoGhost]].\n`,
-    });
+describe(sortFindings, () => {
+  it('sorts findings by path, then line, then rule', () => {
+    const findings = sortFindings([
+      { path: 'b.md', rule: 'z.rule', severity: 'error', message: 'm' },
+      { path: 'a.md', line: 5, rule: 'a.rule', severity: 'error', message: 'm' },
+      { path: 'a.md', line: 2, rule: 'b.rule', severity: 'warning', message: 'm' },
+    ]);
 
-    const findings = await detectIn(root);
-    const paths = findings.map((finding) => finding.path);
-
-    expect(paths).toEqual([...paths].toSorted());
+    expect(findings.map((finding) => `${finding.path}:${finding.line ?? 0}:${finding.rule}`)).toEqual([
+      'a.md:2:b.rule',
+      'a.md:5:a.rule',
+      'b.md:0:z.rule',
+    ]);
   });
 });
