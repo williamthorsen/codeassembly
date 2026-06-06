@@ -14,8 +14,8 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  *
  * Findings are produced in a fixed order. The block-level checks
  * (`frontmatter.missing`, `frontmatter.parse`, `frontmatter.empty`) early-exit
- * after their first finding; the field-level checks (`frontmatter.required`,
- * `.recordType`, `.date`, `.tags`) accumulate.
+ * after their first finding; the field-level checks (`frontmatter.recordType`,
+ * `.required`, `.date`, `.tags`) accumulate.
  */
 export const frontmatterRule: KbRule = {
   name: 'frontmatter',
