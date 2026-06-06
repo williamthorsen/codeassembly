@@ -47,6 +47,12 @@ describe(loadSchema, () => {
     );
   });
 
+  it('rejects a file that still uses the retired flat types: shape, naming the source path', async () => {
+    await expect(loadSchema({ kbRoot: kbRootAt('rejects-types') })).rejects.toThrow(
+      /rejects-types.*schema\.yaml: invalid schema\.yaml —/s,
+    );
+  });
+
   it('rejects a .kb/schema.yaml with malformed YAML, naming the source path', async () => {
     await expect(loadSchema({ kbRoot: kbRootAt('malformed-yaml') })).rejects.toThrow(
       /malformed-yaml.*schema\.yaml: malformed YAML —/s,
