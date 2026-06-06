@@ -61,7 +61,7 @@ export interface CurateSuccess {
 }
 
 /** Categorical error codes the helper can return without an unexpected throw. */
-export type CurateErrorCode = 'invalid-args' | 'no-kb-resolvable' | 'readonly-kb';
+export type CurateErrorCode = 'invalid-args' | 'invalid-config' | 'no-kb-resolvable' | 'readonly-kb';
 
 /** The helper's stdout payload on a recoverable failure. */
 export interface CurateFailure {

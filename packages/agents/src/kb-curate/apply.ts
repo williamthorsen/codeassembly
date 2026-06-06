@@ -2,10 +2,10 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 
 import type { Finding, VaultIndex } from '@codeassembly/kb';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
 
 import { canonicalizeTags } from './apply/canonicalize-tags.ts';
 import { rewriteWikilinks } from './apply/rewrite-wikilinks.ts';
-import type { EnumeratedNote } from './enumerate.ts';
 import type { AppliedFix } from './types.ts';
 
 /**

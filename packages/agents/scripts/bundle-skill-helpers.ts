@@ -277,9 +277,14 @@ function assertKbEditSmokeResult(result: unknown): void {
 function makeKbCurateSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-curate-smoke-'));
   mkdirSync(path.join(fixtureDir, '.kb'), { recursive: true });
+  // The seed note lives under `content/` so the store's default `targets: ['content/**/*.md']` enumerates it; a note
+  // at the store root would not match and the smoke test would silently report zero notes. The note links to a
+  // missing target so a successful enumeration always yields a `wikilinks.unresolved` finding — the proof, below,
+  // that the bundle enumerated the note rather than reporting an empty vault.
+  mkdirSync(path.join(fixtureDir, 'content'), { recursive: true });
   writeFileSync(
-    path.join(fixtureDir, 'Smoke.md'),
-    '---\ntitle: Smoke\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\n---\n\nSmoke body.\n',
+    path.join(fixtureDir, 'content', 'Smoke.md'),
+    '---\ntitle: Smoke\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\n---\n\nSee [[Missing target]].\n',
     'utf8',
   );
   return {
@@ -290,7 +295,12 @@ function makeKbCurateSmokeTest(): SmokeTestInvocation {
   };
 }
 
-/** Assert the kb-curate smoke produced an ok read-only report with an array-valued `findings`. */
+/**
+ * Assert the kb-curate smoke produced an ok read-only report that actually enumerated the seed note. The seed note
+ * carries an unresolved wikilink, so a non-empty enumeration always surfaces a `wikilinks.unresolved` finding; its
+ * absence means the bundle enumerated nothing — a broken `content/` scoping must fail here rather than pass with an
+ * empty report.
+ */
 function assertKbCurateSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-curate');
@@ -303,6 +313,10 @@ function assertKbCurateSmokeResult(result: unknown): void {
   }
   if (!Array.isArray(result.findings)) {
     throw new TypeError(`expected findings to be an array, got ${JSON.stringify(result.findings)}`);
+  }
+  const rules = result.findings.map((entry: unknown) => (isRecord(entry) ? entry.rule : undefined));
+  if (!rules.includes('wikilinks.unresolved')) {
+    throw new Error(`expected the smoke run to enumerate the seed note; got rules: ${JSON.stringify(rules)}`);
   }
 }
 

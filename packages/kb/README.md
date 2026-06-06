@@ -6,16 +6,18 @@ It underpins the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skil
 
 ## Exports
 
-The package exposes five subpath entries plus a root barrel:
+The package exposes seven subpath entries plus a root barrel:
 
-| Entry           | Description                                                        |
-| --------------- | ------------------------------------------------------------------ |
-| `.`             | The most-used types plus `defaultSchema` and the rule constants    |
-| `./discovery`   | KB root discovery and `kb.yaml` registry loading and merging       |
-| `./schema`      | The bundled default schema and per-KB `.kb/schema.yaml` resolution |
-| `./frontmatter` | Note parsing into typed frontmatter and writing it back to YAML    |
-| `./tags`        | `.kb/tag-aliases.yaml` loading and tag canonicalization            |
-| `./rules`       | The `frontmatterRule` / `tagAliasRule` validators and `runRules`   |
+| Entry           | Description                                                               |
+| --------------- | ------------------------------------------------------------------------- |
+| `.`             | The most-used types plus `defaultSchema` and the rule constants           |
+| `./check`       | `check` — config-driven enumeration plus the generic rules, in one call   |
+| `./config`      | `.kb/config.yaml` loading and the typed `KbLoaderError` the loaders throw |
+| `./discovery`   | KB root discovery and `kb.yaml` registry loading and merging              |
+| `./schema`      | The bundled default schema and per-KB `.kb/schema.yaml` resolution        |
+| `./frontmatter` | Note parsing into typed frontmatter and writing it back to YAML           |
+| `./tags`        | `.kb/tag-aliases.yaml` loading and tag canonicalization                   |
+| `./rules`       | The `frontmatterRule` / `tagAliasRule` validators and `runRules`          |
 
 Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
 The library throws on errors; success/failure shaping is left to consumers.
@@ -123,10 +125,60 @@ import { frontmatterRule, runRules, tagAliasRule } from '@codeassembly/kb/rules'
 const findings = runRules({ rules: [frontmatterRule, tagAliasRule], notes, schema, aliases });
 ```
 
+## Checking a store
+
+`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/schema.yaml`, and `.kb/tag-aliases.yaml`, enumerates the notes the config selects, validates each record against the store's schema, and runs the cross-note link and path rules. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
+
+```ts
+import { check } from '@codeassembly/kb/check';
+
+const { notes, findings } = await check({ kbRoot });
+```
+
+A structural defect in any of the three loaded files throws a `KbLoaderError` (see below). Any other error from enumeration or rule execution propagates unchanged.
+
+### Which notes are checked: `.kb/config.yaml`
+
+`.kb/config.yaml` configures which notes a check enumerates. Both keys are optional; an absent file or an omitted key falls back to the default.
+
+```yaml
+# .kb/config.yaml
+targets:
+  - 'content/**/*.md'
+exclude:
+  - '**/node_modules/**'
+```
+
+| Key       | Default                  | Meaning                                                                      |
+| --------- | ------------------------ | ---------------------------------------------------------------------------- |
+| `targets` | `['content/**/*.md']`    | Glob patterns (store-root-relative) selecting which notes a check enumerates |
+| `exclude` | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches           |
+
+Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@codeassembly/kb/config`.
+
+## The `kb` command
+
+The package ships a `kb` bin with a `check` subcommand that validates every note in a store and reports the findings.
+
+```bash
+kb check                 # check the nearest ancestor .kb/ store
+kb check --kb coding     # check the named store from the kb.yaml registry
+kb check --json          # emit a JSON report
+```
+
+`kb check` resolves the store from the nearest ancestor `.kb/` directory, or from a `--kb <name>` entry in the merged `kb.yaml` registry (project-local entries join the user-global registry). The default output groups findings by file; `--json` emits `{ store, summary, findings }`. The command is read-only and never writes to the store.
+
+Exit codes:
+
+| Code | Meaning                                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | No error-severity findings (warnings are allowed). A zero-match run also exits 0.                                         |
+| `1`  | One or more error-severity findings.                                                                                      |
+| `2`  | A usage error, an unresolvable store, a malformed `config.yaml`/`schema.yaml`/`tag-aliases.yaml`, or an unexpected crash. |
+
 ## Error and exception model
 
-Validation rules **return** findings — they never throw. Loaders (`loadKbRegistry`, `loadSchema`, `loadAliases`) **throw** on structural defects, malformed YAML, or illegal overrides, with the offending file path and key named in the message.
-I/O errors other than a missing optional file propagate.
+Validation rules **return** findings — they never throw. Loaders (`loadKbConfig`, `loadSchema`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects, malformed YAML, or illegal overrides, with the offending file path named in the message. `KbLoaderError` (exported from `@codeassembly/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config/schema/alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability
 

@@ -2,10 +2,11 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { enumerateNotes } from '@codeassembly/kb/check';
+import { defaultKbConfig } from '@codeassembly/kb/config';
 import { describe, expect, it } from 'vitest';
 
 import { applyFixes } from '../apply.ts';
-import { enumerateNotes } from '../enumerate.ts';
 
 const ORIGINAL_FRONTMATTER =
   '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [todo-item]\n---\n';
@@ -13,16 +14,21 @@ const CANONICALIZED_FRONTMATTER =
   '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [todo]\n---\n';
 const TARGET = '---\ntitle: Foo\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** Stands up a temp vault with a `.kb/` and the given note files. */
+/** Stands up a temp vault with a `.kb/`, writing each note under `content/` so the default targets enumerate it. */
 async function makeVault(files: Record<string, string>): Promise<string> {
   const kbPath = await mkdtemp(join(tmpdir(), 'kb-curate-apply-'));
   await mkdir(join(kbPath, '.kb'), { recursive: true });
   for (const [relativePath, content] of Object.entries(files)) {
-    const full = join(kbPath, relativePath);
+    const full = join(kbPath, 'content', relativePath);
     await mkdir(join(full, '..'), { recursive: true });
     await writeFile(full, content, 'utf8');
   }
   return kbPath;
+}
+
+/** Enumerates a vault's notes under the default targets. */
+async function enumerate(kbPath: string) {
+  return enumerateNotes({ kbRoot: kbPath, config: defaultKbConfig });
 }
 
 describe(applyFixes, () => {
@@ -33,10 +39,10 @@ describe(applyFixes, () => {
   it('preserves an on-disk frontmatter change made after enumeration when rewriting the body', async () => {
     const linker = `${ORIGINAL_FRONTMATTER}\nSee [[old/Foo]].\n`;
     const kbPath = await makeVault({ 'Linker.md': linker, 'tools/Foo.md': TARGET });
-    const notes = await enumerateNotes(kbPath);
+    const notes = await enumerate(kbPath);
 
     // Simulate the tag fix having rewritten the frontmatter on disk (kb-edit, the sole frontmatter writer).
-    const linkerPath = join(kbPath, 'Linker.md');
+    const linkerPath = join(kbPath, 'content', 'Linker.md');
     await writeFile(linkerPath, `${CANONICALIZED_FRONTMATTER}\nSee [[old/Foo]].\n`, 'utf8');
 
     const fixes = await applyFixes({ kbPath, notes, findings: [] });
@@ -44,7 +50,7 @@ describe(applyFixes, () => {
     const onDisk = await readFile(linkerPath, 'utf8');
     expect(onDisk).toContain('tags: [todo]'); // the on-disk frontmatter change is preserved, not clobbered
     expect(onDisk).not.toContain('tags: [todo-item]');
-    expect(onDisk).toContain('[[tools/Foo]]'); // the body rewrite landed
+    expect(onDisk).toContain('[[content/tools/Foo]]'); // the body rewrite landed against the content-scoped path
     const rewrite = fixes.find((fix) => fix.operation === 'rewrite-wikilink');
     expect(rewrite).toMatchObject({ ok: true });
   });
@@ -52,10 +58,10 @@ describe(applyFixes, () => {
   it('reports ok:false without writing when the body anchor is not found on disk', async () => {
     const linker = `${ORIGINAL_FRONTMATTER}\nSee [[old/Foo]].\n`;
     const kbPath = await makeVault({ 'Linker.md': linker, 'tools/Foo.md': TARGET });
-    const notes = await enumerateNotes(kbPath);
+    const notes = await enumerate(kbPath);
 
     // Replace the body on disk so the snapshot's body no longer anchors in the current content.
-    const linkerPath = join(kbPath, 'Linker.md');
+    const linkerPath = join(kbPath, 'content', 'Linker.md');
     await writeFile(linkerPath, `${ORIGINAL_FRONTMATTER}\nEntirely different body.\n`, 'utf8');
 
     const fixes = await applyFixes({ kbPath, notes, findings: [] });

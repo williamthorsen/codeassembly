@@ -2,22 +2,35 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { check } from '@codeassembly/kb/check';
+import { defaultKbConfig, KbLoaderError } from '@codeassembly/kb/config';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runCurate } from '../cli.ts';
+
+// Mock `check` with a passthrough to the real implementation so most tests run
+// against real vaults; the error-path tests override it per-call.
+vi.mock('@codeassembly/kb/check', async () => {
+  const actual = await vi.importActual<typeof import('@codeassembly/kb/check')>('@codeassembly/kb/check');
+  return { ...actual, check: vi.fn(actual.check) };
+});
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
 const VALID =
   '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\n---\n\nBody.\n';
 
-/** Stands up a temp vault with a `.kb/` and the given note files, plus an empty home so the registry resolves empty. */
+/**
+ * Stands up a temp vault with a `.kb/` and an empty home so the registry resolves empty. A note path is written under
+ * `content/` so the store's default `targets: ['content/**\/*.md']` enumerates it; a path beginning with `.kb/` is
+ * written at the store root so config/schema/alias files land where the loaders read them.
+ */
 async function makeVault(files: Record<string, string>): Promise<{ kbPath: string; home: string }> {
   const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
   const kbPath = await mkdtemp(join(tmpdir(), 'kb-curate-vault-'));
   await mkdir(join(kbPath, '.kb'), { recursive: true });
   for (const [relativePath, content] of Object.entries(files)) {
-    const full = join(kbPath, relativePath);
+    const full = relativePath.startsWith('.kb/') ? join(kbPath, relativePath) : join(kbPath, 'content', relativePath);
     await mkdir(join(full, '..'), { recursive: true });
     await writeFile(full, content, 'utf8');
   }
@@ -52,6 +65,10 @@ describe(parseArgs, () => {
 });
 
 describe(runCurate, () => {
+  afterEach(() => {
+    vi.mocked(check).mockClear();
+  });
+
   it('returns no-kb-resolvable when no KB can be found and none is requested', async () => {
     const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
@@ -109,8 +126,8 @@ describe(runCurate, () => {
     expect(Array.isArray(result.applied)).toBe(true);
     const rewrite = result.applied?.find((fix) => fix.operation === 'rewrite-wikilink');
     expect(rewrite).toMatchObject({ ok: true, operation: 'rewrite-wikilink' });
-    const rewritten = await readFile(join(kbPath, 'Linker.md'), 'utf8');
-    expect(rewritten).toContain('[[tools/Foo]]');
+    const rewritten = await readFile(join(kbPath, 'content', 'Linker.md'), 'utf8');
+    expect(rewritten).toContain('[[content/tools/Foo]]');
   });
 
   it('reports a per-finding failure under --apply when the kb-edit sibling is absent for a tag-alias fix', async () => {
@@ -131,8 +148,9 @@ describe(runCurate, () => {
 
   it('curates a readonly KB in report mode without refusing', async () => {
     const kbPath = await mkdtemp(join(tmpdir(), 'kb-curate-ro-'));
+    await mkdir(join(kbPath, 'content'), { recursive: true });
     await mkdir(join(kbPath, '.kb'), { recursive: true });
-    await writeFile(join(kbPath, 'Note.md'), VALID, 'utf8');
+    await writeFile(join(kbPath, 'content', 'Note.md'), VALID, 'utf8');
     const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
     await mkdir(join(home, '.agents'), { recursive: true });
     await writeFile(join(home, '.agents', 'kb.yaml'), `kbs:\n  ro:\n    path: ${kbPath}\n    readonly: true\n`, 'utf8');
@@ -142,5 +160,61 @@ describe(runCurate, () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.mode).toBe('report');
+  });
+
+  it('produces the generic and curate findings together for a content-structured vault', async () => {
+    const { kbPath, home } = await makeVault({
+      'Bad.md':
+        '---\ntitle: Bad\ntype: howto\ncreated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\n---\n\nSee [[Ghost]].\n',
+    });
+
+    const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const rules = result.findings.map((finding) => finding.rule);
+    expect(rules).toContain('frontmatter.required');
+    expect(rules).toContain('wikilinks.unresolved');
+  });
+
+  it('returns invalid-config when the store config.yaml is malformed', async () => {
+    const { kbPath, home } = await makeVault({
+      'Note.md': VALID,
+      '.kb/config.yaml': 'targets: [unterminated\n',
+    });
+
+    const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });
+
+    expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('config.yaml') });
+  });
+
+  it('returns invalid-config when the store schema.yaml is malformed', async () => {
+    const { kbPath, home } = await makeVault({
+      'Note.md': VALID,
+      '.kb/schema.yaml': 'types: [howto\n',
+    });
+
+    const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });
+
+    expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('schema.yaml') });
+  });
+
+  it('propagates a non-loader error from check rather than returning invalid-config', async () => {
+    const { kbPath, home } = await makeVault({ 'Note.md': VALID });
+    vi.mocked(check).mockRejectedValueOnce(new Error('rule engine crashed'));
+
+    await expect(runCurate({ argv: [], startDir: kbPath, now: NOW, home })).rejects.toThrow(/rule engine crashed/);
+  });
+
+  it('returns invalid-config when the residual check after --apply throws a KbLoaderError', async () => {
+    const { kbPath, home } = await makeVault({ 'Note.md': VALID });
+    // First (pre-apply) check is clean; the residual re-check throws a loader defect (e.g. config corrupted by a race).
+    vi.mocked(check)
+      .mockResolvedValueOnce({ config: defaultKbConfig, notes: [], findings: [] })
+      .mockRejectedValueOnce(new KbLoaderError('config.yaml: malformed YAML'));
+
+    const result = await runCurate({ argv: ['--apply'], startDir: kbPath, now: NOW, home });
+
+    expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('config.yaml') });
   });
 });

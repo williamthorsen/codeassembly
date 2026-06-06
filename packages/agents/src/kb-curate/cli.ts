@@ -1,14 +1,18 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the helper's resolved exit code must reach the OS, and this module runs `main` only behind the `isEntryPoint()` guard, never when imported as a library; throwing-to-set-exitCode would lose the explicit failure-exit contract. */
+/* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import type { Finding } from '@codeassembly/kb';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
+import { check } from '@codeassembly/kb/check';
+import { isKbLoaderError } from '@codeassembly/kb/config';
+
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { applyFixes } from './apply.ts';
-import { detectFindings } from './detect.ts';
-import { enumerateNotes } from './enumerate.ts';
+import { detectCurateFindings, sortFindings } from './detect.ts';
 import type { CurateResult, CurateSummary, ParsedArgs } from './types.ts';
 
 /** Default staleness threshold in whole days when `--stale-after` is not supplied. */
@@ -110,29 +114,74 @@ export async function runCurate(input: {
   }
   const kb = kbOutcome.kb;
 
-  const enumerated = await enumerateNotes(kb.path);
-  const findings = await detectFindings({
-    kbPath: kb.path,
-    notes: enumerated,
-    now: input.now,
-    staleAfterDays: args.staleAfterDays,
-  });
+  const checkInput = { kbRoot: kb.path, now: input.now, staleAfterDays: args.staleAfterDays };
 
-  if (!args.apply) {
-    return { ok: true, mode, kb, findings, summary: summarize(findings) };
+  const checked = await guardedCurateCheck(checkInput);
+  if (!checked.ok) {
+    return checked.failure;
   }
 
-  const applyOutcome = await applyFixes({ kbPath: kb.path, notes: enumerated, findings });
-  const residual = await detectFindings({
+  if (!args.apply) {
+    return { ok: true, mode, kb, findings: checked.value.findings, summary: summarize(checked.value.findings) };
+  }
+
+  const applyOutcome = await applyFixes({
     kbPath: kb.path,
-    notes: await enumerateNotes(kb.path),
-    now: input.now,
-    staleAfterDays: args.staleAfterDays,
+    notes: checked.value.notes,
+    findings: checked.value.findings,
   });
-  return { ok: true, mode, kb, findings: residual, summary: summarize(residual), applied: applyOutcome };
+  const residual = await guardedCurateCheck(checkInput);
+  if (!residual.ok) {
+    return residual.failure;
+  }
+  return {
+    ok: true,
+    mode,
+    kb,
+    findings: residual.value.findings,
+    summary: summarize(residual.value.findings),
+    applied: applyOutcome,
+  };
 }
 
 // region | Helpers
+
+/** A guarded `curateCheck` outcome: the check result, or an `invalid-config` failure mapped from a loader defect. */
+type GuardedCheck =
+  | { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } }
+  | { ok: false; failure: CurateResult };
+
+/**
+ * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config/schema/aliases) to a structured
+ * `invalid-config` failure. Any other throw — an enumeration or rule crash — propagates as a real failure rather than
+ * being relabeled as a config error. Both `runCurate` check calls route through here so the guard cannot drift.
+ */
+async function guardedCurateCheck(input: { kbRoot: string; now: Date; staleAfterDays: number }): Promise<GuardedCheck> {
+  try {
+    return { ok: true, value: await curateCheck(input) };
+  } catch (error) {
+    if (isKbLoaderError(error)) {
+      return { ok: false, failure: { ok: false, error: 'invalid-config', message: error.message } };
+    }
+    throw error;
+  }
+}
+
+/**
+ * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration: the generic
+ * frontmatter/tag-alias/wikilink/path findings come from `check`, and verification-staleness plus supersede-graph
+ * findings are detected here. The combined set is sorted by path, then line, then rule. A loader defect propagates as
+ * a `KbLoaderError` for the caller to map to `invalid-config`.
+ */
+async function curateCheck(input: {
+  kbRoot: string;
+  now: Date;
+  staleAfterDays: number;
+}): Promise<{ notes: readonly EnumeratedNote[]; findings: Finding[] }> {
+  const { notes, findings: base } = await check({ kbRoot: input.kbRoot });
+  const curateFindings = detectCurateFindings({ notes, now: input.now, staleAfterDays: input.staleAfterDays });
+  return { notes, findings: sortFindings([...base, ...curateFindings]) };
+}
 
 /** Partitions a finding set into total, error, and warning counts. */
 function summarize(findings: readonly { severity: 'error' | 'warning' }[]): CurateSummary {
