@@ -80,6 +80,15 @@ describe(removeRulebook, () => {
     const only = injectRulebook('', 'shell', 'Body text');
     expect(removeRulebook(only, 'shell')).toBe('');
   });
+
+  it('when removing the first of two blocks in a header-less document, leaves no leading blank line', () => {
+    const withBoth = injectRulebook(injectRulebook('', 'alpha', 'A body'), 'beta', 'B body');
+
+    const afterRemoval = removeRulebook(withBoth, 'alpha');
+
+    expect(afterRemoval.startsWith('\n')).toBe(false);
+    expect(extractInstalledSlugs(afterRemoval)).toEqual(['beta']);
+  });
 });
 
 describe(extractInstalledSlugs, () => {

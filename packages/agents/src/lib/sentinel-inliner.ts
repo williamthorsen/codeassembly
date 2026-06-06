@@ -49,7 +49,7 @@ export function removeRulebook(content: string, slug: string): string {
     return content.replace(withLeadingSeparator, '');
   }
 
-  const atStart = new RegExp(String.raw`^${block}\n?`);
+  const atStart = new RegExp(String.raw`^${block}\n*`);
   if (atStart.test(content)) {
     return content.replace(atStart, '');
   }
