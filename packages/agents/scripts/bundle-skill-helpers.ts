@@ -13,7 +13,7 @@
  * absent that, the smoke test runs the bundle with no args and empty stdin.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -97,11 +97,11 @@ export const targets: BundleTarget[] = [
 ];
 
 /**
- * Stands up a kind-aware event store plus an isolated home registering it, and a throwaway git repo with an `origin`
- * remote, then returns a `SmokeTestInvocation` that captures a single `observation` against them. Exercises the full
- * resolve-by-name → load kind-aware schema → validate spine → write pipeline end to end, which is the only path that
- * wires the bundled resolver, schema loader, and immutable write together. The store's own `schema.yaml` declares the
- * `event` kind, so the per-type required-set validation is genuinely run.
+ * Stands up an event store plus an isolated home registering it, and a throwaway git repo with an `origin` remote,
+ * then returns a `SmokeTestInvocation` that captures a single event against them. Exercises the full resolve-by-name →
+ * load schema → validate the event record type's spine → write pipeline end to end, which is the only path that wires
+ * the bundled resolver, schema loader, and immutable write together. The store's own `schema.yaml` declares the
+ * `event` record type, so its required-set validation is genuinely run.
  */
 function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'capture-event-store-'));
@@ -109,16 +109,12 @@ function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   writeFileSync(
     path.join(storePath, '.kb', 'schema.yaml'),
     [
-      'kinds:',
+      'recordTypes:',
       '  event:',
       '    immutable: true',
       '    recall: recurrence-recency',
-      '    required: [id, type, captured-at, session, cwd, summary]',
-      '    optional: [repo, skill, model, tags, owner, locality, severity]',
-      '    types:',
-      '      observation: {}',
-      '      mistake:',
-      '        required: [correction]',
+      '    required: [id, captured-at, session, cwd, summary]',
+      '    optional: [repo, skill, model, tags, correction, owner, locality, severity]',
       '',
     ].join('\n'),
     'utf8',
@@ -133,14 +129,17 @@ function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   execFileSync('git', ['-C', repo, 'remote', 'add', 'origin', 'git@github.com:williamthorsen/codeassembly.git']);
 
   return {
-    args: ['--type', 'observation', '--summary', 'Smoke-test observation'],
+    args: ['--summary', 'Smoke-test event'],
     cwd: repo,
     env: { ...process.env, HOME: home, CLAUDE_CODE_SESSION_ID: 'smoke-session' },
     assertResult: assertCaptureEventSmokeResult,
   };
 }
 
-/** Assert the capture-event smoke produced an ok result with a ULID id, ISO-8601 capturedAt, and a written path. */
+/**
+ * Assert the capture-event smoke produced an ok result with a ULID id, ISO-8601 capturedAt, a written path carrying
+ * the stored `recordType: event` discriminant, and no bare `type` field.
+ */
 function assertCaptureEventSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from capture-event');
@@ -156,6 +155,13 @@ function assertCaptureEventSmokeResult(result: unknown): void {
   }
   if (typeof result.path !== 'string' || !result.path.endsWith(`${result.id}.md`)) {
     throw new Error(`expected a written record path ending in {id}.md, got ${JSON.stringify(result.path)}`);
+  }
+  const written = readFileSync(result.path, 'utf8');
+  if (!/^recordType: event$/m.test(written)) {
+    throw new Error(`expected the written event to carry recordType: event, got:\n${written}`);
+  }
+  if (/^type:/m.test(written)) {
+    throw new Error(`expected the written event to omit a bare type field, got:\n${written}`);
   }
 }
 
@@ -238,7 +244,7 @@ function makeKbEditSmokeTest(): SmokeTestInvocation {
   const notePath = path.join(fixtureDir, 'Smoke.md');
   writeFileSync(
     notePath,
-    '---\ntitle: Smoke\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\n---\n\nSmoke body.\n',
+    '---\ntitle: Smoke\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\ntype: howto\n---\n\nSmoke body.\n',
     'utf8',
   );
   return {
@@ -284,7 +290,7 @@ function makeKbCurateSmokeTest(): SmokeTestInvocation {
   mkdirSync(path.join(fixtureDir, 'content'), { recursive: true });
   writeFileSync(
     path.join(fixtureDir, 'content', 'Smoke.md'),
-    '---\ntitle: Smoke\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\n---\n\nSee [[Missing target]].\n',
+    '---\ntitle: Smoke\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [smoke]\ntype: howto\n---\n\nSee [[Missing target]].\n',
     'utf8',
   );
   return {
