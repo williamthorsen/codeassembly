@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { check } from '@codeassembly/kb/check';
-import { KbLoaderError } from '@codeassembly/kb/config';
+import { defaultKbConfig, KbLoaderError } from '@codeassembly/kb/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runCurate } from '../cli.ts';
@@ -210,7 +210,7 @@ describe(runCurate, () => {
     const { kbPath, home } = await makeVault({ 'Note.md': VALID });
     // First (pre-apply) check is clean; the residual re-check throws a loader defect (e.g. config corrupted by a race).
     vi.mocked(check)
-      .mockResolvedValueOnce({ notes: [], findings: [] })
+      .mockResolvedValueOnce({ config: defaultKbConfig, notes: [], findings: [] })
       .mockRejectedValueOnce(new KbLoaderError('config.yaml: malformed YAML'));
 
     const result = await runCurate({ argv: ['--apply'], startDir: kbPath, now: NOW, home });

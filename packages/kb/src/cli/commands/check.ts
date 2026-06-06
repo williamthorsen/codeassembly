@@ -1,11 +1,7 @@
-import { join } from 'node:path';
-
 import { check } from '../../check/check.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
-import { loadKbConfig } from '../../config/load-config.ts';
 import { findKbRoot } from '../../discovery/find-kb-root.ts';
 import { tryLoadKbRegistry } from '../../discovery/load-registry.ts';
-import type { KbRoot } from '../../types.ts';
 import { formatHuman, formatJson, type StoreRef, summarize } from '../format.ts';
 
 /** The outcome of a command run: the exit code plus the streams to write. */
@@ -31,7 +27,7 @@ Options:
 Exit codes:
   0  no error-severity findings (warnings allowed)
   1  one or more error-severity findings
-  2  usage error, unresolvable store, or malformed config/schema/aliases
+  2  usage error, unresolvable store, malformed config/schema/aliases, or an unexpected runtime error
 `;
 
 /**
@@ -75,14 +71,10 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
   }
 
   const summary = summarize(result.findings, result.notes.length);
-  let stdout: string;
-  if (options.json) {
-    stdout = formatJson({ store, summary, findings: result.findings });
-  } else {
-    // The zero-match human line names the store's targets; resolve them only when no note matched.
-    const targets = result.notes.length === 0 ? await resolveTargets(store.path) : [];
-    stdout = formatHuman({ summary, findings: result.findings, targets });
-  }
+  // The human zero-match line names the store's targets, read from the config `check` already resolved.
+  const stdout = options.json
+    ? formatJson({ store, summary, findings: result.findings })
+    : formatHuman({ summary, findings: result.findings, targets: result.config.targets });
 
   return { exitCode: summary.errors > 0 ? 1 : 0, stdout, stderr: '' };
 }
@@ -174,24 +166,6 @@ async function resolveStore(input: {
     return { ok: false, message: 'no .kb/ directory found in the current directory or any ancestor' };
   }
   return { ok: true, store: { name: null, path: discovered.path } };
-}
-
-/**
- * Loads the store's effective `targets` for the zero-match message. `check` already loaded the config successfully
- * before reaching the zero-match path, so this re-load is on a known-good file; it degrades to the default targets
- * only against a benign race that turned the config malformed between the two loads. A genuine I/O error (e.g. EACCES)
- * re-throws rather than masking the failure behind a wrong-targets message.
- */
-async function resolveTargets(storePath: string): Promise<readonly string[]> {
-  const kbRoot: KbRoot = { path: storePath, kbDir: join(storePath, '.kb'), via: 'ancestor-walk' };
-  try {
-    return (await loadKbConfig({ kbRoot })).targets;
-  } catch (error) {
-    if (isKbLoaderError(error)) {
-      return ['content/**/*.md'];
-    }
-    throw error;
-  }
 }
 
 /** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */

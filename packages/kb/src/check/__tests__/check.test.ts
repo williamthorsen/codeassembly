@@ -32,6 +32,7 @@ describe(check, () => {
 
     expect(result.notes.map((entry) => entry.relativePath).toSorted()).toEqual(['content/Bad.md', 'content/Clean.md']);
     expect(result.findings.map((finding) => finding.rule)).toContain('frontmatter.required');
+    expect(result.config.targets).toEqual(['content/**/*.md']);
   });
 
   it('honors a config.yaml targets override beyond the content/ default', async () => {
@@ -44,6 +45,7 @@ describe(check, () => {
     const result = await check({ kbRoot: root });
 
     expect(result.notes.map((entry) => entry.relativePath)).toEqual(['notes/Top.md']);
+    expect(result.config.targets).toEqual(['notes/**/*.md']);
   });
 
   it('runs the tag-alias rule using the store aliases', async () => {
