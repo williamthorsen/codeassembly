@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { parse } from 'yaml';
 
+import { KbLoaderError } from '../config/kb-loader-error.ts';
 import { isEnoent, isRecord } from '../type-guards.ts';
 import type { AliasMap, KbRoot } from '../types.ts';
 
@@ -26,7 +27,12 @@ export async function loadAliases(input: { kbRoot: KbRoot }): Promise<AliasMap> 
     throw error;
   }
 
-  return parseAliases(text, path);
+  try {
+    return parseAliases(text, path);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new KbLoaderError(message);
+  }
 }
 
 /**

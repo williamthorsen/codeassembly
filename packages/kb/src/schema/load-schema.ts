@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 import { z } from 'zod';
 
+import { KbLoaderError } from '../config/kb-loader-error.ts';
 import { isEnoent } from '../type-guards.ts';
 import type { KbRoot, KindSchema, KindsSchema, Schema } from '../types.ts';
 import { defaultSchema } from './default-schema.ts';
@@ -69,27 +70,34 @@ export async function loadSchema(input: { kbRoot: KbRoot }): Promise<Schema> {
     parsed = parse(text);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`${path}: malformed YAML — ${message}`);
+    throw new KbLoaderError(`${path}: malformed YAML — ${message}`);
   }
 
   const result = schemaFileShape.safeParse(parsed ?? {});
   if (!result.success) {
-    throw new Error(`${path}: invalid schema.yaml — ${result.error.issues[0]?.message ?? 'unknown error'}`);
+    throw new KbLoaderError(`${path}: invalid schema.yaml — ${result.error.issues[0]?.message ?? 'unknown error'}`);
   }
 
   const override = result.data;
-  if (override.kinds !== undefined) {
-    return buildKindAwareSchema(override.kinds);
+  try {
+    if (override.kinds !== undefined) {
+      return buildKindAwareSchema(override.kinds);
+    }
+    return {
+      types: override.types === undefined ? defaultSchema.types : narrowTypes(defaultSchema.types, override.types),
+      required:
+        override.required === undefined
+          ? defaultSchema.required
+          : extendRequired(defaultSchema.required, override.required),
+      optional: mergeOptional(defaultSchema, override),
+    };
+  } catch (error) {
+    if (error instanceof KbLoaderError) {
+      throw error;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    throw new KbLoaderError(`${path}: ${message}`);
   }
-
-  return {
-    types: override.types === undefined ? defaultSchema.types : narrowTypes(defaultSchema.types, override.types),
-    required:
-      override.required === undefined
-        ? defaultSchema.required
-        : extendRequired(defaultSchema.required, override.required),
-    optional: mergeOptional(defaultSchema, override),
-  };
 }
 
 /**

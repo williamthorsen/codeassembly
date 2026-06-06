@@ -10,6 +10,16 @@
       "import": "./dist/esm/index.js",
       "types": "./src/index.ts"
     },
+    "./check": {
+      "source": "./src/check/index.ts",
+      "import": "./dist/esm/check/index.js",
+      "types": "./src/check/index.ts"
+    },
+    "./config": {
+      "source": "./src/config/index.ts",
+      "import": "./dist/esm/config/index.js",
+      "types": "./src/config/index.ts"
+    },
     "./discovery": {
       "source": "./src/discovery/index.ts",
       "import": "./dist/esm/discovery/index.js",
@@ -42,13 +52,20 @@
     }
   },
   "main": "./dist/esm/index.js",
+  "bin": {
+    "kb": "bin/kb.js"
+  },
   "scripts": {
     "build": "nmr compile",
     "prepare": "nmr compile"
   },
   "dependencies": {
+    "picomatch": "4.0.4",
     "yaml": "2.9.0",
     "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/picomatch": "4.0.3"
   },
   "engines": {
     "node": ">=24"
