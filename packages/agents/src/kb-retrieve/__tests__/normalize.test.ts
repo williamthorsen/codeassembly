@@ -247,6 +247,16 @@ describe('normalizeHits over event records', () => {
     expect(byTitle.get('An observation captured outside a git remote')).toBe(2);
     expect(byTitle.get('Another observation captured outside a git remote')).toBe(2);
   });
+
+  it('keeps only events whose extra type matches the --type filter, dropping events with no extra type', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-typed-a.md')), hitFor(join(EVENTS, 'event-c.md'))],
+      filters: { type: 'observation' },
+      now: NOW,
+    });
+
+    expect(candidates.map((candidate) => candidate.title)).toEqual(['A typed event carrying a Diataxis label']);
+  });
 });
 
 /** Builds a `RawHit` for a fixture note path. */
