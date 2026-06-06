@@ -44,17 +44,18 @@ export async function syncCommand(
   // frontmatter fails the whole run rather than leaving a partial sync behind.
   const resolved = await Promise.all(declared.map((slug) => resolveRulebook(slug, librarySrcDir)));
 
-  // Derive what is currently installed from the filesystem: neutral files plus inlined sentinel blocks.
-  const existingProjectMd = await readFileOrEmpty(projectMdPath);
-  const installed = new Set<string>([
-    ...extractInstalledSlugs(existingProjectMd),
-    ...(await listNeutralSlugs(neutralDir)),
-  ]);
+  // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
+  // PROJECT.md tracks the desired *ambient* set. Keying PROJECT.md on declaration alone would strand a block
+  // whose rulebook is still declared but whose delivery no longer includes `ambient`.
   const declaredSet = new Set(declared);
-  const orphans = [...installed].filter((slug) => !declaredSet.has(slug));
+  const desiredAmbient = new Set(resolved.filter((rulebook) => rulebook.ambient).map((rulebook) => rulebook.slug));
+
+  const existingProjectMd = await readFileOrEmpty(projectMdPath);
+  const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
+  const inlineOrphans = extractInstalledSlugs(existingProjectMd).filter((slug) => !desiredAmbient.has(slug));
 
   if (options.dryRun) {
-    reportDryRun(resolved, orphans);
+    reportDryRun(resolved, [...new Set([...neutralOrphans, ...inlineOrphans])]);
     return;
   }
 
@@ -70,10 +71,12 @@ export async function syncCommand(
       projectMd = injectRulebook(projectMd, rulebook.slug, rulebook.body);
     }
   }
+  for (const slug of inlineOrphans) {
+    projectMd = removeRulebook(projectMd, slug);
+  }
 
   // `.agents/rulebooks/` is sync-owned, so deleting an undeclared neutral file here is safe, not user data loss.
-  for (const slug of orphans) {
-    projectMd = removeRulebook(projectMd, slug);
+  for (const slug of neutralOrphans) {
     await rm(path.join(neutralDir, `${slug}.md`), { force: true });
   }
 
@@ -82,7 +85,7 @@ export async function syncCommand(
     await writeFile(projectMdPath, projectMd, 'utf8');
   }
 
-  console.info(`Synced ${resolved.length} rulebook(s); retracted ${orphans.length}.`);
+  console.info(`Synced ${resolved.length} rulebook(s); retracted ${neutralOrphans.length} file(s).`);
 }
 
 /** Reads a rulebook from the library, validates its frontmatter, and returns its neutral body and delivery. */
@@ -137,13 +140,13 @@ async function writeIfChanged(filePath: string, content: string): Promise<void> 
 }
 
 /** Prints the writes and retractions a real run would perform. */
-function reportDryRun(resolved: ReadonlyArray<ResolvedRulebook>, orphans: ReadonlyArray<string>): void {
+function reportDryRun(resolved: ReadonlyArray<ResolvedRulebook>, retracted: ReadonlyArray<string>): void {
   console.info('[dry-run] sync would:');
   for (const rulebook of resolved) {
     const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
   }
-  for (const slug of orphans) {
-    console.info(`  retract ${slug} (remove neutral file and PROJECT.md block)`);
+  for (const slug of retracted) {
+    console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
   }
 }

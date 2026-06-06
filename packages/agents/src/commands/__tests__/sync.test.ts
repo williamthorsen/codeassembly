@@ -125,6 +125,33 @@ describe(syncCommand, () => {
     expect(projectMd).toContain('<!-- rulebook:alpha -->');
   });
 
+  it('retracts the inlined block when a rulebook delivery changes away from ambient', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await writeManifest('rulebooks:\n  - alpha\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
+
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(true);
+    const projectMd = await readFile(projectMdPath(), 'utf8');
+    expect(projectMd).not.toContain('<!-- rulebook:alpha -->');
+  });
+
+  it('when the manifest is emptied, retracts every block and neutral file', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await writeManifest('rulebooks:\n  - alpha\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(existsSync(neutralPath('alpha'))).toBe(true);
+
+    await writeManifest('rulebooks: []\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(false);
+    expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+  });
+
   it('throws when a declared rulebook has no library file', async () => {
     await writeManifest('rulebooks:\n  - ghost\n');
 
