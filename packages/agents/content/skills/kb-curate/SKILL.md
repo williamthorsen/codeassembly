@@ -28,6 +28,8 @@ A value-bearing flag accepts both `--kb coding` and `--kb=coding`. With no flags
 
 The knowledge base is resolved the same way as `kb-add`: `--kb <name>` (explicit) beats a discovered `.kb/` folder, which beats the registry's default-marked entry. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Curating spans a single KB per run — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
+Which notes are curated is governed by the store's `.kb/config.yaml`: by default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `schema.yaml`, or `tag-aliases.yaml` fails the run with `invalid-config` rather than being silently ignored.
+
 ## Runtime dependencies
 
 - **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
@@ -92,11 +94,12 @@ The helper prints a JSON object to stdout. On success the payload carries `ok: t
 
 On failure, `ok: false` plus a categorical `error` code:
 
-| Code               | What it means                                                           | What to do                                                     |
-| ------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`. | Correct the invocation. The message names the specific defect. |
-| `no-kb-resolvable` | No `.kb/` discovered, no registry default, and `--kb` matched nothing.  | Confirm the `--kb` name or run from inside the vault.          |
-| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.   | Drop `--apply` for a read-only report, or use a writable KB.   |
+| Code               | What it means                                                                             | What to do                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                   | Correct the invocation. The message names the specific defect. |
+| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/schema.yaml`, or `.kb/tag-aliases.yaml` in the store. | Fix the named file. The message names the offending file.      |
+| `no-kb-resolvable` | No `.kb/` discovered, no registry default, and `--kb` matched nothing.                    | Confirm the `--kb` name or run from inside the vault.          |
+| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                     | Drop `--apply` for a read-only report, or use a writable KB.   |
 
 System failures (out-of-disk, permission denied) print to stderr and exit non-zero. They are out of band and never appear as a structured `error` code.
 
