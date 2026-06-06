@@ -179,14 +179,18 @@ async function resolveStore(input: {
 /**
  * Loads the store's effective `targets` for the zero-match message. `check` already loaded the config successfully
  * before reaching the zero-match path, so this re-load is on a known-good file; it degrades to the default targets
- * only against a benign race.
+ * only against a benign race that turned the config malformed between the two loads. A genuine I/O error (e.g. EACCES)
+ * re-throws rather than masking the failure behind a wrong-targets message.
  */
 async function resolveTargets(storePath: string): Promise<readonly string[]> {
   const kbRoot: KbRoot = { path: storePath, kbDir: join(storePath, '.kb'), via: 'ancestor-walk' };
   try {
     return (await loadKbConfig({ kbRoot })).targets;
-  } catch {
-    return ['content/**/*.md'];
+  } catch (error) {
+    if (isKbLoaderError(error)) {
+      return ['content/**/*.md'];
+    }
+    throw error;
   }
 }
 
