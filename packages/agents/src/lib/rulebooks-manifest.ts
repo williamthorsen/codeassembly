@@ -24,8 +24,14 @@ export async function readRulebooksManifest(projectRoot: string): Promise<Readon
   }
 
   const parsed: unknown = parseYaml(raw);
-  if (!isRecord(parsed)) {
+  // An empty or comment-only file parses to nullish and means "nothing declared". Any other non-mapping top
+  // level (a bare list, a stray scalar) is a malformed manifest; erroring prevents sync from reading it as an
+  // empty declaration and destructively retracting every installed rulebook.
+  if (parsed === undefined || parsed === null) {
     return [];
+  }
+  if (!isRecord(parsed)) {
+    throw new TypeError(`Invalid rulebooks.yaml: expected a mapping with a "rulebooks:" key (in ${manifestPath})`);
   }
 
   const declared = parsed.rulebooks;

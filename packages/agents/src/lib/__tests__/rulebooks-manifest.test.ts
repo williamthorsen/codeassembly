@@ -68,4 +68,14 @@ describe(readRulebooksManifest, () => {
     await writeManifest('rulebooks: not-a-list\n');
     await expect(readRulebooksManifest(projectRoot)).rejects.toThrow(/list/i);
   });
+
+  it('when the file is comment-only, returns an empty array', async () => {
+    await writeManifest('# just a comment, no declarations yet\n');
+    expect(await readRulebooksManifest(projectRoot)).toEqual([]);
+  });
+
+  it('throws when the top level is a bare list instead of a rulebooks mapping', async () => {
+    await writeManifest('- shell-conventions\n- typescript\n');
+    await expect(readRulebooksManifest(projectRoot)).rejects.toThrow(/mapping|rulebooks/i);
+  });
 });
