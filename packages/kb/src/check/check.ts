@@ -14,9 +14,9 @@ import { type EnumeratedNote, enumerateNotes } from './enumerate.ts';
 /** The result of a check run: every enumerated note and every finding the generic rule set produced. */
 export interface CheckResult {
   /** Every note enumerated under the store's `config.targets`, in walk order. */
-  notes: EnumeratedNote[];
+  notes: readonly EnumeratedNote[];
   /** Findings from the four generic rules (frontmatter, tag-alias, wikilinks, paths). */
-  findings: Finding[];
+  findings: readonly Finding[];
 }
 
 /**
