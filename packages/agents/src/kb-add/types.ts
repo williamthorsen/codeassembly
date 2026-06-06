@@ -14,8 +14,8 @@ export interface ParsedArgs {
   kb: string | null;
   /** Optional KB-relative folder under which the note is written; defaults to the KB root. */
   folder: string | null;
-  /** The note's `type` field (e.g. `howto`). */
-  type: string;
+  /** Optional Diátaxis label (e.g. `howto`); written to the note's extra fields, not a top-level field. */
+  type: string | null;
   /** The note title; also doubles as the filename stem. */
   title: string;
   /** The proposed tag list, in the order the agent supplied them. */

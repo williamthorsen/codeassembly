@@ -24,7 +24,9 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 /**
  * Composes a typed `Frontmatter` from parsed CLI args, fills in UTC `created` and `updated` dates, canonicalizes
  * tags via the supplied alias map, and validates the result against the destination KB's schema using the
- * `frontmatterRule` from kb.
+ * `frontmatterRule` from kb. Every note carries `recordType: assertion` as the stored discriminant — `kb-add` only
+ * writes assertions. Any Diátaxis label the agent supplies via `--type` is a vault facet, written to the note's `extra`
+ * fields rather than a top-level field.
  *
  * Validation is performed by round-tripping the rendered frontmatter through `parseNoteContent` and feeding the parsed
  * note through `runRules`. The round trip is the cheapest way to give the rule a real `ParsedNote` carrying valid
@@ -43,13 +45,16 @@ export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: 
   const today = formatUtcDate(now);
 
   const extra: Record<string, unknown> = {};
+  if (args.type !== null) {
+    extra.type = args.type;
+  }
   if (args.lastVerified !== null) {
     extra['last-verified'] = args.lastVerified;
   }
 
   const frontmatter: Frontmatter = {
     title: args.title,
-    type: args.type,
+    recordType: 'assertion',
     created: today,
     updated: today,
     tags: canonicalTags,

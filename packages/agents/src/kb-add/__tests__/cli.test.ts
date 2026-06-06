@@ -97,12 +97,14 @@ describe(parseArgs, () => {
     expect(parsed.lastVerified).toBeNull();
   });
 
-  it('throws when --title is missing', () => {
-    expect(() => parseArgs(['--type', 'howto'])).toThrow(/--title is required/);
+  it('defaults --type to null when omitted', () => {
+    const parsed = parseArgs(['--title', 'Stub']);
+
+    expect(parsed.type).toBeNull();
   });
 
-  it('throws when --type is missing', () => {
-    expect(() => parseArgs(['--title', 'X'])).toThrow(/--type is required/);
+  it('throws when --title is missing', () => {
+    expect(() => parseArgs(['--type', 'howto'])).toThrow(/--title is required/);
   });
 
   it('throws when a value-bearing flag has no value', () => {
@@ -206,21 +208,42 @@ describe(runAdd, () => {
     }
   });
 
-  it('returns schema-validation when the type is not in the schema vocabulary', async () => {
+  it('writes recordType: assertion and the Diátaxis --type label into extra', async () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'rant', '--title', 'X'],
+      argv: ['--type', 'howto', '--title', 'Labeled'],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
     });
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('schema-validation');
-      expect(result.details?.findings?.some((finding) => finding.rule === 'frontmatter.type')).toBe(true);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.frontmatter.recordType).toBe('assertion');
+      expect(result.frontmatter.extra.type).toBe('howto');
+      const written = await readFile(result.path, 'utf8');
+      expect(written).toMatch(/^recordType: assertion$/m);
+      expect(written).toContain('type: howto');
+    }
+  });
+
+  it('writes a note even when --type is omitted', async () => {
+    const kbPath = await makeKb();
+
+    const result = await runAdd({
+      argv: ['--title', 'Unlabeled'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.frontmatter.recordType).toBe('assertion');
+      expect(result.frontmatter.extra).not.toHaveProperty('type');
     }
   });
 

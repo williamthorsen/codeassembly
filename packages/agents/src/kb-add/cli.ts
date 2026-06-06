@@ -78,15 +78,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   if (title === undefined) {
     throw new Error('--title is required');
   }
-  const type = raw.type;
-  if (type === undefined) {
-    throw new Error('--type is required');
-  }
 
   return {
     kb: raw.kb ?? null,
     folder: raw.folder ?? null,
-    type,
+    type: raw.type ?? null,
     title,
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
     lastVerified: raw['last-verified'] ?? null,
@@ -228,7 +224,7 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Matches a `--kb`/`--folder`/`--type`/`--title`/`--tags`/`--last-verified` flag, returning its key and any inline `=value`. */
+/** Matches a `--kb`/`--folder`/`--title`/`--tags`/`--last-verified` flag (and the optional `--type` Diátaxis label), returning its key and any inline `=value`. */
 function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | null } | null {
   for (const key of VALUE_FLAGS) {
     if (arg === `--${key}`) {
