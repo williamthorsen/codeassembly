@@ -2,15 +2,27 @@
 /* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
 import process from 'node:process';
 
+import type { CommandOutput } from './commands/check.ts';
 import { run } from './run.ts';
 
 /**
  * Entry point for the `kb` bin. The module is only ever loaded via `bin/kb.js`'s dynamic import of the build output,
  * so `main` runs unconditionally on load — there is no entry-point guard. It dispatches the parsed argv through the
  * pure {@link run} dispatcher, writes the resolved streams, and exits with the resolved code.
+ *
+ * An unexpected throw from a command (e.g. a rule-engine crash that `runCheck` deliberately re-propagates) is caught
+ * here at the process seam and exits 2 — never the bin wrapper's `ERR_MODULE_NOT_FOUND` "failed to load" branch, and
+ * never exit 1, which is reserved for "error-severity findings present".
  */
 async function main(): Promise<void> {
-  const output = await run({ argv: process.argv.slice(2), cwd: process.cwd() });
+  let output: CommandOutput;
+  try {
+    output = await run({ argv: process.argv.slice(2), cwd: process.cwd() });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb: unexpected error: ${message}\n`);
+    process.exit(2);
+  }
   if (output.stdout !== '') process.stdout.write(output.stdout);
   if (output.stderr !== '') process.stderr.write(output.stderr);
   process.exit(output.exitCode);

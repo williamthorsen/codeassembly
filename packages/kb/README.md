@@ -170,11 +170,11 @@ kb check --json          # emit a JSON report
 
 Exit codes:
 
-| Code | Meaning                                                                                              |
-| ---- | ---------------------------------------------------------------------------------------------------- |
-| `0`  | No error-severity findings (warnings are allowed). A zero-match run also exits 0.                    |
-| `1`  | One or more error-severity findings.                                                                 |
-| `2`  | A usage error, an unresolvable store, or a malformed `config.yaml`/`schema.yaml`/`tag-aliases.yaml`. |
+| Code | Meaning                                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | No error-severity findings (warnings are allowed). A zero-match run also exits 0.                                         |
+| `1`  | One or more error-severity findings.                                                                                      |
+| `2`  | A usage error, an unresolvable store, a malformed `config.yaml`/`schema.yaml`/`tag-aliases.yaml`, or an unexpected crash. |
 
 ## Error and exception model
 
