@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';
 import { isEnoent } from '../type-guards.ts';
-import type { KbRoot, RecordTypeSchema, RecordTypesSchema, Schema } from '../types.ts';
+import type { KbRoot, RecordTypeSchema, Schema } from '../types.ts';
 import { defaultSchema } from './default-schema.ts';
 
 /** Relative location of the schema override file within a KB root. */
@@ -85,8 +85,7 @@ function buildSchema(rawRecordTypes: Record<string, z.infer<typeof recordTypeSha
       immutable: raw.immutable ?? false,
     };
   }
-  const schema: RecordTypesSchema = recordTypes;
-  return { recordTypes: schema };
+  return { recordTypes };
 }
 
 // endregion | Helpers
