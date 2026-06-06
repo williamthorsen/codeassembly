@@ -1,5 +1,5 @@
-/* eslint n/no-process-exit: off */
-/* eslint unicorn/no-process-exit: off */
+/* eslint n/no-process-exit: off -- CLI entry point: the bin's resolved exit code must reach the OS, and this module is loaded only via `bin/kb.js`, never imported as a library; throwing-to-set-exitCode would lose the explicit 0/1/2 contract. */
+/* eslint unicorn/no-process-exit: off -- same as above: `process.exit` is the correct termination mechanism at the process boundary, not a library-internal anti-pattern here. */
 import process from 'node:process';
 
 import { run } from './run.ts';
