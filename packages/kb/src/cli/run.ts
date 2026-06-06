@@ -27,5 +27,3 @@ export async function run(input: { argv: readonly string[]; cwd: string; home?: 
 
   return { exitCode: 2, stdout: '', stderr: `kb: unknown command "${command}"\n${HELP}` };
 }
-
-export { CHECK_HELP } from './commands/check.ts';
