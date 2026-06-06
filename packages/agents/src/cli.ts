@@ -2,13 +2,13 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
-import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.js';
+import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand } from './commands/init.ts';
-import { installCommand } from './commands/install.js';
-import { statusCommand } from './commands/status.js';
+import { installCommand } from './commands/install.ts';
+import { statusCommand } from './commands/status.ts';
 import { syncCommand } from './commands/sync.ts';
-import { uninstallCommand } from './commands/uninstall.js';
-import type { InstallOptions, PlatformId } from './lib/types.js';
+import { uninstallCommand } from './commands/uninstall.ts';
+import type { InstallOptions, PlatformId } from './lib/types.ts';
 
 const VALID_PLATFORM_IDS = new Set<string>(['claude', 'rovodev', 'all']);
 
@@ -124,7 +124,7 @@ Options:
   --platform <name>  Target platform: claude, rovodev, or all (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite modified files (install/uninstall)
-  --dry-run          Show what would be done without making changes (install, sync)
+  --dry-run          Show what would be done without making changes (install, sync, init)
   --help, -h         Show this help message`);
 }
 
