@@ -1,6 +1,6 @@
 ---
 title: Note missing several required fields
-type: howto
+recordType: assertion
 ---
 
 # Note missing several required fields

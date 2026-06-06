@@ -1,6 +1,6 @@
 ---
 title: Git rebase flag reference
-type: reference
+recordType: assertion
 created: 2026-02-15
 updated: 2026-05-10
 tags: [git, reference]

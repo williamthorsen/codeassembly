@@ -1,6 +1,6 @@
 ---
 title: Note that uses alias tags
-type: howto
+recordType: assertion
 created: 2026-04-12
 updated: 2026-05-08
 tags: [vcs, reactjs, git]

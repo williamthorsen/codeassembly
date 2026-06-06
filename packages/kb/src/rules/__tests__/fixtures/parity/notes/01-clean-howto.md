@@ -1,6 +1,6 @@
 ---
 title: How to rebase a feature branch
-type: howto
+recordType: assertion
 created: 2026-04-12
 updated: 2026-05-08
 tags: [git, rebase]

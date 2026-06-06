@@ -12,7 +12,7 @@ const ALIASES: AliasMap = new Map([['vcs', 'git']]);
 const VALID_NOTE = [
   '---',
   'title: Valid note',
-  'type: howto',
+  'recordType: assertion',
   'created: 2026-05-01',
   'updated: 2026-05-14',
   'tags: [vcs]',

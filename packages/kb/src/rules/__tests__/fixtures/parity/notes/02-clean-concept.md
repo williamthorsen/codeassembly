@@ -1,6 +1,6 @@
 ---
 title: What a monorepo buys you
-type: concept
+recordType: assertion
 created: 2026-03-01
 updated: 2026-05-01
 tags: [monorepos, tooling]

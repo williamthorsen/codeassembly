@@ -17,7 +17,7 @@ describe(parseNoteContent, () => {
 
     expect(note.frontmatter).toEqual({
       title: 'How to rebase onto main',
-      type: 'howto',
+      recordType: 'assertion',
       created: '2026-05-01',
       updated: '2026-05-14',
       tags: ['git', 'rebase'],
@@ -56,7 +56,7 @@ describe(parseNoteContent, () => {
     const note = parseNoteContent({ content: await readFixture('unusual-whitespace.md') });
 
     expect(note.frontmatter?.title).toBe('Note with irregular spacing');
-    expect(note.frontmatter?.type).toBe('howto');
+    expect(note.frontmatter?.recordType).toBe('assertion');
     expect(note.frontmatter?.tags).toEqual(['git', 'whitespace']);
   });
 
@@ -64,6 +64,7 @@ describe(parseNoteContent, () => {
     const note = parseNoteContent({ content: await readFixture('with-extra-fields.md') });
 
     expect(note.frontmatter?.extra).toEqual({
+      type: 'reference',
       'last-verified': '2026-05-10',
       'applies-to': ['git 2.45+', 'Bitbucket Cloud'],
       sources: ['https://git-scm.com/docs/git-rebase'],
@@ -75,7 +76,7 @@ describe(parseNoteContent, () => {
       content: [
         '---',
         'title: Dated note',
-        'type: howto',
+        'recordType: assertion',
         'created: 2026-05-14',
         'updated: 2026-05-14',
         'tags: []',

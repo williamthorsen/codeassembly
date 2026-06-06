@@ -1,6 +1,6 @@
 ---
 title: Note with a wrongly formatted date
-type: howto
+recordType: assertion
 created: 2026/04/12
 updated: 2026-05-08
 tags: [git]

@@ -7,7 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { KbLoaderError } from '../../config/kb-loader-error.ts';
 import { check } from '../check.ts';
 
-const VALID = '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
+const VALID =
+  '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
 /** Stands up a temp KB root with a `.kb/` and the given files, returning its path. */
 async function makeVault(files: Record<string, string>): Promise<string> {
@@ -25,7 +26,8 @@ describe(check, () => {
   it('returns both enumerated notes and findings for a content-scoped store', async () => {
     const root = await makeVault({
       'content/Clean.md': VALID,
-      'content/Bad.md': '---\ntitle: Bad\ntype: howto\ncreated: 2026-05-01\ntags: [x]\n---\n\nMissing updated.\n',
+      'content/Bad.md':
+        '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\ntags: [x]\n---\n\nMissing updated.\n',
     });
 
     const result = await check({ kbRoot: root });

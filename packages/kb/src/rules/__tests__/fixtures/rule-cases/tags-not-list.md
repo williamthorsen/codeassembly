@@ -1,6 +1,6 @@
 ---
 title: Note with scalar tags
-type: howto
+recordType: assertion
 created: 2026-05-01
 updated: 2026-05-14
 tags: git

@@ -1,6 +1,6 @@
 ---
 title: Build your first MCP server
-type: tutorial
+recordType: assertion
 created: 2026-04-01
 updated: 2026-05-12
 tags: [mcp, tutorial]

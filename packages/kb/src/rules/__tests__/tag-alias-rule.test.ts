@@ -46,7 +46,7 @@ describe('tagAliasRule', () => {
     const content = [
       '---',
       'title: Canonical tags',
-      'type: howto',
+      'recordType: assertion',
       'created: 2026-05-01',
       'updated: 2026-05-14',
       'tags: [git, react]',
@@ -62,7 +62,7 @@ describe('tagAliasRule', () => {
     const content = [
       '---',
       'title: Multiple aliases',
-      'type: howto',
+      'recordType: assertion',
       'created: 2026-05-01',
       'updated: 2026-05-14',
       'tags: [vcs, version-control, react]',

@@ -194,7 +194,7 @@ packages/factory/src/
 
 ### KB (`packages/kb/`)
 
-Foundation library for knowledge-base tooling, consumed by the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@codeassembly/kb-mcp` server. Exposes five subpath entries — `discovery`, `schema`, `frontmatter`, `tags`, `rules` — covering KB discovery and `kb.yaml` registry loading, default-schema resolution with narrow-only per-KB overrides, note frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
+Foundation library for knowledge-base tooling, consumed by the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@codeassembly/kb-mcp` server. Exposes five subpath entries — `discovery`, `schema`, `frontmatter`, `tags`, `rules` — covering KB discovery and `kb.yaml` registry loading, default-schema resolution with per-store `recordTypes:` overrides, note frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
 
 **Package:** `@codeassembly/kb` (private)
 

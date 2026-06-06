@@ -1,1 +1,3 @@
-types: howto
+recordTypes:
+  assertion:
+    required: [title, created, updated, tags]

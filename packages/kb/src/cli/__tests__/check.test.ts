@@ -14,8 +14,9 @@ vi.mock('../../check/check.ts', async () => {
   return { ...actual, check: vi.fn(actual.check) };
 });
 
-const VALID = '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
-const MISSING_UPDATED = '---\ntitle: Bad\ntype: howto\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
+const VALID =
+  '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
+const MISSING_UPDATED = '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
 /** Stands up a temp store with a `.kb/` and the given files; returns its path. */
 async function makeStore(files: Record<string, string>): Promise<string> {

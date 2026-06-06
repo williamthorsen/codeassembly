@@ -15,11 +15,10 @@ export type {
   KbRegistry,
   KbRegistryEntry,
   KbRoot,
-  KindSchema,
-  KindsSchema,
   ParsedNote,
+  RecordTypeSchema,
+  RecordTypesSchema,
   Schema,
-  TypeSchema,
   VaultIndex,
 } from './types.ts';
 

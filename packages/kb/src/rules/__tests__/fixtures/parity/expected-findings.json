@@ -44,9 +44,9 @@
   {
     "path": "09-unknown-type.md",
     "line": 3,
-    "rule": "frontmatter.type",
+    "rule": "frontmatter.recordType",
     "severity": "error",
-    "message": "\"postmortem\" not in vocabulary [howto, concept, reference, tutorial]"
+    "message": "\"postmortem\" not in vocabulary [assertion, event]"
   },
   {
     "path": "10-bad-date-format.md",
@@ -86,9 +86,9 @@
   {
     "path": "14-multi-defect.md",
     "line": 3,
-    "rule": "frontmatter.type",
+    "rule": "frontmatter.recordType",
     "severity": "error",
-    "message": "\"explainer\" not in vocabulary [howto, concept, reference, tutorial]"
+    "message": "\"explainer\" not in vocabulary [assertion, event]"
   },
   {
     "path": "14-multi-defect.md",
@@ -103,12 +103,5 @@
     "rule": "frontmatter.tag-alias",
     "severity": "warning",
     "message": "tag \"node.js\" is an alias — use canonical form \"nodejs\""
-  },
-  {
-    "path": "14-multi-defect.md",
-    "line": 6,
-    "rule": "frontmatter.required",
-    "severity": "error",
-    "message": "missing required field: updated"
   }
 ]
