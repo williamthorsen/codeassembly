@@ -1,27 +1,18 @@
-# Kind-aware schema for the `codeassembly` knowledge store.
+# Schema for the `codeassembly` knowledge store.
 #
-# Declaring `kinds:` opts the store into kind-aware validation (see @codeassembly/kb): the declared vocabulary
-# replaces the bundled default schema, each kind carries a shared required spine that its types extend, and recall
-# ranks per kind. The `event` kind is immutable and ULID-keyed (written by capture-event); the `assertion` kind is
-# the existing note vocabulary expressed in the new form.
-kinds:
+# A `recordTypes:` block (see @codeassembly/kb) replaces the bundled default schema. Each record type declares its own
+# required and optional fields plus its recall and immutability policy. A record's family is the stored `recordType`
+# discriminant. The `event` record type is immutable and ULID-keyed (written by capture-event); the `assertion` record
+# type is the existing note vocabulary.
+recordTypes:
   event:
     immutable: true
     recall: recurrence-recency
     # `repo` is best-effort: capture resolves it from the git remote when one exists but never blocks on it, so it
     # stays optional rather than joining the required spine.
-    required: [id, type, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, tags, owner, locality, severity]
-    types:
-      observation: {}
-      mistake:
-        required: [correction]
+    required: [id, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, correction, owner, locality, severity]
   assertion:
     recall: freshness
-    required: [title, type, created, updated, tags]
+    required: [title, created, updated, tags]
     optional: [last-verified, applies-to, sources, supersedes, superseded-by]
-    types:
-      howto: {}
-      concept: {}
-      reference: {}
-      tutorial: {}

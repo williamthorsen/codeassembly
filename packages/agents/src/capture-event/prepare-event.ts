@@ -32,9 +32,9 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 
 /**
  * Assembles an immutable event record from agent-supplied args and auto-filled context, renders it to a note string,
- * and validates the result against the store's kind-aware schema via `frontmatterRule`. The record carries the event
- * spine (`id`, `type`, `captured-at`, `session`, `cwd`, `repo`, `summary`) plus any supplied `skill`/`model`/`tags`
- * and, for a `mistake`, `correction`. No `updated`/`last-verified` field is written: events are write-once.
+ * and validates the result against the store's schema via `frontmatterRule`. The record carries the stored
+ * `recordType: event` discriminant and the event spine (`id`, `captured-at`, `session`, `cwd`, `repo`, `summary`) plus
+ * any supplied `skill`/`model`/`tags`. No `updated`/`last-verified` field is written: events are write-once.
  *
  * Validation round-trips the rendered note through `parseNoteContent` and `runRules`, mirroring `kb-add`'s
  * prepare-then-validate flow. When any finding has `severity: 'error'`, the outcome is `{ ok: false, findings }` and
@@ -51,8 +51,8 @@ export function prepareEvent(input: {
   const { args, context, id, capturedAt, schema, body } = input;
 
   const fields: Array<[string, string | string[]]> = [
+    ['recordType', 'event'],
     ['id', id],
-    ['type', args.type],
     ['captured-at', capturedAt],
     ['session', context.session],
     ['cwd', context.cwd],
@@ -69,9 +69,6 @@ export function prepareEvent(input: {
   }
   if (args.tags.length > 0) {
     fields.push(['tags', args.tags]);
-  }
-  if (args.correction !== null) {
-    fields.push(['correction', args.correction]);
   }
 
   const content = renderEventNote(fields, body);

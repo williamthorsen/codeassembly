@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { writeEvent } from '../write-event.ts';
 
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
-const CONTENT = '---\nid: 01HZ\ntype: observation\n---\n\nBody.\n';
+const CONTENT = '---\nrecordType: event\nid: 01HZ\n---\n\nBody.\n';
 
 describe(writeEvent, () => {
   it('writes the record to content/events/{id}.md under the store root', async () => {

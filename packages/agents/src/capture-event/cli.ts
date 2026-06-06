@@ -24,7 +24,7 @@ const execFileAsync = promisify(execFile);
 const DEFAULT_STORE = 'codeassembly';
 
 /** Flag names that take a value. */
-const VALUE_FLAGS = ['store', 'type', 'summary', 'skill', 'model', 'tags', 'correction'] as const;
+const VALUE_FLAGS = ['store', 'summary', 'skill', 'model', 'tags'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -51,8 +51,8 @@ if (isEntryPoint()) {
 
 /**
  * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store by registry
- * name, loads its kind-aware schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`,
- * best-effort `repo`), validates the per-type required set, and writes `content/events/{id}.md` immutably.
+ * name, loads its schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`,
+ * best-effort `repo`), validates the event record type's required spine, and writes `content/events/{id}.md` immutably.
  *
  * Recoverable failures (invalid args, unregistered or readonly store, schema validation) become structured
  * `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
@@ -162,10 +162,6 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     raw[key] = value;
   }
 
-  const type = raw.type;
-  if (type === undefined) {
-    throw new Error('--type is required');
-  }
   const summary = raw.summary;
   if (summary === undefined) {
     throw new Error('--summary is required');
@@ -173,12 +169,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   return {
     store: raw.store ?? DEFAULT_STORE,
-    type,
     summary,
     skill: raw.skill ?? null,
     model: raw.model ?? null,
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
-    correction: raw.correction ?? null,
   };
 }
 

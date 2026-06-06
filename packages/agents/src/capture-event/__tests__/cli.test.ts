@@ -21,27 +21,23 @@ async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Pro
 
 const NOW = new Date('2026-06-04T06:57:22.000Z');
 
-const KIND_AWARE_SCHEMA = `kinds:
+const EVENT_SCHEMA = `recordTypes:
   event:
     immutable: true
     recall: recurrence-recency
-    required: [id, type, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, tags, owner, locality, severity]
-    types:
-      observation: {}
-      mistake:
-        required: [correction]
+    required: [id, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, correction, owner, locality, severity]
 `;
 
 function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
-/** Stand up a temp event store with a kind-aware schema plus an isolated home registering it under `name`. */
+/** Stand up a temp event store with a `recordTypes:` schema plus an isolated home registering it under `name`. */
 async function makeStore(name: string): Promise<{ storePath: string; home: string }> {
   const storePath = await mkdtemp(join(tmpdir(), 'capture-cli-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
-  await writeFile(join(storePath, '.kb', 'schema.yaml'), KIND_AWARE_SCHEMA, 'utf8');
+  await writeFile(join(storePath, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
 
   const home = await mkdtemp(join(tmpdir(), 'capture-cli-home-'));
   await mkdir(join(home, '.agents'), { recursive: true });
@@ -55,8 +51,6 @@ describe(parseArgs, () => {
     const parsed = parseArgs([
       '--store',
       'codeassembly',
-      '--type',
-      'mistake',
       '--summary',
       'A summary',
       '--skill',
@@ -65,37 +59,36 @@ describe(parseArgs, () => {
       'claude-opus-4-8',
       '--tags',
       'one, two,three',
-      '--correction',
-      'Do it differently',
     ]);
 
     expect(parsed).toEqual({
       store: 'codeassembly',
-      type: 'mistake',
       summary: 'A summary',
       skill: 'kb-retrieve',
       model: 'claude-opus-4-8',
       tags: ['one', 'two', 'three'],
-      correction: 'Do it differently',
     });
   });
 
   it('defaults the store to codeassembly and optional flags to null or empty', () => {
-    const parsed = parseArgs(['--type', 'observation', '--summary', 'Noticed']);
+    const parsed = parseArgs(['--summary', 'Noticed']);
 
     expect(parsed.store).toBe('codeassembly');
     expect(parsed.skill).toBeNull();
     expect(parsed.model).toBeNull();
     expect(parsed.tags).toEqual([]);
-    expect(parsed.correction).toBeNull();
-  });
-
-  it('throws when --type is missing', () => {
-    expect(() => parseArgs(['--summary', 'x'])).toThrow(/--type is required/);
   });
 
   it('throws when --summary is missing', () => {
-    expect(() => parseArgs(['--type', 'observation'])).toThrow(/--summary is required/);
+    expect(() => parseArgs(['--store', 'codeassembly'])).toThrow(/--summary is required/);
+  });
+
+  it('rejects the retired --type flag as unknown', () => {
+    expect(() => parseArgs(['--type', 'observation', '--summary', 'x'])).toThrow(/unknown flag/);
+  });
+
+  it('rejects the retired --correction flag as unknown', () => {
+    expect(() => parseArgs(['--correction', 'Do it differently', '--summary', 'x'])).toThrow(/unknown flag/);
   });
 
   it('throws on an unknown flag', () => {
@@ -132,12 +125,12 @@ describe(normalizeRemoteUrl, () => {
 });
 
 describe(runCapture, () => {
-  it('writes an observation event and returns a ULID id and ISO capturedAt', async () => {
+  it('writes recordType: event and returns a ULID id and ISO capturedAt', async () => {
     const { home } = await makeStore('codeassembly');
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
-      argv: ['--type', 'observation', '--summary', 'Noticed a thing'],
+      argv: ['--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -151,7 +144,8 @@ describe(runCapture, () => {
       expect(result.capturedAt).toBe('2026-06-04T06:57:22.000Z');
       expect(result.store).toBe('codeassembly');
       const written = await readFile(result.path, 'utf8');
-      expect(written).toContain('type: observation');
+      expect(written).toMatch(/^recordType: event$/m);
+      expect(written).not.toMatch(/^type:/m);
       expect(written).toContain('summary: Noticed a thing');
       expect(written).toContain('session: session-xyz');
       expect(written).toContain('repo: williamthorsen/codeassembly');
@@ -163,7 +157,7 @@ describe(runCapture, () => {
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git', 'upstream');
 
     const result = await runCapture({
-      argv: ['--type', 'observation', '--summary', 'Noticed a thing'],
+      argv: ['--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -178,12 +172,12 @@ describe(runCapture, () => {
     }
   });
 
-  it('writes an observation event with repo absent when cwd has no git remote', async () => {
+  it('writes an event with repo absent when cwd has no git remote', async () => {
     const { home } = await makeStore('codeassembly');
     const bareDir = await mkdtemp(join(tmpdir(), 'capture-cli-norepo-'));
 
     const result = await runCapture({
-      argv: ['--type', 'observation', '--summary', 'Noticed a thing'],
+      argv: ['--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: bareDir,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -202,10 +196,10 @@ describe(runCapture, () => {
     const { storePath, home } = await makeStore('codeassembly');
     const cwdWithKb = await mkdtemp(join(tmpdir(), 'capture-cli-cwdkb-'));
     await mkdir(join(cwdWithKb, '.kb'), { recursive: true });
-    await writeFile(join(cwdWithKb, '.kb', 'schema.yaml'), KIND_AWARE_SCHEMA, 'utf8');
+    await writeFile(join(cwdWithKb, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
 
     const result = await runCapture({
-      argv: ['--store', 'codeassembly', '--type', 'observation', '--summary', 'Noticed a thing'],
+      argv: ['--store', 'codeassembly', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: cwdWithKb,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -221,32 +215,11 @@ describe(runCapture, () => {
     }
   });
 
-  it('refuses a mistake event with no correction and writes nothing', async () => {
-    const { storePath, home } = await makeStore('codeassembly');
-
-    const result = await runCapture({
-      argv: ['--type', 'mistake', '--summary', 'A mistake'],
-      stdin: bodyStream(''),
-      cwd: '/tmp/elsewhere',
-      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
-      now: NOW,
-      home,
-    });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('schema-validation');
-      expect(result.findings?.map((finding) => finding.message)).toContain('missing required field: correction');
-    }
-    const entries = await readdir(storePath);
-    expect(entries).not.toContain('content');
-  });
-
   it('fails when the named store is not registered', async () => {
     const home = await mkdtemp(join(tmpdir(), 'capture-cli-empty-'));
 
     const result = await runCapture({
-      argv: ['--store', 'missing', '--type', 'observation', '--summary', 'x'],
+      argv: ['--store', 'missing', '--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
@@ -264,7 +237,7 @@ describe(runCapture, () => {
     const { home } = await makeStore('codeassembly');
 
     const result = await runCapture({
-      argv: ['--type', 'observation'],
+      argv: ['--store', 'codeassembly'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},

@@ -11,8 +11,6 @@ import type { Finding } from '@codeassembly/kb';
 export interface ParsedArgs {
   /** Registry name of the event store to write into; defaults to `codeassembly`. */
   store: string;
-  /** The event's `type` field (e.g. `observation`, `mistake`). */
-  type: string;
   /** The human-readable one-line summary; becomes the record's display label on recall. */
   summary: string;
   /** Optional skill the event relates to. */
@@ -21,8 +19,6 @@ export interface ParsedArgs {
   model: string | null;
   /** Optional tag list, in the order the agent supplied them. */
   tags: string[];
-  /** Verbatim correction text; required for `--type mistake`. */
-  correction: string | null;
 }
 
 /** The auto-filled context an event carries beyond the agent-supplied fields. */
