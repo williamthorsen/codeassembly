@@ -8,7 +8,7 @@ const NOW = new Date('2026-05-24T14:35:00Z');
 function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'Example',
-    type: 'howto',
+    recordType: 'assertion',
     created: '2026-05-01',
     updated: '2026-05-01',
     tags: ['example'],

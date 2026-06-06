@@ -18,7 +18,7 @@ vi.mock('@codeassembly/kb/check', async () => {
 const NOW = new Date('2026-05-29T00:00:00Z');
 
 const VALID =
-  '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\n---\n\nBody.\n';
+  '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\ntype: howto\n---\n\nBody.\n';
 
 /**
  * Stands up a temp vault with a `.kb/` and an empty home so the registry resolves empty. A note path is written under
@@ -165,7 +165,7 @@ describe(runCurate, () => {
   it('produces the generic and curate findings together for a content-structured vault', async () => {
     const { kbPath, home } = await makeVault({
       'Bad.md':
-        '---\ntitle: Bad\ntype: howto\ncreated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\n---\n\nSee [[Ghost]].\n',
+        '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\ntype: howto\n---\n\nSee [[Ghost]].\n',
     });
 
     const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });

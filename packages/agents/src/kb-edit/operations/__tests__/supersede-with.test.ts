@@ -11,7 +11,7 @@ function note(input: { name: string; tags?: string[]; extra?: Record<string, unk
   const extra = input.extra ?? {};
   const frontmatter: Frontmatter = {
     title: input.name.replace(/\.md$/, ''),
-    type: 'howto',
+    recordType: 'assertion',
     created: '2026-05-01',
     updated: '2026-05-01',
     tags,
