@@ -9,7 +9,8 @@ try {
   if (error.code === 'ERR_MODULE_NOT_FOUND') {
     process.stderr.write('kb: build output not found — run `pnpm run build` first\n');
   } else {
-    process.stderr.write(`kb: failed to load: ${error.message}\n`);
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb: failed to load: ${message}\n`);
   }
   process.exit(1);
 }
