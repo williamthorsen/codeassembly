@@ -1,7 +1,11 @@
 import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { mkdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { isRecord } from '../lib/type-guards.ts';
 
@@ -31,10 +35,10 @@ interface CliResult {
   readonly exitCode: number;
 }
 
-/** Runs the CLI via tsx and captures stdout, stderr, and exit code. */
-async function runCli(...args: Array<string>): Promise<CliResult> {
+/** Runs the CLI via tsx in an optional working directory, capturing stdout, stderr, and exit code. */
+async function runCliIn(cwd: string | undefined, ...args: Array<string>): Promise<CliResult> {
   try {
-    const { stdout, stderr } = await execFileAsync('tsx', [CLI_PATH, ...args]);
+    const { stdout, stderr } = await execFileAsync('tsx', [CLI_PATH, ...args], cwd === undefined ? {} : { cwd });
     return { stdout, stderr, exitCode: 0 };
   } catch (error: unknown) {
     if (isExecError(error)) {
@@ -42,6 +46,11 @@ async function runCli(...args: Array<string>): Promise<CliResult> {
     }
     throw error;
   }
+}
+
+/** Runs the CLI via tsx in the default working directory. */
+async function runCli(...args: Array<string>): Promise<CliResult> {
+  return runCliIn(undefined, ...args);
 }
 
 describe('CLI generate routing', () => {
@@ -57,5 +66,40 @@ describe('CLI generate routing', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain('Unknown generate target "nonexistent"');
+  });
+});
+
+describe('CLI rulebook routing', () => {
+  let projectRoot: string;
+
+  beforeEach(async () => {
+    projectRoot = path.join(tmpdir(), `agents-test-cli-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(projectRoot, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(projectRoot, { recursive: true, force: true });
+  });
+
+  it('lists the init and sync commands in --help', async () => {
+    const result = await runCli('--help');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('init');
+    expect(result.stdout).toContain('sync');
+  });
+
+  it('dispatches sync, reporting a no-op when no rulebooks.yaml exists', async () => {
+    const result = await runCliIn(projectRoot, 'sync');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Nothing to sync');
+  });
+
+  it('dispatches init, scaffolding rulebooks.yaml in the project', async () => {
+    const result = await runCliIn(projectRoot, 'init');
+
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks.yaml'))).toBe(true);
   });
 });

@@ -2,49 +2,75 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
-import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.js';
-import { installCommand } from './commands/install.js';
-import { statusCommand } from './commands/status.js';
-import { uninstallCommand } from './commands/uninstall.js';
-import type { InstallOptions, PlatformId } from './lib/types.js';
+import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
+import { initCommand } from './commands/init.ts';
+import { installCommand } from './commands/install.ts';
+import { statusCommand } from './commands/status.ts';
+import { syncCommand } from './commands/sync.ts';
+import { uninstallCommand } from './commands/uninstall.ts';
+import type { InstallOptions, PlatformId } from './lib/types.ts';
 
 const VALID_PLATFORM_IDS = new Set<string>(['claude', 'rovodev', 'all']);
+
+/**
+ * Main CLI entry point.
+ */
+async function main(): Promise<void> {
+  const { command, subcommand, options, help } = parseArgs(process.argv);
+
+  if (help || !command) {
+    printUsage();
+    process.exit(help ? 0 : 1);
+  }
+
+  try {
+    switch (command) {
+      case 'install':
+        await installCommand(options);
+        break;
+      case 'init':
+        await initCommand(options);
+        break;
+      case 'sync':
+        await syncCommand(options);
+        break;
+      case 'uninstall':
+        await uninstallCommand({ platform: options.platform, force: options.force });
+        break;
+      case 'status':
+        await statusCommand({ platform: options.platform });
+        break;
+      case 'generate':
+        if (subcommand === 'label-map') {
+          await generateLabelMap({ force: options.force });
+        } else {
+          if (subcommand) console.error(`Error: Unknown generate target "${subcommand}"`);
+          printGenerateUsage();
+          process.exit(1);
+        }
+        break;
+      default:
+        console.error(`Error: Unknown command "${command}"`);
+        printUsage();
+        process.exit(1);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+    } else {
+      console.error('An unexpected error occurred');
+    }
+    process.exit(1);
+  }
+}
+
+// region | Helpers
 
 function isValidPlatform(value: string): value is PlatformId | 'all' {
   return VALID_PLATFORM_IDS.has(value);
 }
 
-function parsePlatformArg(
-  args: ReadonlyArray<string>,
-  index: number,
-): { platform: PlatformId | 'all'; nextIndex: number } {
-  const nextArg = args[index + 1];
-  if (!nextArg || nextArg.startsWith('--')) {
-    console.error('Error: --platform requires a value (claude, rovodev, or all)');
-    process.exit(1);
-  }
-  if (!isValidPlatform(nextArg)) {
-    console.error(`Error: Invalid platform "${nextArg}". Valid options: claude, rovodev, all`);
-    process.exit(1);
-  }
-  return { platform: nextArg, nextIndex: index + 1 };
-}
-
-function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'platform' | null {
-  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'platform'> = {
-    '--help': 'help',
-    '-h': 'help',
-    '--link': 'link',
-    '--force': 'force',
-    '--dry-run': 'dry-run',
-    '--platform': 'platform',
-  };
-  return flags[arg] ?? null;
-}
-
-/**
- * Parses CLI arguments into a structured options object.
- */
+/** Parses CLI arguments into a structured options object. */
 function parseArgs(argv: ReadonlyArray<string>): {
   command: string;
   subcommand: string;
@@ -104,6 +130,34 @@ function parseArgs(argv: ReadonlyArray<string>): {
   };
 }
 
+function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'platform' | null {
+  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'platform'> = {
+    '--help': 'help',
+    '-h': 'help',
+    '--link': 'link',
+    '--force': 'force',
+    '--dry-run': 'dry-run',
+    '--platform': 'platform',
+  };
+  return flags[arg] ?? null;
+}
+
+function parsePlatformArg(
+  args: ReadonlyArray<string>,
+  index: number,
+): { platform: PlatformId | 'all'; nextIndex: number } {
+  const nextArg = args[index + 1];
+  if (!nextArg || nextArg.startsWith('--')) {
+    console.error('Error: --platform requires a value (claude, rovodev, or all)');
+    process.exit(1);
+  }
+  if (!isValidPlatform(nextArg)) {
+    console.error(`Error: Invalid platform "${nextArg}". Valid options: claude, rovodev, all`);
+    process.exit(1);
+  }
+  return { platform: nextArg, nextIndex: index + 1 };
+}
+
 /**
  * Prints usage information to stdout.
  */
@@ -112,6 +166,8 @@ function printUsage(): void {
 
 Commands:
   install          Install guidance, skills, and subagents into platform directories
+  init             Scaffold an empty .agents/rulebooks.yaml in the current project
+  sync             Resolve .agents/rulebooks.yaml and materialize declared rulebooks
   uninstall        Remove installed guidance, skills, and subagents
   status           Show the current state of installed items
   generate <target> Generate a configuration file (e.g., label-map)
@@ -120,54 +176,10 @@ Options:
   --platform <name>  Target platform: claude, rovodev, or all (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite modified files (install/uninstall)
-  --dry-run          Show what would be done without making changes (install only)
+  --dry-run          Show what would be done without making changes (install, sync, init)
   --help, -h         Show this help message`);
 }
 
-/**
- * Main CLI entry point.
- */
-async function main(): Promise<void> {
-  const { command, subcommand, options, help } = parseArgs(process.argv);
-
-  if (help || !command) {
-    printUsage();
-    process.exit(help ? 0 : 1);
-  }
-
-  try {
-    switch (command) {
-      case 'install':
-        await installCommand(options);
-        break;
-      case 'uninstall':
-        await uninstallCommand({ platform: options.platform, force: options.force });
-        break;
-      case 'status':
-        await statusCommand({ platform: options.platform });
-        break;
-      case 'generate':
-        if (subcommand === 'label-map') {
-          await generateLabelMap({ force: options.force });
-        } else {
-          if (subcommand) console.error(`Error: Unknown generate target "${subcommand}"`);
-          printGenerateUsage();
-          process.exit(1);
-        }
-        break;
-      default:
-        console.error(`Error: Unknown command "${command}"`);
-        printUsage();
-        process.exit(1);
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error: ${error.message}`);
-    } else {
-      console.error('An unexpected error occurred');
-    }
-    process.exit(1);
-  }
-}
+// endregion | Helpers
 
 await main();
