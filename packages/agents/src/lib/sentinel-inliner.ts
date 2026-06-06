@@ -4,12 +4,17 @@
  * Every function is a pure string transform with no filesystem access.
  */
 
-function openMarker(slug: string): string {
-  return `<!-- rulebook:${slug} -->`;
-}
-
-function closeMarker(slug: string): string {
-  return `<!-- /rulebook:${slug} -->`;
+/** Returns the slugs whose blocks have a complete open/close marker pair, in document order. */
+export function extractInstalledSlugs(content: string): ReadonlyArray<string> {
+  const pattern = /<!-- rulebook:([a-z0-9-]+) -->[\s\S]*?<!-- \/rulebook:\1 -->/g;
+  const slugs: Array<string> = [];
+  for (const match of content.matchAll(pattern)) {
+    const slug = match[1];
+    if (slug !== undefined) {
+      slugs.push(slug);
+    }
+  }
+  return slugs;
 }
 
 /**
@@ -57,19 +62,6 @@ export function removeRulebook(content: string, slug: string): string {
   return content.replace(new RegExp(block), '');
 }
 
-/** Returns the slugs whose blocks have a complete open/close marker pair, in document order. */
-export function extractInstalledSlugs(content: string): ReadonlyArray<string> {
-  const pattern = /<!-- rulebook:([a-z0-9-]+) -->[\s\S]*?<!-- \/rulebook:\1 -->/g;
-  const slugs: Array<string> = [];
-  for (const match of content.matchAll(pattern)) {
-    const slug = match[1];
-    if (slug !== undefined) {
-      slugs.push(slug);
-    }
-  }
-  return slugs;
-}
-
 /** Renders the canonical block for a slug: open marker, trimmed body, close marker. */
 function renderBlock(slug: string, body: string): string {
   return `${openMarker(slug)}\n${body.trim()}\n${closeMarker(slug)}`;
@@ -89,3 +81,15 @@ function blockPattern(slug: string): RegExp {
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
+
+// region | Helpers
+
+function closeMarker(slug: string): string {
+  return `<!-- /rulebook:${slug} -->`;
+}
+
+function openMarker(slug: string): string {
+  return `<!-- rulebook:${slug} -->`;
+}
+
+// endregion | Helpers

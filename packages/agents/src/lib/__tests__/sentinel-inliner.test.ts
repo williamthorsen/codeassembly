@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../sentinel-inliner.ts';
 
+describe(extractInstalledSlugs, () => {
+  it('returns slugs that have a complete marker pair, in document order', () => {
+    const withBoth = injectRulebook(injectRulebook('', 'alpha', 'A'), 'beta', 'B');
+    expect(extractInstalledSlugs(withBoth)).toEqual(['alpha', 'beta']);
+  });
+
+  it('when there are no markers, returns an empty array', () => {
+    expect(extractInstalledSlugs('# Title\n')).toEqual([]);
+  });
+
+  it('ignores an unpaired open marker', () => {
+    expect(extractInstalledSlugs('<!-- rulebook:shell -->\nBody text\n')).toEqual([]);
+  });
+});
+
 describe(injectRulebook, () => {
   it('when content is empty, returns the block with a trailing newline', () => {
     expect(injectRulebook('', 'shell', 'Body text')).toBe(
@@ -88,20 +103,5 @@ describe(removeRulebook, () => {
 
     expect(afterRemoval.startsWith('\n')).toBe(false);
     expect(extractInstalledSlugs(afterRemoval)).toEqual(['beta']);
-  });
-});
-
-describe(extractInstalledSlugs, () => {
-  it('returns slugs that have a complete marker pair, in document order', () => {
-    const withBoth = injectRulebook(injectRulebook('', 'alpha', 'A'), 'beta', 'B');
-    expect(extractInstalledSlugs(withBoth)).toEqual(['alpha', 'beta']);
-  });
-
-  it('when there are no markers, returns an empty array', () => {
-    expect(extractInstalledSlugs('# Title\n')).toEqual([]);
-  });
-
-  it('ignores an unpaired open marker', () => {
-    expect(extractInstalledSlugs('<!-- rulebook:shell -->\nBody text\n')).toEqual([]);
   });
 });

@@ -88,6 +88,46 @@ export async function syncCommand(
   console.info(`Synced ${resolved.length} rulebook(s); retracted ${neutralOrphans.length} file(s).`);
 }
 
+// region | Helpers
+
+/** Lists the slugs of materialized neutral files, returning an empty list when the directory is absent. */
+async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<string>> {
+  let entries: ReadonlyArray<string>;
+  try {
+    entries = await readdir(neutralDir);
+  } catch (error: unknown) {
+    if (isEnoent(error)) {
+      return [];
+    }
+    throw error;
+  }
+  return entries.filter((entry) => entry.endsWith('.md')).map((entry) => entry.slice(0, -'.md'.length));
+}
+
+/** Reads a file, returning an empty string when it does not exist. */
+async function readFileOrEmpty(filePath: string): Promise<string> {
+  try {
+    return await readFile(filePath, 'utf8');
+  } catch (error: unknown) {
+    if (isEnoent(error)) {
+      return '';
+    }
+    throw error;
+  }
+}
+
+/** Prints the writes and retractions a real run would perform. */
+function reportDryRun(resolved: ReadonlyArray<ResolvedRulebook>, retracted: ReadonlyArray<string>): void {
+  console.info('[dry-run] sync would:');
+  for (const rulebook of resolved) {
+    const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
+    console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
+  }
+  for (const slug of retracted) {
+    console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
+  }
+}
+
 /** Reads a rulebook from the library, validates its frontmatter, and returns its neutral body and delivery. */
 async function resolveRulebook(slug: string, librarySrcDir: string): Promise<ResolvedRulebook> {
   const srcPath = path.join(librarySrcDir, `${slug}.md`);
@@ -105,32 +145,6 @@ async function resolveRulebook(slug: string, librarySrcDir: string): Promise<Res
   return { slug, body: `${body.trim()}\n`, ambient: rulebook.delivery.includes('ambient') };
 }
 
-/** Reads a file, returning an empty string when it does not exist. */
-async function readFileOrEmpty(filePath: string): Promise<string> {
-  try {
-    return await readFile(filePath, 'utf8');
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      return '';
-    }
-    throw error;
-  }
-}
-
-/** Lists the slugs of materialized neutral files, returning an empty list when the directory is absent. */
-async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<string>> {
-  let entries: ReadonlyArray<string>;
-  try {
-    entries = await readdir(neutralDir);
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      return [];
-    }
-    throw error;
-  }
-  return entries.filter((entry) => entry.endsWith('.md')).map((entry) => entry.slice(0, -'.md'.length));
-}
-
 /** Writes `content` to `filePath` only when it differs from the current contents, keeping re-runs diff-free. */
 async function writeIfChanged(filePath: string, content: string): Promise<void> {
   if ((await readFileOrEmpty(filePath)) === content) {
@@ -139,14 +153,4 @@ async function writeIfChanged(filePath: string, content: string): Promise<void> 
   await writeFile(filePath, content, 'utf8');
 }
 
-/** Prints the writes and retractions a real run would perform. */
-function reportDryRun(resolved: ReadonlyArray<ResolvedRulebook>, retracted: ReadonlyArray<string>): void {
-  console.info('[dry-run] sync would:');
-  for (const rulebook of resolved) {
-    const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
-    console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
-  }
-  for (const slug of retracted) {
-    console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
-  }
-}
+// endregion | Helpers
