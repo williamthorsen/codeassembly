@@ -114,35 +114,58 @@ export async function runCurate(input: {
   }
   const kb = kbOutcome.kb;
 
-  let checked;
-  try {
-    checked = await curateCheck({ kbRoot: kb.path, now: input.now, staleAfterDays: args.staleAfterDays });
-  } catch (error) {
-    // Catch only a loader defect (malformed config/schema/aliases); any other throw from `check` — an enumeration
-    // or rule crash — must surface as a real failure rather than being relabeled as a config error.
-    if (isKbLoaderError(error)) {
-      return { ok: false, error: 'invalid-config', message: error.message };
-    }
-    throw error;
+  const checkInput = { kbRoot: kb.path, now: input.now, staleAfterDays: args.staleAfterDays };
+
+  const checked = await guardedCurateCheck(checkInput);
+  if (!checked.ok) {
+    return checked.failure;
   }
 
   if (!args.apply) {
-    return { ok: true, mode, kb, findings: checked.findings, summary: summarize(checked.findings) };
+    return { ok: true, mode, kb, findings: checked.value.findings, summary: summarize(checked.value.findings) };
   }
 
-  const applyOutcome = await applyFixes({ kbPath: kb.path, notes: checked.notes, findings: checked.findings });
-  const residual = await curateCheck({ kbRoot: kb.path, now: input.now, staleAfterDays: args.staleAfterDays });
+  const applyOutcome = await applyFixes({
+    kbPath: kb.path,
+    notes: checked.value.notes,
+    findings: checked.value.findings,
+  });
+  const residual = await guardedCurateCheck(checkInput);
+  if (!residual.ok) {
+    return residual.failure;
+  }
   return {
     ok: true,
     mode,
     kb,
-    findings: residual.findings,
-    summary: summarize(residual.findings),
+    findings: residual.value.findings,
+    summary: summarize(residual.value.findings),
     applied: applyOutcome,
   };
 }
 
 // region | Helpers
+
+/** A guarded `curateCheck` outcome: the check result, or an `invalid-config` failure mapped from a loader defect. */
+type GuardedCheck =
+  | { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } }
+  | { ok: false; failure: CurateResult };
+
+/**
+ * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config/schema/aliases) to a structured
+ * `invalid-config` failure. Any other throw — an enumeration or rule crash — propagates as a real failure rather than
+ * being relabeled as a config error. Both `runCurate` check calls route through here so the guard cannot drift.
+ */
+async function guardedCurateCheck(input: { kbRoot: string; now: Date; staleAfterDays: number }): Promise<GuardedCheck> {
+  try {
+    return { ok: true, value: await curateCheck(input) };
+  } catch (error) {
+    if (isKbLoaderError(error)) {
+      return { ok: false, failure: { ok: false, error: 'invalid-config', message: error.message } };
+    }
+    throw error;
+  }
+}
 
 /**
  * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration: the generic

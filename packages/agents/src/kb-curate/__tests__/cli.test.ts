@@ -2,9 +2,18 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { check } from '@codeassembly/kb/check';
+import { KbLoaderError } from '@codeassembly/kb/config';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runCurate } from '../cli.ts';
+
+// Mock `check` with a passthrough to the real implementation so most tests run
+// against real vaults; the error-path tests override it per-call.
+vi.mock('@codeassembly/kb/check', async () => {
+  const actual = await vi.importActual<typeof import('@codeassembly/kb/check')>('@codeassembly/kb/check');
+  return { ...actual, check: vi.fn(actual.check) };
+});
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
@@ -56,6 +65,10 @@ describe(parseArgs, () => {
 });
 
 describe(runCurate, () => {
+  afterEach(() => {
+    vi.mocked(check).mockClear();
+  });
+
   it('returns no-kb-resolvable when no KB can be found and none is requested', async () => {
     const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
@@ -184,5 +197,24 @@ describe(runCurate, () => {
     const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });
 
     expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('schema.yaml') });
+  });
+
+  it('propagates a non-loader error from check rather than returning invalid-config', async () => {
+    const { kbPath, home } = await makeVault({ 'Note.md': VALID });
+    vi.mocked(check).mockRejectedValueOnce(new Error('rule engine crashed'));
+
+    await expect(runCurate({ argv: [], startDir: kbPath, now: NOW, home })).rejects.toThrow(/rule engine crashed/);
+  });
+
+  it('returns invalid-config when the residual check after --apply throws a KbLoaderError', async () => {
+    const { kbPath, home } = await makeVault({ 'Note.md': VALID });
+    // First (pre-apply) check is clean; the residual re-check throws a loader defect (e.g. config corrupted by a race).
+    vi.mocked(check)
+      .mockResolvedValueOnce({ notes: [], findings: [] })
+      .mockRejectedValueOnce(new KbLoaderError('config.yaml: malformed YAML'));
+
+    const result = await runCurate({ argv: ['--apply'], startDir: kbPath, now: NOW, home });
+
+    expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('config.yaml') });
   });
 });
