@@ -6,14 +6,16 @@ It underpins the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skil
 
 ## Exports
 
-The package exposes seven subpath entries plus a root barrel:
+The package exposes nine subpath entries plus a root barrel:
 
 | Entry           | Description                                                               |
 | --------------- | ------------------------------------------------------------------------- |
 | `.`             | The most-used types plus `defaultSchema` and the rule constants           |
 | `./check`       | `check` — config-driven enumeration plus the generic rules, in one call   |
 | `./config`      | `.kb/config.yaml` loading and the typed `KbLoaderError` the loaders throw |
-| `./discovery`   | KB root discovery and `kb.yaml` registry loading and merging              |
+| `./create`      | `create` — scaffold a new store and register it in `kb.yaml`              |
+| `./discovery`   | KB root discovery and `kb.yaml` registry loading, merging, and writing    |
+| `./filesystem`  | Filesystem-existence helpers with an explicit absence policy              |
 | `./schema`      | The bundled default schema and per-KB `.kb/schema.yaml` resolution        |
 | `./frontmatter` | Note parsing into typed frontmatter and writing it back to YAML           |
 | `./tags`        | `.kb/tag-aliases.yaml` loading and tag canonicalization                   |
@@ -178,7 +180,34 @@ Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `
 
 ## The `kb` command
 
-The package ships a `kb` bin with a `check` subcommand that validates every note in a store and reports the findings.
+The package ships a `kb` bin with two subcommands: `create` and `check`.
+
+### kb create
+
+`kb create` scaffolds a new knowledge base in the current directory and registers it in the user-global `~/.agents/kb.yaml`.
+
+```bash
+kb create                # scaffold the current directory, register under its name
+kb create --name coding  # register under an explicit name
+kb create --no-register  # scaffold without writing the registry
+```
+
+It creates these files and directories:
+
+| Path                          | Contents                                                         |
+| ----------------------------- | ---------------------------------------------------------------- |
+| `.kb/schema.yaml`             | A copy of the bundled default schema, ready to customize         |
+| `.kb/config.yaml`             | A fully-commented check config; the bundled defaults apply as-is |
+| `.kb/tag-aliases.yaml`        | An empty `aliases: {}` map                                       |
+| `content/`, `content/events/` | The note tree; `capture-event` writes to `content/events/`       |
+
+The schema and config seeds are serialized from the in-package `defaultSchema` and `defaultKbConfig`, so a new store cannot drift from the bundled defaults. The generated `.kb/schema.yaml` **replaces** the default outright (the override is a replacement, not a merge): add record types or optional fields freely, but do not remove or rename the default `assertion`/`event` record types or their required fields, since the `kb-*` skills depend on them. Delete the file to re-inherit the bundled default.
+
+The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. The registry write preserves any existing comments in `kb.yaml`. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
+
+### kb check
+
+`kb check` validates every note in a store and reports the findings.
 
 ```bash
 kb check                 # check the nearest ancestor .kb/ store

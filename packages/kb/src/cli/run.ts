@@ -1,18 +1,20 @@
 import { type CommandOutput, runCheck } from './commands/check.ts';
+import { runCreate } from './commands/create.ts';
 
 /** Top-level usage text for the `kb` bin. */
 export const HELP = `Usage: kb <command> [options]
 
 Commands:
-  check   Validate every note in a knowledge base against its rules.
+  check    Validate every note in a knowledge base against its rules.
+  create   Scaffold a new knowledge base and register it in the kb.yaml registry.
 
-Run "kb check --help" for command options.
+Run "kb <command> --help" for command options.
 `;
 
 /**
  * Dispatches a `kb` subcommand and returns its {@link CommandOutput} without touching `process`, so tests drive the
- * command directly. `check` is the only subcommand; a bare invocation or `--help`/`-h` prints top-level usage (exit
- * 0), and an unknown command prints usage to stderr (exit 2).
+ * command directly. `check` and `create` are the subcommands; a bare invocation or `--help`/`-h` prints top-level
+ * usage (exit 0), and an unknown command prints usage to stderr (exit 2).
  */
 export async function run(input: { argv: readonly string[]; cwd: string; home?: string }): Promise<CommandOutput> {
   const [command, ...rest] = input.argv;
@@ -23,6 +25,10 @@ export async function run(input: { argv: readonly string[]; cwd: string; home?: 
 
   if (command === 'check') {
     return runCheck({ argv: rest, cwd: input.cwd, ...(input.home !== undefined && { home: input.home }) });
+  }
+
+  if (command === 'create') {
+    return runCreate({ argv: rest, cwd: input.cwd, ...(input.home !== undefined && { home: input.home }) });
   }
 
   return { exitCode: 2, stdout: '', stderr: `kb: unknown command "${command}"\n${HELP}` };
