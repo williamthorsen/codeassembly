@@ -1,10 +1,11 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { check } from '../../check/check.ts';
+import { getRegistryPathFor, makeStore, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
 
 // Mock `check` with a passthrough to the real implementation so most tests run
@@ -18,23 +19,10 @@ const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 const MISSING_UPDATED = '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** Stands up a temp store with a `.kb/` and the given files; returns its path. */
-async function makeStore(files: Record<string, string>): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'kb-cli-store-'));
-  await mkdir(join(path, '.kb'), { recursive: true });
-  for (const [relativePath, content] of Object.entries(files)) {
-    const full = join(path, relativePath);
-    await mkdir(join(full, '..'), { recursive: true });
-    await writeFile(full, content, 'utf8');
-  }
-  return path;
-}
-
 /** Stands up an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
 async function makeHome(name: string, storePath: string): Promise<string> {
-  const home = await mkdtemp(join(tmpdir(), 'kb-cli-home-'));
-  await mkdir(join(home, '.agents'), { recursive: true });
-  await writeFile(join(home, '.agents', 'kb.yaml'), `kbs:\n  ${name}:\n    path: ${storePath}\n`, 'utf8');
+  const home = await makeTempDir('kb-cli-home-');
+  await seedRegistry(getRegistryPathFor(home), `kbs:\n  ${name}:\n    path: ${storePath}\n`);
   return home;
 }
 
@@ -81,7 +69,7 @@ describe(run, () => {
   });
 
   it('exits 2 when no .kb/ directory is found and no --kb is given', async () => {
-    const empty = await mkdtemp(join(tmpdir(), 'kb-cli-empty-'));
+    const empty = await makeTempDir('kb-cli-empty-');
 
     const result = await run({ argv: ['check'], cwd: empty });
 
@@ -150,10 +138,9 @@ describe(run, () => {
 
   it('resolves a store from a project-local registry entry', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
-    const project = await mkdtemp(join(tmpdir(), 'kb-cli-project-'));
-    await mkdir(join(project, '.agents'), { recursive: true });
-    await writeFile(join(project, '.agents', 'kb.yaml'), `kbs:\n  local:\n    path: ${store}\n`, 'utf8');
-    const home = await mkdtemp(join(tmpdir(), 'kb-cli-home-'));
+    const project = await makeTempDir('kb-cli-project-');
+    await seedRegistry(getRegistryPathFor(project), `kbs:\n  local:\n    path: ${store}\n`);
+    const home = await makeTempDir('kb-cli-home-');
 
     const result = await run({ argv: ['check', '--kb', 'local'], cwd: project, home });
 

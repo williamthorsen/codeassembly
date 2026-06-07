@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { parseNoteContent } from '../../frontmatter/parse-note.ts';
 import { defaultSchema } from '../../schema/default-schema.ts';
 import { parseAliases } from '../../tags/load-aliases.ts';
+import { normalizeFindings } from '../../test-utils/scaffolding.ts';
 import type { Finding } from '../../types.ts';
 import { frontmatterRule } from '../frontmatter-rule.ts';
 import { runRules } from '../run-rules.ts';
@@ -13,18 +14,6 @@ import { tagAliasRule } from '../tag-alias-rule.ts';
 
 const PARITY_DIR = join(import.meta.dirname, 'fixtures', 'parity');
 const NOTES_DIR = join(PARITY_DIR, 'notes');
-
-/** Sort findings by path, then line, then rule, for stable comparison. */
-function normalize(findings: readonly Finding[]): Finding[] {
-  return findings.toSorted((a, b) => {
-    if (a.path !== b.path) return a.path < b.path ? -1 : 1;
-    const lineA = a.line ?? 0;
-    const lineB = b.line ?? 0;
-    if (lineA !== lineB) return lineA - lineB;
-    if (a.rule === b.rule) return 0;
-    return a.rule < b.rule ? -1 : 1;
-  });
-}
 
 // `expected-findings.json` is the checked-in golden the `frontmatter` and
 // `tag-alias` rules produce over the vendored `notes/` fixtures. It was
@@ -54,7 +43,7 @@ describe('rules golden over the vendored notes fixtures', () => {
       aliases,
     });
 
-    expect(normalize(actual)).toEqual(normalize(expected));
+    expect(normalizeFindings(actual)).toEqual(normalizeFindings(expected));
   });
 
   it('exercises every frontmatter rule code in the golden', async () => {

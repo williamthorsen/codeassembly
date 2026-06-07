@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseNoteContent } from '../../frontmatter/parse-note.ts';
 import { defaultSchema } from '../../schema/default-schema.ts';
+import { normalizeFindings } from '../../test-utils/scaffolding.ts';
 import type { Finding } from '../../types.ts';
 import { pathsRule } from '../paths-rule.ts';
 import { runRules } from '../run-rules.ts';
@@ -12,18 +13,6 @@ import { wikilinksRule } from '../wikilinks-rule.ts';
 
 const PARITY_DIR = join(import.meta.dirname, 'fixtures', 'parity-cross-note');
 const NOTES_DIR = join(PARITY_DIR, 'notes');
-
-/** Sort findings by path, then line, then rule, for stable comparison. */
-function normalize(findings: readonly Finding[]): Finding[] {
-  return findings.toSorted((a, b) => {
-    if (a.path !== b.path) return a.path < b.path ? -1 : 1;
-    const lineA = a.line ?? 0;
-    const lineB = b.line ?? 0;
-    if (lineA !== lineB) return lineA - lineB;
-    if (a.rule === b.rule) return 0;
-    return a.rule < b.rule ? -1 : 1;
-  });
-}
 
 /** Recursively collect vault-relative `.md` paths under `dir`, skipping dot-dirs and `node_modules`. */
 async function collectNotePaths(root: string, dir: string): Promise<string[]> {
@@ -62,7 +51,7 @@ describe('cross-note rules parity proof against the real check-notes golden', ()
       schema: defaultSchema,
     });
 
-    expect(normalize(actual)).toEqual(normalize(expected));
+    expect(normalizeFindings(actual)).toEqual(normalizeFindings(expected));
   });
 
   it('exercises both cross-note rule codes in the golden', async () => {

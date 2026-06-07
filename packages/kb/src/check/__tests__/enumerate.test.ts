@@ -1,10 +1,9 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
+import { makeTree } from '../../test-utils/scaffolding.ts';
 import { enumerateNotes } from '../enumerate.ts';
 
 /** Directories whose `readdir` should reject; cleared between tests. */
@@ -31,17 +30,6 @@ afterEach(() => {
 const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** Stands up a temp KB root with the given files written under it. */
-async function makeVault(files: Record<string, string>): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'kb-check-enumerate-'));
-  for (const [relativePath, content] of Object.entries(files)) {
-    const full = join(root, relativePath);
-    await mkdir(join(full, '..'), { recursive: true });
-    await writeFile(full, content, 'utf8');
-  }
-  return root;
-}
-
 /** Enumerates `root` under a config, defaulting `exclude` to the bundled default. */
 async function enumerateIn(root: string, config: Partial<KbConfig> & Pick<KbConfig, 'targets'>): Promise<string[]> {
   const notes = await enumerateNotes({
@@ -53,7 +41,7 @@ async function enumerateIn(root: string, config: Partial<KbConfig> & Pick<KbConf
 
 describe(enumerateNotes, () => {
   it('enumerates only notes under content/ for the default targets', async () => {
-    const root = await makeVault({
+    const root = await makeTree({
       'content/top.md': VALID,
       'content/sub/nested.md': VALID,
       'outside.md': VALID,
@@ -64,7 +52,7 @@ describe(enumerateNotes, () => {
   });
 
   it('excludes node_modules even when nested under a target directory', async () => {
-    const root = await makeVault({
+    const root = await makeTree({
       'content/kept.md': VALID,
       'content/node_modules/dep/readme.md': VALID,
     });
@@ -73,7 +61,7 @@ describe(enumerateNotes, () => {
   });
 
   it('excludes dot-directories implicitly via dot:false without naming them', async () => {
-    const root = await makeVault({
+    const root = await makeTree({
       'content/kept.md': VALID,
       'content/.git/hook.md': VALID,
       'content/.kb/note.md': VALID,
@@ -83,7 +71,7 @@ describe(enumerateNotes, () => {
   });
 
   it('enumerates the whole tree for a glob-first target with no leading literal', async () => {
-    const root = await makeVault({
+    const root = await makeTree({
       'top.md': VALID,
       'sub/nested.md': VALID,
       '2026-05-29/dated.md': VALID,
@@ -97,7 +85,7 @@ describe(enumerateNotes, () => {
   });
 
   it('still excludes node_modules under a full-walk glob-first target', async () => {
-    const root = await makeVault({
+    const root = await makeTree({
       'top.md': VALID,
       'node_modules/dep/readme.md': VALID,
     });
@@ -106,7 +94,7 @@ describe(enumerateNotes, () => {
   });
 
   it('keeps a note with malformed frontmatter rather than dropping it', async () => {
-    const root = await makeVault({ 'content/broken.md': '---\ntitle: [unterminated\n---\n\nBody.\n' });
+    const root = await makeTree({ 'content/broken.md': '---\ntitle: [unterminated\n---\n\nBody.\n' });
 
     const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
 
@@ -116,13 +104,13 @@ describe(enumerateNotes, () => {
   });
 
   it('ignores non-markdown files', async () => {
-    const root = await makeVault({ 'content/note.md': VALID, 'content/data.json': '{}', 'content/image.png': 'x' });
+    const root = await makeTree({ 'content/note.md': VALID, 'content/data.json': '{}', 'content/image.png': 'x' });
 
     expect(await enumerateIn(root, defaultKbConfig)).toEqual(['content/note.md']);
   });
 
   it('honors an explicit exclude target glob', async () => {
-    const root = await makeVault({
+    const root = await makeTree({
       'content/keep.md': VALID,
       'content/drafts/skip.md': VALID,
     });
@@ -133,7 +121,7 @@ describe(enumerateNotes, () => {
   });
 
   it('skips an unreadable subdirectory and still returns the readable notes', async () => {
-    const root = await makeVault({ 'content/top.md': VALID, 'content/restricted/inside.md': VALID });
+    const root = await makeTree({ 'content/top.md': VALID, 'content/restricted/inside.md': VALID });
     const blockedDir = join(root, 'content', 'restricted');
     unreadableDirs.add(blockedDir);
     const warnings: string[] = [];

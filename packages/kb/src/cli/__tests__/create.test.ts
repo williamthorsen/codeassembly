@@ -1,10 +1,11 @@
-import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { mkdir } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { loadKbRegistry } from '../../discovery/load-registry.ts';
+import { pathExists } from '../../filesystem/exists.ts';
+import { getRegistryPathFor, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
 
 describe('kb create', () => {
@@ -17,8 +18,8 @@ describe('kb create', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain(basename(cwd));
     expect(result.stdout).toContain('Registered in');
-    expect(await exists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
-    expect(await exists(join(cwd, 'content', 'events'))).toBe(true);
+    expect(await pathExists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(cwd, 'content', 'events'))).toBe(true);
     const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
     expect(config.entries[0]?.name).toBe(basename(cwd));
   });
@@ -42,8 +43,8 @@ describe('kb create', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Not registered');
-    expect(await exists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
-    expect(await exists(getRegistryPathFor(home))).toBe(false);
+    expect(await pathExists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(getRegistryPathFor(home))).toBe(false);
   });
 
   it('exits 2 when a store already exists in cwd', async () => {
@@ -61,8 +62,7 @@ describe('kb create', () => {
     const cwd = await makeTempDir('kb-cli-store-');
     const home = await makeTempDir('kb-cli-home-');
     const registryPath = getRegistryPathFor(home);
-    await mkdir(dirname(registryPath), { recursive: true });
-    await writeFile(registryPath, `kbs:\n  ${basename(cwd)}:\n    path: /elsewhere\n`, 'utf8');
+    await seedRegistry(registryPath, `kbs:\n  ${basename(cwd)}:\n    path: /elsewhere\n`);
 
     const result = await run({ argv: ['create'], cwd, home });
 
@@ -92,27 +92,3 @@ describe('kb create', () => {
     expect(result.stdout).toContain('create');
   });
 });
-
-// region | Helpers
-
-/** Reports whether something exists at the path. */
-async function exists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Returns the user-global registry path for an injected home directory. */
-function getRegistryPathFor(home: string): string {
-  return join(home, '.agents', 'kb.yaml');
-}
-
-/** Creates a fresh empty temp directory with the given prefix. */
-async function makeTempDir(prefix: string): Promise<string> {
-  return mkdtemp(join(tmpdir(), prefix));
-}
-
-// endregion | Helpers

@@ -1,10 +1,10 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { KbLoaderError } from '../../config/kb-loader-error.ts';
+import { kbRootAt, makeKbRoot, makeReadFixture } from '../../test-utils/scaffolding.ts';
 import { loadAliases, parseAliases } from '../load-aliases.ts';
 
 // Mock `readFile` with a passthrough to the real implementation so most tests
@@ -15,10 +15,7 @@ vi.mock('node:fs/promises', async () => {
 });
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
-
-async function readFixture(name: string): Promise<string> {
-  return readFile(join(FIXTURES_DIR, name), 'utf8');
-}
+const readFixture = makeReadFixture(FIXTURES_DIR);
 
 describe(parseAliases, () => {
   it('loads a valid registry into an alias-to-canonical map', async () => {
@@ -81,10 +78,6 @@ describe(loadAliases, () => {
     vi.mocked(readFile).mockClear();
   });
 
-  function kbRootAt(path: string) {
-    return { path, kbDir: join(path, '.kb'), via: 'ancestor-walk' as const };
-  }
-
   it('reads .kb/tag-aliases.yaml from a KB root into an AliasMap', async () => {
     const map = await loadAliases({ kbRoot: kbRootAt(join(FIXTURES_DIR, 'kb-root')) });
 
@@ -104,10 +97,8 @@ describe(loadAliases, () => {
   });
 
   it('rejects with a KbLoaderError when tag-aliases.yaml is structurally malformed', async () => {
-    const kbPath = await mkdtemp(join(tmpdir(), 'kb-aliases-malformed-'));
-    await mkdir(join(kbPath, '.kb'), { recursive: true });
-    await writeFile(join(kbPath, '.kb', 'tag-aliases.yaml'), 'aliases: [unterminated\n', 'utf8');
+    const kbRoot = await makeKbRoot({ aliases: 'aliases: [unterminated\n' });
 
-    await expect(loadAliases({ kbRoot: kbRootAt(kbPath) })).rejects.toThrow(KbLoaderError);
+    await expect(loadAliases({ kbRoot })).rejects.toThrow(KbLoaderError);
   });
 });

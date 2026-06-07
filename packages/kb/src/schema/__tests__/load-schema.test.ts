@@ -2,6 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { kbRootAt as kbRootForPath } from '../../test-utils/scaffolding.ts';
 import type { KbRoot } from '../../types.ts';
 import { defaultSchema } from '../default-schema.ts';
 import { loadSchema, resolveRequiredForRecordType } from '../load-schema.ts';
@@ -9,8 +10,7 @@ import { loadSchema, resolveRequiredForRecordType } from '../load-schema.ts';
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 
 function kbRootAt(fixture: string): KbRoot {
-  const path = join(FIXTURES_DIR, fixture);
-  return { path, kbDir: join(path, '.kb'), via: 'ancestor-walk' };
+  return kbRootForPath(join(FIXTURES_DIR, fixture));
 }
 
 describe(loadSchema, () => {

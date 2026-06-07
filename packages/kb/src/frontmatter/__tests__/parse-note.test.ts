@@ -1,15 +1,12 @@
-import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { makeReadFixture } from '../../test-utils/scaffolding.ts';
 import { parseNote, parseNoteContent } from '../parse-note.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
-
-async function readFixture(name: string): Promise<string> {
-  return readFile(join(FIXTURES_DIR, name), 'utf8');
-}
+const readFixture = makeReadFixture(FIXTURES_DIR);
 
 describe(parseNoteContent, () => {
   it('when frontmatter is well-formed, returns typed required fields', async () => {
