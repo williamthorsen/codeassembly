@@ -11,6 +11,7 @@ describe('defaultSchema', () => {
     expect(defaultSchema.recordTypes.assertion?.required).toEqual(['created', 'tags', 'title', 'updated']);
     expect(defaultSchema.recordTypes.assertion?.optional).toEqual([
       'applies-to',
+      'diataxis',
       'last-verified',
       'sources',
       'superseded-by',

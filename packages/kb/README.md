@@ -89,7 +89,7 @@ A record's family is the stored `recordType` discriminant, valued against the sc
   recordTypes: {
     assertion: {
       required: ['created', 'tags', 'title', 'updated'],
-      optional: ['applies-to', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
+      optional: ['applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
       recall: 'freshness',
       immutable: false,
     },
@@ -110,7 +110,7 @@ A record's family is the stored `recordType` discriminant, valued against the sc
 recordTypes:
   assertion:
     required: [created, tags, title, updated]
-    optional: [applies-to, last-verified, sources, superseded-by, supersedes]
+    optional: [applies-to, diataxis, last-verified, sources, superseded-by, supersedes]
     recall: freshness
     immutable: false
   event:
