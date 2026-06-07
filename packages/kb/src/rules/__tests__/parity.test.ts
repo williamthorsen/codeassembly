@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { parseNoteContent } from '../../frontmatter/parse-note.ts';
 import { defaultSchema } from '../../schema/default-schema.ts';
 import { parseAliases } from '../../tags/load-aliases.ts';
-import { normalizeFindings } from '../../test-utils/index.ts';
+import { normalizeFindings } from '../../test-utils/scaffolding.ts';
 import type { Finding } from '../../types.ts';
 import { frontmatterRule } from '../frontmatter-rule.ts';
 import { runRules } from '../run-rules.ts';

@@ -2,7 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { kbRootAt as kbRootForPath } from '../../test-utils/index.ts';
+import { kbRootAt as kbRootForPath } from '../../test-utils/scaffolding.ts';
 import type { KbRoot } from '../../types.ts';
 import { defaultSchema } from '../default-schema.ts';
 import { loadSchema, resolveRequiredForRecordType } from '../load-schema.ts';

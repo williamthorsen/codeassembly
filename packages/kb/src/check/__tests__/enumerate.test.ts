@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
-import { makeTree } from '../../test-utils/index.ts';
+import { makeTree } from '../../test-utils/scaffolding.ts';
 import { enumerateNotes } from '../enumerate.ts';
 
 /** Directories whose `readdir` should reject; cleared between tests. */

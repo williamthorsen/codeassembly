@@ -5,7 +5,7 @@ import { loadKbConfig } from '../../config/load-config.ts';
 import { defaultSchema } from '../../schema/default-schema.ts';
 import { loadSchema } from '../../schema/load-schema.ts';
 import { loadAliases } from '../../tags/load-aliases.ts';
-import { makeKbRoot } from '../../test-utils/index.ts';
+import { makeKbRoot } from '../../test-utils/scaffolding.ts';
 import { renderAliasesSeed, renderConfigSeed, renderSchemaSeed } from '../render-seeds.ts';
 
 describe(renderSchemaSeed, () => {

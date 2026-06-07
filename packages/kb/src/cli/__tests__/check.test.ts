@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { check } from '../../check/check.ts';
-import { getRegistryPathFor, makeStore, makeTempDir, seedRegistry } from '../../test-utils/index.ts';
+import { getRegistryPathFor, makeStore, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
 
 // Mock `check` with a passthrough to the real implementation so most tests run

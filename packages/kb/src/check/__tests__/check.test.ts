@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { KbLoaderError } from '../../config/kb-loader-error.ts';
-import { makeStore } from '../../test-utils/index.ts';
+import { makeStore } from '../../test-utils/scaffolding.ts';
 import { check } from '../check.ts';
 
 const VALID =
