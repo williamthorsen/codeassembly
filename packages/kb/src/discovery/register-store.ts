@@ -15,8 +15,9 @@ export interface RegisterStoreResult {
 /**
  * Inserts a knowledge-base entry under `kbs:` in a `kb.yaml` registry, creating the file and its parent directory when
  * absent and preserving any existing comments and formatting. An existing entry of the same name is left untouched and
- * reported as `already-present`. The existing document is validated against the registry schema before mutation, so a
- * structurally invalid registry throws rather than producing a corrupt file.
+ * reported as `already-present`. The registry is validated against its schema both before mutation (so an
+ * already-corrupt file throws rather than being silently extended) and after (so an invalid entry — e.g. an empty
+ * `storePath` from a direct caller — throws rather than being written), never producing a corrupt file.
  */
 export async function registerStore(input: {
   registryPath: string;
@@ -40,6 +41,13 @@ export async function registerStore(input: {
     entry.description = input.description;
   }
   doc.setIn(['kbs', input.name], entry);
+
+  const result = kbRegistryFileSchema.safeParse(doc.toJS());
+  if (!result.success) {
+    throw new Error(
+      `${input.registryPath}: cannot register "${input.name}" — ${result.error.issues[0]?.message ?? 'invalid entry'}`,
+    );
+  }
 
   await mkdir(dirname(input.registryPath), { recursive: true });
   await writeFile(input.registryPath, doc.toString(), 'utf8');

@@ -3,7 +3,7 @@ import { basename, join, resolve } from 'node:path';
 
 import { loadKbRegistry } from '../discovery/load-registry.ts';
 import { registerStore } from '../discovery/register-store.ts';
-import { directoryExists } from '../filesystem/exists.ts';
+import { pathExists } from '../filesystem/exists.ts';
 import { renderAliasesSeed, renderConfigSeed, renderSchemaSeed } from './render-seeds.ts';
 
 /** A successfully created store and a record of what was written. */
@@ -39,7 +39,7 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
   const storePath = resolve(input.targetDir);
   const name = input.name ?? basename(storePath);
 
-  if (await directoryExists(join(storePath, KB_DIR))) {
+  if (await pathExists(join(storePath, KB_DIR))) {
     return { ok: false, reason: 'kb-exists', message: `a ${KB_DIR}/ store already exists at ${storePath}` };
   }
 
@@ -55,7 +55,14 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
 
   let registered = false;
   if (input.register) {
-    await registerStore({ registryPath: input.registryPath, name, storePath });
+    const result = await registerStore({ registryPath: input.registryPath, name, storePath });
+    if (result.status === 'already-present') {
+      return {
+        ok: false,
+        reason: 'name-registered',
+        message: `a store named "${name}" is already registered in ${input.registryPath}`,
+      };
+    }
     registered = true;
   }
 

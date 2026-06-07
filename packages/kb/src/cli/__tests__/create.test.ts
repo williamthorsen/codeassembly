@@ -1,6 +1,6 @@
-import { access, mkdir, mkdtemp } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
@@ -15,6 +15,8 @@ describe('kb create', () => {
     const result = await run({ argv: ['create'], cwd, home });
 
     expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain(basename(cwd));
+    expect(result.stdout).toContain('Registered in');
     expect(await exists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
     expect(await exists(join(cwd, 'content', 'events'))).toBe(true);
     const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
@@ -39,6 +41,7 @@ describe('kb create', () => {
     const result = await run({ argv: ['create', '--no-register'], cwd, home });
 
     expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Not registered');
     expect(await exists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
     expect(await exists(getRegistryPathFor(home))).toBe(false);
   });
@@ -52,6 +55,19 @@ describe('kb create', () => {
 
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('already exists');
+  });
+
+  it('exits 2 when the store name is already registered', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    const registryPath = getRegistryPathFor(home);
+    await mkdir(dirname(registryPath), { recursive: true });
+    await writeFile(registryPath, `kbs:\n  ${basename(cwd)}:\n    path: /elsewhere\n`, 'utf8');
+
+    const result = await run({ argv: ['create'], cwd, home });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('already registered');
   });
 
   it('exits 2 on an unknown flag', async () => {

@@ -69,6 +69,12 @@ describe(registerStore, () => {
 
     await expect(registerStore({ registryPath, name: 'mystore', storePath: '/abs/mystore' })).rejects.toThrow();
   });
+
+  it('throws when the entry it would write is structurally invalid', async () => {
+    const registryPath = await makeRegistryPath();
+
+    await expect(registerStore({ registryPath, name: 'mystore', storePath: '' })).rejects.toThrow();
+  });
 });
 
 // region | Helpers

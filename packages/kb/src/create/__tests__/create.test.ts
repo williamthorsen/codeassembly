@@ -80,6 +80,18 @@ describe(create, () => {
     expect(outcome.reason).toBe('name-registered');
     expect(await exists(join(targetDir, '.kb'))).toBe(false);
   });
+
+  it('returns kb-exists when .kb exists as a regular file', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+    await writeFile(join(targetDir, '.kb'), 'not a directory\n', 'utf8');
+    const registryPath = await makeRegistryPath();
+
+    const outcome = await create({ targetDir, register: true, registryPath });
+
+    assert.ok(!outcome.ok);
+    expect(outcome.reason).toBe('kb-exists');
+    expect(await exists(join(targetDir, 'content'))).toBe(false);
+  });
 });
 
 // region | Helpers
