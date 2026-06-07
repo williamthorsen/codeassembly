@@ -8,7 +8,7 @@ import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
 import { readRulebooksManifest } from '../lib/rulebooks-manifest.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
-import { isEnoent, isErrorCode } from '../lib/type-guards.ts';
+import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { InstallOptions } from '../lib/types.ts';
 
 /** A declared rulebook resolved against the library: its neutral body and which delivery modes it requests. */
@@ -125,8 +125,9 @@ export async function syncCommand(
   }
 
   const skillRetractions = skillOrphansByDir.reduce((total, platform) => total + platform.orphans.length, 0);
+  const skillFilesWritten = desiredSkill.size * platformSkillDirs.length;
   console.info(
-    `Synced ${resolved.length} rulebook(s); ${desiredSkill.size} delivered as skill(s) to ` +
+    `Synced ${resolved.length} rulebook(s); delivered ${skillFilesWritten} skill file(s) across ` +
       `${platformSkillDirs.length} platform(s); retracted ${neutralOrphans.length} neutral file(s) and ` +
       `${skillRetractions} skill dir(s).`,
   );
@@ -170,8 +171,8 @@ async function listOwnedSkillSlugs(skillsDir: string): Promise<ReadonlyArray<str
     try {
       content = await readFile(path.join(skillsDir, entry, 'SKILL.md'), 'utf8');
     } catch (error: unknown) {
-      // Not a skill dir: ENOENT (directory without a SKILL.md) or ENOTDIR (the entry is a regular file).
-      if (isEnoent(error) || isErrorCode(error, 'ENOTDIR')) {
+      // Not a skill dir: the SKILL.md is absent, or the entry is a regular file (ENOTDIR on read-through).
+      if (isMissingFile(error)) {
         continue;
       }
       throw error;

@@ -10,6 +10,9 @@ export function extractRulebookSkillSlug(content: string): string | undefined {
  * (`name`, `description`, `user-invocable`), the sync ownership marker, and the rulebook's neutral body. The
  * output is byte-deterministic — `lineWidth: 0` prevents the description from line-folding — so re-running
  * `sync` with unchanged content leaves the file untouched.
+ *
+ * `user-invocable` is always `true`: on-demand rulebook skills are meant to be invocable, and rulebook
+ * frontmatter deliberately carries no per-rulebook opt-out.
  */
 export function renderSkillFile(slug: string, description: string | undefined, body: string): string {
   const frontmatter = {
