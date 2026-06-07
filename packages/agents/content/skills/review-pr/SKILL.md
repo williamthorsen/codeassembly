@@ -57,12 +57,12 @@ Pass the following inputs to the selected delegate per its delegate interface:
 
 The delegate returns a resolved-input record:
 
-| Field            | Type                                                  | Description                                                                |
-| ---------------- | ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| `merge_base_sha` | string                                                | Result of `git merge-base HEAD <diff-base>` after delegate-side resolution |
-| `diff_base`      | string                                                | The ref the delegate resolved against                                      |
-| `spec_sources`   | array of `{ source_type, label, content, criteria? }` | One entry per available specification source                               |
-| `pr_metadata`    | object (PR number, URL, head SHA, base ref, title)    | Used by the review heading                                                 |
+| Field            | Type                                                                            | Description                                                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `merge_base_sha` | string                                                                          | Result of `git merge-base HEAD <diff-base>` after delegate-side resolution                                                                                                                                     |
+| `diff_base`      | string                                                                          | The ref the delegate resolved against                                                                                                                                                                          |
+| `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source. `provenance`/`last_updated` are recorded so the review can state which contract it measured against; delegate-supplied sources are always `provenance: "remote"` |
+| `pr_metadata`    | object (PR number, URL, head SHA, base ref, title)                              | Used by the review heading                                                                                                                                                                                     |
 
 If the delegate exits with a HEAD-mismatch error (the PR's head commit is not the local HEAD), surface its error message and stop. Do not proceed with mismatched state.
 

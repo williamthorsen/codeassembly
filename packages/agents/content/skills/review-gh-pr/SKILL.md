@@ -25,12 +25,12 @@ This skill does not run a review. The review logic lives in `review-branch`.
 
 On success, return a record with the following fields. `review-pr` passes this directly to `review-branch`:
 
-| Field            | Type                                                  | Description                                                                                      |
-| ---------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `merge_base_sha` | string                                                | Result of `git merge-base HEAD <diff_base>`                                                      |
-| `diff_base`      | string                                                | Resolved ref (override if provided, else `baseRefName`)                                          |
-| `spec_sources`   | array of `{ source_type, label, content, criteria? }` | One entry per available specification source (PR description always present; ticket if resolved) |
-| `pr_metadata`    | object                                                | `{ number, url, head_oid, base_ref, title }`                                                     |
+| Field            | Type                                                                            | Description                                                                                                                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `merge_base_sha` | string                                                                          | Result of `git merge-base HEAD <diff_base>`                                                                                                                                                                                                              |
+| `diff_base`      | string                                                                          | Resolved ref (override if provided, else `baseRefName`)                                                                                                                                                                                                  |
+| `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source (PR description always present; ticket if resolved). Every source is `provenance: "remote"` (this path fetches live and never reads a local snapshot), so the review never renders a divergence note for it |
+| `pr_metadata`    | object                                                                          | `{ number, url, head_oid, base_ref, title }`                                                                                                                                                                                                             |
 
 On HEAD mismatch, do not return — exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
 
@@ -45,12 +45,12 @@ If `pr_id` is a URL of the form `https://github.com/{owner}/{repo}/pull/{number}
 Issue a single `gh pr view` call with all fields needed downstream:
 
 ```bash
-gh pr view {pr_number} --json number,title,body,url,headRefName,headRefOid,baseRefName,closingIssuesReferences
+gh pr view {pr_number} --json number,title,body,url,updatedAt,headRefName,headRefOid,baseRefName,closingIssuesReferences
 ```
 
 Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Capture:
 
-- `number`, `title`, `body`, `url`
+- `number`, `title`, `body`, `url`, `updatedAt`
 - `headRefName`, `headRefOid`, `baseRefName`
 - `closingIssuesReferences` (array of `{ number, title, url }` or empty)
 
@@ -90,14 +90,14 @@ merge_base_sha=$(git merge-base HEAD {diff_base})
 Apply this cascade in order; the first match wins:
 
 1. **`ticket_override`** — if non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
-2. **First entry in `closingIssuesReferences`** — if the array is non-empty, fetch the first entry's content via `gh issue view --json number,title,body,labels {number}` and use it.
+2. **First entry in `closingIssuesReferences`** — if the array is non-empty, fetch the first entry's content via `gh issue view --json number,title,body,labels,updatedAt {number}` and use it.
 3. **Parse PR body for issue references** — scan `body` for the first match of any of these patterns (case-insensitive for keywords):
    - `closes #{n}`, `closes: #{n}`
    - `fixes #{n}`, `fixes: #{n}`
    - `resolves #{n}`, `resolves: #{n}`
    - bare `#{n}`
 
-   Take the first match's number and fetch the issue via `gh issue view --json number,title,body,labels {number}`.
+   Take the first match's number and fetch the issue via `gh issue view --json number,title,body,labels,updatedAt {number}`.
 
 4. **No ticket** — proceed with the PR description as the only spec source.
 
@@ -110,7 +110,9 @@ Always include the PR description as a source:
   source_type: "pr_description",
   label: "pr_description: PR #{number}",
   content: <body>,
-  criteria: <optional — extracted bullets from `## What`, `## Summary`, or an explicit acceptance-criteria heading; null when no list is present>
+  criteria: <optional — extracted bullets from `## What`, `## Summary`, or an explicit acceptance-criteria heading; null when no list is present>,
+  provenance: "remote",
+  last_updated: <PR `updatedAt`>
 }
 ```
 
@@ -121,7 +123,9 @@ If a ticket was resolved in step 5, prepend it:
   source_type: "ticket",
   label: "ticket: {ticket_ref or short identifier}",
   content: <ticket body>,
-  criteria: <optional — extracted from the ticket structure>
+  criteria: <optional — extracted from the ticket structure>,
+  provenance: "remote",
+  last_updated: <issue `updatedAt`>
 }
 ```
 

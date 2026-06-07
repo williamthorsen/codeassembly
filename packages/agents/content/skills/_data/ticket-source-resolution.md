@@ -39,6 +39,8 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 If the ticket ID is `null` or the platform cannot be determined, do not guess. Ask the user for an explicit ticket source. The cost of asking is low; the cost of fetching the wrong ticket is high.
 
+A caller may substitute its own fallback for this "ask the user" terminal step when it has a sound default source. For example, `review-branch` falls back to the most recent local `*_ticket.md` snapshot instead of prompting, so an unattended review can still proceed against a reasonable contract.
+
 ## Platform resolution cascade
 
 Determine which platform a ticket belongs to:

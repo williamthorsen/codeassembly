@@ -25,12 +25,12 @@ This skill does not run a review. The review logic lives in `review-branch`.
 
 On success, return a record with the same shape as `review-gh-pr`'s output. `review-pr` consumes both delegates' outputs interchangeably:
 
-| Field            | Type                                                  | Description                                                       |
-| ---------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
-| `merge_base_sha` | string                                                | Result of `git merge-base HEAD <diff_base>`                       |
-| `diff_base`      | string                                                | Resolved ref (override if provided, else PR's destination branch) |
-| `spec_sources`   | array of `{ source_type, label, content, criteria? }` | One entry per available specification source                      |
-| `pr_metadata`    | object                                                | `{ number, url, head_oid, base_ref, title }`                      |
+| Field            | Type                                                                            | Description                                                                                                                                                                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `merge_base_sha` | string                                                                          | Result of `git merge-base HEAD <diff_base>`                                                                                                                                                                                                                                   |
+| `diff_base`      | string                                                                          | Resolved ref (override if provided, else PR's destination branch)                                                                                                                                                                                                             |
+| `spec_sources`   | array of `{ source_type, label, content, criteria?, provenance, last_updated }` | One entry per available specification source. Every source is `provenance: "remote"` (this path fetches live and never reads a local snapshot), so the review never renders a divergence note for it; `last_updated` is null when the platform does not expose it (e.g. Jira) |
+| `pr_metadata`    | object                                                                          | `{ number, url, head_oid, base_ref, title }`                                                                                                                                                                                                                                  |
 
 On HEAD mismatch, do not return — exit non-zero with the mismatch error. `review-pr` surfaces the message and stops.
 
@@ -62,7 +62,7 @@ GET https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pullrequests/{
 
 Parse the JSON response with `jq` (or python3). Capture from the response:
 
-- `id` (PR number), `title`, `description` (PR body), `links.html.href` (URL)
+- `id` (PR number), `title`, `description` (PR body), `links.html.href` (URL), `updated_on` (PR last-updated timestamp)
 - `source.branch.name` (head branch name), `source.commit.hash` (full head commit SHA)
 - `destination.branch.name` (base branch name)
 
@@ -124,7 +124,9 @@ Always include the PR description as a source:
   source_type: "pr_description",
   label: "pr_description: PR #{number}",
   content: <description>,
-  criteria: <optional — extracted from `## What`, `## Summary`, or an explicit acceptance-criteria heading>
+  criteria: <optional — extracted from `## What`, `## Summary`, or an explicit acceptance-criteria heading>,
+  provenance: "remote",
+  last_updated: <PR `updated_on`>
 }
 ```
 
@@ -135,7 +137,9 @@ If a ticket was resolved in step 5, prepend it:
   source_type: "ticket",
   label: "ticket: {ticket_ref or short identifier}",
   content: <ticket body>,
-  criteria: <optional — extracted from the ticket structure>
+  criteria: <optional — extracted from the ticket structure>,
+  provenance: "remote",
+  last_updated: <ticket last-updated when the platform exposes it (GitHub `updatedAt`); null when it does not (e.g. Jira)>
 }
 ```
 
