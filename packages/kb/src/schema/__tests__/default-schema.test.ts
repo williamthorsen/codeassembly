@@ -8,21 +8,21 @@ describe('defaultSchema', () => {
   });
 
   it('declares the canonical assertion required and optional field sets', () => {
-    expect(defaultSchema.recordTypes.assertion?.required).toEqual(['title', 'created', 'updated', 'tags']);
+    expect(defaultSchema.recordTypes.assertion?.required).toEqual(['created', 'tags', 'title', 'updated']);
     expect(defaultSchema.recordTypes.assertion?.optional).toEqual([
-      'last-verified',
       'applies-to',
+      'last-verified',
       'sources',
-      'supersedes',
       'superseded-by',
+      'supersedes',
     ]);
     expect(defaultSchema.recordTypes.assertion?.recall).toBe('freshness');
     expect(defaultSchema.recordTypes.assertion?.immutable).toBe(false);
   });
 
   it('declares the immutable event record type with its spine', () => {
-    expect(defaultSchema.recordTypes.event?.required).toEqual(['id', 'captured-at', 'session', 'cwd', 'summary']);
-    expect(defaultSchema.recordTypes.event?.optional).toEqual(['repo', 'skill', 'model', 'tags', 'correction']);
+    expect(defaultSchema.recordTypes.event?.required).toEqual(['captured-at', 'cwd', 'id', 'session', 'summary']);
+    expect(defaultSchema.recordTypes.event?.optional).toEqual(['correction', 'model', 'repo', 'skill', 'tags']);
     expect(defaultSchema.recordTypes.event?.recall).toBe('recurrence-recency');
     expect(defaultSchema.recordTypes.event?.immutable).toBe(true);
   });
@@ -55,6 +55,6 @@ describe('defaultSchema', () => {
     };
 
     expect(mutate).toThrow();
-    expect(required[0]).toBe('title');
+    expect(required[0]).toBe('created');
   });
 });

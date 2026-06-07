@@ -32,14 +32,14 @@
     "line": 4,
     "rule": "frontmatter.required",
     "severity": "error",
-    "message": "missing required field: updated"
+    "message": "missing required field: tags"
   },
   {
     "path": "08-missing-required.md",
     "line": 4,
     "rule": "frontmatter.required",
     "severity": "error",
-    "message": "missing required field: tags"
+    "message": "missing required field: updated"
   },
   {
     "path": "09-unknown-type.md",
