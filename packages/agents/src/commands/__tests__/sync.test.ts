@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -47,6 +47,9 @@ describe(syncCommand, () => {
   }
 
   const projectMdPath = (): string => path.join(projectRoot, '.agents', 'PROJECT.md');
+
+  const skillPath = (slug: string, dotDir = '.claude'): string =>
+    path.join(projectRoot, dotDir, 'skills', slug, 'SKILL.md');
 
   it('when no rulebooks.yaml exists, makes no changes', async () => {
     await syncCommand(makeOptions(), projectRoot, contentDir);
@@ -158,24 +161,111 @@ describe(syncCommand, () => {
     await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
   });
 
-  it('materializes a skill-only rulebook without inlining it into PROJECT.md', async () => {
-    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+  it('writes a skill file for a skill-only rulebook without inlining it into PROJECT.md', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill\ndescription: Gamma desc.', 'Gamma rules.');
     await writeManifest('rulebooks:\n  - gamma\n');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('gamma'))).toBe(true);
     expect(existsSync(projectMdPath())).toBe(false);
+    const skill = await readFile(skillPath('gamma'), 'utf8');
+    expect(skill).toContain('name: gamma');
+    expect(skill).toContain('description: Gamma desc.');
+    expect(skill).toContain('<!-- codeassembly-rulebook:gamma -->');
+    expect(skill).toContain('Gamma rules.');
+  });
+
+  it('writes a skill file for a multi-modal rulebook and also inlines it into PROJECT.md', async () => {
+    await writeLibraryRulebook('delta', 'delivery: [ambient, skill]', 'Delta rules.');
+    await writeManifest('rulebooks:\n  - delta\n');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:delta -->');
+    expect(await readFile(skillPath('delta'), 'utf8')).toContain('Delta rules.');
+  });
+
+  it('when re-run with unchanged content, does not rewrite the skill file', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - gamma\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    const firstMtime = statSync(skillPath('gamma')).mtimeMs;
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(statSync(skillPath('gamma')).mtimeMs).toBe(firstMtime);
+  });
+
+  it('retracts the skill directory when a skill rulebook is no longer declared', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - alpha\n  - gamma\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(existsSync(skillPath('gamma'))).toBe(true);
+
+    await writeManifest('rulebooks:\n  - alpha\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(path.dirname(skillPath('gamma')))).toBe(false);
+  });
+
+  it('retracts the skill directory when a rulebook delivery changes away from skill', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - gamma\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(existsSync(skillPath('gamma'))).toBe(true);
+
+    await writeLibraryRulebook('gamma', 'delivery: ambient', 'Gamma rules.');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(path.dirname(skillPath('gamma')))).toBe(false);
+    expect(existsSync(neutralPath('gamma'))).toBe(true);
+  });
+
+  it('with --platform claude, writes only the Claude skills dir', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - gamma\n');
+
+    await syncCommand(makeOptions({ platform: 'claude' }), projectRoot, contentDir);
+
+    expect(existsSync(skillPath('gamma', '.claude'))).toBe(true);
+    expect(existsSync(skillPath('gamma', '.rovodev'))).toBe(false);
+  });
+
+  it('with no detected platform, writes no skill files but still writes the neutral file', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - gamma\n');
+
+    await syncCommand(makeOptions({ platform: 'all' }), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('gamma'))).toBe(true);
+    expect(existsSync(skillPath('gamma'))).toBe(false);
+  });
+
+  it('never deletes a hand-authored skill that lacks the sync marker', async () => {
+    const manualSkill = skillPath('manual');
+    await mkdir(path.dirname(manualSkill), { recursive: true });
+    await writeFile(manualSkill, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - gamma\n');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(manualSkill)).toBe(true);
+    expect(existsSync(skillPath('gamma'))).toBe(true);
   });
 
   it('in dry-run mode, writes nothing to disk', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await writeManifest('rulebooks:\n  - alpha\n  - gamma\n');
 
     await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('alpha'))).toBe(false);
     expect(existsSync(projectMdPath())).toBe(false);
+    expect(existsSync(skillPath('gamma'))).toBe(false);
   });
 
   it('materializes the real shell-conventions rulebook from the package content', async () => {
@@ -188,5 +278,8 @@ describe(syncCommand, () => {
     expect(neutral).not.toContain('slug:');
     const projectMd = await readFile(projectMdPath(), 'utf8');
     expect(projectMd).toContain('<!-- rulebook:shell-conventions -->');
+    const skill = await readFile(skillPath('shell-conventions'), 'utf8');
+    expect(skill).toContain('name: shell-conventions');
+    expect(skill).toContain('# Shell script conventions');
   });
 });

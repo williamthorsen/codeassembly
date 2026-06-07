@@ -1,7 +1,7 @@
 ---
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
-delivery: ambient
+delivery: [ambient, skill]
 version: 1
 ---
 
