@@ -1,5 +1,7 @@
 # CodeAssembly monorepo
 
+@nmr/AGENTS.md
+
 ## Project structure
 
 This is a pnpm monorepo centered around agentic code-orchestration flows. It contains five packages:
