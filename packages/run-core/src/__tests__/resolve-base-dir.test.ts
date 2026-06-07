@@ -122,7 +122,7 @@ describe('resolveBaseDir', () => {
     const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');
     await mkdir(agentsDir, { recursive: true });
-    // Use YAML that causes js-yaml to throw a YAMLException (unclosed flow sequence)
+    // Use YAML that causes yaml's parse to throw a YAMLParseError (malformed flow sequence)
     await writeFile(join(agentsDir, 'preferences.yaml'), 'key: [unclosed\n');
 
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);

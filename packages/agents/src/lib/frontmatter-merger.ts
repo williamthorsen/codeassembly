@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import { parse as parseYaml } from 'yaml';
 
 import { isRecord } from './type-guards.ts';
 
@@ -61,7 +61,7 @@ export function parseFrontmatter(content: string): ParsedFrontmatter {
  * `_defaults` are applied first, then agent-specific values override them.
  */
 export function parseOverlayOverrides(overlayYaml: string, agentName: string): Record<string, string> {
-  const parsed: unknown = yaml.load(overlayYaml);
+  const parsed: unknown = parseYaml(overlayYaml);
   if (!isRecord(parsed)) {
     return {};
   }
@@ -139,8 +139,8 @@ export function mergeFrontmatter(source: string, overlayYaml: string): string {
   // If an overlay key targets a YAML block sequence in the source (e.g., `skills:` followed by indented `- item`
   // lines), only the key line is replaced while the continuation lines remain, producing malformed YAML.
   // Current overlay files avoid this by using inline flow-sequence notation exclusively.
-  // If block-sequence overrides are needed in the future, replace this with structured YAML parsing (e.g., js-yaml
-  // load/dump) instead of line-by-line replacement.
+  // If block-sequence overrides are needed in the future, replace this with structured YAML parsing (e.g., yaml's
+  // parse/stringify) instead of line-by-line replacement.
   const applied = new Set<string>();
   const mergedLines: Array<string> = [];
 

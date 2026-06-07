@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import yaml from 'js-yaml';
+import { parse as parseYaml } from 'yaml';
 
 import { isRecord } from './type-guards.js';
 
@@ -29,7 +29,7 @@ function resolveValue(value: string, projectRoot: string, home: string): string 
 async function readBaseDirFromYaml(filePath: string): Promise<string | undefined> {
   try {
     const content = await readFile(filePath, 'utf8');
-    const parsed: unknown = yaml.load(content);
+    const parsed: unknown = parseYaml(content);
     if (!isRecord(parsed)) {
       return undefined;
     }
