@@ -21,8 +21,8 @@ describe(parseArgs, () => {
     expect(parseArgs(['query', '--all-kbs']).allKbs).toBe(true);
   });
 
-  it('parses a --type filter given as a separate value', () => {
-    expect(parseArgs(['query', '--type', 'howto']).filters.type).toBe('howto');
+  it('parses a --diataxis filter given as a separate value', () => {
+    expect(parseArgs(['query', '--diataxis', 'howto']).filters.diataxis).toBe('howto');
   });
 
   it('parses a --tag filter given with an inline value', () => {
@@ -37,15 +37,19 @@ describe(parseArgs, () => {
   });
 
   it('throws when a value-bearing flag has no value', () => {
-    expect(() => parseArgs(['query', '--type'])).toThrow(/--type requires a value/);
+    expect(() => parseArgs(['query', '--diataxis'])).toThrow(/--diataxis requires a value/);
   });
 
   it('throws when a value-bearing flag has an empty inline value', () => {
-    expect(() => parseArgs(['query', '--type='])).toThrow(/--type requires a value/);
+    expect(() => parseArgs(['query', '--diataxis='])).toThrow(/--diataxis requires a value/);
   });
 
   it('throws on an unknown flag', () => {
     expect(() => parseArgs(['query', '--bogus'])).toThrow(/unknown flag/);
+  });
+
+  it('rejects the retired --type flag as unknown', () => {
+    expect(() => parseArgs(['query', '--type', 'howto'])).toThrow(/unknown flag/);
   });
 
   it('parses --store as the store-scope name', () => {
@@ -99,15 +103,15 @@ describe(runRetrieve, () => {
     expect(event?.capturedAt).toBe('2026-04-20T09:00:00.000Z');
   });
 
-  it('applies the --type filter to the candidate table', async () => {
+  it('applies the --diataxis filter to the candidate table', async () => {
     const result = await runRetrieve({
-      argv: ['deployment', '--type', 'howto'],
+      argv: ['deployment', '--diataxis', 'howto'],
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
     });
 
-    expect(result.candidates.every((candidate) => candidate.type === 'howto')).toBe(true);
+    expect(result.candidates.every((candidate) => candidate.diataxis === 'howto')).toBe(true);
     expect(result.candidates.length).toBeGreaterThan(0);
   });
 

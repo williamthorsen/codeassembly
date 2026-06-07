@@ -1,6 +1,6 @@
 ---
 title: Malformed note
-type: howto
+diataxis: howto
 tags: [unterminated
 created: 2026-01-01
 ---

@@ -17,7 +17,7 @@ export interface ParsedArgs {
   allKbs: boolean;
   /** The registry name from `--store`/`--kb`, scoping recall to that store alone (no cwd-walk); `null` when absent. */
   storeName: string | null;
-  /** The mechanical filters from `--type`, `--tag`, `--folder`. */
+  /** The mechanical filters from `--diataxis`, `--tag`, `--folder`. */
   filters: RecallFilters;
 }
 
@@ -73,9 +73,9 @@ function matchStoreFlag(arg: string): { flag: 'store' | 'kb'; inlineValue: strin
   return null;
 }
 
-/** Matches a `--type`/`--tag`/`--folder` flag, returning its key and any inline `=value`. */
+/** Matches a `--diataxis`/`--tag`/`--folder` flag, returning its key and any inline `=value`. */
 function matchValueFlag(arg: string): { key: keyof RecallFilters; inlineValue: string | null } | null {
-  for (const key of ['type', 'tag', 'folder'] as const) {
+  for (const key of ['diataxis', 'tag', 'folder'] as const) {
     if (arg === `--${key}`) {
       return { key, inlineValue: null };
     }
@@ -87,7 +87,7 @@ function matchValueFlag(arg: string): { key: keyof RecallFilters; inlineValue: s
 }
 
 /**
- * Parses the helper's argv into a query, the `--all-kbs` flag, and the `--type`/`--tag`/`--folder` filters.
+ * Parses the helper's argv into a query, the `--all-kbs` flag, and the `--diataxis`/`--tag`/`--folder` filters.
  * Each value-bearing flag accepts both `--flag value` and `--flag=value`.
  * An unknown flag or a value-bearing flag with no value throws with a usage-style message.
  *
@@ -198,7 +198,7 @@ export async function runRetrieve(input: {
   };
   if (candidates.length === 0) {
     // Distinguish a query that found nothing from a query that found hits which were then excluded by
-    // `--type` / `--tag` / `--folder`, so the caller knows whether to broaden the query or drop a filter.
+    // `--diataxis` / `--tag` / `--folder`, so the caller knows whether to broaden the query or drop a filter.
     result.diagnostic = hits.length === 0 ? 'no notes matched the query' : 'all matches were filtered out';
   }
   return result;

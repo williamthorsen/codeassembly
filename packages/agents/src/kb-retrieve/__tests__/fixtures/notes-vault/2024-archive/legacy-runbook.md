@@ -1,7 +1,7 @@
 ---
 title: Legacy archival runbook
 recordType: assertion
-type: howto
+diataxis: howto
 created: 2024-03-01
 updated: 2024-03-01
 tags: [archive]

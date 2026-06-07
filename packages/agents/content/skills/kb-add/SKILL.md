@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture a new knowledge-base note
 
-Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, generates UTC dates, canonicalizes known-alias tags, validates the proposed frontmatter against the destination KB's schema, and writes the file atomically. You do the judgment work — pick the folder, the type, the title, and the tags; survey the destination KB's existing layout; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
+Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, generates UTC dates, canonicalizes known-alias tags, validates the proposed frontmatter against the destination KB's schema, and writes the file atomically. You do the judgment work — pick the folder, the Diátaxis label, the title, and the tags; survey the destination KB's existing layout; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
 
 The split is deliberate: the helper is narrow and mechanical; the classification and composition are wide and judgment-driven. Treat the helper as a guardrail (it refuses to write notes that fail validation or collide with an existing file), not as a classifier.
 
@@ -16,14 +16,14 @@ The split is deliberate: the helper is narrow and mechanical; the classification
 
 | Argument          | Description                                                                             | Required |
 | ----------------- | --------------------------------------------------------------------------------------- | -------- |
-| `--type`          | The note's `type` field (e.g. `howto`, `concept`, `reference`, `tutorial`).             | Yes      |
+| `--diataxis`      | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).           | No       |
 | `--title`         | The note title; also doubles as the filename.                                           | Yes      |
 | `--kb`            | Explicit knowledge base name; overrides the discovered `.kb/` and the registry default. | No       |
 | `--folder`        | KB-relative folder under which to write the note. Defaults to the KB root.              | No       |
 | `--tags`          | Comma-separated tag list. Known aliases are canonicalized at write time.                | No       |
 | `--last-verified` | `YYYY-MM-DD` date the note's claims were last verified.                                 | No       |
 
-A value-bearing flag accepts both `--type howto` and `--type=howto`. The note body is read from stdin to EOF; an empty body is allowed when a stub note is appropriate.
+A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The note body is read from stdin to EOF; an empty body is allowed when a stub note is appropriate.
 
 ### KB selection
 
@@ -59,8 +59,8 @@ Invoke the `kb-retrieve` skill on the note's topic terms. Read the top-ranked ca
 Pick the placement and metadata:
 
 - **Folder**: An existing folder when one fits; a new folder when the topic is genuinely new to the KB.
-- **Type**: One of the destination KB's `types` (the default vocabulary is `howto`, `concept`, `reference`, `tutorial`).
-- **Title**: A concise, descriptive title. For `type: howto`, propose imperative-led titles ("Configure pnpm workspaces") not interrogative ones ("How do I configure pnpm workspaces?"). The title is also the filename — keep it within a sane length and avoid filesystem-hostile characters.
+- **Diátaxis label**: The note's Diátaxis classification (the default vocabulary is `howto`, `concept`, `reference`, `tutorial`).
+- **Title**: A concise, descriptive title. For `diataxis: howto`, propose imperative-led titles ("Configure pnpm workspaces") not interrogative ones ("How do I configure pnpm workspaces?"). The title is also the filename — keep it within a sane length and avoid filesystem-hostile characters.
 - **Tags**: Topic and category tags drawn from existing tag vocabulary where possible. Known aliases will be canonicalized at write time by the helper.
 
 ### 5. Compose the body
@@ -69,7 +69,7 @@ Write the note body. Embed cross-references inline where the reference contribut
 
 ### 6. Present the proposal (default mode)
 
-In default mode, present the proposed KB, folder, type, title, tags, and body to the user. Wait for confirmation or a redirect. In auto mode, skip this step.
+In default mode, present the proposed KB, folder, Diátaxis label, title, tags, and body to the user. Wait for confirmation or a redirect. In auto mode, skip this step.
 
 ### 7. Invoke the helper
 
@@ -77,7 +77,7 @@ Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies 
 
 ```bash
 cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
-  --type <type> --title "<title>" \
+  --diataxis <label> --title "<title>" \
   [--kb <name>] [--folder <kb-relative-folder>] \
   [--tags <comma,separated>] [--last-verified YYYY-MM-DD]
 <note body, may span multiple lines and contain any characters>
@@ -88,7 +88,7 @@ Or, when the skill directory is known:
 
 ```bash
 cat <<'EOF' | node {platform_home_dir}/skills/kb-add/kb-add.mjs \
-  --type howto --title "Configure pnpm workspaces" --tags "pnpm,workspaces"
+  --diataxis howto --title "Configure pnpm workspaces" --tags "pnpm,workspaces"
 Configure pnpm workspaces by adding a `pnpm-workspace.yaml` at the repo
 root that lists each package directory under `packages:`.
 EOF

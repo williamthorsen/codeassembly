@@ -16,7 +16,7 @@ import type { AddResult, ParsedArgs } from './types.ts';
 import { writeNote } from './write-note.ts';
 
 /** Flag names that take a value. */
-const VALUE_FLAGS = ['kb', 'folder', 'type', 'title', 'tags', 'last-verified'] as const;
+const VALUE_FLAGS = ['kb', 'folder', 'diataxis', 'title', 'tags', 'last-verified'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -82,7 +82,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   return {
     kb: raw.kb ?? null,
     folder: raw.folder ?? null,
-    type: raw.type ?? null,
+    diataxis: raw.diataxis ?? null,
     title,
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
     lastVerified: raw['last-verified'] ?? null,
@@ -224,7 +224,7 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Matches a `--kb`/`--folder`/`--title`/`--tags`/`--last-verified` flag (and the optional `--type` Diátaxis label), returning its key and any inline `=value`. */
+/** Matches a `--kb`/`--folder`/`--title`/`--tags`/`--last-verified` flag (and the optional `--diataxis` Diátaxis label), returning its key and any inline `=value`. */
 function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | null } | null {
   for (const key of VALUE_FLAGS) {
     if (arg === `--${key}`) {
