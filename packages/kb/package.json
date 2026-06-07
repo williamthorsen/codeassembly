@@ -20,6 +20,11 @@
       "import": "./dist/esm/config/index.js",
       "types": "./src/config/index.ts"
     },
+    "./create": {
+      "source": "./src/create/index.ts",
+      "import": "./dist/esm/create/index.js",
+      "types": "./src/create/index.ts"
+    },
     "./discovery": {
       "source": "./src/discovery/index.ts",
       "import": "./dist/esm/discovery/index.js",
