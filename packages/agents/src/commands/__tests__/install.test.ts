@@ -3,8 +3,8 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import yaml from 'js-yaml';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { parse as parseYaml } from 'yaml';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import { readManifest } from '../../lib/manifest.ts';
@@ -287,7 +287,7 @@ describe(installCommand, () => {
     const content = await readFile(promptsPath, 'utf8');
 
     // Parse as YAML to verify structural validity
-    const parsed: unknown = yaml.load(content);
+    const parsed: unknown = parseYaml(content);
     expect(parsed).toBeDefined();
     expect(typeof parsed).toBe('object');
     expect(parsed !== null).toBe(true);
@@ -356,7 +356,7 @@ describe(installCommand, () => {
 
     const promptsPath = path.join(rovodevHome, 'prompts.yml');
     const content = await readFile(promptsPath, 'utf8');
-    const parsed: unknown = yaml.load(content);
+    const parsed: unknown = parseYaml(content);
 
     if (typeof parsed !== 'object' || parsed === null || !('prompts' in parsed)) {
       throw new Error('Expected parsed YAML to have a prompts key');
@@ -571,7 +571,7 @@ describe(installCommand, () => {
     const content = await readFile(promptsPath, 'utf8');
 
     // Parse as YAML and find the synthetic entries
-    const parsed: unknown = yaml.load(content);
+    const parsed: unknown = parseYaml(content);
     if (typeof parsed !== 'object' || parsed === null || !('prompts' in parsed)) {
       throw new Error('Expected parsed YAML to have a prompts key');
     }

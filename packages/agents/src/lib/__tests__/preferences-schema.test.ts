@@ -8,8 +8,8 @@ import { FLAG, registerSchema, validate } from '@hyperjump/json-schema/draft-202
 // failure path below, never as part of an assertion. The stable per-dialect API is used for all
 // pass/fail assertions.
 import { BASIC } from '@hyperjump/json-schema/experimental';
-import yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
 
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
@@ -49,10 +49,10 @@ describe('preferences.json schema', () => {
   it('accepts the live `.agents/preferences.yaml`', async () => {
     const yamlText = readFileSync(livePreferencesPath, 'utf8');
 
-    // `js-yaml`'s `load()` returns `unknown`. Round-tripping through `JSON.parse(JSON.stringify(…))`
-    // both proves the value is JSON-serializable and yields an `any`-typed result that assigns to
-    // the structural `JsonValue` shape without a type assertion.
-    const parsedYaml: unknown = yaml.load(yamlText);
+    // `parse()` is typed `any`; the local is annotated `unknown` to keep the value opaque. Round-tripping
+    // through `JSON.parse(JSON.stringify(…))` both proves the value is JSON-serializable and yields an
+    // `any`-typed result that assigns to the structural `JsonValue` shape without a type assertion.
+    const parsedYaml: unknown = parseYaml(yamlText);
     if (parsedYaml === undefined || parsedYaml === null) {
       throw new Error(`${livePreferencesPath} produced an empty YAML document`);
     }

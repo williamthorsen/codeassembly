@@ -1,4 +1,4 @@
-import yaml from 'js-yaml';
+import { parse as parseYaml } from 'yaml';
 
 import { isRecord } from './type-guards.ts';
 
@@ -49,7 +49,7 @@ export function loadToolMapping(overlayYaml: string): Map<string, string> {
   if (overlayYaml.trim() === '') {
     return new Map();
   }
-  const parsed: unknown = yaml.load(overlayYaml);
+  const parsed: unknown = parseYaml(overlayYaml);
   if (!isRecord(parsed)) {
     return new Map();
   }

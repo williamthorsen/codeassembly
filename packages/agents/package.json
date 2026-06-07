@@ -19,14 +19,12 @@
   },
   "dependencies": {
     "@codeassembly/kb": "workspace:*",
-    "js-yaml": "4.2.0",
     "ulid": "3.0.2",
     "yaml": "2.9.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@hyperjump/json-schema": "1.17.6",
-    "@types/js-yaml": "4.0.9"
+    "@hyperjump/json-schema": "1.17.6"
   },
   "engines": {
     "node": ">=24"
