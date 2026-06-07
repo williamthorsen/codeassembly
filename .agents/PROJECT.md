@@ -212,7 +212,8 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - `nmr ci` - Full CI pipeline (strict checks + build)
 - `nmr build` - Build all packages
 - `nmr test` - Run tests across all packages
-- `nmr lint` - Lint all packages
+- `nmr lint` - Fix lint in all packages
+- `nmr lint:check` - Check for lint in all packages
 - `nmr typecheck` - TypeScript check all packages
 - `nmr root:test` - Run only root-level tests (in `__tests__/`)
 - `nmr root:lint` - Lint only root-level files
@@ -223,7 +224,8 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - `nmr test` - Run tests
 - `nmr test:watch` - Run tests in watch mode
 - `nmr test:coverage` - Run tests with coverage
-- `nmr lint` - Lint
+- `nmr lint` - Fix lint
+- `nmr lint:check` - Check for lint
 - `nmr typecheck` - TypeScript check
 
 **Factory package (`packages/factory/`):**
