@@ -12,20 +12,28 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
 ## Arguments
 
-| Flag                | Effect                                                                                                                                     | Default                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
-| `--diff-base=<ref>` | Reference to diff against. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                                        | Project's default branch  |
-| `--ticket=<source>` | Ticket or requirements to check the implementation against. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md). | Auto-resolved (see below) |
+| Flag                          | Effect                                                                                                                                                         | Default                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `--diff-base=<ref>`           | Reference to diff against. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                                                            | Project's default branch                          |
+| `--ticket=<source>`           | Ticket or requirements to check the implementation against. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md).                     | Auto-resolved (see below)                         |
+| `--spec-source=remote\|local` | When the ticket is auto-resolved (i.e. `--ticket` is omitted), force which candidate wins instead of the recency comparison. Ignored when `--ticket` is given. | Newest of the remote issue vs. the local snapshot |
 
 ## Process
 
 > **When invoked by `review-pr`:** Steps 1–3 are already complete — `review-pr` already invoked the bundled session-context deriver and the platform delegate resolved `merge_base_sha` and `spec_sources`. Begin at step 4 with these values in scope.
 
-1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir` from it.
+1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `platform`, `project_slug`, and `artifact_base_dir` from it.
 2. **Resolve diff base** — If `--diff-base=<ref>` was provided, use `<ref>`; otherwise use `default_branch`. Compute the merge-base SHA once: `git merge-base HEAD <diff-base>`. Use this SHA for the diff command in step 5.
-3. **Resolve specification sources** — Produce a list of spec sources (each a `{ source_type, label, content, criteria? }` record):
-   - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source.
-   - **Auto-resolve**: If `--ticket` was omitted and `ticket_id` is non-null, scan `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` for the most recent `*_ticket.md` file and append it as a `ticket` source.
+3. **Resolve specification sources** — Produce a list of spec sources (each a `{ source_type, label, content, criteria?, provenance, last_updated }` record). `provenance` is `remote` (a live platform fetch, never stale) or `local_snapshot` (a frozen plan-time artifact that can lag the contract); `last_updated` is the source's last-modified timestamp (ISO 8601), or null when the platform does not expose one.
+   - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and append as a `ticket` source. A fetched platform issue is `remote` with its `updatedAt` as `last_updated`; a file or plain-text source is `local_snapshot` with `last_updated` null when unknown. `--spec-source` does not apply on this path.
+   - **Auto-resolve** (when `--ticket` is omitted): resolve up to two candidates and choose between them.
+     - _Remote candidate_: when `ticket_id` is non-null and resolves to a platform ticket (use `platform` from step 1), fetch the remote issue per [ticket source resolution](../_data/ticket-source-resolution.md#auto-resolve) — but substitute the local fallback below for that section's "ask the user" terminal step. Its `last_updated` is the issue's `updatedAt`.
+     - _Local candidate_: the most recent `*_ticket.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. Its `last_updated` is the `YYYYMMDD-HHMMSSZ` prefix of the filename; treat an unparseable prefix as no local candidate.
+     - _Selection_:
+       - If `--spec-source=remote|local` is set, use that candidate. If the named candidate is unavailable (e.g. `--spec-source=local` with no snapshot, or `--spec-source=remote` with a failed/offline fetch or null `ticket_id`), stop and report the missing source rather than silently using the other side — an explicit instruction must not be redirected to the wrong contract. State the remedy (drop the flag to re-enable recency) in the message.
+       - Otherwise use the candidate with the newer `last_updated`. On an exact tie, prefer the remote candidate (canonical for the owned-ticket majority).
+       - If only one candidate exists, use it. This single-candidate fallback also covers a failed/offline remote fetch and a null `ticket_id`.
+     - Append the chosen candidate as a `ticket` source carrying its `provenance` and `last_updated`. When both candidates existed, retain the rejected candidate's `last_updated` for the divergence note in the output.
    - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
@@ -153,6 +161,10 @@ Score: X/10
 ### {source.label}
 
 {The label is `{source_type}: {short identifier}` — for example, `ticket: #553` or `pr_description: PR #1024`. Use the source's natural identifier so a reader can tell at a glance which specification a row evaluates against.}
+
+**Source:** {Render the source's `provenance` and `last_updated` so the reader knows what contract this section measured against — e.g. `remote issue (last updated 2026-06-07T01:56Z)` or ``local snapshot `20260606-090337Z_..._ticket.md` (last updated 2026-06-06T09:03Z)``. Omit the "last updated" clause when `last_updated` is null.}
+
+{When this ticket source was auto-resolved and a competing candidate existed whose `last_updated` differs, add a divergence callout: ⚠️ name both timestamps, state which side this review measured against, and point to `--spec-source=remote|local` to re-resolve against the other. Omit when there was no competing candidate (single source, explicit `--ticket`, or a `pr_description` source).}
 
 #### Acceptance criteria
 
