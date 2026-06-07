@@ -22,7 +22,7 @@ import {
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
-import { isEnoent, isErrorCode } from '../lib/type-guards.ts';
+import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   InstallOptions,
@@ -522,7 +522,7 @@ async function generatePromptsYml(
       // Tolerate any non-directory entry in the destination skills directory (e.g. a `.DS_Store` left by Finder):
       // joining `SKILL.md` onto a regular file raises `ENOTDIR`; a directory without `SKILL.md` raises `ENOENT`.
       // Either way the entry is not a skill and should be skipped.
-      if (isMissingSkill(error)) {
+      if (isMissingFile(error)) {
         continue;
       }
       throw error;
@@ -857,11 +857,6 @@ async function installPlatformGuidance(
   }
 
   return entries;
-}
-
-/** True when a `readFile` of `SKILL.md` raised `ENOENT` (file absent) or `ENOTDIR` (parent segment is a regular file). */
-function isMissingSkill(error: unknown): boolean {
-  return isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR');
 }
 
 /**

@@ -15,6 +15,16 @@ export function isEnoent(error: unknown): boolean {
 }
 
 /**
+ * True when a file read failed because the path is absent (`ENOENT`) or a path segment is not a directory
+ * (`ENOTDIR`); both mean the target file is not there. Prefer this over `isEnoent` when reading a file nested
+ * under a directory that may itself be absent or replaced by a regular file (e.g. a `<dir>/SKILL.md` probe).
+ * @internal
+ */
+export function isMissingFile(error: unknown): boolean {
+  return isErrorCode(error, 'ENOENT') || isErrorCode(error, 'ENOTDIR');
+}
+
+/**
  * Type guard for a non-null, non-array object.
  * @internal
  */
