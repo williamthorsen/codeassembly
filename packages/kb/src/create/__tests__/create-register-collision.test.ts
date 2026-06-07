@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import { makeRegistryPath, makeTempDir } from '../../test-utils/index.ts';
 import { create } from '../create.ts';
 
 // Forces the registry writer to report a name collision detected at write time — a TOCTOU race the `isNameRegistered`
@@ -15,8 +13,8 @@ vi.mock('../../discovery/register-store.ts', () => ({
 
 describe('create with a write-time registry collision', () => {
   it('returns a name-registered failure when registerStore reports already-present', async () => {
-    const targetDir = await mkdtemp(join(tmpdir(), 'kb-create-race-'));
-    const registryPath = join(await mkdtemp(join(tmpdir(), 'kb-create-race-reg-')), '.agents', 'kb.yaml');
+    const targetDir = await makeTempDir('kb-create-race-');
+    const registryPath = await makeRegistryPath();
 
     const outcome = await create({ targetDir, register: true, registryPath });
 

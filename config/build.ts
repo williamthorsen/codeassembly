@@ -16,7 +16,7 @@ const aliases = {
 };
 const dependencies = ['package.json'];
 const entryPoints = await glob(['src/**/*.ts'], {
-  ignore: ['**/__tests__/**'],
+  ignore: ['**/__tests__/**', '**/test-utils/**'],
 });
 const outputConfig = { format, platform, target: [target] };
 

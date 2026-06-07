@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { loadKbRegistry } from '../../discovery/load-registry.ts';
+import { pathExists } from '../../filesystem/exists.ts';
+import { makeRegistryPath, makeTempDir, seedRegistry } from '../../test-utils/index.ts';
 import { create } from '../create.ts';
 
 describe(create, () => {
@@ -16,10 +17,10 @@ describe(create, () => {
     const outcome = await create({ targetDir, register: true, registryPath });
 
     assert.ok(outcome.ok);
-    expect(await exists(join(targetDir, '.kb', 'schema.yaml'))).toBe(true);
-    expect(await exists(join(targetDir, '.kb', 'config.yaml'))).toBe(true);
-    expect(await exists(join(targetDir, '.kb', 'tag-aliases.yaml'))).toBe(true);
-    expect(await exists(join(targetDir, 'content', 'events'))).toBe(true);
+    expect(await pathExists(join(targetDir, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(targetDir, '.kb', 'config.yaml'))).toBe(true);
+    expect(await pathExists(join(targetDir, '.kb', 'tag-aliases.yaml'))).toBe(true);
+    expect(await pathExists(join(targetDir, 'content', 'events'))).toBe(true);
   });
 
   it('registers the store under its directory name by default', async () => {
@@ -53,7 +54,7 @@ describe(create, () => {
 
     assert.ok(outcome.ok);
     expect(outcome.created.registered).toBe(false);
-    expect(await exists(join(targetDir, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(targetDir, '.kb', 'schema.yaml'))).toBe(true);
   });
 
   it('returns kb-exists and scaffolds nothing when .kb already exists', async () => {
@@ -65,20 +66,19 @@ describe(create, () => {
 
     assert.ok(!outcome.ok);
     expect(outcome.reason).toBe('kb-exists');
-    expect(await exists(join(targetDir, 'content'))).toBe(false);
+    expect(await pathExists(join(targetDir, 'content'))).toBe(false);
   });
 
   it('returns name-registered and scaffolds nothing when the name is already registered', async () => {
     const targetDir = await makeTempDir('kb-create-store-');
     const registryPath = await makeRegistryPath();
-    await mkdir(dirname(registryPath), { recursive: true });
-    await writeFile(registryPath, `kbs:\n  ${basename(targetDir)}:\n    path: /elsewhere\n`, 'utf8');
+    await seedRegistry(registryPath, `kbs:\n  ${basename(targetDir)}:\n    path: /elsewhere\n`);
 
     const outcome = await create({ targetDir, register: true, registryPath });
 
     assert.ok(!outcome.ok);
     expect(outcome.reason).toBe('name-registered');
-    expect(await exists(join(targetDir, '.kb'))).toBe(false);
+    expect(await pathExists(join(targetDir, '.kb'))).toBe(false);
   });
 
   it('returns kb-exists when .kb exists as a regular file', async () => {
@@ -90,30 +90,6 @@ describe(create, () => {
 
     assert.ok(!outcome.ok);
     expect(outcome.reason).toBe('kb-exists');
-    expect(await exists(join(targetDir, 'content'))).toBe(false);
+    expect(await pathExists(join(targetDir, 'content'))).toBe(false);
   });
 });
-
-// region | Helpers
-
-/** Reports whether something exists at the path. */
-async function exists(path: string): Promise<boolean> {
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/** Returns an absent `kb.yaml` path beneath an uncreated `.agents/` dir in a fresh temp directory. */
-async function makeRegistryPath(): Promise<string> {
-  return join(await makeTempDir('kb-create-reg-'), '.agents', 'kb.yaml');
-}
-
-/** Creates a fresh empty temp directory with the given prefix. */
-async function makeTempDir(prefix: string): Promise<string> {
-  return mkdtemp(join(tmpdir(), prefix));
-}
-
-// endregion | Helpers

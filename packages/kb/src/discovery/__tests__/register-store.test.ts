@@ -1,9 +1,8 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { readFile } from 'node:fs/promises';
 
 import { describe, expect, it } from 'vitest';
 
+import { makeRegistryPath, seedRegistry } from '../../test-utils/index.ts';
 import { loadKbRegistry } from '../load-registry.ts';
 import { registerStore } from '../register-store.ts';
 
@@ -76,19 +75,3 @@ describe(registerStore, () => {
     await expect(registerStore({ registryPath, name: 'mystore', storePath: '' })).rejects.toThrow();
   });
 });
-
-// region | Helpers
-
-/** Stands up a temp directory and returns an absent `kb.yaml` path beneath an uncreated `.agents/` dir. */
-async function makeRegistryPath(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'kb-register-'));
-  return join(dir, '.agents', 'kb.yaml');
-}
-
-/** Writes seed content to a registry path, creating the `.agents/` parent directory first. */
-async function seedRegistry(registryPath: string, content: string): Promise<void> {
-  await mkdir(dirname(registryPath), { recursive: true });
-  await writeFile(registryPath, content, 'utf8');
-}
-
-// endregion | Helpers
