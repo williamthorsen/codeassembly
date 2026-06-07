@@ -12,10 +12,11 @@ const TODAY = '2026-05-24';
 
 const SAMPLE_NOTE = `---
 title: Sample
-type: howto
+recordType: assertion
 created: 2026-05-01
 updated: 2026-05-01
 tags: [sample]
+type: howto
 ---
 
 Original body.
@@ -327,13 +328,13 @@ describe(runEdit, () => {
   });
 
   it('returns schema-validation when the result fails frontmatter rules', async () => {
-    // Stand up a fixture note with a `type` outside the default vocabulary.
+    // Stand up a fixture note with a `recordType` outside the default vocabulary.
     // Bumping `updated:` re-validates the resulting frontmatter, so this surfaces as schema-validation.
     const { kbPath } = await makeKbWithNote();
-    const path = join(kbPath, 'bad-type.md');
+    const path = join(kbPath, 'bad-record-type.md');
     await writeFile(
       path,
-      '---\ntitle: x\ntype: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
       'utf8',
     );
 
@@ -348,7 +349,7 @@ describe(runEdit, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('schema-validation');
-      expect(result.details?.findings?.some((f) => f.rule === 'frontmatter.type')).toBe(true);
+      expect(result.details?.findings?.some((f) => f.rule === 'frontmatter.recordType')).toBe(true);
     }
   });
 
@@ -449,10 +450,10 @@ describe(runEdit, () => {
   it('does not commit either write when validation of the resulting frontmatter fails', async () => {
     const { kbPath, notePath: oldPath } = await makeKbWithNote();
     const newPath = join(kbPath, 'BadType.md');
-    // New note has a type outside the schema vocabulary; supersede-with validates both before either rename.
+    // New note has a recordType outside the schema vocabulary; supersede-with validates both before either rename.
     await writeFile(
       newPath,
-      '---\ntitle: x\ntype: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
       'utf8',
     );
 
@@ -503,7 +504,7 @@ describe(runEdit, () => {
     // Old note already carries the deprecated tag; supersede-with should not duplicate it.
     await writeFile(
       oldPath,
-      '---\ntitle: Old\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [legacy, deprecated]\n---\n\nbody\n',
+      '---\ntitle: Old\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [legacy, deprecated]\ntype: howto\n---\n\nbody\n',
       'utf8',
     );
     await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'New'), 'utf8');

@@ -1,11 +1,11 @@
 ---
-title: Note with a type outside the vocabulary
-type: postmortem
+title: Note with a record type outside the vocabulary
+recordType: postmortem
 created: 2026-04-12
 updated: 2026-05-08
 tags: [incident]
 ---
 
-# Note with a type outside the vocabulary
+# Note with a record type outside the vocabulary
 
-`postmortem` is not one of the four Diátaxis types.
+`postmortem` is not one of the declared record types.

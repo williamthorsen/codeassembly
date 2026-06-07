@@ -1,0 +1,7 @@
+kinds:
+  event:
+    immutable: true
+    recall: recurrence-recency
+    required: [id, type, captured-at, session, cwd, summary]
+    types:
+      observation: {}

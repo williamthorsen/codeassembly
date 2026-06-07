@@ -1,6 +1,6 @@
 ---
 title: Paths
-type: reference
+recordType: assertion
 created: 2026-05-01
 updated: 2026-05-01
 tags: [example]

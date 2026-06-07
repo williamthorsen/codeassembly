@@ -1,5 +1,6 @@
 ---
 title: Note with an unparseable last-verified
+recordType: assertion
 type: reference
 created: 2026-01-01
 updated: 2026-01-01

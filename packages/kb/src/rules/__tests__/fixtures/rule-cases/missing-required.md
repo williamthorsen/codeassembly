@@ -1,6 +1,6 @@
 ---
 title: Note missing required fields
-type: howto
+recordType: assertion
 tags: [git]
 ---
 

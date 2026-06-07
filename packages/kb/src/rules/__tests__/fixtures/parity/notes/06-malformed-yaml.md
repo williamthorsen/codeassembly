@@ -1,6 +1,6 @@
 ---
 title: Note with broken YAML
-type: howto
+recordType: assertion
 tags: [git, rebase
 created: 2026-04-12
 ---

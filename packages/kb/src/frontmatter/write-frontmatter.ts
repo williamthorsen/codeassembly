@@ -17,7 +17,7 @@ const SCALAR_STRINGIFY_OPTIONS = {
 } as const;
 
 /**
- * Render frontmatter plus a body back to a note string. Fields are emitted in a fixed order — `title`, `type`,
+ * Render frontmatter plus a body back to a note string. Fields are emitted in a fixed order — `title`, `recordType`,
  * `created`, `updated`, `tags`, then `extra` keys in insertion order — followed by the closing fence and one blank line
  * before the body. Re-parsing the output yields a structurally equal `Frontmatter`.
  */
@@ -29,7 +29,7 @@ export function writeFrontmatter(input: { frontmatter: Frontmatter; body: string
   const lines: string[] = [
     FENCE,
     `title: ${renderScalar(frontmatter.title)}`,
-    `type: ${renderScalar(frontmatter.type)}`,
+    `recordType: ${renderScalar(frontmatter.recordType)}`,
     `created: ${renderScalar(frontmatter.created)}`,
     `updated: ${renderScalar(frontmatter.updated)}`,
     `tags: ${renderFlowList(frontmatter.tags)}`,

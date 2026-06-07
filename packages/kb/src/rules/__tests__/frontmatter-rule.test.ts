@@ -67,12 +67,12 @@ describe('frontmatterRule', () => {
     }
   });
 
-  it('emits frontmatter.type when the type is not in the schema vocabulary', async () => {
-    const findings = await checkFixture('unknown-type');
-    const typeFinding = findings.find((finding) => finding.rule === 'frontmatter.type');
+  it('emits frontmatter.recordType when the recordType is not in the schema vocabulary', async () => {
+    const findings = await checkFixture('unknown-record-type');
+    const recordTypeFinding = findings.find((finding) => finding.rule === 'frontmatter.recordType');
 
-    expect(typeFinding?.message).toContain('postmortem');
-    expect(typeFinding?.line).toBe(3);
+    expect(recordTypeFinding?.message).toContain('postmortem');
+    expect(recordTypeFinding?.line).toBe(3);
   });
 
   it('emits frontmatter.date for a date field that is not a real calendar date', async () => {
@@ -91,11 +91,11 @@ describe('frontmatterRule', () => {
     expect(tagsFinding?.line).toBe(6);
   });
 
-  it('produces no findings for a well-formed note', () => {
+  it('produces no findings for a well-formed assertion note', () => {
     const content = [
       '---',
       'title: Valid note',
-      'type: howto',
+      'recordType: assertion',
       'created: 2026-05-01',
       'updated: 2026-05-14',
       'tags: [git]',
@@ -107,72 +107,85 @@ describe('frontmatterRule', () => {
 
     expect(frontmatterRule.check({ note, document, schema: defaultSchema })).toEqual([]);
   });
+
+  it('emits frontmatter.recordType when the recordType field is absent', () => {
+    const content = [
+      '---',
+      'title: Note with no recordType',
+      'created: 2026-05-01',
+      'updated: 2026-05-14',
+      'tags: [git]',
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+    const { note, document } = parseNoteWithDocument(content, 'no-record-type.md');
+
+    const recordTypeFinding = frontmatterRule
+      .check({ note, document, schema: defaultSchema })
+      .find((finding) => finding.rule === 'frontmatter.recordType');
+
+    expect(recordTypeFinding?.message).toBe('missing recordType');
+  });
 });
 
-describe('frontmatterRule under a kind-aware schema', () => {
-  function kindAwareSchema(): Promise<Schema> {
-    const path = join(import.meta.dirname, '..', '..', 'schema', '__tests__', 'fixtures', 'kind-aware');
+describe('frontmatterRule across record types', () => {
+  function recordTypesSchema(): Promise<Schema> {
+    const path = join(import.meta.dirname, '..', '..', 'schema', '__tests__', 'fixtures', 'record-types');
     const kbRoot: KbRoot = { path, kbDir: join(path, '.kb'), via: 'ancestor-walk' };
     return loadSchema({ kbRoot });
   }
 
   function checkAgainst(content: string, schema: Schema): Finding[] {
-    const { note, document } = parseNoteWithDocument(content, 'event.md');
+    const { note, document } = parseNoteWithDocument(content, 'record.md');
     return frontmatterRule.check({ note, document, schema });
   }
 
-  it('rejects a mistake event missing its added correction field', async () => {
-    const schema = await kindAwareSchema();
+  it('rejects an assertion missing a spine field', async () => {
+    const schema = await recordTypesSchema();
+    const content = ['---', 'recordType: assertion', 'title: Missing dates and tags', '---', '', '# Body'].join('\n');
+
+    const required = checkAgainst(content, schema)
+      .filter((finding) => finding.rule === 'frontmatter.required')
+      .map((finding) => finding.message);
+
+    expect(required).toEqual([
+      'missing required field: created',
+      'missing required field: updated',
+      'missing required field: tags',
+    ]);
+  });
+
+  it('rejects an event missing a spine field', async () => {
+    const schema = await recordTypesSchema();
     const content = [
       '---',
+      'recordType: event',
       'id: 01HZ',
-      'type: mistake',
       'captured-at: 2026-06-04T00:00:00Z',
       'session: abc',
       'cwd: /tmp',
-      'repo: owner/name',
-      'summary: A mistake without its correction',
       '---',
       '',
       '# Body',
     ].join('\n');
 
-    const required = checkAgainst(content, schema).filter((finding) => finding.rule === 'frontmatter.required');
+    const required = checkAgainst(content, schema)
+      .filter((finding) => finding.rule === 'frontmatter.required')
+      .map((finding) => finding.message);
 
-    expect(required).toHaveLength(1);
-    expect(required[0]?.message).toBe('missing required field: correction');
+    expect(required).toEqual(['missing required field: summary']);
   });
 
-  it('accepts a mistake event that carries its correction field', async () => {
-    const schema = await kindAwareSchema();
+  it('accepts a valid event with no title or created fields', async () => {
+    const schema = await recordTypesSchema();
     const content = [
       '---',
+      'recordType: event',
       'id: 01HZ',
-      'type: mistake',
       'captured-at: 2026-06-04T00:00:00Z',
       'session: abc',
       'cwd: /tmp',
-      'repo: owner/name',
-      'summary: A mistake with its correction',
-      'correction: Do it the other way',
-      '---',
-      '',
-      '# Body',
-    ].join('\n');
-
-    expect(checkAgainst(content, schema)).toEqual([]);
-  });
-
-  it('accepts an observation event carrying only the kind spine', async () => {
-    const schema = await kindAwareSchema();
-    const content = [
-      '---',
-      'id: 01HZ',
-      'type: observation',
-      'captured-at: 2026-06-04T00:00:00Z',
-      'session: abc',
-      'cwd: /tmp',
-      'repo: owner/name',
       'summary: Something noticed',
       '---',
       '',
@@ -182,16 +195,15 @@ describe('frontmatterRule under a kind-aware schema', () => {
     expect(checkAgainst(content, schema)).toEqual([]);
   });
 
-  it('does not require updated for an immutable event kind', async () => {
-    const schema = await kindAwareSchema();
+  it('does not require updated for an immutable event record type', async () => {
+    const schema = await recordTypesSchema();
     const content = [
       '---',
+      'recordType: event',
       'id: 01HZ',
-      'type: observation',
       'captured-at: 2026-06-04T00:00:00Z',
       'session: abc',
       'cwd: /tmp',
-      'repo: owner/name',
       'summary: No updated field present',
       '---',
       '',
@@ -203,24 +215,25 @@ describe('frontmatterRule under a kind-aware schema', () => {
     expect(required.map((finding) => finding.message)).not.toContain('missing required field: updated');
   });
 
-  it('rejects a type not declared by any kind', async () => {
-    const schema = await kindAwareSchema();
+  it('rejects a recordType not declared by the schema', async () => {
+    const schema = await recordTypesSchema();
     const content = [
       '---',
+      'recordType: postmortem',
       'id: 01HZ',
-      'type: postmortem',
       'captured-at: 2026-06-04T00:00:00Z',
       'session: abc',
       'cwd: /tmp',
-      'repo: owner/name',
-      'summary: Unknown type',
+      'summary: Unknown record type',
       '---',
       '',
       '# Body',
     ].join('\n');
 
-    const typeFinding = checkAgainst(content, schema).find((finding) => finding.rule === 'frontmatter.type');
+    const recordTypeFinding = checkAgainst(content, schema).find(
+      (finding) => finding.rule === 'frontmatter.recordType',
+    );
 
-    expect(typeFinding?.message).toContain('postmortem');
+    expect(recordTypeFinding?.message).toContain('postmortem');
   });
 });

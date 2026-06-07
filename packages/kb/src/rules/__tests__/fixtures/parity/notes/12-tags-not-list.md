@@ -1,6 +1,6 @@
 ---
 title: Note whose tags field is a scalar
-type: reference
+recordType: assertion
 created: 2026-04-12
 updated: 2026-05-08
 tags: git

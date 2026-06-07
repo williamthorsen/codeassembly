@@ -18,7 +18,7 @@ const SCHEMA: Schema = defaultSchema;
 function validFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'Example',
-    type: 'howto',
+    recordType: 'assertion',
     created: '2026-05-01',
     updated: '2026-05-01',
     tags: ['example'],
@@ -64,14 +64,14 @@ describe(writeBackNote, () => {
   });
 
   it('refuses to write and leaves the original file untouched when validation fails', async () => {
-    const path = await makeTempPath('kb-edit-wb-bad-type-');
+    const path = await makeTempPath('kb-edit-wb-bad-record-type-');
     const before = '---\ntitle: original\n---\n\nuntouched\n';
     await writeFile(path, before, 'utf8');
 
     const result = await writeBackNote({
       path,
-      // `rant` is not in the default schema's types vocabulary.
-      frontmatter: validFrontmatter({ type: 'rant' }),
+      // `rant` is not in the default schema's recordType vocabulary.
+      frontmatter: validFrontmatter({ recordType: 'rant' }),
       body: 'should not land\n',
       schema: SCHEMA,
     });
@@ -79,7 +79,7 @@ describe(writeBackNote, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toBe('schema-validation');
-      expect(result.findings.some((f) => f.rule === 'frontmatter.type')).toBe(true);
+      expect(result.findings.some((f) => f.rule === 'frontmatter.recordType')).toBe(true);
     }
     const after = await readFile(path, 'utf8');
     expect(after).toBe(before);
@@ -87,18 +87,19 @@ describe(writeBackNote, () => {
 
   it('round-trips a structurally identical note when frontmatter is unchanged', async () => {
     const path = await makeTempPath('kb-edit-wb-roundtrip-');
-    const original = '---\ntitle: x\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [a]\n---\n\nbody\n';
+    const original =
+      '---\ntitle: x\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [a]\ntype: howto\n---\n\nbody\n';
     await writeFile(path, original, 'utf8');
 
     const result = await writeBackNote({
       path,
       frontmatter: {
         title: 'x',
-        type: 'howto',
+        recordType: 'assertion',
         created: '2026-05-01',
         updated: '2026-05-01',
         tags: ['a'],
-        extra: {},
+        extra: { type: 'howto' },
       },
       body: 'body\n',
       schema: SCHEMA,

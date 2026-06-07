@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { KbRoot } from '../../types.ts';
 import { defaultSchema } from '../default-schema.ts';
-import { extendOptional, extendRequired, loadSchema, narrowTypes, resolveRequiredForType } from '../load-schema.ts';
+import { loadSchema, resolveRequiredForRecordType } from '../load-schema.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 
@@ -20,28 +20,37 @@ describe(loadSchema, () => {
     expect(schema).toBe(defaultSchema);
   });
 
-  it('accepts a per-KB file that narrows the type vocabulary', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('narrowed-types') });
+  it('returns the declared record types from a recordTypes: file', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
 
-    expect(schema.types).toEqual(['howto', 'reference']);
+    expect(Object.keys(schema.recordTypes)).toEqual(['event', 'assertion']);
+    expect(schema.recordTypes.event?.recall).toBe('recurrence-recency');
+    expect(schema.recordTypes.assertion?.recall).toBe('freshness');
   });
 
-  it('rejects a per-KB file that adds a type not in the default vocabulary', async () => {
-    await expect(loadSchema({ kbRoot: kbRootAt('invalid-extends-types') })).rejects.toThrow(/postmortem/);
+  it('marks an immutable record type that omits updated from its required set', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
+
+    expect(schema.recordTypes.event?.immutable).toBe(true);
+    expect(schema.recordTypes.event?.required).not.toContain('updated');
   });
 
-  it('accepts a per-KB file that adds a required field', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('adds-required') });
+  it('defaults immutable to false for a record type that omits it', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
 
-    expect(schema.required).toContain('owner');
+    expect(schema.recordTypes.assertion?.immutable).toBe(false);
   });
 
-  it('rejects a per-KB file that demotes a default required field', async () => {
-    await expect(loadSchema({ kbRoot: kbRootAt('demotes-required') })).rejects.toThrow(/tags.*demoted/);
+  it('rejects a file that still uses the retired kinds: shape, naming the source path', async () => {
+    await expect(loadSchema({ kbRoot: kbRootAt('rejects-kinds') })).rejects.toThrow(
+      /rejects-kinds.*schema\.yaml: invalid schema\.yaml —/s,
+    );
   });
 
-  it('rejects a per-KB file that lists a field in both required and optional', async () => {
-    await expect(loadSchema({ kbRoot: kbRootAt('field-in-both') })).rejects.toThrow(/owner.*both/);
+  it('rejects a file that still uses the retired flat types: shape, naming the source path', async () => {
+    await expect(loadSchema({ kbRoot: kbRootAt('rejects-types') })).rejects.toThrow(
+      /rejects-types.*schema\.yaml: invalid schema\.yaml —/s,
+    );
   });
 
   it('rejects a .kb/schema.yaml with malformed YAML, naming the source path', async () => {
@@ -55,145 +64,24 @@ describe(loadSchema, () => {
       /invalid-structure.*schema\.yaml: invalid schema\.yaml —/s,
     );
   });
-
-  it('exposes the declared kinds when the file opts into kind-aware mode', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
-
-    expect(Object.keys(schema.kinds ?? {})).toEqual(['event', 'assertion']);
-    expect(schema.kinds?.event?.recall).toBe('recurrence-recency');
-    expect(schema.kinds?.assertion?.recall).toBe('freshness');
-  });
-
-  it('marks an immutable kind that omits updated from its required set', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
-
-    expect(schema.kinds?.event?.immutable).toBe(true);
-    expect(schema.kinds?.event?.required).not.toContain('updated');
-  });
-
-  it('derives the flat types union from every kind and type', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
-
-    expect([...schema.types].toSorted()).toEqual(
-      ['concept', 'howto', 'mistake', 'observation', 'reference', 'tutorial'].toSorted(),
-    );
-  });
-
-  it('derives the flat required union from every kind spine and type addition', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
-
-    expect(schema.required).toContain('correction');
-    expect(schema.required).toContain('captured-at');
-    expect(schema.required).toContain('title');
-  });
-
-  it('replaces rather than extends the default vocabulary in kind-aware mode', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
-
-    // `created`/`updated` belong only to the assertion kind, so they are not required for event-kind types.
-    expect(schema.kinds?.event?.required).not.toContain('created');
-  });
-
-  it.each(['no-schema', 'narrowed-types', 'adds-required'])(
-    'leaves kinds undefined for the legacy %s fixture (no kind-aware opt-in)',
-    async (fixture) => {
-      const schema = await loadSchema({ kbRoot: kbRootAt(fixture) });
-
-      expect(schema.kinds).toBeUndefined();
-    },
-  );
-
-  it('contributes a no-type kind spine to the flat required union', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('no-type-kind') });
-
-    expect(schema.required).toContain('id');
-    expect(schema.required).toContain('label');
-  });
-
-  it('exposes a no-type kind with an empty types map and its declared spine', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('no-type-kind') });
-
-    expect(schema.kinds?.marker?.types).toEqual({});
-    expect(schema.kinds?.marker?.required).toEqual(['id', 'label']);
-  });
-
-  it('treats an empty kinds block as a kind-aware opt-in with an empty vocabulary', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('empty-kinds') });
-
-    expect(schema.kinds).toEqual({});
-    expect(schema.types).toEqual([]);
-    expect(schema.required).toEqual([]);
-    expect(schema.optional).toEqual([]);
-  });
 });
 
-describe(resolveRequiredForType, () => {
-  it('returns undefined for a legacy schema with no kinds', () => {
-    expect(resolveRequiredForType(defaultSchema, 'howto')).toBeUndefined();
+describe(resolveRequiredForRecordType, () => {
+  it('returns the record type required set verbatim', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
+
+    expect(resolveRequiredForRecordType(schema, 'event')).toEqual(['id', 'captured-at', 'session', 'cwd', 'summary']);
   });
 
-  it('unions the kind spine with the type additions for a kind-aware type', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
+  it('returns the assertion required set for the assertion record type', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
 
-    expect(resolveRequiredForType(schema, 'mistake')).toEqual([
-      'id',
-      'type',
-      'captured-at',
-      'session',
-      'cwd',
-      'repo',
-      'summary',
-      'correction',
-    ]);
+    expect(resolveRequiredForRecordType(schema, 'assertion')).toEqual(['title', 'created', 'updated', 'tags']);
   });
 
-  it('returns only the kind spine for a type that adds nothing', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
+  it('returns undefined for a record type not declared by the schema', async () => {
+    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
 
-    expect(resolveRequiredForType(schema, 'observation')).toEqual([
-      'id',
-      'type',
-      'captured-at',
-      'session',
-      'cwd',
-      'repo',
-      'summary',
-    ]);
-  });
-
-  it('returns undefined for a type not declared by any kind', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('kind-aware') });
-
-    expect(resolveRequiredForType(schema, 'nonexistent')).toBeUndefined();
-  });
-});
-
-describe(narrowTypes, () => {
-  it('returns the per-KB types when they are a subset of the defaults', () => {
-    expect(narrowTypes(['a', 'b', 'c'], ['a', 'c'])).toEqual(['a', 'c']);
-  });
-
-  it('throws naming the rogue type when the per-KB list adds a new type', () => {
-    expect(() => narrowTypes(['a', 'b'], ['a', 'z'])).toThrow(/"z"/);
-  });
-});
-
-describe(extendRequired, () => {
-  it('returns the per-KB list when it is a superset of the defaults', () => {
-    expect(extendRequired(['a', 'b'], ['a', 'b', 'c'])).toEqual(['a', 'b', 'c']);
-  });
-
-  it('throws naming the missing field when a default required field is dropped', () => {
-    expect(() => extendRequired(['a', 'b'], ['a'])).toThrow(/"b"/);
-  });
-});
-
-describe(extendOptional, () => {
-  it('unions the default and per-KB optional fields', () => {
-    expect(extendOptional(['a', 'b'], ['c'], ['title'])).toEqual(['a', 'b', 'c']);
-  });
-
-  it('throws naming the field that appears in both required and optional', () => {
-    expect(() => extendOptional(['a'], ['title'], ['title'])).toThrow(/title.*both/);
+    expect(resolveRequiredForRecordType(schema, 'nonexistent')).toBeUndefined();
   });
 });

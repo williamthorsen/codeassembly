@@ -6,7 +6,7 @@ import { z } from 'zod';
 /** Schema for the required-field core of a note's frontmatter. */
 export const frontmatterSchema = z.object({
   title: z.string().min(1),
-  type: z.string().min(1),
+  recordType: z.string().min(1),
   created: z.string(),
   updated: z.string(),
   tags: z.array(z.string()),

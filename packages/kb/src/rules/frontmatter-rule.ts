@@ -1,7 +1,7 @@
 import { isScalar, isSeq } from 'yaml';
 
 import { findPair, valueLine } from '../frontmatter/yaml-position.ts';
-import { resolveRequiredForType } from '../schema/load-schema.ts';
+import { resolveRequiredForRecordType } from '../schema/load-schema.ts';
 import type { Finding, Schema } from '../types.ts';
 import type { KbRule, KbRuleInput } from './types.ts';
 
@@ -9,13 +9,13 @@ const DATE_FIELDS = ['created', 'updated', 'last-verified'] as const;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * Validate a note's frontmatter block: presence, parseability, required
- * fields, type vocabulary, date formats, and tags shape.
+ * Validate a note's frontmatter block: presence, parseability, the stored `recordType` discriminant, the required
+ * fields that record type declares, date formats, and tags shape.
  *
  * Findings are produced in a fixed order. The block-level checks
  * (`frontmatter.missing`, `frontmatter.parse`, `frontmatter.empty`) early-exit
- * after their first finding; the field-level checks (`frontmatter.required`,
- * `.type`, `.date`, `.tags`) accumulate.
+ * after their first finding; the field-level checks (`frontmatter.recordType`,
+ * `.required`, `.date`, `.tags`) accumulate.
  */
 export const frontmatterRule: KbRule = {
   name: 'frontmatter',
@@ -58,9 +58,30 @@ export const frontmatterRule: KbRule = {
       return findings;
     }
 
-    const typePair = findPair(doc, 'type');
+    const recordTypePair = findPair(doc, 'recordType');
+    const recordType =
+      recordTypePair !== null && isScalar(recordTypePair.value) ? recordTypePair.value.value : undefined;
 
-    for (const field of resolveRequired(schema, typePair)) {
+    if (recordTypePair === null) {
+      findings.push({
+        path: note.path,
+        line: raw.endLine,
+        rule: 'frontmatter.recordType',
+        severity: 'error',
+        message: 'missing recordType',
+      });
+    } else if (typeof recordType !== 'string' || resolveRequiredForRecordType(schema, recordType) === undefined) {
+      const shown = typeof recordType === 'string' ? `"${recordType}"` : String(recordType);
+      findings.push({
+        path: note.path,
+        line: valueLine(recordTypePair, raw),
+        rule: 'frontmatter.recordType',
+        severity: 'error',
+        message: `${shown} not in vocabulary [${Object.keys(schema.recordTypes).join(', ')}]`,
+      });
+    }
+
+    for (const field of resolveRequired(schema, recordType)) {
       if (findPair(doc, field) === null) {
         findings.push({
           path: note.path,
@@ -68,20 +89,6 @@ export const frontmatterRule: KbRule = {
           rule: 'frontmatter.required',
           severity: 'error',
           message: `missing required field: ${field}`,
-        });
-      }
-    }
-
-    if (typePair !== null && isScalar(typePair.value)) {
-      const value = typePair.value.value;
-      if (typeof value !== 'string' || !schema.types.includes(value)) {
-        const shown = typeof value === 'string' ? `"${value}"` : String(value);
-        findings.push({
-          path: note.path,
-          line: valueLine(typePair, raw),
-          rule: 'frontmatter.type',
-          severity: 'error',
-          message: `${shown} not in vocabulary [${schema.types.join(', ')}]`,
         });
       }
     }
@@ -120,20 +127,15 @@ export const frontmatterRule: KbRule = {
 // region | Helpers
 
 /**
- * Resolves the required-field set a note is validated against. Under a kind-aware schema, the set is the note's
- * `type`'s effective required fields (the kind spine plus the type's additions); under a legacy schema, or when the
- * type is unknown to the kind-aware vocabulary, it falls back to the flat `schema.required`. The `type`-vocabulary
- * check elsewhere in the rule reports an unknown type separately, so the fallback never silently widens validation.
+ * Resolves the required-field set a note is validated against: the record type's declared `required` fields. When the
+ * `recordType` is absent or unknown to the schema (reported separately by the `recordType` check), no required fields
+ * are enforced, so the fallback never silently widens validation.
  */
-function resolveRequired(schema: Schema, typePair: ReturnType<typeof findPair>): readonly string[] {
-  if (schema.kinds === undefined) {
-    return schema.required;
+function resolveRequired(schema: Schema, recordType: unknown): readonly string[] {
+  if (typeof recordType !== 'string') {
+    return [];
   }
-  const type = typePair !== null && isScalar(typePair.value) ? typePair.value.value : undefined;
-  if (typeof type !== 'string') {
-    return schema.required;
-  }
-  return resolveRequiredForType(schema, type) ?? schema.required;
+  return resolveRequiredForRecordType(schema, recordType) ?? [];
 }
 
 /** Validate that a value is a real UTC `YYYY-MM-DD` calendar date; returns an error message or `null`. */

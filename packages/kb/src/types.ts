@@ -42,51 +42,37 @@ export interface KbRegistry {
 }
 
 /**
- * A note-type-and-field schema for a knowledge base.
+ * A record-type-and-field schema for a knowledge base.
  *
- * The flat `types`/`required`/`optional` fields are always populated and describe the union of the store's vocabulary,
- * keeping legacy consumers working unchanged. A kind-aware store additionally carries `kinds`: when present, per-type
- * required-field validation and per-kind recall policy are driven by it, and the flat fields are derived as the union
- * across every declared kind and type.
+ * The schema is a single level keyed by record type (e.g. `assertion`, `event`). Each record type declares its own
+ * required and optional fields plus its recall and immutability policy. A record's family is the stored `recordType`
+ * discriminant, validated against the declared record-type vocabulary.
  */
 export interface Schema {
-  /** Allowed `type` field values. */
-  types: readonly string[];
-  /** Field names that every note must declare. */
-  required: readonly string[];
-  /** Field names a note may optionally declare. */
-  optional: readonly string[];
-  /** Per-kind, per-type vocabulary; present only for kind-aware stores (a `.kb/schema.yaml` that declares `kinds:`). */
-  kinds?: KindsSchema;
+  /** Per-record-type vocabulary, keyed by record-type name (e.g. `assertion`, `event`). */
+  recordTypes: RecordTypesSchema;
 }
 
-/** The kind-aware vocabulary of a store, keyed by kind name (e.g. `event`, `assertion`). */
-export type KindsSchema = Readonly<Record<string, KindSchema>>;
+/** The record-type vocabulary of a store, keyed by record-type name (e.g. `event`, `assertion`). */
+export type RecordTypesSchema = Readonly<Record<string, RecordTypeSchema>>;
 
-/** A single kind's shared vocabulary, recall policy, immutability, and its constituent types. */
-export interface KindSchema {
-  /** Field names required by every type of this kind (the shared spine). */
+/** A single record type's required/optional field sets, recall policy, and immutability. */
+export interface RecordTypeSchema {
+  /** Field names every record of this type must declare (excluding the implicit `recordType` discriminant). */
   required: readonly string[];
-  /** Field names any type of this kind may optionally declare. */
+  /** Field names a record of this type may optionally declare. */
   optional: readonly string[];
-  /** How recall ranks records of this kind, e.g. `freshness` or `recurrence-recency`. */
+  /** How recall ranks records of this type, e.g. `freshness` or `recurrence-recency`. */
   recall: string;
-  /** When true, records of this kind are write-once and carry no `updated`/`last-verified` fields. */
+  /** When true, records of this type are write-once and carry no `updated`/`last-verified` fields. */
   immutable: boolean;
-  /** The kind's constituent types, each declaring any required fields it adds on top of the kind's shared set. */
-  types: Readonly<Record<string, TypeSchema>>;
-}
-
-/** A single type's contribution to its kind: the required fields it adds on top of the kind's shared spine. */
-export interface TypeSchema {
-  /** Field names this type requires beyond its kind's shared `required` set. */
-  required: readonly string[];
 }
 
 /** Strongly-typed frontmatter for a note. */
 export interface Frontmatter {
   title: string;
-  type: string;
+  /** The stored record-type discriminant (e.g. `assertion`, `event`). */
+  recordType: string;
   /** UTC `YYYY-MM-DD`. */
   created: string;
   /** UTC `YYYY-MM-DD`. */

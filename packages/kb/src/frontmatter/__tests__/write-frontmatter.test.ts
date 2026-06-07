@@ -7,7 +7,7 @@ import { writeFrontmatter } from '../write-frontmatter.ts';
 function makeFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'How to rebase onto main',
-    type: 'howto',
+    recordType: 'assertion',
     created: '2026-05-01',
     updated: '2026-05-14',
     tags: ['git', 'rebase'],
@@ -17,14 +17,14 @@ function makeFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
 }
 
 describe(writeFrontmatter, () => {
-  it('emits required fields in the fixed title/type/created/updated/tags order', () => {
+  it('emits required fields in the fixed title/recordType/created/updated/tags order', () => {
     const output = writeFrontmatter({ frontmatter: makeFrontmatter(), body: '# Body' });
     const lines = output.split('\n');
 
     expect(lines.slice(0, 6)).toEqual([
       '---',
       'title: How to rebase onto main',
-      'type: howto',
+      'recordType: assertion',
       'created: 2026-05-01',
       'updated: 2026-05-14',
       'tags: [git, rebase]',

@@ -9,16 +9,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { prepareEvent } from '../prepare-event.ts';
 import type { CaptureContext, ParsedArgs } from '../types.ts';
 
-const KIND_AWARE_SCHEMA = `kinds:
+const EVENT_SCHEMA = `recordTypes:
   event:
     immutable: true
     recall: recurrence-recency
-    required: [id, type, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, tags, owner, locality, severity]
-    types:
-      observation: {}
-      mistake:
-        required: [correction]
+    required: [id, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, correction, owner, locality, severity]
 `;
 
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
@@ -29,12 +25,10 @@ const CONTEXT: CaptureContext = { session: 'session-abc', cwd: '/tmp/work', repo
 function argsFor(overrides: Partial<ParsedArgs>): ParsedArgs {
   return {
     store: 'codeassembly',
-    type: 'observation',
     summary: 'Something noticed',
     skill: null,
     model: null,
     tags: [],
-    correction: null,
     ...overrides,
   };
 }
@@ -45,44 +39,44 @@ describe(prepareEvent, () => {
   beforeAll(async () => {
     const storeRoot = await mkdtemp(join(tmpdir(), 'capture-prepare-'));
     await mkdir(join(storeRoot, '.kb'), { recursive: true });
-    await writeFile(join(storeRoot, '.kb', 'schema.yaml'), KIND_AWARE_SCHEMA, 'utf8');
+    await writeFile(join(storeRoot, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
     const kbRoot: KbRoot = { path: storeRoot, kbDir: join(storeRoot, '.kb'), via: 'ancestor-walk' };
     schema = await loadSchema({ kbRoot });
   });
 
-  it('refuses a mistake event with no correction', () => {
+  it('writes recordType: event as the stored discriminant', () => {
     const result = prepareEvent({
-      args: argsFor({ type: 'mistake' }),
+      args: argsFor({}),
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
       schema,
-      body: 'A mistake happened.',
-    });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.findings.map((finding) => finding.message)).toContain('missing required field: correction');
-    }
-  });
-
-  it('writes a mistake event when correction is supplied', () => {
-    const result = prepareEvent({
-      args: argsFor({ type: 'mistake', correction: 'Do it the other way.' }),
-      context: CONTEXT,
-      id: ID,
-      capturedAt: CAPTURED_AT,
-      schema,
-      body: 'A mistake happened.',
+      body: 'Noticed a thing.',
     });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.prepared.content).toContain('correction: Do it the other way.');
+      expect(result.prepared.content).toMatch(/^recordType: event$/m);
     }
   });
 
-  it('writes an observation event carrying only the spine', () => {
+  it('writes no bare type field', () => {
+    const result = prepareEvent({
+      args: argsFor({}),
+      context: CONTEXT,
+      id: ID,
+      capturedAt: CAPTURED_AT,
+      schema,
+      body: 'Noticed a thing.',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.content).not.toMatch(/^type:/m);
+    }
+  });
+
+  it('writes an event carrying the auto-derived id and capturedAt', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: CONTEXT,

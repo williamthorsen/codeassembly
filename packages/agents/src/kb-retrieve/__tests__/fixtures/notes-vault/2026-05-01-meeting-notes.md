@@ -1,5 +1,6 @@
 ---
 title: Meeting notes
+recordType: assertion
 type: note
 created: 2026-05-01
 updated: 2026-05-01

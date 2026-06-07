@@ -1,6 +1,6 @@
 ---
 title: Note exercising the optional field set
-type: reference
+recordType: assertion
 created: 2026-01-10
 updated: 2026-05-14
 tags: [git, reference]

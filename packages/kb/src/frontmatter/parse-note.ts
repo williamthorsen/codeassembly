@@ -124,7 +124,7 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
 
   const extra: Record<string, unknown> = {};
   let title = '';
-  let type = '';
+  let recordType = '';
   let created = '';
   let updated = '';
   let tags: string[] = [];
@@ -138,8 +138,8 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
       case 'title':
         title = stringValue(item.value);
         break;
-      case 'type':
-        type = stringValue(item.value);
+      case 'recordType':
+        recordType = stringValue(item.value);
         break;
       case 'created':
         created = stringValue(item.value);
@@ -155,7 +155,7 @@ function toFrontmatter(doc: Document.Parsed): Frontmatter | null {
     }
   }
 
-  return { title, type, created, updated, tags, extra };
+  return { title, recordType, created, updated, tags, extra };
 }
 
 // endregion | Helpers

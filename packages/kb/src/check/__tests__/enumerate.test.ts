@@ -28,7 +28,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const VALID = '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
+const VALID =
+  '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
 /** Stands up a temp KB root with the given files written under it. */
 async function makeVault(files: Record<string, string>): Promise<string> {

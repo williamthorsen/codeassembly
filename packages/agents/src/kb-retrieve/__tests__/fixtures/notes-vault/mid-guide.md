@@ -1,5 +1,6 @@
 ---
 title: Interim deployment guide
+recordType: assertion
 type: howto
 created: 2025-09-01
 updated: 2025-09-01

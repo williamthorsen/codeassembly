@@ -3,7 +3,7 @@ set -euo pipefail
 
 # provision-codeassembly-event-store.sh — Stand up the user-global `codeassembly` knowledge store.
 #
-# Idempotently creates the store vault, installs its kind-aware `.kb/schema.yaml` from the committed template, and
+# Idempotently creates the store vault, installs its recordType-aware `.kb/schema.yaml` from the committed template, and
 # registers the store (non-default) in the user-global `~/.agents/kb.yaml`. Re-running is safe: an existing vault,
 # schema, or registry entry is left untouched. The script never overwrites an existing schema or registry entry.
 #

@@ -80,29 +80,49 @@ const config = await loadKbRegistry({ projectDir: process.cwd() });
 
 ## The default schema
 
-`defaultSchema` is a deep-frozen `Schema` constant exposing the Diátaxis four
-types and the canonical frontmatter field sets:
+A record's family is the stored `recordType` discriminant, valued against the schema's declared record-type vocabulary. `defaultSchema` is a deep-frozen `Schema` constant keyed by record type — an `assertion` record type (the canonical vault note, ranked by freshness) and an immutable `event` record type (the ULID-keyed record written by `capture-event`, ranked by recurrence-recency):
 
 ```ts
 {
-  types: ['howto', 'concept', 'reference', 'tutorial'],
-  required: ['title', 'type', 'created', 'updated', 'tags'],
-  optional: ['last-verified', 'applies-to', 'sources', 'supersedes', 'superseded-by'],
+  recordTypes: {
+    assertion: {
+      required: ['title', 'created', 'updated', 'tags'],
+      optional: ['last-verified', 'applies-to', 'sources', 'supersedes', 'superseded-by'],
+      recall: 'freshness',
+      immutable: false,
+    },
+    event: {
+      required: ['id', 'captured-at', 'session', 'cwd', 'summary'],
+      optional: ['repo', 'skill', 'model', 'tags', 'correction'],
+      recall: 'recurrence-recency',
+      immutable: true,
+    },
+  },
 }
 ```
 
-`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. When a per-KB schema file is present it is merged under **narrow-only** rules:
+`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. A `.kb/schema.yaml` declares a `recordTypes:` block keyed by record-type name; each record type declares its own `required`, `optional`, `recall`, and `immutable`. The declared vocabulary **replaces** the bundled default outright. `recordType` is implicitly required on every record — it is the discriminant, so it is never listed in a record type's `required:` array.
 
-- **Types** may only be **narrowed** — a per-KB `types` list must be a subset of the default vocabulary.
-- **Required** fields may only be **extended** — a per-KB `required` list must be a superset of the default required fields; a default-required field cannot be demoted.
-- **Optional** fields are **unioned** with the defaults; a field may not appear in both `required` and `optional`.
+```yaml
+# .kb/schema.yaml
+recordTypes:
+  event:
+    immutable: true
+    recall: recurrence-recency
+    required: [id, captured-at, session, cwd, summary]
+    optional: [repo, skill, model, tags, correction]
+  assertion:
+    recall: freshness
+    required: [title, created, updated, tags]
+    optional: [last-verified, applies-to, sources, supersedes, superseded-by]
+```
 
-Illegal overrides throw at load time, naming the offending field.
+Validation reads a record type's required set directly via `resolveRequiredForRecordType(schema, recordType)`. A malformed or structurally invalid `.kb/schema.yaml` throws at load time, naming the offending file.
 
 ## Frontmatter parsing and writing
 
 `parseNote({ path })` (or `parseNoteContent({ content })`) parses a note into a `ParsedNote` carrying typed `Frontmatter`:
-The five required fields are strongly typed and any other fields are preserved in an `extra` map.
+The `title`, `recordType`, `created`, `updated`, and `tags` fields are strongly typed and any other fields are preserved in an `extra` map.
 `writeFrontmatter({ frontmatter, body })` renders it back to a note string with a fixed field order and flow-style tags; the round trip is idempotent.
 
 Date fields surface as strings, never JS `Date` objects. YAML parse errors are recorded in `ParsedNote.frontmatterRaw.parseError` rather than thrown;

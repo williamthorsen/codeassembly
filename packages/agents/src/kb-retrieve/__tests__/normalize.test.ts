@@ -173,7 +173,7 @@ describe(normalizeHits, () => {
   });
 });
 
-describe('normalizeHits over event-kind records', () => {
+describe('normalizeHits over event records', () => {
   it('surfaces an event summary as the candidate title rather than the ULID basename', async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(EVENTS, 'event-a.md'))],
@@ -207,7 +207,7 @@ describe('normalizeHits over event-kind records', () => {
     expect(candidates[0]?.occurrences).toBeUndefined();
   });
 
-  it('stamps occurrences with the size of each repo+type recurrence group', async () => {
+  it('stamps occurrences with the size of each repo recurrence group', async () => {
     const candidates = await normalizeHits({
       hits: [
         hitFor(join(EVENTS, 'event-a.md')),
@@ -219,10 +219,10 @@ describe('normalizeHits over event-kind records', () => {
     });
 
     const byTitle = new Map(candidates.map((candidate) => [candidate.title, candidate.occurrences]));
-    // event-a and event-b share owner/repo-x + observation (group size 2); event-c is alone in owner/repo-y + mistake.
+    // event-a and event-b share owner/repo-x (group size 2); event-c is alone in owner/repo-y.
     expect(byTitle.get('Noticed a flaky retry under fake timers')).toBe(2);
-    expect(byTitle.get('Another observation in the same repo and type')).toBe(2);
-    expect(byTitle.get('A mistake in a different repo')).toBe(1);
+    expect(byTitle.get('Another observation in the same repo')).toBe(2);
+    expect(byTitle.get('An event in a different repo')).toBe(1);
   });
 
   it('stamps a lone no-repo event with occurrences 1', async () => {
@@ -236,7 +236,7 @@ describe('normalizeHits over event-kind records', () => {
     expect(candidates[0]?.occurrences).toBe(1);
   });
 
-  it('groups two no-repo events of the same type into a shared empty-repo recurrence group', async () => {
+  it('groups two no-repo events into a shared empty-repo recurrence group', async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(EVENTS, 'event-no-repo-a.md')), hitFor(join(EVENTS, 'event-no-repo-b.md'))],
       filters: {},
@@ -246,6 +246,16 @@ describe('normalizeHits over event-kind records', () => {
     const byTitle = new Map(candidates.map((candidate) => [candidate.title, candidate.occurrences]));
     expect(byTitle.get('An observation captured outside a git remote')).toBe(2);
     expect(byTitle.get('Another observation captured outside a git remote')).toBe(2);
+  });
+
+  it('keeps only events whose extra type matches the --type filter, dropping events with no extra type', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-typed-a.md')), hitFor(join(EVENTS, 'event-c.md'))],
+      filters: { type: 'observation' },
+      now: NOW,
+    });
+
+    expect(candidates.map((candidate) => candidate.title)).toEqual(['A typed event carrying a Diataxis label']);
   });
 });
 

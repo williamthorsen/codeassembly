@@ -1,4 +1,4 @@
-import type { AliasMap, Schema } from '@codeassembly/kb';
+import type { AliasMap } from '@codeassembly/kb';
 import { defaultSchema } from '@codeassembly/kb';
 import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter';
 import { parseAliases } from '@codeassembly/kb/tags';
@@ -26,6 +26,35 @@ aliases:
 `);
 
 describe(prepareNote, () => {
+  it('writes recordType: assertion as the stored discriminant', () => {
+    const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.frontmatter.recordType).toBe('assertion');
+    }
+  });
+
+  it('writes the Diátaxis --type label into extra, not a top-level field', () => {
+    const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.frontmatter.extra.type).toBe('howto');
+      expect(result.prepared.frontmatter).not.toHaveProperty('type');
+    }
+  });
+
+  it('omits the extra type field when --type is not supplied', () => {
+    const args: ParsedArgs = { ...baseArgs, type: null };
+    const result = prepareNote({ args, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.frontmatter.extra).not.toHaveProperty('type');
+    }
+  });
+
   it('fills in UTC created and updated dates from now', () => {
     const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
 
@@ -93,22 +122,12 @@ describe(prepareNote, () => {
       const parsed = parseNoteContent({ content: rendered });
       expect(parsed.frontmatter).toEqual({
         title: 'Working with Node streams',
-        type: 'howto',
+        recordType: 'assertion',
         created: TODAY,
         updated: TODAY,
         tags: ['nodejs', 'streams'],
-        extra: { 'last-verified': '2026-01-15' },
+        extra: { type: 'howto', 'last-verified': '2026-01-15' },
       });
-    }
-  });
-
-  it('refuses to proceed when type is not in the schema vocabulary', () => {
-    const args: ParsedArgs = { ...baseArgs, type: 'rant' };
-    const result = prepareNote({ args, schema: defaultSchema, aliases: emptyAliases, now: NOW });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.findings.some((finding) => finding.rule === 'frontmatter.type')).toBe(true);
     }
   });
 
@@ -119,16 +138,6 @@ describe(prepareNote, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.findings.some((finding) => finding.rule === 'frontmatter.date')).toBe(true);
-    }
-  });
-
-  it('refuses to proceed when a per-KB schema narrows types and the input type is out of vocabulary', () => {
-    const narrowed: Schema = { ...defaultSchema, types: ['concept', 'reference'] };
-    const result = prepareNote({ args: baseArgs, schema: narrowed, aliases: emptyAliases, now: NOW });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.findings.some((finding) => finding.rule === 'frontmatter.type')).toBe(true);
     }
   });
 });

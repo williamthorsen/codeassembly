@@ -59,7 +59,7 @@ describe('frontmatter round-trip idempotence', () => {
     (keyword) => {
       const frontmatter: Frontmatter = {
         title: keyword,
-        type: 'howto',
+        recordType: 'assertion',
         created: '2026-05-01',
         updated: '2026-05-14',
         tags: [],
@@ -101,7 +101,7 @@ describe('frontmatter round-trip idempotence', () => {
   ])('preserves a string-typed extra field whose value is the YAML-ambiguous literal %s', (literal) => {
     const frontmatter: Frontmatter = {
       title: 'a note',
-      type: 'howto',
+      recordType: 'assertion',
       created: '2026-05-01',
       updated: '2026-05-14',
       tags: [],
@@ -125,7 +125,7 @@ describe('frontmatter round-trip idempotence', () => {
   ])('preserves a multi-line string-typed extra field with %s', (_label, value) => {
     const frontmatter: Frontmatter = {
       title: 'a note',
-      type: 'howto',
+      recordType: 'assertion',
       created: '2026-05-01',
       updated: '2026-05-14',
       tags: [],
@@ -146,7 +146,7 @@ describe('frontmatter round-trip idempotence', () => {
     (count) => {
       const frontmatter: Frontmatter = {
         title: 'a note',
-        type: 'howto',
+        recordType: 'assertion',
         created: '2026-05-01',
         updated: '2026-05-14',
         tags: [],
@@ -163,7 +163,7 @@ describe('frontmatter round-trip idempotence', () => {
   it.each([true, false])('preserves a boolean extra field whose value is %s', (flag) => {
     const frontmatter: Frontmatter = {
       title: 'a note',
-      type: 'howto',
+      recordType: 'assertion',
       created: '2026-05-01',
       updated: '2026-05-14',
       tags: [],
@@ -179,7 +179,7 @@ describe('frontmatter round-trip idempotence', () => {
   it('preserves a null extra field', () => {
     const frontmatter: Frontmatter = {
       title: 'a note',
-      type: 'howto',
+      recordType: 'assertion',
       created: '2026-05-01',
       updated: '2026-05-14',
       tags: [],
@@ -196,7 +196,7 @@ describe('frontmatter round-trip idempotence', () => {
     const meta = { nested: 'value', count: 3, flags: [true, false] };
     const frontmatter: Frontmatter = {
       title: 'a note',
-      type: 'howto',
+      recordType: 'assertion',
       created: '2026-05-01',
       updated: '2026-05-14',
       tags: [],

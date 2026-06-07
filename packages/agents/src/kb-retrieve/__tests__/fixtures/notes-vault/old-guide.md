@@ -1,5 +1,6 @@
 ---
 title: Old deployment guide
+recordType: assertion
 type: howto
 created: 2025-06-01
 updated: 2025-06-01
