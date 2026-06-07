@@ -22,7 +22,7 @@ describe(normalizeHits, () => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0]).toMatchObject({
       title: 'Current deployment guide',
-      type: 'howto',
+      diataxis: 'howto',
       tags: ['deploy', 'stable'],
     });
   });
@@ -111,15 +111,15 @@ describe(normalizeHits, () => {
     });
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0]?.type).toBeNull();
+    expect(candidates[0]?.diataxis).toBeNull();
     expect(candidates[0]?.title).toBe('malformed.md');
     expect(candidates[0]?.diagnostic).toMatch(/malformed/);
   });
 
-  it('keeps only notes matching the --type filter', async () => {
+  it('keeps only notes matching the --diataxis filter', async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(NOTES_VAULT, 'streams.md')), hitFor(join(NOTES_VAULT, 'sub', 'hooks.md'))],
-      filters: { type: 'reference' },
+      filters: { diataxis: 'reference' },
       now: NOW,
     });
 
@@ -248,10 +248,10 @@ describe('normalizeHits over event records', () => {
     expect(byTitle.get('Another observation captured outside a git remote')).toBe(2);
   });
 
-  it('keeps only events whose extra type matches the --type filter, dropping events with no extra type', async () => {
+  it('keeps only events whose extra diataxis matches the --diataxis filter, dropping events with no extra diataxis', async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(EVENTS, 'event-typed-a.md')), hitFor(join(EVENTS, 'event-c.md'))],
-      filters: { type: 'observation' },
+      filters: { diataxis: 'observation' },
       now: NOW,
     });
 

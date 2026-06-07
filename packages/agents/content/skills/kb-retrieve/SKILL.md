@@ -14,16 +14,16 @@ The split is deliberate: the helper is wide and mechanical; the ranking is narro
 
 ## Arguments
 
-| Argument    | Description                                                                              | Required |
-| ----------- | ---------------------------------------------------------------------------------------- | -------- |
-| `<query>`   | The free-text search query. All non-flag tokens are joined into the query string.        | Yes      |
-| `--all-kbs` | Widen the search to every registered knowledge base, not just the default scope.         | No       |
-| `--store`   | Scope the search to a single registered knowledge base by name (alias: `--kb`).          | No       |
-| `--type`    | Keep only notes whose frontmatter `type` matches (e.g. `howto`, `concept`, `reference`). | No       |
-| `--tag`     | Keep only notes carrying this tag (canonical or alias form), matched case-insensitively. | No       |
-| `--folder`  | Keep only notes whose path contains this folder segment.                                 | No       |
+| Argument     | Description                                                                              | Required |
+| ------------ | ---------------------------------------------------------------------------------------- | -------- |
+| `<query>`    | The free-text search query. All non-flag tokens are joined into the query string.        | Yes      |
+| `--all-kbs`  | Widen the search to every registered knowledge base, not just the default scope.         | No       |
+| `--store`    | Scope the search to a single registered knowledge base by name (alias: `--kb`).          | No       |
+| `--diataxis` | Keep only notes whose `diataxis` facet matches (e.g. `howto`, `concept`, `reference`).   | No       |
+| `--tag`      | Keep only notes carrying this tag (canonical or alias form), matched case-insensitively. | No       |
+| `--folder`   | Keep only notes whose path contains this folder segment.                                 | No       |
 
-A value-bearing flag accepts both `--type howto` and `--type=howto`.
+A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`.
 
 ### Scope
 
@@ -43,25 +43,25 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 Invoke the co-located bundled helper with `node`, passing the query and any flags through verbatim:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-retrieve.mjs" <query> [--all-kbs] [--store <name>] [--type <type>] [--tag <tag>] [--folder <folder>]
+node "$(dirname "$SKILL_PATH")/kb-retrieve.mjs" <query> [--all-kbs] [--store <name>] [--diataxis <label>] [--tag <tag>] [--folder <folder>]
 ```
 
 Or, when the skill directory is known:
 
 ```bash
-node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup" --type howto
+node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup" --diataxis howto
 ```
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of candidate notes, each with `path`, `title`, `type`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. An event candidate also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched events share its `repo`). These three are absent on assertion notes.
+- `candidates` — an array of candidate notes, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. An event candidate also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched events share its `repo`). These three are absent on assertion notes.
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
 
 ### 2. Rank the candidates
 
-Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag, type, and folder overlap with the query are **evidence**, not terms in a weighted sum — a note in the right folder with the wrong intent ranks below a note that directly answers the question. Read each `snippet` to judge whether the note actually addresses the query rather than merely mentioning its terms.
+Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag, Diátaxis, and folder overlap with the query are **evidence**, not terms in a weighted sum — a note in the right folder with the wrong intent ranks below a note that directly answers the question. Read each `snippet` to judge whether the note actually addresses the query rather than merely mentioning its terms.
 
 Ranking is by record type once relevance is established:
 
@@ -70,7 +70,7 @@ Ranking is by record type once relevance is established:
 
 ### 3. Present a ranked list
 
-Present the ranked notes, each showing `path`, `title`, `snippet`, and `type`. Apply these annotations:
+Present the ranked notes, each showing `path`, `title`, `snippet`, and `diataxis`. Apply these annotations:
 
 - **Stale notes** — when `lastVerifiedAgeDays` exceeds 90, annotate the note as not recently verified.
 - **Volatile notes** — when a note's `tags` include `volatile`, flag it prominently: its claims may have rotted and should be re-confirmed before use.
@@ -83,7 +83,7 @@ When the helper returns a `diagnostic` and no candidates, report the empty resul
 - `no knowledge base configured or discovered`: No `.kb/` folder was found and no registry is configured.
 - `registry invalid: …`: The only configured `kb.yaml` registry failed to load, so no knowledge base could be searched; this is a setup problem to fix, not a missing-notes outcome.
 - `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`. An empty `warnings` array is the reliable signal that the in-scope KBs were actually searched and genuinely held nothing; when `warnings` is non-empty, a registry-health problem (a malformed registry or dead KB paths) may explain the empty or partial result even though the diagnostic reads `no notes matched the query`, so read `warnings` before concluding the query simply found nothing.
-- `all matches were filtered out`: The knowledge bases were searched and found hits, but every hit was excluded by `--type`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
+- `all matches were filtered out`: The knowledge bases were searched and found hits, but every hit was excluded by `--diataxis`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
 
 ### 5. Relay registry-health warnings
 

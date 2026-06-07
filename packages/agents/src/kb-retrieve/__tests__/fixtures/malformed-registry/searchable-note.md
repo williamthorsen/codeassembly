@@ -1,6 +1,6 @@
 ---
 title: Searchable note in the malformed-registry discovered KB
-type: reference
+diataxis: reference
 tags: []
 ---
 

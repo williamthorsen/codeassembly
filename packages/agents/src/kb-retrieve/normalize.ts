@@ -12,7 +12,7 @@ const MAX_SUPERSESSION_HOPS = 32;
 /**
  * Normalizes raw ripgrep hits into the candidate table.
  *
- * Each hit's frontmatter is parsed; the `--type`, `--tag`, and `--folder` filters are applied as post-filters on the
+ * Each hit's frontmatter is parsed; the `--diataxis`, `--tag`, and `--folder` filters are applied as post-filters on the
  * parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
  * guard; and `last-verified` is converted to an age in whole days against `now`. Notes with missing or malformed
  * frontmatter degrade to a low-signal candidate carrying a diagnostic rather than being dropped.
@@ -95,8 +95,8 @@ async function parseNoteSafely(path: string): Promise<SafeParseOutcome> {
 }
 
 /**
- * Applies the mechanical `--type`, `--tag`, and `--folder` filters. A note with no parseable frontmatter fails
- * `--type` and `--tag` (it carries no typed fields) but is still subject to the path-based `--folder` filter.
+ * Applies the mechanical `--diataxis`, `--tag`, and `--folder` filters. A note with no parseable frontmatter fails
+ * `--diataxis` and `--tag` (it carries no typed fields) but is still subject to the path-based `--folder` filter.
  */
 function passesFilters(input: { note: ParsedNote; path: string; filters: RecallFilters }): boolean {
   const { note, path, filters } = input;
@@ -107,8 +107,8 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
 
   const frontmatter = note.frontmatter;
   if (
-    filters.type !== undefined &&
-    extractString(frontmatter?.extra, 'type')?.toLowerCase() !== filters.type.toLowerCase()
+    filters.diataxis !== undefined &&
+    extractString(frontmatter?.extra, 'diataxis')?.toLowerCase() !== filters.diataxis.toLowerCase()
   ) {
     return false;
   }
@@ -183,7 +183,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }):
   const repo = extractString(extra, 'repo');
 
   const title = resolveTitle({ frontmatter, summary, capturedAt, path: hit.path });
-  const type = extractString(extra, 'type');
+  const diataxis = extractString(extra, 'diataxis');
   const tags = frontmatter?.tags ?? [];
   const lastVerifiedAgeDays = computeAgeDays(extractString(extra, 'last-verified'), now);
   const supersession = await resolveSupersession({ path: hit.path, note });
@@ -191,7 +191,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }):
   const candidate: Candidate = {
     path: hit.path,
     title,
-    type,
+    diataxis,
     tags,
     snippet: hit.snippet,
     lastVerifiedAgeDays,

@@ -60,7 +60,7 @@ describe(parseArgs, () => {
       'coding',
       '--folder',
       'languages/ts',
-      '--type',
+      '--diataxis',
       'howto',
       '--title',
       'My note',
@@ -73,7 +73,7 @@ describe(parseArgs, () => {
     expect(parsed).toEqual({
       kb: 'coding',
       folder: 'languages/ts',
-      type: 'howto',
+      diataxis: 'howto',
       title: 'My note',
       tags: ['one', 'two', 'three'],
       lastVerified: '2026-01-15',
@@ -81,15 +81,15 @@ describe(parseArgs, () => {
   });
 
   it('parses flags with inline = values', () => {
-    const parsed = parseArgs(['--type=howto', '--title=Inline', '--tags=a,b']);
+    const parsed = parseArgs(['--diataxis=howto', '--title=Inline', '--tags=a,b']);
 
-    expect(parsed.type).toBe('howto');
+    expect(parsed.diataxis).toBe('howto');
     expect(parsed.title).toBe('Inline');
     expect(parsed.tags).toEqual(['a', 'b']);
   });
 
   it('defaults optional flags to null or an empty list', () => {
-    const parsed = parseArgs(['--type', 'concept', '--title', 'Stub']);
+    const parsed = parseArgs(['--diataxis', 'concept', '--title', 'Stub']);
 
     expect(parsed.kb).toBeNull();
     expect(parsed.folder).toBeNull();
@@ -97,22 +97,26 @@ describe(parseArgs, () => {
     expect(parsed.lastVerified).toBeNull();
   });
 
-  it('defaults --type to null when omitted', () => {
+  it('defaults --diataxis to null when omitted', () => {
     const parsed = parseArgs(['--title', 'Stub']);
 
-    expect(parsed.type).toBeNull();
+    expect(parsed.diataxis).toBeNull();
   });
 
   it('throws when --title is missing', () => {
-    expect(() => parseArgs(['--type', 'howto'])).toThrow(/--title is required/);
+    expect(() => parseArgs(['--diataxis', 'howto'])).toThrow(/--title is required/);
   });
 
   it('throws when a value-bearing flag has no value', () => {
-    expect(() => parseArgs(['--type'])).toThrow(/--type requires a value/);
+    expect(() => parseArgs(['--diataxis'])).toThrow(/--diataxis requires a value/);
   });
 
   it('throws on an unknown flag', () => {
-    expect(() => parseArgs(['--type', 'howto', '--title', 'X', '--bogus'])).toThrow(/unknown flag/);
+    expect(() => parseArgs(['--diataxis', 'howto', '--title', 'X', '--bogus'])).toThrow(/unknown flag/);
+  });
+
+  it('rejects the retired --type flag as unknown', () => {
+    expect(() => parseArgs(['--type', 'howto', '--title', 'X'])).toThrow(/unknown flag/);
   });
 });
 
@@ -121,7 +125,7 @@ describe(runAdd, () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'howto', '--title', 'Working with streams', '--tags', 'node,streams'],
+      argv: ['--diataxis', 'howto', '--title', 'Working with streams', '--tags', 'node,streams'],
       stdin: bodyStream('How to work with Node streams.\n'),
       startDir: kbPath,
       now: NOW,
@@ -144,7 +148,7 @@ describe(runAdd, () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'concept', '--title', 'IO', '--folder', 'languages/typescript'],
+      argv: ['--diataxis', 'concept', '--title', 'IO', '--folder', 'languages/typescript'],
       stdin: bodyStream('A short note.\n'),
       startDir: kbPath,
       now: NOW,
@@ -161,7 +165,7 @@ describe(runAdd, () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'reference', '--title', 'Stub'],
+      argv: ['--diataxis', 'reference', '--title', 'Stub'],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
@@ -177,7 +181,7 @@ describe(runAdd, () => {
 
   it('returns no-kb-resolvable when no .kb/ and no registry default exist', async () => {
     const result = await runAdd({
-      argv: ['--type', 'howto', '--title', 'Floating'],
+      argv: ['--diataxis', 'howto', '--title', 'Floating'],
       stdin: bodyStream(''),
       startDir: '/',
       now: NOW,
@@ -194,7 +198,7 @@ describe(runAdd, () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--kb', 'nonexistent', '--type', 'howto', '--title', 'X'],
+      argv: ['--kb', 'nonexistent', '--diataxis', 'howto', '--title', 'X'],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
@@ -208,11 +212,11 @@ describe(runAdd, () => {
     }
   });
 
-  it('writes recordType: assertion and the Diátaxis --type label into extra', async () => {
+  it('writes recordType: assertion and the Diátaxis --diataxis label into extra', async () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'howto', '--title', 'Labeled'],
+      argv: ['--diataxis', 'howto', '--title', 'Labeled'],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
@@ -222,14 +226,14 @@ describe(runAdd, () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.frontmatter.recordType).toBe('assertion');
-      expect(result.frontmatter.extra.type).toBe('howto');
+      expect(result.frontmatter.extra.diataxis).toBe('howto');
       const written = await readFile(result.path, 'utf8');
       expect(written).toMatch(/^recordType: assertion$/m);
-      expect(written).toContain('type: howto');
+      expect(written).toContain('diataxis: howto');
     }
   });
 
-  it('writes a note even when --type is omitted', async () => {
+  it('writes a note even when --diataxis is omitted', async () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
@@ -243,7 +247,7 @@ describe(runAdd, () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.frontmatter.recordType).toBe('assertion');
-      expect(result.frontmatter.extra).not.toHaveProperty('type');
+      expect(result.frontmatter.extra).not.toHaveProperty('diataxis');
     }
   });
 
@@ -252,7 +256,7 @@ describe(runAdd, () => {
     await writeFile(join(kbPath, 'Existing.md'), 'pre-existing\n', 'utf8');
 
     const result = await runAdd({
-      argv: ['--type', 'howto', '--title', 'Existing'],
+      argv: ['--diataxis', 'howto', '--title', 'Existing'],
       stdin: bodyStream('new body\n'),
       startDir: kbPath,
       now: NOW,
@@ -282,7 +286,7 @@ describe(runAdd, () => {
     );
 
     const result = await runAdd({
-      argv: ['--kb', 'locked', '--type', 'howto', '--title', 'Refused'],
+      argv: ['--kb', 'locked', '--diataxis', 'howto', '--title', 'Refused'],
       stdin: bodyStream(''),
       // startDir avoids the KB so discovery does not produce a writable fallback.
       startDir: homeDir,
@@ -305,7 +309,7 @@ describe(runAdd, () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'howto'],
+      argv: ['--diataxis', 'howto'],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
@@ -322,7 +326,7 @@ describe(runAdd, () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
-      argv: ['--type', 'howto', '--title', 'foo/bar'],
+      argv: ['--diataxis', 'howto', '--title', 'foo/bar'],
       stdin: bodyStream(''),
       startDir: kbPath,
       now: NOW,
@@ -351,7 +355,7 @@ describe(runAdd, () => {
     try {
       const result = await runAdd({
         // `nodejs` would canonicalize to `node` if the aliases loaded; with the empty-map fallback it stays as-is.
-        argv: ['--type', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
+        argv: ['--diataxis', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
         stdin: bodyStream('Body.\n'),
         startDir: kbPath,
         now: NOW,
@@ -391,7 +395,7 @@ describe(runAdd, () => {
 
     const { stdout, exitCode } = await runChild({
       command: process.execPath,
-      args: [bundlePath, '--type', 'howto', '--title', 'Subprocess test'],
+      args: [bundlePath, '--diataxis', 'howto', '--title', 'Subprocess test'],
       stdinBody: 'Body from stdin.\n',
       cwd: kbPath,
       env: { ...process.env, HOME: kbPath },

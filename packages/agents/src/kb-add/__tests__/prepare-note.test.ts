@@ -13,7 +13,7 @@ const TODAY = '2026-05-24';
 const baseArgs: ParsedArgs = {
   kb: null,
   folder: null,
-  type: 'howto',
+  diataxis: 'howto',
   title: 'Working with Node streams',
   tags: ['streams'],
   lastVerified: null,
@@ -35,23 +35,23 @@ describe(prepareNote, () => {
     }
   });
 
-  it('writes the Diátaxis --type label into extra, not a top-level field', () => {
+  it('writes the Diátaxis --diataxis label into extra, not a top-level field', () => {
     const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.prepared.frontmatter.extra.type).toBe('howto');
-      expect(result.prepared.frontmatter).not.toHaveProperty('type');
+      expect(result.prepared.frontmatter.extra.diataxis).toBe('howto');
+      expect(result.prepared.frontmatter).not.toHaveProperty('diataxis');
     }
   });
 
-  it('omits the extra type field when --type is not supplied', () => {
-    const args: ParsedArgs = { ...baseArgs, type: null };
+  it('omits the extra diataxis field when --diataxis is not supplied', () => {
+    const args: ParsedArgs = { ...baseArgs, diataxis: null };
     const result = prepareNote({ args, schema: defaultSchema, aliases: emptyAliases, now: NOW });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.prepared.frontmatter.extra).not.toHaveProperty('type');
+      expect(result.prepared.frontmatter.extra).not.toHaveProperty('diataxis');
     }
   });
 
@@ -126,7 +126,7 @@ describe(prepareNote, () => {
         created: TODAY,
         updated: TODAY,
         tags: ['nodejs', 'streams'],
-        extra: { type: 'howto', 'last-verified': '2026-01-15' },
+        extra: { diataxis: 'howto', 'last-verified': '2026-01-15' },
       });
     }
   });

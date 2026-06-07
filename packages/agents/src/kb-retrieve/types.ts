@@ -10,8 +10,8 @@ export interface Candidate {
   path: string;
   /** Note title from frontmatter, or the file basename when frontmatter is missing or malformed. */
   title: string;
-  /** The note's Diátaxis `type` facet from its extra fields, or `null` when absent. */
-  type: string | null;
+  /** The note's Diátaxis facet (the `diataxis` extra field), or `null` when absent. */
+  diataxis: string | null;
   /** Canonical tags from frontmatter. */
   tags: string[];
   /** A context snippet drawn from the ripgrep match. */
@@ -47,10 +47,10 @@ export interface RawHit {
   snippet: string;
 }
 
-/** The mechanical filters applied to the candidate set, parsed from `--type`, `--tag`, `--folder`. */
+/** The mechanical filters applied to the candidate set, parsed from `--diataxis`, `--tag`, `--folder`. */
 export interface RecallFilters {
-  /** Restrict to notes whose Diátaxis `type` facet (in extra) matches, case-insensitively. */
-  type?: string;
+  /** Restrict to notes whose Diátaxis facet (the `diataxis` extra field) matches, case-insensitively. */
+  diataxis?: string;
   /** Restrict to notes carrying this tag (canonical or alias), case-insensitively. */
   tag?: string;
   /** Restrict to notes whose path contains this folder segment, case-insensitively. */
