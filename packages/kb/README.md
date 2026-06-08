@@ -88,14 +88,14 @@ A record's family is the stored `recordType` discriminant, valued against the sc
 {
   recordTypes: {
     assertion: {
-      required: ['title', 'created', 'updated', 'tags'],
-      optional: ['last-verified', 'applies-to', 'sources', 'supersedes', 'superseded-by'],
+      required: ['created', 'tags', 'title', 'updated'],
+      optional: ['applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
       recall: 'freshness',
       immutable: false,
     },
     event: {
-      required: ['id', 'captured-at', 'session', 'cwd', 'summary'],
-      optional: ['repo', 'skill', 'model', 'tags', 'correction'],
+      required: ['captured-at', 'cwd', 'id', 'session', 'summary'],
+      optional: ['correction', 'model', 'repo', 'skill', 'tags'],
       recall: 'recurrence-recency',
       immutable: true,
     },
@@ -108,15 +108,16 @@ A record's family is the stored `recordType` discriminant, valued against the sc
 ```yaml
 # .kb/schema.yaml
 recordTypes:
-  event:
-    immutable: true
-    recall: recurrence-recency
-    required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, tags, correction]
   assertion:
+    required: [created, tags, title, updated]
+    optional: [applies-to, diataxis, last-verified, sources, superseded-by, supersedes]
     recall: freshness
-    required: [title, created, updated, tags]
-    optional: [last-verified, applies-to, sources, supersedes, superseded-by]
+    immutable: false
+  event:
+    required: [captured-at, cwd, id, session, summary]
+    optional: [correction, model, repo, skill, tags]
+    recall: recurrence-recency
+    immutable: true
 ```
 
 Validation reads a record type's required set directly via `resolveRequiredForRecordType(schema, recordType)`. A malformed or structurally invalid `.kb/schema.yaml` throws at load time, naming the offending file.

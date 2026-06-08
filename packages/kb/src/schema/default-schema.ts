@@ -8,15 +8,15 @@ import type { RecordTypeSchema, Schema } from '../types.ts';
 // `Object.freeze` a downstream consumer could mutate the shared arrays and corrupt every later reader.
 
 const assertion: RecordTypeSchema = {
-  required: Object.freeze(['title', 'created', 'updated', 'tags']),
-  optional: Object.freeze(['last-verified', 'applies-to', 'sources', 'supersedes', 'superseded-by']),
+  required: Object.freeze(['created', 'tags', 'title', 'updated']),
+  optional: Object.freeze(['applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes']),
   recall: 'freshness',
   immutable: false,
 };
 
 const event: RecordTypeSchema = {
-  required: Object.freeze(['id', 'captured-at', 'session', 'cwd', 'summary']),
-  optional: Object.freeze(['repo', 'skill', 'model', 'tags', 'correction']),
+  required: Object.freeze(['captured-at', 'cwd', 'id', 'session', 'summary']),
+  optional: Object.freeze(['correction', 'model', 'repo', 'skill', 'tags']),
   recall: 'recurrence-recency',
   immutable: true,
 };
