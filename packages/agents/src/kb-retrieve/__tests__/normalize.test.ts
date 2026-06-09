@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 
+import type { RecordTypeSchema, Schema } from '@codeassembly/kb';
 import { describe, expect, it } from 'vitest';
 
 import { normalizeHits } from '../normalize.ts';
@@ -259,7 +260,105 @@ describe('normalizeHits over event records', () => {
   });
 });
 
+describe('normalizeHits with a schema-driven recall policy', () => {
+  const CUSTOM_RECORD = join(NORMALIZE, 'custom-record.md');
+
+  it('treats an event record as freshness-ranked when its schema declares recall: freshness', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-a.md'))],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({ event: recall('freshness') }),
+    });
+
+    // The recall knob, flipped: an event whose record type declares freshness sheds its recurrence signals.
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+    expect(candidates[0]?.repo).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBeUndefined();
+    expect(candidates[0]?.title).toBe('event-a.md');
+  });
+
+  it('emits recurrence signals for a custom record type whose policy is recurrence-recency', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(CUSTOM_RECORD)],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({ insight: recall('recurrence-recency') }),
+    });
+
+    expect(candidates[0]?.capturedAt).toBe('2026-05-22T10:00:00.000Z');
+    expect(candidates[0]?.repo).toBe('owner/repo-custom');
+    expect(candidates[0]?.occurrences).toBe(1);
+    expect(candidates[0]?.title).toBe('A custom insight surfaced during review');
+    expect(candidates[0]?.lastVerifiedAgeDays).toBeNull();
+  });
+
+  it('emits a freshness age for a custom record type whose policy is freshness', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(CUSTOM_RECORD)],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({ insight: recall('freshness') }),
+    });
+
+    // 2026-04-10 to 2026-05-01 is 21 days.
+    expect(candidates[0]?.lastVerifiedAgeDays).toBe(21);
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+    expect(candidates[0]?.title).toBe('A custom insight record');
+  });
+
+  it('falls back to freshness for an unrecognized recall policy', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(CUSTOM_RECORD)],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({ insight: recall('hand-curated') }),
+    });
+
+    expect(candidates[0]?.lastVerifiedAgeDays).toBe(21);
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+  });
+
+  it('falls back to freshness for a record type the schema does not declare', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-a.md'))],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({}),
+    });
+
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBeUndefined();
+  });
+
+  it('emits no ranking signal for a recurrence-recency record that lacks captured-at', async () => {
+    // streams.md carries neither captured-at nor last-verified; under recurrence-recency it has no recency timestamp
+    // to rank on, and freshness is suppressed — the intentional "no signal" edge.
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NOTES_VAULT, 'streams.md'))],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({ assertion: recall('recurrence-recency') }),
+    });
+
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+    expect(candidates[0]?.repo).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBeUndefined();
+    expect(candidates[0]?.lastVerifiedAgeDays).toBeNull();
+  });
+});
+
 /** Builds a `RawHit` for a fixture note path. */
 function hitFor(path: string): RawHit {
   return { path, kbName: 'fixtures', kbPath: NOTES_VAULT, snippet: 'snippet text' };
+}
+
+/** Builds a minimal record-type schema declaring only a recall policy. */
+function recall(policy: string): RecordTypeSchema {
+  return { required: [], optional: [], recall: policy, immutable: false };
+}
+
+/** Wraps a record-type vocabulary as a schema keyed to the fixture KB path used by `hitFor`. */
+function schemasFor(recordTypes: Record<string, RecordTypeSchema>): ReadonlyMap<string, Schema> {
+  return new Map([[NOTES_VAULT, { recordTypes }]]);
 }

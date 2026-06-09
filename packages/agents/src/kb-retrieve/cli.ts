@@ -1,13 +1,17 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+
+import type { Schema } from '@codeassembly/kb/schema';
+import { defaultSchema, loadSchema } from '@codeassembly/kb/schema';
 
 import { normalizeHits } from './normalize.ts';
 import { recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
-import type { RecallFilters, RetrieveResult, ScopedKb } from './types.ts';
+import type { RawHit, RecallFilters, RetrieveResult, ScopedKb } from './types.ts';
 
 /** Parsed command-line invocation of the kb-retrieve helper. */
 export interface ParsedArgs {
@@ -184,8 +188,9 @@ export async function runRetrieve(input: {
   }
 
   const { hits, missingKbs } = await recallNotes({ query, scopedKbs: inScopeKbs });
+  const { schemas, warnings: schemaWarnings } = await loadSchemasForHits({ hits, scopedKbs: inScopeKbs });
   const unreadableHitWarnings: string[] = [];
-  const candidates = await normalizeHits({ hits, filters, now: input.now, warnings: unreadableHitWarnings });
+  const candidates = await normalizeHits({ hits, filters, now: input.now, warnings: unreadableHitWarnings, schemas });
 
   // `scopedKbs` reports the KBs actually searched, so exclude any whose path was missing; the dead paths surface in
   // `warnings` instead.
@@ -194,7 +199,7 @@ export async function runRetrieve(input: {
   const result: RetrieveResult = {
     candidates,
     scopedKbs: searchedKbs,
-    warnings: [...composeWarnings({ registryError, missingKbs }), ...unreadableHitWarnings],
+    warnings: [...composeWarnings({ registryError, missingKbs }), ...schemaWarnings, ...unreadableHitWarnings],
   };
   if (candidates.length === 0) {
     // Distinguish a query that found nothing from a query that found hits which were then excluded by
@@ -202,6 +207,42 @@ export async function runRetrieve(input: {
     result.diagnostic = hits.length === 0 ? 'no notes matched the query' : 'all matches were filtered out';
   }
   return result;
+}
+
+/**
+ * Loads the effective schema for every KB that produced a hit, keyed by KB root path, so normalization can drive each
+ * note's ranking signals from its record type's declared `recall` policy. Only KBs with hits are read. A KB whose
+ * `.kb/schema.yaml` is malformed degrades to the bundled default schema and contributes a schema-health warning, so
+ * one bad schema never fails a multi-store search.
+ */
+async function loadSchemasForHits(input: {
+  hits: RawHit[];
+  scopedKbs: ScopedKb[];
+}): Promise<{ schemas: Map<string, Schema>; warnings: string[] }> {
+  const schemas = new Map<string, Schema>();
+  const warnings: string[] = [];
+  for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
+    try {
+      const schema = await loadSchema({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
+      schemas.set(kbPath, schema);
+    } catch (error) {
+      schemas.set(kbPath, defaultSchema);
+      warnings.push(formatSchemaInvalid({ kbPath, scopedKbs: input.scopedKbs, error }));
+    }
+  }
+  return { schemas, warnings };
+}
+
+/**
+ * Phrases the schema-health warning for a KB whose `.kb/schema.yaml` could not be loaded. A named registry entry
+ * reports its name; a `.kb/`-discovered KB (no registry name) reports its path.
+ */
+function formatSchemaInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; error: unknown }): string {
+  const name = input.scopedKbs.find((kb) => kb.path === input.kbPath)?.name ?? null;
+  const message = input.error instanceof Error ? input.error.message : String(input.error);
+  return name === null
+    ? `discovered KB schema invalid at ${input.kbPath}: ${message}`
+    : `registry KB "${name}" schema invalid: ${message}`;
 }
 
 /**
