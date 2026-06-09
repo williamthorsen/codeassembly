@@ -355,7 +355,7 @@ function hitFor(path: string): RawHit {
 
 /** Builds a minimal record-type schema declaring only a recall policy. */
 function recall(policy: string): RecordTypeSchema {
-  return { required: [], optional: [], recall: policy, immutable: false };
+  return { required: [], optional: [], recall: policy };
 }
 
 /** Wraps a record-type vocabulary as a schema keyed to the fixture KB path used by `hitFor`. */
