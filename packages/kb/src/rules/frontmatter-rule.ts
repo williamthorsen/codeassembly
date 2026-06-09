@@ -138,6 +138,11 @@ function resolveRequired(schema: Schema, recordType: unknown): readonly string[]
   return resolveRequiredForRecordType(schema, recordType) ?? [];
 }
 
+/** Coerces a scalar date value to a string. */
+function toDateString(value: unknown): string {
+  return typeof value === 'string' ? value : String(value);
+}
+
 /** Validate that a value is a real UTC `YYYY-MM-DD` calendar date; returns an error message or `null`. */
 function validateDate(value: string): string | null {
   if (!DATE_PATTERN.test(value)) {
@@ -154,11 +159,6 @@ function validateDate(value: string): string | null {
     return `"${value}" is not a real calendar date`;
   }
   return null;
-}
-
-/** Coerces a scalar date value to a string. */
-function toDateString(value: unknown): string {
-  return typeof value === 'string' ? value : String(value);
 }
 
 // endregion | Helpers

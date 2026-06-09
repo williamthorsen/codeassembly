@@ -11,12 +11,6 @@ import { frontmatterRule } from '../frontmatter-rule.ts';
 
 const RULE_CASES_DIR = join(import.meta.dirname, 'fixtures', 'rule-cases');
 
-async function checkFixture(name: string): Promise<Finding[]> {
-  const content = await readFile(join(RULE_CASES_DIR, `${name}.md`), 'utf8');
-  const { note, document } = parseNoteWithDocument(content, `${name}.md`);
-  return frontmatterRule.check({ note, document, schema: defaultSchema });
-}
-
 describe('frontmatterRule', () => {
   it('emits frontmatter.missing when a note has no frontmatter block', async () => {
     const findings = await checkFixture('missing-frontmatter');
@@ -237,3 +231,13 @@ describe('frontmatterRule across record types', () => {
     expect(recordTypeFinding?.message).toContain('postmortem');
   });
 });
+
+// region | Helpers
+
+async function checkFixture(name: string): Promise<Finding[]> {
+  const content = await readFile(join(RULE_CASES_DIR, `${name}.md`), 'utf8');
+  const { note, document } = parseNoteWithDocument(content, `${name}.md`);
+  return frontmatterRule.check({ note, document, schema: defaultSchema });
+}
+
+// endregion | Helpers

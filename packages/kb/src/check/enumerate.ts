@@ -44,6 +44,23 @@ export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }
 
 // region | Helpers
 
+/**
+ * Derives the top-level directory names to descend into from the targets' leading literal segments. A target whose
+ * first segment is a literal (`content/**\/*.md` → `content`) contributes that name; a target with no leading literal
+ * (a glob-first pattern like `**\/*.md` or `*.md`) forces a full walk, signalled by returning `null`.
+ */
+function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string> | null {
+  const dirs = new Set<string>();
+  for (const target of targets) {
+    const firstSegment = target.split('/')[0] ?? '';
+    if (firstSegment === '' || isGlobSegment(firstSegment)) {
+      return null;
+    }
+    dirs.add(firstSegment);
+  }
+  return dirs;
+}
+
 async function walk(input: {
   root: string;
   dir: string;
@@ -89,23 +106,6 @@ async function walk(input: {
       process.stderr.write(`kb: warning: could not read note ${absolutePath}; skipping: ${message}\n`);
     }
   }
-}
-
-/**
- * Derives the top-level directory names to descend into from the targets' leading literal segments. A target whose
- * first segment is a literal (`content/**\/*.md` → `content`) contributes that name; a target with no leading literal
- * (a glob-first pattern like `**\/*.md` or `*.md`) forces a full walk, signalled by returning `null`.
- */
-function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string> | null {
-  const dirs = new Set<string>();
-  for (const target of targets) {
-    const firstSegment = target.split('/')[0] ?? '';
-    if (firstSegment === '' || isGlobSegment(firstSegment)) {
-      return null;
-    }
-    dirs.add(firstSegment);
-  }
-  return dirs;
 }
 
 // endregion | Helpers

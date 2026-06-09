@@ -3,10 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { parseNoteContent } from '../../frontmatter/parse-note.ts';
 import { buildVaultIndex } from '../build-vault-index.ts';
 
-function note(path: string) {
-  return parseNoteContent({ content: '# body', path });
-}
-
 describe(buildVaultIndex, () => {
   it('returns an empty index for no notes', () => {
     expect(buildVaultIndex([])).toEqual(new Map());
@@ -27,3 +23,11 @@ describe(buildVaultIndex, () => {
     expect(index.get('Deep note')).toEqual(new Set(['a/b/c/Deep note.md']));
   });
 });
+
+// region | Helpers
+
+function note(path: string) {
+  return parseNoteContent({ content: '# body', path });
+}
+
+// endregion | Helpers

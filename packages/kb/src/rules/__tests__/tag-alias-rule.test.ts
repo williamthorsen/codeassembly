@@ -16,12 +16,6 @@ const ALIASES: AliasMap = new Map([
   ['reactjs', 'react'],
 ]);
 
-async function checkFixture(name: string, aliases?: AliasMap): Promise<Finding[]> {
-  const content = await readFile(join(RULE_CASES_DIR, `${name}.md`), 'utf8');
-  const { note, document } = parseNoteWithDocument(content, `${name}.md`);
-  return tagAliasRule.check({ note, document, schema: defaultSchema, ...(aliases !== undefined && { aliases }) });
-}
-
 describe('tagAliasRule', () => {
   it('emits a warning for each aliased tag in YAML-list order', async () => {
     const findings = await checkFixture('aliased-tag', ALIASES);
@@ -96,3 +90,13 @@ describe('tagAliasRule', () => {
     expect(findings).toEqual([]);
   });
 });
+
+// region | Helpers
+
+async function checkFixture(name: string, aliases?: AliasMap): Promise<Finding[]> {
+  const content = await readFile(join(RULE_CASES_DIR, `${name}.md`), 'utf8');
+  const { note, document } = parseNoteWithDocument(content, `${name}.md`);
+  return tagAliasRule.check({ note, document, schema: defaultSchema, ...(aliases !== undefined && { aliases }) });
+}
+
+// endregion | Helpers

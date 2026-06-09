@@ -14,22 +14,6 @@ import { wikilinksRule } from '../wikilinks-rule.ts';
 const PARITY_DIR = join(import.meta.dirname, 'fixtures', 'parity-cross-note');
 const NOTES_DIR = join(PARITY_DIR, 'notes');
 
-/** Recursively collect vault-relative `.md` paths under `dir`, skipping dot-dirs and `node_modules`. */
-async function collectNotePaths(root: string, dir: string): Promise<string[]> {
-  const entries = await readdir(dir, { withFileTypes: true });
-  const paths: string[] = [];
-  for (const entry of entries) {
-    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      paths.push(...(await collectNotePaths(root, full)));
-    } else if (entry.name.endsWith('.md')) {
-      paths.push(relative(root, full).split(sep).join('/'));
-    }
-  }
-  return paths;
-}
-
 // `expected-findings.json` is captured from the vault's real `check-notes` `wikilinks` and `paths` rules
 // (`github.com/williamthorsen/vaults.coding`) run over this directory's `notes/` mini-vault. It is kept entirely
 // separate from the `frontmatter`/`tag-alias` parity golden in `fixtures/parity/`, so this proof and that one
@@ -61,3 +45,23 @@ describe('cross-note rules parity proof against the real check-notes golden', ()
     expect(codes).toEqual(new Set(['wikilinks.unresolved', 'wikilinks.ambiguous', 'paths.user-home']));
   });
 });
+
+// region | Helpers
+
+/** Recursively collect vault-relative `.md` paths under `dir`, skipping dot-dirs and `node_modules`. */
+async function collectNotePaths(root: string, dir: string): Promise<string[]> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  const paths: string[] = [];
+  for (const entry of entries) {
+    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      paths.push(...(await collectNotePaths(root, full)));
+    } else if (entry.name.endsWith('.md')) {
+      paths.push(relative(root, full).split(sep).join('/'));
+    }
+  }
+  return paths;
+}
+
+// endregion | Helpers
