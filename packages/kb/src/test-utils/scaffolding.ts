@@ -4,15 +4,31 @@
 // so it may freely import `node:` test scaffolding without shipping to `dist`. Consumers are the package's
 // `**/__tests__/*.test.ts` files; per-test setup that genuinely varies stays local to each test.
 
+import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import type { Finding, KbRoot } from '../types.ts';
 
+/** Stages everything under `dir` and commits it with `message`, returning the new commit SHA. */
+export function commitAll(dir: string, message: string): string {
+  runGit(dir, 'add', '--all');
+  runGit(dir, 'commit', '--quiet', '--message', message);
+  return runGit(dir, 'rev-parse', 'HEAD').trim();
+}
+
 /** Returns the user-global `kb.yaml` registry path for an injected home directory. */
 export function getRegistryPathFor(home: string): string {
   return join(home, '.agents', 'kb.yaml');
+}
+
+/** Initializes a git repository in `dir` with a deterministic identity and signing disabled, for fixture commits. */
+export function initGitRepo(dir: string): void {
+  runGit(dir, 'init', '--quiet');
+  runGit(dir, 'config', 'user.email', 'test@example.com');
+  runGit(dir, 'config', 'user.name', 'Test');
+  runGit(dir, 'config', 'commit.gpgsign', 'false');
 }
 
 /** Wraps a filesystem path as a `KbRoot` with ancestor-walk provenance, performing no I/O. */
@@ -71,6 +87,11 @@ export function normalizeFindings(findings: readonly Finding[]): Finding[] {
     if (a.rule === b.rule) return 0;
     return a.rule < b.rule ? -1 : 1;
   });
+}
+
+/** Runs `git` in `dir` with the given arguments and returns its UTF-8 stdout. For fixture setup only. */
+export function runGit(dir: string, ...args: string[]): string {
+  return execFileSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
 }
 
 /** Writes seed content to a registry path, creating its parent `.agents/` directory first. */
