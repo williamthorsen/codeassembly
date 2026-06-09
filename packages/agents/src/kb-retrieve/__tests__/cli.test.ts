@@ -10,6 +10,8 @@ const MALFORMED_NO_KB = join(FIXTURES, 'malformed-no-kb');
 const MALFORMED_REGISTRY = join(FIXTURES, 'malformed-registry');
 const DEAD_PATH_REGISTRY = join(FIXTURES, 'dead-path-registry');
 const MIXED_REGISTRY = join(FIXTURES, 'mixed-registry');
+const CUSTOM_SCHEMA_VAULT = join(FIXTURES, 'custom-schema-vault');
+const MALFORMED_SCHEMA_VAULT = join(FIXTURES, 'malformed-schema-vault');
 const NOW = new Date('2026-05-01T00:00:00Z');
 
 describe(parseArgs, () => {
@@ -218,5 +220,37 @@ describe(runRetrieve, () => {
 
     expect(result.candidates.length).toBeGreaterThan(0);
     expect(result.warnings).toEqual([]);
+  });
+
+  it('applies a discovered store schema, honoring a custom record type recall policy', async () => {
+    const result = await runRetrieve({
+      argv: ['phantomtimer'],
+      startDir: CUSTOM_SCHEMA_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
+    // The store's schema declares `insight` with recall: recurrence-recency, so it surfaces recurrence signals.
+    expect(insight?.capturedAt).toBe('2026-05-22T10:00:00.000Z');
+    expect(insight?.repo).toBe('owner/repo-insight');
+    expect(insight?.title).toBe('A recurring flaky-timer insight');
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('degrades a malformed store schema to the default and warns instead of failing the search', async () => {
+    const result = await runRetrieve({
+      argv: ['brokenschema'],
+      startDir: MALFORMED_SCHEMA_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toMatch(/schema invalid/);
+    // Degraded to the default schema: the assertion note still ranks by freshness (2026-04-20 to 2026-05-01).
+    expect(result.candidates[0]?.lastVerifiedAgeDays).toBe(11);
+    expect(result.diagnostic).toBeUndefined();
   });
 });

@@ -2,12 +2,20 @@ import { basename, dirname, isAbsolute, resolve } from 'node:path';
 
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
 import { parseNote } from '@codeassembly/kb/frontmatter';
+import type { Schema } from '@codeassembly/kb/schema';
+import { defaultSchema } from '@codeassembly/kb/schema';
 
 import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 import type { Candidate, RawHit, RecallFilters, Supersession } from './types.ts';
 
 /** Upper bound on `superseded-by` hops, guarding against a chain cycle. */
 const MAX_SUPERSESSION_HOPS = 32;
+
+// The recall-policy vocabulary kb-retrieve recognizes, mirroring the values declared in the kb package's default
+// schema. `recurrence-recency` is the only policy that diverges from the freshness default, so it is the sole literal
+// the dispatch tests against; every other value (including an unrecognized one) falls through to freshness.
+const FRESHNESS = 'freshness';
+const RECURRENCE_RECENCY = 'recurrence-recency';
 
 /**
  * Normalizes raw ripgrep hits into the candidate table.
@@ -20,12 +28,17 @@ const MAX_SUPERSESSION_HOPS = 32;
  * A hit whose file cannot be read at normalization time (deleted, permission change, dead symlink) is skipped from the
  * candidate table; its path and the underlying error are appended to `warnings` so the dropped hit is surfaced rather
  * than vanishing silently.
+ *
+ * Which ranking signals a candidate carries is driven by its record type's declared `recall` policy, looked up in the
+ * schema of the KB the hit came from (`schemas`, keyed by KB root path). A KB absent from `schemas` — and any record
+ * type the schema does not declare — resolves against the bundled default schema and the `freshness` policy.
  */
 export async function normalizeHits(input: {
   hits: RawHit[];
   filters: RecallFilters;
   now: Date;
   warnings?: string[];
+  schemas?: ReadonlyMap<string, Schema>;
 }): Promise<Candidate[]> {
   const candidates: Candidate[] = [];
   for (const hit of input.hits) {
@@ -38,7 +51,8 @@ export async function normalizeHits(input: {
     if (!passesFilters({ note, path: hit.path, filters: input.filters })) {
       continue;
     }
-    candidates.push(await toCandidate({ hit, note, now: input.now }));
+    const recall = resolveRecallPolicy({ schemas: input.schemas, hit, note });
+    candidates.push(await toCandidate({ hit, note, now: input.now, recall }));
   }
   stampOccurrences(candidates);
   return candidates;
@@ -47,9 +61,25 @@ export async function normalizeHits(input: {
 // region | Helpers
 
 /**
- * Stamps each event candidate with the size of its `repo` recurrence group: the count of query-matched events
- * sharing the same repository. Non-event candidates (no `capturedAt`) are left untouched. The group key collapses a
- * missing `repo` to an empty string so events lacking that signal still group together consistently.
+ * Resolves the recall policy that governs a hit's ranking signals: the note's `recordType` looked up in its KB's
+ * schema. Falls back to `freshness` when the KB has no entry in `schemas`, when the record type is undeclared, or
+ * when the frontmatter is unreadable (no `recordType`) — so an unrecognized or absent policy degrades to the most
+ * general signal rather than emitting none.
+ */
+function resolveRecallPolicy(input: {
+  schemas: ReadonlyMap<string, Schema> | undefined;
+  hit: RawHit;
+  note: ParsedNote;
+}): string {
+  const schema = input.schemas?.get(input.hit.kbPath) ?? defaultSchema;
+  const recordType = input.note.frontmatter?.recordType ?? '';
+  return schema.recordTypes[recordType]?.recall ?? FRESHNESS;
+}
+
+/**
+ * Stamps each recurrence-recency candidate with the size of its `repo` recurrence group: the count of query-matched
+ * records sharing the same repository. Candidates outside that policy (no `capturedAt`) are left untouched. The group
+ * key collapses a missing `repo` to an empty string so records lacking that signal still group together consistently.
  */
 function stampOccurrences(candidates: Candidate[]): void {
   const groupSizes = new Map<string, number>();
@@ -68,7 +98,7 @@ function stampOccurrences(candidates: Candidate[]): void {
   }
 }
 
-/** The recurrence grouping key for an event candidate: its `repo`, defaulting to empty when absent. */
+/** The recurrence grouping key for a recurrence-recency candidate: its `repo`, defaulting to empty when absent. */
 function recurrenceKey(candidate: Candidate): string {
   return candidate.repo ?? '';
 }
@@ -168,24 +198,29 @@ async function resolveSupersession(input: { path: string; note: ParsedNote }): P
 }
 
 /**
- * Projects a parsed note and its hit metadata onto a normalized candidate.
+ * Projects a parsed note and its hit metadata onto a normalized candidate, emitting the ranking signals its `recall`
+ * policy calls for.
  *
- * An event record (detected by a `captured-at` field in `extra`) surfaces its human-readable `summary` as the
- * display `title` rather than the ULID basename, and carries its `captured-at` and `repo` as recall signals.
+ * Under `recurrence-recency` the candidate carries its `captured-at` and `repo` as recurrence signals and surfaces its
+ * human-readable `summary` as the display `title` rather than the ULID basename; under `freshness` (and any fallback)
+ * it carries a `last-verified` age and keeps its frontmatter `title`. The two signal sets are mutually exclusive, so
+ * flipping a record type's policy in the schema flips which signals it emits.
  */
-async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }): Promise<Candidate> {
-  const { hit, note, now } = input;
+async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; recall: string }): Promise<Candidate> {
+  const { hit, note, now, recall } = input;
   const frontmatter = note.frontmatter;
   const extra = frontmatter?.extra;
 
-  const capturedAt = extractString(extra, 'captured-at');
+  const isRecurrence = recall === RECURRENCE_RECENCY;
+  const capturedAt = isRecurrence ? extractString(extra, 'captured-at') : null;
   const summary = extractString(extra, 'summary');
-  const repo = extractString(extra, 'repo');
+  const repo = isRecurrence ? extractString(extra, 'repo') : null;
 
   const title = resolveTitle({ frontmatter, summary, capturedAt, path: hit.path });
   const diataxis = extractString(extra, 'diataxis');
   const tags = frontmatter?.tags ?? [];
-  const lastVerifiedAgeDays = computeAgeDays(extractString(extra, 'last-verified'), now);
+  // A recurrence-recency record is immutable and carries no `last-verified`; only freshness (and the fallback) age it.
+  const lastVerifiedAgeDays = isRecurrence ? null : computeAgeDays(extractString(extra, 'last-verified'), now);
   const supersession = await resolveSupersession({ path: hit.path, note });
 
   const candidate: Candidate = {
@@ -207,9 +242,9 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }):
 }
 
 /**
- * Resolves a candidate's display title: an event record (one carrying `captured-at`) surfaces as its `summary`,
- * falling back to the ULID basename when `summary` is absent; a non-event record keeps its frontmatter `title`,
- * falling back to the file basename.
+ * Resolves a candidate's display title: a recurrence-recency record (one carrying `captured-at`) surfaces as its
+ * `summary`, falling back to the ULID basename when `summary` is absent; any other record keeps its frontmatter
+ * `title`, falling back to the file basename.
  */
 function resolveTitle(input: {
   frontmatter: ParsedNote['frontmatter'];

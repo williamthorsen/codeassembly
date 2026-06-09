@@ -1,0 +1,6 @@
+recordTypes:
+  insight:
+    required: [created, tags, title, updated]
+    optional: [captured-at, last-verified, repo, summary]
+    recall: recurrence-recency
+    immutable: false
