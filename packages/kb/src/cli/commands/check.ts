@@ -58,7 +58,7 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
   try {
     options = parseCheckArgs(input.argv);
   } catch (error) {
-    return usageError(error);
+    return buildUsageError(error);
   }
 
   if (options.help) {
@@ -100,6 +100,12 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
 }
 
 // region | Helpers
+
+/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
+function buildUsageError(error: unknown): CommandOutput {
+  const message = error instanceof Error ? error.message : String(error);
+  return { exitCode: 2, stdout: '', stderr: `kb check: ${message}\n${CHECK_HELP}` };
+}
 
 /** Parsed `kb check` options. */
 interface CheckOptions {
@@ -169,24 +175,6 @@ export function parseCheckArgs(argv: readonly string[]): CheckOptions {
   }
 
   return { kb, json, help, patterns, vs };
-}
-
-/** Reads the value after a space-form flag (`--kb x`), throwing when it is missing or looks like another flag. */
-function takeValue(argv: readonly string[], index: number, flag: string): string {
-  const next = argv[index + 1] ?? null;
-  if (next === null || next.startsWith('--')) {
-    throw new Error(`${flag} requires a value`);
-  }
-  return next;
-}
-
-/** Reads the value from an inline flag (`--kb=x`), throwing when it is empty. */
-function takeInlineValue(arg: string, prefix: string): string {
-  const value = arg.slice(prefix.length);
-  if (value === '') {
-    throw new Error(`${prefix.replace(/=$/, '')} requires a value`);
-  }
-  return value;
 }
 
 /** The selected notes and findings for the run, or a usage-error message (exit 2). */
@@ -265,10 +253,22 @@ async function resolveStore(input: {
   return { ok: true, store: { name: null, path: discovered.path } };
 }
 
-/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
-function usageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb check: ${message}\n${CHECK_HELP}` };
+/** Reads the value from an inline flag (`--kb=x`), throwing when it is empty. */
+function takeInlineValue(arg: string, prefix: string): string {
+  const value = arg.slice(prefix.length);
+  if (value === '') {
+    throw new Error(`${prefix.replace(/=$/, '')} requires a value`);
+  }
+  return value;
+}
+
+/** Reads the value after a space-form flag (`--kb x`), throwing when it is missing or looks like another flag. */
+function takeValue(argv: readonly string[], index: number, flag: string): string {
+  const next = argv[index + 1] ?? null;
+  if (next === null || next.startsWith('--')) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return next;
 }
 
 // endregion | Helpers

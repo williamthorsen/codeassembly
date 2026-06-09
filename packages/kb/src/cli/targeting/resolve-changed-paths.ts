@@ -58,6 +58,14 @@ export function resolveChangedPaths(input: { storeRoot: string; ref: string }): 
 
 // region | Helpers
 
+/** Extracts git's stderr from a thrown `execFileSync` error, falling back to the error's own message. */
+function extractGitErrorMessage(error: unknown): string {
+  if (isRecord(error) && typeof error.stderr === 'string' && error.stderr.trim() !== '') {
+    return error.stderr.trim();
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** Runs `git -C storeRoot <args>`, returning its stdout or a failure carrying git's stderr. */
 function tryGit(
   storeRoot: string,
@@ -70,16 +78,8 @@ function tryGit(
     });
     return { ok: true, stdout };
   } catch (error) {
-    return { ok: false, message: gitErrorMessage(error) };
+    return { ok: false, message: extractGitErrorMessage(error) };
   }
-}
-
-/** Extracts git's stderr from a thrown `execFileSync` error, falling back to the error's own message. */
-function gitErrorMessage(error: unknown): string {
-  if (isRecord(error) && typeof error.stderr === 'string' && error.stderr.trim() !== '') {
-    return error.stderr.trim();
-  }
-  return error instanceof Error ? error.message : String(error);
 }
 
 // endregion | Helpers

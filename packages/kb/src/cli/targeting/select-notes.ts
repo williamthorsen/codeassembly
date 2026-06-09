@@ -69,6 +69,11 @@ function matchPaths(notes: readonly EnumeratedNote[], pattern: string): string[]
   return notes.filter((entry) => isMatch(entry.relativePath)).map((entry) => entry.relativePath);
 }
 
+/** Strips a leading `./` and a single trailing `/` so directory and dot-relative inputs match cleanly. */
+function normalizePattern(pattern: string): string {
+  return pattern.replace(/^\.\//, '').replace(/\/$/, '');
+}
+
 /**
  * Resolves a pattern that matched no note. A metachar-free pattern that is a directory on disk is retried as a subtree
  * (its matches are added to `selectedPaths`). Returns `true` when the pattern resolves to something real — subtree
@@ -104,11 +109,6 @@ async function tryStat(path: string): Promise<Stats | null> {
     if (isEnoent(error)) return null;
     throw error;
   }
-}
-
-/** Strips a leading `./` and a single trailing `/` so directory and dot-relative inputs match cleanly. */
-function normalizePattern(pattern: string): string {
-  return pattern.replace(/^\.\//, '').replace(/\/$/, '');
 }
 
 // endregion | Helpers
