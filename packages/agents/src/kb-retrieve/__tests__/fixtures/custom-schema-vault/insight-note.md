@@ -9,4 +9,4 @@ summary: A recurring flaky-timer insight
 tags: [insight]
 ---
 
-An insight about phantomtimer flakiness that recurs across sessions.
+An insight about phantomtimer flakiness that recurs across sessions. Tagged crossstore for the multi-store search.

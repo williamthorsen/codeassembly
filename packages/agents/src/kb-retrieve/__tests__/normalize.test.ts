@@ -330,6 +330,22 @@ describe('normalizeHits with a schema-driven recall policy', () => {
     expect(candidates[0]?.capturedAt).toBeUndefined();
     expect(candidates[0]?.occurrences).toBeUndefined();
   });
+
+  it('emits no ranking signal for a recurrence-recency record that lacks captured-at', async () => {
+    // streams.md carries neither captured-at nor last-verified; under recurrence-recency it has no recency timestamp
+    // to rank on, and freshness is suppressed — the intentional "no signal" edge.
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NOTES_VAULT, 'streams.md'))],
+      filters: {},
+      now: NOW,
+      schemas: schemasFor({ assertion: recall('recurrence-recency') }),
+    });
+
+    expect(candidates[0]?.capturedAt).toBeUndefined();
+    expect(candidates[0]?.repo).toBeUndefined();
+    expect(candidates[0]?.occurrences).toBeUndefined();
+    expect(candidates[0]?.lastVerifiedAgeDays).toBeNull();
+  });
 });
 
 /** Builds a `RawHit` for a fixture note path. */

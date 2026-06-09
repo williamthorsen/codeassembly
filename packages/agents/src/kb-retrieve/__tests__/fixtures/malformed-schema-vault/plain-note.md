@@ -7,4 +7,4 @@ last-verified: 2026-04-20
 tags: [plain]
 ---
 
-A plain note mentioning brokenschema for matching.
+A plain note mentioning brokenschema for matching. Tagged crossstore for the multi-store search.
