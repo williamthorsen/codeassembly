@@ -22,13 +22,16 @@ export interface Candidate {
   supersession: Supersession;
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
-  /** ISO-8601 capture timestamp for an event record; `undefined` for non-event records. */
+  /** ISO-8601 capture timestamp for a recurrence-recency candidate; `undefined` for freshness-ranked candidates. */
   capturedAt?: string;
-  /** `owner/name` repository for an event record; `undefined` when absent or for non-event records. */
+  /**
+   * `owner/name` repository for a recurrence-recency candidate; `undefined` when absent or for freshness-ranked
+   * candidates.
+   */
   repo?: string;
   /**
-   * For an event candidate, the number of query-matched events sharing its `repo` recurrence group; a coarse
-   * recurrence signal the agent ranks on. `undefined` for non-event candidates.
+   * For a recurrence-recency candidate, the number of query-matched records sharing its `repo` recurrence group; a
+   * coarse recurrence signal the agent ranks on. `undefined` for freshness-ranked candidates.
    */
   occurrences?: number;
   /** A diagnostic note for this candidate, e.g. malformed frontmatter degraded to a low-signal hit. */

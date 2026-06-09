@@ -219,7 +219,8 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; re
   const title = resolveTitle({ frontmatter, summary, capturedAt, path: hit.path });
   const diataxis = extractString(extra, 'diataxis');
   const tags = frontmatter?.tags ?? [];
-  // A recurrence-recency record is immutable and carries no `last-verified`; only freshness (and the fallback) age it.
+  // Under recurrence-recency, ranking is by capture recency rather than freshness, so no `last-verified` age is
+  // computed even when the record carries one; freshness (and the fallback) age the record.
   const lastVerifiedAgeDays = isRecurrence ? null : computeAgeDays(extractString(extra, 'last-verified'), now);
   const supersession = await resolveSupersession({ path: hit.path, note });
 
