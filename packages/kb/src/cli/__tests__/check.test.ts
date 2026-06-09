@@ -5,7 +5,14 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { check } from '../../check/check.ts';
-import { getRegistryPathFor, makeStore, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
+import {
+  commitAll,
+  getRegistryPathFor,
+  initGitRepo,
+  makeStore,
+  makeTempDir,
+  seedRegistry,
+} from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
 
 // Mock `check` with a passthrough to the real implementation so most tests run
@@ -192,5 +199,97 @@ describe(run, () => {
     vi.mocked(check).mockRejectedValueOnce(new Error('rule engine crashed'));
 
     await expect(run({ argv: ['check'], cwd: store })).rejects.toThrow(/rule engine crashed/);
+  });
+});
+
+describe('kb check targeting', () => {
+  it('validates only the notes matched by a path argument', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+
+    const whole = await run({ argv: ['check'], cwd: store });
+    const scoped = await run({ argv: ['check', 'content/Clean.md'], cwd: store });
+
+    expect(whole.exitCode).toBe(1);
+    expect(scoped.exitCode).toBe(0);
+    expect(scoped.stdout).toContain('1 notes checked');
+  });
+
+  it('validates only the notes beneath a directory argument', async () => {
+    const store = await makeStore({ 'content/sub/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+
+    const result = await run({ argv: ['check', 'content/sub'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('exits 2 naming a path that matches no note', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+
+    const result = await run({ argv: ['check', 'content/Ghost.md'], cwd: store });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('content/Ghost.md');
+  });
+
+  it('exits 2 when path arguments and --vs are combined', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+
+    const result = await run({ argv: ['check', 'content/Clean.md', '--vs=HEAD'], cwd: store });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('--vs');
+  });
+
+  it('exits 2 when --vs is given without a ref', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+
+    const result = await run({ argv: ['check', '--vs'], cwd: store });
+
+    expect(result.exitCode).toBe(2);
+  });
+
+  it('prints a targeted empty-selection line distinct from the whole-vault line', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/assets/logo.png': 'x' });
+
+    const result = await run({ argv: ['check', 'content/assets'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('no notes matched the given paths');
+    expect(result.stdout).not.toContain('content/**/*.md');
+  });
+
+  it('reflects the selected count in the JSON summary for a path argument', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+
+    const result = await run({ argv: ['check', 'content/Bad.md', '--json'], cwd: store });
+    const payload: unknown = JSON.parse(result.stdout);
+
+    expect(result.exitCode).toBe(1);
+    expect(payload).toMatchObject({ summary: { notes: 1, errors: 1 } });
+  });
+
+  it('validates only the notes changed since a ref', async () => {
+    const store = await makeStore({ 'content/BadUnchanged.md': MISSING_UPDATED });
+    initGitRepo(store);
+    const base = commitAll(store, 'base');
+    await writeFile(join(store, 'content', 'GoodChanged.md'), VALID, 'utf8');
+    commitAll(store, 'add a clean note');
+
+    const whole = await run({ argv: ['check'], cwd: store });
+    const scoped = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+
+    expect(whole.exitCode).toBe(1);
+    expect(scoped.exitCode).toBe(0);
+  });
+
+  it('exits 2 for an unresolvable --vs ref', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    initGitRepo(store);
+    commitAll(store, 'base');
+
+    const result = await run({ argv: ['check', '--vs=no-such-ref'], cwd: store });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain('no-such-ref');
   });
 });

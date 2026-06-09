@@ -1,8 +1,12 @@
-import { check } from '../../check/check.ts';
+import { check, type CheckResult } from '../../check/check.ts';
+import type { EnumeratedNote } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
 import { findKbRoot } from '../../discovery/find-kb-root.ts';
 import { tryLoadKbRegistry } from '../../discovery/load-registry.ts';
-import { formatHuman, formatJson, type StoreRef, summarize } from '../format.ts';
+import type { Finding } from '../../types.ts';
+import { type CheckScope, formatHuman, formatJson, type StoreRef, summarize } from '../format.ts';
+import { resolveChangedPaths } from '../targeting/resolve-changed-paths.ts';
+import { selectNotes } from '../targeting/select-notes.ts';
 
 /** The outcome of a command run: the exit code plus the streams to write. */
 export interface CommandOutput {
@@ -13,10 +17,20 @@ export interface CommandOutput {
 }
 
 /** Usage text for `kb check`. */
-export const CHECK_HELP = `Usage: kb check [options]
+export const CHECK_HELP = `Usage: kb check [paths...] [options]
 
-Validate every note in a knowledge base against its schema, tag aliases, and
-cross-note link and path rules.
+Validate notes in a knowledge base against its schema, tag aliases, and
+cross-note link and path rules. With no path arguments, every note is checked.
+Cross-note rules always resolve against the whole vault.
+
+Targeting (mutually exclusive):
+  [paths...]    Check only the notes matching the given glob patterns, files,
+                or directories. Quote globs so kb expands them itself. A
+                directory checks every note beneath it. A path that matches no
+                note is a usage error unless it names a real non-note.
+  --vs <ref>    Check only the notes changed between the working tree and the
+                merge-base of <ref> and HEAD: follows renames, includes
+                uncommitted edits, excludes deletions.
 
 Options:
   --kb <name>   Check the named store from the kb.yaml registry. Without it,
@@ -25,9 +39,10 @@ Options:
   -h, --help    Show this help.
 
 Exit codes:
-  0  no error-severity findings (warnings allowed)
-  1  one or more error-severity findings
-  2  usage error, unresolvable store, malformed config/schema/aliases, or an unexpected runtime error
+  0  no error-severity findings in the checked notes (warnings allowed)
+  1  one or more error-severity findings in the checked notes
+  2  usage error, unresolvable store or --vs ref, a path matching no note, or
+     malformed config/schema/aliases
 `;
 
 /**
@@ -70,11 +85,16 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
     throw error;
   }
 
-  const summary = summarize(result.findings, result.notes.length);
-  // The human zero-match line names the store's targets, read from the config `check` already resolved.
+  const selection = await resolveSelection({ options, store, result });
+  if (!selection.ok) {
+    return { exitCode: 2, stdout: '', stderr: `kb check: ${selection.message}\n` };
+  }
+
+  const summary = summarize(selection.findings, selection.notes.length);
+  // The whole-vault zero-match line names the store's targets, read from the config `check` already resolved.
   const stdout = options.json
-    ? formatJson({ store, summary, findings: result.findings })
-    : formatHuman({ summary, findings: result.findings, targets: result.config.targets });
+    ? formatJson({ store, summary, findings: selection.findings })
+    : formatHuman({ summary, findings: selection.findings, targets: result.config.targets, scope: selection.scope });
 
   return { exitCode: summary.errors > 0 ? 1 : 0, stdout, stderr: '' };
 }
@@ -89,16 +109,23 @@ interface CheckOptions {
   json: boolean;
   /** Whether `--help`/`-h` was supplied. */
   help: boolean;
+  /** Positional glob/path/directory arguments selecting which notes to check; empty for a whole-vault run. */
+  patterns: string[];
+  /** The `--vs` ref to diff against, or `null` when not supplied. */
+  vs: string | null;
 }
 
 /**
- * Parses `kb check` options. `--kb` accepts both `--kb x` and `--kb=x`. Unknown flags or a missing `--kb` value
- * throw with a usage-style message.
+ * Parses `kb check` options. `--kb` and `--vs` each accept both the space (`--kb x`) and equals (`--kb=x`) forms;
+ * non-flag arguments are collected as selection patterns. Unknown flags, a missing `--kb`/`--vs` value, or combining
+ * patterns with `--vs` throw with a usage-style message.
  */
 export function parseCheckArgs(argv: readonly string[]): CheckOptions {
   let kb: string | null = null;
   let json = false;
   let help = false;
+  let vs: string | null = null;
+  const patterns: string[] = [];
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -113,27 +140,97 @@ export function parseCheckArgs(argv: readonly string[]): CheckOptions {
       continue;
     }
     if (arg === '--kb') {
-      const next = argv[index + 1] ?? null;
-      if (next === null || next.startsWith('--')) {
-        throw new Error('--kb requires a value');
-      }
-      kb = next;
+      kb = takeValue(argv, index, '--kb');
       index += 1;
       continue;
     }
     if (arg.startsWith('--kb=')) {
-      const value = arg.slice('--kb='.length);
-      if (value === '') {
-        throw new Error('--kb requires a value');
-      }
-      kb = value;
+      kb = takeInlineValue(arg, '--kb=');
       continue;
     }
+    if (arg === '--vs') {
+      vs = takeValue(argv, index, '--vs');
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith('--vs=')) {
+      vs = takeInlineValue(arg, '--vs=');
+      continue;
+    }
+    if (arg.startsWith('-')) {
+      throw new Error(`unknown flag: ${arg}`);
+    }
 
-    throw new Error(`unknown flag: ${arg}`);
+    patterns.push(arg);
   }
 
-  return { kb, json, help };
+  if (vs !== null && patterns.length > 0) {
+    throw new Error('--vs cannot be combined with path arguments');
+  }
+
+  return { kb, json, help, patterns, vs };
+}
+
+/** Reads the value after a space-form flag (`--kb x`), throwing when it is missing or looks like another flag. */
+function takeValue(argv: readonly string[], index: number, flag: string): string {
+  const next = argv[index + 1] ?? null;
+  if (next === null || next.startsWith('--')) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return next;
+}
+
+/** Reads the value from an inline flag (`--kb=x`), throwing when it is empty. */
+function takeInlineValue(arg: string, prefix: string): string {
+  const value = arg.slice(prefix.length);
+  if (value === '') {
+    throw new Error(`${prefix.replace(/=$/, '')} requires a value`);
+  }
+  return value;
+}
+
+/** The selected notes and findings for the run, or a usage-error message (exit 2). */
+type SelectionOutcome =
+  | { ok: true; scope: CheckScope; notes: readonly EnumeratedNote[]; findings: readonly Finding[] }
+  | { ok: false; message: string };
+
+/**
+ * Narrows a whole-vault `CheckResult` to the notes the run targets. A bare run passes through unchanged; `--vs`
+ * resolves changed paths via git (a bad ref fails for exit 2), and pattern selection drops non-notes while reporting
+ * a path that matches nothing real as a usage error. Findings are filtered to the selected notes by their absolute
+ * path, so cross-references stay resolved against the whole vault while the report and exit code cover only the
+ * selection.
+ */
+async function resolveSelection(input: {
+  options: CheckOptions;
+  store: StoreRef;
+  result: CheckResult;
+}): Promise<SelectionOutcome> {
+  const { options, store, result } = input;
+
+  if (options.vs === null && options.patterns.length === 0) {
+    return { ok: true, scope: 'vault', notes: result.notes, findings: result.findings };
+  }
+
+  let scope: CheckScope = 'patterns';
+  let patterns = options.patterns;
+  if (options.vs !== null) {
+    scope = 'vs';
+    const changed = resolveChangedPaths({ storeRoot: store.path, ref: options.vs });
+    if (!changed.ok) {
+      return { ok: false, message: changed.message };
+    }
+    patterns = changed.paths;
+  }
+
+  const selection = await selectNotes({ notes: result.notes, patterns, storeRoot: store.path });
+  if (selection.unmatched.length > 0) {
+    return { ok: false, message: `no notes matched: ${selection.unmatched.join(', ')}` };
+  }
+
+  const selectedPaths = new Set(selection.selected.map((entry) => entry.note.path));
+  const findings = result.findings.filter((finding) => selectedPaths.has(finding.path));
+  return { ok: true, scope, notes: selection.selected, findings };
 }
 
 /** The store-resolution outcome: a resolved store, or a categorical failure message for exit 2. */
