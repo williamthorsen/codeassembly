@@ -111,7 +111,6 @@ function makeCaptureEventSmokeTest(): SmokeTestInvocation {
     [
       'recordTypes:',
       '  event:',
-      '    immutable: true',
       '    recall: recurrence-recency',
       '    required: [id, captured-at, session, cwd, summary]',
       '    optional: [repo, skill, model, tags, correction, owner, locality, severity]',

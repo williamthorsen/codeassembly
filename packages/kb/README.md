@@ -82,7 +82,7 @@ const config = await loadKbRegistry({ projectDir: process.cwd() });
 
 ## The default schema
 
-A record's family is the stored `recordType` discriminant, valued against the schema's declared record-type vocabulary. `defaultSchema` is a deep-frozen `Schema` constant keyed by record type — an `assertion` record type (the canonical vault note, ranked by freshness) and an immutable `event` record type (the ULID-keyed record written by `capture-event`, ranked by recurrence-recency):
+A record's family is the stored `recordType` discriminant, valued against the schema's declared record-type vocabulary. `defaultSchema` is a deep-frozen `Schema` constant keyed by record type — an `assertion` record type (the canonical vault note, ranked by freshness) and an `event` record type (the ULID-keyed record written by `capture-event`, ranked by recurrence-recency):
 
 ```ts
 {
@@ -91,19 +91,17 @@ A record's family is the stored `recordType` discriminant, valued against the sc
       required: ['created', 'tags', 'title', 'updated'],
       optional: ['applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
       recall: 'freshness',
-      immutable: false,
     },
     event: {
       required: ['captured-at', 'cwd', 'id', 'session', 'summary'],
       optional: ['correction', 'model', 'repo', 'skill', 'tags'],
       recall: 'recurrence-recency',
-      immutable: true,
     },
   },
 }
 ```
 
-`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. A `.kb/schema.yaml` declares a `recordTypes:` block keyed by record-type name; each record type declares its own `required`, `optional`, `recall`, and `immutable`. The declared vocabulary **replaces** the bundled default outright. `recordType` is implicitly required on every record — it is the discriminant, so it is never listed in a record type's `required:` array.
+`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. A `.kb/schema.yaml` declares a `recordTypes:` block keyed by record-type name; each record type declares its own `required`, `optional`, and `recall`. The declared vocabulary **replaces** the bundled default outright. `recordType` is implicitly required on every record — it is the discriminant, so it is never listed in a record type's `required:` array.
 
 ```yaml
 # .kb/schema.yaml
@@ -112,12 +110,10 @@ recordTypes:
     required: [created, tags, title, updated]
     optional: [applies-to, diataxis, last-verified, sources, superseded-by, supersedes]
     recall: freshness
-    immutable: false
   event:
     required: [captured-at, cwd, id, session, summary]
     optional: [correction, model, repo, skill, tags]
     recall: recurrence-recency
-    immutable: true
 ```
 
 Validation reads a record type's required set directly via `resolveRequiredForRecordType(schema, recordType)`. A malformed or structurally invalid `.kb/schema.yaml` throws at load time, naming the offending file.

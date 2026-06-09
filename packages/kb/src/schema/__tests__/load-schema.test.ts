@@ -28,17 +28,15 @@ describe(loadSchema, () => {
     expect(schema.recordTypes.assertion?.recall).toBe('freshness');
   });
 
-  it('marks an immutable record type that omits updated from its required set', async () => {
+  it('ignores a retired immutable key, loading the record type without it', async () => {
     const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
 
-    expect(schema.recordTypes.event?.immutable).toBe(true);
-    expect(schema.recordTypes.event?.required).not.toContain('updated');
-  });
-
-  it('defaults immutable to false for a record type that omits it', async () => {
-    const schema = await loadSchema({ kbRoot: kbRootAt('record-types') });
-
-    expect(schema.recordTypes.assertion?.immutable).toBe(false);
+    // The `record-types` fixture still declares `immutable: true`; the loader strips the unknown key rather than
+    // rejecting it, so a store carrying the retired flag keeps loading.
+    const event = schema.recordTypes.event;
+    expect(event).toBeDefined();
+    expect(event !== undefined && 'immutable' in event).toBe(false);
+    expect(event?.required).not.toContain('updated');
   });
 
   it('rejects a file that still uses the retired kinds: shape, naming the source path', async () => {

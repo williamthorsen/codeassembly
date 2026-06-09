@@ -11,7 +11,6 @@ import type { CaptureContext, ParsedArgs } from '../types.ts';
 
 const EVENT_SCHEMA = `recordTypes:
   event:
-    immutable: true
     recall: recurrence-recency
     required: [id, captured-at, session, cwd, summary]
     optional: [repo, skill, model, tags, correction, owner, locality, severity]

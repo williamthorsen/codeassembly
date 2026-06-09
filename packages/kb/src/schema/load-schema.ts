@@ -12,13 +12,11 @@ import { defaultSchema } from './default-schema.ts';
 /** Relative location of the schema override file within a KB root. */
 export const SCHEMA_FILE = join('.kb', 'schema.yaml');
 
-// Describes one record type's entry under `recordTypes:`: a `required`/`optional` field set, a recall policy, and an
-// optional `immutable` flag.
+// Describes one record type's entry under `recordTypes:`: a `required`/`optional` field set and a recall policy.
 const recordTypeShape = z.object({
   required: z.array(z.string()).optional(),
   optional: z.array(z.string()).optional(),
   recall: z.string(),
-  immutable: z.boolean().optional(),
 });
 
 // Describes the on-disk `.kb/schema.yaml` shape: a single `recordTypes:` block keyed by record-type name. A store that
@@ -82,7 +80,6 @@ function buildSchema(rawRecordTypes: Record<string, z.infer<typeof recordTypeSha
       required: raw.required ?? [],
       optional: raw.optional ?? [],
       recall: raw.recall,
-      immutable: raw.immutable ?? false,
     };
   }
   return { recordTypes };

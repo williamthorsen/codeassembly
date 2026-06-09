@@ -23,7 +23,6 @@ const NOW = new Date('2026-06-04T06:57:22.000Z');
 
 const EVENT_SCHEMA = `recordTypes:
   event:
-    immutable: true
     recall: recurrence-recency
     required: [id, captured-at, session, cwd, summary]
     optional: [repo, skill, model, tags, correction, owner, locality, severity]

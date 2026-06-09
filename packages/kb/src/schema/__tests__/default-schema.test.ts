@@ -18,14 +18,12 @@ describe('defaultSchema', () => {
       'supersedes',
     ]);
     expect(defaultSchema.recordTypes.assertion?.recall).toBe('freshness');
-    expect(defaultSchema.recordTypes.assertion?.immutable).toBe(false);
   });
 
-  it('declares the immutable event record type with its spine', () => {
+  it('declares the event record type with its spine', () => {
     expect(defaultSchema.recordTypes.event?.required).toEqual(['captured-at', 'cwd', 'id', 'session', 'summary']);
     expect(defaultSchema.recordTypes.event?.optional).toEqual(['correction', 'model', 'repo', 'skill', 'tags']);
     expect(defaultSchema.recordTypes.event?.recall).toBe('recurrence-recency');
-    expect(defaultSchema.recordTypes.event?.immutable).toBe(true);
   });
 
   it('carries no retired type or kind vocabulary', () => {
