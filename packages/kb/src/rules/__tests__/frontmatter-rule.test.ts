@@ -195,7 +195,7 @@ describe('frontmatterRule across record types', () => {
     expect(checkAgainst(content, schema)).toEqual([]);
   });
 
-  it('does not require updated for an immutable event record type', async () => {
+  it('does not require updated for the event record type', async () => {
     const schema = await recordTypesSchema();
     const content = [
       '---',

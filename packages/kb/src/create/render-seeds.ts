@@ -26,7 +26,7 @@ const CONFIG_HEADER = `# Check configuration for this knowledge store.
 const SCHEMA_HEADER = `# Schema for this knowledge store.
 #
 # This file overrides the bundled default schema outright (the override is a replacement, not a merge). Each record
-# type declares its required and optional fields plus its recall and immutability policy; a record's family is the
+# type declares its required and optional fields plus its recall policy; a record's family is the
 # stored \`recordType\` discriminant.
 #
 # Safe to edit: add record types, or add optional fields. Do NOT remove or rename the default record types or their

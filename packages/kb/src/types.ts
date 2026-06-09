@@ -56,7 +56,7 @@ export interface Schema {
 /** The record-type vocabulary of a store, keyed by record-type name (e.g. `event`, `assertion`). */
 export type RecordTypesSchema = Readonly<Record<string, RecordTypeSchema>>;
 
-/** A single record type's required/optional field sets, recall policy, and immutability. */
+/** A single record type's required/optional field sets and recall policy. */
 export interface RecordTypeSchema {
   /** Field names every record of this type must declare (excluding the implicit `recordType` discriminant). */
   required: readonly string[];
@@ -64,8 +64,6 @@ export interface RecordTypeSchema {
   optional: readonly string[];
   /** How recall ranks records of this type, e.g. `freshness` or `recurrence-recency`. */
   recall: string;
-  /** When true, records of this type are write-once and carry no `updated`/`last-verified` fields. */
-  immutable: boolean;
 }
 
 /** Strongly-typed frontmatter for a note. */
