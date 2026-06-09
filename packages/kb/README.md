@@ -204,23 +204,33 @@ The name defaults to the directory's base name; `--name` overrides it and `--no-
 
 ### kb check
 
-`kb check` validates every note in a store and reports the findings.
+`kb check` validates a store's notes and reports the findings. With no path arguments it checks every note; path arguments or `--vs` scope the run to a subset.
 
 ```bash
-kb check                 # check the nearest ancestor .kb/ store
-kb check --kb coding     # check the named store from the kb.yaml registry
-kb check --json          # emit a JSON report
+kb check                       # check every note in the nearest ancestor .kb/ store
+kb check --kb coding           # check the named store from the kb.yaml registry
+kb check --json                # emit a JSON report
+kb check content/assertions    # check only the notes under a directory
+kb check 'content/**/*.md'     # check only the notes a glob matches (quote it)
+kb check --vs=main             # check only the notes changed since a ref
 ```
 
 `kb check` resolves the store from the nearest ancestor `.kb/` directory, or from a `--kb <name>` entry in the merged `kb.yaml` registry (project-local entries join the user-global registry). The default output groups findings by file; `--json` emits `{ store, summary, findings }`. The command is read-only and never writes to the store.
 
+**Targeting.** Path arguments and `--vs` each scope the run to a subset of notes; they are mutually exclusive, and both compose with `--kb` and `--json`. Cross-note rules always resolve against the whole vault, so a targeted run never false-flags a link to an unselected note; only the report and the exit code narrow to the selection.
+
+- **`[paths...]`**: one or more glob patterns, files, or directories (store-root-relative). The command expands globs itself, so a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that matches no note is a usage error, unless it names a real non-note (a README, a triage note, or an excluded file), which is skipped silently.
+- **`--vs <ref>`**: the notes changed between the working tree and the merge-base of `<ref>` and HEAD. The diff follows renames (checking the destination), includes uncommitted edits to tracked notes, and excludes deletions, so a `git mv`-heavy migration batch reports the notes it actually touched.
+
+Because the exit code reflects only the selected notes, a per-batch or pre-commit gate can pass while the rest of the vault still carries a migration backlog.
+
 Exit codes:
 
-| Code | Meaning                                                                                                                   |
-| ---- | ------------------------------------------------------------------------------------------------------------------------- |
-| `0`  | No error-severity findings (warnings are allowed). A zero-match run also exits 0.                                         |
-| `1`  | One or more error-severity findings.                                                                                      |
-| `2`  | A usage error, an unresolvable store, a malformed `config.yaml`/`schema.yaml`/`tag-aliases.yaml`, or an unexpected crash. |
+| Code | Meaning                                                                                                                           |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that selects no notes also exits 0.                 |
+| `1`  | One or more error-severity findings in the checked notes.                                                                         |
+| `2`  | A usage error, an unresolvable store or `--vs` ref, a path matching no note, or a malformed `config`/`schema`/`tag-aliases` file. |
 
 ## Error and exception model
 
