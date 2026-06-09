@@ -110,6 +110,8 @@ describe(selectNotes, () => {
   });
 });
 
+// region | Helpers
+
 /** Builds a real store from `FILES`, enumerates it, and resolves `patterns` against the result. */
 async function select(patterns: string[]): Promise<{ selected: string[]; unmatched: string[] }> {
   const root = await makeTree(FILES);
@@ -117,3 +119,5 @@ async function select(patterns: string[]): Promise<{ selected: string[]; unmatch
   const result = await selectNotes({ notes, patterns, storeRoot: root });
   return { selected: result.selected.map((entry) => entry.relativePath), unmatched: result.unmatched };
 }
+
+// endregion | Helpers

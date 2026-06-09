@@ -26,13 +26,6 @@ const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 const MISSING_UPDATED = '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** Stands up an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
-async function makeHome(name: string, storePath: string): Promise<string> {
-  const home = await makeTempDir('kb-cli-home-');
-  await seedRegistry(getRegistryPathFor(home), `kbs:\n  ${name}:\n    path: ${storePath}\n`);
-  return home;
-}
-
 describe(run, () => {
   afterEach(() => {
     vi.mocked(check).mockClear();
@@ -330,3 +323,14 @@ describe('kb check targeting', () => {
     expect(result.exitCode).toBe(1);
   });
 });
+
+// region | Helpers
+
+/** Stands up an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
+async function makeHome(name: string, storePath: string): Promise<string> {
+  const home = await makeTempDir('kb-cli-home-');
+  await seedRegistry(getRegistryPathFor(home), `kbs:\n  ${name}:\n    path: ${storePath}\n`);
+  return home;
+}
+
+// endregion | Helpers

@@ -30,15 +30,6 @@ afterEach(() => {
 const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
-/** Enumerates `root` under a config, defaulting `exclude` to the bundled default. */
-async function enumerateIn(root: string, config: Partial<KbConfig> & Pick<KbConfig, 'targets'>): Promise<string[]> {
-  const notes = await enumerateNotes({
-    kbRoot: root,
-    config: { targets: config.targets, exclude: config.exclude ?? defaultKbConfig.exclude },
-  });
-  return notes.map((entry) => entry.relativePath).toSorted();
-}
-
 describe(enumerateNotes, () => {
   it('enumerates only notes under content/ for the default targets', async () => {
     const root = await makeTree({
@@ -136,3 +127,16 @@ describe(enumerateNotes, () => {
     expect(warnings.join('')).toContain(`kb: warning: could not read directory ${blockedDir}`);
   });
 });
+
+// region | Helpers
+
+/** Enumerates `root` under a config, defaulting `exclude` to the bundled default. */
+async function enumerateIn(root: string, config: Partial<KbConfig> & Pick<KbConfig, 'targets'>): Promise<string[]> {
+  const notes = await enumerateNotes({
+    kbRoot: root,
+    config: { targets: config.targets, exclude: config.exclude ?? defaultKbConfig.exclude },
+  });
+  return notes.map((entry) => entry.relativePath).toSorted();
+}
+
+// endregion | Helpers

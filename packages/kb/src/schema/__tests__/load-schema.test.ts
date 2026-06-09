@@ -9,10 +9,6 @@ import { loadSchema, resolveRequiredForRecordType } from '../load-schema.ts';
 
 const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 
-function kbRootAt(fixture: string): KbRoot {
-  return kbRootForPath(join(FIXTURES_DIR, fixture));
-}
-
 describe(loadSchema, () => {
   it('returns the default schema verbatim when no .kb/schema.yaml exists', async () => {
     const schema = await loadSchema({ kbRoot: kbRootAt('no-schema') });
@@ -83,3 +79,11 @@ describe(resolveRequiredForRecordType, () => {
     expect(resolveRequiredForRecordType(schema, 'nonexistent')).toBeUndefined();
   });
 });
+
+// region | Helpers
+
+function kbRootAt(fixture: string): KbRoot {
+  return kbRootForPath(join(FIXTURES_DIR, fixture));
+}
+
+// endregion | Helpers

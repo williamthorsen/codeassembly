@@ -12,16 +12,6 @@ const FIXTURES_DIR = join(import.meta.dirname, 'fixtures');
 // Fixtures that carry well-formed frontmatter and therefore round-trip.
 const ROUND_TRIP_FIXTURES = ['howto-typical.md', 'unusual-whitespace.md', 'with-extra-fields.md'];
 
-/** Parse a fixture and assert its frontmatter parsed, returning the note narrowed. */
-async function parseFixture(fixture: string): Promise<ParsedNote & { frontmatter: Frontmatter }> {
-  const note = parseNoteContent({ content: await readFile(join(FIXTURES_DIR, fixture), 'utf8') });
-  expect(note.frontmatter).not.toBeNull();
-  if (note.frontmatter === null) {
-    throw new Error(`fixture ${fixture} did not parse frontmatter`);
-  }
-  return { ...note, frontmatter: note.frontmatter };
-}
-
 describe('frontmatter round-trip idempotence', () => {
   it.each(ROUND_TRIP_FIXTURES)(
     'when %s is re-serialized and re-parsed, yields a structurally equal frontmatter',
@@ -209,3 +199,17 @@ describe('frontmatter round-trip idempotence', () => {
     expect(reparsed.frontmatter?.extra.meta).toEqual(meta);
   });
 });
+
+// region | Helpers
+
+/** Parse a fixture and assert its frontmatter parsed, returning the note narrowed. */
+async function parseFixture(fixture: string): Promise<ParsedNote & { frontmatter: Frontmatter }> {
+  const note = parseNoteContent({ content: await readFile(join(FIXTURES_DIR, fixture), 'utf8') });
+  expect(note.frontmatter).not.toBeNull();
+  if (note.frontmatter === null) {
+    throw new Error(`fixture ${fixture} did not parse frontmatter`);
+  }
+  return { ...note, frontmatter: note.frontmatter };
+}
+
+// endregion | Helpers

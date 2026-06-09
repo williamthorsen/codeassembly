@@ -4,11 +4,6 @@ import { documentFor, parseNoteContent } from '../../frontmatter/parse-note.ts';
 import { defaultSchema } from '../../schema/default-schema.ts';
 import { pathsRule } from '../paths-rule.ts';
 
-function check(content: string) {
-  const note = parseNoteContent({ content, path: 'note.md' });
-  return pathsRule.check({ note, document: documentFor(note), schema: defaultSchema });
-}
-
 describe('pathsRule', () => {
   it('returns no findings when content has no /Users/ paths', () => {
     expect(check('See ~/repos/foo for details.')).toEqual([]);
@@ -39,3 +34,12 @@ describe('pathsRule', () => {
     expect(findings.length).toBeGreaterThan(0);
   });
 });
+
+// region | Helpers
+
+function check(content: string) {
+  const note = parseNoteContent({ content, path: 'note.md' });
+  return pathsRule.check({ note, document: documentFor(note), schema: defaultSchema });
+}
+
+// endregion | Helpers

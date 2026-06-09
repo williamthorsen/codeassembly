@@ -95,9 +95,13 @@ describe(resolveChangedPaths, () => {
   });
 });
 
+// region | Helpers
+
 /** Writes `content` to `root/rel`, creating parent directories first. */
 async function writeAt(root: string, rel: string, content: string): Promise<void> {
   const full = join(root, rel);
   await mkdir(dirname(full), { recursive: true });
   await writeFile(full, content, 'utf8');
 }
+
+// endregion | Helpers

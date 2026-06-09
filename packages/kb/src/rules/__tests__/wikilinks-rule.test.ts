@@ -5,20 +5,6 @@ import { defaultSchema } from '../../schema/default-schema.ts';
 import type { VaultIndex } from '../../types.ts';
 import { wikilinksRule } from '../wikilinks-rule.ts';
 
-function indexOf(entries: Array<[string, string[]]>): VaultIndex {
-  return new Map(entries.map(([key, paths]) => [key, new Set(paths)]));
-}
-
-function check(body: string, index: VaultIndex | undefined) {
-  const note = parseNoteContent({ content: body, path: 'note.md' });
-  return wikilinksRule.check({
-    note,
-    document: documentFor(note),
-    schema: defaultSchema,
-    ...(index !== undefined && { vaultIndex: index }),
-  });
-}
-
 describe('wikilinksRule', () => {
   it('returns no findings when no vault index is supplied', () => {
     expect(check('See [[Anything]].', undefined)).toEqual([]);
@@ -97,3 +83,21 @@ describe('wikilinksRule', () => {
     expect(check('The `[[plugins]]` block in netlify.toml.', indexOf([]))).toEqual([]);
   });
 });
+
+// region | Helpers
+
+function check(body: string, index: VaultIndex | undefined) {
+  const note = parseNoteContent({ content: body, path: 'note.md' });
+  return wikilinksRule.check({
+    note,
+    document: documentFor(note),
+    schema: defaultSchema,
+    ...(index !== undefined && { vaultIndex: index }),
+  });
+}
+
+function indexOf(entries: Array<[string, string[]]>): VaultIndex {
+  return new Map(entries.map(([key, paths]) => [key, new Set(paths)]));
+}
+
+// endregion | Helpers

@@ -4,18 +4,6 @@ import type { Frontmatter } from '../../types.ts';
 import { parseNoteContent } from '../parse-note.ts';
 import { writeFrontmatter } from '../write-frontmatter.ts';
 
-function makeFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
-  return {
-    title: 'How to rebase onto main',
-    recordType: 'assertion',
-    created: '2026-05-01',
-    updated: '2026-05-14',
-    tags: ['git', 'rebase'],
-    extra: {},
-    ...overrides,
-  };
-}
-
 describe(writeFrontmatter, () => {
   it('emits required fields in the fixed title/recordType/created/updated/tags order', () => {
     const output = writeFrontmatter({ frontmatter: makeFrontmatter(), body: '# Body' });
@@ -91,3 +79,19 @@ describe(writeFrontmatter, () => {
     expect(output).toMatch(/---\n\n# Already spaced$/);
   });
 });
+
+// region | Helpers
+
+function makeFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
+  return {
+    title: 'How to rebase onto main',
+    recordType: 'assertion',
+    created: '2026-05-01',
+    updated: '2026-05-14',
+    tags: ['git', 'rebase'],
+    extra: {},
+    ...overrides,
+  };
+}
+
+// endregion | Helpers
