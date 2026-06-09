@@ -5,7 +5,7 @@ import { runCreate } from './commands/create.ts';
 export const HELP = `Usage: kb <command> [options]
 
 Commands:
-  check    Validate every note in a knowledge base against its rules.
+  check    Validate a knowledge base, optionally scoped to selected notes.
   create   Scaffold a new knowledge base and register it in the kb.yaml registry.
 
 Run "kb <command> --help" for command options.

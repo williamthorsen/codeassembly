@@ -7,6 +7,7 @@ import picomatch from 'picomatch';
 import type { KbConfig } from '../config/config-schema.ts';
 import { parseNoteContent } from '../frontmatter/parse-note.ts';
 import type { ParsedNote } from '../types.ts';
+import { isGlobSegment } from './glob-segments.ts';
 
 /** A parsed note together with its KB-root-relative path, used for index keying and canonical wikilink targets. */
 export interface EnumeratedNote {
@@ -105,11 +106,6 @@ function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string>
     dirs.add(firstSegment);
   }
   return dirs;
-}
-
-/** Reports whether a path segment contains a glob metacharacter, making it non-literal. */
-function isGlobSegment(segment: string): boolean {
-  return /[*?[\]{}()!+@]/.test(segment);
 }
 
 // endregion | Helpers
