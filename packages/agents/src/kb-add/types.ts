@@ -20,13 +20,11 @@ export interface ParsedArgs {
   title: string;
   /** The proposed tag list, in the order the agent supplied them. */
   tags: string[];
-  /** Optional `last-verified` date (`YYYY-MM-DD`). */
-  lastVerified: string | null;
 }
 
 /** The prepared note ready to be written: the rendered frontmatter, the body, and the canonicalization audit trail. */
 export interface PreparedNote {
-  /** Frontmatter with canonical tags, UTC dates filled in, and the optional `last-verified` field merged into `extra`. */
+  /** Frontmatter with canonical tags and a born-verified triad: `created`, `updated`, and the `extra['last-verified']` field stamped from one instant. */
   frontmatter: Frontmatter;
   /** Tag list as the agent supplied it, before alias canonicalization. */
   originalTags: string[];

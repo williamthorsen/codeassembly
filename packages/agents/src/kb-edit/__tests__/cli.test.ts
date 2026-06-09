@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { parseArgs, runEdit } from '../cli.ts';
 
 const NOW = new Date('2026-05-24T14:35:00Z');
-const TODAY = '2026-05-24';
+const TODAY = '2026-05-24T14:35:00Z';
 
 const SAMPLE_NOTE = `---
 title: Sample

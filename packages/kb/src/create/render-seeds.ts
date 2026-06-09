@@ -29,6 +29,9 @@ const SCHEMA_HEADER = `# Schema for this knowledge store.
 # type declares its required and optional fields plus its recall policy; a record's family is the
 # stored \`recordType\` discriminant.
 #
+# Date fields (created, updated, last-verified) are written as second-precision UTC timestamps
+# (YYYY-MM-DDTHH:MM:SSZ); bare YYYY-MM-DD dates remain valid for hand-authored and legacy notes.
+#
 # Safe to edit: add record types, or add optional fields. Do NOT remove or rename the default record types or their
 # required fields — the kb-* skills (kb-add, capture-event, kb-edit) depend on them. Delete this file to re-inherit
 # the bundled default.

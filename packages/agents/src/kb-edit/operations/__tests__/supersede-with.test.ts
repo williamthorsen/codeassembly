@@ -70,8 +70,8 @@ describe(prepareSupersedeWith, () => {
       now: NOW,
     });
 
-    expect(result.old.frontmatter.updated).toBe('2026-05-24');
-    expect(result.new.frontmatter.updated).toBe('2026-05-24');
+    expect(result.old.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
+    expect(result.new.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
   });
 
   it('writes KB-relative pointers when notes are in subfolders', () => {

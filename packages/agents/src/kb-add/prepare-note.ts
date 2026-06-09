@@ -3,7 +3,7 @@ import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter
 import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
 import { canonicalize } from '@codeassembly/kb/tags';
 
-import { dedupeInOrder, formatUtcDate } from '../kb-shared/note-helpers.ts';
+import { dedupeInOrder, formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import type { ParsedArgs, PreparedNote } from './types.ts';
 
 /** Successful preparation: a fully-typed `Frontmatter` plus the canonicalization audit trail. */
@@ -22,11 +22,11 @@ export interface PrepareFailure {
 export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 
 /**
- * Composes a typed `Frontmatter` from parsed CLI args, fills in UTC `created` and `updated` dates, canonicalizes
- * tags via the supplied alias map, and validates the result against the destination KB's schema using the
- * `frontmatterRule` from kb. Every note carries `recordType: assertion` as the stored discriminant — `kb-add` only
- * writes assertions. Any Diátaxis label the agent supplies via `--diataxis` is a vault facet, written to the note's
- * `extra` fields rather than a top-level field.
+ * Composes a typed `Frontmatter` from parsed CLI args, stamps `created`, `updated`, and `last-verified` from one
+ * second-precision UTC instant so the note is born verified, canonicalizes tags via the supplied alias map, and
+ * validates the result against the destination KB's schema using the `frontmatterRule` from kb. Every note carries
+ * `recordType: assertion` as the stored discriminant — `kb-add` only writes assertions. Any Diátaxis label the agent
+ * supplies via `--diataxis` is a vault facet, written to the note's `extra` fields rather than a top-level field.
  *
  * Validation is performed by round-tripping the rendered frontmatter through `parseNoteContent` and feeding the parsed
  * note through `runRules`. The round trip is the cheapest way to give the rule a real `ParsedNote` carrying valid
@@ -42,15 +42,13 @@ export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: 
   // original list intact for the audit trail and deduplicate the written tag list in first-occurrence order so the
   // note doesn't ship `['nodejs', 'nodejs']`.
   const canonicalTags = dedupeInOrder(originalTags.map((tag) => canonicalize(tag, aliases)));
-  const today = formatUtcDate(now);
+  const today = formatUtcTimestamp(now);
 
   const extra: Record<string, unknown> = {};
   if (args.diataxis !== null) {
     extra.diataxis = args.diataxis;
   }
-  if (args.lastVerified !== null) {
-    extra['last-verified'] = args.lastVerified;
-  }
+  extra['last-verified'] = today;
 
   const frontmatter: Frontmatter = {
     title: args.title,

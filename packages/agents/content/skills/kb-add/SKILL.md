@@ -14,14 +14,13 @@ The split is deliberate: the helper is narrow and mechanical; the classification
 
 ## Arguments
 
-| Argument          | Description                                                                             | Required |
-| ----------------- | --------------------------------------------------------------------------------------- | -------- |
-| `--diataxis`      | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).           | No       |
-| `--title`         | The note title; also doubles as the filename.                                           | Yes      |
-| `--kb`            | Explicit knowledge base name; overrides the discovered `.kb/` and the registry default. | No       |
-| `--folder`        | KB-relative folder under which to write the note. Defaults to the KB root.              | No       |
-| `--tags`          | Comma-separated tag list. Known aliases are canonicalized at write time.                | No       |
-| `--last-verified` | `YYYY-MM-DD` date the note's claims were last verified.                                 | No       |
+| Argument     | Description                                                                             | Required |
+| ------------ | --------------------------------------------------------------------------------------- | -------- |
+| `--diataxis` | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).           | No       |
+| `--title`    | The note title; also doubles as the filename.                                           | Yes      |
+| `--kb`       | Explicit knowledge base name; overrides the discovered `.kb/` and the registry default. | No       |
+| `--folder`   | KB-relative folder under which to write the note. Defaults to the KB root.              | No       |
+| `--tags`     | Comma-separated tag list. Known aliases are canonicalized at write time.                | No       |
 
 A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The note body is read from stdin to EOF; an empty body is allowed when a stub note is appropriate.
 
@@ -79,7 +78,7 @@ Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies 
 cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
   --diataxis <label> --title "<title>" \
   [--kb <name>] [--folder <kb-relative-folder>] \
-  [--tags <comma,separated>] [--last-verified YYYY-MM-DD]
+  [--tags <comma,separated>]
 <note body, may span multiple lines and contain any characters>
 EOF
 ```

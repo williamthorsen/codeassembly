@@ -21,7 +21,7 @@ describe(verify, () => {
   it('sets last-verified to today (UTC) and does not bump updated', () => {
     const result = verify({ frontmatter: frontmatter(), body: 'body', now: NOW });
 
-    expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24');
+    expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24T14:35:00Z');
     expect(result.frontmatter.updated).toBe('2026-05-01');
   });
 
@@ -30,7 +30,7 @@ describe(verify, () => {
 
     const result = verify({ frontmatter: fm, body: 'b', now: NOW });
 
-    expect(result.frontmatter.extra).toEqual({ 'last-verified': '2026-05-24' });
+    expect(result.frontmatter.extra).toEqual({ 'last-verified': '2026-05-24T14:35:00Z' });
   });
 
   it('overwrites an existing last-verified value', () => {
@@ -38,7 +38,7 @@ describe(verify, () => {
 
     const result = verify({ frontmatter: fm, body: 'b', now: NOW });
 
-    expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24');
+    expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24T14:35:00Z');
   });
 
   it('preserves other extra fields when adding last-verified', () => {
@@ -49,8 +49,19 @@ describe(verify, () => {
     expect(result.frontmatter.extra).toEqual({
       'applies-to': 'node 24',
       sources: ['docs.example.com'],
-      'last-verified': '2026-05-24',
+      'last-verified': '2026-05-24T14:35:00Z',
     });
+  });
+
+  it('advances a born-verified note last-verified to an instant at or after created', () => {
+    const born = '2026-05-01T09:00:00Z';
+    const fm = frontmatter({ created: born, updated: born, extra: { 'last-verified': born } });
+
+    const result = verify({ frontmatter: fm, body: 'b', now: NOW });
+    const lastVerified = result.frontmatter.extra['last-verified'];
+
+    expect(lastVerified).toBe('2026-05-24T14:35:00Z');
+    expect(Date.parse(String(lastVerified))).toBeGreaterThanOrEqual(Date.parse(result.frontmatter.created));
   });
 
   it('does not mutate the input frontmatter', () => {

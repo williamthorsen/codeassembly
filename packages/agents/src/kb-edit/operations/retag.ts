@@ -1,7 +1,7 @@
 import type { AliasMap, Frontmatter } from '@codeassembly/kb';
 import { canonicalize } from '@codeassembly/kb/tags';
 
-import { dedupeInOrder, formatUtcDate } from '../../kb-shared/note-helpers.ts';
+import { dedupeInOrder, formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
  * Replaces the tag list, canonicalizing each entry through the supplied alias map, deduplicating in
@@ -23,7 +23,7 @@ export function retag(input: {
     frontmatter: {
       ...input.frontmatter,
       tags: canonicalTags,
-      updated: formatUtcDate(input.now),
+      updated: formatUtcTimestamp(input.now),
       extra: { ...input.frontmatter.extra },
     },
     body: input.body,

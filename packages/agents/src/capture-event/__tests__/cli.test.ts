@@ -124,7 +124,7 @@ describe(normalizeRemoteUrl, () => {
 });
 
 describe(runCapture, () => {
-  it('writes recordType: event and returns a ULID id and ISO capturedAt', async () => {
+  it('writes recordType: event and returns a ULID id and second-precision capturedAt', async () => {
     const { home } = await makeStore('codeassembly');
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
@@ -140,7 +140,7 @@ describe(runCapture, () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.id).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
-      expect(result.capturedAt).toBe('2026-06-04T06:57:22.000Z');
+      expect(result.capturedAt).toBe('2026-06-04T06:57:22Z');
       expect(result.store).toBe('codeassembly');
       const written = await readFile(result.path, 'utf8');
       expect(written).toMatch(/^recordType: event$/m);
