@@ -7,13 +7,6 @@ import { describe, expect, it } from 'vitest';
 import { commitAll, initGitRepo, makeStore, makeTempDir, runGit } from '../../../test-utils/scaffolding.ts';
 import { resolveChangedPaths } from '../resolve-changed-paths.ts';
 
-/** Writes `content` to `root/rel`, creating parent directories first. */
-async function writeAt(root: string, rel: string, content: string): Promise<void> {
-  const full = join(root, rel);
-  await mkdir(dirname(full), { recursive: true });
-  await writeFile(full, content, 'utf8');
-}
-
 const NOTE =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
 
@@ -101,3 +94,10 @@ describe(resolveChangedPaths, () => {
     expect(result.paths).toEqual(['content/Added.md']);
   });
 });
+
+/** Writes `content` to `root/rel`, creating parent directories first. */
+async function writeAt(root: string, rel: string, content: string): Promise<void> {
+  const full = join(root, rel);
+  await mkdir(dirname(full), { recursive: true });
+  await writeFile(full, content, 'utf8');
+}

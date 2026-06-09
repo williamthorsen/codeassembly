@@ -18,14 +18,6 @@ const FILES: Record<string, string> = {
   'README.md': '# readme', // a real file that is not a validatable note
 };
 
-/** Builds a real store from `FILES`, enumerates it, and resolves `patterns` against the result. */
-async function select(patterns: string[]): Promise<{ selected: string[]; unmatched: string[] }> {
-  const root = await makeTree(FILES);
-  const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
-  const result = await selectNotes({ notes, patterns, storeRoot: root });
-  return { selected: result.selected.map((entry) => entry.relativePath), unmatched: result.unmatched };
-}
-
 describe(selectNotes, () => {
   it('selects exactly the notes a glob matches', async () => {
     const { selected, unmatched } = await select(['content/assertions/**']);
@@ -117,3 +109,11 @@ describe(selectNotes, () => {
     expect(result.unmatched).toEqual([]);
   });
 });
+
+/** Builds a real store from `FILES`, enumerates it, and resolves `patterns` against the result. */
+async function select(patterns: string[]): Promise<{ selected: string[]; unmatched: string[] }> {
+  const root = await makeTree(FILES);
+  const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
+  const result = await selectNotes({ notes, patterns, storeRoot: root });
+  return { selected: result.selected.map((entry) => entry.relativePath), unmatched: result.unmatched };
+}
