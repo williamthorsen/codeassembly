@@ -59,24 +59,6 @@ export async function runCreate(input: {
   return { exitCode: 0, stdout: formatCreated(outcome.created, registryPath), stderr: '' };
 }
 
-// region | Helpers
-
-/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
-function buildUsageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb create: ${message}\n${CREATE_HELP}` };
-}
-
-/** Builds the human summary of a created store. */
-function formatCreated(created: CreatedStore, registryPath: string): string {
-  const lines = [`Created knowledge base "${created.name}" at ${created.storePath}`];
-  for (const path of created.created) {
-    lines.push(`  ${path}`);
-  }
-  lines.push(created.registered ? `Registered in ${registryPath}` : 'Not registered (--no-register).');
-  return `${lines.join('\n')}\n`;
-}
-
 /** Parsed `kb create` options. */
 interface CreateOptions {
   /** Explicit registry name from `--name`, or `null` to default to the directory name. */
@@ -130,6 +112,24 @@ export function parseCreateArgs(argv: readonly string[]): CreateOptions {
   }
 
   return { name, noRegister, help };
+}
+
+// region | Helpers
+
+/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
+function buildUsageError(error: unknown): CommandOutput {
+  const message = error instanceof Error ? error.message : String(error);
+  return { exitCode: 2, stdout: '', stderr: `kb create: ${message}\n${CREATE_HELP}` };
+}
+
+/** Builds the human summary of a created store. */
+function formatCreated(created: CreatedStore, registryPath: string): string {
+  const lines = [`Created knowledge base "${created.name}" at ${created.storePath}`];
+  for (const path of created.created) {
+    lines.push(`  ${path}`);
+  }
+  lines.push(created.registered ? `Registered in ${registryPath}` : 'Not registered (--no-register).');
+  return `${lines.join('\n')}\n`;
 }
 
 // endregion | Helpers

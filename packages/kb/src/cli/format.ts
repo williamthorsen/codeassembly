@@ -20,22 +20,6 @@ export interface CheckSummary {
   warnings: number;
 }
 
-/** Partitions a finding set into total, error, and warning counts over `noteCount` notes. */
-export function summarize(findings: readonly Finding[], noteCount: number): CheckSummary {
-  let errors = 0;
-  let warnings = 0;
-  for (const finding of findings) {
-    if (finding.severity === 'error') errors += 1;
-    else warnings += 1;
-  }
-  return { notes: noteCount, total: findings.length, errors, warnings };
-}
-
-/** Renders the `--json` payload: store identity, summary counts, and the raw findings. */
-export function formatJson(input: { store: StoreRef; summary: CheckSummary; findings: readonly Finding[] }): string {
-  return `${JSON.stringify({ store: input.store, summary: input.summary, findings: input.findings }, null, 2)}\n`;
-}
-
 /** Which selection produced a report, controlling the wording of the zero-match line. */
 export type CheckScope = 'vault' | 'patterns' | 'vs';
 
@@ -75,19 +59,23 @@ export function formatHuman(input: {
   return `${lines.join('\n')}\n`;
 }
 
-// region | Helpers
-
-/** The line for a run that checked nothing, worded for how its notes were selected. */
-function zeroMatchLine(scope: CheckScope, targets: readonly string[]): string {
-  switch (scope) {
-    case 'patterns':
-      return 'no notes matched the given paths (0 checked)';
-    case 'vs':
-      return 'no changed notes to check (0 checked)';
-    case 'vault':
-      return `no notes matched ${targets.join(', ')} (0 checked)`;
-  }
+/** Renders the `--json` payload: store identity, summary counts, and the raw findings. */
+export function formatJson(input: { store: StoreRef; summary: CheckSummary; findings: readonly Finding[] }): string {
+  return `${JSON.stringify({ store: input.store, summary: input.summary, findings: input.findings }, null, 2)}\n`;
 }
+
+/** Partitions a finding set into total, error, and warning counts over `noteCount` notes. */
+export function summarize(findings: readonly Finding[], noteCount: number): CheckSummary {
+  let errors = 0;
+  let warnings = 0;
+  for (const finding of findings) {
+    if (finding.severity === 'error') errors += 1;
+    else warnings += 1;
+  }
+  return { notes: noteCount, total: findings.length, errors, warnings };
+}
+
+// region | Helpers
 
 /** Groups findings by their `path`, preserving each path's first-seen order and the findings' input order within it. */
 function groupByPath(findings: readonly Finding[]): Map<string, Finding[]> {
@@ -101,6 +89,18 @@ function groupByPath(findings: readonly Finding[]): Map<string, Finding[]> {
     group.push(finding);
   }
   return groups;
+}
+
+/** The line for a run that checked nothing, worded for how its notes were selected. */
+function zeroMatchLine(scope: CheckScope, targets: readonly string[]): string {
+  switch (scope) {
+    case 'patterns':
+      return 'no notes matched the given paths (0 checked)';
+    case 'vs':
+      return 'no changed notes to check (0 checked)';
+    case 'vault':
+      return `no notes matched ${targets.join(', ')} (0 checked)`;
+  }
 }
 
 // endregion | Helpers

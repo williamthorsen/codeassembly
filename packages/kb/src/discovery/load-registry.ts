@@ -73,6 +73,17 @@ export async function tryLoadKbRegistry(
 
 // region | Helpers
 
+/** Expand a leading `~` or `~/` against the home directory; throws when `HOME` is unset. */
+function expandTilde(value: string, home: string): string {
+  if (value !== '~' && !value.startsWith('~/')) {
+    return value;
+  }
+  if (home === '') {
+    throw new Error(`cannot expand "${value}": HOME is not set`);
+  }
+  return value === '~' ? home : join(home, value.slice(2));
+}
+
 /**
  * Read and validate one registry file. Returns `undefined` when the file is absent;
  * throws on malformed YAML, a structural defect, or a duplicate `default: true`.
@@ -161,17 +172,6 @@ function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistry
 function resolvePath(value: string, configDir: string, home: string): string {
   const expanded = expandTilde(value, home);
   return isAbsolute(expanded) ? expanded : resolve(configDir, expanded);
-}
-
-/** Expand a leading `~` or `~/` against the home directory; throws when `HOME` is unset. */
-function expandTilde(value: string, home: string): string {
-  if (value !== '~' && !value.startsWith('~/')) {
-    return value;
-  }
-  if (home === '') {
-    throw new Error(`cannot expand "${value}": HOME is not set`);
-  }
-  return value === '~' ? home : join(home, value.slice(2));
 }
 
 // endregion | Helpers

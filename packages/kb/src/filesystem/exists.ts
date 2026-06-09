@@ -19,14 +19,14 @@ export interface ExistsOptions {
   treatErrorsAsAbsent?: boolean;
 }
 
-/** Returns true when something exists at `path`. See {@link ExistsOptions} for the absence policy. */
-export async function pathExists(path: string, options: ExistsOptions = {}): Promise<boolean> {
-  return statExists(path, options, () => true);
-}
-
 /** Returns true when `path` exists and is a directory. See {@link ExistsOptions} for the absence policy. */
 export async function directoryExists(path: string, options: ExistsOptions = {}): Promise<boolean> {
   return statExists(path, options, (stats) => stats.isDirectory());
+}
+
+/** Returns true when something exists at `path`. See {@link ExistsOptions} for the absence policy. */
+export async function pathExists(path: string, options: ExistsOptions = {}): Promise<boolean> {
+  return statExists(path, options, () => true);
 }
 
 // region | Helpers

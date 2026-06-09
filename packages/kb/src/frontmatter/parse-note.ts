@@ -9,6 +9,29 @@ import { type FrontmatterDocument } from './yaml-position.ts';
 const FENCE = '---';
 
 /**
+ * Builds the raw `yaml.Document` for an already-parsed note's frontmatter, or `null` when the note has no frontmatter
+ * block.
+ *
+ * @internal
+ */
+export function documentFor(note: ParsedNote): FrontmatterDocument | null {
+  if (note.frontmatterRaw === null) {
+    return null;
+  }
+  const doc = parseDocument(note.frontmatterRaw.text, { schema: 'core' });
+  return { doc, raw: note.frontmatterRaw };
+}
+
+/**
+ * Reads a note from disk and parse it into a `ParsedNote`. I/O errors (e.g. a missing file) are thrown;
+ * YAML parse errors are not.
+ */
+export async function parseNote(input: { path: string }): Promise<ParsedNote> {
+  const content = await readFile(input.path, 'utf8');
+  return parseNoteContent({ content, path: input.path });
+}
+
+/**
  * Parse a note from a literal string into a `ParsedNote` carrying typed frontmatter.
  * Parse errors are recorded in `frontmatterRaw.parseError`, never thrown — the rule layer decides how to report them.
  * `path` defaults to `<string>` and labels the result for diagnostics.
@@ -44,15 +67,6 @@ export function parseNoteContent(input: { content: string; path?: string }): Par
 }
 
 /**
- * Reads a note from disk and parse it into a `ParsedNote`. I/O errors (e.g. a missing file) are thrown;
- * YAML parse errors are not.
- */
-export async function parseNote(input: { path: string }): Promise<ParsedNote> {
-  const content = await readFile(input.path, 'utf8');
-  return parseNoteContent({ content, path: input.path });
-}
-
-/**
  * Parses a note and returns its raw `yaml.Document` alongside the slice metadata.
  *
  * @internal - Exported to allow testing
@@ -63,20 +77,6 @@ export function parseNoteWithDocument(
 ): { note: ParsedNote; document: FrontmatterDocument | null } {
   const note = parseNoteContent({ content, path });
   return { note, document: documentFor(note) };
-}
-
-/**
- * Builds the raw `yaml.Document` for an already-parsed note's frontmatter, or `null` when the note has no frontmatter
- * block.
- *
- * @internal
- */
-export function documentFor(note: ParsedNote): FrontmatterDocument | null {
-  if (note.frontmatterRaw === null) {
-    return null;
-  }
-  const doc = parseDocument(note.frontmatterRaw.text, { schema: 'core' });
-  return { doc, raw: note.frontmatterRaw };
 }
 
 // region | Helpers

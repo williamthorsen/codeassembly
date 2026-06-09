@@ -99,14 +99,6 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
   return { exitCode: summary.errors > 0 ? 1 : 0, stdout, stderr: '' };
 }
 
-// region | Helpers
-
-/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
-function buildUsageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb check: ${message}\n${CHECK_HELP}` };
-}
-
 /** Parsed `kb check` options. */
 interface CheckOptions {
   /** Explicit store name from `--kb`, or `null` for ancestor-walk discovery. */
@@ -175,6 +167,14 @@ export function parseCheckArgs(argv: readonly string[]): CheckOptions {
   }
 
   return { kb, json, help, patterns, vs };
+}
+
+// region | Helpers
+
+/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
+function buildUsageError(error: unknown): CommandOutput {
+  const message = error instanceof Error ? error.message : String(error);
+  return { exitCode: 2, stdout: '', stderr: `kb check: ${message}\n${CHECK_HELP}` };
 }
 
 /** The selected notes and findings for the run, or a usage-error message (exit 2). */

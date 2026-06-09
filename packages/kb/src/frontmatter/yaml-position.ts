@@ -35,13 +35,16 @@ export function findPair(doc: Document.Parsed, key: string): Pair | null {
   return null;
 }
 
-/** Translate a YAML node offset (into the raw frontmatter slice) to a 1-based note line number. */
-function noteLineOf(offset: number, raw: FrontmatterRaw): number {
-  let line = 0;
-  for (let index = 0; index < offset && index < raw.text.length; index += 1) {
-    if (raw.text[index] === '\n') line += 1;
+/**
+ * Source line of a sequence item, falling back to the supplied line when the item has no range.
+ *
+ * @internal
+ */
+export function itemLine(item: Scalar, raw: FrontmatterRaw, fallbackLine: number): number {
+  if (item.range) {
+    return noteLineOf(item.range[0], raw);
   }
-  return raw.startLine + 1 + line;
+  return fallbackLine;
 }
 
 /**
@@ -61,14 +64,15 @@ export function valueLine(pair: Pair, raw: FrontmatterRaw): number {
   return raw.startLine + 1;
 }
 
-/**
- * Source line of a sequence item, falling back to the supplied line when the item has no range.
- *
- * @internal
- */
-export function itemLine(item: Scalar, raw: FrontmatterRaw, fallbackLine: number): number {
-  if (item.range) {
-    return noteLineOf(item.range[0], raw);
+// region | Helpers
+
+/** Translate a YAML node offset (into the raw frontmatter slice) to a 1-based note line number. */
+function noteLineOf(offset: number, raw: FrontmatterRaw): number {
+  let line = 0;
+  for (let index = 0; index < offset && index < raw.text.length; index += 1) {
+    if (raw.text[index] === '\n') line += 1;
   }
-  return fallbackLine;
+  return raw.startLine + 1 + line;
 }
+
+// endregion | Helpers

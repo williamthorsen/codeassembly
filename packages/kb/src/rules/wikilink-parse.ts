@@ -22,6 +22,15 @@ const NON_MD_EXTENSIONS = new Set([
   '.wav',
 ]);
 
+/** Counts the newlines in `text` before byte offset `upTo`, used to locate a match's source line. */
+export function countNewlines(text: string, upTo: number): number {
+  let count = 0;
+  for (let index = 0; index < upTo && index < text.length; index += 1) {
+    if (text[index] === '\n') count += 1;
+  }
+  return count;
+}
+
 /**
  * Strips `|alias` and `#anchor` from a wikilink inner string and returns the target. Returns `null` for intra-doc
  * links like `[[#heading]]`, which carry no target.
@@ -47,25 +56,6 @@ export function lookupKey(target: string): string {
   const withoutExtension = target.endsWith('.md') ? target.slice(0, -3) : target;
   const segments = withoutExtension.split('/');
   return segments.at(-1) ?? withoutExtension;
-}
-
-/** Counts the newlines in `text` before byte offset `upTo`, used to locate a match's source line. */
-export function countNewlines(text: string, upTo: number): number {
-  let count = 0;
-  for (let index = 0; index < upTo && index < text.length; index += 1) {
-    if (text[index] === '\n') count += 1;
-  }
-  return count;
-}
-
-/**
- * Replaces inline backtick spans (e.g., TOML `[[plugins]]` mentioned in prose) with same-length whitespace so
- * wikilink-shaped text inside inline code is not flagged. Matches single or multi-backtick runs whose content
- * contains no backticks or newlines — the common case; complex spans with embedded backticks fall through and are
- * still parsed for wikilinks.
- */
-export function maskInlineCode(body: string): string {
-  return body.replace(/`+[^`\n]+?`+/g, (match) => ' '.repeat(match.length));
 }
 
 /**
@@ -100,6 +90,16 @@ export function maskFencedCode(body: string): string {
     if (inFence) lines[index] = ' '.repeat(line.length);
   }
   return lines.join('\n');
+}
+
+/**
+ * Replaces inline backtick spans (e.g., TOML `[[plugins]]` mentioned in prose) with same-length whitespace so
+ * wikilink-shaped text inside inline code is not flagged. Matches single or multi-backtick runs whose content
+ * contains no backticks or newlines — the common case; complex spans with embedded backticks fall through and are
+ * still parsed for wikilinks.
+ */
+export function maskInlineCode(body: string): string {
+  return body.replace(/`+[^`\n]+?`+/g, (match) => ' '.repeat(match.length));
 }
 
 const FENCE_LINE = /^\s{0,3}(`{3,}|~{3,})/;
