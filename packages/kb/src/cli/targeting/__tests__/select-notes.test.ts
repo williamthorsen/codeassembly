@@ -100,4 +100,20 @@ describe(selectNotes, () => {
     expect(selected).toEqual([]);
     expect(unmatched).toEqual(['content/nope/**']);
   });
+
+  it('selects only the literal note when its name contains glob metacharacters', async () => {
+    // `[v2]` is a character class as a glob, so picomatch would also match the sibling `Draft2.md`;
+    // an exact path must select only the named note.
+    const root = await makeTree({
+      'content/Draft[v2].md': NOTE,
+      'content/Draft2.md': NOTE,
+      'content/Plain.md': NOTE,
+    });
+    const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
+
+    const result = await selectNotes({ notes, patterns: ['content/Draft[v2].md'], storeRoot: root });
+
+    expect(result.selected.map((entry) => entry.relativePath)).toEqual(['content/Draft[v2].md']);
+    expect(result.unmatched).toEqual([]);
+  });
 });

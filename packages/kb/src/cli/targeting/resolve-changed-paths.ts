@@ -29,12 +29,18 @@ export function resolveChangedPaths(input: { storeRoot: string; ref: string }): 
     return { ok: false, message: toplevel.message };
   }
 
+  // `-z` emits NUL-delimited, unquoted paths so names with non-ASCII bytes survive verbatim (git's default
+  // octal-quoting would otherwise corrupt them); `-- .` limits the diff to the store subtree when the store is
+  // nested below the repository root.
   const diff = tryGit(storeRoot, [
     'diff',
     '--name-only',
+    '-z',
     '--diff-filter=AMR',
     '--find-renames',
     mergeBase.stdout.trim(),
+    '--',
+    '.',
   ]);
   if (!diff.ok) {
     return { ok: false, message: diff.message };
@@ -43,9 +49,9 @@ export function resolveChangedPaths(input: { storeRoot: string; ref: string }): 
   const realStoreRoot = realpathSync(storeRoot);
   const repoRoot = toplevel.stdout.trim();
   const paths = diff.stdout
-    .split('\n')
-    .filter((line) => line !== '')
-    .map((line) => relative(realStoreRoot, join(repoRoot, line)).split(sep).join('/'));
+    .split('\0')
+    .filter((entry) => entry !== '')
+    .map((entry) => relative(realStoreRoot, join(repoRoot, entry)).split(sep).join('/'));
 
   return { ok: true, paths };
 }

@@ -32,11 +32,21 @@ export async function selectNotes(input: {
   storeRoot: string;
 }): Promise<SelectionResult> {
   const { notes, storeRoot } = input;
+  const relativePaths = new Set(notes.map((entry) => entry.relativePath));
   const selectedPaths = new Set<string>();
   const unmatched: string[] = [];
 
   for (const rawPattern of input.patterns) {
     const pattern = normalizePattern(rawPattern);
+
+    // An exact note-path match wins, so a literal path is matched verbatim — even one carrying glob
+    // metacharacters (a `--vs` git path or a shell-expanded name like `content/Draft[v2].md`), which
+    // as a pattern would over-match its character-class siblings.
+    if (relativePaths.has(pattern)) {
+      selectedPaths.add(pattern);
+      continue;
+    }
+
     const direct = matchPaths(notes, pattern);
     if (direct.length > 0) {
       for (const path of direct) selectedPaths.add(path);

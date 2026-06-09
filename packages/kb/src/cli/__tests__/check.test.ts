@@ -292,4 +292,41 @@ describe('kb check targeting', () => {
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('no-such-ref');
   });
+
+  it('composes --kb with a path argument, narrowing within the named store', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+    const home = await makeHome('coding', store);
+
+    const whole = await run({ argv: ['check', '--kb', 'coding'], cwd: store, home });
+    const scoped = await run({ argv: ['check', '--kb', 'coding', 'content/Clean.md'], cwd: store, home });
+
+    expect(whole.exitCode).toBe(1);
+    expect(scoped.exitCode).toBe(0);
+  });
+
+  it('checks only the changed metacharacter-named note, not its glob-expanded siblings', async () => {
+    // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so a
+    // `--vs` run that touched only the clean `Draft[v2].md` must not be failed by the sibling.
+    const store = await makeStore({ 'content/Draft2.md': MISSING_UPDATED });
+    initGitRepo(store);
+    const base = commitAll(store, 'base');
+    await writeFile(join(store, 'content', 'Draft[v2].md'), VALID, 'utf8');
+    commitAll(store, 'add the metachar-named note');
+
+    const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('checks a changed note with a non-ASCII name', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    initGitRepo(store);
+    const base = commitAll(store, 'base');
+    await writeFile(join(store, 'content', 'Café.md'), MISSING_UPDATED, 'utf8');
+    commitAll(store, 'add a non-ascii note');
+
+    const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+
+    expect(result.exitCode).toBe(1);
+  });
 });
