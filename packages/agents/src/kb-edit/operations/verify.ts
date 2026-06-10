@@ -1,6 +1,6 @@
 import type { Frontmatter } from '@codeassembly/kb';
 
-import { formatUtcDate } from '../../kb-shared/note-helpers.ts';
+import { formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
  * Sets `last-verified:` to today (UTC), inserting the field if it isn't already present. Does **not** bump
@@ -16,7 +16,7 @@ export function verify(input: { frontmatter: Frontmatter; body: string; now: Dat
   return {
     frontmatter: {
       ...input.frontmatter,
-      extra: { ...input.frontmatter.extra, 'last-verified': formatUtcDate(input.now) },
+      extra: { ...input.frontmatter.extra, 'last-verified': formatUtcTimestamp(input.now) },
     },
     body: input.body,
   };

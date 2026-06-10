@@ -12,6 +12,7 @@ import type { KbRoot } from '@codeassembly/kb';
 import { loadSchema } from '@codeassembly/kb/schema';
 import { ulid } from 'ulid';
 
+import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveStoreByName } from '../kb-shared/resolve-store-by-name.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import { prepareEvent } from './prepare-event.ts';
@@ -113,7 +114,7 @@ export async function runCapture(input: {
     args,
     context,
     id: ulid(),
-    capturedAt: input.now.toISOString(),
+    capturedAt: formatUtcTimestamp(input.now),
     schema,
     body,
   });

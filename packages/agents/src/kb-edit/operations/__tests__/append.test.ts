@@ -29,7 +29,7 @@ describe(append, () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.body).toBe('First paragraph.\n\nSecond paragraph.\n');
-      expect(result.frontmatter.updated).toBe('2026-05-24');
+      expect(result.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
     }
   });
 

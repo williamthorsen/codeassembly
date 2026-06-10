@@ -39,7 +39,7 @@ async function runChild(input: {
 }
 
 const NOW = new Date('2026-05-24T14:35:00Z');
-const TODAY = '2026-05-24';
+const TODAY = '2026-05-24T14:35:00Z';
 
 /** Build a Readable stream that emits the given body and ends. */
 function bodyStream(body: string): Readable {
@@ -66,8 +66,6 @@ describe(parseArgs, () => {
       'My note',
       '--tags',
       'one, two,three',
-      '--last-verified',
-      '2026-01-15',
     ]);
 
     expect(parsed).toEqual({
@@ -76,7 +74,6 @@ describe(parseArgs, () => {
       diataxis: 'howto',
       title: 'My note',
       tags: ['one', 'two', 'three'],
-      lastVerified: '2026-01-15',
     });
   });
 
@@ -94,7 +91,6 @@ describe(parseArgs, () => {
     expect(parsed.kb).toBeNull();
     expect(parsed.folder).toBeNull();
     expect(parsed.tags).toEqual([]);
-    expect(parsed.lastVerified).toBeNull();
   });
 
   it('defaults --diataxis to null when omitted', () => {
@@ -118,6 +114,10 @@ describe(parseArgs, () => {
   it('rejects the retired --type flag as unknown', () => {
     expect(() => parseArgs(['--type', 'howto', '--title', 'X'])).toThrow(/unknown flag/);
   });
+
+  it('rejects the retired --last-verified flag as unknown', () => {
+    expect(() => parseArgs(['--last-verified', '2026-01-15', '--title', 'X'])).toThrow(/unknown flag/);
+  });
 });
 
 describe(runAdd, () => {
@@ -138,6 +138,8 @@ describe(runAdd, () => {
       expect(result.kb.source).toBe('discovered');
       expect(result.frontmatter.title).toBe('Working with streams');
       expect(result.frontmatter.created).toBe(TODAY);
+      expect(result.frontmatter.updated).toBe(TODAY);
+      expect(result.frontmatter.extra['last-verified']).toBe(TODAY);
       const content = await readFile(result.path, 'utf8');
       expect(content).toContain('title: Working with streams');
       expect(content).toContain('How to work with Node streams.');

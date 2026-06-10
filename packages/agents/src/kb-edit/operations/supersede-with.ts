@@ -3,7 +3,7 @@ import { relative } from 'node:path';
 import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb';
 import { canonicalize } from '@codeassembly/kb/tags';
 
-import { dedupeInOrder, formatUtcDate } from '../../kb-shared/note-helpers.ts';
+import { dedupeInOrder, formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
  * Prepares the in-memory edits for `--supersede-with`. Old note: `superseded-by` pointer plus a `deprecated` tag
@@ -29,7 +29,7 @@ export function prepareSupersedeWith(input: {
   old: { frontmatter: Frontmatter; body: string };
   new: { frontmatter: Frontmatter; body: string };
 } {
-  const today = formatUtcDate(input.now);
+  const today = formatUtcTimestamp(input.now);
   const oldRelative = relative(input.kbPath, input.oldNote.path);
   const newRelative = relative(input.kbPath, input.newNote.path);
 

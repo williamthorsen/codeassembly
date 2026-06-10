@@ -53,7 +53,7 @@
     "line": 4,
     "rule": "frontmatter.date",
     "severity": "error",
-    "message": "created: expected YYYY-MM-DD, got \"2026/04/12\""
+    "message": "created: expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got \"2026/04/12\""
   },
   {
     "path": "11-bad-date-calendar.md",

@@ -21,7 +21,7 @@ describe(bumpUpdated, () => {
   it('sets updated to today (UTC) and leaves other fields untouched', () => {
     const result = bumpUpdated({ frontmatter: frontmatter(), body: 'unchanged body', now: NOW });
 
-    expect(result.frontmatter.updated).toBe('2026-05-24');
+    expect(result.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
     expect(result.frontmatter.title).toBe('Example');
     expect(result.frontmatter.created).toBe('2026-05-01');
     expect(result.frontmatter.tags).toEqual(['example']);

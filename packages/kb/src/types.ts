@@ -71,9 +71,9 @@ export interface Frontmatter {
   title: string;
   /** The stored record-type discriminant (e.g. `assertion`, `event`). */
   recordType: string;
-  /** UTC `YYYY-MM-DD`. */
+  /** Second-precision UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`); bare legacy `YYYY-MM-DD` dates remain valid. */
   created: string;
-  /** UTC `YYYY-MM-DD`. */
+  /** Second-precision UTC timestamp (`YYYY-MM-DDTHH:MM:SSZ`); bare legacy `YYYY-MM-DD` dates remain valid. */
   updated: string;
   tags: string[];
   /** Optional and unknown fields, preserved through round-trip in insertion order. */

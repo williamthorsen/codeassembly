@@ -6,7 +6,8 @@ import type { Finding, Schema } from '../types.ts';
 import type { KbRule, KbRuleInput } from './types.ts';
 
 const DATE_FIELDS = ['created', 'updated', 'last-verified'] as const;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 
 /**
  * Validate a note's frontmatter block: presence, parseability, the stored `recordType` discriminant, the required
@@ -143,20 +144,34 @@ function toDateString(value: unknown): string {
   return typeof value === 'string' ? value : String(value);
 }
 
-/** Validate that a value is a real UTC `YYYY-MM-DD` calendar date; returns an error message or `null`. */
+/**
+ * Validate that a value is a real UTC instant in either the bare `YYYY-MM-DD` form or the second-precision
+ * `YYYY-MM-DDTHH:MM:SSZ` form; returns an error message or `null`. An unmarked or offset timestamp (no trailing `Z`,
+ * or `+00:00`) matches neither pattern and falls to the format error. Both forms are round-tripped through `Date.UTC`
+ * so an unreal calendar date or unreal clock time is rejected.
+ */
 function validateDate(value: string): string | null {
-  if (!DATE_PATTERN.test(value)) {
-    return `expected YYYY-MM-DD, got "${value}"`;
+  const isDateOnly = DATE_ONLY.test(value);
+  if (!isDateOnly && !TIMESTAMP.test(value)) {
+    return `expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got "${value}"`;
   }
-  // The regex match guarantees fixed-width segments, so slice yields plain strings.
+  // Each regex guarantees fixed-width segments, so slice yields plain numeric strings.
   const year = Number(value.slice(0, 4));
   const month = Number(value.slice(5, 7));
   const day = Number(value.slice(8, 10));
-  const roundTrip = new Date(Date.UTC(year, month - 1, day));
-  const isRealDate =
-    roundTrip.getUTCFullYear() === year && roundTrip.getUTCMonth() === month - 1 && roundTrip.getUTCDate() === day;
-  if (!isRealDate) {
-    return `"${value}" is not a real calendar date`;
+  const hour = isDateOnly ? 0 : Number(value.slice(11, 13));
+  const minute = isDateOnly ? 0 : Number(value.slice(14, 16));
+  const second = isDateOnly ? 0 : Number(value.slice(17, 19));
+  const roundTrip = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  const isReal =
+    roundTrip.getUTCFullYear() === year &&
+    roundTrip.getUTCMonth() === month - 1 &&
+    roundTrip.getUTCDate() === day &&
+    roundTrip.getUTCHours() === hour &&
+    roundTrip.getUTCMinutes() === minute &&
+    roundTrip.getUTCSeconds() === second;
+  if (!isReal) {
+    return isDateOnly ? `"${value}" is not a real calendar date` : `"${value}" is not a real timestamp`;
   }
   return null;
 }

@@ -34,7 +34,7 @@ describe(retag, () => {
     });
 
     expect(result.frontmatter.tags).toEqual(['new', 'set']);
-    expect(result.frontmatter.updated).toBe('2026-05-24');
+    expect(result.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
   });
 
   it('returns originalTags and canonicalTags for audit', () => {

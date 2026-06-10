@@ -1,5 +1,5 @@
 /**
- * Build step: bundle each skill's TypeScript helper into a single self-contained `.mjs` placed inside
+ * Build step: Bundle each skill's TypeScript helper into a single self-contained `.mjs` placed inside
  * the skill's content directory.
  *
  * A skill installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
@@ -186,7 +186,7 @@ function makeDeriveSessionContextSmokeTest(): SmokeTestInvocation {
   };
 }
 
-/** Assert the deriver emitted the expected field set for the smoke fixture. */
+/** Asserts that the deriver emitted the expected field set for the smoke fixture. */
 function assertDeriveSessionContextOutput(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from derive-session-context');
@@ -217,11 +217,10 @@ function assertDeriveSessionContextOutput(result: unknown): void {
 }
 
 /**
- * Type guard: narrows `value` to a plain object with unknown property values.
+ * Type guard: Narrows `value` to a plain object with unknown property values.
  *
- * Intentionally kept local rather than imported from `src/lib/type-guards.ts`: this build
- * script sits outside the runtime surface, and importing runtime source into build tooling
- * would couple the two for the sake of a one-line guard.
+ * Intentionally kept local rather than imported from `src/lib/type-guards.ts`: This build script sits outside the
+ * runtime surface; importing runtime source into build tooling would couple the two for the sake of a one-line guard.
  */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -234,8 +233,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * the fixture dir so the dev's real `~/.claude/kb.yaml` does not pollute KB resolution.
  *
  * The fixture is process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
- * directories without explicit cleanup. The seed note's `updated:` field is bumped by every invocation;
- * `--bump-updated` is idempotent at the field level so re-runs within the same day are no-ops on disk.
+ * directories without explicit cleanup. The seed note's `updated:` field is rewritten to the current instant
+ * on every invocation.
  */
 function makeKbEditSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-edit-smoke-'));
@@ -254,7 +253,7 @@ function makeKbEditSmokeTest(): SmokeTestInvocation {
   };
 }
 
-/** Assert the kb-edit smoke produced an ok bump-updated result with a today-shaped `updated:` field. */
+/** Asserts that the kb-edit smoke produced an ok bump-updated result with second-precision UTC `updated:` timestamp. */
 function assertKbEditSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-edit');
@@ -269,8 +268,8 @@ function assertKbEditSmokeResult(result: unknown): void {
   if (!isRecord(frontmatter)) {
     throw new TypeError('expected frontmatter object on kb-edit result');
   }
-  if (typeof frontmatter.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.updated)) {
-    throw new Error(`expected updated to be YYYY-MM-DD, got ${JSON.stringify(frontmatter.updated)}`);
+  if (typeof frontmatter.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(frontmatter.updated)) {
+    throw new Error(`expected updated to be YYYY-MM-DDTHH:MM:SSZ, got ${JSON.stringify(frontmatter.updated)}`);
   }
 }
 
@@ -301,8 +300,8 @@ function makeKbCurateSmokeTest(): SmokeTestInvocation {
 }
 
 /**
- * Assert the kb-curate smoke produced an ok read-only report that actually enumerated the seed note. The seed note
- * carries an unresolved wikilink, so a non-empty enumeration always surfaces a `wikilinks.unresolved` finding; its
+ * Asserts that the kb-curate smoke produced an ok read-only report that actually enumerated the seed note. The seed
+ * note carries an unresolved wikilink, so a non-empty enumeration always surfaces a `wikilinks.unresolved` finding; its
  * absence means the bundle enumerated nothing — a broken `content/` scoping must fail here rather than pass with an
  * empty report.
  */

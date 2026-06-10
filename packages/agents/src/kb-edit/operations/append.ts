@@ -1,6 +1,6 @@
 import type { Frontmatter } from '@codeassembly/kb';
 
-import { formatUtcDate } from '../../kb-shared/note-helpers.ts';
+import { formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /** Successful append: a mutated `{ frontmatter, body }` ready for `writeBackNote`. */
 export interface AppendSuccess {
@@ -37,7 +37,11 @@ export function append(input: { frontmatter: Frontmatter; body: string; addition
 
   return {
     ok: true,
-    frontmatter: { ...input.frontmatter, updated: formatUtcDate(input.now), extra: { ...input.frontmatter.extra } },
+    frontmatter: {
+      ...input.frontmatter,
+      updated: formatUtcTimestamp(input.now),
+      extra: { ...input.frontmatter.extra },
+    },
     body: newBody,
   };
 }

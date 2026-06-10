@@ -102,6 +102,59 @@ describe('frontmatterRule', () => {
     expect(frontmatterRule.check({ note, document, schema: defaultSchema })).toEqual([]);
   });
 
+  it('accepts a second-precision UTC timestamp in a date field', () => {
+    const dateFinding = checkDateField('created', '2026-05-01T14:35:09Z').find(
+      (finding) => finding.rule === 'frontmatter.date',
+    );
+
+    expect(dateFinding).toBeUndefined();
+  });
+
+  it.each([
+    ['created', 'date without a Z marker', '2026-05-01T14:35:09', 'expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got'],
+    [
+      'created',
+      'date with a numeric offset',
+      '2026-05-01T14:35:09+00:00',
+      'expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got',
+    ],
+    ['created', 'slash-separated date', '2026/05/01', 'expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got'],
+    ['created', 'unreal calendar date', '2026-02-30', 'is not a real calendar date'],
+    ['created', 'unreal clock time', '2026-05-01T25:00:00Z', 'is not a real timestamp'],
+    ['updated', 'unreal calendar date', '2026-02-30', 'is not a real calendar date'],
+  ] as const)('rejects %s as a %s', (field, _label, value, expectedMessage) => {
+    const dateFinding = checkDateField(field, value).find((finding) => finding.rule === 'frontmatter.date');
+
+    expect(dateFinding?.message).toContain(expectedMessage);
+  });
+
+  it('accepts a bare date in the last-verified field', () => {
+    const dateFinding = checkDateField('last-verified', '2026-05-14').find(
+      (finding) => finding.rule === 'frontmatter.date',
+    );
+
+    expect(dateFinding).toBeUndefined();
+  });
+
+  it('accepts a second-precision UTC timestamp in the last-verified field', () => {
+    const dateFinding = checkDateField('last-verified', '2026-05-14T14:35:09Z').find(
+      (finding) => finding.rule === 'frontmatter.date',
+    );
+
+    expect(dateFinding).toBeUndefined();
+  });
+
+  it.each([
+    ['date without a Z marker', '2026-05-14T14:35:09', 'expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got'],
+    ['date with a numeric offset', '2026-05-14T14:35:09+00:00', 'expected YYYY-MM-DD or YYYY-MM-DDTHH:MM:SSZ, got'],
+    ['unreal calendar date', '2026-02-30', 'is not a real calendar date'],
+    ['unreal clock time', '2026-05-14T25:00:00Z', 'is not a real timestamp'],
+  ])('rejects %s in the last-verified field', (_label, value, expectedMessage) => {
+    const dateFinding = checkDateField('last-verified', value).find((finding) => finding.rule === 'frontmatter.date');
+
+    expect(dateFinding?.message).toContain(expectedMessage);
+  });
+
   it('emits frontmatter.recordType when the recordType field is absent', () => {
     const content = [
       '---',
@@ -233,6 +286,30 @@ describe('frontmatterRule across record types', () => {
 });
 
 // region | Helpers
+
+/** Builds a minimal valid assertion note with one date field overridden, then runs the frontmatter rule against it. */
+function checkDateField(field: 'created' | 'updated' | 'last-verified', value: string): Finding[] {
+  const defaults: Record<'created' | 'updated' | 'last-verified', string> = {
+    created: '2026-05-01',
+    updated: '2026-05-14',
+    'last-verified': '2026-05-14',
+  };
+  const lines = { ...defaults, [field]: value };
+  const content = [
+    '---',
+    'title: Date field under test',
+    'recordType: assertion',
+    `created: ${lines.created}`,
+    `updated: ${lines.updated}`,
+    `last-verified: ${lines['last-verified']}`,
+    'tags: [git]',
+    '---',
+    '',
+    '# Body',
+  ].join('\n');
+  const { note, document } = parseNoteWithDocument(content, 'date-field.md');
+  return frontmatterRule.check({ note, document, schema: defaultSchema });
+}
 
 async function checkFixture(name: string): Promise<Finding[]> {
   const content = await readFile(join(RULE_CASES_DIR, `${name}.md`), 'utf8');

@@ -8,7 +8,7 @@ import { prepareNote } from '../prepare-note.ts';
 import type { ParsedArgs } from '../types.ts';
 
 const NOW = new Date('2026-05-24T14:35:00Z');
-const TODAY = '2026-05-24';
+const TODAY = '2026-05-24T14:35:00Z';
 
 const baseArgs: ParsedArgs = {
   kb: null,
@@ -16,7 +16,6 @@ const baseArgs: ParsedArgs = {
   diataxis: 'howto',
   title: 'Working with Node streams',
   tags: ['streams'],
-  lastVerified: null,
 };
 
 const emptyAliases: AliasMap = new Map();
@@ -55,13 +54,14 @@ describe(prepareNote, () => {
     }
   });
 
-  it('fills in UTC created and updated dates from now', () => {
+  it('stamps created, updated, and last-verified from one second-precision instant', () => {
     const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.prepared.frontmatter.created).toBe(TODAY);
       expect(result.prepared.frontmatter.updated).toBe(TODAY);
+      expect(result.prepared.frontmatter.extra['last-verified']).toBe(TODAY);
     }
   });
 
@@ -102,18 +102,8 @@ describe(prepareNote, () => {
     }
   });
 
-  it('emits last-verified into the extra map when supplied', () => {
-    const args: ParsedArgs = { ...baseArgs, lastVerified: '2026-01-15' };
-    const result = prepareNote({ args, schema: defaultSchema, aliases: emptyAliases, now: NOW });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.frontmatter.extra['last-verified']).toBe('2026-01-15');
-    }
-  });
-
   it('round-trips: rendered frontmatter re-parses back to the prepared shape', () => {
-    const args: ParsedArgs = { ...baseArgs, lastVerified: '2026-01-15', tags: ['node.js', 'streams'] };
+    const args: ParsedArgs = { ...baseArgs, tags: ['node.js', 'streams'] };
     const result = prepareNote({ args, schema: defaultSchema, aliases, now: NOW });
 
     expect(result.ok).toBe(true);
@@ -126,18 +116,8 @@ describe(prepareNote, () => {
         created: TODAY,
         updated: TODAY,
         tags: ['nodejs', 'streams'],
-        extra: { diataxis: 'howto', 'last-verified': '2026-01-15' },
+        extra: { diataxis: 'howto', 'last-verified': TODAY },
       });
-    }
-  });
-
-  it('refuses to proceed when last-verified is not a valid YYYY-MM-DD date', () => {
-    const args: ParsedArgs = { ...baseArgs, lastVerified: '2026-99-99' };
-    const result = prepareNote({ args, schema: defaultSchema, aliases: emptyAliases, now: NOW });
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.findings.some((finding) => finding.rule === 'frontmatter.date')).toBe(true);
     }
   });
 });
