@@ -11,6 +11,8 @@ import { loadSchema } from '@codeassembly/kb/schema';
 import { loadAliases } from '@codeassembly/kb/tags';
 
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { readAll } from '../lib/stream-helpers.ts';
 import { prepareNote } from './prepare-note.ts';
 import type { AddResult, ParsedArgs } from './types.ts';
 import { writeNote } from './write-note.ts';
@@ -249,29 +251,6 @@ async function loadAliasesWithWarning(input: { kbRoot: KbRoot }): Promise<AliasM
     process.stderr.write(`kb-add: warning: could not load tag aliases: ${message}\n`);
     return new Map();
   }
-}
-
-/** Splits a comma-separated tag string into individual tags, dropping empties and trimming whitespace. */
-function parseTagList(value: string): string[] {
-  return value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0);
-}
-
-/**
- * Reads a readable stream to completion as a UTF-8 string. Callers pass `process.stdin` (binary mode) or a
- * `Readable.from([Buffer])`, both of which emit `Buffer` chunks.
- */
-async function readAll(stream: Readable): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    if (!Buffer.isBuffer(chunk)) {
-      throw new TypeError('readAll: expected Buffer chunks (stream must be in binary mode)');
-    }
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
 }
 
 // endregion | Helpers
