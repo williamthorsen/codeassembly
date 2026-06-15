@@ -12,19 +12,23 @@ This is a thin entry skill: The shared review logic — diff analysis, finding g
 
 ## Arguments
 
-| Argument            | Description                                                                                                       | Default                                                |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `<pr_id>`           | Positional. Full GitHub or Bitbucket PR URL, or a bare PR number.                                                 | _(required)_                                           |
-| `--diff-base=<ref>` | Override the diff base. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                  | The PR's `baseRefName` (or Bitbucket equivalent)       |
-| `--ticket=<source>` | Override the auto-resolved ticket. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md). | PR's first linked issue, then PR-body parse, then none |
+| Argument            | Description                                                                                                          | Default                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `<pr_id>`           | Positional. Full GitHub or Bitbucket PR URL, or a bare PR number. An explicit value always overrides the stored URL. | _(required unless a stored `pr_url` exists in the manifest)_ |
+| `--diff-base=<ref>` | Override the diff base. Reviews `merge-base(HEAD, <ref>)..HEAD`.                                                     | The PR's `baseRefName` (or Bitbucket equivalent)             |
+| `--ticket=<source>` | Override the auto-resolved ticket. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md).    | PR's first linked issue, then PR-body parse, then none       |
 
 ## Process
 
 ### 1. Get session context
 
-Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, and `platform` from it. These values are carried forward into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `ticket_ref`, `default_branch`, `artifact_base_dir`, `platform`, and `pr_url` from it. These values are carried forward into `review-branch`'s steps 4–9 (review header, scoring, saving) so that `review-branch`'s own step 1 does not need to re-run.
 
-### 2. Detect platform
+### 2. Resolve the PR
+
+Resolve the PR to review per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): an explicit `<pr_id>` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR. The resolved value is passed to the delegate as `pr_id` in step 5.
+
+### 3. Detect platform
 
 Apply the [platform resolution cascade](../_data/ticket-source-resolution.md#platform-resolution-cascade):
 
@@ -34,7 +38,7 @@ Apply the [platform resolution cascade](../_data/ticket-source-resolution.md#pla
 
 If `<pr_id>` is a full URL, the URL host overrides the cascade — a `https://github.com/...` URL is GitHub regardless of preferences. Numeric `<pr_id>` inputs use the cascade-resolved platform.
 
-### 3. Select delegate
+### 4. Select delegate
 
 | Platform                  | Delegate       |
 | ------------------------- | -------------- |
@@ -42,18 +46,18 @@ If `<pr_id>` is a full URL, the URL host overrides the cascade — a `https://gi
 | `bitbucket`               | `review-bb-pr` |
 | Unknown after the cascade | Ask the user   |
 
-### 4. Call delegate
+### 5. Call delegate
 
 Pass the following inputs to the selected delegate per its delegate interface:
 
-| Input                | Value                                                                                                                                                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pr_id`              | Passed through verbatim. The delegate parses and normalizes it (extracts the PR number from a URL when applicable; the Bitbucket delegate also auto-detects workspace/repo from `git remote get-url origin`). |
-| `diff_base_override` | Value of `--diff-base` if provided; otherwise `null`                                                                                                                                                          |
-| `ticket_override`    | Value of `--ticket` if provided; otherwise `null`                                                                                                                                                             |
-| `project_slug`       | From session context                                                                                                                                                                                          |
-| `ticket_id`          | From session context                                                                                                                                                                                          |
-| `artifact_base_dir`  | From session context                                                                                                                                                                                          |
+| Input                | Value                                                                                                                                                                                                           |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pr_id`              | The PR resolved in step 2. The delegate parses and normalizes it (extracts the PR number from a URL when applicable; the Bitbucket delegate also auto-detects workspace/repo from `git remote get-url origin`). |
+| `diff_base_override` | Value of `--diff-base` if provided; otherwise `null`                                                                                                                                                            |
+| `ticket_override`    | Value of `--ticket` if provided; otherwise `null`                                                                                                                                                               |
+| `project_slug`       | From session context                                                                                                                                                                                            |
+| `ticket_id`          | From session context                                                                                                                                                                                            |
+| `artifact_base_dir`  | From session context                                                                                                                                                                                            |
 
 The delegate returns a resolved-input record:
 
@@ -66,7 +70,7 @@ The delegate returns a resolved-input record:
 
 If the delegate exits with a HEAD-mismatch error (the PR's head commit is not the local HEAD), surface its error message and stop. Do not proceed with mismatched state.
 
-### 5. Invoke the shared review process
+### 6. Invoke the shared review process
 
 Invoke `review-branch`'s review process with the resolved inputs:
 
@@ -76,7 +80,7 @@ Invoke `review-branch`'s review process with the resolved inputs:
 
 Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting at step 4 (read prior artifacts). Steps 1–3 of `review-branch` are already complete: Session context was gathered in step 1 above; `merge_base_sha` and `spec_sources` were resolved by the delegate.
 
-### 6. Save and present next steps
+### 7. Save and present next steps
 
 `review-branch`'s saving and next-steps logic apply unchanged. The review artifact lands in the active run directory for the ticket (or a new `{timestamp}-interactive` run directory if none).
 

@@ -26,19 +26,19 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ### 1. Get session context
 
-Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `platform`, `project_slug`, `ticket_id`, and `artifact_base_dir` from it.
+Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `platform`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it.
 
-### 2. Resolve PR number
+### 2. Resolve the PR
 
-If `--pr {n}` was provided, use `{n}` directly.
+Resolve the PR to merge per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): an explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR.
 
-Otherwise, look up the PR for the current branch:
+Read the PR's metadata for the steps below:
 
 ```bash
-gh pr view --json number,title,body,labels,headRefName,baseRefName
+gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
 ```
 
-If `gh pr view` reports no PR for the current branch, stop with: "No open PR found for branch `{branch_name}`. Create one with `/create-pr` first."
+If no PR can be resolved or discovered, stop with: "No open PR found for branch `{branch_name}`. Create one with `/create-pr` first."
 
 Capture `title` (PR title), `body` (PR body), `labels` (label objects), and `number` from the response. These feed the steps below.
 
