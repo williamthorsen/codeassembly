@@ -191,6 +191,55 @@ async function tryReadManifest(filePath: string): Promise<BranchManifest | null>
   return parsed;
 }
 
+/** Returns a copy of `manifest` with each mutation applied in order. */
+function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMutation[]): BranchManifest {
+  let result = manifest;
+  for (const mutation of mutations) {
+    result = { ...result, [mutation.field]: mutation.value };
+  }
+  return result;
+}
+
+/**
+ * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly
+ * composed one. The prior file is read best-effort and at the raw-JSON level — deliberately *not*
+ * gated on `isCurrentSchema`, because the point of carry-forward is to survive a required-field
+ * bump that makes the prior manifest stale. A missing or unparseable file yields no carry-forward,
+ * the same outcome as a first compose. Only string values overlay; the composed `null` defaults
+ * stand otherwise.
+ */
+async function carryForwardStoredUrls(composed: BranchManifest, priorPath: string): Promise<BranchManifest> {
+  let text: string;
+  try {
+    text = await readFile(priorPath, 'utf8');
+  } catch (error) {
+    if (isEnoent(error)) {
+      return composed;
+    }
+    throw error;
+  }
+  let prior: unknown;
+  try {
+    prior = JSON.parse(text);
+  } catch {
+    // Best-effort salvage: a corrupt prior file means we cannot carry stored URLs forward, but a
+    // fresh compose is still the right outcome. Surface a diagnostic so an operator can explain a
+    // vanished `ticket_url`/`pr_url` rather than debugging a silent loss.
+    process.stderr.write(
+      `derive-session-context: warning: prior manifest at ${priorPath} is corrupt; stored URLs not carried forward\n`,
+    );
+    return composed;
+  }
+  if (!isRecord(prior)) {
+    return composed;
+  }
+  return {
+    ...composed,
+    ...(typeof prior.ticket_url === 'string' && { ticket_url: prior.ticket_url }),
+    ...(typeof prior.pr_url === 'string' && { pr_url: prior.pr_url }),
+  };
+}
+
 /**
  * Result of obtaining the manifest before any mutation: the manifest itself and whether the
  * read-or-compose path that produced it still needs to be written to disk. The fast-path read
@@ -237,49 +286,6 @@ async function resolveBaseManifest(input: {
 }
 
 /**
- * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly
- * composed one. The prior file is read best-effort and at the raw-JSON level — deliberately *not*
- * gated on `isCurrentSchema`, because the point of carry-forward is to survive a required-field
- * bump that makes the prior manifest stale. A missing or unparseable file yields no carry-forward,
- * the same outcome as a first compose. Only string values overlay; the composed `null` defaults
- * stand otherwise.
- */
-async function carryForwardStoredUrls(composed: BranchManifest, priorPath: string): Promise<BranchManifest> {
-  let text: string;
-  try {
-    text = await readFile(priorPath, 'utf8');
-  } catch (error) {
-    if (isEnoent(error)) {
-      return composed;
-    }
-    throw error;
-  }
-  let prior: unknown;
-  try {
-    prior = JSON.parse(text);
-  } catch {
-    return composed;
-  }
-  if (!isRecord(prior)) {
-    return composed;
-  }
-  return {
-    ...composed,
-    ...(typeof prior.ticket_url === 'string' && { ticket_url: prior.ticket_url }),
-    ...(typeof prior.pr_url === 'string' && { pr_url: prior.pr_url }),
-  };
-}
-
-/** Returns a copy of `manifest` with each mutation applied in order. */
-function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMutation[]): BranchManifest {
-  let result = manifest;
-  for (const mutation of mutations) {
-    result = { ...result, [mutation.field]: mutation.value };
-  }
-  return result;
-}
-
-/**
  * Writes `manifest` to `targetPath` atomically: serialize to a sibling temp file, then `rename()`
  * over the target so a concurrent reader never observes a half-written file. The temp file shares
  * the target's directory so the rename stays within one filesystem.
@@ -288,8 +294,9 @@ async function writeManifest(targetPath: string, manifest: BranchManifest): Prom
   const dir = path.dirname(targetPath);
   await mkdir(dir, { recursive: true });
   const tempPath = path.join(dir, `.${path.basename(targetPath)}.${process.pid}.${Date.now()}.tmp`);
-  await writeFile(tempPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  const content = `${JSON.stringify(manifest, null, 2)}\n`;
   try {
+    await writeFile(tempPath, content, 'utf8');
     await rename(tempPath, targetPath);
   } catch (error) {
     await rm(tempPath, { force: true });
