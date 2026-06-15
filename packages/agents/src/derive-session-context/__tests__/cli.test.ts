@@ -49,6 +49,12 @@ describe(parseArgs, () => {
     ]);
   });
 
+  it('parses --set-pr-url=value inline form', () => {
+    expect(parseArgs(['--set-pr-url=https://x/pull/2']).mutations).toEqual([
+      { field: 'pr_url', value: 'https://x/pull/2' },
+    ]);
+  });
+
   it('parses --clear-ticket-url and --clear-pr-url as null mutations', () => {
     expect(parseArgs(['--clear-ticket-url', '--clear-pr-url']).mutations).toEqual([
       { field: 'ticket_url', value: null },
@@ -66,6 +72,10 @@ describe(parseArgs, () => {
 
   it('throws when --set-ticket-url has no value', () => {
     expect(() => parseArgs(['--set-ticket-url'])).toThrow(/--set-ticket-url requires a value/);
+  });
+
+  it('throws when --set-pr-url has no value', () => {
+    expect(() => parseArgs(['--set-pr-url'])).toThrow(/--set-pr-url requires a value/);
   });
 
   it('throws on unknown arguments', () => {
@@ -167,6 +177,30 @@ describe(deriveSessionContext, () => {
     expect(result.platform).toBe('github');
     expect(result.artifact_base_dir).toBeDefined();
     expect(result.ticket_id).toBeNull();
+  });
+
+  it('recomposes when a stored URL field is present but wrong-typed', async () => {
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    // All required fields are present and well-typed, but `ticket_url` is a number rather than
+    // `string | null`. `isCurrentSchema` rejects this, forcing a fresh compose that reseeds the URL.
+    const seeded = {
+      ticket_id: null,
+      ticket_ref: null,
+      project_slug: 'seeded',
+      platform: 'github',
+      default_branch: 'origin/main',
+      branch_name: 'main',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      ticket_url: 42,
+    };
+    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
+
+    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(result.platform).toBe('github');
+    expect(result.ticket_url).toBeNull();
   });
 
   it('overwrites a corrupt manifest (invalid JSON)', async () => {
@@ -274,7 +308,7 @@ describe(deriveSessionContext, () => {
     expect(reread.ticket_url).toBe(url);
   });
 
-  it('persists --set-pr-url and reflects it in the emitted manifest', async () => {
+  it('persists --set-pr-url and a subsequent read returns it', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const url = 'https://github.com/owner/repo/pull/42';
     const set = await deriveSessionContext({
@@ -285,6 +319,9 @@ describe(deriveSessionContext, () => {
       mutations: [{ field: 'pr_url', value: url }],
     });
     expect(set.pr_url).toBe(url);
+
+    const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(reread.pr_url).toBe(url);
   });
 
   it('resets the field to null on --clear-ticket-url', async () => {
@@ -304,6 +341,25 @@ describe(deriveSessionContext, () => {
       mutations: [{ field: 'ticket_url', value: null }],
     });
     expect(cleared.ticket_url).toBeNull();
+  });
+
+  it('resets the field to null on --clear-pr-url', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    await deriveSessionContext({
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field: 'pr_url', value: 'https://github.com/owner/repo/pull/42' }],
+    });
+    const cleared = await deriveSessionContext({
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+      mutations: [{ field: 'pr_url', value: null }],
+    });
+    expect(cleared.pr_url).toBeNull();
   });
 
   it('preserves previously stored URLs across a recompose triggered by a stale manifest', async () => {
