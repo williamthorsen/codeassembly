@@ -1,7 +1,0 @@
-kbs:
-  alpha:
-    path: ./alpha-kb
-    default: true
-  beta:
-    path: ./beta-kb
-    default: true

@@ -1,7 +1,7 @@
 # Single-entry user-global registry fixture (regression: #684).
 # Its sole entry is also the default, mirroring the issue's reported registry shape.
+default_kb: coding
 kbs:
   coding:
     path: ../../vault-b
     description: Fixture single-entry default vault
-    default: true

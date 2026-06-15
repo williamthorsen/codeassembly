@@ -19,7 +19,7 @@ export interface ScopeResult {
  * entirely, so a project-local `.kb/` cannot leak into results. This mirrors the write path's resolve-by-name
  * guarantee. A name that matches no entry yields an empty scope and a `storeNotFound` marker for the caller to surface.
  *
- * Otherwise, default scope is the `.kb/`-discovered KB nearest `startDir` plus the registry's default-marked KB; and
+ * Otherwise, default scope is the `.kb/`-discovered KB nearest `startDir` plus the registry's resolved `default_kb`; and
  * `allKbs` widens scope to every entry in the merged `kb.yaml` registry. Entries are de-duplicated by absolute path so
  * a discovered KB that also appears in the registry is searched once. When neither a `.kb/` root nor any registry
  * entry is found, the scope is empty; callers report that as an empty result rather than an error.
@@ -82,11 +82,8 @@ export async function resolveScope(input: {
     for (const entry of config.entries) {
       add({ name: entry.name, path: entry.path, via: 'registry-all' });
     }
-  } else {
-    const defaultEntry = config.entries.find((entry) => entry.default === true);
-    if (defaultEntry !== undefined) {
-      add({ name: defaultEntry.name, path: defaultEntry.path, via: 'registry-default' });
-    }
+  } else if (config.defaultKb !== undefined) {
+    add({ name: config.defaultKb.name, path: config.defaultKb.path, via: 'registry-default' });
   }
 
   return { kbs: scoped, ...(registryError !== undefined && { registryError }) };

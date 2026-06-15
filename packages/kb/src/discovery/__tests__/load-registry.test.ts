@@ -65,12 +65,17 @@ describe(loadKbRegistry, () => {
     expect(userOnly?.path).toBe(join(HOME, 'user-only-kb'));
   });
 
-  it('lets the project default win over the user default across files', async () => {
+  it('resolves default_kb with the project value winning over the user value', async () => {
     const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
-    const defaults = config.entries.filter((entry) => entry.default === true);
 
-    expect(defaults).toHaveLength(1);
-    expect(defaults[0]?.name).toBe('project-only');
+    expect(config.defaultKb?.name).toBe('project-only');
+    expect(config.defaultKb?.source).toBe('project');
+  });
+
+  it('leaves defaultKb undefined when no registry sets default_kb', async () => {
+    const config = await loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'only-project') });
+
+    expect(config.defaultKb).toBeUndefined();
   });
 
   it('throws when a tilde path is used but the home directory is empty', async () => {
@@ -79,10 +84,10 @@ describe(loadKbRegistry, () => {
     );
   });
 
-  it('throws naming the offending entries and source file on a duplicate default', async () => {
-    await expect(loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'dup-default') })).rejects.toThrow(
-      /dup-default.*alpha.*beta/s,
-    );
+  it('throws naming the source file when default_kb names no registered KB', async () => {
+    await expect(
+      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'unresolvable-default') }),
+    ).rejects.toThrow(/unresolvable-default.*default_kb "nonexistent" does not match any registered KB/s);
   });
 
   it('throws naming the source file when a registry contains malformed YAML', async () => {
@@ -132,10 +137,13 @@ describe(tryLoadKbRegistry, () => {
     expect(result.config.entries).toEqual([]);
   });
 
-  it('captures the error for a duplicate default', async () => {
-    const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'dup-default') });
+  it('captures the error for an unresolvable default_kb', async () => {
+    const result = await tryLoadKbRegistry({
+      home: '/no/such/home',
+      projectDir: join(MERGE_DIR, 'unresolvable-default'),
+    });
 
-    expect(result.error).toMatch(/multiple KB entries marked default: true/);
+    expect(result.error).toMatch(/default_kb "nonexistent" does not match any registered KB/);
     expect(result.config.entries).toEqual([]);
   });
 

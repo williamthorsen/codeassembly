@@ -1,3 +1,4 @@
+default_kb: project-only
 kbs:
   shared:
     path: ./project-shared-kb
@@ -5,4 +6,3 @@ kbs:
   project-only:
     path: ./project-only-kb
     description: A KB declared only by the project
-    default: true

@@ -11,12 +11,14 @@ export interface ResolvedStore {
 /**
  * The resolution outcome: a resolved store, or a categorical failure the caller turns into a structured error.
  *
- * - `not-registered`: no `kb.yaml` entry matches the requested name.
+ * - `not-registered`: no `kb.yaml` entry matches the requested name. Carries `registryError` when the registry failed
+ *   to load (which leaves no entries to match), so the caller can attribute the miss to the load failure rather than
+ *   to a genuinely absent name.
  * - `readonly-store`: the matched entry is marked `readonly: true`; writes are refused.
  */
 export type ResolveStoreOutcome =
   | { ok: true; store: ResolvedStore }
-  | { ok: false; reason: 'not-registered'; requestedName: string }
+  | { ok: false; reason: 'not-registered'; requestedName: string; registryError?: string }
   | { ok: false; reason: 'readonly-store'; name: string; path: string };
 
 /**
@@ -34,14 +36,19 @@ export async function resolveStoreByName(input: {
   projectDir?: string;
   home?: string;
 }): Promise<ResolveStoreOutcome> {
-  const { config } = await tryLoadKbRegistry({
+  const { config, error: registryError } = await tryLoadKbRegistry({
     ...(input.projectDir !== undefined && { projectDir: input.projectDir }),
     ...(input.home !== undefined && { home: input.home }),
   });
 
   const match = config.entries.find((entry) => entry.name === input.name);
   if (match === undefined) {
-    return { ok: false, reason: 'not-registered', requestedName: input.name };
+    return {
+      ok: false,
+      reason: 'not-registered',
+      requestedName: input.name,
+      ...(registryError !== undefined && { registryError }),
+    };
   }
   if (match.readonly === true) {
     return { ok: false, reason: 'readonly-store', name: match.name, path: match.path };

@@ -1,7 +1,7 @@
 # Project registry fixture whose sole entry is well-formed but points at a directory that does not exist.
-# Marked `default: true` so the entry enters default scope and reaches recall, where its dead path is detected.
+# Named by `default_kb` so the entry enters default scope and reaches recall, where its dead path is detected.
+default_kb: ghost-vault
 kbs:
   ghost-vault:
     path: ./no-such-kb-directory
     description: Fixture entry whose path is intentionally absent
-    default: true

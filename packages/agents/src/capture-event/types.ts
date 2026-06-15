@@ -9,8 +9,8 @@ import type { Finding } from '@codeassembly/kb';
 
 /** Parsed command-line invocation of the capture-event helper. */
 export interface ParsedArgs {
-  /** Registry name of the event store to write into; defaults to `codeassembly`. */
-  store: string;
+  /** Registry name of the event store to write into; `null` when `--store` is omitted, deferring to `default_kb`. */
+  store: string | null;
   /** The human-readable one-line summary; becomes the record's display label on recall. */
   summary: string;
   /** Optional skill the event relates to. */
@@ -56,7 +56,12 @@ export interface CaptureFailure {
 }
 
 /** Categorical error codes the helper can return without an unexpected throw. */
-export type CaptureErrorCode = 'invalid-args' | 'store-not-registered' | 'readonly-store' | 'schema-validation';
+export type CaptureErrorCode =
+  | 'invalid-args'
+  | 'store-not-registered'
+  | 'readonly-store'
+  | 'no-default-store'
+  | 'schema-validation';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type CaptureResult = CaptureSuccess | CaptureFailure;

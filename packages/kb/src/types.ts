@@ -22,8 +22,6 @@ export interface KbRegistryEntry {
   path: string;
   /** Optional human-readable description. */
   description?: string;
-  /** Whether this is the default KB. */
-  default?: boolean;
   /** Whether the KB is read-only. */
   readonly?: boolean;
   /** Which registry the entry came from. */
@@ -34,6 +32,8 @@ export interface KbRegistryEntry {
 export interface KbRegistry {
   /** All KB entries, user entries merged with project overrides. */
   entries: KbRegistryEntry[];
+  /** The entry named by `default_kb`, resolved against `entries`; absent when `default_kb` is unset. */
+  defaultKb?: KbRegistryEntry;
   /** Absolute paths of the registry files that contributed entries. */
   sources: {
     user?: string;

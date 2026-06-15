@@ -43,16 +43,18 @@ A KB registry declares one or more knowledge bases. `loadKbRegistry` reads two o
 
 ```yaml
 # .agents/kb.yaml
+default_kb: coding
 kbs:
   coding:
     path: ~/vaults/coding
     description: Personal coding knowledge base
-    default: true
     readonly: false
   team:
     path: ../shared/team-kb
     description: Shared team knowledge base
 ```
+
+The top-level `default_kb` key names the machine's default knowledge base — the single KB that search and writes fall back on when no store is named or discovered. It must name an entry under `kbs`; a value that matches none fails the load.
 
 Configuration keys, per KB entry under `kbs.<name>`:
 
@@ -60,7 +62,6 @@ Configuration keys, per KB entry under `kbs.<name>`:
 | ------------- | -------- | ------------------------------------------------------------------------------------------------------- |
 | `path`        | yes      | KB root directory; `~` expands to `$HOME`, relative paths resolve against the registry file's directory |
 | `description` | no       | Human-readable description                                                                              |
-| `default`     | no       | Marks the default KB; at most one per file                                                              |
 | `readonly`    | no       | Marks the KB as read-only                                                                               |
 
 ### Merge semantics
@@ -69,8 +70,7 @@ Configuration keys, per KB entry under `kbs.<name>`:
 
 - Project entries **replace** user entries with the same name.
 - Project entries with a new name are **appended**.
-- When both files declare a `default: true` entry, the **project** default wins and the user default flag is cleared.
-- Two entries marked `default: true` **within a single file** is an error.
+- When both files set `default_kb`, the **project** value wins; the resolved default is the named entry from the merged set.
 - Path existence is not checked at load time.
 
 ```ts
