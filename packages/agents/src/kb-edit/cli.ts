@@ -13,6 +13,8 @@ import { loadAliases } from '@codeassembly/kb/tags';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { readAll } from '../lib/stream-helpers.ts';
 import { commitSupersede } from './commit-supersede.ts';
 import { loadNote } from './load-note.ts';
 import { append } from './operations/append.ts';
@@ -417,18 +419,6 @@ async function runSupersedeWith(input: {
   return success;
 }
 
-/** Reads a readable stream to completion as a UTF-8 string. */
-async function readAll(stream: Readable): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    if (!Buffer.isBuffer(chunk)) {
-      throw new TypeError('readAll: expected Buffer chunks (stream must be in binary mode)');
-    }
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
-}
-
 /** A captured operation flag: its canonical name plus the value (if any) that followed it. */
 interface SelectedOp {
   name: OperationName;
@@ -561,14 +551,6 @@ function matchOperationFlag(
     }
   }
   return null;
-}
-
-/** Splits a comma-separated tag string into individual tags, dropping empties and trimming whitespace. */
-function parseTagList(value: string): string[] {
-  return value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0);
 }
 
 // endregion | Helpers

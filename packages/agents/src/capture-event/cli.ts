@@ -14,6 +14,8 @@ import { ulid } from 'ulid';
 
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveStoreByName } from '../kb-shared/resolve-store-by-name.ts';
+import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
@@ -211,14 +213,6 @@ function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | nu
   return null;
 }
 
-/** Splits a comma-separated tag string into individual tags, dropping empties and trimming whitespace. */
-function parseTagList(value: string): string[] {
-  return value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter((tag) => tag.length > 0);
-}
-
 /**
  * Resolves the `owner/name` git remote at `cwd`, best-effort. Prefers the `origin` remote and falls back to the first
  * listed remote when `origin` is absent. Both SSH (`git@host:owner/name.git`) and HTTPS (`https://host/owner/name.git`)
@@ -261,7 +255,11 @@ async function resolveRemoteUrl(cwd: string): Promise<string | undefined> {
   }
 }
 
-/** Normalizes an SSH or HTTPS git remote URL to `owner/name`, or `undefined` when it cannot be parsed. */
+/**
+ * Normalizes an SSH or HTTPS git remote URL to `owner/name`, or `undefined` when it cannot be parsed.
+ *
+ * @internal - Exported to allow testing.
+ */
 export function normalizeRemoteUrl(url: string): string | undefined {
   const withoutSuffix = url.replace(/\.git$/, '');
 
@@ -285,18 +283,6 @@ function takeOwnerName(path: string): string | undefined {
     return undefined;
   }
   return segments.slice(-2).join('/');
-}
-
-/** Reads a readable stream to completion as a UTF-8 string. */
-async function readAll(stream: Readable): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    if (!Buffer.isBuffer(chunk)) {
-      throw new TypeError('readAll: expected Buffer chunks (stream must be in binary mode)');
-    }
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
 }
 
 // endregion | Helpers

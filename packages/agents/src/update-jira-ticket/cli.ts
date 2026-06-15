@@ -8,22 +8,10 @@
 
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
+import { readAll } from '../lib/stream-helpers.ts';
 import { check } from './check.ts';
-
-/** Read every chunk of `stream` and concatenate into a single UTF-8 string. */
-async function readAll(stream: Readable): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream) {
-    if (!Buffer.isBuffer(chunk)) {
-      throw new TypeError('readAll: expected Buffer chunks (stream must be in binary mode)');
-    }
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
-}
 
 /** Top-level entry: read stdin, run the check, emit JSON. */
 async function main(): Promise<void> {
