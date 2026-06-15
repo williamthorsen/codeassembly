@@ -2,7 +2,7 @@ import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { deriveSessionContext, parseArgs, sanitizeBranch } from '../cli.ts';
 
@@ -390,6 +390,42 @@ describe(deriveSessionContext, () => {
     expect(recomposed.platform).toBe('github');
     expect(recomposed.ticket_url).toBe(ticketUrl);
     expect(recomposed.pr_url).toBe(prUrl);
+  });
+
+  it('recomposes with null URLs and warns when the prior manifest is corrupt JSON', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    // A corrupt prior file fails the schema read (forcing a recompose) and then fails carry-forward's
+    // own parse. The deriver must fall back to a fresh manifest with null URLs and emit the
+    // carry-forward diagnostic so a vanished `ticket_url`/`pr_url` is explainable, not silent.
+    await writeFile(manifestPath, '{ not valid json', 'utf8');
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+      expect(recomposed.platform).toBe('github');
+      expect(recomposed.ticket_url).toBeNull();
+      expect(recomposed.pr_url).toBeNull();
+
+      const warningLine = stderrSpy.mock.calls
+        .map((call) => call[0])
+        .find((arg): arg is string => typeof arg === 'string' && arg.includes('stored URLs not carried forward'));
+      expect(warningLine).toMatch(/prior manifest at .* is corrupt; stored URLs not carried forward/);
+    } finally {
+      stderrSpy.mockRestore();
+    }
+  });
+
+  it('recomposes with null URLs when the prior manifest parses as a non-object', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    // Valid JSON that is not a record (a bare number). The schema read rejects it (forcing a
+    // recompose) and carry-forward's record guard rejects it, so the fresh null URLs stand.
+    await writeFile(manifestPath, '42', 'utf8');
+
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(recomposed.platform).toBe('github');
+    expect(recomposed.ticket_url).toBeNull();
+    expect(recomposed.pr_url).toBeNull();
   });
 
   it('reads a pre-existing manifest lacking the URL fields without recomposing', async () => {
