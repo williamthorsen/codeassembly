@@ -260,6 +260,52 @@ describe('normalizeHits over event records', () => {
   });
 });
 
+describe('normalizeHits addressed-by surfacing', () => {
+  it("carries an event's addressed-by list alongside its recurrence signals", async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(EVENTS, 'event-addressed.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]).toMatchObject({
+      capturedAt: '2026-05-23T10:00:00.000Z',
+      repo: 'owner/repo-x',
+      addressedBy: ['abc1234', 'owner/repo-x#42', 'https://example.com/fix'],
+    });
+  });
+
+  it('omits addressedBy when the note declares no addressed-by', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NOTES_VAULT, 'new-guide.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.addressedBy).toBeUndefined();
+  });
+
+  it('coerces a scalar addressed-by to a one-element list', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NORMALIZE, 'addressed-by-scalar.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.addressedBy).toEqual(['owner/repo#7']);
+  });
+
+  it('drops non-string items from an addressed-by list', async () => {
+    const candidates = await normalizeHits({
+      hits: [hitFor(join(NORMALIZE, 'addressed-by-mixed.md'))],
+      filters: {},
+      now: NOW,
+    });
+
+    expect(candidates[0]?.addressedBy).toEqual(['#1', '#2']);
+  });
+});
+
 describe('normalizeHits with a schema-driven recall policy', () => {
   const CUSTOM_RECORD = join(NORMALIZE, 'custom-record.md');
 

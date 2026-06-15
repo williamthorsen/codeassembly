@@ -1,22 +1,29 @@
-import { isScalar, isSeq } from 'yaml';
+import { type Document, isScalar, isSeq } from 'yaml';
 
 import { findPair, valueLine } from '../frontmatter/yaml-position.ts';
 import { resolveRequiredForRecordType } from '../schema/load-schema.ts';
-import type { Finding, Schema } from '../types.ts';
+import type { Finding, FrontmatterRaw, ParsedNote, Schema } from '../types.ts';
 import type { KbRule, KbRuleInput } from './types.ts';
 
 const DATE_FIELDS = ['created', 'updated', 'last-verified'] as const;
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+// The list-shape fields. Each must be a YAML sequence; entries are left free-form (like `sources`). `tags` keeps its
+// own `frontmatter.tags` rule id; the multi-valued `addressed-by`/`addresses` relation fields share `frontmatter.list`.
+const LIST_SHAPE_FIELDS = [
+  { field: 'tags', rule: 'frontmatter.tags' },
+  { field: 'addressed-by', rule: 'frontmatter.list' },
+  { field: 'addresses', rule: 'frontmatter.list' },
+] as const;
 
 /**
  * Validate a note's frontmatter block: presence, parseability, the stored `recordType` discriminant, the required
- * fields that record type declares, date formats, and tags shape.
+ * fields that record type declares, date formats, tags shape, and relation-list shape.
  *
  * Findings are produced in a fixed order. The block-level checks
  * (`frontmatter.missing`, `frontmatter.parse`, `frontmatter.empty`) early-exit
  * after their first finding; the field-level checks (`frontmatter.recordType`,
- * `.required`, `.date`, `.tags`) accumulate.
+ * `.required`, `.date`, `.tags`, `.list`) accumulate.
  */
 export const frontmatterRule: KbRule = {
   name: 'frontmatter',
@@ -110,22 +117,34 @@ export const frontmatterRule: KbRule = {
       }
     }
 
-    const tagsPair = findPair(doc, 'tags');
-    if (tagsPair !== null && tagsPair.value !== null && !isSeq(tagsPair.value)) {
-      findings.push({
-        path: note.path,
-        line: valueLine(tagsPair, raw),
-        rule: 'frontmatter.tags',
-        severity: 'error',
-        message: 'tags must be a list',
-      });
-    }
+    findings.push(...listShapeFindings(doc, raw, note));
 
     return findings;
   },
 };
 
 // region | Helpers
+
+/**
+ * Validates that each declared list-shape field is a YAML sequence, emitting one finding per field that is present but
+ * scalar. Only the field's shape is checked; entries are left free-form.
+ */
+function listShapeFindings(doc: Document.Parsed, raw: FrontmatterRaw, note: ParsedNote): Finding[] {
+  const findings: Finding[] = [];
+  for (const { field, rule } of LIST_SHAPE_FIELDS) {
+    const pair = findPair(doc, field);
+    if (pair !== null && pair.value !== null && !isSeq(pair.value)) {
+      findings.push({
+        path: note.path,
+        line: valueLine(pair, raw),
+        rule,
+        severity: 'error',
+        message: `${field} must be a list`,
+      });
+    }
+  }
+  return findings;
+}
 
 /**
  * Resolves the required-field set a note is validated against: the record type's declared `required` fields. When the

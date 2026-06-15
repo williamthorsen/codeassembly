@@ -20,8 +20,8 @@ const RECURRENCE_RECENCY = 'recurrence-recency';
 /**
  * Normalizes raw ripgrep hits into the candidate table.
  *
- * Each hit's frontmatter is parsed; the `--diataxis`, `--tag`, and `--folder` filters are applied as post-filters on the
- * parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
+ * Each hit's frontmatter is parsed; the `--diataxis`, `--tag`, and `--folder` filters are applied as post-filters on
+ * the parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
  * guard; and `last-verified` is converted to an age in whole days against `now`. Notes with missing or malformed
  * frontmatter degrade to a low-signal candidate carrying a diagnostic rather than being dropped.
  *
@@ -110,6 +110,22 @@ function extractString(extra: Record<string, unknown> | undefined, key: string):
   }
   const value = extra[key];
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
+}
+
+/**
+ * Reads a string-list field from a frontmatter `extra` map: A sequence yields its non-empty, trimmed string items; a
+ * lone non-empty string is coerced to a one-element list so a mis-authored scalar still surfaces; anything else yields
+ * an empty list.
+ */
+function extractStringList(extra: Record<string, unknown> | undefined, key: string): string[] {
+  const value = extra?.[key];
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+      .map((item) => item.trim());
+  }
+  const scalar = extractString(extra, key);
+  return scalar !== null ? [scalar] : [];
 }
 
 /** The outcome of a guarded note parse: the parsed note, or a `null` note paired with the read/parse error message. */
@@ -205,6 +221,8 @@ async function resolveSupersession(input: { path: string; note: ParsedNote }): P
  * human-readable `summary` as the display `title` rather than the ULID basename; under `freshness` (and any fallback)
  * it carries a `last-verified` age and keeps its frontmatter `title`. The two signal sets are mutually exclusive, so
  * flipping a record type's policy in the schema flips which signals it emits.
+ *
+ * Independent of recall policy, an `addressed-by` list is read from any record type and surfaced flat when present.
  */
 async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; recall: string }): Promise<Candidate> {
   const { hit, note, now, recall } = input;
@@ -223,6 +241,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; re
   // computed even when the record carries one; freshness (and the fallback) age the record.
   const lastVerifiedAgeDays = isRecurrence ? null : computeAgeDays(extractString(extra, 'last-verified'), now);
   const supersession = await resolveSupersession({ path: hit.path, note });
+  const addressedBy = extractStringList(extra, 'addressed-by');
 
   const candidate: Candidate = {
     path: hit.path,
@@ -233,6 +252,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; re
     lastVerifiedAgeDays,
     supersession,
     kbName: hit.kbName,
+    ...(addressedBy.length > 0 && { addressedBy }),
     ...(capturedAt !== null && { capturedAt }),
     ...(capturedAt !== null && repo !== null && { repo }),
   };

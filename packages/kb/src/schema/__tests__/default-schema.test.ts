@@ -10,6 +10,8 @@ describe('defaultSchema', () => {
   it('declares the canonical assertion required and optional field sets', () => {
     expect(defaultSchema.recordTypes.assertion?.required).toEqual(['created', 'tags', 'title', 'updated']);
     expect(defaultSchema.recordTypes.assertion?.optional).toEqual([
+      'addressed-by',
+      'addresses',
       'applies-to',
       'diataxis',
       'last-verified',
@@ -22,7 +24,14 @@ describe('defaultSchema', () => {
 
   it('declares the event record type with its spine', () => {
     expect(defaultSchema.recordTypes.event?.required).toEqual(['captured-at', 'cwd', 'id', 'session', 'summary']);
-    expect(defaultSchema.recordTypes.event?.optional).toEqual(['correction', 'model', 'repo', 'skill', 'tags']);
+    expect(defaultSchema.recordTypes.event?.optional).toEqual([
+      'addressed-by',
+      'correction',
+      'model',
+      'repo',
+      'skill',
+      'tags',
+    ]);
     expect(defaultSchema.recordTypes.event?.recall).toBe('recurrence-recency');
   });
 
