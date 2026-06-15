@@ -13,7 +13,7 @@ import { loadSchema } from '@codeassembly/kb/schema';
 import { ulid } from 'ulid';
 
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
-import { resolveStoreByName } from '../kb-shared/resolve-store-by-name.ts';
+import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -22,9 +22,6 @@ import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
 
 const execFileAsync = promisify(execFile);
-
-/** The default event store; capture always routes by registry name and never walks the working directory. */
-const DEFAULT_STORE = 'codeassembly';
 
 /** Flag names that take a value. */
 const VALUE_FLAGS = ['store', 'summary', 'skill', 'model', 'tags'] as const;
@@ -53,12 +50,14 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store by registry
- * name, loads its schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`,
- * best-effort `repo`), validates the event record type's required spine, and writes `content/events/{id}.md` immutably.
+ * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store (an explicit
+ * `--store` by name, else the registry's `default_kb`), loads its schema, fills in the auto-derived context (ULID
+ * `id`, `captured-at`, `session`, `cwd`, best-effort `repo`), validates the event record type's required spine, and
+ * writes `content/events/{id}.md` immutably.
  *
- * Recoverable failures (invalid args, unregistered or readonly store, schema validation) become structured
- * `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
+ * Recoverable failures (invalid args, an unregistered/readonly store, no configured default, schema validation)
+ * become structured `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the
+ * caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -77,8 +76,8 @@ export async function runCapture(input: {
     return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
   }
 
-  const resolved = await resolveStoreByName({
-    name: args.store,
+  const resolved = await resolveCaptureTarget({
+    explicitName: args.store,
     ...(input.home !== undefined && { home: input.home }),
   });
   if (!resolved.ok) {
@@ -95,9 +94,18 @@ export async function runCapture(input: {
           error: 'readonly-store',
           message: `event store "${resolved.name}" is marked readonly in kb.yaml; captures are refused`,
         };
+      case 'no-default':
+        return {
+          ok: false,
+          error: 'no-default-store',
+          message:
+            resolved.registryError !== undefined
+              ? `could not resolve a default event store: ${resolved.registryError}`
+              : 'no --store was given and no default_kb is configured in kb.yaml',
+        };
       default: {
         const _exhaustive: never = resolved;
-        throw new Error(`unhandled resolveStoreByName failure: ${JSON.stringify(_exhaustive)}`);
+        throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
       }
     }
   }
@@ -171,7 +179,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   }
 
   return {
-    store: raw.store ?? DEFAULT_STORE,
+    store: raw.store ?? null,
     summary,
     skill: raw.skill ?? null,
     model: raw.model ?? null,

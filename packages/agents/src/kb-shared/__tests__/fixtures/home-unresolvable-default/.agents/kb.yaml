@@ -1,0 +1,5 @@
+# Registry fixture whose `default_kb` names no registered entry, so resolution surfaces a load error.
+default_kb: ghost
+kbs:
+  real:
+    path: ../../vault-b

@@ -97,11 +97,11 @@ export const targets: BundleTarget[] = [
 ];
 
 /**
- * Stands up an event store plus an isolated home registering it, and a throwaway git repo with an `origin` remote,
- * then returns a `SmokeTestInvocation` that captures a single event against them. Exercises the full resolve-by-name →
- * load schema → validate the event record type's spine → write pipeline end to end, which is the only path that wires
- * the bundled resolver, schema loader, and immutable write together. The store's own `schema.yaml` declares the
- * `event` record type, so its required-set validation is genuinely run.
+ * Stands up an event store plus an isolated home registering it as `default_kb`, and a throwaway git repo with an
+ * `origin` remote, then returns a `SmokeTestInvocation` that captures a single event against them. Exercises the full
+ * default_kb resolution → load schema → validate the event record type's spine → write pipeline end to end, which is
+ * the only path that wires the bundled resolver, schema loader, and immutable write together. The store's own
+ * `schema.yaml` declares the `event` record type, so its required-set validation is genuinely run.
  */
 function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'capture-event-store-'));
@@ -121,7 +121,11 @@ function makeCaptureEventSmokeTest(): SmokeTestInvocation {
 
   const home = mkdtempSync(path.join(tmpdir(), 'capture-event-home-'));
   mkdirSync(path.join(home, '.agents'), { recursive: true });
-  writeFileSync(path.join(home, '.agents', 'kb.yaml'), `kbs:\n  codeassembly:\n    path: ${storePath}\n`, 'utf8');
+  writeFileSync(
+    path.join(home, '.agents', 'kb.yaml'),
+    `default_kb: codeassembly\nkbs:\n  codeassembly:\n    path: ${storePath}\n`,
+    'utf8',
+  );
 
   const repo = mkdtempSync(path.join(tmpdir(), 'capture-event-repo-'));
   execFileSync('git', ['-C', repo, 'init', '--quiet']);

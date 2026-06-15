@@ -32,15 +32,25 @@ function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
-/** Stand up a temp event store with a `recordTypes:` schema plus an isolated home registering it under `name`. */
-async function makeStore(name: string): Promise<{ storePath: string; home: string }> {
+/** Create a temp event store directory carrying a `recordTypes:` schema, returning its path. */
+async function makeStoreDir(): Promise<string> {
   const storePath = await mkdtemp(join(tmpdir(), 'capture-cli-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
   await writeFile(join(storePath, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
+  return storePath;
+}
+
+/** Stand up a temp event store plus an isolated home that registers it under `name` and marks it `default_kb`. */
+async function makeStore(name: string): Promise<{ storePath: string; home: string }> {
+  const storePath = await makeStoreDir();
 
   const home = await mkdtemp(join(tmpdir(), 'capture-cli-home-'));
   await mkdir(join(home, '.agents'), { recursive: true });
-  await writeFile(join(home, '.agents', 'kb.yaml'), `kbs:\n  ${name}:\n    path: ${storePath}\n`, 'utf8');
+  await writeFile(
+    join(home, '.agents', 'kb.yaml'),
+    `default_kb: ${name}\nkbs:\n  ${name}:\n    path: ${storePath}\n`,
+    'utf8',
+  );
 
   return { storePath, home };
 }
@@ -69,10 +79,10 @@ describe(parseArgs, () => {
     });
   });
 
-  it('defaults the store to codeassembly and optional flags to null or empty', () => {
+  it('leaves the store null and optional flags null or empty when omitted', () => {
     const parsed = parseArgs(['--summary', 'Noticed']);
 
-    expect(parsed.store).toBe('codeassembly');
+    expect(parsed.store).toBeNull();
     expect(parsed.skill).toBeNull();
     expect(parsed.model).toBeNull();
     expect(parsed.tags).toEqual([]);
@@ -229,6 +239,53 @@ describe(runCapture, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('store-not-registered');
+    }
+  });
+
+  it('writes to the --store override, not the configured default_kb', async () => {
+    const defaultStore = await makeStoreDir();
+    const namedStore = await makeStoreDir();
+    const home = await mkdtemp(join(tmpdir(), 'capture-cli-twostore-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: fallback\nkbs:\n  fallback:\n    path: ${defaultStore}\n  named:\n    path: ${namedStore}\n`,
+      'utf8',
+    );
+
+    const result = await runCapture({
+      argv: ['--store', 'named', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.store).toBe('named');
+      expect(result.path.startsWith(namedStore)).toBe(true);
+    }
+  });
+
+  it('fails with no-default-store when no --store is given and no default_kb is configured', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'capture-cli-nodefault-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(join(home, '.agents', 'kb.yaml'), 'kbs:\n  codeassembly:\n    path: /tmp/whatever\n', 'utf8');
+
+    const result = await runCapture({
+      argv: ['--summary', 'x'],
+      stdin: bodyStream(''),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('no-default-store');
     }
   });
 
