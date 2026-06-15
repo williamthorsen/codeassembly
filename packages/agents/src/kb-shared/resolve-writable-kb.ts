@@ -29,7 +29,7 @@ export type ResolveKbOutcome =
 /**
  * Resolves the single knowledge base to write into and refuses read-only KBs.
  *
- * Precedence: `--kb <name>` (explicit) beats `.kb/` (discovered), which beats the registry's default-marked entry.
+ * Precedence: `--kb <name>` (explicit) beats `.kb/` (discovered), which beats the registry's resolved `default_kb`.
  * After a KB is selected, the matching `kb.yaml` entry's `readonly` flag is consulted: a `true` value refuses the
  * write with `'readonly-kb'`. A discovered KB with no registry entry has no metadata to consult and is assumed
  * writable.
@@ -79,14 +79,14 @@ export async function resolveWritableKb(input: {
     };
   }
 
-  const defaultEntry = config.entries.find((entry) => entry.default === true);
-  if (defaultEntry !== undefined) {
-    if (defaultEntry.readonly === true) {
-      return { ok: false, reason: 'readonly-kb', kbName: defaultEntry.name, kbPath: defaultEntry.path };
+  const defaultKb = config.defaultKb;
+  if (defaultKb !== undefined) {
+    if (defaultKb.readonly === true) {
+      return { ok: false, reason: 'readonly-kb', kbName: defaultKb.name, kbPath: defaultKb.path };
     }
     return {
       ok: true,
-      kb: { name: defaultEntry.name, path: defaultEntry.path, source: 'registry-default' },
+      kb: { name: defaultKb.name, path: defaultKb.path, source: 'registry-default' },
     };
   }
 
