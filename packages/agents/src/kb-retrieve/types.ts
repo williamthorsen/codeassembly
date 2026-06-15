@@ -21,9 +21,8 @@ export interface Candidate {
   /** Supersession status, following the `superseded-by` chain to the canonical successor. */
   supersession: Supersession;
   /**
-   * References to whatever was done about the problem this record notes — its `addressed-by` list. The neutral,
-   * recall-facing problem→response relation, surfaced flat (no chain-walking). Entries are heterogeneous (KB
-   * wikilink/relative path, commit SHA, PR/issue ref, or URL). `undefined` when the record declares none.
+   * References to whatever was done about the problem this record notes (its `addressed-by` list): a KB
+   * wikilink/relative path, commit SHA, PR/issue ref, or URL. `undefined` when the record declares none.
    */
   addressedBy?: string[];
   /** Name of the source KB, or `null` for a registry-less discovered KB. */

@@ -20,8 +20,8 @@ const RECURRENCE_RECENCY = 'recurrence-recency';
 /**
  * Normalizes raw ripgrep hits into the candidate table.
  *
- * Each hit's frontmatter is parsed; the `--diataxis`, `--tag`, and `--folder` filters are applied as post-filters on the
- * parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
+ * Each hit's frontmatter is parsed; the `--diataxis`, `--tag`, and `--folder` filters are applied as post-filters on
+ * the parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
  * guard; and `last-verified` is converted to an age in whole days against `now`. Notes with missing or malformed
  * frontmatter degrade to a low-signal candidate carrying a diagnostic rather than being dropped.
  *
@@ -113,7 +113,7 @@ function extractString(extra: Record<string, unknown> | undefined, key: string):
 }
 
 /**
- * Reads a string-list field from a frontmatter `extra` map: a sequence yields its non-empty, trimmed string items; a
+ * Reads a string-list field from a frontmatter `extra` map: A sequence yields its non-empty, trimmed string items; a
  * lone non-empty string is coerced to a one-element list so a mis-authored scalar still surfaces; anything else yields
  * an empty list.
  */
