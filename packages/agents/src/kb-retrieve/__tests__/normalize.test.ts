@@ -261,14 +261,18 @@ describe('normalizeHits over event records', () => {
 });
 
 describe('normalizeHits addressed-by surfacing', () => {
-  it("carries an event's addressed-by list onto the candidate", async () => {
+  it("carries an event's addressed-by list alongside its recurrence signals", async () => {
     const candidates = await normalizeHits({
       hits: [hitFor(join(EVENTS, 'event-addressed.md'))],
       filters: {},
       now: NOW,
     });
 
-    expect(candidates[0]?.addressedBy).toEqual(['abc1234', 'owner/repo-x#42', 'https://example.com/fix']);
+    expect(candidates[0]).toMatchObject({
+      capturedAt: '2026-05-23T10:00:00.000Z',
+      repo: 'owner/repo-x',
+      addressedBy: ['abc1234', 'owner/repo-x#42', 'https://example.com/fix'],
+    });
   });
 
   it('omits addressedBy when the note declares no addressed-by', async () => {
