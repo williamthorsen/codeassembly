@@ -20,13 +20,13 @@ A **solved-problem episode** — a problem you hit and resolved — is worth tag
 
 ## Arguments
 
-| Argument    | Description                                                              | Required |
-| ----------- | ------------------------------------------------------------------------ | -------- |
-| `--summary` | A human-readable one-line summary; becomes the record's label on recall. | Yes      |
-| `--store`   | Registry name of the event store. Defaults to `codeassembly`.            | No       |
-| `--skill`   | The skill the event relates to.                                          | No       |
-| `--model`   | The model identifier in play.                                            | No       |
-| `--tags`    | Comma-separated tag list.                                                | No       |
+| Argument    | Description                                                                | Required |
+| ----------- | -------------------------------------------------------------------------- | -------- |
+| `--summary` | A human-readable one-line summary; becomes the record's label on recall.   | Yes      |
+| `--store`   | Registry name of the event store. Defaults to the registry's `default_kb`. | No       |
+| `--skill`   | The skill the event relates to.                                            | No       |
+| `--model`   | The model identifier in play.                                              | No       |
+| `--tags`    | Comma-separated tag list.                                                  | No       |
 
 A value-bearing flag accepts both `--summary text` and `--summary=text`. The event body is read from stdin to EOF; an empty body is allowed.
 
@@ -37,7 +37,9 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 
 ### Store selection
 
-The helper resolves the store by registry name only — it never walks the working directory for a `.kb/` folder. A capture always lands in the named store (default `codeassembly`), never in a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`.
+The helper resolves the store by registry name only — it never walks the working directory for a `.kb/` folder. A capture lands in the `--store` named store or, when `--store` is omitted, in the registry's `default_kb`; never in a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`. When no `--store` is given and no `default_kb` is configured, the capture is refused with a clear error rather than written to a fixed store.
+
+The `default_kb` is the home for environment-level lessons — observations and refinements that apply across every project in the current environment. When a lesson is clearly specific to one project, direct it to that project's KB with `--store <name>` instead.
 
 ## Runtime dependencies
 

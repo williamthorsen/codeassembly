@@ -27,7 +27,7 @@ A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`.
 
 ### Scope
 
-By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's default-marked knowledge base (the global vault). When neither source resolves, or the two resolve to the same path, the default scope contains fewer than two. `--all-kbs` widens the search to every knowledge base declared in the merged `kb.yaml` registry.
+By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's `default_kb` (the machine's default knowledge base). When neither source resolves, or the two resolve to the same path, the default scope contains fewer than two. `--all-kbs` widens the search to every knowledge base declared in the merged `kb.yaml` registry.
 
 `--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone — no `.kb/` discovery walk runs, so a project-local `.kb/` the helper happened to be invoked near never enters scope. Use it to query a named store directly, such as the `codeassembly` event store. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
 

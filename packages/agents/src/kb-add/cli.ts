@@ -125,7 +125,7 @@ export async function runAdd(input: {
           error: 'no-kb-resolvable',
           message:
             resolved.requestedKb === null
-              ? 'no .kb/ discovered, no registry default configured, and no --kb supplied'
+              ? 'no .kb/ discovered, no default_kb configured, and no --kb supplied'
               : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
         };
         if (resolved.requestedKb !== null) {

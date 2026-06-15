@@ -14,19 +14,19 @@ The split is deliberate: the helper is narrow and mechanical; the classification
 
 ## Arguments
 
-| Argument     | Description                                                                             | Required |
-| ------------ | --------------------------------------------------------------------------------------- | -------- |
-| `--diataxis` | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).           | No       |
-| `--title`    | The note title; also doubles as the filename.                                           | Yes      |
-| `--kb`       | Explicit knowledge base name; overrides the discovered `.kb/` and the registry default. | No       |
-| `--folder`   | KB-relative folder under which to write the note. Defaults to the KB root.              | No       |
-| `--tags`     | Comma-separated tag list. Known aliases are canonicalized at write time.                | No       |
+| Argument     | Description                                                                         | Required |
+| ------------ | ----------------------------------------------------------------------------------- | -------- |
+| `--diataxis` | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).       | No       |
+| `--title`    | The note title; also doubles as the filename.                                       | Yes      |
+| `--kb`       | Explicit knowledge base name; overrides the discovered `.kb/` and the `default_kb`. | No       |
+| `--folder`   | KB-relative folder under which to write the note. Defaults to the KB root.          | No       |
+| `--tags`     | Comma-separated tag list. Known aliases are canonicalized at write time.            | No       |
 
 A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The note body is read from stdin to EOF; an empty body is allowed when a stub note is appropriate.
 
 ### KB selection
 
-By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When no `.kb/` is discovered, it falls back to the registry's default-marked entry. `--kb <name>` overrides both, naming a specific entry from the merged `kb.yaml` registry. The chosen KB is surfaced in the proposal so you can redirect the user via `--kb` if it is wrong.
+By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When no `.kb/` is discovered, it falls back to the registry's `default_kb`. `--kb <name>` overrides both, naming a specific entry from the merged `kb.yaml` registry. The chosen KB is surfaced in the proposal so you can redirect the user via `--kb` if it is wrong.
 
 ## Runtime dependencies
 
@@ -104,7 +104,7 @@ On `ok: true`, report the written path and the canonicalization audit trail. Whe
 
 On `ok: false`, route by the `error` code:
 
-- `no-kb-resolvable` — no `.kb/` discovered, no registry default, and no `--kb` resolved. Ask the user where the note should go (or, in auto mode, fail visibly with the categorical reason).
+- `no-kb-resolvable` — no `.kb/` discovered, no `default_kb`, and no `--kb` resolved. Ask the user where the note should go (or, in auto mode, fail visibly with the categorical reason).
 - `invalid-args` / `invalid-title` — Surface the helper's message and propose a corrected invocation.
 - `schema-validation` — Surface the findings; either correct the proposed frontmatter or, when the user is willing, declare a new type in the KB's `.kb/schema.yaml`.
 - `collision` — A note already exists at the target path. Decide whether to re-title, append the new material to the existing note (read it first, then write a follow-up edit), or abort.
