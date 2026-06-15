@@ -66,6 +66,8 @@ export function composeManifest(input: {
     artifact_base_dir: artifactBaseDir,
     artifact_paths: artifactPaths,
     created_at: formatIsoUtc(now),
+    ticket_url: null,
+    pr_url: null,
   };
 }
 

@@ -288,5 +288,17 @@ describe(composeManifest, () => {
       });
       expect(manifest.created_at).toBe('2026-05-26T02:07:41Z');
     });
+
+    it('seeds ticket_url and pr_url to null on a fresh compose', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'main',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_url).toBeNull();
+      expect(manifest.pr_url).toBeNull();
+    });
   });
 });
