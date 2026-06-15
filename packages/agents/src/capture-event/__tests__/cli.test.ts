@@ -289,6 +289,32 @@ describe(runCapture, () => {
     }
   });
 
+  it('names the registry-load cause when --store names a registered store but default_kb is unresolvable', async () => {
+    const storePath = await makeStoreDir();
+    const home = await mkdtemp(join(tmpdir(), 'capture-cli-poisoned-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: ghost\nkbs:\n  realstore:\n    path: ${storePath}\n`,
+      'utf8',
+    );
+
+    const result = await runCapture({
+      argv: ['--store', 'realstore', '--summary', 'x'],
+      stdin: bodyStream(''),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('store-not-registered');
+      expect(result.message).toMatch(/default_kb "ghost" does not match any registered KB/);
+    }
+  });
+
   it('returns invalid-args when a required flag is missing', async () => {
     const { home } = await makeStore('codeassembly');
 

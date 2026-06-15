@@ -86,7 +86,10 @@ export async function runCapture(input: {
         return {
           ok: false,
           error: 'store-not-registered',
-          message: `event store "${resolved.requestedName}" is not registered in kb.yaml`,
+          message:
+            resolved.registryError !== undefined
+              ? `could not load kb.yaml registry: ${resolved.registryError}`
+              : `event store "${resolved.requestedName}" is not registered in kb.yaml`,
         };
       case 'readonly-store':
         return {
