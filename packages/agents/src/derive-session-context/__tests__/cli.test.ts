@@ -292,74 +292,44 @@ describe(deriveSessionContext, () => {
     expect(manifest.pr_url).toBeNull();
   });
 
-  it('persists --set-ticket-url and a subsequent read returns it', async () => {
+  it.each([
+    { flag: '--set-ticket-url', field: 'ticket_url', url: 'https://github.com/owner/repo/issues/783' },
+    { flag: '--set-pr-url', field: 'pr_url', url: 'https://github.com/owner/repo/pull/42' },
+  ] as const)('persists $flag and a subsequent read returns it', async ({ field, url }) => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const url = 'https://github.com/owner/repo/issues/783';
     const set = await deriveSessionContext({
       cwd: workDir,
       branch: 'main',
       now: NOW,
       home: workDir,
-      mutations: [{ field: 'ticket_url', value: url }],
+      mutations: [{ field, value: url }],
     });
-    expect(set.ticket_url).toBe(url);
+    expect(set[field]).toBe(url);
 
     const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(reread.ticket_url).toBe(url);
+    expect(reread[field]).toBe(url);
   });
 
-  it('persists --set-pr-url and a subsequent read returns it', async () => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const url = 'https://github.com/owner/repo/pull/42';
-    const set = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'pr_url', value: url }],
-    });
-    expect(set.pr_url).toBe(url);
-
-    const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(reread.pr_url).toBe(url);
-  });
-
-  it('resets the field to null on --clear-ticket-url', async () => {
+  it.each([
+    { flag: '--clear-ticket-url', field: 'ticket_url', url: 'https://github.com/owner/repo/issues/783' },
+    { flag: '--clear-pr-url', field: 'pr_url', url: 'https://github.com/owner/repo/pull/42' },
+  ] as const)('resets the field to null on $flag', async ({ field, url }) => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     await deriveSessionContext({
       cwd: workDir,
       branch: 'main',
       now: NOW,
       home: workDir,
-      mutations: [{ field: 'ticket_url', value: 'https://github.com/owner/repo/issues/783' }],
+      mutations: [{ field, value: url }],
     });
     const cleared = await deriveSessionContext({
       cwd: workDir,
       branch: 'main',
       now: NOW,
       home: workDir,
-      mutations: [{ field: 'ticket_url', value: null }],
+      mutations: [{ field, value: null }],
     });
-    expect(cleared.ticket_url).toBeNull();
-  });
-
-  it('resets the field to null on --clear-pr-url', async () => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'pr_url', value: 'https://github.com/owner/repo/pull/42' }],
-    });
-    const cleared = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'pr_url', value: null }],
-    });
-    expect(cleared.pr_url).toBeNull();
+    expect(cleared[field]).toBeNull();
   });
 
   it('preserves previously stored URLs across a recompose triggered by a stale manifest', async () => {

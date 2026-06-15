@@ -421,7 +421,7 @@ function consumeValue(argv: readonly string[], index: number, flag: string): str
 }
 
 // Run as a script. Importable for tests because the file uses `isMain()` rather than a top-level
-// invocation when imported. Mirrors the kb-add / update-jira-ticket entry-point pattern.
+// invocation when imported.
 if (isMain()) {
   await main();
 }
