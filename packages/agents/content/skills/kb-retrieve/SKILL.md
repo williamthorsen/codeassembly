@@ -54,7 +54,7 @@ node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setu
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of candidate notes, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate whose record type is ranked by recurrence-recency (the default `event` type, and any custom type that declares that policy) also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched records share its `repo`). These three are absent on freshness-ranked candidates.
+- `candidates` — an array of candidate notes, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate whose record type is ranked by recurrence-recency (the default `event` type, and any custom type that declares that policy) also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched records share its `repo`). These three are absent on freshness-ranked candidates. A candidate also carries `addressedBy` — the references from its `addressed-by` list (what was done about the problem it notes) — when the note declares one, regardless of record type.
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
@@ -75,6 +75,7 @@ Present the ranked notes, each showing `path`, `title`, `snippet`, and `diataxis
 - **Stale notes** — when `lastVerifiedAgeDays` exceeds 90, annotate the note as not recently verified.
 - **Volatile notes** — when a note's `tags` include `volatile`, flag it prominently: its claims may have rotted and should be re-confirmed before use.
 - **Deprecated notes** — when a note's `tags` include `deprecated`, or its `supersession.superseded` is `true`, route the reader to the successor: prefer `supersession.canonicalPath` and present the canonical note in place of the deprecated one. When `supersession.diagnostic` is set (a broken or cyclic `superseded-by` chain), surface that the chain could not be fully followed.
+- **Addressed problems** — when a candidate carries `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: it records what was done about the problem, not that the problem is verifiably resolved. Unlike supersession, it does not redirect the reader; the record remains a true observation worth keeping.
 
 ### 4. Report empty results plainly
 
