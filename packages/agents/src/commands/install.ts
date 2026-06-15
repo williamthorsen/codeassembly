@@ -190,9 +190,14 @@ async function installSkills(
   const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
-  // Install shared skills and support directories (skip _platforms and dotfiles)
+  // Install shared skills and support directories. Skip `_platforms` (installed by the platform-specific pass below)
+  // and `_partials` (an install-time include target whose content is inlined into including skills, never installed as
+  // a standalone directory), plus dotfiles. This mirrors the per-skill `_partials` walk exclusion, which only matches
+  // `_partials` as a child and so never fires when it is the enumeration root. Other reserved directories such as
+  // `_data/` install normally — skills reference them at runtime by absolute path, so the skip is by name, not by the
+  // leading-underscore convention.
   for (const entry of dirEntries) {
-    if (entry === '_platforms' || entry.startsWith('.')) {
+    if (entry === '_platforms' || entry === '_partials' || entry.startsWith('.')) {
       continue;
     }
     const result = await installSkillEntry(
