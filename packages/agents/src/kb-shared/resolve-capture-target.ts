@@ -22,19 +22,16 @@ export type ResolveCaptureTargetOutcome =
  */
 export async function resolveCaptureTarget(input: {
   explicitName: string | null;
-  projectDir?: string;
   home?: string;
 }): Promise<ResolveCaptureTargetOutcome> {
   if (input.explicitName !== null) {
     return resolveStoreByName({
       name: input.explicitName,
-      ...(input.projectDir !== undefined && { projectDir: input.projectDir }),
       ...(input.home !== undefined && { home: input.home }),
     });
   }
 
   const { config, error: registryError } = await tryLoadKbRegistry({
-    ...(input.projectDir !== undefined && { projectDir: input.projectDir }),
     ...(input.home !== undefined && { home: input.home }),
   });
   const { defaultKb } = config;
