@@ -89,12 +89,12 @@ A record's family is the stored `recordType` discriminant, valued against the sc
   recordTypes: {
     assertion: {
       required: ['created', 'tags', 'title', 'updated'],
-      optional: ['applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
+      optional: ['addressed-by', 'addresses', 'applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
       recall: 'freshness',
     },
     event: {
       required: ['captured-at', 'cwd', 'id', 'session', 'summary'],
-      optional: ['correction', 'model', 'repo', 'skill', 'tags'],
+      optional: ['addressed-by', 'correction', 'model', 'repo', 'skill', 'tags'],
       recall: 'recurrence-recency',
     },
   },
@@ -108,15 +108,24 @@ A record's family is the stored `recordType` discriminant, valued against the sc
 recordTypes:
   assertion:
     required: [created, tags, title, updated]
-    optional: [applies-to, diataxis, last-verified, sources, superseded-by, supersedes]
+    optional: [addressed-by, addresses, applies-to, diataxis, last-verified, sources, superseded-by, supersedes]
     recall: freshness
   event:
     required: [captured-at, cwd, id, session, summary]
-    optional: [correction, model, repo, skill, tags]
+    optional: [addressed-by, correction, model, repo, skill, tags]
     recall: recurrence-recency
 ```
 
 Validation reads a record type's required set directly via `resolveRequiredForRecordType(schema, recordType)`. A malformed or structurally invalid `.kb/schema.yaml` throws at load time, naming the offending file.
+
+### The addressed-by/addresses relation
+
+`addressed-by`/`addresses` is an inverse-pair relation that threads a problem record to whatever was done about it — a fix, a mitigation, an improved guidance note. Both are optional, multi-valued list fields:
+
+- `addressed-by` (on the problem record, available on `assertion` and `event`) is the canonical, recall-facing field: a list of references to whatever addressed the problem. It is the only viable store when the responder is external, so its entries are heterogeneous: a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL. The field's shape is validated as a list (the `frontmatter.list` rule), while its entries are free-form, like `sources`.
+- `addresses` (on a KB-note responder, available on `assertion`) is the optional inverse for the rare "what does this address?" query. It is **non-authoritative**: keeping it in sync would be an N-file write, so `kb-curate` deliberately does not police it.
+
+The relation is many-to-many (one response can address many problems, and one problem can accrue many responses) and is surfaced flat by recall, with no chain-walking. This is distinct from `supersedes`/`superseded-by`, which _deprecates_ a record through a policed 1:1 chain; an addressed problem is not deprecated. It remains a true observation whose recurrence is worth keeping.
 
 ## Frontmatter parsing and writing
 

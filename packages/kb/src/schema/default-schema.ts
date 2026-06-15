@@ -9,13 +9,22 @@ import type { RecordTypeSchema, Schema } from '../types.ts';
 
 const assertion: RecordTypeSchema = {
   required: Object.freeze(['created', 'tags', 'title', 'updated']),
-  optional: Object.freeze(['applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes']),
+  optional: Object.freeze([
+    'addressed-by',
+    'addresses',
+    'applies-to',
+    'diataxis',
+    'last-verified',
+    'sources',
+    'superseded-by',
+    'supersedes',
+  ]),
   recall: 'freshness',
 };
 
 const event: RecordTypeSchema = {
   required: Object.freeze(['captured-at', 'cwd', 'id', 'session', 'summary']),
-  optional: Object.freeze(['correction', 'model', 'repo', 'skill', 'tags']),
+  optional: Object.freeze(['addressed-by', 'correction', 'model', 'repo', 'skill', 'tags']),
   recall: 'recurrence-recency',
 };
 

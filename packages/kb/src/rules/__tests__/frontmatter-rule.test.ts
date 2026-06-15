@@ -85,6 +85,50 @@ describe('frontmatterRule', () => {
     expect(tagsFinding?.line).toBe(6);
   });
 
+  it.each([['addressed-by'], ['addresses']])(
+    'emits frontmatter.list when %s is a scalar rather than a list',
+    (field) => {
+      const content = [
+        '---',
+        'title: Relation field under test',
+        'recordType: assertion',
+        'created: 2026-05-01',
+        'updated: 2026-05-14',
+        'tags: [git]',
+        `${field}: a-single-ref`,
+        '---',
+        '',
+        '# Body',
+      ].join('\n');
+      const { note, document } = parseNoteWithDocument(content, 'relation-field.md');
+
+      const listFinding = frontmatterRule
+        .check({ note, document, schema: defaultSchema })
+        .find((finding) => finding.rule === 'frontmatter.list');
+
+      expect(listFinding?.message).toBe(`${field} must be a list`);
+    },
+  );
+
+  it('produces no findings for an assertion whose addressed-by and addresses are lists', () => {
+    const content = [
+      '---',
+      'title: Note with relation lists',
+      'recordType: assertion',
+      'created: 2026-05-01',
+      'updated: 2026-05-14',
+      'tags: [git]',
+      "addressed-by: ['abc1234', 'owner/repo#42']",
+      "addresses: ['../problem.md']",
+      '---',
+      '',
+      '# Body',
+    ].join('\n');
+    const { note, document } = parseNoteWithDocument(content, 'relation-lists.md');
+
+    expect(frontmatterRule.check({ note, document, schema: defaultSchema })).toEqual([]);
+  });
+
   it('produces no findings for a well-formed assertion note', () => {
     const content = [
       '---',
