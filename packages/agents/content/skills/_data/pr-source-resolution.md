@@ -20,7 +20,7 @@ These skills discover a PR for the current branch at runtime. Resolve in this or
 2. **Stored URL** — otherwise, if the manifest carries a non-null `pr_url`, use it as the default.
 3. **Discover from the platform** — otherwise, look up the PR for the current branch with `gh pr view --json number,title,body,labels,headRefName,baseRefName,url` (or the platform equivalent). If no PR is found, stop and direct the user to create one.
 
-After resolving via step 2 or 3, **persist** the URL per [Stored PR URL](#stored-pr-url). If a stored URL from step 2 does not yield the expected PR, **invalidate** it and fall through to step 3.
+After resolving the URL by any of the three paths above, **persist** it per [Stored PR URL](#stored-pr-url). If a stored URL from step 2 does not yield the expected PR, **invalidate** it and fall through to step 3.
 
 ## `respond-to-review` path
 
