@@ -19,7 +19,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 ## Process
 
-1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, and `artifact_base_dir` from it.
+1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it.
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
@@ -32,7 +32,12 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 The artifact's frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`). If that review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink; otherwise leave it empty.
+Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`. Set `$review_filename` to the bare filename of the review being responded to (e.g., `09_reviewer_review.md`).
+
+Resolve `$pr_url` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
+
+- If the review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
+- Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, leave `$pr_url` empty.
 
 Run via Bash:
 

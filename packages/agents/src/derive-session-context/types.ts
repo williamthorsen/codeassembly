@@ -55,4 +55,16 @@ export interface BranchManifest {
   readonly artifact_base_dir: string;
   readonly artifact_paths: Readonly<Record<string, string>>;
   readonly created_at: string;
+  /**
+   * The resolved ticket URL, stored so consumers can prefer it over reconstructing one from
+   * `ticket_id`. Optional and excluded from the required-field set so pre-existing manifests stay
+   * valid; a fresh compose seeds `null`.
+   */
+  readonly ticket_url?: string | null;
+  /**
+   * The resolved pull-request URL, stored so PR-aware skills can reuse it across sessions. Optional
+   * and excluded from the required-field set so pre-existing manifests stay valid; a fresh compose
+   * seeds `null`.
+   */
+  readonly pr_url?: string | null;
 }

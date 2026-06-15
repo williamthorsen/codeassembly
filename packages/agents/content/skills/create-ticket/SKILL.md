@@ -108,9 +108,15 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 - If `ticket_ref_prefix` is configured: `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., prefix `MAC-` + `147` → `MAC-147`)
 - If no prefix: `ticket_id` = `{number}` (e.g., `147`)
 
+Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)):
+
+```bash
+node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
+```
+
 #### Jira path (stub)
 
-If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Skip to step 7 (save locally with an auto-generated ticket ID). Full Jira API support deferred.
+If `integrations.jira.enabled: true`, note that Jira creation needs additional configuration. Skip to step 7 (save locally with an auto-generated ticket ID). Full Jira API support deferred. The Jira stub holds no URL yet, so it persists nothing new — consistent with today.
 
 ### 6. Save local artifacts
 

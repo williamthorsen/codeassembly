@@ -8,21 +8,28 @@
  * - Idempotent: if a current-schema manifest already exists at the canonical path, reads and returns
  *   it. Otherwise composes a fresh manifest, writes it, and returns it. Stale-schema or corrupt
  *   manifests are overwritten in place.
+ * - Single mutation point: the `--set-*` / `--clear-*` flags read-or-compose a manifest, apply the
+ *   mutation, write the file atomically, and emit the updated JSON. With no mutation flag the
+ *   read-or-compose behavior is unchanged.
  * - Writes JSON to stdout, diagnostics to stderr. Exit 0 on success; exit 1 on hard failures
  *   (detached HEAD, no git, schema-validation error).
  *
  * Flags:
- *   --branch <name>   Override branch lookup (used by tests and the smoke harness).
- *   --cwd <path>      Caller-supplied base directory for repo-relative paths (`.agents/`). When omitted, the base
- *                     resolves to the git repo root (worktree-aware), falling back to the current working directory.
- *                     Callers that already hold the root (e.g. `resolve-frontmatter.sh`) pass it explicitly; tests
- *                     use it for isolation. See `resolveProjectRoot` for the full precedence.
- *   --home <path>     Override home directory for `~/.agents/preferences.yaml` lookup.
- *                     Defaults to `os.homedir()`.
+ *   --branch <name>      Override branch lookup (used by tests and the smoke harness).
+ *   --cwd <path>         Caller-supplied base directory for repo-relative paths (`.agents/`). When omitted, the base
+ *                        resolves to the git repo root (worktree-aware), falling back to the current working directory.
+ *                        Callers that already hold the root (e.g. `resolve-frontmatter.sh`) pass it explicitly; tests
+ *                        use it for isolation. See `resolveProjectRoot` for the full precedence.
+ *   --home <path>        Override home directory for `~/.agents/preferences.yaml` lookup.
+ *                        Defaults to `os.homedir()`.
+ *   --set-ticket-url <url>  Store `url` as the manifest's `ticket_url` (write-through overwrite).
+ *   --set-pr-url <url>      Store `url` as the manifest's `pr_url` (write-through overwrite).
+ *   --clear-ticket-url      Reset the manifest's `ticket_url` to `null`.
+ *   --clear-pr-url          Reset the manifest's `pr_url` to `null`.
  */
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -50,11 +57,21 @@ const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
   'created_at',
 ];
 
-/** Parsed CLI args. */
+/**
+ * A request to set or clear one stored URL field. `value` is the new value: a string for a
+ * `--set-*` flag, `null` for a `--clear-*` flag.
+ */
+interface ManifestMutation {
+  readonly field: 'ticket_url' | 'pr_url';
+  readonly value: string | null;
+}
+
+/** Parsed CLI args. `mutations` is empty when no `--set-*`/`--clear-*` flag was supplied. */
 interface ParsedArgs {
   readonly branch: string | null;
   readonly cwd: string | null;
   readonly home: string | null;
+  readonly mutations: readonly ManifestMutation[];
 }
 
 /** Top-level runner: parses args, derives the manifest, writes JSON to stdout. */
@@ -68,6 +85,7 @@ async function main(): Promise<void> {
       cwd,
       branch,
       now: new Date(),
+      mutations: parsed.mutations,
       ...(parsed.home !== null && { home: parsed.home }),
     });
     process.stdout.write(`${JSON.stringify(manifest, null, 2)}\n`);
@@ -79,7 +97,11 @@ async function main(): Promise<void> {
 }
 
 /**
- * Idempotent derivation: read an existing current-schema manifest, or compose and write one.
+ * Idempotent derivation with an optional mutation point. With no `mutations`, reads an existing
+ * current-schema manifest or composes and writes a fresh one. With `mutations`, obtains the base
+ * manifest the same way, applies the set/clear operations, and writes the result atomically. A
+ * fresh compose carries previously stored URLs forward from any prior file so a required-field
+ * bump never silently drops them.
  *
  * @internal Exported for testing.
  */
@@ -88,6 +110,7 @@ export async function deriveSessionContext(input: {
   branch: string;
   now: Date;
   home?: string;
+  mutations?: readonly ManifestMutation[];
 }): Promise<BranchManifest> {
   if (input.branch === '' || input.branch === 'HEAD') {
     throw new Error('Detached HEAD: this script requires an active branch. Create or check out a branch first.');
@@ -97,37 +120,29 @@ export async function deriveSessionContext(input: {
   const sanitizedBranch = sanitizeBranch(input.branch);
   const newPath = path.join(input.cwd, '.agents', `${sanitizedBranch}.branch-manifest.json`);
   const oldPath = path.join(input.cwd, '.agents', `${sanitizedBranch}.manifest.json`);
+  const mutations = input.mutations ?? [];
 
-  // Fast path: read an existing valid manifest at the canonical (new-format) path.
-  const cached = await tryReadManifest(newPath);
-  if (cached !== null) {
-    return cached;
-  }
-
-  // Backward compatibility: read an existing valid manifest at the old path (`.manifest.json`).
-  // When found, also migrate it to the new-format path so subsequent calls hit the fast path
-  // above and stop re-invoking the deriver on every call.
-  const cachedOld = await tryReadManifest(oldPath);
-  if (cachedOld !== null) {
-    await mkdir(path.dirname(newPath), { recursive: true });
-    await writeFile(newPath, `${JSON.stringify(cachedOld, null, 2)}\n`, 'utf8');
-    return cachedOld;
-  }
-
-  // Otherwise compose afresh. Either no manifest existed, or the one that did was corrupt or stale.
-  const readResult = await readPreferences({ cwd: input.cwd, home });
-  const manifest = composeManifest({
-    preferences: readResult.preferences,
-    branchName: input.branch,
+  const base = await resolveBaseManifest({
     cwd: input.cwd,
     home,
+    branch: input.branch,
     now: input.now,
+    newPath,
+    oldPath,
   });
 
-  await mkdir(path.dirname(newPath), { recursive: true });
-  await writeFile(newPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  if (mutations.length === 0) {
+    // Read-or-compose with no mutation: preserve the existing idempotency contract. The fast-path
+    // read returns without rewriting; the old-format and fresh-compose paths write.
+    if (base.needsWrite) {
+      await writeManifest(newPath, base.manifest);
+    }
+    return base.manifest;
+  }
 
-  return manifest;
+  const mutated = applyMutations(base.manifest, mutations);
+  await writeManifest(newPath, mutated);
+  return mutated;
 }
 
 /**
@@ -176,6 +191,119 @@ async function tryReadManifest(filePath: string): Promise<BranchManifest | null>
   return parsed;
 }
 
+/** Returns a copy of `manifest` with each mutation applied in order. */
+function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMutation[]): BranchManifest {
+  let result = manifest;
+  for (const mutation of mutations) {
+    result = { ...result, [mutation.field]: mutation.value };
+  }
+  return result;
+}
+
+/**
+ * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly
+ * composed one. The prior file is read best-effort and at the raw-JSON level — deliberately *not*
+ * gated on `isCurrentSchema`, because the point of carry-forward is to survive a required-field
+ * bump that makes the prior manifest stale. A missing or unparseable file yields no carry-forward,
+ * the same outcome as a first compose. Only string values overlay; the composed `null` defaults
+ * stand otherwise.
+ */
+async function carryForwardStoredUrls(composed: BranchManifest, priorPath: string): Promise<BranchManifest> {
+  let text: string;
+  try {
+    text = await readFile(priorPath, 'utf8');
+  } catch (error) {
+    if (isEnoent(error)) {
+      return composed;
+    }
+    throw error;
+  }
+  let prior: unknown;
+  try {
+    prior = JSON.parse(text);
+  } catch {
+    // Best-effort salvage: a corrupt prior file means we cannot carry stored URLs forward, but a
+    // fresh compose is still the right outcome. Surface a diagnostic so an operator can explain a
+    // vanished `ticket_url`/`pr_url` rather than debugging a silent loss.
+    process.stderr.write(
+      `derive-session-context: warning: prior manifest at ${priorPath} is corrupt; stored URLs not carried forward\n`,
+    );
+    return composed;
+  }
+  if (!isRecord(prior)) {
+    return composed;
+  }
+  return {
+    ...composed,
+    ...(typeof prior.ticket_url === 'string' && { ticket_url: prior.ticket_url }),
+    ...(typeof prior.pr_url === 'string' && { pr_url: prior.pr_url }),
+  };
+}
+
+/**
+ * Result of obtaining the manifest before any mutation: the manifest itself and whether the
+ * read-or-compose path that produced it still needs to be written to disk. The fast-path read
+ * sets `needsWrite: false`; the old-format migration and the fresh compose set `needsWrite: true`.
+ */
+interface BaseManifestResult {
+  readonly manifest: BranchManifest;
+  readonly needsWrite: boolean;
+}
+
+/**
+ * Obtains the base manifest via the existing read-or-compose cascade: fast-path read of the
+ * canonical file, old-format read with migration, then a fresh compose. A fresh compose overlays
+ * any previously stored URLs from a prior file so they survive a required-field bump.
+ */
+async function resolveBaseManifest(input: {
+  cwd: string;
+  home: string;
+  branch: string;
+  now: Date;
+  newPath: string;
+  oldPath: string;
+}): Promise<BaseManifestResult> {
+  const cached = await tryReadManifest(input.newPath);
+  if (cached !== null) {
+    return { manifest: cached, needsWrite: false };
+  }
+
+  const cachedOld = await tryReadManifest(input.oldPath);
+  if (cachedOld !== null) {
+    return { manifest: cachedOld, needsWrite: true };
+  }
+
+  const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
+  const composed = composeManifest({
+    preferences: readResult.preferences,
+    branchName: input.branch,
+    cwd: input.cwd,
+    home: input.home,
+    now: input.now,
+  });
+  const carried = await carryForwardStoredUrls(composed, input.newPath);
+  return { manifest: carried, needsWrite: true };
+}
+
+/**
+ * Writes `manifest` to `targetPath` atomically: serialize to a sibling temp file, then `rename()`
+ * over the target so a concurrent reader never observes a half-written file. The temp file shares
+ * the target's directory so the rename stays within one filesystem.
+ */
+async function writeManifest(targetPath: string, manifest: BranchManifest): Promise<void> {
+  const dir = path.dirname(targetPath);
+  await mkdir(dir, { recursive: true });
+  const tempPath = path.join(dir, `.${path.basename(targetPath)}.${process.pid}.${Date.now()}.tmp`);
+  const content = `${JSON.stringify(manifest, null, 2)}\n`;
+  try {
+    await writeFile(tempPath, content, 'utf8');
+    await rename(tempPath, targetPath);
+  } catch (error) {
+    await rm(tempPath, { force: true });
+    throw error;
+  }
+}
+
 /**
  * True when `value` is an object containing every required manifest field with the right type.
  * Hand-rolled type narrowing rather than Zod because the schema is small, stable, and Zod is not
@@ -201,6 +329,15 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
     return false;
   }
   if (value.platform !== 'github' && value.platform !== 'bitbucket') {
+    return false;
+  }
+  // The stored-URL fields are optional and not part of REQUIRED_MANIFEST_FIELDS, so a manifest
+  // lacking them stays valid. When present, they must be `string | null`; a wrong-typed value
+  // marks the manifest stale and triggers a recompose.
+  if ('ticket_url' in value && !isStringOrNull(value.ticket_url)) {
+    return false;
+  }
+  if ('pr_url' in value && !isStringOrNull(value.pr_url)) {
     return false;
   }
   return true;
@@ -232,6 +369,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   let branch: string | null = null;
   let cwd: string | null = null;
   let home: string | null = null;
+  const mutations: ManifestMutation[] = [];
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === undefined) {
@@ -252,11 +390,25 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       i += 1;
     } else if (arg.startsWith('--home=')) {
       home = arg.slice('--home='.length);
+    } else if (arg === '--set-ticket-url') {
+      mutations.push({ field: 'ticket_url', value: consumeValue(argv, i, '--set-ticket-url') });
+      i += 1;
+    } else if (arg.startsWith('--set-ticket-url=')) {
+      mutations.push({ field: 'ticket_url', value: arg.slice('--set-ticket-url='.length) });
+    } else if (arg === '--set-pr-url') {
+      mutations.push({ field: 'pr_url', value: consumeValue(argv, i, '--set-pr-url') });
+      i += 1;
+    } else if (arg.startsWith('--set-pr-url=')) {
+      mutations.push({ field: 'pr_url', value: arg.slice('--set-pr-url='.length) });
+    } else if (arg === '--clear-ticket-url') {
+      mutations.push({ field: 'ticket_url', value: null });
+    } else if (arg === '--clear-pr-url') {
+      mutations.push({ field: 'pr_url', value: null });
     } else {
       throw new Error(`unknown argument: ${arg}`);
     }
   }
-  return { branch, cwd, home };
+  return { branch, cwd, home, mutations };
 }
 
 /** Reads the value following a space-delimited flag at `index`. Throws when missing. */
@@ -269,7 +421,7 @@ function consumeValue(argv: readonly string[], index: number, flag: string): str
 }
 
 // Run as a script. Importable for tests because the file uses `isMain()` rather than a top-level
-// invocation when imported. Mirrors the kb-add / update-jira-ticket entry-point pattern.
+// invocation when imported.
 if (isMain()) {
   await main();
 }
