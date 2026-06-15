@@ -371,6 +371,44 @@ describe('install with include directives', () => {
       expect(existsSync(path.join(claudeHome, 'skills', 'demo-skill', 'modules', '_partials'))).toBe(false);
     });
 
+    it('does not install the top-level shared skills/_partials/ directory', async () => {
+      const contentDir = path.join(tempDir, 'fake-content');
+      // A `_partials` key under `skills` synthesizes the shared `content/skills/_partials/` directory as a sibling of
+      // real skills, covering the top-level enumeration case. The per-skill walk exclusions only match `_partials` as a
+      // child mid-walk, so a separate top-level exclusion is required when it is the walk root.
+      await buildContentTree(contentDir, {
+        skills: {
+          _partials: {
+            'plan-template.md': 'shared partial body\n',
+          },
+        },
+      });
+
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'skills', '_partials'))).toBe(false);
+      expect(existsSync(path.join(claudeHome, 'skills', '_partials', 'plan-template.md'))).toBe(false);
+    });
+
+    it('still installs other reserved top-level directories that skills reference at runtime (e.g. _data)', async () => {
+      // Guards the `_partials` exclusion from being over-generalized to an `_`-prefix skip: `_data/` is referenced by
+      // skills at runtime via absolute paths, so it must keep installing.
+      const contentDir = path.join(tempDir, 'fake-content');
+      await buildContentTree(contentDir, {
+        skills: {
+          _data: {
+            'design-priorities.md': 'shared data body\n',
+          },
+        },
+      });
+
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'skills', '_data', 'design-priorities.md'))).toBe(true);
+    });
+
     it('rewrites markdown links inside expanded skill content (expand-then-rewrite ordering)', async () => {
       const contentDir = path.join(tempDir, 'fake-content');
       await buildContentTree(contentDir, {

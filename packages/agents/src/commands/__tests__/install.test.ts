@@ -72,7 +72,10 @@ describe(installCommand, () => {
     // Check that skills were installed — count should match shared + platform-specific
     const contentDir = resolveContentDir();
     const allSkillEntries = await readdir(path.join(contentDir, 'skills'));
-    const sharedSkillCount = allSkillEntries.filter((e) => e !== '_platforms' && !e.startsWith('.')).length;
+    // Mirror the install enumeration's skip set: `_platforms` and `_partials` are excluded, dotfiles too.
+    const sharedSkillCount = allSkillEntries.filter(
+      (e) => e !== '_platforms' && e !== '_partials' && !e.startsWith('.'),
+    ).length;
     const platformSkillsDir = path.join(contentDir, 'skills', '_platforms', 'claude');
     const platformSkillEntries = existsSync(platformSkillsDir) ? await readdir(platformSkillsDir) : [];
     const platformSkillCount = platformSkillEntries.filter((e) => !e.startsWith('.')).length;
