@@ -1,60 +1,37 @@
 ---
 name: plan
-description: Create a structured plan document for analysis or implementation
+description: Create an implementation plan from a ticket or task description
 user-invocable: true
 ---
 
 # Plan
 
-Create a structured plan document for analysis, design, or implementation work.
+Create an implementation plan from a ticket or task. `plan` is the standalone plan-phase entry point: Given a good ticket, it produces the same implementation plan that `design-and-plan` produces with its design phase skipped. For interactive design exploration and ticket refinement before planning, use `design-and-plan`, which runs this same plan phase after its design phase.
 
 ## Arguments
 
-- Task or problem description (required): What to plan for
+- Task source (required): Issue URL, shorthand reference (`#99`, `issue 99`), file path, or description of what to build
 - `--role=<role>` (optional): Agent role for run artifact naming (default: `agent`)
+
+## Resolve the task source
+
+Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description.
+
+When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions carry no provenance.
 
 ## Output format
 
-The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps live in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted — plans authored via this skill are co-authored interactively, not solely AI-generated.
+The plan begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extension; field-resolution steps live in the [Frontmatter resolution](#frontmatter-resolution) section below. `provenance.model` is omitted: The plan is produced in an interactive, user-invoked session (the user supplies and vets the source ticket and approves the next step).
 
-The body following the frontmatter has this structure:
+The body following the frontmatter uses the shared implementation-plan template, the same one `design-and-plan` Phase 5 inlines, so both skills emit an identical plan:
 
-```markdown
-# Plan: {Descriptive title}
-
-**Date**: {YYYY-MM-DD HH:MM UTC}
-**Scope**: {Brief scope statement}
-
-## Problem
-
-{What needs to be solved}
-
-## Approach
-
-{High-level strategy}
-
-## Steps
-
-1. {Step description}
-2. {Step description}
-
-## Risks
-
-{Known risks or unknowns}
-
-## Dependencies
-
-{External dependencies or blockers}
-```
-
-Sections are optional — use only what's appropriate for the task.
+<!-- include: ../_partials/plan-template.md / -->
 
 ## Guidance
 
 - Focus on clarity and actionability
 - Include concrete steps, not vague goals
 - Call out risks and unknowns explicitly
-- Keep the plan concise — detail belongs in implementation, not planning
 - When comparing approaches, rank options per [design priorities](../_data/design-priorities.md)
 
 ## Saving
@@ -94,4 +71,12 @@ Example: `20260223-143000Z_migrate-auth-to-oauth2_plan.md`
 
 ## Completion
 
-Report the file path when done. That's all the user needs to know.
+Report the file path when done.
+
+```
+Plan saved: {plan_path}
+```
+
+<HARD-GATE>
+Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. For recommendation context, supply the source's design provenance from the resolve step — `plan` adds no interactive design phase of its own. Include both `{plan_path}` and `{ticket_source}` in each skill-invoking option line; omit the ticket path when the source was a free-form description rather than a ticket.
+</HARD-GATE>

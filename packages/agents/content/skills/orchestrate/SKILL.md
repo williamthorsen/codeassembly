@@ -160,7 +160,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `refinedBy`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If no provenance block exists, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
-   **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `writing-plans`, `plan-orchestrable-steps`. If credible, proceed to sub-step c. If not credible but `provenance.refinedBy` is `refine-plan`, mark the plan as "refinement-elevated" and proceed to sub-step c (the trust tier will be capped at `"medium"` in sub-step d). If neither credible nor refinement-elevated, set `{planTrust}` to `"low"` and skip remaining evaluation.
+   **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `plan`, `plan-orchestrable-steps`, `writing-plans`. If credible, proceed to sub-step c. If not credible but `provenance.refinedBy` is `refine-plan`, mark the plan as "refinement-elevated" and proceed to sub-step c (the trust tier will be capped at `"medium"` in sub-step d). If neither credible nor refinement-elevated, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
    **c. Evaluate codebase freshness:** Run `git rev-parse --short origin/main` to obtain `{current-main-sha}`. If the command fails, classify freshness as `"unknown"`.
 

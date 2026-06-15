@@ -246,7 +246,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `provenance.iteration` | no       | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements. |
 
-Plan-specific `provenance.skill` values include `design-and-plan`, `plan-orchestrable-steps`, `plan-mode`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
+Plan-specific `provenance.skill` values include `design-and-plan`, `plan`, `plan-mode`, `plan-orchestrable-steps`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
 
 ## Devlog frontmatter
 
