@@ -1,10 +1,8 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-import { Document, parseDocument } from 'yaml';
-
-import { isEnoent } from '../type-guards.ts';
 import { kbRegistryFileSchema } from './kb-registry-schema.ts';
+import { loadRegistryDocument } from './registry-document.ts';
 
 /** The outcome of a registry write. */
 export interface RegisterStoreResult {
@@ -53,22 +51,3 @@ export async function registerStore(input: {
   await writeFile(input.registryPath, doc.toString(), 'utf8');
   return { status: 'added' };
 }
-
-// region | Helpers
-
-/** Reads and parses the registry as a `yaml` Document, returning a fresh empty document when the file is absent or empty. */
-async function loadRegistryDocument(path: string): Promise<Document> {
-  let text: string;
-  try {
-    text = await readFile(path, 'utf8');
-  } catch (error) {
-    if (isEnoent(error)) {
-      return new Document({});
-    }
-    throw error;
-  }
-  const doc = parseDocument(text);
-  return doc.contents === null ? new Document({}) : doc;
-}
-
-// endregion | Helpers

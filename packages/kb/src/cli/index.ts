@@ -4,6 +4,7 @@ import process from 'node:process';
 
 import type { CommandOutput } from './commands/check.ts';
 import { run } from './run.ts';
+import { readlineSelectKbPrompt } from './select-kb-prompt.ts';
 
 /**
  * Entry point for the `kb` bin. The module is only ever loaded via `bin/kb.js`'s dynamic import of the build output,
@@ -17,7 +18,13 @@ import { run } from './run.ts';
 async function main(): Promise<void> {
   let output: CommandOutput;
   try {
-    output = await run({ argv: process.argv.slice(2), cwd: process.cwd() });
+    // Interactive prompting is possible only on a TTY; otherwise the no-argument set-default form errors instead of hanging.
+    const selectKb = process.stdin.isTTY ? readlineSelectKbPrompt : undefined;
+    output = await run({
+      argv: process.argv.slice(2),
+      cwd: process.cwd(),
+      ...(selectKb !== undefined && { selectKb }),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`kb: unexpected error: ${message}\n`);
