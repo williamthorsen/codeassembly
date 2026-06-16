@@ -79,6 +79,21 @@ describe(clearDefaultKb, () => {
     expect(text).not.toContain('default_kb');
   });
 
+  it('drops a comment annotating a trailing default_kb while keeping unrelated comments', async () => {
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(
+      registryPath,
+      '# registry header\nkbs:\n  coding:\n    path: /abs/coding\n# the chosen default\ndefault_kb: coding\n',
+    );
+
+    await clearDefaultKb({ registryPath });
+
+    const text = await readFile(registryPath, 'utf8');
+    expect(text).toContain('# registry header');
+    expect(text).not.toContain('# the chosen default');
+    expect(text).not.toContain('default_kb');
+  });
+
   it('is a no-op when no default is set', async () => {
     const registryPath = await makeRegistryPath();
     await seedRegistry(registryPath, 'kbs:\n  coding:\n    path: /abs/coding\n');
