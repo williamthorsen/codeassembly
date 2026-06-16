@@ -7,24 +7,6 @@ import type { SelectKbChoice, SelectKbPrompt } from '../select-kb-prompt.ts';
 
 const TWO_KBS = 'kbs:\n  coding:\n    path: /abs/coding\n  notes:\n    path: /abs/notes\n';
 
-/** A stub picker that returns a fixed choice and records the input it was called with. */
-function stubPrompt(choice: SelectKbChoice): { prompt: SelectKbPrompt; calledWith: { currentDefaultName?: string }[] } {
-  const calledWith: { currentDefaultName?: string }[] = [];
-  const prompt: SelectKbPrompt = (input) => {
-    calledWith.push({
-      ...(input.currentDefaultName !== undefined && { currentDefaultName: input.currentDefaultName }),
-    });
-    return Promise.resolve(choice);
-  };
-  return { prompt, calledWith };
-}
-
-async function seededHome(content: string): Promise<string> {
-  const home = await makeTempDir('kb-setdefault-home-');
-  await seedRegistry(getRegistryPathFor(home), content);
-  return home;
-}
-
 describe('kb set-default <name>', () => {
   it('sets default_kb to the named KB and confirms', async () => {
     const home = await seededHome(TWO_KBS);
@@ -175,3 +157,25 @@ describe('kb set-default error and help paths', () => {
     expect(result.stdout).toContain('set-default');
   });
 });
+
+// region | Helpers
+
+/** A stub picker that returns a fixed choice and records the input it was called with. */
+function stubPrompt(choice: SelectKbChoice): { prompt: SelectKbPrompt; calledWith: { currentDefaultName?: string }[] } {
+  const calledWith: { currentDefaultName?: string }[] = [];
+  const prompt: SelectKbPrompt = (input) => {
+    calledWith.push({
+      ...(input.currentDefaultName !== undefined && { currentDefaultName: input.currentDefaultName }),
+    });
+    return Promise.resolve(choice);
+  };
+  return { prompt, calledWith };
+}
+
+async function seededHome(content: string): Promise<string> {
+  const home = await makeTempDir('kb-setdefault-home-');
+  await seedRegistry(getRegistryPathFor(home), content);
+  return home;
+}
+
+// endregion | Helpers

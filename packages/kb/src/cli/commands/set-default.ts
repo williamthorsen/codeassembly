@@ -65,13 +65,13 @@ export async function runSetDefault(input: {
 
   if (options.name !== null) {
     if (entries.length === 0) {
-      return { exitCode: 2, stdout: '', stderr: noStoresMessage() };
+      return { exitCode: 2, stdout: '', stderr: buildNoStoresMessage() };
     }
     if (!entries.some((entry) => entry.name === options.name)) {
-      return { exitCode: 2, stdout: '', stderr: notRegisteredMessage(options.name, entries) };
+      return { exitCode: 2, stdout: '', stderr: buildNotRegisteredMessage(options.name, entries) };
     }
     await setDefaultKb({ registryPath, name: options.name });
-    return { exitCode: 0, stdout: setConfirmation(options.name), stderr: '' };
+    return { exitCode: 0, stdout: buildSetConfirmation(options.name), stderr: '' };
   }
 
   if (input.selectKb === undefined) {
@@ -82,7 +82,7 @@ export async function runSetDefault(input: {
     };
   }
   if (entries.length === 0) {
-    return { exitCode: 2, stdout: '', stderr: noStoresMessage() };
+    return { exitCode: 2, stdout: '', stderr: buildNoStoresMessage() };
   }
 
   const choice = await input.selectKb({
@@ -101,7 +101,7 @@ export async function runSetDefault(input: {
     return { exitCode: 2, stdout: '', stderr: 'kb set-default: invalid selection\n' };
   }
   await setDefaultKb({ registryPath, name: chosen.name });
-  return { exitCode: 0, stdout: setConfirmation(chosen.name), stderr: '' };
+  return { exitCode: 0, stdout: buildSetConfirmation(chosen.name), stderr: '' };
 }
 
 /** Parsed `kb set-default` options. */
@@ -156,19 +156,19 @@ function buildUsageError(error: unknown): CommandOutput {
   return { exitCode: 2, stdout: '', stderr: `kb set-default: ${message}\n${SET_DEFAULT_HELP}` };
 }
 
-/** The "no registered KBs" usage error, directing the user to scaffold one first. */
-function noStoresMessage(): string {
+/** Builds the "no registered KBs" usage error, directing the user to scaffold one first. */
+function buildNoStoresMessage(): string {
   return 'kb set-default: no knowledge bases registered; run `kb create` first\n';
 }
 
-/** The "name is not registered" usage error, listing the registered names. */
-function notRegisteredMessage(name: string, entries: readonly KbRegistryEntry[]): string {
+/** Builds the "name is not registered" usage error, listing the registered names. */
+function buildNotRegisteredMessage(name: string, entries: readonly KbRegistryEntry[]): string {
   const names = entries.map((entry) => entry.name).join(', ');
   return `kb set-default: "${name}" is not a registered knowledge base (registered: ${names})\n`;
 }
 
-/** The success line for a set, in completed-action voice. */
-function setConfirmation(name: string): string {
+/** Builds the success line for a set, in completed-action voice. */
+function buildSetConfirmation(name: string): string {
   return `Default knowledge base has been set to "${name}".\n`;
 }
 
