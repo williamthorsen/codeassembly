@@ -52,18 +52,20 @@ describe('platform', () => {
       const result = resolvePlatformPaths('claude', tempDir);
 
       expect(result.platformHome).toBe(path.join(tempDir, PLATFORMS.claude.homeDir));
-      expect(result.skillsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.skillsDir));
-      expect(result.subagentsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.subagentsDir));
-      expect(result.scriptsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.scriptsDir));
+      expect(result.skillsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.skillsDirName));
+      expect(result.subagentsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.subagentsDirName));
+      expect(result.scriptsDir).toBe(path.join(tempDir, PLATFORMS.claude.homeDir, PLATFORMS.claude.scriptsDirName));
     });
 
     it('should resolve correct paths for rovodev platform', () => {
       const result = resolvePlatformPaths('rovodev', tempDir);
 
       expect(result.platformHome).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir));
-      expect(result.skillsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.skillsDir));
-      expect(result.subagentsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.subagentsDir));
-      expect(result.scriptsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.scriptsDir));
+      expect(result.skillsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.skillsDirName));
+      expect(result.subagentsDir).toBe(
+        path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.subagentsDirName),
+      );
+      expect(result.scriptsDir).toBe(path.join(tempDir, PLATFORMS.rovodev.homeDir, PLATFORMS.rovodev.scriptsDirName));
     });
 
     it('should produce absolute paths containing the platform home directory', () => {
