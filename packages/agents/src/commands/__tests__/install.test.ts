@@ -112,6 +112,46 @@ describe(installCommand, () => {
     expect(secondContent).toBe(firstContent);
   });
 
+  describe('subagent script-path expansion', () => {
+    it.each([
+      { platform: 'claude' as const, home: '.claude', subagentsSubdir: 'agents' },
+      { platform: 'rovodev' as const, home: '.rovodev', subagentsSubdir: 'subagents' },
+    ])(
+      'when installing for $platform, no installed subagent retains a raw {platform_home_dir} token',
+      async ({ platform, home, subagentsSubdir }) => {
+        const platformHome = path.join(tempDir, home);
+        await mkdir(path.join(platformHome, 'skills'), { recursive: true });
+        await mkdir(path.join(platformHome, subagentsSubdir), { recursive: true });
+
+        await installCommand(makeOptions({ platform }), tempDir);
+
+        const installedDir = path.join(platformHome, subagentsSubdir);
+        const subagentFiles = (await readdir(installedDir)).filter((file) => file.endsWith('.md'));
+        expect(subagentFiles.length).toBeGreaterThan(0);
+
+        const offenders: Array<string> = [];
+        for (const file of subagentFiles) {
+          const content = await readFile(path.join(installedDir, file), 'utf8');
+          if (content.includes('{platform_home_dir}')) {
+            offenders.push(file);
+          }
+        }
+        expect(offenders).toEqual([]);
+      },
+    );
+
+    it('when installing for claude, expands a subagent script token to a tilde-absolute platform path', async () => {
+      const claudeHome = path.join(tempDir, '.claude');
+      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+      await installCommand(makeOptions(), tempDir);
+
+      const coderContent = await readFile(path.join(claudeHome, 'agents', 'orchestrated-coder.md'), 'utf8');
+      expect(coderContent).toContain('~/.claude/scripts/describe-change.sh');
+    });
+  });
+
   it('skips modified subagent files on re-install without --force', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });

@@ -459,7 +459,7 @@ async function installSubagents(
     }
 
     // Pipeline: Expand includes -> merge frontmatter -> rewrite tool-name placeholders ->
-    // inject provenance marker -> write.
+    // inject provenance marker -> write -> rewrite paths.
     const sourceLabel = `subagents/${entry}`;
     const merged = mergeFrontmatter(expandedSource, overlayYaml);
     const rewritten = rewriteToolNames(merged, toolMapping, sourceLabel);
@@ -467,6 +467,9 @@ async function installSubagents(
     await mkdir(path.dirname(destPath), { recursive: true });
     await unlinkIfSymlink(destPath);
     await writeFile(destPath, withMarker, 'utf8');
+
+    // Expand `{platform_home_dir}` tokens so the body's script references resolve to real paths.
+    await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir);
 
     const hash = await computeContentHash(destPath);
     entries.push({
