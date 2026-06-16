@@ -54,7 +54,7 @@ kbs:
     description: Shared team knowledge base
 ```
 
-The top-level `default_kb` key names the machine's default knowledge base — the single KB that search and writes fall back on when no store is named or discovered. It must name an entry under `kbs`; a value that matches none fails the load.
+The top-level `default_kb` key names the machine's default knowledge base — the single KB that search and writes fall back on when no store is named or discovered. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
 
 Configuration keys, per KB entry under `kbs.<name>`:
 
@@ -186,7 +186,7 @@ Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `
 
 ## The `kb` command
 
-The package ships a `kb` bin with two subcommands: `create` and `check`.
+The package ships a `kb` bin with three subcommands: `create`, `set-default`, and `check`.
 
 ### kb create
 
@@ -210,6 +210,18 @@ It creates these files and directories:
 The schema and config seeds are serialized from the in-package `defaultSchema` and `defaultKbConfig`, so a new store cannot drift from the bundled defaults. The generated `.kb/schema.yaml` **replaces** the default outright (the override is a replacement, not a merge): add record types or optional fields freely, but do not remove or rename the default `assertion`/`event` record types or their required fields, since the `kb-*` skills depend on them. Delete the file to re-inherit the bundled default.
 
 The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. The registry write preserves any existing comments in `kb.yaml`. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
+
+### kb set-default
+
+`kb set-default` sets, clears, or interactively chooses the user-global default knowledge base — the top-level `default_kb` pointer in `~/.agents/kb.yaml`.
+
+```bash
+kb set-default coding   # set default_kb to the registered KB "coding"
+kb set-default --none   # clear default_kb
+kb set-default          # list the registered KBs and choose interactively
+```
+
+With a name, it sets `default_kb` to that KB, exiting 2 if the name is not registered. With `--none`, it clears the pointer. With no arguments on an interactive terminal, it lists the registered KBs — marking the current default and offering a `(none)` option — and writes the choice; cancelling with an empty line leaves the registry unchanged. With no arguments on a non-interactive stdin, it exits 2 rather than hanging. Writes resolve against and target the user-global registry only, and preserve existing comments and formatting.
 
 ### kb check
 
