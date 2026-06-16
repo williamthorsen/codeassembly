@@ -211,6 +211,8 @@ The schema and config seeds are serialized from the in-package `defaultSchema` a
 
 The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. The registry write preserves any existing comments in `kb.yaml`. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
 
+`kb create` also keeps a default knowledge base set. When the registry's top-level `default_kb` pointer is unset and the new store is the only registered KB, it becomes the default. When other KBs are already registered with no default, `kb create` prompts you to choose one on an interactive terminal — or, when stdin is not interactive, points you to `kb set-default`. An existing `default_kb` is never overwritten.
+
 ### kb set-default
 
 `kb set-default` sets, clears, or interactively chooses the user-global default knowledge base: the top-level `default_kb` pointer in `~/.agents/kb.yaml`.

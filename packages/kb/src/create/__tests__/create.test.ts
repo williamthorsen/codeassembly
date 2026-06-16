@@ -92,4 +92,51 @@ describe(create, () => {
     expect(outcome.reason).toBe('kb-exists');
     expect(await pathExists(join(targetDir, 'content'))).toBe(false);
   });
+
+  it('sets the new store as the default when the registry has no default and no other KBs', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+    const registryPath = await makeRegistryPath();
+
+    const outcome = await create({ targetDir, register: true, registryPath });
+
+    assert.ok(outcome.ok);
+    expect(outcome.created.defaultKb).toBe('set');
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.defaultKb?.name).toBe(basename(targetDir));
+  });
+
+  it('leaves an existing default_kb unchanged', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(registryPath, 'default_kb: existing\nkbs:\n  existing:\n    path: /abs/existing\n');
+
+    const outcome = await create({ targetDir, register: true, registryPath });
+
+    assert.ok(outcome.ok);
+    expect(outcome.created.defaultKb).toBe('unchanged');
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.defaultKb?.name).toBe('existing');
+  });
+
+  it('defers selection without setting a default when other KBs exist and none is set', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(registryPath, 'kbs:\n  existing:\n    path: /abs/existing\n');
+
+    const outcome = await create({ targetDir, register: true, registryPath });
+
+    assert.ok(outcome.ok);
+    expect(outcome.created.defaultKb).toBe('needs-selection');
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.defaultKb).toBeUndefined();
+  });
+
+  it('omits the default-KB outcome when not registering', async () => {
+    const targetDir = await makeTempDir('kb-create-store-');
+
+    const outcome = await create({ targetDir, register: false });
+
+    assert.ok(outcome.ok);
+    expect(outcome.created.defaultKb).toBeUndefined();
+  });
 });

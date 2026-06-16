@@ -7,6 +7,7 @@ import { loadKbRegistry } from '../../discovery/load-registry.ts';
 import { pathExists } from '../../filesystem/exists.ts';
 import { getRegistryPathFor, makeTempDir, seedRegistry } from '../../test-utils/scaffolding.ts';
 import { run } from '../run.ts';
+import type { SelectKbChoice, SelectKbPrompt } from '../select-kb-prompt.ts';
 
 describe('kb create', () => {
   it('scaffolds a store in cwd and registers it under the directory name', async () => {
@@ -91,4 +92,103 @@ describe('kb create', () => {
 
     expect(result.stdout).toContain('create');
   });
+
+  it('sets the new store as the default when the registry is empty', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+
+    const result = await run({ argv: ['create'], cwd, home });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Set as the default knowledge base.');
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.defaultKb?.name).toBe(basename(cwd));
+  });
+
+  it('prompts to choose the default when other KBs exist and none is set', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
+
+    const result = await run({ argv: ['create'], cwd, home, selectKb: stubPrompt({ kind: 'kb', index: 0 }) });
+
+    expect(result.exitCode).toBe(0);
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.defaultKb?.name).toBe('existing');
+  });
+
+  it('offers the newly-created store among the picker choices', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
+
+    // The new store is appended after the seeded one, so index 1 selects it.
+    const result = await run({ argv: ['create'], cwd, home, selectKb: stubPrompt({ kind: 'kb', index: 1 }) });
+
+    expect(result.exitCode).toBe(0);
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.defaultKb?.name).toBe(basename(cwd));
+  });
+
+  it('exits 0 once the store is created even when the delegated selection fails', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
+
+    const result = await run({ argv: ['create'], cwd, home, selectKb: stubPrompt({ kind: 'kb', index: 99 }) });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain('invalid selection');
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.entries.some((entry) => entry.name === basename(cwd))).toBe(true);
+    expect(config.defaultKb).toBeUndefined();
+  });
+
+  it('leaves the default unset and points to set-default when other KBs exist and stdin is non-interactive', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
+
+    const result = await run({ argv: ['create'], cwd, home });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('kb set-default');
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.defaultKb).toBeUndefined();
+  });
+
+  it('still succeeds with no default when the picker is cancelled', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
+
+    const result = await run({ argv: ['create'], cwd, home, selectKb: stubPrompt({ kind: 'cancel' }) });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('No changes made.');
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.defaultKb).toBeUndefined();
+  });
+
+  it('leaves an existing default unchanged and announces no default', async () => {
+    const cwd = await makeTempDir('kb-cli-store-');
+    const home = await makeTempDir('kb-cli-home-');
+    await seedRegistry(getRegistryPathFor(home), 'default_kb: existing\nkbs:\n  existing:\n    path: /abs/existing\n');
+
+    const result = await run({ argv: ['create'], cwd, home });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain('Set as the default knowledge base.');
+    const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
+    expect(config.defaultKb?.name).toBe('existing');
+  });
 });
+
+// region | Helpers
+
+/** A stub picker that resolves to a fixed choice, standing in for the interactive default-KB prompt. */
+function stubPrompt(choice: SelectKbChoice): SelectKbPrompt {
+  return () => Promise.resolve(choice);
+}
+
+// endregion | Helpers
