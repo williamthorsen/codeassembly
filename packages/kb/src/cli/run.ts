@@ -43,7 +43,6 @@ export async function run(input: {
   if (command === 'set-default') {
     return runSetDefault({
       argv: rest,
-      cwd: input.cwd,
       ...(input.home !== undefined && { home: input.home }),
       ...(input.selectKb !== undefined && { selectKb: input.selectKb }),
     });

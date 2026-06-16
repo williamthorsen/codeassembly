@@ -36,7 +36,6 @@ Exit codes:
  */
 export async function runSetDefault(input: {
   argv: readonly string[];
-  cwd: string;
   home?: string;
   selectKb?: SelectKbPrompt;
 }): Promise<CommandOutput> {
