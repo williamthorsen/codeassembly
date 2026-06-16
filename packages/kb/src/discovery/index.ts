@@ -6,3 +6,4 @@ export type { KbRegistryLoadResult } from './load-registry.ts';
 export { loadKbRegistry, tryLoadKbRegistry } from './load-registry.ts';
 export type { RegisterStoreResult } from './register-store.ts';
 export { registerStore } from './register-store.ts';
+export { clearDefaultKb, setDefaultKb } from './set-default-kb.ts';
