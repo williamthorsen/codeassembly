@@ -9,7 +9,7 @@ const TWO_KBS = 'kbs:\n  coding:\n    path: /abs/coding\n  notes:\n    path: /ab
 
 describe('kb set-default <name>', () => {
   it('sets default_kb to the named KB and confirms', async () => {
-    const home = await seededHome(TWO_KBS);
+    const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default', 'notes'], cwd: home, home });
 
@@ -20,7 +20,7 @@ describe('kb set-default <name>', () => {
   });
 
   it('exits 2 and leaves the registry unchanged when the name is not registered', async () => {
-    const home = await seededHome(`default_kb: coding\n${TWO_KBS}`);
+    const home = await makeSeededHome(`default_kb: coding\n${TWO_KBS}`);
 
     const result = await run({ argv: ['set-default', 'missing'], cwd: home, home });
 
@@ -31,7 +31,7 @@ describe('kb set-default <name>', () => {
   });
 
   it('sets the current default again idempotently', async () => {
-    const home = await seededHome(`default_kb: coding\n${TWO_KBS}`);
+    const home = await makeSeededHome(`default_kb: coding\n${TWO_KBS}`);
 
     const result = await run({ argv: ['set-default', 'coding'], cwd: home, home });
 
@@ -43,7 +43,7 @@ describe('kb set-default <name>', () => {
 
 describe('kb set-default --none', () => {
   it('clears default_kb and confirms', async () => {
-    const home = await seededHome(`default_kb: coding\n${TWO_KBS}`);
+    const home = await makeSeededHome(`default_kb: coding\n${TWO_KBS}`);
 
     const result = await run({ argv: ['set-default', '--none'], cwd: home, home });
 
@@ -54,7 +54,7 @@ describe('kb set-default --none', () => {
   });
 
   it('succeeds when no default is set', async () => {
-    const home = await seededHome(TWO_KBS);
+    const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default', '--none'], cwd: home, home });
 
@@ -62,7 +62,7 @@ describe('kb set-default --none', () => {
   });
 
   it('exits 2 when combined with a name', async () => {
-    const home = await seededHome(TWO_KBS);
+    const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default', 'coding', '--none'], cwd: home, home });
 
@@ -72,7 +72,7 @@ describe('kb set-default --none', () => {
 
 describe('kb set-default (interactive)', () => {
   it('sets the picked KB and reports the current default to the picker', async () => {
-    const home = await seededHome(`default_kb: coding\n${TWO_KBS}`);
+    const home = await makeSeededHome(`default_kb: coding\n${TWO_KBS}`);
     const { prompt, calledWith } = stubPrompt({ kind: 'kb', index: 1 });
 
     const result = await run({ argv: ['set-default'], cwd: home, home, selectKb: prompt });
@@ -84,7 +84,7 @@ describe('kb set-default (interactive)', () => {
   });
 
   it('clears the default when (none) is chosen', async () => {
-    const home = await seededHome(`default_kb: coding\n${TWO_KBS}`);
+    const home = await makeSeededHome(`default_kb: coding\n${TWO_KBS}`);
     const { prompt } = stubPrompt({ kind: 'none' });
 
     const result = await run({ argv: ['set-default'], cwd: home, home, selectKb: prompt });
@@ -95,7 +95,7 @@ describe('kb set-default (interactive)', () => {
   });
 
   it('leaves the registry unchanged when cancelled', async () => {
-    const home = await seededHome(`default_kb: coding\n${TWO_KBS}`);
+    const home = await makeSeededHome(`default_kb: coding\n${TWO_KBS}`);
     const { prompt } = stubPrompt({ kind: 'cancel' });
 
     const result = await run({ argv: ['set-default'], cwd: home, home, selectKb: prompt });
@@ -107,7 +107,7 @@ describe('kb set-default (interactive)', () => {
   });
 
   it('exits 2 when stdin is not interactive (no picker supplied)', async () => {
-    const home = await seededHome(TWO_KBS);
+    const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default'], cwd: home, home });
 
@@ -137,7 +137,7 @@ describe('kb set-default error and help paths', () => {
   });
 
   it('exits 2 on an unknown flag', async () => {
-    const home = await seededHome(TWO_KBS);
+    const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default', '--bogus'], cwd: home, home });
 
@@ -160,6 +160,13 @@ describe('kb set-default error and help paths', () => {
 
 // region | Helpers
 
+/** Creates a temp home directory whose `kb.yaml` registry is seeded with `content`, and returns its path. */
+async function makeSeededHome(content: string): Promise<string> {
+  const home = await makeTempDir('kb-setdefault-home-');
+  await seedRegistry(getRegistryPathFor(home), content);
+  return home;
+}
+
 /** A stub picker that returns a fixed choice and records the input it was called with. */
 function stubPrompt(choice: SelectKbChoice): { prompt: SelectKbPrompt; calledWith: { currentDefaultName?: string }[] } {
   const calledWith: { currentDefaultName?: string }[] = [];
@@ -170,12 +177,6 @@ function stubPrompt(choice: SelectKbChoice): { prompt: SelectKbPrompt; calledWit
     return Promise.resolve(choice);
   };
   return { prompt, calledWith };
-}
-
-async function seededHome(content: string): Promise<string> {
-  const home = await makeTempDir('kb-setdefault-home-');
-  await seedRegistry(getRegistryPathFor(home), content);
-  return home;
 }
 
 // endregion | Helpers

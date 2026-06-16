@@ -150,12 +150,6 @@ export function parseSetDefaultArgs(argv: readonly string[]): SetDefaultOptions 
 
 // region | Helpers
 
-/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
-function buildUsageError(error: unknown): CommandOutput {
-  const message = error instanceof Error ? error.message : String(error);
-  return { exitCode: 2, stdout: '', stderr: `kb set-default: ${message}\n${SET_DEFAULT_HELP}` };
-}
-
 /** Builds the "no registered KBs" usage error, directing the user to scaffold one first. */
 function buildNoStoresMessage(): string {
   return 'kb set-default: no knowledge bases registered; run `kb create` first\n';
@@ -170,6 +164,12 @@ function buildNotRegisteredMessage(name: string, entries: readonly KbRegistryEnt
 /** Builds the success line for a set, in completed-action voice. */
 function buildSetConfirmation(name: string): string {
   return `Default knowledge base has been set to "${name}".\n`;
+}
+
+/** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
+function buildUsageError(error: unknown): CommandOutput {
+  const message = error instanceof Error ? error.message : String(error);
+  return { exitCode: 2, stdout: '', stderr: `kb set-default: ${message}\n${SET_DEFAULT_HELP}` };
 }
 
 // endregion | Helpers

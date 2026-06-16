@@ -7,55 +7,6 @@ import { makeRegistryPath, seedRegistry } from '../../test-utils/scaffolding.ts'
 import { loadKbRegistry } from '../load-registry.ts';
 import { clearDefaultKb, setDefaultKb } from '../set-default-kb.ts';
 
-describe(setDefaultKb, () => {
-  it('sets default_kb to a registered KB', async () => {
-    const registryPath = await makeRegistryPath();
-    await seedRegistry(registryPath, 'kbs:\n  coding:\n    path: /abs/coding\n');
-
-    await setDefaultKb({ registryPath, name: 'coding' });
-
-    const config = await loadKbRegistry({ userConfigPath: registryPath });
-    expect(config.defaultKb?.name).toBe('coding');
-  });
-
-  it('changes an existing default_kb', async () => {
-    const registryPath = await makeRegistryPath();
-    await seedRegistry(
-      registryPath,
-      'default_kb: coding\nkbs:\n  coding:\n    path: /abs/coding\n  notes:\n    path: /abs/notes\n',
-    );
-
-    await setDefaultKb({ registryPath, name: 'notes' });
-
-    const config = await loadKbRegistry({ userConfigPath: registryPath });
-    expect(config.defaultKb?.name).toBe('notes');
-  });
-
-  it('preserves existing comments', async () => {
-    const registryPath = await makeRegistryPath();
-    await seedRegistry(registryPath, '# my registry comment\nkbs:\n  coding:\n    path: /abs/coding\n');
-
-    await setDefaultKb({ registryPath, name: 'coding' });
-
-    const text = await readFile(registryPath, 'utf8');
-    expect(text).toContain('# my registry comment');
-  });
-
-  it('throws when the name is not a registered KB', async () => {
-    const registryPath = await makeRegistryPath();
-    await seedRegistry(registryPath, 'kbs:\n  coding:\n    path: /abs/coding\n');
-
-    await expect(setDefaultKb({ registryPath, name: 'missing' })).rejects.toThrow();
-  });
-
-  it('throws when the existing registry is structurally invalid', async () => {
-    const registryPath = await makeRegistryPath();
-    await seedRegistry(registryPath, 'kbs: not-a-mapping\n');
-
-    await expect(setDefaultKb({ registryPath, name: 'coding' })).rejects.toThrow();
-  });
-});
-
 describe(clearDefaultKb, () => {
   it('removes an existing default_kb', async () => {
     const registryPath = await makeRegistryPath();
@@ -110,5 +61,54 @@ describe(clearDefaultKb, () => {
     await clearDefaultKb({ registryPath });
 
     expect(await pathExists(registryPath)).toBe(false);
+  });
+});
+
+describe(setDefaultKb, () => {
+  it('sets default_kb to a registered KB', async () => {
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(registryPath, 'kbs:\n  coding:\n    path: /abs/coding\n');
+
+    await setDefaultKb({ registryPath, name: 'coding' });
+
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.defaultKb?.name).toBe('coding');
+  });
+
+  it('changes an existing default_kb', async () => {
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(
+      registryPath,
+      'default_kb: coding\nkbs:\n  coding:\n    path: /abs/coding\n  notes:\n    path: /abs/notes\n',
+    );
+
+    await setDefaultKb({ registryPath, name: 'notes' });
+
+    const config = await loadKbRegistry({ userConfigPath: registryPath });
+    expect(config.defaultKb?.name).toBe('notes');
+  });
+
+  it('preserves existing comments', async () => {
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(registryPath, '# my registry comment\nkbs:\n  coding:\n    path: /abs/coding\n');
+
+    await setDefaultKb({ registryPath, name: 'coding' });
+
+    const text = await readFile(registryPath, 'utf8');
+    expect(text).toContain('# my registry comment');
+  });
+
+  it('throws when the name is not a registered KB', async () => {
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(registryPath, 'kbs:\n  coding:\n    path: /abs/coding\n');
+
+    await expect(setDefaultKb({ registryPath, name: 'missing' })).rejects.toThrow();
+  });
+
+  it('throws when the existing registry is structurally invalid', async () => {
+    const registryPath = await makeRegistryPath();
+    await seedRegistry(registryPath, 'kbs: not-a-mapping\n');
+
+    await expect(setDefaultKb({ registryPath, name: 'coding' })).rejects.toThrow();
   });
 });
