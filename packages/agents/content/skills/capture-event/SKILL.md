@@ -22,13 +22,13 @@ A **skill-caused mistake** — an error a clearer skill definition would have pr
 
 ## Arguments
 
-| Argument    | Description                                                                | Required |
-| ----------- | -------------------------------------------------------------------------- | -------- |
-| `--summary` | A human-readable one-line summary; becomes the record's label on recall.   | Yes      |
-| `--store`   | Registry name of the event store. Defaults to the registry's `default_kb`. | No       |
-| `--skill`   | The skill the event relates to.                                            | No       |
-| `--model`   | The model identifier in play.                                              | No       |
-| `--tags`    | Comma-separated tag list.                                                  | No       |
+| Argument    | Description                                                              | Required |
+| ----------- | ------------------------------------------------------------------------ | -------- |
+| `--summary` | A human-readable one-line summary; becomes the record's label on recall. | Yes      |
+| `--store`   | Registry name of the event store, or `@default` for the `default_kb`.    | Yes      |
+| `--skill`   | The skill the event relates to.                                          | No       |
+| `--model`   | The model identifier in play.                                            | No       |
+| `--tags`    | Comma-separated tag list.                                                | No       |
 
 A value-bearing flag accepts both `--summary text` and `--summary=text`. The event body is read from stdin to EOF; an empty body is allowed.
 
@@ -39,9 +39,9 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 
 ### Store selection
 
-The helper resolves the store by registry name only — it never walks the working directory for a `.kb/` folder. A capture lands in the `--store` named store or, when `--store` is omitted, in the registry's `default_kb`; never in a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`. When no `--store` is given and no `default_kb` is configured, the capture is refused with a clear error rather than written to a fixed store.
+`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture lands in the named store and never in a project-local KB it happened to be invoked near. The store must be registered in `kb.yaml`. Omitting `--store` is refused with an error that lists the registered stores rather than defaulting silently.
 
-The `default_kb` is the home for environment-level lessons — observations and refinements that apply across every project in the current environment. When a lesson is clearly specific to one project, direct it to that project's KB with `--store <name>` instead.
+Choose the destination deliberately. When the lesson is specific to a project, pass that project's KB with `--store <name>`. Only when the lesson is environment-level, meaning an observation or refinement that applies across every project in the current environment, route it to the registry's `default_kb` by passing `--store @default`. Reaching the default is an explicit act, not what happens when the flag is forgotten.
 
 ## Runtime dependencies
 
@@ -60,7 +60,8 @@ Pipe the body to the bundled helper. A heredoc keeps multi-line bodies legible:
 ```bash
 cat <<'EOF' | node {platform_home_dir}/skills/capture-event/capture-event.mjs \
   --summary "<one-line summary>" \
-  [--store <name>] [--skill <skill>] [--model <model>] [--tags <comma,separated>]
+  --store <name|@default> \
+  [--skill <skill>] [--model <model>] [--tags <comma,separated>]
 <event body, may span multiple lines and contain any characters>
 EOF
 ```
@@ -77,8 +78,10 @@ On `ok: true`, report the captured `id` and `path`.
 On `ok: false`, route by the `error` code:
 
 - `invalid-args` — surface the helper's message and propose a corrected invocation.
+- `missing-store` — `--store` was omitted. Re-run with `--store <name>` for the KB the user named, or `--store @default` for an environment-level lesson; the message lists the registered stores.
 - `store-not-registered` — the named store is not in `kb.yaml`. Confirm the store name or register it.
 - `readonly-store` — the store is marked readonly; captures are refused.
+- `no-default-store` — `--store @default` was given but no `default_kb` is configured. Name a store explicitly or configure a default with `kb set-default`.
 - `schema-validation` — surface the `findings`, then supply the missing field and retry.
 
 ## Completion

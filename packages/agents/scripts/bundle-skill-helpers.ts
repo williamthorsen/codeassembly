@@ -98,10 +98,11 @@ export const targets: BundleTarget[] = [
 
 /**
  * Stands up an event store plus an isolated home registering it as `default_kb`, and a throwaway git repo with an
- * `origin` remote, then returns a `SmokeTestInvocation` that captures a single event against them. Exercises the full
- * default_kb resolution → load schema → validate the event record type's spine → write pipeline end to end, which is
- * the only path that wires the bundled resolver, schema loader, and immutable write together. The store's own
- * `schema.yaml` declares the `event` record type, so its required-set validation is genuinely run.
+ * `origin` remote, then returns a `SmokeTestInvocation` that captures a single event against them with `--store
+ * @default`. Exercises the full `@default` sentinel resolution → load schema → validate the event record type's spine →
+ * write pipeline end to end, which is the only path that wires the bundled resolver, schema loader, and immutable write
+ * together. The store's own `schema.yaml` declares the `event` record type, so its required-set validation is genuinely
+ * run.
  */
 function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'capture-event-store-'));
@@ -132,7 +133,7 @@ function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   execFileSync('git', ['-C', repo, 'remote', 'add', 'origin', 'git@github.com:williamthorsen/codeassembly.git']);
 
   return {
-    args: ['--summary', 'Smoke-test event'],
+    args: ['--summary', 'Smoke-test event', '--store', '@default'],
     cwd: repo,
     env: { ...process.env, HOME: home, CLAUDE_CODE_SESSION_ID: 'smoke-session' },
     assertResult: assertCaptureEventSmokeResult,
