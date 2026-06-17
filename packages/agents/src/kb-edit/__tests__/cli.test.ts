@@ -136,6 +136,56 @@ describe(parseArgs, () => {
   it('throws when --supersede-with is given an empty value', () => {
     expect(() => parseArgs(['foo.md', '--supersede-with='])).toThrow(/--supersede-with requires a value/);
   });
+
+  it('parses --add-addressed-by with one path and a comma-separated reference list', () => {
+    const parsed = parseArgs(['foo.md', '--add-addressed-by', '[[fix]],#789']);
+
+    expect(parsed).toEqual({ operation: 'add-addressed-by', paths: ['foo.md'], references: ['[[fix]]', '#789'] });
+  });
+
+  it('parses --add-addressed-by with multiple positional paths', () => {
+    const parsed = parseArgs(['a.md', 'b.md', '--add-addressed-by', '[[fix]]']);
+
+    expect(parsed).toEqual({ operation: 'add-addressed-by', paths: ['a.md', 'b.md'], references: ['[[fix]]'] });
+  });
+
+  it('parses --add-addressed-by with an inline = value', () => {
+    const parsed = parseArgs(['foo.md', '--add-addressed-by=[[fix]]']);
+
+    expect(parsed).toEqual({ operation: 'add-addressed-by', paths: ['foo.md'], references: ['[[fix]]'] });
+  });
+
+  it('trims and drops empties in the --add-addressed-by reference list', () => {
+    const parsed = parseArgs(['foo.md', '--add-addressed-by', ' a , b ,,']);
+
+    expect(parsed).toEqual({ operation: 'add-addressed-by', paths: ['foo.md'], references: ['a', 'b'] });
+  });
+
+  it('accepts --add-addressed-by before the positional paths', () => {
+    const parsed = parseArgs(['--add-addressed-by', '[[fix]]', 'a.md', 'b.md']);
+
+    expect(parsed).toEqual({ operation: 'add-addressed-by', paths: ['a.md', 'b.md'], references: ['[[fix]]'] });
+  });
+
+  it('throws when --add-addressed-by has an empty value', () => {
+    expect(() => parseArgs(['foo.md', '--add-addressed-by='])).toThrow(/at least one reference/);
+  });
+
+  it('throws when --add-addressed-by has only empty reference entries', () => {
+    expect(() => parseArgs(['foo.md', '--add-addressed-by', ',,'])).toThrow(/at least one reference/);
+  });
+
+  it('throws when --add-addressed-by has no value at all', () => {
+    expect(() => parseArgs(['foo.md', '--add-addressed-by'])).toThrow(/--add-addressed-by requires a value/);
+  });
+
+  it('throws when --add-addressed-by is supplied with no positional path', () => {
+    expect(() => parseArgs(['--add-addressed-by', '[[fix]]'])).toThrow(/missing required <path>/);
+  });
+
+  it('still rejects a second positional for a single-target operation', () => {
+    expect(() => parseArgs(['foo.md', 'bar.md', '--bump-updated'])).toThrow(/unexpected extra positional/);
+  });
 });
 
 describe(runEdit, () => {
@@ -521,6 +571,97 @@ describe(runEdit, () => {
     if (result.ok && result.operation === 'supersede-with') {
       const occurrences = result.oldFrontmatter.tags.filter((t) => t === 'deprecated');
       expect(occurrences).toHaveLength(1);
+    }
+  });
+
+  it('appends a reference to a single record addressed-by list', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+
+    const result = await runEdit({
+      argv: [notePath, '--add-addressed-by', '[[fix]]'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'add-addressed-by') {
+      expect(result.results).toHaveLength(1);
+      const [record] = result.results;
+      expect(record?.ok).toBe(true);
+      if (record?.ok) {
+        expect(record.frontmatter.extra['addressed-by']).toEqual(['[[fix]]']);
+        expect(record.frontmatter.updated).toBe(TODAY);
+      }
+      const written = await readFile(notePath, 'utf8');
+      expect(written).toContain('addressed-by');
+      expect(written).toContain('[[fix]]');
+    }
+  });
+
+  it('appends the same reference to multiple records in one invocation', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+    const second = join(kbPath, 'Second.md');
+    await writeFile(second, SAMPLE_NOTE.replace('Sample', 'Second'), 'utf8');
+
+    const result = await runEdit({
+      argv: [notePath, second, '--add-addressed-by', '[[fix]]'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'add-addressed-by') {
+      expect(result.results).toHaveLength(2);
+      expect(result.results.every((record) => record.ok)).toBe(true);
+      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+      expect(await readFile(second, 'utf8')).toContain('[[fix]]');
+    }
+  });
+
+  it('reports a per-record failure for a missing target while writing the valid ones', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+    const missing = join(kbPath, 'Absent.md');
+
+    const result = await runEdit({
+      argv: [notePath, missing, '--add-addressed-by', '[[fix]]'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'add-addressed-by') {
+      const byPath = new Map(result.results.map((record) => [record.path, record]));
+      expect(byPath.get(notePath)?.ok).toBe(true);
+      const missingRecord = byPath.get(missing);
+      expect(missingRecord?.ok).toBe(false);
+      if (missingRecord && !missingRecord.ok) {
+        expect(missingRecord.error).toBe('note-not-found');
+      }
+      // The valid record was still written despite the sibling failure.
+      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+    }
+  });
+
+  it('is idempotent: re-appending an existing reference does not duplicate it', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+    const argv = [notePath, '--add-addressed-by', '[[fix]]'];
+    const baseInput = { stdin: bodyStream(''), startDir: kbPath, now: NOW, home: kbPath };
+
+    await runEdit({ argv, ...baseInput, stdin: bodyStream('') });
+    const result = await runEdit({ argv, ...baseInput, stdin: bodyStream('') });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'add-addressed-by') {
+      const [record] = result.results;
+      if (record?.ok) {
+        expect(record.frontmatter.extra['addressed-by']).toEqual(['[[fix]]']);
+      }
     }
   });
 });
