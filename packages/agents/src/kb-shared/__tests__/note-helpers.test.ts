@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { computeAgeDays, dedupeInOrder, formatUtcTimestamp } from '../note-helpers.ts';
+import { computeAgeDays, dedupeInOrder, formatUtcTimestamp, readStringList, splitCommaList } from '../note-helpers.ts';
 
 describe(formatUtcTimestamp, () => {
   it('formats midnight UTC as a second-precision timestamp', () => {
@@ -66,5 +66,56 @@ describe(dedupeInOrder, () => {
 
   it('treats distinct types as distinct values', () => {
     expect(dedupeInOrder([1, 2, 1, 3])).toEqual([1, 2, 3]);
+  });
+});
+
+describe(splitCommaList, () => {
+  it('splits a comma-separated string into items', () => {
+    expect(splitCommaList('alpha,beta,gamma')).toEqual(['alpha', 'beta', 'gamma']);
+  });
+
+  it('trims surrounding whitespace from each item', () => {
+    expect(splitCommaList(' alpha , beta ,gamma ')).toEqual(['alpha', 'beta', 'gamma']);
+  });
+
+  it('drops empty items left by leading, trailing, or doubled commas', () => {
+    expect(splitCommaList(',alpha,,beta,')).toEqual(['alpha', 'beta']);
+  });
+
+  it('returns an empty list for an empty string', () => {
+    expect(splitCommaList('')).toEqual([]);
+  });
+
+  it('returns an empty list for a whitespace-and-comma-only string', () => {
+    expect(splitCommaList(' , , ')).toEqual([]);
+  });
+});
+
+describe(readStringList, () => {
+  it('returns an empty list when the field is absent', () => {
+    expect(readStringList({}, 'addressed-by')).toEqual([]);
+  });
+
+  it('returns an empty list when the extra map is undefined', () => {
+    expect(readStringList(undefined, 'addressed-by')).toEqual([]);
+  });
+
+  it('returns a sequence of non-empty trimmed string items', () => {
+    expect(readStringList({ 'addressed-by': [' [[fix]] ', 'commit-abc', ''] }, 'addressed-by')).toEqual([
+      '[[fix]]',
+      'commit-abc',
+    ]);
+  });
+
+  it('drops non-string items from a sequence', () => {
+    expect(readStringList({ 'addressed-by': ['keep', 42, null, { x: 1 }] }, 'addressed-by')).toEqual(['keep']);
+  });
+
+  it('coerces a lone non-empty scalar to a one-element list', () => {
+    expect(readStringList({ 'addressed-by': ' [[fix]] ' }, 'addressed-by')).toEqual(['[[fix]]']);
+  });
+
+  it('returns an empty list for a whitespace-only scalar', () => {
+    expect(readStringList({ 'addressed-by': '   ' }, 'addressed-by')).toEqual([]);
   });
 });

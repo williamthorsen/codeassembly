@@ -10,24 +10,26 @@ import type { Finding, Frontmatter } from '@codeassembly/kb';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 
 /** Operation names — one per mutually-exclusive op flag. */
-export type OperationName = 'bump-updated' | 'verify' | 'retag' | 'append' | 'supersede-with';
+export type OperationName = 'bump-updated' | 'verify' | 'retag' | 'append' | 'add-addressed-by' | 'supersede-with';
 
 /**
  * Parsed command-line invocation of the kb-edit helper.
  *
- * A discriminated union on `operation` so each operation module receives only its own typed inputs.
+ * A discriminated union on `operation` so each operation module receives only its own typed inputs. `add-addressed-by`
+ * is the one multi-target operation: it carries a list of target `paths` rather than a single `path`.
  */
 export type ParsedArgs =
   | { operation: 'bump-updated'; path: string }
   | { operation: 'verify'; path: string }
   | { operation: 'retag'; path: string; tags: string[] }
   | { operation: 'append'; path: string }
+  | { operation: 'add-addressed-by'; paths: string[]; references: string[] }
   | { operation: 'supersede-with'; path: string; newPath: string };
 
 /** The helper's stdout payload on success for a single-file operation. */
 export interface EditSingleSuccess {
   ok: true;
-  operation: Exclude<OperationName, 'supersede-with'>;
+  operation: Exclude<OperationName, 'add-addressed-by' | 'supersede-with'>;
   /** Absolute path of the edited note. */
   path: string;
   /** The KB the note belongs to. */
@@ -56,8 +58,24 @@ export interface EditSupersedeSuccess {
   newFrontmatter: Frontmatter;
 }
 
+/** Per-record outcome for the multi-target `add-addressed-by` operation. */
+export type AddAddressedByResult =
+  | { ok: true; path: string; kb: ResolvedKb; frontmatter: Frontmatter }
+  | { ok: false; path: string; error: EditErrorCode; message: string; details?: EditErrorDetails };
+
+/**
+ * The helper's stdout payload for the multi-target `add-addressed-by` operation. `ok: true` signals the batch ran
+ * without a usage or system error; per-record success or failure is carried in `results`, in the order the target
+ * paths were supplied.
+ */
+export interface EditBatchSuccess {
+  ok: true;
+  operation: 'add-addressed-by';
+  results: AddAddressedByResult[];
+}
+
 /** Discriminated success union. */
-export type EditSuccess = EditSingleSuccess | EditSupersedeSuccess;
+export type EditSuccess = EditSingleSuccess | EditSupersedeSuccess | EditBatchSuccess;
 
 /** The helper's stdout payload on a recoverable failure. */
 export interface EditFailure {

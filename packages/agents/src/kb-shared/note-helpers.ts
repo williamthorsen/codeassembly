@@ -37,3 +37,26 @@ export function dedupeInOrder<T>(values: readonly T[]): T[] {
   }
   return result;
 }
+
+/**
+ * Reads a string-list field from a frontmatter `extra` map: a sequence yields its non-empty, trimmed string items; a
+ * lone non-empty string is coerced to a one-element list so a mis-authored scalar still surfaces; anything else yields
+ * an empty list.
+ */
+export function readStringList(extra: Record<string, unknown> | undefined, key: string): string[] {
+  const value = extra?.[key];
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+      .map((item) => item.trim());
+  }
+  return typeof value === 'string' && value.trim() !== '' ? [value.trim()] : [];
+}
+
+/** Splits a comma-separated string into items, trimming whitespace and dropping empties. */
+export function splitCommaList(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}

@@ -5,7 +5,7 @@ import { parseNote } from '@codeassembly/kb/frontmatter';
 import type { Schema } from '@codeassembly/kb/schema';
 import { defaultSchema } from '@codeassembly/kb/schema';
 
-import { computeAgeDays } from '../kb-shared/note-helpers.ts';
+import { computeAgeDays, readStringList } from '../kb-shared/note-helpers.ts';
 import type { Candidate, RawHit, RecallFilters, Supersession } from './types.ts';
 
 /** Upper bound on `superseded-by` hops, guarding against a chain cycle. */
@@ -110,22 +110,6 @@ function extractString(extra: Record<string, unknown> | undefined, key: string):
   }
   const value = extra[key];
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
-}
-
-/**
- * Reads a string-list field from a frontmatter `extra` map: A sequence yields its non-empty, trimmed string items; a
- * lone non-empty string is coerced to a one-element list so a mis-authored scalar still surfaces; anything else yields
- * an empty list.
- */
-function extractStringList(extra: Record<string, unknown> | undefined, key: string): string[] {
-  const value = extra?.[key];
-  if (Array.isArray(value)) {
-    return value
-      .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
-      .map((item) => item.trim());
-  }
-  const scalar = extractString(extra, key);
-  return scalar !== null ? [scalar] : [];
 }
 
 /** The outcome of a guarded note parse: the parsed note, or a `null` note paired with the read/parse error message. */
@@ -241,7 +225,7 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; re
   // computed even when the record carries one; freshness (and the fallback) age the record.
   const lastVerifiedAgeDays = isRecurrence ? null : computeAgeDays(extractString(extra, 'last-verified'), now);
   const supersession = await resolveSupersession({ path: hit.path, note });
-  const addressedBy = extractStringList(extra, 'addressed-by');
+  const addressedBy = readStringList(extra, 'addressed-by');
 
   const candidate: Candidate = {
     path: hit.path,
