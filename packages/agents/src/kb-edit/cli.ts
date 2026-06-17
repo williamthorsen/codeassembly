@@ -194,7 +194,7 @@ function absoluteNotePath(input: { path: string; startDir: string }): string {
 /**
  * Resolves the writable KB that owns the note at `notePath`. Walks up from the note's directory, not the
  * caller's cwd, so the KB context tracks where the note lives rather than where the helper was invoked.
- * Maps resolver failures (`no-kb-resolvable`, `readonly-kb`) onto top-level `EditResult` failures.
+ * Maps resolver failures onto top-level `EditResult` failures.
  */
 async function resolveKbForPath(input: {
   notePath: string;
@@ -209,7 +209,13 @@ async function resolveKbForPath(input: {
     return { ok: true, kb: resolved.kb };
   }
   switch (resolved.reason) {
+    // kb-edit never passes --kb, so a failed resolution always means the note's directory is not inside a writable
+    // KB, which the resolver reports as `missing-destination`. The `no-kb-resolvable` (unmatched --kb name) and
+    // `no-default` (--kb @default) reasons cannot arise here, but are mapped to the same failure so the switch stays
+    // total against the shared resolver's outcome union.
+    case 'missing-destination':
     case 'no-kb-resolvable':
+    case 'no-default':
       return {
         ok: false,
         failure: {

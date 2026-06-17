@@ -230,17 +230,39 @@ async function resolveKb(input: {
     };
   }
 
-  return {
-    ok: false,
-    failure: {
-      ok: false,
-      error: 'no-kb-resolvable',
-      message:
-        resolved.requestedKb === null
-          ? 'no .kb/ discovered, no default_kb configured, and no --kb supplied'
-          : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
-    },
-  };
+  switch (resolved.reason) {
+    case 'no-kb-resolvable':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message: `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+        },
+      };
+    case 'missing-destination':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message: 'no .kb/ discovered and no --kb supplied; pass --kb <name> or --kb @default',
+        },
+      };
+    case 'no-default':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message: '--kb @default was given but no default_kb is configured in kb.yaml',
+        },
+      };
+    default: {
+      const _exhaustive: never = resolved;
+      throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
 }
 
 /** Matches a value-bearing flag in either `--flag value` or `--flag=value` form. Returns `null` when `arg` is not it. */

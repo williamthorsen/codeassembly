@@ -12,10 +12,12 @@ const VAULT_A = join(FIXTURES, 'vault-a');
 const VAULT_B = join(FIXTURES, 'vault-b');
 const VAULT_READONLY = join(FIXTURES, 'vault-readonly');
 const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
+const HOME_DEFAULT_NAMED = join(FIXTURES, 'home-default-named');
 const HOME_MALFORMED = join(FIXTURES, 'malformed-registry');
 const HOME_READONLY_DEFAULT = join(FIXTURES, 'home-readonly-default');
 const HOME_READONLY_NAMED = join(FIXTURES, 'home-readonly-named');
 const HOME_SINGLE_DEFAULT = join(FIXTURES, 'home-single-default');
+const HOME_UNRESOLVABLE_DEFAULT = join(FIXTURES, 'home-unresolvable-default');
 // A home directory with no `.agents/kb.yaml`, so the user-global registry resolves empty.
 const HOME_EMPTY = FIXTURES;
 
@@ -51,13 +53,84 @@ describe(resolveWritableKb, () => {
     });
   });
 
-  it('returns the registry default when no .kb/ is discovered', async () => {
-    const result = await resolveWritableKb({ startDir: FIXTURES, explicitKb: null, home: HOME_WITH_DEFAULT });
+  it('resolves the @default sentinel to the configured default_kb', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: '@default', home: HOME_WITH_DEFAULT });
 
     expect(result).toEqual({
       ok: true,
       kb: { name: 'global-vault', path: VAULT_B, source: 'registry-default' },
     });
+  });
+
+  it('resolves @default to the registry default, overriding a discovered .kb/', async () => {
+    // DISCOVERED_KB has a `.kb/` marker, but the explicit sentinel beats discovery just as a concrete --kb name does,
+    // so the registry default is selected rather than the discovered KB.
+    const result = await resolveWritableKb({
+      startDir: DISCOVERED_KB,
+      explicitKb: '@default',
+      home: HOME_WITH_DEFAULT,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'global-vault', path: VAULT_B, source: 'registry-default' },
+    });
+  });
+
+  it('treats --kb default as a concrete name, resolving the KB named "default" not the sentinel target', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: 'default', home: HOME_DEFAULT_NAMED });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'default', path: VAULT_A, source: 'explicit' },
+    });
+  });
+
+  it('resolves @default to the configured default even when a KB named "default" is registered', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: '@default', home: HOME_DEFAULT_NAMED });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'other-vault', path: VAULT_B, source: 'registry-default' },
+    });
+  });
+
+  it('returns no-default when @default is given but no default_kb is configured', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: '@default', home: HOME_EMPTY });
+
+    expect(result).toEqual({ ok: false, reason: 'no-default' });
+  });
+
+  it('refuses a readonly default_kb reached via @default', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: '@default', home: HOME_READONLY_DEFAULT });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'readonly-kb',
+      kbName: 'readonly-default',
+      kbPath: VAULT_READONLY,
+    });
+  });
+
+  it('carries the registry error when @default names an unresolvable default_kb', async () => {
+    // The unresolvable default_kb makes tryLoadKbRegistry surface an error, which resolveWritableKb also logs to
+    // stderr; spy on it so the warning does not pollute test output.
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await resolveWritableKb({
+        startDir: '/',
+        explicitKb: '@default',
+        home: HOME_UNRESOLVABLE_DEFAULT,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        reason: 'no-default',
+        registryError: expect.stringMatching(/default_kb "ghost" does not match any registered KB/),
+      });
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 
   it('returns the explicit KB when --kb names a registered entry, overriding discovery and default', async () => {
@@ -84,10 +157,21 @@ describe(resolveWritableKb, () => {
     expect(result).toEqual({ ok: false, reason: 'no-kb-resolvable', requestedKb: 'nonexistent' });
   });
 
-  it('returns no-kb-resolvable when no .kb/, no default, and no explicit KB is available', async () => {
+  it('refuses with missing-destination, naming the registered KBs and the default, when no .kb/ and no --kb', async () => {
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_WITH_DEFAULT });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'missing-destination',
+      registeredKbs: ['global-vault', 'named-vault-a'],
+      defaultName: 'global-vault',
+    });
+  });
+
+  it('refuses with missing-destination and an empty list when no .kb/, no --kb, and the registry is empty', async () => {
     const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_EMPTY });
 
-    expect(result).toEqual({ ok: false, reason: 'no-kb-resolvable', requestedKb: null });
+    expect(result).toEqual({ ok: false, reason: 'missing-destination', registeredKbs: [] });
   });
 
   it('uses the discovered KB even when a registry default is also configured', async () => {
@@ -107,7 +191,12 @@ describe(resolveWritableKb, () => {
     try {
       const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
 
-      expect(result).toEqual({ ok: false, reason: 'no-kb-resolvable', requestedKb: null });
+      expect(result).toEqual({
+        ok: false,
+        reason: 'missing-destination',
+        registeredKbs: [],
+        registryError: expect.any(String),
+      });
 
       const warningLine = stderrSpy.mock.calls
         .map((call) => call[0])
@@ -128,14 +217,16 @@ describe(resolveWritableKb, () => {
     });
   });
 
-  it('refuses a readonly registry-default with readonly-kb', async () => {
+  it('does not reach a readonly registry-default via the null path, refusing with missing-destination', async () => {
+    // Without `--kb @default` the registry default is never selected, so a readonly default is not even reached: the
+    // null path refuses outright rather than surfacing readonly-kb.
     const result = await resolveWritableKb({ startDir: FIXTURES, explicitKb: null, home: HOME_READONLY_DEFAULT });
 
     expect(result).toEqual({
       ok: false,
-      reason: 'readonly-kb',
-      kbName: 'readonly-default',
-      kbPath: VAULT_READONLY,
+      reason: 'missing-destination',
+      registeredKbs: ['readonly-default', 'also-writable'],
+      defaultName: 'readonly-default',
     });
   });
 

@@ -181,7 +181,7 @@ describe(runAdd, () => {
     }
   });
 
-  it('returns no-kb-resolvable when no .kb/ and no registry default exist', async () => {
+  it('returns missing-destination when no .kb/ and no --kb are available', async () => {
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Floating'],
       stdin: bodyStream(''),
@@ -192,7 +192,56 @@ describe(runAdd, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('no-kb-resolvable');
+      expect(result.error).toBe('missing-destination');
+      expect(result.message).toContain('--kb');
+    }
+  });
+
+  it('names the registered KBs and points to --kb @default in the missing-destination message', async () => {
+    const kbPath = await makeKb();
+    const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-missing-'));
+    await mkdir(join(homeDir, '.agents'), { recursive: true });
+    await writeFile(
+      join(homeDir, '.agents', 'kb.yaml'),
+      `default_kb: primary\nkbs:\n  primary:\n    path: ${kbPath}\n`,
+      'utf8',
+    );
+
+    const result = await runAdd({
+      argv: ['--diataxis', 'howto', '--title', 'Floating'],
+      stdin: bodyStream(''),
+      // startDir avoids the KB so discovery does not supply a destination.
+      startDir: homeDir,
+      now: NOW,
+      home: homeDir,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('missing-destination');
+      expect(result.message).toContain('primary');
+      expect(result.message).toContain('--kb @default');
+    }
+  });
+
+  it('returns no-default when --kb @default is given but no default_kb is configured', async () => {
+    const kbPath = await makeKb();
+    const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-no-default-'));
+    await mkdir(join(homeDir, '.agents'), { recursive: true });
+    await writeFile(join(homeDir, '.agents', 'kb.yaml'), `kbs:\n  primary:\n    path: ${kbPath}\n`, 'utf8');
+
+    const result = await runAdd({
+      argv: ['--kb', '@default', '--diataxis', 'howto', '--title', 'Floating'],
+      stdin: bodyStream(''),
+      startDir: homeDir,
+      now: NOW,
+      home: homeDir,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('no-default');
+      expect(result.message).toContain('@default');
     }
   });
 

@@ -119,20 +119,24 @@ export async function runAdd(input: {
   });
   if (!resolved.ok) {
     switch (resolved.reason) {
-      case 'no-kb-resolvable': {
-        const failure: AddResult = {
+      case 'no-kb-resolvable':
+        return {
           ok: false,
           error: 'no-kb-resolvable',
-          message:
-            resolved.requestedKb === null
-              ? 'no .kb/ discovered, no default_kb configured, and no --kb supplied'
-              : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+          message: `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+          details: { requestedKb: resolved.requestedKb },
         };
-        if (resolved.requestedKb !== null) {
-          failure.details = { requestedKb: resolved.requestedKb };
-        }
-        return failure;
-      }
+      case 'missing-destination':
+        return { ok: false, error: 'missing-destination', message: formatMissingDestinationMessage(resolved) };
+      case 'no-default':
+        return {
+          ok: false,
+          error: 'no-default',
+          message:
+            resolved.registryError !== undefined
+              ? `could not resolve the default knowledge base: ${resolved.registryError}`
+              : '--kb @default was given but no default_kb is configured in kb.yaml',
+        };
       case 'readonly-kb':
         return {
           ok: false,
@@ -204,6 +208,30 @@ export async function runAdd(input: {
 }
 
 // region | Helpers
+
+/**
+ * Builds the agent-facing error message for an undeterminable destination (no `--kb` given and no discoverable
+ * `.kb/`), naming the registered knowledge bases and, when configured, the registry default reachable as
+ * `--kb @default`.
+ */
+function formatMissingDestinationMessage(resolved: {
+  registeredKbs: string[];
+  defaultName?: string;
+  registryError?: string;
+}): string {
+  if (resolved.registryError !== undefined) {
+    return `no .kb/ was discovered and no --kb was given, and the kb.yaml registry could not be loaded: ${resolved.registryError}`;
+  }
+  if (resolved.registeredKbs.length === 0) {
+    return 'no .kb/ was discovered, no --kb was given, and no knowledge bases are registered in kb.yaml';
+  }
+  const kbs = resolved.registeredKbs.join(', ');
+  const defaultHint =
+    resolved.defaultName !== undefined
+      ? `the registry default is "${resolved.defaultName}", reachable as --kb @default`
+      : 'no default_kb is configured';
+  return `no .kb/ was discovered and no --kb was given. Registered knowledge bases: ${kbs}. Pass --kb <name> to choose one; ${defaultHint}.`;
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a

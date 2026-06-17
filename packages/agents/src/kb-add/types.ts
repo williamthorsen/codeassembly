@@ -61,6 +61,8 @@ export interface AddFailure {
 /** Categorical error codes the helper can return without an unexpected throw. */
 export type AddErrorCode =
   | 'no-kb-resolvable'
+  | 'missing-destination'
+  | 'no-default'
   | 'invalid-args'
   | 'invalid-title'
   | 'schema-validation'
