@@ -69,4 +69,4 @@ When you deem appropriate, proactively dispatch subagents to perform tasks. Good
 
 ## Skill improvement
 
-- When the user corrects a mistake caused by unclear skill definition, invoke the `capture-event` skill with `--type mistake` to record it.
+- When the user corrects a mistake caused by unclear skill definition, invoke the `capture-event` skill to record it: pass `--tags mistake` and `--skill <skill-at-fault>`, and put what went wrong and what the skill should have said in the body.

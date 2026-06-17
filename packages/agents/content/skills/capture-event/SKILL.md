@@ -18,6 +18,8 @@ Capture anything worth recalling later: a behavior, a pattern, a refinement, a s
 
 A **solved-problem episode** — a problem you hit and resolved — is worth tagging so you can recall past fixes as a group: capture it with `--tags fix` (plus any topical tags), putting the problem and its resolution in the body. The `fix` tag is what lets you recall past fixes together later.
 
+A **skill-caused mistake** — an error a clearer skill definition would have prevented — is worth tagging the same way: capture it with `--tags mistake` and `--skill <skill-at-fault>`, putting what went wrong and what the skill should have said in the body. The `mistake` tag is what lets you recall skill mistakes as a group when deciding which skills to revise.
+
 ## Arguments
 
 | Argument    | Description                                                                | Required |
