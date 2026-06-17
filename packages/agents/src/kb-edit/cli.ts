@@ -235,11 +235,21 @@ async function resolveKbForPath(input: {
   }
 }
 
+/** Builds the `KbRoot` descriptor for a resolved KB. */
+function kbRootFor(kb: ResolvedKb): KbRoot {
+  return { path: kb.path, kbDir: `${kb.path}/.kb`, via: 'ancestor-walk' };
+}
+
 /** Loads schema and aliases for a resolved KB. Falls back to an empty alias map on a malformed aliases file. */
 async function loadKbContext(input: { kb: ResolvedKb }): Promise<{ schema: Schema; aliases: AliasMap }> {
-  const kbRoot: KbRoot = { path: input.kb.path, kbDir: `${input.kb.path}/.kb`, via: 'ancestor-walk' };
+  const kbRoot = kbRootFor(input.kb);
   const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
   return { schema, aliases };
+}
+
+/** Loads only the destination schema for a resolved KB, for operations like `add-addressed-by` that never canonicalize tags. */
+async function loadSchemaForKb(input: { kb: ResolvedKb }): Promise<Schema> {
+  return loadSchema({ kbRoot: kbRootFor(input.kb) });
 }
 
 /**
@@ -444,8 +454,11 @@ async function runSupersedeWith(input: {
 /**
  * Orchestrates `--add-addressed-by`: applies the same reference list to each target record independently. Every target
  * resolves its own writable KB, loads, appends to `addressed-by`, and writes atomically; a recoverable failure on one
- * target is captured in that record's result and does not abort the others. Because the append de-duplicates, a re-run
- * after a partial failure is a no-op for the records already written, so no cross-file rollback is needed.
+ * target is captured in that record's result and does not abort the others. Per-record isolation covers the
+ * recoverable `EditResult` failures only: an unexpected throw (a malformed `.kb/schema.yaml`, a filesystem error)
+ * still propagates to `main`, as it does for the single-file operations. The append de-duplicates, so a re-run is
+ * idempotent for `addressed-by` (entries are never duplicated) even though each run re-bumps `updated:`; no cross-file
+ * rollback is needed.
  */
 async function runAddAddressedBy(input: {
   args: Extract<ParsedArgs, { operation: 'add-addressed-by' }>;
@@ -488,7 +501,7 @@ async function editOneAddressedBy(input: {
     return toRecordFailure(input.notePath, loadFailureToResult(loadOutcome));
   }
 
-  const { schema } = await loadKbContext({ kb: kbOutcome.kb });
+  const schema = await loadSchemaForKb({ kb: kbOutcome.kb });
   const prepared = addAddressedBy({
     frontmatter: nonNullFrontmatter(loadOutcome.note),
     body: loadOutcome.note.body,
