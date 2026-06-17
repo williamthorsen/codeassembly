@@ -9,17 +9,17 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
   claude: {
     id: 'claude',
     homeDir: '.claude',
-    skillsDir: 'skills',
-    subagentsDir: 'agents',
-    scriptsDir: 'scripts',
+    skillsDirName: 'skills',
+    subagentsDirName: 'agents',
+    scriptsDirName: 'scripts',
     frontmatterFile: 'claude.yaml',
   },
   rovodev: {
     id: 'rovodev',
     homeDir: '.rovodev',
-    skillsDir: 'skills',
-    subagentsDir: 'subagents',
-    scriptsDir: 'scripts',
+    skillsDirName: 'skills',
+    subagentsDirName: 'subagents',
+    scriptsDirName: 'scripts',
     frontmatterFile: 'rovodev.yaml',
   },
 };
@@ -57,9 +57,9 @@ export function resolvePlatformPaths(
   const platformHome = path.join(home, config.homeDir);
   return {
     platformHome,
-    skillsDir: path.join(platformHome, config.skillsDir),
-    subagentsDir: path.join(platformHome, config.subagentsDir),
-    scriptsDir: path.join(platformHome, config.scriptsDir),
+    skillsDir: path.join(platformHome, config.skillsDirName),
+    subagentsDir: path.join(platformHome, config.subagentsDirName),
+    scriptsDir: path.join(platformHome, config.scriptsDirName),
   };
 }
 

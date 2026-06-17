@@ -88,7 +88,7 @@ export async function installCommand(
     const toolMapping = loadToolMapping(overlayYaml);
 
     // Install skills (shared + platform-specific)
-    const skillsPrefix = `${platformConfig.homeDir}/${platformConfig.skillsDir}`;
+    const skillsPrefix = `${platformConfig.homeDir}/${platformConfig.skillsDirName}`;
     const skillEntries = await installSkills(
       contentDir,
       paths.skillsDir,
@@ -420,7 +420,6 @@ async function installSubagents(
   const platformConfig = PLATFORMS[platformId];
 
   const dirEntries = await readdir(subagentsSrcDir);
-  const subagentsDirName = platformConfig.subagentsDir;
   const entries: Array<ManifestEntry> = [];
 
   for (const entry of dirEntries) {
@@ -430,7 +429,7 @@ async function installSubagents(
 
     const srcPath = path.join(subagentsSrcDir, entry);
     const destPath = path.join(platformPaths.subagentsDir, entry);
-    const relativePath = `${subagentsDirName}/${entry}`;
+    const relativePath = `${platformConfig.subagentsDirName}/${entry}`;
 
     // Resolve include directives at source-tree level. Run before the dry-run gate so missing targets, cycles, and
     // out-of-tree references surface even when no files are written. Mirrors the ordering in installPlatformGuidance.
@@ -652,7 +651,7 @@ async function installScripts(
       continue;
     }
     const destPath = path.join(scriptsDestDir, entry);
-    const relativePath = `${platformConfig.scriptsDir}/${entry}`;
+    const relativePath = `${platformConfig.scriptsDirName}/${entry}`;
 
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';

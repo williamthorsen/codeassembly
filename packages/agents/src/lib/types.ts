@@ -6,12 +6,12 @@ export interface PlatformConfig {
   readonly id: PlatformId;
   /** Relative path from home to the platform's dot directory (e.g., `.claude`). */
   readonly homeDir: string;
-  /** Relative path from the platform home to the skills directory. */
-  readonly skillsDir: string;
-  /** Relative path from the platform home to the subagents directory. */
-  readonly subagentsDir: string;
-  /** Relative path from the platform home to the scripts directory. */
-  readonly scriptsDir: string;
+  /** Name of the skills directory under the platform home. */
+  readonly skillsDirName: string;
+  /** Name of the subagents directory under the platform home. */
+  readonly subagentsDirName: string;
+  /** Name of the scripts directory under the platform home. */
+  readonly scriptsDirName: string;
   /** Filename of the frontmatter overlay YAML for this platform. */
   readonly frontmatterFile: string;
 }
