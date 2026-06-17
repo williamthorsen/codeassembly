@@ -664,4 +664,63 @@ describe(runEdit, () => {
       }
     }
   });
+
+  it('reports a per-record schema-validation failure while writing the valid targets', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+    const badType = join(kbPath, 'BadType.md');
+    // A recordType outside the schema vocabulary: appending re-validates the frontmatter, so this record fails.
+    await writeFile(
+      badType,
+      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      'utf8',
+    );
+
+    const result = await runEdit({
+      argv: [notePath, badType, '--add-addressed-by', '[[fix]]'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'add-addressed-by') {
+      const byPath = new Map(result.results.map((record) => [record.path, record]));
+      expect(byPath.get(notePath)?.ok).toBe(true);
+      const badRecord = byPath.get(badType);
+      expect(badRecord?.ok).toBe(false);
+      if (badRecord && !badRecord.ok) {
+        expect(badRecord.error).toBe('schema-validation');
+      }
+      // The valid record was written; the failing one was left untouched.
+      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+      expect(await readFile(badType, 'utf8')).not.toContain('addressed-by');
+    }
+  });
+
+  it('reports a per-record no-kb-resolvable failure for a target outside any KB', async () => {
+    const { kbPath, notePath } = await makeKbWithNote();
+    const orphanDir = await mkdtemp(join(tmpdir(), 'kb-edit-orphan-batch-'));
+    const orphan = join(orphanDir, 'orphan.md');
+    await writeFile(orphan, SAMPLE_NOTE.replace('Sample', 'Orphan'), 'utf8');
+
+    const result = await runEdit({
+      argv: [notePath, orphan, '--add-addressed-by', '[[fix]]'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok && result.operation === 'add-addressed-by') {
+      const byPath = new Map(result.results.map((record) => [record.path, record]));
+      expect(byPath.get(notePath)?.ok).toBe(true);
+      const orphanRecord = byPath.get(orphan);
+      expect(orphanRecord?.ok).toBe(false);
+      if (orphanRecord && !orphanRecord.ok) {
+        expect(orphanRecord.error).toBe('no-kb-resolvable');
+      }
+    }
+  });
 });
