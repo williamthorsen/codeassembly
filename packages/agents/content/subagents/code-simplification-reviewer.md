@@ -172,6 +172,7 @@ If no findings:
 ## Principles
 
 - **Only actionable findings**: No praise, no style nits outside project conventions
+<!-- include: _partials/review-finding-actionability-gate.md / -->
 - **No false positives**: If you're not confident a simplification improves the code, don't flag it
 - **Context-aware**: Understand the codebase conventions before flagging opportunities. What looks verbose in isolation might be the established pattern.
 - **Proportional**: Match your depth to the risk and scope of the change
