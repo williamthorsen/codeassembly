@@ -119,6 +119,15 @@ describe('reviewer and coder partials install correctly', () => {
     expect(content).toContain('### Review-response-mode scaffold');
   });
 
+  const allReviewers = [...returnBlockReviewers, 'code-simplification-reviewer'] as const;
+
+  for (const reviewer of allReviewers) {
+    it(`${reviewer} includes the actionability-gate findings bullet`, async () => {
+      const content = await readInstalled(reviewer);
+      expect(content).toContain('**No self-disqualifying findings**');
+    });
+  }
+
   it('does not install the subagents _partials directory', () => {
     expect(existsSync(path.join(claudeAgentsDir, '_partials'))).toBe(false);
   });

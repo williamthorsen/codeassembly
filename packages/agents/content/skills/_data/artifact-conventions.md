@@ -742,7 +742,7 @@ A role can only disposition findings directed at it or its own prior findings. T
 
 ## Finding scheme (F/W/T/R/S + legacy suffix)
 
-Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must include a concrete action the author can take. Non-actionable observations belong in prose sections (e.g., Technical Assessment), not in numbered findings.
+Used by review-producing skills and agents for structured code review findings. Every finding (F/W/T/R/S) must clear the [Actionability gate](#actionability-gate) before it is emitted.
 
 | ID                 | Category       | Icon | Criticality | Merge-blocking?            |
 | ------------------ | -------------- | ---- | ----------- | -------------------------- |
@@ -754,6 +754,25 @@ Used by review-producing skills and agents for structured code review findings. 
 | `{F,W,T,R,S}{n}-L` | Legacy         | 🔍   | excluded    | Never                      |
 
 Consumers that present or report findings (review skills, wrap-up, response artifacts) should render the icon alongside the prefix or category to give an at-a-glance severity cue. The Legacy row uses 🔍 regardless of underlying severity letter.
+
+### Actionability gate
+
+Every finding (F/W/T/R/S) must hand the author a concrete decision they can act on **in the change under review**: fix it, defer it with a ticket, or explicitly accept it. A finding that produces no decision is not a finding; drop it, don't soften it.
+
+A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as carrying a burden of proof, weighed against that full cost, never against its line length.
+
+**Hedging language is a delete trigger, not a softening device.** If a finding's own body qualifies it out of relevance, it does not belong. Drop it. If the condition genuinely holds now, drop the qualifier instead and state the finding plainly. Disqualifying tells include:
+
+- "No action this PR / no action required / not actionable here"
+- "Just capturing a thought" / "mentioning so the next contributor…"
+- "Call it out only if X" / "consider when Y" / "would matter once Z" / "revisit if/when…", where the named condition is not currently met
+- A body that endorses the current state ("the current shape is correct") and then proposes a change anyway: incoherent, since no recommendation remains once you have endorsed the status quo
+
+Self-test before writing each finding: _Would I make this exact change right now if it were my code?_ If no, it is not a finding.
+
+Where dropped content goes: an observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
+
+Apply this gate **hardest** to R and S, where the low criticality bar invites filler.
 
 ### Category criteria
 
@@ -784,14 +803,14 @@ Consumers that present or report findings (review skills, wrap-up, response arti
 - Better patterns available in the codebase
 - Opportunities to reduce complexity
 - Architectural improvements worth considering
-- **Gate:** Raise only when the change is plausibly better — improved clarity, reduced complexity, better-aligned pattern. "Another valid way to write it" does not qualify.
+- **Gate:** Raise only when the change is plausibly better — improved clarity, reduced complexity, better-aligned pattern. "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
 
 **Suggestion (S)** — optional improvement:
 
 - Better naming or code organization
 - Additional test cases for edge cases
 - Documentation improvements
-- **Gate:** Raise only when the change aligns with a codebase convention the code violates, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify.
+- **Gate:** Raise only when the change aligns with a codebase convention the code violates, has measurable improvement evidence (perf, correctness, readability with a concrete example), or follows a widely accepted external standard (linter rule, language spec, ecosystem norm with a citation). "Another valid way to write it" does not qualify. The finding must also clear the [Actionability gate](#actionability-gate).
 
 **Legacy (`-L` suffix)** — pre-existing code observation:
 

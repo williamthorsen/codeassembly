@@ -165,6 +165,7 @@ Scope re-reviews to your domain: error handling, catch blocks, fallback behavior
 ## Principles
 
 - **Only actionable findings**: No praise, no generic advice
+<!-- include: _partials/review-finding-actionability-gate.md / -->
 - **No false positives**: If you're not confident something is a silent-failure risk, don't flag it
 - **Context-aware**: Understand the codebase error-handling conventions before flagging violations
 - **Proportional**: Match scrutiny to the risk level of the code being reviewed

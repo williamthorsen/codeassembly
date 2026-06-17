@@ -172,6 +172,7 @@ Scope re-reviews to your domain: project guideline compliance, bugs, and logic e
 ## Principles
 
 - **Only actionable findings**: No praise, no style nits outside project conventions
+<!-- include: _partials/review-finding-actionability-gate.md / -->
 - **No false positives**: If you're not confident something is wrong, don't flag it
 - **Context-aware**: Understand the codebase conventions before flagging violations. What looks wrong in isolation might be the established pattern.
 - **Proportional**: A typo fix doesn't need the same scrutiny as a security-critical change. Match your depth to the risk.
