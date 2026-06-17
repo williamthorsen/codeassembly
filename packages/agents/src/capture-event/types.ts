@@ -9,7 +9,10 @@ import type { Finding } from '@codeassembly/kb';
 
 /** Parsed command-line invocation of the capture-event helper. */
 export interface ParsedArgs {
-  /** Registry name of the event store to write into; `null` when `--store` is omitted, deferring to `default_kb`. */
+  /**
+   * Registry name of the event store to write into, or the `@default` sentinel for the registry's `default_kb`;
+   * `null` when `--store` is omitted, which the resolver refuses.
+   */
   store: string | null;
   /** The human-readable one-line summary; becomes the record's display label on recall. */
   summary: string;
@@ -58,6 +61,7 @@ export interface CaptureFailure {
 /** Categorical error codes the helper can return without an unexpected throw. */
 export type CaptureErrorCode =
   | 'invalid-args'
+  | 'missing-store'
   | 'store-not-registered'
   | 'readonly-store'
   | 'no-default-store'

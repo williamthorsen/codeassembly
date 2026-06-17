@@ -1,0 +1,12 @@
+# Registry fixture: a KB literally named `default`, distinct from the `@default` sentinel.
+# `default_kb` points at a different entry (`other-vault`) so that resolving `--store default` (the concrete name)
+# is distinguishable from resolving `--store @default` (the sentinel, which targets `other-vault`).
+# Paths are relative to this file's directory (`home-default-named/.agents/`).
+default_kb: other-vault
+kbs:
+  default:
+    path: ../../vault-a
+    description: Fixture KB literally named "default"
+  other-vault:
+    path: ../../vault-b
+    description: Fixture default target reached via @default

@@ -139,7 +139,7 @@ describe(runCapture, () => {
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
-      argv: ['--summary', 'Noticed a thing'],
+      argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -166,7 +166,7 @@ describe(runCapture, () => {
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git', 'upstream');
 
     const result = await runCapture({
-      argv: ['--summary', 'Noticed a thing'],
+      argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -186,7 +186,7 @@ describe(runCapture, () => {
     const bareDir = await mkdtemp(join(tmpdir(), 'capture-cli-norepo-'));
 
     const result = await runCapture({
-      argv: ['--summary', 'Noticed a thing'],
+      argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: bareDir,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -269,13 +269,42 @@ describe(runCapture, () => {
     }
   });
 
-  it('fails with no-default-store when no --store is given and no default_kb is configured', async () => {
+  it('fails with missing-store, listing the non-default store and marking the registry default', async () => {
+    const defaultStore = await makeStoreDir();
+    const otherStore = await makeStoreDir();
+    const home = await mkdtemp(join(tmpdir(), 'capture-cli-missingstore-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: primary\nkbs:\n  primary:\n    path: ${defaultStore}\n  secondary:\n    path: ${otherStore}\n`,
+      'utf8',
+    );
+
+    const result = await runCapture({
+      argv: ['--summary', 'x'],
+      stdin: bodyStream(''),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('missing-store');
+      expect(result.message).toContain('secondary');
+      expect(result.message).toContain('default is "primary"');
+      expect(result.message).toContain('--store @default');
+    }
+  });
+
+  it('fails with no-default-store when --store @default is given but no default_kb is configured', async () => {
     const home = await mkdtemp(join(tmpdir(), 'capture-cli-nodefault-'));
     await mkdir(join(home, '.agents'), { recursive: true });
     await writeFile(join(home, '.agents', 'kb.yaml'), 'kbs:\n  codeassembly:\n    path: /tmp/whatever\n', 'utf8');
 
     const result = await runCapture({
-      argv: ['--summary', 'x'],
+      argv: ['--store', '@default', '--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},

@@ -54,7 +54,7 @@ kbs:
     description: Shared team knowledge base
 ```
 
-The top-level `default_kb` key names the machine's default knowledge base: the single KB that search and writes fall back on when no store is named or discovered. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
+The top-level `default_kb` key names the machine's default knowledge base: the single KB that searches and discovery-based writes fall back on when no store is named or discovered. `capture-event` writes there only when explicitly selected with `--store @default`, never by omission. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
 
 Configuration keys, per KB entry under `kbs.<name>`:
 

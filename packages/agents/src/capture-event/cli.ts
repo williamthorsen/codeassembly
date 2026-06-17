@@ -50,14 +50,14 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store (an explicit
- * `--store` by name, else the registry's `default_kb`), loads its schema, fills in the auto-derived context (ULID
- * `id`, `captured-at`, `session`, `cwd`, best-effort `repo`), validates the event record type's required spine, and
- * writes `content/events/{id}.md` immutably.
+ * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store (a concrete
+ * `--store` by name, or the registry's `default_kb` via the `@default` sentinel; an omitted `--store` is refused),
+ * loads its schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`, best-effort
+ * `repo`), validates the event record type's required spine, and writes `content/events/{id}.md` immutably.
  *
- * Recoverable failures (invalid args, an unregistered/readonly store, no configured default, schema validation)
- * become structured `{ ok: false, ... }` results. System failures (out-of-disk, permission denied) propagate to the
- * caller's try/catch.
+ * Recoverable failures (invalid args, an omitted `--store`, an unregistered/readonly store, no configured default,
+ * schema validation) become structured `{ ok: false, ... }` results. System failures (out-of-disk, permission
+ * denied) propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -82,6 +82,8 @@ export async function runCapture(input: {
   });
   if (!resolved.ok) {
     switch (resolved.reason) {
+      case 'missing-store':
+        return { ok: false, error: 'missing-store', message: formatMissingStoreMessage(resolved) };
       case 'not-registered':
         return {
           ok: false,
@@ -103,8 +105,8 @@ export async function runCapture(input: {
           error: 'no-default-store',
           message:
             resolved.registryError !== undefined
-              ? `could not resolve a default event store: ${resolved.registryError}`
-              : 'no --store was given and no default_kb is configured in kb.yaml',
+              ? `could not resolve the default event store: ${resolved.registryError}`
+              : '--store @default was given but no default_kb is configured in kb.yaml',
         };
       default: {
         const _exhaustive: never = resolved;
@@ -191,6 +193,29 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 // region | Helpers
+
+/**
+ * Builds the agent-facing error message for an omitted `--store`, naming the registered stores and, when configured,
+ * the registry default reachable as `--store @default`.
+ */
+function formatMissingStoreMessage(resolved: {
+  registeredStores: string[];
+  defaultName?: string;
+  registryError?: string;
+}): string {
+  if (resolved.registryError !== undefined) {
+    return `--store is required, but the kb.yaml registry could not be loaded: ${resolved.registryError}`;
+  }
+  if (resolved.registeredStores.length === 0) {
+    return '--store is required, but no stores are registered in kb.yaml';
+  }
+  const stores = resolved.registeredStores.join(', ');
+  const defaultHint =
+    resolved.defaultName !== undefined
+      ? `the registry default is "${resolved.defaultName}", reachable as --store @default`
+      : 'no default_kb is configured';
+  return `--store is required. Registered stores: ${stores}. Pass --store <name> to choose one; ${defaultHint}.`;
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
