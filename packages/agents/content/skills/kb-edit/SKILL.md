@@ -28,7 +28,7 @@ For new notes, use `kb-add`. For finding notes, use `kb-retrieve`. For periodic 
 
 A value-bearing flag accepts both `--retag node,react` and `--retag=node,react`. Exactly one operation flag is required per invocation; combining two is rejected with `invalid-args`. The note body for `--append` is read from stdin to EOF; empty or whitespace-only stdin is rejected.
 
-`--add-addressed-by` is the one multi-target operation: it accepts one or more `<path>` arguments and appends the same reference(s) to each note's `addressed-by` list. References are free-form (a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL); they are stored verbatim and de-duplicated after any existing entries. A reference value that is empty or contains only separators is rejected with `invalid-args`. (Because the value is comma-separated, a reference that itself contains a comma — a rare URL — would be split; use one invocation per such reference.)
+`--add-addressed-by` is the one multi-target operation: it accepts one or more `<path>` arguments and appends the same reference(s) to each note's `addressed-by` list. References are free-form (a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL); they are stored verbatim and de-duplicated after any existing entries. A reference value that is empty or contains only separators is rejected with `invalid-args`. (Because the value is comma-separated, a reference that itself contains a comma, such as a rare URL, would be split; use one invocation per such reference. A reference that begins with `--` is otherwise read as the next flag, so pass it with the inline `--add-addressed-by=<ref>` form.)
 
 ### KB selection
 
