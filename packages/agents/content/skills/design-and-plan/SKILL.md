@@ -99,10 +99,12 @@ When the ticket needs work, produce or update it to capture the proposed approac
 
 ## Proposed solution
 
-{The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, what tradeoffs were chosen. Keep this section outcome-shaped: Specific code, syntax, and file-level technique belong in the plan, not here.}
+{The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, and the chosen approach — including "X, not Y" where a rejected option is worth recording. Keep this section outcome-shaped: Specific code, syntax, and file-level technique belong in the plan, not here.}
 
 <!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
 ```
+
+<!-- include: ../_partials/ticket-concision.md / -->
 
 **❌ Out of scope here.** Example of what doesn't belong under `## Proposed solution`:
 

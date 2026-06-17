@@ -43,7 +43,9 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 ## Guidance
 
-- Keep tone professional but concise
+<!-- include: ../_partials/ticket-concision.md / -->
+
+- Keep tone professional and objective
 - Focus on what was broken and what needed fixing
 - Prioritize functional issues in "Must have"
 - Place code quality/maintenance items in "Should have"
