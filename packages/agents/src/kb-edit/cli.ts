@@ -320,7 +320,7 @@ async function prepareOperation(input: {
       return { ok: true, ...result };
     }
     case 'retag': {
-      const result = retag({ frontmatter, body, tags: input.args.tags, aliases: input.aliases, now: input.now });
+      const result = retag({ frontmatter, body, tags: input.args.tags, aliases: input.aliases });
       return { ok: true, ...result };
     }
     case 'append': {

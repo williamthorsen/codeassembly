@@ -22,7 +22,7 @@ For new notes, use `kb-add`. For finding notes, use `kb-retrieve`. For periodic 
 | `--bump-updated`            | Set `updated:` to today (UTC). Body unchanged.                                                  | One op   |
 | `--verify`                  | Set `last-verified:` to today (UTC). Does **not** bump `updated:`.                              | One op   |
 | `--append`                  | Append the body read from stdin after a separating blank line, and bump `updated:`.             | One op   |
-| `--retag <list>`            | Replace `tags:` with the comma-separated list. Canonicalizes; bumps `updated:`.                 | One op   |
+| `--retag <list>`            | Replace `tags:` with the comma-separated list. Canonicalizes; does **not** bump `updated:`.     | One op   |
 | `--add-addressed-by <refs>` | Append comma-separated reference(s) to each target's `addressed-by` list; bumps `updated:`.     | One op   |
 | `--supersede-with <p>`      | Mark `<path>` superseded by `<p>`. Two-file atomic write; both notes bump `updated:`.           | One op   |
 
@@ -50,9 +50,16 @@ The `--auto` flag is consumed by you, not by the bundled helper; it controls whe
 - **`--bump-updated`** — A non-empirical edit to the note (rewording, restructuring, fact correction) where the body change is made out of band and you want only to refresh `updated:`. Rare on its own; mostly an audit-trail tool.
 - **`--verify`** — You reran the note's instructions or re-confirmed its claims and they still hold. Use this for the "I just checked; still good" path. Does not bump `updated:` because nothing about the content changed.
 - **`--append`** — Add a section to an existing note. The new content lands after the existing body with a separating blank line. Use for accumulating findings or extending a list.
-- **`--retag`** — Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`.
+- **`--retag`** — Replace the tag list wholesale (canonicalized through the KB's `.kb/tag-aliases.yaml`). Use when tags drift, when restructuring categories, or when remediating findings from `kb-curate`. Curatorial: it changes how a record is found, not what it asserts, so it leaves `updated:` unchanged.
 - **`--add-addressed-by`** — Record what addressed a problem: append references to a record's recall-facing `addressed-by` list so the response surfaces when the record is later recalled. Pass several target notes to link one response (a fix note, a PR, a commit) to all the incidents it resolved in a single run.
 - **`--supersede-with`** — Mark an old note deprecated and point it at its replacement. Both notes' frontmatter is updated atomically (best-effort): old gains `superseded-by` and the `deprecated` tag, new gains `supersedes`. Use when a note is no longer canonical but should remain discoverable.
+
+## Update semantics: which operations bump `updated:`
+
+`updated:` records the last _substantive_ change to a record — what it asserts, its body, or its lifecycle state. Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
+
+- **Bump `updated:`** (substantive change): `--append` (body change), `--add-addressed-by` (records a response relation), and `--supersede-with` (lifecycle-state change). `--bump-updated` is the explicit escape hatch for an out-of-band edit made elsewhere.
+- **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: reorganizes findability only) and `--verify` (re-confirmation: content is unchanged).
 
 ## Process
 

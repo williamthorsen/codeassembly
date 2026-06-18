@@ -230,7 +230,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('replaces tags via --retag and surfaces canonicalization audit', async () => {
+  it('replaces tags via --retag without bumping updated and surfaces canonicalization audit', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
 
     const result = await runEdit({
@@ -246,7 +246,9 @@ describe(runEdit, () => {
       expect(result.originalTags).toEqual(['one', 'two', 'three']);
       expect(result.canonicalTags).toEqual(['one', 'two', 'three']);
       expect(result.frontmatter.tags).toEqual(['one', 'two', 'three']);
-      expect(result.frontmatter.updated).toBe(TODAY);
+      expect(result.frontmatter.updated).toBe('2026-05-01');
+      const written = await readFile(notePath, 'utf8');
+      expect(written).toContain('updated: 2026-05-01');
     }
   });
 
