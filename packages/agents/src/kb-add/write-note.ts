@@ -1,10 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, rename, unlink, writeFile } from 'node:fs/promises';
-import { join, resolve, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 
 import type { Frontmatter } from '@codeassembly/kb';
 import { pathExists } from '@codeassembly/kb/filesystem';
 import { writeFrontmatter } from '@codeassembly/kb/frontmatter';
+
+/** The KB-root-relative location kb-add writes assertions under; `assertions` mirrors the hardcoded `recordType: assertion`. */
+const CONTENT_ROOT = 'content';
+const ASSERTIONS_DIR = 'assertions';
 
 /** Successful write: the absolute path the note landed at. */
 export interface WriteSuccess {
@@ -22,11 +26,17 @@ export type WriteFailure =
 export type WriteOutcome = WriteSuccess | WriteFailure;
 
 /**
- * Writes a prepared note to disk, choosing the path from KB root + folder + (title-verbatim + `.md`).
+ * Writes a prepared assertion to disk under the KB's assertions root (`content/assertions/`), choosing the path from
+ * that root + folder + (title-verbatim + `.md`). `folder` is the topic subpath beneath the archetype root, not the
+ * archetype itself: `kb-add` owns the `assertions/` segment, mirroring the hardcoded `recordType: assertion`.
  *
  * Title-as-filename is intentional. Titles containing path separators, null bytes, or newlines are rejected explicitly
  * rather than silently sanitized so the agent can decide whether to re-title or abort. Leading and trailing whitespace
  * is trimmed first; an empty result after trimming is also rejected.
+ *
+ * Two structured refusals keep a malformed `folder` from misplacing a note rather than silently succeeding: a `folder`
+ * that climbs out of the assertions root (`invalid-folder`), and a `folder` that re-names the `assertions/` archetype
+ * segment (`invalid-folder`).
  *
  * The target folder is created with `mkdir -p` semantics when absent. On filename collision the function returns a
  * structured error without modifying anything on disk. Otherwise the note is written atomically via a same-directory
@@ -48,14 +58,23 @@ export async function writeNote(input: {
     return filenameOutcome;
   }
 
-  const targetDir = input.folder === null ? input.kbPath : join(input.kbPath, input.folder);
-  if (!isWithinKb({ kbPath: input.kbPath, targetDir })) {
+  const assertionsRoot = join(input.kbPath, CONTENT_ROOT, ASSERTIONS_DIR);
+  const targetDir = input.folder === null ? assertionsRoot : join(assertionsRoot, input.folder);
+  if (!isWithin({ root: assertionsRoot, target: targetDir })) {
     return {
       ok: false,
       reason: 'invalid-folder',
-      message: `folder "${input.folder ?? ''}" resolves outside the KB root`,
+      message: `folder "${input.folder ?? ''}" resolves outside the assertions root`,
     };
   }
+  if (namesArchetypeSegment({ assertionsRoot, targetDir })) {
+    return {
+      ok: false,
+      reason: 'invalid-folder',
+      message: `folder "${input.folder ?? ''}" must not begin with "${ASSERTIONS_DIR}/"; kb-add writes under content/assertions/ automatically — pass the topic subpath only`,
+    };
+  }
+
   const targetPath = join(targetDir, filenameOutcome.filename);
 
   if (await pathExists(targetPath)) {
@@ -119,20 +138,28 @@ async function atomicWrite(input: { targetPath: string; content: string }): Prom
 }
 
 /**
- * Returns true when `targetDir` resolves to a location inside the KB root (or to the root itself).
- * Compares lexically resolved paths so `..` segments are caught before any directory is created or any
- * file is written. Symlinks inside the KB are not resolved here: a symlink that points outside the KB
- * would not be caught. For single-user CLI use, planting such a symlink requires pre-existing write
- * access to the KB root, so the lexical check is sufficient. Multi-tenant use would need a `realpath`
+ * Returns true when `target` resolves to a location inside `root` (or to `root` itself). Compares lexically resolved
+ * paths so `..` segments are caught before any directory is created or any file is written. Symlinks are not resolved
+ * here: a symlink that points outside `root` would not be caught. For single-user CLI use, planting such a symlink
+ * requires pre-existing write access, so the lexical check is sufficient. Multi-tenant use would need a `realpath`
  * walk against the deepest existing ancestor.
  */
-function isWithinKb(input: { kbPath: string; targetDir: string }): boolean {
-  const resolvedRoot = resolve(input.kbPath);
-  const resolvedTarget = resolve(input.targetDir);
+function isWithin(input: { root: string; target: string }): boolean {
+  const resolvedRoot = resolve(input.root);
+  const resolvedTarget = resolve(input.target);
   if (resolvedTarget === resolvedRoot) {
     return true;
   }
   return resolvedTarget.startsWith(resolvedRoot + sep);
+}
+
+/**
+ * Reports whether `targetDir`'s first segment beneath the assertions root re-names the archetype directory
+ * (`content/assertions/assertions/...`). Catches a caller that prefixed the archetype into `--folder` out of habit;
+ * `kb-add` owns that segment, so the caller passes the topic subpath only.
+ */
+function namesArchetypeSegment(input: { assertionsRoot: string; targetDir: string }): boolean {
+  return relative(input.assertionsRoot, input.targetDir).split(sep)[0] === ASSERTIONS_DIR;
 }
 
 // endregion | Helpers

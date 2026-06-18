@@ -12,7 +12,8 @@ import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 export interface ParsedArgs {
   /** Optional explicit KB name; when set, wins over discovery and registry-default. */
   kb: string | null;
-  /** Optional KB-relative folder under which the note is written; defaults to the KB root. */
+  /** Optional topic subpath beneath the assertions root (`content/assertions/`) under which the note is written; the
+   * archetype segment is owned by the tool, not named here. Defaults to `content/assertions/` itself. */
   folder: string | null;
   /** Optional Diátaxis label (e.g. `howto`); written to the note's extra fields, not a top-level field. */
   diataxis: string | null;
