@@ -9,6 +9,8 @@ import type { EnumeratedNote } from '@codeassembly/kb/check';
 import { check } from '@codeassembly/kb/check';
 import { isKbLoaderError } from '@codeassembly/kb/config';
 
+import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
+import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { applyFixes } from './apply.ts';
@@ -217,7 +219,7 @@ async function resolveKb(input: {
 
   if (resolved.reason === 'readonly-kb') {
     if (!input.requireWritable) {
-      const source = input.explicitKb !== null ? 'explicit' : 'registry-default';
+      const source = readonlyReportSource(input.explicitKb);
       return { ok: true, kb: { name: resolved.kbName, path: resolved.kbPath, source } };
     }
     return {
@@ -230,17 +232,50 @@ async function resolveKb(input: {
     };
   }
 
-  return {
-    ok: false,
-    failure: {
-      ok: false,
-      error: 'no-kb-resolvable',
-      message:
-        resolved.requestedKb === null
-          ? 'no .kb/ discovered, no default_kb configured, and no --kb supplied'
-          : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
-    },
-  };
+  switch (resolved.reason) {
+    case 'no-kb-resolvable':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message: `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+        },
+      };
+    case 'missing-destination':
+      return {
+        ok: false,
+        failure: { ok: false, error: 'no-kb-resolvable', message: formatMissingDestinationMessage(resolved) },
+      };
+    case 'no-default':
+      return {
+        ok: false,
+        failure: {
+          ok: false,
+          error: 'no-kb-resolvable',
+          message:
+            resolved.registryError !== undefined
+              ? `could not resolve the default knowledge base: ${resolved.registryError}`
+              : '--kb @default was given but no default_kb is configured in kb.yaml',
+        },
+      };
+    default: {
+      const _exhaustive: never = resolved;
+      throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+/**
+ * Derives the `source` label for a readonly KB accepted in report mode, from the explicit-KB input that produced the
+ * `readonly-kb` outcome: the `@default` sentinel resolves the registry default, a concrete name is explicit, and an
+ * omitted `--kb` can only have reached a readonly KB through `.kb/` discovery.
+ */
+function readonlyReportSource(explicitKb: string | null): ResolvedKb['source'] {
+  if (explicitKb === DEFAULT_KB_SENTINEL) {
+    return 'registry-default';
+  }
+  return explicitKb !== null ? 'explicit' : 'discovered';
 }
 
 /** Matches a value-bearing flag in either `--flag value` or `--flag=value` form. Returns `null` when `arg` is not it. */

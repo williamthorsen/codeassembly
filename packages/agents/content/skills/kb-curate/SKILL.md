@@ -16,17 +16,17 @@ For a single note's edit, use `kb-edit`. For new notes, use `kb-add`. For findin
 
 ## Arguments
 
-| Argument            | Description                                                                                  | Required |
-| ------------------- | -------------------------------------------------------------------------------------------- | -------- |
-| `--kb <name>`       | The knowledge base to curate. Falls back to a discovered `.kb/`, then the `default_kb`.      | No       |
-| `--apply`           | Perform the two safe fixes (tag canonicalization, path-only wikilink rewrites). Default off. | No       |
-| `--stale-after <n>` | Verification-staleness threshold in whole days. Positive integer; defaults to 90.            | No       |
+| Argument            | Description                                                                                            | Required |
+| ------------------- | ------------------------------------------------------------------------------------------------------ | -------- |
+| `--kb <name>`       | The knowledge base to curate, or `@default` for the registry default. Defaults to a discovered `.kb/`. | No       |
+| `--apply`           | Perform the two safe fixes (tag canonicalization, path-only wikilink rewrites). Default off.           | No       |
+| `--stale-after <n>` | Verification-staleness threshold in whole days. Positive integer; defaults to 90.                      | No       |
 
 A value-bearing flag accepts both `--kb coding` and `--kb=coding`. With no flags, the helper produces a read-only report.
 
 ### KB selection
 
-The knowledge base is resolved the same way as `kb-add`: `--kb <name>` (explicit) beats a discovered `.kb/` folder, which beats the registry's `default_kb`. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Curating spans a single KB per run — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
+The knowledge base is resolved the same way as `kb-add`: a concrete `--kb <name>` beats a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Curating spans a single KB per run — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
 Which notes are curated is governed by the store's `.kb/config.yaml`: by default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `schema.yaml`, or `tag-aliases.yaml` fails the run with `invalid-config` rather than being silently ignored.
 
@@ -94,12 +94,12 @@ The helper prints a JSON object to stdout. On success the payload carries `ok: t
 
 On failure, `ok: false` plus a categorical `error` code:
 
-| Code               | What it means                                                                             | What to do                                                     |
-| ------------------ | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                   | Correct the invocation. The message names the specific defect. |
-| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/schema.yaml`, or `.kb/tag-aliases.yaml` in the store. | Fix the named file. The message names the offending file.      |
-| `no-kb-resolvable` | No `.kb/` discovered, no `default_kb`, and `--kb` matched nothing.                        | Confirm the `--kb` name or run from inside the vault.          |
-| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                     | Drop `--apply` for a read-only report, or use a writable KB.   |
+| Code               | What it means                                                                                                                                | What to do                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                                                                      | Correct the invocation. The message names the specific defect.               |
+| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/schema.yaml`, or `.kb/tag-aliases.yaml` in the store.                                                    | Fix the named file. The message names the offending file.                    |
+| `no-kb-resolvable` | A KB could not be resolved: `--kb` matched no entry, or no `--kb` and no discoverable `.kb/`, or `--kb @default` with no configured default. | Confirm the `--kb` name, run from inside the vault, or pass `--kb @default`. |
+| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                                                                        | Drop `--apply` for a read-only report, or use a writable KB.                 |
 
 System failures (out-of-disk, permission denied) print to stderr and exit non-zero. They are out of band and never appear as a structured `error` code.
 

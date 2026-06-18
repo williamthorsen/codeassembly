@@ -1,9 +1,7 @@
 import { tryLoadKbRegistry } from '@codeassembly/kb/discovery';
 
+import { DEFAULT_KB_SENTINEL } from './default-kb-sentinel.ts';
 import { resolveStoreByName, type ResolveStoreOutcome } from './resolve-store-by-name.ts';
-
-/** The reserved `--store` value that deliberately selects the registry's `default_kb` instead of a named store. */
-export const STORE_DEFAULT_SENTINEL = '@default';
 
 /**
  * The capture resolution outcome: a resolved store, or a categorical failure. Extends `resolveStoreByName`'s outcome
@@ -35,7 +33,7 @@ export async function resolveCaptureTarget(input: {
   home?: string;
 }): Promise<ResolveCaptureTargetOutcome> {
   // A concrete store name resolves by registry name; only an omitted value or the sentinel need the registry here.
-  if (input.explicitName !== null && input.explicitName !== STORE_DEFAULT_SENTINEL) {
+  if (input.explicitName !== null && input.explicitName !== DEFAULT_KB_SENTINEL) {
     return resolveStoreByName({
       name: input.explicitName,
       ...(input.home !== undefined && { home: input.home }),

@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
 
 import { check } from '@codeassembly/kb/check';
 import { defaultKbConfig, KbLoaderError } from '@codeassembly/kb/config';
@@ -85,6 +86,50 @@ describe(runCurate, () => {
     const result = await runCurate({ argv: ['--kb', 'ghost'], startDir, now: NOW, home });
 
     expect(result).toEqual({ ok: false, error: 'no-kb-resolvable', message: expect.stringContaining('"ghost"') });
+  });
+
+  it('names the registered KBs and points to --kb @default when run outside a vault', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: primary\nkbs:\n  primary:\n    path: ${home}/primary\n`,
+      'utf8',
+    );
+    const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
+
+    const result = await runCurate({ argv: [], startDir, now: NOW, home });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('no-kb-resolvable');
+      expect(result.message).toContain('primary');
+      expect(result.message).toContain('--kb @default');
+    }
+  });
+
+  it('reports the registry error when --kb @default names an unresolvable default', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: ghost\nkbs:\n  real:\n    path: ${home}/real\n`,
+      'utf8',
+    );
+    const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
+    // resolveWritableKb logs the unresolvable-default registry error to stderr; spy so it does not pollute output.
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const result = await runCurate({ argv: ['--kb', '@default'], startDir, now: NOW, home });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('no-kb-resolvable');
+        expect(result.message).toContain('could not resolve the default');
+      }
+    } finally {
+      stderrSpy.mockRestore();
+    }
   });
 
   it('refuses --apply against a readonly KB', async () => {

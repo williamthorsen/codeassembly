@@ -10,6 +10,7 @@ import type { AliasMap, KbRoot } from '@codeassembly/kb';
 import { loadSchema } from '@codeassembly/kb/schema';
 import { loadAliases } from '@codeassembly/kb/tags';
 
+import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { readAll } from '../lib/stream-helpers.ts';
@@ -119,20 +120,24 @@ export async function runAdd(input: {
   });
   if (!resolved.ok) {
     switch (resolved.reason) {
-      case 'no-kb-resolvable': {
-        const failure: AddResult = {
+      case 'no-kb-resolvable':
+        return {
           ok: false,
           error: 'no-kb-resolvable',
-          message:
-            resolved.requestedKb === null
-              ? 'no .kb/ discovered, no default_kb configured, and no --kb supplied'
-              : `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+          message: `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
+          details: { requestedKb: resolved.requestedKb },
         };
-        if (resolved.requestedKb !== null) {
-          failure.details = { requestedKb: resolved.requestedKb };
-        }
-        return failure;
-      }
+      case 'missing-destination':
+        return { ok: false, error: 'missing-destination', message: formatMissingDestinationMessage(resolved) };
+      case 'no-default':
+        return {
+          ok: false,
+          error: 'no-default',
+          message:
+            resolved.registryError !== undefined
+              ? `could not resolve the default knowledge base: ${resolved.registryError}`
+              : '--kb @default was given but no default_kb is configured in kb.yaml',
+        };
       case 'readonly-kb':
         return {
           ok: false,
