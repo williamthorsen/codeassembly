@@ -19,8 +19,8 @@ function validFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'Example',
     recordType: 'assertion',
-    created: '2026-05-01',
-    updated: '2026-05-01',
+    created: '2026-05-01T08:17:23Z',
+    updated: '2026-05-01T08:17:23Z',
     tags: ['example'],
     extra: {},
     ...overrides,
@@ -88,7 +88,7 @@ describe(writeBackNote, () => {
   it('round-trips a structurally identical note when frontmatter is unchanged', async () => {
     const path = await makeTempPath('kb-edit-wb-roundtrip-');
     const original =
-      '---\ntitle: x\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [a]\ntype: howto\n---\n\nbody\n';
+      '---\ntitle: x\nrecordType: assertion\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [a]\ntype: howto\n---\n\nbody\n';
     await writeFile(path, original, 'utf8');
 
     const result = await writeBackNote({
@@ -96,8 +96,8 @@ describe(writeBackNote, () => {
       frontmatter: {
         title: 'x',
         recordType: 'assertion',
-        created: '2026-05-01',
-        updated: '2026-05-01',
+        created: '2026-05-01T08:17:23Z',
+        updated: '2026-05-01T08:17:23Z',
         tags: ['a'],
         extra: { type: 'howto' },
       },
