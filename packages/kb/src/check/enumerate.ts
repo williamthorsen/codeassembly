@@ -2,9 +2,8 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import process from 'node:process';
 
-import picomatch from 'picomatch';
-
 import type { KbConfig } from '../config/config-schema.ts';
+import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';
 import { parseNoteContent } from '../frontmatter/parse-note.ts';
 import type { ParsedNote } from '../types.ts';
 import { isGlobSegment } from './glob-segments.ts';
@@ -33,12 +32,11 @@ export interface EnumeratedNote {
  */
 export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }): Promise<EnumeratedNote[]> {
   const { kbRoot, config } = input;
-  const isTarget = picomatch([...config.targets], { dot: false });
-  const isExcluded = picomatch([...config.exclude], { dot: false });
+  const matcher = createNoteScopeMatcher(config);
   const topLevelDirs = leadingLiteralSegments(config.targets);
 
   const notes: EnumeratedNote[] = [];
-  await walk({ root: kbRoot, dir: kbRoot, isTarget, isExcluded, topLevelDirs, out: notes });
+  await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: notes });
   return notes;
 }
 
@@ -64,13 +62,12 @@ function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string>
 async function walk(input: {
   root: string;
   dir: string;
-  isTarget: (test: string) => boolean;
-  isExcluded: (test: string) => boolean;
+  matcher: NoteScopeMatcher;
   /** Top-level directory names to descend into, or `null` to walk the entire tree. */
   topLevelDirs: ReadonlySet<string> | null;
   out: EnumeratedNote[];
 }): Promise<void> {
-  const { root, dir, isTarget, isExcluded, topLevelDirs, out } = input;
+  const { root, dir, matcher, topLevelDirs, out } = input;
 
   let entries;
   try {
@@ -89,13 +86,13 @@ async function walk(input: {
     if (entry.isDirectory()) {
       // Prune to the targets' leading literal segments at the top level; deeper levels always descend.
       if (atRoot && topLevelDirs !== null && !topLevelDirs.has(entry.name)) continue;
-      if (isExcluded(relativePath)) continue;
-      await walk({ root, dir: absolutePath, isTarget, isExcluded, topLevelDirs, out });
+      if (matcher.isExcluded(relativePath)) continue;
+      await walk({ root, dir: absolutePath, matcher, topLevelDirs, out });
       continue;
     }
 
     if (!entry.name.endsWith('.md')) continue;
-    if (!isTarget(relativePath) || isExcluded(relativePath)) continue;
+    if (!matcher.isNote(relativePath)) continue;
 
     try {
       const content = await readFile(absolutePath, 'utf8');
