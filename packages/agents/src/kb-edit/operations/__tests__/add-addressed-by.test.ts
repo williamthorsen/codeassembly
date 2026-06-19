@@ -10,8 +10,8 @@ function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'Example',
     recordType: 'event',
-    created: '2026-05-01',
-    updated: '2026-05-01',
+    created: '2026-05-01T08:17:23Z',
+    updated: '2026-05-01T08:17:23Z',
     tags: ['example'],
     extra: {},
     ...overrides,
@@ -88,6 +88,6 @@ describe(addAddressedBy, () => {
     addAddressedBy({ frontmatter: fm, body: 'b', references: ['[[fix]]'], now: NOW });
 
     expect(fm.extra['addressed-by']).toEqual(['#789']);
-    expect(fm.updated).toBe('2026-05-01');
+    expect(fm.updated).toBe('2026-05-01T08:17:23Z');
   });
 });

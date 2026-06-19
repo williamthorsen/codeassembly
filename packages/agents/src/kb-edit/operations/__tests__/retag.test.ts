@@ -3,14 +3,12 @@ import { describe, expect, it } from 'vitest';
 
 import { retag } from '../retag.ts';
 
-const NOW = new Date('2026-05-24T14:35:00Z');
-
 function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'Example',
     recordType: 'assertion',
-    created: '2026-05-01',
-    updated: '2026-05-01',
+    created: '2026-05-01T08:17:23Z',
+    updated: '2026-05-01T08:17:23Z',
     tags: ['old', 'tags'],
     extra: {},
     ...overrides,
@@ -24,17 +22,16 @@ const NODE_ALIASES: AliasMap = new Map([
 ]);
 
 describe(retag, () => {
-  it('replaces the tag list with the supplied tags and bumps updated', () => {
+  it('replaces the tag list with the supplied tags and leaves updated unchanged', () => {
     const result = retag({
       frontmatter: frontmatter(),
       body: 'b',
       tags: ['new', 'set'],
       aliases: NO_ALIASES,
-      now: NOW,
     });
 
     expect(result.frontmatter.tags).toEqual(['new', 'set']);
-    expect(result.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
+    expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
   });
 
   it('returns originalTags and canonicalTags for audit', () => {
@@ -43,7 +40,6 @@ describe(retag, () => {
       body: 'b',
       tags: ['node.js', 'react'],
       aliases: NODE_ALIASES,
-      now: NOW,
     });
 
     expect(result.originalTags).toEqual(['node.js', 'react']);
@@ -58,7 +54,6 @@ describe(retag, () => {
       body: 'b',
       tags: ['node.js', 'react', 'node'],
       aliases: NODE_ALIASES,
-      now: NOW,
     });
 
     expect(result.canonicalTags).toEqual(['nodejs', 'react']);
@@ -70,7 +65,6 @@ describe(retag, () => {
       body: 'b',
       tags: [],
       aliases: NO_ALIASES,
-      now: NOW,
     });
 
     expect(result.frontmatter.tags).toEqual([]);
@@ -80,7 +74,7 @@ describe(retag, () => {
   it('does not mutate the input frontmatter', () => {
     const fm = frontmatter();
 
-    retag({ frontmatter: fm, body: 'b', tags: ['x'], aliases: NO_ALIASES, now: NOW });
+    retag({ frontmatter: fm, body: 'b', tags: ['x'], aliases: NO_ALIASES });
 
     expect(fm.tags).toEqual(['old', 'tags']);
   });

@@ -13,8 +13,8 @@ const TODAY = '2026-05-24T14:35:00Z';
 const SAMPLE_NOTE = `---
 title: Sample
 recordType: assertion
-created: 2026-05-01
-updated: 2026-05-01
+created: 2026-05-01T08:17:23Z
+updated: 2026-05-01T08:17:23Z
 tags: [sample]
 type: howto
 ---
@@ -223,14 +223,14 @@ describe(runEdit, () => {
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'verify') {
       expect(result.frontmatter.extra['last-verified']).toBe(TODAY);
-      expect(result.frontmatter.updated).toBe('2026-05-01');
+      expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
       const written = await readFile(notePath, 'utf8');
       expect(written).toContain(`last-verified: ${TODAY}`);
-      expect(written).toContain('updated: 2026-05-01');
+      expect(written).toContain('updated: 2026-05-01T08:17:23Z');
     }
   });
 
-  it('replaces tags via --retag and surfaces canonicalization audit', async () => {
+  it('replaces tags via --retag without bumping updated and surfaces canonicalization audit', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
 
     const result = await runEdit({
@@ -246,7 +246,9 @@ describe(runEdit, () => {
       expect(result.originalTags).toEqual(['one', 'two', 'three']);
       expect(result.canonicalTags).toEqual(['one', 'two', 'three']);
       expect(result.frontmatter.tags).toEqual(['one', 'two', 'three']);
-      expect(result.frontmatter.updated).toBe(TODAY);
+      expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
+      const written = await readFile(notePath, 'utf8');
+      expect(written).toContain('updated: 2026-05-01T08:17:23Z');
     }
   });
 
@@ -384,7 +386,7 @@ describe(runEdit, () => {
     const path = join(kbPath, 'bad-record-type.md');
     await writeFile(
       path,
-      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [x]\n---\n\nbody\n',
       'utf8',
     );
 
@@ -503,7 +505,7 @@ describe(runEdit, () => {
     // New note has a recordType outside the schema vocabulary; supersede-with validates both before either rename.
     await writeFile(
       newPath,
-      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [x]\n---\n\nbody\n',
       'utf8',
     );
 
@@ -554,7 +556,7 @@ describe(runEdit, () => {
     // Old note already carries the deprecated tag; supersede-with should not duplicate it.
     await writeFile(
       oldPath,
-      '---\ntitle: Old\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [legacy, deprecated]\ntype: howto\n---\n\nbody\n',
+      '---\ntitle: Old\nrecordType: assertion\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [legacy, deprecated]\ntype: howto\n---\n\nbody\n',
       'utf8',
     );
     await writeFile(newPath, SAMPLE_NOTE.replace('Sample', 'New'), 'utf8');
@@ -671,7 +673,7 @@ describe(runEdit, () => {
     // A recordType outside the schema vocabulary: appending re-validates the frontmatter, so this record fails.
     await writeFile(
       badType,
-      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nbody\n',
+      '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [x]\n---\n\nbody\n',
       'utf8',
     );
 

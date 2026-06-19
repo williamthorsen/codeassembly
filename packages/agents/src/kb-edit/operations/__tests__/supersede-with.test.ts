@@ -12,8 +12,8 @@ function note(input: { name: string; tags?: string[]; extra?: Record<string, unk
   const frontmatter: Frontmatter = {
     title: input.name.replace(/\.md$/, ''),
     recordType: 'assertion',
-    created: '2026-05-01',
-    updated: '2026-05-01',
+    created: '2026-05-01T08:17:23Z',
+    updated: '2026-05-01T08:17:23Z',
     tags,
     extra,
   };
@@ -130,7 +130,7 @@ describe(prepareSupersedeWith, () => {
 
   it('preserves other extra fields on both notes', () => {
     const oldNote = note({ name: 'old.md', extra: { 'applies-to': 'node 22' } });
-    const newNote = note({ name: 'new.md', extra: { 'last-verified': '2026-04-15' } });
+    const newNote = note({ name: 'new.md', extra: { 'last-verified': '2026-04-15T13:28:14Z' } });
 
     const result = prepareSupersedeWith({
       oldNote,
@@ -143,6 +143,6 @@ describe(prepareSupersedeWith, () => {
     });
 
     expect(result.old.frontmatter.extra['applies-to']).toBe('node 22');
-    expect(result.new.frontmatter.extra['last-verified']).toBe('2026-04-15');
+    expect(result.new.frontmatter.extra['last-verified']).toBe('2026-04-15T13:28:14Z');
   });
 });

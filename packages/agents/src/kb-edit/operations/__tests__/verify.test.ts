@@ -9,8 +9,8 @@ function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'Example',
     recordType: 'assertion',
-    created: '2026-05-01',
-    updated: '2026-05-01',
+    created: '2026-05-01T08:17:23Z',
+    updated: '2026-05-01T08:17:23Z',
     tags: ['example'],
     extra: {},
     ...overrides,
@@ -22,7 +22,7 @@ describe(verify, () => {
     const result = verify({ frontmatter: frontmatter(), body: 'body', now: NOW });
 
     expect(result.frontmatter.extra['last-verified']).toBe('2026-05-24T14:35:00Z');
-    expect(result.frontmatter.updated).toBe('2026-05-01');
+    expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
   });
 
   it('adds last-verified when the field is absent', () => {
@@ -34,7 +34,7 @@ describe(verify, () => {
   });
 
   it('overwrites an existing last-verified value', () => {
-    const fm = frontmatter({ extra: { 'last-verified': '2026-01-15' } });
+    const fm = frontmatter({ extra: { 'last-verified': '2026-01-15T11:42:09Z' } });
 
     const result = verify({ frontmatter: fm, body: 'b', now: NOW });
 
