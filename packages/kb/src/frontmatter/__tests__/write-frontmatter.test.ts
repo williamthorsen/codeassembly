@@ -13,8 +13,8 @@ describe(writeFrontmatter, () => {
       '---',
       'title: How to rebase onto main',
       'recordType: assertion',
-      'created: 2026-05-01',
-      'updated: 2026-05-14',
+      'created: 2026-05-01T08:14:22Z',
+      'updated: 2026-05-14T13:47:05Z',
       'tags: [git, rebase]',
     ]);
   });
@@ -64,12 +64,12 @@ describe(writeFrontmatter, () => {
 
   it('emits extra fields after the required core in insertion order', () => {
     const frontmatter = makeFrontmatter({
-      extra: { 'last-verified': '2026-05-10', 'applies-to': ['git 2.45+'] },
+      extra: { 'last-verified': '2026-05-10T10:05:47Z', 'applies-to': ['git 2.45+'] },
     });
     const output = writeFrontmatter({ frontmatter, body: '' });
     const lines = output.split('\n');
 
-    expect(lines[6]).toBe('last-verified: 2026-05-10');
+    expect(lines[6]).toBe('last-verified: 2026-05-10T10:05:47Z');
     expect(lines[7]).toBe('applies-to: [git 2.45+]');
   });
 
@@ -86,8 +86,8 @@ function makeFrontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
   return {
     title: 'How to rebase onto main',
     recordType: 'assertion',
-    created: '2026-05-01',
-    updated: '2026-05-14',
+    created: '2026-05-01T08:14:22Z',
+    updated: '2026-05-14T13:47:05Z',
     tags: ['git', 'rebase'],
     extra: {},
     ...overrides,

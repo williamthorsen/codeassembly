@@ -1,8 +1,8 @@
 ---
 title: A note addressed by a single reference
 recordType: assertion
-created: 2026-04-01
-updated: 2026-04-01
+created: 2026-04-01T10:05:47Z
+updated: 2026-04-01T17:08:44Z
 addressed-by: owner/repo#7
 ---
 

@@ -1,8 +1,8 @@
 ---
 title: Links
 recordType: assertion
-created: 2026-05-01
-updated: 2026-05-01
+created: 2026-05-01T07:38:12Z
+updated: 2026-05-01T16:08:41Z
 tags: [example]
 ---
 

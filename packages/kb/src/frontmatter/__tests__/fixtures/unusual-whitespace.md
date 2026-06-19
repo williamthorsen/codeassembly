@@ -1,8 +1,8 @@
 ---
 title: Note with irregular spacing
 recordType: assertion
-created: 2026-05-01
-updated: 2026-05-14
+created: 2026-05-01T08:05:47Z
+updated: 2026-05-14T14:12:38Z
 tags:
   - git
   - whitespace

@@ -2,8 +2,8 @@
 title: Multi-match snippet fixture
 recordType: assertion
 diataxis: howto
-created: 2026-03-01
-updated: 2026-03-01
+created: 2026-03-01T09:05:51Z
+updated: 2026-03-01T16:13:47Z
 tags: [test]
 ---
 

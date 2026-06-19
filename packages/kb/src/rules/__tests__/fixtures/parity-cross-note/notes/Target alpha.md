@@ -1,8 +1,8 @@
 ---
 title: Target alpha
 recordType: assertion
-created: 2026-05-01
-updated: 2026-05-01
+created: 2026-05-01T08:05:51Z
+updated: 2026-05-01T15:19:33Z
 tags: [example]
 ---
 

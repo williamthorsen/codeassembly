@@ -2,7 +2,7 @@
 title: Note with a wrongly formatted date
 recordType: assertion
 created: 2026/04/12
-updated: 2026-05-08
+updated: 2026-05-08T16:03:42Z
 tags: [git]
 ---
 
