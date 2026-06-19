@@ -2,8 +2,8 @@
 title: Brewing coffee
 recordType: assertion
 diataxis: howto
-created: 2026-03-01
-updated: 2026-03-01
+created: 2026-03-01T07:53:16Z
+updated: 2026-03-01T13:24:40Z
 tags: [kitchen]
 ---
 

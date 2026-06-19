@@ -1,8 +1,8 @@
 ---
 title: Note with scalar tags
 recordType: assertion
-created: 2026-05-01
-updated: 2026-05-14
+created: 2026-05-01T08:33:58Z
+updated: 2026-05-14T15:58:12Z
 tags: git
 ---
 

@@ -10,8 +10,8 @@ import { composeFilename, writeNote } from '../write-note.ts';
 const baseFrontmatter: Frontmatter = {
   title: 'Sample',
   recordType: 'assertion',
-  created: '2026-05-24',
-  updated: '2026-05-24',
+  created: '2026-05-24T09:14:22Z',
+  updated: '2026-05-24T13:58:12Z',
   tags: ['sample'],
   extra: {},
 };

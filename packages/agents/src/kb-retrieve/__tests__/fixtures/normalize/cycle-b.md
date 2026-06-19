@@ -2,8 +2,8 @@
 title: Cycle node B
 recordType: assertion
 diataxis: concept
-created: 2026-01-01
-updated: 2026-01-01
+created: 2026-01-01T09:52:18Z
+updated: 2026-01-01T15:19:03Z
 tags: [cycle]
 superseded-by: cycle-a.md
 ---

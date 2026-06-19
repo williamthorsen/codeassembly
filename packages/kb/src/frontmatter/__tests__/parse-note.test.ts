@@ -15,8 +15,8 @@ describe(parseNoteContent, () => {
     expect(note.frontmatter).toEqual({
       title: 'How to rebase onto main',
       recordType: 'assertion',
-      created: '2026-05-01',
-      updated: '2026-05-14',
+      created: '2026-05-01T09:22:35Z',
+      updated: '2026-05-14T15:08:51Z',
       tags: ['git', 'rebase'],
       extra: {},
     });
@@ -62,7 +62,7 @@ describe(parseNoteContent, () => {
 
     expect(note.frontmatter?.extra).toEqual({
       type: 'reference',
-      'last-verified': '2026-05-10',
+      'last-verified': '2026-05-10T11:34:09Z',
       'applies-to': ['git 2.45+', 'Bitbucket Cloud'],
       sources: ['https://git-scm.com/docs/git-rebase'],
     });

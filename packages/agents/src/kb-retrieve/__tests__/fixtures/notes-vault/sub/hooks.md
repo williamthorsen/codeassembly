@@ -2,8 +2,8 @@
 title: React hooks reference
 recordType: assertion
 diataxis: reference
-created: 2026-02-01
-updated: 2026-02-01
+created: 2026-02-01T09:41:33Z
+updated: 2026-02-01T16:28:02Z
 tags: [react, hooks]
 ---
 

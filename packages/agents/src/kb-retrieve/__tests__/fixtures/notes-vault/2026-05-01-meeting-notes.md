@@ -2,8 +2,8 @@
 title: Meeting notes
 recordType: assertion
 diataxis: note
-created: 2026-05-01
-updated: 2026-05-01
+created: 2026-05-01T07:46:29Z
+updated: 2026-05-01T13:41:50Z
 tags: [meeting]
 ---
 

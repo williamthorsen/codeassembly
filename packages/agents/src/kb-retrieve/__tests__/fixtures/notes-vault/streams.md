@@ -2,8 +2,8 @@
 title: Working with Node.js streams
 recordType: assertion
 diataxis: howto
-created: 2026-01-10
-updated: 2026-01-10
+created: 2026-01-10T08:24:09Z
+updated: 2026-01-10T14:47:55Z
 tags: [nodejs, streams]
 ---
 

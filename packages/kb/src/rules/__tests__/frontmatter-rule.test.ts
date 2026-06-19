@@ -92,8 +92,8 @@ describe('frontmatterRule', () => {
         '---',
         'title: Relation field under test',
         'recordType: assertion',
-        'created: 2026-05-01',
-        'updated: 2026-05-14',
+        'created: 2026-05-01T08:33:51Z',
+        'updated: 2026-05-14T15:42:18Z',
         'tags: [git]',
         `${field}: a-single-ref`,
         '---',
@@ -115,8 +115,8 @@ describe('frontmatterRule', () => {
       '---',
       'title: Note with relation lists',
       'recordType: assertion',
-      'created: 2026-05-01',
-      'updated: 2026-05-14',
+      'created: 2026-05-01T08:33:51Z',
+      'updated: 2026-05-14T15:42:18Z',
       'tags: [git]',
       "addressed-by: ['abc1234', 'owner/repo#42']",
       "addresses: ['../problem.md']",
@@ -134,8 +134,8 @@ describe('frontmatterRule', () => {
       '---',
       'title: Valid note',
       'recordType: assertion',
-      'created: 2026-05-01',
-      'updated: 2026-05-14',
+      'created: 2026-05-01T08:33:51Z',
+      'updated: 2026-05-14T15:42:18Z',
       'tags: [git]',
       '---',
       '',
@@ -203,8 +203,8 @@ describe('frontmatterRule', () => {
     const content = [
       '---',
       'title: Note with no recordType',
-      'created: 2026-05-01',
-      'updated: 2026-05-14',
+      'created: 2026-05-01T08:33:51Z',
+      'updated: 2026-05-14T15:42:18Z',
       'tags: [git]',
       '---',
       '',
@@ -334,9 +334,9 @@ describe('frontmatterRule across record types', () => {
 /** Builds a minimal valid assertion note with one date field overridden, then runs the frontmatter rule against it. */
 function checkDateField(field: 'created' | 'updated' | 'last-verified', value: string): Finding[] {
   const defaults: Record<'created' | 'updated' | 'last-verified', string> = {
-    created: '2026-05-01',
-    updated: '2026-05-14',
-    'last-verified': '2026-05-14',
+    created: '2026-05-01T08:33:51Z',
+    updated: '2026-05-14T15:42:18Z',
+    'last-verified': '2026-05-14T11:09:47Z',
   };
   const lines = { ...defaults, [field]: value };
   const content = [

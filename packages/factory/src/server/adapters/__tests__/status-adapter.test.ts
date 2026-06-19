@@ -558,7 +558,7 @@ describe('parseStatusFile', () => {
         projectRoot: '/test',
         branch: 'main',
         task: 'test',
-        startedAt: '2026-01-01',
+        startedAt: '2026-01-01T08:17:34Z',
         status: 'completed',
         // missing phases
       });

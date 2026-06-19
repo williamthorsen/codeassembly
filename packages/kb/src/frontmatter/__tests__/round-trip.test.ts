@@ -50,8 +50,8 @@ describe('frontmatter round-trip idempotence', () => {
       const frontmatter: Frontmatter = {
         title: keyword,
         recordType: 'assertion',
-        created: '2026-05-01',
-        updated: '2026-05-14',
+        created: '2026-05-01T07:48:16Z',
+        updated: '2026-05-14T16:21:44Z',
         tags: [],
         extra: {},
       };
@@ -92,8 +92,8 @@ describe('frontmatter round-trip idempotence', () => {
     const frontmatter: Frontmatter = {
       title: 'a note',
       recordType: 'assertion',
-      created: '2026-05-01',
-      updated: '2026-05-14',
+      created: '2026-05-01T07:48:16Z',
+      updated: '2026-05-14T16:21:44Z',
       tags: [],
       extra: { token: literal },
     };
@@ -116,8 +116,8 @@ describe('frontmatter round-trip idempotence', () => {
     const frontmatter: Frontmatter = {
       title: 'a note',
       recordType: 'assertion',
-      created: '2026-05-01',
-      updated: '2026-05-14',
+      created: '2026-05-01T07:48:16Z',
+      updated: '2026-05-14T16:21:44Z',
       tags: [],
       extra: { note: value },
     };
@@ -137,8 +137,8 @@ describe('frontmatter round-trip idempotence', () => {
       const frontmatter: Frontmatter = {
         title: 'a note',
         recordType: 'assertion',
-        created: '2026-05-01',
-        updated: '2026-05-14',
+        created: '2026-05-01T07:48:16Z',
+        updated: '2026-05-14T16:21:44Z',
         tags: [],
         extra: { count },
       };
@@ -154,8 +154,8 @@ describe('frontmatter round-trip idempotence', () => {
     const frontmatter: Frontmatter = {
       title: 'a note',
       recordType: 'assertion',
-      created: '2026-05-01',
-      updated: '2026-05-14',
+      created: '2026-05-01T07:48:16Z',
+      updated: '2026-05-14T16:21:44Z',
       tags: [],
       extra: { flag },
     };
@@ -170,8 +170,8 @@ describe('frontmatter round-trip idempotence', () => {
     const frontmatter: Frontmatter = {
       title: 'a note',
       recordType: 'assertion',
-      created: '2026-05-01',
-      updated: '2026-05-14',
+      created: '2026-05-01T07:48:16Z',
+      updated: '2026-05-14T16:21:44Z',
       tags: [],
       extra: { maybe: null },
     };
@@ -187,8 +187,8 @@ describe('frontmatter round-trip idempotence', () => {
     const frontmatter: Frontmatter = {
       title: 'a note',
       recordType: 'assertion',
-      created: '2026-05-01',
-      updated: '2026-05-14',
+      created: '2026-05-01T07:48:16Z',
+      updated: '2026-05-14T16:21:44Z',
       tags: [],
       extra: { meta },
     };

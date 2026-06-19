@@ -5,8 +5,8 @@ import { frontmatterSchema } from '../frontmatter-schema.ts';
 const validFrontmatter = {
   title: 'A note',
   recordType: 'assertion',
-  created: '2026-05-01',
-  updated: '2026-05-14',
+  created: '2026-05-01T10:17:29Z',
+  updated: '2026-05-14T14:39:58Z',
   tags: ['git', 'rebase'],
   extra: {},
 };
