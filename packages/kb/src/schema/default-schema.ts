@@ -24,7 +24,7 @@ const assertion: RecordTypeSchema = {
 
 const event: RecordTypeSchema = {
   required: Object.freeze(['captured-at', 'cwd', 'id', 'session', 'summary']),
-  optional: Object.freeze(['addressed-by', 'correction', 'model', 'repo', 'skill', 'tags']),
+  optional: Object.freeze(['addressed-by', 'correction', 'harness', 'model', 'repo', 'skill', 'tags']),
   recall: 'recurrence-recency',
 };
 

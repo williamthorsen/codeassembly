@@ -25,7 +25,7 @@ const EVENT_SCHEMA = `recordTypes:
   event:
     recall: recurrence-recency
     required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, tags, correction, owner, locality, severity]
+    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity]
 `;
 
 function bodyStream(body: string): Readable {
@@ -66,6 +66,8 @@ describe(parseArgs, () => {
       'kb-retrieve',
       '--model',
       'claude-opus-4-8',
+      '--harness',
+      'claude',
       '--tags',
       'one, two,three',
     ]);
@@ -75,6 +77,7 @@ describe(parseArgs, () => {
       summary: 'A summary',
       skill: 'kb-retrieve',
       model: 'claude-opus-4-8',
+      harness: 'claude',
       tags: ['one', 'two', 'three'],
     });
   });
@@ -85,6 +88,7 @@ describe(parseArgs, () => {
     expect(parsed.store).toBeNull();
     expect(parsed.skill).toBeNull();
     expect(parsed.model).toBeNull();
+    expect(parsed.harness).toBeNull();
     expect(parsed.tags).toEqual([]);
   });
 
@@ -158,6 +162,27 @@ describe(runCapture, () => {
       expect(written).toContain('summary: Noticed a thing');
       expect(written).toContain('session: session-xyz');
       expect(written).toContain('repo: williamthorsen/codeassembly');
+      expect(written).not.toMatch(/^harness:/m);
+    }
+  });
+
+  it('writes the harness field when --harness is supplied', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+
+    const result = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Noticed a thing', '--harness', 'claude'],
+      stdin: bodyStream('Body text.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const written = await readFile(result.path, 'utf8');
+      expect(written).toMatch(/^harness: claude$/m);
     }
   });
 
