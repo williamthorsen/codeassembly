@@ -27,6 +27,7 @@ describe('defaultSchema', () => {
     expect(defaultSchema.recordTypes.event?.optional).toEqual([
       'addressed-by',
       'correction',
+      'harness',
       'model',
       'repo',
       'skill',

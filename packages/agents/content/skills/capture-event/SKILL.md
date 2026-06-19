@@ -28,6 +28,7 @@ A **skill-caused mistake** — an error a clearer skill definition would have pr
 | `--store`   | Registry name of the event store, or `@default` for the `default_kb`.    | Yes      |
 | `--skill`   | The skill the event relates to.                                          | No       |
 | `--model`   | The model identifier in play.                                            | No       |
+| `--harness` | The agent platform (`claude`, `rovodev`); install-injected — keep as-is. | Injected |
 | `--tags`    | Comma-separated tag list.                                                | No       |
 
 A value-bearing flag accepts both `--summary text` and `--summary=text`. The event body is read from stdin to EOF; an empty body is allowed.
@@ -35,6 +36,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 ### Auto-filled vs agent-supplied
 
 - **Auto-filled by the helper:** `recordType` (`event`), `id` (ULID), `captured-at`, `session` (`CLAUDE_CODE_SESSION_ID`), `cwd`, and `repo` (the `owner/name` git remote at `cwd`, best-effort — omitted silently when no remote resolves).
+- **Template-injected:** `harness` — `codeassembly-agents` writes the agent platform (`claude` or `rovodev`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
 - **Agent-supplied:** `summary`, the optional `skill`/`model`/`tags`, and the body.
 
 ### Store selection
@@ -61,6 +63,7 @@ Pipe the body to the bundled helper. A heredoc keeps multi-line bodies legible:
 cat <<'EOF' | node {platform_home_dir}/skills/capture-event/capture-event.mjs \
   --summary "<one-line summary>" \
   --store <name|@default> \
+  --harness {harness_id} \
   [--skill <skill>] [--model <model>] [--tags <comma,separated>]
 <event body, may span multiple lines and contain any characters>
 EOF

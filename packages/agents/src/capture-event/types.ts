@@ -20,6 +20,8 @@ export interface ParsedArgs {
   skill: string | null;
   /** Optional model identifier. */
   model: string | null;
+  /** Optional harness (agent platform) identifier, injected from the installed invocation template. */
+  harness: string | null;
   /** Optional tag list, in the order the agent supplied them. */
   tags: string[];
 }

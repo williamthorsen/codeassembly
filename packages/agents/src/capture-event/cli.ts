@@ -24,7 +24,7 @@ import { writeEvent } from './write-event.ts';
 const execFileAsync = promisify(execFile);
 
 /** Flag names that take a value. */
-const VALUE_FLAGS = ['store', 'summary', 'skill', 'model', 'tags'] as const;
+const VALUE_FLAGS = ['store', 'summary', 'skill', 'model', 'harness', 'tags'] as const;
 type ValueFlag = (typeof VALUE_FLAGS)[number];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -188,6 +188,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     summary,
     skill: raw.skill ?? null,
     model: raw.model ?? null,
+    harness: raw.harness ?? null,
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
   };
 }

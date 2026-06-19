@@ -210,6 +210,7 @@ async function installSkills(
       options,
       skillsPrefix,
       homeDir,
+      platformId,
       contentDir,
       toolMapping,
     );
@@ -245,6 +246,7 @@ async function installSkills(
       options,
       skillsPrefix,
       homeDir,
+      platformId,
       contentDir,
       toolMapping,
       '(platform-specific)',
@@ -270,6 +272,7 @@ async function installSkillEntry(
   options: InstallOptions,
   skillsPrefix: string,
   homeDir: string,
+  harnessId: string,
   contentDir: string,
   toolMapping: ReadonlyMap<string, string>,
   label = '',
@@ -316,7 +319,7 @@ async function installSkillEntry(
     }
     await writeExpandedSkillDir(srcPath, destPath, expandedDirContents);
     const skillsDestDir = path.dirname(destPath);
-    await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir);
+    await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir, harnessId);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
   } else if (srcPath.endsWith('.md') && expandedFileContent !== undefined) {
     // Single-file `.md` skill entries: write the previously expanded content directly.
@@ -468,7 +471,7 @@ async function installSubagents(
     await writeFile(destPath, withMarker, 'utf8');
 
     // Expand `{platform_home_dir}` tokens so the body's script references resolve to real paths.
-    await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir);
+    await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir, platformConfig.id);
 
     const hash = await computeContentHash(destPath);
     entries.push({
@@ -852,7 +855,7 @@ async function installPlatformGuidance(
       if (expandedContent !== undefined) {
         await writeFile(destPath, expandedContent, 'utf8');
       }
-      await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir);
+      await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir, platformConfig.id);
       await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_platforms/${platformId}/${entry}`));
     }
 

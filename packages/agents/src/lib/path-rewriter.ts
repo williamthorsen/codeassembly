@@ -39,28 +39,31 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathP
 }
 
 /**
- * Replaces `{platform_home_dir}` with `~/{homeDir}` (e.g., `~/.claude`) in `content`.
+ * Expands install-time template variables in `content`: `{platform_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`), and
+ * `{harness_id}` to the platform's harness identifier (e.g. `claude`), the value capture-event records as the agent
+ * platform.
  */
-export function rewriteTemplateVariables(content: string, homeDir: string): string {
-  return content.replaceAll('{platform_home_dir}', `~/${homeDir}`);
+export function rewriteTemplateVariables(content: string, homeDir: string, harnessId: string): string {
+  return content.replaceAll('{platform_home_dir}', `~/${homeDir}`).replaceAll('{harness_id}', harnessId);
 }
 
 /**
  * Applies Markdown path rewriting and template variable expansion to a single `.md` file.
  * `fileRelPath` is the file's path relative to the tree root that `pathPrefix` names.
  * For flat guidance files (one directory, no nesting) the caller typically passes the file's
- * basename.
+ * basename. `harnessId` is the platform's harness identifier used to expand `{harness_id}`.
  */
 export async function rewritePathsInFile(
   filePath: string,
   fileRelPath: string,
   pathPrefix: string,
   homeDir: string,
+  harnessId: string,
 ): Promise<void> {
   try {
     const content = await readFile(filePath, 'utf8');
     let rewritten = rewriteMarkdownPaths(content, fileRelPath, pathPrefix);
-    rewritten = rewriteTemplateVariables(rewritten, homeDir);
+    rewritten = rewriteTemplateVariables(rewritten, homeDir, harnessId);
     if (rewritten !== content) {
       await writeFile(filePath, rewritten, 'utf8');
     }
@@ -77,13 +80,15 @@ export async function rewritePathsInFile(
  * `pathPrefix` is the platform-relative prefix for rewriting link targets (e.g., `.claude/skills`
  * for skills, `.claude` for platform guidance).
  * `homeDir` is the platform home directory segment (e.g., `.claude`), used to expand
- * `{platform_home_dir}` template variables.
+ * `{platform_home_dir}` template variables. `harnessId` is the platform's harness identifier,
+ * used to expand `{harness_id}`.
  */
 export async function rewritePathsInDirectory(
   dirPath: string,
   destRoot: string,
   pathPrefix: string,
   homeDir: string,
+  harnessId: string,
 ): Promise<void> {
   const entries = await readdir(dirPath);
 
@@ -96,10 +101,10 @@ export async function rewritePathsInDirectory(
     }
 
     if (stats.isDirectory()) {
-      await rewritePathsInDirectory(fullPath, destRoot, pathPrefix, homeDir);
+      await rewritePathsInDirectory(fullPath, destRoot, pathPrefix, homeDir, harnessId);
     } else if (entry.endsWith('.md')) {
       const fileRelPath = path.relative(destRoot, fullPath).split(path.sep).join('/');
-      await rewritePathsInFile(fullPath, fileRelPath, pathPrefix, homeDir);
+      await rewritePathsInFile(fullPath, fileRelPath, pathPrefix, homeDir, harnessId);
     }
   }
 }

@@ -13,7 +13,7 @@ const EVENT_SCHEMA = `recordTypes:
   event:
     recall: recurrence-recency
     required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, tags, correction, owner, locality, severity]
+    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity]
 `;
 
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
@@ -27,6 +27,7 @@ function argsFor(overrides: Partial<ParsedArgs>): ParsedArgs {
     summary: 'Something noticed',
     skill: null,
     model: null,
+    harness: null,
     tags: [],
     ...overrides,
   };
@@ -126,9 +127,9 @@ describe(prepareEvent, () => {
     }
   });
 
-  it('renders the agent-supplied skill, model, and tags into the record', () => {
+  it('renders the agent-supplied skill, model, harness, and tags into the record', () => {
     const result = prepareEvent({
-      args: argsFor({ skill: 'kb-retrieve', model: 'claude-opus-4-8', tags: ['recall', 'kb'] }),
+      args: argsFor({ skill: 'kb-retrieve', model: 'claude-opus-4-8', harness: 'claude', tags: ['recall', 'kb'] }),
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
@@ -140,6 +141,7 @@ describe(prepareEvent, () => {
     if (result.ok) {
       expect(result.prepared.content).toContain('skill: kb-retrieve');
       expect(result.prepared.content).toContain('model: claude-opus-4-8');
+      expect(result.prepared.content).toContain('harness: claude');
       expect(result.prepared.content).toContain('tags: [recall, kb]');
     }
   });
