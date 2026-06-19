@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture a new knowledge-base note
 
-Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, generates UTC dates, canonicalizes known-alias tags, validates the proposed frontmatter against the destination KB's schema, and writes the file atomically. You do the judgment work — pick the folder, the Diátaxis label, the title, and the tags; survey the destination KB's existing layout; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
+Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, generates UTC dates, canonicalizes known-alias tags, validates the proposed frontmatter against the destination KB's schema, and writes the file atomically under the KB's assertions root (`content/assertions/`). You do the judgment work — pick the topic folder, the Diátaxis label, the title, and the tags; survey the destination KB's existing layout; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
 
 The split is deliberate: the helper is narrow and mechanical; the classification and composition are wide and judgment-driven. Treat the helper as a guardrail (it refuses to write notes that fail validation or collide with an existing file), not as a classifier.
 
@@ -14,13 +14,13 @@ The split is deliberate: the helper is narrow and mechanical; the classification
 
 ## Arguments
 
-| Argument     | Description                                                                                                                                          | Required |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `--diataxis` | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).                                                                        | No       |
-| `--title`    | The note title; also doubles as the filename.                                                                                                        | Yes      |
-| `--kb`       | Knowledge base name, or `@default` for the registry default. Overrides `.kb/` discovery; the registry default is reachable only via `--kb @default`. | No       |
-| `--folder`   | KB-relative folder under which to write the note. Defaults to the KB root.                                                                           | No       |
-| `--tags`     | Comma-separated tag list. Known aliases are canonicalized at write time.                                                                             | No       |
+| Argument     | Description                                                                                                                                                                   | Required |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `--diataxis` | The note's Diátaxis label (e.g. `howto`, `concept`, `reference`, `tutorial`).                                                                                                 | No       |
+| `--title`    | The note title; also doubles as the filename.                                                                                                                                 | Yes      |
+| `--kb`       | Knowledge base name, or `@default` for the registry default. Overrides `.kb/` discovery; the registry default is reachable only via `--kb @default`.                          | No       |
+| `--folder`   | Topic subpath beneath the assertions root (`content/assertions/`). The helper owns the `assertions/` segment — pass the topic only. Defaults to `content/assertions/` itself. | No       |
+| `--tags`     | Comma-separated tag list. Known aliases are canonicalized at write time.                                                                                                      | No       |
 
 A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The note body is read from stdin to EOF; an empty body is allowed when a stub note is appropriate.
 
@@ -47,7 +47,7 @@ Read the note content from the conversation or, if the user pointed to one, from
 
 ### 2. Survey the destination KB
 
-List the top-level folders of the resolved knowledge base and a representative sample of notes from the folder most likely to fit the new note's topic. This survey informs the folder choice and reveals naming conventions already in use.
+List the existing topic folders under the resolved KB's assertions root (`content/assertions/`) and a representative sample of notes from the folder most likely to fit the new note's topic. This survey informs the folder choice and reveals naming conventions already in use.
 
 ### 3. Cross-reference via kb-retrieve
 
@@ -57,7 +57,7 @@ Invoke the `kb-retrieve` skill on the note's topic terms. Read the top-ranked ca
 
 Pick the placement and metadata:
 
-- **Folder**: An existing folder when one fits; a new folder when the topic is genuinely new to the KB.
+- **Folder**: A topic subpath under `content/assertions/` — an existing topic folder when one fits, a new one when the topic is genuinely new to the KB. Do not include the `assertions/` segment; the helper adds it.
 - **Diátaxis label**: The note's Diátaxis classification (the default vocabulary is `howto`, `concept`, `reference`, `tutorial`).
 - **Title**: A concise, descriptive title. For `diataxis: howto`, propose imperative-led titles ("Configure pnpm workspaces") not interrogative ones ("How do I configure pnpm workspaces?"). The title is also the filename — keep it within a sane length and avoid filesystem-hostile characters.
 - **Tags**: Topic and category tags drawn from existing tag vocabulary where possible. Known aliases will be canonicalized at write time by the helper.
@@ -77,7 +77,7 @@ Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies 
 ```bash
 cat <<'EOF' | node "$(dirname "$SKILL_PATH")/kb-add.mjs" \
   --diataxis <label> --title "<title>" \
-  [--kb <name>] [--folder <kb-relative-folder>] \
+  [--kb <name>] [--folder <topic-subpath>] \
   [--tags <comma,separated>]
 <note body, may span multiple lines and contain any characters>
 EOF
@@ -107,7 +107,7 @@ On `ok: false`, route by the `error` code:
 - `no-kb-resolvable` — the explicit `--kb <name>` matched no registered entry. Surface the message and propose a corrected name (or, in auto mode, fail visibly with the categorical reason).
 - `missing-destination` — no `.kb/` was discovered and no `--kb` was given. Ask the user where the note should go, passing `--kb <name>` for a specific KB or `--kb @default` for the registry default (or, in auto mode, fail visibly with the categorical reason).
 - `no-default` — `--kb @default` was given but no `default_kb` is configured. Surface the message; have the user name a KB explicitly or configure a default.
-- `invalid-args` / `invalid-title` — Surface the helper's message and propose a corrected invocation.
+- `invalid-args` / `invalid-title` — Surface the helper's message and propose a corrected invocation. A `--folder` that re-names the `assertions/` segment lands here; drop the archetype segment and pass the topic subpath only.
 - `schema-validation` — Surface the findings; either correct the proposed frontmatter or, when the user is willing, declare a new type in the KB's `.kb/schema.yaml`.
 - `collision` — A note already exists at the target path. Decide whether to re-title, append the new material to the existing note (read it first, then write a follow-up edit), or abort.
 

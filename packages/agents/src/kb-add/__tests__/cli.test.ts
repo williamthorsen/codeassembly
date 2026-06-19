@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { copyFile, mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { Readable } from 'node:stream';
 
@@ -134,7 +134,7 @@ describe(runAdd, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.path).toBe(join(kbPath, 'Working with streams.md'));
+      expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'Working with streams.md'));
       expect(result.kb.source).toBe('discovered');
       expect(result.frontmatter.title).toBe('Working with streams');
       expect(result.frontmatter.created).toBe(TODAY);
@@ -146,7 +146,7 @@ describe(runAdd, () => {
     }
   });
 
-  it('places the note under the given folder, creating it on demand', async () => {
+  it('places the note under content/assertions plus the given topic folder, creating it on demand', async () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
@@ -159,7 +159,7 @@ describe(runAdd, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.path).toBe(join(kbPath, 'languages', 'typescript', 'IO.md'));
+      expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'languages', 'typescript', 'IO.md'));
     }
   });
 
@@ -304,7 +304,9 @@ describe(runAdd, () => {
 
   it('returns collision and does not overwrite an existing note', async () => {
     const kbPath = await makeKb();
-    await writeFile(join(kbPath, 'Existing.md'), 'pre-existing\n', 'utf8');
+    const existing = join(kbPath, 'content', 'assertions', 'Existing.md');
+    await mkdir(dirname(existing), { recursive: true });
+    await writeFile(existing, 'pre-existing\n', 'utf8');
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Existing'],
@@ -317,10 +319,9 @@ describe(runAdd, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('collision');
-      expect(result.details?.existingPath).toBe(join(kbPath, 'Existing.md'));
+      expect(result.details?.existingPath).toBe(existing);
     }
-    const content = await readFile(join(kbPath, 'Existing.md'), 'utf8');
-    expect(content).toBe('pre-existing\n');
+    expect(await readFile(existing, 'utf8')).toBe('pre-existing\n');
   });
 
   it('returns readonly-kb when the explicit --kb names a readonly registry entry', async () => {
@@ -393,6 +394,24 @@ describe(runAdd, () => {
     expect(entries.filter((name) => name !== '.kb')).toEqual([]);
   });
 
+  it('returns invalid-args when --folder re-names the assertions archetype segment', async () => {
+    const kbPath = await makeKb();
+
+    const result = await runAdd({
+      argv: ['--diataxis', 'howto', '--title', 'Doubled', '--folder', 'assertions/tools'],
+      stdin: bodyStream(''),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('invalid-args');
+      expect(result.message).toContain('assertions/');
+    }
+  });
+
   it('warns on stderr and falls back to an empty alias map when tag-aliases.yaml is malformed', async () => {
     // Stand up a fresh KB and copy in the intentionally malformed tag-aliases.yaml fixture, so the write
     // itself stays in an isolated tempdir while the alias-load arm hits a real parse failure.
@@ -455,7 +474,7 @@ describe(runAdd, () => {
     expect(exitCode).toBe(0);
     const parsed: unknown = JSON.parse(stdout);
     expect(parsed).toMatchObject({ ok: true });
-    const writtenPath = join(kbPath, 'Subprocess test.md');
+    const writtenPath = join(kbPath, 'content', 'assertions', 'Subprocess test.md');
     const content = await readFile(writtenPath, 'utf8');
     expect(content).toContain('title: Subprocess test');
     expect(content).toContain('Body from stdin.');
