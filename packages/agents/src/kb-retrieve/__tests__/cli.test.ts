@@ -13,6 +13,9 @@ const MIXED_REGISTRY = join(FIXTURES, 'mixed-registry');
 const CUSTOM_SCHEMA_VAULT = join(FIXTURES, 'custom-schema-vault');
 const MALFORMED_SCHEMA_VAULT = join(FIXTURES, 'malformed-schema-vault');
 const MULTI_SCHEMA_REGISTRY = join(FIXTURES, 'multi-schema-registry');
+const SCOPED_VAULT = join(FIXTURES, 'scoped-vault');
+const DEFAULT_SCOPE_VAULT = join(FIXTURES, 'default-scope-vault');
+const MALFORMED_CONFIG_VAULT = join(FIXTURES, 'malformed-config-vault');
 const NOW = new Date('2026-05-01T00:00:00Z');
 
 describe(parseArgs, () => {
@@ -270,5 +273,41 @@ describe(runRetrieve, () => {
     // ...while the malformed sibling degrades, still surfaces its note, and contributes exactly one schema warning.
     expect(plain).toBeDefined();
     expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(1);
+  });
+
+  it('recalls only notes inside the configured targets, skipping root and excluded markdown', async () => {
+    // scoped-vault stores `zephyrquux` in README.md (root), content/in-scope.md, and content/drafts/excluded.md;
+    // its config targets `content/**/*.md` and excludes `content/drafts/**`, so only in-scope.md is a note.
+    const result = await runRetrieve({ argv: ['zephyrquux'], startDir: SCOPED_VAULT, now: NOW, home: FIXTURES });
+
+    expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['in-scope.md']);
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('scopes to content/ under the default config when no config.yaml is present', async () => {
+    // default-scope-vault has no `.kb/config.yaml`, so the default `content/**/*.md` applies: the root README is skipped.
+    const result = await runRetrieve({
+      argv: ['wibblefrazz'],
+      startDir: DEFAULT_SCOPE_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
+  });
+
+  it('degrades a malformed config to the default and warns instead of failing the search', async () => {
+    const result = await runRetrieve({
+      argv: ['splonktastic'],
+      startDir: MALFORMED_CONFIG_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    // The content/ note still recalls under the degraded default config, and the defect surfaces as one warning.
+    expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]).toMatch(/config invalid/);
+    expect(result.diagnostic).toBeUndefined();
   });
 });

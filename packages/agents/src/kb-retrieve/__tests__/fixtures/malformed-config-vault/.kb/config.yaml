@@ -1,0 +1,3 @@
+# `targets` must be a list of globs; a scalar is a type error that `loadKbConfig` rejects,
+# so recall degrades to the default config.
+targets: not-a-list

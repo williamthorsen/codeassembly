@@ -1,10 +1,12 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import type { NoteScopeMatcher } from '@codeassembly/kb/config';
+import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@codeassembly/kb/config';
 import type { Schema } from '@codeassembly/kb/schema';
 import { defaultSchema, loadSchema } from '@codeassembly/kb/schema';
 
@@ -187,7 +189,13 @@ export async function runRetrieve(input: {
     return { candidates: [], scopedKbs: [], warnings: composeWarnings({ registryError, missingKbs: [] }), diagnostic };
   }
 
-  const { hits, missingKbs } = await recallNotes({ query, scopedKbs: inScopeKbs });
+  const { hits: rawHits, missingKbs } = await recallNotes({ query, scopedKbs: inScopeKbs });
+
+  // Scope ripgrep's raw hits to each KB's configured note set — the same `targets`/`exclude` definition `kb check`
+  // enforces — so non-note markdown under the root and excluded paths never reach the candidate table.
+  const { matchers, warnings: configWarnings } = await loadMatchersForHits({ hits: rawHits, scopedKbs: inScopeKbs });
+  const hits = rawHits.filter((hit) => isNoteHit(hit, matchers));
+
   const { schemas, warnings: schemaWarnings } = await loadSchemasForHits({ hits, scopedKbs: inScopeKbs });
   const unreadableHitWarnings: string[] = [];
   const candidates = await normalizeHits({ hits, filters, now: input.now, warnings: unreadableHitWarnings, schemas });
@@ -199,7 +207,12 @@ export async function runRetrieve(input: {
   const result: RetrieveResult = {
     candidates,
     scopedKbs: searchedKbs,
-    warnings: [...composeWarnings({ registryError, missingKbs }), ...schemaWarnings, ...unreadableHitWarnings],
+    warnings: [
+      ...composeWarnings({ registryError, missingKbs }),
+      ...configWarnings,
+      ...schemaWarnings,
+      ...unreadableHitWarnings,
+    ],
   };
   if (candidates.length === 0) {
     // Distinguish a query that found nothing from a query that found hits which were then excluded by
@@ -207,6 +220,53 @@ export async function runRetrieve(input: {
     result.diagnostic = hits.length === 0 ? 'no notes matched the query' : 'all matches were filtered out';
   }
   return result;
+}
+
+/** Returns true when a hit's path falls inside its KB's configured note set; a KB with no matcher keeps all hits. */
+function isNoteHit(hit: RawHit, matchers: Map<string, NoteScopeMatcher>): boolean {
+  const matcher = matchers.get(hit.kbPath);
+  return matcher === undefined || matcher.isNote(toRelativePath(hit.kbPath, hit.path));
+}
+
+/** Renders a hit's absolute path as the slash-separated, KB-root-relative path the note-scope matcher expects. */
+function toRelativePath(kbPath: string, notePath: string): string {
+  return relative(kbPath, notePath).split(sep).join('/');
+}
+
+/**
+ * Builds a note-scope matcher for every KB that produced a hit, keyed by KB root path, so recall can drop hits that
+ * fall outside the KB's configured `targets`/`exclude` — the same definition `kb check` enforces. A KB whose
+ * `.kb/config.yaml` is malformed degrades to {@link defaultKbConfig} and contributes a config-health warning, so one
+ * bad config never fails a multi-store search (mirroring {@link loadSchemasForHits}).
+ */
+async function loadMatchersForHits(input: {
+  hits: RawHit[];
+  scopedKbs: ScopedKb[];
+}): Promise<{ matchers: Map<string, NoteScopeMatcher>; warnings: string[] }> {
+  const matchers = new Map<string, NoteScopeMatcher>();
+  const warnings: string[] = [];
+  for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
+    let config = defaultKbConfig;
+    try {
+      config = await loadKbConfig({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
+    } catch (error) {
+      warnings.push(formatConfigInvalid({ kbPath, scopedKbs: input.scopedKbs, error }));
+    }
+    matchers.set(kbPath, createNoteScopeMatcher(config));
+  }
+  return { matchers, warnings };
+}
+
+/**
+ * Phrases the config-health warning for a KB whose `.kb/config.yaml` could not be loaded. A named registry entry
+ * reports its name; a `.kb/`-discovered KB (no registry name) reports its path.
+ */
+function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; error: unknown }): string {
+  const name = input.scopedKbs.find((kb) => kb.path === input.kbPath)?.name ?? null;
+  const message = input.error instanceof Error ? input.error.message : String(input.error);
+  return name === null
+    ? `discovered KB config invalid at ${input.kbPath}: ${message}`
+    : `registry KB "${name}" config invalid: ${message}`;
 }
 
 /**
