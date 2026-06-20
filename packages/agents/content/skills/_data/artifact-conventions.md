@@ -772,6 +772,8 @@ Self-test before writing each finding: _Would I make this exact change right now
 
 Where dropped content goes: an observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
 
+This holds at the whole-review level too: a review that surfaces no findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
+
 Apply this gate **hardest** to R and S, where the low criticality bar invites filler.
 
 ### Category criteria
