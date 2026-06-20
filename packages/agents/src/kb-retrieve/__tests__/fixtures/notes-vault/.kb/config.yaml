@@ -1,0 +1,3 @@
+# This fixture deliberately stores notes outside `content/`, so recall must search the whole tree.
+targets:
+  - '**/*.md'
