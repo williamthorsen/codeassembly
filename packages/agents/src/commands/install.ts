@@ -5,7 +5,7 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
-import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.ts';
+import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import {
   computeContentHash,
   detectDrift,
@@ -320,6 +320,12 @@ async function installSkillEntry(
     // The cache is non-undefined here because srcStats.isDirectory() implies the directory branch above ran.
     if (expandedDirContents === undefined) {
       throw new Error(`Invariant violation: expandedDirContents undefined for directory ${srcPath}`);
+    }
+    // Clean-write directories CodeAssembly previously installed: remove the prior copy so files deleted from the
+    // source skill don't survive in the destination. Gated on prior ownership (a manifest entry exists) so a
+    // first-time install never wipes a coincidentally same-named directory the user already had.
+    if (existingEntry) {
+      await removeItem(destPath);
     }
     await writeExpandedSkillDir(srcPath, destPath, expandedDirContents);
     const skillsDestDir = path.dirname(destPath);

@@ -105,6 +105,35 @@ describe('install stale-file pruning', () => {
     expect(paths).toContain('skills/drop');
   });
 
+  it('removes a file deleted from within a still-present multi-file skill', async () => {
+    const contentDir = await buildContent({
+      skills: {
+        multi: { 'SKILL.md': skillBody('multi'), 'modules/old.md': '# old\n', 'modules/keep.md': '# keep\n' },
+      },
+    });
+    await installCommand(makeOptions(), tempDir, contentDir);
+    expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'old.md'))).toBe(true);
+
+    await rm(path.join(contentDir, 'skills', 'multi', 'modules', 'old.md'));
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'old.md'))).toBe(false);
+    expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'keep.md'))).toBe(true);
+    expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'SKILL.md'))).toBe(true);
+  });
+
+  it('does not clean a coincidentally same-named directory on first install', async () => {
+    const preExisting = path.join(tempDir, '.claude', 'skills', 'multi');
+    await mkdir(preExisting, { recursive: true });
+    await writeFile(path.join(preExisting, 'user-note.md'), '# mine\n', 'utf8');
+
+    const contentDir = await buildContent({ skills: { multi: { 'SKILL.md': skillBody('multi') } } });
+    await installCommand(makeOptions(), tempDir, contentDir);
+
+    expect(existsSync(path.join(preExisting, 'user-note.md'))).toBe(true);
+    expect(existsSync(path.join(preExisting, 'SKILL.md'))).toBe(true);
+  });
+
   // region | Helpers
 
   function skillBody(name: string): string {
@@ -152,7 +181,9 @@ describe('install stale-file pruning', () => {
       const skillDir = path.join(contentDir, 'skills', skillName);
       await mkdir(skillDir, { recursive: true });
       for (const [fileName, body] of Object.entries(files)) {
-        await writeFile(path.join(skillDir, fileName), body, 'utf8');
+        const fullPath = path.join(skillDir, fileName);
+        await mkdir(path.dirname(fullPath), { recursive: true });
+        await writeFile(fullPath, body, 'utf8');
       }
     }
 
