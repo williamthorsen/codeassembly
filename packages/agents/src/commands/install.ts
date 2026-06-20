@@ -20,6 +20,7 @@ import {
   injectMarkersInDirectory,
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
+import { pruneOrphanedEntries } from '../lib/orphan-pruner.ts';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
@@ -136,6 +137,11 @@ export async function installCommand(
         entries.push(promptsEntry);
       }
     }
+
+    // Reconcile against the previous manifest: remove files whose source was deleted. Runs before the dry-run
+    // gate so `--dry-run` previews removals. User-modified orphans are kept (unless `--force`) and stay tracked.
+    const { retained } = await pruneOrphanedEntries(existingEntries, entries, paths.harnessHome, options);
+    entries.push(...retained);
 
     if (options.dryRun) {
       console.info(`  [dry-run] Would install ${entries.length} items:`);
@@ -768,6 +774,11 @@ async function installSharedGuidance(
       linked: options.link,
     });
   }
+
+  // Reconcile shared guidance against the previous manifest before reporting or persisting, so deleted-source
+  // files are removed from `~/.agents/` too. User-modified orphans are kept (unless `--force`) and stay tracked.
+  const { retained } = await pruneOrphanedEntries(existingEntries, entries, sharedHome, options);
+  entries.push(...retained);
 
   if (options.dryRun) {
     console.info(`  [dry-run] Would install ${entries.length} shared guidance items`);
