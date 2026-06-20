@@ -101,11 +101,9 @@ export async function unlinkIfSymlink(destPath: string): Promise<void> {
 }
 
 /**
- * Removes a file or directory.
- * @param destPath Absolute path to remove.
+ * Removes a file, directory, or symlink. A dangling symlink (its target gone) is still removed, because `rm`
+ * operates on the link itself; `force` makes removal a no-op when the path is absent.
  */
 export async function removeItem(destPath: string): Promise<void> {
-  if (existsSync(destPath)) {
-    await rm(destPath, { recursive: true, force: true });
-  }
+  await rm(destPath, { recursive: true, force: true });
 }

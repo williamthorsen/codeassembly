@@ -165,7 +165,7 @@ function printUsage(): void {
   console.info(`Usage: codeassembly-agents <command> [options]
 
 Commands:
-  install          Install guidance, skills, and subagents into harness directories
+  install          Install guidance, skills, and subagents into harness directories, removing files whose source was deleted
   init             Scaffold an empty .agents/rulebooks.yaml in the current project
   sync             Resolve .agents/rulebooks.yaml and materialize declared rulebooks
   uninstall        Remove installed guidance, skills, and subagents
@@ -175,7 +175,7 @@ Commands:
 Options:
   --harness <name>  Target harness: claude, rovodev, or all (default: all)
   --link             Use symlinks instead of copies (install only)
-  --force            Overwrite modified files (install/uninstall)
+  --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
   --help, -h         Show this help message`);
 }
