@@ -11,7 +11,7 @@ Always act as a conscientious and courteous collaborator. Follow best practices 
 
 ## Interactive work
 
-- Invoke the `collaboration` skill when working interactively with the user (not applicable to orchestrated subagent work)
+- Invoke the `collaborate` skill when working interactively with the user (not applicable to orchestrated subagent work)
 
 ## Style
 

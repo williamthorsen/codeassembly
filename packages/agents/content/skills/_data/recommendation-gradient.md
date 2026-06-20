@@ -1,6 +1,6 @@
 # Recommendation gradient
 
-> **Note for maintainers:** Several skill bodies — including `collaboration/SKILL.md`, `design-and-plan/SKILL.md`, and `refine-plan/SKILL.md` — contain pointers back to this file at their question-asking steps. Those pointers duplicate the universal rule in `AGENTS.md` _intentionally_: Agents follow behavioural rules more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
+> **Note for maintainers:** Several skill bodies — including `collaborate/SKILL.md`, `design-and-plan/SKILL.md`, and `refine-plan/SKILL.md` — contain pointers back to this file at their question-asking steps. Those pointers duplicate the universal rule in `AGENTS.md` _intentionally_: Agents follow behavioural rules more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
 
 For numbered option-style questions with 2 or more choices, mark each option with a strength gradient and a brief rationale. The gradient applies to every list with substantive tradeoffs, including templated next-steps menus and substantive binary choices.
 

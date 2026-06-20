@@ -1,10 +1,10 @@
 ---
-name: collaboration
+name: collaborate
 description: Interactive collaboration rules — pause for input, ask before acting, discuss before implementing
 user-invocable: false
 ---
 
-# Collaboration
+# Collaborate
 
 Rules for interactive work with the user. These do not apply to orchestrated subagent sessions.
 

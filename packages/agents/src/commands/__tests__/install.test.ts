@@ -375,7 +375,7 @@ describe(installCommand, () => {
     // Shared skills with user-invocable: false should be excluded
     expect(skillNames).not.toContain('anti-patterns');
     expect(skillNames).not.toContain('common-mistakes');
-    expect(skillNames).not.toContain('collaboration');
+    expect(skillNames).not.toContain('collaborate');
     expect(skillNames).not.toContain('orchestrate');
 
     // Shared skills with user-invocable: true should be included
