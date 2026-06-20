@@ -324,4 +324,22 @@ describe(syncCommand, () => {
     expect(skill).toContain('name: consult-shell-conventions');
     expect(skill).toContain('# Shell script conventions');
   });
+
+  it('fails when two skill rulebooks resolve to the same skill name, naming both slugs', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill\nskill-name: shared', 'Gamma rules.');
+    await writeLibraryRulebook('delta', 'delivery: skill\nskill-name: shared', 'Delta rules.');
+    await writeManifest('rulebooks:\n  - gamma\n  - delta\n');
+
+    let message = '';
+    try {
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+    } catch (error: unknown) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+
+    expect(message).toContain('shared');
+    expect(message).toContain('gamma');
+    expect(message).toContain('delta');
+    expect(existsSync(skillPath('shared'))).toBe(false);
+  });
 });

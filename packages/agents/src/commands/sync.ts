@@ -49,6 +49,7 @@ export async function syncCommand(
   // Resolve and validate every declared rulebook before writing anything, so a missing library file or invalid
   // frontmatter fails the whole run rather than leaving a partial sync behind.
   const resolved = await Promise.all(declared.map((slug) => resolveRulebook(slug, librarySrcDir)));
+  assertNoSkillNameCollisions(resolved);
 
   // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
   // PROJECT.md tracks the desired *ambient* set. Keying PROJECT.md on declaration alone would strand a block
@@ -142,6 +143,32 @@ export async function syncCommand(
 }
 
 // region | Helpers
+
+/**
+ * Throws when two skill-delivery rulebooks resolve to the same skill name, which would share one directory and
+ * clobber each other. Failing here, before any write, forces the conflict to be resolved with a `skill-name`
+ * override rather than silently letting the last write win.
+ */
+function assertNoSkillNameCollisions(resolved: ReadonlyArray<ResolvedRulebook>): void {
+  const slugsByName = new Map<string, Array<string>>();
+  for (const rulebook of resolved) {
+    if (!rulebook.skill) {
+      continue;
+    }
+    const slugs = slugsByName.get(rulebook.skillName) ?? [];
+    slugs.push(rulebook.slug);
+    slugsByName.set(rulebook.skillName, slugs);
+  }
+
+  for (const [skillName, slugs] of slugsByName) {
+    if (slugs.length > 1) {
+      throw new Error(
+        `Skill name collision: rulebooks ${slugs.join(', ')} all resolve to skill "${skillName}". ` +
+          'Give all but one a distinct `skill-name`.',
+      );
+    }
+  }
+}
 
 /** Lists the slugs of materialized neutral files, returning an empty list when the directory is absent. */
 async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<string>> {
