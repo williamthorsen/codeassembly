@@ -112,8 +112,8 @@ describe(injectProvenanceMarker, () => {
 
 describe(buildSourceUrl, () => {
   it('builds a URL under packages/agents/content/ at the SOURCE_REF branch', () => {
-    expect(buildSourceUrl('skills/collaboration/SKILL.md')).toBe(
-      `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content/skills/collaboration/SKILL.md`,
+    expect(buildSourceUrl('skills/collaborate/SKILL.md')).toBe(
+      `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content/skills/collaborate/SKILL.md`,
     );
   });
 

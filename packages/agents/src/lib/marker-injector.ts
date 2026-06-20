@@ -21,7 +21,7 @@ const FRONTMATTER_OPEN = '---';
 
 /**
  * Build the GitHub URL pointing to a source file under `packages/agents/content/`.
- * `contentRelativePath` is the path relative to that directory (e.g., `skills/collaboration/SKILL.md`).
+ * `contentRelativePath` is the path relative to that directory (e.g., `skills/collaborate/SKILL.md`).
  */
 export function buildSourceUrl(contentRelativePath: string): string {
   return `${REPO_BLOB_BASE}/${contentRelativePath}`;
