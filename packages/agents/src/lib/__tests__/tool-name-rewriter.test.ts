@@ -31,7 +31,7 @@ describe('rewriteToolNames', () => {
     expect(rewriteToolNames(content, IDENTITY, 'test.md')).toBe('Use Glob, Grep, and Read to explore.');
   });
 
-  it('replaces placeholders with platform-native names for a non-identity mapping', () => {
+  it('replaces placeholders with harness-native names for a non-identity mapping', () => {
     const content = 'Use {tool:Glob}, {tool:Grep}, and {tool:Read} to explore.';
     expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe('Use expand_folder, grep, and open_files to explore.');
   });

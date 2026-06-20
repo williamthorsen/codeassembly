@@ -12,7 +12,6 @@ integrations:
     enabled: false
 merge:
   title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'
-platform: github
 pr:
   title_format: '[{ticket_ref} ]{title}'
 project:
@@ -22,5 +21,6 @@ repository:
   default_remote:
     name: origin
     default_branch: main
+scm: github
 ticket:
   title_format: '{title}'

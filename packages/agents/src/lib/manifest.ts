@@ -17,7 +17,7 @@ function isAgentsManifest(value: unknown): value is AgentsManifest {
   if (!isRecord(value)) {
     return false;
   }
-  return typeof value.schemaVersion === 'number' && isRecord(value.platforms);
+  return typeof value.schemaVersion === 'number' && isRecord(value.harnesses);
 }
 
 /** Default manifest directory relative to home. */
@@ -38,8 +38,8 @@ export function getManifestPath(baseDir?: string): string {
  */
 export function createEmptyManifest(): AgentsManifest {
   return {
-    schemaVersion: 1,
-    platforms: {},
+    schemaVersion: 2,
+    harnesses: {},
   };
 }
 
@@ -95,14 +95,14 @@ export async function computeContentHash(filePath: string): Promise<string> {
 /**
  * Detects whether an installed file has drifted from its manifest entry.
  * @param entry The manifest entry to check.
- * @param platformHome Absolute path to the platform's home directory.
+ * @param harnessHome Absolute path to the harness's home directory.
  * @returns `'current'` if unchanged, `'modified'` if changed, `'missing'` if deleted.
  */
 export async function detectDrift(
   entry: ManifestEntry,
-  platformHome: string,
+  harnessHome: string,
 ): Promise<'current' | 'modified' | 'missing'> {
-  const filePath = path.join(platformHome, entry.relativePath);
+  const filePath = path.join(harnessHome, entry.relativePath);
 
   if (!existsSync(filePath)) {
     return 'missing';

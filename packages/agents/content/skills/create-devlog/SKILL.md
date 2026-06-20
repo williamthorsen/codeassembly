@@ -55,7 +55,7 @@ Resolve session context and the artifact directory before writing.
 
 ### Path resolution
 
-1. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `project_slug`, `artifact_base_dir`, `artifact_paths`, and `branch_name` from it.
+1. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `project_slug`, `artifact_base_dir`, `artifact_paths`, and `branch_name` from it.
 2. If `ticket_id` is non-null: Save as a ticket-level artifact at:
 
    ```
@@ -91,7 +91,7 @@ Resolve `$run_id_arg` from the `--run-id={id}` argument (empty when not supplied
 Run via Bash, substituting the resolved arguments:
 
 ```bash
-{platform_home_dir}/scripts/resolve-frontmatter.sh \
+{harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill create-devlog \
   --interactive true \
   --model "$MODEL_ID" \

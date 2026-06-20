@@ -79,10 +79,19 @@ describe('preferences.json schema', () => {
     expect(output).toMatchObject({ valid: false });
   });
 
-  it('rejects a `platform` value outside the allowed enum', async () => {
-    // Guards the `platform` enum constraint (`github` | `bitbucket`).
-    const output = await validate(schemaId, { platform: 'gitlab' }, FLAG);
+  it('rejects a `scm` value outside the allowed enum', async () => {
+    // Guards the `scm` enum constraint (`github` | `bitbucket`).
+    const output = await validate(schemaId, { scm: 'gitlab' }, FLAG);
     expect(output).toMatchObject({ valid: false });
+  });
+
+  it('accepts the `scm` key and the deprecated `platform` alias', async () => {
+    // The canonical `scm` key and the legacy `platform` alias both validate; the alias is retained
+    // so an existing `platform`-keyed preferences file stays schema-valid during the migration window.
+    const scmOutput = await validate(schemaId, { scm: 'bitbucket' }, FLAG);
+    expect(scmOutput).toMatchObject({ valid: true });
+    const legacyOutput = await validate(schemaId, { platform: 'bitbucket' }, FLAG);
+    expect(legacyOutput).toMatchObject({ valid: true });
   });
 
   it('accepts the documented reserved keys under `merge`', async () => {

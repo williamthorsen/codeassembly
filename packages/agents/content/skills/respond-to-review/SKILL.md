@@ -19,7 +19,7 @@ This skill bridges the gap between receiving a code review and implementing fixe
 
 ## Process
 
-1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it.
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it.
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
@@ -36,13 +36,13 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 
 Resolve `$pr_url` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
 
-- If the review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
+- If the review's frontmatter carries a `pr:` field, set `$pr_url` to its value so the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "$pr_url"`.
 - Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, leave `$pr_url` empty.
 
 Run via Bash:
 
 ```bash
-{platform_home_dir}/scripts/resolve-frontmatter.sh \
+{harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill respond-to-review \
   --interactive true \
   --model "$MODEL_ID" \
@@ -249,7 +249,7 @@ The body following the frontmatter has this structure:
 
 ### Path resolution
 
-Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir` and `project_slug` from the manifest JSON emitted on stdout (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir` and `project_slug` from the manifest JSON emitted on stdout (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

@@ -2,8 +2,8 @@
 
 /** A narrow projection of `schemas/preferences.json` covering the fields the deriver consumes. */
 export interface ResolvedPreferences {
-  /** Top-level `platform` (`"github"` or `"bitbucket"`); may be undefined when not configured. */
-  readonly platform?: 'github' | 'bitbucket';
+  /** Top-level `scm`, the VCS host (`"github"` or `"bitbucket"`); may be undefined when not configured. */
+  readonly scm?: 'github' | 'bitbucket';
   /** `project.slug`, `project.ticket_ref_prefix`. */
   readonly project?: {
     readonly slug?: string;
@@ -49,7 +49,7 @@ export interface BranchManifest {
   readonly ticket_id: string | null;
   readonly ticket_ref: string | null;
   readonly project_slug: string;
-  readonly platform: 'github' | 'bitbucket';
+  readonly scm: 'github' | 'bitbucket';
   readonly default_branch: string;
   readonly branch_name: string;
   readonly artifact_base_dir: string;

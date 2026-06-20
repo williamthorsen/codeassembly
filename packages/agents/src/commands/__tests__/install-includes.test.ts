@@ -22,7 +22,7 @@ describe('install with include directives', () => {
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return {
-      platform: 'claude',
+      harness: 'claude',
       link: false,
       force: false,
       dryRun: false,
@@ -45,15 +45,15 @@ describe('install with include directives', () => {
     } = {},
   ): Promise<void> {
     await mkdir(path.join(contentDir, 'guidance', 'shared'), { recursive: true });
-    await mkdir(path.join(contentDir, 'guidance', '_platforms', 'claude'), { recursive: true });
-    await mkdir(path.join(contentDir, 'guidance', '_platforms', 'rovodev'), { recursive: true });
+    await mkdir(path.join(contentDir, 'guidance', '_harnesses', 'claude'), { recursive: true });
+    await mkdir(path.join(contentDir, 'guidance', '_harnesses', 'rovodev'), { recursive: true });
     await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
     await mkdir(path.join(contentDir, 'skills'), { recursive: true });
     await mkdir(path.join(contentDir, 'scripts'), { recursive: true });
 
     await writeFile(path.join(contentDir, 'guidance', 'shared', 'AGENTS.md'), '# Shared\n', 'utf8');
     await writeFile(
-      path.join(contentDir, 'guidance', '_platforms', 'claude', 'CLAUDE.md'),
+      path.join(contentDir, 'guidance', '_harnesses', 'claude', 'CLAUDE.md'),
       '# Claude guidance\n',
       'utf8',
     );
@@ -436,7 +436,7 @@ describe('install with include directives', () => {
       await installCommand(makeOptions(), tempDir, contentDir);
 
       const installed = await readFile(path.join(claudeHome, 'skills', 'demo-skill', 'SKILL.md'), 'utf8');
-      // The bare-relative link should have been rewritten to an absolute platform path.
+      // The bare-relative link should have been rewritten to an absolute harness path.
       expect(installed).not.toMatch(/\]\(_data\/case-conventions\.md\)/);
       expect(installed).toMatch(/case-conventions\.md/);
     });

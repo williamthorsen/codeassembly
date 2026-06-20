@@ -8,9 +8,9 @@ import { installCommand } from './commands/install.ts';
 import { statusCommand } from './commands/status.ts';
 import { syncCommand } from './commands/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
-import type { InstallOptions, PlatformId } from './lib/types.ts';
+import type { HarnessId, InstallOptions } from './lib/types.ts';
 
-const VALID_PLATFORM_IDS = new Set<string>(['claude', 'rovodev', 'all']);
+const VALID_HARNESS_IDS = new Set<string>(['claude', 'rovodev', 'all']);
 
 /**
  * Main CLI entry point.
@@ -35,10 +35,10 @@ async function main(): Promise<void> {
         await syncCommand(options);
         break;
       case 'uninstall':
-        await uninstallCommand({ platform: options.platform, force: options.force });
+        await uninstallCommand({ harness: options.harness, force: options.force });
         break;
       case 'status':
-        await statusCommand({ platform: options.platform });
+        await statusCommand({ harness: options.harness });
         break;
       case 'generate':
         if (subcommand === 'label-map') {
@@ -66,8 +66,8 @@ async function main(): Promise<void> {
 
 // region | Helpers
 
-function isValidPlatform(value: string): value is PlatformId | 'all' {
-  return VALID_PLATFORM_IDS.has(value);
+function isValidHarness(value: string): value is HarnessId | 'all' {
+  return VALID_HARNESS_IDS.has(value);
 }
 
 /** Parses CLI arguments into a structured options object. */
@@ -80,7 +80,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   const args = argv.slice(2);
   let command = '';
   let subcommand = '';
-  let platform: InstallOptions['platform'] = 'all';
+  let harness: InstallOptions['harness'] = 'all';
   let link = false;
   let force = false;
   let dryRun = false;
@@ -104,9 +104,9 @@ function parseArgs(argv: ReadonlyArray<string>): {
       case 'dry-run':
         dryRun = true;
         break;
-      case 'platform': {
-        const result = parsePlatformArg(args, i);
-        platform = result.platform;
+      case 'harness': {
+        const result = parseHarnessArg(args, i);
+        harness = result.harness;
         i = result.nextIndex;
         break;
       }
@@ -125,37 +125,37 @@ function parseArgs(argv: ReadonlyArray<string>): {
   return {
     command,
     subcommand,
-    options: { platform, link, force, dryRun },
+    options: { harness, link, force, dryRun },
     help,
   };
 }
 
-function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'platform' | null {
-  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'platform'> = {
+function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'harness' | null {
+  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'harness'> = {
     '--help': 'help',
     '-h': 'help',
     '--link': 'link',
     '--force': 'force',
     '--dry-run': 'dry-run',
-    '--platform': 'platform',
+    '--harness': 'harness',
   };
   return flags[arg] ?? null;
 }
 
-function parsePlatformArg(
+function parseHarnessArg(
   args: ReadonlyArray<string>,
   index: number,
-): { platform: PlatformId | 'all'; nextIndex: number } {
+): { harness: HarnessId | 'all'; nextIndex: number } {
   const nextArg = args[index + 1];
   if (!nextArg || nextArg.startsWith('--')) {
-    console.error('Error: --platform requires a value (claude, rovodev, or all)');
+    console.error('Error: --harness requires a value (claude, rovodev, or all)');
     process.exit(1);
   }
-  if (!isValidPlatform(nextArg)) {
-    console.error(`Error: Invalid platform "${nextArg}". Valid options: claude, rovodev, all`);
+  if (!isValidHarness(nextArg)) {
+    console.error(`Error: Invalid harness "${nextArg}". Valid options: claude, rovodev, all`);
     process.exit(1);
   }
-  return { platform: nextArg, nextIndex: index + 1 };
+  return { harness: nextArg, nextIndex: index + 1 };
 }
 
 /**
@@ -165,7 +165,7 @@ function printUsage(): void {
   console.info(`Usage: codeassembly-agents <command> [options]
 
 Commands:
-  install          Install guidance, skills, and subagents into platform directories
+  install          Install guidance, skills, and subagents into harness directories
   init             Scaffold an empty .agents/rulebooks.yaml in the current project
   sync             Resolve .agents/rulebooks.yaml and materialize declared rulebooks
   uninstall        Remove installed guidance, skills, and subagents
@@ -173,7 +173,7 @@ Commands:
   generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
-  --platform <name>  Target platform: claude, rovodev, or all (default: all)
+  --harness <name>  Target harness: claude, rovodev, or all (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)

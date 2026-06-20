@@ -30,7 +30,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
    - Other URL -> Fetch the URL content.
-4. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
+4. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
 
@@ -153,7 +153,7 @@ The stamp writes the full canonical schema in one atomic write: the `provenance:
 
 This site uses `--format json` because the `provenance:` Block is case-branched on the input artifact's existing provenance — see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `platform`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too — do not emit `null` or empty strings.
 
 The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
 

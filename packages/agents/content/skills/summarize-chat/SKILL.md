@@ -73,11 +73,11 @@ The artifact's frontmatter conforms to the [universal artifact frontmatter](../_
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill summarize-chat --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill summarize-chat --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Saving
 
-Resolve artifact directory by invoking `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths` from the manifest JSON emitted on stdout. The chats path is `artifact_paths.chats` (default: `chats`).
+Resolve artifact directory by invoking `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `artifact_paths` from the manifest JSON emitted on stdout. The chats path is `artifact_paths.chats` (default: `chats`).
 
 Full path: `{artifact_base_dir}/projects/{project_slug}/{chats_path}/`
 

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolvePlatformPaths } from '../../lib/platform.js';
+import { resolveHarnessPaths } from '../../lib/harness.js';
 import type { InstallOptions } from '../../lib/types.js';
 import { installCommand } from '../install.js';
 import { statusCommand } from '../status.js';
@@ -23,7 +23,7 @@ describe('statusCommand', () => {
 
   function makeInstallOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return {
-      platform: 'claude',
+      harness: 'claude',
       link: false,
       force: false,
       dryRun: false,
@@ -41,7 +41,7 @@ describe('statusCommand', () => {
 
     // Capture status output
     const infoSpy = vi.spyOn(console, 'info');
-    await statusCommand({ platform: 'claude' }, tempDir);
+    await statusCommand({ harness: 'claude' }, tempDir);
 
     const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
     expect(output).toContain('current');
@@ -51,12 +51,12 @@ describe('statusCommand', () => {
     infoSpy.mockRestore();
   });
 
-  it('should report not installed for a platform with no manifest', async () => {
+  it('should report not installed for a harness with no manifest', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });
 
     const infoSpy = vi.spyOn(console, 'info');
-    await statusCommand({ platform: 'claude' }, tempDir);
+    await statusCommand({ harness: 'claude' }, tempDir);
 
     const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
     expect(output).toContain('not installed');
@@ -72,7 +72,7 @@ describe('statusCommand', () => {
     await installCommand(makeInstallOptions(), tempDir);
 
     // Delete one installed subagent file
-    const paths = resolvePlatformPaths('claude', tempDir);
+    const paths = resolveHarnessPaths('claude', tempDir);
     const agentFiles = await readdir(paths.subagentsDir);
     const firstAgent = agentFiles[0];
     if (firstAgent === undefined) {
@@ -81,7 +81,7 @@ describe('statusCommand', () => {
     await unlink(path.join(paths.subagentsDir, firstAgent));
 
     const infoSpy = vi.spyOn(console, 'info');
-    await statusCommand({ platform: 'claude' }, tempDir);
+    await statusCommand({ harness: 'claude' }, tempDir);
 
     const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
     expect(output).toContain('missing:');
@@ -97,7 +97,7 @@ describe('statusCommand', () => {
     await installCommand(makeInstallOptions(), tempDir);
 
     // Overwrite one installed subagent file with different content
-    const paths = resolvePlatformPaths('claude', tempDir);
+    const paths = resolveHarnessPaths('claude', tempDir);
     const agentFiles = await readdir(paths.subagentsDir);
     const firstAgent = agentFiles[0];
     if (firstAgent === undefined) {
@@ -106,7 +106,7 @@ describe('statusCommand', () => {
     await writeFile(path.join(paths.subagentsDir, firstAgent), 'tampered content', 'utf8');
 
     const infoSpy = vi.spyOn(console, 'info');
-    await statusCommand({ platform: 'claude' }, tempDir);
+    await statusCommand({ harness: 'claude' }, tempDir);
 
     const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
     expect(output).toContain('modified:');

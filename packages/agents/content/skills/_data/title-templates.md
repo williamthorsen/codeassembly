@@ -7,7 +7,7 @@ Commit titles, ticket titles, PR titles, and squash-merge titles are produced fr
 Run the `describe-change.sh` script with every input that is available; templates control which tokens are required:
 
 ```bash
-{platform_home_dir}/scripts/describe-change.sh \
+{harness_home_dir}/scripts/describe-change.sh \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \

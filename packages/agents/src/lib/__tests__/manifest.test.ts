@@ -39,6 +39,30 @@ describe('manifest', () => {
       warnSpy.mockRestore();
     });
 
+    it('should reset a pre-rename manifest carrying the legacy `platforms` key', async () => {
+      const manifestPath = path.join(tempDir, 'legacy-manifest.json');
+      const legacyManifest = {
+        schemaVersion: 1,
+        platforms: {
+          claude: {
+            platform: 'claude',
+            version: '0.1.0',
+            installedAt: '2026-01-01T00:00:00Z',
+            entries: [{ relativePath: 'skills/test', contentHash: 'sha256:abc123', linked: false }],
+          },
+        },
+      };
+      await writeFile(manifestPath, JSON.stringify(legacyManifest), 'utf8');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const result = await readManifest(manifestPath);
+
+      expect(result).toEqual(createEmptyManifest());
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('existing manifest is invalid or incompatible'));
+
+      warnSpy.mockRestore();
+    });
+
     it('should throw when file contains malformed JSON', async () => {
       const manifestPath = path.join(tempDir, 'malformed.json');
       await writeFile(manifestPath, 'not valid json {{{', 'utf8');
@@ -48,10 +72,10 @@ describe('manifest', () => {
 
     it('should read a valid manifest file', async () => {
       const manifest: AgentsManifest = {
-        schemaVersion: 1,
-        platforms: {
+        schemaVersion: 2,
+        harnesses: {
           claude: {
-            platform: 'claude',
+            harness: 'claude',
             version: '0.1.0',
             installedAt: '2026-01-01T00:00:00Z',
             entries: [{ relativePath: 'skills/test', contentHash: 'sha256:abc123', linked: false }],
@@ -69,10 +93,10 @@ describe('manifest', () => {
   describe('writeManifest', () => {
     it('should round-trip manifest data', async () => {
       const manifest: AgentsManifest = {
-        schemaVersion: 1,
-        platforms: {
+        schemaVersion: 2,
+        harnesses: {
           claude: {
-            platform: 'claude',
+            harness: 'claude',
             version: '0.1.0',
             installedAt: '2026-01-01T00:00:00Z',
             entries: [{ relativePath: 'skills/test', contentHash: 'sha256:abc', linked: false }],
@@ -113,8 +137,8 @@ describe('manifest', () => {
 
   describe('detectDrift', () => {
     it('should return current for unmodified file', async () => {
-      const platformHome = path.join(tempDir, 'platform');
-      const skillDir = path.join(platformHome, 'skills');
+      const harnessHome = path.join(tempDir, 'harness');
+      const skillDir = path.join(harnessHome, 'skills');
       await mkdir(skillDir, { recursive: true });
 
       const filePath = path.join(skillDir, 'test.md');
@@ -127,13 +151,13 @@ describe('manifest', () => {
         linked: false,
       };
 
-      const result = await detectDrift(entry, platformHome);
+      const result = await detectDrift(entry, harnessHome);
       expect(result).toBe('current');
     });
 
     it('should return modified for changed file', async () => {
-      const platformHome = path.join(tempDir, 'platform');
-      const skillDir = path.join(platformHome, 'skills');
+      const harnessHome = path.join(tempDir, 'harness');
+      const skillDir = path.join(harnessHome, 'skills');
       await mkdir(skillDir, { recursive: true });
 
       const filePath = path.join(skillDir, 'test.md');
@@ -149,25 +173,25 @@ describe('manifest', () => {
         linked: false,
       };
 
-      const result = await detectDrift(entry, platformHome);
+      const result = await detectDrift(entry, harnessHome);
       expect(result).toBe('modified');
     });
 
     it('should return missing for deleted file', async () => {
-      const platformHome = path.join(tempDir, 'platform');
+      const harnessHome = path.join(tempDir, 'harness');
       const entry: ManifestEntry = {
         relativePath: 'skills/nonexistent.md',
         contentHash: 'sha256:doesnotmatter',
         linked: false,
       };
 
-      const result = await detectDrift(entry, platformHome);
+      const result = await detectDrift(entry, harnessHome);
       expect(result).toBe('missing');
     });
 
     it('should return current for directory entry when directory exists', async () => {
-      const platformHome = path.join(tempDir, 'platform');
-      const dirPath = path.join(platformHome, 'skills', 'my-skill');
+      const harnessHome = path.join(tempDir, 'harness');
+      const dirPath = path.join(harnessHome, 'skills', 'my-skill');
       await mkdir(dirPath, { recursive: true });
 
       const entry: ManifestEntry = {
@@ -176,14 +200,14 @@ describe('manifest', () => {
         linked: false,
       };
 
-      const result = await detectDrift(entry, platformHome);
+      const result = await detectDrift(entry, harnessHome);
       expect(result).toBe('current');
     });
 
     it('should return modified for directory entry when replaced by a file', async () => {
-      const platformHome = path.join(tempDir, 'platform');
-      const filePath = path.join(platformHome, 'skills', 'my-skill');
-      await mkdir(path.join(platformHome, 'skills'), { recursive: true });
+      const harnessHome = path.join(tempDir, 'harness');
+      const filePath = path.join(harnessHome, 'skills', 'my-skill');
+      await mkdir(path.join(harnessHome, 'skills'), { recursive: true });
       await writeFile(filePath, 'not a directory', 'utf8');
 
       const entry: ManifestEntry = {
@@ -192,7 +216,7 @@ describe('manifest', () => {
         linked: false,
       };
 
-      const result = await detectDrift(entry, platformHome);
+      const result = await detectDrift(entry, harnessHome);
       expect(result).toBe('modified');
     });
   });

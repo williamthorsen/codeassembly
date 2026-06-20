@@ -17,7 +17,7 @@ import { installCommand } from '../install.js';
 describe('tool-name placeholder rewriting end-to-end', () => {
   let tempDir: string;
   let contentDir: string;
-  const installOptions: InstallOptions = { platform: 'rovodev', link: false, force: false, dryRun: false };
+  const installOptions: InstallOptions = { harness: 'rovodev', link: false, force: false, dryRun: false };
 
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-tool-names-${Date.now()}-${Math.random().toString(36).slice(2)}`);

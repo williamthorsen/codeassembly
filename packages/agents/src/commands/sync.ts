@@ -3,7 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.ts';
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
 import { readRulebooksManifest } from '../lib/rulebooks-manifest.ts';
@@ -23,7 +23,7 @@ interface ResolvedRulebook {
 /**
  * Resolves the project-scope `.agents/rulebooks.yaml`, materializes each declared rulebook's neutral body to
  * `.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `.agents/PROJECT.md`, writes `skill` rulebooks
- * as thin-wrapper skills into each targeted platform's project-local skills dir, and retracts anything no longer
+ * as thin-wrapper skills into each targeted harness's project-local skills dir, and retracts anything no longer
  * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent.
  * An absent `rulebooks.yaml` is a total no-op.
  *
@@ -56,10 +56,10 @@ export async function syncCommand(
   const desiredAmbient = new Set(resolved.filter((rulebook) => rulebook.ambient).map((rulebook) => rulebook.slug));
   const desiredSkill = new Set(resolved.filter((rulebook) => rulebook.skill).map((rulebook) => rulebook.slug));
 
-  // Skill delivery targets project-local platform skills dirs, gated by detection (or `--platform`). Passing
+  // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir.
-  const platformSkillDirs = resolvePlatformIds(options.platform, projectRoot).map(
-    (platformId) => resolvePlatformPaths(platformId, projectRoot).skillsDir,
+  const harnessSkillDirs = resolveHarnessIds(options.harness, projectRoot).map(
+    (harnessId) => resolveHarnessPaths(harnessId, projectRoot).skillsDir,
   );
 
   const existingProjectMd = await readFileOrEmpty(projectMdPath);
@@ -68,14 +68,14 @@ export async function syncCommand(
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. Orphans are owned dirs whose slug is no longer delivered as a skill.
   const skillOrphansByDir = await Promise.all(
-    platformSkillDirs.map(async (skillsDir) => ({
+    harnessSkillDirs.map(async (skillsDir) => ({
       skillsDir,
       orphans: (await listOwnedSkillSlugs(skillsDir)).filter((slug) => !desiredSkill.has(slug)),
     })),
   );
 
   if (options.dryRun) {
-    reportDryRun(resolved, [...new Set([...neutralOrphans, ...inlineOrphans])], platformSkillDirs, skillOrphansByDir);
+    reportDryRun(resolved, [...new Set([...neutralOrphans, ...inlineOrphans])], harnessSkillDirs, skillOrphansByDir);
     return;
   }
 
@@ -105,7 +105,7 @@ export async function syncCommand(
     await writeFile(projectMdPath, projectMd, 'utf8');
   }
 
-  // Reconcile skill files per targeted platform: write every skill-delivery rulebook, then retract sync-owned
+  // Reconcile skill files per targeted harness: write every skill-delivery rulebook, then retract sync-owned
   // skill dirs that are no longer skill rulebooks. Orphans were computed against the pre-write filesystem.
   for (const { skillsDir, orphans } of skillOrphansByDir) {
     for (const rulebook of resolved) {
@@ -124,11 +124,11 @@ export async function syncCommand(
     }
   }
 
-  const skillRetractions = skillOrphansByDir.reduce((total, platform) => total + platform.orphans.length, 0);
-  const skillFilesWritten = desiredSkill.size * platformSkillDirs.length;
+  const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
+  const skillFilesWritten = desiredSkill.size * harnessSkillDirs.length;
   console.info(
     `Synced ${resolved.length} rulebook(s); delivered ${skillFilesWritten} skill file(s) across ` +
-      `${platformSkillDirs.length} platform(s); retracted ${neutralOrphans.length} neutral file(s) and ` +
+      `${harnessSkillDirs.length} harness(s); retracted ${neutralOrphans.length} neutral file(s) and ` +
       `${skillRetractions} skill dir(s).`,
   );
 }
@@ -200,7 +200,7 @@ async function readFileOrEmpty(filePath: string): Promise<string> {
 function reportDryRun(
   resolved: ReadonlyArray<ResolvedRulebook>,
   retracted: ReadonlyArray<string>,
-  platformSkillDirs: ReadonlyArray<string>,
+  harnessSkillDirs: ReadonlyArray<string>,
   skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
 ): void {
   console.info('[dry-run] sync would:');
@@ -208,7 +208,7 @@ function reportDryRun(
     const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
-      for (const skillsDir of platformSkillDirs) {
+      for (const skillsDir of harnessSkillDirs) {
         console.info(`  write ${path.join(skillsDir, rulebook.slug, 'SKILL.md')}`);
       }
     }

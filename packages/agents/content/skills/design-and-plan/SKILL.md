@@ -140,13 +140,13 @@ Present the plan to the user. Revise until approved.
 ### Phase 6: Save artifacts and stop
 
 1. Resolve artifact directory using `save-artifact` conventions:
-   - Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
+   - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
    - Target: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
 
 2. Resolve frontmatter fields for both artifacts. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-   Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body.
+   Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body.
 
 3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`

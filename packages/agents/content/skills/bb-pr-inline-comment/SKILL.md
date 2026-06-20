@@ -57,7 +57,7 @@ bash "$(dirname "$SKILL_PATH")/bb-pr-inline-comment.sh" -f <file> -l <line> -m <
 Or, if the skill directory is known:
 
 ```bash
-bash {platform_home_dir}/skills/bb-pr-inline-comment/bb-pr-inline-comment.sh \
+bash {harness_home_dir}/skills/bb-pr-inline-comment/bb-pr-inline-comment.sh \
   -f src/foo.ts -l 42 -m "Consider extracting this into a helper function."
 ```
 

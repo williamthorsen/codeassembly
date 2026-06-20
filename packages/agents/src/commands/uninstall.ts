@@ -1,45 +1,45 @@
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { removeItem } from '../lib/installer.js';
 import { detectDrift, getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
-import { resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.js';
 
 /**
  * Executes the uninstall command, removing installed skills, subagents, and guidance files.
  */
 export async function uninstallCommand(
-  options: Pick<InstallOptions, 'platform' | 'force'>,
+  options: Pick<InstallOptions, 'harness' | 'force'>,
   baseDir?: string,
 ): Promise<void> {
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
-  const platforms = resolvePlatformIds(options.platform, baseDir);
+  const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Uninstall shared guidance unconditionally (not gated by platform detection)
+  // Uninstall shared guidance unconditionally (not gated by harness detection)
   const updatedShared = await uninstallSharedGuidance(manifest, options, baseDir);
 
-  let remainingPlatforms = { ...manifest.platforms };
+  let remainingHarnesses = { ...manifest.harnesses };
 
   // uninstallSharedGuidance above is a no-op when manifest.shared is undefined,
   // so this guard safely covers the "nothing installed at all" case.
-  if (platforms.length === 0 && !manifest.shared) {
-    console.info('No target platforms detected. Nothing to uninstall.');
+  if (harnesses.length === 0 && !manifest.shared) {
+    console.info('No target harnesses detected. Nothing to uninstall.');
     return;
   }
 
-  for (const platformId of platforms) {
-    const platformManifest = manifest.platforms[platformId];
-    if (!platformManifest) {
-      console.info(`\nNo installation found for platform: ${platformId}`);
+  for (const harnessId of harnesses) {
+    const harnessManifest = manifest.harnesses[harnessId];
+    if (!harnessManifest) {
+      console.info(`\nNo installation found for harness: ${harnessId}`);
       continue;
     }
 
-    console.info(`\nUninstalling for platform: ${platformId}`);
-    const paths = resolvePlatformPaths(platformId, baseDir);
+    console.info(`\nUninstalling for harness: ${harnessId}`);
+    const paths = resolveHarnessPaths(harnessId, baseDir);
     let removedCount = 0;
     const skippedEntries: ManifestEntry[] = [];
 
-    for (const entry of platformManifest.entries) {
-      const drift = await detectDrift(entry, paths.platformHome);
+    for (const entry of harnessManifest.entries) {
+      const drift = await detectDrift(entry, paths.harnessHome);
 
       if (drift === 'missing') {
         // Already gone
@@ -53,19 +53,19 @@ export async function uninstallCommand(
         continue;
       }
 
-      const fullPath = `${paths.platformHome}/${entry.relativePath}`;
+      const fullPath = `${paths.harnessHome}/${entry.relativePath}`;
       await removeItem(fullPath);
       removedCount++;
     }
 
-    // Remove platform from manifest or retain only skipped entries
+    // Remove harness from manifest or retain only skipped entries
     if (skippedEntries.length === 0) {
-      const { [platformId]: _removed, ...rest } = remainingPlatforms;
-      remainingPlatforms = rest;
+      const { [harnessId]: _removed, ...rest } = remainingHarnesses;
+      remainingHarnesses = rest;
     } else {
-      remainingPlatforms = {
-        ...remainingPlatforms,
-        [platformId]: { ...platformManifest, entries: skippedEntries },
+      remainingHarnesses = {
+        ...remainingHarnesses,
+        [harnessId]: { ...harnessManifest, entries: skippedEntries },
       };
     }
 
@@ -75,7 +75,7 @@ export async function uninstallCommand(
   const updatedManifest: AgentsManifest = {
     ...manifest,
     shared: updatedShared,
-    platforms: remainingPlatforms,
+    harnesses: remainingHarnesses,
   };
 
   await writeManifest(manifestPath, updatedManifest);

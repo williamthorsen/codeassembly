@@ -4,9 +4,9 @@ import baseConfig from '../../eslint.config.js';
 
 export default [
   ...baseConfig,
-  // Generated esbuild bundles, not authored source.
+  // Generated esbuild bundles and shipped harness content, not lintable source.
   globalIgnores([
-    'content/skills/_platforms/**',
+    'content/skills/_harnesses/**',
     'content/skills/capture-event/capture-event.mjs',
     'content/skills/derive-session-context/derive-session-context.mjs',
     'content/skills/kb-add/kb-add.mjs',

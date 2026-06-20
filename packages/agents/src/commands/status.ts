@@ -1,41 +1,41 @@
+import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
-import { resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import type { InstallOptions } from '../lib/types.js';
 
 /**
  * Executes the status command, showing the current state of installed items.
  */
-export async function statusCommand(options: Pick<InstallOptions, 'platform'>, baseDir?: string): Promise<void> {
+export async function statusCommand(options: Pick<InstallOptions, 'harness'>, baseDir?: string): Promise<void> {
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
-  const platforms = resolvePlatformIds(options.platform, baseDir);
+  const harnesses = resolveHarnessIds(options.harness, baseDir);
 
   // Report shared guidance status unconditionally
   await reportSharedGuidanceStatus(manifest, baseDir);
 
-  if (platforms.length === 0 && !manifest.shared) {
-    console.info('No target platforms detected.');
+  if (harnesses.length === 0 && !manifest.shared) {
+    console.info('No target harnesses detected.');
     return;
   }
 
-  for (const platformId of platforms) {
-    const platformManifest = manifest.platforms[platformId];
-    if (!platformManifest) {
-      console.info(`\n${platformId}: not installed`);
+  for (const harnessId of harnesses) {
+    const harnessManifest = manifest.harnesses[harnessId];
+    if (!harnessManifest) {
+      console.info(`\n${harnessId}: not installed`);
       continue;
     }
 
-    console.info(`\n${platformId}:`);
-    console.info(`  Installed at: ${platformManifest.installedAt}`);
-    console.info(`  Version: ${platformManifest.version}`);
+    console.info(`\n${harnessId}:`);
+    console.info(`  Installed at: ${harnessManifest.installedAt}`);
+    console.info(`  Version: ${harnessManifest.version}`);
 
-    const paths = resolvePlatformPaths(platformId, baseDir);
+    const paths = resolveHarnessPaths(harnessId, baseDir);
     let currentCount = 0;
     let modifiedCount = 0;
     let missingCount = 0;
 
-    for (const entry of platformManifest.entries) {
-      const drift = await detectDrift(entry, paths.platformHome);
+    for (const entry of harnessManifest.entries) {
+      const drift = await detectDrift(entry, paths.harnessHome);
 
       switch (drift) {
         case 'current':

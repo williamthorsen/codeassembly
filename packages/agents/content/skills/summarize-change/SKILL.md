@@ -11,7 +11,7 @@ Analyze the current branch's changes since diverging from the default branch.
 ## Process
 
 1. **Gather context**:
-   - Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_id`, and `ticket_ref` from the manifest JSON emitted on stdout; consult [work-types.json](../_data/work-types.json).
+   - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch`, `ticket_id`, and `ticket_ref` from the manifest JSON emitted on stdout; consult [work-types.json](../_data/work-types.json).
 
 2. **Analyze changes**:
 
@@ -123,7 +123,7 @@ Source `$MODEL_ID` from your system-prompt environment block: the line `model na
 Run via Bash:
 
 ```bash
-{platform_home_dir}/scripts/resolve-frontmatter.sh \
+{harness_home_dir}/scripts/resolve-frontmatter.sh \
   --skill summarize-change \
   --interactive true \
   --model "$MODEL_ID" \
@@ -149,7 +149,7 @@ When used as a PR description, include **from `## What` onward only** — omit t
 
 ### Path resolution
 
-Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout (the same invocation in step 1 already populated the manifest file, so this is a fast-path read).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

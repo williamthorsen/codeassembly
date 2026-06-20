@@ -177,7 +177,7 @@ describe(composeManifest, () => {
   });
 
   describe('defaults and fallbacks', () => {
-    it('defaults platform to github when not configured', () => {
+    it('defaults scm to github when not configured', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
         branchName: 'main',
@@ -185,7 +185,7 @@ describe(composeManifest, () => {
         home: HOME,
         now: NOW,
       });
-      expect(manifest.platform).toBe('github');
+      expect(manifest.scm).toBe('github');
     });
 
     it('defaults default_branch to origin/main when no remote configured', () => {

@@ -6,13 +6,13 @@ Non-`.sh` files in this directory (such as this README) are not installed.
 
 ## Invocation convention
 
-Agent-facing content must invoke these scripts using the `{platform_home_dir}/scripts/` template prefix:
+Agent-facing content must invoke these scripts using the `{harness_home_dir}/scripts/` template prefix:
 
 ```
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill my-skill --interactive false` via Bash.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill my-skill --interactive false` via Bash.
 ```
 
-At install time, `{platform_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.opencode`, or the equivalent per target platform, producing an explicit absolute path the agent can execute.
+At install time, `{harness_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.opencode`, or the equivalent per target platform, producing an explicit absolute path the agent can execute.
 
 Bare invocations (e.g., `` Run `resolve-frontmatter.sh ...` ``) do not resolve at runtime: The install directory is not on `$PATH`, and only the launcher set (`claude.sh`, `rovo.sh`, etc.) is symlinked into `/usr/local/bin`. An agent that encounters a bare invocation typically guesses a path and fails before succeeding, wasting tool calls.
 
@@ -28,6 +28,6 @@ Prose mentions of script names that are not invocations (e.g., ``"the `describe-
 
 ## Drift detection
 
-The regression test at `packages/agents/src/__tests__/script-invocation-conventions.test.ts` walks every `.md` file under `content/skills/` and `content/subagents/` and fails when any executable invocation of a known helper script lacks the `{platform_home_dir}/scripts/` prefix.
+The regression test at `packages/agents/src/__tests__/script-invocation-conventions.test.ts` walks every `.md` file under `content/skills/` and `content/subagents/` and fails when any executable invocation of a known helper script lacks the `{harness_home_dir}/scripts/` prefix.
 
 When adding a new helper script, append its filename to the `KNOWN_SCRIPTS` array in the test file.

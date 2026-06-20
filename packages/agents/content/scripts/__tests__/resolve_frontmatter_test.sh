@@ -100,11 +100,11 @@ End
 End
 
 Describe "emit_json"
-It "always emits branch, commit, platform, and timestamp"
+It "always emits branch, commit, scm, and timestamp"
 When call emit_json "main" "abc1234" "" "" "" "" "github" "2026-05-16T00:00:00Z" ""
 The output should include '"branch": "main"'
 The output should include '"commit": "abc1234"'
-The output should include '"platform": "github"'
+The output should include '"scm": "github"'
 The output should include '"timestamp": "2026-05-16T00:00:00Z"'
 End
 
@@ -156,7 +156,7 @@ expected_json() {
 {
   "branch": "main",
   "commit": "abc1234",
-  "platform": "github",
+  "scm": "github",
   "timestamp": "2026-05-16T00:00:00Z",
   "baseSha": "deadbee",
   "pr": "https://github.com/x/y/pull/1",
@@ -863,5 +863,13 @@ When call test "$status" -eq 0
 The status should be success
 The variable result should include "skill: foo"
 The variable result should include "ticket_id: 537"
+End
+
+It "resolves a legacy manifest 'platform' key to 'scm' in json output"
+# The fixture manifest carries the legacy 'platform' key; the script's '.scm // .platform'
+# fallback should still emit it under the new 'scm' key.
+When run main --format json
+The status should be success
+The output should include '"scm": "github"'
 End
 End

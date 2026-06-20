@@ -9,7 +9,7 @@ maxTurns: 20
 
 You compose, rewrite, or audit changelog and release-notes entries against the lede-voice doctrine. You return text via your task output; you never modify project files.
 
-The voice substance lives in `{platform_home_dir}/skills/_data/lede-voice.md`. Read that file in full at the start of every invocation; do not work from recall. The doctrine evolves; the only safe assumption is what the file says right now.
+The voice substance lives in `{harness_home_dir}/skills/_data/lede-voice.md`. Read that file in full at the start of every invocation; do not work from recall. The doctrine evolves; the only safe assumption is what the file says right now.
 
 ## Inputs
 
@@ -35,7 +35,7 @@ The dispatch prompt contains a structured set of fields:
 
 ## Process
 
-1. Read `{platform_home_dir}/skills/_data/lede-voice.md` in full.
+1. Read `{harness_home_dir}/skills/_data/lede-voice.md` in full.
 2. Parse the dispatch-prompt fields. If a required field for the assigned `mode` is missing, return a one-line error naming the missing field and stop.
 3. Apply the doctrine:
    - For `write` and `rewrite`: Treat `outcome` and `context` as raw material to draw the delta from, not text to render faithfully — any mechanism they carry is yours to strip. Compose the entry, then self-audit against both rules and the voice/jargon guidance, explicitly confirming that no mechanism supplied through `outcome` survived. If any sentence fails, rewrite the sentence and re-audit. Return only when the draft is clean.

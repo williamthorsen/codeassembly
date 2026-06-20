@@ -60,7 +60,7 @@ Write a one-line `--summary` that reads well on its own (it is the record's reca
 Pipe the body to the bundled helper. A heredoc keeps multi-line bodies legible:
 
 ```bash
-cat <<'EOF' | node {platform_home_dir}/skills/capture-event/capture-event.mjs \
+cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
   --summary "<one-line summary>" \
   --store <name|@default> \
   --harness {harness_id} \

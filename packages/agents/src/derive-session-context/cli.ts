@@ -49,7 +49,7 @@ const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
   'ticket_id',
   'ticket_ref',
   'project_slug',
-  'platform',
+  'scm',
   'default_branch',
   'branch_name',
   'artifact_base_dir',
@@ -328,7 +328,7 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
   if (!isRecord(value.artifact_paths)) {
     return false;
   }
-  if (value.platform !== 'github' && value.platform !== 'bitbucket') {
+  if (value.scm !== 'github' && value.scm !== 'bitbucket') {
     return false;
   }
   // The stored-URL fields are optional and not part of REQUIRED_MANIFEST_FIELDS, so a manifest

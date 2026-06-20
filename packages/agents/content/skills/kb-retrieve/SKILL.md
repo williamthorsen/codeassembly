@@ -51,7 +51,7 @@ node "$(dirname "$SKILL_PATH")/kb-retrieve.mjs" <query> [--all-kbs] [--store <na
 Or, when the skill directory is known:
 
 ```bash
-node {platform_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup" --diataxis howto
+node {harness_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup" --diataxis howto
 ```
 
 The helper prints a JSON object to stdout:

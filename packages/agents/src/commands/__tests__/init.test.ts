@@ -22,7 +22,7 @@ describe(initCommand, () => {
   });
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-    return { platform: 'claude', link: false, force: false, dryRun: false, ...overrides };
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
   const manifestPath = (): string => path.join(projectRoot, '.agents', 'rulebooks.yaml');

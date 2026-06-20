@@ -11,8 +11,8 @@ interface LinkViolation {
 }
 
 /**
- * Shared guidance lives under a platform-neutral path (`~/.agents/`) and
- * cannot resolve platform-scoped targets. The policy: no outbound Markdown
+ * Shared guidance lives under a harness-neutral path (`~/.agents/`) and
+ * cannot resolve harness-scoped targets. The policy: no outbound Markdown
  * links. Skills are referenced by name; path-level conventions travel through
  * the skill chain (which the install-time rewriter handles correctly).
  */

@@ -66,7 +66,7 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill code-simplification-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill code-simplification-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Scope
 
@@ -77,7 +77,7 @@ Focus exclusively on simplification opportunities in changed code:
 - Premature abstractions that don't earn their weight
 - Overly defensive patterns (redundant null checks, unnecessary try/catch wrappers, excessive validation of trusted internal inputs)
 - Unnecessary nesting and complexity
-- Comment-discipline violations. See `{platform_home_dir}/skills/_data/comment-discipline.md` for the full taxonomy. Common patterns to flag:
+- Comment-discipline violations. See `{harness_home_dir}/skills/_data/comment-discipline.md` for the full taxonomy. Common patterns to flag:
   - Comments that restate or paraphrase the code below them
   - Tutorial-style file headers that duplicate per-function JSDoc
   - Conversation memorialization (references to chat-time reasoning, tickets, or PRs in code comments)
@@ -88,7 +88,7 @@ Focus exclusively on simplification opportunities in changed code:
   - Domain leaks in shared/common code
   - Inline "what" comments that describe what the code does instead of explaining why a non-obvious decision was made
   - `eslint-disable` rationales that explain the surrounding decision rather than the specific suppression
-- Test-structure violations. See `{platform_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
+- Test-structure violations. See `{harness_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
   - Adjacent tests with near-identical setup where only one input varies (parameterize with `it.each` or extract a helper)
   - Specific-fixture-label assertions repeated per row when the rule is a count or predicate
   - Helpers whose parameters the test bodies still re-specify (the abstraction failed to absorb the duplication)

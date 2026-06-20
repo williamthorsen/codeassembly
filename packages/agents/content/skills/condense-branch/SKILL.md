@@ -24,7 +24,7 @@ If branch exists, increment version number.
 
 4. **Condense commits**:
 
-   Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout.
+   Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `default_branch` from the manifest JSON it emits on stdout.
 
    ```bash
    git reset --soft $(git merge-base {default_branch} HEAD)
@@ -47,7 +47,7 @@ Use `summarize-change` to compose a good commit message. Save the description pe
 Follow the [commit conventions](../commit/SKILL.md). Use `describe-change.sh` to render the full commit title (see [title-templates.md](../_data/title-templates.md) for syntax):
 
 ```bash
-json=$({platform_home_dir}/scripts/describe-change.sh \
+json=$({harness_home_dir}/scripts/describe-change.sh \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \

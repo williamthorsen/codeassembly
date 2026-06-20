@@ -13,7 +13,7 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 1. **Extract plan content** from conversation context (the most recent plan discussed or produced)
 
 2. **Resolve artifact path**:
-   - Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout
+   - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout
    - Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
 3. **Generate slug** from the plan title or description (kebab-case, max 60 chars)
@@ -22,7 +22,7 @@ Save the plan from the current conversation as a ticket-scoped artifact. Useful 
 
    The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions.
 
-   Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill plan-mode --interactive true` via Bash. Prepend the output verbatim to the artifact body.
+   Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan-mode --interactive true` via Bash. Prepend the output verbatim to the artifact body.
 
 5. **Save** as ticket-level artifact:
 

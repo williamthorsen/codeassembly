@@ -8,7 +8,7 @@ import { extractTicketId } from './extract-ticket-id.ts';
 import type { BranchManifest, ResolvedPreferences } from './types.ts';
 
 /** Default values when not set in preferences. */
-const DEFAULT_PLATFORM = 'github';
+const DEFAULT_SCM = 'github';
 const DEFAULT_BASE_DIR = '~/ai-artifacts';
 const DEFAULT_REMOTE_NAME = 'origin';
 const DEFAULT_REMOTE_BRANCH = 'main';
@@ -39,7 +39,7 @@ export function composeManifest(input: {
 
   const projectSlug = preferences.project?.slug ?? preferences.repository?.slug ?? path.basename(cwd);
 
-  const platform = preferences.platform ?? DEFAULT_PLATFORM;
+  const scm = preferences.scm ?? DEFAULT_SCM;
 
   const remoteName = preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
   const remoteBranch = preferences.repository?.default_remote?.default_branch ?? DEFAULT_REMOTE_BRANCH;
@@ -60,7 +60,7 @@ export function composeManifest(input: {
     ticket_id: ticketResult.ticket_id,
     ticket_ref: ticketResult.ticket_ref,
     project_slug: projectSlug,
-    platform,
+    scm,
     default_branch: defaultBranch,
     branch_name: branchName,
     artifact_base_dir: artifactBaseDir,

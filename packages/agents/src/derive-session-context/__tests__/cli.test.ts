@@ -140,7 +140,7 @@ describe(deriveSessionContext, () => {
       ticket_id: null,
       ticket_ref: null,
       project_slug: 'seeded',
-      platform: 'github',
+      scm: 'github',
       default_branch: 'origin/main',
       branch_name: 'main',
       artifact_base_dir: '/tmp/seeded',
@@ -164,7 +164,7 @@ describe(deriveSessionContext, () => {
   it('overwrites a stale-schema manifest (missing required fields)', async () => {
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
-    // Stale manifest is missing `platform`, `artifact_base_dir`, and other newer fields.
+    // Stale manifest is missing `scm`, `artifact_base_dir`, and other newer fields.
     await writeFile(manifestPath, JSON.stringify({ ticket_id: 'OLD-1' }), 'utf8');
 
     const result = await deriveSessionContext({
@@ -174,7 +174,7 @@ describe(deriveSessionContext, () => {
       home: workDir,
     });
     // The deriver fell through and produced a fresh manifest with all required fields.
-    expect(result.platform).toBe('github');
+    expect(result.scm).toBe('github');
     expect(result.artifact_base_dir).toBeDefined();
     expect(result.ticket_id).toBeNull();
   });
@@ -188,7 +188,7 @@ describe(deriveSessionContext, () => {
       ticket_id: null,
       ticket_ref: null,
       project_slug: 'seeded',
-      platform: 'github',
+      scm: 'github',
       default_branch: 'origin/main',
       branch_name: 'main',
       artifact_base_dir: '/tmp/seeded',
@@ -199,7 +199,7 @@ describe(deriveSessionContext, () => {
     await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
 
     const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(result.platform).toBe('github');
+    expect(result.scm).toBe('github');
     expect(result.ticket_url).toBeNull();
   });
 
@@ -225,7 +225,7 @@ describe(deriveSessionContext, () => {
       ticket_id: 'OLD-1',
       ticket_ref: 'OLD-1',
       project_slug: 'old-format',
-      platform: 'github',
+      scm: 'github',
       default_branch: 'origin/main',
       branch_name: 'main',
       artifact_base_dir: '/tmp/old',
@@ -337,7 +337,7 @@ describe(deriveSessionContext, () => {
     const ticketUrl = 'https://github.com/owner/repo/issues/783';
     const prUrl = 'https://github.com/owner/repo/pull/42';
 
-    // Seed a stale manifest (missing the required `platform` field) that nonetheless carries stored
+    // Seed a stale manifest (missing the required `scm` field) that nonetheless carries stored
     // URLs. The next derive recomposes because the manifest fails the schema check; carry-forward
     // must rescue the URLs from the prior file.
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
@@ -357,7 +357,7 @@ describe(deriveSessionContext, () => {
     await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
 
     const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(recomposed.platform).toBe('github');
+    expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBe(ticketUrl);
     expect(recomposed.pr_url).toBe(prUrl);
   });
@@ -372,7 +372,7 @@ describe(deriveSessionContext, () => {
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
       const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-      expect(recomposed.platform).toBe('github');
+      expect(recomposed.scm).toBe('github');
       expect(recomposed.ticket_url).toBeNull();
       expect(recomposed.pr_url).toBeNull();
 
@@ -393,7 +393,7 @@ describe(deriveSessionContext, () => {
     await writeFile(manifestPath, '42', 'utf8');
 
     const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(recomposed.platform).toBe('github');
+    expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
   });
@@ -405,7 +405,7 @@ describe(deriveSessionContext, () => {
       ticket_id: null,
       ticket_ref: null,
       project_slug: 'seeded',
-      platform: 'github',
+      scm: 'github',
       default_branch: 'origin/main',
       branch_name: 'main',
       artifact_base_dir: '/tmp/seeded',

@@ -27,7 +27,7 @@ describe(syncCommand, () => {
   });
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-    return { platform: 'claude', link: false, force: false, dryRun: false, ...overrides };
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
   /** Writes a fixture rulebook into the temp content library. */
@@ -223,21 +223,21 @@ describe(syncCommand, () => {
     expect(existsSync(neutralPath('gamma'))).toBe(true);
   });
 
-  it('with --platform claude, writes only the Claude skills dir', async () => {
+  it('with --harness claude, writes only the Claude skills dir', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await writeManifest('rulebooks:\n  - gamma\n');
 
-    await syncCommand(makeOptions({ platform: 'claude' }), projectRoot, contentDir);
+    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, contentDir);
 
     expect(existsSync(skillPath('gamma', '.claude'))).toBe(true);
     expect(existsSync(skillPath('gamma', '.rovodev'))).toBe(false);
   });
 
-  it('with no detected platform, writes no skill files but still writes the neutral file', async () => {
+  it('with no detected harness, writes no skill files but still writes the neutral file', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await writeManifest('rulebooks:\n  - gamma\n');
 
-    await syncCommand(makeOptions({ platform: 'all' }), projectRoot, contentDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('gamma'))).toBe(true);
     expect(existsSync(skillPath('gamma'))).toBe(false);

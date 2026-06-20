@@ -14,7 +14,7 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 
 Get `project_slug` and `artifact_base_dir` -- but NOT `ticket_id` (that comes from the platform in step 5).
 
-- Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
+- Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
@@ -85,7 +85,7 @@ label_flags+=" --label \"{label_name}\""
 Render the ticket title using `describe-change.sh`. Note that ticket creation does **not** pass `--ticket-ref` — the new ticket has no ref yet (that's what this step assigns).
 
 ```bash
-json=$({platform_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
+json=$({harness_home_dir}/scripts/describe-change.sh --title "{title}" --scope "{scope}" --type "{type}")
 ticket_title=$(printf '%s' "$json" | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))")
 ```
 
@@ -113,7 +113,7 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)):
 
 ```bash
-node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
+node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
 ```
 
 #### Jira path (stub)
@@ -149,7 +149,7 @@ The artifact's frontmatter conforms to the [universal artifact frontmatter](../_
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 ### 7. Save plan (if present)
 

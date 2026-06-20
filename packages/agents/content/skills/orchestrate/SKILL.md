@@ -152,7 +152,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
 ## Run initialization
 
-1. **Get context**: Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one.
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}` -- this concrete SHA is what you pass to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
 3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan** — step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
 
@@ -515,7 +515,7 @@ Pass the following engine-managed variables to the module:
 - `{plan-md-path}`: full path to orchestration-plan.md artifact (empty string if planning was skipped)
 - `{aspect_reviewers}`: resolved aspect reviewer overrides from the effort preset. Map of `{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means use the module's file-pattern default. For `disabled` (low effort): `{ code: false, silent_failure: false, test: false }`. For `auto` (medium effort): empty map (all keys absent). For `always` (high effort): `{ code: true, silent_failure: true, test: true }`.
 - `{authored-by-pipeline}`: `true` when the pipeline spec includes `implementation`; `false` otherwise. Signals whether the code under review was authored by the orchestrated pipeline (used by the test reviewer for classification).
-- `{lookup-path}`: `{platform_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
+- `{lookup-path}`: `{harness_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Static lookup table input to the reviewer-context assembly step.
 - `{reviewer-context-sidecar-path}`: Full path to the most recent `*_coder_reviewer-context.md` artifact (empty string if none).
 
 ### review-cycle: Resolving `{models}`
@@ -538,7 +538,7 @@ The sidecar is optional — its absence is the documented signal that nothing su
 
 ### review-cycle: Resolving `{lookup-path}`
 
-`{lookup-path}`: `{platform_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Used by the reviewer-context assembly step (see `modules/review-cycle.md`) as the static lookup table input to the helper script.
+`{lookup-path}`: `{harness_home_dir}/skills/orchestrate/_data/reviewer-context-packages.md`. Used by the reviewer-context assembly step (see `modules/review-cycle.md`) as the static lookup table input to the helper script.
 
 ## Phase 1: Architecture (optional)
 
@@ -711,7 +711,7 @@ Include:
 
 This section governs the frontmatter resolution for both orchestrator-written artifacts — the run-manifest (step 5) and the run-summary (Phase 5) — which use identical field-resolution logic.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --interactive false` via Bash. Prepend the output verbatim to the artifact body.
 
 The orchestrator's `provenance.model` is omitted — the run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 

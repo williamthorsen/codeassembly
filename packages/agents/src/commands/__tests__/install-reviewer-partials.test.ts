@@ -25,7 +25,7 @@ describe('reviewer and coder partials install correctly', () => {
     await mkdir(claudeAgentsDir, { recursive: true });
 
     const options: InstallOptions = {
-      platform: 'claude',
+      harness: 'claude',
       link: false,
       force: false,
       dryRun: false,

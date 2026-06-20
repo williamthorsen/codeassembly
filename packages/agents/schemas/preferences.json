@@ -124,7 +124,7 @@
     },
     "platform": {
       "type": "string",
-      "description": "Development platform. Initial supported values are `github` and `bitbucket`; new platforms can be added additively.",
+      "description": "Deprecated legacy spelling of `scm`, retained so existing preferences files validate during the migration window. Prefer `scm`; a future release removes this alias.",
       "enum": ["github", "bitbucket"]
     },
     "pr": {
@@ -176,6 +176,11 @@
           "description": "Deprecated. Use `project.slug` instead. Kept as a fallback."
         }
       }
+    },
+    "scm": {
+      "type": "string",
+      "description": "Source-code-management host. Supported values are `github` and `bitbucket`; new hosts can be added additively.",
+      "enum": ["github", "bitbucket"]
     },
     "ticket": {
       "type": "object",
