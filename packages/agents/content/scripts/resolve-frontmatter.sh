@@ -35,7 +35,7 @@
 #
 # Output (json mode, stdout): a single JSON object — backward-compatible
 # with prior `--format json` (default) callers. Keys: branch, commit,
-# baseSha, pr, ticket_id, ticket_ref, platform, timestamp, run_id.
+# baseSha, pr, ticket_id, ticket_ref, scm, timestamp, run_id.
 #
 # Omission rules (both formats): any key whose resolved value is empty is
 # omitted entirely. `--override KEY=` with empty value force-omits even
@@ -162,8 +162,11 @@ main() {
   local commit
   commit=$(git rev-parse --short HEAD 2>/dev/null) || fail "could not resolve HEAD commit"
 
-  local platform ticket_id ticket_ref default_branch
-  platform=$(jq -r '.platform // "github"' <<<"$manifest")
+  local scm ticket_id ticket_ref default_branch
+  # Read `scm`, falling back to the legacy `platform` key so a pre-rename branch manifest still
+  # resolves the right VCS host (this path validates only JSON well-formedness, so it would not
+  # otherwise trigger a recompose). The fallback is temporary; a separate ticket removes it.
+  scm=$(jq -r '.scm // .platform // "github"' <<<"$manifest")
   ticket_id=$(jq -r '.ticket_id // ""' <<<"$manifest")
   ticket_ref=$(jq -r '.ticket_ref // ""' <<<"$manifest")
   default_branch=$(jq -r '.default_branch // "origin/main"' <<<"$manifest")
@@ -181,13 +184,13 @@ main() {
   pr_url=$(apply_override "pr" "$pr_url" overrides)
   ticket_id=$(apply_override "ticket_id" "$ticket_id" overrides)
   ticket_ref=$(apply_override "ticket_ref" "$ticket_ref" overrides)
-  platform=$(apply_override "platform" "$platform" overrides)
+  scm=$(apply_override "scm" "$scm" overrides)
   timestamp=$(apply_override "timestamp" "$timestamp" overrides)
   run_id=$(apply_override "run_id" "$run_id" overrides)
 
   if [[ "$format" == "json" ]]; then
     emit_json "$branch" "$commit" "$base_sha" "$pr_url" \
-      "$ticket_id" "$ticket_ref" "$platform" "$timestamp" "$run_id"
+      "$ticket_id" "$ticket_ref" "$scm" "$timestamp" "$run_id"
   else
     emit_yaml \
       "$skill" "$timestamp" "$base_sha" "$interactive" "$model" \
@@ -371,7 +374,7 @@ sanitize_branch() {
 # Optional fields are omitted (rather than emitted as null or empty) so consumers can rely on `has(field)` semantics.
 emit_json() {
   local branch="$1" commit="$2" base_sha="$3" pr_url="$4"
-  local ticket_id="$5" ticket_ref="$6" platform="$7" timestamp="$8" run_id="$9"
+  local ticket_id="$5" ticket_ref="$6" scm="$7" timestamp="$8" run_id="$9"
 
   jq -n \
     --arg branch "$branch" \
@@ -380,14 +383,14 @@ emit_json() {
     --arg pr "$pr_url" \
     --arg ticket_id "$ticket_id" \
     --arg ticket_ref "$ticket_ref" \
-    --arg platform "$platform" \
+    --arg scm "$scm" \
     --arg timestamp "$timestamp" \
     --arg run_id "$run_id" \
     '
     {
       branch: $branch,
       commit: $commit,
-      platform: $platform,
+      scm: $scm,
       timestamp: $timestamp
     }
     + (if $base_sha   == "" then {} else { baseSha:    $base_sha   } end)

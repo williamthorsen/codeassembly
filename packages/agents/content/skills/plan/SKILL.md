@@ -42,7 +42,7 @@ Resolve artifact directory based on context.
 
 The artifact frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill plan --interactive true` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan --interactive true` via Bash. Prepend the output verbatim to the artifact body.
 
 ### Run context
 
@@ -53,7 +53,7 @@ If inside an active run (`run-index.json` exists in a parent directory):
 
 ### Ticket context
 
-1. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout. If no ticket ID is available, auto-generate: `{YYYYMMDD}-{4 random hex}`.
+1. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout. If no ticket ID is available, auto-generate: `{YYYYMMDD}-{4 random hex}`.
 2. Save as ticket-level artifact: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/{timestamp}_{slug}_plan.md`
 3. Slug derived from the plan's descriptive title (kebab-case, max 60 chars).
 

@@ -26,7 +26,7 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ### 1. Get session context
 
-Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `platform`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `scm`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it.
 
 ### 2. Resolve the PR
 
@@ -47,7 +47,7 @@ Capture `title` (PR title), `body` (PR body), `labels` (label objects), and `num
 Invoke `resolve-merge-options.sh` to resolve both dimensions in one call. The script combines the CLI override, reverse-lookup against `.meta/label-map.json`, and commit-majority over `git log {default_branch}..HEAD --format=%s` per the rules documented in the script header.
 
 ```bash
-json=$({platform_home_dir}/scripts/resolve-merge-options.sh \
+json=$({harness_home_dir}/scripts/resolve-merge-options.sh \
   [--cli-scope "{cli_scope}"] \
   [--cli-type "{cli_type}"] \
   [--pr-label "{label_1}" --pr-label "{label_2}" ...] \
@@ -87,7 +87,7 @@ Compute the bare title from the PR title with the `ticket_ref` prefix stripped:
 Render the merge-commit title via `describe-change.sh`:
 
 ```bash
-json=$({platform_home_dir}/scripts/describe-change.sh \
+json=$({harness_home_dir}/scripts/describe-change.sh \
   --title "{bare_title}" \
   --scope "{scope}" \
   --type "{type}" \
@@ -153,7 +153,7 @@ If the user declines, stop with no API call and no artifact. If they approve, co
 
 ### 8. Detect platform and select delegate
 
-Read `platform` from session context:
+Read `scm` from session context:
 
 - `"github"` → delegate to `merge-gh-pr`
 - `"bitbucket"` → delegate to `merge-bb-pr` (stub; prints the resolved values and exits without merging)

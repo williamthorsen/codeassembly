@@ -9,8 +9,8 @@ Resolve the pull-request URL a skill operates on at session start, and reuse it 
 The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `pr_url` so it is reused across sessions instead of being re-discovered each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags — never by hand-editing the JSON.
 
 - **Prefer** — use a stored `pr_url` as the default before discovering one from the platform.
-- **Persist** — after a PR URL is resolved, store it: run `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{url}"`.
-- **Invalidate** — when the stored URL does not yield the expected PR (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-pr-url`, then re-resolve. This rule is platform-agnostic: there is no carve-out.
+- **Persist** — after a PR URL is resolved, store it: run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{url}"`.
+- **Invalidate** — when the stored URL does not yield the expected PR (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-pr-url`, then re-resolve. This rule is platform-agnostic: there is no carve-out.
 
 ## Runtime-resolution path (`review-pr`, `merge-pr`)
 

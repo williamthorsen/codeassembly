@@ -1,8 +1,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readPreferences } from '../read-preferences.ts';
 
@@ -38,9 +39,9 @@ describe(readPreferences, () => {
   });
 
   it('reads global-only preferences', async () => {
-    await writeGlobalYaml(homeDir, 'platform: github\nproject:\n  slug: global-default\n');
+    await writeGlobalYaml(homeDir, 'scm: github\nproject:\n  slug: global-default\n');
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
-    expect(result.preferences.platform).toBe('github');
+    expect(result.preferences.scm).toBe('github');
     expect(result.preferences.project?.slug).toBe('global-default');
     expect(result.sources.global).toBe(path.join(homeDir, '.agents', 'preferences.yaml'));
     expect(result.sources.project).toBeUndefined();
@@ -48,11 +49,11 @@ describe(readPreferences, () => {
 
   it('merges with project values winning over global at the top-level key', async () => {
     // The project file replaces the entire `project:` section. Top-level keys not set at the
-    // project level (like `platform:`) come from the global file.
-    await writeGlobalYaml(homeDir, 'platform: github\nproject:\n  slug: global-default\n');
+    // project level (like `scm:`) come from the global file.
+    await writeGlobalYaml(homeDir, 'scm: github\nproject:\n  slug: global-default\n');
     await writeProjectYaml(projectDir, 'project:\n  slug: my-project\n');
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
-    expect(result.preferences.platform).toBe('github');
+    expect(result.preferences.scm).toBe('github');
     expect(result.preferences.project?.slug).toBe('my-project');
     // Both sources contributed; confirm the merge does not clear `sources.global`.
     expect(result.sources.project).toBeDefined();
@@ -85,7 +86,7 @@ describe(readPreferences, () => {
         '  base_dir: ~/ai-artifacts',
         'merge_commit:',
         "  title_format: '[{ticket_ref}] {title}'",
-        'platform: github',
+        'scm: github',
         'project:',
         '  slug: my-project',
         'worktrees:',
@@ -96,16 +97,38 @@ describe(readPreferences, () => {
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
     expect(result.preferences).toEqual({
       artifacts: { base_dir: '~/ai-artifacts' },
-      platform: 'github',
+      scm: 'github',
       project: { slug: 'my-project' },
     });
   });
 
-  it('throws with the offending key path when `platform` is outside the allowed enum', async () => {
-    await writeProjectYaml(projectDir, 'platform: gitlab\n');
+  it('throws with the offending key path when `scm` is outside the allowed enum', async () => {
+    await writeProjectYaml(projectDir, 'scm: gitlab\n');
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
-      /'platform' must be "github" or "bitbucket"/,
+      /'scm' must be "github" or "bitbucket"/,
     );
+  });
+
+  it('falls back to the legacy `platform` key and warns when `scm` is absent', async () => {
+    const writeSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    await writeProjectYaml(projectDir, 'platform: bitbucket\n');
+
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+
+    expect(result.preferences.scm).toBe('bitbucket');
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining("'platform' key is deprecated"));
+    writeSpy.mockRestore();
+  });
+
+  it('prefers `scm` over the legacy `platform` key and does not warn', async () => {
+    const writeSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    await writeProjectYaml(projectDir, 'scm: bitbucket\nplatform: github\n');
+
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+
+    expect(result.preferences.scm).toBe('bitbucket');
+    expect(writeSpy).not.toHaveBeenCalled();
+    writeSpy.mockRestore();
   });
 
   it('throws with the offending key path when a consumed string field has the wrong type', async () => {

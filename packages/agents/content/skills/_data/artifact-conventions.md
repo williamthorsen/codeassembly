@@ -4,7 +4,7 @@ Standards for AI-generated artifact storage, naming, and lifecycle.
 
 ## Directory structure
 
-All artifacts live under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Invoke the bundled session-context deriver (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) to resolve `artifact_base_dir`:
+All artifacts live under a configurable base directory (`base_dir`, default `~/ai-artifacts`). Invoke the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) to resolve `artifact_base_dir`:
 
 ```
 {base_dir}/
@@ -59,7 +59,7 @@ Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored pat
 
 ## Path resolution
 
-Skills resolve artifact directories by invoking the bundled session-context deriver (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON it emits on stdout. This is the canonical method for all artifact path resolution. The deriver writes the manifest to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect; subsequent invocations short-circuit by reading the cached manifest.
+Skills resolve artifact directories by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON it emits on stdout. This is the canonical method for all artifact path resolution. The deriver writes the manifest to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect; subsequent invocations short-circuit by reading the cached manifest.
 
 For contexts where neither the deriver nor a cached manifest is available (e.g., standalone scripts without Node.js), the manual fallback is:
 
@@ -71,11 +71,11 @@ For contexts where neither the deriver nor a cached manifest is available (e.g.,
 
 ### Reader tolerance and authoring-time validation
 
-The session-context deriver reads only the fields it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `platform`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated — this file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
+The session-context deriver reads only the fields it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `scm`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated — this file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
 
 Schema validation against `schemas/preferences.json` is an authoring-time concern, surfaced by the `$schema` reference at the top of the YAML (for editor LSPs) and by `preferences-schema.test.ts` against the project-checked-in `.agents/preferences.yaml`. The reader does not validate against the schema at runtime; doing so would fail on legitimate keys owned by other tools.
 
-The reader does still hard-fail on malformed YAML, missing git state, and shape problems on fields it consumes (e.g., `artifacts.base_dir` set to a non-string, `platform` set to a value outside the `github | bitbucket` enum). Per-field errors name the offending key path so the user can locate the issue without reading the whole file.
+The reader does still hard-fail on malformed YAML, missing git state, and shape problems on fields it consumes (e.g., `artifacts.base_dir` set to a non-string, `scm` set to a value outside the `github | bitbucket` enum). Per-field errors name the offending key path so the user can locate the issue without reading the whole file.
 
 ### Ticket-scoped paths
 
@@ -224,14 +224,14 @@ These two sites read the script's JSON output, then write the YAML frontmatter t
 
 ## Manifest creation
 
-Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and shipped as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose toolbelt includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
+Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and shipped as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose toolbelt includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
 There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path; failure to find one becomes a recovery, not a hard stop.
 
 Invocation surface:
 
 ```bash
-node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs
+node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 ```
 
 The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).

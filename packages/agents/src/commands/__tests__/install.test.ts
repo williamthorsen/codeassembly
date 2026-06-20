@@ -27,7 +27,7 @@ describe(installCommand, () => {
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return {
-      platform: 'claude',
+      harness: 'claude',
       link: false,
       force: false,
       dryRun: false,
@@ -69,17 +69,17 @@ describe(installCommand, () => {
 
     await installCommand(makeOptions(), tempDir);
 
-    // Check that skills were installed — count should match shared + platform-specific
+    // Check that skills were installed — count should match shared + harness-specific
     const contentDir = resolveContentDir();
     const allSkillEntries = await readdir(path.join(contentDir, 'skills'));
-    // Mirror the install enumeration's skip set: `_platforms` and `_partials` are excluded, dotfiles too.
+    // Mirror the install enumeration's skip set: `_harnesses` and `_partials` are excluded, dotfiles too.
     const sharedSkillCount = allSkillEntries.filter(
-      (e) => e !== '_platforms' && e !== '_partials' && !e.startsWith('.'),
+      (e) => e !== '_harnesses' && e !== '_partials' && !e.startsWith('.'),
     ).length;
-    const platformSkillsDir = path.join(contentDir, 'skills', '_platforms', 'claude');
-    const platformSkillEntries = existsSync(platformSkillsDir) ? await readdir(platformSkillsDir) : [];
-    const platformSkillCount = platformSkillEntries.filter((e) => !e.startsWith('.')).length;
-    const expectedSkillCount = sharedSkillCount + platformSkillCount;
+    const harnessSkillsDir = path.join(contentDir, 'skills', '_harnesses', 'claude');
+    const harnessSkillEntries = existsSync(harnessSkillsDir) ? await readdir(harnessSkillsDir) : [];
+    const harnessSkillCount = harnessSkillEntries.filter((e) => !e.startsWith('.')).length;
+    const expectedSkillCount = sharedSkillCount + harnessSkillCount;
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
     expect(skillsContents.length).toBe(expectedSkillCount);
 
@@ -93,7 +93,7 @@ describe(installCommand, () => {
     const manifestPath = getManifestPath(tempDir);
     expect(existsSync(manifestPath)).toBe(true);
     const manifest = await readManifest(manifestPath);
-    const claudeManifest = manifest.platforms.claude;
+    const claudeManifest = manifest.harnesses.claude;
     expect(claudeManifest).toBeDefined();
     expect(claudeManifest?.entries.length).toBeGreaterThan(0);
   });
@@ -114,25 +114,25 @@ describe(installCommand, () => {
 
   describe('subagent script-path expansion', () => {
     it.each([
-      { platform: 'claude' as const, home: '.claude', subagentsSubdir: 'agents' },
-      { platform: 'rovodev' as const, home: '.rovodev', subagentsSubdir: 'subagents' },
+      { harness: 'claude' as const, home: '.claude', subagentsSubdir: 'agents' },
+      { harness: 'rovodev' as const, home: '.rovodev', subagentsSubdir: 'subagents' },
     ])(
-      'when installing for $platform, no installed subagent retains a raw {platform_home_dir} token',
-      async ({ platform, home, subagentsSubdir }) => {
-        const platformHome = path.join(tempDir, home);
-        await mkdir(path.join(platformHome, 'skills'), { recursive: true });
-        await mkdir(path.join(platformHome, subagentsSubdir), { recursive: true });
+      'when installing for $harness, no installed subagent retains a raw {harness_home_dir} token',
+      async ({ harness, home, subagentsSubdir }) => {
+        const harnessHome = path.join(tempDir, home);
+        await mkdir(path.join(harnessHome, 'skills'), { recursive: true });
+        await mkdir(path.join(harnessHome, subagentsSubdir), { recursive: true });
 
-        await installCommand(makeOptions({ platform }), tempDir);
+        await installCommand(makeOptions({ harness }), tempDir);
 
-        const installedDir = path.join(platformHome, subagentsSubdir);
+        const installedDir = path.join(harnessHome, subagentsSubdir);
         const subagentFiles = (await readdir(installedDir)).filter((file) => file.endsWith('.md'));
         expect(subagentFiles.length).toBeGreaterThan(0);
 
         const offenders: Array<string> = [];
         for (const file of subagentFiles) {
           const content = await readFile(path.join(installedDir, file), 'utf8');
-          if (content.includes('{platform_home_dir}')) {
+          if (content.includes('{harness_home_dir}')) {
             offenders.push(file);
           }
         }
@@ -140,7 +140,7 @@ describe(installCommand, () => {
       },
     );
 
-    it('when installing for claude, expands a subagent script token to a tilde-absolute platform path', async () => {
+    it('when installing for claude, expands a subagent script token to a tilde-absolute harness path', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -246,7 +246,7 @@ describe(installCommand, () => {
 
     // Verify manifest records skill entries as not linked
     const manifest = await readManifest(getManifestPath(tempDir));
-    const claudeManifest = manifest.platforms.claude;
+    const claudeManifest = manifest.harnesses.claude;
     expect(claudeManifest).toBeDefined();
     const skillEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('skills/'));
     expect(skillEntries?.length).toBeGreaterThan(0);
@@ -274,7 +274,7 @@ describe(installCommand, () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
     // Claude gets review-permissions (claude-specific)
@@ -289,7 +289,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     const skillsContents = await readdir(path.join(rovodevHome, 'skills'));
     // Rovodev gets brainstorming and systematic-debugging (rovodev-specific)
@@ -299,15 +299,15 @@ describe(installCommand, () => {
     expect(skillsContents).not.toContain('review-permissions');
   });
 
-  it('installs _data support directory but not _platforms', async () => {
+  it('installs _data support directory but not _harnesses', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
     const skillsContents = await readdir(path.join(claudeHome, 'skills'));
-    expect(skillsContents).not.toContain('_platforms');
+    expect(skillsContents).not.toContain('_harnesses');
     expect(skillsContents).toContain('_data');
 
     // Verify _data contents are present
@@ -322,7 +322,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     const promptsPath = path.join(rovodevHome, 'prompts.yml');
     expect(existsSync(promptsPath)).toBe(true);
@@ -395,7 +395,7 @@ describe(installCommand, () => {
     await writeFile(path.join(rovodevSkills, '.DS_Store'), '', 'utf8');
     await writeFile(path.join(rovodevSkills, 'stray-file'), '', 'utf8');
 
-    await expect(installCommand(makeOptions({ platform: 'rovodev' }), tempDir)).resolves.toBeUndefined();
+    await expect(installCommand(makeOptions({ harness: 'rovodev' }), tempDir)).resolves.toBeUndefined();
 
     const promptsPath = path.join(rovodevHome, 'prompts.yml');
     const content = await readFile(promptsPath, 'utf8');
@@ -425,10 +425,10 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     const manifest = await readManifest(getManifestPath(tempDir));
-    const rovodevManifest = manifest.platforms.rovodev;
+    const rovodevManifest = manifest.harnesses.rovodev;
     expect(rovodevManifest).toBeDefined();
 
     const promptsEntry = rovodevManifest?.entries.find((e) => e.relativePath === 'prompts.yml');
@@ -442,7 +442,7 @@ describe(installCommand, () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
     const promptsPath = path.join(claudeHome, 'prompts.yml');
     expect(existsSync(promptsPath)).toBe(false);
@@ -454,7 +454,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
     // First install to establish manifest
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Modify a subagent file after installation (subagents are single files with
     // content hashes, so drift detection works reliably)
@@ -464,7 +464,7 @@ describe(installCommand, () => {
     await writeFile(agentPath, modifiedContent, 'utf8');
 
     // Re-install without --force
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Modified file should be preserved (not overwritten)
     const afterReinstall = await readFile(agentPath, 'utf8');
@@ -477,7 +477,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
     // First install to establish manifest
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Modify a subagent file after installation
     const agentPath = path.join(rovodevHome, 'subagents', 'orchestrated-coder.md');
@@ -486,7 +486,7 @@ describe(installCommand, () => {
     await writeFile(agentPath, modifiedContent, 'utf8');
 
     // Re-install with --force
-    await installCommand(makeOptions({ platform: 'rovodev', force: true }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev', force: true }), tempDir);
 
     // Modified file should be overwritten back to the managed content
     const afterReinstall = await readFile(agentPath, 'utf8');
@@ -500,7 +500,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
     // First install to establish manifest
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Modify prompts.yml after installation
     const promptsPath = path.join(rovodevHome, 'prompts.yml');
@@ -509,7 +509,7 @@ describe(installCommand, () => {
     await writeFile(promptsPath, modifiedContent, 'utf8');
 
     // Re-install without --force
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Modified file should be preserved (not overwritten)
     const afterReinstall = await readFile(promptsPath, 'utf8');
@@ -522,7 +522,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
     // First install to establish manifest
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Modify prompts.yml after installation
     const promptsPath = path.join(rovodevHome, 'prompts.yml');
@@ -531,7 +531,7 @@ describe(installCommand, () => {
     await writeFile(promptsPath, modifiedContent, 'utf8');
 
     // Re-install with --force
-    await installCommand(makeOptions({ platform: 'rovodev', force: true }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev', force: true }), tempDir);
 
     // Modified file should be overwritten (regenerated)
     const afterReinstall = await readFile(promptsPath, 'utf8');
@@ -544,7 +544,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'rovodev', dryRun: true }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev', dryRun: true }), tempDir);
 
     // Manifest should not have been created
     const manifestPath = getManifestPath(tempDir);
@@ -559,21 +559,21 @@ describe(installCommand, () => {
     expect(existsSync(promptsPath)).toBe(false);
   });
 
-  it('copies platform-specific skills even in link mode', async () => {
+  it('copies harness-specific skills even in link mode', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeOptions({ platform: 'claude', link: true }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude', link: true }), tempDir);
 
-    // Verify review-permissions (claude platform-specific) is copied, not symlinked
+    // Verify review-permissions (claude harness-specific) is copied, not symlinked
     const reviewPermissionsPath = path.join(claudeHome, 'skills', 'review-permissions');
     const stats = lstatSync(reviewPermissionsPath);
     expect(stats.isSymbolicLink()).toBe(false);
 
     // Verify the manifest records it as not linked
     const manifest = await readManifest(getManifestPath(tempDir));
-    const claudeManifest = manifest.platforms.claude;
+    const claudeManifest = manifest.harnesses.claude;
     expect(claudeManifest).toBeDefined();
     const reviewPermEntry = claudeManifest?.entries.find((e) => e.relativePath === 'skills/review-permissions');
     expect(reviewPermEntry).toBeDefined();
@@ -586,7 +586,7 @@ describe(installCommand, () => {
     await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
 
     // First install to create the initial prompts.yml and manifest
-    await installCommand(makeOptions({ platform: 'rovodev' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
 
     // Write a synthetic skill with a single-quoted description containing an escaped apostrophe.
     // This exercises the quote-stripping code path in generatePromptsYml.
@@ -608,7 +608,7 @@ describe(installCommand, () => {
     );
 
     // Re-install with --force to regenerate prompts.yml with the new skills
-    await installCommand(makeOptions({ platform: 'rovodev', force: true }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovodev', force: true }), tempDir);
 
     const promptsPath = path.join(rovodevHome, 'prompts.yml');
     const content = await readFile(promptsPath, 'utf8');
@@ -758,18 +758,18 @@ describe(installCommand, () => {
       expect(content).toContain('permissionMode: bypassPermissions');
     });
 
-    it('uses the platform-specific source URL for platform skills', async () => {
+    it('uses the harness-specific source URL for harness skills', async () => {
       const claudeHome = path.join(tempDir, '.claude');
       await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
       await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-      await installCommand(makeOptions({ platform: 'claude' }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
       // review-permissions is a claude-specific skill
       const skillPath = path.join(claudeHome, 'skills', 'review-permissions', 'SKILL.md');
       const content = await readFile(skillPath, 'utf8');
       expect(content).toContain(
-        '# Source: https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/_platforms/claude/review-permissions/SKILL.md',
+        '# Source: https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/_harnesses/claude/review-permissions/SKILL.md',
       );
     });
 
@@ -873,7 +873,7 @@ describe(installCommand, () => {
       await installCommand(makeOptions(), tempDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
-      const claudeManifest = manifest.platforms.claude;
+      const claudeManifest = manifest.harnesses.claude;
       expect(claudeManifest).toBeDefined();
       const scriptEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('scripts/'));
       expect(scriptEntries?.length).toBeGreaterThan(0);
@@ -891,7 +891,7 @@ describe(installCommand, () => {
       await installCommand(makeOptions({ link: true }), tempDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
-      const claudeManifest = manifest.platforms.claude;
+      const claudeManifest = manifest.harnesses.claude;
       expect(claudeManifest).toBeDefined();
       const scriptEntries = claudeManifest?.entries.filter((e) => e.relativePath.startsWith('scripts/'));
       expect(scriptEntries?.length).toBeGreaterThan(0);

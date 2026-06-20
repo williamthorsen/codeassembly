@@ -139,7 +139,7 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill plan-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan-reviewer --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Principles
 

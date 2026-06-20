@@ -16,11 +16,11 @@ Apply the comment-discipline audit to a target file set. Edits comments in place
 
 ## Process
 
-1. **Read the discipline doc.** Read `{platform_home_dir}/skills/_data/comment-discipline.md` before any edits. The audit below depends on its definitions; do not derive them from memory.
+1. **Read the discipline doc.** Read `{harness_home_dir}/skills/_data/comment-discipline.md` before any edits. The audit below depends on its definitions; do not derive them from memory.
 
 2. **Resolve the target file set.**
 
-   With no argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `$default_branch` via `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
+   With no argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `$default_branch` via `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
 
    ```bash
    git diff --name-only "$default_branch...HEAD"

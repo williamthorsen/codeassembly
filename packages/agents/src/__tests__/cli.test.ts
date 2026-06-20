@@ -103,3 +103,27 @@ describe('CLI rulebook routing', () => {
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks.yaml'))).toBe(true);
   });
 });
+
+describe('CLI harness flag', () => {
+  it('rejects an invalid --harness value', async () => {
+    const result = await runCli('install', '--harness', 'bogus');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('Invalid harness "bogus"');
+  });
+
+  it('rejects the removed --platform flag as an unknown option', async () => {
+    const result = await runCli('install', '--platform', 'claude');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('Unknown option "--platform"');
+  });
+
+  it('documents --harness (not --platform) in --help', async () => {
+    const result = await runCli('--help');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('--harness');
+    expect(result.stdout).not.toContain('--platform');
+  });
+});

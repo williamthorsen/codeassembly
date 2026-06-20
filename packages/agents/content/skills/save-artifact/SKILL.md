@@ -78,7 +78,7 @@ Run artifacts are saved by the skills that produce them (`review-branch`, `respo
 
 ## Path resolution
 
-Resolve the artifact directory before saving. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout.
+Resolve the artifact directory before saving. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout.
 
 ### Ticket-scoped path
 

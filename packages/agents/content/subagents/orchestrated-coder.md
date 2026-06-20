@@ -139,7 +139,7 @@ The artifact's frontmatter conforms to the universal artifact frontmatter schema
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-coder --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrated-coder --interactive false --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
 
 ## Reviewer-context sidecar
 
@@ -175,7 +175,7 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 <HARD-GATE>
 Every commit message MUST satisfy all five rules. Violations are treated as quality gate failures.
 
-1. **Render the commit title.** Run `{platform_home_dir}/scripts/describe-change.sh --title "<title>" --scope "<scope>" --type "<type>"` via Bash and read `commit_title` from the JSON output.
+1. **Render the commit title.** Run `{harness_home_dir}/scripts/describe-change.sh --title "<title>" --scope "<scope>" --type "<type>"` via Bash and read `commit_title` from the JSON output.
 2. **Title describes the code change, not the process.** Ask "what does the diff do?" — never "why did I open the editor?" Forbidden: "Address review findings," "Apply feedback," "Fix issues from review," "Incorporate suggestions." Required: Describe the actual change — "Fix null check in layout resolver," "Remove unused layout fields."
 3. **Title is 72 characters max.** Count characters before committing. If it's too long, shorten it.
 4. **No hard line breaks in the body.** Write naturally as continuous text. Do not insert newlines to wrap at a fixed column width.

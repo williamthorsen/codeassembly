@@ -23,7 +23,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
 
 ### 1. Resolve context
 
-1. Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `ticket_id`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
+1. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `ticket_id`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
 2. If no ticket ID is available, auto-generate one: `{YYYYMMDD}-{4 random hex}`.
 3. **Resolve artifact directory**: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` -- this is the ticket level, NOT inside a run directory. `orchestration-plan.json` is a ticket-level mutable artifact.
 4. `mkdir -p {artifact-dir}`
@@ -86,7 +86,7 @@ When the user approves the plan:
 
 1. Resolve frontmatter fields. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-   Run `{platform_home_dir}/scripts/resolve-frontmatter.sh --skill plan-orchestrable-steps --interactive true` via Bash. Prepend the output verbatim to the artifact body.
+   Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan-orchestrable-steps --interactive true` via Bash. Prepend the output verbatim to the artifact body.
 
 2. Add a frontmatter header to the latest plan markdown snapshot. List `{artifact-dir}/*_planner_orchestration-plan.md` files, sort lexicographically descending, and take the first (most recent by timestamp prefix). If no matching files are found, skip the frontmatter header step — the planner did not produce a markdown snapshot. Read the file, prepend the resolved frontmatter, and write back.
 

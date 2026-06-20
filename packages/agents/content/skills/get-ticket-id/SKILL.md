@@ -24,7 +24,7 @@ Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched
 
 ### From branch name
 
-The script `{platform_home_dir}/scripts/get-ticket-id.sh` extracts a ticket ID from a branch name. It accepts an optional branch name (defaults to the current branch) and prints the resolved ticket ID, or an empty string when no ID can be derived.
+The script `{harness_home_dir}/scripts/get-ticket-id.sh` extracts a ticket ID from a branch name. It accepts an optional branch name (defaults to the current branch) and prints the resolved ticket ID, or an empty string when no ID can be derived.
 
 In branch names, `_` and `/` are interchangeable separators (see `branch-format.md`). The Jira-style match is case-insensitive and unanchored, so it extracts the ID regardless of which separator is used or whether an author/scope prefix appears (e.g., `wt/COMPPLAN-795`, `wthorsen/MAC-130`, `feat/COMPPLAN-795-add-foo`). The result is uppercased before being returned.
 
@@ -44,7 +44,7 @@ When the bare-numeric fallback fires, the script reads `project.ticket_ref_prefi
 
 ```bash
 branch_name="${1:-$(git branch --show-current)}"
-ticket_id=$({platform_home_dir}/scripts/get-ticket-id.sh "$branch_name")
+ticket_id=$({harness_home_dir}/scripts/get-ticket-id.sh "$branch_name")
 ```
 
 ### From commit message

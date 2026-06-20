@@ -30,5 +30,5 @@ Old-format branch names like `MAC-123/agents/feat/add-orchestrator` still parse 
 
 ## Related skills
 
-- `derive-session-context` — Bundled TypeScript helper (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) that parses the branch name and caches all derived metadata (ticket ID, branch name, artifact paths, and other metadata) in `.agents/{sanitized-branch}.branch-manifest.json` for single-lookup access. Preferred when multiple metadata fields are needed.
+- `derive-session-context` — Bundled TypeScript helper (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) that parses the branch name and caches all derived metadata (ticket ID, branch name, artifact paths, and other metadata) in `.agents/{sanitized-branch}.branch-manifest.json` for single-lookup access. Preferred when multiple metadata fields are needed.
 - `get-ticket-id` — Extracts the ticket ID segment.

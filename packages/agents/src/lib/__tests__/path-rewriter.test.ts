@@ -101,15 +101,15 @@ describe(rewriteMarkdownPaths, () => {
 });
 
 describe(rewriteTemplateVariables, () => {
-  it('replaces {platform_home_dir} with tilde-prefixed homeDir', () => {
-    const content = '{platform_home_dir}/scripts/describe-change.sh --scope agents --type feat';
+  it('replaces {harness_home_dir} with tilde-prefixed homeDir', () => {
+    const content = '{harness_home_dir}/scripts/describe-change.sh --scope agents --type feat';
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
       '~/.claude/scripts/describe-change.sh --scope agents --type feat',
     );
   });
 
   it('replaces multiple occurrences', () => {
-    const content = 'Run {platform_home_dir}/scripts/a.sh then {platform_home_dir}/scripts/b.sh';
+    const content = 'Run {harness_home_dir}/scripts/a.sh then {harness_home_dir}/scripts/b.sh';
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
       'Run ~/.claude/scripts/a.sh then ~/.claude/scripts/b.sh',
     );
@@ -120,13 +120,13 @@ describe(rewriteTemplateVariables, () => {
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(content);
   });
 
-  it('resolves to the correct path for different platforms', () => {
-    const content = '{platform_home_dir}/scripts/describe-change.sh';
+  it('resolves to the correct path for different harnesses', () => {
+    const content = '{harness_home_dir}/scripts/describe-change.sh';
     expect(rewriteTemplateVariables(content, '.rovodev', 'rovodev')).toBe('~/.rovodev/scripts/describe-change.sh');
   });
 
   it('replaces {harness_id} with the harness identifier, leaving no placeholder', () => {
-    const content = 'node {platform_home_dir}/skills/capture-event/capture-event.mjs --harness {harness_id}';
+    const content = 'node {harness_home_dir}/skills/capture-event/capture-event.mjs --harness {harness_id}';
     expect(rewriteTemplateVariables(content, '.claude', 'claude')).toBe(
       'node ~/.claude/skills/capture-event/capture-event.mjs --harness claude',
     );
@@ -203,12 +203,12 @@ describe(rewritePathsInDirectory, () => {
     ).resolves.toBeUndefined();
   });
 
-  it('replaces {platform_home_dir} template variables in .md files', async () => {
+  it('replaces {harness_home_dir} template variables in .md files', async () => {
     const skillDir = path.join(skillsDestDir, 'commit');
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      '{platform_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}',
+      '{harness_home_dir}/scripts/describe-change.sh --scope {scope} --type {type}',
       'utf8',
     );
 
@@ -223,7 +223,7 @@ describe(rewritePathsInDirectory, () => {
     await mkdir(skillDir, { recursive: true });
     await writeFile(
       path.join(skillDir, 'SKILL.md'),
-      'See [format](../_data/title-templates.md). Run {platform_home_dir}/scripts/describe-change.sh.',
+      'See [format](../_data/title-templates.md). Run {harness_home_dir}/scripts/describe-change.sh.',
       'utf8',
     );
 

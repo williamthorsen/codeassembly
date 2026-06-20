@@ -28,7 +28,7 @@ describe(expandIncludes, () => {
   describe('resolution', () => {
     it('replaces a single self-closing directive with the included file content', async () => {
       const host = await writeSource(
-        'platforms/claude/CLAUDE.md',
+        'harnesses/claude/CLAUDE.md',
         ['Read AGENTS.md.', '', '<!-- include: ../../shared/AGENTS.md / -->', ''].join('\n'),
       );
       await writeSource('shared/AGENTS.md', ['# Shared instructions', '', 'Be courteous.', ''].join('\n'));
@@ -40,10 +40,10 @@ describe(expandIncludes, () => {
 
     it('resolves against the directive-bearing file directory, not the entry point directory', async () => {
       const host = await writeSource(
-        'platforms/rovodev/AGENTS.md',
+        'harnesses/rovodev/AGENTS.md',
         ['<!-- include: ./codeassembly-guidance.md / -->', ''].join('\n'),
       );
-      await writeSource('platforms/rovodev/codeassembly-guidance.md', 'Rovodev-specific.\n');
+      await writeSource('harnesses/rovodev/codeassembly-guidance.md', 'Rovodev-specific.\n');
 
       const result = await expandIncludes(host, contentDir);
 
@@ -306,7 +306,7 @@ describe(expandIncludes, () => {
     });
 
     it('throws out-of-tree when the resolved path escapes contentDir', async () => {
-      const host = await writeSource('platforms/claude/CLAUDE.md', '<!-- include: ../../../escape.md / -->\n');
+      const host = await writeSource('harnesses/claude/CLAUDE.md', '<!-- include: ../../../escape.md / -->\n');
 
       await expect(expandIncludes(host, contentDir)).rejects.toMatchObject({
         reason: 'out-of-tree',

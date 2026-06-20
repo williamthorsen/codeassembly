@@ -25,7 +25,7 @@ describe('uninstallCommand', () => {
 
   function makeInstallOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return {
-      platform: 'claude',
+      harness: 'claude',
       link: false,
       force: false,
       dryRun: false,
@@ -46,25 +46,25 @@ describe('uninstallCommand', () => {
     await writeFile(manualFile, 'manual content', 'utf8');
 
     // Uninstall
-    await uninstallCommand({ platform: 'claude', force: false }, tempDir);
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     // Manual file should still exist
     expect(existsSync(manualFile)).toBe(true);
 
-    // Manifest should no longer have claude platform
+    // Manifest should no longer have claude harness
     const manifest = await readManifest(getManifestPath(tempDir));
-    expect(manifest.platforms.claude).toBeUndefined();
+    expect(manifest.harnesses.claude).toBeUndefined();
   });
 
-  it('should report when no installation exists for a platform', async () => {
+  it('should report when no installation exists for a harness', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });
 
     // Should not throw when no installation exists
-    await expect(uninstallCommand({ platform: 'claude', force: false }, tempDir)).resolves.not.toThrow();
+    await expect(uninstallCommand({ harness: 'claude', force: false }, tempDir)).resolves.not.toThrow();
   });
 
-  it('should skip modified files and preserve platform manifest entry', async () => {
+  it('should skip modified files and preserve harness manifest entry', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -81,17 +81,17 @@ describe('uninstallCommand', () => {
     );
 
     // Uninstall without force
-    await uninstallCommand({ platform: 'claude', force: false }, tempDir);
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     // Modified file should still exist
     expect(existsSync(path.join(claudeHome, 'agents', 'orchestrated-coder.md'))).toBe(true);
 
-    // Platform manifest entry should be retained because some files were skipped
+    // Harness manifest entry should be retained because some files were skipped
     const manifest = await readManifest(getManifestPath(tempDir));
-    expect(manifest.platforms.claude).toBeDefined();
+    expect(manifest.harnesses.claude).toBeDefined();
   });
 
-  it('should retain only skipped entries in platform manifest after partial uninstall', async () => {
+  it('should retain only skipped entries in harness manifest after partial uninstall', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
@@ -105,12 +105,12 @@ describe('uninstallCommand', () => {
     await writeFile(agentFile, original + '\n<!-- user modification -->', 'utf8');
 
     // Uninstall without force — modified file is skipped, others are removed
-    await uninstallCommand({ platform: 'claude', force: false }, tempDir);
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
-    // Platform manifest should contain only the skipped entry
+    // Harness manifest should contain only the skipped entry
     const manifest = await readManifest(getManifestPath(tempDir));
-    const claudeEntries = manifest.platforms.claude?.entries;
-    assert.ok(claudeEntries, 'Expected claude platform entries to be defined');
+    const claudeEntries = manifest.harnesses.claude?.entries;
+    assert.ok(claudeEntries, 'Expected claude harness entries to be defined');
     expect(claudeEntries).toHaveLength(1);
     expect(claudeEntries[0]?.relativePath).toBe('agents/orchestrated-coder.md');
   });
@@ -138,7 +138,7 @@ describe('uninstallCommand', () => {
           { relativePath: 'EXTRA.md', contentHash: hashB, linked: false },
         ],
       },
-      platforms: {},
+      harnesses: {},
     };
     await writeManifest(getManifestPath(tempDir), manifest);
 
@@ -146,7 +146,7 @@ describe('uninstallCommand', () => {
     await writeFile(fileA, 'modified content A', 'utf8');
 
     // Uninstall without force — AGENTS.md is skipped, EXTRA.md is removed
-    await uninstallCommand({ platform: 'claude', force: false }, tempDir);
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     // Shared manifest should contain only the skipped entry
     const updated = await readManifest(getManifestPath(tempDir));
@@ -178,13 +178,13 @@ describe('uninstallCommand', () => {
     );
 
     // Uninstall with force
-    await uninstallCommand({ platform: 'claude', force: true }, tempDir);
+    await uninstallCommand({ harness: 'claude', force: true }, tempDir);
 
     // Modified file should be removed
     expect(existsSync(path.join(claudeHome, 'agents', 'orchestrated-coder.md'))).toBe(false);
 
-    // Platform manifest entry should be removed
+    // Harness manifest entry should be removed
     const manifest = await readManifest(getManifestPath(tempDir));
-    expect(manifest.platforms.claude).toBeUndefined();
+    expect(manifest.harnesses.claude).toBeUndefined();
   });
 });

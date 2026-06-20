@@ -86,7 +86,7 @@ EOF
 Or, when the skill directory is known:
 
 ```bash
-cat <<'EOF' | node {platform_home_dir}/skills/kb-add/kb-add.mjs \
+cat <<'EOF' | node {harness_home_dir}/skills/kb-add/kb-add.mjs \
   --diataxis howto --title "Configure pnpm workspaces" --tags "pnpm,workspaces"
 Configure pnpm workspaces by adding a `pnpm-workspace.yaml` at the repo
 root that lists each package directory under `packages:`.

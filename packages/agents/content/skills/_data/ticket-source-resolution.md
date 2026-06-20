@@ -19,7 +19,7 @@ When no ticket source is provided, attempt to derive the ticket from the current
 
 ### Steps
 
-1. **Get session context** by invoking the bundled session-context deriver (`node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON carries both `ticket_id` and the persisted `ticket_url` (see [Stored ticket URL](#stored-ticket-url)).
+1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON carries both `ticket_id` and the persisted `ticket_url` (see [Stored ticket URL](#stored-ticket-url)).
 
 2. **Prefer the stored URL.** If `ticket_url` is a non-null string, fetch the ticket directly from that URL — skip the platform/identifier reconstruction below. If the stored URL does not yield the expected ticket, invalidate it per [Stored ticket URL](#stored-ticket-url) and continue with reconstruction.
 
@@ -80,8 +80,8 @@ Not yet supported for automated fetch. If the platform is determined to be Jira,
 The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `ticket_url` so it is reused across sessions instead of being reconstructed or re-pasted each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags — never by hand-editing the JSON.
 
 - **Prefer** — auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
-- **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: run `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
-- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: there is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-prompts the user for a corrected URL (Jira has no automated fetch).
+- **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.
+- **Invalidate** — when the stored URL does not yield the expected ticket (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-ticket-url`, then re-resolve. This rule is platform-agnostic: there is no carve-out. For GitHub, re-resolution re-derives or re-fetches; for Jira, re-resolution re-prompts the user for a corrected URL (Jira has no automated fetch).
 
 ## Resolved metadata
 

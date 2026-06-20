@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // Installable Markdown content is rewritten at install time. Runtime cross-references to other installable files must
-// use the `{platform_home_dir}/...` template (expanded by the install pipeline) or a relative Markdown link (rewritten
+// use the `{harness_home_dir}/...` template (expanded by the install pipeline) or a relative Markdown link (rewritten
 // by `rewriteMarkdownPaths`). Raw `packages/agents/content/...` paths resolve only inside this monorepo and break in
 // every installed context, so they are forbidden in installable Markdown — except in the small set of files below,
 // whose references are intentional source-tree citations (documentation about where the canonical source lives).
@@ -67,7 +67,7 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   const header =
     `Found ${violations.length} raw \`${FORBIDDEN_PATTERN}\` reference(s) in installable Markdown. ` +
     `Replace each with one of: ` +
-    `(a) \`{platform_home_dir}/...\` for runtime references the agent reads or executes; ` +
+    `(a) \`{harness_home_dir}/...\` for runtime references the agent reads or executes; ` +
     `(b) a relative Markdown link \`[text](relative/path.md)\` (the install pipeline rewrites it); ` +
     `(c) add the file to the ALLOWLIST in this test if the reference is an intentional source-tree citation. ` +
     `See \`packages/agents/content/_partials/README.md\` § "Path references in installed content" for the convention.`;

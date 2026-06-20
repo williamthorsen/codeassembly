@@ -4,6 +4,7 @@ import path from 'node:path';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
+import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.ts';
 import {
   computeContentHash,
@@ -20,21 +21,20 @@ import {
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
-import { PLATFORMS, resolvePlatformIds, resolvePlatformPaths } from '../lib/platform.js';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
+  HarnessConfig,
+  HarnessId,
+  HarnessManifest,
   InstallOptions,
   ManifestEntry,
-  PlatformConfig,
-  PlatformId,
-  PlatformManifest,
   SharedManifest,
 } from '../lib/types.js';
 
 /**
- * Executes the install command, installing skills and subagents for the specified platforms.
+ * Executes the install command, installing skills and subagents for the specified harnesses.
  */
 export async function installCommand(
   options: InstallOptions,
@@ -44,13 +44,13 @@ export async function installCommand(
   const contentDir = contentDirOverride ?? resolveContentDir();
   const manifestPath = getManifestPath(baseDir);
   const manifest = await readManifest(manifestPath);
-  const platforms = resolvePlatformIds(options.platform, baseDir);
+  const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Install shared guidance unconditionally (before platform detection check)
+  // Install shared guidance unconditionally (before harness detection check)
   const sharedGuidanceResult = await installSharedGuidance(contentDir, manifest, options, baseDir);
 
-  if (platforms.length === 0) {
-    // Even with no platforms, persist the shared manifest update
+  if (harnesses.length === 0) {
+    // Even with no harnesses, persist the shared manifest update
     if (!options.dryRun && sharedGuidanceResult) {
       const updatedManifest: AgentsManifest = {
         ...manifest,
@@ -59,16 +59,16 @@ export async function installCommand(
       await writeManifest(manifestPath, updatedManifest);
       console.info('\nManifest updated.');
     } else {
-      console.info('No target platforms detected. Nothing else to install.');
+      console.info('No target harnesses detected. Nothing else to install.');
     }
     return;
   }
 
-  const updatedPlatforms: Partial<Record<PlatformId, PlatformManifest>> = { ...manifest.platforms };
+  const updatedHarnesses: Partial<Record<HarnessId, HarnessManifest>> = { ...manifest.harnesses };
 
-  for (const platformId of platforms) {
-    console.info(`\nInstalling for platform: ${platformId}`);
-    const paths = resolvePlatformPaths(platformId, baseDir);
+  for (const harnessId of harnesses) {
+    console.info(`\nInstalling for harness: ${harnessId}`);
+    const paths = resolveHarnessPaths(harnessId, baseDir);
 
     // Safety check: ensure target directories are not symlinks
     checkSymlinkSafety(paths.skillsDir);
@@ -76,28 +76,28 @@ export async function installCommand(
     checkSymlinkSafety(paths.scriptsDir);
 
     // Build lookup of previously installed entries for drift detection
-    const existingEntries = manifest.platforms[platformId]?.entries ?? [];
+    const existingEntries = manifest.harnesses[harnessId]?.entries ?? [];
     const existingByPath = new Map(existingEntries.map((e) => [e.relativePath, e]));
 
     const entries: Array<ManifestEntry> = [];
 
-    // Load the platform overlay once per platform. The raw YAML feeds the frontmatter merger (subagents only);
+    // Load the harness overlay once per harness. The raw YAML feeds the frontmatter merger (subagents only);
     // the parsed `_tools:` mapping feeds the body-text placeholder rewriter (subagents and skills).
-    const platformConfig = PLATFORMS[platformId];
-    const overlayYaml = await readOverlay(contentDir, platformConfig.frontmatterFile);
+    const harnessConfig = HARNESSES[harnessId];
+    const overlayYaml = await readOverlay(contentDir, harnessConfig.frontmatterFile);
     const toolMapping = loadToolMapping(overlayYaml);
 
-    // Install skills (shared + platform-specific)
-    const skillsPrefix = `${platformConfig.homeDir}/${platformConfig.skillsDirName}`;
+    // Install skills (shared + harness-specific)
+    const skillsPrefix = `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`;
     const skillEntries = await installSkills(
       contentDir,
       paths.skillsDir,
-      paths.platformHome,
+      paths.harnessHome,
       existingByPath,
       options,
-      platformId,
+      harnessId,
       skillsPrefix,
-      platformConfig.homeDir,
+      harnessConfig.homeDir,
       toolMapping,
     );
     entries.push(...skillEntries);
@@ -106,7 +106,7 @@ export async function installCommand(
     const subagentEntries = await installSubagents(
       contentDir,
       paths,
-      platformId,
+      harnessId,
       existingByPath,
       options,
       overlayYaml,
@@ -118,19 +118,19 @@ export async function installCommand(
     const scriptEntries = await installScripts(
       contentDir,
       paths.scriptsDir,
-      paths.platformHome,
-      platformConfig,
+      paths.harnessHome,
+      harnessConfig,
       existingByPath,
       options,
     );
     entries.push(...scriptEntries);
 
-    // Install platform-specific guidance file
-    const guidanceEntries = await installPlatformGuidance(contentDir, paths, platformId, existingByPath, options);
+    // Install harness-specific guidance file
+    const guidanceEntries = await installHarnessGuidance(contentDir, paths, harnessId, existingByPath, options);
     entries.push(...guidanceEntries);
 
     // Generate prompts.yml for Rovo Dev (skill discovery file)
-    if (platformId === 'rovodev') {
+    if (harnessId === 'rovodev') {
       const promptsEntry = await generatePromptsYml(paths, existingByPath, options);
       if (promptsEntry) {
         entries.push(promptsEntry);
@@ -146,20 +146,20 @@ export async function installCommand(
       continue;
     }
 
-    updatedPlatforms[platformId] = {
-      platform: platformId,
+    updatedHarnesses[harnessId] = {
+      harness: harnessId,
       version: '0.1.0',
       installedAt: new Date().toISOString(),
       entries,
     };
-    console.info(`  ✅ Installed ${entries.length} items for ${platformId}`);
+    console.info(`  ✅ Installed ${entries.length} items for ${harnessId}`);
   }
 
   if (!options.dryRun) {
     const updatedManifest: AgentsManifest = {
       ...manifest,
       shared: sharedGuidanceResult ?? manifest.shared,
-      platforms: updatedPlatforms,
+      harnesses: updatedHarnesses,
     };
     await writeManifest(manifestPath, updatedManifest);
     console.info('\nManifest updated.');
@@ -168,9 +168,9 @@ export async function installCommand(
 
 /**
  * Installs skill directories from content/skills/ into the target skills directory.
- * Shared skills (top-level entries) are installed for all platforms.
- * Platform-specific skills from `_platforms/{platformId}/` are installed only for the matching platform.
- * The `_platforms` directory is skipped (handled by dedicated platform-specific logic below).
+ * Shared skills (top-level entries) are installed for all harnesses.
+ * Harness-specific skills from `_harnesses/{harnessId}/` are installed only for the matching harness.
+ * The `_harnesses` directory is skipped (handled by dedicated harness-specific logic below).
  *
  * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
  * mirroring the uninstall command's drift-checking behavior.
@@ -178,10 +178,10 @@ export async function installCommand(
 async function installSkills(
   contentDir: string,
   skillsDestDir: string,
-  platformHome: string,
+  harnessHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
-  platformId: PlatformId,
+  harnessId: HarnessId,
   skillsPrefix: string,
   homeDir: string,
   toolMapping: ReadonlyMap<string, string>,
@@ -190,14 +190,14 @@ async function installSkills(
   const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
-  // Install shared skills and support directories. Skip `_platforms` (installed by the platform-specific pass below)
+  // Install shared skills and support directories. Skip `_harnesses` (installed by the harness-specific pass below)
   // and `_partials` (an install-time include target whose content is inlined into including skills, never installed as
   // a standalone directory), plus dotfiles. This mirrors the per-skill `_partials` walk exclusion, which only matches
   // `_partials` as a child and so never fires when it is the enumeration root. Other reserved directories such as
   // `_data/` install normally — skills reference them at runtime by absolute path, so the skip is by name, not by the
   // leading-underscore convention.
   for (const entry of dirEntries) {
-    if (entry === '_platforms' || entry === '_partials' || entry.startsWith('.')) {
+    if (entry === '_harnesses' || entry === '_partials' || entry.startsWith('.')) {
       continue;
     }
     const result = await installSkillEntry(
@@ -205,51 +205,49 @@ async function installSkills(
       path.join(skillsDestDir, entry),
       `skills/${entry}`,
       `skills/${entry}`,
-      platformHome,
+      harnessHome,
       existingByPath,
       options,
       skillsPrefix,
       homeDir,
-      platformId,
+      harnessId,
       contentDir,
       toolMapping,
     );
     entries.push(result);
   }
 
-  // Install platform-specific skills from _platforms/{platformId}/
-  const platformSkillsSrcDir = path.join(skillsSrcDir, '_platforms', platformId);
-  let platformDirEntries: ReadonlyArray<string>;
+  // Install harness-specific skills from _harnesses/{harnessId}/
+  const harnessSkillsSrcDir = path.join(skillsSrcDir, '_harnesses', harnessId);
+  let harnessDirEntries: ReadonlyArray<string>;
   try {
-    platformDirEntries = await readdir(platformSkillsSrcDir);
+    harnessDirEntries = await readdir(harnessSkillsSrcDir);
   } catch (error: unknown) {
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(
-      `  ⚠️ Warning: no platform-specific skills directory found for ${platformId}: ${platformSkillsSrcDir}`,
-    );
-    platformDirEntries = [];
+    console.warn(`  ⚠️ Warning: no harness-specific skills directory found for ${harnessId}: ${harnessSkillsSrcDir}`);
+    harnessDirEntries = [];
   }
 
-  for (const entry of platformDirEntries) {
+  for (const entry of harnessDirEntries) {
     if (entry.startsWith('.')) {
       continue;
     }
     const result = await installSkillEntry(
-      path.join(platformSkillsSrcDir, entry),
+      path.join(harnessSkillsSrcDir, entry),
       path.join(skillsDestDir, entry),
       `skills/${entry}`,
-      `skills/_platforms/${platformId}/${entry}`,
-      platformHome,
+      `skills/_harnesses/${harnessId}/${entry}`,
+      harnessHome,
       existingByPath,
       options,
       skillsPrefix,
       homeDir,
-      platformId,
+      harnessId,
       contentDir,
       toolMapping,
-      '(platform-specific)',
+      '(harness-specific)',
     );
     entries.push(result);
   }
@@ -267,7 +265,7 @@ async function installSkillEntry(
   destPath: string,
   relativePath: string,
   sourceRelativeRoot: string,
-  platformHome: string,
+  harnessHome: string,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
   skillsPrefix: string,
@@ -302,7 +300,7 @@ async function installSkillEntry(
   // Check for user modifications before overwriting
   const existingEntry = existingByPath.get(relativePath);
   if (existingEntry && !options.force) {
-    const drift = await detectDrift(existingEntry, platformHome);
+    const drift = await detectDrift(existingEntry, harnessHome);
     if (drift === 'modified') {
       console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
       return existingEntry;
@@ -406,21 +404,21 @@ async function writeExpandedSkillDir(
 }
 
 /**
- * Installs subagent .md files with platform-specific frontmatter merging.
+ * Installs subagent .md files with harness-specific frontmatter merging.
  * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
  * mirroring the uninstall command's drift-checking behavior.
  */
 async function installSubagents(
   contentDir: string,
-  platformPaths: { platformHome: string; subagentsDir: string },
-  platformId: PlatformId,
+  harnessPaths: { harnessHome: string; subagentsDir: string },
+  harnessId: HarnessId,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
   overlayYaml: string,
   toolMapping: ReadonlyMap<string, string>,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const subagentsSrcDir = path.join(contentDir, 'subagents');
-  const platformConfig = PLATFORMS[platformId];
+  const harnessConfig = HARNESSES[harnessId];
 
   const dirEntries = await readdir(subagentsSrcDir);
   const entries: Array<ManifestEntry> = [];
@@ -431,11 +429,11 @@ async function installSubagents(
     }
 
     const srcPath = path.join(subagentsSrcDir, entry);
-    const destPath = path.join(platformPaths.subagentsDir, entry);
-    const relativePath = `${platformConfig.subagentsDirName}/${entry}`;
+    const destPath = path.join(harnessPaths.subagentsDir, entry);
+    const relativePath = `${harnessConfig.subagentsDirName}/${entry}`;
 
     // Resolve include directives at source-tree level. Run before the dry-run gate so missing targets, cycles, and
-    // out-of-tree references surface even when no files are written. Mirrors the ordering in installPlatformGuidance.
+    // out-of-tree references surface even when no files are written. Mirrors the ordering in installHarnessGuidance.
     const expandedSource = await expandIncludes(srcPath, contentDir);
 
     if (options.dryRun) {
@@ -452,7 +450,7 @@ async function installSubagents(
     // Check for user modifications before overwriting
     const existingEntry = existingByPath.get(relativePath);
     if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, platformPaths.platformHome);
+      const drift = await detectDrift(existingEntry, harnessPaths.harnessHome);
       if (drift === 'modified') {
         console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
         entries.push(existingEntry);
@@ -470,8 +468,8 @@ async function installSubagents(
     await unlinkIfSymlink(destPath);
     await writeFile(destPath, withMarker, 'utf8');
 
-    // Expand `{platform_home_dir}` tokens so the body's script references resolve to real paths.
-    await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir, platformConfig.id);
+    // Expand `{harness_home_dir}` tokens so the body's script references resolve to real paths.
+    await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, harnessConfig.homeDir, harnessConfig.id);
 
     const hash = await computeContentHash(destPath);
     entries.push({
@@ -488,10 +486,10 @@ async function installSubagents(
  * Generates `prompts.yml` for Rovo Dev, which is the skill discovery file that lists all user-invocable skills.
  * Skills with `user-invocable: false` are excluded.
  *
- * The file is written to `{platformHome}/prompts.yml` and tracked in the manifest.
+ * The file is written to `{harnessHome}/prompts.yml` and tracked in the manifest.
  */
 async function generatePromptsYml(
-  paths: { platformHome: string; skillsDir: string },
+  paths: { harnessHome: string; skillsDir: string },
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
 ): Promise<ManifestEntry | undefined> {
@@ -587,17 +585,17 @@ async function generatePromptsYml(
   // Files at 'current' drift are always regenerated to pick up any newly added skills.
   const existingEntry = existingByPath.get(relativePath);
   if (existingEntry && !options.force) {
-    const drift = await detectDrift(existingEntry, paths.platformHome);
+    const drift = await detectDrift(existingEntry, paths.harnessHome);
     if (drift === 'modified') {
       console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
       return existingEntry;
     }
   }
 
-  // Ensure platform home directory exists
-  await mkdir(paths.platformHome, { recursive: true });
+  // Ensure harness home directory exists
+  await mkdir(paths.harnessHome, { recursive: true });
 
-  const destPath = path.join(paths.platformHome, relativePath);
+  const destPath = path.join(paths.harnessHome, relativePath);
   await unlinkIfSymlink(destPath);
   await writeFile(destPath, yamlContent, 'utf8');
 
@@ -611,14 +609,14 @@ async function generatePromptsYml(
 
 /**
  * Installs script files from content/scripts/ into the target scripts directory.
- * Scripts are flat files (no frontmatter, no platform-specific variants).
+ * Scripts are flat files (no frontmatter, no harness-specific variants).
  * Copied scripts receive the executable bit (0o755); symlinked scripts inherit the source's permissions.
  */
 async function installScripts(
   contentDir: string,
   scriptsDestDir: string,
-  platformHome: string,
-  platformConfig: PlatformConfig,
+  harnessHome: string,
+  harnessConfig: HarnessConfig,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
 ): Promise<ReadonlyArray<ManifestEntry>> {
@@ -641,7 +639,7 @@ async function installScripts(
       continue;
     }
 
-    // Skip non-script files (e.g. README.md); only `.sh` helpers ship to platform homes.
+    // Skip non-script files (e.g. README.md); only `.sh` helpers ship to harness homes.
     if (!entry.endsWith('.sh')) {
       continue;
     }
@@ -654,7 +652,7 @@ async function installScripts(
       continue;
     }
     const destPath = path.join(scriptsDestDir, entry);
-    const relativePath = `${platformConfig.scriptsDirName}/${entry}`;
+    const relativePath = `${harnessConfig.scriptsDirName}/${entry}`;
 
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';
@@ -666,7 +664,7 @@ async function installScripts(
     // Check for user modifications before overwriting
     const existingEntry = existingByPath.get(relativePath);
     if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, platformHome);
+      const drift = await detectDrift(existingEntry, harnessHome);
       if (drift === 'modified') {
         console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
         entries.push(existingEntry);
@@ -695,7 +693,7 @@ async function installScripts(
 
 /**
  * Installs shared guidance files from `content/guidance/shared/` to `~/.agents/`.
- * Runs unconditionally (not gated by platform detection).
+ * Runs unconditionally (not gated by harness detection).
  */
 async function installSharedGuidance(
   contentDir: string,
@@ -786,19 +784,19 @@ async function installSharedGuidance(
 }
 
 /**
- * Installs platform-specific guidance files from `content/guidance/_platforms/{platformId}/` into the platform
- * home directory. Platform guidance is always copied and rewritten (never symlinked), because install-time path
+ * Installs harness-specific guidance files from `content/guidance/_harnesses/{harnessId}/` into the harness
+ * home directory. Harness guidance is always copied and rewritten (never symlinked), because install-time path
  * rewriting produces absolute link targets that agents can resolve without knowing a path convention.
  */
-async function installPlatformGuidance(
+async function installHarnessGuidance(
   contentDir: string,
-  platformPaths: { platformHome: string },
-  platformId: PlatformId,
+  harnessPaths: { harnessHome: string },
+  harnessId: HarnessId,
   existingByPath: ReadonlyMap<string, ManifestEntry>,
   options: InstallOptions,
 ): Promise<ReadonlyArray<ManifestEntry>> {
-  const platformConfig = PLATFORMS[platformId];
-  const guidanceSrcDir = path.join(contentDir, 'guidance', '_platforms', platformId);
+  const harnessConfig = HARNESSES[harnessId];
+  const guidanceSrcDir = path.join(contentDir, 'guidance', '_harnesses', harnessId);
   let dirEntries: ReadonlyArray<string>;
   try {
     dirEntries = await readdir(guidanceSrcDir);
@@ -807,7 +805,7 @@ async function installPlatformGuidance(
       throw error;
     }
     console.warn(
-      `  ⚠️ Warning: no platform guidance directory found at ${guidanceSrcDir}, skipping platform guidance installation`,
+      `  ⚠️ Warning: no harness guidance directory found at ${guidanceSrcDir}, skipping harness guidance installation`,
     );
     return [];
   }
@@ -820,7 +818,7 @@ async function installPlatformGuidance(
     }
 
     const srcPath = path.join(guidanceSrcDir, entry);
-    const destPath = path.join(platformPaths.platformHome, entry);
+    const destPath = path.join(harnessPaths.harnessHome, entry);
 
     // Resolve include directives at source-tree level. Run before the dry-run gate so missing
     // targets, cycles, and out-of-tree references surface even when no files are written.
@@ -838,9 +836,9 @@ async function installPlatformGuidance(
     // Check for user modifications before overwriting
     const existingEntry = existingByPath.get(entry);
     if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, platformPaths.platformHome);
+      const drift = await detectDrift(existingEntry, harnessPaths.harnessHome);
       if (drift === 'modified') {
-        console.warn(`  ⚠️ Skipping modified item: ${platformConfig.homeDir}/${entry}`);
+        console.warn(`  ⚠️ Skipping modified item: ${harnessConfig.homeDir}/${entry}`);
         entries.push(existingEntry);
         continue;
       }
@@ -855,8 +853,8 @@ async function installPlatformGuidance(
       if (expandedContent !== undefined) {
         await writeFile(destPath, expandedContent, 'utf8');
       }
-      await rewritePathsInFile(destPath, entry, platformConfig.homeDir, platformConfig.homeDir, platformConfig.id);
-      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_platforms/${platformId}/${entry}`));
+      await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, harnessConfig.homeDir, harnessConfig.id);
+      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_harnesses/${harnessId}/${entry}`));
     }
 
     entries.push({
@@ -871,7 +869,7 @@ async function installPlatformGuidance(
 
 /**
  * Returns a POSIX-style path label for a skill source file relative to `contentDir`, used as the `contextLabel`
- * argument to `rewriteToolNames` so install errors include a stable, platform-independent file reference.
+ * argument to `rewriteToolNames` so install errors include a stable, harness-independent file reference.
  */
 function relativeFromContent(contentDir: string, srcPath: string): string {
   return path.relative(contentDir, srcPath).split(path.sep).join('/');

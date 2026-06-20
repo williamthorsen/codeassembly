@@ -44,7 +44,7 @@ Sub-phase state is recorded via `emit_event` calls at the points described in ea
 
 Every reviewer dispatch and re-dispatch in this module includes a conditional `## Reviewer context` block in its prompt. This sub-section defines how the block is computed; each dispatch site below references it. Do not inline this logic at the dispatch sites — keep the assembly definition single-sourced here.
 
-The block is assembled from two independent sources by the helper script `{platform_home_dir}/scripts/resolve-reviewer-context.sh`:
+The block is assembled from two independent sources by the helper script `{harness_home_dir}/scripts/resolve-reviewer-context.sh`:
 
 1. The most recent coder-emitted sidecar artifact (`{reviewer-context-sidecar-path}`), if present.
 2. Static lookup-table entries from `{lookup-path}` whose package keys are statically imported or required by any changed file.
@@ -58,7 +58,7 @@ The block is assembled from two independent sources by the helper script `{platf
    ```
    # Only include --sidecar when {reviewer-context-sidecar-path} is non-empty;
    # omit the flag entirely when the variable is an empty string.
-   bash {platform_home_dir}/scripts/resolve-reviewer-context.sh \
+   bash {harness_home_dir}/scripts/resolve-reviewer-context.sh \
      --sidecar "{reviewer-context-sidecar-path}" \
      --changed-files "{run-dir}/.tmp_changed-files.txt" \
      --lookup "{lookup-path}" \

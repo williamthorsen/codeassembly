@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-// Helper scripts in `packages/agents/content/scripts/` are installed to `~/<platform_home>/scripts/`, a directory not
-// on `$PATH`. Agent-facing content must invoke them via the `{platform_home_dir}/scripts/` template,
-// which the install pipeline expands per platform. Bare invocations leave the agent guessing a path at runtime.
+// Helper scripts in `packages/agents/content/scripts/` are installed to `~/<harness_home>/scripts/`, a directory not
+// on `$PATH`. Agent-facing content must invoke them via the `{harness_home_dir}/scripts/` template,
+// which the install pipeline expands per harness. Bare invocations leave the agent guessing a path at runtime.
 const KNOWN_SCRIPTS: ReadonlyArray<string> = [
   'describe-change.sh',
   'get-ticket-id.sh',
@@ -14,7 +14,7 @@ const KNOWN_SCRIPTS: ReadonlyArray<string> = [
   'resolve-reviewer-context.sh',
 ];
 
-const REQUIRED_PREFIX = '{platform_home_dir}/scripts/';
+const REQUIRED_PREFIX = '{harness_home_dir}/scripts/';
 
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 const SKILLS_DIR = path.join(CONTENT_ROOT, 'skills');
@@ -94,7 +94,7 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
 }
 
 describe('helper-script invocation conventions', () => {
-  it('every executable invocation of a known helper script uses the {platform_home_dir}/scripts/ prefix', async () => {
+  it('every executable invocation of a known helper script uses the {harness_home_dir}/scripts/ prefix', async () => {
     const violations = await findViolations();
     expect(violations, formatViolations(violations)).toEqual([]);
   });

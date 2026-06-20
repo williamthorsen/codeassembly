@@ -112,7 +112,7 @@ function serializeScalar(value: unknown): string {
 }
 
 /**
- * Merges platform-specific frontmatter overrides into a subagent markdown file.
+ * Merges harness-specific frontmatter overrides into a subagent markdown file.
  *
  * Replicates the behavior of `merge_frontmatter` from `sync-agent-files.sh`:
  * 1. Parse source frontmatter and extract agent name
@@ -122,7 +122,7 @@ function serializeScalar(value: unknown): string {
  * 5. Preserve body verbatim
  *
  * @param source The source markdown content.
- * @param overlayYaml The overlay YAML content for the target platform.
+ * @param overlayYaml The overlay YAML content for the target harness.
  * @returns The merged markdown content.
  */
 export function mergeFrontmatter(source: string, overlayYaml: string): string {

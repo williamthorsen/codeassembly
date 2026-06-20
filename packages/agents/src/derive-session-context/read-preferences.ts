@@ -9,6 +9,7 @@
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 
 import { parse as parseYaml } from 'yaml';
 
@@ -107,8 +108,15 @@ function mergeTopLevel(global: unknown, project: unknown): Record<string, unknow
 function projectPreferences(merged: Record<string, unknown>): ResolvedPreferences {
   const result: WritablePreferences = {};
 
-  if (merged.platform !== undefined) {
-    result.platform = expectPlatform(merged.platform);
+  // Resolve `scm` from the new key, falling back to the legacy top-level `platform` key so an
+  // existing `bitbucket` configuration is not silently dropped. The fallback is temporary; a
+  // separate ticket removes it once preferences files have migrated.
+  const scmValue = merged.scm ?? merged.platform;
+  if (scmValue !== undefined) {
+    if (merged.scm === undefined) {
+      process.stderr.write("preferences: the top-level 'platform' key is deprecated; rename it to 'scm'.\n");
+    }
+    result.scm = expectScm(scmValue);
   }
 
   if (merged.project !== undefined) {
@@ -168,7 +176,7 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
 
 /** Mutable mirror of `ResolvedPreferences` used during projection construction. */
 interface WritablePreferences {
-  platform?: 'github' | 'bitbucket';
+  scm?: 'github' | 'bitbucket';
   project?: {
     slug?: string;
     ticket_ref_prefix?: string;
@@ -187,14 +195,14 @@ interface WritablePreferences {
 }
 
 /**
- * Narrows `value` to the `platform` enum. Throws with the offending key path when the value is
+ * Narrows `value` to the `scm` enum. Throws with the offending key path when the value is
  * neither `"github"` nor `"bitbucket"`.
  */
-function expectPlatform(value: unknown): 'github' | 'bitbucket' {
+function expectScm(value: unknown): 'github' | 'bitbucket' {
   if (value === 'github' || value === 'bitbucket') {
     return value;
   }
-  throw new Error(`preferences: 'platform' must be "github" or "bitbucket" (got ${formatValue(value)})`);
+  throw new Error(`preferences: 'scm' must be "github" or "bitbucket" (got ${formatValue(value)})`);
 }
 
 /** Narrows `value` to `string`. Throws with the offending key path when the value is not a string. */

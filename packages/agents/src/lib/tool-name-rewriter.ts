@@ -15,7 +15,7 @@ export class ToolNameRewriteError extends Error {
   constructor(toolName: string, contextLabel: string, line: number) {
     super(
       `Unmapped tool name "${toolName}" in ${contextLabel}:${line}. ` +
-        `Define ${toolName} in the platform overlay's _tools: mapping.`,
+        `Define ${toolName} in the harness overlay's _tools: mapping.`,
     );
     this.toolName = toolName;
     this.contextLabel = contextLabel;
@@ -42,7 +42,7 @@ export function rewriteToolNames(content: string, mapping: ReadonlyMap<string, s
 }
 
 /**
- * Parses the top-level `_tools:` key out of an overlay YAML document into a canonical → platform name `Map`.
+ * Parses the top-level `_tools:` key out of an overlay YAML document into a canonical → harness name `Map`.
  * Missing, null, or empty `_tools:` returns an empty `Map`. A non-object `_tools:` or any non-string entry throws.
  */
 export function loadToolMapping(overlayYaml: string): Map<string, string> {

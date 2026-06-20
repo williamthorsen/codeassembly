@@ -4,9 +4,9 @@ import path from 'node:path';
 /**
  * Rewrites relative Markdown link targets in `content` to absolute `~`-prefixed paths.
  * Resolves each relative target against the directory of `fileRelPath` within the tree rooted
- * at `pathPrefix`, then maps to `~/{pathPrefix}/{resolved}`. The prefix is the platform-relative
+ * at `pathPrefix`, then maps to `~/{pathPrefix}/{resolved}`. The prefix is the harness-relative
  * directory under which the tree lives (e.g., `.claude/skills` for skills, `.claude` for
- * platform guidance files that sit directly in the platform home).
+ * harness guidance files that sit directly in the harness home).
  */
 export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathPrefix: string): string {
   const fileDir = path.posix.dirname(fileRelPath);
@@ -39,19 +39,19 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathP
 }
 
 /**
- * Expands install-time template variables in `content`: `{platform_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`), and
- * `{harness_id}` to the platform's harness identifier (e.g. `claude`), the value capture-event records as the agent
- * platform.
+ * Expands install-time template variables in `content`: `{harness_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`), and
+ * `{harness_id}` to the harness identifier (e.g. `claude`), the value capture-event records as the agent
+ * harness.
  */
 export function rewriteTemplateVariables(content: string, homeDir: string, harnessId: string): string {
-  return content.replaceAll('{platform_home_dir}', `~/${homeDir}`).replaceAll('{harness_id}', harnessId);
+  return content.replaceAll('{harness_home_dir}', `~/${homeDir}`).replaceAll('{harness_id}', harnessId);
 }
 
 /**
  * Applies Markdown path rewriting and template variable expansion to a single `.md` file.
  * `fileRelPath` is the file's path relative to the tree root that `pathPrefix` names.
  * For flat guidance files (one directory, no nesting) the caller typically passes the file's
- * basename. `harnessId` is the platform's harness identifier used to expand `{harness_id}`.
+ * basename. `harnessId` is the harness identifier used to expand `{harness_id}`.
  */
 export async function rewritePathsInFile(
   filePath: string,
@@ -76,11 +76,11 @@ export async function rewritePathsInFile(
 /**
  * Walks `.md` files in `dirPath`, applies path and template variable rewrites, and writes back.
  * `destRoot` is the tree root used to compute each file's relative path (e.g., the skills install
- * directory for a skill tree, or the platform home for flat platform-guidance files).
- * `pathPrefix` is the platform-relative prefix for rewriting link targets (e.g., `.claude/skills`
- * for skills, `.claude` for platform guidance).
- * `homeDir` is the platform home directory segment (e.g., `.claude`), used to expand
- * `{platform_home_dir}` template variables. `harnessId` is the platform's harness identifier,
+ * directory for a skill tree, or the harness home for flat harness-guidance files).
+ * `pathPrefix` is the harness-relative prefix for rewriting link targets (e.g., `.claude/skills`
+ * for skills, `.claude` for harness guidance).
+ * `homeDir` is the harness home directory segment (e.g., `.claude`), used to expand
+ * `{harness_home_dir}` template variables. `harnessId` is the harness identifier,
  * used to expand `{harness_id}`.
  */
 export async function rewritePathsInDirectory(

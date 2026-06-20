@@ -42,7 +42,7 @@ Use this branch only when the available tool is the HTML-surface `update_jira_is
 
 ### Pre-flight checker
 
-A bundled helper at `{platform_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs` validates the rendered HTML against every known failure class. The agent invokes it before every `update_jira_issue` / `create_jira_issue` call.
+A bundled helper at `{harness_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs` validates the rendered HTML against every known failure class. The agent invokes it before every `update_jira_issue` / `create_jira_issue` call.
 
 #### Invocation
 
@@ -57,7 +57,7 @@ EOF
 Or, when the skill directory is known:
 
 ```bash
-cat <<'EOF' | node {platform_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs
+cat <<'EOF' | node {harness_home_dir}/skills/update-jira-ticket/update-jira-ticket.mjs
 <p>Your rendered HTML payload here.</p>
 EOF
 ```

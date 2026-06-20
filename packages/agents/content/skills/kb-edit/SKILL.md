@@ -105,7 +105,7 @@ EOF
 Or, when the skill directory is known:
 
 ```bash
-node {platform_home_dir}/skills/kb-edit/kb-edit.mjs Tools/tmux/tmux-insights.md --verify
+node {harness_home_dir}/skills/kb-edit/kb-edit.mjs Tools/tmux/tmux-insights.md --verify
 ```
 
 ### 5. Handle the result

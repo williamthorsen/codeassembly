@@ -17,7 +17,7 @@ Create a pull request on the appropriate platform. This is the user-facing entry
 
 ### 1. Get session context
 
-Invoke `node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `platform`, `default_branch`, `branch_name`, and `artifact_base_dir` from it.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `scm`, `default_branch`, `branch_name`, and `artifact_base_dir` from it.
 
 ### 2. Check branch sync
 
@@ -47,7 +47,7 @@ If `--scope` was provided, use it instead of the frontmatter `scope`. If `--type
 Call `describe-change.sh` to render the PR title from the configured `pr.title_format` template. Pass every input that is available — the template controls which tokens are required:
 
 ```bash
-json=$({platform_home_dir}/scripts/describe-change.sh \
+json=$({harness_home_dir}/scripts/describe-change.sh \
   --title "{title}" \
   --scope "{scope}" \
   --type "{type}" \
@@ -81,7 +81,7 @@ Missing entries are silently skipped. If neither scope nor type is present, labe
 
 ### 8. Detect platform and select delegate
 
-Read `platform` from the session context manifest:
+Read `scm` from the session context manifest:
 
 - `"github"` -> delegate to `create-gh-pr`
 - `"bitbucket"` -> delegate to `create-bitbucket-pr`
@@ -114,7 +114,7 @@ The delegate reports the created PR's URL (its `PR created: {URL}` line). Stamp 
 Also persist the URL into the branch manifest so PR-aware skills reuse it on later sessions (see [PR source resolution](../_data/pr-source-resolution.md#stored-pr-url)):
 
 ```bash
-node {platform_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{URL}"
+node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{URL}"
 ```
 
 ## Important
