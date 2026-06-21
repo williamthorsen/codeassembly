@@ -33,22 +33,22 @@ MCP server for orchestrated run management. Wraps run-core capabilities as five 
 
 ### Agents (`packages/agents/`)
 
-The agents package is a CLI tool (`codeassembly-agents`) that installs reusable AI skills and subagent definitions into platform-specific directories. It also serves as the canonical home for all skill and subagent content.
+The agents package is a CLI tool (`codeassembly-agents`) that installs reusable AI skills and subagent definitions into harness-specific directories. It also serves as the canonical home for all skill and subagent content.
 
 **Package:** `@codeassembly/agents` (private)
 
 **CLI commands:**
 
-| Command             | Description                                                                                    |
-| ------------------- | ---------------------------------------------------------------------------------------------- |
-| `generate <target>` | Scaffolds project files (`label-map`)                                                          |
-| `install`           | Copies or symlinks skills and subagents into platform directories; prunes deleted-source files |
-| `status`            | Shows current vs modified vs missing installed items                                           |
-| `uninstall`         | Removes previously installed items (respects drift detection)                                  |
+| Command             | Description                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------- |
+| `generate <target>` | Scaffolds project files (`label-map`)                                                         |
+| `install`           | Copies or symlinks skills and subagents into harness directories; prunes deleted-source files |
+| `status`            | Shows current vs modified vs missing installed items                                          |
+| `uninstall`         | Removes previously installed items (respects drift detection)                                 |
 
-Key flags: `--platform <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`.
+Key flags: `--harness <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`.
 
-**Supported platforms:**
+**Supported harnesses:**
 
 - **Claude Code** (`claude`) — installs into `~/.claude/skills/` and `~/.claude/agents/`
 - **Rovo Dev** (`rovodev`) — installs into `~/.rovodev/skills/` and `~/.rovodev/subagents/`
@@ -60,12 +60,12 @@ packages/agents/
   src/
     cli.ts                         # CLI entry point (Commander-based)
     lib/
-      types.ts                     # Core interfaces: PlatformId, ManifestEntry, InstallOptions
-      platform.ts                  # Platform config table, detection, path resolution
+      types.ts                     # Core interfaces: HarnessId, ManifestEntry, InstallOptions
+      harness.ts                   # Harness config table, detection, path resolution
       manifest.ts                  # ~/.codeassembly/agents-manifest.json; SHA-256 hashing; drift detection
       installer.ts                 # copyItem(), linkItem(), removeItem(), checkSymlinkSafety()
       content-resolver.ts          # Resolves content/ dir in dev vs built layouts
-      frontmatter-merger.ts        # Parses YAML frontmatter; merges platform overrides from _data/*.yml
+      frontmatter-merger.ts        # Parses YAML frontmatter; merges harness overrides from _data/*.yaml
       __tests__/                   # Unit tests for library modules
   content/                         # Skill and subagent definitions (see below)
   scripts/
@@ -84,7 +84,7 @@ content/
       commit-format.md             # Commit title format specification
       git-commands.md              # Git command reference
       work-types.json              # Commit work-type taxonomy (JSON SSOT; companion schema at schemas/work-types.schema.json)
-    _platforms/                    # Platform-specific skills (not installed to all platforms)
+    _harnesses/                    # Harness-specific skills (not installed to all harnesses)
       claude/                      # Skills installed only to Claude Code
         {skill-name}/SKILL.md
       rovodev/                     # Skills installed only to Rovo Dev
@@ -97,8 +97,8 @@ content/
         review-cycle.md
   subagents/
     _data/
-      claude.yml                   # Platform frontmatter overrides for Claude Code
-      rovodev.yml                  # Platform frontmatter overrides for Rovo Dev
+      claude.yaml                  # Harness frontmatter overrides for Claude Code
+      rovodev.yaml                 # Harness frontmatter overrides for Rovo Dev
     {agent-name}.md                # Each subagent is a single .md file
 ```
 
@@ -106,9 +106,9 @@ content/
 
 **Subagent frontmatter:** `name`, `description`, `tools` (allowed tools), `maxTurns`, `skills` (injected skill references).
 
-**Platform overlay mechanism:** `claude.yml` and `rovodev.yml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
+**Harness overlay mechanism:** `claude.yaml` and `rovodev.yaml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
 
-**Platform-specific skills:** Directories prefixed with `_` under `skills/` (e.g., `_data`, `_platforms`) are not regular skills and are not installed directly. Skills in `_platforms/{platformId}/` are installed only when the install target matches that platform. For Rovo Dev, the CLI also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
+**Harness-specific skills:** Directories prefixed with `_` under `skills/` (e.g., `_data`, `_harnesses`) are not regular skills and are not installed directly. Skills in `_harnesses/{harnessId}/` are installed only when the install target matches that harness. For Rovo Dev, the CLI also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
 
 #### Content authoring
 
