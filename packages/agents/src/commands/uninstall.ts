@@ -1,6 +1,7 @@
+import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { removeItem } from '../lib/installer.js';
-import { detectDrift, getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
+import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
 import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.js';
 
 /**
@@ -35,28 +36,7 @@ export async function uninstallCommand(
 
     console.info(`\nUninstalling for harness: ${harnessId}`);
     const paths = resolveHarnessPaths(harnessId, baseDir);
-    let removedCount = 0;
-    const skippedEntries: ManifestEntry[] = [];
-
-    for (const entry of harnessManifest.entries) {
-      const drift = await detectDrift(entry, paths.harnessHome);
-
-      if (drift === 'missing') {
-        // Already gone
-        removedCount++;
-        continue;
-      }
-
-      if (drift === 'modified' && !options.force) {
-        console.warn(`  ⚠️ Skipping modified file: ${entry.relativePath}`);
-        skippedEntries.push(entry);
-        continue;
-      }
-
-      const fullPath = `${paths.harnessHome}/${entry.relativePath}`;
-      await removeItem(fullPath);
-      removedCount++;
-    }
+    const skippedEntries = await removeTrackedEntries(harnessManifest.entries, paths.harnessHome, options.force, '');
 
     // Remove harness from manifest or retain only skipped entries
     if (skippedEntries.length === 0) {
@@ -68,8 +48,6 @@ export async function uninstallCommand(
         [harnessId]: { ...harnessManifest, entries: skippedEntries },
       };
     }
-
-    console.info(`  ✅ Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
   }
 
   const updatedManifest: AgentsManifest = {
@@ -98,29 +76,7 @@ async function uninstallSharedGuidance(
 
   console.info('\nUninstalling shared guidance');
   const sharedHome = resolveSharedHome(baseDir);
-  let removedCount = 0;
-  const skippedEntries: ManifestEntry[] = [];
-
-  for (const entry of sharedManifest.entries) {
-    const drift = await detectDrift(entry, sharedHome);
-
-    if (drift === 'missing') {
-      removedCount++;
-      continue;
-    }
-
-    if (drift === 'modified' && !options.force) {
-      console.warn(`  ⚠️ Skipping modified file: ~/.agents/${entry.relativePath}`);
-      skippedEntries.push(entry);
-      continue;
-    }
-
-    const fullPath = `${sharedHome}/${entry.relativePath}`;
-    await removeItem(fullPath);
-    removedCount++;
-  }
-
-  console.info(`  ✅ Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
+  const skippedEntries = await removeTrackedEntries(sharedManifest.entries, sharedHome, options.force, '~/.agents/');
 
   // Retain shared manifest only with the entries that were skipped
   if (skippedEntries.length > 0) {
@@ -128,3 +84,40 @@ async function uninstallSharedGuidance(
   }
   return undefined;
 }
+
+// region | Helpers
+
+/**
+ * Removes each tracked entry the policy marks for removal, collects user-modified entries to keep tracking,
+ * reports the tally, and returns the skipped entries. `displayPrefix` is prepended to the relative path in
+ * skip warnings (e.g., `~/.agents/` for shared guidance).
+ */
+async function removeTrackedEntries(
+  entries: ReadonlyArray<ManifestEntry>,
+  home: string,
+  force: boolean,
+  displayPrefix: string,
+): Promise<ManifestEntry[]> {
+  let removedCount = 0;
+  const skippedEntries: ManifestEntry[] = [];
+
+  for (const entry of entries) {
+    const verdict = await classifyOwnedEntry(entry, home, force);
+
+    if (verdict === 'retain') {
+      console.warn(`  ⚠️ Skipping modified file: ${displayPrefix}${entry.relativePath}`);
+      skippedEntries.push(entry);
+      continue;
+    }
+
+    if (verdict === 'remove') {
+      await removeItem(`${home}/${entry.relativePath}`);
+    }
+    removedCount++;
+  }
+
+  console.info(`  ✅ Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
+  return skippedEntries;
+}
+
+// endregion | Helpers
