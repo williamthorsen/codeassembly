@@ -5,8 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { classifyOwnedEntry, pruneOrphanedEntries } from '../entry-remover.ts';
 import { computeContentHash } from '../manifest.ts';
-import { pruneOrphanedEntries } from '../orphan-pruner.ts';
 import type { ManifestEntry } from '../types.ts';
 
 describe(pruneOrphanedEntries, () => {
@@ -108,5 +108,63 @@ describe(pruneOrphanedEntries, () => {
 
     expect(existsSync(path.join(home, entry.relativePath))).toBe(true);
     expect(result.removedPaths).toEqual([entry.relativePath]);
+  });
+});
+
+describe(classifyOwnedEntry, () => {
+  let home: string;
+
+  beforeEach(async () => {
+    home = path.join(tmpdir(), `agents-test-classify-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(home, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(home, { recursive: true, force: true });
+  });
+
+  async function writeTracked(relativePath: string, content: string): Promise<ManifestEntry> {
+    const fullPath = path.join(home, relativePath);
+    await mkdir(path.dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, content, 'utf8');
+    return { relativePath, contentHash: await computeContentHash(fullPath), linked: false };
+  }
+
+  it('returns remove for a linked entry whose target is gone', async () => {
+    const target = path.join(home, 'target.sh');
+    await writeFile(target, 'content', 'utf8');
+    const linkPath = path.join(home, 'scripts', 'linked.sh');
+    await mkdir(path.dirname(linkPath), { recursive: true });
+    await symlink(target, linkPath);
+    await rm(target); // Leave the symlink dangling, as a deleted source would.
+    const entry: ManifestEntry = { relativePath: 'scripts/linked.sh', contentHash: 'sha256:linked', linked: true };
+
+    expect(await classifyOwnedEntry(entry, home, false)).toBe('remove');
+  });
+
+  it('returns absent for an unlinked entry that is gone from disk', async () => {
+    const entry: ManifestEntry = { relativePath: 'skills/never/SKILL.md', contentHash: 'sha256:absent', linked: false };
+
+    expect(await classifyOwnedEntry(entry, home, false)).toBe('absent');
+  });
+
+  it('returns retain for an unlinked user-modified entry when force is unset', async () => {
+    const entry = await writeTracked('scripts/edited.sh', 'original');
+    await writeFile(path.join(home, entry.relativePath), 'user edit', 'utf8');
+
+    expect(await classifyOwnedEntry(entry, home, false)).toBe('retain');
+  });
+
+  it('returns remove for an unlinked user-modified entry when force is set', async () => {
+    const entry = await writeTracked('scripts/edited.sh', 'original');
+    await writeFile(path.join(home, entry.relativePath), 'user edit', 'utf8');
+
+    expect(await classifyOwnedEntry(entry, home, true)).toBe('remove');
+  });
+
+  it('returns remove for an unlinked unmodified entry', async () => {
+    const entry = await writeTracked('scripts/clean.sh', 'original');
+
+    expect(await classifyOwnedEntry(entry, home, false)).toBe('remove');
   });
 });

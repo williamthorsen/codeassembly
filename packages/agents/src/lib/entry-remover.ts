@@ -4,6 +4,9 @@ import { removeItem } from './installer.ts';
 import { detectDrift } from './manifest.ts';
 import type { ManifestEntry } from './types.ts';
 
+/** Fate of an owned manifest entry during removal: delete it, keep it (user-modified, no force), or note it is already gone from disk. */
+export type OwnedEntryVerdict = 'remove' | 'retain' | 'absent';
+
 /** Options controlling orphan pruning, mirroring the install flags that govern it. */
 interface PruneOptions {
   readonly force: boolean;
@@ -17,13 +20,35 @@ interface PruneResult {
 }
 
 /**
+ * Decides an owned manifest entry's fate during removal. A symlink (no user-modifiable content) or an
+ * unmodified-or-forced file is removed; a user-modified file without `force` is retained; an entry already
+ * gone from disk is absent. Checking `linked` before drift detection is what lets a dangling symlink — which
+ * `detectDrift` reports as `missing` — be removed rather than treated as already gone.
+ */
+export async function classifyOwnedEntry(
+  entry: ManifestEntry,
+  home: string,
+  force: boolean,
+): Promise<OwnedEntryVerdict> {
+  if (entry.linked) {
+    return 'remove';
+  }
+
+  const drift = await detectDrift(entry, home);
+  if (drift === 'missing') {
+    return 'absent';
+  }
+  if (drift === 'modified' && !force) {
+    return 'retain';
+  }
+  return 'remove';
+}
+
+/**
  * Removes installed files recorded in `previousEntries` whose source no longer exists — those whose
- * `relativePath` is absent from `currentEntries` — resolving paths against the install root `home`.
- *
- * A `linked` orphan is a symlink CodeAssembly owns whose source is gone, so it is removed outright (a symlink
- * has no content to be user-modified). An unlinked orphan is removed unless the user modified it and `force`
- * is unset, in which case it is retained so the manifest keeps tracking it. In `dryRun`, removals are reported
- * and recorded but not performed.
+ * `relativePath` is absent from `currentEntries` — resolving paths against the install root `home`. Each
+ * orphan's fate follows `classifyOwnedEntry`; a retained (user-modified, unforced) orphan stays tracked in
+ * the manifest. In `dryRun`, removals are reported and recorded but not performed.
  */
 export async function pruneOrphanedEntries(
   previousEntries: ReadonlyArray<ManifestEntry>,
@@ -38,27 +63,20 @@ export async function pruneOrphanedEntries(
   const removedPaths: Array<string> = [];
 
   for (const orphan of orphans) {
-    const fullPath = path.join(home, orphan.relativePath);
+    const verdict = await classifyOwnedEntry(orphan, home, options.force);
 
-    if (orphan.linked) {
-      await removeOrphan(fullPath, orphan.relativePath, removedPaths, options.dryRun);
-      continue;
-    }
-
-    const drift = await detectDrift(orphan, home);
-
-    if (drift === 'missing') {
-      removedPaths.push(orphan.relativePath);
-      continue;
-    }
-
-    if (drift === 'modified' && !options.force) {
+    if (verdict === 'retain') {
       console.warn(`  ⚠️ Keeping modified stale item: ${orphan.relativePath}`);
       retained.push(orphan);
       continue;
     }
 
-    await removeOrphan(fullPath, orphan.relativePath, removedPaths, options.dryRun);
+    if (verdict === 'absent') {
+      removedPaths.push(orphan.relativePath);
+      continue;
+    }
+
+    await removeOrphan(path.join(home, orphan.relativePath), orphan.relativePath, removedPaths, options.dryRun);
   }
 
   return { retained, removedPaths };

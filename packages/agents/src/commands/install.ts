@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
+import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
@@ -20,7 +21,6 @@ import {
   injectMarkersInDirectory,
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
-import { pruneOrphanedEntries } from '../lib/orphan-pruner.ts';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';

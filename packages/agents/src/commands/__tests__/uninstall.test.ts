@@ -1,6 +1,6 @@
 import assert from 'node:assert';
-import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync, lstatSync } from 'node:fs';
+import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -31,6 +31,33 @@ describe('uninstallCommand', () => {
       dryRun: false,
       ...overrides,
     };
+  }
+
+  /** Creates an owned symlink under the claude harness home pointing to a fresh source file, recorded in a single-entry manifest. */
+  async function writeLinkedEntry(
+    relativePath: string,
+    sourceContent: string,
+  ): Promise<{ linkPath: string; source: string }> {
+    const linkPath = path.join(tempDir, '.claude', relativePath);
+    await mkdir(path.dirname(linkPath), { recursive: true });
+    const source = path.join(tempDir, 'source', path.basename(relativePath));
+    await mkdir(path.dirname(source), { recursive: true });
+    await writeFile(source, sourceContent, 'utf8');
+    await symlink(source, linkPath);
+
+    const manifest: AgentsManifest = {
+      schemaVersion: 1,
+      harnesses: {
+        claude: {
+          harness: 'claude',
+          version: '0.0.0',
+          installedAt: new Date().toISOString(),
+          entries: [{ relativePath, contentHash: 'sha256:linked', linked: true }],
+        },
+      },
+    };
+    await writeManifest(getManifestPath(tempDir), manifest);
+    return { linkPath, source };
   }
 
   it('should remove only manifest-tracked files', async () => {
@@ -186,5 +213,49 @@ describe('uninstallCommand', () => {
     // Harness manifest entry should be removed
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude).toBeUndefined();
+  });
+
+  it('removes a dangling owned symlink whose source was deleted', async () => {
+    const { linkPath, source } = await writeLinkedEntry('skills/helper.mjs', 'export const x = 1;');
+    await rm(source); // Leave the symlink dangling, as a deleted source would.
+
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+
+    // existsSync already reads false for a dangling link, so assert the link entry itself is gone.
+    expect(() => lstatSync(linkPath)).toThrow();
+    const manifest = await readManifest(getManifestPath(tempDir));
+    expect(manifest.harnesses.claude).toBeUndefined();
+  });
+
+  it('removes an owned symlink whose target content changed, without force', async () => {
+    const { linkPath, source } = await writeLinkedEntry('skills/helper.mjs', 'original');
+    await writeFile(source, 'changed', 'utf8'); // A symlink has no user content to preserve.
+
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+
+    expect(existsSync(linkPath)).toBe(false);
+    const manifest = await readManifest(getManifestPath(tempDir));
+    expect(manifest.harnesses.claude).toBeUndefined();
+  });
+
+  it('treats a tracked entry already gone from disk as removed', async () => {
+    await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
+    const manifest: AgentsManifest = {
+      schemaVersion: 1,
+      harnesses: {
+        claude: {
+          harness: 'claude',
+          version: '0.0.0',
+          installedAt: new Date().toISOString(),
+          entries: [{ relativePath: 'skills/missing.md', contentHash: 'sha256:missing', linked: false }],
+        },
+      },
+    };
+    await writeManifest(getManifestPath(tempDir), manifest);
+
+    await expect(uninstallCommand({ harness: 'claude', force: false }, tempDir)).resolves.not.toThrow();
+
+    const updated = await readManifest(getManifestPath(tempDir));
+    expect(updated.harnesses.claude).toBeUndefined();
   });
 });
