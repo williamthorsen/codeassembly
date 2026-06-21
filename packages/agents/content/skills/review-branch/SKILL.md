@@ -41,10 +41,11 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 4. **Read prior artifacts**: If a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
-7. **Assign a score** out of 10.
-8. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
-9. **Save the review** per the [Saving](#saving) section.
-10. **Present next steps**: After saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact.
+7. **Challenge your own findings**: re-read each finding and delete every one you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
+8. **Assign a score** out of 10.
+9. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
+10. **Save the review** per the [Saving](#saving) section.
+11. **Present next steps**: After saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact.
 
 ## Frontmatter resolution
 
@@ -66,6 +67,8 @@ Run via Bash:
 Prepend the script's output verbatim to the artifact body. The `pr:` field is populated only when reviewing a PR (via `review-pr`); a direct ticket-only review omits it.
 
 ## Review guidelines
+
+A no-findings review is a complete, valid outcome and the expected default for a clean change: merge-ready, not lazy or unfinished. Raise a finding only when it genuinely warrants the author's action; finding none is success, not a gap to fill.
 
 Comprehensive review — trace logic, verify edge cases, assess architectural impact.
 
@@ -138,11 +141,11 @@ The body following the frontmatter has this structure:
 
 ### Recommendations 🧠
 
-{Advisable but discretionary - don't count against score}
+{Advisable but discretionary}
 
 ### Suggestions ☝️
 
-{Optional improvements - don't count against score}
+{Optional improvements}
 
 ### Legacy observations 🔍
 
@@ -219,11 +222,38 @@ Only rows where at least two of (ticket, PR description, implementation) differ 
 Paraphrasing is not divergence — evaluate semantic alignment, not textual overlap. The verdict is independent of the F/W/T/R/S finding scheme; author-actionable issues continue to surface through the existing finding sections. When the PR description defers entirely to the ticket (e.g., a body of just `Closes #N` and a sentence), render a single Details paragraph noting the deferral and emit verdict `none` with no table.
 ```
 
+### Clean reviews
+
+When a change warrants no findings, render it on this shape rather than as empty `### FIXMEs` / "None." scaffolding:
+
+```markdown
+## Action required
+
+None.
+
+## Areas for improvement
+
+None.
+
+## Technical assessment
+
+{Why the change is correct and adequately tested.}
+
+## Conclusion
+
+A focused, well-tested change with no outstanding issues. Merge-ready.
+
+Score: 10/10
+```
+
 ## Scoring
 
-- Score only the quality of changes in the reviewed scope
-- Do not deduct for failure to address pre-existing issues
-- Legacy observations don't affect score
+The score is an honest, at-a-glance quality signal.
+
+- A no-findings review is 10/10.
+- Every authored finding that survives the self-challenge lowers the score, weighted by severity from `F` (heaviest) down to `S` (lightest). No tier is score-neutral: A finding worth raising is a finding worth a deduction.
+- Score only the change under review; Legacy and other pre-existing observations never affect the score.
+- Never suppress a real finding to protect a perfect score. An honest 8 beats a flattering 10.
 
 ## Saving
 
