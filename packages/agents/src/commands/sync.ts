@@ -5,7 +5,7 @@ import process from 'node:process';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
+import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { readRulebooksManifest } from '../lib/rulebooks-manifest.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
@@ -14,6 +14,7 @@ import type { InstallOptions } from '../lib/types.ts';
 /** A declared rulebook resolved against the library: its neutral body and which delivery modes it requests. */
 interface ResolvedRulebook {
   readonly slug: string;
+  readonly skillName: string;
   readonly body: string;
   readonly ambient: boolean;
   readonly skill: boolean;
@@ -48,13 +49,18 @@ export async function syncCommand(
   // Resolve and validate every declared rulebook before writing anything, so a missing library file or invalid
   // frontmatter fails the whole run rather than leaving a partial sync behind.
   const resolved = await Promise.all(declared.map((slug) => resolveRulebook(slug, librarySrcDir)));
+  assertNoSkillNameCollisions(resolved);
 
   // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
   // PROJECT.md tracks the desired *ambient* set. Keying PROJECT.md on declaration alone would strand a block
   // whose rulebook is still declared but whose delivery no longer includes `ambient`.
   const declaredSet = new Set(declared);
   const desiredAmbient = new Set(resolved.filter((rulebook) => rulebook.ambient).map((rulebook) => rulebook.slug));
-  const desiredSkill = new Set(resolved.filter((rulebook) => rulebook.skill).map((rulebook) => rulebook.slug));
+  // Maps each skill-delivery rulebook's stable slug to the directory its skill currently belongs in. Retraction
+  // compares this against what each owned directory's marker reports, so a renamed skill retracts its old dir.
+  const desiredSkillDirs = new Map(
+    resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
+  );
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir.
@@ -66,11 +72,14 @@ export async function syncCommand(
   const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
   const inlineOrphans = extractInstalledSlugs(existingProjectMd).filter((slug) => !desiredAmbient.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
-  // hand-authored skills safe. Orphans are owned dirs whose slug is no longer delivered as a skill.
+  // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
+  // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
   const skillOrphansByDir = await Promise.all(
     harnessSkillDirs.map(async (skillsDir) => ({
       skillsDir,
-      orphans: (await listOwnedSkillSlugs(skillsDir)).filter((slug) => !desiredSkill.has(slug)),
+      orphans: (await listOwnedSkills(skillsDir))
+        .filter(({ dir, slug }) => desiredSkillDirs.get(slug) !== dir)
+        .map(({ dir }) => dir),
     })),
   );
 
@@ -105,27 +114,29 @@ export async function syncCommand(
     await writeFile(projectMdPath, projectMd, 'utf8');
   }
 
-  // Reconcile skill files per targeted harness: write every skill-delivery rulebook, then retract sync-owned
-  // skill dirs that are no longer skill rulebooks. Orphans were computed against the pre-write filesystem.
+  // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
+  // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
+  // before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
+  // of the write being clobbered by a later retract.
   for (const { skillsDir, orphans } of skillOrphansByDir) {
+    for (const dir of orphans) {
+      await rm(path.join(skillsDir, dir), { recursive: true, force: true });
+    }
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
       }
-      const skillDir = path.join(skillsDir, rulebook.slug);
+      const skillDir = path.join(skillsDir, rulebook.skillName);
       await mkdir(skillDir, { recursive: true });
       await writeIfChanged(
         path.join(skillDir, 'SKILL.md'),
-        renderSkillFile(rulebook.slug, rulebook.description, rulebook.body),
+        renderSkillFile(rulebook.skillName, rulebook.slug, rulebook.description, rulebook.body),
       );
-    }
-    for (const slug of orphans) {
-      await rm(path.join(skillsDir, slug), { recursive: true, force: true });
     }
   }
 
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
-  const skillFilesWritten = desiredSkill.size * harnessSkillDirs.length;
+  const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
   console.info(
     `Synced ${resolved.length} rulebook(s); delivered ${skillFilesWritten} skill file(s) across ` +
       `${harnessSkillDirs.length} harness(s); retracted ${neutralOrphans.length} neutral file(s) and ` +
@@ -134,6 +145,32 @@ export async function syncCommand(
 }
 
 // region | Helpers
+
+/**
+ * Throws when two skill-delivery rulebooks resolve to the same skill name, which would share one directory and
+ * clobber each other. Failing here, before any write, forces the conflict to be resolved with a `skill-name`
+ * override rather than silently letting the last write win.
+ */
+function assertNoSkillNameCollisions(resolved: ReadonlyArray<ResolvedRulebook>): void {
+  const slugsByName = new Map<string, Array<string>>();
+  for (const rulebook of resolved) {
+    if (!rulebook.skill) {
+      continue;
+    }
+    const slugs = slugsByName.get(rulebook.skillName) ?? [];
+    slugs.push(rulebook.slug);
+    slugsByName.set(rulebook.skillName, slugs);
+  }
+
+  for (const [skillName, slugs] of slugsByName) {
+    if (slugs.length > 1) {
+      throw new Error(
+        `Skill name collision: rulebooks ${slugs.join(', ')} all resolve to skill "${skillName}". ` +
+          'Give all but one a distinct `skill-name`.',
+      );
+    }
+  }
+}
 
 /** Lists the slugs of materialized neutral files, returning an empty list when the directory is absent. */
 async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<string>> {
@@ -150,11 +187,13 @@ async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<strin
 }
 
 /**
- * Lists the names of skill directories under `skillsDir` that sync owns — those whose `SKILL.md` carries the
- * rulebook provenance marker. Returns an empty list when the directory is absent. Entries without a readable
- * `SKILL.md` (a marker-less hand-authored skill, a stray `.DS_Store`) are skipped, never claimed for deletion.
+ * Lists the sync-owned skills under `skillsDir` as `{ dir, slug }` pairs — those whose `SKILL.md` carries the
+ * rulebook provenance marker, paired with the slug recovered from it. The directory locates the skill on disk;
+ * the slug is its stable identity, which the directory may no longer match. Returns an empty list when the
+ * directory is absent. Entries without a readable `SKILL.md` (a marker-less hand-authored skill, a stray
+ * `.DS_Store`) are skipped, never claimed for deletion.
  */
-async function listOwnedSkillSlugs(skillsDir: string): Promise<ReadonlyArray<string>> {
+async function listOwnedSkills(skillsDir: string): Promise<ReadonlyArray<{ dir: string; slug: string }>> {
   let entries: ReadonlyArray<string>;
   try {
     entries = await readdir(skillsDir);
@@ -165,7 +204,7 @@ async function listOwnedSkillSlugs(skillsDir: string): Promise<ReadonlyArray<str
     throw error;
   }
 
-  const owned: Array<string> = [];
+  const owned: Array<{ dir: string; slug: string }> = [];
   for (const entry of entries) {
     let content: string;
     try {
@@ -177,8 +216,9 @@ async function listOwnedSkillSlugs(skillsDir: string): Promise<ReadonlyArray<str
       }
       throw error;
     }
-    if (extractRulebookSkillSlug(content) !== undefined) {
-      owned.push(entry);
+    const slug = extractRulebookSkillSlug(content);
+    if (slug !== undefined) {
+      owned.push({ dir: entry, slug });
     }
   }
   return owned;
@@ -209,7 +249,7 @@ function reportDryRun(
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
       for (const skillsDir of harnessSkillDirs) {
-        console.info(`  write ${path.join(skillsDir, rulebook.slug, 'SKILL.md')}`);
+        console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
       }
     }
   }
@@ -217,8 +257,8 @@ function reportDryRun(
     console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
   }
   for (const { skillsDir, orphans } of skillOrphansByDir) {
-    for (const slug of orphans) {
-      console.info(`  retract skill ${path.join(skillsDir, slug)} (no longer a skill rulebook)`);
+    for (const dir of orphans) {
+      console.info(`  retract skill ${path.join(skillsDir, dir)} (no longer the current skill dir)`);
     }
   }
 }
@@ -239,6 +279,7 @@ async function resolveRulebook(slug: string, librarySrcDir: string): Promise<Res
   const { rulebook, body } = parseRulebookFile(content, `${slug}.md`);
   return {
     slug,
+    skillName: resolveSkillName(slug, rulebook['skill-name']),
     body: `${body.trim()}\n`,
     ambient: rulebook.delivery.includes('ambient'),
     skill: rulebook.delivery.includes('skill'),

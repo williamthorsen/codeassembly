@@ -52,6 +52,24 @@ describe(parseRulebookFile, () => {
     expect(rulebook.slug).toBe('shell-conventions');
   });
 
+  it('parses a skill-name override', () => {
+    const { rulebook } = parseRulebookFile(
+      rulebookFile('slug: shell-conventions\nskill-name: shell-conventions-rulebook'),
+    );
+
+    expect(rulebook['skill-name']).toBe('shell-conventions-rulebook');
+  });
+
+  it('when skill-name is omitted, leaves it undefined', () => {
+    const { rulebook } = parseRulebookFile(rulebookFile('slug: shell-conventions'));
+
+    expect(rulebook['skill-name']).toBeUndefined();
+  });
+
+  it('throws when skill-name is not kebab-case', () => {
+    expect(() => parseRulebookFile(rulebookFile('slug: x\nskill-name: Not_Kebab'))).toThrow(/skill-name/);
+  });
+
   it('throws when slug is missing', () => {
     expect(() => parseRulebookFile(rulebookFile('description: no slug here'))).toThrow(/slug/);
   });
