@@ -85,6 +85,8 @@ For each finding, apply technical rigor:
 7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. There is no `ACCEPT (follow-up)`: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
    </HARD-GATE>
 
+Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](#comment-discipline) as you write. The reviewer conversation must not leak into the source.
+
 ## Worked examples
 
 ### Bad → Good: Hedged move with doctrinal conflict
@@ -142,6 +144,29 @@ The disposition conflates two decisions: whether the change belongs (substance),
 **Good: Substance check (ACCEPT), then separate timing decision:**
 
 > T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard ships in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not held as a maybe.
+
+## Comment discipline
+
+When you implement an ACCEPTed finding by editing code, you are mid-conversation with the reviewer, and that voice must not leak into the source. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
+
+<!-- include: ../../_partials/comment-audit-checklist.md / -->
+
+**Before** (narrates the review, cites a finding and an acceptance criterion):
+
+```ts
+// Per F3, the reviewer worried a future refactor could move the toggle to a parent that
+// always renders, silently violating acceptance criterion 4 — so pin it here.
+expect(query).not.toHaveProperty('directReportsOnly', true);
+```
+
+**After** (states the invariant the code enforces):
+
+```ts
+// A non-manager viewer emits no directReportsOnly narrowing; the GraphQL surface is the binding contract.
+expect(query).not.toHaveProperty('directReportsOnly', true);
+```
+
+Full rule set: [comment-discipline.md](../_data/comment-discipline.md).
 
 ## Disposition vocabulary
 
@@ -238,6 +263,7 @@ The body following the frontmatter has this structure:
 
 ## Section handling
 
+- Code changes summarized under `## Changes made` must themselves satisfy [Comment discipline](#comment-discipline): comments in the edited code state the code's current contract, not the change history or the reviewer's concern.
 - Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
 - File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) — use repo-relative paths
