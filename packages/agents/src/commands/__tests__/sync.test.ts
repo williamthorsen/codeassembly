@@ -342,4 +342,21 @@ describe(syncCommand, () => {
     expect(message).toContain('delta');
     expect(existsSync(skillPath('shared'))).toBe(false);
   });
+
+  it('reassigns a skill name from one rulebook to another within a single sync', async () => {
+    await writeLibraryRulebook('foo', 'delivery: skill\nskill-name: shared', 'Foo rules.');
+    await writeManifest('rulebooks:\n  - foo\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(existsSync(skillPath('shared'))).toBe(true);
+
+    await writeLibraryRulebook('foo', 'delivery: skill', 'Foo rules.');
+    await writeLibraryRulebook('bar', 'delivery: skill\nskill-name: shared', 'Bar rules.');
+    await writeManifest('rulebooks:\n  - foo\n  - bar\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(skillPath('consult-foo'), 'utf8')).toContain('<!-- codeassembly-rulebook:foo -->');
+    const shared = await readFile(skillPath('shared'), 'utf8');
+    expect(shared).toContain('name: shared');
+    expect(shared).toContain('<!-- codeassembly-rulebook:bar -->');
+  });
 });

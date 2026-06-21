@@ -114,9 +114,14 @@ export async function syncCommand(
     await writeFile(projectMdPath, projectMd, 'utf8');
   }
 
-  // Reconcile skill files per targeted harness: write every skill-delivery rulebook, then retract sync-owned
-  // skill dirs that are no longer skill rulebooks. Orphans were computed against the pre-write filesystem.
+  // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
+  // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
+  // before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
+  // of the write being clobbered by a later retract.
   for (const { skillsDir, orphans } of skillOrphansByDir) {
+    for (const dir of orphans) {
+      await rm(path.join(skillsDir, dir), { recursive: true, force: true });
+    }
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -127,9 +132,6 @@ export async function syncCommand(
         path.join(skillDir, 'SKILL.md'),
         renderSkillFile(rulebook.skillName, rulebook.slug, rulebook.description, rulebook.body),
       );
-    }
-    for (const dir of orphans) {
-      await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
   }
 
