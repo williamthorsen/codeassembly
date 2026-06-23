@@ -74,6 +74,10 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['query', '--store'])).toThrow(/--store requires a value/);
   });
 
+  it('binds an inline =value verbatim even when it begins with --', () => {
+    expect(parseArgs(['query', '--tag=--odd-tag']).filters.tag).toBe('--odd-tag');
+  });
+
   it('returns an empty query for empty argv', () => {
     expect(parseArgs([]).query).toBe('');
   });

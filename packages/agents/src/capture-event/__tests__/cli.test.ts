@@ -107,6 +107,14 @@ describe(parseArgs, () => {
   it('throws on an unknown flag', () => {
     expect(() => parseArgs(['--bogus', 'x'])).toThrow(/unknown flag/);
   });
+
+  it('binds an inline =value verbatim even when it begins with --', () => {
+    expect(parseArgs(['--summary', 'x', '--skill=--odd-skill']).skill).toBe('--odd-skill');
+  });
+
+  it('rejects an unexpected positional argument', () => {
+    expect(() => parseArgs(['--summary', 'x', 'stray'])).toThrow(/unexpected argument/);
+  });
 });
 
 describe(normalizeRemoteUrl, () => {

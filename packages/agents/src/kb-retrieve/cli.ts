@@ -10,10 +10,20 @@ import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@codeasse
 import type { Schema } from '@codeassembly/kb/schema';
 import { defaultSchema, loadSchema } from '@codeassembly/kb/schema';
 
+import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { normalizeHits } from './normalize.ts';
 import { recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
 import type { RawHit, RecallFilters, RetrieveResult, ScopedKb } from './types.ts';
+
+/** The flags this helper accepts; positionals join into the free-text query. `--kb` is an alias for `--store`. */
+const FLAGS: readonly FlagSpec[] = [
+  { name: 'all-kbs', takesValue: false },
+  { name: 'store', aliases: ['kb'], takesValue: true },
+  { name: 'diataxis', takesValue: true },
+  { name: 'tag', takesValue: true },
+  { name: 'folder', takesValue: true },
+];
 
 /** Parsed command-line invocation of the kb-retrieve helper. */
 export interface ParsedArgs {
@@ -66,88 +76,39 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Matches the `--store`/`--kb` store-scope flag, returning the matched flag name and any inline `=value`. */
-function matchStoreFlag(arg: string): { flag: 'store' | 'kb'; inlineValue: string | null } | null {
-  for (const flag of ['store', 'kb'] as const) {
-    if (arg === `--${flag}`) {
-      return { flag, inlineValue: null };
-    }
-    if (arg.startsWith(`--${flag}=`)) {
-      return { flag, inlineValue: arg.slice(`--${flag}=`.length) };
-    }
-  }
-  return null;
-}
-
-/** Matches a `--diataxis`/`--tag`/`--folder` flag, returning its key and any inline `=value`. */
-function matchValueFlag(arg: string): { key: keyof RecallFilters; inlineValue: string | null } | null {
-  for (const key of ['diataxis', 'tag', 'folder'] as const) {
-    if (arg === `--${key}`) {
-      return { key, inlineValue: null };
-    }
-    if (arg.startsWith(`--${key}=`)) {
-      return { key, inlineValue: arg.slice(`--${key}=`.length) };
-    }
-  }
-  return null;
-}
-
 /**
- * Parses the helper's argv into a query, the `--all-kbs` flag, and the `--diataxis`/`--tag`/`--folder` filters.
- * Each value-bearing flag accepts both `--flag value` and `--flag=value`.
- * An unknown flag or a value-bearing flag with no value throws with a usage-style message.
+ * Parses the helper's argv into a query, the `--all-kbs` flag, the `--store`/`--kb` store scope, and the
+ * `--diataxis`/`--tag`/`--folder` filters. Each value-bearing flag accepts both `--flag value` and `--flag=value`.
+ * An unknown flag, or a value-bearing flag given no value (or an empty one), throws with a usage-style message.
  *
  * @internal - Exported to allow testing.
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
-  const queryParts: string[] = [];
-  let allKbs = false;
-  let storeName: string | null = null;
-  const filters: RecallFilters = {};
+  const { positionals, flags } = scanFlags(argv, FLAGS);
+  const values = valueFlagMap(flags);
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === undefined) {
-      continue;
-    }
-    if (arg === '--all-kbs') {
-      allKbs = true;
-      continue;
-    }
-    const storeFlag = matchStoreFlag(arg);
-    if (storeFlag !== null) {
-      let value = storeFlag.inlineValue;
-      if (value === null) {
-        value = argv[index + 1] ?? null;
-        index += 1;
-      }
-      if (value === null || value === '' || value.startsWith('--')) {
-        throw new Error(`--${storeFlag.flag} requires a value`);
-      }
-      storeName = value;
-      continue;
-    }
-    const valueFlag = matchValueFlag(arg);
-    if (valueFlag !== null) {
-      const { key } = valueFlag;
-      let value = valueFlag.inlineValue;
-      if (value === null) {
-        value = argv[index + 1] ?? null;
-        index += 1;
-      }
-      if (value === null || value === '' || value.startsWith('--')) {
-        throw new Error(`--${key} requires a value`);
-      }
-      filters[key] = value;
-      continue;
-    }
-    if (arg.startsWith('--')) {
-      throw new Error(`unknown flag: ${arg}`);
-    }
-    queryParts.push(arg);
+  const storeName = values.store ?? null;
+  if (storeName === '') {
+    throw new Error('--store requires a value');
   }
 
-  return { query: queryParts.join(' ').trim(), allKbs, storeName, filters };
+  const filters: RecallFilters = {};
+  for (const key of ['diataxis', 'tag', 'folder'] as const) {
+    const value = values[key];
+    if (value === '') {
+      throw new Error(`--${key} requires a value`);
+    }
+    if (value !== undefined) {
+      filters[key] = value;
+    }
+  }
+
+  return {
+    query: positionals.join(' ').trim(),
+    allKbs: flags.some((flag) => flag.name === 'all-kbs'),
+    storeName,
+    filters,
+  };
 }
 
 /**

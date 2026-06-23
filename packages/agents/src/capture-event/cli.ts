@@ -15,6 +15,7 @@ import { ulid } from 'ulid';
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import { prepareEvent } from './prepare-event.ts';
@@ -23,9 +24,15 @@ import { writeEvent } from './write-event.ts';
 
 const execFileAsync = promisify(execFile);
 
-/** Flag names that take a value. */
-const VALUE_FLAGS = ['store', 'summary', 'skill', 'model', 'harness', 'tags'] as const;
-type ValueFlag = (typeof VALUE_FLAGS)[number];
+/** The value-bearing flags this helper accepts; the body comes from stdin, so the layout is flag-only. */
+const FLAGS: readonly FlagSpec[] = [
+  { name: 'store', takesValue: true },
+  { name: 'summary', takesValue: true },
+  { name: 'skill', takesValue: true },
+  { name: 'model', takesValue: true },
+  { name: 'harness', takesValue: true },
+  { name: 'tags', takesValue: true },
+];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -149,37 +156,20 @@ export async function runCapture(input: {
 
 /**
  * Parses the helper's argv. Each value-bearing flag accepts both `--flag value` and `--flag=value`; `--tags` accepts a
- * comma-separated list. Unknown flags or missing required values throw with a usage-style message. The body comes from
- * stdin rather than the command line, so the layout is flag-only.
+ * comma-separated list. Unknown flags, an unexpected positional, or a missing/empty `--summary` throw with a usage-style
+ * message. The body comes from stdin rather than the command line, so the layout is flag-only.
  *
  * @internal - Exported to allow testing.
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
-  const raw: Partial<Record<ValueFlag, string>> = {};
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === undefined) {
-      continue;
-    }
-    const matched = matchValueFlag(arg);
-    if (matched === null) {
-      throw new Error(`unknown flag: ${arg}`);
-    }
-    const { key } = matched;
-    let value = matched.inlineValue;
-    if (value === null) {
-      value = argv[index + 1] ?? null;
-      index += 1;
-    }
-    if (value === null || value === '' || value.startsWith('--')) {
-      throw new Error(`--${key} requires a value`);
-    }
-    raw[key] = value;
+  const { positionals, flags } = scanFlags(argv, FLAGS);
+  if (positionals[0] !== undefined) {
+    throw new Error(`unexpected argument: ${positionals[0]}`);
   }
+  const raw = valueFlagMap(flags);
 
   const summary = raw.summary;
-  if (summary === undefined) {
+  if (summary === undefined || summary === '') {
     throw new Error('--summary is required');
   }
 
@@ -235,19 +225,6 @@ function isEntryPoint(): boolean {
     process.stderr.write(`capture-event: warning: could not determine entry point: ${message}\n`);
     return false;
   }
-}
-
-/** Matches a value-bearing flag, returning its key and any inline `=value`. */
-function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | null } | null {
-  for (const key of VALUE_FLAGS) {
-    if (arg === `--${key}`) {
-      return { key, inlineValue: null };
-    }
-    if (arg.startsWith(`--${key}=`)) {
-      return { key, inlineValue: arg.slice(`--${key}=`.length) };
-    }
-  }
-  return null;
 }
 
 /**
