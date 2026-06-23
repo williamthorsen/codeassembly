@@ -5,6 +5,7 @@ import process from 'node:process';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
+import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
 import { syncCommand } from './commands/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
@@ -39,6 +40,15 @@ async function main(): Promise<void> {
         break;
       case 'status':
         await statusCommand({ harness: options.harness });
+        break;
+      case 'library':
+        if (subcommand === 'list') {
+          await libraryListCommand();
+        } else {
+          if (subcommand) console.error(`Error: Unknown library subcommand "${subcommand}"`);
+          printLibraryUsage();
+          process.exit(1);
+        }
         break;
       case 'generate':
         if (subcommand === 'label-map') {
@@ -170,6 +180,7 @@ Commands:
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks
   uninstall        Remove installed guidance, skills, and subagents
   status           Show the current state of installed items
+  library list     List available library artifacts (rulebooks, skills, subagents)
   generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
