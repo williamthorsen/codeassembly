@@ -80,6 +80,16 @@ describe(parseArgs, () => {
     expect(parsed.store).toBe('codeassembly');
   });
 
+  it('binds an inline =value verbatim even when it begins with --', () => {
+    const parsed = parseArgs(['--store', 's', '--add-addressed-by=--weird-ref', EVENT_ID]);
+    expect(parsed).toEqual({
+      operation: 'add-addressed-by',
+      store: 's',
+      ids: [EVENT_ID],
+      references: ['--weird-ref'],
+    });
+  });
+
   it('leaves store null when --store is omitted, deferring the refusal to the resolver', () => {
     const parsed = parseArgs(['--add-addressed-by', '#849', EVENT_ID]);
     expect(parsed.store).toBeNull();

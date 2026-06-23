@@ -104,12 +104,15 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       }
       let value = matched.inlineValue;
       if (value === null) {
-        value = argv[index + 1] ?? null;
+        // A value taken from the next argv is rejected when it is absent or itself a flag. The inline `--flag=value`
+        // form binds its value verbatim — the `=` disambiguates it from a following flag — so a `--`-prefixed or
+        // empty value is only reachable inline.
+        const next = argv[index + 1] ?? null;
+        if (next === null || next.startsWith('--')) {
+          throw new Error(`--${matched.key} requires a value`);
+        }
+        value = next;
         index += 1;
-      }
-      // An empty value is allowed (`--retag ""` clears tags); only an absent value or a following flag is rejected.
-      if (value === null || value.startsWith('--')) {
-        throw new Error(`--${matched.key} requires a value`);
       }
       raw[matched.key] = value;
       continue;
