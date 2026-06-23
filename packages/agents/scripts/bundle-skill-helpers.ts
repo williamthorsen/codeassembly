@@ -179,7 +179,7 @@ function assertCaptureEventSmokeResult(result: unknown): void {
  * `SmokeTestInvocation` that marks the event `addressed-by` a reference with `--store @default`. Exercises the full
  * `@default` resolution → read → parse → mutate → atomic write pipeline, the only path that wires the bundled resolver,
  * the per-type record layer, and the note-io writer together. The assertion confirms the reference landed and that no
- * `title`/`created`/`updated` was injected (the #815 regression guard).
+ * `title`/`created`/`updated` was injected onto the event.
  */
 function makeKbUpdateEventsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'kb-update-events-store-'));

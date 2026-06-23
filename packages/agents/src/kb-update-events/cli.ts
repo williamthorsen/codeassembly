@@ -42,8 +42,9 @@ if (isEntryPoint()) {
  * Runs the helper end to end: parses args, resolves the target store by registry name (or the `@default` sentinel), and
  * applies the chosen operation to each event id independently. Each id resolves to `{store}/content/events/{id}.md`;
  * the event is read, parsed to a typed `KbEvent`, mutated, re-rendered through the per-type renderer, and written back
- * atomically — bypassing the assertion-biased generic writer that #815 broke. A recoverable per-event failure (invalid
- * id, not found, unparseable) is captured in that id's result and never aborts the others.
+ * atomically. The per-type renderer emits only event fields, so an edit never injects the assertion-only `title`,
+ * `created`, or `updated` onto an event. A recoverable per-event failure (invalid id, not found, unparseable) is
+ * captured in that id's result and never aborts the others.
  *
  * Invocation-level failures (invalid args, an unresolvable or readonly store) become structured `{ ok: false, ... }`
  * results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.

@@ -207,7 +207,7 @@ describe(runUpdate, () => {
     expect(result.error).toBe('store-not-registered');
   });
 
-  it('writes an event that passes the store frontmatter rule (the #815 scenario)', async () => {
+  it('writes an edited event that still passes the store frontmatter rule', async () => {
     const { storePath, home } = await makeStore('codeassembly');
     const path = await seedEvent(storePath, EVENT_ID);
 
