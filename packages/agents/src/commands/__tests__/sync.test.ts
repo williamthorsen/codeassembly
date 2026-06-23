@@ -2,8 +2,9 @@ import { existsSync, statSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
@@ -42,6 +43,18 @@ describe(syncCommand, () => {
     const useBlock =
       slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
     await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `rulebooks:\n${useBlock}`, 'utf8');
+  }
+
+  /** Writes the project-local codeassembly.local.yaml verbatim, for multi-tier and drop cases. */
+  async function writeLocalDeclaration(content: string): Promise<void> {
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(path.join(projectRoot, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
+  }
+
+  /** Writes a legacy flat-format rulebooks.yaml, for the migration-fallback case. */
+  async function writeLegacyDeclaration(content: string): Promise<void> {
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(path.join(projectRoot, '.agents', 'rulebooks.yaml'), content, 'utf8');
   }
 
   function neutralPath(slug: string): string {
@@ -312,19 +325,57 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
   });
 
-  it('materializes the real shell-conventions rulebook from the package content', async () => {
+  it('deploys and retracts the real shell-conventions canary end-to-end', async () => {
     await declareRulebooks('shell-conventions');
-
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
+    // Deployed across all three surfaces: neutral body, PROJECT.md inline, and the consult- skill.
     const neutral = await readFile(neutralPath('shell-conventions'), 'utf8');
     expect(neutral).toContain('# Shell script conventions');
     expect(neutral).not.toContain('slug:');
-    const projectMd = await readFile(projectMdPath(), 'utf8');
-    expect(projectMd).toContain('<!-- rulebook:shell-conventions -->');
+    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:shell-conventions -->');
     const skill = await readFile(skillPath('consult-shell-conventions'), 'utf8');
     expect(skill).toContain('name: consult-shell-conventions');
     expect(skill).toContain('# Shell script conventions');
+
+    // Emptying the declaration retracts every surface.
+    await declareRulebooks();
+    await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+    expect(existsSync(neutralPath('shell-conventions'))).toBe(false);
+    expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:shell-conventions -->');
+    expect(existsSync(path.dirname(skillPath('consult-shell-conventions')))).toBe(false);
+  });
+
+  it('deploys a rulebook declared only in the project-local tier, and retracts it on drop', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await writeLibraryRulebook('beta', 'delivery: ambient', 'Beta rules.');
+    await declareRulebooks('alpha');
+    await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(true);
+    expect(existsSync(neutralPath('beta'))).toBe(true);
+
+    // The project-local tier drops alpha, which it inherited from the project tier.
+    await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n  drop:\n    - alpha\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(false);
+    expect(existsSync(neutralPath('beta'))).toBe(true);
+  });
+
+  it('deploys via the legacy rulebooks.yaml fallback when no codeassembly.yaml exists', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await writeLegacyDeclaration('rulebooks:\n  - alpha\n');
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(true);
+    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
+    expect(stderr.mock.calls.map((call) => String(call[0])).join('')).toMatch(/deprecated/i);
+    stderr.mockRestore();
   });
 
   it('fails when two skill rulebooks resolve to the same skill name, naming both slugs', async () => {
