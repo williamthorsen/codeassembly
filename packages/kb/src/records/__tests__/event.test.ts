@@ -33,21 +33,75 @@ describe(parseEvent, () => {
     expect(result.ok).toBe(false);
   });
 
-  it('preserves optional fields in extra', () => {
-    const result = parseEvent({ ...validFields, repo: 'owner/name', 'addressed-by': ['#849'] }, '');
+  it('reads tags and addressed-by as typed fields, not extra', () => {
+    const result = parseEvent({ ...validFields, tags: ['fix'], 'addressed-by': ['#849'] }, '');
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.record.extra).toEqual({ repo: 'owner/name', 'addressed-by': ['#849'] });
+    expect(result.record.tags).toEqual(['fix']);
+    expect(result.record.addressedBy).toEqual(['#849']);
+    expect(result.record.extra).toEqual({});
+  });
+
+  it('defaults tags and addressed-by to empty lists when absent', () => {
+    const result = parseEvent(validFields, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.tags).toEqual([]);
+    expect(result.record.addressedBy).toEqual([]);
+  });
+
+  it('reports a non-list addressed-by', () => {
+    const result = parseEvent({ ...validFields, 'addressed-by': 42 }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('addressed-by');
+  });
+
+  it('preserves unknown fields in extra', () => {
+    const result = parseEvent({ ...validFields, repo: 'owner/name' }, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.extra).toEqual({ repo: 'owner/name' });
   });
 });
 
 describe(renderEvent, () => {
   it('round-trips a well-formed event through parse', () => {
-    const parsed = parseEvent({ ...validFields, repo: 'owner/name' }, '\nThe body.\n');
+    const parsed = parseEvent(
+      { ...validFields, repo: 'owner/name', tags: ['fix'], 'addressed-by': ['#849'] },
+      '\nThe body.\n',
+    );
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
     const { fields, body } = renderEvent(parsed.record);
     expect(parseEvent(fields, body)).toEqual(parsed);
+  });
+
+  it('omits tags and addressed-by when empty', () => {
+    const parsed = parseEvent(validFields, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderEvent(parsed.record).fields);
+    expect(keys).not.toContain('tags');
+    expect(keys).not.toContain('addressed-by');
+  });
+
+  it('emits tags and addressed-by after the spine and before extra', () => {
+    const parsed = parseEvent({ ...validFields, repo: 'owner/name', tags: ['fix'], 'addressed-by': ['#849'] }, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderEvent(parsed.record).fields);
+    expect(keys).toEqual([
+      'recordType',
+      'id',
+      'captured-at',
+      'session',
+      'cwd',
+      'summary',
+      'tags',
+      'addressed-by',
+      'repo',
+    ]);
   });
 
   it('emits only the event fields — never title, created, or updated', () => {
