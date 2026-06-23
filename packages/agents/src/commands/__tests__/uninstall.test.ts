@@ -6,17 +6,21 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.js';
-import type { AgentsManifest, InstallOptions } from '../../lib/types.js';
-import { installCommand } from '../install.js';
-import { uninstallCommand } from '../uninstall.js';
+import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
+import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
+import { installCommand } from '../install.ts';
+import { uninstallCommand } from '../uninstall.ts';
+import { buildContentTree } from './build-content-tree.ts';
 
 describe('uninstallCommand', () => {
   let tempDir: string;
+  let contentDir: string;
 
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-uninstall-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
+    await buildContentTree(contentDir);
   });
 
   afterEach(async () => {
@@ -66,7 +70,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     // Install
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
     // Create a manual file that should NOT be removed
     const manualFile = path.join(claudeHome, 'agents', 'manual-agent.md');
@@ -97,12 +101,12 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     // Install first
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
     // Modify an installed subagent file
-    const agentFiles = await readFile(path.join(claudeHome, 'agents', 'orchestrated-coder.md'), 'utf8');
+    const agentFiles = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
     await writeFile(
-      path.join(claudeHome, 'agents', 'orchestrated-coder.md'),
+      path.join(claudeHome, 'agents', 'demo-agent.md'),
       agentFiles + '\n<!-- user modification -->',
       'utf8',
     );
@@ -111,7 +115,7 @@ describe('uninstallCommand', () => {
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     // Modified file should still exist
-    expect(existsSync(path.join(claudeHome, 'agents', 'orchestrated-coder.md'))).toBe(true);
+    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(true);
 
     // Harness manifest entry should be retained because some files were skipped
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -124,10 +128,10 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     // Install
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
     // Modify one installed subagent file
-    const agentFile = path.join(claudeHome, 'agents', 'orchestrated-coder.md');
+    const agentFile = path.join(claudeHome, 'agents', 'demo-agent.md');
     const original = await readFile(agentFile, 'utf8');
     await writeFile(agentFile, original + '\n<!-- user modification -->', 'utf8');
 
@@ -139,7 +143,7 @@ describe('uninstallCommand', () => {
     const claudeEntries = manifest.harnesses.claude?.entries;
     assert.ok(claudeEntries, 'Expected claude harness entries to be defined');
     expect(claudeEntries).toHaveLength(1);
-    expect(claudeEntries[0]?.relativePath).toBe('agents/orchestrated-coder.md');
+    expect(claudeEntries[0]?.relativePath).toBe('agents/demo-agent.md');
   });
 
   it('should retain only skipped entries in shared manifest after partial uninstall', async () => {
@@ -194,12 +198,12 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     // Install first
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
     // Modify an installed subagent file
-    const agentFiles = await readFile(path.join(claudeHome, 'agents', 'orchestrated-coder.md'), 'utf8');
+    const agentFiles = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
     await writeFile(
-      path.join(claudeHome, 'agents', 'orchestrated-coder.md'),
+      path.join(claudeHome, 'agents', 'demo-agent.md'),
       agentFiles + '\n<!-- user modification -->',
       'utf8',
     );
@@ -208,7 +212,7 @@ describe('uninstallCommand', () => {
     await uninstallCommand({ harness: 'claude', force: true }, tempDir);
 
     // Modified file should be removed
-    expect(existsSync(path.join(claudeHome, 'agents', 'orchestrated-coder.md'))).toBe(false);
+    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
 
     // Harness manifest entry should be removed
     const manifest = await readManifest(getManifestPath(tempDir));
