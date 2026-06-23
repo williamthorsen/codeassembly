@@ -1,14 +1,16 @@
 ---
 name: kb-retrieve
-description: Query the knowledge base for notes relevant to a task and return a ranked list with freshness, recurrence, and supersession signals
+description: Query the knowledge base for assertions relevant to a task and return a ranked list with freshness and supersession signals
 user-invocable: true
 ---
 
-# Retrieve knowledge-base notes
+# Retrieve knowledge-base assertions
 
-Surface the knowledge-base notes most relevant to a query. A bundled helper does the mechanical recall — it resolves which knowledge bases to search, runs ripgrep over note files, expands query terms through the tag aliases, and emits a structured candidate table. You then rank those candidates by genuine relevance and present a ranked list.
+Surface the knowledge-base assertions most relevant to a query. A bundled helper does the mechanical recall — it resolves which knowledge bases to search, runs ripgrep over note files, expands query terms through the tag aliases, and emits a structured candidate table. You then rank those candidates by genuine relevance and present a ranked list.
 
 The split is deliberate: the helper is wide and mechanical; the ranking is narrow and judgment-driven. Treat the helper's output as evidence, not as a finished answer.
+
+This skill returns assertions — the canonical knowledge-base notes. For event recall — the raw observations captured to refine assertions — use `kb-retrieve-events` instead.
 
 **Announce at start:** "Using kb-retrieve to search for {query}."
 
@@ -56,7 +58,7 @@ node {harness_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup
 
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of candidate notes, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate whose record type is ranked by recurrence-recency (the default `event` type, and any custom type that declares that policy) also carries `capturedAt` (its ISO-8601 capture timestamp), `repo` (its `owner/name` repository when known), and `occurrences` (a coarse recurrence count — how many query-matched records share its `repo`). These three are absent on freshness-ranked candidates. A candidate also carries `addressedBy` — the references from its `addressed-by` list (what was done about the problem it notes) — when the note declares one, regardless of record type.
+- `candidates` — an array of assertion candidates, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate also carries `addressedBy` — the references from its `addressed-by` list (what was done about the problem it notes) — when the note declares one. A note that matches but declares no recordType is surfaced as a degraded candidate carrying a `diagnostic`, so a note broken in that way is not hidden from recall.
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no notes matched.
@@ -65,10 +67,7 @@ The helper prints a JSON object to stdout:
 
 Parse the JSON and rank the `candidates` by genuine relevance to the query's intent. Tag, Diátaxis, and folder overlap with the query are **evidence**, not terms in a weighted sum — a note in the right folder with the wrong intent ranks below a note that directly answers the question. Read each `snippet` to judge whether the note actually addresses the query rather than merely mentioning its terms.
 
-Ranking follows each candidate's recall policy — the ranking semantics its record type declares in the store schema — once relevance is established. The two default record types are the common cases; a custom record type ranks by whichever policy it declares, surfaced through the same signals:
-
-- **Freshness-ranked candidates** (the default `assertion` type; carrying `lastVerifiedAgeDays`, no `capturedAt`) rank by freshness: a recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal.
-- **Recurrence-recency candidates** (the default `event` type; those carrying `capturedAt`) rank by recurrence, then recency: a candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo` and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched records sharing the group, not a precise cluster — treat it as a strong-but-soft signal.
+Once relevance is established, rank by freshness: a recently verified note outranks a stale one of equal relevance. `lastVerifiedAgeDays` is the freshness signal — the whole days since the note was last verified.
 
 ### 3. Present a ranked list
 
@@ -87,6 +86,7 @@ When the helper returns a `diagnostic` and no candidates, report the empty resul
 - `registry invalid: …`: The only configured `kb.yaml` registry failed to load, so no knowledge base could be searched; this is a setup problem to fix, not a missing-notes outcome.
 - `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`. An empty `warnings` array is the reliable signal that the in-scope KBs were actually searched and genuinely held nothing; when `warnings` is non-empty, a registry-health problem (a malformed registry or dead KB paths) may explain the empty or partial result even though the diagnostic reads `no notes matched the query`, so read `warnings` before concluding the query simply found nothing.
 - `all matches were filtered out`: The knowledge bases were searched and found hits, but every hit was excluded by `--diataxis`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
+- `matches were found but none are assertions; use kb-retrieve-events for event recall`: The query matched only non-assertion records, such as events; the reader likely wants `kb-retrieve-events`.
 
 ### 5. Relay registry-health warnings
 
