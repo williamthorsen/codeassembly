@@ -166,8 +166,8 @@ function printUsage(): void {
 
 Commands:
   install          Install guidance, skills, and subagents into harness directories, removing files whose source was deleted
-  init             Scaffold an empty .agents/rulebooks.yaml in the current project
-  sync             Resolve .agents/rulebooks.yaml and materialize declared rulebooks
+  init             Scaffold an empty .agents/codeassembly.yaml in the current project
+  sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks
   uninstall        Remove installed guidance, skills, and subagents
   status           Show the current state of installed items
   generate <target> Generate a configuration file (e.g., label-map)

@@ -2,6 +2,33 @@
 
 Specialized subagents for orchestrated development workflows. This package provides skills, subagent definitions, and scripts that power the orchestration pipeline.
 
+## Project declaration
+
+A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them.
+
+### Format
+
+The declaration is grouped by artifact category. Each category takes a `use` list (the slugs to adopt) and an optional `drop` list (slugs to remove from what broader scopes contributed):
+
+```yaml
+rulebooks:
+  use:
+    - shell-conventions
+```
+
+A declared rulebook is materialized into `.agents/rulebooks/<slug>.md` and, depending on its delivery mode, inlined into `.agents/PROJECT.md` and/or delivered as a `consult-<slug>` skill in each detected harness.
+
+Only `rulebooks` is deployed in this version. The `skills`, `subagents`, and `collections` categories are accepted for forward compatibility; declaring a non-empty block of them raises an error until their deployment lands in a later release.
+
+### Scopes
+
+The declaration resolves across two tiers, lowest to highest precedence:
+
+1. **Project** — `.agents/codeassembly.yaml`, committed and shared with the team.
+2. **Project-local** — `.agents/codeassembly.local.yaml`, gitignored, for personal overrides.
+
+A higher tier adds to and overrides the tiers below it: `use` adds a rulebook, `drop` removes one inherited from a broader scope, and `root: true` discards everything declared in broader scopes, starting fresh from that file.
+
 ## Preferences
 
 Agent behavior is configured through `.agents/preferences.yaml` files. The resolution cascade is:
