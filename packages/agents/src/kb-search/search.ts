@@ -98,6 +98,14 @@ export async function searchNotes(input: {
   };
 }
 
+/**
+ * The note's stored record type, defaulting to empty when frontmatter is missing or declares no recordType. A retrieve
+ * command filters search hits to the record type it owns (e.g. `assertion`, `event`).
+ */
+export function recordTypeOf(hit: SearchHit): string {
+  return hit.note.frontmatter?.recordType ?? '';
+}
+
 // region | Helpers
 
 /** Returns true when a hit's path falls inside its KB's configured note set; a KB with no matcher keeps all hits. */
