@@ -1,8 +1,11 @@
 // Shape of the kb-retrieve helper's candidate table and the inputs the helper modules exchange.
 //
-// The candidate table is the helper's stable contract with `SKILL.md`: the helper performs mechanical recall and emits
-// raw signals (freshness age, tags, supersession), and the agent ranks and presents. The shape is deliberately
-// backend-agnostic so a future non-ripgrep recall can populate the same structure without changing `SKILL.md`.
+// The candidate table is the helper's stable contract with `SKILL.md`: the helper performs mechanical recall (via the
+// shared `kb-search` primitive) and emits raw signals (freshness age, tags, supersession), and the agent ranks and
+// presents. The shape is deliberately backend-agnostic so a future non-ripgrep recall can populate the same structure
+// without changing `SKILL.md`.
+
+import type { ScopedKb } from '../kb-search/types.ts';
 
 /** A fully normalized candidate note ready for the agent to rank and present. */
 export interface Candidate {
@@ -43,28 +46,6 @@ export interface Candidate {
   diagnostic?: string;
 }
 
-/** A single ripgrep hit before frontmatter parsing and normalization. */
-export interface RawHit {
-  /** Absolute path to the matched note file. */
-  path: string;
-  /** Name of the KB the note belongs to, or `null` for a registry-less discovered KB. */
-  kbName: string | null;
-  /** Absolute path to the KB root the note belongs to. */
-  kbPath: string;
-  /** A context snippet drawn from the matching line and its neighbors. */
-  snippet: string;
-}
-
-/** The mechanical filters applied to the candidate set, parsed from `--diataxis`, `--tag`, `--folder`. */
-export interface RecallFilters {
-  /** Restrict to notes whose Diátaxis facet (the `diataxis` extra field) matches, case-insensitively. */
-  diataxis?: string;
-  /** Restrict to notes carrying this tag (canonical or alias), case-insensitively. */
-  tag?: string;
-  /** Restrict to notes whose path contains this folder segment, case-insensitively. */
-  folder?: string;
-}
-
 /** The helper's full stdout payload: the candidate table plus run-level diagnostics. */
 export interface RetrieveResult {
   /** The normalized candidates, one per matched note. */
@@ -75,16 +56,6 @@ export interface RetrieveResult {
   warnings: string[];
   /** A run-level diagnostic, set when scope is empty or no notes matched. */
   diagnostic?: string;
-}
-
-/** A knowledge base resolved as in-scope for the current query. */
-export interface ScopedKb {
-  /** The KB's display name. `null` for a `.kb/`-discovered KB with no registry entry. */
-  name: string | null;
-  /** Absolute path to the KB's root directory. */
-  path: string;
-  /** How the KB entered scope. */
-  via: 'discovery' | 'registry-default' | 'registry-all' | 'registry-named';
 }
 
 /** A note's supersession status, surfaced as a raw signal for the agent to route on. */

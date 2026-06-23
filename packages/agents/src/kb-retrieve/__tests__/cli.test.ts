@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runRetrieve } from '../cli.ts';
 
-const FIXTURES = join(import.meta.dirname, 'fixtures');
+// The vault and registry fixtures live with the shared search primitive (kb-search), which owns scope and recall; the
+// retrieve command's integration tests reuse them.
+const FIXTURES = join(import.meta.dirname, '..', '..', 'kb-search', '__tests__', 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
 const MALFORMED_NO_KB = join(FIXTURES, 'malformed-no-kb');
 const MALFORMED_REGISTRY = join(FIXTURES, 'malformed-registry');

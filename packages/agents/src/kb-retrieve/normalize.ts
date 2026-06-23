@@ -1,57 +1,36 @@
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
-import { parseNote } from '@codeassembly/kb/frontmatter';
-import type { Schema } from '@codeassembly/kb/schema';
-import { defaultSchema } from '@codeassembly/kb/schema';
 
-import { computeAgeDays, readStringList } from '../kb-shared/note-helpers.ts';
-import type { Candidate, RawHit, RecallFilters, Supersession } from './types.ts';
+import { computeAgeDays, extractString, parseNoteSafely, readStringList } from '../kb-shared/note-helpers.ts';
+import type { RawHit, SearchHit } from '../kb-search/types.ts';
+import type { Candidate, Supersession } from './types.ts';
 
 /** Upper bound on `superseded-by` hops, guarding against a chain cycle. */
 const MAX_SUPERSESSION_HOPS = 32;
 
-// The recall-policy vocabulary kb-retrieve recognizes, mirroring the values declared in the kb package's default
-// schema. `recurrence-recency` is the only policy that diverges from the freshness default, so it is the sole literal
-// the dispatch tests against; every other value (including an unrecognized one) falls through to freshness.
-const FRESHNESS = 'freshness';
+// The recall policy under which a candidate carries recurrence signals (capture timestamp, repo, occurrence count)
+// rather than a freshness age. It is the sole policy `toCandidate` tests against; every other value emits the freshness
+// projection.
 const RECURRENCE_RECENCY = 'recurrence-recency';
 
 /**
- * Normalizes raw ripgrep hits into the candidate table.
+ * Projects the shared search primitive's parsed hits onto the candidate table.
  *
- * Each hit's frontmatter is parsed; the `--diataxis`, `--tag`, and `--folder` filters are applied as post-filters on
- * the parsed frontmatter and the note path; a `superseded-by` chain is followed to the canonical successor with a cycle
- * guard; and `last-verified` is converted to an age in whole days against `now`. Notes with missing or malformed
- * frontmatter degrade to a low-signal candidate carrying a diagnostic rather than being dropped.
+ * Each hit arrives already parsed and carrying its record type's recall policy. For each, a `superseded-by` chain is
+ * followed to the canonical successor with a cycle guard, and `last-verified` is converted to an age in whole days
+ * against `now`. A hit whose frontmatter is missing or malformed still projects to a low-signal candidate carrying a
+ * diagnostic rather than being dropped.
  *
- * A hit whose file cannot be read at normalization time (deleted, permission change, dead symlink) is skipped from the
- * candidate table; its path and the underlying error are appended to `warnings` so the dropped hit is surfaced rather
- * than vanishing silently.
- *
- * Which ranking signals a candidate carries is driven by its record type's declared `recall` policy, looked up in the
- * schema of the KB the hit came from (`schemas`, keyed by KB root path). A KB absent from `schemas` — and any record
- * type the schema does not declare — resolves against the bundled default schema and the `freshness` policy.
+ * Which ranking signals a candidate carries is driven by its recall policy: under `recurrence-recency` the candidate
+ * carries `captured-at` and `repo` recurrence signals and surfaces its `summary` as the display `title`; under
+ * `freshness` (and any other value) it carries a `last-verified` age and keeps its frontmatter `title`. The two signal
+ * sets are mutually exclusive. After projection, each recurrence-recency candidate is stamped with the size of its
+ * `repo` recurrence group.
  */
-export async function normalizeHits(input: {
-  hits: RawHit[];
-  filters: RecallFilters;
-  now: Date;
-  warnings?: string[];
-  schemas?: ReadonlyMap<string, Schema>;
-}): Promise<Candidate[]> {
+export async function normalizeHits(input: { hits: SearchHit[]; now: Date }): Promise<Candidate[]> {
   const candidates: Candidate[] = [];
-  for (const hit of input.hits) {
-    const parsed = await parseNoteSafely(hit.path);
-    if (parsed.note === null) {
-      input.warnings?.push(`note at "${hit.path}" could not be read: ${parsed.error}`);
-      continue;
-    }
-    const note = parsed.note;
-    if (!passesFilters({ note, path: hit.path, filters: input.filters })) {
-      continue;
-    }
-    const recall = resolveRecallPolicy({ schemas: input.schemas, hit, note });
+  for (const { hit, note, recall } of input.hits) {
     candidates.push(await toCandidate({ hit, note, now: input.now, recall }));
   }
   stampOccurrences(candidates);
@@ -59,22 +38,6 @@ export async function normalizeHits(input: {
 }
 
 // region | Helpers
-
-/**
- * Resolves the recall policy that governs a hit's ranking signals: the note's `recordType` looked up in its KB's
- * schema. Falls back to `freshness` when the KB has no entry in `schemas`, when the record type is undeclared, or
- * when the frontmatter is unreadable (no `recordType`) — so an unrecognized or absent policy degrades to the most
- * general signal rather than emitting none.
- */
-function resolveRecallPolicy(input: {
-  schemas: ReadonlyMap<string, Schema> | undefined;
-  hit: RawHit;
-  note: ParsedNote;
-}): string {
-  const schema = input.schemas?.get(input.hit.kbPath) ?? defaultSchema;
-  const recordType = input.note.frontmatter?.recordType ?? '';
-  return schema.recordTypes[recordType]?.recall ?? FRESHNESS;
-}
 
 /**
  * Stamps each recurrence-recency candidate with the size of its `repo` recurrence group: the count of query-matched
@@ -101,55 +64,6 @@ function stampOccurrences(candidates: Candidate[]): void {
 /** The recurrence grouping key for a recurrence-recency candidate: its `repo`, defaulting to empty when absent. */
 function recurrenceKey(candidate: Candidate): string {
   return candidate.repo ?? '';
-}
-
-/** Reads a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
-function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
-  if (extra === undefined) {
-    return null;
-  }
-  const value = extra[key];
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
-}
-
-/** The outcome of a guarded note parse: the parsed note, or a `null` note paired with the read/parse error message. */
-type SafeParseOutcome = { note: ParsedNote } | { note: null; error: string };
-
-/** Parse a note from disk, returning a `null` note plus the error message when the file cannot be read. */
-async function parseNoteSafely(path: string): Promise<SafeParseOutcome> {
-  try {
-    return { note: await parseNote({ path }) };
-  } catch (error) {
-    return { note: null, error: error instanceof Error ? error.message : String(error) };
-  }
-}
-
-/**
- * Applies the mechanical `--diataxis`, `--tag`, and `--folder` filters. A note with no parseable frontmatter fails
- * `--diataxis` and `--tag` (it carries no typed fields) but is still subject to the path-based `--folder` filter.
- */
-function passesFilters(input: { note: ParsedNote; path: string; filters: RecallFilters }): boolean {
-  const { note, path, filters } = input;
-
-  if (filters.folder !== undefined && !path.toLowerCase().includes(`/${filters.folder.toLowerCase()}/`)) {
-    return false;
-  }
-
-  const frontmatter = note.frontmatter;
-  if (
-    filters.diataxis !== undefined &&
-    extractString(frontmatter?.extra, 'diataxis')?.toLowerCase() !== filters.diataxis.toLowerCase()
-  ) {
-    return false;
-  }
-  if (filters.tag !== undefined) {
-    const wanted = filters.tag.toLowerCase();
-    const tags = frontmatter?.tags ?? [];
-    if (!tags.some((tag) => tag.toLowerCase() === wanted)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 /**

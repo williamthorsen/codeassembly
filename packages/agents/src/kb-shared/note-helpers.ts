@@ -1,3 +1,6 @@
+import type { ParsedNote } from '@codeassembly/kb/frontmatter';
+import { parseNote } from '@codeassembly/kb/frontmatter';
+
 /** Whole-day divisor for converting a date delta in milliseconds to an age in days. */
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -24,6 +27,15 @@ export function computeAgeDays(dateValue: string | null, now: Date): number | nu
     return null;
   }
   return Math.floor((now.getTime() - parsed) / MILLISECONDS_PER_DAY);
+}
+
+/** Reads a string-valued field from a frontmatter `extra` map; `null` when absent, non-string, or blank after trimming. */
+export function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
+  if (extra === undefined) {
+    return null;
+  }
+  const value = extra[key];
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
 }
 
 /** Returns `values` with duplicate entries dropped, preserving first-occurrence order. */
@@ -59,4 +71,16 @@ export function splitCommaList(value: string): string[] {
     .split(',')
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
+}
+
+/** The outcome of a guarded note parse: the parsed note, or a `null` note paired with the read/parse error message. */
+export type SafeParseOutcome = { note: ParsedNote } | { note: null; error: string };
+
+/** Parses a note from disk, returning a `null` note plus the error message when the file cannot be read. */
+export async function parseNoteSafely(path: string): Promise<SafeParseOutcome> {
+  try {
+    return { note: await parseNote({ path }) };
+  } catch (error) {
+    return { note: null, error: error instanceof Error ? error.message : String(error) };
+  }
 }
