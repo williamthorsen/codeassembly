@@ -1,0 +1,312 @@
+/* eslint n/no-process-exit: off */
+/* eslint unicorn/no-process-exit: off */
+import { realpathSync } from 'node:fs';
+import { join } from 'node:path';
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+
+import type { AliasMap, KbRoot } from '@codeassembly/kb';
+import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
+import { parseEvent, renderEvent } from '@codeassembly/kb/records';
+import { loadAliases } from '@codeassembly/kb/tags';
+
+import { splitCommaList } from '../kb-shared/note-helpers.ts';
+import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
+import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { isMissingFile } from '../lib/type-guards.ts';
+import { addAddressedBy } from './operations/add-addressed-by.ts';
+import { retag } from './operations/retag.ts';
+import type { EventResult, ParsedArgs, UpdateFailure, UpdateResult } from './types.ts';
+
+/** Flag names that take a value. */
+const VALUE_FLAGS = ['store', 'add-addressed-by', 'retag'] as const;
+type ValueFlag = (typeof VALUE_FLAGS)[number];
+
+/** Executes the helper from `process.argv` and writes the JSON result to stdout. */
+async function main(): Promise<void> {
+  try {
+    const result = await runUpdate({ argv: process.argv.slice(2) });
+    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-update-events: ${message}\n`);
+    process.exit(1);
+  }
+}
+
+if (isEntryPoint()) {
+  await main();
+}
+
+/**
+ * Runs the helper end to end: parses args, resolves the target store by registry name (or the `@default` sentinel), and
+ * applies the chosen operation to each event id independently. Each id resolves to `{store}/content/events/{id}.md`;
+ * the event is read, parsed to a typed `KbEvent`, mutated, re-rendered through the per-type renderer, and written back
+ * atomically — bypassing the assertion-biased generic writer that #815 broke. A recoverable per-event failure (invalid
+ * id, not found, unparseable) is captured in that id's result and never aborts the others.
+ *
+ * Invocation-level failures (invalid args, an unresolvable or readonly store) become structured `{ ok: false, ... }`
+ * results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
+ *
+ * @internal - Exported to allow testing.
+ */
+export async function runUpdate(input: { argv: readonly string[]; home?: string }): Promise<UpdateResult> {
+  let args: ParsedArgs;
+  try {
+    args = parseArgs(input.argv);
+  } catch (error) {
+    return { ok: false, error: 'invalid-args', message: error instanceof Error ? error.message : String(error) };
+  }
+
+  const resolved = await resolveCaptureTarget({
+    explicitName: args.store,
+    ...(input.home !== undefined && { home: input.home }),
+  });
+  if (!resolved.ok) {
+    return resolutionFailure(resolved);
+  }
+  const store = resolved.store;
+
+  // Aliases are only consulted by `retag`; `add-addressed-by` stores references verbatim, so skip the load for it.
+  const aliases: AliasMap =
+    args.operation === 'retag' ? await loadAliasesForStore(store.path) : new Map<string, string>();
+
+  const results: EventResult[] = [];
+  for (const id of args.ids) {
+    results.push(await editOne({ storePath: store.path, id, args, aliases }));
+  }
+
+  return { ok: true, operation: args.operation, store: store.name, results };
+}
+
+/**
+ * Parses the helper's argv. Layout: a required `--store`, exactly one operation flag (`--add-addressed-by` or
+ * `--retag`), and one or more positional event ids. Each value-bearing flag accepts both `--flag value` and
+ * `--flag=value`; `--add-addressed-by` and `--retag` take a comma-separated list. An unknown flag, both operation flags,
+ * neither, no ids, or a missing required value throws with a usage-style message.
+ *
+ * @internal - Exported to allow testing.
+ */
+export function parseArgs(argv: readonly string[]): ParsedArgs {
+  const ids: string[] = [];
+  const raw: Partial<Record<ValueFlag, string>> = {};
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === undefined) {
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      const matched = matchValueFlag(arg);
+      if (matched === null) {
+        throw new Error(`unknown flag: ${arg}`);
+      }
+      let value = matched.inlineValue;
+      if (value === null) {
+        value = argv[index + 1] ?? null;
+        index += 1;
+      }
+      // An empty value is allowed (`--retag ""` clears tags); only an absent value or a following flag is rejected.
+      if (value === null || value.startsWith('--')) {
+        throw new Error(`--${matched.key} requires a value`);
+      }
+      raw[matched.key] = value;
+      continue;
+    }
+    ids.push(arg);
+  }
+
+  const store = raw.store === undefined ? null : raw.store;
+  if (store === '') {
+    throw new Error('--store requires a value');
+  }
+
+  const hasAddressedBy = raw['add-addressed-by'] !== undefined;
+  const hasRetag = raw.retag !== undefined;
+  if (hasAddressedBy && hasRetag) {
+    throw new Error('operation flags are mutually exclusive; got --add-addressed-by and --retag');
+  }
+  if (!hasAddressedBy && !hasRetag) {
+    throw new Error('one operation flag is required (--add-addressed-by or --retag)');
+  }
+  if (ids.length === 0) {
+    throw new Error('at least one event id is required');
+  }
+
+  if (hasAddressedBy) {
+    const references = splitCommaList(raw['add-addressed-by'] ?? '');
+    if (references.length === 0) {
+      throw new Error('--add-addressed-by requires at least one reference');
+    }
+    return { operation: 'add-addressed-by', store, ids, references };
+  }
+  return { operation: 'retag', store, ids, tags: parseTagList(raw.retag ?? '') };
+}
+
+// region | Helpers
+
+/**
+ * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. Reads through
+ * the note-io layer and parses to a typed `KbEvent`; a missing file, a frontmatter parse error, or a record that is not
+ * a valid event each become a structured failure rather than a throw. The rendered output is re-parsed as a defensive
+ * round-trip guard before the atomic write.
+ */
+async function editOne(input: {
+  storePath: string;
+  id: string;
+  args: ParsedArgs;
+  aliases: AliasMap;
+}): Promise<EventResult> {
+  const { storePath, id, args, aliases } = input;
+
+  if (!isSafeId(id)) {
+    return {
+      ok: false,
+      id,
+      error: 'invalid-id',
+      message: `event id "${id}" must be a bare filename stem (no path separators)`,
+    };
+  }
+
+  const path = join(storePath, 'content', 'events', `${id}.md`);
+
+  let read: ReadNote;
+  try {
+    read = await readNote(path);
+  } catch (error) {
+    if (isMissingFile(error)) {
+      return { ok: false, id, error: 'not-found', message: `no event at ${path}` };
+    }
+    throw error;
+  }
+
+  if (read.error !== undefined) {
+    return { ok: false, id, error: 'parse', message: read.error };
+  }
+
+  const parsed = parseEvent(read.fields, read.body);
+  if (!parsed.ok) {
+    return { ok: false, id, error: 'parse', message: parsed.errors.join('; ') };
+  }
+
+  const updated =
+    args.operation === 'add-addressed-by'
+      ? addAddressedBy(parsed.record, args.references)
+      : retag(parsed.record, args.tags, aliases);
+
+  const rendered = renderEvent(updated);
+
+  const reparsed = parseEvent(rendered.fields, rendered.body);
+  if (!reparsed.ok) {
+    return { ok: false, id, error: 'validation', message: reparsed.errors.join('; ') };
+  }
+
+  await writeNote(path, rendered.fields, rendered.body);
+  return { ok: true, id, path };
+}
+
+/**
+ * Builds the agent-facing error message for an omitted `--store`, naming the registered stores and, when configured,
+ * the registry default reachable as `--store @default`.
+ */
+function formatMissingStoreMessage(resolved: {
+  registeredStores: string[];
+  defaultName?: string;
+  registryError?: string;
+}): string {
+  if (resolved.registryError !== undefined) {
+    return `--store is required, but the kb.yaml registry could not be loaded: ${resolved.registryError}`;
+  }
+  if (resolved.registeredStores.length === 0) {
+    return '--store is required, but no stores are registered in kb.yaml';
+  }
+  const stores = resolved.registeredStores.join(', ');
+  const defaultHint =
+    resolved.defaultName !== undefined
+      ? `the registry default is "${resolved.defaultName}", reachable as --store @default`
+      : 'no default_kb is configured';
+  return `--store is required. Registered stores: ${stores}. Pass --store <name> to choose one; ${defaultHint}.`;
+}
+
+/** Returns true when this module is the process entry point, resolving both sides through `realpathSync` so a symlinked invocation still matches. */
+function isEntryPoint(): boolean {
+  const entry = process.argv[1];
+  if (entry === undefined) {
+    return false;
+  }
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-update-events: warning: could not determine entry point: ${message}\n`);
+    return false;
+  }
+}
+
+/** Reports whether an event id is a bare filename stem, rejecting path separators and traversal segments. */
+function isSafeId(id: string): boolean {
+  return id.length > 0 && !id.includes('/') && !id.includes('\\') && !id.includes('..') && !id.includes('\0');
+}
+
+/** Loads tag aliases for a store, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map with a warning. */
+async function loadAliasesForStore(storePath: string): Promise<AliasMap> {
+  const kbRoot: KbRoot = { path: storePath, kbDir: join(storePath, '.kb'), via: 'ancestor-walk' };
+  try {
+    return await loadAliases({ kbRoot });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`kb-update-events: warning: could not load tag aliases: ${message}\n`);
+    return new Map();
+  }
+}
+
+/** Matches a value-bearing flag, returning its key and any inline `=value`. */
+function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | null } | null {
+  for (const key of VALUE_FLAGS) {
+    if (arg === `--${key}`) {
+      return { key, inlineValue: null };
+    }
+    if (arg.startsWith(`--${key}=`)) {
+      return { key, inlineValue: arg.slice(`--${key}=`.length) };
+    }
+  }
+  return null;
+}
+
+/** Maps a store-resolution failure onto the helper's invocation-level failure result. */
+function resolutionFailure(resolved: Extract<ResolveCaptureTargetOutcome, { ok: false }>): UpdateFailure {
+  switch (resolved.reason) {
+    case 'missing-store':
+      return { ok: false, error: 'missing-store', message: formatMissingStoreMessage(resolved) };
+    case 'not-registered':
+      return {
+        ok: false,
+        error: 'store-not-registered',
+        message:
+          resolved.registryError !== undefined
+            ? `could not load kb.yaml registry: ${resolved.registryError}`
+            : `event store "${resolved.requestedName}" is not registered in kb.yaml`,
+      };
+    case 'readonly-store':
+      return {
+        ok: false,
+        error: 'readonly-store',
+        message: `event store "${resolved.name}" is marked readonly in kb.yaml; edits are refused`,
+      };
+    case 'no-default':
+      return {
+        ok: false,
+        error: 'no-default-store',
+        message:
+          resolved.registryError !== undefined
+            ? `could not resolve the default event store: ${resolved.registryError}`
+            : '--store @default was given but no default_kb is configured in kb.yaml',
+      };
+    default: {
+      const _exhaustive: never = resolved;
+      throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
+
+// endregion | Helpers

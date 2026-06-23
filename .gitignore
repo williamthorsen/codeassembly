@@ -22,6 +22,7 @@ packages/agents/content/skills/kb-add/kb-add.mjs
 packages/agents/content/skills/kb-curate/kb-curate.mjs
 packages/agents/content/skills/kb-edit/kb-edit.mjs
 packages/agents/content/skills/kb-retrieve/kb-retrieve.mjs
+packages/agents/content/skills/kb-update-events/kb-update-events.mjs
 packages/agents/content/skills/update-jira-ticket/update-jira-ticket.mjs
 
 # Credentials
