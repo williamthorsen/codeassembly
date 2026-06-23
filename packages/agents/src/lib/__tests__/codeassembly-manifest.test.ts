@@ -1,8 +1,9 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveRulebookDeclaration } from '../codeassembly-manifest.ts';
 
@@ -26,6 +27,11 @@ describe(resolveRulebookDeclaration, () => {
   /** Writes the project-local `codeassembly.local.yaml`. */
   async function writeLocal(content: string): Promise<void> {
     await writeFile(path.join(cwd, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
+  }
+
+  /** Writes a legacy flat-format `rulebooks.yaml`. */
+  async function writeLegacy(content: string): Promise<void> {
+    await writeFile(path.join(cwd, '.agents', 'rulebooks.yaml'), content, 'utf8');
   }
 
   it('returns undefined when no codeassembly.yaml exists in any tier', async () => {
@@ -73,5 +79,34 @@ describe(resolveRulebookDeclaration, () => {
   it('tolerates an empty unsupported category block, resolving only rulebooks', async () => {
     await writeProject('rulebooks:\n  use:\n    - alpha\nskills:\n  use: []\n');
     expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha']);
+  });
+
+  it('falls back to a legacy flat rulebooks.yaml when no codeassembly.yaml exists', async () => {
+    await writeLegacy('rulebooks:\n  - alpha\n  - beta\n');
+    expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha', 'beta']);
+  });
+
+  it('reads structured legacy entries via the name key', async () => {
+    await writeLegacy('rulebooks:\n  - name: alpha\n    source: npm\n');
+    expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha']);
+  });
+
+  it('prefers codeassembly.yaml over a legacy rulebooks.yaml when both exist', async () => {
+    await writeProject('rulebooks:\n  use:\n    - alpha\n');
+    await writeLegacy('rulebooks:\n  - beta\n');
+    expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha']);
+  });
+
+  it('writes a deprecation notice naming codeassembly.yaml when reading a legacy file', async () => {
+    await writeLegacy('rulebooks:\n  - alpha\n');
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+
+    await resolveRulebookDeclaration({ cwd });
+
+    const message = stderr.mock.calls.map((call) => String(call[0])).join('');
+    expect(message).toMatch(/rulebooks\.yaml/);
+    expect(message).toMatch(/deprecated/i);
+    expect(message).toMatch(/codeassembly\.yaml/);
+    stderr.mockRestore();
   });
 });

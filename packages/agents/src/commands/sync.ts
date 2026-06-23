@@ -2,11 +2,11 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { resolveRulebookDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
-import { readRulebooksManifest } from '../lib/rulebooks-manifest.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { InstallOptions } from '../lib/types.ts';
@@ -22,11 +22,11 @@ interface ResolvedRulebook {
 }
 
 /**
- * Resolves the project-scope `.agents/rulebooks.yaml`, materializes each declared rulebook's neutral body to
+ * Resolves the project's `codeassembly.yaml` scope chain, materializes each declared rulebook's neutral body to
  * `.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `.agents/PROJECT.md`, writes `skill` rulebooks
  * as thin-wrapper skills into each targeted harness's project-local skills dir, and retracts anything no longer
  * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent.
- * An absent `rulebooks.yaml` is a total no-op.
+ * An absent `codeassembly.yaml` is a total no-op.
  *
  * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
  * @param contentDirOverride Override for the rulebook library source (defaults to the package content dir).
@@ -36,9 +36,9 @@ export async function syncCommand(
   projectRoot: string = process.cwd(),
   contentDirOverride?: string,
 ): Promise<void> {
-  const declared = await readRulebooksManifest(projectRoot);
+  const declared = await resolveRulebookDeclaration({ cwd: projectRoot });
   if (declared === undefined) {
-    console.info('No .agents/rulebooks.yaml found. Nothing to sync.');
+    console.info('No .agents/codeassembly.yaml found. Nothing to sync.');
     return;
   }
 

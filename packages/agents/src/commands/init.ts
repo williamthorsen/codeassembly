@@ -5,34 +5,50 @@ import process from 'node:process';
 
 import type { InstallOptions } from '../lib/types.ts';
 
-const MANIFEST_TEMPLATE = `# Rulebooks this project opts into. List slugs under \`rulebooks:\`, then run \`codeassembly-agents sync\`.
-rulebooks: []
+const DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly-agents sync\`.
+#
+# rulebooks.use lists the rulebook slugs this project adopts. Each is materialized under .agents/ and, per its
+# delivery mode, inlined into PROJECT.md and/or delivered as a consult-<slug> skill.
+rulebooks:
+  use: []
+  # drop: []  # remove a rulebook inherited from a broader-scope declaration
+
+# root: true  # ignore broader-scope declarations entirely, starting fresh from this file
+
+# Accepted now for forward compatibility; deployment lands in a later release:
+# collections:
+#   use: []
+# skills:
+#   use: []
+# subagents:
+#   use: []
 `;
 
 /**
- * Scaffolds a project-scope `.agents/rulebooks.yaml` with an empty declaration, creating `.agents/` if absent.
- * Refuses to overwrite an existing file. Honors `--dry-run` by reporting the intended action without writing.
+ * Scaffolds a project-scope `.agents/codeassembly.yaml` with an empty rulebooks declaration, creating `.agents/`
+ * if absent. Refuses to overwrite an existing file. Honors `--dry-run` by reporting the intended action without
+ * writing.
  *
  * @param projectRoot The project to scaffold (defaults to the current directory).
  */
 export async function initCommand(options: InstallOptions, projectRoot: string = process.cwd()): Promise<void> {
-  const manifestPath = path.join(projectRoot, '.agents', 'rulebooks.yaml');
-  const alreadyExists = existsSync(manifestPath);
+  const declarationPath = path.join(projectRoot, '.agents', 'codeassembly.yaml');
+  const alreadyExists = existsSync(declarationPath);
 
   if (options.dryRun) {
     console.info(
       alreadyExists
-        ? `[dry-run] ${manifestPath} already exists; init would refuse to overwrite it.`
-        : `[dry-run] init would create ${manifestPath}.`,
+        ? `[dry-run] ${declarationPath} already exists; init would refuse to overwrite it.`
+        : `[dry-run] init would create ${declarationPath}.`,
     );
     return;
   }
 
   if (alreadyExists) {
-    throw new Error(`A rulebooks.yaml already exists at ${manifestPath}; refusing to overwrite it.`);
+    throw new Error(`A codeassembly.yaml already exists at ${declarationPath}; refusing to overwrite it.`);
   }
 
-  await mkdir(path.dirname(manifestPath), { recursive: true });
-  await writeFile(manifestPath, MANIFEST_TEMPLATE, 'utf8');
-  console.info(`Created ${manifestPath}`);
+  await mkdir(path.dirname(declarationPath), { recursive: true });
+  await writeFile(declarationPath, DECLARATION_TEMPLATE, 'utf8');
+  console.info(`Created ${declarationPath}`);
 }
