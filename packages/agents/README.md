@@ -2,6 +2,22 @@
 
 Specialized subagents for orchestrated development workflows. This package provides skills, subagent definitions, and scripts that power the orchestration pipeline.
 
+## Commands
+
+Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`.
+
+| Command             | Description                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------------- |
+| `install`           | Install guidance, skills, and subagents into harness directories, removing files whose source was deleted |
+| `init`              | Scaffold an empty `.agents/codeassembly.yaml` in the current project                                      |
+| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks                                    |
+| `uninstall`         | Remove installed guidance, skills, and subagents                                                          |
+| `status`            | Show the current state of installed items                                                                 |
+| `library list`      | List available library artifacts (rulebooks, skills, subagents)                                           |
+| `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                         |
+
+Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. Run `codeassembly-agents --help` for the authoritative list.
+
 ## Project declaration
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them.
