@@ -322,7 +322,6 @@ describe(syncCommand, () => {
     await declareRulebooks('shell-conventions');
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
-    // Deployed across all three surfaces: neutral body, PROJECT.md inline, and the consult- skill.
     const neutral = await readFile(neutralPath('shell-conventions'), 'utf8');
     expect(neutral).toContain('# Shell script conventions');
     expect(neutral).not.toContain('slug:');
@@ -331,7 +330,6 @@ describe(syncCommand, () => {
     expect(skill).toContain('name: consult-shell-conventions');
     expect(skill).toContain('# Shell script conventions');
 
-    // Emptying the declaration retracts every surface.
     await declareRulebooks();
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
@@ -350,7 +348,6 @@ describe(syncCommand, () => {
     expect(existsSync(neutralPath('alpha'))).toBe(true);
     expect(existsSync(neutralPath('beta'))).toBe(true);
 
-    // The project-local tier drops alpha, which it inherited from the project tier.
     await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n  drop:\n    - alpha\n');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 

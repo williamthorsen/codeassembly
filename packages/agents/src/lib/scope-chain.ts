@@ -1,20 +1,16 @@
 import { access } from 'node:fs/promises';
 import path from 'node:path';
 
-/** The base directories whose `.agents/` tier files compose a scope chain. Slice 1 resolves the project only. */
+/** Base directories whose `.agents/` tier files compose the scope chain. */
 interface ScopeChainOptions {
   readonly cwd: string;
 }
 
 /**
- * Resolves the ordered chain of existing config files named `filename` across the supported tiers, lowest to
- * highest precedence. Slice 1 walks two tiers, both under `<cwd>/.agents/`: the committed project file
- * (`<filename>`) and its gitignored project-local override (`<filename>` with `.local` inserted before the
- * extension). Only files that exist are returned, so a caller can treat the result as the exact set to combine.
- *
- * The tiers are a list this function walks, so adding the user-global (`~/.agents/`) and workspace tiers later is
- * data — a longer candidate list built from additional base dirs — not a change to callers. This is the shared
- * "resolve the chain, not a single file" helper that the preferences reader adopts in a later slice.
+ * Resolves the ordered chain of existing config files named `filename`, lowest to highest precedence. Two tiers
+ * are walked, both under `<cwd>/.agents/`: the committed project file (`<filename>`) and its gitignored
+ * project-local override (`<filename>` with `.local` inserted before the extension). Only existing files are
+ * returned, so the caller can treat the result as the exact set to combine.
  */
 export async function resolveScopeChain(filename: string, options: ScopeChainOptions): Promise<ReadonlyArray<string>> {
   const agentsDir = path.join(options.cwd, '.agents');

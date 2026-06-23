@@ -8,10 +8,9 @@ const EntrySchema = z
 
 /**
  * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag plus one optional block
- * per artifact category (`rulebooks`, `skills`, `subagents`, `collections`). The top level is **closed** so a
- * mistyped category (`rulebookz:`) surfaces as an error rather than being silently ignored. Entries are **open**
- * (unknown keys pass through) so reserved seams like `source` and `delivery` can be authored before the engine
- * interprets them. Each category resolves to `{ use, drop }` lists; absent or null categories drop out entirely.
+ * per artifact category (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized
+ * category triggers an error); entries are open (unknown keys pass through). Each category resolves to
+ * `{ use, drop }` lists; an absent or null category is omitted.
  */
 const CodeAssemblySchema = z
   .object({
@@ -34,8 +33,8 @@ export type DeclarationEntry = z.infer<typeof EntrySchema>;
 
 /**
  * Parses and validates one `codeassembly.yaml` file's contents into a typed declaration. An empty or comment-only
- * file yields a declaration with `root: false` and no categories. Throws a readable error — naming `sourceLabel`
- * when provided — for malformed YAML, an unknown top-level key, a non-mapping top level, or an invalid entry.
+ * file yields a declaration with `root: false` and no categories. Throws a readable error, naming `sourceLabel`
+ * when provided, for malformed YAML, an unknown top-level key, a non-mapping top level, or an invalid entry.
  */
 export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAssemblyDeclaration {
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
@@ -72,10 +71,7 @@ function categorySchema() {
     .strict();
 }
 
-/**
- * Wraps a category in optional, null-tolerant handling: an absent key or a key whose value is `null` (every entry
- * commented out) resolves to `undefined`, so the category simply does not appear in the parsed declaration.
- */
+/** Resolves an absent category key, or one whose value is `null`, to `undefined` rather than a validation error. */
 function optionalCategory(): z.ZodType<CategoryDeclaration | undefined> {
   return z.preprocess((value) => value ?? undefined, categorySchema().optional());
 }

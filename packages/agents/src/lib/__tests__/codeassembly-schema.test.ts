@@ -29,7 +29,7 @@ describe(parseCodeAssemblyFile, () => {
     expect(parseCodeAssemblyFile('# just a comment\n')).toEqual({ root: false });
   });
 
-  it('tolerates unknown keys on a structured entry (reserved seam)', () => {
+  it('tolerates unknown keys on a structured entry', () => {
     const declaration = parseCodeAssemblyFile(
       'rulebooks:\n  use:\n    - name: alpha\n      source: npm\n      delivery: skill\n',
     );

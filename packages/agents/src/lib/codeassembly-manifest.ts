@@ -4,7 +4,7 @@ import type { CodeAssemblyDeclaration } from './codeassembly-schema.ts';
 import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 
-/** The categories the grouped format accepts but slice 1 does not yet deploy; a non-empty block of any is an error. */
+/** The categories the grouped format accepts but does not yet deploy; a non-empty block of any is an error. */
 const UNSUPPORTED_CATEGORIES = ['skills', 'subagents', 'collections'] as const;
 
 /**
@@ -13,8 +13,8 @@ const UNSUPPORTED_CATEGORIES = ['skills', 'subagents', 'collections'] as const;
  * inherited slug; `root: true` discards everything from lower-precedence tiers before that tier is applied.
  *
  * Returns `undefined` when no `codeassembly.yaml` exists anywhere in the chain — a total no-op for `sync`, distinct
- * from a present-but-empty declaration, which returns `[]` (reconcile to nothing declared). Slice 1 interprets only
- * the `rulebooks` category; a non-empty `skills`, `subagents`, or `collections` block raises a clear error.
+ * from a present-but-empty declaration, which returns `[]`. Only the `rulebooks` category is interpreted; a
+ * non-empty `skills`, `subagents`, or `collections` block raises a clear error.
  *
  * @param options.cwd The project whose `.agents/` tiers are resolved.
  */
@@ -46,11 +46,7 @@ export async function resolveRulebookDeclaration(options: { cwd: string }): Prom
 
 // region | Helpers
 
-/**
- * Throws when a declaration carries a non-empty `skills`, `subagents`, or `collections` block. The grouped format
- * accepts these keys so they can be authored ahead of support, but slice 1 deploys only rulebooks; deploying them
- * silently would be worse than a clear failure that names the file and category.
- */
+/** Throws when a declaration carries a non-empty `skills`, `subagents`, or `collections` block, which the format accepts but does not yet deploy. */
 function assertOnlyRulebooks(declaration: CodeAssemblyDeclaration, filePath: string): void {
   for (const category of UNSUPPORTED_CATEGORIES) {
     const block = declaration[category];
