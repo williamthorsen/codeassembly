@@ -1,9 +1,8 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveRulebookDeclaration } from '../codeassembly-manifest.ts';
 
@@ -29,7 +28,7 @@ describe(resolveRulebookDeclaration, () => {
     await writeFile(path.join(cwd, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
   }
 
-  /** Writes a legacy flat-format `rulebooks.yaml`. */
+  /** Writes a legacy flat-format `rulebooks.yaml`, which the resolver does not read. */
   async function writeLegacy(content: string): Promise<void> {
     await writeFile(path.join(cwd, '.agents', 'rulebooks.yaml'), content, 'utf8');
   }
@@ -81,32 +80,8 @@ describe(resolveRulebookDeclaration, () => {
     expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha']);
   });
 
-  it('falls back to a legacy flat rulebooks.yaml when no codeassembly.yaml exists', async () => {
-    await writeLegacy('rulebooks:\n  - alpha\n  - beta\n');
-    expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha', 'beta']);
-  });
-
-  it('reads structured legacy entries via the name key', async () => {
-    await writeLegacy('rulebooks:\n  - name: alpha\n    source: npm\n');
-    expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha']);
-  });
-
-  it('prefers codeassembly.yaml over a legacy rulebooks.yaml when both exist', async () => {
-    await writeProject('rulebooks:\n  use:\n    - alpha\n');
-    await writeLegacy('rulebooks:\n  - beta\n');
-    expect(await resolveRulebookDeclaration({ cwd })).toEqual(['alpha']);
-  });
-
-  it('writes a deprecation notice naming codeassembly.yaml when reading a legacy file', async () => {
+  it('does not read a legacy rulebooks.yaml: it returns undefined when only that file is present', async () => {
     await writeLegacy('rulebooks:\n  - alpha\n');
-    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-
-    await resolveRulebookDeclaration({ cwd });
-
-    const message = stderr.mock.calls.map((call) => String(call[0])).join('');
-    expect(message).toMatch(/rulebooks\.yaml/);
-    expect(message).toMatch(/deprecated/i);
-    expect(message).toMatch(/codeassembly\.yaml/);
-    stderr.mockRestore();
+    expect(await resolveRulebookDeclaration({ cwd })).toBeUndefined();
   });
 });

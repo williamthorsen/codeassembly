@@ -2,9 +2,8 @@ import { existsSync, statSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
@@ -49,12 +48,6 @@ describe(syncCommand, () => {
   async function writeLocalDeclaration(content: string): Promise<void> {
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await writeFile(path.join(projectRoot, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
-  }
-
-  /** Writes a legacy flat-format rulebooks.yaml, for the migration-fallback case. */
-  async function writeLegacyDeclaration(content: string): Promise<void> {
-    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
-    await writeFile(path.join(projectRoot, '.agents', 'rulebooks.yaml'), content, 'utf8');
   }
 
   function neutralPath(slug: string): string {
@@ -363,19 +356,6 @@ describe(syncCommand, () => {
 
     expect(existsSync(neutralPath('alpha'))).toBe(false);
     expect(existsSync(neutralPath('beta'))).toBe(true);
-  });
-
-  it('deploys via the legacy rulebooks.yaml fallback when no codeassembly.yaml exists', async () => {
-    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await writeLegacyDeclaration('rulebooks:\n  - alpha\n');
-    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-
-    await syncCommand(makeOptions(), projectRoot, contentDir);
-
-    expect(existsSync(neutralPath('alpha'))).toBe(true);
-    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
-    expect(stderr.mock.calls.map((call) => String(call[0])).join('')).toMatch(/deprecated/i);
-    stderr.mockRestore();
   });
 
   it('fails when two skill rulebooks resolve to the same skill name, naming both slugs', async () => {
