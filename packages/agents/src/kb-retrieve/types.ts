@@ -1,14 +1,14 @@
 // Shape of the kb-retrieve helper's candidate table and the inputs the helper modules exchange.
 //
 // The candidate table is the helper's stable contract with `SKILL.md`: the helper performs mechanical recall (via the
-// shared `kb-search` primitive) and emits raw signals (freshness age, tags, supersession), and the agent ranks and
-// presents. The shape is deliberately backend-agnostic so a future non-ripgrep recall can populate the same structure
-// without changing `SKILL.md`.
+// shared `kb-search` primitive) and emits raw assertion signals (freshness age, tags, supersession), and the agent
+// ranks and presents. The shape is deliberately backend-agnostic so a future non-ripgrep recall can populate the same
+// structure without changing `SKILL.md`.
 
 import type { ScopedKb } from '../kb-search/types.ts';
 
-/** A fully normalized candidate note ready for the agent to rank and present. */
-export interface Candidate {
+/** A fully normalized assertion candidate ready for the agent to rank and present. */
+export interface AssertionCandidate {
   /** Absolute path to the note that was matched. */
   path: string;
   /** Note title from frontmatter, or the file basename when frontmatter is missing or malformed. */
@@ -30,26 +30,14 @@ export interface Candidate {
   addressedBy?: string[];
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
-  /** ISO-8601 capture timestamp for a recurrence-recency candidate; `undefined` for freshness-ranked candidates. */
-  capturedAt?: string;
-  /**
-   * `owner/name` repository for a recurrence-recency candidate; `undefined` when absent or for freshness-ranked
-   * candidates.
-   */
-  repo?: string;
-  /**
-   * For a recurrence-recency candidate, the number of query-matched records sharing its `repo` recurrence group; a
-   * coarse recurrence signal the agent ranks on. `undefined` for freshness-ranked candidates.
-   */
-  occurrences?: number;
-  /** A diagnostic note for this candidate, e.g. malformed frontmatter degraded to a low-signal hit. */
+  /** A diagnostic note for this candidate, e.g. malformed frontmatter or a missing recordType degraded to a low-signal hit. */
   diagnostic?: string;
 }
 
 /** The helper's full stdout payload: the candidate table plus run-level diagnostics. */
 export interface RetrieveResult {
-  /** The normalized candidates, one per matched note. */
-  candidates: Candidate[];
+  /** The normalized assertion candidates, one per matched note. */
+  candidates: AssertionCandidate[];
   /** The knowledge bases that were actually searched: in-scope KBs minus any whose path did not exist on disk. */
   scopedKbs: ScopedKb[];
   /** Registry-health problems (malformed registry, dead entry paths), always present and possibly empty. */

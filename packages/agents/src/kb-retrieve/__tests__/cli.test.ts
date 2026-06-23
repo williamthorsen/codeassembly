@@ -102,7 +102,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBeUndefined();
   });
 
-  it('recalls an event stored under content/events/ and classifies it as an event', async () => {
+  it('excludes an event record from the assertion candidate table, pointing the reader at event recall', async () => {
     const result = await runRetrieve({
       argv: ['phantomwidget'],
       startDir: NOTES_VAULT,
@@ -110,9 +110,22 @@ describe(runRetrieve, () => {
       home: FIXTURES,
     });
 
-    const event = result.candidates.find((candidate) => candidate.path.includes(join('content', 'events')));
-    expect(event).toBeDefined();
-    expect(event?.capturedAt).toBe('2026-04-20T09:00:00.000Z');
+    // phantomwidget matches only an event, so the assertion table is empty and the diagnostic routes to event recall.
+    expect(result.candidates).toEqual([]);
+    expect(result.diagnostic).toMatch(/kb-retrieve-events/);
+  });
+
+  it('surfaces a note with no recordType as a degraded candidate via the transitional tolerance', async () => {
+    const result = await runRetrieve({
+      argv: ['untypedquux'],
+      startDir: NOTES_VAULT,
+      now: NOW,
+      home: FIXTURES,
+    });
+
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0]?.title).toBe('A legacy note without a record type');
+    expect(result.candidates[0]?.diagnostic).toMatch(/no recordType/);
   });
 
   it('applies the --diataxis filter to the candidate table', async () => {
@@ -232,7 +245,7 @@ describe(runRetrieve, () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('applies a discovered store schema, honoring a custom record type recall policy', async () => {
+  it('excludes a custom non-assertion record type from the assertion candidate table', async () => {
     const result = await runRetrieve({
       argv: ['phantomtimer'],
       startDir: CUSTOM_SCHEMA_VAULT,
@@ -240,11 +253,9 @@ describe(runRetrieve, () => {
       home: FIXTURES,
     });
 
-    const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
-    // The store's schema declares `insight` with recall: recurrence-recency, so it surfaces recurrence signals.
-    expect(insight?.capturedAt).toBe('2026-05-22T10:00:00.000Z');
-    expect(insight?.repo).toBe('owner/repo-insight');
-    expect(insight?.title).toBe('A recurring flaky-timer insight');
+    // insight-note declares recordType: insight — neither an assertion nor an event — so no retrieve command claims it.
+    expect(result.candidates).toEqual([]);
+    expect(result.diagnostic).toMatch(/none are assertions/);
     expect(result.warnings).toEqual([]);
   });
 
@@ -264,7 +275,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBeUndefined();
   });
 
-  it('applies a valid store schema while degrading a malformed sibling in one multi-store search', async () => {
+  it('surfaces the valid store assertion while degrading a malformed sibling schema in one multi-store search', async () => {
     const result = await runRetrieve({
       argv: ['crossstore', '--all-kbs'],
       startDir: MULTI_SCHEMA_REGISTRY,
@@ -274,9 +285,8 @@ describe(runRetrieve, () => {
 
     const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
     const plain = result.candidates.find((candidate) => candidate.path.includes('plain-note.md'));
-    // The valid custom schema still applies its recurrence-recency policy...
-    expect(insight?.capturedAt).toBe('2026-05-22T10:00:00.000Z');
-    // ...while the malformed sibling degrades, still surfaces its note, and contributes exactly one schema warning.
+    // The custom insight type is excluded; the assertion surfaces, and the malformed sibling schema degrades with one warning.
+    expect(insight).toBeUndefined();
     expect(plain).toBeDefined();
     expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(1);
   });

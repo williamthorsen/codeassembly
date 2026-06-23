@@ -4,67 +4,27 @@ import type { ParsedNote } from '@codeassembly/kb/frontmatter';
 
 import { computeAgeDays, extractString, parseNoteSafely, readStringList } from '../kb-shared/note-helpers.ts';
 import type { RawHit, SearchHit } from '../kb-search/types.ts';
-import type { Candidate, Supersession } from './types.ts';
+import type { AssertionCandidate, Supersession } from './types.ts';
 
 /** Upper bound on `superseded-by` hops, guarding against a chain cycle. */
 const MAX_SUPERSESSION_HOPS = 32;
 
-// The recall policy under which a candidate carries recurrence signals (capture timestamp, repo, occurrence count)
-// rather than a freshness age. It is the sole policy `toCandidate` tests against; every other value emits the freshness
-// projection.
-const RECURRENCE_RECENCY = 'recurrence-recency';
-
 /**
- * Projects the shared search primitive's parsed hits onto the candidate table.
+ * Projects the shared search primitive's parsed hits onto the assertion candidate table.
  *
- * Each hit arrives already parsed and carrying its record type's recall policy. For each, a `superseded-by` chain is
- * followed to the canonical successor with a cycle guard, and `last-verified` is converted to an age in whole days
- * against `now`. A hit whose frontmatter is missing or malformed still projects to a low-signal candidate carrying a
- * diagnostic rather than being dropped.
- *
- * Which ranking signals a candidate carries is driven by its recall policy: under `recurrence-recency` the candidate
- * carries `captured-at` and `repo` recurrence signals and surfaces its `summary` as the display `title`; under
- * `freshness` (and any other value) it carries a `last-verified` age and keeps its frontmatter `title`. The two signal
- * sets are mutually exclusive. After projection, each recurrence-recency candidate is stamped with the size of its
- * `repo` recurrence group.
+ * Each hit arrives already parsed. For each, a `superseded-by` chain is followed to the canonical successor with a cycle
+ * guard, and `last-verified` is converted to an age in whole days against `now`. A hit whose frontmatter is missing or
+ * malformed still projects to a low-signal candidate carrying a diagnostic rather than being dropped.
  */
-export async function normalizeHits(input: { hits: SearchHit[]; now: Date }): Promise<Candidate[]> {
-  const candidates: Candidate[] = [];
-  for (const { hit, note, recall } of input.hits) {
-    candidates.push(await toCandidate({ hit, note, now: input.now, recall }));
+export async function normalizeHits(input: { hits: SearchHit[]; now: Date }): Promise<AssertionCandidate[]> {
+  const candidates: AssertionCandidate[] = [];
+  for (const { hit, note } of input.hits) {
+    candidates.push(await toCandidate({ hit, note, now: input.now }));
   }
-  stampOccurrences(candidates);
   return candidates;
 }
 
 // region | Helpers
-
-/**
- * Stamps each recurrence-recency candidate with the size of its `repo` recurrence group: the count of query-matched
- * records sharing the same repository. Candidates outside that policy (no `capturedAt`) are left untouched. The group
- * key collapses a missing `repo` to an empty string so records lacking that signal still group together consistently.
- */
-function stampOccurrences(candidates: Candidate[]): void {
-  const groupSizes = new Map<string, number>();
-  for (const candidate of candidates) {
-    if (candidate.capturedAt === undefined) {
-      continue;
-    }
-    const key = recurrenceKey(candidate);
-    groupSizes.set(key, (groupSizes.get(key) ?? 0) + 1);
-  }
-  for (const candidate of candidates) {
-    if (candidate.capturedAt === undefined) {
-      continue;
-    }
-    candidate.occurrences = groupSizes.get(recurrenceKey(candidate)) ?? 1;
-  }
-}
-
-/** The recurrence grouping key for a recurrence-recency candidate: its `repo`, defaulting to empty when absent. */
-function recurrenceKey(candidate: Candidate): string {
-  return candidate.repo ?? '';
-}
 
 /**
  * Follows a note's `superseded-by` chain to its canonical successor. Each hop's frontmatter is parsed and inspected
@@ -112,36 +72,23 @@ async function resolveSupersession(input: { path: string; note: ParsedNote }): P
 }
 
 /**
- * Projects a parsed note and its hit metadata onto a normalized candidate, emitting the ranking signals its `recall`
- * policy calls for.
- *
- * Under `recurrence-recency` the candidate carries its `captured-at` and `repo` as recurrence signals and surfaces its
- * human-readable `summary` as the display `title` rather than the ULID basename; under `freshness` (and any fallback)
- * it carries a `last-verified` age and keeps its frontmatter `title`. The two signal sets are mutually exclusive, so
- * flipping a record type's policy in the schema flips which signals it emits.
- *
- * Independent of recall policy, an `addressed-by` list is read from any record type and surfaced flat when present.
+ * Projects a parsed note and its hit metadata onto an assertion candidate, emitting the freshness ranking signals: a
+ * `last-verified` age and the note's `title`, `diataxis`, and `tags`. An `addressed-by` list is surfaced flat when
+ * present. A note with missing or malformed frontmatter degrades to a low-signal candidate carrying a diagnostic.
  */
-async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; recall: string }): Promise<Candidate> {
-  const { hit, note, now, recall } = input;
+async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date }): Promise<AssertionCandidate> {
+  const { hit, note, now } = input;
   const frontmatter = note.frontmatter;
   const extra = frontmatter?.extra;
 
-  const isRecurrence = recall === RECURRENCE_RECENCY;
-  const capturedAt = isRecurrence ? extractString(extra, 'captured-at') : null;
-  const summary = extractString(extra, 'summary');
-  const repo = isRecurrence ? extractString(extra, 'repo') : null;
-
-  const title = resolveTitle({ frontmatter, summary, capturedAt, path: hit.path });
+  const title = frontmatter !== null && frontmatter.title !== '' ? frontmatter.title : basename(hit.path);
   const diataxis = extractString(extra, 'diataxis');
   const tags = frontmatter?.tags ?? [];
-  // Under recurrence-recency, ranking is by capture recency rather than freshness, so no `last-verified` age is
-  // computed even when the record carries one; freshness (and the fallback) age the record.
-  const lastVerifiedAgeDays = isRecurrence ? null : computeAgeDays(extractString(extra, 'last-verified'), now);
+  const lastVerifiedAgeDays = computeAgeDays(extractString(extra, 'last-verified'), now);
   const supersession = await resolveSupersession({ path: hit.path, note });
   const addressedBy = readStringList(extra, 'addressed-by');
 
-  const candidate: Candidate = {
+  const candidate: AssertionCandidate = {
     path: hit.path,
     title,
     diataxis,
@@ -151,30 +98,11 @@ async function toCandidate(input: { hit: RawHit; note: ParsedNote; now: Date; re
     supersession,
     kbName: hit.kbName,
     ...(addressedBy.length > 0 && { addressedBy }),
-    ...(capturedAt !== null && { capturedAt }),
-    ...(capturedAt !== null && repo !== null && { repo }),
   };
   if (frontmatter === null) {
     candidate.diagnostic = 'frontmatter missing or malformed; degraded to a low-signal candidate';
   }
   return candidate;
-}
-
-/**
- * Resolves a candidate's display title: a recurrence-recency record (one carrying `captured-at`) surfaces as its
- * `summary`, falling back to the ULID basename when `summary` is absent; any other record keeps its frontmatter
- * `title`, falling back to the file basename.
- */
-function resolveTitle(input: {
-  frontmatter: ParsedNote['frontmatter'];
-  summary: string | null;
-  capturedAt: string | null;
-  path: string;
-}): string {
-  if (input.capturedAt !== null) {
-    return input.summary ?? basename(input.path);
-  }
-  return input.frontmatter !== null && input.frontmatter.title !== '' ? input.frontmatter.title : basename(input.path);
 }
 
 // endregion | Helpers

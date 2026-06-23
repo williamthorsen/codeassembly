@@ -5,10 +5,14 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import { searchNotes } from '../kb-search/search.ts';
-import type { RecallFilters } from '../kb-search/types.ts';
+import type { RecallFilters, SearchHit } from '../kb-search/types.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { normalizeHits } from './normalize.ts';
+import { collectTypelessCandidates } from './typeless-tolerance.ts';
 import type { RetrieveResult } from './types.ts';
+
+/** The record type kb-retrieve owns; every other declared type (e.g. `event`) is left to its own retrieve command. */
+const ASSERTION = 'assertion';
 
 /** The flags this helper accepts; positionals join into the free-text query. `--kb` is an alias for `--store`. */
 const FLAGS: readonly FlagSpec[] = [
@@ -145,7 +149,14 @@ export async function runRetrieve(input: {
     };
   }
 
-  const candidates = await normalizeHits({ hits: search.hits, now: input.now });
+  // kb-retrieve owns assertions. Project assertion records, plus — transitionally — notes that carry no recordType, so a
+  // broken note is not hidden from recall. Records of another type (e.g. events) are left to their own retrieve command.
+  const assertionHits = search.hits.filter((hit) => recordTypeOf(hit) === ASSERTION);
+  const typelessHits = search.hits.filter((hit) => recordTypeOf(hit) === '');
+  const candidates = [
+    ...(await normalizeHits({ hits: assertionHits, now: input.now })),
+    ...(await collectTypelessCandidates({ hits: typelessHits, now: input.now })),
+  ];
 
   const result: RetrieveResult = {
     candidates,
@@ -153,11 +164,32 @@ export async function runRetrieve(input: {
     warnings: search.warnings,
   };
   if (candidates.length === 0) {
-    // Distinguish a query that found nothing from a query that found hits which were then excluded by
-    // `--diataxis` / `--tag` / `--folder`, so the caller knows whether to broaden the query or drop a filter.
-    result.diagnostic = search.recalledCount === 0 ? 'no notes matched the query' : 'all matches were filtered out';
+    result.diagnostic = emptyResultDiagnostic({
+      recalledCount: search.recalledCount,
+      filteredHits: search.hits.length,
+    });
   }
   return result;
+}
+
+/** The note's stored record type, defaulting to empty when frontmatter is missing or declares no recordType. */
+function recordTypeOf(hit: SearchHit): string {
+  return hit.note.frontmatter?.recordType ?? '';
+}
+
+/**
+ * Phrases the empty-result diagnostic: `no notes matched the query` when recall found nothing; `all matches were
+ * filtered out` when the mechanical `--diataxis`/`--tag`/`--folder` filters excluded everything; otherwise the matches
+ * were all of another record type, so the reader is pointed at the event-recall command.
+ */
+function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: number }): string {
+  if (input.recalledCount === 0) {
+    return 'no notes matched the query';
+  }
+  if (input.filteredHits === 0) {
+    return 'all matches were filtered out';
+  }
+  return 'matches were found but none are assertions; use kb-retrieve-events for event recall';
 }
 
 // endregion | Helpers
