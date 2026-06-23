@@ -36,10 +36,18 @@ describe(syncCommand, () => {
     await writeFile(file, `---\nslug: ${slug}\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
   }
 
-  /** Writes the project-scope rulebooks.yaml. */
-  async function writeManifest(content: string): Promise<void> {
+  /** Writes the project-scope codeassembly.yaml declaring the given rulebook slugs in the grouped format. */
+  async function declareRulebooks(...slugs: ReadonlyArray<string>): Promise<void> {
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
-    await writeFile(path.join(projectRoot, '.agents', 'rulebooks.yaml'), content, 'utf8');
+    const useBlock =
+      slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
+    await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `rulebooks:\n${useBlock}`, 'utf8');
+  }
+
+  /** Writes the project-local codeassembly.local.yaml verbatim, for multi-tier and drop cases. */
+  async function writeLocalDeclaration(content: string): Promise<void> {
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(path.join(projectRoot, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
   }
 
   function neutralPath(slug: string): string {
@@ -51,7 +59,7 @@ describe(syncCommand, () => {
   const skillPath = (slug: string, dotDir = '.claude'): string =>
     path.join(projectRoot, dotDir, 'skills', slug, 'SKILL.md');
 
-  it('when no rulebooks.yaml exists, makes no changes', async () => {
+  it('when no codeassembly.yaml exists, makes no changes', async () => {
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
@@ -60,7 +68,7 @@ describe(syncCommand, () => {
 
   it('writes the neutral body with frontmatter stripped for a declared rulebook', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -71,7 +79,7 @@ describe(syncCommand, () => {
 
   it('inlines an ambient rulebook into PROJECT.md between sentinels, creating the file', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -83,7 +91,7 @@ describe(syncCommand, () => {
 
   it('preserves hand-authored PROJECT.md content when inlining', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await writeFile(projectMdPath(), '# Project\n\nHand-authored intro.\n', 'utf8');
 
@@ -96,7 +104,7 @@ describe(syncCommand, () => {
 
   it('when re-run with the same manifest, produces no file changes', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
     const firstProjectMd = await readFile(projectMdPath(), 'utf8');
@@ -113,12 +121,12 @@ describe(syncCommand, () => {
   it('retracts a rulebook that is no longer declared', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeLibraryRulebook('beta', 'delivery: ambient', 'Beta rules.');
-    await writeManifest('rulebooks:\n  - alpha\n  - beta\n');
+    await declareRulebooks('alpha', 'beta');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('beta'))).toBe(true);
 
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('beta'))).toBe(false);
@@ -130,7 +138,7 @@ describe(syncCommand, () => {
 
   it('retracts the inlined block when a rulebook delivery changes away from ambient', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
@@ -144,11 +152,11 @@ describe(syncCommand, () => {
 
   it('when the manifest is emptied, retracts every block and neutral file', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     expect(existsSync(neutralPath('alpha'))).toBe(true);
 
-    await writeManifest('rulebooks: []\n');
+    await declareRulebooks();
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('alpha'))).toBe(false);
@@ -156,14 +164,14 @@ describe(syncCommand, () => {
   });
 
   it('throws when a declared rulebook has no library file', async () => {
-    await writeManifest('rulebooks:\n  - ghost\n');
+    await declareRulebooks('ghost');
 
     await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
   });
 
   it('writes a skill file for a skill-only rulebook without inlining it into PROJECT.md', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\ndescription: Gamma desc.', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -178,7 +186,7 @@ describe(syncCommand, () => {
 
   it('renders a skill-name override as the skill directory and name, keeping the marker on the slug', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\nskill-name: gamma-rulebook', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -190,7 +198,7 @@ describe(syncCommand, () => {
 
   it('writes a skill file for a multi-modal rulebook and also inlines it into PROJECT.md', async () => {
     await writeLibraryRulebook('delta', 'delivery: [ambient, skill]', 'Delta rules.');
-    await writeManifest('rulebooks:\n  - delta\n');
+    await declareRulebooks('delta');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -200,7 +208,7 @@ describe(syncCommand, () => {
 
   it('when re-run with unchanged content, does not rewrite the skill file', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     const firstMtime = statSync(skillPath('consult-gamma')).mtimeMs;
 
@@ -212,11 +220,11 @@ describe(syncCommand, () => {
   it('retracts the skill directory when a skill rulebook is no longer declared', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - alpha\n  - gamma\n');
+    await declareRulebooks('alpha', 'gamma');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
 
-    await writeManifest('rulebooks:\n  - alpha\n');
+    await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(path.dirname(skillPath('consult-gamma')))).toBe(false);
@@ -224,7 +232,7 @@ describe(syncCommand, () => {
 
   it('retracts the skill directory when a rulebook delivery changes away from skill', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
 
@@ -237,7 +245,7 @@ describe(syncCommand, () => {
 
   it('retracts the prior skill directory when a rulebook resolved skill name changes', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     expect(existsSync(skillPath('consult-gamma'))).toBe(true);
 
@@ -257,7 +265,7 @@ describe(syncCommand, () => {
       'utf8',
     );
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -267,7 +275,7 @@ describe(syncCommand, () => {
 
   it('with --harness claude, writes only the Claude skills dir', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
 
     await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, contentDir);
 
@@ -277,7 +285,7 @@ describe(syncCommand, () => {
 
   it('with no detected harness, writes no skill files but still writes the neutral file', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
 
     await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
 
@@ -290,7 +298,7 @@ describe(syncCommand, () => {
     await mkdir(path.dirname(manualSkill), { recursive: true });
     await writeFile(manualSkill, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - gamma\n');
+    await declareRulebooks('gamma');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
@@ -301,7 +309,7 @@ describe(syncCommand, () => {
   it('in dry-run mode, writes nothing to disk', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
-    await writeManifest('rulebooks:\n  - alpha\n  - gamma\n');
+    await declareRulebooks('alpha', 'gamma');
 
     await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
 
@@ -310,25 +318,47 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
   });
 
-  it('materializes the real shell-conventions rulebook from the package content', async () => {
-    await writeManifest('rulebooks:\n  - shell-conventions\n');
-
+  it('deploys and retracts the real shell-conventions canary end-to-end', async () => {
+    await declareRulebooks('shell-conventions');
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
     const neutral = await readFile(neutralPath('shell-conventions'), 'utf8');
     expect(neutral).toContain('# Shell script conventions');
     expect(neutral).not.toContain('slug:');
-    const projectMd = await readFile(projectMdPath(), 'utf8');
-    expect(projectMd).toContain('<!-- rulebook:shell-conventions -->');
+    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:shell-conventions -->');
     const skill = await readFile(skillPath('consult-shell-conventions'), 'utf8');
     expect(skill).toContain('name: consult-shell-conventions');
     expect(skill).toContain('# Shell script conventions');
+
+    await declareRulebooks();
+    await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+    expect(existsSync(neutralPath('shell-conventions'))).toBe(false);
+    expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:shell-conventions -->');
+    expect(existsSync(path.dirname(skillPath('consult-shell-conventions')))).toBe(false);
+  });
+
+  it('deploys a rulebook declared only in the project-local tier, and retracts it on drop', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await writeLibraryRulebook('beta', 'delivery: ambient', 'Beta rules.');
+    await declareRulebooks('alpha');
+    await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(true);
+    expect(existsSync(neutralPath('beta'))).toBe(true);
+
+    await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n  drop:\n    - alpha\n');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralPath('alpha'))).toBe(false);
+    expect(existsSync(neutralPath('beta'))).toBe(true);
   });
 
   it('fails when two skill rulebooks resolve to the same skill name, naming both slugs', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\nskill-name: shared', 'Gamma rules.');
     await writeLibraryRulebook('delta', 'delivery: skill\nskill-name: shared', 'Delta rules.');
-    await writeManifest('rulebooks:\n  - gamma\n  - delta\n');
+    await declareRulebooks('gamma', 'delta');
 
     let message = '';
     try {
@@ -345,13 +375,13 @@ describe(syncCommand, () => {
 
   it('reassigns a skill name from one rulebook to another within a single sync', async () => {
     await writeLibraryRulebook('foo', 'delivery: skill\nskill-name: shared', 'Foo rules.');
-    await writeManifest('rulebooks:\n  - foo\n');
+    await declareRulebooks('foo');
     await syncCommand(makeOptions(), projectRoot, contentDir);
     expect(existsSync(skillPath('shared'))).toBe(true);
 
     await writeLibraryRulebook('foo', 'delivery: skill', 'Foo rules.');
     await writeLibraryRulebook('bar', 'delivery: skill\nskill-name: shared', 'Bar rules.');
-    await writeManifest('rulebooks:\n  - foo\n  - bar\n');
+    await declareRulebooks('foo', 'bar');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(await readFile(skillPath('consult-foo'), 'utf8')).toContain('<!-- codeassembly-rulebook:foo -->');

@@ -89,18 +89,18 @@ describe('CLI rulebook routing', () => {
     expect(result.stdout).toContain('sync');
   });
 
-  it('dispatches sync, reporting a no-op when no rulebooks.yaml exists', async () => {
+  it('dispatches sync, reporting a no-op when no codeassembly.yaml exists', async () => {
     const result = await runCliIn(projectRoot, 'sync');
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Nothing to sync');
   });
 
-  it('dispatches init, scaffolding rulebooks.yaml in the project', async () => {
+  it('dispatches init, scaffolding codeassembly.yaml in the project', async () => {
     const result = await runCliIn(projectRoot, 'init');
 
     expect(result.exitCode).toBe(0);
-    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks.yaml'))).toBe(true);
+    expect(existsSync(path.join(projectRoot, '.agents', 'codeassembly.yaml'))).toBe(true);
   });
 });
 
