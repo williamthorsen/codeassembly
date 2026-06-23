@@ -11,9 +11,9 @@ The package exposes nine subpath entries plus a root barrel:
 | Entry           | Description                                                               |
 | --------------- | ------------------------------------------------------------------------- |
 | `.`             | The most-used types plus `defaultSchema` and the rule constants           |
-| `./check`       | `check` — config-driven enumeration plus the generic rules, in one call   |
+| `./check`       | `check`: config-driven enumeration plus the generic rules, in one call    |
 | `./config`      | `.kb/config.yaml` loading and the typed `KbLoaderError` the loaders throw |
-| `./create`      | `create` — scaffold a new store and register it in `kb.yaml`              |
+| `./create`      | `create`: scaffold a new store and register it in `kb.yaml`               |
 | `./discovery`   | KB root discovery and `kb.yaml` registry loading, merging, and writing    |
 | `./filesystem`  | Filesystem-existence helpers with an explicit absence policy              |
 | `./schema`      | The bundled default schema and per-KB `.kb/schema.yaml` resolution        |
@@ -38,8 +38,8 @@ const root = await findKbRoot({ startDir: process.cwd() });
 
 A KB registry declares one or more knowledge bases. `loadKbRegistry` reads two optional registry files and merges them:
 
-- **user-global** — `~/.agents/kb.yaml`
-- **project-local** — `<projectDir>/.agents/kb.yaml`
+- **user-global**: `~/.agents/kb.yaml`
+- **project-local**: `<projectDir>/.agents/kb.yaml`
 
 ```yaml
 # .agents/kb.yaml
@@ -82,7 +82,7 @@ const config = await loadKbRegistry({ projectDir: process.cwd() });
 
 ## The default schema
 
-A record's family is the stored `recordType` discriminant, valued against the schema's declared record-type vocabulary. `defaultSchema` is a deep-frozen `Schema` constant keyed by record type — an `assertion` record type (the canonical vault note, ranked by freshness) and an `event` record type (the ULID-keyed record written by `capture-event`, ranked by recurrence-recency):
+A record's family is the stored `recordType` discriminant, valued against the schema's declared record-type vocabulary. `defaultSchema` is a deep-frozen `Schema` constant keyed by record type: an `assertion` record type (the canonical vault note, ranked by freshness) and an `event` record type (the ULID-keyed record written by `capture-event`, ranked by recurrence-recency):
 
 ```ts
 {
@@ -101,7 +101,7 @@ A record's family is the stored `recordType` discriminant, valued against the sc
 }
 ```
 
-`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. A `.kb/schema.yaml` declares a `recordTypes:` block keyed by record-type name; each record type declares its own `required`, `optional`, and `recall`. The declared vocabulary **replaces** the bundled default outright. `recordType` is implicitly required on every record — it is the discriminant, so it is never listed in a record type's `required:` array.
+`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. A `.kb/schema.yaml` declares a `recordTypes:` block keyed by record-type name; each record type declares its own `required`, `optional`, and `recall`. The declared vocabulary **replaces** the bundled default outright. `recordType` is implicitly required on every record: It is the discriminant, so it is never listed in a record type's `required:` array.
 
 ```yaml
 # .kb/schema.yaml
@@ -120,9 +120,9 @@ Validation reads a record type's required set directly via `resolveRequiredForRe
 
 ### The addressed-by/addresses relation
 
-`addressed-by`/`addresses` is an inverse-pair relation that threads a problem record to whatever was done about it — a fix, a mitigation, an improved guidance note. Both are optional, multi-valued list fields:
+`addressed-by`/`addresses` is an inverse-pair relation that threads a problem record to whatever was done about it: a fix, a mitigation, an improved guidance note. Both are optional, multi-valued list fields:
 
-- `addressed-by` (on the problem record, available on `assertion` and `event`) is the canonical, recall-facing field: a list of references to whatever addressed the problem. It is the only viable store when the responder is external, so its entries are heterogeneous: a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL. The field's shape is validated as a list (the `frontmatter.list` rule), while its entries are free-form, like `sources`.
+- `addressed-by` (on the problem record, available on `assertion` and `event`) is the canonical, recall-facing field: a list of references to whatever addressed the problem. It is the only viable store when the responder is external, so its entries are heterogeneous: a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL. The field's shape is validated as a list (the `frontmatter.list` rule), while its entries are free-form, like `sources`. It is set on events with `kb-update-events` and on assertions with `kb-edit`.
 - `addresses` (on a KB-note responder, available on `assertion`) is the optional inverse for the rare "what does this address?" query. It is **non-authoritative**: keeping it in sync would be an N-file write, so `kb-curate` deliberately does not police it.
 
 The relation is many-to-many (one response can address many problems, and one problem can accrue many responses) and is surfaced flat by recall, with no chain-walking. This is distinct from `supersedes`/`superseded-by`, which _deprecates_ a record through a policed 1:1 chain; an addressed problem is not deprecated. It remains a true observation whose recurrence is worth keeping.
@@ -143,7 +143,7 @@ missing files (when a path is given) throw.
 
 ## Validation rules
 
-`frontmatterRule` and `tagAliasRule` are `KbRule` objects — `{ name, check }` — that produce `Finding[]`.
+`frontmatterRule` and `tagAliasRule` are `KbRule` objects (`{ name, check }`) that produce `Finding[]`.
 `runRules({ rules, notes, schema, aliases })` applies a rule set across notes and concatenates the findings.
 The `KbRule` interface is the extension point for future rules.
 
@@ -200,12 +200,12 @@ kb create --no-register  # scaffold without writing the registry
 
 It creates these files and directories:
 
-| Path                          | Contents                                                         |
-| ----------------------------- | ---------------------------------------------------------------- |
-| `.kb/schema.yaml`             | A copy of the bundled default schema, ready to customize         |
-| `.kb/config.yaml`             | A fully-commented check config; the bundled defaults apply as-is |
-| `.kb/tag-aliases.yaml`        | An empty `aliases: {}` map                                       |
-| `content/`, `content/events/` | The note tree; `capture-event` writes to `content/events/`       |
+| Path                          | Contents                                                                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `.kb/schema.yaml`             | A copy of the bundled default schema, ready to customize                                                  |
+| `.kb/config.yaml`             | A fully-commented check config; the bundled defaults apply as-is                                          |
+| `.kb/tag-aliases.yaml`        | An empty `aliases: {}` map                                                                                |
+| `content/`, `content/events/` | The note tree; `capture-event` writes events to `content/events/`, `kb-update-events` edits them in place |
 
 The schema and config seeds are serialized from the in-package `defaultSchema` and `defaultKbConfig`, so a new store cannot drift from the bundled defaults. The generated `.kb/schema.yaml` **replaces** the default outright (the override is a replacement, not a merge): add record types or optional fields freely, but do not remove or rename the default `assertion`/`event` record types or their required fields, since the `kb-*` skills depend on them. Delete the file to re-inherit the bundled default.
 
@@ -257,7 +257,7 @@ Exit codes:
 
 ## Error and exception model
 
-Validation rules **return** findings — they never throw. Loaders (`loadKbConfig`, `loadSchema`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects, malformed YAML, or illegal overrides, with the offending file path named in the message. `KbLoaderError` (exported from `@codeassembly/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config/schema/alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
+Validation rules **return** findings; they never throw. Loaders (`loadKbConfig`, `loadSchema`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects, malformed YAML, or illegal overrides, with the offending file path named in the message. `KbLoaderError` (exported from `@codeassembly/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config/schema/alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability
 
