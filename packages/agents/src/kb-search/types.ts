@@ -46,7 +46,7 @@ export interface SearchHit {
   hit: RawHit;
   /** The parsed note; its `frontmatter` is `null` when the block is missing or malformed. */
   note: ParsedNote;
-  /** The recall policy resolved from the note's record type in its KB's schema (e.g. `freshness`), driving ranking. */
+  /** The recall policy declared for the note's record type in its KB's schema (e.g. `freshness`). */
   recall: string;
 }
 
