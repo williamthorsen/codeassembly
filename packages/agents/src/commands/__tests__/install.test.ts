@@ -204,6 +204,38 @@ describe(installCommand, () => {
     expect(skills).not.toContain('claude-only');
   });
 
+  it('excludes a skill marked deploy: declared from install and the manifest', async () => {
+    const claudeHome = await setupClaudeHome();
+    await buildContentTree(contentDir, {
+      skills: {
+        'declared-skill': {
+          'SKILL.md': [
+            '---',
+            'name: declared-skill',
+            'description: Declared fixture skill',
+            'deploy: declared',
+            '---',
+            '',
+            '# Declared',
+            '',
+          ].join('\n'),
+        },
+      },
+    });
+
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+    const skills = await readdir(path.join(claudeHome, 'skills'));
+    expect(skills).not.toContain('declared-skill');
+    // A skill without the field installs unchanged.
+    expect(skills).toContain('alpha');
+
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
+    expect(relativePaths).not.toContain('skills/declared-skill');
+    expect(relativePaths).toContain('skills/alpha');
+  });
+
   it('installs the _data support directory but not _harnesses', async () => {
     const claudeHome = await setupClaudeHome();
 

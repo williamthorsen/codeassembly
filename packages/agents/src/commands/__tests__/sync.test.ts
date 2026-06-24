@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
@@ -388,5 +388,151 @@ describe(syncCommand, () => {
     const shared = await readFile(skillPath('shared'), 'utf8');
     expect(shared).toContain('name: shared');
     expect(shared).toContain('<!-- codeassembly-rulebook:bar -->');
+  });
+
+  describe('declared skills', () => {
+    /** Writes a fixture skill into the temp content library's `skills/<slug>/SKILL.md`. */
+    async function writeLibrarySkill(
+      slug: string,
+      { deploy = 'declared', body = `# ${slug}\n\nBody.` }: { deploy?: string; body?: string } = {},
+    ): Promise<void> {
+      const dir = path.join(contentDir, 'skills', slug);
+      await mkdir(dir, { recursive: true });
+      const deployLine = deploy === '' ? '' : `deploy: ${deploy}\n`;
+      await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${deployLine}---\n\n${body}\n`, 'utf8');
+    }
+
+    /** Writes the project-scope codeassembly.yaml declaring the given skill slugs. */
+    async function declareSkills(...slugs: ReadonlyArray<string>): Promise<void> {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      const useBlock =
+        slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `skills:\n${useBlock}`, 'utf8');
+    }
+
+    /** Writes the project-scope codeassembly.yaml verbatim, for declarations mixing categories. */
+    async function declareRaw(content: string): Promise<void> {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), content, 'utf8');
+    }
+
+    it('deploys a declared skill into the project-local skills dir with the ownership marker', async () => {
+      await writeLibrarySkill('people-report');
+      await declareSkills('people-report');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const skill = await readFile(skillPath('people-report'), 'utf8');
+      expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
+      expect(skill).toContain('# people-report');
+    });
+
+    it('when re-run with unchanged content, does not rewrite the declared skill file', async () => {
+      await writeLibrarySkill('people-report');
+      await declareSkills('people-report');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const firstMtime = statSync(skillPath('people-report')).mtimeMs;
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(statSync(skillPath('people-report')).mtimeMs).toBe(firstMtime);
+    });
+
+    it('retracts a declared skill directory once it is no longer declared', async () => {
+      await writeLibrarySkill('people-report');
+      await writeLibrarySkill('other');
+      await declareSkills('people-report', 'other');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(existsSync(skillPath('other'))).toBe(true);
+
+      await declareSkills('people-report');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(path.dirname(skillPath('other')))).toBe(false);
+      expect(existsSync(skillPath('people-report'))).toBe(true);
+    });
+
+    it('never deletes a hand-authored skill when retracting declared skills', async () => {
+      const manual = skillPath('manual');
+      await mkdir(path.dirname(manual), { recursive: true });
+      await writeFile(manual, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
+      await writeLibrarySkill('people-report');
+      await declareSkills('people-report');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      await declareSkills();
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(manual)).toBe(true);
+      expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
+    });
+
+    it('throws when a declared skill is missing from the library, writing nothing', async () => {
+      await declareSkills('ghost');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
+      expect(existsSync(skillPath('ghost'))).toBe(false);
+    });
+
+    it('throws when a declared skill is still on the install path', async () => {
+      await writeLibrarySkill('legacy', { deploy: 'install' });
+      await declareSkills('legacy');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/legacy.*declared/i);
+    });
+
+    it('deploys declared skills and rulebook skills side by side without clobbering each other', async () => {
+      await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+      await writeLibrarySkill('people-report');
+      await declareRaw('rulebooks:\n  use:\n    - gamma\nskills:\n  use:\n    - people-report\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(await readFile(skillPath('consult-gamma'), 'utf8')).toContain('<!-- codeassembly-rulebook:gamma -->');
+      expect(await readFile(skillPath('people-report'), 'utf8')).toContain('<!-- codeassembly-skill:people-report -->');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(skillPath('consult-gamma'))).toBe(true);
+      expect(existsSync(skillPath('people-report'))).toBe(true);
+    });
+
+    it('errors when a declared skill and a rulebook skill would share a directory name', async () => {
+      await writeLibraryRulebook('foo', 'delivery: skill\nskill-name: shared', 'Foo rules.');
+      await writeLibrarySkill('shared');
+      await declareRaw('rulebooks:\n  use:\n    - foo\nskills:\n  use:\n    - shared\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/collision/i);
+      expect(existsSync(skillPath('shared'))).toBe(false);
+    });
+
+    it('previews declared-skill writes and retractions in dry-run without writing', async () => {
+      await writeLibrarySkill('people-report');
+      await declareSkills('people-report');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain('people-report');
+      expect(existsSync(skillPath('people-report'))).toBe(false);
+    });
+
+    it('deploys and retracts the real people-report canary end-to-end', async () => {
+      await declareSkills('people-report');
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+      const skill = await readFile(skillPath('people-report'), 'utf8');
+      expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
+      expect(skill).toContain('# People report');
+
+      await declareSkills();
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+      expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
+    });
   });
 });

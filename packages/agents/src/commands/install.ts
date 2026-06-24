@@ -22,6 +22,7 @@ import {
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
+import { readSkillDeploy } from '../lib/skill-frontmatter.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
@@ -206,6 +207,11 @@ async function installSkills(
     if (entry === '_harnesses' || entry === '_partials' || entry.startsWith('.')) {
       continue;
     }
+    // Skills opting into declared delivery (`deploy: declared`) are materialized per-project by `sync`, never
+    // installed unconditionally. A support entry with no `SKILL.md` (e.g. `_data`) reads as `install` and stays.
+    if (await isDeclaredSkill(path.join(skillsSrcDir, entry))) {
+      continue;
+    }
     const result = await installSkillEntry(
       path.join(skillsSrcDir, entry),
       path.join(skillsDestDir, entry),
@@ -259,6 +265,24 @@ async function installSkills(
   }
 
   return entries;
+}
+
+/**
+ * Reads a skill entry's `SKILL.md` and reports whether it opts into declared delivery. An entry with no readable
+ * `SKILL.md` (a support directory such as `_data`, or a stray file) reads as `install` — only an explicit
+ * `deploy: declared` excludes the skill from the unconditional install path.
+ */
+async function isDeclaredSkill(entryDir: string): Promise<boolean> {
+  let content: string;
+  try {
+    content = await readFile(path.join(entryDir, 'SKILL.md'), 'utf8');
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return false;
+    }
+    throw error;
+  }
+  return readSkillDeploy(content, `skills/${path.basename(entryDir)}/SKILL.md`) === 'declared';
 }
 
 /**
