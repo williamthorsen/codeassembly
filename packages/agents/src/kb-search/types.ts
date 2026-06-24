@@ -1,7 +1,7 @@
 // Shapes for the shared, type-blind note search primitive: the raw recall hit, the resolved search hit handed to each
 // command's projection, and the run-level envelope. The primitive performs scope resolution, ripgrep recall, note-set
-// scoping, schema loading, parsing, and the mechanical filters; the assertion and event retrieve commands each project
-// these hits into their own candidate shape.
+// scoping, schema validation, parsing, and the mechanical filters; the assertion and event retrieve commands each
+// project these hits into their own candidate shape.
 
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
 
@@ -50,7 +50,7 @@ export interface SearchHit {
 
 /** The shared search primitive's output: parsed hits plus the run-level signals each command composes its result from. */
 export interface SearchResult {
-  /** Hits surviving note-set scoping and the mechanical filters, each parsed and carrying its recall policy. */
+  /** Hits surviving note-set scoping and the mechanical filters, each parsed. */
   hits: SearchHit[];
   /** The knowledge bases actually searched: in-scope KBs minus any whose path did not exist on disk. */
   scopedKbs: ScopedKb[];
