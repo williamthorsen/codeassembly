@@ -77,6 +77,11 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/kb-retrieve/kb-retrieve.mjs',
   },
   {
+    entry: 'src/kb-retrieve-events/cli.ts',
+    outFile: 'content/skills/kb-retrieve-events/kb-retrieve-events.mjs',
+    smokeTest: makeKbRetrieveEventsSmokeTest(),
+  },
+  {
     entry: 'src/update-jira-ticket/cli.ts',
     outFile: 'content/skills/update-jira-ticket/update-jira-ticket.mjs',
     smokeTest: {
@@ -263,6 +268,84 @@ function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): vo
   }
   if (/^(title|created|updated):/m.test(written)) {
     throw new Error(`expected no assertion fields injected, got:\n${written}`);
+  }
+}
+
+/**
+ * Stands up an event store carrying a single seed event plus an isolated home registering it as `default_kb`, then
+ * returns a `SmokeTestInvocation` that recalls the event by a body term scoped to that store. Exercises the full scope →
+ * ripgrep recall → note-set scoping → event projection pipeline, the only path that wires the bundled search primitive
+ * and the event projection together. `ripgrep` (`rg`) must be on PATH for recall to find the seed event.
+ */
+function makeKbRetrieveEventsSmokeTest(): SmokeTestInvocation {
+  const storePath = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-store-'));
+  mkdirSync(path.join(storePath, '.kb'), { recursive: true });
+  writeFileSync(
+    path.join(storePath, '.kb', 'schema.yaml'),
+    [
+      'recordTypes:',
+      '  event:',
+      '    recall: recurrence-recency',
+      '    required: [id, captured-at, session, cwd, summary]',
+      '    optional: [repo, tags, addressed-by]',
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+
+  const eventsDir = path.join(storePath, 'content', 'events');
+  mkdirSync(eventsDir, { recursive: true });
+  writeFileSync(
+    path.join(eventsDir, 'smoke-event.md'),
+    [
+      '---',
+      'recordType: event',
+      'id: smoke-event',
+      'captured-at: 2026-06-18T09:41:02Z',
+      'session: smoke',
+      'cwd: /tmp/smoke',
+      'summary: Smoke retrieve event',
+      'repo: owner/repo-smoke',
+      '---',
+      '',
+      'A smoke note mentioning retrievesmokequux.',
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+
+  const home = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-home-'));
+  mkdirSync(path.join(home, '.agents'), { recursive: true });
+  writeFileSync(
+    path.join(home, '.agents', 'kb.yaml'),
+    `default_kb: codeassembly\nkbs:\n  codeassembly:\n    path: ${storePath}\n`,
+    'utf8',
+  );
+
+  return {
+    args: ['retrievesmokequux', '--store', 'codeassembly'],
+    env: { ...process.env, HOME: home },
+    assertResult: assertKbRetrieveEventsSmokeResult,
+  };
+}
+
+/** Assert the kb-retrieve-events smoke recalled the seed event and projected it with its summary and capture timestamp. */
+function assertKbRetrieveEventsSmokeResult(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result from kb-retrieve-events');
+  }
+  if (!Array.isArray(result.candidates) || result.candidates.length === 0) {
+    throw new Error(`expected at least one event candidate, got ${JSON.stringify(result)}`);
+  }
+  const candidate: unknown = result.candidates[0];
+  if (!isRecord(candidate)) {
+    throw new TypeError('expected a candidate object');
+  }
+  if (candidate.summary !== 'Smoke retrieve event') {
+    throw new Error(`expected summary 'Smoke retrieve event', got ${JSON.stringify(candidate.summary)}`);
+  }
+  if (typeof candidate.capturedAt !== 'string' || !candidate.capturedAt.includes('2026-06-18')) {
+    throw new Error(`expected an ISO capturedAt, got ${JSON.stringify(candidate.capturedAt)}`);
   }
 }
 

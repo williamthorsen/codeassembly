@@ -2,7 +2,7 @@
 
 Foundation library for knowledge-base tooling.
 Provides knowledge-base discovery, registry loading, schema resolution, frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
-It underpins the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@codeassembly/kb-mcp` server.
+It underpins the knowledge-base skills — among them `kb-retrieve` (assertion recall) and `kb-retrieve-events` (event recall), `kb-add`, `kb-curate`, `capture-event`, and `kb-update-events` — and the planned `@codeassembly/kb-mcp` server.
 
 ## Exports
 

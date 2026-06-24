@@ -15,6 +15,7 @@ import { splitCommaList } from '../kb-shared/note-helpers.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { commitSupersede } from './commit-supersede.ts';
 import { loadNote } from './load-note.ts';
@@ -35,15 +36,15 @@ import type {
 } from './types.ts';
 import { validateFrontmatter, writeBackNote } from './write-back.ts';
 
-/** Operation flag → operation name. Order is the documented surface order in SKILL.md. */
+/** Operation flags, in the documented surface order in SKILL.md. Each name doubles as the operation name. */
 const OPERATION_FLAGS = [
-  { flag: '--bump-updated', name: 'bump-updated', takesValue: false },
-  { flag: '--verify', name: 'verify', takesValue: false },
-  { flag: '--append', name: 'append', takesValue: false },
-  { flag: '--retag', name: 'retag', takesValue: true },
-  { flag: '--add-addressed-by', name: 'add-addressed-by', takesValue: true },
-  { flag: '--supersede-with', name: 'supersede-with', takesValue: true },
-] as const satisfies readonly { flag: string; name: OperationName; takesValue: boolean }[];
+  { name: 'bump-updated', takesValue: false },
+  { name: 'verify', takesValue: false },
+  { name: 'append', takesValue: false },
+  { name: 'retag', takesValue: true },
+  { name: 'add-addressed-by', takesValue: true },
+  { name: 'supersede-with', takesValue: true },
+] as const satisfies readonly (FlagSpec & { name: OperationName })[];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -562,37 +563,12 @@ interface SelectedOp {
  * captured shape so the per-op composition can be a separate, narrow function.
  */
 function scanArgv(argv: readonly string[]): { positionals: string[]; selectedOps: SelectedOp[] } {
-  const positionals: string[] = [];
-  const selectedOps: SelectedOp[] = [];
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === undefined) continue;
-
-    if (arg.startsWith('--')) {
-      const matched = matchOperationFlag(arg);
-      if (matched === null) {
-        throw new Error(`unknown flag: ${arg}`);
-      }
-      let value: string | null = matched.inlineValue;
-      if (matched.takesValue && value === null) {
-        // Inline `--flag=value` already provided the value; otherwise consume the next argv slot. Empty inline
-        // values (`--flag=` or `--flag ""`) are intentionally allowed at this layer — each op decides whether
-        // empty is meaningful (`--retag ""` clears tags) or downstream-rejected (`--supersede-with ""` fails
-        // path resolution, `--add-addressed-by ""` yields no references).
-        value = argv[index + 1] ?? null;
-        index += 1;
-      }
-      if (matched.takesValue && (value === null || value.startsWith('--'))) {
-        throw new Error(`${matched.flag} requires a value`);
-      }
-      selectedOps.push({ name: matched.name, value });
-      continue;
-    }
-
-    positionals.push(arg);
-  }
-
+  // The specs are typed with the OperationName union, so the kernel reports each matched flag under that union. A
+  // boolean op carries a `null` value; a value op carries its resolved (possibly empty) string. Empty inline values
+  // are intentionally allowed at this layer — each op decides whether empty is meaningful (`--retag=` clears tags) or
+  // downstream-rejected (`--supersede-with=` fails path resolution, `--add-addressed-by=` yields no references).
+  const { positionals, flags } = scanFlags(argv, OPERATION_FLAGS);
+  const selectedOps: SelectedOp[] = flags.map((flag) => ({ name: flag.name, value: flag.value }));
   return { positionals, selectedOps };
 }
 
@@ -609,7 +585,7 @@ function composeParsedArgs(input: { positionals: string[]; selectedOps: Selected
     throw new Error('missing required <path> positional argument');
   }
   if (selectedOps.length === 0) {
-    const flags = OPERATION_FLAGS.map(({ flag }) => flag).join(', ');
+    const flags = OPERATION_FLAGS.map((spec) => `--${spec.name}`).join(', ');
     throw new Error(`one operation flag is required (one of: ${flags})`);
   }
   if (selectedOps.length > 1) {
@@ -687,21 +663,6 @@ function isEntryPoint(): boolean {
     process.stderr.write(`kb-edit: warning: could not determine entry point: ${message}\n`);
     return false;
   }
-}
-
-/** Matches an operation flag, returning its name, whether it takes a value, and any inline `=value`. */
-function matchOperationFlag(
-  arg: string,
-): { flag: string; name: OperationName; takesValue: boolean; inlineValue: string | null } | null {
-  for (const entry of OPERATION_FLAGS) {
-    if (arg === entry.flag) {
-      return { ...entry, inlineValue: null };
-    }
-    if (entry.takesValue && arg.startsWith(`${entry.flag}=`)) {
-      return { ...entry, inlineValue: arg.slice(`${entry.flag}=`.length) };
-    }
-  }
-  return null;
 }
 
 // endregion | Helpers

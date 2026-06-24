@@ -7,23 +7,20 @@ import { fileURLToPath } from 'node:url';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
 import type { RecallFilters } from '../kb-search/types.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { normalizeHits } from './normalize.ts';
-import { collectTypelessCandidates } from './typeless-tolerance.ts';
-import type { RetrieveResult } from './types.ts';
+import { normalizeEvents } from './normalize.ts';
+import type { EventRetrieveResult } from './types.ts';
 
-/** The record type kb-retrieve owns; every other declared type (e.g. `event`) is left to its own retrieve command. */
-const ASSERTION = 'assertion';
+/** The record type kb-retrieve-events owns; every other type (e.g. `assertion`) is left to its own retrieve command. */
+const EVENT = 'event';
 
 /** The flags this helper accepts; positionals join into the free-text query. `--kb` is an alias for `--store`. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'all-kbs', takesValue: false },
   { name: 'store', aliases: ['kb'], takesValue: true },
-  { name: 'diataxis', takesValue: true },
   { name: 'tag', takesValue: true },
-  { name: 'folder', takesValue: true },
 ];
 
-/** Parsed command-line invocation of the kb-retrieve helper. */
+/** Parsed command-line invocation of the kb-retrieve-events helper. */
 export interface ParsedArgs {
   /** The free-text query string (all non-flag tokens, joined by spaces). */
   query: string;
@@ -31,22 +28,18 @@ export interface ParsedArgs {
   allKbs: boolean;
   /** The registry name from `--store`/`--kb`, scoping recall to that store alone (no cwd-walk); `null` when absent. */
   storeName: string | null;
-  /** The mechanical filters from `--diataxis`, `--tag`, `--folder`. */
+  /** The mechanical filter from `--tag`. */
   filters: RecallFilters;
 }
 
 /** Executes the helper from `process.argv` and write the JSON result to stdout. */
 async function main(): Promise<void> {
   try {
-    const result = await runRetrieve({
-      argv: process.argv.slice(2),
-      startDir: process.cwd(),
-      now: new Date(),
-    });
+    const result = await runRetrieveEvents({ argv: process.argv.slice(2), startDir: process.cwd() });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`kb-retrieve: ${message}\n`);
+    process.stderr.write(`kb-retrieve-events: ${message}\n`);
     process.exit(1);
   }
 }
@@ -59,8 +52,8 @@ if (isEntryPoint()) {
 // region | Helpers
 
 /**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so that a
- * symlinked invocation path (e.g. a `mktemp` directory under `/var` that resolves to `/private/var`) still matches.
+ * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
+ * symlinked invocation path still matches.
  */
 function isEntryPoint(): boolean {
   const entry = process.argv[1];
@@ -75,9 +68,9 @@ function isEntryPoint(): boolean {
 }
 
 /**
- * Parses the helper's argv into a query, the `--all-kbs` flag, the `--store`/`--kb` store scope, and the
- * `--diataxis`/`--tag`/`--folder` filters. Each value-bearing flag accepts both `--flag value` and `--flag=value`.
- * An unknown flag, or a value-bearing flag given no value (or an empty one), throws with a usage-style message.
+ * Parses the helper's argv into a query, the `--all-kbs` flag, the `--store`/`--kb` store scope, and the `--tag` filter.
+ * Each value-bearing flag accepts both `--flag value` and `--flag=value`. An unknown flag, or a value-bearing flag given
+ * no value (or an empty one), throws with a usage-style message.
  *
  * @internal - Exported to allow testing.
  */
@@ -90,41 +83,34 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error('--store requires a value');
   }
 
-  const filters: RecallFilters = {};
-  for (const key of ['diataxis', 'tag', 'folder'] as const) {
-    const value = values[key];
-    if (value === '') {
-      throw new Error(`--${key} requires a value`);
-    }
-    if (value !== undefined) {
-      filters[key] = value;
-    }
+  const tag = values.tag;
+  if (tag === '') {
+    throw new Error('--tag requires a value');
   }
 
   return {
     query: positionals.join(' ').trim(),
     allKbs: flags.some((flag) => flag.name === 'all-kbs'),
     storeName,
-    filters,
+    filters: tag !== undefined ? { tag } : {},
   };
 }
 
 /**
  * Runs the helper end to end: parses args, searches the in-scope knowledge bases through the shared search primitive,
- * projects the assertion candidate table, and returns the structured result. A no-query, no-KB, or no-match outcome
- * yields an empty candidate list with a `diagnostic` field rather than throwing.
+ * projects the event candidate table, and returns the structured result. A no-query, no-KB, or no-match outcome yields
+ * an empty candidate list with a `diagnostic` field rather than throwing.
  *
  * `home` overrides the directory the user-global `kb.yaml` is read from; it exists so tests can isolate registry
  * resolution from the developer's environment.
  *
  * @internal - Exported to allow testing.
  */
-export async function runRetrieve(input: {
+export async function runRetrieveEvents(input: {
   argv: readonly string[];
   startDir: string;
-  now: Date;
   home?: string;
-}): Promise<RetrieveResult> {
+}): Promise<EventRetrieveResult> {
   const { query, allKbs, storeName, filters } = parseArgs(input.argv);
 
   if (query === '') {
@@ -149,16 +135,9 @@ export async function runRetrieve(input: {
     };
   }
 
-  // kb-retrieve owns assertions. Project assertion records, plus — transitionally — notes that carry no recordType, so a
-  // broken note is not hidden from recall. Records of another type (e.g. events) are left to their own retrieve command.
-  const assertionHits = search.hits.filter((hit) => recordTypeOf(hit) === ASSERTION);
-  const typelessHits = search.hits.filter((hit) => recordTypeOf(hit) === '');
-  const candidates = [
-    ...(await normalizeHits({ hits: assertionHits, now: input.now })),
-    ...(await collectTypelessCandidates({ hits: typelessHits, now: input.now })),
-  ];
+  const candidates = normalizeEvents({ hits: search.hits.filter((hit) => recordTypeOf(hit) === EVENT) });
 
-  const result: RetrieveResult = {
+  const result: EventRetrieveResult = {
     candidates,
     scopedKbs: search.scopedKbs,
     warnings: search.warnings,
@@ -174,8 +153,8 @@ export async function runRetrieve(input: {
 
 /**
  * Phrases the empty-result diagnostic: `no notes matched the query` when recall found nothing; `all matches were
- * filtered out` when the mechanical `--diataxis`/`--tag`/`--folder` filters excluded everything; otherwise the matches
- * were all of another record type, so the reader is pointed at the event-recall command.
+ * filtered out` when the `--tag` filter excluded everything; otherwise the matches were all of another record type, so
+ * the reader is pointed at the assertion-recall command.
  */
 function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: number }): string {
   if (input.recalledCount === 0) {
@@ -184,7 +163,7 @@ function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: num
   if (input.filteredHits === 0) {
     return 'all matches were filtered out';
   }
-  return 'matches were found but none are assertions; use kb-retrieve-events for event recall';
+  return 'matches were found but none are events; use kb-retrieve for assertion recall';
 }
 
 // endregion | Helpers

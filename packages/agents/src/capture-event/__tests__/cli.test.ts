@@ -107,6 +107,22 @@ describe(parseArgs, () => {
   it('throws on an unknown flag', () => {
     expect(() => parseArgs(['--bogus', 'x'])).toThrow(/unknown flag/);
   });
+
+  it('binds an inline =value verbatim even when it begins with --', () => {
+    expect(parseArgs(['--summary', 'x', '--skill=--odd-skill']).skill).toBe('--odd-skill');
+  });
+
+  it('rejects an empty value for an optional flag rather than writing an empty field', () => {
+    expect(() => parseArgs(['--summary', 'x', '--skill='])).toThrow(/--skill requires a value/);
+  });
+
+  it('rejects an empty --store rather than deferring the failure to store resolution', () => {
+    expect(() => parseArgs(['--summary', 'x', '--store='])).toThrow(/--store requires a value/);
+  });
+
+  it('rejects an unexpected positional argument', () => {
+    expect(() => parseArgs(['--summary', 'x', 'stray'])).toThrow(/unexpected argument/);
+  });
 });
 
 describe(normalizeRemoteUrl, () => {

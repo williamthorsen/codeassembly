@@ -13,14 +13,18 @@ import { loadAliases } from '@codeassembly/kb/tags';
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import { addAddressedBy } from './operations/add-addressed-by.ts';
 import { retag } from './operations/retag.ts';
 import type { EventResult, ParsedArgs, UpdateFailure, UpdateResult } from './types.ts';
 
-/** Flag names that take a value. */
-const VALUE_FLAGS = ['store', 'add-addressed-by', 'retag'] as const;
-type ValueFlag = (typeof VALUE_FLAGS)[number];
+/** The value-bearing flags this helper accepts; positionals are the event ids the operation applies to. */
+const FLAGS: readonly FlagSpec[] = [
+  { name: 'store', takesValue: true },
+  { name: 'add-addressed-by', takesValue: true },
+  { name: 'retag', takesValue: true },
+];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
@@ -89,36 +93,8 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
  * @internal - Exported to allow testing.
  */
 export function parseArgs(argv: readonly string[]): ParsedArgs {
-  const ids: string[] = [];
-  const raw: Partial<Record<ValueFlag, string>> = {};
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === undefined) {
-      continue;
-    }
-    if (arg.startsWith('--')) {
-      const matched = matchValueFlag(arg);
-      if (matched === null) {
-        throw new Error(`unknown flag: ${arg}`);
-      }
-      let value = matched.inlineValue;
-      if (value === null) {
-        // A value taken from the next argv is rejected when it is absent or itself a flag. The inline `--flag=value`
-        // form binds its value verbatim — the `=` disambiguates it from a following flag — so a `--`-prefixed or
-        // empty value is only reachable inline.
-        const next = argv[index + 1] ?? null;
-        if (next === null || next.startsWith('--')) {
-          throw new Error(`--${matched.key} requires a value`);
-        }
-        value = next;
-        index += 1;
-      }
-      raw[matched.key] = value;
-      continue;
-    }
-    ids.push(arg);
-  }
+  const { positionals: ids, flags } = scanFlags(argv, FLAGS);
+  const raw = valueFlagMap(flags);
 
   const store = raw.store === undefined ? null : raw.store;
   if (store === '') {
@@ -262,19 +238,6 @@ async function loadAliasesForStore(storePath: string): Promise<AliasMap> {
     process.stderr.write(`kb-update-events: warning: could not load tag aliases: ${message}\n`);
     return new Map();
   }
-}
-
-/** Matches a value-bearing flag, returning its key and any inline `=value`. */
-function matchValueFlag(arg: string): { key: ValueFlag; inlineValue: string | null } | null {
-  for (const key of VALUE_FLAGS) {
-    if (arg === `--${key}`) {
-      return { key, inlineValue: null };
-    }
-    if (arg.startsWith(`--${key}=`)) {
-      return { key, inlineValue: arg.slice(`--${key}=`.length) };
-    }
-  }
-  return null;
 }
 
 /** Maps a store-resolution failure onto the helper's invocation-level failure result. */
