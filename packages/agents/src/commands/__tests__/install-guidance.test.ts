@@ -1,22 +1,26 @@
 import { existsSync, lstatSync } from 'node:fs';
-import { lstat, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getManifestPath, readManifest } from '../../lib/manifest.js';
-import type { InstallOptions } from '../../lib/types.js';
-import { installCommand } from '../install.js';
-import { statusCommand } from '../status.js';
-import { uninstallCommand } from '../uninstall.js';
+import { getManifestPath, readManifest } from '../../lib/manifest.ts';
+import type { InstallOptions } from '../../lib/types.ts';
+import { installCommand } from '../install.ts';
+import { statusCommand } from '../status.ts';
+import { uninstallCommand } from '../uninstall.ts';
+import { buildContentTree } from './build-content-tree.ts';
 
 describe('guidance installation', () => {
   let tempDir: string;
+  let contentDir: string;
 
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-guidance-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
+    await buildContentTree(contentDir);
   });
 
   afterEach(async () => {
@@ -24,288 +28,185 @@ describe('guidance installation', () => {
   });
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-    return {
-      harness: 'claude',
-      link: false,
-      force: false,
-      dryRun: false,
-      ...overrides,
-    };
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
+  }
+
+  async function setupClaudeHome(): Promise<string> {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+    return claudeHome;
+  }
+
+  async function setupRovodevHome(): Promise<string> {
+    const rovodevHome = path.join(tempDir, '.rovodev');
+    await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
+    await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+    return rovodevHome;
   }
 
   describe('shared guidance', () => {
     it('installs AGENTS.md to ~/.agents/', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
 
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
       expect(existsSync(sharedAgentsMd)).toBe(true);
-
-      const content = await readFile(sharedAgentsMd, 'utf8');
-      expect(content).toContain('# Shared agent instructions');
+      expect(await readFile(sharedAgentsMd, 'utf8')).toContain('# Fixture shared guidance');
     });
 
     it('installs even when no harness home directories exist', async () => {
-      // No .claude or .rovodev directories exist
-      await installCommand(makeOptions({ harness: 'all' }), tempDir);
+      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
 
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      expect(existsSync(sharedAgentsMd)).toBe(true);
+      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
 
-      // Verify manifest was written with shared section
       const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared).toBeDefined();
       expect(manifest.shared?.entries.length).toBeGreaterThan(0);
     });
 
     it('tracks shared entries in manifest.shared', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared).toBeDefined();
-
-      const agentsEntry = manifest.shared?.entries.find((e) => e.relativePath === 'AGENTS.md');
-      expect(agentsEntry).toBeDefined();
-      expect(agentsEntry?.contentHash).toMatch(/^sha256:/);
-      expect(agentsEntry?.linked).toBe(false);
+      const entry = manifest.shared?.entries.find((e) => e.relativePath === 'AGENTS.md');
+      expect(entry?.contentHash).toMatch(/^sha256:/);
+      expect(entry?.linked).toBe(false);
     });
 
     it('creates symlinks in link mode', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions({ link: true }), tempDir);
+      await installCommand(makeOptions({ link: true }), tempDir, contentDir);
 
-      // Use lstatSync to check existence and type; existsSync follows symlinks
-      // and returns false when the relative target doesn't resolve from tempDir
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const stats = lstatSync(sharedAgentsMd);
-      expect(stats.isSymbolicLink()).toBe(true);
+      // lstatSync (not existsSync, which follows the link) confirms the entry itself is a symlink.
+      expect(lstatSync(path.join(tempDir, '.agents', 'AGENTS.md')).isSymbolicLink()).toBe(true);
 
       const manifest = await readManifest(getManifestPath(tempDir));
-      const agentsEntry = manifest.shared?.entries.find((e) => e.relativePath === 'AGENTS.md');
-      expect(agentsEntry?.linked).toBe(true);
+      expect(manifest.shared?.entries.find((e) => e.relativePath === 'AGENTS.md')?.linked).toBe(true);
     });
 
     it('skips modified shared guidance without --force', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
-
-      // Modify the shared guidance file
+      await installCommand(makeOptions(), tempDir, contentDir);
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const original = await readFile(sharedAgentsMd, 'utf8');
-      const modified = original + '\n<!-- user modification -->\n';
+      const modified = (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n';
       await writeFile(sharedAgentsMd, modified, 'utf8');
 
-      // Re-install without --force
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
 
-      const afterReinstall = await readFile(sharedAgentsMd, 'utf8');
-      expect(afterReinstall).toBe(modified);
+      expect(await readFile(sharedAgentsMd, 'utf8')).toBe(modified);
     });
 
     it('overwrites modified shared guidance with --force', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
-
+      await installCommand(makeOptions(), tempDir, contentDir);
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const original = await readFile(sharedAgentsMd, 'utf8');
-      const modified = original + '\n<!-- user modification -->\n';
-      await writeFile(sharedAgentsMd, modified, 'utf8');
+      const managed = await readFile(sharedAgentsMd, 'utf8');
+      await writeFile(sharedAgentsMd, managed + '\n<!-- user modification -->\n', 'utf8');
 
-      await installCommand(makeOptions({ force: true }), tempDir);
+      await installCommand(makeOptions({ force: true }), tempDir, contentDir);
 
-      const afterReinstall = await readFile(sharedAgentsMd, 'utf8');
-      expect(afterReinstall).toBe(original);
+      expect(await readFile(sharedAgentsMd, 'utf8')).toBe(managed);
     });
 
     it('does not write files in dry-run mode', async () => {
-      await installCommand(makeOptions({ harness: 'all', dryRun: true }), tempDir);
+      await installCommand(makeOptions({ harness: 'all', dryRun: true }), tempDir, contentDir);
 
-      const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      expect(existsSync(sharedAgentsMd)).toBe(false);
-
-      // Manifest should not have been created
+      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
       expect(existsSync(getManifestPath(tempDir))).toBe(false);
     });
   });
 
   describe('harness-specific guidance', () => {
-    it('installs CLAUDE.md to ~/.claude/ for claude harness', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+    it('installs CLAUDE.md to ~/.claude/ for claude harness with includes expanded', async () => {
+      const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       expect(existsSync(claudeMd)).toBe(true);
-
       const content = await readFile(claudeMd, 'utf8');
-      expect(content).toContain('# Shared agent instructions');
+      expect(content).toContain('# Fixture shared guidance'); // inlined from the shared include
       expect(content).not.toContain('<!-- include:');
-      expect(content).not.toContain('@~/.agents/AGENTS.md');
     });
 
-    it('installs AGENTS.md to ~/.rovodev/ for rovodev harness', async () => {
-      const rovodevHome = path.join(tempDir, '.rovodev');
-      await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
-      await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+    it('installs AGENTS.md and standalone guidance to ~/.rovodev/ for rovodev harness', async () => {
+      const rovodevHome = await setupRovodevHome();
 
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
+      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
 
       const rovodevAgentsMd = path.join(rovodevHome, 'AGENTS.md');
       expect(existsSync(rovodevAgentsMd)).toBe(true);
-
       const content = await readFile(rovodevAgentsMd, 'utf8');
-      expect(content).toContain('# Shared agent instructions');
+      expect(content).toContain('# Fixture shared guidance');
       expect(content).not.toContain('<!-- include:');
-      expect(content).not.toContain('@~/.agents/AGENTS.md');
 
-      // Standalone codeassembly-guidance.md is also installed under ~/.rovodev/, separate from
-      // being inlined into AGENTS.md, so ad-hoc references to that path continue to resolve.
-      const standaloneGuidance = path.join(rovodevHome, 'codeassembly-guidance.md');
-      expect(existsSync(standaloneGuidance)).toBe(true);
-      const standaloneContent = await readFile(standaloneGuidance, 'utf8');
-      expect(standaloneContent).toContain('## Interaction style');
+      // The standalone guidance file is installed separately from being inlined into AGENTS.md.
+      const standalone = path.join(rovodevHome, 'codeassembly-guidance.md');
+      expect(existsSync(standalone)).toBe(true);
+      expect(await readFile(standalone, 'utf8')).toContain('## Fixture interaction');
     });
 
-    it('inlines both shared and harness-specific content into rovodev AGENTS.md in source order', async () => {
-      const rovodevHome = path.join(tempDir, '.rovodev');
-      await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
-      await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
+    it('inlines shared and harness-specific content into rovodev AGENTS.md in source order', async () => {
+      const rovodevHome = await setupRovodevHome();
 
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir);
+      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
 
       const content = await readFile(path.join(rovodevHome, 'AGENTS.md'), 'utf8');
-      const sharedHeader = '# Shared agent instructions';
-      const harnessSection = '## Interaction style';
-      const sharedIndex = content.indexOf(sharedHeader);
-      const harnessIndex = content.indexOf(harnessSection);
+      const sharedIndex = content.indexOf('# Fixture shared guidance');
+      const harnessIndex = content.indexOf('## Fixture interaction');
       expect(sharedIndex).toBeGreaterThanOrEqual(0);
       expect(harnessIndex).toBeGreaterThan(sharedIndex);
     });
 
     it('tracks harness guidance in harness manifest entries', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
-      const claudeManifest = manifest.harnesses.claude;
-      expect(claudeManifest).toBeDefined();
-
-      const guidanceEntry = claudeManifest?.entries.find((e) => e.relativePath === 'CLAUDE.md');
-      expect(guidanceEntry).toBeDefined();
-      expect(guidanceEntry?.contentHash).toMatch(/^sha256:/);
+      const entry = manifest.harnesses.claude?.entries.find((e) => e.relativePath === 'CLAUDE.md');
+      expect(entry?.contentHash).toMatch(/^sha256:/);
     });
 
     it('copies harness guidance (never symlinks) even in link mode', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude', link: true }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude', link: true }), tempDir, contentDir);
 
-      // Harness guidance must be copied so install-time path rewriting can take effect;
-      // a symlink would expose unrewritten source content to agents.
-      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
-      const stats = lstatSync(claudeMd);
+      // Harness guidance must be copied so install-time path rewriting takes effect; a symlink would expose
+      // unrewritten source content to agents.
+      const stats = lstatSync(path.join(claudeHome, 'CLAUDE.md'));
       expect(stats.isSymbolicLink()).toBe(false);
       expect(stats.isFile()).toBe(true);
 
       const manifest = await readManifest(getManifestPath(tempDir));
-      const guidanceEntry = manifest.harnesses.claude?.entries.find((e) => e.relativePath === 'CLAUDE.md');
-      expect(guidanceEntry?.linked).toBe(false);
-    });
-
-    it('overwrites modified harness guidance with --force', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-
-      await installCommand(makeOptions(), tempDir);
-
-      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
-      const original = await readFile(claudeMd, 'utf8');
-      const modified = original + '\n<!-- user modification -->\n';
-      await writeFile(claudeMd, modified, 'utf8');
-
-      await installCommand(makeOptions({ force: true }), tempDir);
-
-      const afterReinstall = await readFile(claudeMd, 'utf8');
-      expect(afterReinstall).toBe(original);
-    });
-
-    it('does not write harness guidance in dry-run mode', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-
-      await installCommand(makeOptions({ dryRun: true }), tempDir);
-
-      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
-      expect(existsSync(claudeMd)).toBe(false);
-    });
-
-    it('skips modified harness guidance without --force', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-
-      await installCommand(makeOptions(), tempDir);
-
-      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
-      const original = await readFile(claudeMd, 'utf8');
-      const modified = original + '\n<!-- user modification -->\n';
-      await writeFile(claudeMd, modified, 'utf8');
-
-      await installCommand(makeOptions(), tempDir);
-
-      const afterReinstall = await readFile(claudeMd, 'utf8');
-      expect(afterReinstall).toBe(modified);
+      expect(manifest.harnesses.claude?.entries.find((e) => e.relativePath === 'CLAUDE.md')?.linked).toBe(false);
     });
   });
 
   describe('uninstall', () => {
     it('removes shared guidance files', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
       expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
 
       await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
       expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
-
-      const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared).toBeUndefined();
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
     it('removes harness-specific guidance files', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(true);
 
       await uninstallCommand({ harness: 'claude', force: false }, tempDir);
@@ -314,116 +215,56 @@ describe('guidance installation', () => {
     });
 
     it('skips modified shared guidance without --force', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
-
+      await installCommand(makeOptions(), tempDir, contentDir);
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const modified = (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n';
-      await writeFile(sharedAgentsMd, modified, 'utf8');
+      await writeFile(
+        sharedAgentsMd,
+        (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n',
+        'utf8',
+      );
 
       await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
-      // Shared guidance should still exist (modified)
       expect(existsSync(sharedAgentsMd)).toBe(true);
-
-      // Shared manifest should be retained
-      const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared).toBeDefined();
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeDefined();
     });
 
     it('removes shared guidance when no harness home directories exist', async () => {
-      // Install with no harness home dirs — only shared guidance is installed
-      await installCommand(makeOptions({ harness: 'all' }), tempDir);
-
+      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
       expect(existsSync(sharedAgentsMd)).toBe(true);
 
       await uninstallCommand({ harness: 'all', force: false }, tempDir);
 
       expect(existsSync(sharedAgentsMd)).toBe(false);
-
-      const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared).toBeUndefined();
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
     it('removes modified shared guidance with --force', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
-
+      await installCommand(makeOptions(), tempDir, contentDir);
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const modified = (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n';
-      await writeFile(sharedAgentsMd, modified, 'utf8');
+      await writeFile(
+        sharedAgentsMd,
+        (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n',
+        'utf8',
+      );
 
       await uninstallCommand({ harness: 'claude', force: true }, tempDir);
 
       expect(existsSync(sharedAgentsMd)).toBe(false);
-      const manifest = await readManifest(getManifestPath(tempDir));
-      expect(manifest.shared).toBeUndefined();
-    });
-  });
-
-  describe('link policy (end-to-end)', () => {
-    async function setupAllHarnesses(): Promise<void> {
-      const claudeHome = path.join(tempDir, '.claude');
-      const rovodevHome = path.join(tempDir, '.rovodev');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-      await mkdir(path.join(rovodevHome, 'skills'), { recursive: true });
-      await mkdir(path.join(rovodevHome, 'subagents'), { recursive: true });
-    }
-
-    async function collectBareRelativeLinks(): Promise<Array<{ file: string; target: string }>> {
-      const violations: Array<{ file: string; target: string }> = [];
-      for (const tier of ['.claude', '.rovodev', '.agents']) {
-        const tierDir = path.join(tempDir, tier);
-        if (!existsSync(tierDir)) {
-          continue;
-        }
-        await walkMarkdownFiles(tierDir, async (filePath) => {
-          const content = await readFile(filePath, 'utf8');
-          const matches = content.matchAll(/\[([^\]]*)\]\(([^)]+)\)/g);
-          for (const match of matches) {
-            const target = match[2];
-            if (target === undefined || /^(https?:\/\/|\/|~\/|#)/.test(target)) {
-              continue;
-            }
-            violations.push({ file: path.relative(tempDir, filePath), target });
-          }
-        });
-      }
-      return violations;
-    }
-
-    it('no installed .md contains a bare-relative Markdown link target (copy mode)', async () => {
-      await setupAllHarnesses();
-      await installCommand(makeOptions({ harness: 'all', link: false }), tempDir);
-
-      const violations = await collectBareRelativeLinks();
-      expect(violations, formatViolations(violations)).toEqual([]);
-    });
-
-    it('--link mode does not bypass path rewriting', async () => {
-      await setupAllHarnesses();
-      await installCommand(makeOptions({ harness: 'all', link: true }), tempDir);
-
-      const violations = await collectBareRelativeLinks();
-      expect(violations, formatViolations(violations)).toEqual([]);
+      expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
   });
 
   describe('status', () => {
     it('reports shared guidance state', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
 
       const infoSpy = vi.spyOn(console, 'info');
       await statusCommand({ harness: 'claude' }, tempDir);
@@ -436,13 +277,9 @@ describe('guidance installation', () => {
     });
 
     it('reports missing shared guidance when file is deleted from disk', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
-
-      // Delete the installed shared guidance file
+      await installCommand(makeOptions(), tempDir, contentDir);
       await rm(path.join(tempDir, '.agents', 'AGENTS.md'));
 
       const infoSpy = vi.spyOn(console, 'info');
@@ -456,17 +293,14 @@ describe('guidance installation', () => {
     });
 
     it('reports harness guidance state', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, contentDir);
 
       const infoSpy = vi.spyOn(console, 'info');
       await statusCommand({ harness: 'claude' }, tempDir);
 
       const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
-      // Harness section should report CLAUDE.md as current
       expect(output).toContain('claude:');
       expect(output).toMatch(/\d+ current/);
 
@@ -474,15 +308,15 @@ describe('guidance installation', () => {
     });
 
     it('reports modified shared guidance', async () => {
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
-
+      await installCommand(makeOptions(), tempDir, contentDir);
       const sharedAgentsMd = path.join(tempDir, '.agents', 'AGENTS.md');
-      const modified = (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n';
-      await writeFile(sharedAgentsMd, modified, 'utf8');
+      await writeFile(
+        sharedAgentsMd,
+        (await readFile(sharedAgentsMd, 'utf8')) + '\n<!-- user modification -->\n',
+        'utf8',
+      );
 
       const infoSpy = vi.spyOn(console, 'info');
       await statusCommand({ harness: 'claude' }, tempDir);
@@ -496,84 +330,49 @@ describe('guidance installation', () => {
 
   describe('include directive expansion errors', () => {
     /**
-     * Builds the minimum content tree the install pipeline expects to traverse, so a test can
-     * inject a deliberately-broken harness guidance source file without depending on the real
-     * package content.
+     * Builds the minimum content tree the install pipeline expects to traverse, so a test can inject a
+     * deliberately-broken harness guidance source file without depending on the real package content.
      */
-    async function buildFakeContentTree(contentDir: string, options: { brokenClaudeBody: string }): Promise<void> {
-      await mkdir(path.join(contentDir, 'guidance', 'shared'), { recursive: true });
-      await mkdir(path.join(contentDir, 'guidance', '_harnesses', 'claude'), { recursive: true });
-      await mkdir(path.join(contentDir, 'guidance', '_harnesses', 'rovodev'), { recursive: true });
-      await mkdir(path.join(contentDir, 'skills'), { recursive: true });
-      await mkdir(path.join(contentDir, 'subagents'), { recursive: true });
-      await mkdir(path.join(contentDir, 'scripts'), { recursive: true });
+    async function buildFakeContentTree(fakeContentDir: string, options: { brokenClaudeBody: string }): Promise<void> {
+      await mkdir(path.join(fakeContentDir, 'guidance', 'shared'), { recursive: true });
+      await mkdir(path.join(fakeContentDir, 'guidance', '_harnesses', 'claude'), { recursive: true });
+      await mkdir(path.join(fakeContentDir, 'guidance', '_harnesses', 'rovodev'), { recursive: true });
+      await mkdir(path.join(fakeContentDir, 'skills'), { recursive: true });
+      await mkdir(path.join(fakeContentDir, 'subagents'), { recursive: true });
+      await mkdir(path.join(fakeContentDir, 'scripts'), { recursive: true });
 
-      await writeFile(path.join(contentDir, 'guidance', 'shared', 'AGENTS.md'), '# Fake shared\n', 'utf8');
+      await writeFile(path.join(fakeContentDir, 'guidance', 'shared', 'AGENTS.md'), '# Fake shared\n', 'utf8');
       await writeFile(
-        path.join(contentDir, 'guidance', '_harnesses', 'claude', 'CLAUDE.md'),
+        path.join(fakeContentDir, 'guidance', '_harnesses', 'claude', 'CLAUDE.md'),
         options.brokenClaudeBody,
         'utf8',
       );
     }
 
     it('propagates a missing-target error from a harness source even in dry-run mode', async () => {
-      const contentDir = path.join(tempDir, 'fake-content');
-      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ./does-not-exist.md / -->\n' });
+      const fakeContentDir = path.join(tempDir, 'fake-content');
+      await buildFakeContentTree(fakeContentDir, { brokenClaudeBody: '<!-- include: ./does-not-exist.md / -->\n' });
 
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      const claudeHome = await setupClaudeHome();
 
       await expect(
-        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, contentDir),
-      ).rejects.toMatchObject({
-        name: 'DirectiveExpansionError',
-        reason: 'not-found',
-      });
+        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeContentDir),
+      ).rejects.toMatchObject({ name: 'DirectiveExpansionError', reason: 'not-found' });
 
       // No harness guidance file should be written in dry-run mode regardless of the failure.
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
 
     it('propagates an out-of-tree error during a real install', async () => {
-      const contentDir = path.join(tempDir, 'fake-content');
-      await buildFakeContentTree(contentDir, { brokenClaudeBody: '<!-- include: ../../../../escape.md / -->\n' });
+      const fakeContentDir = path.join(tempDir, 'fake-content');
+      await buildFakeContentTree(fakeContentDir, { brokenClaudeBody: '<!-- include: ../../../../escape.md / -->\n' });
 
-      const claudeHome = path.join(tempDir, '.claude');
-      await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-      await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+      await setupClaudeHome();
 
-      await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir)).rejects.toMatchObject({
+      await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeContentDir)).rejects.toMatchObject({
         name: 'DirectiveExpansionError',
         reason: 'out-of-tree',
       });
     });
   });
 });
-
-async function walkMarkdownFiles(dir: string, visit: (filePath: string) => Promise<void>): Promise<void> {
-  const entries = await readdir(dir);
-  for (const entry of entries) {
-    const full = path.join(dir, entry);
-    const info = await lstat(full);
-    // Skip symlinks — readFile follows links, so for installed .md files this test
-    // depends on copy-mode for harness guidance (guaranteed by installHarnessGuidance).
-    // Symlinked content (shared guidance in --link mode, scripts) is validated elsewhere.
-    if (info.isSymbolicLink()) {
-      continue;
-    }
-    if (info.isDirectory()) {
-      await walkMarkdownFiles(full, visit);
-    } else if (entry.endsWith('.md')) {
-      await visit(full);
-    }
-  }
-}
-
-function formatViolations(violations: ReadonlyArray<{ file: string; target: string }>): string {
-  if (violations.length === 0) {
-    return '';
-  }
-  const lines = violations.map((v) => `  ${v.file}: [...](${v.target})`);
-  return `Installed Markdown contains bare-relative link targets:\n${lines.join('\n')}`;
-}

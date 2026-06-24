@@ -3,22 +3,22 @@ import { mkdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import type { InstallOptions } from '../../lib/types.js';
-import { installCommand } from '../install.js';
+import type { InstallOptions } from '../../lib/types.ts';
+import { installCommand } from '../install.ts';
 
 /**
- * Round-trip tests for the reviewer/coder subagent files that were migrated to use
- * shared partials. These run against the real `content/` tree and verify that the
- * installed output contains the expected expanded content (no leftover include
- * directives and the key prose blocks present).
+ * Round-trip tests verifying the reviewer and coder subagents install against the real `content/` tree with their
+ * shared partials fully expanded: no leftover include directives, and the key prose blocks present.
  */
 describe('reviewer and coder partials install correctly', () => {
   let tempDir: string;
   let claudeAgentsDir: string;
 
-  beforeEach(async () => {
+  // Tests are read-only assertions on the installed output, so install the real library once for the file rather than
+  // per test.
+  beforeAll(async () => {
     tempDir = path.join(tmpdir(), `agents-test-reviewer-partials-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     claudeAgentsDir = path.join(tempDir, '.claude', 'agents');
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
@@ -33,7 +33,7 @@ describe('reviewer and coder partials install correctly', () => {
     await installCommand(options, tempDir);
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 

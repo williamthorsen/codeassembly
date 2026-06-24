@@ -4,17 +4,21 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveHarnessPaths } from '../../lib/harness.js';
-import type { InstallOptions } from '../../lib/types.js';
-import { installCommand } from '../install.js';
-import { statusCommand } from '../status.js';
+import { resolveHarnessPaths } from '../../lib/harness.ts';
+import type { InstallOptions } from '../../lib/types.ts';
+import { installCommand } from '../install.ts';
+import { statusCommand } from '../status.ts';
+import { buildContentTree } from './build-content-tree.ts';
 
 describe('statusCommand', () => {
   let tempDir: string;
+  let contentDir: string;
 
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-status-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
+    await buildContentTree(contentDir);
   });
 
   afterEach(async () => {
@@ -22,13 +26,7 @@ describe('statusCommand', () => {
   });
 
   function makeInstallOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-    return {
-      harness: 'claude',
-      link: false,
-      force: false,
-      dryRun: false,
-      ...overrides,
-    };
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
   it('should report all entries as current after install', async () => {
@@ -36,10 +34,8 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    // Install first
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Capture status output
     const infoSpy = vi.spyOn(console, 'info');
     await statusCommand({ harness: 'claude' }, tempDir);
 
@@ -69,9 +65,8 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Delete one installed subagent file
     const paths = resolveHarnessPaths('claude', tempDir);
     const agentFiles = await readdir(paths.subagentsDir);
     const firstAgent = agentFiles[0];
@@ -94,9 +89,8 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Overwrite one installed subagent file with different content
     const paths = resolveHarnessPaths('claude', tempDir);
     const agentFiles = await readdir(paths.subagentsDir);
     const firstAgent = agentFiles[0];
