@@ -72,6 +72,5 @@ async function hitFor(path: string): Promise<SearchHit> {
   return {
     hit: { path, kbName: 'events', kbPath: EVENTS, snippet: 'snippet text' },
     note: await parseNote({ path }),
-    recall: 'recurrence-recency',
   };
 }

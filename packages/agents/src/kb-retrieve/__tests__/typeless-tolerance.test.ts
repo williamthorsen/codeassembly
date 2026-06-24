@@ -35,6 +35,5 @@ async function hitFor(path: string): Promise<SearchHit> {
   return {
     hit: { path, kbName: 'fixtures', kbPath: NORMALIZE, snippet: 'snippet' },
     note: await parseNote({ path }),
-    recall: 'freshness',
   };
 }

@@ -114,6 +114,5 @@ async function hitFor(path: string): Promise<SearchHit> {
   return {
     hit: { path, kbName: 'fixtures', kbPath: NOTES_VAULT, snippet: 'snippet text' },
     note: await parseNote({ path }),
-    recall: 'freshness',
   };
 }

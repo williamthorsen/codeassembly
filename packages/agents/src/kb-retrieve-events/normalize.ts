@@ -1,7 +1,7 @@
 import { basename } from 'node:path';
 
-import { extractString, readStringList } from '../kb-shared/note-helpers.ts';
 import type { SearchHit } from '../kb-search/types.ts';
+import { extractString, readStringList } from '../kb-shared/note-helpers.ts';
 import type { EventCandidate } from './types.ts';
 
 /**

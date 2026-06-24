@@ -2,8 +2,8 @@ import { basename, dirname, isAbsolute, resolve } from 'node:path';
 
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
 
-import { computeAgeDays, extractString, parseNoteSafely, readStringList } from '../kb-shared/note-helpers.ts';
 import type { RawHit, SearchHit } from '../kb-search/types.ts';
+import { computeAgeDays, extractString, parseNoteSafely, readStringList } from '../kb-shared/note-helpers.ts';
 import type { AssertionCandidate, Supersession } from './types.ts';
 
 /** Upper bound on `superseded-by` hops, guarding against a chain cycle. */

@@ -3,24 +3,20 @@ import { join, relative, sep } from 'node:path';
 import type { NoteScopeMatcher } from '@codeassembly/kb/config';
 import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@codeassembly/kb/config';
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
-import type { Schema } from '@codeassembly/kb/schema';
-import { defaultSchema, loadSchema } from '@codeassembly/kb/schema';
+import { loadSchema } from '@codeassembly/kb/schema';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
 import { recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
 import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from './types.ts';
 
-// The fallback recall policy: a record type the schema does not declare, and a note with unreadable frontmatter (no
-// `recordType`), both resolve to `freshness` so an unrecognized or absent policy degrades to the most general signal.
-const FRESHNESS = 'freshness';
-
 /**
  * Runs the shared, type-blind recall pipeline both retrieve commands call: resolves which knowledge bases to search,
- * recalls candidate notes with ripgrep, scopes the hits to each KB's configured note set, loads each KB's schema, parses
- * each surviving note, applies the mechanical `--diataxis`/`--tag`/`--folder` filters, and resolves each note's recall
- * policy. Returns the parsed hits plus the run-level signals — searched KBs, ordered health warnings, the pre-filter hit
- * count, and an empty-scope diagnostic — that each command composes its own candidate table and diagnostics from.
+ * recalls candidate notes with ripgrep, scopes the hits to each KB's configured note set, parses each surviving note,
+ * and applies the mechanical `--diataxis`/`--tag`/`--folder` filters. Returns the parsed hits plus the run-level signals
+ * — searched KBs, ordered health warnings (including a malformed-schema warning per offending store), the pre-filter hit
+ * count, and an empty-scope diagnostic — that each command composes its own candidate table and diagnostics from. Each
+ * command selects the hits it owns by the parsed note's `recordType`.
  *
  * An empty scope (no KB discovered or configured, an unknown `--store`, or a malformed registry) returns no hits and an
  * `emptyScopeDiagnostic`; a no-match run returns no hits with `recalledCount` 0. A note whose file cannot be read at
@@ -65,7 +61,7 @@ export async function searchNotes(input: {
   const { matchers, warnings: configWarnings } = await loadMatchersForHits({ hits: rawHits, scopedKbs: inScopeKbs });
   const noteHits = rawHits.filter((hit) => isNoteHit(hit, matchers));
 
-  const { schemas, warnings: schemaWarnings } = await loadSchemasForHits({ hits: noteHits, scopedKbs: inScopeKbs });
+  const schemaWarnings = await collectSchemaWarnings({ hits: noteHits, scopedKbs: inScopeKbs });
 
   const unreadableWarnings: string[] = [];
   const hits: SearchHit[] = [];
@@ -78,7 +74,7 @@ export async function searchNotes(input: {
     if (!passesFilters({ note: parsed.note, path: hit.path, filters: input.filters })) {
       continue;
     }
-    hits.push({ hit, note: parsed.note, recall: resolveRecallPolicy({ schemas, hit, note: parsed.note }) });
+    hits.push({ hit, note: parsed.note });
   }
 
   // `scopedKbs` reports the KBs actually searched, so exclude any whose path was missing; the dead paths surface in
@@ -156,27 +152,21 @@ function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; err
 }
 
 /**
- * Loads the effective schema for every KB that produced a hit, keyed by KB root path, so a command can drive each note's
- * ranking signals from its record type's declared `recall` policy. Only KBs with hits are read. A KB whose
- * `.kb/schema.yaml` is malformed degrades to the bundled default schema and contributes a schema-health warning, so
- * one bad schema never fails a multi-store search.
+ * Validates the `.kb/schema.yaml` of every KB that produced a hit by loading it, collecting one schema-health warning
+ * per KB whose schema fails to load. Only KBs with hits are read. Recall and the candidate shape do not depend on the
+ * schema, so a malformed one never fails the search — it is reported to the operator and the search continues, mirroring
+ * the config check in {@link loadMatchersForHits}.
  */
-async function loadSchemasForHits(input: {
-  hits: RawHit[];
-  scopedKbs: ScopedKb[];
-}): Promise<{ schemas: Map<string, Schema>; warnings: string[] }> {
-  const schemas = new Map<string, Schema>();
+async function collectSchemaWarnings(input: { hits: RawHit[]; scopedKbs: ScopedKb[] }): Promise<string[]> {
   const warnings: string[] = [];
   for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
     try {
-      const schema = await loadSchema({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
-      schemas.set(kbPath, schema);
+      await loadSchema({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
     } catch (error) {
-      schemas.set(kbPath, defaultSchema);
       warnings.push(formatSchemaInvalid({ kbPath, scopedKbs: input.scopedKbs, error }));
     }
   }
-  return { schemas, warnings };
+  return warnings;
 }
 
 /**
@@ -189,18 +179,6 @@ function formatSchemaInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; err
   return name === null
     ? `discovered KB schema invalid at ${input.kbPath}: ${message}`
     : `registry KB "${name}" schema invalid: ${message}`;
-}
-
-/**
- * Resolves the recall policy that governs a hit's ranking signals: the note's `recordType` looked up in its KB's
- * schema. Falls back to `freshness` when the KB has no entry in `schemas`, when the record type is undeclared, or
- * when the frontmatter is unreadable (no `recordType`) — so an unrecognized or absent policy degrades to the most
- * general signal rather than emitting none.
- */
-function resolveRecallPolicy(input: { schemas: ReadonlyMap<string, Schema>; hit: RawHit; note: ParsedNote }): string {
-  const schema = input.schemas.get(input.hit.kbPath) ?? defaultSchema;
-  const recordType = input.note.frontmatter?.recordType ?? '';
-  return schema.recordTypes[recordType]?.recall ?? FRESHNESS;
 }
 
 /**

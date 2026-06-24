@@ -8,7 +8,7 @@ const FIXTURES = join(import.meta.dirname, 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
 
 describe(searchNotes, () => {
-  it('returns parsed hits, each carrying the recall policy resolved from its record type', async () => {
+  it('returns hits carrying the parsed note, so a command can select by recordType and project its own shape', async () => {
     const result = await searchNotes({
       query: 'backpressure',
       allKbs: false,
@@ -19,22 +19,8 @@ describe(searchNotes, () => {
 
     const streams = result.hits.find((hit) => hit.hit.path.endsWith('streams.md'));
     expect(streams).toBeDefined();
-    expect(streams?.recall).toBe('freshness');
+    expect(streams?.note.frontmatter?.recordType).toBe('assertion');
     expect(streams?.note.frontmatter?.title).toBe('Working with Node.js streams');
-  });
-
-  it('resolves recurrence-recency for an event record under content/events/', async () => {
-    const result = await searchNotes({
-      query: 'phantomwidget',
-      allKbs: false,
-      filters: {},
-      startDir: NOTES_VAULT,
-      home: FIXTURES,
-    });
-
-    const event = result.hits.find((hit) => hit.hit.path.includes(join('content', 'events')));
-    expect(event).toBeDefined();
-    expect(event?.recall).toBe('recurrence-recency');
   });
 
   it('applies the mechanical --diataxis filter, reporting the pre-filter hit count in recalledCount', async () => {

@@ -39,15 +39,13 @@ export interface ScopedKb {
 
 /**
  * A recalled note that survived note-set scoping and the mechanical filters, parsed and ready for a command to project
- * into its own candidate shape.
+ * into its own candidate shape. A command selects the hits it owns by the parsed note's `recordType`.
  */
 export interface SearchHit {
   /** The raw recall hit: note path, source KB, and the ripgrep snippet. */
   hit: RawHit;
   /** The parsed note; its `frontmatter` is `null` when the block is missing or malformed. */
   note: ParsedNote;
-  /** The recall policy declared for the note's record type in its KB's schema (e.g. `freshness`). */
-  recall: string;
 }
 
 /** The shared search primitive's output: parsed hits plus the run-level signals each command composes its result from. */
