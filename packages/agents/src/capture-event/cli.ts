@@ -156,8 +156,8 @@ export async function runCapture(input: {
 
 /**
  * Parses the helper's argv. Each value-bearing flag accepts both `--flag value` and `--flag=value`; `--tags` accepts a
- * comma-separated list. Unknown flags, an unexpected positional, or a missing/empty `--summary` throw with a usage-style
- * message. The body comes from stdin rather than the command line, so the layout is flag-only.
+ * comma-separated list. Unknown flags, an unexpected positional, an empty value for any flag, or a missing `--summary`
+ * throw with a usage-style message. The body comes from stdin rather than the command line, so the layout is flag-only.
  *
  * @internal - Exported to allow testing.
  */
@@ -167,9 +167,14 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error(`unexpected argument: ${positionals[0]}`);
   }
   const raw = valueFlagMap(flags);
+  for (const [name, value] of Object.entries(raw)) {
+    if (value === '') {
+      throw new Error(`--${name} requires a value`);
+    }
+  }
 
   const summary = raw.summary;
-  if (summary === undefined || summary === '') {
+  if (summary === undefined) {
     throw new Error('--summary is required');
   }
 
