@@ -593,15 +593,17 @@ describe(syncCommand, () => {
       expect(deployed).not.toContain('GENERATED FILE');
     });
 
-    it('when re-run with unchanged content, does not rewrite the declared subagent file', async () => {
+    it('when re-run with unchanged content, leaves the declared subagent file byte-identical and unwritten', async () => {
       await writeOverlays();
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
       await syncCommand(makeOptions(), projectRoot, contentDir);
+      const firstBytes = await readFile(subagentPath('canary'), 'utf8');
       const firstMtime = statSync(subagentPath('canary')).mtimeMs;
 
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
+      expect(await readFile(subagentPath('canary'), 'utf8')).toBe(firstBytes);
       expect(statSync(subagentPath('canary')).mtimeMs).toBe(firstMtime);
     });
 

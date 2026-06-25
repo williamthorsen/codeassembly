@@ -5,8 +5,11 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeArtifactMarker } from '../artifact-marker.ts';
+import { mergeFrontmatter } from '../frontmatter-merger.ts';
+import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
-import { loadToolMapping } from '../tool-name-rewriter.ts';
+import { loadToolMapping, rewriteToolNames } from '../tool-name-rewriter.ts';
 
 const CLAUDE_OVERLAY = ['_tools:', '  Read: Read', '', '_defaults:', '  permissionMode: bypassPermissions', ''].join(
   '\n',
@@ -95,6 +98,16 @@ describe(deploySubagent, () => {
     };
   }
 
+  /** Renders the bytes `deploySubagent` should write for `canary` via the public transform steps and marker injection. */
+  function renderExpectedDeploy(source: string): string {
+    const toolMapping = loadToolMapping(CLAUDE_OVERLAY);
+    const merged = mergeFrontmatter(source, CLAUDE_OVERLAY);
+    const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/canary.md');
+    const rewrittenPaths = rewriteMarkdownPaths(rewrittenTools, 'canary.md', '.claude');
+    const transformed = rewriteTemplateVariables(rewrittenPaths, '.claude', 'claude');
+    return makeArtifactMarker('subagent').injectMarker(transformed, 'canary');
+  }
+
   const SOURCE = [
     '---',
     'name: canary',
@@ -125,15 +138,18 @@ describe(deploySubagent, () => {
     expect(deployed).not.toContain('GENERATED FILE');
   });
 
-  it('re-deploys unchanged content without rewriting the file', async () => {
+  it('re-deploys unchanged content as the same bytes without rewriting the file', async () => {
     await writeLibrarySubagent('canary', SOURCE);
     const destPath = path.join(destParent, 'canary.md');
     const resolved = { slug: 'canary', srcPath: path.join(librarySubagentsDir, 'canary.md') };
+    const expected = renderExpectedDeploy(SOURCE);
     await deploySubagent(resolved, destPath, claudeContext());
+    expect(await readFile(destPath, 'utf8')).toBe(expected);
     const firstMtime = statSync(destPath).mtimeMs;
 
     await deploySubagent(resolved, destPath, claudeContext());
 
+    expect(await readFile(destPath, 'utf8')).toBe(expected);
     expect(statSync(destPath).mtimeMs).toBe(firstMtime);
   });
 });

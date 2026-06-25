@@ -94,25 +94,31 @@ describe(renderSubagentForHarness, () => {
     ).toThrow(ToolNameRewriteError);
   });
 
-  it('produces the same output as the standalone merge → tools → markdown-path → template steps', () => {
-    const toolMapping = loadToolMapping(CLAUDE_OVERLAY);
-    const merged = mergeFrontmatter(SOURCE, CLAUDE_OVERLAY);
-    const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/demo-agent.md');
-    const rewrittenPaths = rewriteMarkdownPaths(rewrittenTools, 'demo-agent.md', '.claude');
-    const expected = rewriteTemplateVariables(rewrittenPaths, '.claude', 'claude');
+  it.each([
+    { harnessId: 'claude', overlayYaml: CLAUDE_OVERLAY, homeDir: '.claude' },
+    { harnessId: 'rovodev', overlayYaml: ROVODEV_OVERLAY, homeDir: '.rovodev' },
+  ])(
+    'produces the same $harnessId output as the standalone merge → tools → markdown-path → template steps',
+    ({ harnessId, overlayYaml, homeDir }) => {
+      const toolMapping = loadToolMapping(overlayYaml);
+      const merged = mergeFrontmatter(SOURCE, overlayYaml);
+      const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/demo-agent.md');
+      const rewrittenPaths = rewriteMarkdownPaths(rewrittenTools, 'demo-agent.md', homeDir);
+      const expected = rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 
-    const rendered = renderSubagentForHarness(SOURCE, {
-      overlayYaml: CLAUDE_OVERLAY,
-      toolMapping,
-      fileRelPath: 'demo-agent.md',
-      sourceLabel: 'subagents/demo-agent.md',
-      pathPrefix: '.claude',
-      homeDir: '.claude',
-      harnessId: 'claude',
-    });
+      const rendered = renderSubagentForHarness(SOURCE, {
+        overlayYaml,
+        toolMapping,
+        fileRelPath: 'demo-agent.md',
+        sourceLabel: 'subagents/demo-agent.md',
+        pathPrefix: homeDir,
+        homeDir,
+        harnessId,
+      });
 
-    expect(rendered).toBe(expected);
-  });
+      expect(rendered).toBe(expected);
+    },
+  );
 });
 
 describe(loadSubagentOverlay, () => {
