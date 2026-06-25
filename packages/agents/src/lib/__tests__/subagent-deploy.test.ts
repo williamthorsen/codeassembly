@@ -3,6 +3,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeArtifactMarker } from '../artifact-marker.ts';
@@ -11,9 +12,14 @@ import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } f
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping } from '../tool-name-rewriter.ts';
 
-const CLAUDE_OVERLAY = ['_tools:', '  Read: Read', '', '_defaults:', '  permissionMode: bypassPermissions', ''].join(
-  '\n',
-);
+const CLAUDE_OVERLAY = unindent`
+  _tools:
+    Read: Read
+
+  _defaults:
+    permissionMode: bypassPermissions
+
+`;
 
 describe(deploySubagent, () => {
   let contentDir: string;
@@ -64,17 +70,17 @@ describe(deploySubagent, () => {
     return makeArtifactMarker('subagent').injectMarker(rendered, 'canary');
   }
 
-  const SOURCE = [
-    '---',
-    'name: canary',
-    'description: Deployment canary',
-    '---',
-    '',
-    '# Canary',
-    '',
-    'Use {tool:Read}; run `{harness_home_dir}/scripts/x.sh`.',
-    '',
-  ].join('\n');
+  const SOURCE = unindent`
+    ---
+    name: canary
+    description: Deployment canary
+    ---
+
+    # Canary
+
+    Use {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.
+
+  `;
 
   it('writes the transformed body with the ownership marker but no provenance marker', async () => {
     await writeLibrarySubagent('canary', SOURCE);

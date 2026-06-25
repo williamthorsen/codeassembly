@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
@@ -240,16 +241,16 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
     await buildContentTree(contentDir, {
       subagents: {
-        'declared-agent.md': [
-          '---',
-          'name: declared-agent',
-          'description: Declared fixture subagent',
-          'deploy: declared',
-          '---',
-          '',
-          '# Declared agent',
-          '',
-        ].join('\n'),
+        'declared-agent.md': unindent`
+          ---
+          name: declared-agent
+          description: Declared fixture subagent
+          deploy: declared
+          ---
+
+          # Declared agent
+
+        `,
       },
     });
 
@@ -273,16 +274,16 @@ describe(installCommand, () => {
 
     await buildContentTree(contentDir, {
       subagents: {
-        'demo-agent.md': [
-          '---',
-          'name: demo-agent',
-          'description: Demo fixture subagent',
-          'deploy: declared',
-          '---',
-          '',
-          '# Demo agent',
-          '',
-        ].join('\n'),
+        'demo-agent.md': unindent`
+          ---
+          name: demo-agent
+          description: Demo fixture subagent
+          deploy: declared
+          ---
+
+          # Demo agent
+
+        `,
       },
     });
 

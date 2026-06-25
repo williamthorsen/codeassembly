@@ -49,7 +49,7 @@ export async function buildContentTree(contentDir: string, options: ContentTreeO
     await writeSkillTree(path.join(contentDir, 'skills', '_harnesses', harness), harnessSkills);
   }
 
-  // Overlays are read by `readOverlay` under their frontmatter-file name (`claude.yaml`, `rovodev.yaml`).
+  // Overlays are written under their frontmatter-file name (`claude.yaml`, `rovodev.yaml`) so the loader resolves them.
   const overlayFiles: Record<string, string> = {};
   for (const harness of HARNESS_IDS) {
     overlayFiles[`${harness}.yaml`] = options.overlays?.[harness] ?? DEFAULT_OVERLAYS[harness];

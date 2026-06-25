@@ -3,6 +3,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
@@ -537,15 +538,22 @@ describe(syncCommand, () => {
   });
 
   describe('declared subagents', () => {
-    const CLAUDE_OVERLAY = [
-      '_tools:',
-      '  Read: Read',
-      '',
-      '_defaults:',
-      '  permissionMode: bypassPermissions',
-      '',
-    ].join('\n');
-    const ROVODEV_OVERLAY = ['_tools:', '  Read: open_files', '', '_defaults:', '  tools: [open_files]', ''].join('\n');
+    const CLAUDE_OVERLAY = unindent`
+      _tools:
+        Read: Read
+
+      _defaults:
+        permissionMode: bypassPermissions
+
+    `;
+    const ROVODEV_OVERLAY = unindent`
+      _tools:
+        Read: open_files
+
+      _defaults:
+        tools: [open_files]
+
+    `;
 
     const subagentPath = (slug: string, dotDir = '.claude', subDir = 'agents'): string =>
       path.join(projectRoot, dotDir, subDir, `${slug}.md`);

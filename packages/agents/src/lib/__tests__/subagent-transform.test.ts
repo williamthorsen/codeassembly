@@ -2,6 +2,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
@@ -10,26 +11,36 @@ import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter
 import { loadSubagentOverlay, renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
-const SOURCE = [
-  '---',
-  'name: demo-agent',
-  'description: Demo subagent',
-  '---',
-  '',
-  '# Demo agent',
-  '',
-  'Use the {tool:Read} tool, then run `{harness_home_dir}/scripts/demo.sh`.',
-  '',
-  'See [the guide](./guide.md).',
-  '',
-].join('\n');
+const SOURCE = unindent`
+  ---
+  name: demo-agent
+  description: Demo subagent
+  ---
 
-const CLAUDE_OVERLAY = ['_tools:', '  Read: Read', '', '_defaults:', '  permissionMode: bypassPermissions', ''].join(
-  '\n',
-);
-const ROVODEV_OVERLAY = ['_tools:', '  Read: open_files', '', '_defaults:', '  tools: [bash, open_files]', ''].join(
-  '\n',
-);
+  # Demo agent
+
+  Use the {tool:Read} tool, then run \`{harness_home_dir}/scripts/demo.sh\`.
+
+  See [the guide](./guide.md).
+
+`;
+
+const CLAUDE_OVERLAY = unindent`
+  _tools:
+    Read: Read
+
+  _defaults:
+    permissionMode: bypassPermissions
+
+`;
+const ROVODEV_OVERLAY = unindent`
+  _tools:
+    Read: open_files
+
+  _defaults:
+    tools: [bash, open_files]
+
+`;
 
 describe(loadSubagentOverlay, () => {
   let contentDir: string;
