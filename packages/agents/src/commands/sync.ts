@@ -405,7 +405,16 @@ async function listOwnedSubagents(subagentsDir: string): Promise<ReadonlyArray<{
     if (!entry.isFile() || !entry.name.endsWith('.md')) {
       continue;
     }
-    const content = await readFile(path.join(subagentsDir, entry.name), 'utf8');
+    let content: string;
+    try {
+      content = await readFile(path.join(subagentsDir, entry.name), 'utf8');
+    } catch (error: unknown) {
+      // A `.md` symlink whose target is gone passes the `isFile()` filter (it follows links) but throws on read.
+      if (isEnoent(error)) {
+        continue;
+      }
+      throw error;
+    }
     const slug = subagentMarker.extractSlug(content);
     if (slug !== undefined) {
       owned.push({ file: entry.name, slug });
