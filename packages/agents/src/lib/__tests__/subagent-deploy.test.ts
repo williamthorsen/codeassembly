@@ -6,10 +6,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeArtifactMarker } from '../artifact-marker.ts';
-import { mergeFrontmatter } from '../frontmatter-merger.ts';
-import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
+import { expandIncludes } from '../directive-expander.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
-import { loadToolMapping, rewriteToolNames } from '../tool-name-rewriter.ts';
+import { renderSubagentForHarness } from '../subagent-transform.ts';
+import { loadToolMapping } from '../tool-name-rewriter.ts';
 
 const CLAUDE_OVERLAY = ['_tools:', '  Read: Read', '', '_defaults:', '  permissionMode: bypassPermissions', ''].join(
   '\n',
@@ -98,14 +98,19 @@ describe(deploySubagent, () => {
     };
   }
 
-  /** Renders the bytes `deploySubagent` should write for `canary` via the public transform steps and marker injection. */
-  function renderExpectedDeploy(source: string): string {
-    const toolMapping = loadToolMapping(CLAUDE_OVERLAY);
-    const merged = mergeFrontmatter(source, CLAUDE_OVERLAY);
-    const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/canary.md');
-    const rewrittenPaths = rewriteMarkdownPaths(rewrittenTools, 'canary.md', '.claude');
-    const transformed = rewriteTemplateVariables(rewrittenPaths, '.claude', 'claude');
-    return makeArtifactMarker('subagent').injectMarker(transformed, 'canary');
+  /** Renders the bytes `deploySubagent` should write for `canary` by mirroring its expand → render → mark composition. */
+  async function renderExpectedDeploy(srcPath: string): Promise<string> {
+    const expanded = await expandIncludes(srcPath, contentDir);
+    const rendered = renderSubagentForHarness(expanded, {
+      overlayYaml: CLAUDE_OVERLAY,
+      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+      fileRelPath: 'canary.md',
+      sourceLabel: 'subagents/canary.md',
+      pathPrefix: '.claude',
+      homeDir: '.claude',
+      harnessId: 'claude',
+    });
+    return makeArtifactMarker('subagent').injectMarker(rendered, 'canary');
   }
 
   const SOURCE = [
@@ -142,7 +147,7 @@ describe(deploySubagent, () => {
     await writeLibrarySubagent('canary', SOURCE);
     const destPath = path.join(destParent, 'canary.md');
     const resolved = { slug: 'canary', srcPath: path.join(librarySubagentsDir, 'canary.md') };
-    const expected = renderExpectedDeploy(SOURCE);
+    const expected = await renderExpectedDeploy(resolved.srcPath);
     await deploySubagent(resolved, destPath, claudeContext());
     expect(await readFile(destPath, 'utf8')).toBe(expected);
     const firstMtime = statSync(destPath).mtimeMs;
