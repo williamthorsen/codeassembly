@@ -2,9 +2,10 @@ import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promis
 import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
-import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
+import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import {
@@ -22,7 +23,7 @@ import {
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
-import { readSkillDeploy } from '../lib/skill-frontmatter.ts';
+import { loadSubagentOverlay, renderSubagentForHarness } from '../lib/subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
@@ -86,7 +87,7 @@ export async function installCommand(
     // Load the harness overlay once per harness. The raw YAML feeds the frontmatter merger (subagents only);
     // the parsed `_tools:` mapping feeds the body-text placeholder rewriter (subagents and skills).
     const harnessConfig = HARNESSES[harnessId];
-    const overlayYaml = await readOverlay(contentDir, harnessConfig.frontmatterFile);
+    const overlayYaml = await loadSubagentOverlay(contentDir, harnessConfig);
     const toolMapping = loadToolMapping(overlayYaml);
 
     // Install skills (shared + harness-specific)
@@ -282,7 +283,7 @@ async function isDeclaredSkill(entryDir: string): Promise<boolean> {
     }
     throw error;
   }
-  return readSkillDeploy(content, `skills/${path.basename(entryDir)}/SKILL.md`) === 'declared';
+  return readDeploy(content, `skills/${path.basename(entryDir)}/SKILL.md`) === 'declared';
 }
 
 /**
@@ -468,6 +469,13 @@ async function installSubagents(
     const destPath = path.join(harnessPaths.subagentsDir, entry);
     const relativePath = `${harnessConfig.subagentsDirName}/${entry}`;
 
+    // Subagents opting into declared delivery (`deploy: declared`) are materialized per-project by `sync`, never
+    // installed unconditionally. Skipping leaves the entry out of `entries`, so a previously-installed copy is pruned
+    // by the caller's reconcile.
+    if (readDeploy(await readFile(srcPath, 'utf8'), `subagents/${entry}`) === 'declared') {
+      continue;
+    }
+
     // Resolve include directives at source-tree level. Run before the dry-run gate so missing targets, cycles, and
     // out-of-tree references surface even when no files are written. Mirrors the ordering in installHarnessGuidance.
     const expandedSource = await expandIncludes(srcPath, contentDir);
@@ -494,18 +502,23 @@ async function installSubagents(
       }
     }
 
-    // Pipeline: Expand includes -> merge frontmatter -> rewrite tool-name placeholders ->
-    // inject provenance marker -> write -> rewrite paths.
-    const sourceLabel = `subagents/${entry}`;
-    const merged = mergeFrontmatter(expandedSource, overlayYaml);
-    const rewritten = rewriteToolNames(merged, toolMapping, sourceLabel);
-    const withMarker = injectProvenanceMarker(rewritten, buildSourceUrl(sourceLabel));
+    // Render the harness-specific body (frontmatter merge, tool-name rewrite, path/template rewrite), then stamp the
+    // install-path provenance marker before writing. The marker is injected after the path rewrites because its
+    // `https://` Source URL is skipped by link rewriting and carries no template tokens, so the output is identical to
+    // marking before the rewrite.
+    const rendered = renderSubagentForHarness(expandedSource, {
+      overlayYaml,
+      toolMapping,
+      fileRelPath: entry,
+      sourceLabel: `subagents/${entry}`,
+      pathPrefix: harnessConfig.homeDir,
+      homeDir: harnessConfig.homeDir,
+      harnessId: harnessConfig.id,
+    });
+    const withMarker = injectProvenanceMarker(rendered, buildSourceUrl(`subagents/${entry}`));
     await mkdir(path.dirname(destPath), { recursive: true });
     await unlinkIfSymlink(destPath);
     await writeFile(destPath, withMarker, 'utf8');
-
-    // Expand `{harness_home_dir}` tokens so the body's script references resolve to real paths.
-    await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, harnessConfig.homeDir, harnessConfig.id);
 
     const hash = await computeContentHash(destPath);
     entries.push({
@@ -932,17 +945,4 @@ function rewriteToolNamesInExpansionMap(
     rewritten.set(absSrcPath, rewriteToolNames(content, toolMapping, label));
   }
   return rewritten;
-}
-
-/** Reads a subagent overlay YAML file. Returns an empty string when the file does not exist. */
-async function readOverlay(contentDir: string, frontmatterFile: string): Promise<string> {
-  const overlayPath = path.join(contentDir, 'subagents', '_data', frontmatterFile);
-  try {
-    return await readFile(overlayPath, 'utf8');
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    return '';
-  }
 }

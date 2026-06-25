@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { readSkillDeploy } from '../../lib/skill-frontmatter.ts';
+import { readDeploy } from '../../lib/deploy-frontmatter.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
@@ -67,6 +67,14 @@ describe('install smoke (real library)', () => {
     const linkViolations = await collectBareRelativeLinks(tempDir);
     expect(linkViolations, formatViolations(linkViolations)).toEqual([]);
   });
+
+  it('does not install the declared canary subagent into any harness', async () => {
+    await installCommand(makeOptions(), tempDir);
+
+    for (const subagentsDir of [path.join(tempDir, '.claude', 'agents'), path.join(tempDir, '.rovodev', 'subagents')]) {
+      expect(existsSync(path.join(subagentsDir, 'canary.md'))).toBe(false);
+    }
+  });
 });
 
 const INSTALLED_TIERS: ReadonlyArray<string> = ['.claude', '.rovodev', '.agents'];
@@ -92,7 +100,7 @@ async function installDeliveredSkills(skillsSrcDir: string): Promise<Array<strin
       }
       throw error;
     }
-    if (readSkillDeploy(content) !== 'declared') {
+    if (readDeploy(content) !== 'declared') {
       delivered.push(entry);
     }
   }

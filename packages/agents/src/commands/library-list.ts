@@ -6,9 +6,9 @@ import process from 'node:process';
 import { parse as parseYaml } from 'yaml';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { readSkillDeploy } from '../lib/skill-frontmatter.ts';
 import { isEnoent, isMissingFile, isRecord } from '../lib/type-guards.ts';
 
 /** One of the artifact kinds the content library currently ships. */
@@ -201,7 +201,7 @@ async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
       // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.
       return {
         slug: meta.name ?? name,
-        delivery: readSkillDeploy(content, `skills/${name}/SKILL.md`),
+        delivery: readDeploy(content, `skills/${name}/SKILL.md`),
         description: meta.description ?? '',
       };
     });
@@ -220,9 +220,10 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('subagent', file, () => {
       const meta = readNameAndDescription(content);
+      // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.
       return {
         slug: meta.name ?? path.basename(file, '.md'),
-        delivery: 'subagent',
+        delivery: readDeploy(content, `subagents/${file}`),
         description: meta.description ?? '',
       };
     });

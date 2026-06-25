@@ -56,6 +56,14 @@ describe(libraryListCommand, () => {
     expect(lines.find((line) => line.includes('bravo-skill'))).toContain('install');
   });
 
+  it('shows a subagent delivery of declared when it opts into declared delivery, install otherwise', async () => {
+    const { output } = await captureList(contentDir);
+    const lines = output.split('\n');
+
+    expect(lines.find((line) => line.includes('zulu-agent'))).toContain('declared');
+    expect(lines.find((line) => line.includes('yankee-agent'))).toContain('install');
+  });
+
   it('skips an artifact with invalid frontmatter and keeps listing the rest', async () => {
     const { output, warnings } = await captureList(contentDir);
 
@@ -104,7 +112,7 @@ describe(renderLibraryTable, () => {
     const rows: Array<LibraryRow> = [
       makeRow({ type: 'rulebook', emoji: '📕', slug: 'shell-conventions', delivery: 'ambient, skill' }),
       makeRow({ type: 'skill', emoji: '🪄', slug: 'add-test-ids', delivery: 'skill' }),
-      makeRow({ type: 'subagent', emoji: '🤖', slug: 'planner', delivery: 'subagent' }),
+      makeRow({ type: 'subagent', emoji: '🤖', slug: 'planner', delivery: 'install' }),
     ];
 
     const lines = renderLibraryTable(rows, 100).split('\n');
@@ -184,6 +192,10 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
 
   await writeFile(path.join(subagents, 'yankee.md'), frontmatter({ name: 'yankee-agent', description: 'Yankee.' }));
   await writeFile(path.join(subagents, 'xray.md'), frontmatter({ description: 'Xray without a name.' }));
+  await writeFile(
+    path.join(subagents, 'zulu.md'),
+    frontmatter({ name: 'zulu-agent', description: 'Zulu.', deploy: 'declared' }),
+  );
   await writeFile(path.join(subagents, 'broken.md'), '---\nname: "unterminated\ndescription: oops\n---\n\n# Body\n');
 }
 

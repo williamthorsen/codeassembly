@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
@@ -234,6 +235,64 @@ describe(installCommand, () => {
     const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
     expect(relativePaths).not.toContain('skills/declared-skill');
     expect(relativePaths).toContain('skills/alpha');
+  });
+
+  it('excludes a subagent marked deploy: declared from install and the manifest', async () => {
+    const claudeHome = await setupClaudeHome();
+    await buildContentTree(contentDir, {
+      subagents: {
+        'declared-agent.md': unindent`
+          ---
+          name: declared-agent
+          description: Declared fixture subagent
+          deploy: declared
+          ---
+
+          # Declared agent
+
+        `,
+      },
+    });
+
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+    const subagents = await readdir(path.join(claudeHome, 'agents'));
+    expect(subagents).not.toContain('declared-agent.md');
+    // A subagent without the field installs unchanged.
+    expect(subagents).toContain('demo-agent.md');
+
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
+    expect(relativePaths).not.toContain('agents/declared-agent.md');
+    expect(relativePaths).toContain('agents/demo-agent.md');
+  });
+
+  it('prunes a previously-installed subagent once it flips to deploy: declared', async () => {
+    const claudeHome = await setupClaudeHome();
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(true);
+
+    await buildContentTree(contentDir, {
+      subagents: {
+        'demo-agent.md': unindent`
+          ---
+          name: demo-agent
+          description: Demo fixture subagent
+          deploy: declared
+          ---
+
+          # Demo agent
+
+        `,
+      },
+    });
+
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
+    expect(relativePaths).not.toContain('agents/demo-agent.md');
   });
 
   it('installs the _data support directory but not _harnesses', async () => {

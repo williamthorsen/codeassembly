@@ -3,6 +3,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
@@ -533,6 +534,184 @@ describe(syncCommand, () => {
       await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
       expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
+    });
+  });
+
+  describe('declared subagents', () => {
+    const CLAUDE_OVERLAY = unindent`
+      _tools:
+        Read: Read
+
+      _defaults:
+        permissionMode: bypassPermissions
+
+    `;
+    const ROVODEV_OVERLAY = unindent`
+      _tools:
+        Read: open_files
+
+      _defaults:
+        tools: [open_files]
+
+    `;
+
+    const subagentPath = (slug: string, dotDir = '.claude', subDir = 'agents'): string =>
+      path.join(projectRoot, dotDir, subDir, `${slug}.md`);
+
+    /** Writes the harness overlays so the subagent transform has tool mappings and `_defaults`. */
+    async function writeOverlays(): Promise<void> {
+      const dataDir = path.join(contentDir, 'subagents', '_data');
+      await mkdir(dataDir, { recursive: true });
+      await writeFile(path.join(dataDir, 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
+      await writeFile(path.join(dataDir, 'rovodev.yaml'), ROVODEV_OVERLAY, 'utf8');
+    }
+
+    /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
+    async function writeLibrarySubagent(
+      slug: string,
+      { deploy = 'declared', body }: { deploy?: string; body?: string } = {},
+    ): Promise<void> {
+      const dir = path.join(contentDir, 'subagents');
+      await mkdir(dir, { recursive: true });
+      const deployLine = deploy === '' ? '' : `deploy: ${deploy}\n`;
+      const content = body ?? `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.`;
+      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n${deployLine}---\n\n${content}\n`, 'utf8');
+    }
+
+    /** Writes the project-scope codeassembly.yaml declaring the given subagent slugs. */
+    async function declareSubagents(...slugs: ReadonlyArray<string>): Promise<void> {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      const useBlock =
+        slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `subagents:\n${useBlock}`, 'utf8');
+    }
+
+    it('deploys a declared subagent with the transform applied and the ownership marker, no provenance marker', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary');
+      await declareSubagents('canary');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
+      expect(deployed).toContain('permissionMode: bypassPermissions');
+      expect(deployed).toContain('Use Read;');
+      expect(deployed).toContain('~/.claude/scripts/x.sh');
+      expect(deployed).not.toContain('GENERATED FILE');
+    });
+
+    it('when re-run with unchanged content, leaves the declared subagent file byte-identical and unwritten', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary');
+      await declareSubagents('canary');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const firstBytes = await readFile(subagentPath('canary'), 'utf8');
+      const firstMtime = statSync(subagentPath('canary')).mtimeMs;
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(subagentPath('canary'), 'utf8')).toBe(firstBytes);
+      expect(statSync(subagentPath('canary')).mtimeMs).toBe(firstMtime);
+    });
+
+    it('retracts a declared subagent file once it is no longer declared', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary');
+      await writeLibrarySubagent('other');
+      await declareSubagents('canary', 'other');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(existsSync(subagentPath('other'))).toBe(true);
+
+      await declareSubagents('canary');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(subagentPath('other'))).toBe(false);
+      expect(existsSync(subagentPath('canary'))).toBe(true);
+    });
+
+    it('never deletes a hand-authored subagent file that lacks the marker', async () => {
+      await writeOverlays();
+      const manual = subagentPath('manual');
+      await mkdir(path.dirname(manual), { recursive: true });
+      await writeFile(manual, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
+      await writeLibrarySubagent('canary');
+      await declareSubagents('canary');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      await declareSubagents();
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(manual)).toBe(true);
+      expect(existsSync(subagentPath('canary'))).toBe(false);
+    });
+
+    it('throws when a declared subagent is missing from the library, writing nothing', async () => {
+      await writeOverlays();
+      await declareSubagents('ghost');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
+      expect(existsSync(subagentPath('ghost'))).toBe(false);
+    });
+
+    it('throws when a declared subagent is still on the install path', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('legacy', { deploy: 'install' });
+      await declareSubagents('legacy');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/legacy.*declared/i);
+    });
+
+    it('deploys the same subagent into each targeted harness with its own transform', async () => {
+      await mkdir(path.join(projectRoot, '.claude', 'agents'), { recursive: true });
+      await mkdir(path.join(projectRoot, '.rovodev', 'subagents'), { recursive: true });
+      await writeOverlays();
+      await writeLibrarySubagent('canary');
+      await declareSubagents('canary');
+
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+
+      const claude = await readFile(subagentPath('canary', '.claude', 'agents'), 'utf8');
+      const rovodev = await readFile(subagentPath('canary', '.rovodev', 'subagents'), 'utf8');
+      expect(claude).toContain('Use Read;');
+      expect(claude).toContain('~/.claude/scripts/x.sh');
+      expect(rovodev).toContain('Use open_files;');
+      expect(rovodev).toContain('~/.rovodev/scripts/x.sh');
+    });
+
+    it('previews declared-subagent writes and retractions in dry-run without writing', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary');
+      await declareSubagents('canary');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain('canary');
+      expect(existsSync(subagentPath('canary'))).toBe(false);
+    });
+
+    it('deploys and retracts the real canary subagent end-to-end', async () => {
+      await declareSubagents('canary');
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
+      expect(deployed).toContain('# Canary');
+      expect(deployed).not.toContain('{tool:Read}');
+      expect(deployed).not.toContain('{harness_home_dir}');
+      expect(deployed).toContain('~/.claude');
+
+      await declareSubagents();
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+      expect(existsSync(subagentPath('canary'))).toBe(false);
     });
   });
 });

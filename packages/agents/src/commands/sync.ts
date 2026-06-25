@@ -1,18 +1,30 @@
+import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
-import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
-import { extractDeployedSkillSlug } from '../lib/skill-marker.ts';
+import {
+  deploySubagent,
+  resolveDeclaredSubagent,
+  type ResolvedSubagent,
+  type SubagentDeployContext,
+} from '../lib/subagent-deploy.ts';
+import { loadSubagentOverlay } from '../lib/subagent-transform.ts';
+import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
-import type { InstallOptions } from '../lib/types.ts';
+import type { HarnessId, InstallOptions } from '../lib/types.ts';
+
+const skillMarker = makeArtifactMarker('skill');
+const subagentMarker = makeArtifactMarker('subagent');
 
 /** A declared rulebook resolved against the library: its neutral body and which delivery modes it requests. */
 interface ResolvedRulebook {
@@ -24,15 +36,22 @@ interface ResolvedRulebook {
   readonly description: string | undefined;
 }
 
+/** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
+interface HarnessSubagentTarget {
+  readonly subagentsDir: string;
+  readonly deployContext: SubagentDeployContext;
+}
+
 /**
  * Resolves the project's `codeassembly.yaml` scope chain, materializes each declared rulebook's neutral body to
  * `.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `.agents/PROJECT.md`, writes `skill` rulebooks
- * as thin-wrapper skills into each targeted harness's project-local skills dir, and retracts anything no longer
+ * as thin-wrapper skills into each targeted harness's project-local skills dir, deploys declared skills and declared
+ * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
  * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent.
  * An absent `codeassembly.yaml` is a total no-op.
  *
  * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
- * @param contentDirOverride Override for the rulebook library source (defaults to the package content dir).
+ * @param contentDirOverride Override for the library source (defaults to the package content dir).
  */
 export async function syncCommand(
   options: InstallOptions,
@@ -49,15 +68,19 @@ export async function syncCommand(
   const contentDir = contentDirOverride ?? resolveContentDir();
   const librarySrcDir = path.join(contentDir, 'guidance', 'rulebooks');
   const librarySkillsDir = path.join(contentDir, 'skills');
+  const librarySubagentsDir = path.join(contentDir, 'subagents');
   const neutralDir = path.join(projectRoot, '.agents', 'rulebooks');
   const projectMdPath = path.join(projectRoot, '.agents', 'PROJECT.md');
 
-  // Resolve and validate every declared rulebook and skill before writing anything, so a missing library file,
-  // invalid frontmatter, or a still-`install` skill fails the whole run rather than leaving a partial sync behind.
+  // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
+  // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
   const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, librarySrcDir)));
   assertNoSkillNameCollisions(resolved);
   const resolvedSkills = await Promise.all(
     declaration.skills.map((slug) => resolveDeclaredSkill(slug, librarySkillsDir)),
+  );
+  const resolvedSubagents = await Promise.all(
+    declaration.subagents.map((slug) => resolveDeclaredSubagent(slug, librarySubagentsDir)),
   );
 
   // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
@@ -80,6 +103,16 @@ export async function syncCommand(
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir.
   const harnessSkillDirs = resolveHarnessIds(options.harness, projectRoot).map(
     (harnessId) => resolveHarnessPaths(harnessId, projectRoot).skillsDir,
+  );
+
+  // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
+  // mapping so the deploy applies the same transform `install` would. Resolved separately from skills because the
+  // transform is harness-specific, and subagents live in a distinct flat dir from skills.
+  const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
+  const harnessSubagentTargets = await Promise.all(
+    resolveHarnessIds(options.harness, projectRoot).map((harnessId) =>
+      resolveSubagentTarget(harnessId, projectRoot, contentDir),
+    ),
   );
 
   const existingProjectMd = await readFileOrEmpty(projectMdPath);
@@ -107,16 +140,30 @@ export async function syncCommand(
         .map(({ dir }) => dir),
     })),
   );
+  // Declared subagents reconcile file-based (flat `.md` files, not directories): an owned subagent file is one whose
+  // content carries the `codeassembly-subagent:` marker. It is an orphan once its slug is no longer declared. A
+  // marker-less hand-authored file is never claimed, so it survives untouched.
+  const subagentOrphansByDir = await Promise.all(
+    harnessSubagentTargets.map(async (target) => ({
+      subagentsDir: target.subagentsDir,
+      orphans: (await listOwnedSubagents(target.subagentsDir))
+        .filter(({ slug }) => !declaredSubagentSet.has(slug))
+        .map(({ file }) => file),
+    })),
+  );
 
   if (options.dryRun) {
-    reportDryRun(
+    reportDryRun({
       resolved,
-      [...new Set([...neutralOrphans, ...inlineOrphans])],
+      retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
       harnessSkillDirs,
       skillOrphansByDir,
       resolvedSkills,
       declaredSkillOrphansByDir,
-    );
+      resolvedSubagents,
+      harnessSubagentTargets,
+      subagentOrphansByDir,
+    });
     return;
   }
 
@@ -178,6 +225,11 @@ export async function syncCommand(
     }
   }
 
+  // Reconcile declared subagents per targeted harness, independently of the skill passes: retract owned subagent
+  // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
+  // transform applied and the ownership marker stamped.
+  await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
+
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
   const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
   const declaredSkillRetractions = declaredSkillOrphansByDir.reduce(
@@ -185,11 +237,15 @@ export async function syncCommand(
     0,
   );
   const declaredSkillsDeployed = resolvedSkills.length * harnessSkillDirs.length;
+  const subagentRetractions = subagentOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
+  const subagentsDeployed = resolvedSubagents.length * harnessSubagentTargets.length;
   console.info(
-    `Synced ${resolved.length} rulebook(s) and ${resolvedSkills.length} declared skill(s); delivered ` +
-      `${skillFilesWritten} rulebook-skill file(s) and ${declaredSkillsDeployed} declared-skill dir(s) across ` +
+    `Synced ${resolved.length} rulebook(s), ${resolvedSkills.length} declared skill(s), and ` +
+      `${resolvedSubagents.length} declared subagent(s); delivered ${skillFilesWritten} rulebook-skill file(s), ` +
+      `${declaredSkillsDeployed} declared-skill dir(s), and ${subagentsDeployed} declared-subagent file(s) across ` +
       `${harnessSkillDirs.length} harness(s); retracted ${neutralOrphans.length} neutral file(s), ` +
-      `${skillRetractions} rulebook-skill dir(s), and ${declaredSkillRetractions} declared-skill dir(s).`,
+      `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
+      `${subagentRetractions} declared-subagent file(s).`,
   );
 }
 
@@ -281,7 +337,7 @@ async function listOwnedDeclaredSkills(skillsDir: string): Promise<ReadonlyArray
       }
       throw error;
     }
-    const slug = extractDeployedSkillSlug(content);
+    const slug = skillMarker.extractSlug(content);
     if (slug !== undefined) {
       owned.push({ dir: entry, slug });
     }
@@ -327,41 +383,118 @@ async function listOwnedSkills(skillsDir: string): Promise<ReadonlyArray<{ dir: 
   return owned;
 }
 
+/**
+ * Lists the sync-owned subagents under `subagentsDir` as `{ file, slug }` pairs — the flat `.md` files whose content
+ * carries the `codeassembly-subagent:` ownership marker, paired with the slug recovered from it. Reads only that
+ * marker, so a marker-less hand-authored file is never claimed. Returns an empty list when the directory is absent;
+ * non-`.md` entries and directories are skipped.
+ */
+async function listOwnedSubagents(subagentsDir: string): Promise<ReadonlyArray<{ file: string; slug: string }>> {
+  let entries: ReadonlyArray<Dirent>;
+  try {
+    entries = await readdir(subagentsDir, { withFileTypes: true });
+  } catch (error: unknown) {
+    if (isEnoent(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  const owned: Array<{ file: string; slug: string }> = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.md')) {
+      continue;
+    }
+    let content: string;
+    try {
+      content = await readFile(path.join(subagentsDir, entry.name), 'utf8');
+    } catch (error: unknown) {
+      // A `.md` symlink whose target is gone passes the `isFile()` filter (it follows links) but throws on read.
+      if (isEnoent(error)) {
+        continue;
+      }
+      throw error;
+    }
+    const slug = subagentMarker.extractSlug(content);
+    if (slug !== undefined) {
+      owned.push({ file: entry.name, slug });
+    }
+  }
+  return owned;
+}
+
+/**
+ * Retracts owned subagent files no longer declared, then deploys each declared subagent into every targeted harness's
+ * subagents dir. Orphans were computed against the pre-write filesystem, so retracting before writing lets a slug
+ * freed in one dir be re-created in the same sync rather than clobbered by a later retract.
+ */
+async function reconcileDeclaredSubagents(
+  targets: ReadonlyArray<HarnessSubagentTarget>,
+  orphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>,
+  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+): Promise<void> {
+  for (const target of targets) {
+    const orphans = orphansByDir.find((entry) => entry.subagentsDir === target.subagentsDir)?.orphans ?? [];
+    for (const file of orphans) {
+      await rm(path.join(target.subagentsDir, file), { force: true });
+    }
+    for (const subagent of resolvedSubagents) {
+      await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), target.deployContext);
+    }
+  }
+}
+
+/** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
+interface DryRunPlan {
+  readonly resolved: ReadonlyArray<ResolvedRulebook>;
+  readonly retracted: ReadonlyArray<string>;
+  readonly harnessSkillDirs: ReadonlyArray<string>;
+  readonly skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
+  readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
+  readonly declaredSkillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
+  readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
+  readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
+  readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
+}
+
 /** Prints the writes and retractions a real run would perform. */
-function reportDryRun(
-  resolved: ReadonlyArray<ResolvedRulebook>,
-  retracted: ReadonlyArray<string>,
-  harnessSkillDirs: ReadonlyArray<string>,
-  skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
-  resolvedSkills: ReadonlyArray<ResolvedSkill>,
-  declaredSkillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
-): void {
+function reportDryRun(plan: DryRunPlan): void {
   console.info('[dry-run] sync would:');
-  for (const rulebook of resolved) {
+  for (const rulebook of plan.resolved) {
     const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
-      for (const skillsDir of harnessSkillDirs) {
+      for (const skillsDir of plan.harnessSkillDirs) {
         console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
       }
     }
   }
-  for (const skill of resolvedSkills) {
-    for (const skillsDir of harnessSkillDirs) {
+  for (const skill of plan.resolvedSkills) {
+    for (const skillsDir of plan.harnessSkillDirs) {
       console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
     }
   }
-  for (const slug of retracted) {
+  for (const subagent of plan.resolvedSubagents) {
+    for (const target of plan.harnessSubagentTargets) {
+      console.info(`  deploy declared subagent ${path.join(target.subagentsDir, `${subagent.slug}.md`)}`);
+    }
+  }
+  for (const slug of plan.retracted) {
     console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
   }
-  for (const { skillsDir, orphans } of skillOrphansByDir) {
+  for (const { skillsDir, orphans } of plan.skillOrphansByDir) {
     for (const dir of orphans) {
       console.info(`  retract skill ${path.join(skillsDir, dir)} (no longer the current skill dir)`);
     }
   }
-  for (const { skillsDir, orphans } of declaredSkillOrphansByDir) {
+  for (const { skillsDir, orphans } of plan.declaredSkillOrphansByDir) {
     for (const dir of orphans) {
       console.info(`  retract declared skill ${path.join(skillsDir, dir)} (no longer declared)`);
+    }
+  }
+  for (const { subagentsDir, orphans } of plan.subagentOrphansByDir) {
+    for (const file of orphans) {
+      console.info(`  retract declared subagent ${path.join(subagentsDir, file)} (no longer declared)`);
     }
   }
 }
@@ -387,6 +520,30 @@ async function resolveRulebook(slug: string, librarySrcDir: string): Promise<Res
     ambient: rulebook.delivery.includes('ambient'),
     skill: rulebook.delivery.includes('skill'),
     description: rulebook.description,
+  };
+}
+
+/**
+ * Resolves one harness's project-local subagents dir together with the per-harness inputs the deploy transform needs:
+ * the harness overlay YAML, its tool-name mapping, the home-dir segment, and the harness id. Passing `projectRoot` as
+ * the base keeps delivery project-scoped, matching the skill passes.
+ */
+async function resolveSubagentTarget(
+  harnessId: HarnessId,
+  projectRoot: string,
+  contentDir: string,
+): Promise<HarnessSubagentTarget> {
+  const harnessConfig = HARNESSES[harnessId];
+  const overlayYaml = await loadSubagentOverlay(contentDir, harnessConfig);
+  return {
+    subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
+    deployContext: {
+      contentDir,
+      overlayYaml,
+      toolMapping: loadToolMapping(overlayYaml),
+      homeDir: harnessConfig.homeDir,
+      harnessId: harnessConfig.id,
+    },
   };
 }
 

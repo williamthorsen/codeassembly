@@ -1,3 +1,4 @@
+import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
@@ -25,21 +26,19 @@ describe(renderSkillFile, () => {
       '# Shell\n\nBody.',
     );
 
-    expect(output).toBe(
-      [
-        '---',
-        'name: consult-shell-conventions',
-        'description: Shell rules.',
-        'user-invocable: true',
-        '---',
-        '<!-- codeassembly-rulebook:shell-conventions -->',
-        '',
-        '# Shell',
-        '',
-        'Body.',
-        '',
-      ].join('\n'),
-    );
+    expect(output).toBe(unindent`
+      ---
+      name: consult-shell-conventions
+      description: Shell rules.
+      user-invocable: true
+      ---
+      <!-- codeassembly-rulebook:shell-conventions -->
+
+      # Shell
+
+      Body.
+
+    `);
   });
 
   it('uses the skill name for the frontmatter name and the slug for the ownership marker', () => {
