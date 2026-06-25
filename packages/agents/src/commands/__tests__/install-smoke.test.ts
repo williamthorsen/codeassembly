@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { readSkillDeploy } from '../../lib/skill-frontmatter.ts';
+import { readDeploy } from '../../lib/deploy-frontmatter.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
@@ -92,7 +92,7 @@ async function installDeliveredSkills(skillsSrcDir: string): Promise<Array<strin
       }
       throw error;
     }
-    if (readSkillDeploy(content) !== 'declared') {
+    if (readDeploy(content) !== 'declared') {
       delivered.push(entry);
     }
   }

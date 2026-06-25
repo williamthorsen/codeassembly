@@ -2,6 +2,7 @@ import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promis
 import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { mergeFrontmatter, parseFrontmatter } from '../lib/frontmatter-merger.ts';
@@ -22,7 +23,6 @@ import {
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
-import { readSkillDeploy } from '../lib/skill-frontmatter.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
@@ -282,7 +282,7 @@ async function isDeclaredSkill(entryDir: string): Promise<boolean> {
     }
     throw error;
   }
-  return readSkillDeploy(content, `skills/${path.basename(entryDir)}/SKILL.md`) === 'declared';
+  return readDeploy(content, `skills/${path.basename(entryDir)}/SKILL.md`) === 'declared';
 }
 
 /**

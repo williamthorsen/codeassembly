@@ -1,10 +1,12 @@
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { makeArtifactMarker } from './artifact-marker.ts';
+import { readDeploy } from './deploy-frontmatter.ts';
 import { writeIfChanged } from './fs-helpers.ts';
-import { readSkillDeploy } from './skill-frontmatter.ts';
-import { injectSkillMarker } from './skill-marker.ts';
 import { isEnoent, isMissingFile } from './type-guards.ts';
+
+const skillMarker = makeArtifactMarker('skill');
 
 /** A declared skill resolved against the library: its stable slug and the directory to copy from. */
 export interface ResolvedSkill {
@@ -32,7 +34,7 @@ export async function resolveDeclaredSkill(slug: string, librarySkillsDir: strin
     throw error;
   }
 
-  const deploy = readSkillDeploy(skillMd, `skills/${slug}/SKILL.md`);
+  const deploy = readDeploy(skillMd, `skills/${slug}/SKILL.md`);
   if (deploy !== 'declared') {
     throw new Error(
       `Declared skill "${slug}" is not marked for declared delivery; its SKILL.md has deploy: ${deploy}. ` +
@@ -61,7 +63,7 @@ export async function deploySkill(skill: ResolvedSkill, destDir: string): Promis
     if (entry.isDirectory()) {
       await copySubtree(srcPath, destPath);
     } else if (entry.name === 'SKILL.md') {
-      await writeIfChanged(destPath, injectSkillMarker(await readFile(srcPath, 'utf8'), skill.slug));
+      await writeIfChanged(destPath, skillMarker.injectMarker(await readFile(srcPath, 'utf8'), skill.slug));
     } else {
       await copyFileIfChanged(srcPath, destPath);
     }

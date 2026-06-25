@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
@@ -10,8 +11,9 @@ import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
-import { extractDeployedSkillSlug } from '../lib/skill-marker.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
+
+const skillMarker = makeArtifactMarker('skill');
 import type { InstallOptions } from '../lib/types.ts';
 
 /** A declared rulebook resolved against the library: its neutral body and which delivery modes it requests. */
@@ -281,7 +283,7 @@ async function listOwnedDeclaredSkills(skillsDir: string): Promise<ReadonlyArray
       }
       throw error;
     }
-    const slug = extractDeployedSkillSlug(content);
+    const slug = skillMarker.extractSlug(content);
     if (slug !== undefined) {
       owned.push({ dir: entry, slug });
     }
