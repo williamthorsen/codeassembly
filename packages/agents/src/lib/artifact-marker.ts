@@ -19,7 +19,7 @@ const FRONTMATTER_PATTERN = /^(---\n[\s\S]*?\n---\n)/;
  */
 export function makeArtifactMarker(kind: 'skill' | 'subagent'): ArtifactMarker {
   const markerPattern = new RegExp(`<!-- codeassembly-${kind}:([a-z0-9-]+) -->`);
-  const leadingMarkerLinePattern = new RegExp(`^<!-- codeassembly-${kind}:[a-z0-9-]+ -->\\n`);
+  const leadingMarkerLinePattern = new RegExp(String.raw`^<!-- codeassembly-${kind}:[a-z0-9-]+ -->\n`);
 
   return {
     extractSlug(content: string): string | undefined {

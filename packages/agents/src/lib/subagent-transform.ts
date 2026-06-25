@@ -4,8 +4,8 @@ import path from 'node:path';
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
-import type { HarnessConfig } from './types.ts';
 import { isEnoent } from './type-guards.ts';
+import type { HarnessConfig } from './types.ts';
 
 /** The harness-specific inputs a subagent render depends on, resolved once per harness by the caller. */
 export interface SubagentRenderContext {
