@@ -5,12 +5,13 @@ import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 
 /** The categories the grouped format accepts but does not yet deploy; a non-empty block of any is an error. */
-const UNSUPPORTED_CATEGORIES = ['subagents', 'collections'] as const;
+const UNSUPPORTED_CATEGORIES = ['collections'] as const;
 
 /** The effective slug sets a project opts into, one list per deployable category. */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
   readonly skills: ReadonlyArray<string>;
+  readonly subagents: ReadonlyArray<string>;
 }
 
 /**
@@ -20,8 +21,8 @@ export interface ResolvedDeclaration {
  * contributions before that tier is applied. Each category accumulates independently.
  *
  * Returns `undefined` when no `codeassembly.yaml` exists anywhere in the chain — a total no-op for `sync`, distinct
- * from a present-but-empty declaration, which returns empty lists. The `rulebooks` and `skills` categories are
- * interpreted; a non-empty `subagents` or `collections` block raises a clear error.
+ * from a present-but-empty declaration, which returns empty lists. The `rulebooks`, `skills`, and `subagents`
+ * categories are interpreted; a non-empty `collections` block raises a clear error.
  *
  * @param options.cwd The project whose `.agents/` tiers are resolved.
  */
@@ -34,6 +35,7 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
   // A Set preserves first-seen order while deduplicating; `delete` powers `drop`, `clear` powers `root`.
   const rulebooks = new Set<string>();
   const skills = new Set<string>();
+  const subagents = new Set<string>();
   for (const filePath of chain) {
     const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath);
     assertSupportedCategories(declaration, filePath);
@@ -41,12 +43,14 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
     if (declaration.root) {
       rulebooks.clear();
       skills.clear();
+      subagents.clear();
     }
     accumulateCategory(rulebooks, declaration.rulebooks);
     accumulateCategory(skills, declaration.skills);
+    accumulateCategory(subagents, declaration.subagents);
   }
 
-  return { rulebooks: [...rulebooks], skills: [...skills] };
+  return { rulebooks: [...rulebooks], skills: [...skills], subagents: [...subagents] };
 }
 
 // region | Helpers
@@ -61,14 +65,14 @@ function accumulateCategory(effective: Set<string>, category: CategoryDeclaratio
   }
 }
 
-/** Throws when a declaration carries a non-empty `subagents` or `collections` block, which the format accepts but does not yet deploy. */
+/** Throws when a declaration carries a non-empty `collections` block, which the format accepts but does not yet deploy. */
 function assertSupportedCategories(declaration: CodeAssemblyDeclaration, filePath: string): void {
   for (const category of UNSUPPORTED_CATEGORIES) {
     const block = declaration[category];
     if (block && (block.use.length > 0 || block.drop.length > 0)) {
       throw new Error(
         `${filePath}: the "${category}" category is declared but not supported in this version; ` +
-          'only "rulebooks" and "skills" are deployed.',
+          'only "rulebooks", "skills", and "subagents" are deployed.',
       );
     }
   }
