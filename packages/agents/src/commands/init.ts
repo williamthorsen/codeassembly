@@ -13,14 +13,20 @@ rulebooks:
   use: []
   # drop: []  # remove a rulebook inherited from a broader-scope declaration
 
+# skills.use lists the skill slugs this project adopts. Each declared skill (deploy: declared) is deployed into the
+# project's harness skills dirs.
+# skills:
+#   use: []
+
+# subagents.use lists the subagent slugs this project adopts. Each declared subagent (deploy: declared) is deployed
+# into the project's harness subagents dirs.
+# subagents:
+#   use: []
+
 # root: true  # ignore broader-scope declarations entirely, starting fresh from this file
 
 # Accepted now for forward compatibility; deployment lands in a later release:
 # collections:
-#   use: []
-# skills:
-#   use: []
-# subagents:
 #   use: []
 `;
 

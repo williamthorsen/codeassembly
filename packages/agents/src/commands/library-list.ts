@@ -220,9 +220,10 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('subagent', file, () => {
       const meta = readNameAndDescription(content);
+      // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.
       return {
         slug: meta.name ?? path.basename(file, '.md'),
-        delivery: 'subagent',
+        delivery: readDeploy(content, `subagents/${file}`),
         description: meta.description ?? '',
       };
     });

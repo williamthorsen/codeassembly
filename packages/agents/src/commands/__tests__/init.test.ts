@@ -38,7 +38,7 @@ describe(initCommand, () => {
   it('scaffolds a file that parses to zero declared artifacts', async () => {
     await initCommand(makeOptions(), projectRoot);
 
-    expect(await resolveDeclaration({ cwd: projectRoot })).toEqual({ rulebooks: [], skills: [] });
+    expect(await resolveDeclaration({ cwd: projectRoot })).toEqual({ rulebooks: [], skills: [], subagents: [] });
   });
 
   it('refuses to overwrite an existing codeassembly.yaml', async () => {
