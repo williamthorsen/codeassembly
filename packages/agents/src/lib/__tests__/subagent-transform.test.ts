@@ -31,6 +31,29 @@ const ROVODEV_OVERLAY = ['_tools:', '  Read: open_files', '', '_defaults:', '  t
   '\n',
 );
 
+describe(loadSubagentOverlay, () => {
+  let contentDir: string;
+
+  beforeEach(async () => {
+    contentDir = path.join(tmpdir(), `agents-test-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  it('reads the harness overlay file from subagents/_data', async () => {
+    await writeFile(path.join(contentDir, 'subagents', '_data', 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
+
+    expect(await loadSubagentOverlay(contentDir, HARNESSES.claude)).toBe(CLAUDE_OVERLAY);
+  });
+
+  it('returns an empty string when the overlay file is absent', async () => {
+    expect(await loadSubagentOverlay(contentDir, HARNESSES.rovodev)).toBe('');
+  });
+});
+
 describe(renderSubagentForHarness, () => {
   it('merges _defaults, rewrites the tool placeholder, and expands {harness_home_dir} for claude', () => {
     const output = renderSubagentForHarness(SOURCE, {
@@ -119,27 +142,4 @@ describe(renderSubagentForHarness, () => {
       expect(rendered).toBe(expected);
     },
   );
-});
-
-describe(loadSubagentOverlay, () => {
-  let contentDir: string;
-
-  beforeEach(async () => {
-    contentDir = path.join(tmpdir(), `agents-test-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
-  });
-
-  afterEach(async () => {
-    await rm(contentDir, { recursive: true, force: true });
-  });
-
-  it('reads the harness overlay file from subagents/_data', async () => {
-    await writeFile(path.join(contentDir, 'subagents', '_data', 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
-
-    expect(await loadSubagentOverlay(contentDir, HARNESSES.claude)).toBe(CLAUDE_OVERLAY);
-  });
-
-  it('returns an empty string when the overlay file is absent', async () => {
-    expect(await loadSubagentOverlay(contentDir, HARNESSES.rovodev)).toBe('');
-  });
 });

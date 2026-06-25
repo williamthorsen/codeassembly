@@ -31,6 +31,32 @@ export interface SubagentDeployContext {
 const subagentMarker = makeArtifactMarker('subagent');
 
 /**
+ * Materializes a resolved subagent to `destPath`, applying the harness transform (frontmatter merge, tool-name rewrite,
+ * path/template rewrite) and stamping the `codeassembly-subagent:<slug>` ownership marker. No provenance marker is
+ * injected — declared subagents carry only the ownership marker, which is what `sync` retracts against. The write is
+ * byte-stable, so re-deploying unchanged content makes no filesystem change.
+ */
+export async function deploySubagent(
+  resolved: ResolvedSubagent,
+  destPath: string,
+  context: SubagentDeployContext,
+): Promise<void> {
+  const expanded = await expandIncludes(resolved.srcPath, context.contentDir);
+  const fileName = `${resolved.slug}.md`;
+  const rendered = renderSubagentForHarness(expanded, {
+    overlayYaml: context.overlayYaml,
+    toolMapping: context.toolMapping,
+    fileRelPath: fileName,
+    sourceLabel: `subagents/${fileName}`,
+    pathPrefix: context.homeDir,
+    homeDir: context.homeDir,
+    harnessId: context.harnessId,
+  });
+  await mkdir(path.dirname(destPath), { recursive: true });
+  await writeIfChanged(destPath, subagentMarker.injectMarker(rendered, resolved.slug));
+}
+
+/**
  * Resolves a declared subagent slug against the library, confirming its `<slug>.md` exists and that it opts into
  * declared delivery. A missing file throws a clear error naming the slug. A subagent still on the `install` path is
  * rejected rather than deployed, since declaring an `install` subagent would ship it twice: once via `install`, once
@@ -57,30 +83,4 @@ export async function resolveDeclaredSubagent(slug: string, librarySubagentsDir:
   }
 
   return { slug, srcPath };
-}
-
-/**
- * Materializes a resolved subagent to `destPath`, applying the harness transform (frontmatter merge, tool-name rewrite,
- * path/template rewrite) and stamping the `codeassembly-subagent:<slug>` ownership marker. No provenance marker is
- * injected — declared subagents carry only the ownership marker, which is what `sync` retracts against. The write is
- * byte-stable, so re-deploying unchanged content makes no filesystem change.
- */
-export async function deploySubagent(
-  resolved: ResolvedSubagent,
-  destPath: string,
-  context: SubagentDeployContext,
-): Promise<void> {
-  const expanded = await expandIncludes(resolved.srcPath, context.contentDir);
-  const fileName = `${resolved.slug}.md`;
-  const rendered = renderSubagentForHarness(expanded, {
-    overlayYaml: context.overlayYaml,
-    toolMapping: context.toolMapping,
-    fileRelPath: fileName,
-    sourceLabel: `subagents/${fileName}`,
-    pathPrefix: context.homeDir,
-    homeDir: context.homeDir,
-    harnessId: context.harnessId,
-  });
-  await mkdir(path.dirname(destPath), { recursive: true });
-  await writeIfChanged(destPath, subagentMarker.injectMarker(rendered, resolved.slug));
 }
