@@ -111,6 +111,9 @@ importers:
       '@hyperjump/json-schema':
         specifier: 1.17.6
         version: 1.17.6(@hyperjump/browser@1.3.1)
+      '@williamthorsen/toolbelt.strings':
+        specifier: 3.1.4
+        version: 3.1.4
 
   packages/factory:
     dependencies:
@@ -1124,6 +1127,26 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: '>=9'
+
+  '@williamthorsen/toolbelt.arrays@3.3.5':
+    resolution: {integrity: sha512-gwH0gRxJP1TCHzG4IHCDjdT8UHUEENkZ0GkIUMHHlR5W6tEeQxjkhVN+hMCZ+QXKV949LFiG6sjhkvsj8Gf2fQ==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.guards@3.1.4':
+    resolution: {integrity: sha512-pNklK8w1czsvL5alYKDLc4FvUtrwzkRsPgpBAtL+0/b4MomCwoC3POV/ZXcdhW8St4TEBGKLyGObwJ8YoNkrDA==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.numbers@4.3.4':
+    resolution: {integrity: sha512-i3M47jQ0Dhz8fXhPdVmj+5DdcLSkQqf9k5fFgX9sFXq74ZcpHOFO69LekCcD+fdEoYDYtmscYsj1MYAiYPagjA==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.sets@3.0.5':
+    resolution: {integrity: sha512-WnSo9KLiFKM8jNmkvLeYWWdMbrYeNYOvRe9aLeytan32KmtgjdXMBPhhw1/mnhAA0FymbBUh9qv5SW9VljRZHw==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.strings@3.1.4':
+    resolution: {integrity: sha512-v1OB/OVqcwks3arhy1CV+10IXJnMG901QiMbmTXXvqve2Q0J3B1LMqxDqfKaO2VypVBJME8V9ZopWGmKTirGEQ==}
+    engines: {node: '>=24.0.0'}
 
   '@xyflow/react@12.11.0':
     resolution: {integrity: sha512-na4IO33FSs2OS72hASgZDmTYwFAkef7Z74uBUVrong3ARmQQHfnRUVaCFn1kTt5LbS6pK03TbYjCPGLjLFfziA==}
@@ -4202,6 +4225,23 @@ snapshots:
     dependencies:
       eslint: 9.39.4(jiti@2.7.0)
       tsx: 4.22.4
+
+  '@williamthorsen/toolbelt.arrays@3.3.5':
+    dependencies:
+      '@williamthorsen/toolbelt.guards': 3.1.4
+      '@williamthorsen/toolbelt.numbers': 4.3.4
+
+  '@williamthorsen/toolbelt.guards@3.1.4': {}
+
+  '@williamthorsen/toolbelt.numbers@4.3.4': {}
+
+  '@williamthorsen/toolbelt.sets@3.0.5': {}
+
+  '@williamthorsen/toolbelt.strings@3.1.4':
+    dependencies:
+      '@williamthorsen/toolbelt.arrays': 3.3.5
+      '@williamthorsen/toolbelt.numbers': 4.3.4
+      '@williamthorsen/toolbelt.sets': 3.0.5
 
   '@xyflow/react@12.11.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
