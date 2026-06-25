@@ -48,6 +48,14 @@ describe(libraryListCommand, () => {
     expect(output).toContain('xray');
   });
 
+  it('shows a skill delivery of declared when it opts into declared delivery, install otherwise', async () => {
+    const { output } = await captureList(contentDir);
+    const lines = output.split('\n');
+
+    expect(lines.find((line) => line.includes('charlie-skill'))).toContain('declared');
+    expect(lines.find((line) => line.includes('bravo-skill'))).toContain('install');
+  });
+
   it('skips an artifact with invalid frontmatter and keeps listing the rest', async () => {
     const { output, warnings } = await captureList(contentDir);
 
@@ -155,6 +163,7 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   const subagents = path.join(contentDir, 'subagents');
   await mkdir(rulebooks, { recursive: true });
   await mkdir(path.join(skills, 'bravo'), { recursive: true });
+  await mkdir(path.join(skills, 'charlie'), { recursive: true });
   await mkdir(path.join(skills, '_data'), { recursive: true });
   await mkdir(path.join(skills, 'empty-dir'), { recursive: true });
   await mkdir(path.join(subagents, '_partials'), { recursive: true });
@@ -167,6 +176,10 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   await writeFile(path.join(rulebooks, 'bad.md'), frontmatter({ slug: 'Not A Valid Slug' }));
 
   await writeFile(path.join(skills, 'bravo', 'SKILL.md'), frontmatter({ name: 'bravo-skill', description: 'Bravo.' }));
+  await writeFile(
+    path.join(skills, 'charlie', 'SKILL.md'),
+    frontmatter({ name: 'charlie-skill', description: 'Charlie.', deploy: 'declared' }),
+  );
   await writeFile(path.join(skills, '_data', 'reserved.md'), frontmatter({ name: 'reserved' }));
 
   await writeFile(path.join(subagents, 'yankee.md'), frontmatter({ name: 'yankee-agent', description: 'Yankee.' }));

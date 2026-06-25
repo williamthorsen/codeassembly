@@ -6,6 +6,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { readSkillDeploy } from '../../lib/skill-frontmatter.ts';
+import { isMissingFile } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 
@@ -35,10 +37,9 @@ describe('install smoke (real library)', () => {
     await installCommand(makeOptions(), tempDir);
 
     // Each installed harness's skill count matches the source enumeration (shared skills + that harness's skills).
+    // Skills marked `deploy: declared` are delivered per-project by `sync`, so they are excluded from the count.
     const contentDir = resolveContentDir();
-    const sharedSkills = (await readdir(path.join(contentDir, 'skills'))).filter(
-      (e) => e !== '_harnesses' && e !== '_partials' && !e.startsWith('.'),
-    );
+    const sharedSkills = await installDeliveredSkills(path.join(contentDir, 'skills'));
     for (const [harness, home] of [
       ['claude', '.claude'],
       ['rovodev', '.rovodev'],
@@ -69,6 +70,34 @@ describe('install smoke (real library)', () => {
 });
 
 const INSTALLED_TIERS: ReadonlyArray<string> = ['.claude', '.rovodev', '.agents'];
+
+/**
+ * Returns the shared skill directory names the install path actually delivers: every visible entry except those
+ * marked `deploy: declared`, mirroring install's own gate.
+ * A support entry without a `SKILL.md` (e.g. `_data`) is delivered and so is kept.
+ */
+async function installDeliveredSkills(skillsSrcDir: string): Promise<Array<string>> {
+  const entries = (await readdir(skillsSrcDir)).filter(
+    (entry) => entry !== '_harnesses' && entry !== '_partials' && !entry.startsWith('.'),
+  );
+  const delivered: Array<string> = [];
+  for (const entry of entries) {
+    let content: string;
+    try {
+      content = await readFile(path.join(skillsSrcDir, entry, 'SKILL.md'), 'utf8');
+    } catch (error: unknown) {
+      if (isMissingFile(error)) {
+        delivered.push(entry);
+        continue;
+      }
+      throw error;
+    }
+    if (readSkillDeploy(content) !== 'declared') {
+      delivered.push(entry);
+    }
+  }
+  return delivered;
+}
 
 /** Collects the relative paths of installed Markdown files whose content satisfies `predicate`. */
 async function collectMarkdownMatches(

@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { resolveRulebookDeclaration } from '../../lib/codeassembly-manifest.ts';
+import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { initCommand } from '../init.ts';
 
@@ -35,10 +35,10 @@ describe(initCommand, () => {
     expect(content).toContain('use: []');
   });
 
-  it('scaffolds a file that parses to zero declared rulebooks', async () => {
+  it('scaffolds a file that parses to zero declared artifacts', async () => {
     await initCommand(makeOptions(), projectRoot);
 
-    expect(await resolveRulebookDeclaration({ cwd: projectRoot })).toEqual([]);
+    expect(await resolveDeclaration({ cwd: projectRoot })).toEqual({ rulebooks: [], skills: [] });
   });
 
   it('refuses to overwrite an existing codeassembly.yaml', async () => {

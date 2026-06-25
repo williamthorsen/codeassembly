@@ -2,6 +2,7 @@
 name: people-report
 description: Generate headcount, attrition, diversity, or org health reports from employee data. Use when pulling a headcount snapshot, analyzing turnover trends, preparing diversity metrics, or assessing span of control and flight risk.
 user-invocable: true
+deploy: declared
 ---
 
 # People report

@@ -10,7 +10,7 @@ Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
 | `install`           | Install guidance, skills, and subagents into harness directories, removing files whose source was deleted |
 | `init`              | Scaffold an empty `.agents/codeassembly.yaml` in the current project                                      |
-| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks                                    |
+| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks and skills                         |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                          |
 | `status`            | Show the current state of installed items                                                                 |
 | `library list`      | List available library artifacts (rulebooks, skills, subagents)                                           |
@@ -30,11 +30,30 @@ The declaration is grouped by artifact category. Each category takes a `use` lis
 rulebooks:
   use:
     - shell-conventions
+skills:
+  use:
+    - people-report
 ```
 
 A declared rulebook is materialized into `.agents/rulebooks/<slug>.md` and, depending on its delivery mode, inlined into `.agents/PROJECT.md` and/or delivered as a `consult-<slug>` skill in each detected harness.
 
-Only `rulebooks` is deployed in this version. The `skills`, `subagents`, and `collections` categories are accepted for forward compatibility; declaring a non-empty block of them raises an error until their deployment lands in a later release.
+A declared skill is deployed verbatim into each detected harness's project-local skills directory (`.claude/skills/<slug>/`), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Only a skill whose `SKILL.md` frontmatter sets `deploy: declared` can be deployed this way; a skill without the field installs unconditionally into the user-global harness directories instead (see the [`deploy` field](#the-deploy-skill-field) below). Skill deployment is project-scoped: declared skills land in the project's harness directories, not the user-global ones.
+
+`rulebooks` and `skills` are deployed. The `subagents` and `collections` categories are accepted for forward compatibility; declaring a non-empty block of them raises an error until their deployment lands in a later release.
+
+### The `deploy` skill field
+
+A skill becomes declarable by setting `deploy: declared` in its `SKILL.md` frontmatter:
+
+```yaml
+---
+name: people-report
+description: …
+deploy: declared
+---
+```
+
+The field defaults to `install` when absent — the fail-safe default that keeps every skill on the unconditional install path until it is explicitly migrated. A `declared` skill is delivered only through a project's `codeassembly.yaml` declaration, never by `install`.
 
 ### Scopes
 
