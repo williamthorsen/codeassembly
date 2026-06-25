@@ -67,6 +67,14 @@ describe('install smoke (real library)', () => {
     const linkViolations = await collectBareRelativeLinks(tempDir);
     expect(linkViolations, formatViolations(linkViolations)).toEqual([]);
   });
+
+  it('does not install the declared canary subagent into any harness', async () => {
+    await installCommand(makeOptions(), tempDir);
+
+    for (const subagentsDir of [path.join(tempDir, '.claude', 'agents'), path.join(tempDir, '.rovodev', 'subagents')]) {
+      expect(existsSync(path.join(subagentsDir, 'canary.md'))).toBe(false);
+    }
+  });
 });
 
 const INSTALLED_TIERS: ReadonlyArray<string> = ['.claude', '.rovodev', '.agents'];

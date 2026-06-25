@@ -1,3 +1,6 @@
 skills:
   use:
     - people-report
+subagents:
+  use:
+    - canary

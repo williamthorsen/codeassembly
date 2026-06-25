@@ -686,5 +686,22 @@ describe(syncCommand, () => {
       expect(output).toContain('canary');
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
+
+    it('deploys and retracts the real canary subagent end-to-end', async () => {
+      await declareSubagents('canary');
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
+      expect(deployed).toContain('# Canary');
+      expect(deployed).not.toContain('{tool:Read}');
+      expect(deployed).not.toContain('{harness_home_dir}');
+      expect(deployed).toContain('~/.claude');
+
+      await declareSubagents();
+      await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+      expect(existsSync(subagentPath('canary'))).toBe(false);
+    });
   });
 });
