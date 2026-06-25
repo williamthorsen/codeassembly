@@ -471,7 +471,7 @@ async function installSubagents(
 
     // Subagents opting into declared delivery (`deploy: declared`) are materialized per-project by `sync`, never
     // installed unconditionally. Skipping leaves the entry out of `entries`, so a previously-installed copy is pruned
-    // by the caller's reconcile. Mirrors the skill path's `isDeclaredSkill` gate.
+    // by the caller's reconcile.
     if (readDeploy(await readFile(srcPath, 'utf8'), `subagents/${entry}`) === 'declared') {
       continue;
     }
