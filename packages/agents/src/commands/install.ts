@@ -469,6 +469,13 @@ async function installSubagents(
     const destPath = path.join(harnessPaths.subagentsDir, entry);
     const relativePath = `${harnessConfig.subagentsDirName}/${entry}`;
 
+    // Subagents opting into declared delivery (`deploy: declared`) are materialized per-project by `sync`, never
+    // installed unconditionally. Skipping leaves the entry out of `entries`, so a previously-installed copy is pruned
+    // by the caller's reconcile. Mirrors the skill path's `isDeclaredSkill` gate.
+    if (readDeploy(await readFile(srcPath, 'utf8'), `subagents/${entry}`) === 'declared') {
+      continue;
+    }
+
     // Resolve include directives at source-tree level. Run before the dry-run gate so missing targets, cycles, and
     // out-of-tree references surface even when no files are written. Mirrors the ordering in installHarnessGuidance.
     const expandedSource = await expandIncludes(srcPath, contentDir);
