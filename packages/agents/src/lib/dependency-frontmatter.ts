@@ -43,6 +43,10 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
         `Invalid dependencies${where}: unknown type "${key}"; expected one of ${Object.keys(TYPE_BY_KEY).join(', ')}.`,
       );
     }
+    // A sub-key with no list (`skills:`, e.g. all entries commented out) declares no edges of that type, not an error.
+    if (value === null) {
+      continue;
+    }
     const entries = z.array(EntrySchema).safeParse(value);
     if (!entries.success) {
       throw new Error(`Invalid dependencies${where}: "${key}" must be a list of slugs.`);

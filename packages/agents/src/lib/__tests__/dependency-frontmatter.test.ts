@@ -35,6 +35,12 @@ describe(readDependencies, () => {
     expect(readDependencies(withFrontmatter('dependencies:'))).toEqual({});
   });
 
+  it('tolerates a null sub-key, reading it as no edges of that type', () => {
+    const content = withFrontmatter('dependencies:\n  skills:\n  subagents:\n    - canary');
+
+    expect(readDependencies(content)).toEqual({ subagent: ['canary'] });
+  });
+
   it('throws on an unknown type key, naming the source label', () => {
     const content = withFrontmatter('dependencies:\n  widgets:\n    - gadget');
 
