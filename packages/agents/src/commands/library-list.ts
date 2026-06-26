@@ -140,7 +140,7 @@ function buildEntryOrSkip(type: ArtifactType, source: string, build: () => Artif
   }
 }
 
-/** Orders rows by artifact type (rulebook, skill, subagent), then by slug. */
+/** Orders rows by artifact type, then by slug. */
 function compareRows(a: LibraryRow, b: LibraryRow): number {
   if (a.type !== b.type) {
     return TYPE_ORDER[a.type] - TYPE_ORDER[b.type];
