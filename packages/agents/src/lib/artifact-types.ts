@@ -5,10 +5,17 @@
  */
 export type ArtifactType = 'rulebook' | 'skill' | 'subagent' | 'collection';
 
-/** Per-type metadata: `key` is the plural spelling used as a YAML/declaration key; `contentPath` is the library subdir. */
-export const ARTIFACT_TYPES: Record<ArtifactType, { readonly key: string; readonly contentPath: string }> = {
-  rulebook: { key: 'rulebooks', contentPath: 'guidance/rulebooks' },
-  skill: { key: 'skills', contentPath: 'skills' },
-  subagent: { key: 'subagents', contentPath: 'subagents' },
-  collection: { key: 'collections', contentPath: 'collections' },
+/** Per-type metadata: its own `type`, the plural `key` used as a YAML/declaration key, and its library `contentPath`. */
+export interface ArtifactTypeMeta {
+  readonly type: ArtifactType;
+  readonly key: string;
+  readonly contentPath: string;
+}
+
+/** The single source of truth for each artifact type's declaration key and library location. */
+export const ARTIFACT_TYPES: Record<ArtifactType, ArtifactTypeMeta> = {
+  rulebook: { type: 'rulebook', key: 'rulebooks', contentPath: 'guidance/rulebooks' },
+  skill: { type: 'skill', key: 'skills', contentPath: 'skills' },
+  subagent: { type: 'subagent', key: 'subagents', contentPath: 'subagents' },
+  collection: { type: 'collection', key: 'collections', contentPath: 'collections' },
 };

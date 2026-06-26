@@ -2,7 +2,7 @@ import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
 /** A declaration entry: a bare slug string or a `{ name }` object with tolerated unknown keys, normalized to `{ name }`. */
-const EntrySchema = z
+export const EntrySchema = z
   .union([z.string(), z.object({ name: z.string() }).loose()])
   .transform((entry) => (typeof entry === 'string' ? { name: entry } : entry));
 
