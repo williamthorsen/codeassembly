@@ -6,6 +6,7 @@ import process from 'node:process';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
@@ -63,9 +64,22 @@ export async function syncCommand(
     console.info('No .agents/codeassembly.yaml found. Nothing to sync.');
     return;
   }
-  const declaredRulebooks = declaration.rulebooks;
 
   const contentDir = contentDirOverride ?? resolveContentDir();
+
+  // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
+  // resolving against the library, so a declared collection deploys exactly its transitive closure.
+  const closure = await resolveClosure(
+    {
+      rulebook: declaration.rulebooks,
+      skill: declaration.skills,
+      subagent: declaration.subagents,
+      collection: declaration.collections,
+    },
+    contentDir,
+  );
+  const declaredRulebooks = closure.rulebooks;
+
   const librarySrcDir = path.join(contentDir, 'guidance', 'rulebooks');
   const librarySkillsDir = path.join(contentDir, 'skills');
   const librarySubagentsDir = path.join(contentDir, 'subagents');
@@ -76,11 +90,9 @@ export async function syncCommand(
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
   const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, librarySrcDir)));
   assertNoSkillNameCollisions(resolved);
-  const resolvedSkills = await Promise.all(
-    declaration.skills.map((slug) => resolveDeclaredSkill(slug, librarySkillsDir)),
-  );
+  const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, librarySkillsDir)));
   const resolvedSubagents = await Promise.all(
-    declaration.subagents.map((slug) => resolveDeclaredSubagent(slug, librarySubagentsDir)),
+    closure.subagents.map((slug) => resolveDeclaredSubagent(slug, librarySubagentsDir)),
   );
 
   // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
