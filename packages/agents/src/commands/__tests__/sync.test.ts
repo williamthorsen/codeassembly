@@ -1,6 +1,6 @@
 import { existsSync, statSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
-import { syncCommand } from '../sync.ts';
+import { syncCommand, syncGlobalCommand } from '../sync.ts';
 
 describe(syncCommand, () => {
   let projectRoot: string;
@@ -713,5 +713,139 @@ describe(syncCommand, () => {
 
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
+  });
+});
+
+describe(syncGlobalCommand, () => {
+  let homeDir: string;
+  let contentDir: string;
+
+  beforeEach(async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    homeDir = path.join(tmpdir(), `agents-test-sync-home-${stamp}`);
+    contentDir = path.join(tmpdir(), `agents-test-sync-home-content-${stamp}`);
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(path.join(contentDir, 'guidance', 'rulebooks'), { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(homeDir, { recursive: true, force: true });
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
+  }
+
+  /** Writes a fixture rulebook into the temp content library. */
+  async function writeLibraryRulebook(slug: string, frontmatter: string, body: string): Promise<void> {
+    const file = path.join(contentDir, 'guidance', 'rulebooks', `${slug}.md`);
+    await writeFile(file, `---\nslug: ${slug}\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
+  }
+
+  /** Writes a fixture declared skill into the temp content library. */
+  async function writeLibrarySkill(slug: string): Promise<void> {
+    const dir = path.join(contentDir, 'skills', slug);
+    await mkdir(dir, { recursive: true });
+    await writeFile(
+      path.join(dir, 'SKILL.md'),
+      `---\nname: ${slug}\ndeploy: declared\n---\n\n# ${slug}\n\nBody.\n`,
+      'utf8',
+    );
+  }
+
+  /** Writes the user-global codeassembly.yaml under the temp home's `.agents/`. */
+  async function declareRaw(content: string): Promise<void> {
+    await mkdir(path.join(homeDir, '.agents'), { recursive: true });
+    await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), content, 'utf8');
+  }
+
+  it('when no ~/.agents/codeassembly.yaml exists, makes no changes', async () => {
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks'))).toBe(false);
+  });
+
+  it('deploys a declared skill into the home harness skills dir with the ownership marker', async () => {
+    await writeLibrarySkill('people-report');
+    await declareRaw('skills:\n  use:\n    - people-report\n');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'), 'utf8');
+    expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
+  });
+
+  it('inlines ambient rulebooks into ~/.agents/GLOBAL.md, never PROJECT.md', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const globalMd = await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8');
+    expect(globalMd).toContain('<!-- rulebook:alpha -->');
+    expect(globalMd).toContain('Alpha rules.');
+    expect(existsSync(path.join(homeDir, '.agents', 'PROJECT.md'))).toBe(false);
+  });
+
+  it('refuses to overwrite a home skill that lacks the sync ownership marker', async () => {
+    await writeLibrarySkill('people-report');
+    await declareRaw('skills:\n  use:\n    - people-report\n');
+    const target = path.join(homeDir, '.claude', 'skills', 'people-report');
+    await mkdir(target, { recursive: true });
+    await writeFile(path.join(target, 'SKILL.md'), '---\nname: people-report\n---\n\n# Hand-authored\n', 'utf8');
+
+    await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(/not owned by sync/i);
+    expect(await readFile(path.join(target, 'SKILL.md'), 'utf8')).toContain('Hand-authored');
+  });
+
+  it('refuses a bare sync run rooted at the home directory, directing to --global', async () => {
+    await expect(syncCommand(makeOptions(), homedir(), contentDir)).rejects.toThrow(/--global/);
+  });
+
+  it('retracts a home ambient block on undeclare and never writes ~/.agents/AGENTS.md', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+    expect(await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8')).toContain('<!-- rulebook:alpha -->');
+
+    await declareRaw('rulebooks:\n  use: []\n');
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const globalMd = await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8');
+    expect(globalMd).not.toContain('<!-- rulebook:alpha -->');
+    expect(existsSync(path.join(homeDir, '.agents', 'AGENTS.md'))).toBe(false);
+  });
+
+  it('refreshes ~/.rovodev/prompts.yml with home-deployed Rovo Dev skills', async () => {
+    await writeLibrarySkill('people-report');
+    await declareRaw('skills:\n  use:\n    - people-report\n');
+
+    await syncGlobalCommand(makeOptions({ harness: 'rovodev' }), homeDir, contentDir);
+
+    const prompts = await readFile(path.join(homeDir, '.rovodev', 'prompts.yml'), 'utf8');
+    expect(prompts).toContain("name: 'people-report'");
+    expect(prompts).toContain('content_file: skills/people-report/SKILL.md');
+  });
+
+  it('deploys the real recommended collection to home via the user-global declaration', async () => {
+    await declareRaw('collections:\n  use:\n    - recommended\n');
+
+    await syncGlobalCommand(makeOptions({ harness: 'claude' }), homeDir, resolveContentDir());
+
+    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(true);
+  });
+
+  it('reconciles ~/.agents/rulebooks/ as wholesale sync-owned, removing an undeclared neutral file', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+    await writeFile(path.join(homeDir, '.agents', 'rulebooks', 'stray.md'), '# Stray\n', 'utf8');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'stray.md'))).toBe(false);
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
   });
 });

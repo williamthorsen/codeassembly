@@ -7,7 +7,7 @@ import { initCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
-import { syncCommand } from './commands/sync.ts';
+import { syncCommand, syncGlobalCommand } from './commands/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
@@ -17,7 +17,7 @@ const VALID_HARNESS_IDS = new Set<string>(['claude', 'rovodev', 'all']);
  * Main CLI entry point.
  */
 async function main(): Promise<void> {
-  const { command, subcommand, options, help } = parseArgs(process.argv);
+  const { command, subcommand, options, help, global } = parseArgs(process.argv);
 
   if (help || !command) {
     printUsage();
@@ -33,7 +33,7 @@ async function main(): Promise<void> {
         await initCommand(options);
         break;
       case 'sync':
-        await syncCommand(options);
+        await (global ? syncGlobalCommand(options) : syncCommand(options));
         break;
       case 'uninstall':
         await uninstallCommand({ harness: options.harness, force: options.force });
@@ -86,6 +86,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   subcommand: string;
   options: InstallOptions;
   help: boolean;
+  global: boolean;
 } {
   const args = argv.slice(2);
   let command = '';
@@ -95,6 +96,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   let force = false;
   let dryRun = false;
   let help = false;
+  let global = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -113,6 +115,9 @@ function parseArgs(argv: ReadonlyArray<string>): {
         break;
       case 'dry-run':
         dryRun = true;
+        break;
+      case 'global':
+        global = true;
         break;
       case 'harness': {
         const result = parseHarnessArg(args, i);
@@ -137,16 +142,18 @@ function parseArgs(argv: ReadonlyArray<string>): {
     subcommand,
     options: { harness, link, force, dryRun },
     help,
+    global,
   };
 }
 
-function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'harness' | null {
-  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'harness'> = {
+function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'global' | 'harness' | null {
+  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'global' | 'harness'> = {
     '--help': 'help',
     '-h': 'help',
     '--link': 'link',
     '--force': 'force',
     '--dry-run': 'dry-run',
+    '--global': 'global',
     '--harness': 'harness',
   };
   return flags[arg] ?? null;
@@ -188,6 +195,7 @@ Options:
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
+  --global           Sync the user-global tier (~/.agents/codeassembly.yaml) into the home harness dirs (sync only)
   --help, -h         Show this help message`);
 }
 

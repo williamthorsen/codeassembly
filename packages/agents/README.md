@@ -20,7 +20,7 @@ Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `-
 
 ## Project declaration
 
-A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them.
+A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`); see [Scopes](#scopes).
 
 ### Format
 
@@ -40,9 +40,9 @@ subagents:
 
 A declared rulebook is materialized into `.agents/rulebooks/<slug>.md` and, depending on its delivery mode, inlined into `.agents/PROJECT.md` and/or delivered as a `consult-<slug>` skill in each detected harness.
 
-A declared skill is deployed verbatim into each detected harness's project-local skills directory (`.claude/skills/<slug>/`), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Only a skill whose `SKILL.md` frontmatter sets `deploy: declared` can be deployed this way; a skill without the field installs unconditionally into the user-global harness directories instead (see the [`deploy` field](#the-deploy-field) below). Skill deployment is project-scoped: declared skills land in the project's harness directories, not the user-global ones.
+A declared skill is deployed verbatim into each detected harness's project-local skills directory (`.claude/skills/<slug>/`), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Only a skill whose `SKILL.md` frontmatter sets `deploy: declared` can be deployed this way; a skill without the field installs unconditionally into the user-global harness directories instead (see the [`deploy` field](#the-deploy-field) below). Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
 
-A declared subagent is deployed into each detected harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. As with skills, only a subagent whose frontmatter sets `deploy: declared` is deployed this way; a subagent without the field installs unconditionally. Subagent deployment is project-scoped: a declared subagent resolves only where it is declared. Global (home) delivery for subagents is tracked by #857; until then, real, globally-dispatched subagents stay on `install` and are not migrated.
+A declared subagent is deployed into each detected harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. As with skills, only a subagent whose frontmatter sets `deploy: declared` is deployed this way; a subagent without the field installs unconditionally. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`. The default catalog still ships through the unconditional `install` path; migrating it onto `declared` so `sync --global` carries it is the remaining step.
 
 `rulebooks`, `skills`, `subagents`, and `collections` are all deployed.
 
@@ -56,7 +56,7 @@ collections:
     - recommended
 ```
 
-Dropping or omitting a collection — or `root: true` — excludes its entire closure. The shipped `recommended` collection bundles the default declared artifacts and is opt-in: a project gets it only by declaring it.
+Dropping or omitting a collection — or `root: true` — excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead. The shipped `recommended` collection bundles the default declared artifacts. The installed user-global declaration (`~/.agents/codeassembly.yaml`) declares it, so `sync --global` deploys it into the home directories out of the box; a project adds it for repo deployment by declaring it explicitly.
 
 ### Dependencies
 
@@ -90,12 +90,19 @@ The field defaults to `install` when absent — the fail-safe default that keeps
 
 ### Scopes
 
-The declaration resolves across two tiers, lowest to highest precedence:
+The declaration resolves in two independent **domains**, each with its own base and local tiers and its own deployment target. The tiers within a domain run lowest to highest precedence.
+
+**Repo domain** — `codeassembly-agents sync`, deploying into the repo:
 
 1. **Project** — `.agents/codeassembly.yaml`, committed and shared with the team.
 2. **Project-local** — `.agents/codeassembly.local.yaml`, gitignored, for personal overrides.
 
-A higher tier adds to and overrides the tiers below it: `use` adds a rulebook, `drop` removes one inherited from a broader scope, and `root: true` discards everything declared in broader scopes, starting fresh from that file.
+**Home domain** — `codeassembly-agents sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovodev`) and `~/.agents/`:
+
+1. **User-global** — `~/.agents/codeassembly.yaml`, install-managed (declares `recommended` by default).
+2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
+
+A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. The domains never cross — a project tier cannot `drop` a user-global entry, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). Ambient rulebooks inline into `.agents/PROJECT.md` in the repo domain and `~/.agents/GLOBAL.md` in the home domain.
 
 ## Preferences
 

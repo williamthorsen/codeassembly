@@ -1,0 +1,6 @@
+# Installed by codeassembly-agents into ~/.agents/codeassembly.yaml; edits are overwritten on the next install.
+# This is the user-global declaration tier: `sync --global` deploys its closure into the home harness dirs.
+# To override (for example, to drop a recommended member), use ~/.agents/codeassembly.local.yaml.
+collections:
+  use:
+    - recommended

@@ -1,5 +1,6 @@
 import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -9,6 +10,7 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
@@ -43,13 +45,17 @@ interface HarnessSubagentTarget {
   readonly deployContext: SubagentDeployContext;
 }
 
+/** The one per-domain difference: the base dir to resolve and deploy under, and the file that hosts ambient blocks. */
+export interface SyncDomain {
+  readonly baseDir: string;
+  readonly ambientHostPath: string;
+  readonly label: 'project' | 'global';
+}
+
 /**
- * Resolves the project's `codeassembly.yaml` scope chain, materializes each declared rulebook's neutral body to
- * `.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `.agents/PROJECT.md`, writes `skill` rulebooks
- * as thin-wrapper skills into each targeted harness's project-local skills dir, deploys declared skills and declared
- * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
- * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent.
- * An absent `codeassembly.yaml` is a total no-op.
+ * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
+ * domain). A thin wrapper over `reconcileDomain` that supplies the repo `SyncDomain`. An absent `codeassembly.yaml`
+ * is a total no-op.
  *
  * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
  * @param contentDirOverride Override for the library source (defaults to the package content dir).
@@ -59,7 +65,55 @@ export async function syncCommand(
   projectRoot: string = process.cwd(),
   contentDirOverride?: string,
 ): Promise<void> {
-  const declaration = await resolveDeclaration({ cwd: projectRoot });
+  if (path.resolve(projectRoot) === path.resolve(homedir())) {
+    throw new Error(
+      'Refusing to run `sync` in the home directory: that would deploy the user-global tier through the project ' +
+        'path. Run `sync --global` to sync the user-global tier into the home harness dirs.',
+    );
+  }
+  await reconcileDomain(
+    options,
+    { baseDir: projectRoot, ambientHostPath: path.join(projectRoot, '.agents', 'PROJECT.md'), label: 'project' },
+    contentDirOverride,
+  );
+}
+
+/**
+ * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
+ * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in
+ * `~/.agents/GLOBAL.md` so install's whole-file `~/.agents/AGENTS.md` is never co-written. An absent declaration is a
+ * total no-op.
+ *
+ * @param homeDir The home directory whose `.agents/` is synced (defaults to the OS home dir; injected in tests).
+ * @param contentDirOverride Override for the library source (defaults to the package content dir).
+ */
+export async function syncGlobalCommand(
+  options: InstallOptions,
+  homeDir: string = homedir(),
+  contentDirOverride?: string,
+): Promise<void> {
+  await reconcileDomain(
+    options,
+    { baseDir: homeDir, ambientHostPath: path.join(homeDir, '.agents', 'GLOBAL.md'), label: 'global' },
+    contentDirOverride,
+  );
+}
+
+/**
+ * Resolves the `codeassembly.yaml` scope chain under `domain.baseDir`, materializes each declared rulebook's neutral
+ * body to `<baseDir>/.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `domain.ambientHostPath`, writes
+ * `skill` rulebooks as thin-wrapper skills into each targeted harness's skills dir, deploys declared skills and
+ * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
+ * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent. An
+ * absent `codeassembly.yaml` is a total no-op. Repo and home domains share this one reconciler, differing only in
+ * the `SyncDomain` they pass.
+ */
+async function reconcileDomain(
+  options: InstallOptions,
+  domain: SyncDomain,
+  contentDirOverride?: string,
+): Promise<void> {
+  const declaration = await resolveDeclaration({ cwd: domain.baseDir });
   if (declaration === undefined) {
     console.info('No .agents/codeassembly.yaml found. Nothing to sync.');
     return;
@@ -83,8 +137,8 @@ export async function syncCommand(
   const librarySrcDir = path.join(contentDir, 'guidance', 'rulebooks');
   const librarySkillsDir = path.join(contentDir, 'skills');
   const librarySubagentsDir = path.join(contentDir, 'subagents');
-  const neutralDir = path.join(projectRoot, '.agents', 'rulebooks');
-  const projectMdPath = path.join(projectRoot, '.agents', 'PROJECT.md');
+  const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
+  const ambientHostPath = domain.ambientHostPath;
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
@@ -113,8 +167,8 @@ export async function syncCommand(
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir.
-  const harnessSkillDirs = resolveHarnessIds(options.harness, projectRoot).map(
-    (harnessId) => resolveHarnessPaths(harnessId, projectRoot).skillsDir,
+  const harnessSkillDirs = resolveHarnessIds(options.harness, domain.baseDir).map(
+    (harnessId) => resolveHarnessPaths(harnessId, domain.baseDir).skillsDir,
   );
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
@@ -122,14 +176,14 @@ export async function syncCommand(
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    resolveHarnessIds(options.harness, projectRoot).map((harnessId) =>
-      resolveSubagentTarget(harnessId, projectRoot, contentDir),
+    resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
+      resolveSubagentTarget(harnessId, domain.baseDir, contentDir),
     ),
   );
 
-  const existingProjectMd = await readFileOrEmpty(projectMdPath);
+  const existingAmbientHost = await readFileOrEmpty(ambientHostPath);
   const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
-  const inlineOrphans = extractInstalledSlugs(existingProjectMd).filter((slug) => !desiredAmbient.has(slug));
+  const inlineOrphans = extractInstalledSlugs(existingAmbientHost).filter((slug) => !desiredAmbient.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
@@ -164,8 +218,16 @@ export async function syncCommand(
     })),
   );
 
+  // Before any write or delete, fail closed on any skill or subagent target that already exists without this sync's
+  // ownership marker — an install-managed or hand-authored file. The marker-gated retraction scans keep such files
+  // from being deleted; this keeps them from being overwritten. Runs in dry-run too, so a preview surfaces the conflict.
+  await assertNoForeignOwnedTargets(
+    collectOwnedTargets(harnessSkillDirs, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
+  );
+
   if (options.dryRun) {
     reportDryRun({
+      ambientHostName: path.basename(ambientHostPath),
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
       harnessSkillDirs,
@@ -183,16 +245,16 @@ export async function syncCommand(
     await mkdir(neutralDir, { recursive: true });
   }
 
-  // PROJECT.md is read once, mutated in memory across all inject/remove operations, and written once.
-  let projectMd = existingProjectMd;
+  // The ambient host file is read once, mutated in memory across all inject/remove operations, and written once.
+  let ambientHost = existingAmbientHost;
   for (const rulebook of resolved) {
     await writeIfChanged(path.join(neutralDir, `${rulebook.slug}.md`), rulebook.body);
     if (rulebook.ambient) {
-      projectMd = injectRulebook(projectMd, rulebook.slug, rulebook.body);
+      ambientHost = injectRulebook(ambientHost, rulebook.slug, rulebook.body);
     }
   }
   for (const slug of inlineOrphans) {
-    projectMd = removeRulebook(projectMd, slug);
+    ambientHost = removeRulebook(ambientHost, slug);
   }
 
   // `.agents/rulebooks/` is sync-owned, so deleting an undeclared neutral file here is safe, not user data loss.
@@ -200,9 +262,9 @@ export async function syncCommand(
     await rm(path.join(neutralDir, `${slug}.md`), { force: true });
   }
 
-  if (projectMd !== existingProjectMd) {
-    await mkdir(path.dirname(projectMdPath), { recursive: true });
-    await writeFile(projectMdPath, projectMd, 'utf8');
+  if (ambientHost !== existingAmbientHost) {
+    await mkdir(path.dirname(ambientHostPath), { recursive: true });
+    await writeFile(ambientHostPath, ambientHost, 'utf8');
   }
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
@@ -242,6 +304,8 @@ export async function syncCommand(
   // transform applied and the ownership marker stamped.
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
 
+  await refreshHomePromptsYml(options, domain);
+
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
   const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
   const declaredSkillRetractions = declaredSkillOrphansByDir.reduce(
@@ -262,6 +326,80 @@ export async function syncCommand(
 }
 
 // region | Helpers
+
+/** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
+interface OwnedTarget {
+  readonly filePath: string;
+  readonly isOwned: (content: string) => boolean;
+}
+
+/**
+ * Throws when any planned target already exists without this sync's ownership marker — an install-managed or
+ * hand-authored file. Failing here, before any write or delete, is what keeps a same-named foreign file from being
+ * overwritten; the marker-gated retraction scans separately keep it from being deleted. Absent targets are safe.
+ */
+async function assertNoForeignOwnedTargets(targets: ReadonlyArray<OwnedTarget>): Promise<void> {
+  const foreign: Array<string> = [];
+  for (const target of targets) {
+    let content: string;
+    try {
+      content = await readFile(target.filePath, 'utf8');
+    } catch (error: unknown) {
+      if (isMissingFile(error)) {
+        continue;
+      }
+      throw error;
+    }
+    if (!target.isOwned(content)) {
+      foreign.push(target.filePath);
+    }
+  }
+  if (foreign.length > 0) {
+    throw new Error(
+      `Refusing to overwrite ${foreign.length} file(s) not owned by sync (install-managed or hand-authored): ` +
+        `${foreign.join(', ')}. Rename or remove them, or retire the conflicting install artifact, then re-run.`,
+    );
+  }
+}
+
+/**
+ * Collects the skill and subagent destinations a sync would write, each paired with the predicate that recognizes its
+ * own ownership marker, so the pre-write guard can reject any that already exist foreign-owned.
+ */
+function collectOwnedTargets(
+  harnessSkillDirs: ReadonlyArray<string>,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  resolvedSkills: ReadonlyArray<ResolvedSkill>,
+  harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>,
+  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+): ReadonlyArray<OwnedTarget> {
+  const targets: Array<OwnedTarget> = [];
+  for (const skillsDir of harnessSkillDirs) {
+    for (const rulebook of resolved) {
+      if (rulebook.skill) {
+        targets.push({
+          filePath: path.join(skillsDir, rulebook.skillName, 'SKILL.md'),
+          isOwned: (content) => extractRulebookSkillSlug(content) !== undefined,
+        });
+      }
+    }
+    for (const skill of resolvedSkills) {
+      targets.push({
+        filePath: path.join(skillsDir, skill.slug, 'SKILL.md'),
+        isOwned: (content) => skillMarker.extractSlug(content) !== undefined,
+      });
+    }
+  }
+  for (const target of harnessSubagentTargets) {
+    for (const subagent of resolvedSubagents) {
+      targets.push({
+        filePath: path.join(target.subagentsDir, `${subagent.slug}.md`),
+        isOwned: (content) => subagentMarker.extractSlug(content) !== undefined,
+      });
+    }
+  }
+  return targets;
+}
 
 /**
  * Throws when a rulebook-skill directory name and a declared-skill directory name collide, which would let the two
@@ -456,8 +594,30 @@ async function reconcileDeclaredSubagents(
   }
 }
 
+/**
+ * Regenerates the home-domain Rovo Dev `prompts.yml` so home-deployed skills appear in its available-skills list. As a
+ * pure projection of the on-disk skills dir, it also drops any just-retracted skill. A no-op for the repo domain (which
+ * keeps no such index) and for non-Rovo Dev harnesses.
+ */
+async function refreshHomePromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
+  if (domain.label !== 'global') {
+    return;
+  }
+  for (const harnessId of resolveHarnessIds(options.harness, domain.baseDir)) {
+    if (harnessId !== 'rovodev') {
+      continue;
+    }
+    const { harnessHome, skillsDir } = resolveHarnessPaths(harnessId, domain.baseDir);
+    const promptsYml = await renderPromptsYml(skillsDir);
+    if (promptsYml !== undefined) {
+      await writeIfChanged(path.join(harnessHome, 'prompts.yml'), promptsYml);
+    }
+  }
+}
+
 /** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
 interface DryRunPlan {
+  readonly ambientHostName: string;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
   readonly retracted: ReadonlyArray<string>;
   readonly harnessSkillDirs: ReadonlyArray<string>;
@@ -473,7 +633,7 @@ interface DryRunPlan {
 function reportDryRun(plan: DryRunPlan): void {
   console.info('[dry-run] sync would:');
   for (const rulebook of plan.resolved) {
-    const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
+    const inline = rulebook.ambient ? ` (+ inline into ${plan.ambientHostName})` : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
       for (const skillsDir of plan.harnessSkillDirs) {
