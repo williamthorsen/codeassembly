@@ -5,7 +5,6 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
-import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import {
@@ -23,6 +22,7 @@ import {
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
+import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { loadSubagentOverlay, renderSubagentForHarness } from '../lib/subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
@@ -554,81 +554,11 @@ async function generatePromptsYml(
     };
   }
 
-  // Gather skill metadata from installed skills directory
-  let skillDirEntries: ReadonlyArray<string>;
-  try {
-    skillDirEntries = await readdir(paths.skillsDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
+  const yamlContent = await renderPromptsYml(paths.skillsDir);
+  if (yamlContent === undefined) {
     console.warn(`  ⚠️ Warning: skills directory not found, skipping prompts.yml generation: ${paths.skillsDir}`);
     return undefined;
   }
-
-  const sortedSkillNames = [...skillDirEntries].toSorted();
-
-  const promptEntries: Array<{ name: string; description: string; contentFile: string }> = [];
-
-  for (const skillName of sortedSkillNames) {
-    const skillMdPath = path.join(paths.skillsDir, skillName, 'SKILL.md');
-    let skillContent: string;
-    try {
-      skillContent = await readFile(skillMdPath, 'utf8');
-    } catch (error: unknown) {
-      // Tolerate any non-directory entry in the destination skills directory (e.g. a `.DS_Store` left by Finder):
-      // joining `SKILL.md` onto a regular file raises `ENOTDIR`; a directory without `SKILL.md` raises `ENOENT`.
-      // Either way the entry is not a skill and should be skipped.
-      if (isMissingFile(error)) {
-        continue;
-      }
-      throw error;
-    }
-
-    const { lines } = parseFrontmatter(skillContent);
-
-    // Extract user-invocable and description from frontmatter lines
-    let userInvocable = true; // Default: included unless explicitly false
-    let description = '';
-    for (const line of lines) {
-      if (line.startsWith('user-invocable:')) {
-        const value = line.slice('user-invocable:'.length).trim();
-        userInvocable = value !== 'false';
-      }
-      if (line.startsWith('description:')) {
-        description = line.slice('description:'.length).trim();
-        // Strip surrounding quotes if present and unescape internal escapes
-        if (description.startsWith("'") && description.endsWith("'")) {
-          description = description.slice(1, -1).replaceAll("''", "'");
-        } else if (description.startsWith('"') && description.endsWith('"')) {
-          description = description.slice(1, -1).replaceAll(String.raw`\"`, '"');
-        }
-      }
-    }
-
-    if (!userInvocable) {
-      continue;
-    }
-
-    promptEntries.push({
-      name: skillName,
-      description,
-      contentFile: `skills/${skillName}/SKILL.md`,
-    });
-  }
-
-  // Build YAML content with deterministic template literals. Description values are single-quoted with internal single
-  // quotes escaped (doubled) to prevent YAML-special characters from producing invalid output.
-  const yamlLines = ['prompts:'];
-  for (const entry of promptEntries) {
-    const escapedDescription = entry.description.replaceAll("'", "''");
-    yamlLines.push(
-      `  - name: '${entry.name}'`,
-      `    description: '${escapedDescription}'`,
-      `    content_file: ${entry.contentFile}`,
-    );
-  }
-  const yamlContent = yamlLines.join('\n') + '\n';
 
   // Check for user modifications before overwriting.
   // Files at 'current' drift are always regenerated to pick up any newly added skills.

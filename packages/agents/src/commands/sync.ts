@@ -10,6 +10,7 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
@@ -303,6 +304,8 @@ async function reconcileDomain(
   // transform applied and the ownership marker stamped.
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
 
+  await refreshHomePromptsYml(options, domain);
+
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
   const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
   const declaredSkillRetractions = declaredSkillOrphansByDir.reduce(
@@ -587,6 +590,27 @@ async function reconcileDeclaredSubagents(
     }
     for (const subagent of resolvedSubagents) {
       await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), target.deployContext);
+    }
+  }
+}
+
+/**
+ * Regenerates the home-domain Rovo Dev `prompts.yml` so home-deployed skills appear in its available-skills list. As a
+ * pure projection of the on-disk skills dir, it also drops any just-retracted skill. A no-op for the repo domain (which
+ * keeps no such index) and for non-Rovo Dev harnesses.
+ */
+async function refreshHomePromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
+  if (domain.label !== 'global') {
+    return;
+  }
+  for (const harnessId of resolveHarnessIds(options.harness, domain.baseDir)) {
+    if (harnessId !== 'rovodev') {
+      continue;
+    }
+    const { harnessHome, skillsDir } = resolveHarnessPaths(harnessId, domain.baseDir);
+    const promptsYml = await renderPromptsYml(skillsDir);
+    if (promptsYml !== undefined) {
+      await writeIfChanged(path.join(harnessHome, 'prompts.yml'), promptsYml);
     }
   }
 }

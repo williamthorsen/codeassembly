@@ -816,4 +816,15 @@ describe(syncGlobalCommand, () => {
     expect(globalMd).not.toContain('<!-- rulebook:alpha -->');
     expect(existsSync(path.join(homeDir, '.agents', 'AGENTS.md'))).toBe(false);
   });
+
+  it('refreshes ~/.rovodev/prompts.yml with home-deployed Rovo Dev skills', async () => {
+    await writeLibrarySkill('people-report');
+    await declareRaw('skills:\n  use:\n    - people-report\n');
+
+    await syncGlobalCommand(makeOptions({ harness: 'rovodev' }), homeDir, contentDir);
+
+    const prompts = await readFile(path.join(homeDir, '.rovodev', 'prompts.yml'), 'utf8');
+    expect(prompts).toContain("name: 'people-report'");
+    expect(prompts).toContain('content_file: skills/people-report/SKILL.md');
+  });
 });
