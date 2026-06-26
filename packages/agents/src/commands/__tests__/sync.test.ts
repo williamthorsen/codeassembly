@@ -836,4 +836,16 @@ describe(syncGlobalCommand, () => {
     expect(existsSync(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'))).toBe(true);
     expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(true);
   });
+
+  it('reconciles ~/.agents/rulebooks/ as wholesale sync-owned, removing an undeclared neutral file', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+    await writeFile(path.join(homeDir, '.agents', 'rulebooks', 'stray.md'), '# Stray\n', 'utf8');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'stray.md'))).toBe(false);
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
+  });
 });
