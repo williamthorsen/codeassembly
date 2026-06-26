@@ -827,4 +827,13 @@ describe(syncGlobalCommand, () => {
     expect(prompts).toContain("name: 'people-report'");
     expect(prompts).toContain('content_file: skills/people-report/SKILL.md');
   });
+
+  it('deploys the real recommended collection to home via the user-global declaration', async () => {
+    await declareRaw('collections:\n  use:\n    - recommended\n');
+
+    await syncGlobalCommand(makeOptions({ harness: 'claude' }), homeDir, resolveContentDir());
+
+    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(true);
+  });
 });
