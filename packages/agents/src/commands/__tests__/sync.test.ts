@@ -802,4 +802,18 @@ describe(syncGlobalCommand, () => {
   it('refuses a bare sync run rooted at the home directory, directing to --global', async () => {
     await expect(syncCommand(makeOptions(), homedir(), contentDir)).rejects.toThrow(/--global/);
   });
+
+  it('retracts a home ambient block on undeclare and never writes ~/.agents/AGENTS.md', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+    expect(await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8')).toContain('<!-- rulebook:alpha -->');
+
+    await declareRaw('rulebooks:\n  use: []\n');
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const globalMd = await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8');
+    expect(globalMd).not.toContain('<!-- rulebook:alpha -->');
+    expect(existsSync(path.join(homeDir, '.agents', 'AGENTS.md'))).toBe(false);
+  });
 });
