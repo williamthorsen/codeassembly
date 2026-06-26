@@ -3,6 +3,7 @@ name: recommended
 description: The batteries-included default set of artifacts, opt-in via codeassembly.yaml.
 dependencies:
   skills:
+    - capture-feedback
     - people-report
   subagents:
     - canary
