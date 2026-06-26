@@ -43,13 +43,17 @@ interface HarnessSubagentTarget {
   readonly deployContext: SubagentDeployContext;
 }
 
+/** The one per-domain difference: the base dir to resolve and deploy under, and the file that hosts ambient blocks. */
+export interface SyncDomain {
+  readonly baseDir: string;
+  readonly ambientHostPath: string;
+  readonly label: 'project' | 'global';
+}
+
 /**
- * Resolves the project's `codeassembly.yaml` scope chain, materializes each declared rulebook's neutral body to
- * `.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `.agents/PROJECT.md`, writes `skill` rulebooks
- * as thin-wrapper skills into each targeted harness's project-local skills dir, deploys declared skills and declared
- * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
- * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent.
- * An absent `codeassembly.yaml` is a total no-op.
+ * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
+ * domain). A thin wrapper over `reconcileDomain` that supplies the repo `SyncDomain`. An absent `codeassembly.yaml`
+ * is a total no-op.
  *
  * @param projectRoot The project whose `.agents/` directory is synced (defaults to the current directory).
  * @param contentDirOverride Override for the library source (defaults to the package content dir).
@@ -59,7 +63,28 @@ export async function syncCommand(
   projectRoot: string = process.cwd(),
   contentDirOverride?: string,
 ): Promise<void> {
-  const declaration = await resolveDeclaration({ cwd: projectRoot });
+  await reconcileDomain(
+    options,
+    { baseDir: projectRoot, ambientHostPath: path.join(projectRoot, '.agents', 'PROJECT.md'), label: 'project' },
+    contentDirOverride,
+  );
+}
+
+/**
+ * Resolves the `codeassembly.yaml` scope chain under `domain.baseDir`, materializes each declared rulebook's neutral
+ * body to `<baseDir>/.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `domain.ambientHostPath`, writes
+ * `skill` rulebooks as thin-wrapper skills into each targeted harness's skills dir, deploys declared skills and
+ * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
+ * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent. An
+ * absent `codeassembly.yaml` is a total no-op. Repo and home domains share this one reconciler, differing only in
+ * the `SyncDomain` they pass.
+ */
+async function reconcileDomain(
+  options: InstallOptions,
+  domain: SyncDomain,
+  contentDirOverride?: string,
+): Promise<void> {
+  const declaration = await resolveDeclaration({ cwd: domain.baseDir });
   if (declaration === undefined) {
     console.info('No .agents/codeassembly.yaml found. Nothing to sync.');
     return;
@@ -83,8 +108,8 @@ export async function syncCommand(
   const librarySrcDir = path.join(contentDir, 'guidance', 'rulebooks');
   const librarySkillsDir = path.join(contentDir, 'skills');
   const librarySubagentsDir = path.join(contentDir, 'subagents');
-  const neutralDir = path.join(projectRoot, '.agents', 'rulebooks');
-  const projectMdPath = path.join(projectRoot, '.agents', 'PROJECT.md');
+  const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
+  const ambientHostPath = domain.ambientHostPath;
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
@@ -113,8 +138,8 @@ export async function syncCommand(
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir.
-  const harnessSkillDirs = resolveHarnessIds(options.harness, projectRoot).map(
-    (harnessId) => resolveHarnessPaths(harnessId, projectRoot).skillsDir,
+  const harnessSkillDirs = resolveHarnessIds(options.harness, domain.baseDir).map(
+    (harnessId) => resolveHarnessPaths(harnessId, domain.baseDir).skillsDir,
   );
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
@@ -122,14 +147,14 @@ export async function syncCommand(
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    resolveHarnessIds(options.harness, projectRoot).map((harnessId) =>
-      resolveSubagentTarget(harnessId, projectRoot, contentDir),
+    resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
+      resolveSubagentTarget(harnessId, domain.baseDir, contentDir),
     ),
   );
 
-  const existingProjectMd = await readFileOrEmpty(projectMdPath);
+  const existingAmbientHost = await readFileOrEmpty(ambientHostPath);
   const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
-  const inlineOrphans = extractInstalledSlugs(existingProjectMd).filter((slug) => !desiredAmbient.has(slug));
+  const inlineOrphans = extractInstalledSlugs(existingAmbientHost).filter((slug) => !desiredAmbient.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
@@ -166,6 +191,7 @@ export async function syncCommand(
 
   if (options.dryRun) {
     reportDryRun({
+      ambientHostName: path.basename(ambientHostPath),
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
       harnessSkillDirs,
@@ -183,16 +209,16 @@ export async function syncCommand(
     await mkdir(neutralDir, { recursive: true });
   }
 
-  // PROJECT.md is read once, mutated in memory across all inject/remove operations, and written once.
-  let projectMd = existingProjectMd;
+  // The ambient host file is read once, mutated in memory across all inject/remove operations, and written once.
+  let ambientHost = existingAmbientHost;
   for (const rulebook of resolved) {
     await writeIfChanged(path.join(neutralDir, `${rulebook.slug}.md`), rulebook.body);
     if (rulebook.ambient) {
-      projectMd = injectRulebook(projectMd, rulebook.slug, rulebook.body);
+      ambientHost = injectRulebook(ambientHost, rulebook.slug, rulebook.body);
     }
   }
   for (const slug of inlineOrphans) {
-    projectMd = removeRulebook(projectMd, slug);
+    ambientHost = removeRulebook(ambientHost, slug);
   }
 
   // `.agents/rulebooks/` is sync-owned, so deleting an undeclared neutral file here is safe, not user data loss.
@@ -200,9 +226,9 @@ export async function syncCommand(
     await rm(path.join(neutralDir, `${slug}.md`), { force: true });
   }
 
-  if (projectMd !== existingProjectMd) {
-    await mkdir(path.dirname(projectMdPath), { recursive: true });
-    await writeFile(projectMdPath, projectMd, 'utf8');
+  if (ambientHost !== existingAmbientHost) {
+    await mkdir(path.dirname(ambientHostPath), { recursive: true });
+    await writeFile(ambientHostPath, ambientHost, 'utf8');
   }
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
@@ -458,6 +484,7 @@ async function reconcileDeclaredSubagents(
 
 /** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
 interface DryRunPlan {
+  readonly ambientHostName: string;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
   readonly retracted: ReadonlyArray<string>;
   readonly harnessSkillDirs: ReadonlyArray<string>;
@@ -473,7 +500,7 @@ interface DryRunPlan {
 function reportDryRun(plan: DryRunPlan): void {
   console.info('[dry-run] sync would:');
   for (const rulebook of plan.resolved) {
-    const inline = rulebook.ambient ? ' (+ inline into PROJECT.md)' : '';
+    const inline = rulebook.ambient ? ` (+ inline into ${plan.ambientHostName})` : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
       for (const skillsDir of plan.harnessSkillDirs) {
