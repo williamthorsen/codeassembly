@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
-import type { CategoryDeclaration, CodeAssemblyDeclaration } from './codeassembly-schema.ts';
+import type { CodeAssemblyDeclaration, TypeDeclaration } from './codeassembly-schema.ts';
 import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 
@@ -45,9 +45,9 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
       skills.clear();
       subagents.clear();
     }
-    accumulateCategory(rulebooks, declaration.rulebooks);
-    accumulateCategory(skills, declaration.skills);
-    accumulateCategory(subagents, declaration.subagents);
+    accumulateType(rulebooks, declaration.rulebooks);
+    accumulateType(skills, declaration.skills);
+    accumulateType(subagents, declaration.subagents);
   }
 
   return { rulebooks: [...rulebooks], skills: [...skills], subagents: [...subagents] };
@@ -55,12 +55,12 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
 
 // region | Helpers
 
-/** Applies one category's `use` (add) and `drop` (subtract) entries to its accumulator, in declaration order. */
-function accumulateCategory(effective: Set<string>, category: CategoryDeclaration | undefined): void {
-  for (const entry of category?.use ?? []) {
+/** Applies one type's `use` (add) and `drop` (subtract) entries to its accumulator, in declaration order. */
+function accumulateType(effective: Set<string>, block: TypeDeclaration | undefined): void {
+  for (const entry of block?.use ?? []) {
     effective.add(entry.name);
   }
-  for (const entry of category?.drop ?? []) {
+  for (const entry of block?.drop ?? []) {
     effective.delete(entry.name);
   }
 }

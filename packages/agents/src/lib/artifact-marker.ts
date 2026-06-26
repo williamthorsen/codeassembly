@@ -13,13 +13,13 @@ export interface ArtifactMarker {
 const FRONTMATTER_PATTERN = /^(---\n[\s\S]*?\n---\n)/;
 
 /**
- * Builds the ownership-marker accessors for one artifact `kind`, producing `<!-- codeassembly-${kind}:${slug} -->`
- * markers. Skills and subagents share this single implementation; each kind reads and writes only its own marker, so
+ * Builds the ownership-marker accessors for one artifact `type`, producing `<!-- codeassembly-${type}:${slug} -->`
+ * markers. Skills and subagents share this single implementation; each type reads and writes only its own marker, so
  * the two namespaces never claim each other's files.
  */
-export function makeArtifactMarker(kind: 'skill' | 'subagent'): ArtifactMarker {
-  const markerPattern = new RegExp(`<!-- codeassembly-${kind}:([a-z0-9-]+) -->`);
-  const leadingMarkerLinePattern = new RegExp(String.raw`^<!-- codeassembly-${kind}:[a-z0-9-]+ -->\n`);
+export function makeArtifactMarker(type: 'skill' | 'subagent'): ArtifactMarker {
+  const markerPattern = new RegExp(`<!-- codeassembly-${type}:([a-z0-9-]+) -->`);
+  const leadingMarkerLinePattern = new RegExp(String.raw`^<!-- codeassembly-${type}:[a-z0-9-]+ -->\n`);
 
   return {
     extractSlug(content: string): string | undefined {
@@ -29,11 +29,11 @@ export function makeArtifactMarker(kind: 'skill' | 'subagent'): ArtifactMarker {
     injectMarker(content: string, slug: string): string {
       const frontmatter = FRONTMATTER_PATTERN.exec(content)?.[1];
       if (frontmatter === undefined) {
-        throw new Error(`Cannot inject the ${kind} ownership marker: the content has no frontmatter block.`);
+        throw new Error(`Cannot inject the ${type} ownership marker: the content has no frontmatter block.`);
       }
 
       const afterFrontmatter = content.slice(frontmatter.length).replace(leadingMarkerLinePattern, '');
-      return `${frontmatter}<!-- codeassembly-${kind}:${slug} -->\n${afterFrontmatter}`;
+      return `${frontmatter}<!-- codeassembly-${type}:${slug} -->\n${afterFrontmatter}`;
     },
   };
 }

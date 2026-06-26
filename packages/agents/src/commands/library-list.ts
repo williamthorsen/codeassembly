@@ -5,46 +5,44 @@ import process from 'node:process';
 
 import { parse as parseYaml } from 'yaml';
 
+import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { isEnoent, isMissingFile, isRecord } from '../lib/type-guards.ts';
 
-/** One of the artifact kinds the content library currently ships. */
-export type ArtifactType = 'rulebook' | 'skill' | 'subagent';
-
-/** A single artifact's normalized listing fields, before its kind's type and emoji are attached. */
+/** A single artifact's normalized listing fields, before its type and emoji are attached. */
 interface ArtifactEntry {
   readonly slug: string;
   readonly delivery: string;
   readonly description: string;
 }
 
-/** A listing row: an artifact entry tagged with its kind's display type and emoji. */
+/** A listing row: an artifact entry tagged with its display type and emoji. */
 export interface LibraryRow extends ArtifactEntry {
   readonly type: ArtifactType;
   readonly emoji: string;
 }
 
-/** Pairs an artifact kind with its display emoji and the enumerator that lists it from a content directory. */
-interface KindDescriptor {
+/** Pairs an artifact type with its display emoji and the enumerator that lists it from a content directory. */
+interface ArtifactDescriptor {
   readonly type: ArtifactType;
   readonly emoji: string;
   list(contentDir: string): Promise<Array<ArtifactEntry>>;
 }
 
 /**
- * The kinds enumerated by `library list`, in display order. A new kind (e.g. collections) joins as one more
+ * The types enumerated by `library list`, in display order. A new type (e.g. collections) joins as one more
  * descriptor; 📦 is reserved for that.
  */
-const KIND_DESCRIPTORS: ReadonlyArray<KindDescriptor> = [
+const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
   { type: 'rulebook', emoji: '📕', list: listRulebooks },
   { type: 'skill', emoji: '🪄', list: listSkills },
   { type: 'subagent', emoji: '🤖', list: listSubagents },
 ];
 
-/** Rank used to group rows by kind before the within-kind slug sort. */
+/** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2 };
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
@@ -64,7 +62,7 @@ const MIN_DESCRIPTION_WIDTH = 20;
  */
 export async function libraryListCommand(contentDir: string = resolveContentDir()): Promise<void> {
   const rows: Array<LibraryRow> = [];
-  for (const descriptor of KIND_DESCRIPTORS) {
+  for (const descriptor of ARTIFACT_DESCRIPTORS) {
     const entries = await descriptor.list(contentDir);
     for (const entry of entries) {
       rows.push({ ...entry, type: descriptor.type, emoji: descriptor.emoji });
@@ -163,7 +161,7 @@ async function listMarkdownFiles(dir: string): Promise<Array<string>> {
 
 /** Lists rulebook artifacts from `content/guidance/rulebooks`, parsing each via the rulebook schema. */
 async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> {
-  const dir = path.join(contentDir, 'guidance', 'rulebooks');
+  const dir = path.join(contentDir, ARTIFACT_TYPES.rulebook.contentPath);
   const entries: Array<ArtifactEntry> = [];
   for (const file of await listMarkdownFiles(dir)) {
     const content = await readFile(path.join(dir, file), 'utf8');
@@ -184,7 +182,7 @@ async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> 
 
 /** Lists skill artifacts from `content/skills`, reading each `<slug>/SKILL.md` frontmatter. */
 async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
-  const dir = path.join(contentDir, 'skills');
+  const dir = path.join(contentDir, ARTIFACT_TYPES.skill.contentPath);
   const entries: Array<ArtifactEntry> = [];
   for (const name of await listVisibleSubdirectories(dir)) {
     let content: string;
@@ -214,7 +212,7 @@ async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
 
 /** Lists subagent artifacts from `content/subagents`, reading each markdown file's frontmatter. */
 async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> {
-  const dir = path.join(contentDir, 'subagents');
+  const dir = path.join(contentDir, ARTIFACT_TYPES.subagent.contentPath);
   const entries: Array<ArtifactEntry> = [];
   for (const file of await listMarkdownFiles(dir)) {
     const content = await readFile(path.join(dir, file), 'utf8');

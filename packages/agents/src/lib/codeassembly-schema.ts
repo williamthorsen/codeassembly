@@ -8,25 +8,25 @@ const EntrySchema = z
 
 /**
  * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag plus one optional block
- * per artifact category (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized
- * category triggers an error); entries are open (unknown keys pass through). Each category resolves to
- * `{ use, drop }` lists; an absent or null category is omitted.
+ * per artifact type (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized
+ * type triggers an error); entries are open (unknown keys pass through). Each type's block resolves to
+ * `{ use, drop }` lists; an absent or null block is omitted.
  */
 const CodeAssemblySchema = z
   .object({
     root: z.boolean().default(false),
-    rulebooks: optionalCategory(),
-    skills: optionalCategory(),
-    subagents: optionalCategory(),
-    collections: optionalCategory(),
+    rulebooks: optionalTypeDeclaration(),
+    skills: optionalTypeDeclaration(),
+    subagents: optionalTypeDeclaration(),
+    collections: optionalTypeDeclaration(),
   })
   .strict();
 
 /** A parsed, validated `codeassembly.yaml` declaration from one file in the scope chain. */
 export type CodeAssemblyDeclaration = z.infer<typeof CodeAssemblySchema>;
 
-/** One category block: the artifacts this file adds (`use`) and those it subtracts from inherited tiers (`drop`). */
-export type CategoryDeclaration = z.infer<ReturnType<typeof categorySchema>>;
+/** One type's block: the artifacts this file adds (`use`) and those it subtracts from inherited tiers (`drop`). */
+export type TypeDeclaration = z.infer<ReturnType<typeof typeDeclarationSchema>>;
 
 /** A normalized declaration entry: always `{ name }`, with any unknown authoring keys preserved. */
 export type DeclarationEntry = z.infer<typeof EntrySchema>;
@@ -61,8 +61,8 @@ export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAs
 
 // region | Helpers
 
-/** Builds the closed `{ use, drop }` schema for one category, each list defaulting to empty. */
-function categorySchema() {
+/** Builds the closed `{ use, drop }` schema for one type's block, each list defaulting to empty. */
+function typeDeclarationSchema() {
   return z
     .object({
       use: z.array(EntrySchema).default([]),
@@ -71,9 +71,9 @@ function categorySchema() {
     .strict();
 }
 
-/** Resolves an absent category key, or one whose value is `null`, to `undefined` rather than a validation error. */
-function optionalCategory(): z.ZodType<CategoryDeclaration | undefined> {
-  return z.preprocess((value) => value ?? undefined, categorySchema().optional());
+/** Resolves an absent type key, or one whose value is `null`, to `undefined` rather than a validation error. */
+function optionalTypeDeclaration(): z.ZodType<TypeDeclaration | undefined> {
+  return z.preprocess((value) => value ?? undefined, typeDeclarationSchema().optional());
 }
 
 // endregion | Helpers
