@@ -64,6 +64,12 @@ export async function syncCommand(
   projectRoot: string = process.cwd(),
   contentDirOverride?: string,
 ): Promise<void> {
+  if (path.resolve(projectRoot) === path.resolve(homedir())) {
+    throw new Error(
+      'Refusing to run `sync` in the home directory: that would deploy the user-global tier through the project ' +
+        'path. Run `sync --global` to sync the user-global tier into the home harness dirs.',
+    );
+  }
   await reconcileDomain(
     options,
     { baseDir: projectRoot, ambientHostPath: path.join(projectRoot, '.agents', 'PROJECT.md'), label: 'project' },
@@ -211,6 +217,13 @@ async function reconcileDomain(
     })),
   );
 
+  // Before any write or delete, fail closed on any skill or subagent target that already exists without this sync's
+  // ownership marker — an install-managed or hand-authored file. The marker-gated retraction scans keep such files
+  // from being deleted; this keeps them from being overwritten. Runs in dry-run too, so a preview surfaces the conflict.
+  await assertNoForeignOwnedTargets(
+    collectOwnedTargets(harnessSkillDirs, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
+  );
+
   if (options.dryRun) {
     reportDryRun({
       ambientHostName: path.basename(ambientHostPath),
@@ -310,6 +323,80 @@ async function reconcileDomain(
 }
 
 // region | Helpers
+
+/** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
+interface OwnedTarget {
+  readonly filePath: string;
+  readonly isOwned: (content: string) => boolean;
+}
+
+/**
+ * Throws when any planned target already exists without this sync's ownership marker — an install-managed or
+ * hand-authored file. Failing here, before any write or delete, is what keeps a same-named foreign file from being
+ * overwritten; the marker-gated retraction scans separately keep it from being deleted. Absent targets are safe.
+ */
+async function assertNoForeignOwnedTargets(targets: ReadonlyArray<OwnedTarget>): Promise<void> {
+  const foreign: Array<string> = [];
+  for (const target of targets) {
+    let content: string;
+    try {
+      content = await readFile(target.filePath, 'utf8');
+    } catch (error: unknown) {
+      if (isMissingFile(error)) {
+        continue;
+      }
+      throw error;
+    }
+    if (!target.isOwned(content)) {
+      foreign.push(target.filePath);
+    }
+  }
+  if (foreign.length > 0) {
+    throw new Error(
+      `Refusing to overwrite ${foreign.length} file(s) not owned by sync (install-managed or hand-authored): ` +
+        `${foreign.join(', ')}. Rename or remove them, or retire the conflicting install artifact, then re-run.`,
+    );
+  }
+}
+
+/**
+ * Collects the skill and subagent destinations a sync would write, each paired with the predicate that recognizes its
+ * own ownership marker, so the pre-write guard can reject any that already exist foreign-owned.
+ */
+function collectOwnedTargets(
+  harnessSkillDirs: ReadonlyArray<string>,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  resolvedSkills: ReadonlyArray<ResolvedSkill>,
+  harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>,
+  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+): ReadonlyArray<OwnedTarget> {
+  const targets: Array<OwnedTarget> = [];
+  for (const skillsDir of harnessSkillDirs) {
+    for (const rulebook of resolved) {
+      if (rulebook.skill) {
+        targets.push({
+          filePath: path.join(skillsDir, rulebook.skillName, 'SKILL.md'),
+          isOwned: (content) => extractRulebookSkillSlug(content) !== undefined,
+        });
+      }
+    }
+    for (const skill of resolvedSkills) {
+      targets.push({
+        filePath: path.join(skillsDir, skill.slug, 'SKILL.md'),
+        isOwned: (content) => skillMarker.extractSlug(content) !== undefined,
+      });
+    }
+  }
+  for (const target of harnessSubagentTargets) {
+    for (const subagent of resolvedSubagents) {
+      targets.push({
+        filePath: path.join(target.subagentsDir, `${subagent.slug}.md`),
+        isOwned: (content) => subagentMarker.extractSlug(content) !== undefined,
+      });
+    }
+  }
+  return targets;
+}
 
 /**
  * Throws when a rulebook-skill directory name and a declared-skill directory name collide, which would let the two

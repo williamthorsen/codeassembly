@@ -1,6 +1,6 @@
 import { existsSync, statSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
@@ -786,5 +786,20 @@ describe(syncGlobalCommand, () => {
     expect(globalMd).toContain('<!-- rulebook:alpha -->');
     expect(globalMd).toContain('Alpha rules.');
     expect(existsSync(path.join(homeDir, '.agents', 'PROJECT.md'))).toBe(false);
+  });
+
+  it('refuses to overwrite a home skill that lacks the sync ownership marker', async () => {
+    await writeLibrarySkill('people-report');
+    await declareRaw('skills:\n  use:\n    - people-report\n');
+    const target = path.join(homeDir, '.claude', 'skills', 'people-report');
+    await mkdir(target, { recursive: true });
+    await writeFile(path.join(target, 'SKILL.md'), '---\nname: people-report\n---\n\n# Hand-authored\n', 'utf8');
+
+    await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(/not owned by sync/i);
+    expect(await readFile(path.join(target, 'SKILL.md'), 'utf8')).toContain('Hand-authored');
+  });
+
+  it('refuses a bare sync run rooted at the home directory, directing to --global', async () => {
+    await expect(syncCommand(makeOptions(), homedir(), contentDir)).rejects.toThrow(/--global/);
   });
 });
