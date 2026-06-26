@@ -1,6 +1,3 @@
-skills:
+collections:
   use:
-    - people-report
-subagents:
-  use:
-    - canary
+    - recommended

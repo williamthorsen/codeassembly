@@ -6,15 +6,15 @@ Specialized subagents for orchestrated development workflows. This package provi
 
 Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`.
 
-| Command             | Description                                                                                               |
-| ------------------- | --------------------------------------------------------------------------------------------------------- |
-| `install`           | Install guidance, skills, and subagents into harness directories, removing files whose source was deleted |
-| `init`              | Scaffold an empty `.agents/codeassembly.yaml` in the current project                                      |
-| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, and subagents             |
-| `uninstall`         | Remove installed guidance, skills, and subagents                                                          |
-| `status`            | Show the current state of installed items                                                                 |
-| `library list`      | List available library artifacts (rulebooks, skills, subagents)                                           |
-| `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                         |
+| Command             | Description                                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `install`           | Install guidance, skills, and subagents into harness directories, removing files whose source was deleted  |
+| `init`              | Scaffold an empty `.agents/codeassembly.yaml` in the current project                                       |
+| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
+| `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
+| `status`            | Show the current state of installed items                                                                  |
+| `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
+| `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
 Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. Run `codeassembly-agents --help` for the authoritative list.
 
@@ -24,7 +24,7 @@ A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `c
 
 ### Format
 
-The declaration is grouped by artifact category. Each category takes a `use` list (the slugs to adopt) and an optional `drop` list (slugs to remove from what broader scopes contributed):
+The declaration is grouped by artifact type. Each type's block takes a `use` list (the slugs to adopt) and an optional `drop` list (slugs to remove from what broader scopes contributed):
 
 ```yaml
 rulebooks:
@@ -44,7 +44,35 @@ A declared skill is deployed verbatim into each detected harness's project-local
 
 A declared subagent is deployed into each detected harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. As with skills, only a subagent whose frontmatter sets `deploy: declared` is deployed this way; a subagent without the field installs unconditionally. Subagent deployment is project-scoped: a declared subagent resolves only where it is declared. Global (home) delivery for subagents is tracked by #857; until then, real, globally-dispatched subagents stay on `install` and are not migrated.
 
-`rulebooks`, `skills`, and `subagents` are deployed. The `collections` category is accepted for forward compatibility; declaring a non-empty block of it raises an error until its deployment lands in a later release.
+`rulebooks`, `skills`, `subagents`, and `collections` are all deployed.
+
+### Collections
+
+A collection is a dependency-only aggregate: it deploys no file of its own, but declaring it pulls in its members' transitive dependency closure, which `sync` then deploys. Declare one like any other type:
+
+```yaml
+collections:
+  use:
+    - recommended
+```
+
+Dropping or omitting a collection — or `root: true` — excludes its entire closure. The shipped `recommended` collection bundles the default declared artifacts and is opt-in: a project gets it only by declaring it.
+
+### Dependencies
+
+Any artifact may declare dependencies on others in its frontmatter, grouped by artifact type. Resolution follows these edges transitively — deduped, with cycle detection — so declaring one artifact pulls in its whole closure:
+
+```yaml
+dependencies:
+  rulebooks:
+    - typescript-conventions
+  skills:
+    - people-report
+  subagents:
+    - canary
+```
+
+A collection is simply an artifact whose only payload is this block.
 
 ### The `deploy` field
 

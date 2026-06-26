@@ -411,7 +411,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `skills:\n${useBlock}`, 'utf8');
     }
 
-    /** Writes the project-scope codeassembly.yaml verbatim, for declarations mixing categories. */
+    /** Writes the project-scope codeassembly.yaml verbatim, for declarations mixing types. */
     async function declareRaw(content: string): Promise<void> {
       await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), content, 'utf8');
