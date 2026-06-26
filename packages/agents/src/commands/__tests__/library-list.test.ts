@@ -27,11 +27,19 @@ describe(libraryListCommand, () => {
     expect(output).toContain('yankee-agent');
   });
 
-  it('orders rulebooks before skills before subagents', async () => {
+  it('orders rulebooks before skills before subagents before collections', async () => {
     const { output } = await captureList(contentDir);
 
     expect(output.indexOf('sample-rulebook')).toBeLessThan(output.indexOf('bravo-skill'));
     expect(output.indexOf('bravo-skill')).toBeLessThan(output.indexOf('yankee-agent'));
+    expect(output.indexOf('yankee-agent')).toBeLessThan(output.indexOf('sample-collection'));
+  });
+
+  it('lists a collection with an em-dash delivery, since a collection has no deploy mode', async () => {
+    const { output } = await captureList(contentDir);
+    const lines = output.split('\n');
+
+    expect(lines.find((line) => line.includes('sample-collection'))).toContain('—');
   });
 
   it('excludes underscore-prefixed support entries, dotfiles, and skill dirs without a SKILL.md', async () => {
@@ -169,6 +177,8 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   const rulebooks = path.join(contentDir, 'guidance', 'rulebooks');
   const skills = path.join(contentDir, 'skills');
   const subagents = path.join(contentDir, 'subagents');
+  const collections = path.join(contentDir, 'collections');
+  await mkdir(collections, { recursive: true });
   await mkdir(rulebooks, { recursive: true });
   await mkdir(path.join(skills, 'bravo'), { recursive: true });
   await mkdir(path.join(skills, 'charlie'), { recursive: true });
@@ -197,6 +207,11 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
     frontmatter({ name: 'zulu-agent', description: 'Zulu.', deploy: 'declared' }),
   );
   await writeFile(path.join(subagents, 'broken.md'), '---\nname: "unterminated\ndescription: oops\n---\n\n# Body\n');
+
+  await writeFile(
+    path.join(collections, 'sample.md'),
+    frontmatter({ name: 'sample-collection', description: 'Sample collection.' }),
+  );
 }
 
 /** Renders a minimal markdown file with the given frontmatter keys and a throwaway body. */

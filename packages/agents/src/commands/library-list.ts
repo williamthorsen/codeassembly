@@ -32,18 +32,19 @@ interface ArtifactDescriptor {
   list(contentDir: string): Promise<Array<ArtifactEntry>>;
 }
 
-/**
- * The types enumerated by `library list`, in display order. A new type (e.g. collections) joins as one more
- * descriptor; 📦 is reserved for that.
- */
+/** The types enumerated by `library list`, in display order. */
 const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
   { type: 'rulebook', emoji: '📕', list: listRulebooks },
   { type: 'skill', emoji: '🪄', list: listSkills },
   { type: 'subagent', emoji: '🤖', list: listSubagents },
+  { type: 'collection', emoji: '📦', list: listCollections },
 ];
 
 /** Rank used to group rows by type before the within-type slug sort. */
-const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2 };
+const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
+
+/** Delivery cell for a collection: a dependency-only aggregate has no `deploy` field and so no delivery mode. */
+const COLLECTION_DELIVERY = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
 
@@ -80,7 +81,7 @@ export function printLibraryUsage(): void {
   console.info(`Usage: codeassembly-agents library <subcommand>
 
 Subcommands:
-  list   List available library artifacts (rulebooks, skills, subagents)`);
+  list   List available library artifacts (rulebooks, skills, subagents, collections)`);
 }
 
 /**
@@ -150,6 +151,27 @@ function compareRows(a: LibraryRow, b: LibraryRow): number {
 /** True when a directory entry is neither a reserved `_`-prefixed support entry nor a dotfile. */
 function isVisible(name: string): boolean {
   return !name.startsWith('_') && !name.startsWith('.');
+}
+
+/** Lists collection artifacts from `content/collections`, reading each markdown file's name and description. */
+async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>> {
+  const dir = path.join(contentDir, ARTIFACT_TYPES.collection.contentPath);
+  const entries: Array<ArtifactEntry> = [];
+  for (const file of await listMarkdownFiles(dir)) {
+    const content = await readFile(path.join(dir, file), 'utf8');
+    const entry = buildEntryOrSkip('collection', file, () => {
+      const meta = readNameAndDescription(content);
+      return {
+        slug: meta.name ?? path.basename(file, '.md'),
+        delivery: COLLECTION_DELIVERY,
+        description: meta.description ?? '',
+      };
+    });
+    if (entry) {
+      entries.push(entry);
+    }
+  }
+  return entries;
 }
 
 /** Returns visible (`.md`, non-`_`, non-dotfile) regular-file names directly in `dir`; empty when `dir` is absent. */
