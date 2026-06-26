@@ -37,7 +37,7 @@ describe(parseCodeAssemblyFile, () => {
     expect(declaration.rulebooks?.use[0]).toMatchObject({ name: 'alpha', source: 'npm', delivery: 'skill' });
   });
 
-  it('parses the other category keys without interpreting them', () => {
+  it('parses the other type keys without interpreting them', () => {
     const declaration = parseCodeAssemblyFile(
       'skills:\n  use:\n    - alpha\nsubagents:\n  use:\n    - beta\ncollections:\n  use:\n    - gamma\n',
     );
@@ -69,7 +69,7 @@ describe(parseCodeAssemblyFile, () => {
     );
   });
 
-  it('tolerates a category key whose value is null (all entries commented out)', () => {
+  it('tolerates a type key whose value is null (all entries commented out)', () => {
     const declaration = parseCodeAssemblyFile('rulebooks:\n');
 
     expect(declaration.rulebooks).toBeUndefined();

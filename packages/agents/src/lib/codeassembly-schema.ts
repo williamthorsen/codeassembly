@@ -33,7 +33,7 @@ export type DeclarationEntry = z.infer<typeof EntrySchema>;
 
 /**
  * Parses and validates one `codeassembly.yaml` file's contents into a typed declaration. An empty or comment-only
- * file yields a declaration with `root: false` and no categories. Throws a readable error, naming `sourceLabel`
+ * file yields a declaration with `root: false` and no type blocks. Throws a readable error, naming `sourceLabel`
  * when provided, for malformed YAML, an unknown top-level key, a non-mapping top level, or an invalid entry.
  */
 export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAssemblyDeclaration {
