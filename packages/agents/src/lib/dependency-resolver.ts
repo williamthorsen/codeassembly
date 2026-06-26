@@ -81,7 +81,7 @@ async function readArtifactDependencies(
     content = await readFile(filePath, 'utf8');
   } catch (error: unknown) {
     if (isMissingFile(error)) {
-      throw new Error(`Declared ${type} "${slug}" was not found in the library at ${filePath}`);
+      throw new Error(`Referenced ${type} "${slug}" was not found in the library at ${filePath}`);
     }
     throw error;
   }
