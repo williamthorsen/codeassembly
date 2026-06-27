@@ -112,6 +112,8 @@ content/
 
 #### Content authoring
 
+When authoring a skill, subagent, rulebook, or collection, consult `packages/agents/content/guidance/rulebooks/authoring-guidance.md` (the `consult-authoring-guidance` skill) for `dependencies:`/`members:`, frontmatter, and naming conventions.
+
 The `packages/agents/content/` tree supports **partials** — reusable Markdown fragments inlined at install time. The expander produces byte-identical installed output, so partials are the correct DRY mechanism even when "verbatim execution context" is a requirement. See `packages/agents/content/_partials/README.md` for the canonical reference.
 
 > Content that appears identically in 2+ skill/subagent files should be a partial whenever parallel copies would drift if maintained separately. Treat partials as the prose analogue of subroutines.

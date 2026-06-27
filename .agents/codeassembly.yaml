@@ -1,3 +1,6 @@
+rulebooks:
+  use:
+    - authoring-guidance
 collections:
   use:
     - recommended
