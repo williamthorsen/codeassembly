@@ -15,10 +15,22 @@ import { listVisibleMarkdownFiles, listVisibleSubdirectories, readDirEntries } f
 export async function enumerateLibrarySlugs(contentDir: string): Promise<ArtifactDependencies> {
   const [rulebook, skill, subagent] = await Promise.all([
     listMarkdownBasenames(path.join(contentDir, ARTIFACT_TYPES.rulebook.contentPath)),
-    listSkillSlugs(path.join(contentDir, ARTIFACT_TYPES.skill.contentPath)),
+    listSkillDirectories(path.join(contentDir, ARTIFACT_TYPES.skill.contentPath)),
     listMarkdownBasenames(path.join(contentDir, ARTIFACT_TYPES.subagent.contentPath)),
   ]);
   return { rulebook, skill, subagent };
+}
+
+/** Lists the visible subdirectories in `skillsDir` that hold a `SKILL.md` file — the definition of a valid skill directory. */
+export async function listSkillDirectories(skillsDir: string): Promise<Array<string>> {
+  const names: Array<string> = [];
+  for (const name of await listVisibleSubdirectories(skillsDir)) {
+    const entries = await readDirEntries(path.join(skillsDir, name));
+    if (entries.some((entry) => entry.isFile() && entry.name === 'SKILL.md')) {
+      names.push(name);
+    }
+  }
+  return names;
 }
 
 // region | Helpers
@@ -26,18 +38,6 @@ export async function enumerateLibrarySlugs(contentDir: string): Promise<Artifac
 /** Lists the basenames (without `.md`) of the visible markdown files directly in `dir`. */
 async function listMarkdownBasenames(dir: string): Promise<Array<string>> {
   return (await listVisibleMarkdownFiles(dir)).map((file) => path.basename(file, '.md'));
-}
-
-/** Lists the visible skill subdirectory names in `skillsDir`, keeping only those that hold a `SKILL.md`. */
-async function listSkillSlugs(skillsDir: string): Promise<Array<string>> {
-  const slugs: Array<string> = [];
-  for (const name of await listVisibleSubdirectories(skillsDir)) {
-    const entries = await readDirEntries(path.join(skillsDir, name));
-    if (entries.some((entry) => entry.isFile() && entry.name === 'SKILL.md')) {
-      slugs.push(name);
-    }
-  }
-  return slugs;
 }
 
 // endregion | Helpers

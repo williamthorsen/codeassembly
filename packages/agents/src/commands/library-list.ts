@@ -8,9 +8,10 @@ import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
-import { listVisibleMarkdownFiles, listVisibleSubdirectories } from '../lib/fs-helpers.ts';
+import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
+import { listSkillDirectories } from '../lib/library-catalog.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { isMissingFile, isRecord } from '../lib/type-guards.ts';
+import { isRecord } from '../lib/type-guards.ts';
 
 /** A single artifact's normalized listing fields, before its type and emoji are attached. */
 interface ArtifactEntry {
@@ -194,16 +195,8 @@ async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> 
 async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.skill.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const name of await listVisibleSubdirectories(dir)) {
-    let content: string;
-    try {
-      content = await readFile(path.join(dir, name, 'SKILL.md'), 'utf8');
-    } catch (error) {
-      if (isMissingFile(error)) {
-        continue;
-      }
-      throw error;
-    }
+  for (const name of await listSkillDirectories(dir)) {
+    const content = await readFile(path.join(dir, name, 'SKILL.md'), 'utf8');
     const entry = buildEntryOrSkip('skill', name, () => {
       const meta = readNameAndDescription(content);
       // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.

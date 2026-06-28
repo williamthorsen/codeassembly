@@ -66,6 +66,15 @@ describe(enumerateLibrarySlugs, () => {
     expect(catalog.skill).toEqual(['people-report']);
   });
 
+  it('skips a skill subdirectory whose SKILL.md is itself a directory', async () => {
+    await writeSkill(contentDir, 'people-report');
+    await mkdir(path.join(contentDir, 'skills', 'weird', 'SKILL.md'), { recursive: true });
+
+    const catalog = await enumerateLibrarySlugs(contentDir);
+
+    expect(catalog.skill).toEqual(['people-report']);
+  });
+
   it('never enumerates collections', async () => {
     await writeSkill(contentDir, 'people-report');
     const collectionsDir = path.join(contentDir, 'collections');
