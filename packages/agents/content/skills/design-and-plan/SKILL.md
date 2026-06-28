@@ -28,7 +28,7 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 4's optional remote update.
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 4's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
 
 2. **Assess relevancy** — determine whether the ticket may be stale and, if so, verify it is still relevant.
 
