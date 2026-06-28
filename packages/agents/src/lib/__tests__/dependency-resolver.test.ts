@@ -85,29 +85,81 @@ describe(resolveClosure, () => {
       /skill "ghost" was not found/,
     );
   });
+
+  it('resolves a collection whose members is @library to the full deployable catalog', async () => {
+    await writeArtifact(contentDir, 'rulebook', 'typescript-conventions');
+    await writeArtifact(contentDir, 'skill', 'people-report');
+    await writeArtifact(contentDir, 'subagent', 'canary');
+    await writeArtifact(contentDir, 'collection', 'all', '@library');
+
+    const closure = await resolveClosure({ collection: ['all'] }, contentDir);
+
+    expect(closure.rulebooks.toSorted()).toEqual(['typescript-conventions']);
+    expect(closure.skills.toSorted()).toEqual(['people-report']);
+    expect(closure.subagents.toSorted()).toEqual(['canary']);
+  });
+
+  it('includes a newly added artifact in @library with no edit to the collection', async () => {
+    await writeArtifact(contentDir, 'skill', 'people-report');
+    await writeArtifact(contentDir, 'collection', 'all', '@library');
+
+    const before = await resolveClosure({ collection: ['all'] }, contentDir);
+    expect(before.skills.toSorted()).toEqual(['people-report']);
+
+    await writeArtifact(contentDir, 'skill', 'classify-complexity');
+    const after = await resolveClosure({ collection: ['all'] }, contentDir);
+
+    expect(after.skills.toSorted()).toEqual(['classify-complexity', 'people-report']);
+  });
+
+  it('deduplicates @library pulled by two collections under one parent', async () => {
+    await writeArtifact(contentDir, 'skill', 'shared');
+    await writeArtifact(contentDir, 'collection', 'left', '@library');
+    await writeArtifact(contentDir, 'collection', 'right', '@library');
+    await writeArtifact(contentDir, 'collection', 'top', { collection: ['left', 'right'] });
+
+    const closure = await resolveClosure({ collection: ['top'] }, contentDir);
+
+    expect(closure.skills).toEqual(['shared']);
+  });
+
+  it('throws naming the collection on an unrecognized members token', async () => {
+    const filePath = path.join(contentDir, artifactFrontmatterPath('collection', 'bad'));
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, "---\nname: bad\nmembers: '@everything'\n---\n\n# bad\n", 'utf8');
+
+    await expect(resolveClosure({ collection: ['bad'] }, contentDir)).rejects.toThrow(/collection bad.*@everything/s);
+  });
 });
 
-/** Writes an artifact's frontmatter file under `contentDir`, optionally with a `dependencies:` block. */
+/**
+ * Writes an artifact's frontmatter file under `contentDir`. A collection's edges render as `members:` (either the
+ * `'@library'` token or a per-type block); every other type's render as `dependencies:`. Omit `edges` for a leaf.
+ */
 async function writeArtifact(
   contentDir: string,
   type: ArtifactType,
   slug: string,
-  dependencies?: DirectArtifacts,
+  edges?: DirectArtifacts | '@library',
 ): Promise<void> {
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
   await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `---\nname: ${slug}\n${renderDependencies(dependencies)}---\n\n# ${slug}\n`, 'utf8');
+  await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n# ${slug}\n`, 'utf8');
 }
 
-/** Renders a `dependencies:` frontmatter block from a per-type slug map, or an empty string when there are none. */
-function renderDependencies(dependencies: DirectArtifacts | undefined): string {
+/** Renders an artifact's edge block: `members:` for a collection, `dependencies:` otherwise; empty when there are none. */
+function renderEdges(type: ArtifactType, edges: DirectArtifacts | '@library' | undefined): string {
+  if (edges === '@library') {
+    return `members: '@library'\n`;
+  }
+  const key = type === 'collection' ? 'members' : 'dependencies';
   const lines: Array<string> = [];
-  for (const type of ARTIFACT_TYPE_VALUES) {
-    const slugs = dependencies?.[type] ?? [];
+  for (const edgeType of ARTIFACT_TYPE_VALUES) {
+    const slugs = edges?.[edgeType] ?? [];
     if (slugs.length > 0) {
       const items = slugs.map((slug) => `    - ${slug}`).join('\n');
-      lines.push(`  ${ARTIFACT_TYPES[type].key}:\n${items}`);
+      lines.push(`  ${ARTIFACT_TYPES[edgeType].key}:\n${items}`);
     }
   }
-  return lines.length === 0 ? '' : `dependencies:\n${lines.join('\n')}\n`;
+  return lines.length === 0 ? '' : `${key}:\n${lines.join('\n')}\n`;
 }
