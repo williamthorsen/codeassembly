@@ -56,6 +56,8 @@ export function composeManifest(input: {
     }
   }
 
+  const { ticketBaseUrl, ticketUrl } = resolveTicketUrls(preferences, ticketResult.ticket_id);
+
   return {
     ticket_id: ticketResult.ticket_id,
     ticket_ref: ticketResult.ticket_ref,
@@ -66,7 +68,8 @@ export function composeManifest(input: {
     artifact_base_dir: artifactBaseDir,
     artifact_paths: artifactPaths,
     created_at: formatIsoUtc(now),
-    ticket_url: null,
+    ticket_url: ticketUrl,
+    ticket_base_url: ticketBaseUrl,
     pr_url: null,
   };
 }
@@ -88,6 +91,29 @@ function resolveBaseDir(rawBaseDir: string, cwd: string, home: string): string {
     return expanded;
   }
   return path.resolve(cwd, expanded);
+}
+
+/**
+ * Resolves the ticket base URL from preferences and, when a ticket id is also known, the full
+ * ticket URL built from base and id. Either is null when its inputs are absent — leaving `ticketUrl`
+ * for a skill to resolve and store (e.g. GitHub, which fetches the URL via `gh`). An explicitly
+ * stored URL overrides the constructed default through `carryForwardStoredUrls`.
+ */
+function resolveTicketUrls(
+  preferences: ResolvedPreferences,
+  ticketId: string | null,
+): { ticketBaseUrl: string | null; ticketUrl: string | null } {
+  const ticketBaseUrl = preferences.ticket?.base_url ?? null;
+  const ticketUrl = ticketBaseUrl !== null && ticketId !== null ? joinTicketUrl(ticketBaseUrl, ticketId) : null;
+  return { ticketBaseUrl, ticketUrl };
+}
+
+/**
+ * Joins a ticket base URL and a bare ticket id with exactly one `/` at the boundary, so a trailing
+ * slash on the base is optional (`.../browse` and `.../browse/` both yield `.../browse/{id}`).
+ */
+function joinTicketUrl(baseUrl: string, ticketId: string): string {
+  return `${baseUrl.replace(/\/+$/, '')}/${ticketId}`;
 }
 
 /** Formats a `Date` as an ISO 8601 UTC string trimmed to second precision (e.g., `2026-05-26T02:07:41Z`). */

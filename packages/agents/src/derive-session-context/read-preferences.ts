@@ -171,6 +171,15 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
     result.artifacts = artifacts;
   }
 
+  if (merged.ticket !== undefined) {
+    const section = expectRecord(merged.ticket, 'ticket');
+    const ticket: WritablePreferences['ticket'] = {};
+    if (section.base_url !== undefined) {
+      ticket.base_url = expectString(section.base_url, 'ticket.base_url');
+    }
+    result.ticket = ticket;
+  }
+
   return result;
 }
 
@@ -191,6 +200,9 @@ interface WritablePreferences {
   artifacts?: {
     base_dir?: string;
     paths?: Record<string, string>;
+  };
+  ticket?: {
+    base_url?: string;
   };
 }
 

@@ -421,6 +421,66 @@ describe(deriveSessionContext, () => {
     // No spurious recompose: the on-disk file is byte-identical to what was seeded.
     expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual(seeded);
   });
+
+  it('surfaces ticket_base_url and constructs ticket_url from preferences', async () => {
+    await writeProjectPrefs(
+      workDir,
+      'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
+    );
+    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'MAC-130/feat/x', now: NOW, home: workDir });
+    expect(manifest.ticket_base_url).toBe('https://org.atlassian.net/browse/');
+    expect(manifest.ticket_url).toBe('https://org.atlassian.net/browse/MAC-130');
+  });
+
+  it('carries a stored ticket_url forward across a recompose, overriding the constructed default', async () => {
+    await writeProjectPrefs(
+      workDir,
+      'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
+    );
+    const stored = 'https://org.atlassian.net/browse/OTHER-1';
+    // Seed a stale manifest (missing the required `scm`) that carries a stored ticket_url. The
+    // recompose would construct .../MAC-130 from the base and branch id; carry-forward must win.
+    const manifestPath = path.join(workDir, '.agents', 'MAC-130.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    const stale = {
+      ticket_id: 'MAC-130',
+      ticket_ref: 'MAC-130',
+      project_slug: 'seeded',
+      default_branch: 'origin/main',
+      branch_name: 'MAC-130',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      ticket_url: stored,
+    };
+    await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
+
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'MAC-130', now: NOW, home: workDir });
+    expect(recomposed.scm).toBe('github');
+    expect(recomposed.ticket_url).toBe(stored);
+  });
+
+  it('recomposes when ticket_base_url is present but wrong-typed', async () => {
+    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    const seeded = {
+      ticket_id: null,
+      ticket_ref: null,
+      project_slug: 'seeded',
+      scm: 'github',
+      default_branch: 'origin/main',
+      branch_name: 'main',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      ticket_base_url: 42,
+    };
+    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
+
+    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(result.scm).toBe('github');
+    expect(result.ticket_base_url).toBeNull();
+  });
 });
 
 // region | Helpers

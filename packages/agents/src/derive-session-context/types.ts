@@ -22,6 +22,10 @@ export interface ResolvedPreferences {
     readonly base_dir?: string;
     readonly paths?: Readonly<Record<string, string>>;
   };
+  /** `ticket.base_url`, the org-stable base a bare ticket id is appended to (e.g. Jira `https://org.atlassian.net/browse/`). */
+  readonly ticket?: {
+    readonly base_url?: string;
+  };
 }
 
 /** Result of reading and merging the project and global preferences files. */
@@ -61,6 +65,13 @@ export interface BranchManifest {
    * valid; a fresh compose seeds `null`.
    */
   readonly ticket_url?: string | null;
+  /**
+   * The org-stable base URL a bare ticket id is appended to, mirroring the `ticket.base_url`
+   * preference. Lets skills expand a bare reference to a full URL on platforms where one can't be
+   * reconstructed (e.g. Jira). Optional and excluded from the required-field set so pre-existing
+   * manifests stay valid; a fresh compose seeds it from preferences, or `null` when unset.
+   */
+  readonly ticket_base_url?: string | null;
   /**
    * The resolved pull-request URL, stored so PR-aware skills can reuse it across sessions. Optional
    * and excluded from the required-field set so pre-existing manifests stay valid; a fresh compose

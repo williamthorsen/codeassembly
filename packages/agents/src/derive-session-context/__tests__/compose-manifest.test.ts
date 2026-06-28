@@ -301,4 +301,69 @@ describe(composeManifest, () => {
       expect(manifest.pr_url).toBeNull();
     });
   });
+
+  describe('ticket URL construction', () => {
+    it('constructs ticket_url from base_url and a Jira-style ticket id', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
+        branchName: 'MAC-130/feat/x',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_base_url).toBe('https://org.atlassian.net/browse/');
+      expect(manifest.ticket_url).toBe('https://org.atlassian.net/browse/MAC-130');
+    });
+
+    it('appends the bare ticket id, not the display ref, for a #-prefixed numeric ticket', () => {
+      const manifest = composeManifest({
+        preferences: {
+          project: { slug: 'x', ticket_ref_prefix: '#' },
+          ticket: { base_url: 'https://github.com/owner/repo/issues/' },
+        },
+        branchName: '152',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_ref).toBe('#152');
+      expect(manifest.ticket_url).toBe('https://github.com/owner/repo/issues/152');
+    });
+
+    it('normalizes the base/id boundary to one slash when the base lacks a trailing slash', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse' } },
+        branchName: 'MAC-130',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_url).toBe('https://org.atlassian.net/browse/MAC-130');
+    });
+
+    it('leaves ticket_url null when no base_url is configured', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'MAC-130',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_base_url).toBeNull();
+      expect(manifest.ticket_url).toBeNull();
+    });
+
+    it('leaves ticket_url null when a base_url is set but no ticket id can be derived', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
+        branchName: 'experiment/no-ticket',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_id).toBeNull();
+      expect(manifest.ticket_base_url).toBe('https://org.atlassian.net/browse/');
+      expect(manifest.ticket_url).toBeNull();
+    });
+  });
 });
