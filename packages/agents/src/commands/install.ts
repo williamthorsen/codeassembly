@@ -22,8 +22,9 @@ import {
   injectMarkersInDirectory,
   injectProvenanceMarker,
 } from '../lib/marker-injector.js';
-import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
+import { rewritePathsInFile } from '../lib/path-rewriter.js';
 import { renderPromptsYml } from '../lib/prompts-yml.ts';
+import { type RenderedSkillEntry, renderSkillDirectory } from '../lib/skill-transform.ts';
 import { renderSubagentForHarness } from '../lib/subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
@@ -307,18 +308,21 @@ async function installSkillEntry(
   toolMapping: ReadonlyMap<string, string>,
   label = '',
 ): Promise<ManifestEntry> {
-  // Eagerly resolves include directives at source-tree level. Run before the dry-run gate so missing targets, cycles,
-  // and out-of-tree references surface even when no files are written.
-  // Directory entries traverse their tree and cache each expanded `.md` file's content;
-  // file entries expand the file directly.
-  // After expansion, applies the tool-name rewriter in-memory so the cached content carries the final body text the
-  // write phase will emit — no second disk pass, no read-back-from-disk.
+  // Eagerly render the skill's final body before the dry-run gate, so missing include targets, cycles, out-of-tree
+  // references, and unmapped tool placeholders surface even when no files are written. Directory entries render the
+  // whole tree (include expansion, tool-name + link/template rewriting) into the exact bytes the write phase emits;
+  // single-file `.md` entries expand and tool-rewrite directly.
   const srcStats = await stat(srcPath);
   let expandedFileContent: string | undefined;
-  let expandedDirContents: ReadonlyMap<string, string> | undefined;
+  let renderedDir: ReadonlyArray<RenderedSkillEntry> | undefined;
   if (srcStats.isDirectory()) {
-    const rawExpanded = await preExpandSkillDirectory(srcPath, contentDir);
-    expandedDirContents = rewriteToolNamesInExpansionMap(rawExpanded, contentDir, toolMapping);
+    renderedDir = await renderSkillDirectory(srcPath, path.basename(destPath), {
+      contentDir,
+      toolMapping,
+      pathPrefix: skillsPrefix,
+      homeDir,
+      harnessId,
+    });
   } else if (srcPath.endsWith('.md')) {
     const expanded = await expandIncludes(srcPath, contentDir);
     expandedFileContent = rewriteToolNames(expanded, toolMapping, relativeFromContent(contentDir, srcPath));
@@ -340,12 +344,9 @@ async function installSkillEntry(
   }
 
   if (srcStats.isDirectory()) {
-    // Per-file walk: Writes expanded `.md` files from the cache populated during the pre-expand pass,
-    // mirrors the directory structure to the destination, and copies non-`.md` files plainly.
-    // The `_partials/` exclusion is applied during the walk.
-    // The cache is non-undefined here because srcStats.isDirectory() implies the directory branch above ran.
-    if (expandedDirContents === undefined) {
-      throw new Error(`Invariant violation: expandedDirContents undefined for directory ${srcPath}`);
+    // The rendered tree is non-undefined here because srcStats.isDirectory() implies the directory branch above ran.
+    if (renderedDir === undefined) {
+      throw new Error(`Invariant violation: renderedDir undefined for directory ${srcPath}`);
     }
     // Clean-write directories CodeAssembly previously installed: remove the prior copy so files deleted from the
     // source skill don't survive in the destination. Gated on prior ownership (a manifest entry exists) so a
@@ -353,9 +354,7 @@ async function installSkillEntry(
     if (existingEntry) {
       await removeItem(destPath);
     }
-    await writeExpandedSkillDir(srcPath, destPath, expandedDirContents);
-    const skillsDestDir = path.dirname(destPath);
-    await rewritePathsInDirectory(destPath, skillsDestDir, skillsPrefix, homeDir, harnessId);
+    await writeRenderedSkillDir(destPath, renderedDir);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
   } else if (srcPath.endsWith('.md') && expandedFileContent !== undefined) {
     // Single-file `.md` skill entries: write the previously expanded content directly.
@@ -377,67 +376,14 @@ async function installSkillEntry(
 }
 
 /**
- * Eagerly walks a skill source directory, runs `expandIncludes` on each `.md` file to surface include errors before
- * any file is written, and returns a map keyed by absolute source path with the expanded content.
- * `_partials/` directories are skipped because their contents are referenced through includes, not installed.
- * The returned map is consumed by `writeExpandedSkillDir` so each `.md` file is expanded once per install.
+ * Writes a rendered skill directory to `destDir`: markdown entries are written from their transformed content, asset
+ * entries are copied verbatim from source. Each entry's parent directory is created as needed.
  */
-async function preExpandSkillDirectory(srcDir: string, contentDir: string): Promise<Map<string, string>> {
-  const expandedBySrcPath = new Map<string, string>();
-  await collectExpansions(srcDir, contentDir, expandedBySrcPath);
-  return expandedBySrcPath;
-}
-
-async function collectExpansions(
-  srcDir: string,
-  contentDir: string,
-  expandedBySrcPath: Map<string, string>,
-): Promise<void> {
-  const entries = await readdir(srcDir);
+async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<RenderedSkillEntry>): Promise<void> {
   for (const entry of entries) {
-    if (entry === '_partials' || entry.startsWith('.')) {
-      continue;
-    }
-    const fullPath = path.join(srcDir, entry);
-    const info = await stat(fullPath);
-    if (info.isDirectory()) {
-      await collectExpansions(fullPath, contentDir, expandedBySrcPath);
-    } else if (entry.endsWith('.md')) {
-      expandedBySrcPath.set(fullPath, await expandIncludes(fullPath, contentDir));
-    }
-  }
-}
-
-/**
- * Recursively writes a skill source directory to the destination. `.md` files are read from the pre-computed expansion
- * cache (populated by `preExpandSkillDirectory`); non-`.md` files are copied verbatim.
- * `_partials/` subdirectories are skipped at any depth — their contents are include targets, not installed artifacts.
- */
-async function writeExpandedSkillDir(
-  srcDir: string,
-  destDir: string,
-  expandedBySrcPath: ReadonlyMap<string, string>,
-): Promise<void> {
-  await mkdir(destDir, { recursive: true });
-  const entries = await readdir(srcDir);
-  for (const entry of entries) {
-    if (entry === '_partials' || entry.startsWith('.')) {
-      continue;
-    }
-    const srcPath = path.join(srcDir, entry);
-    const destPath = path.join(destDir, entry);
-    const info = await stat(srcPath);
-    if (info.isDirectory()) {
-      await writeExpandedSkillDir(srcPath, destPath, expandedBySrcPath);
-    } else if (entry.endsWith('.md')) {
-      const expanded = expandedBySrcPath.get(srcPath);
-      if (expanded === undefined) {
-        throw new Error(`Invariant violation: pre-expand cache missing entry for ${srcPath}`);
-      }
-      await writeFile(destPath, expanded, 'utf8');
-    } else {
-      await copyItem(srcPath, destPath);
-    }
+    const destPath = path.join(destDir, entry.relPath);
+    await mkdir(path.dirname(destPath), { recursive: true });
+    await (entry.kind === 'markdown' ? writeFile(destPath, entry.content, 'utf8') : copyItem(entry.srcPath, destPath));
   }
 }
 
@@ -858,22 +804,4 @@ async function installHarnessGuidance(
  */
 function relativeFromContent(contentDir: string, srcPath: string): string {
   return path.relative(contentDir, srcPath).split(path.sep).join('/');
-}
-
-/**
- * Returns a new map mirroring `rawExpanded`, with every value processed through the tool-name rewriter.
- * The map is preserved by-reference (same keys, same iteration order); only the string values change. Each entry's
- * `contextLabel` is its content-relative POSIX path, so an unmapped placeholder surfaces a usable file reference.
- */
-function rewriteToolNamesInExpansionMap(
-  rawExpanded: ReadonlyMap<string, string>,
-  contentDir: string,
-  toolMapping: ReadonlyMap<string, string>,
-): Map<string, string> {
-  const rewritten = new Map<string, string>();
-  for (const [absSrcPath, content] of rawExpanded) {
-    const label = relativeFromContent(contentDir, absSrcPath);
-    rewritten.set(absSrcPath, rewriteToolNames(content, toolMapping, label));
-  }
-  return rewritten;
 }
