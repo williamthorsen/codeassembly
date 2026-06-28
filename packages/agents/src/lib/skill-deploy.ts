@@ -4,6 +4,7 @@ import path from 'node:path';
 import { makeArtifactMarker } from './artifact-marker.ts';
 import { readDeploy } from './deploy-frontmatter.ts';
 import { writeIfChanged } from './fs-helpers.ts';
+import { renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
 import { isEnoent, isMissingFile } from './type-guards.ts';
 
 const skillMarker = makeArtifactMarker('skill');
@@ -46,26 +47,28 @@ export async function resolveDeclaredSkill(slug: string, librarySkillsDir: strin
 }
 
 /**
- * Materializes a resolved skill into `destDir/`, mirroring its library directory verbatim and stamping the
- * declared-skill ownership marker into the deployed root `SKILL.md`.
- * The mirror is byte-stable: Unchanged files are left untouched and destination files the source no longer carries
- * are removed) — so re-running sync on an unchanged skill makes no filesystem changes.
- * Verbatim only: no include expansion or path rewriting (deferred to the first skill that needs it).
+ * Materializes a resolved skill into `destDir/` for one harness: every `.md` file is include-expanded and
+ * tool-name/link/template-rewritten through the shared skill transform, non-`.md` files are mirrored verbatim, and the
+ * declared-skill ownership marker is stamped into the deployed root `SKILL.md`.
+ * The write is byte-stable: unchanged files are left untouched, and destination files the source no longer carries —
+ * along with any directory left empty by their removal — are pruned, so re-deploying an unchanged skill makes no
+ * filesystem change.
  */
-export async function deploySkill(skill: ResolvedSkill, destDir: string): Promise<void> {
+export async function deploySkill(skill: ResolvedSkill, destDir: string, context: SkillDeployContext): Promise<void> {
+  const entries = await renderSkillDirectory(skill.srcDir, skill.slug, context);
   await mkdir(destDir, { recursive: true });
-  const srcEntries = await readdir(skill.srcDir, { withFileTypes: true });
-  await removeOrphans(destDir, srcEntries);
 
-  for (const entry of srcEntries) {
-    const srcPath = path.join(skill.srcDir, entry.name);
-    const destPath = path.join(destDir, entry.name);
-    if (entry.isDirectory()) {
-      await copySubtree(srcPath, destPath);
-    } else if (entry.name === 'SKILL.md') {
-      await writeIfChanged(destPath, skillMarker.injectMarker(await readFile(srcPath, 'utf8'), skill.slug));
+  const expectedFiles = new Set(entries.map((entry) => entry.relPath));
+  await pruneOrphans(destDir, '', expectedFiles);
+
+  for (const entry of entries) {
+    const destPath = path.join(destDir, entry.relPath);
+    await mkdir(path.dirname(destPath), { recursive: true });
+    if (entry.kind === 'markdown') {
+      const body = entry.relPath === 'SKILL.md' ? skillMarker.injectMarker(entry.content, skill.slug) : entry.content;
+      await writeIfChanged(destPath, body);
     } else {
-      await copyFileIfChanged(srcPath, destPath);
+      await copyFileIfChanged(entry.srcPath, destPath);
     }
   }
 }
@@ -83,17 +86,21 @@ async function copyFileIfChanged(srcPath: string, destPath: string): Promise<voi
 }
 
 /**
- * Byte-stably mirrors an auxiliary subdirectory (no marker injection), removing destination entries
- * that the source dropped. */
-async function copySubtree(srcDir: string, destDir: string): Promise<void> {
-  await mkdir(destDir, { recursive: true });
-  const srcEntries = await readdir(srcDir, { withFileTypes: true });
-  await removeOrphans(destDir, srcEntries);
-
-  for (const entry of srcEntries) {
-    const srcPath = path.join(srcDir, entry.name);
-    const destPath = path.join(destDir, entry.name);
-    await (entry.isDirectory() ? copySubtree(srcPath, destPath) : copyFileIfChanged(srcPath, destPath));
+ * Removes every destination file absent from `expectedFiles`, then any directory left empty by those removals, so a
+ * skill's dropped files — and the directories that held them — do not linger across re-deploys.
+ */
+async function pruneOrphans(destDir: string, relDir: string, expectedFiles: ReadonlySet<string>): Promise<void> {
+  for (const entry of await readdir(path.join(destDir, relDir), { withFileTypes: true })) {
+    const rel = relDir === '' ? entry.name : `${relDir}/${entry.name}`;
+    const absPath = path.join(destDir, rel);
+    if (entry.isDirectory()) {
+      await pruneOrphans(destDir, rel, expectedFiles);
+      if ((await readdir(absPath)).length === 0) {
+        await rm(absPath, { recursive: true, force: true });
+      }
+    } else if (!expectedFiles.has(rel)) {
+      await rm(absPath, { force: true });
+    }
   }
 }
 
@@ -106,16 +113,6 @@ async function readFileOrUndefined(filePath: string): Promise<Buffer | undefined
       return;
     }
     throw error;
-  }
-}
-
-/** Removes every entry under `destDir` whose name is absent from `srcEntries`, so source deletions do not linger. */
-async function removeOrphans(destDir: string, srcEntries: ReadonlyArray<{ name: string }>): Promise<void> {
-  const srcNames = new Set(srcEntries.map((entry) => entry.name));
-  for (const destEntry of await readdir(destDir, { withFileTypes: true })) {
-    if (!srcNames.has(destEntry.name)) {
-      await rm(path.join(destDir, destEntry.name), { recursive: true, force: true });
-    }
   }
 }
 

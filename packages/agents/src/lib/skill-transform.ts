@@ -28,11 +28,10 @@ export type RenderedSkillEntry =
   | { readonly kind: 'asset'; readonly relPath: string; readonly srcPath: string };
 
 /**
- * Renders a declared skill's directory for one harness: every `.md` file is include-expanded, tool-name-rewritten, and
- * link/template-rewritten in install's order; non-`.md` files are returned as assets to copy verbatim. Pure read — no
- * writes and no ownership/provenance marking — so `install` and `sync` each compose their own write strategy and markers
- * around the single shared transform. Throws (with a file:line anchor) on a broken include or an unmapped `{tool:NAME}`
- * placeholder.
+ * Renders a declared skill's directory for one harness: Every `.md` file is include-expanded, then tool-name-rewritten,
+ * then link/template-rewritten; non-`.md` files are returned as assets to copy verbatim.
+ * Read-only; the caller composes its own write strategy and markers around the transform.
+ * Throws (with a file:line anchor) on a broken include or an unmapped `{tool:NAME}` placeholder.
  *
  * `slug` anchors link rewriting: a relative Markdown link resolves against `<slug>/<file>` under `pathPrefix`, matching
  * how the deployed skill sits at `<pathPrefix>/<slug>/`. `_partials/` directories and dotfiles are skipped at every
