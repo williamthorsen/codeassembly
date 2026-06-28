@@ -2,7 +2,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
-import { type ArtifactDependencies, readDependencies } from './dependency-frontmatter.ts';
+import { type ArtifactDependencies, readDependencies, readMembers } from './dependency-frontmatter.ts';
+import { enumerateLibrarySlugs } from './library-catalog.ts';
 import { isMissingFile } from './type-guards.ts';
 
 /** The directly-declared slugs per type that seed closure resolution; an absent type seeds nothing. */
@@ -16,11 +17,11 @@ export interface ResolvedClosure {
 }
 
 /**
- * Expands the directly-declared artifacts into their transitive dependency closure, reading each visited artifact's
- * `dependencies:` frontmatter and following its edges across every type. The result is deduped (a diamond dependency
- * appears once) and acyclic — a cycle throws an error naming the offending path. A collection is a traversal-only
- * node: its dependencies are followed but the collection itself is dropped from the deployable result. A referenced
- * artifact whose library file is absent throws an error naming its type and slug.
+ * Expands the directly-declared artifacts into their transitive closure, reading each visited artifact's edges — a
+ * collection's `members:`, every other type's `dependencies:` — and following them across every type. The result is
+ * deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending path. A
+ * collection is a traversal-only node: its members are followed but the collection itself is dropped from the
+ * deployable result. A referenced artifact whose library file is absent throws an error naming its type and slug.
  *
  * @param contentDir The library root each artifact's frontmatter file is resolved under.
  */
@@ -45,10 +46,10 @@ export async function resolveClosure(direct: DirectArtifacts, contentDir: string
     reached[type].add(slug);
 
     onPath.add(id);
-    const dependencies = await readArtifactDependencies(type, slug, contentDir);
-    for (const dependencyType of ARTIFACT_TYPE_VALUES) {
-      for (const dependencySlug of dependencies[dependencyType] ?? []) {
-        await visit(dependencyType, dependencySlug, [...trail, id]);
+    const edges = await readArtifactEdges(type, slug, contentDir);
+    for (const edgeType of ARTIFACT_TYPE_VALUES) {
+      for (const edgeSlug of edges[edgeType] ?? []) {
+        await visit(edgeType, edgeSlug, [...trail, id]);
       }
     }
     onPath.delete(id);
@@ -69,12 +70,12 @@ export async function resolveClosure(direct: DirectArtifacts, contentDir: string
 
 // region | Helpers
 
-/** Reads one artifact's declared dependencies, throwing a clear error when its library file is absent. */
-async function readArtifactDependencies(
-  type: ArtifactType,
-  slug: string,
-  contentDir: string,
-): Promise<ArtifactDependencies> {
+/**
+ * Reads one artifact's outgoing edges, throwing a clear error when its library file is absent. A collection's edges
+ * come from `members:` — the full catalog when it carries `'@library'`, otherwise its explicit members — while every
+ * other type's come from `dependencies:`.
+ */
+async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: string): Promise<ArtifactDependencies> {
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
   let content: string;
   try {
@@ -85,7 +86,13 @@ async function readArtifactDependencies(
     }
     throw error;
   }
-  return readDependencies(content, `${type} ${slug}`);
+
+  const label = `${type} ${slug}`;
+  if (type === 'collection') {
+    const members = readMembers(content, label);
+    return members.kind === 'library' ? await enumerateLibrarySlugs(contentDir) : members.edges;
+  }
+  return readDependencies(content, label);
 }
 
 // endregion | Helpers

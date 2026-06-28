@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readDependencies } from '../dependency-frontmatter.ts';
+import { readDependencies, readMembers } from '../dependency-frontmatter.ts';
 
 /** Wraps a frontmatter body in `---` delimiters with a throwaway markdown body. */
 function withFrontmatter(frontmatter: string): string {
@@ -57,5 +57,47 @@ describe(readDependencies, () => {
     const content = withFrontmatter('dependencies:\n  - people-report');
 
     expect(() => readDependencies(content)).toThrow(/mapping/);
+  });
+
+  it('throws when a non-collection declares members, naming the source', () => {
+    const content = withFrontmatter("members: '@library'");
+
+    expect(() => readDependencies(content, 'skills/people-report/SKILL.md')).toThrow(/people-report.*members/s);
+  });
+});
+
+describe(readMembers, () => {
+  it('reads the @library token as a library directive', () => {
+    expect(readMembers(withFrontmatter("name: all\nmembers: '@library'"))).toEqual({ kind: 'library' });
+  });
+
+  it('reads an explicit per-type members block as edges', () => {
+    const content = withFrontmatter('members:\n  skills:\n    - people-report\n  subagents:\n    - canary');
+
+    expect(readMembers(content)).toEqual({
+      kind: 'explicit',
+      edges: { skill: ['people-report'], subagent: ['canary'] },
+    });
+  });
+
+  it('treats absent or null members as an empty collection', () => {
+    expect(readMembers(withFrontmatter('name: empty'))).toEqual({ kind: 'explicit', edges: {} });
+    expect(readMembers(withFrontmatter('members:'))).toEqual({ kind: 'explicit', edges: {} });
+  });
+
+  it('throws naming the token and source on an unrecognized members token', () => {
+    expect(() => readMembers(withFrontmatter("members: '@everything'"), 'collections/all.md')).toThrow(
+      /all\.md.*@everything/s,
+    );
+  });
+
+  it('throws when members is neither a token nor a mapping', () => {
+    expect(() => readMembers(withFrontmatter('members:\n  - people-report'), 'collections/all.md')).toThrow(/all\.md/);
+  });
+
+  it('throws when a collection also declares dependencies, naming the source', () => {
+    const content = withFrontmatter("members: '@library'\ndependencies:\n  skills:\n    - people-report");
+
+    expect(() => readMembers(content, 'collections/all.md')).toThrow(/all\.md.*dependencies/s);
   });
 });

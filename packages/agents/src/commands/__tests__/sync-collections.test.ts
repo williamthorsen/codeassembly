@@ -60,18 +60,18 @@ async function declareCollections(projectRoot: string, ...slugs: ReadonlyArray<s
   await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `collections:\n${useBlock}`, 'utf8');
 }
 
-/** Writes a dependency-only collection `<slug>.md` into the temp content library. */
+/** Writes a members-based collection `<slug>.md` into the temp content library. */
 async function writeCollection(
   contentDir: string,
   slug: string,
-  dependencies: { skills?: ReadonlyArray<string>; subagents?: ReadonlyArray<string> },
+  members: { skills?: ReadonlyArray<string>; subagents?: ReadonlyArray<string> },
 ): Promise<void> {
   const dir = path.join(contentDir, 'collections');
   await mkdir(dir, { recursive: true });
-  const blocks = Object.entries(dependencies).map(
-    ([key, slugs]) => `  ${key}:\n${slugs.map((dependency) => `    - ${dependency}`).join('\n')}`,
+  const blocks = Object.entries(members).map(
+    ([key, slugs]) => `  ${key}:\n${slugs.map((member) => `    - ${member}`).join('\n')}`,
   );
-  const frontmatter = `name: ${slug}\ndependencies:\n${blocks.join('\n')}\n`;
+  const frontmatter = `name: ${slug}\nmembers:\n${blocks.join('\n')}\n`;
   await writeFile(path.join(dir, `${slug}.md`), `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
 }
 

@@ -48,7 +48,7 @@ A declared subagent is deployed into each detected harness's project-local subag
 
 ### Collections
 
-A collection is a dependency-only aggregate: it deploys no file of its own, but declaring it pulls in its members' transitive dependency closure, which `sync` then deploys. Declare one like any other type:
+A collection is a traversal-only aggregate: it deploys no file of its own, but declaring it pulls in its members' transitive closure, which `sync` then deploys. Declare one like any other type:
 
 ```yaml
 collections:
@@ -56,11 +56,29 @@ collections:
     - recommended
 ```
 
+A collection lists its constituents under a `members:` key — either an explicit per-type block (the same shape `dependencies:` uses) or the computed token `'@library'`:
+
+```yaml
+members:
+  skills:
+    - capture-feedback
+  subagents:
+    - canary
+```
+
+`members:` is collections-only; rulebooks, skills, and subagents declare prerequisite edges under `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error that names the offending artifact.
+
 Dropping or omitting a collection — or `root: true` — excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead. The shipped `recommended` collection bundles the default declared artifacts. The installed user-global declaration (`~/.agents/codeassembly.yaml`) declares it, so `sync --global` deploys it into the home directories out of the box; a project adds it for repo deployment by declaring it explicitly.
+
+#### The `@library` token
+
+A collection whose `members:` is the string `'@library'` resolves to every deployable artifact in the content library (all rulebooks, skills, and subagents), computed at resolution time so a newly added artifact joins automatically with no edit. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: the resolver never emits them, and "every collection" would be self-referential.
+
+The shipped `all` collection carries `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
 
 ### Dependencies
 
-Any artifact may declare dependencies on others in its frontmatter, grouped by artifact type. Resolution follows these edges transitively — deduped, with cycle detection — so declaring one artifact pulls in its whole closure:
+A rulebook, skill, or subagent may declare dependencies on other artifacts in its frontmatter, grouped by artifact type. Resolution follows these edges transitively — deduped, with cycle detection — so declaring one artifact pulls in its whole closure:
 
 ```yaml
 dependencies:
@@ -72,7 +90,7 @@ dependencies:
     - canary
 ```
 
-A collection is simply an artifact whose only payload is this block.
+The resolver follows `members:` and `dependencies:` identically; the split is semantic — a collection _contains_ members, while an artifact _depends on_ prerequisites.
 
 ### The `deploy` field
 

@@ -1,5 +1,4 @@
-import type { Dirent } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -9,8 +8,10 @@ import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
+import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
+import { listSkillDirectories } from '../lib/library-catalog.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { isEnoent, isMissingFile, isRecord } from '../lib/type-guards.ts';
+import { isRecord } from '../lib/type-guards.ts';
 
 /** A single artifact's normalized listing fields, before its type and emoji are attached. */
 interface ArtifactEntry {
@@ -43,7 +44,7 @@ const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
 /** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
 
-/** Delivery cell for a collection: a dependency-only aggregate has no `deploy` field and so no delivery mode. */
+/** Delivery cell for a collection: a collection has no `deploy` field and so no delivery mode. */
 const COLLECTION_DELIVERY = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
@@ -148,16 +149,11 @@ function compareRows(a: LibraryRow, b: LibraryRow): number {
   return a.slug.localeCompare(b.slug);
 }
 
-/** True when a directory entry is neither a reserved `_`-prefixed support entry nor a dotfile. */
-function isVisible(name: string): boolean {
-  return !name.startsWith('_') && !name.startsWith('.');
-}
-
 /** Lists collection artifacts from `content/collections`, reading each markdown file's name and description. */
 async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.collection.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const file of await listMarkdownFiles(dir)) {
+  for (const file of await listVisibleMarkdownFiles(dir)) {
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('collection', file, () => {
       const meta = readNameAndDescription(content);
@@ -174,18 +170,11 @@ async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>
   return entries;
 }
 
-/** Returns visible (`.md`, non-`_`, non-dotfile) regular-file names directly in `dir`; empty when `dir` is absent. */
-async function listMarkdownFiles(dir: string): Promise<Array<string>> {
-  return (await readDirEntries(dir))
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md') && isVisible(entry.name))
-    .map((entry) => entry.name);
-}
-
 /** Lists rulebook artifacts from `content/guidance/rulebooks`, parsing each via the rulebook schema. */
 async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.rulebook.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const file of await listMarkdownFiles(dir)) {
+  for (const file of await listVisibleMarkdownFiles(dir)) {
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('rulebook', file, () => {
       const { rulebook } = parseRulebookFile(content, file);
@@ -206,16 +195,8 @@ async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> 
 async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.skill.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const name of await listVisibleSubdirectories(dir)) {
-    let content: string;
-    try {
-      content = await readFile(path.join(dir, name, 'SKILL.md'), 'utf8');
-    } catch (error) {
-      if (isMissingFile(error)) {
-        continue;
-      }
-      throw error;
-    }
+  for (const name of await listSkillDirectories(dir)) {
+    const content = await readFile(path.join(dir, name, 'SKILL.md'), 'utf8');
     const entry = buildEntryOrSkip('skill', name, () => {
       const meta = readNameAndDescription(content);
       // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.
@@ -236,7 +217,7 @@ async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
 async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> {
   const dir = path.join(contentDir, ARTIFACT_TYPES.subagent.contentPath);
   const entries: Array<ArtifactEntry> = [];
-  for (const file of await listMarkdownFiles(dir)) {
+  for (const file of await listVisibleMarkdownFiles(dir)) {
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('subagent', file, () => {
       const meta = readNameAndDescription(content);
@@ -254,29 +235,10 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
   return entries;
 }
 
-/** Returns visible (non-`_`, non-dotfile) subdirectory names directly in `dir`; empty when `dir` is absent. */
-async function listVisibleSubdirectories(dir: string): Promise<Array<string>> {
-  return (await readDirEntries(dir))
-    .filter((entry) => entry.isDirectory() && isVisible(entry.name))
-    .map((entry) => entry.name);
-}
-
 /** Builds a type cell (`{emoji} {label}`) padded with trailing spaces to `colWidth` display cells. */
 function padType(emoji: string, label: string, colWidth: number): string {
   const padding = Math.max(0, colWidth - (EMOJI_DISPLAY_WIDTH + 1 + label.length));
   return `${emoji} ${label}${' '.repeat(padding)}`;
-}
-
-/** Reads `dir` with file types, returning `[]` when the directory does not exist. */
-async function readDirEntries(dir: string): Promise<Array<Dirent>> {
-  try {
-    return await readdir(dir, { withFileTypes: true });
-  } catch (error) {
-    if (isEnoent(error)) {
-      return [];
-    }
-    throw error;
-  }
 }
 
 /** Extracts the `name` and `description` strings from a markdown file's frontmatter, when present. */
