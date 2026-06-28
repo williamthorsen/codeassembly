@@ -10,18 +10,19 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
+import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import {
   deploySubagent,
   resolveDeclaredSubagent,
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from '../lib/subagent-deploy.ts';
-import { loadSubagentOverlay } from '../lib/subagent-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { HarnessId, InstallOptions } from '../lib/types.ts';
@@ -43,6 +44,12 @@ interface ResolvedRulebook {
 interface HarnessSubagentTarget {
   readonly subagentsDir: string;
   readonly deployContext: SubagentDeployContext;
+}
+
+/** One targeted harness's project-local skills dir paired with the per-harness inputs the skill transform needs. */
+interface HarnessSkillTarget {
+  readonly skillsDir: string;
+  readonly deployContext: SkillDeployContext;
 }
 
 /** The one per-domain difference: the base dir to resolve and deploy under, and the file that hosts ambient blocks. */
@@ -166,10 +173,16 @@ async function reconcileDomain(
   assertNoCrossNamespaceCollisions([...desiredSkillDirs.values()], declaredSkillSet);
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
-  // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir.
-  const harnessSkillDirs = resolveHarnessIds(options.harness, domain.baseDir).map(
-    (harnessId) => resolveHarnessPaths(harnessId, domain.baseDir).skillsDir,
+  // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
+  // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
+  // tool-name/link rewriting. `harnessSkillDirs` is the plain dir list the rulebook-skill passes and orphan scans use,
+  // which need no transform context.
+  const harnessSkillTargets = await Promise.all(
+    resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
+      resolveSkillTarget(harnessId, domain.baseDir, contentDir),
+    ),
   );
+  const harnessSkillDirs = harnessSkillTargets.map((target) => target.skillsDir);
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
   // mapping so the deploy applies the same transform `install` would. Resolved separately from skills because the
@@ -224,6 +237,11 @@ async function reconcileDomain(
   await assertNoForeignOwnedTargets(
     collectOwnedTargets(harnessSkillDirs, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
   );
+
+  // Render every declared skill against every targeted harness up front, so a broken include or an unmapped tool
+  // placeholder fails the whole run — dry-run included — before any file is written. The rendered output is discarded
+  // here; `deploySkill` re-renders it at write time.
+  await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
 
   if (options.dryRun) {
     reportDryRun({
@@ -290,14 +308,7 @@ async function reconcileDomain(
 
   // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
-  for (const { skillsDir, orphans } of declaredSkillOrphansByDir) {
-    for (const dir of orphans) {
-      await rm(path.join(skillsDir, dir), { recursive: true, force: true });
-    }
-    for (const skill of resolvedSkills) {
-      await deploySkill(skill, path.join(skillsDir, skill.slug));
-    }
-  }
+  await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
@@ -595,6 +606,43 @@ async function reconcileDeclaredSubagents(
 }
 
 /**
+ * Retracts owned declared-skill dirs no longer declared, then deploys each declared skill into every targeted harness's
+ * skills dir with that harness's transform applied. Orphans were computed against the pre-write filesystem, so
+ * retracting before writing lets a slug freed in one dir be re-created in the same sync rather than clobbered.
+ */
+async function reconcileDeclaredSkills(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  orphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
+  resolvedSkills: ReadonlyArray<ResolvedSkill>,
+): Promise<void> {
+  for (const target of targets) {
+    const orphans = orphansByDir.find((entry) => entry.skillsDir === target.skillsDir)?.orphans ?? [];
+    for (const dir of orphans) {
+      await rm(path.join(target.skillsDir, dir), { recursive: true, force: true });
+    }
+    for (const skill of resolvedSkills) {
+      await deploySkill(skill, path.join(target.skillsDir, skill.slug), target.deployContext);
+    }
+  }
+}
+
+/**
+ * Renders every declared skill against every targeted harness, discarding the output, so a broken include or an
+ * unmapped tool placeholder throws before any file is written. The deploy pass re-renders at write time; this pass
+ * exists only to fail the run closed, including under `--dry-run`.
+ */
+async function assertDeclaredSkillsRender(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  resolvedSkills: ReadonlyArray<ResolvedSkill>,
+): Promise<void> {
+  for (const target of targets) {
+    for (const skill of resolvedSkills) {
+      await renderSkillDirectory(skill.srcDir, skill.slug, target.deployContext);
+    }
+  }
+}
+
+/**
  * Regenerates the home-domain Rovo Dev `prompts.yml` so home-deployed skills appear in its available-skills list. As a
  * pure projection of the on-disk skills dir, it also drops any just-retracted skill. A no-op for the repo domain (which
  * keeps no such index) and for non-Rovo Dev harnesses.
@@ -706,13 +754,37 @@ async function resolveSubagentTarget(
   contentDir: string,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
-  const overlayYaml = await loadSubagentOverlay(contentDir, harnessConfig);
+  const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {
       contentDir,
       overlayYaml,
       toolMapping: loadToolMapping(overlayYaml),
+      homeDir: harnessConfig.homeDir,
+      harnessId: harnessConfig.id,
+    },
+  };
+}
+
+/**
+ * Resolves one harness's project-local skills dir together with the per-harness inputs the skill transform needs: the
+ * tool-name mapping (from the harness overlay), the link-rewrite prefix, the home-dir segment, and the harness id.
+ * Passing `projectRoot` as the base keeps delivery project-scoped.
+ */
+async function resolveSkillTarget(
+  harnessId: HarnessId,
+  projectRoot: string,
+  contentDir: string,
+): Promise<HarnessSkillTarget> {
+  const harnessConfig = HARNESSES[harnessId];
+  const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
+  return {
+    skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
+    deployContext: {
+      contentDir,
+      toolMapping: loadToolMapping(overlayYaml),
+      pathPrefix: `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
     },

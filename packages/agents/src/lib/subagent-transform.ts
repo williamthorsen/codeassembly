@@ -1,27 +1,6 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
-import { isEnoent } from './type-guards.ts';
-import type { HarnessConfig } from './types.ts';
-
-/**
- * Reads the subagent overlay YAML for a harness, returning an empty string when the file does not exist.
- * Shared by `install` and `sync` so both apply the same `_defaults`/per-agent merge and `{tool:NAME}` mapping.
- */
-export async function loadSubagentOverlay(contentDir: string, harnessConfig: HarnessConfig): Promise<string> {
-  const overlayPath = path.join(contentDir, 'subagents', '_data', harnessConfig.frontmatterFile);
-  try {
-    return await readFile(overlayPath, 'utf8');
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    return '';
-  }
-}
 
 /** The harness-specific inputs a subagent render depends on, resolved once per harness by the caller. */
 export interface SubagentRenderContext {

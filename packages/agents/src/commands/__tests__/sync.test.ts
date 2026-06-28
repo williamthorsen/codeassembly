@@ -535,6 +535,45 @@ describe(syncCommand, () => {
 
       expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
     });
+
+    it('applies include expansion and tool-name and link rewriting when deploying a declared skill', async () => {
+      await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
+      await writeFile(
+        path.join(contentDir, 'subagents', '_data', 'claude.yaml'),
+        '_tools:\n  Read: open_files\n',
+        'utf8',
+      );
+      const skillDir = path.join(contentDir, 'skills', 'demo');
+      await mkdir(path.join(skillDir, '_partials'), { recursive: true });
+      await writeFile(
+        path.join(skillDir, 'SKILL.md'),
+        '---\nname: demo\ndeploy: declared\n---\n\n<!-- include: _partials/frag.md / -->\n\nUse {tool:Read}. See [guide](./guide.md).\n',
+        'utf8',
+      );
+      await writeFile(path.join(skillDir, '_partials', 'frag.md'), 'Shared fragment.\n', 'utf8');
+      await writeFile(path.join(skillDir, 'guide.md'), '# Guide\n', 'utf8');
+      await declareSkills('demo');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const skill = await readFile(skillPath('demo'), 'utf8');
+      expect(skill).toContain('Shared fragment.');
+      expect(skill).toContain('Use open_files.');
+      expect(skill).toContain('[guide](~/.claude/skills/demo/guide.md)');
+      expect(skill).not.toContain('{tool:Read}');
+      expect(existsSync(path.join(projectRoot, '.claude', 'skills', 'demo', '_partials'))).toBe(false);
+    });
+
+    it('fails before writing when a declared skill has an unmapped tool placeholder, dry-run included', async () => {
+      await writeLibrarySkill('demo', { body: 'Use {tool:Read}.' });
+      await declareSkills('demo');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /Unmapped tool name "Read" in skills\/demo\/SKILL\.md/,
+      );
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/Unmapped tool name "Read"/);
+      expect(existsSync(skillPath('demo'))).toBe(false);
+    });
   });
 
   describe('declared subagents', () => {

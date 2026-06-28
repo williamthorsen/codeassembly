@@ -1,14 +1,9 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
-import { HARNESSES } from '../harness.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
-import { loadSubagentOverlay, renderSubagentForHarness } from '../subagent-transform.ts';
+import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 const SOURCE = unindent`
@@ -41,29 +36,6 @@ const ROVODEV_OVERLAY = unindent`
     tools: [bash, open_files]
 
 `;
-
-describe(loadSubagentOverlay, () => {
-  let contentDir: string;
-
-  beforeEach(async () => {
-    contentDir = path.join(tmpdir(), `agents-test-overlay-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    await mkdir(path.join(contentDir, 'subagents', '_data'), { recursive: true });
-  });
-
-  afterEach(async () => {
-    await rm(contentDir, { recursive: true, force: true });
-  });
-
-  it('reads the harness overlay file from subagents/_data', async () => {
-    await writeFile(path.join(contentDir, 'subagents', '_data', 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
-
-    expect(await loadSubagentOverlay(contentDir, HARNESSES.claude)).toBe(CLAUDE_OVERLAY);
-  });
-
-  it('returns an empty string when the overlay file is absent', async () => {
-    expect(await loadSubagentOverlay(contentDir, HARNESSES.rovodev)).toBe('');
-  });
-});
 
 describe(renderSubagentForHarness, () => {
   it('merges _defaults, rewrites the tool placeholder, and expands {harness_home_dir} for claude', () => {
