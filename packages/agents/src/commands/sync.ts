@@ -10,6 +10,7 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
@@ -21,7 +22,6 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from '../lib/subagent-deploy.ts';
-import { loadSubagentOverlay } from '../lib/subagent-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { HarnessId, InstallOptions } from '../lib/types.ts';
@@ -706,7 +706,7 @@ async function resolveSubagentTarget(
   contentDir: string,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
-  const overlayYaml = await loadSubagentOverlay(contentDir, harnessConfig);
+  const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {

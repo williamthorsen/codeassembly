@@ -6,6 +6,7 @@ import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
+import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import {
   computeContentHash,
@@ -23,7 +24,7 @@ import {
 } from '../lib/marker-injector.js';
 import { rewritePathsInDirectory, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { renderPromptsYml } from '../lib/prompts-yml.ts';
-import { loadSubagentOverlay, renderSubagentForHarness } from '../lib/subagent-transform.ts';
+import { renderSubagentForHarness } from '../lib/subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
@@ -87,7 +88,7 @@ export async function installCommand(
     // Load the harness overlay once per harness. The raw YAML feeds the frontmatter merger (subagents only);
     // the parsed `_tools:` mapping feeds the body-text placeholder rewriter (subagents and skills).
     const harnessConfig = HARNESSES[harnessId];
-    const overlayYaml = await loadSubagentOverlay(contentDir, harnessConfig);
+    const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
     const toolMapping = loadToolMapping(overlayYaml);
 
     // Install skills (shared + harness-specific)
