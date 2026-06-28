@@ -13,13 +13,15 @@ Resolve a ticket source argument into ticket content and metadata. Skills that a
 | Plain text                                                  | Use as-is                                                         |
 | _(no source provided)_                                      | Auto-resolve from environment (see [auto-resolve](#auto-resolve)) |
 
+**Persist the resolved URL.** After resolving by any form above (an explicitly supplied URL included, not only the auto-resolve path), store the resolved `ticket_url` in the branch manifest so later sessions reuse it without re-resolving or re-pasting. See [Stored ticket URL](#stored-ticket-url).
+
 ## Auto-resolve
 
 When no ticket source is provided, attempt to derive the ticket from the current environment. This covers the common case where the branch name encodes the ticket identity (e.g., branch `357` for GitHub issue #357, or branch `MAC-42/feat/foo` for Jira ticket MAC-42).
 
 ### Steps
 
-1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON carries both `ticket_id` and the persisted `ticket_url` (see [Stored ticket URL](#stored-ticket-url)).
+1. **Get session context** by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading the manifest JSON emitted on stdout. This JSON carries `ticket_id`, the persisted `ticket_url`, and `ticket_base_url` (the org-stable base mirrored from the `ticket.base_url` preference; see [Stored ticket URL](#stored-ticket-url)).
 
 2. **Prefer the stored URL.** If `ticket_url` is a non-null string, fetch the ticket directly from that URL — skip the platform/identifier reconstruction below. If the stored URL does not yield the expected ticket, invalidate it per [Stored ticket URL](#stored-ticket-url) and continue with reconstruction.
 
@@ -36,6 +38,8 @@ When no ticket source is provided, attempt to derive the ticket from the current
    c. **If `ticket_id` contains a prefix** (e.g., `MAC-42`): The ID is a Jira-style key. The platform is Jira (or whichever platform hosts that project).
 
    d. If the platform still cannot be determined, ask the user.
+
+   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for platforms with no automated fetch (e.g. Jira): it yields a URL to present and persist even when the content cannot be fetched.
 
 5. **Fetch the ticket** using the platform-specific command from [platform-specific fetch commands](#platform-specific-fetch-commands).
 
@@ -73,11 +77,13 @@ Skills may request a subset of these fields. The `updatedAt` field is needed by 
 
 ### Jira
 
-Not yet supported for automated fetch. If the platform is determined to be Jira, present the Jira key to the user and ask them to provide the ticket content. The stored URL still applies: a Jira ticket URL the user supplied once is reused on later sessions (presented to the user) so it does not have to be re-pasted, and it is invalidated like any other stored URL when it does not yield the expected ticket — see [Stored ticket URL](#stored-ticket-url).
+Not yet supported for automated fetch. If the platform is determined to be Jira, present the Jira key to the user and ask them to provide the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted; the user is still asked for the content, since Jira has no automated fetch. The stored URL still applies: a Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
 
 ## Stored ticket URL
 
-The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `ticket_url` so it is reused across sessions instead of being reconstructed or re-pasted each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags — never by hand-editing the JSON.
+The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `ticket_url` so it is reused across sessions instead of being reconstructed or re-pasted each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags, never by hand-editing the JSON.
+
+The manifest also surfaces `ticket_base_url`, mirroring the `ticket.base_url` preference. When a base and a `ticket_id` are both known, the deriver seeds `ticket_url` by joining them, so a bare Jira-style reference resolves to a URL without a supplied one. An explicitly stored URL always overrides that constructed default.
 
 - **Prefer** — auto-resolve uses a stored `ticket_url` before reconstructing one from `ticket_id`.
 - **Persist** — after a ticket URL is resolved (reconstructed, supplied by the user, or fetched), store it: run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "{url}"`.

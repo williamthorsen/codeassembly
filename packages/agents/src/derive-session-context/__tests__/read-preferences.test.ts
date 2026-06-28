@@ -144,6 +144,25 @@ describe(readPreferences, () => {
       /'repository\.default_remote\.name' must be a string/,
     );
   });
+
+  it('reads ticket.base_url', async () => {
+    await writeProjectYaml(projectDir, 'ticket:\n  base_url: https://org.atlassian.net/browse/\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.ticket).toEqual({ base_url: 'https://org.atlassian.net/browse/' });
+  });
+
+  it('ignores ticket.title_format, which the deriver does not consume', async () => {
+    await writeProjectYaml(projectDir, "ticket:\n  title_format: '{title}'\n");
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.ticket).toEqual({});
+  });
+
+  it('throws with the offending key path when ticket.base_url has the wrong type', async () => {
+    await writeProjectYaml(projectDir, 'ticket:\n  base_url: 42\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
+      /'ticket\.base_url' must be a string/,
+    );
+  });
 });
 
 // region | Helpers

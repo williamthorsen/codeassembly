@@ -184,11 +184,15 @@
     },
     "ticket": {
       "type": "object",
-      "description": "Ticket (issue) title rendering configuration.",
+      "description": "Ticket (issue) configuration: title rendering and the base URL used to resolve bare ticket references.",
       "properties": {
         "title_format": {
           "type": "string",
           "description": "Template string used to render ticket (issue) titles. Supports the same token vocabulary as `commit.title_format`."
+        },
+        "base_url": {
+          "type": "string",
+          "description": "Org-stable base URL that a bare ticket id is appended to when reconstructing a ticket URL, for platforms where the URL cannot otherwise be derived (e.g. Jira `https://org.atlassian.net/browse/`). The trailing slash is optional. Surfaced into the branch manifest as `ticket_base_url`."
         }
       },
       "required": ["title_format"]

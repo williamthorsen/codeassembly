@@ -15,7 +15,7 @@ Create an implementation plan from a ticket or task. `plan` is the standalone pl
 
 ## Resolve the task source
 
-Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description.
+Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description.
 
 When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions carry no provenance.
 

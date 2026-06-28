@@ -337,6 +337,9 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
   if ('ticket_url' in value && !isStringOrNull(value.ticket_url)) {
     return false;
   }
+  if ('ticket_base_url' in value && !isStringOrNull(value.ticket_base_url)) {
+    return false;
+  }
   if ('pr_url' in value && !isStringOrNull(value.pr_url)) {
     return false;
   }

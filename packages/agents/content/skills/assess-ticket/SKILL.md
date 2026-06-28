@@ -19,7 +19,7 @@ Assess a ticket against the current codebase across five dimensions: drift, rele
 
 ### 1. Resolve ticket source
 
-Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis. Store the resolved metadata (platform, repo, issue number, last-updated date, ticket content).
+Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis. Store the resolved metadata (platform, repo, issue number, last-updated date, ticket content). When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
 
 ### 2. Investigate
 
