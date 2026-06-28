@@ -18,7 +18,7 @@ Classify a ticket's complexity by examining the described work against the curre
 
 ### 1. Resolve ticket source
 
-Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Store the resolved metadata (platform, repo, issue number, ticket content).
+Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Store the resolved metadata (platform, repo, issue number, ticket content). When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
 
 ### 2. Identify the work surface
 
