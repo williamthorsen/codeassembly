@@ -34,7 +34,8 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
  * Assembles an immutable event record from agent-supplied args and auto-filled context, renders it to a note string,
  * and validates the result against the store's schema via `frontmatterRule`. The record carries the stored
  * `recordType: event` discriminant and the event spine (`id`, `captured-at`, `session`, `cwd`, `repo`, `summary`) plus
- * any supplied `skill`/`model`/`harness`/`tags`. No `updated`/`last-verified` field is written: events are write-once.
+ * any supplied `skill`/`model`/`harness`/`tags`/`impact`. No `updated`/`last-verified` field is written: events are
+ * write-once.
  *
  * Validation round-trips the rendered note through `parseNoteContent` and `runRules`, mirroring `kb-add`'s
  * prepare-then-validate flow. When any finding has `severity: 'error'`, the outcome is `{ ok: false, findings }` and
@@ -72,6 +73,9 @@ export function prepareEvent(input: {
   }
   if (args.tags.length > 0) {
     fields.push(['tags', args.tags]);
+  }
+  if (args.impact !== null) {
+    fields.push(['impact', args.impact]);
   }
 
   const content = renderEventNote(fields, body);

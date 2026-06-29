@@ -6,6 +6,7 @@
 // (out-of-disk, permission denied) are out of band: they print to stderr and exit non-zero.
 
 import type { Finding } from '@codeassembly/kb';
+import type { EventImpact } from '@codeassembly/kb/records';
 
 /** Parsed command-line invocation of the capture-event helper. */
 export interface ParsedArgs {
@@ -24,6 +25,8 @@ export interface ParsedArgs {
   harness: string | null;
   /** Optional tag list, in the order the agent supplied them. */
   tags: string[];
+  /** Optional impact rating; `null` when `--impact` is omitted. */
+  impact: EventImpact | null;
 }
 
 /** The auto-filled context an event carries beyond the agent-supplied fields. */

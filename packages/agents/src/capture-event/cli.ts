@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import type { KbRoot } from '@codeassembly/kb';
+import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@codeassembly/kb/records';
 import { loadSchema } from '@codeassembly/kb/schema';
 import { ulid } from 'ulid';
 
@@ -32,6 +33,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'model', takesValue: true },
   { name: 'harness', takesValue: true },
   { name: 'tags', takesValue: true },
+  { name: 'impact', takesValue: true },
 ];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -156,8 +158,9 @@ export async function runCapture(input: {
 
 /**
  * Parses the helper's argv. Each value-bearing flag accepts both `--flag value` and `--flag=value`; `--tags` accepts a
- * comma-separated list. Unknown flags, an unexpected positional, an empty value for any flag, or a missing `--summary`
- * throw with a usage-style message. The body comes from stdin rather than the command line, so the layout is flag-only.
+ * comma-separated list and `--impact` accepts one declared impact level. Unknown flags, an unexpected positional, an
+ * empty value for any flag, a missing `--summary`, or an out-of-enum `--impact` throw with a usage-style message. The
+ * body comes from stdin rather than the command line, so the layout is flag-only.
  *
  * @internal - Exported to allow testing.
  */
@@ -178,6 +181,14 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error('--summary is required');
   }
 
+  let impact: EventImpact | null = null;
+  if (raw.impact !== undefined) {
+    if (!isEventImpact(raw.impact)) {
+      throw new Error(`--impact must be one of ${EVENT_IMPACT_LEVELS.join(', ')}`);
+    }
+    impact = raw.impact;
+  }
+
   return {
     store: raw.store ?? null,
     summary,
@@ -185,6 +196,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     model: raw.model ?? null,
     harness: raw.harness ?? null,
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
+    impact,
   };
 }
 

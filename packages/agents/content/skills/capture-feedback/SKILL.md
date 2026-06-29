@@ -48,6 +48,7 @@ Invoke the `capture-event` skill to append an immutable record, composing its ar
 - `--store codeassembly` — the project's agent-guidance KB. Pass a different `--store` only when the user directs the record elsewhere.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>` — when the refinement target is a skill.
+- `--impact <level>` — optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.
 - `--summary` — a one-line recall label, for example "Agent title-cased a heading; sentence case is the rule."
 - **Body** — the generalized lesson, only to the extent needed to act on it later:
   - The **error→correction pair** (misapplied-guidance mode) or the **desired behavior** (no-guidance mode), generalized — not the raw artifact or diff.

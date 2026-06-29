@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { AliasMap, KbRoot } from '@codeassembly/kb';
 import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
-import { parseEvent, renderEvent } from '@codeassembly/kb/records';
+import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@codeassembly/kb/records';
 import { loadAliases } from '@codeassembly/kb/tags';
 
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
@@ -17,6 +17,7 @@ import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import { addAddressedBy } from './operations/add-addressed-by.ts';
 import { retag } from './operations/retag.ts';
+import { setImpact } from './operations/set-impact.ts';
 import type { EventResult, ParsedArgs, UpdateFailure, UpdateResult } from './types.ts';
 
 /** The value-bearing flags this helper accepts; positionals are the event ids the operation applies to. */
@@ -24,6 +25,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'store', takesValue: true },
   { name: 'add-addressed-by', takesValue: true },
   { name: 'retag', takesValue: true },
+  { name: 'set-impact', takesValue: true },
 ];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -85,10 +87,11 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
 }
 
 /**
- * Parses the helper's argv. Layout: a required `--store`, exactly one operation flag (`--add-addressed-by` or
- * `--retag`), and one or more positional event ids. Each value-bearing flag accepts both `--flag value` and
- * `--flag=value`; `--add-addressed-by` and `--retag` take a comma-separated list. An unknown flag, both operation flags,
- * neither, no ids, or a missing required value throws with a usage-style message.
+ * Parses the helper's argv. Layout: a required `--store`, exactly one operation flag (`--add-addressed-by`, `--retag`,
+ * or `--set-impact`), and one or more positional event ids. Each value-bearing flag accepts both `--flag value` and
+ * `--flag=value`; `--add-addressed-by` and `--retag` take a comma-separated list and `--set-impact` takes one declared
+ * impact level. An unknown flag, more than one operation flag, none, no ids, an out-of-enum `--set-impact`, or a missing
+ * required value throws with a usage-style message.
  *
  * @internal - Exported to allow testing.
  */
@@ -103,11 +106,15 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   const hasAddressedBy = raw['add-addressed-by'] !== undefined;
   const hasRetag = raw.retag !== undefined;
-  if (hasAddressedBy && hasRetag) {
-    throw new Error('operation flags are mutually exclusive; got --add-addressed-by and --retag');
+  const hasSetImpact = raw['set-impact'] !== undefined;
+  const operationCount = [hasAddressedBy, hasRetag, hasSetImpact].filter(Boolean).length;
+  if (operationCount > 1) {
+    throw new Error(
+      'operation flags are mutually exclusive; pass exactly one of --add-addressed-by, --retag, or --set-impact',
+    );
   }
-  if (!hasAddressedBy && !hasRetag) {
-    throw new Error('one operation flag is required (--add-addressed-by or --retag)');
+  if (operationCount === 0) {
+    throw new Error('one operation flag is required (--add-addressed-by, --retag, or --set-impact)');
   }
   if (ids.length === 0) {
     throw new Error('at least one event id is required');
@@ -120,10 +127,33 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
     return { operation: 'add-addressed-by', store, ids, references };
   }
-  return { operation: 'retag', store, ids, tags: parseTagList(raw.retag ?? '') };
+  if (hasRetag) {
+    return { operation: 'retag', store, ids, tags: parseTagList(raw.retag ?? '') };
+  }
+  const impact = raw['set-impact'] ?? '';
+  if (!isEventImpact(impact)) {
+    throw new Error(`--set-impact must be one of ${EVENT_IMPACT_LEVELS.join(', ')}`);
+  }
+  return { operation: 'set-impact', store, ids, impact };
 }
 
 // region | Helpers
+
+/** Applies the parsed operation to an event, returning the mutated record. Exhaustive over the operation union. */
+function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): KbEvent {
+  switch (args.operation) {
+    case 'add-addressed-by':
+      return addAddressedBy(record, args.references);
+    case 'retag':
+      return retag(record, args.tags, aliases);
+    case 'set-impact':
+      return setImpact(record, args.impact);
+    default: {
+      const _exhaustive: never = args;
+      throw new Error(`unhandled operation: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
+}
 
 /**
  * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. Reads through
@@ -169,10 +199,7 @@ async function editOne(input: {
     return { ok: false, id, error: 'parse', message: parsed.errors.join('; ') };
   }
 
-  const updated =
-    args.operation === 'add-addressed-by'
-      ? addAddressedBy(parsed.record, args.references)
-      : retag(parsed.record, args.tags, aliases);
+  const updated = applyOperation(parsed.record, args, aliases);
 
   const rendered = renderEvent(updated);
 

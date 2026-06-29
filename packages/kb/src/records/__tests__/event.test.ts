@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseEvent, renderEvent } from '../event.ts';
+import { EVENT_IMPACT_LEVELS, isEventImpact, parseEvent, renderEvent } from '../event.ts';
 
 const validFields = {
   recordType: 'event',
@@ -63,6 +63,39 @@ describe(parseEvent, () => {
     if (!result.ok) return;
     expect(result.record.extra).toEqual({ repo: 'owner/name' });
   });
+
+  it('reads a valid impact as a typed field, not extra', () => {
+    const result = parseEvent({ ...validFields, impact: 'high' }, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.impact).toBe('high');
+    expect(result.record.extra).toEqual({});
+  });
+
+  it('leaves impact undefined when absent', () => {
+    const result = parseEvent(validFields, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.impact).toBeUndefined();
+  });
+
+  it('rejects an out-of-enum impact', () => {
+    const result = parseEvent({ ...validFields, impact: 'urgent' }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('impact');
+  });
+});
+
+describe(isEventImpact, () => {
+  it('accepts each declared level and rejects anything else', () => {
+    for (const level of EVENT_IMPACT_LEVELS) {
+      expect(isEventImpact(level)).toBe(true);
+    }
+    expect(isEventImpact('urgent')).toBe(false);
+    expect(isEventImpact(2)).toBe(false);
+    expect(isEventImpact(undefined)).toBe(false);
+  });
 });
 
 describe(renderEvent, () => {
@@ -112,5 +145,38 @@ describe(renderEvent, () => {
     expect(keys).not.toContain('title');
     expect(keys).not.toContain('created');
     expect(keys).not.toContain('updated');
+  });
+
+  it('omits impact when unset', () => {
+    const parsed = parseEvent(validFields, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(Object.keys(renderEvent(parsed.record).fields)).not.toContain('impact');
+  });
+
+  it('emits impact after addressed-by and before extra', () => {
+    const parsed = parseEvent({ ...validFields, 'addressed-by': ['#849'], impact: 'critical', repo: 'owner/name' }, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderEvent(parsed.record).fields);
+    expect(keys).toEqual([
+      'recordType',
+      'id',
+      'captured-at',
+      'session',
+      'cwd',
+      'summary',
+      'addressed-by',
+      'impact',
+      'repo',
+    ]);
+  });
+
+  it('round-trips an event carrying impact', () => {
+    const parsed = parseEvent({ ...validFields, impact: 'high' }, '\nThe body.\n');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const { fields, body } = renderEvent(parsed.record);
+    expect(parseEvent(fields, body)).toEqual(parsed);
   });
 });
