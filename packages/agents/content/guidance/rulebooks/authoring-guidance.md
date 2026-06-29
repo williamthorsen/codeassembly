@@ -2,7 +2,7 @@
 slug: authoring-guidance
 description: Conventions for authoring CodeAssembly skills, subagents, rulebooks, and collections.
 delivery: skill
-version: 1
+version: 2
 ---
 
 # Authoring guidance
@@ -11,7 +11,7 @@ Conventions for authoring CodeAssembly artifacts — skills, subagents, rulebook
 
 ## Declaring dependencies
 
-When a rulebook, skill, or subagent relies on another — a skill that invokes another skill, a subagent that injects a skill — declare the edge in its frontmatter `dependencies:` block, grouped by type:
+When a rulebook, skill, or subagent relies on another — a skill that invokes another skill, a subagent that calls a skill it does not inject — declare the edge in its frontmatter `dependencies:` block, grouped by type:
 
 ```yaml
 dependencies:
@@ -41,7 +41,7 @@ members:
 
 - **Rulebooks:** `slug`, `description`, `delivery` (`ambient`, `skill`, or both), optional `skill-name`, optional `version`.
 - **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`).
-- **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context — pair with a matching `dependencies:` edge so `sync` deploys them).
+- **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context; `sync` pulls them into the deploy closure automatically).
 - **Collections:** `name`, `description`, and a `members:` block — the collection's only payload.
 
 ## Naming

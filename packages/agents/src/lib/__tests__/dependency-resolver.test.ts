@@ -130,6 +130,52 @@ describe(resolveClosure, () => {
 
     await expect(resolveClosure({ collection: ['bad'] }, contentDir)).rejects.toThrow(/collection bad.*@everything/s);
   });
+
+  it("pulls a subagent's injected skills into the closure without a dependencies edge", async () => {
+    await writeArtifact(contentDir, 'skill', 'anti-patterns');
+    await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns']);
+
+    const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, contentDir);
+
+    expect(closure).toEqual({ rulebooks: [], skills: ['anti-patterns'], subagents: ['orchestrated-coder'] });
+  });
+
+  it('pulls injected skills into the closure for a subagent reached transitively', async () => {
+    await writeArtifact(contentDir, 'skill', 'anti-patterns');
+    await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns']);
+    await writeArtifact(contentDir, 'collection', 'recommended', { subagent: ['orchestrated-coder'] });
+
+    const closure = await resolveClosure({ collection: ['recommended'] }, contentDir);
+
+    expect(closure.skills).toEqual(['anti-patterns']);
+    expect(closure.subagents).toEqual(['orchestrated-coder']);
+  });
+
+  it('deduplicates a skill named in both the injection list and the dependencies edge', async () => {
+    await writeArtifact(contentDir, 'skill', 'anti-patterns');
+    await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns'], { skill: ['anti-patterns'] });
+
+    const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, contentDir);
+
+    expect(closure.skills).toEqual(['anti-patterns']);
+  });
+
+  it('throws naming the cycle when an injected skill loops back to the subagent', async () => {
+    await writeArtifact(contentDir, 'skill', 'loops', { subagent: ['coder'] });
+    await writeSubagent(contentDir, 'coder', ['loops']);
+
+    await expect(resolveClosure({ subagent: ['coder'] }, contentDir)).rejects.toThrow(
+      /cycle.*subagent:coder → skill:loops → subagent:coder/s,
+    );
+  });
+
+  it('throws naming the skill when an injected skill is missing from the library', async () => {
+    await writeSubagent(contentDir, 'orchestrated-coder', ['ghost']);
+
+    await expect(resolveClosure({ subagent: ['orchestrated-coder'] }, contentDir)).rejects.toThrow(
+      /skill "ghost" was not found/,
+    );
+  });
 });
 
 /**
@@ -145,6 +191,23 @@ async function writeArtifact(
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n# ${slug}\n`, 'utf8');
+}
+
+/**
+ * Writes a subagent frontmatter file carrying a top-level `skills:` injection list, plus optional `dependencies:`
+ * edges. Distinct from `writeArtifact`, which never emits the top-level `skills:` field.
+ */
+async function writeSubagent(
+  contentDir: string,
+  slug: string,
+  injects: ReadonlyArray<string>,
+  edges?: DirectArtifacts,
+): Promise<void> {
+  const filePath = path.join(contentDir, artifactFrontmatterPath('subagent', slug));
+  await mkdir(path.dirname(filePath), { recursive: true });
+  const injected = injects.map((skill) => `  - ${skill}`).join('\n');
+  const frontmatter = `name: ${slug}\nskills:\n${injected}\n${renderEdges('subagent', edges)}`;
+  await writeFile(filePath, `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
 }
 
 /** Renders an artifact's edge block: `members:` for a collection, `dependencies:` otherwise; empty when there are none. */

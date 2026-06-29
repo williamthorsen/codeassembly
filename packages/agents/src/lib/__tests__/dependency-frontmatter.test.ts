@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readDependencies, readMembers } from '../dependency-frontmatter.ts';
+import { readDependencies, readInjectedSkills, readMembers } from '../dependency-frontmatter.ts';
 
 /** Wraps a frontmatter body in `---` delimiters with a throwaway markdown body. */
 function withFrontmatter(frontmatter: string): string {
@@ -99,5 +99,29 @@ describe(readMembers, () => {
     const content = withFrontmatter("members: '@library'\ndependencies:\n  skills:\n    - people-report");
 
     expect(() => readMembers(content, 'collections/all.md')).toThrow(/all\.md.*dependencies/s);
+  });
+});
+
+describe(readInjectedSkills, () => {
+  it('reads the top-level skills list, normalizing bare and structured entries alike', () => {
+    const content = withFrontmatter(
+      'name: orchestrated-coder\nskills:\n  - anti-patterns\n  - name: commit\n    source: npm',
+    );
+
+    expect(readInjectedSkills(content)).toEqual(['anti-patterns', 'commit']);
+  });
+
+  it('returns no skills for an absent key, absent frontmatter, or a null value', () => {
+    expect(readInjectedSkills(withFrontmatter('name: canary'))).toEqual([]);
+    expect(readInjectedSkills('# No frontmatter\n')).toEqual([]);
+    expect(readInjectedSkills(withFrontmatter('skills:'))).toEqual([]);
+  });
+
+  it('throws when skills is not a list, naming the source label', () => {
+    const content = withFrontmatter('skills: anti-patterns');
+
+    expect(() => readInjectedSkills(content, 'subagents/orchestrated-coder.md')).toThrow(
+      /orchestrated-coder\.md.*list/s,
+    );
   });
 });

@@ -54,6 +54,30 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
 }
 
 /**
+ * Reads a subagent's top-level `skills:` frontmatter — the runtime injection list the harness loads into the
+ * subagent's context. Each entry is a bare slug or a `{ name }` object (extra keys tolerated). Absent frontmatter,
+ * an absent `skills:` key, or a null value all resolve to no injected skills. A non-list value throws, naming
+ * `sourceLabel` when provided.
+ */
+export function readInjectedSkills(content: string, sourceLabel?: string): ReadonlyArray<string> {
+  const { lines } = parseFrontmatter(content);
+  const parsed: unknown = parseYaml(lines.join('\n'));
+  if (!isRecord(parsed)) {
+    return [];
+  }
+  if (parsed.skills === undefined || parsed.skills === null) {
+    return [];
+  }
+
+  const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
+  const entries = z.array(EntrySchema).safeParse(parsed.skills);
+  if (!entries.success) {
+    throw new Error(`Invalid skills${where}: "skills" must be a list of slugs.`);
+  }
+  return entries.data.map((entry) => entry.name);
+}
+
+/**
  * Reads a collection's `members:` frontmatter — its constituents, which resolution follows transitively. The value
  * is either the computed token `'@library'` (every deployable artifact, expanded by the resolver) or an explicit
  * per-type mapping in the same shape `dependencies:` uses. Absent or null members is an empty collection, not an
