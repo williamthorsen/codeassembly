@@ -2,6 +2,9 @@
 name: plan-orchestrable-steps
 description: Break a story into independently orchestrable steps with interactive refinement
 user-invocable: true
+dependencies:
+  subagents:
+    - planner
 ---
 
 # Plan

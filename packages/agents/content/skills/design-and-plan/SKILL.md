@@ -49,7 +49,7 @@ If the task source is plain text or a file (no remote metadata), skip the releva
 
 **The relevancy check** (when triggered by user approval or `--check-staleness`):
 
-Invoke the `assess-ticket` skill with the resolved ticket source and mode `drift`.
+Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mode `drift`.
 
 **After the check** — interpret the drift verdict:
 

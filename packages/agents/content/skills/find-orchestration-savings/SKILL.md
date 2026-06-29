@@ -22,7 +22,7 @@ Analyze a completed orchestrated run to identify cost-saving opportunities while
 
 2. **Verify the run directory** contains `run-log.jsonl` and `run-index.json`. If either is missing, report and exit.
 
-3. **Dispatch the savings-analyzer subagent** via {tool:Task}:
+3. **Dispatch the {subagent:savings-analyzer} subagent** via {tool:Task}:
    - Model: `haiku`
    - Prompt: Provide the run directory path and the next available sequence number for the artifact filename
    - The subagent reads the event log, applies the analysis framework, and writes the artifact

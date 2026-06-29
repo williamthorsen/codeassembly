@@ -40,7 +40,7 @@ Synthesize existing descriptions to describe the final result. Lead the first pa
 
 ### If commits lack detail
 
-Use `summarize-change` to compose a good commit message. Save the description per standard artifact conventions.
+Use `{skill:summarize-change}` to compose a good commit message. Save the description per standard artifact conventions.
 
 ## Commit format
 

@@ -2,6 +2,10 @@
 name: refine-plan
 description: Review and refine an implementation plan for completeness and correctness
 user-invocable: true
+dependencies:
+  subagents:
+    - plan-reviewer
+    - plan-reviser
 ---
 
 # Refine plan

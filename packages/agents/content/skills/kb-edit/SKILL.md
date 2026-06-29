@@ -69,7 +69,7 @@ Identify which single operation fits the change. If you have several distinct ch
 
 ### 2. Survey context with kb-retrieve when warranted
 
-For `--retag` and `--supersede-with`, run `kb-retrieve` for related notes first: a retag is often a vault-wide pattern change worth applying consistently, and a supersession needs the right successor identified.
+For `--retag` and `--supersede-with`, run `{skill:kb-retrieve}` for related notes first: a retag is often a vault-wide pattern change worth applying consistently, and a supersession needs the right successor identified.
 
 ### 3. Present the proposal (default mode)
 

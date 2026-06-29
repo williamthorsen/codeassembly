@@ -69,4 +69,4 @@ When you deem appropriate, proactively dispatch subagents to perform tasks. Good
 
 ## Skill improvement
 
-- When the user corrects the agent, or specifies a new desired behavior, that feedback is evidence for refining a skill, subagent, rulebook, general guidance, or helper. Invoke the `capture-feedback` skill: it applies the immediate fix when there is something concrete and records a generalized `feedback` event — tagged `mistake` when existing guidance was missed — for a later refinement pass to mine.
+- When the user corrects the agent, or specifies a new desired behavior, that feedback is evidence for refining a skill, subagent, rulebook, general guidance, or helper. Invoke the `{skill:capture-feedback}` skill: it applies the immediate fix when there is something concrete and records a generalized `feedback` event — tagged `mistake` when existing guidance was missed — for a later refinement pass to mine.

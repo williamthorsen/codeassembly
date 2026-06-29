@@ -2,6 +2,17 @@
 name: orchestrate
 description: Pipeline execution engine for multi-phase development workflows using specialized subagents
 user-invocable: false
+dependencies:
+  subagents:
+    - aspect-code-reviewer
+    - aspect-silent-failure-reviewer
+    - aspect-test-reviewer
+    - code-simplification-reviewer
+    - orchestrated-architect
+    - orchestrated-coder
+    - orchestrated-planner
+    - orchestrated-reviewer
+    - savings-analyzer
 ---
 
 # Orchestrate
@@ -739,7 +750,7 @@ rm -f .claude/tmp/active-run-dir
 
 ## Phase 6: Wrap-up (prompted, conditional)
 
-After the summary is presented and `complete_run` has been called, check whether the run-summary contains a non-empty `## Deferred items` or `## Insights` section. If either section is present and non-empty, invoke `/wrap-up` to offer post-run housekeeping.
+After the summary is presented and `complete_run` has been called, check whether the run-summary contains a non-empty `## Deferred items` or `## Insights` section. If either section is present and non-empty, invoke `{skill:wrap-up}` to offer post-run housekeeping.
 
 Like Phase 5, this is an inherent engine responsibility — not a pipeline phase. It does not get `phase_decision` or `phase_started`/`phase_completed` events.
 
