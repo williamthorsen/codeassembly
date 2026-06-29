@@ -176,6 +176,63 @@ describe(resolveClosure, () => {
       /skill "ghost" was not found/,
     );
   });
+
+  describe('body invocation tokens', () => {
+    it('pulls a skill body invocation token into the closure', async () => {
+      await writeArtifact(contentDir, 'skill', 'capture-event');
+      await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:capture-event} to record it.');
+
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, contentDir);
+
+      expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
+    });
+
+    it('pulls a subagent body invocation token into the closure', async () => {
+      await writeArtifact(contentDir, 'subagent', 'planner');
+      await writeArtifactWithBody(contentDir, 'subagent', 'orchestrator', 'Dispatch {subagent:planner} first.');
+
+      const closure = await resolveClosure({ subagent: ['orchestrator'] }, contentDir);
+
+      expect(closure.subagents.toSorted()).toEqual(['orchestrator', 'planner']);
+    });
+
+    it('pulls a token that arrives via an included partial into the closure', async () => {
+      await writeArtifact(contentDir, 'skill', 'capture-event');
+      await writeSkillPartial(contentDir, 'wrap-up', 'frag.md', 'Then invoke {skill:capture-event}.');
+      await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', '# wrap-up\n\n<!-- include: _partials/frag.md / -->');
+
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, contentDir);
+
+      expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
+    });
+
+    it('fails the run when a body token names a non-existent artifact', async () => {
+      await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:ghost}.');
+
+      await expect(resolveClosure({ skill: ['wrap-up'] }, contentDir)).rejects.toThrow(/skill "ghost" was not found/);
+    });
+
+    it('deduplicates a slug named by both a body token and a dependencies edge', async () => {
+      await writeArtifact(contentDir, 'skill', 'capture-event');
+      await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:capture-event}.', {
+        skill: ['capture-event'],
+      });
+
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, contentDir);
+
+      expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
+    });
+
+    it('does not treat a rulebook body token as an edge', async () => {
+      // A rulebook body is embedded without the render pass, so a token in it is literal text, not an edge: the named
+      // skill is neither pulled into the closure nor existence-checked (here it does not exist, and the run succeeds).
+      await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Invoke {skill:capture-event}.');
+
+      const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, contentDir);
+
+      expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: [] });
+    });
+  });
 });
 
 /**
@@ -208,6 +265,29 @@ async function writeSubagent(
   const injected = injects.map((skill) => `  - ${skill}`).join('\n');
   const frontmatter = `name: ${slug}\nskills:\n${injected}\n${renderEdges('subagent', edges)}`;
   await writeFile(filePath, `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
+}
+
+/**
+ * Writes an artifact's file with a custom body following the frontmatter. Unlike `writeArtifact` (which emits a bare
+ * `# <slug>` body), this lets a test place invocation tokens or include directives in the body.
+ */
+async function writeArtifactWithBody(
+  contentDir: string,
+  type: ArtifactType,
+  slug: string,
+  body: string,
+  edges?: DirectArtifacts,
+): Promise<void> {
+  const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n${body}\n`, 'utf8');
+}
+
+/** Writes a partial inside a skill's `_partials/` directory — the include target a skill body expands. */
+async function writeSkillPartial(contentDir: string, skillSlug: string, name: string, body: string): Promise<void> {
+  const filePath = path.join(contentDir, 'skills', skillSlug, '_partials', name);
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `${body}\n`, 'utf8');
 }
 
 /** Renders an artifact's edge block: `members:` for a collection, `dependencies:` otherwise; empty when there are none. */

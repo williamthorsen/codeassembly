@@ -8,6 +8,8 @@ import {
   readInjectedSkills,
   readMembers,
 } from './dependency-frontmatter.ts';
+import { expandIncludes } from './directive-expander.ts';
+import { extractInvocationEdges } from './invocation-tokens.ts';
 import { enumerateLibrarySlugs } from './library-catalog.ts';
 import { isMissingFile } from './type-guards.ts';
 
@@ -23,8 +25,9 @@ export interface ResolvedClosure {
 
 /**
  * Expands the directly-declared artifacts into their transitive closure, reading each visited artifact's edges — a
- * collection's `members:`, every other type's `dependencies:`, plus a subagent's top-level `skills:` injection list —
- * and following them across every type. The result is
+ * collection's `members:`, every other type's `dependencies:`, a subagent's top-level `skills:` injection list, plus
+ * the invocation tokens in a skill's or subagent's include-expanded body — and following them across every type. The
+ * result is
  * deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending path. A
  * collection is a traversal-only node: its members are followed but the collection itself is dropped from the
  * deployable result. A referenced artifact whose library file is absent throws an error naming its type and slug.
@@ -79,8 +82,11 @@ export async function resolveClosure(direct: DirectArtifacts, contentDir: string
 /**
  * Reads one artifact's outgoing edges, throwing a clear error when its library file is absent. A collection's edges
  * come from `members:` — the full catalog when it carries `'@library'`, otherwise its explicit members. Every other
- * type's edges come from `dependencies:`; a subagent additionally unions its top-level `skills:` injection list into
- * those skill edges, so an injected skill enters the closure without a duplicate `dependencies:` declaration.
+ * type's edges come from `dependencies:`. A skill or subagent additionally unions the invocation tokens in its
+ * include-expanded body (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a
+ * token inside a shared partial becomes an edge for every artifact that includes it — and a subagent further unions
+ * its top-level `skills:` injection list. A rulebook keeps `dependencies:` only; its body is embedded without the
+ * render pass. Every unioned edge enters the closure without a duplicate `dependencies:` declaration.
  */
 async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: string): Promise<ArtifactDependencies> {
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
@@ -101,16 +107,23 @@ async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: s
   }
 
   const dependencies = readDependencies(content, label);
-  // A subagent's top-level `skills:` is its runtime injection list; union it into the skill edges so injected skills
-  // enter the closure without a duplicate `dependencies:` declaration. `visit` carries dedup and cycle-safety, so the
-  // union is emitted unfiltered — a skill named in both lists collapses to one visit.
-  if (type === 'subagent') {
-    const injected = readInjectedSkills(content, label);
-    if (injected.length > 0) {
-      return { ...dependencies, skill: [...(dependencies.skill ?? []), ...injected] };
-    }
+  // A rulebook's body is embedded without the render pass, so only its declared `dependencies:` are edges.
+  if (type === 'rulebook') {
+    return dependencies;
   }
-  return dependencies;
+
+  // For a skill or subagent, the frontmatter file is also the body file. Expand its includes to match the render
+  // surface, then union the body's invocation tokens — and, for a subagent, its `skills:` injection list — into the
+  // declared dependencies. `visit` carries dedup and cycle-safety, so the unions are emitted unfiltered; a slug named
+  // by both a token and `dependencies:` collapses to one visit.
+  const expanded = await expandIncludes(filePath, contentDir);
+  const tokens = extractInvocationEdges(expanded);
+  const injectedSkills = type === 'subagent' ? readInjectedSkills(content, label) : [];
+  return {
+    ...dependencies,
+    skill: [...(dependencies.skill ?? []), ...tokens.skills, ...injectedSkills],
+    subagent: [...(dependencies.subagent ?? []), ...tokens.subagents],
+  };
 }
 
 // endregion | Helpers
