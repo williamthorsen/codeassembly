@@ -5,7 +5,31 @@ import { extractInvocationEdges, type InvocationSigils, rewriteInvocationTokens 
 const CLAUDE: InvocationSigils = { skillSigil: '/', subagentSigil: '' };
 const ROVODEV: InvocationSigils = { skillSigil: '!', subagentSigil: '' };
 
-describe('rewriteInvocationTokens', () => {
+describe(extractInvocationEdges, () => {
+  it('returns empty groups when no tokens are present', () => {
+    expect(extractInvocationEdges('No tokens here.')).toEqual({ skills: [], subagents: [] });
+  });
+
+  it('groups slugs by kind', () => {
+    const content = 'Run {skill:plan} and {subagent:planner}, then {skill:review-branch}.';
+    expect(extractInvocationEdges(content)).toEqual({
+      skills: ['plan', 'review-branch'],
+      subagents: ['planner'],
+    });
+  });
+
+  it('ignores non-token text and malformed tokens', () => {
+    const content = 'Prose {skill:commit} and {skill:} and {tool:Read} and {subagent:9bad}.';
+    expect(extractInvocationEdges(content)).toEqual({ skills: ['commit'], subagents: [] });
+  });
+
+  it('returns slugs in source order without deduping repeats', () => {
+    const content = '{skill:commit} then {skill:commit} again.';
+    expect(extractInvocationEdges(content)).toEqual({ skills: ['commit', 'commit'], subagents: [] });
+  });
+});
+
+describe(rewriteInvocationTokens, () => {
   it('returns content unchanged when no tokens are present', () => {
     const content = 'Plain prose mentioning a skill but using no token.';
     expect(rewriteInvocationTokens(content, CLAUDE)).toBe(content);
@@ -47,29 +71,5 @@ describe('rewriteInvocationTokens', () => {
   it('does not match an empty slug or an unknown kind', () => {
     const content = 'Not tokens: {skill:} and {agent:foo} and {tool:Read}.';
     expect(rewriteInvocationTokens(content, CLAUDE)).toBe(content);
-  });
-});
-
-describe('extractInvocationEdges', () => {
-  it('returns empty groups when no tokens are present', () => {
-    expect(extractInvocationEdges('No tokens here.')).toEqual({ skills: [], subagents: [] });
-  });
-
-  it('groups slugs by kind', () => {
-    const content = 'Run {skill:plan} and {subagent:planner}, then {skill:review-branch}.';
-    expect(extractInvocationEdges(content)).toEqual({
-      skills: ['plan', 'review-branch'],
-      subagents: ['planner'],
-    });
-  });
-
-  it('ignores non-token text and malformed tokens', () => {
-    const content = 'Prose {skill:commit} and {skill:} and {tool:Read} and {subagent:9bad}.';
-    expect(extractInvocationEdges(content)).toEqual({ skills: ['commit'], subagents: [] });
-  });
-
-  it('returns slugs in source order without deduping repeats', () => {
-    const content = '{skill:commit} then {skill:commit} again.';
-    expect(extractInvocationEdges(content)).toEqual({ skills: ['commit', 'commit'], subagents: [] });
   });
 });

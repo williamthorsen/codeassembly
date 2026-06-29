@@ -113,15 +113,6 @@ describe(renderSkillDirectory, () => {
     };
   }
 
-  /** Writes files into the demo skill directory from a relative-path → content map. */
-  async function writeSkill(files: Record<string, string>): Promise<void> {
-    for (const [rel, content] of Object.entries(files)) {
-      const full = path.join(skillDir, rel);
-      await mkdir(path.dirname(full), { recursive: true });
-      await writeFile(full, content, 'utf8');
-    }
-  }
-
   /** Returns the transformed content of the markdown entry at relPath, failing if it is absent or an asset. */
   function markdownContent(entries: ReadonlyArray<RenderedSkillEntry>, relPath: string): string {
     const entry = entries.find((candidate) => candidate.relPath === relPath);
@@ -129,6 +120,15 @@ describe(renderSkillDirectory, () => {
       throw new Error(`Expected a markdown entry at ${relPath}, got ${entry?.kind ?? 'nothing'}`);
     }
     return entry.content;
+  }
+
+  /** Writes files into the demo skill directory from a relative-path → content map. */
+  async function writeSkill(files: Record<string, string>): Promise<void> {
+    for (const [rel, content] of Object.entries(files)) {
+      const full = path.join(skillDir, rel);
+      await mkdir(path.dirname(full), { recursive: true });
+      await writeFile(full, content, 'utf8');
+    }
   }
 
   // endregion | Helpers

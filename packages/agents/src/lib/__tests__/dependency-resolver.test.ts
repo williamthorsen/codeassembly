@@ -250,21 +250,21 @@ async function writeArtifact(
   await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n# ${slug}\n`, 'utf8');
 }
 
-/**
- * Writes a subagent frontmatter file carrying a top-level `skills:` injection list, plus optional `dependencies:`
- * edges. Distinct from `writeArtifact`, which never emits the top-level `skills:` field.
- */
-async function writeSubagent(
-  contentDir: string,
-  slug: string,
-  injects: ReadonlyArray<string>,
-  edges?: DirectArtifacts,
-): Promise<void> {
-  const filePath = path.join(contentDir, artifactFrontmatterPath('subagent', slug));
-  await mkdir(path.dirname(filePath), { recursive: true });
-  const injected = injects.map((skill) => `  - ${skill}`).join('\n');
-  const frontmatter = `name: ${slug}\nskills:\n${injected}\n${renderEdges('subagent', edges)}`;
-  await writeFile(filePath, `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
+/** Renders an artifact's edge block: `members:` for a collection, `dependencies:` otherwise; empty when there are none. */
+function renderEdges(type: ArtifactType, edges: DirectArtifacts | '@library' | undefined): string {
+  if (edges === '@library') {
+    return `members: '@library'\n`;
+  }
+  const key = type === 'collection' ? 'members' : 'dependencies';
+  const lines: Array<string> = [];
+  for (const edgeType of ARTIFACT_TYPE_VALUES) {
+    const slugs = edges?.[edgeType] ?? [];
+    if (slugs.length > 0) {
+      const items = slugs.map((slug) => `    - ${slug}`).join('\n');
+      lines.push(`  ${ARTIFACT_TYPES[edgeType].key}:\n${items}`);
+    }
+  }
+  return lines.length === 0 ? '' : `${key}:\n${lines.join('\n')}\n`;
 }
 
 /**
@@ -290,19 +290,19 @@ async function writeSkillPartial(contentDir: string, skillSlug: string, name: st
   await writeFile(filePath, `${body}\n`, 'utf8');
 }
 
-/** Renders an artifact's edge block: `members:` for a collection, `dependencies:` otherwise; empty when there are none. */
-function renderEdges(type: ArtifactType, edges: DirectArtifacts | '@library' | undefined): string {
-  if (edges === '@library') {
-    return `members: '@library'\n`;
-  }
-  const key = type === 'collection' ? 'members' : 'dependencies';
-  const lines: Array<string> = [];
-  for (const edgeType of ARTIFACT_TYPE_VALUES) {
-    const slugs = edges?.[edgeType] ?? [];
-    if (slugs.length > 0) {
-      const items = slugs.map((slug) => `    - ${slug}`).join('\n');
-      lines.push(`  ${ARTIFACT_TYPES[edgeType].key}:\n${items}`);
-    }
-  }
-  return lines.length === 0 ? '' : `${key}:\n${lines.join('\n')}\n`;
+/**
+ * Writes a subagent frontmatter file carrying a top-level `skills:` injection list, plus optional `dependencies:`
+ * edges. Distinct from `writeArtifact`, which never emits the top-level `skills:` field.
+ */
+async function writeSubagent(
+  contentDir: string,
+  slug: string,
+  injects: ReadonlyArray<string>,
+  edges?: DirectArtifacts,
+): Promise<void> {
+  const filePath = path.join(contentDir, artifactFrontmatterPath('subagent', slug));
+  await mkdir(path.dirname(filePath), { recursive: true });
+  const injected = injects.map((skill) => `  - ${skill}`).join('\n');
+  const frontmatter = `name: ${slug}\nskills:\n${injected}\n${renderEdges('subagent', edges)}`;
+  await writeFile(filePath, `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
 }

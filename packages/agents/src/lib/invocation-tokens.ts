@@ -24,18 +24,6 @@ export interface InvocationEdges {
 }
 
 /**
- * Replaces every `{skill:<slug>}` / `{subagent:<slug>}` token in `content` with its harness sigil followed by the slug.
- * Unlike `rewriteToolNames`, this never throws: the sigil is a fixed property of the typed harness config, so there is
- * no unmapped-name failure path. Non-token text passes through unchanged.
- */
-export function rewriteInvocationTokens(content: string, sigils: InvocationSigils): string {
-  return content.replace(INVOCATION_TOKEN_RE, (_match: string, kind: string, slug: string): string => {
-    const sigil = kind === 'skill' ? sigils.skillSigil : sigils.subagentSigil;
-    return `${sigil}${slug}`;
-  });
-}
-
-/**
  * Collects every invocation token in `content`, grouping slugs by kind. Non-token text is ignored. Slugs are returned
  * in source order without dedup; the dependency resolver's `visit` carries dedup and cycle-safety, so the caller need
  * not.
@@ -56,4 +44,16 @@ export function extractInvocationEdges(content: string): InvocationEdges {
     }
   }
   return { skills, subagents };
+}
+
+/**
+ * Replaces every `{skill:<slug>}` / `{subagent:<slug>}` token in `content` with its harness sigil followed by the slug.
+ * Unlike `rewriteToolNames`, this never throws: the sigil is a fixed property of the typed harness config, so there is
+ * no unmapped-name failure path. Non-token text passes through unchanged.
+ */
+export function rewriteInvocationTokens(content: string, sigils: InvocationSigils): string {
+  return content.replace(INVOCATION_TOKEN_RE, (_match: string, kind: string, slug: string): string => {
+    const sigil = kind === 'skill' ? sigils.skillSigil : sigils.subagentSigil;
+    return `${sigil}${slug}`;
+  });
 }
