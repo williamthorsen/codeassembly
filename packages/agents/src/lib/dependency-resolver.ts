@@ -2,7 +2,12 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
-import { type ArtifactDependencies, readDependencies, readMembers } from './dependency-frontmatter.ts';
+import {
+  type ArtifactDependencies,
+  readDependencies,
+  readInjectedSkills,
+  readMembers,
+} from './dependency-frontmatter.ts';
 import { enumerateLibrarySlugs } from './library-catalog.ts';
 import { isMissingFile } from './type-guards.ts';
 
@@ -18,7 +23,8 @@ export interface ResolvedClosure {
 
 /**
  * Expands the directly-declared artifacts into their transitive closure, reading each visited artifact's edges — a
- * collection's `members:`, every other type's `dependencies:` — and following them across every type. The result is
+ * collection's `members:`, every other type's `dependencies:`, plus a subagent's top-level `skills:` injection list —
+ * and following them across every type. The result is
  * deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending path. A
  * collection is a traversal-only node: its members are followed but the collection itself is dropped from the
  * deployable result. A referenced artifact whose library file is absent throws an error naming its type and slug.
@@ -72,8 +78,9 @@ export async function resolveClosure(direct: DirectArtifacts, contentDir: string
 
 /**
  * Reads one artifact's outgoing edges, throwing a clear error when its library file is absent. A collection's edges
- * come from `members:` — the full catalog when it carries `'@library'`, otherwise its explicit members — while every
- * other type's come from `dependencies:`.
+ * come from `members:` — the full catalog when it carries `'@library'`, otherwise its explicit members. Every other
+ * type's edges come from `dependencies:`; a subagent additionally unions its top-level `skills:` injection list into
+ * those skill edges, so an injected skill enters the closure without a duplicate `dependencies:` declaration.
  */
 async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: string): Promise<ArtifactDependencies> {
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
@@ -92,7 +99,18 @@ async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: s
     const members = readMembers(content, label);
     return members.kind === 'library' ? await enumerateLibrarySlugs(contentDir) : members.edges;
   }
-  return readDependencies(content, label);
+
+  const dependencies = readDependencies(content, label);
+  // A subagent's top-level `skills:` is its runtime injection list; union it into the skill edges so injected skills
+  // enter the closure without a duplicate `dependencies:` declaration. `visit` carries dedup and cycle-safety, so the
+  // union is emitted unfiltered — a skill named in both lists collapses to one visit.
+  if (type === 'subagent') {
+    const injected = readInjectedSkills(content, label);
+    if (injected.length > 0) {
+      return { ...dependencies, skill: [...(dependencies.skill ?? []), ...injected] };
+    }
+  }
+  return dependencies;
 }
 
 // endregion | Helpers
