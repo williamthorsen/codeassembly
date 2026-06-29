@@ -775,10 +775,18 @@ describe(syncGlobalCommand, () => {
     await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), content, 'utf8');
   }
 
-  it('when no ~/.agents/codeassembly.yaml exists, makes no changes', async () => {
-    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+  it('when no ~/.agents/codeassembly.yaml exists, makes no changes and points at init --global', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let infoLines: ReadonlyArray<string>;
+    try {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+      infoLines = infoSpy.mock.calls.map((call) => String(call[0]));
+    } finally {
+      infoSpy.mockRestore();
+    }
 
     expect(existsSync(path.join(homeDir, '.agents', 'rulebooks'))).toBe(false);
+    expect(infoLines.join('\n')).toContain('init --global');
   });
 
   it('deploys a declared skill into the home harness skills dir with the ownership marker', async () => {

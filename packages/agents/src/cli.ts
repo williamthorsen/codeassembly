@@ -3,7 +3,7 @@
 import process from 'node:process';
 
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
-import { initCommand } from './commands/init.ts';
+import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
         await installCommand(options);
         break;
       case 'init':
-        await initCommand(options);
+        await (global ? initGlobalCommand(options) : initCommand(options));
         break;
       case 'sync':
         await (global ? syncGlobalCommand(options) : syncCommand(options));
