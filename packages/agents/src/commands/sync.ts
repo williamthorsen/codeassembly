@@ -1,4 +1,4 @@
-import type { Dirent } from 'node:fs';
+import { type Dirent, existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -88,8 +88,8 @@ export async function syncCommand(
 /**
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
  * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in
- * `~/.agents/GLOBAL.md` so install's whole-file `~/.agents/AGENTS.md` is never co-written. An absent declaration is a
- * total no-op.
+ * `~/.agents/GLOBAL.md` so install's whole-file `~/.agents/AGENTS.md` is never co-written. When the home declaration
+ * is absent, makes no changes and directs the user to `init --global`.
  *
  * @param homeDir The home directory whose `.agents/` is synced (defaults to the OS home dir; injected in tests).
  * @param contentDirOverride Override for the library source (defaults to the package content dir).
@@ -99,6 +99,13 @@ export async function syncGlobalCommand(
   homeDir: string = homedir(),
   contentDirOverride?: string,
 ): Promise<void> {
+  const declarationPath = path.join(homeDir, '.agents', 'codeassembly.yaml');
+  if (!existsSync(declarationPath)) {
+    console.info(
+      `No ${declarationPath} found. Run \`codeassembly-agents init --global\` to create one, then re-run \`sync --global\`.`,
+    );
+    return;
+  }
   await reconcileDomain(
     options,
     { baseDir: homeDir, ambientHostPath: path.join(homeDir, '.agents', 'GLOBAL.md'), label: 'global' },

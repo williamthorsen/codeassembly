@@ -130,17 +130,17 @@ describe(resolveDeclaredSubagent, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  /** Writes a library subagent `<slug>.md` with the given frontmatter lines. */
-  async function writeLibrarySubagent(slug: string, frontmatter: string): Promise<void> {
+  /** Writes a library subagent `<slug>.md`. */
+  async function writeLibrarySubagent(slug: string): Promise<void> {
     await writeFile(
       path.join(librarySubagentsDir, `${slug}.md`),
-      `---\nname: ${slug}\n${frontmatter}\n---\n\n# ${slug}\n\nBody.\n`,
+      `---\nname: ${slug}\n---\n\n# ${slug}\n\nBody.\n`,
       'utf8',
     );
   }
 
   it('resolves a declared subagent to its slug and source file', async () => {
-    await writeLibrarySubagent('canary', 'deploy: declared');
+    await writeLibrarySubagent('canary');
 
     const resolved = await resolveDeclaredSubagent('canary', librarySubagentsDir);
 
@@ -150,17 +150,5 @@ describe(resolveDeclaredSubagent, () => {
 
   it('throws a clear error naming the slug when the subagent is missing from the library', async () => {
     await expect(resolveDeclaredSubagent('ghost', librarySubagentsDir)).rejects.toThrow(/ghost/);
-  });
-
-  it('throws when the declared subagent is still on the install path', async () => {
-    await writeLibrarySubagent('legacy', 'deploy: install');
-
-    await expect(resolveDeclaredSubagent('legacy', librarySubagentsDir)).rejects.toThrow(/legacy.*declared/i);
-  });
-
-  it('throws when the declared subagent has no deploy field', async () => {
-    await writeLibrarySubagent('unmarked', 'description: x');
-
-    await expect(resolveDeclaredSubagent('unmarked', librarySubagentsDir)).rejects.toThrow(/unmarked.*declared/i);
   });
 });

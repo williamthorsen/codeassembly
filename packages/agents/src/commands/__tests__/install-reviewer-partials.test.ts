@@ -1,44 +1,44 @@
-import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
-import type { InstallOptions } from '../../lib/types.ts';
-import { installCommand } from '../install.ts';
+import { resolveContentDir } from '../../lib/content-resolver.ts';
+import { expandIncludes } from '../../lib/directive-expander.ts';
+import { HARNESSES } from '../../lib/harness.ts';
+import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
+import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
 
 /**
- * Round-trip tests verifying the reviewer and coder subagents install against the real `content/` tree with their
- * shared partials fully expanded: no leftover include directives, and the key prose blocks present.
+ * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
+ * shared partials fully inlined: no leftover include directives, and the key prose blocks present. They reproduce
+ * `sync`'s subagent-deploy transform (expand includes, then `renderSubagentForHarness`), so they assert the exact
+ * body `sync` writes — install no longer deploys subagents.
  */
-describe('reviewer and coder partials install correctly', () => {
-  let tempDir: string;
-  let claudeAgentsDir: string;
+describe('reviewer and coder partials render correctly', () => {
+  const contentDir = resolveContentDir();
+  const harnessConfig = HARNESSES.claude;
+  let overlayYaml: string;
+  let toolMapping: ReadonlyMap<string, string>;
 
-  // Tests are read-only assertions on the installed output, so install the real library once for the file rather than
-  // per test.
   beforeAll(async () => {
-    tempDir = path.join(tmpdir(), `agents-test-reviewer-partials-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    claudeAgentsDir = path.join(tempDir, '.claude', 'agents');
-    await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
-    await mkdir(claudeAgentsDir, { recursive: true });
-
-    const options: InstallOptions = {
-      harness: 'claude',
-      link: false,
-      force: false,
-      dryRun: false,
-    };
-    await installCommand(options, tempDir);
+    overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
+    toolMapping = loadToolMapping(overlayYaml);
   });
 
-  afterAll(async () => {
-    await rm(tempDir, { recursive: true, force: true });
-  });
-
-  async function readInstalled(name: string): Promise<string> {
-    return readFile(path.join(claudeAgentsDir, `${name}.md`), 'utf8');
+  /** Renders a subagent's deployed claude body exactly as `sync`'s `deploySubagent` does: expand includes, then merge frontmatter and rewrite tool, path, and template placeholders. */
+  async function readDeployed(name: string): Promise<string> {
+    const fileName = `${name}.md`;
+    const expanded = await expandIncludes(path.join(contentDir, 'subagents', fileName), contentDir);
+    return renderSubagentForHarness(expanded, {
+      overlayYaml,
+      toolMapping,
+      fileRelPath: fileName,
+      sourceLabel: `subagents/${fileName}`,
+      pathPrefix: harnessConfig.homeDir,
+      homeDir: harnessConfig.homeDir,
+      harnessId: harnessConfig.id,
+    });
   }
 
   const returnBlockReviewers = [
@@ -50,65 +50,65 @@ describe('reviewer and coder partials install correctly', () => {
 
   for (const reviewer of returnBlockReviewers) {
     it(`expands all partials in ${reviewer} (no leftover directives)`, async () => {
-      const content = await readInstalled(reviewer);
+      const content = await readDeployed(reviewer);
       expect(content).not.toContain('<!-- include:');
       expect(content).not.toContain('<!-- /include -->');
       expect(content).not.toContain('<!-- children -->');
     });
 
     it(`${reviewer} preserves the HARD-GATE block including the re-review note`, async () => {
-      const content = await readInstalled(reviewer);
+      const content = await readDeployed(reviewer);
       expect(content).toContain('your NEXT tool use MUST be a `Write` of the review scaffold');
       expect(content).toContain('The HARD-GATE applies on every dispatch, including re-reviews');
     });
 
     it(`${reviewer} preserves the scaffold subsection`, async () => {
-      const content = await readInstalled(reviewer);
+      const content = await readDeployed(reviewer);
       expect(content).toContain('### Scaffold (first write)');
       expect(content).toContain('### Criticality: (pending)');
       expect(content).toContain('(none yet)');
     });
 
     it(`${reviewer} preserves the interim writes prose and reviewer-specific example`, async () => {
-      const content = await readInstalled(reviewer);
+      const content = await readDeployed(reviewer);
       expect(content).toContain('### Interim writes (after each finding)');
       expect(content).toContain('Example interim form with one finding present');
     });
 
     it(`${reviewer} preserves the finalize subsection and the "Then emit" sentence`, async () => {
-      const content = await readInstalled(reviewer);
+      const content = await readDeployed(reviewer);
       expect(content).toContain('### Finalize (reserved last 3 turns)');
       expect(content).toContain('Then emit your structured return block.');
     });
   }
 
   it('expands all partials in code-simplification-reviewer', async () => {
-    const content = await readInstalled('code-simplification-reviewer');
+    const content = await readDeployed('code-simplification-reviewer');
     expect(content).not.toContain('<!-- include:');
     expect(content).not.toContain('<!-- /include -->');
     expect(content).not.toContain('<!-- children -->');
   });
 
   it('code-simplification-reviewer omits the re-review note (intentional carve-out)', async () => {
-    const content = await readInstalled('code-simplification-reviewer');
+    const content = await readDeployed('code-simplification-reviewer');
     expect(content).toContain('your NEXT tool use MUST be a `Write` of the review scaffold');
     expect(content).not.toContain('The HARD-GATE applies on every dispatch, including re-reviews');
   });
 
   it('code-simplification-reviewer keeps the "for this phase" prelude addendum', async () => {
-    const content = await readInstalled('code-simplification-reviewer');
+    const content = await readDeployed('code-simplification-reviewer');
     expect(content).toContain('primary state-transfer channel for this phase');
     expect(content).toContain('decide whether to dispatch a coder fix cycle');
   });
 
   it('code-simplification-reviewer omits the "Then emit" sentence (intentional carve-out)', async () => {
-    const content = await readInstalled('code-simplification-reviewer');
+    const content = await readDeployed('code-simplification-reviewer');
     expect(content).toContain('### Finalize (reserved last 3 turns)');
     expect(content).not.toContain('Then emit your structured return block.');
   });
 
   it('orchestrated-coder expands all four coder partials', async () => {
-    const content = await readInstalled('orchestrated-coder');
+    const content = await readDeployed('orchestrated-coder');
     expect(content).not.toContain('<!-- include:');
     expect(content).not.toContain('<!-- /include -->');
     expect(content).not.toContain('<!-- children -->');
@@ -123,12 +123,8 @@ describe('reviewer and coder partials install correctly', () => {
 
   for (const reviewer of allReviewers) {
     it(`${reviewer} includes the actionability-gate findings bullet`, async () => {
-      const content = await readInstalled(reviewer);
+      const content = await readDeployed(reviewer);
       expect(content).toContain('**No self-disqualifying findings**');
     });
   }
-
-  it('does not install the subagents _partials directory', () => {
-    expect(existsSync(path.join(claudeAgentsDir, '_partials'))).toBe(false);
-  });
 });

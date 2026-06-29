@@ -1,0 +1,56 @@
+import { existsSync } from 'node:fs';
+import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import type { InstallOptions } from '../../lib/types.ts';
+import { initGlobalCommand } from '../init.ts';
+import { syncGlobalCommand } from '../sync.ts';
+
+// Exercises the real content library end-to-end: `init --global` seeds the `all` collection, then `sync --global`
+// resolves it and deploys the whole catalog into an isolated temp home. Heavier than the fixture-based sync tests
+// (it deploys the real catalog), so kept to a single case.
+describe('sync --global smoke (real library, all collection)', () => {
+  let homeDir: string;
+
+  beforeEach(async () => {
+    homeDir = path.join(tmpdir(), `agents-test-sync-global-smoke-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(homeDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(homeDir, { recursive: true, force: true });
+  });
+
+  function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
+  }
+
+  it('init --global then sync --global deploys the whole catalog with transforms applied', async () => {
+    await initGlobalCommand(makeOptions(), homeDir);
+    expect(await readFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), 'utf8')).toContain('- all');
+
+    // A throw here means the real catalog failed to resolve, transform, or write end-to-end.
+    await syncGlobalCommand(makeOptions(), homeDir);
+
+    const skillsDir = path.join(homeDir, '.claude', 'skills');
+    const deployedSkills = await readdir(skillsDir);
+    // A representative sample of the real skill catalog landed, sync-owned.
+    expect(deployedSkills).toContain('commit');
+    expect(deployedSkills).toContain('create-pr');
+    const commit = await readFile(path.join(skillsDir, 'commit', 'SKILL.md'), 'utf8');
+    expect(commit).toContain('<!-- codeassembly-skill:commit -->');
+
+    // Transforms ran across the real catalog: a skill that uses both includes and tool placeholders deploys with
+    // neither a leftover include directive nor an unrewritten `{tool:…}` placeholder.
+    const designAndPlan = await readFile(path.join(skillsDir, 'design-and-plan', 'SKILL.md'), 'utf8');
+    expect(designAndPlan).not.toContain('<!-- include:');
+    expect(designAndPlan).not.toContain('{tool:');
+
+    // Subagents and rulebooks reach the home domain through `@library` too.
+    expect((await readdir(path.join(homeDir, '.claude', 'agents'))).length).toBeGreaterThan(0);
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'shell-conventions.md'))).toBe(true);
+  });
+});

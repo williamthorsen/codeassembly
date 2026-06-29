@@ -2,7 +2,6 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { makeArtifactMarker } from './artifact-marker.ts';
-import { readDeploy } from './deploy-frontmatter.ts';
 import { writeIfChanged } from './fs-helpers.ts';
 import { renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
 import { isEnoent, isMissingFile } from './type-guards.ts';
@@ -16,31 +15,20 @@ export interface ResolvedSkill {
 }
 
 /**
- * Resolves a declared skill slug against the library, confirming its `SKILL.md` exists and that the skill opts into
- * declared delivery. A missing directory throws a clear error naming the slug.
- * A skill still on the `install` path is rejected rather than deployed, since declaring an `install` skill would ship
- * it twice: once via `install`, once via `sync`.
+ * Resolves a declared skill slug against the library, confirming its `SKILL.md` exists. A missing directory or
+ * `SKILL.md` throws a clear error naming the slug.
  *
  * @param librarySkillsDir The library `content/skills` directory the slug is resolved under.
  */
 export async function resolveDeclaredSkill(slug: string, librarySkillsDir: string): Promise<ResolvedSkill> {
   const srcDir = path.join(librarySkillsDir, slug);
-  let skillMd: string;
   try {
-    skillMd = await readFile(path.join(srcDir, 'SKILL.md'), 'utf8');
+    await readFile(path.join(srcDir, 'SKILL.md'), 'utf8');
   } catch (error: unknown) {
     if (isMissingFile(error)) {
       throw new Error(`Declared skill "${slug}" was not found in the library at ${srcDir}`);
     }
     throw error;
-  }
-
-  const deploy = readDeploy(skillMd, `skills/${slug}/SKILL.md`);
-  if (deploy !== 'declared') {
-    throw new Error(
-      `Declared skill "${slug}" is not marked for declared delivery; its SKILL.md has deploy: ${deploy}. ` +
-        'Add `deploy: declared` to its frontmatter, or remove it from the declaration.',
-    );
   }
 
   return { slug, srcDir };

@@ -3,7 +3,7 @@
 import process from 'node:process';
 
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
-import { initCommand } from './commands/init.ts';
+import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
 import { statusCommand } from './commands/status.ts';
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
         await installCommand(options);
         break;
       case 'init':
-        await initCommand(options);
+        await (global ? initGlobalCommand(options) : initCommand(options));
         break;
       case 'sync':
         await (global ? syncGlobalCommand(options) : syncCommand(options));
@@ -182,8 +182,8 @@ function printUsage(): void {
   console.info(`Usage: codeassembly-agents <command> [options]
 
 Commands:
-  install          Install guidance, skills, and subagents into harness directories, removing files whose source was deleted
-  init             Scaffold an empty .agents/codeassembly.yaml in the current project
+  install          Install shared guidance, harness-specific skills, scripts, and support data into harness directories
+  init             Scaffold .agents/codeassembly.yaml (or --global for ~/.agents/codeassembly.yaml)
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
   uninstall        Remove installed guidance, skills, and subagents
   status           Show the current state of installed items
@@ -195,7 +195,7 @@ Options:
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
-  --global           Sync the user-global tier (~/.agents/codeassembly.yaml) into the home harness dirs (sync only)
+  --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
   --help, -h         Show this help message`);
 }
 

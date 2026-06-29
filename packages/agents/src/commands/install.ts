@@ -1,8 +1,7 @@
-import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
@@ -16,18 +15,12 @@ import {
   resolveSharedHome,
   writeManifest,
 } from '../lib/manifest.js';
-import {
-  buildSourceUrl,
-  injectMarkerInFile,
-  injectMarkersInDirectory,
-  injectProvenanceMarker,
-} from '../lib/marker-injector.js';
+import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.js';
 import { rewritePathsInFile } from '../lib/path-rewriter.js';
 import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { type RenderedSkillEntry, renderSkillDirectory } from '../lib/skill-transform.ts';
-import { renderSubagentForHarness } from '../lib/subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
-import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
+import { isEnoent } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   HarnessConfig,
@@ -107,18 +100,6 @@ export async function installCommand(
     );
     entries.push(...skillEntries);
 
-    // Install subagents with merged frontmatter
-    const subagentEntries = await installSubagents(
-      contentDir,
-      paths,
-      harnessId,
-      existingByPath,
-      options,
-      overlayYaml,
-      toolMapping,
-    );
-    entries.push(...subagentEntries);
-
     // Install scripts
     const scriptEntries = await installScripts(
       contentDir,
@@ -150,7 +131,6 @@ export async function installCommand(
     if (options.dryRun) {
       console.info(`  [dry-run] Would install ${entries.length} items:`);
       console.info(`    ${skillEntries.length} skill items`);
-      console.info(`    ${subagentEntries.length} subagent items`);
       console.info(`    ${scriptEntries.length} script items`);
       console.info(`    ${guidanceEntries.length} guidance items`);
       continue;
@@ -177,10 +157,10 @@ export async function installCommand(
 }
 
 /**
- * Installs skill directories from content/skills/ into the target skills directory.
- * Shared skills (top-level entries) are installed for all harnesses.
- * Harness-specific skills from `_harnesses/{harnessId}/` are installed only for the matching harness.
- * The `_harnesses` directory is skipped (handled by dedicated harness-specific logic below).
+ * Installs support directories (e.g. `_data`) and harness-specific skills into the target skills directory.
+ * The general skill catalog — any `content/skills/<slug>/` holding a `SKILL.md` — deploys per-declaration via `sync`,
+ * not here; this pass installs only the non-skill support entries plus the matching harness's
+ * `_harnesses/{harnessId}/` skills. `_harnesses` and `_partials` are excluded from the support pass.
  *
  * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
  * mirroring the uninstall command's drift-checking behavior.
@@ -210,9 +190,9 @@ async function installSkills(
     if (entry === '_harnesses' || entry === '_partials' || entry.startsWith('.')) {
       continue;
     }
-    // Skills opting into declared delivery (`deploy: declared`) are materialized per-project by `sync`, never
-    // installed unconditionally. A support entry with no `SKILL.md` (e.g. `_data`) reads as `install` and stays.
-    if (await isDeclaredSkill(path.join(skillsSrcDir, entry))) {
+    // The general skill catalog (any directory holding a `SKILL.md`) deploys per-declaration via `sync`, never
+    // unconditionally. Only non-skill support entries (e.g. `_data`, which skills reference at runtime) stay here.
+    if (await isSkillDirectory(path.join(skillsSrcDir, entry))) {
       continue;
     }
     const result = await installSkillEntry(
@@ -271,21 +251,20 @@ async function installSkills(
 }
 
 /**
- * Reads a skill entry's `SKILL.md` and reports whether it opts into declared delivery. An entry with no readable
- * `SKILL.md` (a support directory such as `_data`, or a stray file) reads as `install` — only an explicit
- * `deploy: declared` excludes the skill from the unconditional install path.
+ * Reports whether `entryDir` is a skill directory — one holding a `SKILL.md`. Skill directories deploy
+ * per-declaration via `sync`, so the install pass skips them; a support directory such as `_data` (no `SKILL.md`)
+ * is not a skill and stays on the install path.
  */
-async function isDeclaredSkill(entryDir: string): Promise<boolean> {
-  let content: string;
+async function isSkillDirectory(entryDir: string): Promise<boolean> {
   try {
-    content = await readFile(path.join(entryDir, 'SKILL.md'), 'utf8');
+    await stat(path.join(entryDir, 'SKILL.md'));
+    return true;
   } catch (error: unknown) {
-    if (isMissingFile(error)) {
+    if (isEnoent(error)) {
       return false;
     }
     throw error;
   }
-  return readDeploy(content, `skills/${path.basename(entryDir)}/SKILL.md`) === 'declared';
 }
 
 /**
@@ -385,97 +364,6 @@ async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<Ren
     await mkdir(path.dirname(destPath), { recursive: true });
     await (entry.kind === 'markdown' ? writeFile(destPath, entry.content, 'utf8') : copyItem(entry.srcPath, destPath));
   }
-}
-
-/**
- * Installs subagent .md files with harness-specific frontmatter merging.
- * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
- * mirroring the uninstall command's drift-checking behavior.
- */
-async function installSubagents(
-  contentDir: string,
-  harnessPaths: { harnessHome: string; subagentsDir: string },
-  harnessId: HarnessId,
-  existingByPath: ReadonlyMap<string, ManifestEntry>,
-  options: InstallOptions,
-  overlayYaml: string,
-  toolMapping: ReadonlyMap<string, string>,
-): Promise<ReadonlyArray<ManifestEntry>> {
-  const subagentsSrcDir = path.join(contentDir, 'subagents');
-  const harnessConfig = HARNESSES[harnessId];
-
-  const dirEntries = await readdir(subagentsSrcDir);
-  const entries: Array<ManifestEntry> = [];
-
-  for (const entry of dirEntries) {
-    if (entry === '_data' || entry === '_partials' || !entry.endsWith('.md')) {
-      continue;
-    }
-
-    const srcPath = path.join(subagentsSrcDir, entry);
-    const destPath = path.join(harnessPaths.subagentsDir, entry);
-    const relativePath = `${harnessConfig.subagentsDirName}/${entry}`;
-
-    // Subagents opting into declared delivery (`deploy: declared`) are materialized per-project by `sync`, never
-    // installed unconditionally. Skipping leaves the entry out of `entries`, so a previously-installed copy is pruned
-    // by the caller's reconcile.
-    if (readDeploy(await readFile(srcPath, 'utf8'), `subagents/${entry}`) === 'declared') {
-      continue;
-    }
-
-    // Resolve include directives at source-tree level. Run before the dry-run gate so missing targets, cycles, and
-    // out-of-tree references surface even when no files are written. Mirrors the ordering in installHarnessGuidance.
-    const expandedSource = await expandIncludes(srcPath, contentDir);
-
-    if (options.dryRun) {
-      const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${relativePath}`);
-      entries.push({
-        relativePath,
-        contentHash: 'dry-run',
-        linked: options.link,
-      });
-      continue;
-    }
-
-    // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(relativePath);
-    if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, harnessPaths.harnessHome);
-      if (drift === 'modified') {
-        console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
-        entries.push(existingEntry);
-        continue;
-      }
-    }
-
-    // Render the harness-specific body (frontmatter merge, tool-name rewrite, path/template rewrite), then stamp the
-    // install-path provenance marker before writing. The marker is injected after the path rewrites because its
-    // `https://` Source URL is skipped by link rewriting and carries no template tokens, so the output is identical to
-    // marking before the rewrite.
-    const rendered = renderSubagentForHarness(expandedSource, {
-      overlayYaml,
-      toolMapping,
-      fileRelPath: entry,
-      sourceLabel: `subagents/${entry}`,
-      pathPrefix: harnessConfig.homeDir,
-      homeDir: harnessConfig.homeDir,
-      harnessId: harnessConfig.id,
-    });
-    const withMarker = injectProvenanceMarker(rendered, buildSourceUrl(`subagents/${entry}`));
-    await mkdir(path.dirname(destPath), { recursive: true });
-    await unlinkIfSymlink(destPath);
-    await writeFile(destPath, withMarker, 'utf8');
-
-    const hash = await computeContentHash(destPath);
-    entries.push({
-      relativePath,
-      contentHash: hash,
-      linked: false, // Subagents are always copied (merged content), never linked
-    });
-  }
-
-  return entries;
 }
 
 /**

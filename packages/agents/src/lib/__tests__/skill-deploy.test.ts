@@ -22,19 +22,15 @@ describe(resolveDeclaredSkill, () => {
     await rm(librarySkillsDir, { recursive: true, force: true });
   });
 
-  /** Writes a library skill `<slug>/SKILL.md` with the given frontmatter lines. */
-  async function writeLibrarySkill(slug: string, frontmatter: string): Promise<void> {
+  /** Writes a library skill `<slug>/SKILL.md`. */
+  async function writeLibrarySkill(slug: string): Promise<void> {
     const dir = path.join(librarySkillsDir, slug);
     await mkdir(dir, { recursive: true });
-    await writeFile(
-      path.join(dir, 'SKILL.md'),
-      `---\nname: ${slug}\n${frontmatter}\n---\n\n# ${slug}\n\nBody.\n`,
-      'utf8',
-    );
+    await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
   }
 
   it('resolves a declared skill to its slug and source directory', async () => {
-    await writeLibrarySkill('people-report', 'deploy: declared');
+    await writeLibrarySkill('people-report');
 
     const resolved = await resolveDeclaredSkill('people-report', librarySkillsDir);
 
@@ -44,18 +40,6 @@ describe(resolveDeclaredSkill, () => {
 
   it('throws a clear error naming the slug when the skill is missing from the library', async () => {
     await expect(resolveDeclaredSkill('ghost', librarySkillsDir)).rejects.toThrow(/ghost/);
-  });
-
-  it('throws when the declared skill is still on the install path', async () => {
-    await writeLibrarySkill('legacy', 'deploy: install');
-
-    await expect(resolveDeclaredSkill('legacy', librarySkillsDir)).rejects.toThrow(/legacy.*declared/i);
-  });
-
-  it('throws when the declared skill has no deploy field', async () => {
-    await writeLibrarySkill('unmarked', 'description: x');
-
-    await expect(resolveDeclaredSkill('unmarked', librarySkillsDir)).rejects.toThrow(/unmarked.*declared/i);
   });
 });
 
