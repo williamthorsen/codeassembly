@@ -76,4 +76,23 @@ describe('harness', () => {
       expect(result.scriptsDir.startsWith(result.harnessHome)).toBe(true);
     });
   });
+
+  describe('HARNESSES invocation sigils', () => {
+    it('should render the skill sigil per harness', () => {
+      expect(HARNESSES.claude.skillSigil).toBe('/');
+      expect(HARNESSES.rovodev.skillSigil).toBe('!');
+    });
+
+    it('should leave the subagent sigil empty on both current harnesses', () => {
+      expect(HARNESSES.claude.subagentSigil).toBe('');
+      expect(HARNESSES.rovodev.subagentSigil).toBe('');
+    });
+
+    it('should supply both sigils for every harness id', () => {
+      for (const config of Object.values(HARNESSES)) {
+        expect(typeof config.skillSigil).toBe('string');
+        expect(typeof config.subagentSigil).toBe('string');
+      }
+    });
+  });
 });

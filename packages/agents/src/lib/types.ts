@@ -14,6 +14,10 @@ export interface HarnessConfig {
   readonly scriptsDirName: string;
   /** Filename of the frontmatter overlay YAML for this harness. */
   readonly frontmatterFile: string;
+  /** Prefix a `{skill:<slug>}` invocation token renders to (e.g. `/` for Claude, `!` for Rovo). */
+  readonly skillSigil: string;
+  /** Prefix a `{subagent:<slug>}` invocation token renders to; empty on both current harnesses (a bare slug dispatches). */
+  readonly subagentSigil: string;
 }
 
 /** A single entry in the manifest tracking an installed file or directory. */
