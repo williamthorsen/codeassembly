@@ -30,6 +30,8 @@ function argsFor(overrides: Partial<ParsedArgs>): ParsedArgs {
     harness: null,
     tags: [],
     impact: null,
+    amend: null,
+    allowPushed: false,
     ...overrides,
   };
 }

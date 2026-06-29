@@ -1,6 +1,6 @@
 ---
 name: kb-update-events
-description: Edit existing events in the knowledge store — mark one or more events addressed-by a reference, retag them, or set their impact — in a single batch invocation. The event mutable set only; events stay otherwise write-once.
+description: Edit existing events in the knowledge store — mark one or more events addressed-by a reference, retag them, or set their impact — in a single batch invocation. The curatorial mutable set only; substantive content is edited via `capture-event --amend`.
 user-invocable: true
 ---
 
@@ -8,7 +8,7 @@ user-invocable: true
 
 Apply one mutation to one or more existing event records in a single invocation. A bundled helper does the mechanical work — it resolves the event store by name, resolves each id to its record, reads it through the type-blind note I/O layer, parses it to a typed `KbEvent`, applies the operation, and writes it back atomically. You supply the store, the operation, and the event ids.
 
-The operation surface is the **event mutable set** only: `addressed-by` (mark an event as addressed by a reference), `tags` (retag), and `impact` (set the impact rating). Events are otherwise write-once: there is no body edit, and these mutations stamp no timestamp — they are curatorial annotations, not substantive edits. Impact is a subjective assessment that may legitimately change, which is why it lives in the mutable set rather than the immutable spine. For new events, use `capture-event`. For editing assertions, use `kb-edit`.
+The operation surface is the **curatorial mutable set** only: `addressed-by` (mark an event as addressed by a reference), `tags` (retag), and `impact` (set the impact rating). These are curatorial annotations that stay available regardless of push state, and they stamp no timestamp. Impact is a subjective assessment that may legitimately change, which is why it lives in the mutable set rather than the immutable spine. They are not substantive edits: to change an event's summary or body, use `capture-event --amend`, which works until the event is pushed. For new events, use `capture-event`. For editing assertions, use `kb-edit`.
 
 **Announce at start:** "Using kb-update-events to {mark|retag|rate} {N} event(s)."
 
@@ -73,4 +73,4 @@ On `ok: false`, route by the `error` code:
 
 ## Completion
 
-Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: succeeded events are written; failed ids are reported and left untouched. Events remain write-once apart from these `addressed-by`/`tags`/`impact` annotations.
+Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: succeeded events are written; failed ids are reported and left untouched. These `addressed-by`/`tags`/`impact` annotations stay available regardless of push state; substantive content edits go through `capture-event --amend`.

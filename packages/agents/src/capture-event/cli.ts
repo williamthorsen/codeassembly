@@ -9,16 +9,25 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import type { KbRoot } from '@codeassembly/kb';
-import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@codeassembly/kb/records';
+import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
+import {
+  EVENT_IMPACT_LEVELS,
+  type EventImpact,
+  isEventImpact,
+  type KbEvent,
+  parseEvent,
+  renderEvent,
+} from '@codeassembly/kb/records';
 import { loadSchema } from '@codeassembly/kb/schema';
 import { ulid } from 'ulid';
 
-import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
+import { formatUtcTimestamp, isSafeEventId } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
+import { isEventPushed } from './event-push-state.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
@@ -34,6 +43,8 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'harness', takesValue: true },
   { name: 'tags', takesValue: true },
   { name: 'impact', takesValue: true },
+  { name: 'amend', takesValue: true },
+  { name: 'allow-pushed', takesValue: false },
 ];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -59,14 +70,16 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end: parses args, reads the event body from stdin, resolves the target store (a concrete
- * `--store` by name, or the registry's `default_kb` via the `@default` sentinel; an omitted `--store` is refused),
- * loads its schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`, best-effort
- * `repo`), validates the event record type's required spine, and writes `content/events/{id}.md` immutably.
+ * Runs the helper end to end: parses args, reads the event body from stdin, and resolves the target store (a concrete
+ * `--store` by name, or the registry's `default_kb` via the `@default` sentinel; an omitted `--store` is refused). A
+ * fresh capture loads the store schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`,
+ * best-effort `repo`), validates the event record type's required spine, and writes `content/events/{id}.md` without
+ * overwriting an existing id. With `--amend <id>`, it instead rewrites that existing event in place; see
+ * {@link amendEvent}.
  *
  * Recoverable failures (invalid args, an omitted `--store`, an unregistered/readonly store, no configured default,
- * schema validation) become structured `{ ok: false, ... }` results. System failures (out-of-disk, permission
- * denied) propagate to the caller's try/catch.
+ * schema validation, and the amend-specific not-found/parse/pushed cases) become structured `{ ok: false, ... }`
+ * results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -125,14 +138,17 @@ export async function runCapture(input: {
   }
   const store = resolved.store;
 
+  const body = await readAll(input.stdin);
+
+  if (args.amend !== null) {
+    return amendEvent({ args, store, body });
+  }
+
   const kbRoot: KbRoot = { path: store.path, kbDir: join(store.path, '.kb'), via: 'ancestor-walk' };
   const schema = await loadSchema({ kbRoot });
-
   const session = input.env.CLAUDE_CODE_SESSION_ID ?? '';
   const repo = await resolveRepo(input.cwd);
   const context: CaptureContext = { session, cwd: input.cwd, ...(repo !== undefined && { repo }) };
-
-  const body = await readAll(input.stdin);
 
   const prep = prepareEvent({
     args,
@@ -158,9 +174,10 @@ export async function runCapture(input: {
 
 /**
  * Parses the helper's argv. Each value-bearing flag accepts both `--flag value` and `--flag=value`; `--tags` accepts a
- * comma-separated list and `--impact` accepts one declared impact level. Unknown flags, an unexpected positional, an
- * empty value for any flag, a missing `--summary`, or an out-of-enum `--impact` throw with a usage-style message. The
- * body comes from stdin rather than the command line, so the layout is flag-only.
+ * comma-separated list, `--impact` accepts one declared impact level, and `--allow-pushed` is a boolean flag. Unknown
+ * flags, an unexpected positional, an empty value for any value-bearing flag, a missing `--summary`, an out-of-enum
+ * `--impact`, or an `--amend` id that is not a bare filename stem throw with a usage-style message. The body comes from
+ * stdin rather than the command line, so the layout is flag-only.
  *
  * @internal - Exported to allow testing.
  */
@@ -189,6 +206,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     impact = raw.impact;
   }
 
+  const amend = raw.amend ?? null;
+  if (amend !== null && !isSafeEventId(amend)) {
+    throw new Error(`--amend id "${amend}" must be a bare filename stem (no path separators)`);
+  }
+
   return {
     store: raw.store ?? null,
     summary,
@@ -197,10 +219,104 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     harness: raw.harness ?? null,
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
     impact,
+    amend,
+    allowPushed: flags.some((flag) => flag.name === 'allow-pushed'),
   };
 }
 
 // region | Helpers
+
+/**
+ * Amends an existing event in place. It rewrites `summary` and the body from the invocation and overrides
+ * `skill`/`model`/`tags`/`impact` only when they are supplied, preserving everything else: provenance (`id`,
+ * `captured-at`, `session`, `cwd`, `repo`, `harness`), `addressed-by`, and any curatorial field the caller did not
+ * restate. The overwrite is refused when the event is already pushed to the store's remote unless `--allow-pushed` was
+ * given, so a pushed event stays immutable while an unpushed one remains editable. The filename id is authoritative, so
+ * a corrupted frontmatter id cannot redirect the write. A missing or unparseable target becomes a structured
+ * `amend-not-found`/`amend-parse` result.
+ */
+async function amendEvent(input: {
+  args: ParsedArgs;
+  store: { name: string; path: string };
+  body: string;
+}): Promise<CaptureResult> {
+  const { args, store, body } = input;
+  const id = args.amend;
+  if (id === null) {
+    throw new Error('amendEvent called without an --amend id');
+  }
+
+  const eventPath = join(store.path, 'content', 'events', `${id}.md`);
+
+  let read: ReadNote;
+  try {
+    read = await readNote(eventPath);
+  } catch (error) {
+    if (isEnoent(error)) {
+      return { ok: false, error: 'amend-not-found', message: `no event to amend at ${eventPath}` };
+    }
+    throw error;
+  }
+  if (read.error !== undefined) {
+    return { ok: false, error: 'amend-parse', message: `event at ${eventPath} is not a valid note: ${read.error}` };
+  }
+
+  const parsed = parseEvent(read.fields, read.body);
+  if (!parsed.ok) {
+    return {
+      ok: false,
+      error: 'amend-parse',
+      message: `event at ${eventPath} is not a valid event: ${parsed.errors.join('; ')}`,
+    };
+  }
+
+  if (!args.allowPushed && (await isEventPushed({ storePath: store.path, id }))) {
+    return {
+      ok: false,
+      error: 'event-pushed',
+      message: `event ${id} is already pushed to the remote; re-run with --allow-pushed to amend it anyway, or capture a new event instead`,
+    };
+  }
+
+  const updated = amendRecord(parsed.record, args, body);
+  const rendered = renderEvent(updated);
+
+  const reparsed = parseEvent(rendered.fields, rendered.body);
+  if (!reparsed.ok) {
+    return {
+      ok: false,
+      error: 'amend-parse',
+      message: `amended event failed validation: ${reparsed.errors.join('; ')}`,
+    };
+  }
+
+  await writeNote(eventPath, rendered.fields, rendered.body);
+  return { ok: true, id, capturedAt: parsed.record.capturedAt, path: eventPath, store: store.name };
+}
+
+/**
+ * Applies an amend to a parsed event: `summary` and `body` come from the invocation; `skill`/`model` (stored in
+ * `extra`) and `tags`/`impact` are overridden only when supplied; provenance and `addressed-by` are preserved. Clearing
+ * a curatorial field is a job for its own mutator in `kb-update-events`, not for an amend, so an omitted flag keeps the
+ * existing value rather than dropping it.
+ */
+function amendRecord(existing: KbEvent, args: ParsedArgs, body: string): KbEvent {
+  const extra = { ...existing.extra };
+  if (args.skill !== null) {
+    extra.skill = args.skill;
+  }
+  if (args.model !== null) {
+    extra.model = args.model;
+  }
+  return {
+    ...existing,
+    summary: args.summary,
+    body,
+    tags: args.tags.length > 0 ? args.tags : existing.tags,
+    ...(args.impact !== null && { impact: args.impact }),
+    extra,
+  };
+}
 
 /**
  * Builds the agent-facing error message for an omitted `--store`, naming the registered stores and, when configured,
