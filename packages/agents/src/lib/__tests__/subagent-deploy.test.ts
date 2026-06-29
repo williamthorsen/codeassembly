@@ -52,6 +52,8 @@ describe(deploySubagent, () => {
       toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
     };
   }
 
@@ -66,6 +68,8 @@ describe(deploySubagent, () => {
       pathPrefix: '.claude',
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
     });
     return makeArtifactMarker('subagent').injectMarker(rendered, 'canary');
   }

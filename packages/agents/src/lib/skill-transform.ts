@@ -2,6 +2,7 @@ import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { expandIncludes } from './directive-expander.ts';
+import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
@@ -17,6 +18,10 @@ export interface SkillDeployContext {
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
   readonly harnessId: string;
+  /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
+  readonly skillSigil: string;
+  /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
+  readonly subagentSigil: string;
 }
 
 /**
@@ -73,18 +78,24 @@ async function collectEntries(
   }
 }
 
-/** Applies the skill `.md` transform chain: include expansion, tool-name rewrite, link rewrite, template expansion. */
+/**
+ * Applies the skill `.md` transform chain: include expansion, tool-name rewrite, invocation-token rewrite, link
+ * rewrite, template expansion. Invocation tokens are rewritten after tool names (the two grammars are disjoint, so
+ * their relative order is immaterial) and before link rewriting (a rendered `/slug` is not a Markdown link, so path
+ * rewriting leaves it untouched).
+ */
 async function renderMarkdown(
   srcPath: string,
   relPath: string,
   slug: string,
   context: SkillDeployContext,
 ): Promise<string> {
-  const { contentDir, toolMapping, pathPrefix, homeDir, harnessId } = context;
+  const { contentDir, toolMapping, pathPrefix, homeDir, harnessId, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentDir, srcPath).split(path.sep).join('/');
   const expanded = await expandIncludes(srcPath, contentDir);
   const toolRewritten = rewriteToolNames(expanded, toolMapping, contextLabel);
-  const pathRewritten = rewriteMarkdownPaths(toolRewritten, `${slug}/${relPath}`, pathPrefix);
+  const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil });
+  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, pathPrefix);
   return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
 }
 

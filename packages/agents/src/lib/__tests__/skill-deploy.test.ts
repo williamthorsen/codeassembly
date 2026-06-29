@@ -166,6 +166,8 @@ describe(deploySkill, () => {
       pathPrefix: '.claude/skills',
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
     };
   }
 

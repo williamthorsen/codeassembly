@@ -2,6 +2,7 @@ import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
+import { rewriteInvocationTokens } from '../invocation-tokens.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
@@ -47,6 +48,8 @@ describe(renderSubagentForHarness, () => {
       pathPrefix: '.claude',
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
     });
 
     expect(output).toContain('permissionMode: bypassPermissions');
@@ -65,11 +68,53 @@ describe(renderSubagentForHarness, () => {
       pathPrefix: '.rovodev',
       homeDir: '.rovodev',
       harnessId: 'rovodev',
+      skillSigil: '!',
+      subagentSigil: '',
     });
 
     expect(output).toContain('tools: [bash, open_files]');
     expect(output).toContain('Use the open_files tool');
     expect(output).toContain('~/.rovodev/scripts/demo.sh');
+  });
+
+  it('rewrites skill and subagent invocation tokens to their harness-rendered form', () => {
+    const source = unindent`
+      ---
+      name: demo-agent
+      description: Demo subagent
+      ---
+
+      Invoke {skill:capture-event}, then dispatch {subagent:code-reviewer}.
+
+    `;
+
+    const claude = renderSubagentForHarness(source, {
+      overlayYaml: CLAUDE_OVERLAY,
+      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+      fileRelPath: 'demo-agent.md',
+      sourceLabel: 'subagents/demo-agent.md',
+      pathPrefix: '.claude',
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+    });
+    expect(claude).toContain('Invoke /capture-event, then dispatch code-reviewer.');
+    expect(claude).not.toContain('{skill:');
+    expect(claude).not.toContain('{subagent:');
+
+    const rovo = renderSubagentForHarness(source, {
+      overlayYaml: ROVODEV_OVERLAY,
+      toolMapping: loadToolMapping(ROVODEV_OVERLAY),
+      fileRelPath: 'demo-agent.md',
+      sourceLabel: 'subagents/demo-agent.md',
+      pathPrefix: '.rovodev',
+      homeDir: '.rovodev',
+      harnessId: 'rovodev',
+      skillSigil: '!',
+      subagentSigil: '',
+    });
+    expect(rovo).toContain('Invoke !capture-event, then dispatch code-reviewer.');
   });
 
   it('rewrites a relative Markdown link to a tilde-prefixed path under pathPrefix', () => {
@@ -81,6 +126,8 @@ describe(renderSubagentForHarness, () => {
       pathPrefix: '.claude',
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
     });
 
     expect(output).toContain('[the guide](~/.claude/guide.md)');
@@ -96,20 +143,23 @@ describe(renderSubagentForHarness, () => {
         pathPrefix: '.claude',
         homeDir: '.claude',
         harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
       }),
     ).toThrow(ToolNameRewriteError);
   });
 
   it.each([
-    { harnessId: 'claude', overlayYaml: CLAUDE_OVERLAY, homeDir: '.claude' },
-    { harnessId: 'rovodev', overlayYaml: ROVODEV_OVERLAY, homeDir: '.rovodev' },
+    { harnessId: 'claude', overlayYaml: CLAUDE_OVERLAY, homeDir: '.claude', skillSigil: '/', subagentSigil: '' },
+    { harnessId: 'rovodev', overlayYaml: ROVODEV_OVERLAY, homeDir: '.rovodev', skillSigil: '!', subagentSigil: '' },
   ])(
-    'produces the same $harnessId output as the standalone merge → tools → markdown-path → template steps',
-    ({ harnessId, overlayYaml, homeDir }) => {
+    'produces the same $harnessId output as the standalone merge → tools → invocations → markdown-path → template steps',
+    ({ harnessId, overlayYaml, homeDir, skillSigil, subagentSigil }) => {
       const toolMapping = loadToolMapping(overlayYaml);
       const merged = mergeFrontmatter(SOURCE, overlayYaml);
       const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/demo-agent.md');
-      const rewrittenPaths = rewriteMarkdownPaths(rewrittenTools, 'demo-agent.md', homeDir);
+      const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil });
+      const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, 'demo-agent.md', homeDir);
       const expected = rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 
       const rendered = renderSubagentForHarness(SOURCE, {
@@ -120,6 +170,8 @@ describe(renderSubagentForHarness, () => {
         pathPrefix: homeDir,
         homeDir,
         harnessId,
+        skillSigil,
+        subagentSigil,
       });
 
       expect(rendered).toBe(expected);

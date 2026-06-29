@@ -1,4 +1,5 @@
 import { mergeFrontmatter } from './frontmatter-merger.ts';
+import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
@@ -18,6 +19,10 @@ export interface SubagentRenderContext {
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
   readonly harnessId: string;
+  /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
+  readonly skillSigil: string;
+  /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
+  readonly subagentSigil: string;
 }
 
 /**
@@ -32,10 +37,21 @@ export interface SubagentRenderContext {
  */
 export function renderSubagentForHarness(
   expandedSource: string,
-  { overlayYaml, toolMapping, fileRelPath, sourceLabel, pathPrefix, homeDir, harnessId }: SubagentRenderContext,
+  {
+    overlayYaml,
+    toolMapping,
+    fileRelPath,
+    sourceLabel,
+    pathPrefix,
+    homeDir,
+    harnessId,
+    skillSigil,
+    subagentSigil,
+  }: SubagentRenderContext,
 ): string {
   const merged = mergeFrontmatter(expandedSource, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
-  const rewrittenPaths = rewriteMarkdownPaths(rewrittenTools, fileRelPath, pathPrefix);
+  const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil });
+  const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, pathPrefix);
   return rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 }

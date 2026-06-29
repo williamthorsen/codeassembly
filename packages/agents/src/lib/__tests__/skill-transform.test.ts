@@ -44,6 +44,25 @@ describe(renderSkillDirectory, () => {
     expect(entries.some((entry) => entry.relPath.startsWith('_partials'))).toBe(false);
   });
 
+  it('rewrites invocation tokens to their harness-rendered form, including a token inside an included partial', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n\nDispatch {subagent:code-reviewer}.\n\n<!-- include: _partials/frag.md / -->\n',
+      '_partials/frag.md': 'Then invoke {skill:capture-event}.\n',
+    });
+
+    const claude = markdownContent(await renderSkillDirectory(skillDir, 'demo', context()), 'SKILL.md');
+    expect(claude).toContain('Dispatch code-reviewer.');
+    expect(claude).toContain('Then invoke /capture-event.');
+    expect(claude).not.toContain('{skill:');
+    expect(claude).not.toContain('{subagent:');
+
+    const rovo = markdownContent(
+      await renderSkillDirectory(skillDir, 'demo', context({ skillSigil: '!' })),
+      'SKILL.md',
+    );
+    expect(rovo).toContain('Then invoke !capture-event.');
+  });
+
   it('rewrites a bare-relative link in a nested .md against the skill slug and prefix', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n', 'reference/guide.md': 'See [the data](../data/table.csv).\n' });
 
@@ -88,6 +107,8 @@ describe(renderSkillDirectory, () => {
       pathPrefix: '.claude/skills',
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
       ...overrides,
     };
   }
