@@ -6,11 +6,7 @@
 
 /** Stable identifier for a rule class. The skill body, tests, and stdout payload all reference these. */
 export type RuleId =
-  | 'composition-code-inline-mark'
-  | 'named-entity'
-  | 'confluence-construct'
-  | 'pre-multiline'
-  | 'disallowed-element';
+  'composition-code-inline-mark' | 'named-entity' | 'confluence-construct' | 'pre-multiline' | 'disallowed-element';
 
 /** A single rule violation. `line` is best-effort (1-based, from the offset of the offending construct). */
 export interface Finding {

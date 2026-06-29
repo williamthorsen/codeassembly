@@ -32,14 +32,12 @@ export interface CreatedStore {
 
 /** Inputs for {@link create}. `registryPath` is required only when registering. */
 export type CreateInput = { targetDir: string; name?: string } & (
-  | { register: false }
-  | { register: true; registryPath: string }
+  { register: false } | { register: true; registryPath: string }
 );
 
 /** The outcome of a {@link create} call: a created store, or a categorical precondition failure. */
 export type CreateOutcome =
-  | { ok: true; created: CreatedStore }
-  | { ok: false; reason: 'kb-exists' | 'name-registered'; message: string };
+  { ok: true; created: CreatedStore } | { ok: false; reason: 'kb-exists' | 'name-registered'; message: string };
 
 /**
  * Scaffolds a new knowledge-base store in `targetDir` and, unless `register` is false, registers it in the kb.yaml

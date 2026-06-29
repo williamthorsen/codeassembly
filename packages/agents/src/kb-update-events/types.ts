@@ -18,8 +18,7 @@ export type ParsedArgs =
 
 /** Per-event outcome, in the order the ids were supplied. */
 export type EventResult =
-  | { ok: true; id: string; path: string }
-  | { ok: false; id: string; error: EventErrorCode; message: string };
+  { ok: true; id: string; path: string } | { ok: false; id: string; error: EventErrorCode; message: string };
 
 /** Categorical per-event error codes. */
 export type EventErrorCode = 'invalid-id' | 'not-found' | 'parse' | 'validation';
@@ -42,11 +41,7 @@ export interface UpdateFailure {
 
 /** Categorical invocation-level error codes the helper can return without an unexpected throw. */
 export type UpdateErrorCode =
-  | 'invalid-args'
-  | 'missing-store'
-  | 'store-not-registered'
-  | 'readonly-store'
-  | 'no-default-store';
+  'invalid-args' | 'missing-store' | 'store-not-registered' | 'readonly-store' | 'no-default-store';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type UpdateResult = UpdateBatchSuccess | UpdateFailure;

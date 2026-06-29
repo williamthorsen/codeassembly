@@ -11,13 +11,7 @@ import type { CanonicalRunStatus, Phases } from '../../../shared/types/canonical
  * Excalibur game layer.
  */
 export type AgentAnimationState =
-  | 'idle'
-  | 'working'
-  | 'walking'
-  | 'resting'
-  | 'celebrating'
-  | 'concerned'
-  | 'deactivated';
+  'idle' | 'working' | 'walking' | 'resting' | 'celebrating' | 'concerned' | 'deactivated';
 
 // -- Phase status accessors --
 

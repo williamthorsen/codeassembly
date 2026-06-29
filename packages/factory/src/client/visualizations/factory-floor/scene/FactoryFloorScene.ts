@@ -38,8 +38,7 @@ export class FactoryFloorScene extends Scene {
 
   private choreographyInProgress = false;
   private pendingDiff:
-    | { diff: FactoryFloorDiff; config: FactoryFloorSceneConfig; layout: FactoryFloorLayoutResult }
-    | undefined;
+    { diff: FactoryFloorDiff; config: FactoryFloorSceneConfig; layout: FactoryFloorLayoutResult } | undefined;
 
   constructor(status: CanonicalRunStatus) {
     super();

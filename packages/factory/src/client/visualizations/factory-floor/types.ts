@@ -5,13 +5,7 @@ import type { PhaseName, RoleType } from '../../../shared/constants/role-types.j
  * since both use the same sprite system.
  */
 export type AgentAnimationState =
-  | 'idle'
-  | 'working'
-  | 'walking'
-  | 'resting'
-  | 'celebrating'
-  | 'concerned'
-  | 'deactivated';
+  'idle' | 'working' | 'walking' | 'resting' | 'celebrating' | 'concerned' | 'deactivated';
 
 /** The three vertical zones in the factory-floor layout. */
 export type Zone = 'upper' | 'rail' | 'lower';

@@ -150,8 +150,7 @@ export async function runCurate(input: {
 
 /** A guarded `curateCheck` outcome: the check result, or an `invalid-config` failure mapped from a loader defect. */
 type GuardedCheck =
-  | { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } }
-  | { ok: false; failure: CurateResult };
+  { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } } | { ok: false; failure: CurateResult };
 
 /**
  * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config/schema/aliases) to a structured

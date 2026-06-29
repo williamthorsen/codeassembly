@@ -6,13 +6,7 @@ import type { PhaseName, RoleType } from '../../../shared/constants/role-types.j
  * on the Excalibur game layer.
  */
 export type AgentAnimationState =
-  | 'idle'
-  | 'working'
-  | 'walking'
-  | 'resting'
-  | 'celebrating'
-  | 'concerned'
-  | 'deactivated';
+  'idle' | 'working' | 'walking' | 'resting' | 'celebrating' | 'concerned' | 'deactivated';
 
 export interface CatwalkSceneConfig {
   orchestrator: OrchestratorConfig;
