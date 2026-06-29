@@ -14,14 +14,15 @@ For assertion recall — the canonical knowledge-base notes — use `kb-retrieve
 
 ## Arguments
 
-| Argument    | Description                                                                       | Required |
-| ----------- | --------------------------------------------------------------------------------- | -------- |
-| `<query>`   | The free-text search query. All non-flag tokens are joined into the query string. | Yes      |
-| `--all-kbs` | Widen the search to every registered knowledge base, not just the default scope.  | No       |
-| `--store`   | Scope the search to a single registered knowledge base by name (alias: `--kb`).   | No       |
-| `--tag`     | Keep only events carrying this tag (canonical or alias form), case-insensitively. | No       |
+| Argument       | Description                                                                       | Required |
+| -------------- | --------------------------------------------------------------------------------- | -------- |
+| `<query>`      | The free-text search query. All non-flag tokens are joined into the query string. | Yes      |
+| `--all-kbs`    | Widen the search to every registered knowledge base, not just the default scope.  | No       |
+| `--min-impact` | Keep only events rated at or above the given level; unrated events are dropped.   | No       |
+| `--store`      | Scope the search to a single registered knowledge base by name (alias: `--kb`).   | No       |
+| `--tag`        | Keep only events carrying this tag (canonical or alias form), case-insensitively. | No       |
 
-A value-bearing flag accepts both `--tag fix` and `--tag=fix`.
+A value-bearing flag accepts both `--tag fix` and `--tag=fix`. `--min-impact` takes one of the impact levels, ordered `low` < `medium` < `high` < `critical`; an absent or out-of-range value is rejected with a usage message.
 
 ### Scope
 
@@ -43,7 +44,7 @@ Within each knowledge base, recall is limited to the notes the store declares �
 Invoke the co-located bundled helper with `node`, passing the query and any flags through verbatim:
 
 ```bash
-node "$(dirname "$SKILL_PATH")/kb-retrieve-events.mjs" <query> [--all-kbs] [--store <name>] [--tag <tag>]
+node "$(dirname "$SKILL_PATH")/kb-retrieve-events.mjs" <query> [--all-kbs] [--store <name>] [--tag <tag>] [--min-impact <level>]
 ```
 
 Or, when the skill directory is known:
@@ -52,9 +53,15 @@ Or, when the skill directory is known:
 node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store codeassembly
 ```
 
+Triage the most consequential events by floor on impact:
+
+```bash
+node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store codeassembly --min-impact high
+```
+
 The helper prints a JSON object to stdout:
 
-- `candidates` — an array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also carries `occurrences` — a coarse recurrence count of how many query-matched events share its `repo` — and, when present, `repo` (its `owner/name` repository) and `addressedBy` (references recording what was done about the problem it notes).
+- `candidates` — an array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also carries `occurrences` — a coarse recurrence count of how many query-matched events share its `repo` — and, when present, `repo` (its `owner/name` repository), `addressedBy` (references recording what was done about the problem it notes), and `impact` (the author's rating, one of `low` < `medium` < `high` < `critical`; absent when the event is unrated).
 - `scopedKbs` — the knowledge bases that were actually searched.
 - `warnings` — an array (possibly empty) of registry-health problems, present even when candidates are returned.
 - `diagnostic` — present only when scope is empty or no events matched.
@@ -65,9 +72,11 @@ Parse the JSON and rank the `candidates` by genuine relevance to the query's int
 
 Once relevance is established, rank by recurrence, then recency: a candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo` and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched events sharing the group, not a precise cluster — treat it as a strong-but-soft signal.
 
+Do not rank by `impact`. It is the author's subjective rating, orthogonal to a query's relevance, so it is shown to the reader and available as the `--min-impact` filter but never folded into the ordering.
+
 ### 3. Present a ranked list
 
-Present the ranked events, each showing `summary`, `path`, `capturedAt`, and `snippet`. Apply this annotation:
+Present the ranked events, each showing `summary`, `path`, `capturedAt`, and `snippet`, plus `impact` when the event carries one. Apply this annotation:
 
 - **Addressed problems** — when a candidate carries `addressedBy`, surface its references so a recurring-but-addressed problem reads as _addressed_ rather than _unaddressed_. The references are heterogeneous (a KB note, a commit, a PR/issue, or a URL), and the relation is neutral: it records what was done about the problem, not that the problem is verifiably resolved. The event remains a true observation worth keeping.
 
@@ -80,6 +89,7 @@ When the helper returns a `diagnostic` and no candidates, report the empty resul
 - `registry invalid: …`: The only configured `kb.yaml` registry failed to load; this is a setup problem to fix, not a missing-events outcome.
 - `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
 - `all matches were filtered out`: Matches were found but every one was excluded by `--tag`; suggest dropping or loosening the filter.
+- `all matches were below the --min-impact threshold of <level>`: Events matched, but every one was rated below the `--min-impact` floor or was unrated; suggest lowering or dropping the filter.
 - `matches were found but none are events; use kb-retrieve for assertion recall`: The query matched only non-event records; the reader likely wants `kb-retrieve`.
 
 ### 5. Relay registry-health warnings

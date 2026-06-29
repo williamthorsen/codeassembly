@@ -37,6 +37,23 @@ describe(parseArgs, () => {
   it('throws when --tag has no value', () => {
     expect(() => parseArgs(['q', '--tag'])).toThrow(/--tag requires a value/);
   });
+
+  it('parses --min-impact as the level floor, in both spaced and inline forms', () => {
+    expect(parseArgs(['q', '--min-impact', 'high']).minImpact).toBe('high');
+    expect(parseArgs(['q', '--min-impact=critical']).minImpact).toBe('critical');
+  });
+
+  it('leaves minImpact null when --min-impact is absent', () => {
+    expect(parseArgs(['q']).minImpact).toBeNull();
+  });
+
+  it('throws when --min-impact has no value', () => {
+    expect(() => parseArgs(['q', '--min-impact'])).toThrow(/--min-impact requires a value/);
+  });
+
+  it('throws when --min-impact is outside the declared levels', () => {
+    expect(() => parseArgs(['q', '--min-impact', 'louder'])).toThrow(/--min-impact must be one of/);
+  });
 });
 
 describe(runRetrieveEvents, () => {
@@ -84,5 +101,35 @@ describe(runRetrieveEvents, () => {
 
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('no query provided');
+  });
+
+  it('surfaces a declared impact on a candidate and omits it on an unrated one', async () => {
+    const result = await runRetrieveEvents({ argv: ['snorkleweft'], startDir: NOTES_VAULT, home: FIXTURES });
+
+    const byImpact = new Map(result.candidates.map((candidate) => [candidate.summary, candidate.impact]));
+    expect(byImpact.get('A snorkleweft outage rated high')).toBe('high');
+    expect(byImpact.get('A snorkleweft observation left unrated')).toBeUndefined();
+  });
+
+  it('keeps only events rated at or above --min-impact, excluding lower and unrated events', async () => {
+    const result = await runRetrieveEvents({
+      argv: ['snorkleweft', '--min-impact', 'high'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+    });
+
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0]).toMatchObject({ summary: 'A snorkleweft outage rated high', impact: 'high' });
+  });
+
+  it('reports a threshold diagnostic when --min-impact filters every match out', async () => {
+    const result = await runRetrieveEvents({
+      argv: ['snorkleweft', '--min-impact', 'critical'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+    });
+
+    expect(result.candidates).toEqual([]);
+    expect(result.diagnostic).toBe('all matches were below the --min-impact threshold of critical');
   });
 });

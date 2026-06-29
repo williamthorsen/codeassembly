@@ -1,13 +1,16 @@
 import { basename } from 'node:path';
 
+import { isEventImpact } from '@codeassembly/kb/records';
+
 import type { SearchHit } from '../kb-search/types.ts';
 import { extractString, readStringList } from '../kb-shared/note-helpers.ts';
 import type { EventCandidate } from './types.ts';
 
 /**
  * Projects the shared search primitive's event hits onto the event candidate table. Each candidate carries its
- * recurrence signals — `captured-at`, `repo`, and an `occurrences` count — plus its `summary`, tags, and any
- * `addressed-by` references. After projection, each candidate is stamped with the size of its `repo` recurrence group:
+ * recurrence signals — `captured-at`, `repo`, and an `occurrences` count — plus its `summary`, tags, any
+ * `addressed-by` references, and its `impact` rating when set. After projection, each candidate is stamped with the
+ * size of its `repo` recurrence group:
  * the count of query-matched events sharing the same repository. A note whose frontmatter is missing or malformed still
  * projects to a low-signal candidate carrying a diagnostic rather than being dropped.
  */
@@ -19,13 +22,15 @@ export function normalizeEvents(input: { hits: SearchHit[] }): EventCandidate[] 
 
 // region | Helpers
 
-/** Projects a single event hit onto a candidate, reading its recurrence signals from frontmatter. */
+/** Projects a single event hit onto a candidate, reading its recurrence signals and impact from frontmatter. */
 function toEventCandidate(searchHit: SearchHit): EventCandidate {
   const { hit, note } = searchHit;
   const extra = note.frontmatter?.extra;
 
   const repo = extractString(extra, 'repo');
   const addressedBy = readStringList(extra, 'addressed-by');
+  const rawImpact = extra?.impact;
+  const impact = isEventImpact(rawImpact) ? rawImpact : undefined;
 
   const candidate: EventCandidate = {
     path: hit.path,
@@ -37,6 +42,7 @@ function toEventCandidate(searchHit: SearchHit): EventCandidate {
     kbName: hit.kbName,
     ...(repo !== null && { repo }),
     ...(addressedBy.length > 0 && { addressedBy }),
+    ...(impact !== undefined && { impact }),
   };
   if (note.frontmatter === null) {
     candidate.diagnostic = 'frontmatter missing or malformed; degraded to a low-signal candidate';
