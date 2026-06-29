@@ -22,6 +22,8 @@ Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `-
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly-agents init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).
 
+Authoring conventions for the artifacts you declare — frontmatter fields, the `dependencies:` and `members:` blocks, and naming — live in the `authoring-guidance` rulebook (`content/guidance/rulebooks/authoring-guidance.md`). This section documents the declaration mechanism itself.
+
 ### Format
 
 The declaration is grouped by artifact type. Each type's block takes a `use` list (the slugs to adopt) and an optional `drop` list (slugs to remove from what broader scopes contributed):
@@ -83,7 +85,7 @@ A rulebook, skill, or subagent may declare dependencies on other artifacts in it
 ```yaml
 dependencies:
   rulebooks:
-    - typescript-conventions
+    - shell-conventions
   skills:
     - people-report
   subagents:
