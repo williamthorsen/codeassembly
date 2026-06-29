@@ -222,13 +222,13 @@ What would you like to do? Reply with numbers, or 'all'.
 
 The actions menu is built dynamically based on which sections are populated:
 
-| Action                          | Offered when                               | Skill/tool invoked |
-| ------------------------------- | ------------------------------------------ | ------------------ |
-| Batch tickets for findings      | Findings section has ≥2 items              | `/create-ticket`   |
-| Create tickets for findings     | Findings section non-empty                 | `/create-ticket`   |
-| Create tickets for legacy items | Legacy section non-empty                   | `/create-ticket`   |
-| Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment` |
-| Save session devlog             | Always (unless trivial)                    | `/create-devlog`   |
+| Action                          | Offered when                               | Skill/tool invoked      |
+| ------------------------------- | ------------------------------------------ | ----------------------- |
+| Batch tickets for findings      | Findings section has ≥2 items              | `{skill:create-ticket}` |
+| Create tickets for findings     | Findings section non-empty                 | `{skill:create-ticket}` |
+| Create tickets for legacy items | Legacy section non-empty                   | `{skill:create-ticket}` |
+| Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment`      |
+| Save session devlog             | Always (unless trivial)                    | `{skill:create-devlog}` |
 
 **Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives — only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. The "Batch tickets for findings" action implements the **batch later** lane; "Create tickets for findings" implements the **separate ticket** lane from [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md).
 
@@ -277,7 +277,7 @@ Process confirmed actions in this order:
 2. **Tickets for findings** — invoke `{skill:create-ticket}` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
 3. **Tickets for legacy items** — invoke `{skill:create-ticket}` once per item. Label as technical debt or the appropriate category.
 4. **Post insights to ticket** — for each `ticket comment` insight, write the insight body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then post via `gh issue comment {number} --body-file "$body_path"` (ticket number from the session-context manifest). When posting multiple insights, use a loop-unique path (e.g., `gh-body-{timestamp}-{index}.md`) to avoid collisions. Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
-5. **Save session devlog** — invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `/create-devlog --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
+5. **Save session devlog** — invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
 
 After all actions complete, identify which findings were _not_ selected by any action (implicitly dropped) and pass that set forward to Phase 4 for inclusion in the report's `### Dropped` section and the artifact's `## Dropped` section.
 
