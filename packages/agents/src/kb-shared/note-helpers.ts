@@ -50,6 +50,11 @@ export function dedupeInOrder<T>(values: readonly T[]): T[] {
   return result;
 }
 
+/** Reports whether an id is a bare filename stem, rejecting path separators and traversal segments so it cannot escape `content/events/`. */
+export function isSafeEventId(id: string): boolean {
+  return id.length > 0 && !id.includes('/') && !id.includes('\\') && !id.includes('..') && !id.includes('\0');
+}
+
 /**
  * Reads a string-list field from a frontmatter `extra` map: a sequence yields its non-empty, trimmed string items; a
  * lone non-empty string is coerced to a one-element list so a mis-authored scalar still surfaces; anything else yields

@@ -10,7 +10,7 @@ import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
 import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@codeassembly/kb/records';
 import { loadAliases } from '@codeassembly/kb/tags';
 
-import { splitCommaList } from '../kb-shared/note-helpers.ts';
+import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
@@ -169,7 +169,7 @@ async function editOne(input: {
 }): Promise<EventResult> {
   const { storePath, id, args, aliases } = input;
 
-  if (!isSafeId(id)) {
+  if (!isSafeEventId(id)) {
     return {
       ok: false,
       id,
@@ -248,11 +248,6 @@ function isEntryPoint(): boolean {
     process.stderr.write(`kb-update-events: warning: could not determine entry point: ${message}\n`);
     return false;
   }
-}
-
-/** Reports whether an event id is a bare filename stem, rejecting path separators and traversal segments. */
-function isSafeId(id: string): boolean {
-  return id.length > 0 && !id.includes('/') && !id.includes('\\') && !id.includes('..') && !id.includes('\0');
 }
 
 /** Loads tag aliases for a store, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map with a warning. */
