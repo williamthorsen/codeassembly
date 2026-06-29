@@ -65,6 +65,25 @@ describe(normalizeEvents, () => {
       addressedBy: ['abc1234', 'owner/repo-x#42', 'https://example.com/fix'],
     });
   });
+
+  it('carries a declared impact level onto an event candidate', async () => {
+    const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-impact-high.md'))] });
+
+    expect(candidates[0]?.impact).toBe('high');
+  });
+
+  it('omits impact when the event declares none', async () => {
+    const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-a.md'))] });
+
+    expect(candidates[0]?.impact).toBeUndefined();
+  });
+
+  it('omits an impact value outside the declared levels', async () => {
+    const candidates = normalizeEvents({ hits: [await hitFor(join(EVENTS, 'event-impact-bad.md'))] });
+
+    expect(candidates[0]?.summary).toBe('An event carrying an out-of-range impact value');
+    expect(candidates[0]?.impact).toBeUndefined();
+  });
 });
 
 /** Builds a `SearchHit` for a fixture event by parsing it. */

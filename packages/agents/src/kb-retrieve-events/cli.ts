@@ -4,11 +4,13 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@codeassembly/kb/records';
+
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
 import type { RecallFilters } from '../kb-search/types.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { normalizeEvents } from './normalize.ts';
-import type { EventRetrieveResult } from './types.ts';
+import type { EventCandidate, EventRetrieveResult } from './types.ts';
 
 /** The record type kb-retrieve-events owns; every other type (e.g. `assertion`) is left to its own retrieve command. */
 const EVENT = 'event';
@@ -16,6 +18,7 @@ const EVENT = 'event';
 /** The flags this helper accepts; positionals join into the free-text query. `--kb` is an alias for `--store`. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'all-kbs', takesValue: false },
+  { name: 'min-impact', takesValue: true },
   { name: 'store', aliases: ['kb'], takesValue: true },
   { name: 'tag', takesValue: true },
 ];
@@ -30,6 +33,8 @@ export interface ParsedArgs {
   storeName: string | null;
   /** The mechanical filter from `--tag`. */
   filters: RecallFilters;
+  /** The `--min-impact` floor; candidates rated below it (and unrated ones) are dropped. `null` when absent. */
+  minImpact: EventImpact | null;
 }
 
 /** Executes the helper from `process.argv` and write the JSON result to stdout. */
@@ -68,9 +73,10 @@ function isEntryPoint(): boolean {
 }
 
 /**
- * Parses the helper's argv into a query, the `--all-kbs` flag, the `--store`/`--kb` store scope, and the `--tag` filter.
- * Each value-bearing flag accepts both `--flag value` and `--flag=value`. An unknown flag, or a value-bearing flag given
- * no value (or an empty one), throws with a usage-style message.
+ * Parses the helper's argv into a query, the `--all-kbs` flag, the `--store`/`--kb` store scope, the `--tag` filter, and
+ * the `--min-impact` floor. Each value-bearing flag accepts both `--flag value` and `--flag=value`. An unknown flag, a
+ * value-bearing flag given no value (or an empty one), or a `--min-impact` outside the declared levels throws with a
+ * usage-style message.
  *
  * @internal - Exported to allow testing.
  */
@@ -93,6 +99,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     allKbs: flags.some((flag) => flag.name === 'all-kbs'),
     storeName,
     filters: tag !== undefined ? { tag } : {},
+    minImpact: parseMinImpact(values['min-impact']),
   };
 }
 
@@ -111,7 +118,7 @@ export async function runRetrieveEvents(input: {
   startDir: string;
   home?: string;
 }): Promise<EventRetrieveResult> {
-  const { query, allKbs, storeName, filters } = parseArgs(input.argv);
+  const { query, allKbs, storeName, filters, minImpact } = parseArgs(input.argv);
 
   if (query === '') {
     return { candidates: [], scopedKbs: [], warnings: [], diagnostic: 'no query provided' };
@@ -135,7 +142,9 @@ export async function runRetrieveEvents(input: {
     };
   }
 
-  const candidates = normalizeEvents({ hits: search.hits.filter((hit) => recordTypeOf(hit) === EVENT) });
+  const eventCandidates = normalizeEvents({ hits: search.hits.filter((hit) => recordTypeOf(hit) === EVENT) });
+  const candidates =
+    minImpact === null ? eventCandidates : eventCandidates.filter((candidate) => meetsMinImpact(candidate, minImpact));
 
   const result: EventRetrieveResult = {
     candidates,
@@ -143,10 +152,10 @@ export async function runRetrieveEvents(input: {
     warnings: search.warnings,
   };
   if (candidates.length === 0) {
-    result.diagnostic = emptyResultDiagnostic({
-      recalledCount: search.recalledCount,
-      filteredHits: search.hits.length,
-    });
+    result.diagnostic =
+      minImpact !== null && eventCandidates.length > 0
+        ? `all matches were below the --min-impact threshold of ${minImpact}`
+        : emptyResultDiagnostic({ recalledCount: search.recalledCount, filteredHits: search.hits.length });
   }
   return result;
 }
@@ -164,6 +173,31 @@ function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: num
     return 'all matches were filtered out';
   }
   return 'matches were found but none are events; use kb-retrieve for assertion recall';
+}
+
+/** Reports whether a candidate's impact is set and ranks at or above `floor` by the declared level ordering. */
+function meetsMinImpact(candidate: EventCandidate, floor: EventImpact): boolean {
+  if (candidate.impact === undefined) {
+    return false;
+  }
+  return EVENT_IMPACT_LEVELS.indexOf(candidate.impact) >= EVENT_IMPACT_LEVELS.indexOf(floor);
+}
+
+/**
+ * Resolves the `--min-impact` value to a level floor, or `null` when the flag is absent. An empty value, or one outside
+ * the declared levels, throws a usage-style message.
+ */
+function parseMinImpact(value: string | undefined): EventImpact | null {
+  if (value === undefined) {
+    return null;
+  }
+  if (value === '') {
+    throw new Error('--min-impact requires a value');
+  }
+  if (!isEventImpact(value)) {
+    throw new Error(`--min-impact must be one of ${EVENT_IMPACT_LEVELS.join(', ')}`);
+  }
+  return value;
 }
 
 // endregion | Helpers

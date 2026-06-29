@@ -2,6 +2,8 @@
 // `kb-search` primitive and projects event records into candidates carrying their recurrence signals; the agent ranks
 // by recurrence then recency and presents.
 
+import type { EventImpact } from '@codeassembly/kb/records';
+
 import type { ScopedKb } from '../kb-search/types.ts';
 
 /** A normalized event candidate ready for the agent to rank by recurrence then recency. */
@@ -25,6 +27,12 @@ export interface EventCandidate {
    * wikilink/relative path, commit SHA, PR/issue ref, or URL. `undefined` when the event declares none.
    */
   addressedBy?: string[];
+  /**
+   * The author's revisable rating of how much addressing this event matters. `undefined` when the event is unrated or
+   * carries a value outside the declared levels. Shown to the reader and usable by `--min-impact`, but not a ranking
+   * signal.
+   */
+  impact?: EventImpact;
   /** Name of the source KB, or `null` for a registry-less discovered KB. */
   kbName: string | null;
   /** A diagnostic note for this candidate, e.g. malformed frontmatter degraded to a low-signal hit. */
