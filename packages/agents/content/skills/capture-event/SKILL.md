@@ -22,14 +22,15 @@ A **skill-caused mistake** — an error a clearer skill definition would have pr
 
 ## Arguments
 
-| Argument    | Description                                                              | Required |
-| ----------- | ------------------------------------------------------------------------ | -------- |
-| `--summary` | A human-readable one-line summary; becomes the record's label on recall. | Yes      |
-| `--store`   | Registry name of the event store, or `@default` for the `default_kb`.    | Yes      |
-| `--skill`   | The skill the event relates to.                                          | No       |
-| `--model`   | The model identifier in play.                                            | No       |
-| `--harness` | The agent platform (`claude`, `rovodev`); install-injected — keep as-is. | Injected |
-| `--tags`    | Comma-separated tag list.                                                | No       |
+| Argument    | Description                                                                       | Required |
+| ----------- | --------------------------------------------------------------------------------- | -------- |
+| `--summary` | A human-readable one-line summary; becomes the record's label on recall.          | Yes      |
+| `--store`   | Registry name of the event store, or `@default` for the `default_kb`.             | Yes      |
+| `--skill`   | The skill the event relates to.                                                   | No       |
+| `--model`   | The model identifier in play.                                                     | No       |
+| `--harness` | The agent platform (`claude`, `rovodev`); install-injected — keep as-is.          | Injected |
+| `--tags`    | Comma-separated tag list.                                                         | No       |
+| `--impact`  | Impact rating: one of `low`, `medium`, `high`, `critical`. Omit to leave unrated. | No       |
 
 A value-bearing flag accepts both `--summary text` and `--summary=text`. The event body is read from stdin to EOF; an empty body is allowed.
 
@@ -37,7 +38,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 
 - **Auto-filled by the helper:** `recordType` (`event`), `id` (ULID), `captured-at`, `session` (`CLAUDE_CODE_SESSION_ID`), `cwd`, and `repo` (the `owner/name` git remote at `cwd`, best-effort — omitted silently when no remote resolves).
 - **Template-injected:** `harness` — `codeassembly-agents` writes the agent platform (`claude` or `rovodev`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
-- **Agent-supplied:** `summary`, the optional `skill`/`model`/`tags`, and the body.
+- **Agent-supplied:** `summary`, the optional `skill`/`model`/`tags`/`impact`, and the body.
 
 ### Store selection
 
@@ -55,6 +56,8 @@ Choose the destination deliberately. When the lesson is specific to a project, p
 
 Write a one-line `--summary` that reads well on its own (it is the record's recall label). Put the detail — context, the problem and its resolution, the pattern and its refinement — in the body on stdin. Capture enough context that the event is intelligible months later without the surrounding conversation.
 
+Optionally rate `--impact` (`low`, `medium`, `high`, or `critical`): your subjective read of how much addressing the event matters, which applies equally to a bug and to a beneficial change. Omit it when you have no clear read — an unrated event is left for a later triage pass. The rating is revisable later with `kb-update-events`.
+
 ### 2. Invoke the helper
 
 Pipe the body to the bundled helper. A heredoc keeps multi-line bodies legible:
@@ -64,7 +67,7 @@ cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
   --summary "<one-line summary>" \
   --store <name|@default> \
   --harness {harness_id} \
-  [--skill <skill>] [--model <model>] [--tags <comma,separated>]
+  [--skill <skill>] [--model <model>] [--tags <comma,separated>] [--impact <level>]
 <event body, may span multiple lines and contain any characters>
 EOF
 ```

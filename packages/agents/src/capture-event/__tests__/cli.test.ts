@@ -25,7 +25,7 @@ const EVENT_SCHEMA = `recordTypes:
   event:
     recall: recurrence-recency
     required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity]
+    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity, impact]
 `;
 
 function bodyStream(body: string): Readable {
@@ -70,6 +70,8 @@ describe(parseArgs, () => {
       'claude',
       '--tags',
       'one, two,three',
+      '--impact',
+      'high',
     ]);
 
     expect(parsed).toEqual({
@@ -79,6 +81,7 @@ describe(parseArgs, () => {
       model: 'claude-opus-4-8',
       harness: 'claude',
       tags: ['one', 'two', 'three'],
+      impact: 'high',
     });
   });
 
@@ -90,6 +93,11 @@ describe(parseArgs, () => {
     expect(parsed.model).toBeNull();
     expect(parsed.harness).toBeNull();
     expect(parsed.tags).toEqual([]);
+    expect(parsed.impact).toBeNull();
+  });
+
+  it('throws on an out-of-enum --impact', () => {
+    expect(() => parseArgs(['--summary', 'x', '--impact', 'urgent'])).toThrow(/--impact must be one of/);
   });
 
   it('throws when --summary is missing', () => {
@@ -179,6 +187,26 @@ describe(runCapture, () => {
       expect(written).toContain('session: session-xyz');
       expect(written).toContain('repo: williamthorsen/codeassembly');
       expect(written).not.toMatch(/^harness:/m);
+    }
+  });
+
+  it('writes the impact field when --impact is supplied', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+
+    const result = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Noticed a thing', '--impact', 'high'],
+      stdin: bodyStream('Body text.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const written = await readFile(result.path, 'utf8');
+      expect(written).toMatch(/^impact: high$/m);
     }
   });
 

@@ -13,7 +13,7 @@ const EVENT_SCHEMA = `recordTypes:
   event:
     recall: recurrence-recency
     required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity]
+    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity, impact]
 `;
 
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
@@ -29,6 +29,7 @@ function argsFor(overrides: Partial<ParsedArgs>): ParsedArgs {
     model: null,
     harness: null,
     tags: [],
+    impact: null,
     ...overrides,
   };
 }
@@ -143,6 +144,38 @@ describe(prepareEvent, () => {
       expect(result.prepared.content).toContain('model: claude-opus-4-8');
       expect(result.prepared.content).toContain('harness: claude');
       expect(result.prepared.content).toContain('tags: [recall, kb]');
+    }
+  });
+
+  it('renders the supplied impact into the record', () => {
+    const result = prepareEvent({
+      args: argsFor({ impact: 'high' }),
+      context: CONTEXT,
+      id: ID,
+      capturedAt: CAPTURED_AT,
+      schema,
+      body: '',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.content).toMatch(/^impact: high$/m);
+    }
+  });
+
+  it('omits impact when none is supplied', () => {
+    const result = prepareEvent({
+      args: argsFor({}),
+      context: CONTEXT,
+      id: ID,
+      capturedAt: CAPTURED_AT,
+      schema,
+      body: '',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.content).not.toMatch(/^impact:/m);
     }
   });
 });
