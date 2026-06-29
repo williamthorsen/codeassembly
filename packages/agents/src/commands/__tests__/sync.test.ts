@@ -395,12 +395,11 @@ describe(syncCommand, () => {
     /** Writes a fixture skill into the temp content library's `skills/<slug>/SKILL.md`. */
     async function writeLibrarySkill(
       slug: string,
-      { deploy = 'declared', body = `# ${slug}\n\nBody.` }: { deploy?: string; body?: string } = {},
+      { body = `# ${slug}\n\nBody.` }: { body?: string } = {},
     ): Promise<void> {
       const dir = path.join(contentDir, 'skills', slug);
       await mkdir(dir, { recursive: true });
-      const deployLine = deploy === '' ? '' : `deploy: ${deploy}\n`;
-      await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${deployLine}---\n\n${body}\n`, 'utf8');
+      await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n${body}\n`, 'utf8');
     }
 
     /** Writes the project-scope codeassembly.yaml declaring the given skill slugs. */
@@ -475,13 +474,6 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('ghost'))).toBe(false);
     });
 
-    it('throws when a declared skill is still on the install path', async () => {
-      await writeLibrarySkill('legacy', { deploy: 'install' });
-      await declareSkills('legacy');
-
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/legacy.*declared/i);
-    });
-
     it('deploys declared skills and rulebook skills side by side without clobbering each other', async () => {
       await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
       await writeLibrarySkill('people-report');
@@ -547,7 +539,7 @@ describe(syncCommand, () => {
       await mkdir(path.join(skillDir, '_partials'), { recursive: true });
       await writeFile(
         path.join(skillDir, 'SKILL.md'),
-        '---\nname: demo\ndeploy: declared\n---\n\n<!-- include: _partials/frag.md / -->\n\nUse {tool:Read}. See [guide](./guide.md).\n',
+        '---\nname: demo\n---\n\n<!-- include: _partials/frag.md / -->\n\nUse {tool:Read}. See [guide](./guide.md).\n',
         'utf8',
       );
       await writeFile(path.join(skillDir, '_partials', 'frag.md'), 'Shared fragment.\n', 'utf8');
@@ -606,15 +598,11 @@ describe(syncCommand, () => {
     }
 
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
-    async function writeLibrarySubagent(
-      slug: string,
-      { deploy = 'declared', body }: { deploy?: string; body?: string } = {},
-    ): Promise<void> {
+    async function writeLibrarySubagent(slug: string): Promise<void> {
       const dir = path.join(contentDir, 'subagents');
       await mkdir(dir, { recursive: true });
-      const deployLine = deploy === '' ? '' : `deploy: ${deploy}\n`;
-      const content = body ?? `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.`;
-      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n${deployLine}---\n\n${content}\n`, 'utf8');
+      const content = `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.`;
+      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n${content}\n`, 'utf8');
     }
 
     /** Writes the project-scope codeassembly.yaml declaring the given subagent slugs. */
@@ -691,14 +679,6 @@ describe(syncCommand, () => {
 
       await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
       expect(existsSync(subagentPath('ghost'))).toBe(false);
-    });
-
-    it('throws when a declared subagent is still on the install path', async () => {
-      await writeOverlays();
-      await writeLibrarySubagent('legacy', { deploy: 'install' });
-      await declareSubagents('legacy');
-
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/legacy.*declared/i);
     });
 
     it('deploys the same subagent into each targeted harness with its own transform', async () => {
@@ -782,15 +762,11 @@ describe(syncGlobalCommand, () => {
     await writeFile(file, `---\nslug: ${slug}\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
   }
 
-  /** Writes a fixture declared skill into the temp content library. */
+  /** Writes a fixture skill into the temp content library. */
   async function writeLibrarySkill(slug: string): Promise<void> {
     const dir = path.join(contentDir, 'skills', slug);
     await mkdir(dir, { recursive: true });
-    await writeFile(
-      path.join(dir, 'SKILL.md'),
-      `---\nname: ${slug}\ndeploy: declared\n---\n\n# ${slug}\n\nBody.\n`,
-      'utf8',
-    );
+    await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
   }
 
   /** Writes the user-global codeassembly.yaml under the temp home's `.agents/`. */

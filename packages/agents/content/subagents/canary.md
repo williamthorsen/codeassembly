@@ -2,7 +2,6 @@
 name: canary
 description: Deployment canary for the declared-subagent mechanism; not meant to be invoked.
 tools: [Read]
-deploy: declared
 ---
 
 # Canary

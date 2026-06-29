@@ -2,7 +2,6 @@ import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { makeArtifactMarker } from './artifact-marker.ts';
-import { readDeploy } from './deploy-frontmatter.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { writeIfChanged } from './fs-helpers.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
@@ -57,29 +56,18 @@ export async function deploySubagent(
 }
 
 /**
- * Resolves a declared subagent slug against the library, confirming its `<slug>.md` exists and that it opts into
- * declared delivery. A missing file throws a clear error naming the slug. A subagent still on the `install` path is
- * rejected rather than deployed, since declaring an `install` subagent would ship it twice: once via `install`, once
- * via `sync`.
+ * Resolves a declared subagent slug against the library, confirming its `<slug>.md` exists. A missing file throws a
+ * clear error naming the slug.
  */
 export async function resolveDeclaredSubagent(slug: string, librarySubagentsDir: string): Promise<ResolvedSubagent> {
   const srcPath = path.join(librarySubagentsDir, `${slug}.md`);
-  let content: string;
   try {
-    content = await readFile(srcPath, 'utf8');
+    await readFile(srcPath, 'utf8');
   } catch (error: unknown) {
     if (isEnoent(error)) {
       throw new Error(`Declared subagent "${slug}" was not found in the library at ${srcPath}`);
     }
     throw error;
-  }
-
-  const deploy = readDeploy(content, `subagents/${slug}.md`);
-  if (deploy !== 'declared') {
-    throw new Error(
-      `Declared subagent "${slug}" is not marked for declared delivery; its frontmatter has deploy: ${deploy}. ` +
-        'Add `deploy: declared` to its frontmatter, or remove it from the declaration.',
-    );
   }
 
   return { slug, srcPath };

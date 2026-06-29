@@ -6,7 +6,6 @@ import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { readDeploy } from '../lib/deploy-frontmatter.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
@@ -44,8 +43,8 @@ const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
 /** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
 
-/** Delivery cell for a collection: a collection has no `deploy` field and so no delivery mode. */
-const COLLECTION_DELIVERY = '—';
+/** Delivery cell for an artifact with no delivery mode — collections, skills, and subagents. Only rulebooks carry delivery modes (`ambient`/`skill`). */
+const NO_DELIVERY_MODE = '—';
 
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
 
@@ -159,7 +158,7 @@ async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>
       const meta = readNameAndDescription(content);
       return {
         slug: meta.name ?? path.basename(file, '.md'),
-        delivery: COLLECTION_DELIVERY,
+        delivery: NO_DELIVERY_MODE,
         description: meta.description ?? '',
       };
     });
@@ -199,10 +198,9 @@ async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
     const content = await readFile(path.join(dir, name, 'SKILL.md'), 'utf8');
     const entry = buildEntryOrSkip('skill', name, () => {
       const meta = readNameAndDescription(content);
-      // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.
       return {
         slug: meta.name ?? name,
-        delivery: readDeploy(content, `skills/${name}/SKILL.md`),
+        delivery: NO_DELIVERY_MODE,
         description: meta.description ?? '',
       };
     });
@@ -221,10 +219,9 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
     const content = await readFile(path.join(dir, file), 'utf8');
     const entry = buildEntryOrSkip('subagent', file, () => {
       const meta = readNameAndDescription(content);
-      // The delivery column mirrors the `deploy` field: `declared` (delivered per-project by sync) or `install`.
       return {
         slug: meta.name ?? path.basename(file, '.md'),
-        delivery: readDeploy(content, `subagents/${file}`),
+        delivery: NO_DELIVERY_MODE,
         description: meta.description ?? '',
       };
     });

@@ -75,22 +75,18 @@ async function writeCollection(
   await writeFile(path.join(dir, `${slug}.md`), `---\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
 }
 
-/** Writes a declared fixture skill into the temp content library's `skills/<slug>/SKILL.md`. */
+/** Writes a fixture skill into the temp content library's `skills/<slug>/SKILL.md`. */
 async function writeLibrarySkill(contentDir: string, slug: string): Promise<void> {
   const dir = path.join(contentDir, 'skills', slug);
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\ndeploy: declared\n---\n\n# ${slug}\n`, 'utf8');
+  await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n`, 'utf8');
 }
 
-/** Writes a declared fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
+/** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
 async function writeLibrarySubagent(contentDir: string, slug: string): Promise<void> {
   const dir = path.join(contentDir, 'subagents');
   await mkdir(dir, { recursive: true });
-  await writeFile(
-    path.join(dir, `${slug}.md`),
-    `---\nname: ${slug}\ndeploy: declared\n---\n\n# ${slug}\n\nUse {tool:Read}.\n`,
-    'utf8',
-  );
+  await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n# ${slug}\n\nUse {tool:Read}.\n`, 'utf8');
 }
 
 /** Writes the Claude harness overlay so the subagent transform has its tool mapping and defaults. */

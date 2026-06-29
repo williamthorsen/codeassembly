@@ -2,7 +2,6 @@
 name: capture-feedback
 description: Capture feedback on agent behavior as a guidance-refinement candidate — apply the immediate fix when concrete, then record the generalized lesson. Use when correcting a misapplied rule or specifying a new desired behavior.
 user-invocable: true
-deploy: declared
 ---
 
 # Capture feedback

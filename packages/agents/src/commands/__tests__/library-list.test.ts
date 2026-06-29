@@ -56,20 +56,18 @@ describe(libraryListCommand, () => {
     expect(output).toContain('xray');
   });
 
-  it('shows a skill delivery of declared when it opts into declared delivery, install otherwise', async () => {
+  it('lists a skill with an em-dash delivery, since a skill has no delivery mode', async () => {
     const { output } = await captureList(contentDir);
     const lines = output.split('\n');
 
-    expect(lines.find((line) => line.includes('charlie-skill'))).toContain('declared');
-    expect(lines.find((line) => line.includes('bravo-skill'))).toContain('install');
+    expect(lines.find((line) => line.includes('bravo-skill'))).toContain('—');
   });
 
-  it('shows a subagent delivery of declared when it opts into declared delivery, install otherwise', async () => {
+  it('lists a subagent with an em-dash delivery, since a subagent has no delivery mode', async () => {
     const { output } = await captureList(contentDir);
     const lines = output.split('\n');
 
-    expect(lines.find((line) => line.includes('zulu-agent'))).toContain('declared');
-    expect(lines.find((line) => line.includes('yankee-agent'))).toContain('install');
+    expect(lines.find((line) => line.includes('yankee-agent'))).toContain('—');
   });
 
   it('skips an artifact with invalid frontmatter and keeps listing the rest', async () => {
@@ -181,7 +179,6 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   await mkdir(collections, { recursive: true });
   await mkdir(rulebooks, { recursive: true });
   await mkdir(path.join(skills, 'bravo'), { recursive: true });
-  await mkdir(path.join(skills, 'charlie'), { recursive: true });
   await mkdir(path.join(skills, '_data'), { recursive: true });
   await mkdir(path.join(skills, 'empty-dir'), { recursive: true });
   await mkdir(path.join(subagents, '_partials'), { recursive: true });
@@ -194,18 +191,10 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   await writeFile(path.join(rulebooks, 'bad.md'), frontmatter({ slug: 'Not A Valid Slug' }));
 
   await writeFile(path.join(skills, 'bravo', 'SKILL.md'), frontmatter({ name: 'bravo-skill', description: 'Bravo.' }));
-  await writeFile(
-    path.join(skills, 'charlie', 'SKILL.md'),
-    frontmatter({ name: 'charlie-skill', description: 'Charlie.', deploy: 'declared' }),
-  );
   await writeFile(path.join(skills, '_data', 'reserved.md'), frontmatter({ name: 'reserved' }));
 
   await writeFile(path.join(subagents, 'yankee.md'), frontmatter({ name: 'yankee-agent', description: 'Yankee.' }));
   await writeFile(path.join(subagents, 'xray.md'), frontmatter({ description: 'Xray without a name.' }));
-  await writeFile(
-    path.join(subagents, 'zulu.md'),
-    frontmatter({ name: 'zulu-agent', description: 'Zulu.', deploy: 'declared' }),
-  );
   await writeFile(path.join(subagents, 'broken.md'), '---\nname: "unterminated\ndescription: oops\n---\n\n# Body\n');
 
   await writeFile(
