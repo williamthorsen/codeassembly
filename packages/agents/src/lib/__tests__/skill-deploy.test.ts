@@ -11,38 +11,6 @@ import { deploySkill, resolveDeclaredSkill } from '../skill-deploy.ts';
 import { type SkillDeployContext } from '../skill-transform.ts';
 import { rewriteToolNames } from '../tool-name-rewriter.ts';
 
-describe(resolveDeclaredSkill, () => {
-  let librarySkillsDir: string;
-
-  beforeEach(() => {
-    librarySkillsDir = path.join(tmpdir(), `agents-test-sd-lib-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  });
-
-  afterEach(async () => {
-    await rm(librarySkillsDir, { recursive: true, force: true });
-  });
-
-  /** Writes a library skill `<slug>/SKILL.md`. */
-  async function writeLibrarySkill(slug: string): Promise<void> {
-    const dir = path.join(librarySkillsDir, slug);
-    await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
-  }
-
-  it('resolves a declared skill to its slug and source directory', async () => {
-    await writeLibrarySkill('people-report');
-
-    const resolved = await resolveDeclaredSkill('people-report', librarySkillsDir);
-
-    expect(resolved.slug).toBe('people-report');
-    expect(resolved.srcDir).toBe(path.join(librarySkillsDir, 'people-report'));
-  });
-
-  it('throws a clear error naming the slug when the skill is missing from the library', async () => {
-    await expect(resolveDeclaredSkill('ghost', librarySkillsDir)).rejects.toThrow(/ghost/);
-  });
-});
-
 describe(deploySkill, () => {
   let librarySkillsDir: string;
   let destParent: string;
@@ -166,6 +134,8 @@ describe(deploySkill, () => {
       pathPrefix: '.claude/skills',
       homeDir: '.claude',
       harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
     };
   }
 
@@ -184,4 +154,36 @@ describe(deploySkill, () => {
   }
 
   // endregion | Helpers
+});
+
+describe(resolveDeclaredSkill, () => {
+  let librarySkillsDir: string;
+
+  beforeEach(() => {
+    librarySkillsDir = path.join(tmpdir(), `agents-test-sd-lib-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  });
+
+  afterEach(async () => {
+    await rm(librarySkillsDir, { recursive: true, force: true });
+  });
+
+  /** Writes a library skill `<slug>/SKILL.md`. */
+  async function writeLibrarySkill(slug: string): Promise<void> {
+    const dir = path.join(librarySkillsDir, slug);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
+  }
+
+  it('resolves a declared skill to its slug and source directory', async () => {
+    await writeLibrarySkill('people-report');
+
+    const resolved = await resolveDeclaredSkill('people-report', librarySkillsDir);
+
+    expect(resolved.slug).toBe('people-report');
+    expect(resolved.srcDir).toBe(path.join(librarySkillsDir, 'people-report'));
+  });
+
+  it('throws a clear error naming the slug when the skill is missing from the library', async () => {
+    await expect(resolveDeclaredSkill('ghost', librarySkillsDir)).rejects.toThrow(/ghost/);
+  });
 });

@@ -25,6 +25,10 @@ export interface SubagentDeployContext {
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to. */
   readonly harnessId: string;
+  /** Sigil prefixed to a rendered `{skill:<slug>}` invocation token (e.g. `/` for Claude). */
+  readonly skillSigil: string;
+  /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
+  readonly subagentSigil: string;
 }
 
 const subagentMarker = makeArtifactMarker('subagent');
@@ -50,6 +54,8 @@ export async function deploySubagent(
     pathPrefix: context.homeDir,
     homeDir: context.homeDir,
     harnessId: context.harnessId,
+    skillSigil: context.skillSigil,
+    subagentSigil: context.subagentSigil,
   });
   await mkdir(path.dirname(destPath), { recursive: true });
   await writeIfChanged(destPath, subagentMarker.injectMarker(rendered, resolved.slug));

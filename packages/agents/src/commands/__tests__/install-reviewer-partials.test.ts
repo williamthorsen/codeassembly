@@ -38,6 +38,8 @@ describe('reviewer and coder partials render correctly', () => {
       pathPrefix: harnessConfig.homeDir,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
+      skillSigil: harnessConfig.skillSigil,
+      subagentSigil: harnessConfig.subagentSigil,
     });
   }
 

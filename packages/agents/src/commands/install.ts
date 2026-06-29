@@ -97,6 +97,8 @@ export async function installCommand(
       skillsPrefix,
       harnessConfig.homeDir,
       toolMapping,
+      harnessConfig.skillSigil,
+      harnessConfig.subagentSigil,
     );
     entries.push(...skillEntries);
 
@@ -175,6 +177,8 @@ async function installSkills(
   skillsPrefix: string,
   homeDir: string,
   toolMapping: ReadonlyMap<string, string>,
+  skillSigil: string,
+  subagentSigil: string,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const skillsSrcDir = path.join(contentDir, 'skills');
   const dirEntries = await readdir(skillsSrcDir);
@@ -208,6 +212,8 @@ async function installSkills(
       harnessId,
       contentDir,
       toolMapping,
+      skillSigil,
+      subagentSigil,
     );
     if (result !== undefined) {
       entries.push(result);
@@ -244,6 +250,8 @@ async function installSkills(
       harnessId,
       contentDir,
       toolMapping,
+      skillSigil,
+      subagentSigil,
       '(harness-specific)',
     );
     if (result !== undefined) {
@@ -289,6 +297,8 @@ async function installSkillEntry(
   harnessId: string,
   contentDir: string,
   toolMapping: ReadonlyMap<string, string>,
+  skillSigil: string,
+  subagentSigil: string,
   label = '',
 ): Promise<ManifestEntry | undefined> {
   // Eagerly render the skill's final body before the dry-run gate, so missing include targets, cycles, out-of-tree
@@ -305,6 +315,8 @@ async function installSkillEntry(
       pathPrefix: skillsPrefix,
       homeDir,
       harnessId,
+      skillSigil,
+      subagentSigil,
     });
   } else if (srcPath.endsWith('.md')) {
     const expanded = await expandIncludes(srcPath, contentDir);

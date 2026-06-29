@@ -1,6 +1,13 @@
 /** Supported harness identifiers. */
 export type HarnessId = 'claude' | 'rovodev';
 
+/** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
+export interface AgentsManifest {
+  readonly schemaVersion: number;
+  readonly shared?: SharedManifest | undefined;
+  readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
+}
+
 /** Configuration for a single harness. */
 export interface HarnessConfig {
   readonly id: HarnessId;
@@ -14,6 +21,26 @@ export interface HarnessConfig {
   readonly scriptsDirName: string;
   /** Filename of the frontmatter overlay YAML for this harness. */
   readonly frontmatterFile: string;
+  /** Prefix a `{skill:<slug>}` invocation token renders to (e.g. `/` for Claude, `!` for Rovo). */
+  readonly skillSigil: string;
+  /** Prefix a `{subagent:<slug>}` invocation token renders to; empty on both current harnesses (a bare slug dispatches). */
+  readonly subagentSigil: string;
+}
+
+/** Manifest data for a single harness. */
+export interface HarnessManifest {
+  readonly harness: HarnessId;
+  readonly version: string;
+  readonly installedAt: string;
+  readonly entries: ReadonlyArray<ManifestEntry>;
+}
+
+/** Options controlling install behavior. */
+export interface InstallOptions {
+  readonly harness: HarnessId | 'all';
+  readonly link: boolean;
+  readonly force: boolean;
+  readonly dryRun: boolean;
 }
 
 /** A single entry in the manifest tracking an installed file or directory. */
@@ -26,32 +53,9 @@ export interface ManifestEntry {
   readonly linked: boolean;
 }
 
-/** Manifest data for a single harness. */
-export interface HarnessManifest {
-  readonly harness: HarnessId;
-  readonly version: string;
-  readonly installedAt: string;
-  readonly entries: ReadonlyArray<ManifestEntry>;
-}
-
 /** Manifest data for shared (cross-harness) entries installed to `~/.agents/`. */
 export interface SharedManifest {
   readonly version: string;
   readonly installedAt: string;
   readonly entries: ReadonlyArray<ManifestEntry>;
-}
-
-/** Top-level manifest structure written to `~/.codeassembly/agents-manifest.json`. */
-export interface AgentsManifest {
-  readonly schemaVersion: number;
-  readonly shared?: SharedManifest | undefined;
-  readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
-}
-
-/** Options controlling install behavior. */
-export interface InstallOptions {
-  readonly harness: HarnessId | 'all';
-  readonly link: boolean;
-  readonly force: boolean;
-  readonly dryRun: boolean;
 }

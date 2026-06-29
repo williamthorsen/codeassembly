@@ -2,7 +2,7 @@
 slug: authoring-guidance
 description: Conventions for authoring CodeAssembly skills, subagents, rulebooks, and collections.
 delivery: skill
-version: 2
+version: 3
 ---
 
 # Authoring guidance
@@ -22,6 +22,19 @@ dependencies:
 ```
 
 `sync` resolves these edges transitively, so declaring one artifact pulls in its whole closure. Prefer a declared dependency over a prose note that another artifact "must be present."
+
+## Invocation tokens
+
+When a skill or subagent invocation appears inline in a skill's or subagent's body, write it as a token rather than a hardcoded harness-specific form:
+
+- `{skill:<slug>}` renders to the harness skill sigil plus the slug — `/<slug>` on Claude, `!<slug>` on Rovo.
+- `{subagent:<slug>}` renders to the harness subagent sigil plus the slug. That sigil is empty on both current harnesses, so it renders to the bare slug, which is how a subagent is dispatched on each.
+
+Slugs are kebab-case and letter-led (`[a-z][a-z0-9-]*`). The sigils are a typed property of each harness in `HarnessConfig`, so a new harness must declare its own rendering or the build fails.
+
+A token is also a dependency edge: `sync` extracts the tokens from a skill's or subagent's include-expanded body and pulls each target into the deploy closure. An inline invocation is therefore expressed once, as the token — it needs no duplicate `dependencies:` entry, and a token naming a non-existent artifact fails the run just as a missing `dependencies:` edge does. Because extraction runs on the include-expanded body, a token inside a shared `_partials` file becomes an edge for every skill that includes it.
+
+Tokens are honored only in skills and subagents — the types whose bodies pass through the render pass. Rulebooks (embedded without that pass) and collections keep `dependencies:` / `members:`. Reserve a `dependencies:` entry for a non-inline edge; use a token for any invocation that appears in the body.
 
 ## Collections
 

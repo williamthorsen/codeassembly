@@ -13,6 +13,8 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     subagentsDirName: 'agents',
     scriptsDirName: 'scripts',
     frontmatterFile: 'claude.yaml',
+    skillSigil: '/',
+    subagentSigil: '',
   },
   rovodev: {
     id: 'rovodev',
@@ -21,6 +23,8 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     subagentsDirName: 'subagents',
     scriptsDirName: 'scripts',
     frontmatterFile: 'rovodev.yaml',
+    skillSigil: '!',
+    subagentSigil: '',
   },
 };
 

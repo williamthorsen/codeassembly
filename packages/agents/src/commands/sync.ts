@@ -770,6 +770,8 @@ async function resolveSubagentTarget(
       toolMapping: loadToolMapping(overlayYaml),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
+      skillSigil: harnessConfig.skillSigil,
+      subagentSigil: harnessConfig.subagentSigil,
     },
   };
 }
@@ -794,6 +796,8 @@ async function resolveSkillTarget(
       pathPrefix: `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
+      skillSigil: harnessConfig.skillSigil,
+      subagentSigil: harnessConfig.subagentSigil,
     },
   };
 }
