@@ -58,6 +58,22 @@ describe(installCommand, () => {
     expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
   });
 
+  it('skips a support directory that renders to zero installable entries', async () => {
+    const claudeHome = await setupClaudeHome();
+    // A support directory whose only content is a dotfile renders to zero entries (the renderer skips dotfiles),
+    // so install must skip it rather than create anything.
+    const emptySupportSrc = path.join(contentDir, 'skills', 'empty-support');
+    await mkdir(emptySupportSrc, { recursive: true });
+    await writeFile(path.join(emptySupportSrc, '.DS_Store'), '');
+
+    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir)).resolves.toBeUndefined();
+
+    expect(existsSync(path.join(claudeHome, 'skills', 'empty-support'))).toBe(false);
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const entries = manifest.harnesses.claude?.entries ?? [];
+    expect(entries.some((entry) => entry.relativePath === 'skills/empty-support')).toBe(false);
+  });
+
   it('writes nothing in dry-run mode', async () => {
     const claudeHome = await setupClaudeHome();
 

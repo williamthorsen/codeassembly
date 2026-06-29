@@ -209,7 +209,9 @@ async function installSkills(
       contentDir,
       toolMapping,
     );
-    entries.push(result);
+    if (result !== undefined) {
+      entries.push(result);
+    }
   }
 
   // Install harness-specific skills from _harnesses/{harnessId}/
@@ -244,7 +246,9 @@ async function installSkills(
       toolMapping,
       '(harness-specific)',
     );
-    entries.push(result);
+    if (result !== undefined) {
+      entries.push(result);
+    }
   }
 
   return entries;
@@ -286,7 +290,7 @@ async function installSkillEntry(
   contentDir: string,
   toolMapping: ReadonlyMap<string, string>,
   label = '',
-): Promise<ManifestEntry> {
+): Promise<ManifestEntry | undefined> {
   // Eagerly render the skill's final body before the dry-run gate, so missing include targets, cycles, out-of-tree
   // references, and unmapped tool placeholders surface even when no files are written. Directory entries render the
   // whole tree (include expansion, tool-name + link/template rewriting) into the exact bytes the write phase emits;
@@ -305,6 +309,13 @@ async function installSkillEntry(
   } else if (srcPath.endsWith('.md')) {
     const expanded = await expandIncludes(srcPath, contentDir);
     expandedFileContent = rewriteToolNames(expanded, toolMapping, relativeFromContent(contentDir, srcPath));
+  }
+
+  // A support directory holding only dotfiles or `_partials/` renders to zero entries — nothing to install. Skip it
+  // entirely: no destination, no markers, no manifest entry. The orphan-prune pass clears any previously installed copy.
+  if (renderedDir !== undefined && renderedDir.length === 0) {
+    console.info(`    [skip] ${relativePath}${label ? ` ${label}` : ''} (no installable entries)`);
+    return undefined;
   }
 
   if (options.dryRun) {
