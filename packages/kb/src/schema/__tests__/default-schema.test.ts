@@ -28,6 +28,7 @@ describe('defaultSchema', () => {
       'addressed-by',
       'correction',
       'harness',
+      'impact',
       'model',
       'repo',
       'skill',

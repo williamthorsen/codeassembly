@@ -4,6 +4,21 @@ import { asStringList, isValidDate } from '../note-io/field-validators.ts';
 // validated contract; any other frontmatter field (e.g. `repo`) is preserved verbatim in `extra` for faithful
 // round-trip and is promoted to a typed field by the operation that comes to depend on it.
 
+/** The impact levels an event may carry, ordered lowest to highest. */
+export const EVENT_IMPACT_LEVELS = ['low', 'medium', 'high', 'critical'] as const;
+
+/** An event's impact: the author's subjective, revisable rating of how much addressing the event matters. */
+export type EventImpact = (typeof EVENT_IMPACT_LEVELS)[number];
+
+// A widened-element set for membership tests: the `as const` tuple's literal element type rejects a `string` argument
+// to `.includes`, and type assertions are banned, so the set's `.has(string)` is the assertion-free lookup.
+const IMPACT_LEVEL_SET: ReadonlySet<string> = new Set(EVENT_IMPACT_LEVELS);
+
+/** Reports whether a value is one of the declared {@link EVENT_IMPACT_LEVELS}. */
+export function isEventImpact(value: unknown): value is EventImpact {
+  return typeof value === 'string' && IMPACT_LEVEL_SET.has(value);
+}
+
 /** A parsed `event` record: its declared fields, the body, and any other frontmatter preserved in `extra`. */
 export interface KbEvent {
   recordType: 'event';
@@ -14,6 +29,7 @@ export interface KbEvent {
   summary: string;
   tags: string[];
   addressedBy: string[];
+  impact?: EventImpact;
   extra: Record<string, unknown>;
   body: string;
 }
@@ -21,7 +37,17 @@ export interface KbEvent {
 /** The outcome of parsing frontmatter as an event: the typed record, or the validation errors that blocked it. */
 export type ParseEventResult = { ok: true; record: KbEvent } | { ok: false; errors: string[] };
 
-const TYPED_FIELDS = new Set(['recordType', 'id', 'captured-at', 'session', 'cwd', 'summary', 'tags', 'addressed-by']);
+const TYPED_FIELDS = new Set([
+  'recordType',
+  'id',
+  'captured-at',
+  'session',
+  'cwd',
+  'summary',
+  'tags',
+  'addressed-by',
+  'impact',
+]);
 
 /** Validates a frontmatter field map as an event and projects it onto a {@link KbEvent}, accumulating every error. */
 export function parseEvent(fields: Record<string, unknown>, body: string): ParseEventResult {
@@ -48,6 +74,7 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
 
   const tags = readListField(fields.tags, 'tags', errors);
   const addressedBy = readListField(fields['addressed-by'], 'addressed-by', errors);
+  const impact = readImpactField(fields.impact, errors);
 
   if (
     errors.length > 0 ||
@@ -71,7 +98,19 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
 
   return {
     ok: true,
-    record: { recordType: 'event', id, capturedAt, session, cwd, summary, tags, addressedBy, extra, body },
+    record: {
+      recordType: 'event',
+      id,
+      capturedAt,
+      session,
+      cwd,
+      summary,
+      tags,
+      addressedBy,
+      ...(impact !== undefined && { impact }),
+      extra,
+      body,
+    },
   };
 }
 
@@ -91,11 +130,29 @@ export function renderEvent(record: KbEvent): { fields: Record<string, unknown>;
   if (record.addressedBy.length > 0) {
     fields['addressed-by'] = record.addressedBy;
   }
+  if (record.impact !== undefined) {
+    fields.impact = record.impact;
+  }
   Object.assign(fields, record.extra);
   return { fields, body: record.body };
 }
 
 // region | Helpers
+
+/**
+ * Reads the optional `impact` field: an absent value yields `undefined`, a declared level yields it typed, and any other
+ * value records an error and yields `undefined`.
+ */
+function readImpactField(value: unknown, errors: string[]): EventImpact | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (isEventImpact(value)) {
+    return value;
+  }
+  errors.push(`impact: expected one of ${EVENT_IMPACT_LEVELS.join(', ')}`);
+  return undefined;
+}
 
 /**
  * Reads an optional string-list field: an absent value coerces to an empty list, a list-shaped value yields its string
