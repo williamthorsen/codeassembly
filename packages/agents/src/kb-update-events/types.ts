@@ -5,8 +5,10 @@
 // batch returns `{ ok: true, ..., results }`, where each event carries its own success or failed-with-reason entry.
 // System errors (out-of-disk, permission denied) are out of band: they print to stderr and exit non-zero.
 
+import type { EventImpact } from '@codeassembly/kb/records';
+
 /** Operation names — one per mutually-exclusive op flag. */
-export type OperationName = 'add-addressed-by' | 'retag';
+export type OperationName = 'add-addressed-by' | 'retag' | 'set-impact';
 
 /**
  * Parsed command-line invocation. A discriminated union on `operation`. `store` is `null` when `--store` was omitted,
@@ -14,7 +16,8 @@ export type OperationName = 'add-addressed-by' | 'retag';
  */
 export type ParsedArgs =
   | { operation: 'add-addressed-by'; store: string | null; ids: string[]; references: string[] }
-  | { operation: 'retag'; store: string | null; ids: string[]; tags: string[] };
+  | { operation: 'retag'; store: string | null; ids: string[]; tags: string[] }
+  | { operation: 'set-impact'; store: string | null; ids: string[]; impact: EventImpact };
 
 /** Per-event outcome, in the order the ids were supplied. */
 export type EventResult =

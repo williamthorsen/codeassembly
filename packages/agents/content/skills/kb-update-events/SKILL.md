@@ -1,6 +1,6 @@
 ---
 name: kb-update-events
-description: Edit existing events in the knowledge store — mark one or more events addressed-by a reference, or retag them — in a single batch invocation. The event mutable set only; events stay otherwise write-once.
+description: Edit existing events in the knowledge store — mark one or more events addressed-by a reference, retag them, or set their impact — in a single batch invocation. The event mutable set only; events stay otherwise write-once.
 user-invocable: true
 ---
 
@@ -8,20 +8,21 @@ user-invocable: true
 
 Apply one mutation to one or more existing event records in a single invocation. A bundled helper does the mechanical work — it resolves the event store by name, resolves each id to its record, reads it through the type-blind note I/O layer, parses it to a typed `KbEvent`, applies the operation, and writes it back atomically. You supply the store, the operation, and the event ids.
 
-The operation surface is the **event mutable set** only: `addressed-by` (mark an event as addressed by a reference) and `tags` (retag). Events are otherwise write-once: there is no body edit, and marking stamps no timestamp — `addressed-by` and `tags` are append-only/curatorial annotations, not substantive edits. For new events, use `capture-event`. For editing assertions, use `kb-edit`.
+The operation surface is the **event mutable set** only: `addressed-by` (mark an event as addressed by a reference), `tags` (retag), and `impact` (set the impact rating). Events are otherwise write-once: there is no body edit, and these mutations stamp no timestamp — they are curatorial annotations, not substantive edits. Impact is a subjective assessment that may legitimately change, which is why it lives in the mutable set rather than the immutable spine. For new events, use `capture-event`. For editing assertions, use `kb-edit`.
 
-**Announce at start:** "Using kb-update-events to {mark|retag} {N} event(s)."
+**Announce at start:** "Using kb-update-events to {mark|retag|rate} {N} event(s)."
 
 ## Arguments
 
-| Argument                    | Description                                                               | Required |
-| --------------------------- | ------------------------------------------------------------------------- | -------- |
-| `--store`                   | Registry name of the event store, or `@default` for the `default_kb`.     | Yes      |
-| `--add-addressed-by <refs>` | Append comma-separated reference(s) to each event's `addressed-by` list.  | One op   |
-| `--retag <list>`            | Replace each event's `tags` with the comma-separated list. Canonicalizes. | One op   |
-| `<event-id>`                | One or more event ids; each resolves to `{store}/content/events/{id}.md`. | Yes      |
+| Argument                    | Description                                                                                        | Required |
+| --------------------------- | -------------------------------------------------------------------------------------------------- | -------- |
+| `--store`                   | Registry name of the event store, or `@default` for the `default_kb`.                              | Yes      |
+| `--add-addressed-by <refs>` | Append comma-separated reference(s) to each event's `addressed-by` list.                           | One op   |
+| `--retag <list>`            | Replace each event's `tags` with the comma-separated list. Canonicalizes.                          | One op   |
+| `--set-impact <level>`      | Set each event's `impact` to one of `low`, `medium`, `high`, `critical`. Replaces any prior value. | One op   |
+| `<event-id>`                | One or more event ids; each resolves to `{store}/content/events/{id}.md`.                          | Yes      |
 
-A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,observation`. Exactly one operation flag is required per invocation; combining the two is rejected with `invalid-args`. References are free-form (a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL); they are stored verbatim and de-duplicated after any existing entries. A reference that begins with `--` is otherwise read as the next flag, so pass it with the inline `--add-addressed-by=<ref>` form.
+A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,observation`. Exactly one operation flag is required per invocation; combining more than one is rejected with `invalid-args`. References are free-form (a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL); they are stored verbatim and de-duplicated after any existing entries. A reference that begins with `--` is otherwise read as the next flag, so pass it with the inline `--add-addressed-by=<ref>` form.
 
 ### Store selection
 
@@ -46,7 +47,7 @@ node {harness_home_dir}/skills/kb-update-events/kb-update-events.mjs \
   <event-id> [<event-id> ...]
 ```
 
-Use `--retag <tag[,tag...]>` in place of `--add-addressed-by` to retag instead.
+Use `--retag <tag[,tag...]>` or `--set-impact <level>` in place of `--add-addressed-by` for those operations.
 
 The helper prints a JSON object to stdout:
 
@@ -72,4 +73,4 @@ On `ok: false`, route by the `error` code:
 
 ## Completion
 
-Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: succeeded events are written; failed ids are reported and left untouched. Events remain write-once apart from these `addressed-by`/`tags` annotations.
+Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: succeeded events are written; failed ids are reported and left untouched. Events remain write-once apart from these `addressed-by`/`tags`/`impact` annotations.

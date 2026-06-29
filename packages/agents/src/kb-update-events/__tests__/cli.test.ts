@@ -75,6 +75,16 @@ describe(parseArgs, () => {
     });
   });
 
+  it('parses a set-impact invocation with multiple ids', () => {
+    const parsed = parseArgs(['--store', 'codeassembly', '--set-impact', 'high', EVENT_ID, 'id-two']);
+    expect(parsed).toEqual({
+      operation: 'set-impact',
+      store: 'codeassembly',
+      ids: [EVENT_ID, 'id-two'],
+      impact: 'high',
+    });
+  });
+
   it('accepts the inline --flag=value form', () => {
     const parsed = parseArgs(['--store=codeassembly', '--add-addressed-by=#849', EVENT_ID]);
     expect(parsed.store).toBe('codeassembly');
@@ -98,6 +108,11 @@ describe(parseArgs, () => {
   it.each([
     { argv: ['--store', 's', EVENT_ID], pattern: /one operation flag is required/ },
     { argv: ['--store', 's', '--add-addressed-by', '#1', '--retag', 'fix', EVENT_ID], pattern: /mutually exclusive/ },
+    {
+      argv: ['--store', 's', '--add-addressed-by', '#1', '--set-impact', 'high', EVENT_ID],
+      pattern: /mutually exclusive/,
+    },
+    { argv: ['--store', 's', '--set-impact', 'urgent', EVENT_ID], pattern: /--set-impact must be one of/ },
     { argv: ['--store', 's', '--add-addressed-by', '#1'], pattern: /at least one event id/ },
     { argv: ['--store', 's', '--add-addressed-by', '', EVENT_ID], pattern: /at least one reference/ },
     { argv: ['--store', 's', '--bogus', 'x', EVENT_ID], pattern: /unknown flag/ },
@@ -154,6 +169,32 @@ describe(runUpdate, () => {
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
     expect(parsed.record.tags).toEqual(['fix', 'observation']);
+  });
+
+  it('sets impact on a previously unrated event', async () => {
+    const { storePath, home } = await makeStore('codeassembly');
+    const path = await seedEvent(storePath, EVENT_ID);
+
+    const result = await runUpdate({ argv: ['--store', 'codeassembly', '--set-impact', 'high', EVENT_ID], home });
+
+    expect(result.ok).toBe(true);
+    const parsed = await readBackEvent(path);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.record.impact).toBe('high');
+  });
+
+  it('replaces a prior impact value', async () => {
+    const { storePath, home } = await makeStore('codeassembly');
+    const path = await seedEvent(storePath, EVENT_ID, ['impact: low']);
+
+    const result = await runUpdate({ argv: ['--store', 'codeassembly', '--set-impact', 'critical', EVENT_ID], home });
+
+    expect(result.ok).toBe(true);
+    const parsed = await readBackEvent(path);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.record.impact).toBe('critical');
   });
 
   it('reports per-event success and failure across a mixed batch', async () => {
