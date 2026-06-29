@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { existsSync, lstatSync } from 'node:fs';
-import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -103,19 +103,15 @@ describe('uninstallCommand', () => {
     // Install first
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Modify an installed subagent file
-    const agentFiles = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
-    await writeFile(
-      path.join(claudeHome, 'agents', 'demo-agent.md'),
-      agentFiles + '\n<!-- user modification -->',
-      'utf8',
-    );
+    // Modify an installed script file
+    const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
+    await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
     // Uninstall without force
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     // Modified file should still exist
-    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(true);
+    expect(existsSync(scriptPath)).toBe(true);
 
     // Harness manifest entry should be retained because some files were skipped
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -130,10 +126,9 @@ describe('uninstallCommand', () => {
     // Install
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Modify one installed subagent file
-    const agentFile = path.join(claudeHome, 'agents', 'demo-agent.md');
-    const original = await readFile(agentFile, 'utf8');
-    await writeFile(agentFile, original + '\n<!-- user modification -->', 'utf8');
+    // Modify one installed script file
+    const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
+    await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
     // Uninstall without force — modified file is skipped, others are removed
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
@@ -143,7 +138,7 @@ describe('uninstallCommand', () => {
     const claudeEntries = manifest.harnesses.claude?.entries;
     assert.ok(claudeEntries, 'Expected claude harness entries to be defined');
     expect(claudeEntries).toHaveLength(1);
-    expect(claudeEntries[0]?.relativePath).toBe('agents/demo-agent.md');
+    expect(claudeEntries[0]?.relativePath).toBe('scripts/demo.sh');
   });
 
   it('should retain only skipped entries in shared manifest after partial uninstall', async () => {
@@ -200,19 +195,15 @@ describe('uninstallCommand', () => {
     // Install first
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    // Modify an installed subagent file
-    const agentFiles = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
-    await writeFile(
-      path.join(claudeHome, 'agents', 'demo-agent.md'),
-      agentFiles + '\n<!-- user modification -->',
-      'utf8',
-    );
+    // Modify an installed script file
+    const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
+    await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
 
     // Uninstall with force
     await uninstallCommand({ harness: 'claude', force: true }, tempDir);
 
     // Modified file should be removed
-    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
+    expect(existsSync(scriptPath)).toBe(false);
 
     // Harness manifest entry should be removed
     const manifest = await readManifest(getManifestPath(tempDir));

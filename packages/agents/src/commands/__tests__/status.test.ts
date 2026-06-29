@@ -1,10 +1,9 @@
-import { mkdir, readdir, rm, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveHarnessPaths } from '../../lib/harness.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
@@ -60,20 +59,14 @@ describe('statusCommand', () => {
     infoSpy.mockRestore();
   });
 
-  it('should report missing when an installed file is deleted', async () => {
+  it('reports missing when an installed file is deleted', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    const paths = resolveHarnessPaths('claude', tempDir);
-    const agentFiles = await readdir(paths.subagentsDir);
-    const firstAgent = agentFiles[0];
-    if (firstAgent === undefined) {
-      throw new Error('Expected at least one installed agent file');
-    }
-    await unlink(path.join(paths.subagentsDir, firstAgent));
+    await unlink(path.join(tempDir, '.agents', 'AGENTS.md'));
 
     const infoSpy = vi.spyOn(console, 'info');
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -84,20 +77,14 @@ describe('statusCommand', () => {
     infoSpy.mockRestore();
   });
 
-  it('should report modified when an installed file is overwritten', async () => {
+  it('reports modified when an installed file is overwritten', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
     await installCommand(makeInstallOptions(), tempDir, contentDir);
 
-    const paths = resolveHarnessPaths('claude', tempDir);
-    const agentFiles = await readdir(paths.subagentsDir);
-    const firstAgent = agentFiles[0];
-    if (firstAgent === undefined) {
-      throw new Error('Expected at least one installed agent file');
-    }
-    await writeFile(path.join(paths.subagentsDir, firstAgent), 'tampered content', 'utf8');
+    await writeFile(path.join(tempDir, '.agents', 'AGENTS.md'), 'tampered content', 'utf8');
 
     const infoSpy = vi.spyOn(console, 'info');
     await statusCommand({ harness: 'claude' }, tempDir);

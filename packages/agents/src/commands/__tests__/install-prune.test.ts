@@ -27,35 +27,31 @@ describe('install stale-file pruning', () => {
 
   it('removes an installed skill directory whose source was deleted', async () => {
     const contentDir = await buildContent({
-      skills: { keep: { 'SKILL.md': skillBody('keep') }, drop: { 'SKILL.md': skillBody('drop') } },
+      harnessSkills: { keep: { 'SKILL.md': skillBody('keep') }, drop: { 'SKILL.md': skillBody('drop') } },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'drop'))).toBe(true);
 
-    await rm(path.join(contentDir, 'skills', 'drop'), { recursive: true, force: true });
+    await rm(path.join(contentDir, 'skills', '_harnesses', 'claude', 'drop'), { recursive: true, force: true });
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'drop'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'keep'))).toBe(true);
   });
 
-  it('removes orphaned subagent, script, and shared-guidance files whose sources were deleted', async () => {
+  it('removes orphaned script and shared-guidance files whose sources were deleted', async () => {
     const contentDir = await buildContent({
-      subagents: { 'keep-agent.md': agentBody('keep-agent'), 'drop-agent.md': agentBody('drop-agent') },
       scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody },
       shared: { 'AGENTS.md': '# Shared\n', 'EXTRA.md': '# Extra\n' },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
 
-    await rm(path.join(contentDir, 'subagents', 'drop-agent.md'));
     await rm(path.join(contentDir, 'scripts', 'drop.sh'));
     await rm(path.join(contentDir, 'guidance', 'shared', 'EXTRA.md'));
     await installCommand(makeOptions(), tempDir, contentDir);
 
-    expect(existsSync(path.join(tempDir, '.claude', 'agents', 'drop-agent.md'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'drop.sh'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.agents', 'EXTRA.md'))).toBe(false);
-    expect(existsSync(path.join(tempDir, '.claude', 'agents', 'keep-agent.md'))).toBe(true);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'keep.sh'))).toBe(true);
     expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
   });
@@ -92,11 +88,11 @@ describe('install stale-file pruning', () => {
 
   it('in dry-run, leaves an orphan on disk and does not rewrite the manifest', async () => {
     const contentDir = await buildContent({
-      skills: { keep: { 'SKILL.md': skillBody('keep') }, drop: { 'SKILL.md': skillBody('drop') } },
+      harnessSkills: { keep: { 'SKILL.md': skillBody('keep') }, drop: { 'SKILL.md': skillBody('drop') } },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
 
-    await rm(path.join(contentDir, 'skills', 'drop'), { recursive: true, force: true });
+    await rm(path.join(contentDir, 'skills', '_harnesses', 'claude', 'drop'), { recursive: true, force: true });
     await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'drop'))).toBe(true);
@@ -107,14 +103,14 @@ describe('install stale-file pruning', () => {
 
   it('removes a file deleted from within a still-present multi-file skill', async () => {
     const contentDir = await buildContent({
-      skills: {
+      harnessSkills: {
         multi: { 'SKILL.md': skillBody('multi'), 'modules/old.md': '# old\n', 'modules/keep.md': '# keep\n' },
       },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'old.md'))).toBe(true);
 
-    await rm(path.join(contentDir, 'skills', 'multi', 'modules', 'old.md'));
+    await rm(path.join(contentDir, 'skills', '_harnesses', 'claude', 'multi', 'modules', 'old.md'));
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'old.md'))).toBe(false);
@@ -127,7 +123,7 @@ describe('install stale-file pruning', () => {
     await mkdir(preExisting, { recursive: true });
     await writeFile(path.join(preExisting, 'user-note.md'), '# mine\n', 'utf8');
 
-    const contentDir = await buildContent({ skills: { multi: { 'SKILL.md': skillBody('multi') } } });
+    const contentDir = await buildContent({ harnessSkills: { multi: { 'SKILL.md': skillBody('multi') } } });
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(preExisting, 'user-note.md'))).toBe(true);
@@ -140,20 +136,16 @@ describe('install stale-file pruning', () => {
     return `---\nname: ${name}\ndescription: Test skill\n---\n# ${name}\n`;
   }
 
-  function agentBody(name: string): string {
-    return `---\nname: ${name}\ndescription: Test agent\n---\n# ${name}\n`;
-  }
-
   const scriptBody = '#!/usr/bin/env bash\necho hi\n';
 
   /**
    * Builds a minimal content tree under a fresh temp directory and returns its path. Only the surfaces named in
    * `options` get extra files; the baseline (shared `AGENTS.md`, claude guidance, subagent overlay) is always present
-   * so the install pipeline runs end to end.
+   * so the install pipeline runs end to end. `harnessSkills` are written under `skills/_harnesses/claude/`, the
+   * install-deployed skill location (the general catalog deploys per-declaration via `sync`, not via install).
    */
   async function buildContent(options: {
-    skills?: Record<string, Record<string, string>>;
-    subagents?: Record<string, string>;
+    harnessSkills?: Record<string, Record<string, string>>;
     scripts?: Record<string, string>;
     shared?: Record<string, string>;
   }): Promise<string> {
@@ -171,14 +163,11 @@ describe('install stale-file pruning', () => {
     for (const [name, body] of Object.entries(shared)) {
       await writeFile(path.join(contentDir, 'guidance', 'shared', name), body, 'utf8');
     }
-    for (const [name, body] of Object.entries(options.subagents ?? {})) {
-      await writeFile(path.join(contentDir, 'subagents', name), body, 'utf8');
-    }
     for (const [name, body] of Object.entries(options.scripts ?? {})) {
       await writeFile(path.join(contentDir, 'scripts', name), body, 'utf8');
     }
-    for (const [skillName, files] of Object.entries(options.skills ?? {})) {
-      const skillDir = path.join(contentDir, 'skills', skillName);
+    for (const [skillName, files] of Object.entries(options.harnessSkills ?? {})) {
+      const skillDir = path.join(contentDir, 'skills', '_harnesses', 'claude', skillName);
       await mkdir(skillDir, { recursive: true });
       for (const [fileName, body] of Object.entries(files)) {
         const fullPath = path.join(skillDir, fileName);

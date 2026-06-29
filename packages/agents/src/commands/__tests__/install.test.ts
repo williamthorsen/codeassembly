@@ -3,7 +3,6 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
@@ -46,13 +45,14 @@ describe(installCommand, () => {
     return rovodevHome;
   }
 
-  it('installs skills, subagents, and a manifest', async () => {
+  it('installs harness skills and support dirs with a manifest', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
-    expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(true);
+    expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
@@ -70,38 +70,16 @@ describe(installCommand, () => {
   it('is idempotent: re-installing is byte-identical', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions(), tempDir, contentDir);
-    const firstSkill = await readFile(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'), 'utf8');
-    const firstAgent = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    const firstSkill = await readFile(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'), 'utf8');
+    const firstScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
-    await installCommand(makeOptions(), tempDir, contentDir);
-    const secondSkill = await readFile(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'), 'utf8');
-    const secondAgent = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    const secondSkill = await readFile(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'), 'utf8');
+    const secondScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
     expect(secondSkill).toBe(firstSkill);
-    expect(secondAgent).toBe(firstAgent);
-  });
-
-  it('merges the harness overlay into subagent frontmatter', async () => {
-    const claudeHome = await setupClaudeHome();
-
-    await installCommand(makeOptions(), tempDir, contentDir);
-
-    // The overlay applies `_defaults` (permissionMode) and the per-agent override (model, memory) to demo-agent.
-    const content = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
-    expect(content).toContain('permissionMode: bypassPermissions');
-    expect(content).toContain('model: inherit');
-    expect(content).toContain('memory: user');
-  });
-
-  it('expands {harness_home_dir} tokens in subagent bodies', async () => {
-    const claudeHome = await setupClaudeHome();
-
-    await installCommand(makeOptions(), tempDir, contentDir);
-
-    const content = await readFile(path.join(claudeHome, 'agents', 'demo-agent.md'), 'utf8');
-    expect(content).toContain('~/.claude/scripts/demo.sh');
-    expect(content).not.toContain('{harness_home_dir}');
+    expect(secondScript).toBe(firstScript);
   });
 
   it('throws when the target skills directory is a symlink', async () => {
@@ -114,38 +92,38 @@ describe(installCommand, () => {
     await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow('Target directory is a symlink');
   });
 
-  it('skips a user-modified subagent on re-install without --force', async () => {
-    const claudeHome = await setupClaudeHome();
+  it('skips a user-modified shared-guidance file on re-install without --force', async () => {
+    await setupClaudeHome();
 
-    await installCommand(makeOptions(), tempDir, contentDir);
-    const agentPath = path.join(claudeHome, 'agents', 'demo-agent.md');
-    const modified = (await readFile(agentPath, 'utf8')) + '\n<!-- user modification -->\n';
-    await writeFile(agentPath, modified, 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
+    const modified = (await readFile(guidancePath, 'utf8')) + '\n<!-- user modification -->\n';
+    await writeFile(guidancePath, modified, 'utf8');
 
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
-    expect(await readFile(agentPath, 'utf8')).toBe(modified);
+    expect(await readFile(guidancePath, 'utf8')).toBe(modified);
   });
 
-  it('overwrites a user-modified subagent on re-install with --force', async () => {
-    const claudeHome = await setupClaudeHome();
+  it('overwrites a user-modified shared-guidance file on re-install with --force', async () => {
+    await setupClaudeHome();
 
-    await installCommand(makeOptions(), tempDir, contentDir);
-    const agentPath = path.join(claudeHome, 'agents', 'demo-agent.md');
-    const managed = await readFile(agentPath, 'utf8');
-    await writeFile(agentPath, managed + '\n<!-- user modification -->\n', 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
+    const managed = await readFile(guidancePath, 'utf8');
+    await writeFile(guidancePath, managed + '\n<!-- user modification -->\n', 'utf8');
 
-    await installCommand(makeOptions({ force: true }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude', force: true }), tempDir, contentDir);
 
-    expect(await readFile(agentPath, 'utf8')).toBe(managed);
+    expect(await readFile(guidancePath, 'utf8')).toBe(managed);
   });
 
   it('prefixes skip warnings with ⚠️ and the success summary with ✅', async () => {
-    const claudeHome = await setupClaudeHome();
+    await setupClaudeHome();
 
-    await installCommand(makeOptions(), tempDir, contentDir);
-    const agentPath = path.join(claudeHome, 'agents', 'demo-agent.md');
-    await writeFile(agentPath, `${await readFile(agentPath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    const guidancePath = path.join(tempDir, '.agents', 'AGENTS.md');
+    await writeFile(guidancePath, `${await readFile(guidancePath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
@@ -164,15 +142,13 @@ describe(installCommand, () => {
     expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
   });
 
-  it('copies skills and subagents but symlinks scripts in link mode', async () => {
+  it('copies harness skills but symlinks scripts in link mode', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ link: true }), tempDir, contentDir);
 
-    // Skills (path rewriting) and subagents (frontmatter merge) are always copied; scripts are symlinked.
-    expect(lstatSync(path.join(claudeHome, 'skills', 'alpha')).isSymbolicLink()).toBe(false);
+    // Skills are always copied (install-time path rewriting forbids symlinking); scripts are symlinked.
     expect(lstatSync(path.join(claudeHome, 'skills', 'claude-only')).isSymbolicLink()).toBe(false);
-    expect(lstatSync(path.join(claudeHome, 'agents', 'demo-agent.md')).isSymbolicLink()).toBe(false);
     expect(lstatSync(path.join(claudeHome, 'scripts', 'demo.sh')).isSymbolicLink()).toBe(true);
 
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -205,94 +181,23 @@ describe(installCommand, () => {
     expect(skills).not.toContain('claude-only');
   });
 
-  it('excludes a skill marked deploy: declared from install and the manifest', async () => {
+  it('deploys harness skills and the _data support tree but not the general catalog or subagents', async () => {
     const claudeHome = await setupClaudeHome();
-    await buildContentTree(contentDir, {
-      skills: {
-        'declared-skill': {
-          'SKILL.md': [
-            '---',
-            'name: declared-skill',
-            'description: Declared fixture skill',
-            'deploy: declared',
-            '---',
-            '',
-            '# Declared',
-            '',
-          ].join('\n'),
-        },
-      },
-    });
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
     const skills = await readdir(path.join(claudeHome, 'skills'));
-    expect(skills).not.toContain('declared-skill');
-    // A skill without the field installs unchanged.
-    expect(skills).toContain('alpha');
-
-    const manifest = await readManifest(getManifestPath(tempDir));
-    const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
-    expect(relativePaths).not.toContain('skills/declared-skill');
-    expect(relativePaths).toContain('skills/alpha');
-  });
-
-  it('excludes a subagent marked deploy: declared from install and the manifest', async () => {
-    const claudeHome = await setupClaudeHome();
-    await buildContentTree(contentDir, {
-      subagents: {
-        'declared-agent.md': unindent`
-          ---
-          name: declared-agent
-          description: Declared fixture subagent
-          deploy: declared
-          ---
-
-          # Declared agent
-
-        `,
-      },
-    });
-
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-
-    const subagents = await readdir(path.join(claudeHome, 'agents'));
-    expect(subagents).not.toContain('declared-agent.md');
-    // A subagent without the field installs unchanged.
-    expect(subagents).toContain('demo-agent.md');
-
-    const manifest = await readManifest(getManifestPath(tempDir));
-    const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
-    expect(relativePaths).not.toContain('agents/declared-agent.md');
-    expect(relativePaths).toContain('agents/demo-agent.md');
-  });
-
-  it('prunes a previously-installed subagent once it flips to deploy: declared', async () => {
-    const claudeHome = await setupClaudeHome();
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(true);
-
-    await buildContentTree(contentDir, {
-      subagents: {
-        'demo-agent.md': unindent`
-          ---
-          name: demo-agent
-          description: Demo fixture subagent
-          deploy: declared
-          ---
-
-          # Demo agent
-
-        `,
-      },
-    });
-
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-
+    // Harness-specific skills and the _data support tree still install via the unconditional path.
+    expect(skills).toContain('claude-only');
+    expect(skills).toContain('_data');
+    // General-catalog skills (a directory with a SKILL.md) no longer do — they deploy per-declaration via sync.
+    expect(skills).not.toContain('alpha');
+    expect(skills).not.toContain('beta');
+    // Subagents no longer install unconditionally either.
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
-    const manifest = await readManifest(getManifestPath(tempDir));
-    const relativePaths = manifest.harnesses.claude?.entries.map((entry) => entry.relativePath) ?? [];
-    expect(relativePaths).not.toContain('agents/demo-agent.md');
+    // Non-artifact responsibilities are unchanged.
+    expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
+    expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
   });
 
   it('installs the _data support directory but not _harnesses', async () => {
@@ -338,8 +243,24 @@ describe(installCommand, () => {
       return parsed.prompts.filter((entry): entry is Record<string, unknown> => isRecord(entry));
     }
 
+    /** Writes a `SKILL.md` with the given frontmatter lines into the harness skills dir, simulating a skill `sync` already deployed. */
+    async function seedInstalledSkill(
+      harnessHome: string,
+      name: string,
+      frontmatterLines: ReadonlyArray<string>,
+    ): Promise<void> {
+      const skillDir = path.join(harnessHome, 'skills', name);
+      await mkdir(skillDir, { recursive: true });
+      const body = ['---', ...frontmatterLines, '---', '', `# ${name}`, ''].join('\n');
+      await writeFile(path.join(skillDir, 'SKILL.md'), body, 'utf8');
+    }
+
     it('generates a valid prompts.yml filtered by user-invocable', async () => {
       const rovodevHome = await setupRovodevHome();
+      // prompts.yml is a pure projection of the on-disk skills dir, so seed the catalog skills sync would have
+      // delivered before install regenerates the index.
+      await seedInstalledSkill(rovodevHome, 'alpha', ['name: alpha', 'user-invocable: true']);
+      await seedInstalledSkill(rovodevHome, 'beta', ['name: beta', 'user-invocable: false']);
 
       await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
 
@@ -357,34 +278,17 @@ describe(installCommand, () => {
 
     it('strips surrounding quotes from skill descriptions', async () => {
       const rovodevHome = await setupRovodevHome();
-      await buildContentTree(contentDir, {
-        skills: {
-          'single-quoted': {
-            'SKILL.md': [
-              '---',
-              'name: single-quoted',
-              "description: 'A skill: it''s useful'",
-              'user-invocable: true',
-              '---',
-              '',
-              '# Single quoted',
-              '',
-            ].join('\n'),
-          },
-          'double-quoted': {
-            'SKILL.md': [
-              '---',
-              'name: double-quoted',
-              'description: "A double-quoted description"',
-              'user-invocable: true',
-              '---',
-              '',
-              '# Double quoted',
-              '',
-            ].join('\n'),
-          },
-        },
-      });
+      // Seed the quoted-description skills directly into the destination, as sync would have deployed them.
+      await seedInstalledSkill(rovodevHome, 'single-quoted', [
+        'name: single-quoted',
+        "description: 'A skill: it''s useful'",
+        'user-invocable: true',
+      ]);
+      await seedInstalledSkill(rovodevHome, 'double-quoted', [
+        'name: double-quoted',
+        'description: "A double-quoted description"',
+        'user-invocable: true',
+      ]);
 
       await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
 
