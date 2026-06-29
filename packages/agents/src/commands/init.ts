@@ -26,7 +26,7 @@ rulebooks:
 
 # root: true  # ignore broader-scope declarations entirely, starting fresh from this file
 
-# Accepted now for forward compatibility; deployment lands in a later release:
+# collections.use lists collection slugs; each pulls in its members' transitive closure.
 # collections:
 #   use: []
 `;
