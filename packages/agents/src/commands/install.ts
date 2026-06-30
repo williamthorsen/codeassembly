@@ -17,7 +17,6 @@ import {
 } from '../lib/manifest.js';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.js';
 import { rewritePathsInFile } from '../lib/path-rewriter.js';
-import { renderPromptsYml } from '../lib/prompts-yml.ts';
 import { type RenderedSkillEntry, renderSkillDirectory } from '../lib/skill-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -85,9 +84,9 @@ export async function installCommand(
     const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
     const toolMapping = loadToolMapping(overlayYaml);
 
-    // Install skills (shared + harness-specific)
+    // Install skill support directories (e.g. `_data`). Skills themselves deploy per-declaration via `sync`.
     const skillsPrefix = `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`;
-    const skillEntries = await installSkills(
+    const supportEntries = await installSupportDirectories(
       contentDir,
       paths.skillsDir,
       paths.harnessHome,
@@ -100,7 +99,7 @@ export async function installCommand(
       harnessConfig.skillSigil,
       harnessConfig.subagentSigil,
     );
-    entries.push(...skillEntries);
+    entries.push(...supportEntries);
 
     // Install scripts
     const scriptEntries = await installScripts(
@@ -117,14 +116,6 @@ export async function installCommand(
     const guidanceEntries = await installHarnessGuidance(contentDir, paths, harnessId, existingByPath, options);
     entries.push(...guidanceEntries);
 
-    // Generate prompts.yml for Rovo Dev (skill discovery file)
-    if (harnessId === 'rovodev') {
-      const promptsEntry = await generatePromptsYml(paths, existingByPath, options);
-      if (promptsEntry) {
-        entries.push(promptsEntry);
-      }
-    }
-
     // Reconcile against the previous manifest: remove files whose source was deleted. Runs before the dry-run
     // gate so `--dry-run` previews removals. User-modified orphans are kept (unless `--force`) and stay tracked.
     const { retained } = await pruneOrphanedEntries(existingEntries, entries, paths.harnessHome, options);
@@ -132,7 +123,7 @@ export async function installCommand(
 
     if (options.dryRun) {
       console.info(`  [dry-run] Would install ${entries.length} items:`);
-      console.info(`    ${skillEntries.length} skill items`);
+      console.info(`    ${supportEntries.length} skill support items`);
       console.info(`    ${scriptEntries.length} script items`);
       console.info(`    ${guidanceEntries.length} guidance items`);
       continue;
@@ -159,15 +150,14 @@ export async function installCommand(
 }
 
 /**
- * Installs support directories (e.g. `_data`) and harness-specific skills into the target skills directory.
- * The general skill catalog — any `content/skills/<slug>/` holding a `SKILL.md` — deploys per-declaration via `sync`,
- * not here; this pass installs only the non-skill support entries plus the matching harness's
- * `_harnesses/{harnessId}/` skills. `_harnesses` and `_partials` are excluded from the support pass.
+ * Installs skill support directories (e.g. `_data`) into the target skills directory. Skills themselves — any
+ * `content/skills/<slug>/` holding a `SKILL.md` — deploy per-declaration via `sync`, not here, so this pass installs
+ * only the non-skill support entries; `_partials` (an install-time include target) and dotfiles are excluded.
  *
  * If a previously installed item has been modified by the user, it is skipped unless `--force` is set,
  * mirroring the uninstall command's drift-checking behavior.
  */
-async function installSkills(
+async function installSupportDirectories(
   contentDir: string,
   skillsDestDir: string,
   harnessHome: string,
@@ -184,18 +174,14 @@ async function installSkills(
   const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
-  // Install shared skills and support directories. Skip `_harnesses` (installed by the harness-specific pass below)
-  // and `_partials` (an install-time include target whose content is inlined into including skills, never installed as
-  // a standalone directory), plus dotfiles. This mirrors the per-skill `_partials` walk exclusion, which only matches
-  // `_partials` as a child and so never fires when it is the enumeration root. Other reserved directories such as
-  // `_data/` install normally — skills reference them at runtime by absolute path, so the skip is by name, not by the
-  // leading-underscore convention.
+  // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). Skip
+  // `_partials` (an install-time include target inlined into including skills) and `_harnesses` (no longer an install
+  // target — harness skills live in the flat catalog and deploy via `sync`), plus dotfiles, and skip any skill
+  // directory, since those deploy per-declaration via `sync`, never unconditionally.
   for (const entry of dirEntries) {
-    if (entry === '_harnesses' || entry === '_partials' || entry.startsWith('.')) {
+    if (entry === '_partials' || entry === '_harnesses' || entry.startsWith('.')) {
       continue;
     }
-    // The general skill catalog (any directory holding a `SKILL.md`) deploys per-declaration via `sync`, never
-    // unconditionally. Only non-skill support entries (e.g. `_data`, which skills reference at runtime) stay here.
     if (await isSkillDirectory(path.join(skillsSrcDir, entry))) {
       continue;
     }
@@ -214,45 +200,6 @@ async function installSkills(
       toolMapping,
       skillSigil,
       subagentSigil,
-    );
-    if (result !== undefined) {
-      entries.push(result);
-    }
-  }
-
-  // Install harness-specific skills from _harnesses/{harnessId}/
-  const harnessSkillsSrcDir = path.join(skillsSrcDir, '_harnesses', harnessId);
-  let harnessDirEntries: ReadonlyArray<string>;
-  try {
-    harnessDirEntries = await readdir(harnessSkillsSrcDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    console.warn(`  ⚠️ Warning: no harness-specific skills directory found for ${harnessId}: ${harnessSkillsSrcDir}`);
-    harnessDirEntries = [];
-  }
-
-  for (const entry of harnessDirEntries) {
-    if (entry.startsWith('.')) {
-      continue;
-    }
-    const result = await installSkillEntry(
-      path.join(harnessSkillsSrcDir, entry),
-      path.join(skillsDestDir, entry),
-      `skills/${entry}`,
-      `skills/_harnesses/${harnessId}/${entry}`,
-      harnessHome,
-      existingByPath,
-      options,
-      skillsPrefix,
-      homeDir,
-      harnessId,
-      contentDir,
-      toolMapping,
-      skillSigil,
-      subagentSigil,
-      '(harness-specific)',
     );
     if (result !== undefined) {
       entries.push(result);
@@ -387,61 +334,6 @@ async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<Ren
     await mkdir(path.dirname(destPath), { recursive: true });
     await (entry.kind === 'markdown' ? writeFile(destPath, entry.content, 'utf8') : copyItem(entry.srcPath, destPath));
   }
-}
-
-/**
- * Generates `prompts.yml` for Rovo Dev, which is the skill discovery file that lists all user-invocable skills.
- * Skills with `user-invocable: false` are excluded.
- *
- * The file is written to `{harnessHome}/prompts.yml` and tracked in the manifest.
- */
-async function generatePromptsYml(
-  paths: { harnessHome: string; skillsDir: string },
-  existingByPath: ReadonlyMap<string, ManifestEntry>,
-  options: InstallOptions,
-): Promise<ManifestEntry | undefined> {
-  const relativePath = 'prompts.yml';
-
-  // Short-circuit in dry-run mode: no filesystem reads needed
-  if (options.dryRun) {
-    console.info(`    [generate] ${relativePath}`);
-    return {
-      relativePath,
-      contentHash: 'dry-run',
-      linked: false,
-    };
-  }
-
-  const yamlContent = await renderPromptsYml(paths.skillsDir);
-  if (yamlContent === undefined) {
-    console.warn(`  ⚠️ Warning: skills directory not found, skipping prompts.yml generation: ${paths.skillsDir}`);
-    return undefined;
-  }
-
-  // Check for user modifications before overwriting.
-  // Files at 'current' drift are always regenerated to pick up any newly added skills.
-  const existingEntry = existingByPath.get(relativePath);
-  if (existingEntry && !options.force) {
-    const drift = await detectDrift(existingEntry, paths.harnessHome);
-    if (drift === 'modified') {
-      console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
-      return existingEntry;
-    }
-  }
-
-  // Ensure harness home directory exists
-  await mkdir(paths.harnessHome, { recursive: true });
-
-  const destPath = path.join(paths.harnessHome, relativePath);
-  await unlinkIfSymlink(destPath);
-  await writeFile(destPath, yamlContent, 'utf8');
-
-  const hash = await computeContentHash(destPath);
-  return {
-    relativePath,
-    contentHash: hash,
-    linked: false,
-  };
 }
 
 /**

@@ -53,7 +53,7 @@ members:
 ## Frontmatter fields
 
 - **Rulebooks:** `slug`, `description`, `delivery` (`ambient`, `skill`, or both), optional `skill-name`, optional `version`.
-- **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`).
+- **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
 - **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context; `sync` pulls them into the deploy closure automatically).
 - **Collections:** `name`, `description`, and a `members:` block — the collection's only payload.
 
