@@ -11,7 +11,7 @@ import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
-import { collectPromptEntries, renderPromptEntries, renderPromptsYml } from '../lib/prompts-yml.ts';
+import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
@@ -269,6 +269,7 @@ async function reconcileDomain(
       resolvedSubagents,
       harnessSubagentTargets,
       subagentOrphansByDir,
+      promptsYmlPaths: resolvePromptsYmlPaths(options, domain),
     });
     return;
   }
@@ -329,8 +330,7 @@ async function reconcileDomain(
   // transform applied and the ownership marker stamped.
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
 
-  await refreshHomePromptsYml(options, domain);
-  await refreshProjectPromptsYml(options, domain);
+  await refreshPromptsYml(options, domain);
 
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
   const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
@@ -675,37 +675,13 @@ async function assertDeclaredSkillsRender(
 }
 
 /**
- * Regenerates the home-domain Rovo Dev `prompts.yml` so home-deployed skills appear in its available-skills list. As a
- * pure projection of the on-disk skills dir, it also drops any just-retracted skill. A no-op for the repo domain (which
- * keeps no such index) and for non-Rovo Dev harnesses.
+ * Reconciles the Rovo Dev `prompts.yml` index so it lists the user-invocable skills currently in the harness skills
+ * dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file, preserving any
+ * foreign entries; when no skills remain, the region is stripped — and the file deleted when nothing foreign is left. A
+ * no-op for non-Rovo Dev harnesses and for a file carrying no codeassembly region. Both domains share this one path, so
+ * the home file is merged rather than whole-file overwritten, matching the repo file's non-clobbering shape.
  */
-async function refreshHomePromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
-  if (domain.label !== 'global') {
-    return;
-  }
-  for (const harnessId of resolveHarnessIds(options.harness, domain.baseDir)) {
-    if (harnessId !== 'rovodev') {
-      continue;
-    }
-    const { harnessHome, skillsDir } = resolveHarnessPaths(harnessId, domain.baseDir);
-    const promptsYml = await renderPromptsYml(skillsDir);
-    if (promptsYml !== undefined) {
-      await writeIfChanged(path.join(harnessHome, 'prompts.yml'), promptsYml);
-    }
-  }
-}
-
-/**
- * Generates the repo-domain Rovo Dev `prompts.yml` so project-scoped skills appear in its available-skills list. The
- * deployed skills are projected into a codeassembly-owned region merged into the shared file, preserving any foreign
- * entries. When no project-scoped skills remain, the region is stripped — and the file deleted when nothing foreign is
- * left. A no-op for the home domain and for non-Rovo Dev harnesses; a file carrying no codeassembly region is never
- * touched.
- */
-async function refreshProjectPromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
-  if (domain.label !== 'project') {
-    return;
-  }
+async function refreshPromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
   for (const harnessId of resolveHarnessIds(options.harness, domain.baseDir)) {
     if (harnessId !== 'rovodev') {
       continue;
@@ -720,14 +696,21 @@ async function refreshProjectPromptsYml(options: InstallOptions, domain: SyncDom
       continue;
     }
 
-    // No project-scoped skills: strip our region, deleting the file when nothing foreign survives. A file we never
-    // owned (no region) is left untouched.
+    // No skills remain: strip our region, deleting the file when nothing foreign survives. A file we never owned (no
+    // region) is left untouched.
     if (!hasPromptsRegion(existing)) {
       continue;
     }
     const stripped = removePromptsRegion(existing);
     await (stripped.trim() === '' ? rm(promptsPath, { force: true }) : writeIfChanged(promptsPath, stripped));
   }
+}
+
+/** Lists the Rovo Dev `prompts.yml` paths a sync of `domain` would reconcile — one per targeted Rovo Dev harness. */
+function resolvePromptsYmlPaths(options: InstallOptions, domain: SyncDomain): ReadonlyArray<string> {
+  return resolveHarnessIds(options.harness, domain.baseDir)
+    .filter((harnessId) => harnessId === 'rovodev')
+    .map((harnessId) => path.join(resolveHarnessPaths(harnessId, domain.baseDir).harnessHome, 'prompts.yml'));
 }
 
 /** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
@@ -742,6 +725,7 @@ interface DryRunPlan {
   readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
   readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
   readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
+  readonly promptsYmlPaths: ReadonlyArray<string>;
 }
 
 /** Prints the writes and retractions a real run would perform. */
@@ -786,6 +770,11 @@ function reportDryRun(plan: DryRunPlan): void {
     for (const file of orphans) {
       console.info(`  retract declared subagent ${path.join(subagentsDir, file)} (no longer declared)`);
     }
+  }
+  for (const promptsPath of plan.promptsYmlPaths) {
+    console.info(
+      `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
+    );
   }
 }
 

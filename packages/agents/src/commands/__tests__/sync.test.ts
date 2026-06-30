@@ -926,6 +926,23 @@ describe(syncCommand, () => {
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(handAuthored);
     });
+
+    it('previews the prompts.yml reconciliation in dry-run without writing', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ harness: 'rovodev', dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain('prompts.yml');
+      expect(existsSync(promptsYmlPath())).toBe(false);
+    });
   });
 });
 
@@ -1034,15 +1051,35 @@ describe(syncGlobalCommand, () => {
     expect(existsSync(path.join(homeDir, '.agents', 'AGENTS.md'))).toBe(false);
   });
 
-  it('refreshes ~/.rovodev/prompts.yml with home-deployed Rovo Dev skills', async () => {
+  it('refreshes ~/.rovodev/prompts.yml with home-deployed Rovo Dev skills through the managed region', async () => {
     await writeLibrarySkill('people-report');
     await declareRaw('skills:\n  use:\n    - people-report\n');
 
     await syncGlobalCommand(makeOptions({ harness: 'rovodev' }), homeDir, contentDir);
 
     const prompts = await readFile(path.join(homeDir, '.rovodev', 'prompts.yml'), 'utf8');
+    expect(prompts).toContain('# codeassembly:managed:start');
     expect(prompts).toContain("name: 'people-report'");
     expect(prompts).toContain('content_file: skills/people-report/SKILL.md');
+  });
+
+  it('merges the home prompts.yml region into a hand-authored file, preserving foreign entries', async () => {
+    await writeLibrarySkill('people-report');
+    await declareRaw('skills:\n  use:\n    - people-report\n');
+    await mkdir(path.join(homeDir, '.rovodev'), { recursive: true });
+    await writeFile(
+      path.join(homeDir, '.rovodev', 'prompts.yml'),
+      "prompts:\n  - name: 'hand-authored'\n    description: 'kept'\n    content_file: custom.md\n",
+      'utf8',
+    );
+
+    await syncGlobalCommand(makeOptions({ harness: 'rovodev' }), homeDir, contentDir);
+
+    const prompts = await readFile(path.join(homeDir, '.rovodev', 'prompts.yml'), 'utf8');
+    expect(prompts).toContain("name: 'hand-authored'");
+    expect(prompts).toContain('content_file: custom.md');
+    expect(prompts).toContain("name: 'people-report'");
+    expect(prompts).toContain('# codeassembly:managed:start');
   });
 
   it('deploys the real recommended collection to home via the user-global declaration', async () => {

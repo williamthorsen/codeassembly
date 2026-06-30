@@ -68,19 +68,6 @@ export function renderPromptEntries(entries: ReadonlyArray<PromptEntry>): string
   return yamlLines.length === 0 ? '' : yamlLines.join('\n') + '\n';
 }
 
-/**
- * Renders the whole-file Rovo Dev `prompts.yml` index for the skills under `skillsDir` (`prompts:` header plus the
- * entry list). Returns `undefined` when the directory is absent. A pure projection of the on-disk skills dir — install
- * and sync produce byte-identical output, so either may regenerate it.
- */
-export async function renderPromptsYml(skillsDir: string): Promise<string | undefined> {
-  const entries = await collectPromptEntries(skillsDir);
-  if (entries === undefined) {
-    return undefined;
-  }
-  return `prompts:\n${renderPromptEntries(entries)}`;
-}
-
 // region | Helpers
 
 /** Reads a skill's `user-invocable` (default true) and `description` (default empty) from its frontmatter lines. */
