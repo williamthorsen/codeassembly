@@ -326,7 +326,6 @@ describe(syncCommand, () => {
     const neutral = await readFile(neutralPath('shell-conventions'), 'utf8');
     expect(neutral).toContain('# Shell script conventions');
     expect(neutral).not.toContain('slug:');
-    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:shell-conventions -->');
     const skill = await readFile(skillPath('consult-shell-conventions'), 'utf8');
     expect(skill).toContain('name: consult-shell-conventions');
     expect(skill).toContain('# Shell script conventions');
@@ -335,7 +334,6 @@ describe(syncCommand, () => {
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
     expect(existsSync(neutralPath('shell-conventions'))).toBe(false);
-    expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:shell-conventions -->');
     expect(existsSync(path.dirname(skillPath('consult-shell-conventions')))).toBe(false);
   });
 
