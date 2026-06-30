@@ -21,6 +21,8 @@ async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Pro
 
 const NOW = new Date('2026-06-04T06:57:22.000Z');
 
+const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
+
 const EVENT_SCHEMA = `recordTypes:
   event:
     recall: recurrence-recency
@@ -55,6 +57,38 @@ async function makeStore(name: string): Promise<{ storePath: string; home: strin
   return { storePath, home };
 }
 
+/** Stand up a git-backed event store on `main` with a bare upstream and a seeded pushed commit, registered under `name`. */
+async function makeGitBackedStore(name: string): Promise<{ storePath: string; home: string }> {
+  const remote = await mkdtemp(join(tmpdir(), 'capture-cli-remote-'));
+  await execFileAsync('git', ['init', '--quiet', '--bare', '-b', 'main', remote]);
+
+  const storePath = await makeStoreDir();
+  await execFileAsync('git', ['-C', storePath, 'init', '--quiet', '-b', 'main']);
+  await execFileAsync('git', ['-C', storePath, 'config', 'user.email', 'test@example.com']);
+  await execFileAsync('git', ['-C', storePath, 'config', 'user.name', 'Test']);
+  await execFileAsync('git', ['-C', storePath, 'remote', 'add', 'origin', remote]);
+  await execFileAsync('git', ['-C', storePath, 'add', '-A']);
+  await execFileAsync('git', ['-C', storePath, 'commit', '--quiet', '-m', 'seed']);
+  await execFileAsync('git', ['-C', storePath, 'push', '--quiet', '-u', 'origin', 'main']);
+
+  const home = await mkdtemp(join(tmpdir(), 'capture-cli-githome-'));
+  await mkdir(join(home, '.agents'), { recursive: true });
+  await writeFile(
+    join(home, '.agents', 'kb.yaml'),
+    `default_kb: ${name}\nkbs:\n  ${name}:\n    path: ${storePath}\n`,
+    'utf8',
+  );
+
+  return { storePath, home };
+}
+
+/** Stage, commit, and push the store's current working tree to its upstream. */
+async function commitAndPush(storePath: string): Promise<void> {
+  await execFileAsync('git', ['-C', storePath, 'add', '-A']);
+  await execFileAsync('git', ['-C', storePath, 'commit', '--quiet', '-m', 'capture']);
+  await execFileAsync('git', ['-C', storePath, 'push', '--quiet']);
+}
+
 describe(parseArgs, () => {
   it('parses every value-bearing flag in long form', () => {
     const parsed = parseArgs([
@@ -82,7 +116,25 @@ describe(parseArgs, () => {
       harness: 'claude',
       tags: ['one', 'two', 'three'],
       impact: 'high',
+      amend: null,
+      allowPushed: false,
     });
+  });
+
+  it('parses --amend and the --allow-pushed boolean flag', () => {
+    const parsed = parseArgs(['--summary', 'x', '--amend', ID, '--allow-pushed']);
+    expect(parsed.amend).toBe(ID);
+    expect(parsed.allowPushed).toBe(true);
+  });
+
+  it('leaves amend null and allowPushed false when both are omitted', () => {
+    const parsed = parseArgs(['--summary', 'x']);
+    expect(parsed.amend).toBeNull();
+    expect(parsed.allowPushed).toBe(false);
+  });
+
+  it('rejects an --amend id that is not a bare filename stem', () => {
+    expect(() => parseArgs(['--summary', 'x', '--amend', '../escape'])).toThrow(/bare filename stem/);
   });
 
   it('leaves the store null and optional flags null or empty when omitted', () => {
@@ -428,6 +480,147 @@ describe(runCapture, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('invalid-args');
+    }
+  });
+
+  it('amends an unpushed event, editing content while preserving provenance and unsupplied fields', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+
+    const created = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Original summary', '--tags', 'one', '--impact', 'high'],
+      stdin: bodyStream('Original body.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
+      now: NOW,
+      home,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const amended = await runCapture({
+      argv: ['--store', '@default', '--amend', created.id, '--summary', 'Corrected summary'],
+      stdin: bodyStream('Corrected body.'),
+      cwd: '/tmp/different-cwd',
+      env: { CLAUDE_CODE_SESSION_ID: 'session-later' },
+      now: new Date('2027-01-01T00:00:00.000Z'),
+      home,
+    });
+
+    expect(amended.ok).toBe(true);
+    if (amended.ok) {
+      expect(amended.id).toBe(created.id);
+      expect(amended.capturedAt).toBe(created.capturedAt);
+
+      const written = await readFile(amended.path, 'utf8');
+      expect(written).toContain('summary: Corrected summary');
+      expect(written).toContain('Corrected body.');
+      expect(written).not.toContain('Original body.');
+
+      // Provenance comes from the original capture, not the amending invocation.
+      expect(written).toContain(`captured-at: ${created.capturedAt}`);
+      expect(written).toContain('session: session-original');
+      expect(written).toContain(`cwd: ${repo}`);
+      expect(written).toContain('repo: williamthorsen/codeassembly');
+
+      // Curatorial fields the amend did not restate keep their existing values.
+      expect(written).toMatch(/^tags: \[one\]$/m);
+      expect(written).toMatch(/^impact: high$/m);
+    }
+  });
+
+  it('overrides curatorial fields on amend only when their flag is supplied', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+
+    const created = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Original', '--tags', 'one', '--impact', 'high'],
+      stdin: bodyStream('Body.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
+      now: NOW,
+      home,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const amended = await runCapture({
+      argv: ['--store', '@default', '--amend', created.id, '--summary', 'Original', '--tags', 'two', '--impact', 'low'],
+      stdin: bodyStream('Body.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
+      now: NOW,
+      home,
+    });
+
+    expect(amended.ok).toBe(true);
+    if (amended.ok) {
+      const written = await readFile(amended.path, 'utf8');
+      expect(written).toMatch(/^tags: \[two\]$/m);
+      expect(written).toMatch(/^impact: low$/m);
+    }
+  });
+
+  it('returns amend-not-found when the target event does not exist', async () => {
+    const { home } = await makeStore('codeassembly');
+
+    const result = await runCapture({
+      argv: ['--store', '@default', '--amend', ID, '--summary', 'x'],
+      stdin: bodyStream('body'),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('amend-not-found');
+    }
+  });
+
+  it('refuses to amend a pushed event, then allows it with --allow-pushed', async () => {
+    const { storePath, home } = await makeGitBackedStore('codeassembly');
+
+    const created = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Pushed summary'],
+      stdin: bodyStream('Pushed body.'),
+      cwd: storePath,
+      env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
+      now: NOW,
+      home,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    await commitAndPush(storePath);
+
+    const refused = await runCapture({
+      argv: ['--store', '@default', '--amend', created.id, '--summary', 'Reworded'],
+      stdin: bodyStream('Reworded body.'),
+      cwd: storePath,
+      env: {},
+      now: NOW,
+      home,
+    });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.error).toBe('event-pushed');
+      expect(refused.message).toContain('--allow-pushed');
+    }
+
+    const forced = await runCapture({
+      argv: ['--store', '@default', '--amend', created.id, '--summary', 'Reworded', '--allow-pushed'],
+      stdin: bodyStream('Reworded body.'),
+      cwd: storePath,
+      env: {},
+      now: NOW,
+      home,
+    });
+    expect(forced.ok).toBe(true);
+    if (forced.ok) {
+      const written = await readFile(forced.path, 'utf8');
+      expect(written).toContain('Reworded body.');
+      expect(written).not.toContain('Pushed body.');
     }
   });
 });

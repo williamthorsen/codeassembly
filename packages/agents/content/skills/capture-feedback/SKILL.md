@@ -43,7 +43,7 @@ If the feedback is purely behavioral — a standing rule with nothing to fix rig
 
 ### 3. Capture the record
 
-Invoke the `{skill:capture-event}` skill to append an immutable record, composing its arguments and body as follows:
+Invoke the `{skill:capture-event}` skill to append the record, composing its arguments and body as follows:
 
 - `--store codeassembly` — the project's agent-guidance KB. Pass a different `--store` only when the user directs the record elsewhere.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
@@ -59,6 +59,8 @@ Invoke the `{skill:capture-event}` skill to append an immutable record, composin
 
 State what was fixed — or that the feedback was behavioral-only — and the captured record's id and path.
 
+If the user then says the record is inaccurate, correct it in place with `capture-event --amend <id>` rather than capturing a second record — the event is still local and therefore editable. Capture a fresh record only when the correction is a genuinely distinct lesson.
+
 ## Completion
 
-The immediate fix is applied (when applicable) and an immutable `feedback`-tagged record is written, ready for a later refinement pass to mine via `kb-retrieve-events`.
+The immediate fix is applied (when applicable) and a `feedback`-tagged record is written, ready for a later refinement pass to mine via `kb-retrieve-events`.
