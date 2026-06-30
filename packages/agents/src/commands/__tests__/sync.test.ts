@@ -568,6 +568,79 @@ describe(syncCommand, () => {
     });
   });
 
+  describe('harness-targeted skills', () => {
+    /** Writes a fixture skill `<slug>/SKILL.md`, with an optional `harnesses:` line and body override. */
+    async function writeLibrarySkill(
+      slug: string,
+      { harnesses, body }: { harnesses?: string; body?: string } = {},
+    ): Promise<void> {
+      const dir = path.join(contentDir, 'skills', slug);
+      await mkdir(dir, { recursive: true });
+      const harnessLine = harnesses === undefined ? '' : `harnesses: ${harnesses}\n`;
+      const content = body ?? `# ${slug}\n\nBody.`;
+      await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${harnessLine}---\n\n${content}\n`, 'utf8');
+    }
+
+    /** Writes the project-scope codeassembly.yaml declaring the given skill slugs. */
+    async function declareSkills(...slugs: ReadonlyArray<string>): Promise<void> {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      const useBlock =
+        slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `skills:\n${useBlock}`, 'utf8');
+    }
+
+    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovodev. */
+    async function detectBothHarnesses(): Promise<void> {
+      await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
+      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+    }
+
+    it('deploys a harness-targeted skill only into its target harness, while all-harness skills reach both', async () => {
+      await detectBothHarnesses();
+      await writeLibrarySkill('rovo-only', { harnesses: '[rovodev]' });
+      await writeLibrarySkill('everywhere');
+      await declareSkills('rovo-only', 'everywhere');
+
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+
+      expect(existsSync(skillPath('rovo-only', '.rovodev'))).toBe(true);
+      expect(existsSync(skillPath('rovo-only', '.claude'))).toBe(false);
+      expect(existsSync(skillPath('everywhere', '.claude'))).toBe(true);
+      expect(existsSync(skillPath('everywhere', '.rovodev'))).toBe(true);
+    });
+
+    it('does not render a harness-targeted skill against a non-target harness whose tool map would reject it', async () => {
+      await detectBothHarnesses();
+      // rovodev maps Read; claude does not, so rendering this skill against claude would throw on the unmapped tool.
+      const overlays = path.join(contentDir, 'subagents', '_data');
+      await mkdir(overlays, { recursive: true });
+      await writeFile(path.join(overlays, 'rovodev.yaml'), '_tools:\n  Read: open_files\n', 'utf8');
+      await writeFile(path.join(overlays, 'claude.yaml'), '_tools:\n  Edit: Edit\n', 'utf8');
+      await writeLibrarySkill('rovo-tool', { harnesses: '[rovodev]', body: 'Use {tool:Read}.' });
+      await declareSkills('rovo-tool');
+
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('rovo-tool', '.rovodev'), 'utf8')).toContain('Use open_files.');
+      expect(existsSync(skillPath('rovo-tool', '.claude'))).toBe(false);
+    });
+
+    it('retracts a skill from a harness it no longer targets while keeping it where it still does', async () => {
+      await detectBothHarnesses();
+      await writeLibrarySkill('was-everywhere');
+      await declareSkills('was-everywhere');
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+      expect(existsSync(skillPath('was-everywhere', '.claude'))).toBe(true);
+      expect(existsSync(skillPath('was-everywhere', '.rovodev'))).toBe(true);
+
+      await writeLibrarySkill('was-everywhere', { harnesses: '[rovodev]' });
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+
+      expect(existsSync(path.dirname(skillPath('was-everywhere', '.claude')))).toBe(false);
+      expect(existsSync(skillPath('was-everywhere', '.rovodev'))).toBe(true);
+    });
+  });
+
   describe('declared subagents', () => {
     const CLAUDE_OVERLAY = unindent`
       _tools:

@@ -28,7 +28,16 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
   },
 };
 
-const ALL_HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovodev'];
+/** Every known harness identifier. */
+export const ALL_HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovodev'];
+
+/** Membership set for `isHarnessId`, widened to `string` so an arbitrary value tests without a type assertion. */
+const HARNESS_ID_SET: ReadonlySet<string> = new Set(ALL_HARNESS_IDS);
+
+/** Narrows an arbitrary string to a known harness identifier. */
+export function isHarnessId(value: string): value is HarnessId {
+  return HARNESS_ID_SET.has(value);
+}
 
 /**
  * Detects which harnesses have their home directories present.

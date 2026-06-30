@@ -167,11 +167,12 @@ describe(resolveDeclaredSkill, () => {
     await rm(librarySkillsDir, { recursive: true, force: true });
   });
 
-  /** Writes a library skill `<slug>/SKILL.md`. */
-  async function writeLibrarySkill(slug: string): Promise<void> {
+  /** Writes a library skill `<slug>/SKILL.md`, optionally inserting extra frontmatter lines after `name:`. */
+  async function writeLibrarySkill(slug: string, extraFrontmatter = ''): Promise<void> {
     const dir = path.join(librarySkillsDir, slug);
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
+    const frontmatter = extraFrontmatter === '' ? `name: ${slug}` : `name: ${slug}\n${extraFrontmatter}`;
+    await writeFile(path.join(dir, 'SKILL.md'), `---\n${frontmatter}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
   }
 
   it('resolves a declared skill to its slug and source directory', async () => {
@@ -181,6 +182,36 @@ describe(resolveDeclaredSkill, () => {
 
     expect(resolved.slug).toBe('people-report');
     expect(resolved.srcDir).toBe(path.join(librarySkillsDir, 'people-report'));
+  });
+
+  it('leaves the target harnesses undefined when no `harnesses:` field is present', async () => {
+    await writeLibrarySkill('people-report');
+
+    const resolved = await resolveDeclaredSkill('people-report', librarySkillsDir);
+
+    expect(resolved.targetHarnesses).toBeUndefined();
+  });
+
+  it('reads a list-valued `harnesses:` field into the target set', async () => {
+    await writeLibrarySkill('brainstorming', 'harnesses: [rovodev]');
+
+    const resolved = await resolveDeclaredSkill('brainstorming', librarySkillsDir);
+
+    expect(resolved.targetHarnesses).toEqual(['rovodev']);
+  });
+
+  it('normalizes a scalar `harnesses:` field into a single-element target set', async () => {
+    await writeLibrarySkill('review-permissions', 'harnesses: claude');
+
+    const resolved = await resolveDeclaredSkill('review-permissions', librarySkillsDir);
+
+    expect(resolved.targetHarnesses).toEqual(['claude']);
+  });
+
+  it('throws naming the slug and the bad id when `harnesses:` lists an unknown harness', async () => {
+    await writeLibrarySkill('exotic', 'harnesses: [codex]');
+
+    await expect(resolveDeclaredSkill('exotic', librarySkillsDir)).rejects.toThrow(/exotic.*codex/s);
   });
 
   it('throws a clear error naming the slug when the skill is missing from the library', async () => {

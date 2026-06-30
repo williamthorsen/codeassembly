@@ -47,8 +47,9 @@ interface HarnessSubagentTarget {
   readonly deployContext: SubagentDeployContext;
 }
 
-/** One targeted harness's project-local skills dir paired with the per-harness inputs the skill transform needs. */
+/** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
 interface HarnessSkillTarget {
+  readonly harnessId: HarnessId;
   readonly skillsDir: string;
   readonly deployContext: SkillDeployContext;
 }
@@ -216,16 +217,21 @@ async function reconcileDomain(
         .map(({ dir }) => dir),
     })),
   );
-  // Declared-skill orphans reconcile independently against the same dirs, reading only the declared-skill marker so
-  // the two namespaces never consider each other's dirs. An owned declared-skill dir is an orphan once its slug is
-  // no longer declared.
+  // Declared-skill orphans reconcile per harness, reading only the declared-skill marker so the two namespaces never
+  // consider each other's dirs. An owned declared-skill dir in a harness is an orphan once its slug is no longer among
+  // the declared skills that target that harness — covering both an undeclared skill and one that dropped this harness.
   const declaredSkillOrphansByDir = await Promise.all(
-    harnessSkillDirs.map(async (skillsDir) => ({
-      skillsDir,
-      orphans: (await listOwnedDeclaredSkills(skillsDir))
-        .filter(({ slug }) => !declaredSkillSet.has(slug))
-        .map(({ dir }) => dir),
-    })),
+    harnessSkillTargets.map(async ({ skillsDir, harnessId }) => {
+      const targetedSlugs = new Set(
+        resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+      );
+      return {
+        skillsDir,
+        orphans: (await listOwnedDeclaredSkills(skillsDir))
+          .filter(({ slug }) => !targetedSlugs.has(slug))
+          .map(({ dir }) => dir),
+      };
+    }),
   );
   // Declared subagents reconcile file-based (flat `.md` files, not directories): an owned subagent file is one whose
   // content carries the `codeassembly-subagent:` marker. It is an orphan once its slug is no longer declared. A
@@ -243,7 +249,7 @@ async function reconcileDomain(
   // ownership marker — an install-managed or hand-authored file. The marker-gated retraction scans keep such files
   // from being deleted; this keeps them from being overwritten. Runs in dry-run too, so a preview surfaces the conflict.
   await assertNoForeignOwnedTargets(
-    collectOwnedTargets(harnessSkillDirs, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
+    collectOwnedTargets(harnessSkillTargets, resolved, resolvedSkills, harnessSubagentTargets, resolvedSubagents),
   );
 
   // Render every declared skill against every targeted harness up front, so a broken include or an unmapped tool
@@ -256,7 +262,7 @@ async function reconcileDomain(
       ambientHostName: path.basename(ambientHostPath),
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
-      harnessSkillDirs,
+      harnessSkillTargets,
       skillOrphansByDir,
       resolvedSkills,
       declaredSkillOrphansByDir,
@@ -332,7 +338,10 @@ async function reconcileDomain(
     (total, harness) => total + harness.orphans.length,
     0,
   );
-  const declaredSkillsDeployed = resolvedSkills.length * harnessSkillDirs.length;
+  const declaredSkillsDeployed = harnessSkillTargets.reduce(
+    (total, { harnessId }) => total + resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).length,
+    0,
+  );
   const subagentRetractions = subagentOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
   const subagentsDeployed = resolvedSubagents.length * harnessSubagentTargets.length;
   console.info(
@@ -346,6 +355,11 @@ async function reconcileDomain(
 }
 
 // region | Helpers
+
+/** True when a skill targets the given harness — either it names no harnesses (so all) or lists this one. */
+function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
+  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
+}
 
 /** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
 interface OwnedTarget {
@@ -387,14 +401,14 @@ async function assertNoForeignOwnedTargets(targets: ReadonlyArray<OwnedTarget>):
  * own ownership marker, so the pre-write guard can reject any that already exist foreign-owned.
  */
 function collectOwnedTargets(
-  harnessSkillDirs: ReadonlyArray<string>,
+  harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>,
   resolved: ReadonlyArray<ResolvedRulebook>,
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
   harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
 ): ReadonlyArray<OwnedTarget> {
   const targets: Array<OwnedTarget> = [];
-  for (const skillsDir of harnessSkillDirs) {
+  for (const { skillsDir, harnessId } of harnessSkillTargets) {
     for (const rulebook of resolved) {
       if (rulebook.skill) {
         targets.push({
@@ -404,6 +418,9 @@ function collectOwnedTargets(
       }
     }
     for (const skill of resolvedSkills) {
+      if (!skillTargetsHarness(skill, harnessId)) {
+        continue;
+      }
       targets.push({
         filePath: path.join(skillsDir, skill.slug, 'SKILL.md'),
         isOwned: (content) => skillMarker.extractSlug(content) !== undefined,
@@ -630,6 +647,9 @@ async function reconcileDeclaredSkills(
       await rm(path.join(target.skillsDir, dir), { recursive: true, force: true });
     }
     for (const skill of resolvedSkills) {
+      if (!skillTargetsHarness(skill, target.harnessId)) {
+        continue;
+      }
       await deploySkill(skill, path.join(target.skillsDir, skill.slug), target.deployContext);
     }
   }
@@ -646,6 +666,9 @@ async function assertDeclaredSkillsRender(
 ): Promise<void> {
   for (const target of targets) {
     for (const skill of resolvedSkills) {
+      if (!skillTargetsHarness(skill, target.harnessId)) {
+        continue;
+      }
       await renderSkillDirectory(skill.srcDir, skill.slug, target.deployContext);
     }
   }
@@ -712,7 +735,7 @@ interface DryRunPlan {
   readonly ambientHostName: string;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
   readonly retracted: ReadonlyArray<string>;
-  readonly harnessSkillDirs: ReadonlyArray<string>;
+  readonly harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>;
   readonly skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
   readonly declaredSkillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
@@ -728,13 +751,16 @@ function reportDryRun(plan: DryRunPlan): void {
     const inline = rulebook.ambient ? ` (+ inline into ${plan.ambientHostName})` : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
-      for (const skillsDir of plan.harnessSkillDirs) {
+      for (const { skillsDir } of plan.harnessSkillTargets) {
         console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
       }
     }
   }
   for (const skill of plan.resolvedSkills) {
-    for (const skillsDir of plan.harnessSkillDirs) {
+    for (const { skillsDir, harnessId } of plan.harnessSkillTargets) {
+      if (!skillTargetsHarness(skill, harnessId)) {
+        continue;
+      }
       console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
     }
   }
@@ -826,6 +852,7 @@ async function resolveSkillTarget(
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
+    harnessId,
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       contentDir,
