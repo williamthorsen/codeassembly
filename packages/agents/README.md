@@ -8,7 +8,7 @@ Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`
 
 | Command             | Description                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `install`           | Install shared guidance, harness-specific skills, scripts, and support data into harness directories       |
+| `install`           | Install shared guidance, scripts, and support data into harness directories                                |
 | `init`              | Scaffold `.agents/codeassembly.yaml` for the project, or `--global` for `~/.agents/codeassembly.yaml`      |
 | `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
@@ -43,6 +43,8 @@ subagents:
 A declared rulebook is materialized into `.agents/rulebooks/<slug>.md` and, depending on its delivery mode, inlined into `.agents/PROJECT.md` and/or delivered as a `consult-<slug>` skill in each detected harness.
 
 A declared skill is deployed into each detected harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
+
+A skill may restrict itself to specific harnesses with a `harnesses:` frontmatter field (a single harness id or a list, e.g. `harnesses: [rovodev]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill with no `harnesses:` field deploys to every harness. This is how a skill that one harness provides natively — but the library supplies for the others — is targeted at just the harnesses that need it, without duplicating it per harness.
 
 A declared subagent is deployed into each detected harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
 
@@ -108,9 +110,9 @@ The declaration resolves in two independent **domains**, each with its own base 
 1. **User-global** — `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
 2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
 
-A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. The domains never cross — a project tier cannot `drop` a user-global entry, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). Ambient rulebooks inline into `.agents/PROJECT.md` in the repo domain and `~/.agents/GLOBAL.md` in the home domain. In the repo domain, project-scoped Rovo Dev skills are also indexed into a project-local `.rovodev/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched.
+A higher tier adds to and overrides the tiers below it _within the same domain_: `use` adds an entry, `drop` removes one a broader tier in that domain contributed, and `root: true` discards everything from broader tiers in that domain. The domains never cross — a project tier cannot `drop` a user-global entry, and bare `sync` never writes the home directories (it refuses to run when invoked from the home directory, directing you to `sync --global`). Ambient rulebooks inline into `.agents/PROJECT.md` in the repo domain and `~/.agents/GLOBAL.md` in the home domain. In both domains, the deployed Rovo Dev skills are indexed into `.rovodev/prompts.yml` so they surface in Rovo Dev's available-skills list; `sync` owns a single sentinel-delimited region in that file and leaves any hand-authored entries outside it untouched, in the home file as well as the project file.
 
-When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: the new `install` prunes the catalog skills it previously planted, and `sync --global` then re-deploys them as sync-owned. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned files.
+When upgrading from a build where `install` deployed the catalog, run `install` once before `sync --global`: the new `install` prunes the skills and the whole-file `prompts.yml` it previously planted, and `sync --global` then re-deploys the skills as sync-owned and rewrites `prompts.yml` as a merged region. Running `sync --global` first stops at a refuse-to-overwrite error on those still-`install`-owned skill files, and would merge its region beneath the stale whole-file `prompts.yml` entries until the next `install` prunes them.
 
 ## Preferences
 
