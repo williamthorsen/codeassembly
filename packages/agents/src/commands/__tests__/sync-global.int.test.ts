@@ -9,14 +9,14 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { initGlobalCommand } from '../init.ts';
 import { syncGlobalCommand } from '../sync.ts';
 
-// Exercises the real content library end-to-end: `init --global` seeds the `all` collection, then `sync --global`
-// resolves it and deploys the whole catalog into an isolated temp home. Heavier than the fixture-based sync tests
-// (it deploys the real catalog), so kept to a single case.
-describe('sync --global smoke (real library, all collection)', () => {
+// Deliberate-only integration test that exercises the real content library end-to-end: `init --global` seeds the
+// `all` collection, then `sync --global` resolves it and deploys the whole catalog into an isolated temp home. Runs
+// via `test:integration`, not the default unit suite, so it asserts real-catalog invariants a synthetic fixture cannot.
+describe('sync --global (real library, all collection)', () => {
   let homeDir: string;
 
   beforeEach(async () => {
-    homeDir = path.join(tmpdir(), `agents-test-sync-global-smoke-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    homeDir = path.join(tmpdir(), `agents-test-sync-global-int-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(homeDir, { recursive: true });
   });
 
