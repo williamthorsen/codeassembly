@@ -35,21 +35,14 @@ describe('install smoke (real library)', () => {
     // A throw here means the real catalog failed to expand/rewrite/write end-to-end.
     await installCommand(makeOptions(), tempDir);
 
-    // Each installed harness's skill count matches the source enumeration (support entries + that harness's skills).
-    // The general skill catalog deploys per-project via `sync`, so only non-skill support entries (no `SKILL.md`)
-    // count toward the install delivery.
+    // Each installed harness's skill count matches the source enumeration of non-skill support entries (no `SKILL.md`).
+    // Harness skills and the general catalog now deploy per-project via `sync`, so only support entries
+    // (directories without a `SKILL.md`) count toward the install delivery.
     const contentDir = resolveContentDir();
     const supportEntries = await listInstalledSupportEntries(path.join(contentDir, 'skills'));
-    for (const [harness, home] of [
-      ['claude', '.claude'],
-      ['rovodev', '.rovodev'],
-    ] as const) {
-      const harnessSkillsDir = path.join(contentDir, 'skills', '_harnesses', harness);
-      const harnessSkills = existsSync(harnessSkillsDir)
-        ? (await readdir(harnessSkillsDir)).filter((e) => !e.startsWith('.'))
-        : [];
+    for (const home of ['.claude', '.rovodev']) {
       const installedSkills = await readdir(path.join(tempDir, home, 'skills'));
-      expect(installedSkills.length).toBe(supportEntries.length + harnessSkills.length);
+      expect(installedSkills.length).toBe(supportEntries.length);
     }
 
     // No installed file retains a raw template token.

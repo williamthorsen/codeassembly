@@ -25,14 +25,14 @@ describe('install stale-file pruning', () => {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  it('removes an installed skill directory whose source was deleted', async () => {
+  it('removes an installed support directory whose source was deleted', async () => {
     const contentDir = await buildContent({
-      harnessSkills: { keep: { 'SKILL.md': skillBody('keep') }, drop: { 'SKILL.md': skillBody('drop') } },
+      supportDirs: { keep: { 'data.md': '# keep\n' }, drop: { 'data.md': '# drop\n' } },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'drop'))).toBe(true);
 
-    await rm(path.join(contentDir, 'skills', '_harnesses', 'claude', 'drop'), { recursive: true, force: true });
+    await rm(path.join(contentDir, 'skills', 'drop'), { recursive: true, force: true });
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'drop'))).toBe(false);
@@ -88,11 +88,11 @@ describe('install stale-file pruning', () => {
 
   it('in dry-run, leaves an orphan on disk and does not rewrite the manifest', async () => {
     const contentDir = await buildContent({
-      harnessSkills: { keep: { 'SKILL.md': skillBody('keep') }, drop: { 'SKILL.md': skillBody('drop') } },
+      supportDirs: { keep: { 'data.md': '# keep\n' }, drop: { 'data.md': '# drop\n' } },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
 
-    await rm(path.join(contentDir, 'skills', '_harnesses', 'claude', 'drop'), { recursive: true, force: true });
+    await rm(path.join(contentDir, 'skills', 'drop'), { recursive: true, force: true });
     await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'drop'))).toBe(true);
@@ -101,21 +101,21 @@ describe('install stale-file pruning', () => {
     expect(paths).toContain('skills/drop');
   });
 
-  it('removes a file deleted from within a still-present multi-file skill', async () => {
+  it('removes a file deleted from within a still-present multi-file support directory', async () => {
     const contentDir = await buildContent({
-      harnessSkills: {
-        multi: { 'SKILL.md': skillBody('multi'), 'modules/old.md': '# old\n', 'modules/keep.md': '# keep\n' },
+      supportDirs: {
+        multi: { 'index.md': '# multi\n', 'modules/old.md': '# old\n', 'modules/keep.md': '# keep\n' },
       },
     });
     await installCommand(makeOptions(), tempDir, contentDir);
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'old.md'))).toBe(true);
 
-    await rm(path.join(contentDir, 'skills', '_harnesses', 'claude', 'multi', 'modules', 'old.md'));
+    await rm(path.join(contentDir, 'skills', 'multi', 'modules', 'old.md'));
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'old.md'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'modules', 'keep.md'))).toBe(true);
-    expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(tempDir, '.claude', 'skills', 'multi', 'index.md'))).toBe(true);
   });
 
   it('does not clean a coincidentally same-named directory on first install', async () => {
@@ -123,29 +123,25 @@ describe('install stale-file pruning', () => {
     await mkdir(preExisting, { recursive: true });
     await writeFile(path.join(preExisting, 'user-note.md'), '# mine\n', 'utf8');
 
-    const contentDir = await buildContent({ harnessSkills: { multi: { 'SKILL.md': skillBody('multi') } } });
+    const contentDir = await buildContent({ supportDirs: { multi: { 'index.md': '# multi\n' } } });
     await installCommand(makeOptions(), tempDir, contentDir);
 
     expect(existsSync(path.join(preExisting, 'user-note.md'))).toBe(true);
-    expect(existsSync(path.join(preExisting, 'SKILL.md'))).toBe(true);
+    expect(existsSync(path.join(preExisting, 'index.md'))).toBe(true);
   });
 
   // region | Helpers
-
-  function skillBody(name: string): string {
-    return `---\nname: ${name}\ndescription: Test skill\n---\n# ${name}\n`;
-  }
 
   const scriptBody = '#!/usr/bin/env bash\necho hi\n';
 
   /**
    * Builds a minimal content tree under a fresh temp directory and returns its path. Only the surfaces named in
    * `options` get extra files; the baseline (shared `AGENTS.md`, claude guidance, subagent overlay) is always present
-   * so the install pipeline runs end to end. `harnessSkills` are written under `skills/_harnesses/claude/`, the
-   * install-deployed skill location (the general catalog deploys per-declaration via `sync`, not via install).
+   * so the install pipeline runs end to end. `supportDirs` are written under `skills/<name>/` without a `SKILL.md`,
+   * so install treats them as support directories (the skill catalog deploys per-declaration via `sync`, not install).
    */
   async function buildContent(options: {
-    harnessSkills?: Record<string, Record<string, string>>;
+    supportDirs?: Record<string, Record<string, string>>;
     scripts?: Record<string, string>;
     shared?: Record<string, string>;
   }): Promise<string> {
@@ -166,11 +162,11 @@ describe('install stale-file pruning', () => {
     for (const [name, body] of Object.entries(options.scripts ?? {})) {
       await writeFile(path.join(contentDir, 'scripts', name), body, 'utf8');
     }
-    for (const [skillName, files] of Object.entries(options.harnessSkills ?? {})) {
-      const skillDir = path.join(contentDir, 'skills', '_harnesses', 'claude', skillName);
-      await mkdir(skillDir, { recursive: true });
+    for (const [dirName, files] of Object.entries(options.supportDirs ?? {})) {
+      const supportDir = path.join(contentDir, 'skills', dirName);
+      await mkdir(supportDir, { recursive: true });
       for (const [fileName, body] of Object.entries(files)) {
-        const fullPath = path.join(skillDir, fileName);
+        const fullPath = path.join(supportDir, fileName);
         await mkdir(path.dirname(fullPath), { recursive: true });
         await writeFile(fullPath, body, 'utf8');
       }

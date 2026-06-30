@@ -4,10 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { parse as parseYaml } from 'yaml';
 
-import { getManifestPath, readManifest } from '../../lib/manifest.ts';
-import { isRecord } from '../../lib/type-guards.ts';
+import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from './build-content-tree.ts';
@@ -45,14 +43,16 @@ describe(installCommand, () => {
     return rovodevHome;
   }
 
-  it('installs harness skills and support dirs with a manifest', async () => {
+  it('installs support directories and guidance with a manifest', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
-    expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(true);
+    // Support directory _data is installed.
+    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
+    // No skill directory is planted — harness skills and catalog skills deploy via sync, not install.
+    expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(false);
-    expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
@@ -87,14 +87,14 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const firstSkill = await readFile(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'), 'utf8');
+    const firstData = await readFile(path.join(claudeHome, 'skills', '_data', 'sample.md'), 'utf8');
     const firstScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const secondSkill = await readFile(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'), 'utf8');
+    const secondData = await readFile(path.join(claudeHome, 'skills', '_data', 'sample.md'), 'utf8');
     const secondScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
-    expect(secondSkill).toBe(firstSkill);
+    expect(secondData).toBe(firstData);
     expect(secondScript).toBe(firstScript);
   });
 
@@ -158,13 +158,13 @@ describe(installCommand, () => {
     expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
   });
 
-  it('copies harness skills but symlinks scripts in link mode', async () => {
+  it('copies support directories but symlinks scripts in link mode', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ link: true }), tempDir, contentDir);
 
-    // Skills are always copied (install-time path rewriting forbids symlinking); scripts are symlinked.
-    expect(lstatSync(path.join(claudeHome, 'skills', 'claude-only')).isSymbolicLink()).toBe(false);
+    // Support directories are always copied (path rewriting forbids symlinking); scripts are symlinked.
+    expect(lstatSync(path.join(claudeHome, 'skills', '_data')).isSymbolicLink()).toBe(false);
     expect(lstatSync(path.join(claudeHome, 'scripts', 'demo.sh')).isSymbolicLink()).toBe(true);
 
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -177,41 +177,43 @@ describe(installCommand, () => {
     }
   });
 
-  it('installs claude harness skills and excludes rovodev harness skills', async () => {
+  it('installs support directories for claude but no harness-specific skill directories', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
     const skills = await readdir(path.join(claudeHome, 'skills'));
-    expect(skills).toContain('claude-only');
+    expect(skills).toContain('_data');
+    expect(skills).not.toContain('claude-only');
     expect(skills).not.toContain('rovodev-only');
   });
 
-  it('installs rovodev harness skills and excludes claude harness skills', async () => {
+  it('installs support directories for rovodev but no harness-specific skill directories', async () => {
     const rovodevHome = await setupRovodevHome();
 
     await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
 
     const skills = await readdir(path.join(rovodevHome, 'skills'));
-    expect(skills).toContain('rovodev-only');
+    expect(skills).toContain('_data');
+    expect(skills).not.toContain('rovodev-only');
     expect(skills).not.toContain('claude-only');
   });
 
-  it('deploys harness skills and the _data support tree but not the general catalog or subagents', async () => {
+  it('deploys the _data support tree and scripts but no skill directories or subagents', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
     const skills = await readdir(path.join(claudeHome, 'skills'));
-    // Harness-specific skills and the _data support tree still install via the unconditional path.
-    expect(skills).toContain('claude-only');
+    // The _data support tree installs.
     expect(skills).toContain('_data');
-    // General-catalog skills (a directory with a SKILL.md) no longer do — they deploy per-declaration via sync.
+    // No skill directory is planted — not harness skills, not general-catalog skills.
+    expect(skills).not.toContain('claude-only');
     expect(skills).not.toContain('alpha');
     expect(skills).not.toContain('beta');
-    // Subagents no longer install unconditionally either.
+    // Subagents do not install unconditionally.
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
-    // Non-artifact responsibilities are unchanged.
+    // Scripts and shared guidance install as before.
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
     expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(true);
   });
@@ -227,13 +229,13 @@ describe(installCommand, () => {
     expect(await readdir(path.join(claudeHome, 'skills', '_data'))).toContain('sample.md');
   });
 
-  it('uses the harness-specific source URL in markers for harness skills', async () => {
+  it('uses the harness-specific source URL in markers for installed harness guidance', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
-    const content = await readFile(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'), 'utf8');
-    expect(content).toContain('content/skills/_harnesses/claude/claude-only/SKILL.md');
+    const content = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
+    expect(content).toContain('content/guidance/_harnesses/claude/CLAUDE.md');
   });
 
   it('does not inject a marker into symlinked shared guidance', async () => {
@@ -250,113 +252,51 @@ describe(installCommand, () => {
     expect(sourceAfter.startsWith('<!-- GENERATED FILE')).toBe(false);
   });
 
-  describe('prompts.yml (rovodev)', () => {
-    function extractPrompts(content: string): Array<Record<string, unknown>> {
-      const parsed: unknown = parseYaml(content);
-      if (!isRecord(parsed) || !Array.isArray(parsed.prompts)) {
-        throw new Error('Expected parsed YAML with a prompts array');
-      }
-      return parsed.prompts.filter((entry): entry is Record<string, unknown> => isRecord(entry));
-    }
+  it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {
+    const claudeHome = await setupClaudeHome();
+    const rovodevHome = await setupRovodevHome();
 
-    /** Writes a `SKILL.md` with the given frontmatter lines into the harness skills dir, simulating a skill `sync` already deployed. */
-    async function seedInstalledSkill(
-      harnessHome: string,
-      name: string,
-      frontmatterLines: ReadonlyArray<string>,
-    ): Promise<void> {
-      const skillDir = path.join(harnessHome, 'skills', name);
-      await mkdir(skillDir, { recursive: true });
-      const body = ['---', ...frontmatterLines, '---', '', `# ${name}`, ''].join('\n');
-      await writeFile(path.join(skillDir, 'SKILL.md'), body, 'utf8');
-    }
+    // Seed on-disk files representing what a previous install would have planted.
+    const legacySkillDir = path.join(claudeHome, 'skills', 'claude-only');
+    await mkdir(legacySkillDir, { recursive: true });
+    await writeFile(path.join(legacySkillDir, 'SKILL.md'), '---\nname: claude-only\n---\n', 'utf8');
+    const promptsYmlPath = path.join(rovodevHome, 'prompts.yml');
+    await writeFile(promptsYmlPath, 'prompts: []\n', 'utf8');
+    const promptsYmlHash = await computeContentHash(promptsYmlPath);
 
-    it('generates a valid prompts.yml filtered by user-invocable', async () => {
-      const rovodevHome = await setupRovodevHome();
-      // prompts.yml is a pure projection of the on-disk skills dir, so seed the catalog skills sync would have
-      // delivered before install regenerates the index.
-      await seedInstalledSkill(rovodevHome, 'alpha', ['name: alpha', 'user-invocable: true']);
-      await seedInstalledSkill(rovodevHome, 'beta', ['name: beta', 'user-invocable: false']);
-
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
-
-      const prompts = extractPrompts(await readFile(path.join(rovodevHome, 'prompts.yml'), 'utf8'));
-      for (const entry of prompts) {
-        expect(typeof entry.name).toBe('string');
-        expect(typeof entry.description).toBe('string');
-        expect(typeof entry.content_file).toBe('string');
-      }
-      const names = prompts.map((entry) => entry.name);
-      expect(names).toContain('alpha'); // user-invocable: true
-      expect(names).toContain('rovodev-only'); // user-invocable defaults to true
-      expect(names).not.toContain('beta'); // user-invocable: false
+    // Seed the manifest to record these as previously installed entries. Directory entries use the sentinel
+    // hash; file entries require the actual content hash so the drift check treats them as unmodified.
+    await writeManifest(getManifestPath(tempDir), {
+      schemaVersion: 2,
+      harnesses: {
+        claude: {
+          harness: 'claude',
+          version: '0.1.0',
+          installedAt: new Date().toISOString(),
+          entries: [
+            { relativePath: 'skills/claude-only', contentHash: 'sha256:dir:skills/claude-only', linked: false },
+          ],
+        },
+        rovodev: {
+          harness: 'rovodev',
+          version: '0.1.0',
+          installedAt: new Date().toISOString(),
+          entries: [{ relativePath: 'prompts.yml', contentHash: promptsYmlHash, linked: false }],
+        },
+      },
     });
 
-    it('strips surrounding quotes from skill descriptions', async () => {
-      const rovodevHome = await setupRovodevHome();
-      // Seed the quoted-description skills directly into the destination, as sync would have deployed them.
-      await seedInstalledSkill(rovodevHome, 'single-quoted', [
-        'name: single-quoted',
-        "description: 'A skill: it''s useful'",
-        'user-invocable: true',
-      ]);
-      await seedInstalledSkill(rovodevHome, 'double-quoted', [
-        'name: double-quoted',
-        'description: "A double-quoted description"',
-        'user-invocable: true',
-      ]);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
 
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
+    expect(existsSync(path.join(claudeHome, 'skills', 'claude-only'))).toBe(false);
+    expect(existsSync(promptsYmlPath)).toBe(false);
 
-      const prompts = extractPrompts(await readFile(path.join(rovodevHome, 'prompts.yml'), 'utf8'));
-      const single = prompts.find((entry) => entry.name === 'single-quoted');
-      const double = prompts.find((entry) => entry.name === 'double-quoted');
-      expect(single?.description).toBe("A skill: it's useful");
-      expect(double?.description).toBe('A double-quoted description');
-    });
-
-    it('tracks prompts.yml in the manifest', async () => {
-      await setupRovodevHome();
-
-      await installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir);
-
-      const manifest = await readManifest(getManifestPath(tempDir));
-      const entry = manifest.harnesses.rovodev?.entries.find((e) => e.relativePath === 'prompts.yml');
-      expect(entry?.linked).toBe(false);
-      expect(entry?.contentHash).toMatch(/^sha256:/);
-    });
-
-    it('does not generate prompts.yml for claude', async () => {
-      const claudeHome = await setupClaudeHome();
-
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-
-      expect(existsSync(path.join(claudeHome, 'prompts.yml'))).toBe(false);
-    });
-
-    it('tolerates stray non-skill entries in the destination skills directory', async () => {
-      const rovodevHome = await setupRovodevHome();
-      // A `.DS_Store` (dotfile) and a plain file both reach generatePromptsYml's readdir; joining SKILL.md onto a
-      // non-directory raises ENOTDIR/ENOENT, which is swallowed.
-      await writeFile(path.join(rovodevHome, 'skills', '.DS_Store'), '', 'utf8');
-      await writeFile(path.join(rovodevHome, 'skills', 'stray-file'), '', 'utf8');
-
-      await expect(installCommand(makeOptions({ harness: 'rovodev' }), tempDir, contentDir)).resolves.toBeUndefined();
-
-      const prompts = extractPrompts(await readFile(path.join(rovodevHome, 'prompts.yml'), 'utf8'));
-      const names = prompts.map((entry) => entry.name);
-      expect(names).not.toContain('.DS_Store');
-      expect(names).not.toContain('stray-file');
-    });
-
-    it('writes no prompts.yml or manifest in dry-run mode', async () => {
-      const rovodevHome = await setupRovodevHome();
-
-      await installCommand(makeOptions({ harness: 'rovodev', dryRun: true }), tempDir, contentDir);
-
-      expect(existsSync(path.join(rovodevHome, 'prompts.yml'))).toBe(false);
-      expect(existsSync(getManifestPath(tempDir))).toBe(false);
-    });
+    const manifest = await readManifest(getManifestPath(tempDir));
+    const claudePaths = manifest.harnesses.claude?.entries.map((e) => e.relativePath) ?? [];
+    const rovodevPaths = manifest.harnesses.rovodev?.entries.map((e) => e.relativePath) ?? [];
+    expect(claudePaths).not.toContain('skills/claude-only');
+    expect(rovodevPaths).not.toContain('prompts.yml');
   });
 
   describe('scripts', () => {
