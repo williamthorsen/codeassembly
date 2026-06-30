@@ -155,8 +155,8 @@ If the user declines, stop with no API call and no artifact. If they approve, co
 
 Read `scm` from session context:
 
-- `"github"` → delegate to `merge-gh-pr`
-- `"bitbucket"` → delegate to `merge-bb-pr` (stub; prints the resolved values and exits without merging)
+- `"github"` → delegate to `{skill:merge-gh-pr}`
+- `"bitbucket"` → delegate to `{skill:merge-bb-pr}` (stub; prints the resolved values and exits without merging)
 - Unknown or missing → ask the user which platform to use
 
 ### 9. Call delegate

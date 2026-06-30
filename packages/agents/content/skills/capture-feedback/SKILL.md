@@ -43,7 +43,7 @@ If the feedback is purely behavioral — a standing rule with nothing to fix rig
 
 ### 3. Capture the record
 
-Invoke the `capture-event` skill to append an immutable record, composing its arguments and body as follows:
+Invoke the `{skill:capture-event}` skill to append an immutable record, composing its arguments and body as follows:
 
 - `--store codeassembly` — the project's agent-guidance KB. Pass a different `--store` only when the user directs the record elsewhere.
 - `--tags feedback` — always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").

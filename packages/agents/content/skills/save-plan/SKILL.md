@@ -43,7 +43,7 @@ Report the file path, then present a ticket prompt and next steps together in a 
 ```
 Plan saved: {plan_path}
 
-Would you like to create or update a ticket for this work? If so, use the `create-ticket` skill.
+Would you like to create or update a ticket for this work? If so, use the `{skill:create-ticket}` skill.
 ```
 
 <HARD-GATE>

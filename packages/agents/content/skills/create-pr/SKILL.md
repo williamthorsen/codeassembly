@@ -32,7 +32,7 @@ If the branch is not up to date with remote, **STOP THIS TASK** and notify the u
 
 ### 3. Call `summarize-change`
 
-Invoke the `summarize-change` skill to produce a change summary. This generates a markdown file with YAML frontmatter containing `title`, `ticket_id`, `commit`, `scope`, and `type`.
+Invoke the `{skill:summarize-change}` skill to produce a change summary. This generates a markdown file with YAML frontmatter containing `title`, `ticket_id`, `commit`, `scope`, and `type`.
 
 ### 4. Read frontmatter
 
@@ -83,8 +83,8 @@ Missing entries are silently skipped. If neither scope nor type is present, labe
 
 Read `scm` from the session context manifest:
 
-- `"github"` -> delegate to `create-gh-pr`
-- `"bitbucket"` -> delegate to `create-bitbucket-pr`
+- `"github"` -> delegate to `{skill:create-gh-pr}`
+- `"bitbucket"` -> delegate to `{skill:create-bitbucket-pr}`
 - Unknown or missing -> ask the user which platform to use
 
 ### 9. Append auto-close keyword (if applicable)

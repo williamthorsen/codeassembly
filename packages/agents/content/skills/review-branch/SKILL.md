@@ -2,6 +2,9 @@
 name: review-branch
 description: Perform code review of branch changes against a diff base
 user-invocable: true
+dependencies:
+  skills:
+    - review-criteria
 ---
 
 # Review branch

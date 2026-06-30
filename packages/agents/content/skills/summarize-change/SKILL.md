@@ -28,7 +28,7 @@ Check commit messages for additional context.
 
 5. **Resolve tier**: From [work-types.json](../_data/work-types.json), look up the `tier` (`public`, `internal`, or `process`) corresponding to the resolved `type`. If `type` could not be inferred, default the tier to `internal`.
 
-6. **Compose `## What` via `changelog-writer`**: Dispatch the `changelog-writer` subagent via the {tool:Task} tool in `write` mode. Pass a prompt of this shape:
+6. **Compose `## What` via `changelog-writer`**: Dispatch the `{subagent:changelog-writer}` subagent via the {tool:Task} tool in `write` mode. Pass a prompt of this shape:
 
    ```
    mode: write

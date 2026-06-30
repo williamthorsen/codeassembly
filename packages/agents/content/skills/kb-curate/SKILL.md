@@ -58,7 +58,7 @@ The helper reports findings across five categories. Each finding carries a rule 
 
 Only two fixes are applied; everything else stays report-only.
 
-- **Tag canonicalization** — for each note with a `frontmatter.tag-alias` finding, the helper invokes `kb-edit --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
+- **Tag canonicalization** — for each note with a `frontmatter.tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
 - **Path-only wikilink rewrites** — a cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: a bare-basename link that resolves uniquely is valid, carries no finding, and is left untouched, so remediation never flips a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
 
 Each fix returns a per-finding result reporting `ok: true/false` and the operation invoked. A single fix failure does not abort the run.

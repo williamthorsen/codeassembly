@@ -6,7 +6,7 @@ user-invocable: true
 
 # Review pull request
 
-Review a pull request on the appropriate platform. Detects the platform, dispatches to a delegate (`review-gh-pr` or `review-bb-pr`) that fetches PR metadata, verifies HEAD matches the PR's head commit, and resolves specification sources, then invokes the shared review process from `review-branch` with the resolved inputs.
+Review a pull request on the appropriate platform. Detects the platform, dispatches to a delegate (`{skill:review-gh-pr}` or `{skill:review-bb-pr}`) that fetches PR metadata, verifies HEAD matches the PR's head commit, and resolves specification sources, then invokes the shared review process from `{skill:review-branch}` with the resolved inputs.
 
 This is a thin entry skill: The shared review logic — diff analysis, finding generation, "Specification compliance" rendering, artifact saving — lives in `review-branch`. Delegates own only the platform-specific work (PR-metadata fetch, HEAD verification, ticket resolution from PR linked issues, PR-description preparation). After the delegate returns its resolved inputs, this skill invokes `review-branch`'s review process with the prepared spec-source list and resolved diff base.
 

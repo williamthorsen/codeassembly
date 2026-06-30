@@ -51,7 +51,7 @@ List the existing topic folders under the resolved KB's assertions root (`conten
 
 ### 3. Cross-reference via kb-retrieve
 
-Invoke the `kb-retrieve` skill on the note's topic terms. Read the top-ranked candidates; they are the inputs for your cross-referencing decisions in step 5. This step is mandatory in both default and auto modes — the proposal should always either embed cross-references or explicitly note that none are warranted.
+Invoke the `{skill:kb-retrieve}` skill on the note's topic terms. Read the top-ranked candidates; they are the inputs for your cross-referencing decisions in step 5. This step is mandatory in both default and auto modes — the proposal should always either embed cross-references or explicitly note that none are warranted.
 
 ### 4. Classify
 

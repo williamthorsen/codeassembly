@@ -93,8 +93,8 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 2. **Apply overrides**: For each setting, apply the resolution cascade — explicit CLI arguments override effort presets, which override preferences, which override engine defaults.
 3. **Resolve aspect reviewers**: Based on the effort preset's `aspect-reviewers` setting (`disabled`, `auto`, or `always`), set the `orchestration.aspect_reviewers` configuration. `disabled` sets all aspects to `false`. `always` sets all aspects to `true`. `auto` omits the configuration (engine uses default file-pattern activation).
 4. **Build pipeline**: Apply any `--architecture` or `--planning` overrides to the pipeline table. If not overridden, use `optional` for both.
-5. **Invoke the engine**: Invoke the `orchestrate` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) directly.
+5. **Invoke the engine**: Invoke the `{skill:orchestrate}` skill with the pipeline specification and all resolved arguments. The pipeline table **is** the pipeline specification — the engine reads the table entries (phase name + requirement level) directly.
 
 ## After the run
 
-The orchestrate engine automatically offers `/wrap-up` when the run-summary contains deferred items or insights (Phase 6). For sessions where the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `/wrap-up` manually.
+The orchestrate engine automatically offers `/wrap-up` when the run-summary contains deferred items or insights (Phase 6). For sessions where the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `{skill:wrap-up}` manually.
