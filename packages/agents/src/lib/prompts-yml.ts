@@ -5,19 +5,18 @@ import { parseFrontmatter } from './frontmatter-merger.ts';
 import { isEnoent, isMissingFile } from './type-guards.ts';
 
 /** One entry in the rendered index: a user-invocable skill paired with its description and content file. */
-interface PromptEntry {
+export interface PromptEntry {
   readonly name: string;
   readonly description: string;
   readonly contentFile: string;
 }
 
 /**
- * Renders the Rovo Dev `prompts.yml` index for the skills under `skillsDir`: one entry per skill directory, sorted by
- * name, excluding any whose `SKILL.md` declares `user-invocable: false`. Returns `undefined` when the directory is
- * absent. A pure projection of the on-disk skills dir — install and sync produce byte-identical output, so either may
- * regenerate it.
+ * Scans the skills under `skillsDir` into the prompt entries that back the Rovo Dev index: one entry per skill
+ * directory, sorted by name, excluding any whose `SKILL.md` declares `user-invocable: false`. Returns `undefined`
+ * when the directory is absent. The shared projection both the whole-file and region renderers build on.
  */
-export async function renderPromptsYml(skillsDir: string): Promise<string | undefined> {
+export async function collectPromptEntries(skillsDir: string): Promise<ReadonlyArray<PromptEntry> | undefined> {
   let skillDirEntries: ReadonlyArray<string>;
   try {
     skillDirEntries = await readdir(skillsDir);
@@ -49,7 +48,37 @@ export async function renderPromptsYml(skillsDir: string): Promise<string | unde
     promptEntries.push({ name: skillName, description, contentFile: `skills/${skillName}/SKILL.md` });
   }
 
-  return renderYaml(promptEntries);
+  return promptEntries;
+}
+
+/**
+ * Renders the prompt entries as the indented `- name/description/content_file` list items — no `prompts:` header —
+ * single-quoting descriptions with internal quotes doubled. Returns an empty string for no entries. This is the body
+ * the whole-file renderer prefixes with `prompts:` and the region renderer wraps in sentinels.
+ */
+export function renderPromptEntries(entries: ReadonlyArray<PromptEntry>): string {
+  const yamlLines: Array<string> = [];
+  for (const entry of entries) {
+    yamlLines.push(
+      `  - name: '${entry.name}'`,
+      `    description: '${entry.description.replaceAll("'", "''")}'`,
+      `    content_file: ${entry.contentFile}`,
+    );
+  }
+  return yamlLines.length === 0 ? '' : yamlLines.join('\n') + '\n';
+}
+
+/**
+ * Renders the whole-file Rovo Dev `prompts.yml` index for the skills under `skillsDir` (`prompts:` header plus the
+ * entry list). Returns `undefined` when the directory is absent. A pure projection of the on-disk skills dir — install
+ * and sync produce byte-identical output, so either may regenerate it.
+ */
+export async function renderPromptsYml(skillsDir: string): Promise<string | undefined> {
+  const entries = await collectPromptEntries(skillsDir);
+  if (entries === undefined) {
+    return undefined;
+  }
+  return `prompts:\n${renderPromptEntries(entries)}`;
 }
 
 // region | Helpers
@@ -68,19 +97,6 @@ function readPromptMetadata(skillContent: string): { userInvocable: boolean; des
     }
   }
   return { userInvocable, description };
-}
-
-/** Builds the deterministic `prompts.yml` body, single-quoting descriptions with internal quotes doubled. */
-function renderYaml(promptEntries: ReadonlyArray<PromptEntry>): string {
-  const yamlLines = ['prompts:'];
-  for (const entry of promptEntries) {
-    yamlLines.push(
-      `  - name: '${entry.name}'`,
-      `    description: '${entry.description.replaceAll("'", "''")}'`,
-      `    content_file: ${entry.contentFile}`,
-    );
-  }
-  return yamlLines.join('\n') + '\n';
 }
 
 /** Strips surrounding single or double quotes from a YAML scalar, unescaping the doubled or backslash forms. */
