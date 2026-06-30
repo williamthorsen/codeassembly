@@ -9,9 +9,8 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { initGlobalCommand } from '../init.ts';
 import { syncGlobalCommand } from '../sync.ts';
 
-// Deliberate-only integration test that exercises the real content library end-to-end: `init --global` seeds the
-// `all` collection, then `sync --global` resolves it and deploys the whole catalog into an isolated temp home. Runs
-// via `test:integration`, not the default unit suite, so it asserts real-catalog invariants a synthetic fixture cannot.
+// Runs `init --global` then `sync --global` against the real content library to catch failures that
+// only show up with real content.
 describe('sync --global (real library, all collection)', () => {
   let homeDir: string;
 

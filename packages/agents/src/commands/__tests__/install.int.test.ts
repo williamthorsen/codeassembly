@@ -10,9 +10,8 @@ import { isEnoent } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 
-// Deliberate-only integration tests that install the real library to assert real-content invariants a
-// synthetic fixture cannot. They run via `test:integration`, not the default unit suite, so they cover the
-// full catalog rather than a sample.
+// Installs the real content library, not a fixture, to catch failures that only show up with real
+// content, such as an unreplaced `{...}` token or a link that wasn't rewritten.
 describe('install (real library, full catalog)', () => {
   let tempDir: string;
 
