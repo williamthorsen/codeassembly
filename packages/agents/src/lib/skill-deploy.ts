@@ -65,7 +65,12 @@ export async function deploySkill(skill: ResolvedSkill, destDir: string, context
     const destPath = path.join(destDir, entry.relPath);
     await mkdir(path.dirname(destPath), { recursive: true });
     if (entry.kind === 'markdown') {
-      const body = entry.relPath === 'SKILL.md' ? skillMarker.injectMarker(entry.content, skill.slug) : entry.content;
+      // Strip the build-only `harnesses:` directive from the deployed root SKILL.md — it steers deployment, not the
+      // harness, which would otherwise carry a frontmatter key it ignores.
+      const body =
+        entry.relPath === 'SKILL.md'
+          ? skillMarker.injectMarker(stripHarnessesDirective(entry.content), skill.slug)
+          : entry.content;
       await writeIfChanged(destPath, body);
     } else {
       await copyFileIfChanged(entry.srcPath, destPath);
@@ -144,6 +149,35 @@ function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<
     harnesses.push(value);
   }
   return harnesses;
+}
+
+/**
+ * Removes the `harnesses:` build directive from a skill's frontmatter, dropping the key line and any indented
+ * block-continuation beneath it. Returns the content unchanged when no `harnesses:` key is present, so a skill that
+ * never declared one is left byte-identical.
+ */
+function stripHarnessesDirective(content: string): string {
+  const { lines, body } = parseFrontmatter(content);
+  if (!lines.some((line) => /^harnesses\s*:/.test(line))) {
+    return content;
+  }
+
+  const kept: Array<string> = [];
+  let skippingBlock = false;
+  for (const line of lines) {
+    if (skippingBlock) {
+      if (/^\s/.test(line) && line.trim() !== '') {
+        continue;
+      }
+      skippingBlock = false;
+    }
+    if (/^harnesses\s*:/.test(line)) {
+      skippingBlock = true;
+      continue;
+    }
+    kept.push(line);
+  }
+  return `---\n${kept.join('\n')}\n---\n${body}`;
 }
 
 // endregion | Helpers

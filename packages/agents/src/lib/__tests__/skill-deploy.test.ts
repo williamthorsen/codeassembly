@@ -38,6 +38,20 @@ describe(deploySkill, () => {
     expect(deployed).toContain('# People report');
   });
 
+  it('strips the build-only harnesses directive from the deployed SKILL.md', async () => {
+    await writeLibrarySkill('rovo-only', {
+      'SKILL.md': '---\nname: rovo-only\nharnesses: [rovodev]\n---\n\n# Rovo only\n',
+    });
+    const destDir = path.join(destParent, 'rovo-only');
+
+    await deploySkill(resolvedSkill('rovo-only'), destDir, context());
+
+    const deployed = await readFile(path.join(destDir, 'SKILL.md'), 'utf8');
+    expect(deployed).not.toContain('harnesses:');
+    expect(deployed).toContain('name: rovo-only');
+    expect(deployed).toContain('# Rovo only');
+  });
+
   it('re-deploys an unchanged skill without rewriting SKILL.md', async () => {
     await writeLibrarySkill('people-report', { 'SKILL.md': '---\nname: people-report\n---\n\n# People report\n' });
     const destDir = path.join(destParent, 'people-report');
