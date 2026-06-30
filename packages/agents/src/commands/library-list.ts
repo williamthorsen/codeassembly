@@ -200,7 +200,7 @@ async function listSkills(contentDir: string): Promise<Array<ArtifactEntry>> {
       const meta = readNameAndDescription(content);
       return {
         slug: meta.name ?? name,
-        delivery: NO_DELIVERY_MODE,
+        delivery: readHarnessAffinity(content),
         description: meta.description ?? '',
       };
     });
@@ -236,6 +236,22 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
 function padType(emoji: string, label: string, colWidth: number): string {
   const padding = Math.max(0, colWidth - (EMOJI_DISPLAY_WIDTH + 1 + label.length));
   return `${emoji} ${label}${' '.repeat(padding)}`;
+}
+
+/**
+ * Reads a skill's `harnesses:` frontmatter for the delivery column, formatting it as the comma-joined harness list a
+ * skill targets, or `—` when the field is absent or empty (meaning all harnesses). Display-only and tolerant: a
+ * non-string entry is dropped rather than rejected.
+ */
+function readHarnessAffinity(content: string): string {
+  const { lines } = parseFrontmatter(content);
+  const parsed: unknown = parseYaml(lines.join('\n'));
+  if (!isRecord(parsed) || parsed.harnesses === undefined || parsed.harnesses === null) {
+    return NO_DELIVERY_MODE;
+  }
+  const values = Array.isArray(parsed.harnesses) ? parsed.harnesses : [parsed.harnesses];
+  const harnesses = values.filter((value): value is string => typeof value === 'string');
+  return harnesses.length === 0 ? NO_DELIVERY_MODE : harnesses.join(', ');
 }
 
 /** Extracts the `name` and `description` strings from a markdown file's frontmatter, when present. */
