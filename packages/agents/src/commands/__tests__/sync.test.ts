@@ -830,6 +830,20 @@ describe(syncCommand, () => {
       expect(prompts).not.toContain('# codeassembly:managed:start');
     });
 
+    it('refuses to corrupt a flow-style hand-authored prompts.yml, leaving it unchanged', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+      const flowAuthored = "prompts: [{ name: 'foreign', content_file: custom.md }]\n";
+      await writeFile(promptsYmlPath(), flowAuthored, 'utf8');
+
+      await expect(syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir)).rejects.toThrow(
+        /block-style/,
+      );
+
+      expect(await readFile(promptsYmlPath(), 'utf8')).toBe(flowAuthored);
+    });
+
     it('leaves a region-less prompts.yml untouched when no Rovo Dev skills are declared', async () => {
       await seedHandAuthoredPromptsYml();
       const handAuthored = await readFile(promptsYmlPath(), 'utf8');

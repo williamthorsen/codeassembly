@@ -17,8 +17,10 @@ export function hasPromptsRegion(content: string): boolean {
 /**
  * Inserts or replaces the codeassembly region carrying `regionBody` (the rendered entry list). An existing region is
  * replaced in place; otherwise the region is appended at the end of the `prompts:` sequence — after any foreign items
- * and before any following top-level key — creating a `prompts:` key when the file has none. Re-inserting an identical
- * body yields byte-identical content, which is what keeps `sync` diff-free on re-run.
+ * and before any following top-level key — creating a `prompts:` key when the file has none. An empty flow-style
+ * `prompts: []` is normalized to a block header first; an inline-valued `prompts:` carrying content is refused (throws)
+ * rather than silently duplicating the key into an unloadable file. Re-inserting an identical body yields byte-identical
+ * content, which is what keeps `sync` diff-free on re-run.
  */
 export function injectPromptsRegion(content: string, regionBody: string): string {
   const region = renderRegion(regionBody);
@@ -30,10 +32,22 @@ export function injectPromptsRegion(content: string, regionBody: string): string
 
   const lines = splitContentLines(content);
   const regionLines = region.split('\n');
-  const promptsIdx = lines.findIndex(isPromptsKey);
+  const promptsIdx = lines.findIndex(isTopLevelPromptsKey);
 
   if (promptsIdx === -1) {
     return joinContentLines([...lines, 'prompts:', ...regionLines]);
+  }
+
+  const promptsLine = lines[promptsIdx] ?? '';
+  if (!isBlockPromptsHeader(promptsLine)) {
+    if (!isEmptyFlowPrompts(promptsLine)) {
+      throw new Error(
+        "Cannot merge the codeassembly region into an inline 'prompts:' value in prompts.yml; convert it to a " +
+          "block-style 'prompts:' sequence, then re-run.",
+      );
+    }
+    // An empty flow sequence holds no foreign items, so rewrite it as a block header and insert the region below.
+    lines[promptsIdx] = 'prompts:';
   }
 
   // Walk to the end of the prompts block: indented list items and their children, skipping interleaved blank lines,
@@ -76,7 +90,7 @@ export function removePromptsRegion(content: string): string {
   }
 
   const remaining = [...lines.slice(0, startIdx), ...lines.slice(endIdx + 1)];
-  const promptsIdx = remaining.findIndex(isPromptsKey);
+  const promptsIdx = remaining.findIndex(isBlockPromptsHeader);
   if (promptsIdx !== -1 && !hasIndentedContentAfter(remaining, promptsIdx)) {
     remaining.splice(promptsIdx, 1);
   }
@@ -98,17 +112,27 @@ function hasIndentedContentAfter(lines: ReadonlyArray<string>, promptsIdx: numbe
   return false;
 }
 
+/** True for a block-style `prompts:` header — column 0, no inline value. */
+function isBlockPromptsHeader(line: string): boolean {
+  return /^prompts:[ \t]*$/.test(line);
+}
+
 function isCloseMarker(line: string): boolean {
   return line.trim() === '# codeassembly:managed:end';
+}
+
+/** True for an empty flow-style sequence (`prompts: []`), which carries no foreign items. */
+function isEmptyFlowPrompts(line: string): boolean {
+  return /^prompts:[ \t]*\[[ \t]*\][ \t]*$/.test(line);
 }
 
 function isOpenMarker(line: string): boolean {
   return line.trim() === '# codeassembly:managed:start';
 }
 
-/** True for a top-level `prompts:` key (column 0, no trailing value). */
-function isPromptsKey(line: string): boolean {
-  return /^prompts:[ \t]*$/.test(line);
+/** True for any top-level `prompts:` key, whether a block header or an inline-valued line. */
+function isTopLevelPromptsKey(line: string): boolean {
+  return line.startsWith('prompts:');
 }
 
 /** Rejoins content lines, restoring a single trailing newline; returns an empty string for no lines. */

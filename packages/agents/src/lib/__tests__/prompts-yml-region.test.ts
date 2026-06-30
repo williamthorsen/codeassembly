@@ -59,6 +59,16 @@ describe(injectPromptsRegion, () => {
     expect(updated).toBe(`prompts:\n${newRegion}\n`);
     expect(updated).not.toContain("name: 'x'");
   });
+
+  it('normalizes an empty flow-style prompts: [] to a block header before inserting', () => {
+    expect(injectPromptsRegion('prompts: []\n', BODY)).toBe(`prompts:\n${REGION}\n`);
+  });
+
+  it('refuses an inline-valued prompts: rather than appending a duplicate key', () => {
+    expect(() => injectPromptsRegion("prompts: [{ name: 'foreign', content_file: foo.md }]\n", BODY)).toThrow(
+      /block-style/,
+    );
+  });
 });
 
 describe(removePromptsRegion, () => {
