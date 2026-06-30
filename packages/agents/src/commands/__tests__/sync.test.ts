@@ -733,6 +733,127 @@ describe(syncCommand, () => {
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
   });
+
+  describe('project Rovo Dev prompts.yml', () => {
+    /** Writes a fixture skill into the temp content library, with optional extra frontmatter line(s). */
+    async function writeLibrarySkill(slug: string, frontmatter = ''): Promise<void> {
+      const dir = path.join(contentDir, 'skills', slug);
+      await mkdir(dir, { recursive: true });
+      const extra = frontmatter === '' ? '' : `${frontmatter}\n`;
+      await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${extra}---\n\n# ${slug}\n\nBody.\n`, 'utf8');
+    }
+
+    /** Writes the project-scope codeassembly.yaml declaring the given skill slugs. */
+    async function declareSkills(...slugs: ReadonlyArray<string>): Promise<void> {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      const useBlock =
+        slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `skills:\n${useBlock}`, 'utf8');
+    }
+
+    const promptsYmlPath = (): string => path.join(projectRoot, '.rovodev', 'prompts.yml');
+
+    /** Seeds a hand-authored `prompts.yml` carrying a single foreign entry and no codeassembly region. */
+    async function seedHandAuthoredPromptsYml(): Promise<void> {
+      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+      await writeFile(
+        promptsYmlPath(),
+        "prompts:\n  - name: 'hand-authored'\n    description: 'kept'\n    content_file: custom.md\n",
+        'utf8',
+      );
+    }
+
+    it('writes a region indexing the user-invocable Rovo Dev skills, excluding non-invocable ones', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await writeLibrarySkill('internal-skill', 'user-invocable: false');
+      await declareSkills('public-skill', 'internal-skill');
+
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+
+      const prompts = await readFile(promptsYmlPath(), 'utf8');
+      expect(prompts).toContain('# codeassembly:managed:start');
+      expect(prompts).toContain('# codeassembly:managed:end');
+      expect(prompts).toContain("name: 'public-skill'");
+      expect(prompts).toContain('content_file: skills/public-skill/SKILL.md');
+      expect(prompts).not.toContain('internal-skill');
+    });
+
+    it('leaves prompts.yml byte-identical on re-sync with no skill changes', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      const first = await readFile(promptsYmlPath(), 'utf8');
+
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+
+      expect(await readFile(promptsYmlPath(), 'utf8')).toBe(first);
+    });
+
+    it('merges the region into a hand-authored prompts.yml, preserving foreign entries', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+      await seedHandAuthoredPromptsYml();
+
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+
+      const prompts = await readFile(promptsYmlPath(), 'utf8');
+      expect(prompts).toContain("name: 'hand-authored'");
+      expect(prompts).toContain('content_file: custom.md');
+      expect(prompts).toContain("name: 'public-skill'");
+      expect(prompts).toContain('# codeassembly:managed:start');
+    });
+
+    it('removes the region and deletes the file when undeclaring leaves nothing foreign', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      expect(existsSync(promptsYmlPath())).toBe(true);
+
+      await declareSkills();
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+
+      expect(existsSync(promptsYmlPath())).toBe(false);
+    });
+
+    it('strips only the region and keeps the file when foreign entries remain', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+      await seedHandAuthoredPromptsYml();
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+      expect(await readFile(promptsYmlPath(), 'utf8')).toContain('# codeassembly:managed:start');
+
+      await declareSkills();
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+
+      const prompts = await readFile(promptsYmlPath(), 'utf8');
+      expect(prompts).toContain("name: 'hand-authored'");
+      expect(prompts).not.toContain('# codeassembly:managed:start');
+    });
+
+    it('refuses to corrupt a flow-style hand-authored prompts.yml, leaving it unchanged', async () => {
+      await writeLibrarySkill('public-skill', 'description: Public skill');
+      await declareSkills('public-skill');
+      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+      const flowAuthored = "prompts: [{ name: 'foreign', content_file: custom.md }]\n";
+      await writeFile(promptsYmlPath(), flowAuthored, 'utf8');
+
+      await expect(syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir)).rejects.toThrow(
+        /block-style/,
+      );
+
+      expect(await readFile(promptsYmlPath(), 'utf8')).toBe(flowAuthored);
+    });
+
+    it('leaves a region-less prompts.yml untouched when no Rovo Dev skills are declared', async () => {
+      await seedHandAuthoredPromptsYml();
+      const handAuthored = await readFile(promptsYmlPath(), 'utf8');
+      await declareSkills();
+
+      await syncCommand(makeOptions({ harness: 'rovodev' }), projectRoot, contentDir);
+
+      expect(await readFile(promptsYmlPath(), 'utf8')).toBe(handAuthored);
+    });
+  });
 });
 
 describe(syncGlobalCommand, () => {

@@ -11,7 +11,8 @@ import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
-import { renderPromptsYml } from '../lib/prompts-yml.ts';
+import { collectPromptEntries, renderPromptEntries, renderPromptsYml } from '../lib/prompts-yml.ts';
+import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
@@ -323,6 +324,7 @@ async function reconcileDomain(
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
 
   await refreshHomePromptsYml(options, domain);
+  await refreshProjectPromptsYml(options, domain);
 
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
   const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
@@ -667,6 +669,41 @@ async function refreshHomePromptsYml(options: InstallOptions, domain: SyncDomain
     if (promptsYml !== undefined) {
       await writeIfChanged(path.join(harnessHome, 'prompts.yml'), promptsYml);
     }
+  }
+}
+
+/**
+ * Generates the repo-domain Rovo Dev `prompts.yml` so project-scoped skills appear in its available-skills list. The
+ * deployed skills are projected into a codeassembly-owned region merged into the shared file, preserving any foreign
+ * entries. When no project-scoped skills remain, the region is stripped — and the file deleted when nothing foreign is
+ * left. A no-op for the home domain and for non-Rovo Dev harnesses; a file carrying no codeassembly region is never
+ * touched.
+ */
+async function refreshProjectPromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
+  if (domain.label !== 'project') {
+    return;
+  }
+  for (const harnessId of resolveHarnessIds(options.harness, domain.baseDir)) {
+    if (harnessId !== 'rovodev') {
+      continue;
+    }
+    const { harnessHome, skillsDir } = resolveHarnessPaths(harnessId, domain.baseDir);
+    const promptsPath = path.join(harnessHome, 'prompts.yml');
+    const entries = await collectPromptEntries(skillsDir);
+    const existing = await readFileOrEmpty(promptsPath);
+
+    if (entries !== undefined && entries.length > 0) {
+      await writeIfChanged(promptsPath, injectPromptsRegion(existing, renderPromptEntries(entries)));
+      continue;
+    }
+
+    // No project-scoped skills: strip our region, deleting the file when nothing foreign survives. A file we never
+    // owned (no region) is left untouched.
+    if (!hasPromptsRegion(existing)) {
+      continue;
+    }
+    const stripped = removePromptsRegion(existing);
+    await (stripped.trim() === '' ? rm(promptsPath, { force: true }) : writeIfChanged(promptsPath, stripped));
   }
 }
 
