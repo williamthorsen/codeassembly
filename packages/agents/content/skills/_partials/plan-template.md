@@ -1,4 +1,4 @@
-**Detail threshold:** Include enough detail that a competent engineer, reading only the plan and ticket, would make the same architectural decisions you would. Omit details they'd arrive at independently.
+**Detail threshold:** Include enough detail that a competent engineer, reading only the plan and ticket, would make the same architectural decisions you would. Omit details they'd arrive at independently. Compose at this altitude from the outset ([concision principle](../_data/concision.md)); a plan drafted tight beats a fuller one pared down.
 
 ```markdown
 # Implementation plan: {Title}
