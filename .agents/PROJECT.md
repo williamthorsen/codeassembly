@@ -226,6 +226,7 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - `nmr test` - Run tests
 - `nmr test:watch` - Run tests in watch mode
 - `nmr test:coverage` - Run tests with coverage
+- `nmr test:integration` - Run deliberate-only integration tests (`*.int.test.ts`), excluded from the unit suite and CI
 - `nmr lint` - Fix lint
 - `nmr lint:check` - Check for lint
 - `nmr typecheck` - TypeScript check
@@ -275,6 +276,7 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - Base config in `config/vitest.config.ts`
 - Coverage reporting with v8 provider
 - Package-specific configurations for different test types
+- Real-library / full-install tests (e.g. real installs) are deliberate-only `*.int.test.ts` tests: excluded from the default unit suite and CI, run on demand via `nmr test:integration`. A package opts in by providing `vitest.integration.config.ts` and `vitest.standalone.config.ts` (see `packages/agents/`). Land new real-library/full-install tests here, not in the unit suite.
 
 ### Code quality
 

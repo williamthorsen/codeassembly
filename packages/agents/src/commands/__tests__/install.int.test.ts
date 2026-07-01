@@ -10,13 +10,13 @@ import { isEnoent } from '../../lib/type-guards.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 
-// The only tests that install the real library; they assert real-content invariants a synthetic fixture cannot.
-// Adding more real installs here raises the suite's parallel-load cost, so keep them to the minimum below.
-describe('install smoke (real library)', () => {
+// Installs the real content library, not a fixture, to catch failures that only show up with real
+// content, such as an unreplaced `{...}` token or a link that wasn't rewritten.
+describe('install (real library, full catalog)', () => {
   let tempDir: string;
 
   beforeEach(async () => {
-    tempDir = path.join(tmpdir(), `agents-test-smoke-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    tempDir = path.join(tmpdir(), `agents-test-install-int-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
     await mkdir(path.join(tempDir, '.claude', 'agents'), { recursive: true });
     await mkdir(path.join(tempDir, '.rovodev', 'skills'), { recursive: true });
