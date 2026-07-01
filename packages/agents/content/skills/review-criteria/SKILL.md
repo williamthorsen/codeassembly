@@ -44,6 +44,10 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 Before emitting any F/W/T/R/S finding, confirm it hands the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
 
+## Finding concision
+
+Compose each finding at the tight altitude ([concision principle](../_data/concision.md)): State the defect, its location, and the decision the author must make, then stop. Cut code the author can already see, hedged narration, and rationale for why you looked. Every reader pays for each line, so weigh each sentence against the decision it enables, not its completeness.
+
 ## Finding references
 
 Conventions for how findings reference files and code locations.

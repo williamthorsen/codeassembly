@@ -19,6 +19,8 @@ The tier shifts the register; it does not lower the bar. The glancing-reader fra
 
 ## The principle
 
+This is the [concision principle](./concision.md) applied to changelog and release-notes entries; the routing and rules below are its lede-specific form.
+
 **Detail is routed, not omitted.** The PR is one click away and carries the full story (ticket, diff, `## Details`). Putting implementation detail in the entry isn't thoroughness — it's information in the wrong channel, and it makes the entry less likely to be read at all. Cutting a sentence from the entry doesn't lose the information; it puts the information where it belongs:
 
 - Mechanism, internal naming, and refactor mechanics → `## Details` (the PR carries this).

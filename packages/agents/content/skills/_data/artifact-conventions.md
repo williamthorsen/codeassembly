@@ -761,6 +761,8 @@ Every finding (F/W/T/R/S) must hand the author a concrete decision they can act 
 
 A finding's cost is a cascade, not a line: the reader's time, the tokens spent asking you to reconsider it, the author's triage, and every later reader who reads both the finding and its rejection. Treat emitting any finding as carrying a burden of proof, weighed against that full cost, never against its line length.
 
+This gate is the [concision principle](./concision.md) applied to findings: A finding, like any detail, taxes every reader once its cost outweighs the decision it enables.
+
 **Hedging language is a delete trigger, not a softening device.** If a finding's own body qualifies it out of relevance, it does not belong. Drop it. If the condition genuinely holds now, drop the qualifier instead and state the finding plainly. Disqualifying tells include:
 
 - "No action this PR / no action required / not actionable here"
