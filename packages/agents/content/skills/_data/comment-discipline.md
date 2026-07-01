@@ -8,7 +8,7 @@ The reader is the engineer six months later who has no chat transcript, no sessi
 
 ## The principle
 
-Comments are written for the future reader, not the recent conversation.
+Comments are written for the future reader, not the recent conversation. This is the [concision principle](./concision.md) applied to code comments; the deletion rules below are its comment-specific cut-list.
 
 Detail is routed, not omitted:
 
