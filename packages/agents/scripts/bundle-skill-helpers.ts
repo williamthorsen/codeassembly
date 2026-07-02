@@ -104,6 +104,11 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/kb-update-events/kb-update-events.mjs',
     smokeTest: makeKbUpdateEventsSmokeTest(),
   },
+  {
+    entry: 'src/migrate-feedback-memories/cli.ts',
+    outFile: 'content/skills/migrate-feedback-memories/migrate-feedback-memories.mjs',
+    smokeTest: makeMigrateFeedbackMemoriesSmokeTest(),
+  },
 ];
 
 /**
@@ -524,6 +529,69 @@ function assertCompositionViolationFinding(result: unknown): void {
   const rules = findings.map((entry: unknown) => (isRecord(entry) ? entry.rule : undefined));
   if (!rules.includes('composition-code-inline-mark')) {
     throw new Error(`expected composition-code-inline-mark finding; got rules: ${JSON.stringify(rules)}`);
+  }
+}
+
+/**
+ * Stands up an isolated home holding one nested-schema feedback memory under a project store, then returns a
+ * `SmokeTestInvocation` that runs `enumerate` against it. `HOME` points the projects-root walk at the fixture and an
+ * empty `CLAUDE_CONFIG_DIR` neutralizes any ambient value, so the enumeration never touches the developer's real
+ * `~/.claude`. Exercises the full projects-root resolution → store walk → frontmatter parse → feedback filter pipeline.
+ */
+function makeMigrateFeedbackMemoriesSmokeTest(): SmokeTestInvocation {
+  const home = mkdtempSync(path.join(tmpdir(), 'migrate-feedback-memories-home-'));
+  const memoryDir = path.join(home, '.claude', 'projects', '-store-smoke', 'memory');
+  mkdirSync(memoryDir, { recursive: true });
+  writeFileSync(
+    path.join(memoryDir, 'feedback-smoke-example.md'),
+    [
+      '---',
+      'name: feedback-smoke-example',
+      'description: a smoke-test feedback memory',
+      'metadata:',
+      '  node_type: memory',
+      '  type: feedback',
+      '  originSessionId: smoke-session',
+      '---',
+      '',
+      'Smoke body.',
+      '',
+    ].join('\n'),
+    'utf8',
+  );
+  writeFileSync(
+    path.join(memoryDir, 'MEMORY.md'),
+    '# Memory\n\n## Feedback\n\n- [x](feedback-smoke-example.md): x\n',
+    'utf8',
+  );
+
+  return {
+    args: ['enumerate'],
+    env: { ...process.env, HOME: home, CLAUDE_CONFIG_DIR: '' },
+    assertResult: assertMigrateFeedbackMemoriesSmokeResult,
+  };
+}
+
+/**
+ * Assert the migrate-feedback-memories smoke enumerated exactly the seeded feedback memory, reading its slug and the
+ * origin session id from the nested `metadata` schema.
+ */
+function assertMigrateFeedbackMemoriesSmokeResult(result: unknown): void {
+  if (!isRecord(result)) {
+    throw new TypeError('expected object result from migrate-feedback-memories');
+  }
+  if (result.ok !== true) {
+    throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
+  }
+  if (!Array.isArray(result.memories) || result.memories.length !== 1) {
+    throw new Error(`expected exactly one enumerated memory, got ${JSON.stringify(result.memories)}`);
+  }
+  const memory: unknown = result.memories[0];
+  if (!isRecord(memory) || memory.slug !== 'feedback-smoke-example') {
+    throw new Error(`expected the seeded feedback memory, got ${JSON.stringify(memory)}`);
+  }
+  if (memory.originSessionId !== 'smoke-session') {
+    throw new Error(`expected originSessionId from nested metadata, got ${JSON.stringify(memory.originSessionId)}`);
   }
 }
 

@@ -24,6 +24,7 @@ packages/agents/content/skills/kb-edit/kb-edit.mjs
 packages/agents/content/skills/kb-retrieve/kb-retrieve.mjs
 packages/agents/content/skills/kb-retrieve-events/kb-retrieve-events.mjs
 packages/agents/content/skills/kb-update-events/kb-update-events.mjs
+packages/agents/content/skills/migrate-feedback-memories/migrate-feedback-memories.mjs
 packages/agents/content/skills/update-jira-ticket/update-jira-ticket.mjs
 
 # Credentials
