@@ -10,7 +10,7 @@ Route every `feedback`-type agent memory on this machine to its proper home. A b
 
 The three destinations:
 
-- **Capture** — a generalizable lesson that should propagate becomes a `capture-feedback`-style candidate event in the `codeassembly` KB; a later distillation pass codifies it into shared guidance.
+- **Capture** — a generalizable lesson that should propagate is recorded as a `capture-feedback`-style candidate event in the `codeassembly` KB, and the source memory is then removed from its store; a capture migrates the memory out, it does not copy it. A later distillation pass codifies the event into shared guidance.
 - **Retain** — a genuinely local, non-propagating fact (a project-specific deadline or quirk) stays a memory, untouched.
 - **Delete** — a memory already captured (including one migrated from another machine) or otherwise redundant is removed.
 
@@ -65,32 +65,34 @@ Show every memory with its destination, and for each capture the proposed `--tag
 
 ### 5. Execute
 
-On approval, route each memory:
+On approval, run all captures first, then a single deletion pass:
 
-- **Capture** — compose the arguments and body per the {skill:capture-event} contract and pipe the body to its bundled helper directly (a batch this size cannot afford a per-item skill invocation):
+1. **Capture** — for each memory routed to capture, compose the arguments and body per the {skill:capture-event} contract and pipe the body to its bundled helper directly (a batch this size cannot afford a per-item skill invocation):
 
-  ```bash
-  cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
-    --summary "<one-line lesson>" \
-    --store codeassembly \
-    --harness {harness_id} \
-    --tags feedback \
-    [--skill <slug>] [--impact <level>]
-  <the generalized lesson>
+   ```bash
+   cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
+     --summary "<one-line lesson>" \
+     --store codeassembly \
+     --harness {harness_id} \
+     --tags feedback \
+     [--skill <slug>] [--impact <level>]
+   <the generalized lesson>
 
-  Origin: project <store>, machine <machine>, session <originSessionId>.
-  EOF
-  ```
+   Origin: project <store>, machine <machine>, session <originSessionId>.
+   EOF
+   ```
 
-- **Delete** — collect every delete path and pipe them, newline-separated, to the helper's `delete` subcommand in a single call, so each store's `MEMORY.md` is reconciled once:
+   Only when `capture-event` returns `ok: true`, add that memory's source `path` to the deletion batch — a capture migrates the memory out of its store, so its source is removed once the event has landed. When a capture fails, leave the source in place and surface the failure; never delete a memory whose capture did not land.
 
-  ```bash
-  printf '%s\n' "<path>" "<path>" … | node {harness_home_dir}/skills/migrate-feedback-memories/migrate-feedback-memories.mjs delete
-  ```
+2. **Delete** — pipe every deletion path, newline-separated, to the helper's `delete` subcommand in a single call. The batch is the union of the memories routed to delete-as-redundant and the sources of successful captures, so each store's `MEMORY.md` is reconciled once:
 
-  It removes each file and reconciles its `MEMORY.md`, printing a per-path outcome (`deleted`, `indexUpdated`, and a `note` for any already-absent file or unmatched index line).
+   ```bash
+   printf '%s\n' "<path>" "<path>" … | node {harness_home_dir}/skills/migrate-feedback-memories/migrate-feedback-memories.mjs delete
+   ```
 
-- **Retain** — no action.
+   It removes each file and reconciles its `MEMORY.md`, printing a per-path outcome (`deleted`, `indexUpdated`, and a `note` for any already-absent file or unmatched index line).
+
+3. **Retain** — no action.
 
 ### Composing a capture
 
@@ -107,4 +109,4 @@ Summarize the counts — captured, deleted, retained, skipped — with the ids a
 
 ## Completion
 
-Every feedback memory on the machine is captured, deleted, or retained; each affected `MEMORY.md` reflects its post-migration store; and every capture carries origin provenance in its body. After a full run, a store holds only retained-local memories, so a re-run is a no-op.
+Every feedback memory on the machine is routed — captured then removed, deleted as redundant, or retained locally; each affected `MEMORY.md` reflects its post-migration store; and every capture carries origin provenance in its body. After a full run, a store holds only retained-local memories, so a re-run is a no-op.
