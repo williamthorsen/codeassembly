@@ -1,10 +1,10 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { hostname } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 
 import { readNoteContent } from '@codeassembly/kb/note-io';
 
-import { isEnoent, isRecord } from '../lib/type-guards.ts';
+import { isMissingFile, isRecord } from '../lib/type-guards.ts';
 import type { EnumerateResult, FeedbackMemory, SkippedMemory } from './types.ts';
 
 /**
@@ -25,7 +25,7 @@ export async function enumerateFeedbackMemories(input: {
     const entries = await readdir(input.projectsRoot, { withFileTypes: true });
     stores = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
   } catch (error) {
-    if (isEnoent(error)) {
+    if (isMissingFile(error)) {
       return { ok: false, error: 'no-projects-root', message: `no projects root at ${input.projectsRoot}` };
     }
     throw error;
@@ -63,7 +63,7 @@ async function listMemoryFiles(memoryDir: string): Promise<string[]> {
   try {
     entries = await readdir(memoryDir);
   } catch (error) {
-    if (isEnoent(error)) {
+    if (isMissingFile(error)) {
       return [];
     }
     throw error;
@@ -95,7 +95,7 @@ async function readMemory(input: {
       path: input.path,
       store: input.store,
       machine: input.machine,
-      slug: fileStem(input.path),
+      slug: basename(input.path, '.md'),
       name: stringField(note.fields, 'name'),
       description: stringField(note.fields, 'description'),
       originSessionId: originSessionId(note.fields),
@@ -133,12 +133,6 @@ function originSessionId(fields: Record<string, unknown>): string | null {
     return metadata.originSessionId;
   }
   return stringField(fields, 'originSessionId');
-}
-
-/** Extracts the filename stem (no directory, no `.md`) from an absolute path. */
-function fileStem(path: string): string {
-  const base = path.slice(path.lastIndexOf('/') + 1);
-  return base.endsWith('.md') ? base.slice(0, -'.md'.length) : base;
 }
 
 // endregion | Helpers

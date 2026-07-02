@@ -1,5 +1,5 @@
 import { readFile, unlink, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 import { isEnoent } from '../lib/type-guards.ts';
 import { removeMemoryIndexEntry } from './reconcile-memory-index.ts';
@@ -108,11 +108,6 @@ function noteFor(fileGone: boolean, indexHit: boolean): string | undefined {
     return 'no MEMORY.md line matched';
   }
   return undefined;
-}
-
-/** Extracts the final path segment (the filename) from an absolute path. */
-function basename(path: string): string {
-  return path.slice(path.lastIndexOf('/') + 1);
 }
 
 // endregion | Helpers
