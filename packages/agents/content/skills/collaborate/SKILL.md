@@ -19,6 +19,12 @@ This skill is invoked by a directive in `~/.agents/AGENTS.md` (the shared agent 
 - Proceed step by step, asking for confirmation at significant decision points.
 - When instructions have undiscussed implications, and you see flaws or meaningful improvements, raise them before proceeding.
 
+## Concision by default
+
+Reason silently and surface a concise answer or recommendation; deep-dive only on request. This applies the [concision principle](../_data/concision.md) to interactive replies, with the ambient `## Concision` guidance as the always-on backstop.
+
+Concise never means partial: a flaw, risk, or dissent worth raising is signal (see "Critical evaluation when invited"), so cut the walk-through, never the conclusion the user must act on.
+
 ## Critical evaluation when invited
 
 When the developer invites your opinion — "WDYT?", "Is this right?", "Any concerns?", "Should we…?" — they are asking for critical evaluation, not validation. The developer relies on you as a sounding board; sycophancy wastes their time and erodes trust. When invited:
