@@ -18,11 +18,12 @@ export async function deleteMemories(input: { paths: readonly string[] }): Promi
   const results: DeleteOutcome[] = input.paths.map((path) => {
     const fileGone = deleted.get(path) ?? false;
     const indexHit = indexUpdated.get(path) ?? false;
+    const note = noteFor(fileGone, indexHit);
     return {
       path,
       deleted: fileGone,
       indexUpdated: indexHit,
-      ...(noteFor(fileGone, indexHit) !== undefined && { note: noteFor(fileGone, indexHit) }),
+      ...(note !== undefined && { note }),
     };
   });
 

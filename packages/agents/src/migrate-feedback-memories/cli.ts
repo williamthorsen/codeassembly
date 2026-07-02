@@ -54,7 +54,10 @@ export async function runMigrate(input: {
     if (rest.length > 0) {
       return invalidArgs(`enumerate takes no arguments; got: ${rest.join(' ')}`);
     }
-    const projectsRoot = resolveProjectsRoot({ ...(input.home !== undefined && { home: input.home }), env: input.env });
+    const projectsRoot = resolveProjectsRoot({
+      ...(input.home !== undefined && { home: input.home }),
+      ...(input.env !== undefined && { env: input.env }),
+    });
     return enumerateFeedbackMemories({
       projectsRoot,
       ...(input.machine !== undefined && { machine: input.machine }),
