@@ -12,9 +12,10 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 
 ### 1. Resolve project metadata
 
-Get `project_slug` and `artifact_base_dir` -- but NOT `ticket_id` (that comes from the platform in step 5).
+Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_id` (that comes from the platform in step 5).
 
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug` and `artifact_base_dir` from the manifest JSON emitted on stdout
+- From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket the current branch is derived from (empty when the branch encodes no ticket). It is used only by the step-5 guard; the new ticket's authoritative `ticket_id` still comes from the platform in step 5.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
 
 ### 2. Write ticket content
@@ -110,11 +111,17 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 - If `ticket_ref_prefix` is configured: `ticket_id` = `{ticket_ref_prefix}{number}` (e.g., prefix `MAC-` + `147` → `MAC-147`)
 - If no prefix: `ticket_id` = `{number}` (e.g., `147`)
 
-Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)):
+Persist the new issue URL into the branch manifest so later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the bare issue `number` extracted above:
 
-```bash
-node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
-```
+- When `branch_ticket_id` is empty (the branch encodes no ticket) or equals `number` (the branch already owns this ticket), persist:
+
+  ```bash
+  node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-ticket-url "$url"
+  ```
+
+- Otherwise the new ticket is a backlog/follow-up ticket created from an unrelated branch. Skip the persist so it does not clobber the branch → ticket link, and report the skip in the completion output, e.g. `Backlog ticket #{number} created while on a branch owning ticket {branch_ticket_id}; skipped branch-manifest association.`
+
+Compare the bare `number`, not the constructed `ticket_id`: GitHub uses the `#` (or empty) `ticket_ref_prefix`, for which `branch_ticket_id` is the bare issue number and compares directly against `number`. The Jira path persists nothing, so this guard applies only to the GitHub path.
 
 #### Jira path (stub)
 
@@ -149,7 +156,9 @@ The artifact's frontmatter conforms to the [universal artifact frontmatter](../_
 
 Source `$MODEL_ID` from your system-prompt environment block: the line `model named ... model ID is ...`.
 
-Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID"` via Bash. Prepend the output verbatim to the artifact body.
+Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill create-ticket --interactive true --model "$MODEL_ID" --override ticket_id="{ticket_id}" --override ticket_ref="{ticket_ref}"` via Bash, substituting the just-created ticket's `ticket_id` (step 5) and `ticket_ref` (computed above). Prepend the output verbatim to the artifact body.
+
+The `--override` flags force the frontmatter to the new ticket's own `ticket_id`/`ticket_ref` (the same values its directory and `# {ticket_ref}:` heading use). Without them, `resolve-frontmatter.sh` resolves these from the current branch's manifest, so a ticket created from an unrelated branch would carry the branch's id instead of its own. `branch` is left un-overridden so it stays as authoring provenance. This applies to both the ticket artifact (step 6) and the plan artifact (step 7).
 
 ### 7. Save plan (if present)
 
@@ -190,6 +199,7 @@ If remote ticket creation fails or no platform is available, fall back to an aut
 Issue created: {URL}                       <- only if remote creation succeeded
 Ticket saved: {ticket artifact path}
 Plan saved: {plan artifact path}           <- only if plan existed
+Branch association skipped: {reason}       <- only when the step-5 guard skipped the persist
 ```
 
 Nothing else.
