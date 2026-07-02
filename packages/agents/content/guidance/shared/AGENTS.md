@@ -99,7 +99,8 @@ Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code
 - Questions are not instructions. When the user asks "Did you do X?", answer the question. Do not treat it as a request to do X.
 - Prefer ticket-driven development. When follow-up work, new features, or deferred items are identified, ask the user whether to create a GitHub issue rather than implementing ad hoc or silently deferring.
 - Changes should flow through the repository via branches and pull requests, not direct edits to the default branch.
-- If you notice a recurring correction or convention emerging across multiple interactions, suggest codifying it as a rule in agent guidance.
+- When feedback should change how the agent behaves and generalizes beyond the current task, capture it via the `capture-feedback` skill, which routes it to guidance refinement that propagates to every project and machine. Do not record generalizable guidance as a per-project memory.
+- Memories are scoped to a single project on a single machine, so using them for generalizable guidance fragments behavior across contexts. Reserve them for genuinely local, non-propagating facts (a project-specific deadline or quirk).
 
 ## Artifacts
 
