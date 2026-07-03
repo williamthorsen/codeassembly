@@ -114,6 +114,14 @@ describe(parseCodeAssemblyFile, () => {
     expect(() => parseCodeAssemblyFile('sources:\n  - name: org\n')).toThrow(/path/);
   });
 
+  it('throws when a source path is an empty string', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: org\n    path: ""\n')).toThrow(/path/);
+  });
+
+  it('throws when a source name is an empty string', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: ""\n    path: ../shared\n')).toThrow(/name/);
+  });
+
   it('throws when sources is not a list', () => {
     expect(() => parseCodeAssemblyFile('sources:\n  name: org\n  path: ../shared\n')).toThrow();
   });

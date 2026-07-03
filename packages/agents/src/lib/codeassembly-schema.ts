@@ -11,7 +11,7 @@ export const EntrySchema = z
  * required; unknown keys pass through (`.loose()`) so a later cut can add per-source config without a breaking change,
  * mirroring `EntrySchema`.
  */
-export const SourceSchema = z.object({ name: z.string(), path: z.string() }).loose();
+export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
 
 /**
  * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag, an optional `sources` list,
