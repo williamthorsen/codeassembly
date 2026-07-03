@@ -14,6 +14,12 @@ export interface FeedbackMemory {
   path: string;
   /** The project-store slug (the `<project>` directory name under the projects root); the origin-project identifier. */
   store: string;
+  /**
+   * Absolute path to the origin project's working directory when the store slug resolves to a live repo on this
+   * machine, else `null`. Lets a caller ground routing decisions in that project's guidance; `null` when the slug
+   * decodes to no existing directory (a dead store, or a name whose `.` punctuation cannot be recovered).
+   */
+  repoPath: string | null;
   /** Machine hostname captured at enumeration time. */
   machine: string;
   /** Filename stem, without the `.md` extension. */
@@ -51,10 +57,10 @@ export interface EnumerateSuccess {
   skipped: SkippedMemory[];
 }
 
-/** The `enumerate` subcommand's stdout payload when the projects root is absent. */
+/** The `enumerate` subcommand's stdout payload when the projects root is absent, or a `--store` names no store. */
 export interface EnumerateFailure {
   ok: false;
-  error: 'no-projects-root';
+  error: 'no-projects-root' | 'no-such-store';
   message: string;
 }
 
