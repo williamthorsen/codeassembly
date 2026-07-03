@@ -109,9 +109,6 @@ async function readArtifactEdges(
       `Referenced ${type} "${slug}" was not found in any of: ${describeSearchedLocations(resolver, type, slug)}`,
     );
   }
-  // Only rulebooks are supported from a declared source in this cut. Any other type resolved from a non-library source
-  // fails here, upstream of the render pass and any `@library` member expansion, so neither the undecided
-  // external-include base nor a mis-scoped catalog enumeration is ever reached.
   if (type !== 'rulebook' && resolved.source !== undefined) {
     throw new Error(`External-source ${type} "${slug}" resolved from source "${resolved.source}" is not yet supported`);
   }
