@@ -5,6 +5,7 @@ import { basename, join } from 'node:path';
 import { readNoteContent } from '@codeassembly/kb/note-io';
 
 import { isMissingFile, isRecord } from '../lib/type-guards.ts';
+import { resolveRepoPath } from './resolve-repo-path.ts';
 import type { EnumerateResult, FeedbackMemory, SkippedMemory } from './types.ts';
 
 /**
@@ -39,10 +40,12 @@ export async function enumerateFeedbackMemories(input: {
     const memoryDir = join(input.projectsRoot, store, 'memory');
     const files = await listMemoryFiles(memoryDir);
     const memoryIndexPath = join(memoryDir, 'MEMORY.md');
+    // Resolve the store's origin repo once — every memory in it shares the slug — and only when it has memories to route.
+    const repoPath = files.length > 0 ? await resolveRepoPath(store) : null;
 
     for (const file of files) {
       const path = join(memoryDir, file);
-      const record = await readMemory({ path, store, machine, memoryIndexPath });
+      const record = await readMemory({ path, store, repoPath, machine, memoryIndexPath });
       if (record.kind === 'feedback') {
         memories.push(record.memory);
       } else if (record.kind === 'unreadable') {
@@ -75,6 +78,7 @@ async function listMemoryFiles(memoryDir: string): Promise<string[]> {
 async function readMemory(input: {
   path: string;
   store: string;
+  repoPath: string | null;
   machine: string;
   memoryIndexPath: string;
 }): Promise<{ kind: 'feedback'; memory: FeedbackMemory } | { kind: 'other' } | { kind: 'unreadable'; reason: string }> {
@@ -94,6 +98,7 @@ async function readMemory(input: {
     memory: {
       path: input.path,
       store: input.store,
+      repoPath: input.repoPath,
       machine: input.machine,
       slug: basename(input.path, '.md'),
       name: stringField(note.fields, 'name'),

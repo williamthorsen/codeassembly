@@ -14,6 +14,12 @@ export interface FeedbackMemory {
   path: string;
   /** The project-store slug (the `<project>` directory name under the projects root); the origin-project identifier. */
   store: string;
+  /**
+   * Absolute path to the origin project's working directory when the store slug resolves to a live repo on this
+   * machine, else `null`. Lets a caller ground routing decisions in that project's guidance; `null` when the slug
+   * decodes to no existing directory (a dead store, or a name whose `.` punctuation cannot be recovered).
+   */
+  repoPath: string | null;
   /** Machine hostname captured at enumeration time. */
   machine: string;
   /** Filename stem, without the `.md` extension. */

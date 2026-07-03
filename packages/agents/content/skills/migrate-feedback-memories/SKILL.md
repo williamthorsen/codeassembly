@@ -45,15 +45,19 @@ Run the helper's `enumerate` subcommand — it is read-only:
 node {harness_home_dir}/skills/migrate-feedback-memories/migrate-feedback-memories.mjs enumerate
 ```
 
-It prints `{ ok, machine, projectsRoot, memories, skipped }`. Each entry in `memories` carries `path`, `store`, `machine`, `slug`, `name`, `description`, `originSessionId`, `body`, and `memoryIndexPath`. `skipped` lists memory files that have a frontmatter fence but unparseable YAML — read and route each one by hand (they are usually feedback memories whose `name:` value needs quoting).
+It prints `{ ok, machine, projectsRoot, memories, skipped }`. Each entry in `memories` carries `path`, `store`, `machine`, `slug`, `name`, `description`, `originSessionId`, `body`, `memoryIndexPath`, and `repoPath` — the origin project's working directory when the store slug resolves to a live repo on this machine, else null. `skipped` lists memory files that have a frontmatter fence but unparseable YAML — read and route each one by hand (they are usually feedback memories whose `name:` value needs quoting).
 
 ### 2. Classify
 
-Decide one destination per memory:
+Work through the memories **one store at a time**, not as a single undifferentiated batch. The `memories` array is already ordered by store, so group it by the `store` field and process each group in turn.
+
+Before classifying a store's memories, ground yourself in that project: when `repoPath` is set, read that repo's `.agents/PROJECT.md` and any project guidance it points to, so the routing calls reflect what the project already codifies. When `repoPath` is null — the store's slug does not resolve to a working repo on this machine — classify that store's memories ungrounded. Grounding is best-effort, never a blocker.
+
+Then decide one destination per memory:
 
 - **Capture** when the lesson generalizes beyond its origin project — a behavior, correction, or convention that should propagate. This is the default for behavioral feedback.
 - **Retain** when the fact is genuinely local and non-propagating (a project-specific deadline, a one-off quirk).
-- **Delete** when the memory is redundant with shared guidance or a prior capture. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is such a case — its guidance now lives in `shared/AGENTS.md`, so it is a delete like any other, with no carve-out.
+- **Delete** when the memory is redundant with shared guidance or a prior capture — including a rule the origin project's own guidance already covers, which is exactly what grounding surfaces. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is such a case: its guidance now lives in `shared/AGENTS.md`, so it is a delete like any other, with no carve-out.
 
 ### 3. Dedup capture candidates
 
