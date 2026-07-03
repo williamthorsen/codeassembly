@@ -1,8 +1,6 @@
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { isMissingFile } from '../lib/type-guards.ts';
-
 /**
  * Best-effort decode of a Claude project-store slug back to the working directory it was derived from. Claude Code
  * builds the slug by collapsing every path separator — and other punctuation such as `.` — in the session cwd to `-`,
@@ -55,15 +53,16 @@ async function searchSegments(input: {
   return null;
 }
 
-/** True when `path` resolves to a directory; false when it is absent or a path segment is not a directory. */
+/**
+ * True when `path` resolves to a directory. Any `stat` failure — a missing path, a non-directory path component, or a
+ * permission or I/O error — yields `false`, so a probe error degrades slug resolution to `null` rather than aborting the
+ * read-only enumeration; grounding is best-effort, and no filesystem error on a probe should block it.
+ */
 async function directoryExists(path: string): Promise<boolean> {
   try {
     return (await stat(path)).isDirectory();
-  } catch (error) {
-    if (isMissingFile(error)) {
-      return false;
-    }
-    throw error;
+  } catch {
+    return false;
   }
 }
 
