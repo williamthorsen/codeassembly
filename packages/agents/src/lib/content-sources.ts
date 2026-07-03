@@ -2,6 +2,7 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 
 import { artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
+import { isMissingFile } from './type-guards.ts';
 
 /** Where a `(type, slug)` artifact resolved from: the directory holding it and the source name (undefined = library). */
 export interface ResolvedArtifactSource {
@@ -53,15 +54,33 @@ export function libraryResolver(libraryDir: string): SourceResolver {
   return createSourceResolver([], libraryDir);
 }
 
+/**
+ * Renders the comma-joined list of every location `resolver` searches for a `(type, slug)` artifact — each declared
+ * source in precedence order, then the library — for a not-found error message. Shared so the format cannot drift
+ * between callers.
+ */
+export function describeSearchedLocations(resolver: SourceResolver, type: ArtifactType, slug: string): string {
+  return [...resolver.sources.map((source) => source.dir), resolver.libraryDir]
+    .map((dir) => path.join(dir, artifactFrontmatterPath(type, slug)))
+    .join(', ');
+}
+
 // region | Helpers
 
-/** Resolves whether a path points at an accessible file or directory. */
+/**
+ * Resolves whether a path points at a present file or directory. A missing-file error (`ENOENT`/`ENOTDIR`, a bare
+ * absence) resolves to `false`; any other failure — e.g. `EACCES` on an unreadable source directory — rethrows, so a
+ * higher-precedence source with a permission problem fails loud instead of being silently shadowed by a lower one.
+ */
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await access(filePath);
     return true;
-  } catch {
-    return false;
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return false;
+    }
+    throw error;
   }
 }
 

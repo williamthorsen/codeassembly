@@ -22,7 +22,7 @@ export const SourceSchema = z.object({ name: z.string(), path: z.string() }).loo
 const CodeAssemblySchema = z
   .object({
     root: z.boolean().default(false),
-    sources: z.array(SourceSchema).default([]),
+    sources: optionalSourceList(),
     rulebooks: optionalTypeDeclaration(),
     skills: optionalTypeDeclaration(),
     subagents: optionalTypeDeclaration(),
@@ -85,6 +85,11 @@ function typeDeclarationSchema() {
 /** Resolves an absent type key, or one whose value is `null`, to `undefined` rather than a validation error. */
 function optionalTypeDeclaration(): z.ZodType<TypeDeclaration | undefined> {
   return z.preprocess((value) => value ?? undefined, typeDeclarationSchema().optional());
+}
+
+/** Resolves an absent `sources` key, or one whose value is `null` (all entries commented out), to an empty list. */
+function optionalSourceList(): z.ZodType<Array<DeclarationSource>> {
+  return z.preprocess((value) => value ?? undefined, z.array(SourceSchema).default([]));
 }
 
 // endregion | Helpers

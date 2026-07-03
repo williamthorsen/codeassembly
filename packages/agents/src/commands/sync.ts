@@ -8,7 +8,7 @@ import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { artifactFrontmatterPath } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { createSourceResolver, type SourceResolver } from '../lib/content-sources.ts';
+import { createSourceResolver, describeSearchedLocations, type SourceResolver } from '../lib/content-sources.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
@@ -386,7 +386,11 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
   }
 }
 
-/** Reports what disqualifies `dir` as a source — that it is missing or not a directory — or `undefined` when valid. */
+/**
+ * Reports what disqualifies `dir` as a source — that it is missing, not a directory, or unreadable (e.g. a
+ * permission-denied `stat`) — or `undefined` when valid. Any `stat` failure other than a plain absence is folded into
+ * the "unreadable" case so it still surfaces through the attributed `Invalid declared source(s)` error naming `dir`.
+ */
 async function describeSourceProblem(dir: string): Promise<string | undefined> {
   try {
     return (await stat(dir)).isDirectory() ? undefined : 'not a directory';
@@ -394,7 +398,7 @@ async function describeSourceProblem(dir: string): Promise<string | undefined> {
     if (isMissingFile(error)) {
       return 'does not exist';
     }
-    throw error;
+    return `unreadable — ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
@@ -823,9 +827,7 @@ function reportDryRun(plan: DryRunPlan): void {
 async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<ResolvedRulebook> {
   const resolved = await resolver.resolve('rulebook', slug);
   if (resolved === undefined) {
-    const searched = [...resolver.sources.map((source) => source.dir), resolver.libraryDir]
-      .map((dir) => path.join(dir, artifactFrontmatterPath('rulebook', slug)))
-      .join(', ');
+    const searched = describeSearchedLocations(resolver, 'rulebook', slug);
     throw new Error(`Declared rulebook "${slug}" was not found in any of: ${searched}`);
   }
 

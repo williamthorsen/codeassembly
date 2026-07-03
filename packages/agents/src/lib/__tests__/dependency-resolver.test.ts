@@ -289,6 +289,25 @@ describe(resolveClosure, () => {
       );
     });
 
+    it('fails a source-resolved collection as not-yet-supported before expanding its members', async () => {
+      await writeArtifact(sourceDir, 'collection', 'source-collection', '@library');
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      await expect(resolveClosure({ collection: ['source-collection'] }, resolver)).rejects.toThrow(
+        /External-source collection "source-collection".*source "org".*not yet supported/s,
+      );
+    });
+
+    it('still resolves a library collection through a resolver that also carries declared sources', async () => {
+      await writeArtifact(contentDir, 'skill', 'library-skill');
+      await writeArtifact(contentDir, 'collection', 'library-collection', { skill: ['library-skill'] });
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const closure = await resolveClosure({ collection: ['library-collection'] }, resolver);
+
+      expect(closure.skills).toEqual(['library-skill']);
+    });
+
     it('still deploys a library skill through a resolver that also carries declared sources', async () => {
       await writeArtifact(contentDir, 'skill', 'library-skill');
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);

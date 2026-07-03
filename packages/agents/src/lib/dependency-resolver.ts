@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
-import { libraryResolver, type SourceResolver } from './content-sources.ts';
+import { describeSearchedLocations, libraryResolver, type SourceResolver } from './content-sources.ts';
 import {
   type ArtifactDependencies,
   readDependencies,
@@ -87,9 +87,10 @@ export async function resolveClosure(
 
 /**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
- * every location searched when the artifact resolves from no source or the library. A skill or subagent that resolves
- * from a non-library source throws a not-yet-supported error naming that source — before any body is read or expanded,
- * so the undecided external-include base is never reached. A collection's edges come from `members:` — the full
+ * every location searched when the artifact resolves from no source or the library. Any non-rulebook artifact (skill,
+ * subagent, or collection) that resolves from a non-library source throws a not-yet-supported error naming that source
+ * — before any body is read or expanded, so neither the undecided external-include base nor a mis-scoped `@library`
+ * enumeration is ever reached. A collection's edges come from `members:` — the full
  * library catalog when it carries `'@library'`, otherwise its explicit members. Every other type's edges come from
  * `dependencies:`. A skill or subagent additionally unions the invocation tokens in its include-expanded body
  * (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a token inside a shared
@@ -104,11 +105,14 @@ async function readArtifactEdges(
 ): Promise<ArtifactDependencies> {
   const resolved = await resolver.resolve(type, slug);
   if (resolved === undefined) {
-    throw new Error(`Referenced ${type} "${slug}" was not found in any of: ${searchedLocations(resolver, type, slug)}`);
+    throw new Error(
+      `Referenced ${type} "${slug}" was not found in any of: ${describeSearchedLocations(resolver, type, slug)}`,
+    );
   }
-  // Skills and subagents from a non-library source are not yet supported. Fail here, upstream of the render pass, so
-  // the undecided external-include base is never reached.
-  if ((type === 'skill' || type === 'subagent') && resolved.source !== undefined) {
+  // Only rulebooks are supported from a declared source in this cut. Any other type resolved from a non-library source
+  // fails here, upstream of the render pass and any `@library` member expansion, so neither the undecided
+  // external-include base nor a mis-scoped catalog enumeration is ever reached.
+  if (type !== 'rulebook' && resolved.source !== undefined) {
     throw new Error(`External-source ${type} "${slug}" resolved from source "${resolved.source}" is not yet supported`);
   }
 
@@ -139,13 +143,6 @@ async function readArtifactEdges(
     skill: [...(dependencies.skill ?? []), ...tokens.skills, ...injectedSkills],
     subagent: [...(dependencies.subagent ?? []), ...tokens.subagents],
   };
-}
-
-/** Renders every location `resolver` searches for a `(type, slug)` artifact — each declared source, then the library. */
-function searchedLocations(resolver: SourceResolver, type: ArtifactType, slug: string): string {
-  return [...resolver.sources.map((source) => source.dir), resolver.libraryDir]
-    .map((dir) => path.join(dir, artifactFrontmatterPath(type, slug)))
-    .join(', ');
 }
 
 // endregion | Helpers

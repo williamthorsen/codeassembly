@@ -1,11 +1,14 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { artifactFrontmatterPath, type ArtifactType } from '../artifact-types.ts';
-import { createSourceResolver, libraryResolver } from '../content-sources.ts';
+import { createSourceResolver, describeSearchedLocations, libraryResolver } from '../content-sources.ts';
+
+/** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
+const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
 
 describe(createSourceResolver, () => {
   let root: string;
@@ -80,6 +83,52 @@ describe(createSourceResolver, () => {
 
     expect(resolver.libraryDir).toBe(libraryDir);
     expect(resolver.sources).toEqual([{ name: 'org', dir: orgDir }]);
+  });
+
+  it.runIf(canEnforceDirPermissions)(
+    'rethrows a permission error from a higher-precedence source instead of falling through to the library',
+    async () => {
+      const orgDir = path.join(root, 'org');
+      await writeArtifact(orgDir, 'rulebook', 'alpha');
+      await writeArtifact(libraryDir, 'rulebook', 'alpha');
+      await chmod(orgDir, 0o000);
+      const resolver = createSourceResolver([{ name: 'org', dir: orgDir }], libraryDir);
+
+      try {
+        await expect(resolver.resolve('rulebook', 'alpha')).rejects.toThrow(/EACCES/);
+      } finally {
+        await chmod(orgDir, 0o755);
+      }
+    },
+  );
+});
+
+describe(describeSearchedLocations, () => {
+  it('lists each declared source in precedence order, then the library, joined by the frontmatter path', () => {
+    const resolver = createSourceResolver(
+      [
+        { name: 'high', dir: '/srcs/high' },
+        { name: 'low', dir: '/srcs/low' },
+      ],
+      '/library',
+    );
+
+    const rulebookPath = artifactFrontmatterPath('rulebook', 'alpha');
+    expect(describeSearchedLocations(resolver, 'rulebook', 'alpha')).toBe(
+      [
+        path.join('/srcs/high', rulebookPath),
+        path.join('/srcs/low', rulebookPath),
+        path.join('/library', rulebookPath),
+      ].join(', '),
+    );
+  });
+
+  it('lists only the library for a resolver with no declared sources', () => {
+    const resolver = libraryResolver('/library');
+
+    expect(describeSearchedLocations(resolver, 'skill', 'people-report')).toBe(
+      path.join('/library', artifactFrontmatterPath('skill', 'people-report')),
+    );
   });
 });
 

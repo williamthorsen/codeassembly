@@ -82,6 +82,13 @@ describe(parseCodeAssemblyFile, () => {
     expect(declaration.sources).toEqual([]);
   });
 
+  it('tolerates a sources key whose value is null (all entries commented out)', () => {
+    const declaration = parseCodeAssemblyFile('sources:\n');
+
+    expect(declaration.sources).toEqual([]);
+    expect(declaration.root).toBe(false);
+  });
+
   it('parses a sources list of name/path pairs', () => {
     const declaration = parseCodeAssemblyFile(
       'sources:\n  - name: org\n    path: ../shared-guidance\n  - name: home\n    path: ~/guidance\n',

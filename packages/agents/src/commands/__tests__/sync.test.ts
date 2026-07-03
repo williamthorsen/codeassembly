@@ -1,5 +1,5 @@
 import { existsSync, statSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -9,6 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
+
+/** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
+const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
 
 describe(syncCommand, () => {
   let projectRoot: string;
@@ -476,6 +479,25 @@ describe(syncCommand, () => {
 
       await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/not a directory/);
     });
+
+    it.runIf(canEnforceDirPermissions)(
+      'fails the run with a clear error naming a declared source that is unreadable',
+      async () => {
+        const outer = path.join(sourceDir, 'outer');
+        const inner = path.join(outer, 'inner');
+        await mkdir(inner, { recursive: true });
+        await chmod(outer, 0o000);
+        await declareWithSource('rulebooks:\n  use: []\n', inner);
+
+        try {
+          await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+            /Invalid declared source.*"org".*unreadable/s,
+          );
+        } finally {
+          await chmod(outer, 0o755);
+        }
+      },
+    );
 
     it('fails a declared source skill as not-yet-supported, naming the source', async () => {
       await writeSourceSkill('source-skill');
