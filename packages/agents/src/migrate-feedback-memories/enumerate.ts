@@ -10,13 +10,16 @@ import type { EnumerateResult, FeedbackMemory, SkippedMemory } from './types.ts'
 
 /**
  * Walks every `<projects-root>/<project>/memory/` directory and returns each memory whose effective type is `feedback`.
- * Membership is decided by parsed frontmatter — `metadata.type` when nested, else a top-level `type` — never by filename
- * or a single-schema regex, so both the legacy and current memory schemas are enumerated. A file that cannot be read as
- * a note is reported in `skipped` rather than dropped. An absent projects root is the one categorical failure; an absent
- * per-store `memory/` directory is simply skipped.
+ * When `store` is set, enumeration is scoped to that one project store, so a machine with many memories can be worked
+ * one store per invocation. Membership is decided by parsed frontmatter — `metadata.type` when nested, else a top-level
+ * `type` — never by filename or a single-schema regex, so both the legacy and current memory schemas are enumerated. A
+ * file that cannot be read as a note is reported in `skipped` rather than dropped. An absent projects root is the one
+ * categorical failure; a `store` naming no directory under it is a `no-such-store` failure, so a mistyped slug fails
+ * loudly rather than looking like a clean store; an absent per-store `memory/` directory is simply skipped.
  */
 export async function enumerateFeedbackMemories(input: {
   projectsRoot: string;
+  store?: string;
   machine?: string;
 }): Promise<EnumerateResult> {
   const machine = input.machine ?? hostname();
@@ -32,6 +35,13 @@ export async function enumerateFeedbackMemories(input: {
     throw error;
   }
   stores = stores.toSorted();
+
+  if (input.store !== undefined) {
+    if (!stores.includes(input.store)) {
+      return { ok: false, error: 'no-such-store', message: `no store "${input.store}" under ${input.projectsRoot}` };
+    }
+    stores = [input.store];
+  }
 
   const memories: FeedbackMemory[] = [];
   const skipped: SkippedMemory[] = [];

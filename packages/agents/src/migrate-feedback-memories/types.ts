@@ -57,10 +57,10 @@ export interface EnumerateSuccess {
   skipped: SkippedMemory[];
 }
 
-/** The `enumerate` subcommand's stdout payload when the projects root is absent. */
+/** The `enumerate` subcommand's stdout payload when the projects root is absent, or a `--store` names no store. */
 export interface EnumerateFailure {
   ok: false;
-  error: 'no-projects-root';
+  error: 'no-projects-root' | 'no-such-store';
   message: string;
 }
 

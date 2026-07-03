@@ -191,6 +191,29 @@ describe(enumerateFeedbackMemories, () => {
     ]);
   });
 
+  it('scopes enumeration to a single store when store is set', async () => {
+    const root = await makeProjectsRoot();
+    await writeMemory(root, '-store-a', 'feedback-nested-example.md', NESTED_FEEDBACK);
+    await writeMemory(root, '-store-b', 'atlaskit-xcss.md', LEGACY_NO_SESSION);
+
+    const result = await enumerateFeedbackMemories({ projectsRoot: root, store: '-store-b', machine: MACHINE });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.memories.map((memory) => memory.store)).toEqual(['-store-b']);
+  });
+
+  it('fails with no-such-store when store names no directory under the root', async () => {
+    const root = await makeProjectsRoot();
+    await writeMemory(root, '-store-a', 'feedback-nested-example.md', NESTED_FEEDBACK);
+
+    const result = await enumerateFeedbackMemories({ projectsRoot: root, store: '-store-missing', machine: MACHINE });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('no-such-store');
+  });
+
   it('fails with no-projects-root when the projects root is absent', async () => {
     const root = join(await makeProjectsRoot(), 'does-not-exist');
 

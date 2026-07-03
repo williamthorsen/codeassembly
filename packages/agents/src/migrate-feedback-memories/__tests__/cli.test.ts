@@ -35,6 +35,15 @@ async function makeHomeWithMemory(): Promise<{ home: string; memoryPath: string 
   return { home, memoryPath };
 }
 
+/** Writes a feedback memory into `<home>/.claude/projects/<store>/memory/<filename>`, returning its path. */
+async function writeStoreMemory(home: string, store: string, filename: string): Promise<string> {
+  const memoryDir = join(home, '.claude', 'projects', store, 'memory');
+  await mkdir(memoryDir, { recursive: true });
+  const memoryPath = join(memoryDir, filename);
+  await writeFile(memoryPath, FEEDBACK, 'utf8');
+  return memoryPath;
+}
+
 describe(runMigrate, () => {
   it('enumerates feedback memories under the resolved projects root', async () => {
     const { home } = await makeHomeWithMemory();
@@ -101,5 +110,50 @@ describe(runMigrate, () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe('invalid-args');
+  });
+
+  it('scopes enumeration to one store with --store', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'migrate-cli-home-'));
+    await writeStoreMemory(home, '-store-a', 'feedback-a.md');
+    await writeStoreMemory(home, '-store-b', 'feedback-b.md');
+
+    const result = await runMigrate({
+      argv: ['enumerate', '--store', '-store-b'],
+      stdin: bodyStream(''),
+      env: {},
+      home,
+      machine: MACHINE,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !('memories' in result)) return;
+    expect(result.memories.map((memory) => memory.store)).toEqual(['-store-b']);
+  });
+
+  it('accepts the --store=<slug> form', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'migrate-cli-home-'));
+    await writeStoreMemory(home, '-store-a', 'feedback-a.md');
+    await writeStoreMemory(home, '-store-b', 'feedback-b.md');
+
+    const result = await runMigrate({
+      argv: ['enumerate', '--store=-store-a'],
+      stdin: bodyStream(''),
+      env: {},
+      home,
+      machine: MACHINE,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok || !('memories' in result)) return;
+    expect(result.memories.map((memory) => memory.store)).toEqual(['-store-a']);
+  });
+
+  it('returns invalid-args when --store has no value', async () => {
+    const result = await runMigrate({ argv: ['enumerate', '--store'], stdin: bodyStream(''), env: {} });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('invalid-args');
+    expect(result.message).toContain('--store requires');
   });
 });
