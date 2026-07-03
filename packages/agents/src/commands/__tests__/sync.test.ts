@@ -1,5 +1,5 @@
 import { existsSync, statSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -9,6 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
+
+/** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
+const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
 
 describe(syncCommand, () => {
   let projectRoot: string;
@@ -387,6 +390,152 @@ describe(syncCommand, () => {
     const shared = await readFile(skillPath('shared'), 'utf8');
     expect(shared).toContain('name: shared');
     expect(shared).toContain('<!-- codeassembly-rulebook:bar -->');
+  });
+
+  describe('declared sources', () => {
+    let sourceDir: string;
+
+    beforeEach(async () => {
+      sourceDir = path.join(tmpdir(), `agents-test-sync-source-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      await mkdir(path.join(sourceDir, 'guidance', 'rulebooks'), { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(sourceDir, { recursive: true, force: true });
+    });
+
+    /** Writes a fixture rulebook into the temp source dir, shaped exactly like a library rulebook. */
+    async function writeSourceRulebook(slug: string, frontmatter: string, body: string): Promise<void> {
+      const file = path.join(sourceDir, 'guidance', 'rulebooks', `${slug}.md`);
+      await writeFile(file, `---\nslug: ${slug}\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
+    }
+
+    /** Writes a fixture skill into the temp source dir's `skills/<slug>/SKILL.md`. */
+    async function writeSourceSkill(slug: string): Promise<void> {
+      const dir = path.join(sourceDir, 'skills', slug);
+      await mkdir(dir, { recursive: true });
+      await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n`, 'utf8');
+    }
+
+    /** Writes the project-scope codeassembly.yaml declaring one `org` source plus the given verbatim body. */
+    async function declareWithSource(body: string, dir = sourceDir): Promise<void> {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: org\n    path: ${dir}\n${body}`,
+        'utf8',
+      );
+    }
+
+    it('deploys a rulebook that exists only in a declared source, body from the source', async () => {
+      await writeSourceRulebook('source-only', 'delivery: skill\ndescription: From org.', 'Org rules.');
+      await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(neutralPath('source-only'), 'utf8')).toContain('Org rules.');
+      const skill = await readFile(skillPath('consult-source-only'), 'utf8');
+      expect(skill).toContain('description: From org.');
+      expect(skill).toContain('Org rules.');
+    });
+
+    it('inlines an ambient source rulebook into PROJECT.md and retracts it on removal', async () => {
+      await writeSourceRulebook('ambient-src', 'delivery: ambient', 'Ambient org rules.');
+      await declareWithSource('rulebooks:\n  use:\n    - ambient-src\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const projectMd = await readFile(projectMdPath(), 'utf8');
+      expect(projectMd).toContain('<!-- rulebook:ambient-src -->');
+      expect(projectMd).toContain('Ambient org rules.');
+
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(neutralPath('ambient-src'))).toBe(false);
+      expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:ambient-src -->');
+    });
+
+    it('prefers a source rulebook over a same-slug library rulebook', async () => {
+      await writeLibraryRulebook('shadowed', 'delivery: ambient', 'Library body.');
+      await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
+      await declareWithSource('rulebooks:\n  use:\n    - shadowed\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(neutralPath('shadowed'), 'utf8')).toContain('Source body.');
+    });
+
+    it('fails the run when a declared source directory does not exist, writing nothing', async () => {
+      await declareWithSource('rulebooks:\n  use: []\n', path.join(sourceDir, 'missing'));
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/Invalid declared source/);
+      expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+    });
+
+    it('fails the run when a declared source path is a file, not a directory', async () => {
+      const filePath = path.join(sourceDir, 'a-file');
+      await writeFile(filePath, 'not a dir\n', 'utf8');
+      await declareWithSource('rulebooks:\n  use: []\n', filePath);
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/not a directory/);
+    });
+
+    it.runIf(canEnforceDirPermissions)(
+      'fails the run with a clear error naming a declared source that is unreadable',
+      async () => {
+        const outer = path.join(sourceDir, 'outer');
+        const inner = path.join(outer, 'inner');
+        await mkdir(inner, { recursive: true });
+        await chmod(outer, 0o000);
+        await declareWithSource('rulebooks:\n  use: []\n', inner);
+
+        try {
+          await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+            /Invalid declared source.*"org".*unreadable/s,
+          );
+        } finally {
+          await chmod(outer, 0o755);
+        }
+      },
+    );
+
+    // The source root itself is unreadable while its parent stays searchable, so `stat` still reports it as a
+    // directory. With no declared rulebook to probe inside it, only the up-front readability check catches it.
+    it.runIf(canEnforceDirPermissions)(
+      'fails the run when a declared source root is itself unreadable, even with nothing declared to resolve',
+      async () => {
+        const locked = path.join(sourceDir, 'locked');
+        await mkdir(locked, { recursive: true });
+        await chmod(locked, 0o000);
+        await declareWithSource('rulebooks:\n  use: []\n', locked);
+
+        try {
+          await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+            /Invalid declared source.*"org".*unreadable/s,
+          );
+        } finally {
+          await chmod(locked, 0o755);
+        }
+      },
+    );
+
+    it('fails a declared source skill as not-yet-supported, naming the source', async () => {
+      await writeSourceSkill('source-skill');
+      await declareWithSource('skills:\n  use:\n    - source-skill\n');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+        /source-skill.*source "org".*not yet supported/s,
+      );
+      expect(existsSync(skillPath('source-skill'))).toBe(false);
+    });
+
+    it('rejects an invalid source in dry-run, before previewing any write', async () => {
+      await declareWithSource('rulebooks:\n  use: []\n', path.join(sourceDir, 'missing'));
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /Invalid declared source/,
+      );
+    });
   });
 
   describe('declared skills', () => {

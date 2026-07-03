@@ -25,8 +25,8 @@ describe(parseCodeAssemblyFile, () => {
   });
 
   it('treats an empty or comment-only file as nothing declared', () => {
-    expect(parseCodeAssemblyFile('')).toEqual({ root: false });
-    expect(parseCodeAssemblyFile('# just a comment\n')).toEqual({ root: false });
+    expect(parseCodeAssemblyFile('')).toEqual({ root: false, sources: [] });
+    expect(parseCodeAssemblyFile('# just a comment\n')).toEqual({ root: false, sources: [] });
   });
 
   it('tolerates unknown keys on a structured entry', () => {
@@ -74,5 +74,55 @@ describe(parseCodeAssemblyFile, () => {
 
     expect(declaration.rulebooks).toBeUndefined();
     expect(declaration.root).toBe(false);
+  });
+
+  it('defaults sources to an empty list when the key is absent', () => {
+    const declaration = parseCodeAssemblyFile('rulebooks:\n  use:\n    - alpha\n');
+
+    expect(declaration.sources).toEqual([]);
+  });
+
+  it('tolerates a sources key whose value is null (all entries commented out)', () => {
+    const declaration = parseCodeAssemblyFile('sources:\n');
+
+    expect(declaration.sources).toEqual([]);
+    expect(declaration.root).toBe(false);
+  });
+
+  it('parses a sources list of name/path pairs', () => {
+    const declaration = parseCodeAssemblyFile(
+      'sources:\n  - name: org\n    path: ../shared-guidance\n  - name: home\n    path: ~/guidance\n',
+    );
+
+    expect(declaration.sources).toEqual([
+      { name: 'org', path: '../shared-guidance' },
+      { name: 'home', path: '~/guidance' },
+    ]);
+  });
+
+  it('tolerates unknown keys on a source entry', () => {
+    const declaration = parseCodeAssemblyFile('sources:\n  - name: org\n    path: ../shared\n    ref: v2\n');
+
+    expect(declaration.sources[0]).toMatchObject({ name: 'org', path: '../shared', ref: 'v2' });
+  });
+
+  it('throws when a source is missing name', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - path: ../shared\n')).toThrow(/name/);
+  });
+
+  it('throws when a source is missing path', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: org\n')).toThrow(/path/);
+  });
+
+  it('throws when a source path is an empty string', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: org\n    path: ""\n')).toThrow(/path/);
+  });
+
+  it('throws when a source name is an empty string', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: ""\n    path: ../shared\n')).toThrow(/name/);
+  });
+
+  it('throws when sources is not a list', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  name: org\n  path: ../shared\n')).toThrow();
   });
 });

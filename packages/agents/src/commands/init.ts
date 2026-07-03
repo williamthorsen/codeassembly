@@ -24,7 +24,16 @@ rulebooks:
 # subagents:
 #   use: []
 
-# root: true  # ignore broader-scope declarations entirely, starting fresh from this file
+# sources declares extra content directories to resolve artifacts from, each a { name, path } pair searched
+# before the built-in library. A relative path resolves against this .agents/ directory (~ and absolute paths are
+# also allowed); a later-declared source shadows an earlier one, and any source shadows the library. Commit only
+# repo-relative paths here; keep machine-specific paths in codeassembly.local.yaml. This release resolves rulebooks
+# through sources; a skill or subagent that resolves from a source fails as not-yet-supported.
+# sources:
+#   - name: org-guidance
+#     path: ../shared-guidance
+
+# root: true  # ignore broader-scope declarations entirely (including sources), starting fresh from this file
 
 # collections.use lists collection slugs; each pulls in its members' transitive closure.
 # collections:

@@ -7,14 +7,22 @@ export const EntrySchema = z
   .transform((entry) => (typeof entry === 'string' ? { name: entry } : entry));
 
 /**
- * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag plus one optional block
- * per artifact type (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized
- * type triggers an error); entries are open (unknown keys pass through). Each type's block resolves to
- * `{ use, drop }` lists; an absent or null block is omitted.
+ * A declared content source: a named directory structured like the library's `content/`. Both `name` and `path` are
+ * required; unknown keys pass through (`.loose()`) so a later cut can add per-source config without a breaking change,
+ * mirroring `EntrySchema`.
+ */
+export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
+
+/**
+ * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag, an optional `sources` list,
+ * plus one optional block per artifact type (`rulebooks`, `skills`, `subagents`, `collections`). The top level is
+ * closed (an unrecognized key triggers an error); entries are open (unknown keys pass through). Each type's block
+ * resolves to `{ use, drop }` lists; an absent or null block is omitted.
  */
 const CodeAssemblySchema = z
   .object({
     root: z.boolean().default(false),
+    sources: optionalSourceList(),
     rulebooks: optionalTypeDeclaration(),
     skills: optionalTypeDeclaration(),
     subagents: optionalTypeDeclaration(),
@@ -30,6 +38,9 @@ export type TypeDeclaration = z.infer<ReturnType<typeof typeDeclarationSchema>>;
 
 /** A normalized declaration entry: always `{ name }`, with any unknown authoring keys preserved. */
 export type DeclarationEntry = z.infer<typeof EntrySchema>;
+
+/** A declared content source as authored: a `{ name, path }` pair with any unknown keys preserved. */
+export type DeclarationSource = z.infer<typeof SourceSchema>;
 
 /**
  * Parses and validates one `codeassembly.yaml` file's contents into a typed declaration. An empty or comment-only
@@ -74,6 +85,11 @@ function typeDeclarationSchema() {
 /** Resolves an absent type key, or one whose value is `null`, to `undefined` rather than a validation error. */
 function optionalTypeDeclaration(): z.ZodType<TypeDeclaration | undefined> {
   return z.preprocess((value) => value ?? undefined, typeDeclarationSchema().optional());
+}
+
+/** Resolves an absent `sources` key, or one whose value is `null` (all entries commented out), to an empty list. */
+function optionalSourceList(): z.ZodType<Array<DeclarationSource>> {
+  return z.preprocess((value) => value ?? undefined, z.array(SourceSchema).default([]));
 }
 
 // endregion | Helpers

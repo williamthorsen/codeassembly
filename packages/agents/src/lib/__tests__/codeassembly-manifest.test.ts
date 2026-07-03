@@ -1,5 +1,5 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -17,6 +17,9 @@ describe(resolveDeclaration, () => {
   afterEach(async () => {
     await rm(cwd, { recursive: true, force: true });
   });
+
+  /** The absolute `.agents/` directory a relative source path resolves against. */
+  const agentsDir = (): string => path.join(cwd, '.agents');
 
   /** Writes the project-scope `codeassembly.yaml`. */
   async function writeProject(content: string): Promise<void> {
@@ -37,9 +40,15 @@ describe(resolveDeclaration, () => {
     expect(await resolveDeclaration({ cwd })).toBeUndefined();
   });
 
-  it('returns empty type lists when a file is present but declares nothing', async () => {
+  it('returns empty type and source lists when a file is present but declares nothing', async () => {
     await writeProject('# nothing declared yet\n');
-    expect(await resolveDeclaration({ cwd })).toEqual({ rulebooks: [], skills: [], subagents: [], collections: [] });
+    expect(await resolveDeclaration({ cwd })).toEqual({
+      rulebooks: [],
+      skills: [],
+      subagents: [],
+      collections: [],
+      sources: [],
+    });
   });
 
   it('resolves additive rulebook use from a single project file, deduplicating', async () => {
@@ -49,6 +58,7 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: [],
+      sources: [],
     });
   });
 
@@ -59,6 +69,7 @@ describe(resolveDeclaration, () => {
       skills: ['one', 'two'],
       subagents: [],
       collections: [],
+      sources: [],
     });
   });
 
@@ -69,6 +80,7 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: ['canary', 'other'],
       collections: [],
+      sources: [],
     });
   });
 
@@ -79,6 +91,7 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: ['recommended', 'other'],
+      sources: [],
     });
   });
 
@@ -91,6 +104,7 @@ describe(resolveDeclaration, () => {
       skills: ['one'],
       subagents: ['canary'],
       collections: ['recommended'],
+      sources: [],
     });
   });
 
@@ -104,6 +118,7 @@ describe(resolveDeclaration, () => {
       skills: ['one', 'two'],
       subagents: ['canary', 'other'],
       collections: [],
+      sources: [],
     });
   });
 
@@ -115,6 +130,7 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: [],
+      sources: [],
     });
   });
 
@@ -126,6 +142,7 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: ['other'],
+      sources: [],
     });
   });
 
@@ -141,6 +158,7 @@ describe(resolveDeclaration, () => {
       skills: ['two'],
       subagents: ['other'],
       collections: ['fresh'],
+      sources: [],
     });
   });
 
@@ -151,11 +169,68 @@ describe(resolveDeclaration, () => {
       skills: ['gamma'],
       subagents: [],
       collections: [],
+      sources: [],
     });
   });
 
   it('does not read a legacy rulebooks.yaml: it returns undefined when only that file is present', async () => {
     await writeLegacy('rulebooks:\n  - alpha\n');
     expect(await resolveDeclaration({ cwd })).toBeUndefined();
+  });
+
+  describe('sources', () => {
+    it('resolves a relative source path against the declaring file’s .agents/ directory', async () => {
+      await writeProject('sources:\n  - name: org\n    path: ../shared-guidance\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([{ name: 'org', dir: path.resolve(agentsDir(), '../shared-guidance') }]);
+    });
+
+    it('keeps an absolute source path unchanged', async () => {
+      await writeProject('sources:\n  - name: org\n    path: /opt/guidance\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([{ name: 'org', dir: '/opt/guidance' }]);
+    });
+
+    it('expands a ~-prefixed source path against the home directory', async () => {
+      await writeProject('sources:\n  - name: home\n    path: ~/guidance\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([{ name: 'home', dir: path.join(homedir(), 'guidance') }]);
+    });
+
+    it('orders sources highest-precedence-first: later-declared shadows earlier within one file', async () => {
+      await writeProject('sources:\n  - name: a\n    path: /a\n  - name: b\n    path: /b\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([
+        { name: 'b', dir: '/b' },
+        { name: 'a', dir: '/a' },
+      ]);
+    });
+
+    it('ranks a higher-tier source above a lower-tier one', async () => {
+      await writeProject('sources:\n  - name: org\n    path: /org\n');
+      await writeLocal('sources:\n  - name: local\n    path: /local\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([
+        { name: 'local', dir: '/local' },
+        { name: 'org', dir: '/org' },
+      ]);
+    });
+
+    it('remaps a repeated source name to the later path and moves it ahead of an unremapped source', async () => {
+      await writeProject('sources:\n  - name: org\n    path: /org-old\n  - name: other\n    path: /other\n');
+      await writeLocal('sources:\n  - name: org\n    path: /org-new\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([
+        { name: 'org', dir: '/org-new' },
+        { name: 'other', dir: '/other' },
+      ]);
+    });
+
+    it('discards a lower-tier source declaration when a higher tier declares root: true', async () => {
+      await writeProject('sources:\n  - name: org\n    path: /org\n');
+      await writeLocal('root: true\nsources:\n  - name: local\n    path: /local\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([{ name: 'local', dir: '/local' }]);
+    });
   });
 });

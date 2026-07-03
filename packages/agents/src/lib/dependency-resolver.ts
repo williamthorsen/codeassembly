@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
+import { describeSearchedLocations, libraryResolver, type SourceResolver } from './content-sources.ts';
 import {
   type ArtifactDependencies,
   readDependencies,
@@ -11,7 +12,6 @@ import {
 import { expandIncludes } from './directive-expander.ts';
 import { extractInvocationEdges } from './invocation-tokens.ts';
 import { enumerateLibrarySlugs } from './library-catalog.ts';
-import { isMissingFile } from './type-guards.ts';
 
 /** The directly-declared slugs per type that seed closure resolution; an absent type seeds nothing. */
 export type DirectArtifacts = Partial<Record<ArtifactType, ReadonlyArray<string>>>;
@@ -30,11 +30,17 @@ export interface ResolvedClosure {
  * result is
  * deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending path. A
  * collection is a traversal-only node: its members are followed but the collection itself is dropped from the
- * deployable result. A referenced artifact whose library file is absent throws an error naming its type and slug.
+ * deployable result. A referenced artifact that resolves from no source or the library throws an error naming its
+ * type and slug and every location searched.
  *
- * @param contentDir The library root each artifact's frontmatter file is resolved under.
+ * @param sources The source resolver each artifact is resolved through, or a library directory string normalized to a
+ * library-only resolver (preserving the legacy library-only call sites unchanged).
  */
-export async function resolveClosure(direct: DirectArtifacts, contentDir: string): Promise<ResolvedClosure> {
+export async function resolveClosure(
+  direct: DirectArtifacts,
+  sources: SourceResolver | string,
+): Promise<ResolvedClosure> {
+  const resolver = typeof sources === 'string' ? libraryResolver(sources) : sources;
   const reached: Record<ArtifactType, Set<string>> = {
     rulebook: new Set(),
     skill: new Set(),
@@ -55,7 +61,7 @@ export async function resolveClosure(direct: DirectArtifacts, contentDir: string
     reached[type].add(slug);
 
     onPath.add(id);
-    const edges = await readArtifactEdges(type, slug, contentDir);
+    const edges = await readArtifactEdges(type, slug, resolver);
     for (const edgeType of ARTIFACT_TYPE_VALUES) {
       for (const edgeSlug of edges[edgeType] ?? []) {
         await visit(edgeType, edgeSlug, [...trail, id]);
@@ -80,30 +86,40 @@ export async function resolveClosure(direct: DirectArtifacts, contentDir: string
 // region | Helpers
 
 /**
- * Reads one artifact's outgoing edges, throwing a clear error when its library file is absent. A collection's edges
- * come from `members:` — the full catalog when it carries `'@library'`, otherwise its explicit members. Every other
- * type's edges come from `dependencies:`. A skill or subagent additionally unions the invocation tokens in its
- * include-expanded body (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a
- * token inside a shared partial becomes an edge for every artifact that includes it — and a subagent further unions
- * its top-level `skills:` injection list. A rulebook keeps `dependencies:` only; its body is embedded without the
- * render pass. Every unioned edge enters the closure without a duplicate `dependencies:` declaration.
+ * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
+ * every location searched when the artifact resolves from no source or the library. Any non-rulebook artifact (skill,
+ * subagent, or collection) that resolves from a non-library source throws a not-yet-supported error naming that source
+ * — before any body is read or expanded, so neither the undecided external-include base nor a mis-scoped `@library`
+ * enumeration is ever reached. A collection's edges come from `members:` — the full
+ * library catalog when it carries `'@library'`, otherwise its explicit members. Every other type's edges come from
+ * `dependencies:`. A skill or subagent additionally unions the invocation tokens in its include-expanded body
+ * (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a token inside a shared
+ * partial becomes an edge for every artifact that includes it — and a subagent further unions its top-level `skills:`
+ * injection list. A rulebook keeps `dependencies:` only; its body is embedded without the render pass. Every unioned
+ * edge enters the closure without a duplicate `dependencies:` declaration.
  */
-async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: string): Promise<ArtifactDependencies> {
-  const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
-  let content: string;
-  try {
-    content = await readFile(filePath, 'utf8');
-  } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      throw new Error(`Referenced ${type} "${slug}" was not found in the library at ${filePath}`);
-    }
-    throw error;
+async function readArtifactEdges(
+  type: ArtifactType,
+  slug: string,
+  resolver: SourceResolver,
+): Promise<ArtifactDependencies> {
+  const resolved = await resolver.resolve(type, slug);
+  if (resolved === undefined) {
+    throw new Error(
+      `Referenced ${type} "${slug}" was not found in any of: ${describeSearchedLocations(resolver, type, slug)}`,
+    );
   }
+  if (type !== 'rulebook' && resolved.source !== undefined) {
+    throw new Error(`External-source ${type} "${slug}" resolved from source "${resolved.source}" is not yet supported`);
+  }
+
+  const filePath = path.join(resolved.dir, artifactFrontmatterPath(type, slug));
+  const content = await readFile(filePath, 'utf8');
 
   const label = `${type} ${slug}`;
   if (type === 'collection') {
     const members = readMembers(content, label);
-    return members.kind === 'library' ? await enumerateLibrarySlugs(contentDir) : members.edges;
+    return members.kind === 'library' ? await enumerateLibrarySlugs(resolver.libraryDir) : members.edges;
   }
 
   const dependencies = readDependencies(content, label);
@@ -116,7 +132,7 @@ async function readArtifactEdges(type: ArtifactType, slug: string, contentDir: s
   // surface, then union the body's invocation tokens — and, for a subagent, its `skills:` injection list — into the
   // declared dependencies. `visit` carries dedup and cycle-safety, so the unions are emitted unfiltered; a slug named
   // by both a token and `dependencies:` collapses to one visit.
-  const expanded = await expandIncludes(filePath, contentDir);
+  const expanded = await expandIncludes(filePath, resolved.dir);
   const tokens = extractInvocationEdges(expanded);
   const injectedSkills = type === 'subagent' ? readInjectedSkills(content, label) : [];
   return {
