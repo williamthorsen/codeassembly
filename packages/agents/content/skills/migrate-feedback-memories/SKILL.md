@@ -60,7 +60,7 @@ Then decide one destination per memory:
 
 - **Capture** when the lesson generalizes beyond its origin project — a behavior, correction, or convention that should propagate. This is the default for behavioral feedback.
 - **Retain** when the fact is genuinely local and non-propagating (a project-specific deadline, a one-off quirk).
-- **Delete** when the memory is redundant with shared guidance or a prior capture — including a rule the origin project's own guidance already covers, which is exactly what grounding surfaces. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is such a case: its guidance now lives in `shared/AGENTS.md`, so it is a delete like any other, with no carve-out.
+- **Delete** only when the memory _restates_ a rule that shared guidance, a prior capture, or the origin project's own guidance already codifies, adding no signal the guidance does not already carry. Redundancy here is of signal, not topic. A memory that **narrates a violation** of already-existing guidance is not redundant: an agent breaking a codified rule is fresh evidence the guidance is not landing, so route it to **Capture** with `,mistake`, never Delete. When a body is ambiguous between restatement and violation, prefer Capture; a needless capture dedups away on the next run, but a deleted violation is gone for good. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is a pure restatement (its rule now lives in `shared/AGENTS.md`), so it is a delete like any other.
 
 ### 3. Dedup capture candidates by origin
 
@@ -109,7 +109,7 @@ On approval, run all captures first, then a single deletion pass:
 ### Composing a capture
 
 - `--store codeassembly` — the agent-guidance KB. Route to a different store only when a memory is specific to another registered project's KB.
-- `--tags feedback` always; add `,mistake` (i.e. `--tags feedback,mistake`) when the memory recorded a _misapplied_ existing rule.
+- `--tags feedback` always; add `,mistake` (i.e. `--tags feedback,mistake`) when the memory recorded a _misapplied_ existing rule — including the violation-of-existing-guidance memory the Delete rule routes to Capture instead of deleting.
 - `--skill <slug>` when the lesson targets a specific skill.
 - `--impact <low|medium|high|critical>` — rate on the merits of the memory's content: how much acting on the lesson would improve future behavior. Omit only on a genuine toss-up.
 - `--harness {harness_id}` — keep verbatim; the installer injects the value.
