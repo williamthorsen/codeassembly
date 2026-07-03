@@ -499,6 +499,26 @@ describe(syncCommand, () => {
       },
     );
 
+    // The source root itself is unreadable while its parent stays searchable, so `stat` still reports it as a
+    // directory. With no declared rulebook to probe inside it, only the up-front readability check catches it.
+    it.runIf(canEnforceDirPermissions)(
+      'fails the run when a declared source root is itself unreadable, even with nothing declared to resolve',
+      async () => {
+        const locked = path.join(sourceDir, 'locked');
+        await mkdir(locked, { recursive: true });
+        await chmod(locked, 0o000);
+        await declareWithSource('rulebooks:\n  use: []\n', locked);
+
+        try {
+          await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+            /Invalid declared source.*"org".*unreadable/s,
+          );
+        } finally {
+          await chmod(locked, 0o755);
+        }
+      },
+    );
+
     it('fails a declared source skill as not-yet-supported, naming the source', async () => {
       await writeSourceSkill('source-skill');
       await declareWithSource('skills:\n  use:\n    - source-skill\n');

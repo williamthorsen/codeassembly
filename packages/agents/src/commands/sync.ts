@@ -1,5 +1,5 @@
-import { type Dirent, existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { constants, type Dirent, existsSync } from 'node:fs';
+import { access, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -368,8 +368,8 @@ function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolea
 }
 
 /**
- * Throws when any declared source path is missing or not a directory, so a bad source fails the whole run — dry-run
- * included — before any file is touched. The error names each offending source and what is wrong with it.
+ * Throws when any declared source path is missing, not a directory, or unreadable, so a bad source fails the whole
+ * run — dry-run included — before any file is touched. The error names each offending source and what is wrong with it.
  */
 async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: string }>): Promise<void> {
   const invalid: Array<string> = [];
@@ -381,19 +381,28 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
   }
   if (invalid.length > 0) {
     throw new Error(
-      `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing directory.`,
+      `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing, readable directory.`,
     );
   }
 }
 
 /**
- * Reports what disqualifies `dir` as a source — that it is missing, not a directory, or unreadable (e.g. a
- * permission-denied `stat`) — or `undefined` when valid. Any `stat` failure other than a plain absence is folded into
- * the "unreadable" case so it still surfaces through the attributed `Invalid declared source(s)` error naming `dir`.
+ * Reports what disqualifies `dir` as a source — that it is missing, not a directory, or unreadable — or `undefined`
+ * when valid. Validity requires both that `dir` is a directory and that the process can read and traverse it, because
+ * `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the parent chain,
+ * not on `dir`). Any permission failure — from the `stat` or the read-and-traverse access probe — folds into the
+ * "unreadable" case so it surfaces through the attributed `Invalid declared source(s)` error naming `dir`.
  */
 async function describeSourceProblem(dir: string): Promise<string | undefined> {
   try {
-    return (await stat(dir)).isDirectory() ? undefined : 'not a directory';
+    if (!(await stat(dir)).isDirectory()) {
+      return 'not a directory';
+    }
+    // Probe the read+traverse access the resolver's frontmatter lookups rely on, so a directory that stats as a
+    // directory but is itself unreadable (e.g. mode 000) fails here with the attributed error rather than as a raw
+    // EACCES mid-resolution — or not at all when no declared artifact happens to reach into it.
+    await access(dir, constants.R_OK | constants.X_OK);
+    return undefined;
   } catch (error: unknown) {
     if (isMissingFile(error)) {
       return 'does not exist';
