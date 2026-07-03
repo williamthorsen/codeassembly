@@ -1,12 +1,14 @@
 import { type Dirent, existsSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
+import { artifactFrontmatterPath } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { createSourceResolver, type SourceResolver } from '../lib/content-sources.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
@@ -31,7 +33,7 @@ import type { HarnessId, InstallOptions } from '../lib/types.ts';
 const skillMarker = makeArtifactMarker('skill');
 const subagentMarker = makeArtifactMarker('subagent');
 
-/** A declared rulebook resolved against the library: its neutral body and which delivery modes it requests. */
+/** A declared rulebook resolved against its owning source: its neutral body and which delivery modes it requests. */
 interface ResolvedRulebook {
   readonly slug: string;
   readonly skillName: string;
@@ -137,8 +139,13 @@ async function reconcileDomain(
 
   const contentDir = contentDirOverride ?? resolveContentDir();
 
+  // Resolution searches declared sources (highest precedence first) then the built-in library. Validate each declared
+  // source up front so a missing or non-directory source fails the whole run — dry-run included — before any write.
+  const resolver = createSourceResolver(declaration.sources, contentDir);
+  await assertValidSources(declaration.sources);
+
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
-  // resolving against the library, so a declared collection deploys exactly its transitive closure.
+  // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
   const closure = await resolveClosure(
     {
       rulebook: declaration.rulebooks,
@@ -146,11 +153,10 @@ async function reconcileDomain(
       subagent: declaration.subagents,
       collection: declaration.collections,
     },
-    contentDir,
+    resolver,
   );
   const declaredRulebooks = closure.rulebooks;
 
-  const librarySrcDir = path.join(contentDir, 'guidance', 'rulebooks');
   const librarySkillsDir = path.join(contentDir, 'skills');
   const librarySubagentsDir = path.join(contentDir, 'subagents');
   const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
@@ -158,7 +164,7 @@ async function reconcileDomain(
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
-  const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, librarySrcDir)));
+  const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, resolver)));
   assertNoSkillNameCollisions(resolved);
   const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, librarySkillsDir)));
   const resolvedSubagents = await Promise.all(
@@ -359,6 +365,37 @@ async function reconcileDomain(
 /** True when a skill targets the given harness — either it names no harnesses (so all) or lists this one. */
 function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
   return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
+}
+
+/**
+ * Throws when any declared source path is missing or not a directory, so a bad source fails the whole run — dry-run
+ * included — before any file is touched. The error names each offending source and what is wrong with it.
+ */
+async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: string }>): Promise<void> {
+  const invalid: Array<string> = [];
+  for (const source of sources) {
+    const problem = await describeSourceProblem(source.dir);
+    if (problem !== undefined) {
+      invalid.push(`"${source.name}" (${source.dir}): ${problem}`);
+    }
+  }
+  if (invalid.length > 0) {
+    throw new Error(
+      `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing directory.`,
+    );
+  }
+}
+
+/** Reports what disqualifies `dir` as a source — that it is missing or not a directory — or `undefined` when valid. */
+async function describeSourceProblem(dir: string): Promise<string | undefined> {
+  try {
+    return (await stat(dir)).isDirectory() ? undefined : 'not a directory';
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return 'does not exist';
+    }
+    throw error;
+  }
 }
 
 /** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
@@ -778,15 +815,28 @@ function reportDryRun(plan: DryRunPlan): void {
   }
 }
 
-/** Reads a rulebook from the library, validates its frontmatter, and returns its neutral body and delivery. */
-async function resolveRulebook(slug: string, librarySrcDir: string): Promise<ResolvedRulebook> {
-  const srcPath = path.join(librarySrcDir, `${slug}.md`);
+/**
+ * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), validates
+ * its frontmatter, and returns its neutral body and delivery. A missing frontmatter file throws an error naming the
+ * resolving source.
+ */
+async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<ResolvedRulebook> {
+  const resolved = await resolver.resolve('rulebook', slug);
+  if (resolved === undefined) {
+    const searched = [...resolver.sources.map((source) => source.dir), resolver.libraryDir]
+      .map((dir) => path.join(dir, artifactFrontmatterPath('rulebook', slug)))
+      .join(', ');
+    throw new Error(`Declared rulebook "${slug}" was not found in any of: ${searched}`);
+  }
+
+  const srcPath = path.join(resolved.dir, artifactFrontmatterPath('rulebook', slug));
   let content: string;
   try {
     content = await readFile(srcPath, 'utf8');
   } catch (error: unknown) {
     if (isEnoent(error)) {
-      throw new Error(`Declared rulebook "${slug}" was not found in the library at ${srcPath}`);
+      const origin = resolved.source === undefined ? 'the library' : `source "${resolved.source}"`;
+      throw new Error(`Declared rulebook "${slug}" was not found in ${origin} at ${srcPath}`);
     }
     throw error;
   }

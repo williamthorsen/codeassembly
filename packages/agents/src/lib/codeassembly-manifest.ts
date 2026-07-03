@@ -1,18 +1,23 @@
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import type { TypeDeclaration } from './codeassembly-schema.ts';
+import type { DeclarationSource, TypeDeclaration } from './codeassembly-schema.ts';
 import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
+import { resolveSourcePath } from './source-path.ts';
 
 /**
  * The effective slugs a project declares per artifact type, after combining the scope chain. `rulebooks`, `skills`,
  * and `subagents` are deployable; `collections` are dependency-only aggregates the caller expands into the others.
+ * `sources` are the declared content sources, each resolved to an absolute directory, in precedence order (highest
+ * first).
  */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
   readonly skills: ReadonlyArray<string>;
   readonly subagents: ReadonlyArray<string>;
   readonly collections: ReadonlyArray<string>;
+  readonly sources: ReadonlyArray<{ name: string; dir: string }>;
 }
 
 /**
@@ -39,6 +44,8 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
   const skills = new Set<string>();
   const subagents = new Set<string>();
   const collections = new Set<string>();
+  // Sources key on `name` so a repeated name remaps its path; the value is the resolved absolute dir.
+  const sources = new Map<string, string>();
   for (const filePath of chain) {
     const declaration = parseCodeAssemblyFile(await readFile(filePath, 'utf8'), filePath);
 
@@ -47,17 +54,42 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
       skills.clear();
       subagents.clear();
       collections.clear();
+      sources.clear();
     }
     accumulateType(rulebooks, declaration.rulebooks);
     accumulateType(skills, declaration.skills);
     accumulateType(subagents, declaration.subagents);
     accumulateType(collections, declaration.collections);
+    accumulateSources(sources, declaration.sources, path.dirname(filePath));
   }
 
-  return { rulebooks: [...rulebooks], skills: [...skills], subagents: [...subagents], collections: [...collections] };
+  return {
+    rulebooks: [...rulebooks],
+    skills: [...skills],
+    subagents: [...subagents],
+    collections: [...collections],
+    // The map is insertion-ordered lowest-to-highest precedence; reverse it so the highest-precedence source is first.
+    sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
+  };
 }
 
 // region | Helpers
+
+/**
+ * Resolves each declared source's `path` against `fileDir` and accumulates it by `name`. Re-inserting after a delete
+ * moves a repeated name to the end of the map, so a later (higher-precedence) declaration wins both the path and the
+ * position.
+ */
+function accumulateSources(
+  sources: Map<string, string>,
+  declared: ReadonlyArray<DeclarationSource>,
+  fileDir: string,
+): void {
+  for (const source of declared) {
+    sources.delete(source.name);
+    sources.set(source.name, resolveSourcePath(source.path, fileDir));
+  }
+}
 
 /** Applies one type's `use` (add) and `drop` (subtract) entries to its accumulator, in declaration order. */
 function accumulateType(effective: Set<string>, block: TypeDeclaration | undefined): void {

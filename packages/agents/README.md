@@ -96,6 +96,27 @@ dependencies:
 
 The resolver follows `members:` and `dependencies:` identically; the split is semantic — a collection _contains_ members, while an artifact _depends on_ prerequisites.
 
+### Sources
+
+By default, a declared artifact resolves from CodeAssembly's built-in content library. A top-level `sources:` list adds your own content directories — machine-local, project-local, or a third-party guidance repo — each structured like the library's `content/` (`guidance/rulebooks/`, `skills/`, `subagents/`, `collections/`). Resolution searches the declared sources first, then the library:
+
+```yaml
+sources:
+  - name: org-guidance
+    path: ../shared-guidance
+  - name: personal
+    path: ~/guidance
+rulebooks:
+  use:
+    - team-standards
+```
+
+Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. Declaration entries stay bare slugs — resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, with no per-entry `from:` syntax.
+
+**Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, so a source can override a same-slug library artifact. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
+
+This release resolves **rulebooks** through sources — a rulebook's body and its `dependencies:` closure both resolve from the source that owns it, and a source rulebook's ownership, sentinel, and retraction semantics are identical to a library rulebook's. A declared **skill** or **subagent** that resolves from a non-library source fails loudly as not-yet-supported, naming the source, rather than silently resolving. A declared source that is missing or not a directory fails the run — dry-run included — before any file is written, and a slug found in no source or the library fails with an error naming every location searched.
+
 ### Scopes
 
 The declaration resolves in two independent **domains**, each with its own base and local tiers and its own deployment target. The tiers within a domain run lowest to highest precedence.

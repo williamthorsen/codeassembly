@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from '../artifact-types.ts';
+import { createSourceResolver } from '../content-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../dependency-resolver.ts';
 
 describe(resolveClosure, () => {
@@ -231,6 +232,70 @@ describe(resolveClosure, () => {
       const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, contentDir);
 
       expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: [] });
+    });
+  });
+
+  describe('resolving through declared sources', () => {
+    let sourceDir: string;
+
+    beforeEach(async () => {
+      sourceDir = path.join(tmpdir(), `agents-test-resolver-src-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      await mkdir(sourceDir, { recursive: true });
+    });
+
+    afterEach(async () => {
+      await rm(sourceDir, { recursive: true, force: true });
+    });
+
+    it('resolves a source rulebook and its closure edges from the source over the library', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'library-dep');
+      await writeArtifact(sourceDir, 'rulebook', 'source-dep');
+      await writeArtifact(sourceDir, 'rulebook', 'source-book', {
+        rulebook: ['source-dep', 'library-dep'],
+      });
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const closure = await resolveClosure({ rulebook: ['source-book'] }, resolver);
+
+      expect(closure.rulebooks.toSorted()).toEqual(['library-dep', 'source-book', 'source-dep']);
+    });
+
+    it('throws naming every searched location when a slug resolves from no source or the library', async () => {
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const searched = resolveClosure({ rulebook: ['ghost'] }, resolver);
+
+      await expect(searched).rejects.toThrow(/rulebook "ghost" was not found/);
+      await expect(searched).rejects.toThrow(new RegExp(path.join(sourceDir, 'guidance', 'rulebooks', 'ghost.md')));
+      await expect(searched).rejects.toThrow(new RegExp(path.join(contentDir, 'guidance', 'rulebooks', 'ghost.md')));
+    });
+
+    it('fails a source-resolved skill as not-yet-supported, naming the source and no include error', async () => {
+      await writeArtifactWithBody(sourceDir, 'skill', 'source-skill', 'Invoke {skill:missing-include}.');
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const attempt = resolveClosure({ skill: ['source-skill'] }, resolver);
+
+      await expect(attempt).rejects.toThrow(/External-source skill "source-skill".*source "org".*not yet supported/s);
+      await expect(attempt).rejects.not.toThrow(/include/i);
+    });
+
+    it('fails a source-resolved subagent as not-yet-supported, naming the source', async () => {
+      await writeSubagent(sourceDir, 'source-agent', []);
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      await expect(resolveClosure({ subagent: ['source-agent'] }, resolver)).rejects.toThrow(
+        /External-source subagent "source-agent".*source "org".*not yet supported/s,
+      );
+    });
+
+    it('still deploys a library skill through a resolver that also carries declared sources', async () => {
+      await writeArtifact(contentDir, 'skill', 'library-skill');
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const closure = await resolveClosure({ skill: ['library-skill'] }, resolver);
+
+      expect(closure.skills).toEqual(['library-skill']);
     });
   });
 });
