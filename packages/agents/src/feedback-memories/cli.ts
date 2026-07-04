@@ -9,12 +9,12 @@ import { readAll } from '../lib/stream-helpers.ts';
 import { deleteMemories } from './delete-memory.ts';
 import { enumerateFeedbackMemories } from './enumerate.ts';
 import { resolveProjectsRoot } from './resolve-projects-root.ts';
-import type { MigrateFailure, MigrateResult } from './types.ts';
+import type { FeedbackMemoriesFailure, FeedbackMemoriesResult } from './types.ts';
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
   try {
-    const result = await runMigrate({
+    const result = await runFeedbackMemories({
       argv: process.argv.slice(2),
       stdin: process.stdin,
       env: process.env,
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
     // throws (permission denied, out-of-disk) take the catch arm below.
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`migrate-feedback-memories: ${message}\n`);
+    process.stderr.write(`feedback-memories: ${message}\n`);
     process.exit(1);
   }
 }
@@ -42,13 +42,13 @@ if (isEntryPoint()) {
  *
  * @internal - Exported to allow testing.
  */
-export async function runMigrate(input: {
+export async function runFeedbackMemories(input: {
   argv: readonly string[];
   stdin: Readable;
   env?: NodeJS.ProcessEnv;
   home?: string;
   machine?: string;
-}): Promise<MigrateResult> {
+}): Promise<FeedbackMemoriesResult> {
   const [subcommand, ...rest] = input.argv;
 
   if (subcommand === 'enumerate') {
@@ -123,7 +123,7 @@ function parsePaths(stdinText: string): string[] {
 }
 
 /** Builds a recoverable `invalid-args` failure with the given message. */
-function invalidArgs(message: string): MigrateFailure {
+function invalidArgs(message: string): FeedbackMemoriesFailure {
   return { ok: false, error: 'invalid-args', message };
 }
 
@@ -141,7 +141,7 @@ function isEntryPoint(): boolean {
     return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`migrate-feedback-memories: warning: could not determine entry point: ${message}\n`);
+    process.stderr.write(`feedback-memories: warning: could not determine entry point: ${message}\n`);
     return false;
   }
 }

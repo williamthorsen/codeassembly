@@ -43,7 +43,7 @@ The `--auto` flag is consumed by you, not the helper; it controls whether you pr
 Run the helper's `enumerate` subcommand — it is read-only:
 
 ```bash
-node {harness_home_dir}/skills/migrate-feedback-memories/migrate-feedback-memories.mjs enumerate [--store <slug>]
+node {harness_home_dir}/skills/migrate-feedback-memories/feedback-memories.mjs enumerate [--store <slug>]
 ```
 
 Omit `--store` to enumerate every store on the machine; pass `--store <slug>` — the `<project>` directory name reported in each memory's `store` field — to scope the run to one store. A `--store` value that names no store on the machine returns `{ ok: false, error: 'no-such-store' }`, so a mistyped slug fails loudly rather than looking like an already-clean store.
@@ -102,7 +102,7 @@ On approval, run all captures first, then a single deletion pass:
 2. **Delete** — pipe every deletion path, newline-separated, to the helper's `delete` subcommand in a single call. The batch is the union of the memories routed to delete-as-redundant and the sources of successful captures, so each store's `MEMORY.md` is reconciled once:
 
    ```bash
-   printf '%s\n' "<path>" "<path>" … | node {harness_home_dir}/skills/migrate-feedback-memories/migrate-feedback-memories.mjs delete
+   printf '%s\n' "<path>" "<path>" … | node {harness_home_dir}/skills/migrate-feedback-memories/feedback-memories.mjs delete
    ```
 
    It removes each file and reconciles its `MEMORY.md`, printing a per-path outcome (`deleted`, `indexUpdated`, and a `note` for any already-absent file or unmatched index line).

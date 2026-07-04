@@ -1,4 +1,4 @@
-// Shapes for the migrate-feedback-memories helper: the enumerated feedback-memory record, and the JSON results emitted
+// Shapes for the feedback-memories helper: the enumerated feedback-memory record, and the JSON results emitted
 // to stdout by the `enumerate` and `delete` subcommands.
 //
 // Each helper subcommand prints a discriminated union on `ok`. Recoverable failures return `{ ok: false, error, message }`;
@@ -85,12 +85,12 @@ export interface DeleteSuccess {
 }
 
 /** The stdout payload for a recoverable helper failure (bad arguments or an unknown subcommand). */
-export interface MigrateFailure {
+export interface FeedbackMemoriesFailure {
   ok: false;
   error: 'invalid-args';
   message: string;
 }
 
-export type DeleteResult = DeleteSuccess | MigrateFailure;
+export type DeleteResult = DeleteSuccess | FeedbackMemoriesFailure;
 
-export type MigrateResult = EnumerateResult | DeleteResult;
+export type FeedbackMemoriesResult = EnumerateResult | DeleteResult;
