@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from '../artifact-types.ts';
-import { createSourceResolver } from '../content-sources.ts';
+import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../dependency-resolver.ts';
 
 describe(resolveClosure, () => {
@@ -24,7 +24,10 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'skill', 'people-report');
     await writeArtifact(contentDir, 'subagent', 'canary');
 
-    const closure = await resolveClosure({ skill: ['people-report'], subagent: ['canary'] }, contentDir);
+    const closure = await resolveClosure(
+      { skill: ['people-report'], subagent: ['canary'] },
+      libraryResolver(contentDir),
+    );
 
     expect(closure).toEqual({ rulebooks: [], skills: ['people-report'], subagents: ['canary'] });
   });
@@ -34,7 +37,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'subagent', 'canary');
     await writeArtifact(contentDir, 'collection', 'recommended', { skill: ['people-report'], subagent: ['canary'] });
 
-    const closure = await resolveClosure({ collection: ['recommended'] }, contentDir);
+    const closure = await resolveClosure({ collection: ['recommended'] }, libraryResolver(contentDir));
 
     expect(closure).toEqual({ rulebooks: [], skills: ['people-report'], subagents: ['canary'] });
   });
@@ -45,7 +48,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'collection', 'base', { rulebook: ['typescript-conventions'] });
     await writeArtifact(contentDir, 'collection', 'recommended', { collection: ['base'], skill: ['people-report'] });
 
-    const closure = await resolveClosure({ collection: ['recommended'] }, contentDir);
+    const closure = await resolveClosure({ collection: ['recommended'] }, libraryResolver(contentDir));
 
     expect(closure).toEqual({ rulebooks: ['typescript-conventions'], skills: ['people-report'], subagents: [] });
   });
@@ -56,7 +59,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'collection', 'right', { skill: ['shared'] });
     await writeArtifact(contentDir, 'collection', 'top', { collection: ['left', 'right'] });
 
-    const closure = await resolveClosure({ collection: ['top'] }, contentDir);
+    const closure = await resolveClosure({ collection: ['top'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toEqual(['shared']);
   });
@@ -65,7 +68,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'rulebook', 'typescript-conventions');
     await writeArtifact(contentDir, 'skill', 'people-report', { rulebook: ['typescript-conventions'] });
 
-    const closure = await resolveClosure({ skill: ['people-report'] }, contentDir);
+    const closure = await resolveClosure({ skill: ['people-report'] }, libraryResolver(contentDir));
 
     expect(closure).toEqual({ rulebooks: ['typescript-conventions'], skills: ['people-report'], subagents: [] });
   });
@@ -74,7 +77,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'collection', 'a', { collection: ['b'] });
     await writeArtifact(contentDir, 'collection', 'b', { collection: ['a'] });
 
-    await expect(resolveClosure({ collection: ['a'] }, contentDir)).rejects.toThrow(
+    await expect(resolveClosure({ collection: ['a'] }, libraryResolver(contentDir))).rejects.toThrow(
       /cycle.*collection:a → collection:b → collection:a/s,
     );
   });
@@ -82,7 +85,7 @@ describe(resolveClosure, () => {
   it('throws naming the type and slug when a referenced artifact is missing', async () => {
     await writeArtifact(contentDir, 'collection', 'recommended', { skill: ['ghost'] });
 
-    await expect(resolveClosure({ collection: ['recommended'] }, contentDir)).rejects.toThrow(
+    await expect(resolveClosure({ collection: ['recommended'] }, libraryResolver(contentDir))).rejects.toThrow(
       /skill "ghost" was not found/,
     );
   });
@@ -93,7 +96,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'subagent', 'canary');
     await writeArtifact(contentDir, 'collection', 'all', '@library');
 
-    const closure = await resolveClosure({ collection: ['all'] }, contentDir);
+    const closure = await resolveClosure({ collection: ['all'] }, libraryResolver(contentDir));
 
     expect(closure.rulebooks.toSorted()).toEqual(['typescript-conventions']);
     expect(closure.skills.toSorted()).toEqual(['people-report']);
@@ -104,11 +107,11 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'skill', 'people-report');
     await writeArtifact(contentDir, 'collection', 'all', '@library');
 
-    const before = await resolveClosure({ collection: ['all'] }, contentDir);
+    const before = await resolveClosure({ collection: ['all'] }, libraryResolver(contentDir));
     expect(before.skills.toSorted()).toEqual(['people-report']);
 
     await writeArtifact(contentDir, 'skill', 'classify-complexity');
-    const after = await resolveClosure({ collection: ['all'] }, contentDir);
+    const after = await resolveClosure({ collection: ['all'] }, libraryResolver(contentDir));
 
     expect(after.skills.toSorted()).toEqual(['classify-complexity', 'people-report']);
   });
@@ -119,7 +122,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'collection', 'right', '@library');
     await writeArtifact(contentDir, 'collection', 'top', { collection: ['left', 'right'] });
 
-    const closure = await resolveClosure({ collection: ['top'] }, contentDir);
+    const closure = await resolveClosure({ collection: ['top'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toEqual(['shared']);
   });
@@ -129,14 +132,16 @@ describe(resolveClosure, () => {
     await mkdir(path.dirname(filePath), { recursive: true });
     await writeFile(filePath, "---\nname: bad\nmembers: '@everything'\n---\n\n# bad\n", 'utf8');
 
-    await expect(resolveClosure({ collection: ['bad'] }, contentDir)).rejects.toThrow(/collection bad.*@everything/s);
+    await expect(resolveClosure({ collection: ['bad'] }, libraryResolver(contentDir))).rejects.toThrow(
+      /collection bad.*@everything/s,
+    );
   });
 
   it("pulls a subagent's injected skills into the closure without a dependencies edge", async () => {
     await writeArtifact(contentDir, 'skill', 'anti-patterns');
     await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns']);
 
-    const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, contentDir);
+    const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir));
 
     expect(closure).toEqual({ rulebooks: [], skills: ['anti-patterns'], subagents: ['orchestrated-coder'] });
   });
@@ -146,7 +151,7 @@ describe(resolveClosure, () => {
     await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns']);
     await writeArtifact(contentDir, 'collection', 'recommended', { subagent: ['orchestrated-coder'] });
 
-    const closure = await resolveClosure({ collection: ['recommended'] }, contentDir);
+    const closure = await resolveClosure({ collection: ['recommended'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toEqual(['anti-patterns']);
     expect(closure.subagents).toEqual(['orchestrated-coder']);
@@ -156,7 +161,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'skill', 'anti-patterns');
     await writeSubagent(contentDir, 'orchestrated-coder', ['anti-patterns'], { skill: ['anti-patterns'] });
 
-    const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, contentDir);
+    const closure = await resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toEqual(['anti-patterns']);
   });
@@ -165,7 +170,7 @@ describe(resolveClosure, () => {
     await writeArtifact(contentDir, 'skill', 'loops', { subagent: ['coder'] });
     await writeSubagent(contentDir, 'coder', ['loops']);
 
-    await expect(resolveClosure({ subagent: ['coder'] }, contentDir)).rejects.toThrow(
+    await expect(resolveClosure({ subagent: ['coder'] }, libraryResolver(contentDir))).rejects.toThrow(
       /cycle.*subagent:coder → skill:loops → subagent:coder/s,
     );
   });
@@ -173,7 +178,7 @@ describe(resolveClosure, () => {
   it('throws naming the skill when an injected skill is missing from the library', async () => {
     await writeSubagent(contentDir, 'orchestrated-coder', ['ghost']);
 
-    await expect(resolveClosure({ subagent: ['orchestrated-coder'] }, contentDir)).rejects.toThrow(
+    await expect(resolveClosure({ subagent: ['orchestrated-coder'] }, libraryResolver(contentDir))).rejects.toThrow(
       /skill "ghost" was not found/,
     );
   });
@@ -183,7 +188,7 @@ describe(resolveClosure, () => {
       await writeArtifact(contentDir, 'skill', 'capture-event');
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:capture-event} to record it.');
 
-      const closure = await resolveClosure({ skill: ['wrap-up'] }, contentDir);
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir));
 
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
@@ -192,7 +197,7 @@ describe(resolveClosure, () => {
       await writeArtifact(contentDir, 'subagent', 'planner');
       await writeArtifactWithBody(contentDir, 'subagent', 'orchestrator', 'Dispatch {subagent:planner} first.');
 
-      const closure = await resolveClosure({ subagent: ['orchestrator'] }, contentDir);
+      const closure = await resolveClosure({ subagent: ['orchestrator'] }, libraryResolver(contentDir));
 
       expect(closure.subagents.toSorted()).toEqual(['orchestrator', 'planner']);
     });
@@ -202,7 +207,7 @@ describe(resolveClosure, () => {
       await writeSkillPartial(contentDir, 'wrap-up', 'frag.md', 'Then invoke {skill:capture-event}.');
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', '# wrap-up\n\n<!-- include: _partials/frag.md / -->');
 
-      const closure = await resolveClosure({ skill: ['wrap-up'] }, contentDir);
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir));
 
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
@@ -210,7 +215,9 @@ describe(resolveClosure, () => {
     it('fails the run when a body token names a non-existent artifact', async () => {
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'Invoke {skill:ghost}.');
 
-      await expect(resolveClosure({ skill: ['wrap-up'] }, contentDir)).rejects.toThrow(/skill "ghost" was not found/);
+      await expect(resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir))).rejects.toThrow(
+        /skill "ghost" was not found/,
+      );
     });
 
     it('deduplicates a slug named by both a body token and a dependencies edge', async () => {
@@ -219,7 +226,7 @@ describe(resolveClosure, () => {
         skill: ['capture-event'],
       });
 
-      const closure = await resolveClosure({ skill: ['wrap-up'] }, contentDir);
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir));
 
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
@@ -229,7 +236,7 @@ describe(resolveClosure, () => {
       // skill is neither pulled into the closure nor existence-checked (here it does not exist, and the run succeeds).
       await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Invoke {skill:capture-event}.');
 
-      const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, contentDir);
+      const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, libraryResolver(contentDir));
 
       expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: [] });
     });

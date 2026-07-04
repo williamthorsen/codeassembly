@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
-import { describeSearchedLocations, libraryResolver, type SourceResolver } from './content-sources.ts';
+import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import {
   type ArtifactDependencies,
   readDependencies,
@@ -32,15 +32,8 @@ export interface ResolvedClosure {
  * collection is a traversal-only node: its members are followed but the collection itself is dropped from the
  * deployable result. A referenced artifact that resolves from no source or the library throws an error naming its
  * type and slug and every location searched.
- *
- * @param sources The source resolver each artifact is resolved through, or a library directory string normalized to a
- * library-only resolver (preserving the legacy library-only call sites unchanged).
  */
-export async function resolveClosure(
-  direct: DirectArtifacts,
-  sources: SourceResolver | string,
-): Promise<ResolvedClosure> {
-  const resolver = typeof sources === 'string' ? libraryResolver(sources) : sources;
+export async function resolveClosure(direct: DirectArtifacts, resolver: SourceResolver): Promise<ResolvedClosure> {
   const reached: Record<ArtifactType, Set<string>> = {
     rulebook: new Set(),
     skill: new Set(),
