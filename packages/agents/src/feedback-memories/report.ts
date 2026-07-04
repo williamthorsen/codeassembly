@@ -1,4 +1,4 @@
-import type { FeedbackMemorySummary, ProjectSummary } from './types.ts';
+import type { FeedbackMemorySummary, ProjectSummary, SkippedMemory } from './types.ts';
 
 const EMOJI = '📦';
 const FALLBACK_WIDTH = 120;
@@ -12,12 +12,16 @@ const INDENT = '   ';
  * sorting all happen upstream in `summarizeFeedbackMemories`; this only lays the summary out.
  */
 export function reportSummary(summary: FeedbackMemorySummary, options: { verbose?: boolean; width?: number }): string {
+  const verbose = options.verbose ?? false;
+  const footer = skippedFooter(summary.skipped, verbose);
+
   if (summary.projects.length === 0) {
-    return 'No feedback memories found.';
+    return footer === '' ? 'No feedback memories found.' : `No feedback memories found.\n${footer}`;
   }
   const width = options.width ?? FALLBACK_WIDTH;
-  const body = options.verbose ? verboseBody(summary.projects, width) : tableBody(summary.projects);
-  return `${body}\n\n${totalLine(summary)}`;
+  const body = verbose ? verboseBody(summary.projects, width) : tableBody(summary.projects);
+  const totals = footer === '' ? totalLine(summary) : `${totalLine(summary)}\n${footer}`;
+  return `${body}\n\n${totals}`;
 }
 
 // region | Helpers
@@ -59,6 +63,18 @@ function totalLine(summary: FeedbackMemorySummary): string {
   const memories = `${summary.total} feedback ${pluralize(summary.total, 'memory', 'memories')}`;
   const projects = `${summary.projects.length} ${pluralize(summary.projects.length, 'project', 'projects')}`;
   return `${memories} across ${projects}`;
+}
+
+/** Renders a warning for memory files that were detected but could not be read, listing paths under verbose; empty when none. */
+function skippedFooter(skipped: readonly SkippedMemory[], verbose: boolean): string {
+  if (skipped.length === 0) {
+    return '';
+  }
+  const heading = `⚠️  ${skipped.length} ${pluralize(skipped.length, 'file', 'files')} skipped (unreadable)`;
+  if (!verbose) {
+    return heading;
+  }
+  return [`${heading}:`, ...skipped.map((entry) => `${INDENT}${entry.path}`)].join('\n');
 }
 
 /** Formats an ISO-8601 timestamp as `YYYY-MM-DD HH:MM UTC`. */

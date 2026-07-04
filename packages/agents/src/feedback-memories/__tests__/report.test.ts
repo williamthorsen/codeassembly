@@ -89,6 +89,66 @@ describe(reportSummary, () => {
     expect(memoryLine?.length).toBeLessThanOrEqual(40);
   });
 
+  it('warns about skipped files under the total when any are unreadable', () => {
+    const output = reportSummary(
+      summary({
+        total: 1,
+        projects: [
+          {
+            store: '-a',
+            label: 'app',
+            repoPath: '/app',
+            count: 1,
+            lastModified: '2026-06-15T12:30:00.000Z',
+            memories: [],
+          },
+        ],
+        skipped: [
+          { path: '/app/memory/feedback-bad.md', reason: 'bad yaml' },
+          { path: '/app/memory/feedback-worse.md', reason: 'bad yaml' },
+        ],
+      }),
+      {},
+    );
+
+    expect(output).toContain('1 feedback memory across 1 project');
+    expect(output).toContain('2 files skipped (unreadable)');
+    expect(output).not.toContain('/app/memory/feedback-bad.md');
+  });
+
+  it('lists skipped file paths under --verbose', () => {
+    const output = reportSummary(
+      summary({
+        total: 1,
+        projects: [
+          {
+            store: '-a',
+            label: 'app',
+            repoPath: '/app',
+            count: 1,
+            lastModified: '2026-06-15T12:30:00.000Z',
+            memories: [{ slug: 'feedback-ok', description: 'a readable memory' }],
+          },
+        ],
+        skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }],
+      }),
+      { verbose: true },
+    );
+
+    expect(output).toContain('1 file skipped (unreadable)');
+    expect(output).toContain('/app/memory/feedback-bad.md');
+  });
+
+  it('surfaces skipped files even when no readable memories remain', () => {
+    const output = reportSummary(
+      summary({ skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }] }),
+      {},
+    );
+
+    expect(output).toContain('No feedback memories found.');
+    expect(output).toContain('1 file skipped (unreadable)');
+  });
+
   it('reports the empty case plainly', () => {
     expect(reportSummary(summary(), {})).toBe('No feedback memories found.');
   });
