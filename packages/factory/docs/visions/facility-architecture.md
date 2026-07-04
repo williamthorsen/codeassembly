@@ -1,6 +1,6 @@
 # Facility architecture: rooms, agents, and composability
 
-Design document for the Excalibur.js facility visualization. Captures the spatial, behavioral, and compositional architecture derived from the v2 tilemap prototype, brainstorming sessions, and the logical layer implemented in branch 295.
+Design document for the Excalibur.js facility visualization. Captures the spatial, behavioral, and compositional architecture derived from the v2 tilemap prototype, brainstorming sessions, and an earlier implementation of the logical layer.
 
 ---
 
@@ -406,9 +406,9 @@ Transition types: `walk`, `state_change`, `fade_in`, `fade_out`, `artifact_appea
 
 ---
 
-## Branch 295: implementation status
+## Current implementation status
 
-Branch 295 implements layers 1-4 as pure TypeScript functions with comprehensive tests. Current status:
+The current implementation covers layers 1-4 as pure TypeScript functions with comprehensive tests. Status:
 
 ### Implemented
 
@@ -425,16 +425,16 @@ Branch 295 implements layers 1-4 as pure TypeScript functions with comprehensive
 ### Not yet implemented
 
 - Tileset-based rendering (currently uses colored circles/rectangles as placeholders)
-- The refined office layout from this document (branch 295 uses the earlier 5-room layout)
+- The refined office layout from this document (the current implementation uses the earlier 5-room layout)
 - Workshop whiteboard as a visual element
 - Pipeline panel (top-of-screen information strip)
 - Click-to-chat on orchestrator
 - Actual sprite integration (LimeZu Modern Interiors / Modern Office)
-- Artifact state rename: `on_desk` → `created`, add `in_transit` (branch 295 uses `on_desk` | `delivered`)
+- Artifact state rename: `on_desk` → `created`, add `in_transit` (the current implementation uses `on_desk` | `delivered`)
 
 ### Interfaces to preserve
 
-Branch 295's interfaces align well with this document's architecture. Key types to keep:
+The current implementation's interfaces align well with this document's architecture. Key types to keep:
 
 - `TilemapSceneConfig` as the scene snapshot type
 - `FacilityLayout` with its query methods (`slotPosition`, `corridorPath`, etc.)

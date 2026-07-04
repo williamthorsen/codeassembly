@@ -1,6 +1,5 @@
 # Catwalk config differ design
 
-Issue: #182 — Implement catwalk config differ
 Date: 2026-03-06
 
 ## Goal

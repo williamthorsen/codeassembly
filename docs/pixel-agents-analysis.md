@@ -164,4 +164,4 @@ Completion notifications use a two-note chime (E5 → E6, 659 Hz → 1319 Hz) ge
 
 ---
 
-_Analysis performed against pixel-agents repo at `~/repos/clones/pablodelucca/pixel-agents`._
+_Analysis performed against the pixel-agents repo._
