@@ -79,10 +79,10 @@ Show every memory with its destination, and for each capture the proposed `--tag
 
 On approval, run all captures first, then a single deletion pass:
 
-1. **Capture** — for each memory routed to capture, compose the arguments and body per the {skill:capture-event} contract and pipe the body to its bundled helper directly (a batch this size cannot afford a per-item skill invocation):
+1. **Capture** — for each memory routed to capture, compose the arguments and body per the {skill:capture-event} contract and pipe the body to its bundled helper directly (a batch this size cannot afford a per-item skill invocation). Run the capture from the memory's origin repo, so `capture-event`'s auto-filled `cwd` and `repo` resolve to the origin rather than this migration run: wrap the invocation in a subshell that changes to the memory's `repoPath` first. The subshell contains the `cd`, keeping the origin directory out of the deletion pass and the next capture.
 
    ```bash
-   cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
+   (cd "<repoPath>" && cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
      --summary "<one-line lesson>" \
      --store codeassembly \
      --harness {harness_id} \
@@ -92,7 +92,10 @@ On approval, run all captures first, then a single deletion pass:
 
    Origin: project <store>, machine <machine>, session <originSessionId>.
    EOF
+   )
    ```
+
+   `--store codeassembly` resolves from `~/.agents/kb.yaml` independently of the working directory, so the event lands in the same store wherever the capture runs. When the memory's `repoPath` is null — the store slug resolves to no live repo on this machine — omit the `(cd "<repoPath>" && … )` wrapper and run the capture from the current directory as today; `capture-event` then stamps this run's `cwd`/`repo`, and the origin survives in the body's `Origin:` line.
 
    Only when `capture-event` returns `ok: true`, add that memory's source `path` to the deletion batch — a capture migrates the memory out of its store, so its source is removed once the event has landed. When a capture fails, leave the source in place and surface the failure; never delete a memory whose capture did not land.
 
@@ -113,7 +116,7 @@ On approval, run all captures first, then a single deletion pass:
 - `--skill <slug>` when the lesson targets a specific skill.
 - `--impact <low|medium|high|critical>` — rate on the merits of the memory's content: how much acting on the lesson would improve future behavior. Omit only on a genuine toss-up.
 - `--harness {harness_id}` — keep verbatim; the installer injects the value.
-- **Provenance in the body** — `capture-event` auto-fills `cwd`, `repo`, and `session` from _this_ migration run, not the memory's origin, so record the origin project (`store`), machine, and `originSessionId` in the body.
+- **Provenance** — running the capture from the origin `repoPath` (step 5) lands the origin's `cwd` and `repo` in the event's structured fields. `session` is still this migration run's, and the origin machine and `store` have no structured field, so record the origin project (`store`), machine, and `originSessionId` in the body's `Origin:` line.
 
 ### 6. Report
 
@@ -121,4 +124,4 @@ Summarize the counts — captured, deleted, retained, skipped — with the ids a
 
 ## Completion
 
-Every feedback memory in the run's scope — the whole machine, or the single store named by `--store` — is routed: captured then removed, deleted as redundant, or retained locally. Each affected `MEMORY.md` reflects its post-migration store; every capture carries origin provenance in its body; and a lesson that recurred across separate stores is preserved as one event per origin, not collapsed. Because captured and deleted memories leave their store, a processed store holds only retained-local memories, so a re-run is a no-op and a second machine's run converges rather than duplicating.
+Every feedback memory in the run's scope — the whole machine, or the single store named by `--store` — is routed: captured then removed, deleted as redundant, or retained locally. Each affected `MEMORY.md` reflects its post-migration store; every capture carries the origin's `cwd`/`repo` in its structured fields, with the origin project, machine, and session in its body; and a lesson that recurred across separate stores is preserved as one event per origin, not collapsed. Because captured and deleted memories leave their store, a processed store holds only retained-local memories, so a re-run is a no-op and a second machine's run converges rather than duplicating.
