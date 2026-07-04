@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { deploySkill, resolveDeclaredSkill } from '../skill-deploy.ts';
@@ -143,7 +144,6 @@ describe(deploySkill, () => {
 
   function context(toolMapping: ReadonlyMap<string, string> = new Map()): SkillDeployContext {
     return {
-      contentDir: librarySkillsDir,
       toolMapping,
       pathPrefix: '.claude/skills',
       homeDir: '.claude',
@@ -163,45 +163,46 @@ describe(deploySkill, () => {
   }
 
   /** Builds a ResolvedSkill without the deploy-field check, so deploySkill tests can use minimal fixtures. */
-  function resolvedSkill(slug: string): { slug: string; srcDir: string } {
-    return { slug, srcDir: path.join(librarySkillsDir, slug) };
+  function resolvedSkill(slug: string): { slug: string; srcDir: string; contentRoot: string } {
+    return { slug, srcDir: path.join(librarySkillsDir, slug), contentRoot: librarySkillsDir };
   }
 
   // endregion | Helpers
 });
 
 describe(resolveDeclaredSkill, () => {
-  let librarySkillsDir: string;
+  let contentDir: string;
 
   beforeEach(() => {
-    librarySkillsDir = path.join(tmpdir(), `agents-test-sd-lib-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    contentDir = path.join(tmpdir(), `agents-test-sd-lib-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   });
 
   afterEach(async () => {
-    await rm(librarySkillsDir, { recursive: true, force: true });
+    await rm(contentDir, { recursive: true, force: true });
   });
 
-  /** Writes a library skill `<slug>/SKILL.md`, optionally inserting extra frontmatter lines after `name:`. */
+  /** Writes a library skill `skills/<slug>/SKILL.md`, optionally inserting extra frontmatter lines after `name:`. */
   async function writeLibrarySkill(slug: string, extraFrontmatter = ''): Promise<void> {
-    const dir = path.join(librarySkillsDir, slug);
+    const dir = path.join(contentDir, 'skills', slug);
     await mkdir(dir, { recursive: true });
     const frontmatter = extraFrontmatter === '' ? `name: ${slug}` : `name: ${slug}\n${extraFrontmatter}`;
     await writeFile(path.join(dir, 'SKILL.md'), `---\n${frontmatter}\n---\n\n# ${slug}\n\nBody.\n`, 'utf8');
   }
 
-  it('resolves a declared skill to its slug and source directory', async () => {
+  it('resolves a declared skill to its slug, source directory, and content root', async () => {
     await writeLibrarySkill('people-report');
 
-    const resolved = await resolveDeclaredSkill('people-report', librarySkillsDir);
+    const resolved = await resolveDeclaredSkill('people-report', libraryResolver(contentDir));
 
     expect(resolved.slug).toBe('people-report');
-    expect(resolved.srcDir).toBe(path.join(librarySkillsDir, 'people-report'));
+    expect(resolved.srcDir).toBe(path.join(contentDir, 'skills', 'people-report'));
+    expect(resolved.contentRoot).toBe(contentDir);
   });
 
   it('leaves the target harnesses undefined when no `harnesses:` field is present', async () => {
     await writeLibrarySkill('people-report');
 
-    const resolved = await resolveDeclaredSkill('people-report', librarySkillsDir);
+    const resolved = await resolveDeclaredSkill('people-report', libraryResolver(contentDir));
 
     expect(resolved.targetHarnesses).toBeUndefined();
   });
@@ -209,7 +210,7 @@ describe(resolveDeclaredSkill, () => {
   it('reads a list-valued `harnesses:` field into the target set', async () => {
     await writeLibrarySkill('brainstorming', 'harnesses: [rovodev]');
 
-    const resolved = await resolveDeclaredSkill('brainstorming', librarySkillsDir);
+    const resolved = await resolveDeclaredSkill('brainstorming', libraryResolver(contentDir));
 
     expect(resolved.targetHarnesses).toEqual(['rovodev']);
   });
@@ -217,7 +218,7 @@ describe(resolveDeclaredSkill, () => {
   it('normalizes a scalar `harnesses:` field into a single-element target set', async () => {
     await writeLibrarySkill('review-permissions', 'harnesses: claude');
 
-    const resolved = await resolveDeclaredSkill('review-permissions', librarySkillsDir);
+    const resolved = await resolveDeclaredSkill('review-permissions', libraryResolver(contentDir));
 
     expect(resolved.targetHarnesses).toEqual(['claude']);
   });
@@ -225,10 +226,10 @@ describe(resolveDeclaredSkill, () => {
   it('throws naming the slug and the bad id when `harnesses:` lists an unknown harness', async () => {
     await writeLibrarySkill('exotic', 'harnesses: [codex]');
 
-    await expect(resolveDeclaredSkill('exotic', librarySkillsDir)).rejects.toThrow(/exotic.*codex/s);
+    await expect(resolveDeclaredSkill('exotic', libraryResolver(contentDir))).rejects.toThrow(/exotic.*codex/s);
   });
 
-  it('throws a clear error naming the slug when the skill is missing from the library', async () => {
-    await expect(resolveDeclaredSkill('ghost', librarySkillsDir)).rejects.toThrow(/ghost/);
+  it('throws an error naming the slug and every location searched when the skill resolves nowhere', async () => {
+    await expect(resolveDeclaredSkill('ghost', libraryResolver(contentDir))).rejects.toThrow(/ghost/);
   });
 });

@@ -1,22 +1,26 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { makeArtifactMarker } from './artifact-marker.ts';
+import { artifactFrontmatterPath } from './artifact-types.ts';
+import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { writeIfChanged } from './fs-helpers.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
-import { isEnoent } from './type-guards.ts';
 
-/** A declared subagent resolved against the library: its stable slug and the source `.md` file to render from. */
+/**
+ * A declared subagent resolved through the source resolver: its stable slug, the source `.md` file to render from, and
+ * the content root its includes resolve against — the library for a library subagent, the declaring source for a
+ * source subagent.
+ */
 export interface ResolvedSubagent {
   readonly slug: string;
   readonly srcPath: string;
+  readonly contentRoot: string;
 }
 
 /** The per-harness inputs a declared-subagent deploy depends on, resolved once per harness by `sync`. */
 export interface SubagentDeployContext {
-  /** Library content root, used to resolve include directives during expansion. */
-  readonly contentDir: string;
   /** Raw harness overlay YAML feeding the frontmatter merge. */
   readonly overlayYaml: string;
   /** Canonical → harness tool-name mapping for the body-text placeholder rewriter. */
@@ -44,7 +48,7 @@ export async function deploySubagent(
   destPath: string,
   context: SubagentDeployContext,
 ): Promise<void> {
-  const expanded = await expandIncludes(resolved.srcPath, context.contentDir);
+  const expanded = await expandIncludes(resolved.srcPath, resolved.contentRoot);
   const fileName = `${resolved.slug}.md`;
   const rendered = renderSubagentForHarness(expanded, {
     overlayYaml: context.overlayYaml,
@@ -62,19 +66,22 @@ export async function deploySubagent(
 }
 
 /**
- * Resolves a declared subagent slug against the library, confirming its `<slug>.md` exists. A missing file throws a
- * clear error naming the slug.
+ * Resolves a declared subagent slug through the source resolver (declared sources first, then the library), confirming
+ * its `<slug>.md` exists and carrying the resolved content root — the source or library directory it resolved from — so
+ * the deploy pass expands its includes against its own tree. A slug found in no source or the library throws an error
+ * naming every location searched.
  */
-export async function resolveDeclaredSubagent(slug: string, librarySubagentsDir: string): Promise<ResolvedSubagent> {
-  const srcPath = path.join(librarySubagentsDir, `${slug}.md`);
-  try {
-    await readFile(srcPath, 'utf8');
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      throw new Error(`Declared subagent "${slug}" was not found in the library at ${srcPath}`);
-    }
-    throw error;
+export async function resolveDeclaredSubagent(slug: string, resolver: SourceResolver): Promise<ResolvedSubagent> {
+  const resolved = await resolver.resolve('subagent', slug);
+  if (resolved === undefined) {
+    throw new Error(
+      `Declared subagent "${slug}" was not found in any of: ${describeSearchedLocations(resolver, 'subagent', slug)}`,
+    );
   }
 
-  return { slug, srcPath };
+  return {
+    slug,
+    srcPath: path.join(resolved.dir, artifactFrontmatterPath('subagent', slug)),
+    contentRoot: resolved.dir,
+  };
 }
