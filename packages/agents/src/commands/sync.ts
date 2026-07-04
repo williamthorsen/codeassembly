@@ -157,8 +157,6 @@ async function reconcileDomain(
   );
   const declaredRulebooks = closure.rulebooks;
 
-  const librarySkillsDir = path.join(contentDir, 'skills');
-  const librarySubagentsDir = path.join(contentDir, 'subagents');
   const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
   const ambientHostPath = domain.ambientHostPath;
 
@@ -166,10 +164,8 @@ async function reconcileDomain(
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
   const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, resolver)));
   assertNoSkillNameCollisions(resolved);
-  const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, librarySkillsDir)));
-  const resolvedSubagents = await Promise.all(
-    closure.subagents.map((slug) => resolveDeclaredSubagent(slug, librarySubagentsDir)),
-  );
+  const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, resolver)));
+  const resolvedSubagents = await Promise.all(closure.subagents.map((slug) => resolveDeclaredSubagent(slug, resolver)));
 
   // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
   // PROJECT.md tracks the desired *ambient* set. Keying PROJECT.md on declaration alone would strand a block
@@ -719,7 +715,7 @@ async function assertDeclaredSkillsRender(
       if (!skillTargetsHarness(skill, target.harnessId)) {
         continue;
       }
-      await renderSkillDirectory(skill.srcDir, skill.slug, target.deployContext);
+      await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, target.deployContext);
     }
   }
 }
@@ -878,7 +874,6 @@ async function resolveSubagentTarget(
   return {
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {
-      contentDir,
       overlayYaml,
       toolMapping: loadToolMapping(overlayYaml),
       homeDir: harnessConfig.homeDir,
@@ -905,7 +900,6 @@ async function resolveSkillTarget(
     harnessId,
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
-      contentDir,
       toolMapping: loadToolMapping(overlayYaml),
       pathPrefix: `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`,
       homeDir: harnessConfig.homeDir,

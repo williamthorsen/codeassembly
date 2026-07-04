@@ -256,8 +256,7 @@ async function installSkillEntry(
   let expandedFileContent: string | undefined;
   let renderedDir: ReadonlyArray<RenderedSkillEntry> | undefined;
   if (srcStats.isDirectory()) {
-    renderedDir = await renderSkillDirectory(srcPath, path.basename(destPath), {
-      contentDir,
+    renderedDir = await renderSkillDirectory(srcPath, path.basename(destPath), contentDir, {
       toolMapping,
       pathPrefix: skillsPrefix,
       homeDir,

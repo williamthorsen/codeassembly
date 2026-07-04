@@ -4,46 +4,52 @@ import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
 import { makeArtifactMarker } from './artifact-marker.ts';
+import { artifactFrontmatterPath } from './artifact-types.ts';
+import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { writeIfChanged } from './fs-helpers.ts';
 import { ALL_HARNESS_IDS, isHarnessId } from './harness.ts';
 import { renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
-import { isEnoent, isMissingFile, isRecord } from './type-guards.ts';
+import { isEnoent, isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
 const skillMarker = makeArtifactMarker('skill');
 
 /**
- * A declared skill resolved against the library: its stable slug, the directory to copy from, and the harnesses it
- * targets. `targetHarnesses` is absent when the skill carries no `harnesses:` field, meaning it deploys to all harnesses.
+ * A declared skill resolved through the source resolver: its stable slug, the directory to copy from, the content root
+ * its includes resolve against, and the harnesses it targets. `contentRoot` is the library for a library skill and the
+ * declaring source for a source skill. `targetHarnesses` is absent when the skill carries no `harnesses:` field,
+ * meaning it deploys to all harnesses.
  */
 export interface ResolvedSkill {
   readonly slug: string;
   readonly srcDir: string;
+  readonly contentRoot: string;
   readonly targetHarnesses?: ReadonlyArray<HarnessId>;
 }
 
 /**
- * Resolves a declared skill slug against the library, confirming its `SKILL.md` exists and reading the harnesses it
- * targets from frontmatter. A missing directory or `SKILL.md` throws a clear error naming the slug; an unknown harness
- * id in the `harnesses:` field throws naming the slug and the offending id.
- *
- * @param librarySkillsDir The library `content/skills` directory the slug is resolved under.
+ * Resolves a declared skill slug through the source resolver (declared sources first, then the library), confirming its
+ * `SKILL.md` exists and reading the harnesses it targets from frontmatter. Carries the resolved content root — the
+ * source or library directory the slug resolved from — so the render pass expands the skill's includes against its own
+ * tree. A slug found in no source or the library throws an error naming every location searched; an unknown harness id
+ * in the `harnesses:` field throws naming the slug and the offending id.
  */
-export async function resolveDeclaredSkill(slug: string, librarySkillsDir: string): Promise<ResolvedSkill> {
-  const srcDir = path.join(librarySkillsDir, slug);
-  let content: string;
-  try {
-    content = await readFile(path.join(srcDir, 'SKILL.md'), 'utf8');
-  } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      throw new Error(`Declared skill "${slug}" was not found in the library at ${srcDir}`);
-    }
-    throw error;
+export async function resolveDeclaredSkill(slug: string, resolver: SourceResolver): Promise<ResolvedSkill> {
+  const resolved = await resolver.resolve('skill', slug);
+  if (resolved === undefined) {
+    throw new Error(
+      `Declared skill "${slug}" was not found in any of: ${describeSearchedLocations(resolver, 'skill', slug)}`,
+    );
   }
 
+  const contentRoot = resolved.dir;
+  const srcDir = path.dirname(path.join(contentRoot, artifactFrontmatterPath('skill', slug)));
+  const content = await readFile(path.join(srcDir, 'SKILL.md'), 'utf8');
+
   const targetHarnesses = readTargetHarnesses(content, slug);
-  return targetHarnesses === undefined ? { slug, srcDir } : { slug, srcDir, targetHarnesses };
+  const base = { slug, srcDir, contentRoot };
+  return targetHarnesses === undefined ? base : { ...base, targetHarnesses };
 }
 
 /**
@@ -55,7 +61,7 @@ export async function resolveDeclaredSkill(slug: string, librarySkillsDir: strin
  * filesystem change.
  */
 export async function deploySkill(skill: ResolvedSkill, destDir: string, context: SkillDeployContext): Promise<void> {
-  const entries = await renderSkillDirectory(skill.srcDir, skill.slug, context);
+  const entries = await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, context);
   await mkdir(destDir, { recursive: true });
 
   const expectedFiles = new Set(entries.map((entry) => entry.relPath));

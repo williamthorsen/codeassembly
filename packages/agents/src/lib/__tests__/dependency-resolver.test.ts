@@ -277,23 +277,24 @@ describe(resolveClosure, () => {
       await expect(searched).rejects.toThrow(new RegExp(path.join(contentDir, 'guidance', 'rulebooks', 'ghost.md')));
     });
 
-    it('fails a source-resolved skill as not-yet-supported, naming the source and no include error', async () => {
-      await writeArtifactWithBody(sourceDir, 'skill', 'source-skill', 'Invoke {skill:missing-include}.');
+    it('resolves a source skill, expanding its body against the source root to reach a library-provided edge', async () => {
+      await writeSkillPartial(sourceDir, 'source-skill', 'frag.md', 'Invoke {skill:library-helper}.');
+      await writeArtifactWithBody(sourceDir, 'skill', 'source-skill', '<!-- include: _partials/frag.md / -->');
+      await writeArtifact(contentDir, 'skill', 'library-helper');
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
 
-      const attempt = resolveClosure({ skill: ['source-skill'] }, resolver);
+      const closure = await resolveClosure({ skill: ['source-skill'] }, resolver);
 
-      await expect(attempt).rejects.toThrow(/External-source skill "source-skill".*source "org".*not yet supported/s);
-      await expect(attempt).rejects.not.toThrow(/include/i);
+      expect(closure.skills.toSorted()).toEqual(['library-helper', 'source-skill']);
     });
 
-    it('fails a source-resolved subagent as not-yet-supported, naming the source', async () => {
+    it('resolves a source subagent from its source', async () => {
       await writeSubagent(sourceDir, 'source-agent', []);
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
 
-      await expect(resolveClosure({ subagent: ['source-agent'] }, resolver)).rejects.toThrow(
-        /External-source subagent "source-agent".*source "org".*not yet supported/s,
-      );
+      const closure = await resolveClosure({ subagent: ['source-agent'] }, resolver);
+
+      expect(closure.subagents).toEqual(['source-agent']);
     });
 
     it('fails a source-resolved collection as not-yet-supported before expanding its members', async () => {

@@ -32,7 +32,7 @@ describe(renderSkillDirectory, () => {
       '_partials/frag.md': 'Shared fragment.\n',
     });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
 
     const content = markdownContent(entries, 'SKILL.md');
     expect(content).toContain('Shared fragment.');
@@ -50,14 +50,14 @@ describe(renderSkillDirectory, () => {
       '_partials/frag.md': 'Then invoke {skill:capture-event}.\n',
     });
 
-    const claude = markdownContent(await renderSkillDirectory(skillDir, 'demo', context()), 'SKILL.md');
+    const claude = markdownContent(await renderSkillDirectory(skillDir, 'demo', contentDir, context()), 'SKILL.md');
     expect(claude).toContain('Dispatch code-reviewer.');
     expect(claude).toContain('Then invoke /capture-event.');
     expect(claude).not.toContain('{skill:');
     expect(claude).not.toContain('{subagent:');
 
     const rovo = markdownContent(
-      await renderSkillDirectory(skillDir, 'demo', context({ skillSigil: '!' })),
+      await renderSkillDirectory(skillDir, 'demo', contentDir, context({ skillSigil: '!' })),
       'SKILL.md',
     );
     expect(rovo).toContain('Then invoke !capture-event.');
@@ -66,7 +66,7 @@ describe(renderSkillDirectory, () => {
   it('rewrites a bare-relative link in a nested .md against the skill slug and prefix', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n', 'reference/guide.md': 'See [the data](../data/table.csv).\n' });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
 
     expect(markdownContent(entries, 'reference/guide.md')).toContain(
       '[the data](~/.claude/skills/demo/data/table.csv)',
@@ -76,7 +76,7 @@ describe(renderSkillDirectory, () => {
   it('returns non-.md files as assets pointing at the source path', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n', 'data/table.csv': 'a,b\n1,2\n' });
 
-    const entries = await renderSkillDirectory(skillDir, 'demo', context());
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
 
     expect(entries.find((entry) => entry.relPath === 'data/table.csv')).toEqual({
       kind: 'asset',
@@ -88,21 +88,24 @@ describe(renderSkillDirectory, () => {
   it('throws a file/line-anchored error for an unmapped tool placeholder', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nUse {tool:Bash}.\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', context())).rejects.toThrow(ToolNameRewriteError);
-    await expect(renderSkillDirectory(skillDir, 'demo', context())).rejects.toThrow(/skills\/demo\/SKILL\.md:3/);
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(ToolNameRewriteError);
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+      /skills\/demo\/SKILL\.md:3/,
+    );
   });
 
   it('throws on a broken include directive', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- include: _partials/missing.md / -->\n' });
 
-    await expect(renderSkillDirectory(skillDir, 'demo', context())).rejects.toThrow(DirectiveExpansionError);
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+      DirectiveExpansionError,
+    );
   });
 
   // region | Helpers
 
   function context(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
     return {
-      contentDir,
       toolMapping: TOOL_MAPPING,
       pathPrefix: '.claude/skills',
       homeDir: '.claude',

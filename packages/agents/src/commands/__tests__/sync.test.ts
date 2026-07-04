@@ -519,14 +519,50 @@ describe(syncCommand, () => {
       },
     );
 
-    it('fails a declared source skill as not-yet-supported, naming the source', async () => {
+    it('deploys a declared source skill from its source into the harness skills dir', async () => {
       await writeSourceSkill('source-skill');
       await declareWithSource('skills:\n  use:\n    - source-skill\n');
 
-      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
-        /source-skill.*source "org".*not yet supported/s,
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('source-skill'), 'utf8')).toContain('<!-- codeassembly-skill:source-skill -->');
+    });
+
+    it('deploys a declared source subagent from its source into the harness subagents dir', async () => {
+      await mkdir(path.join(sourceDir, 'subagents'), { recursive: true });
+      await writeFile(
+        path.join(sourceDir, 'subagents', 'source-agent.md'),
+        '---\nname: source-agent\ndescription: Org agent\n---\n\n# Source agent\n',
+        'utf8',
       );
-      expect(existsSync(skillPath('source-skill'))).toBe(false);
+      await declareWithSource('subagents:\n  use:\n    - source-agent\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const deployed = await readFile(path.join(projectRoot, '.claude', 'agents', 'source-agent.md'), 'utf8');
+      expect(deployed).toContain('<!-- codeassembly-subagent:source-agent -->');
+    });
+
+    it('deploys a source skill over a same-slug library skill, source-first', async () => {
+      const libraryDir = path.join(contentDir, 'skills', 'shared-skill');
+      await mkdir(libraryDir, { recursive: true });
+      await writeFile(
+        path.join(libraryDir, 'SKILL.md'),
+        '---\nname: shared-skill\n---\n\n# Library shared skill\n',
+        'utf8',
+      );
+      const sourceSkillDir = path.join(sourceDir, 'skills', 'shared-skill');
+      await mkdir(sourceSkillDir, { recursive: true });
+      await writeFile(
+        path.join(sourceSkillDir, 'SKILL.md'),
+        '---\nname: shared-skill\n---\n\n# Source shared skill\n',
+        'utf8',
+      );
+      await declareWithSource('skills:\n  use:\n    - shared-skill\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('shared-skill'), 'utf8')).toContain('# Source shared skill');
     });
 
     it('rejects an invalid source in dry-run, before previewing any write', async () => {
