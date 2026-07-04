@@ -79,7 +79,7 @@ Expected: PASS (types are just definitions, no usage yet)
 
 ```bash
 git add packages/factory/src/client/visualizations/catwalk/types.ts
-git commit -m "#182 factory|feat: Add CatwalkDiff types for structural scene config diffing"
+git commit -m "factory|feat: Add CatwalkDiff types for structural scene config diffing"
 ```
 
 ---
@@ -197,7 +197,7 @@ Expected: PASS (all 6 tests)
 ```bash
 git add packages/factory/src/client/visualizations/catwalk/state/catwalk-differ.ts \
        packages/factory/src/client/visualizations/catwalk/state/__tests__/catwalk-differ.test.ts
-git commit -m "#182 factory|feat: Implement diffOrchestrator with tests"
+git commit -m "factory|feat: Implement diffOrchestrator with tests"
 ```
 
 ---
@@ -358,7 +358,7 @@ Expected: PASS (all tests)
 ```bash
 git add packages/factory/src/client/visualizations/catwalk/state/catwalk-differ.ts \
        packages/factory/src/client/visualizations/catwalk/state/__tests__/catwalk-differ.test.ts
-git commit -m "#182 factory|feat: Implement diffAgents with tests"
+git commit -m "factory|feat: Implement diffAgents with tests"
 ```
 
 ---
@@ -467,7 +467,7 @@ Expected: PASS
 ```bash
 git add packages/factory/src/client/visualizations/catwalk/state/catwalk-differ.ts \
        packages/factory/src/client/visualizations/catwalk/state/__tests__/catwalk-differ.test.ts
-git commit -m "#182 factory|feat: Implement diffGates with tests"
+git commit -m "factory|feat: Implement diffGates with tests"
 ```
 
 ---
@@ -599,7 +599,7 @@ Expected: PASS
 ```bash
 git add packages/factory/src/client/visualizations/catwalk/state/catwalk-differ.ts \
        packages/factory/src/client/visualizations/catwalk/state/__tests__/catwalk-differ.test.ts
-git commit -m "#182 factory|feat: Implement diffArtifacts with tests"
+git commit -m "factory|feat: Implement diffArtifacts with tests"
 ```
 
 ---
@@ -781,7 +781,7 @@ Expected: All pass
 ```bash
 git add packages/factory/src/client/visualizations/catwalk/state/catwalk-differ.ts \
        packages/factory/src/client/visualizations/catwalk/state/__tests__/catwalk-differ.test.ts
-git commit -m "#182 factory|feat: Implement diffCatwalkConfig composer with tests"
+git commit -m "factory|feat: Implement diffCatwalkConfig composer with tests"
 ```
 
 ---

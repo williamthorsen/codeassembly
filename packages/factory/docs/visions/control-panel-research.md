@@ -419,7 +419,7 @@ Multiple tools maintain a real-time event feed:
 
 **Stealable ideas:**
 
-- **Follow mode is the killer feature for the room.** The camera auto-follows the currently active agent. When the active step changes, the camera pans to that station. This creates the "compulsive watchability" the session summary calls for.
+- **Follow mode is the killer feature for the room.** The camera auto-follows the currently active agent. When the active step changes, the camera pans to that station. This creates the "compulsive watchability" the visualization should aim for.
 - Failure navigation → press a key and the camera snaps to the failing station
 - Selection-based dependency highlighting → click a station, its upstream and downstream connections glow
 - Virtualization for large builds → for multi-run views, only render detail for the room currently in view
@@ -518,7 +518,7 @@ A card game that teaches Continuous Delivery pipeline design. Uses physical game
 
 The concept: displays that "radiate" information passively. You don't go to them; they come to you. Traffic-light indicators for build status. Always-visible, always-current.
 
-**Relevance:** The orchestration room IS an information radiator. It should be designed to be left open on a secondary monitor, passively radiating run status. This reinforces "compulsive watchability" from the session summary.
+**Relevance:** The orchestration room IS an information radiator. It should be designed to be left open on a secondary monitor, passively radiating run status. This reinforces the "compulsive watchability" goal.
 
 ---
 
