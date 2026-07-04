@@ -3,9 +3,9 @@ set -euo pipefail
 
 # install-launchers.sh — Symlink agent launcher scripts into a directory on PATH.
 #
-# Creates symlinks for check-project-staleness.sh, claude.sh, and rovo.sh
-# in the target directory. Uses symlinks so that pulling repo updates
-# automatically updates the installed scripts.
+# Creates symlinks for check-project-staleness.sh, claude.sh,
+# feedback-memories.sh, and rovo.sh in the target directory. Uses symlinks so
+# that pulling repo updates automatically updates the installed scripts.
 #
 # Usage:
 #   install-launchers.sh [--prefix DIR] [--force]
@@ -13,7 +13,7 @@ set -euo pipefail
 
 readonly PROG="$(basename "$0")"
 readonly DEFAULT_PREFIX="/usr/local/bin"
-readonly SCRIPTS=(check-project-staleness.sh claude.sh rovo.sh)
+readonly SCRIPTS=(check-project-staleness.sh claude.sh feedback-memories.sh rovo.sh)
 
 # Main flow
 main() {
@@ -137,9 +137,9 @@ show_usage() {
   cat >&2 <<USAGE
 Symlink agent launcher scripts into a directory on PATH.
 
-Creates symlinks for check-project-staleness.sh, claude.sh, and rovo.sh
-in the target directory. Uses symlinks so that pulling repo updates
-automatically updates the installed scripts.
+Creates symlinks for check-project-staleness.sh, claude.sh,
+feedback-memories.sh, and rovo.sh in the target directory. Uses symlinks so
+that pulling repo updates automatically updates the installed scripts.
 
 Usage:
   $PROG [--prefix DIR] [--force]
