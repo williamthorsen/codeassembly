@@ -80,10 +80,11 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
 
 /**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
- * every location searched when the artifact resolves from no source or the library. Any non-rulebook artifact (skill,
- * subagent, or collection) that resolves from a non-library source throws a not-yet-supported error naming that source
- * — before any body is read or expanded, so neither the undecided external-include base nor a mis-scoped `@library`
- * enumeration is ever reached. A collection's edges come from `members:` — the full
+ * every location searched when the artifact resolves from no source or the library. A collection that resolves from a
+ * non-library source throws a not-yet-supported error naming that source — before its `members:` are read — because a
+ * source collection's `'@library'` sentinel would enumerate the built-in library catalog, not the source; a skill or
+ * subagent resolves from any source, its include-expanded body read against that source's own root. A collection's
+ * edges come from `members:` — the full
  * library catalog when it carries `'@library'`, otherwise its explicit members. Every other type's edges come from
  * `dependencies:`. A skill or subagent additionally unions the invocation tokens in its include-expanded body
  * (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a token inside a shared
@@ -102,8 +103,12 @@ async function readArtifactEdges(
       `Referenced ${type} "${slug}" was not found in any of: ${describeSearchedLocations(resolver, type, slug)}`,
     );
   }
-  if (type !== 'rulebook' && resolved.source !== undefined) {
-    throw new Error(`External-source ${type} "${slug}" resolved from source "${resolved.source}" is not yet supported`);
+  // A source-resolved collection is deferred: its `'@library'` members sentinel would enumerate the built-in library
+  // catalog, not the source. Skills and subagents carry no such ambiguity, so only collections stay gated here.
+  if (type === 'collection' && resolved.source !== undefined) {
+    throw new Error(
+      `External-source collection "${slug}" resolved from source "${resolved.source}" is not yet supported`,
+    );
   }
 
   const filePath = path.join(resolved.dir, artifactFrontmatterPath(type, slug));
