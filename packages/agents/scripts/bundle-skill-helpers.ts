@@ -105,9 +105,9 @@ export const targets: BundleTarget[] = [
     smokeTest: makeKbUpdateEventsSmokeTest(),
   },
   {
-    entry: 'src/migrate-feedback-memories/cli.ts',
-    outFile: 'content/skills/migrate-feedback-memories/migrate-feedback-memories.mjs',
-    smokeTest: makeMigrateFeedbackMemoriesSmokeTest(),
+    entry: 'src/feedback-memories/cli.ts',
+    outFile: 'content/skills/migrate-feedback-memories/feedback-memories.mjs',
+    smokeTest: makeFeedbackMemoriesSmokeTest(),
   },
 ];
 
@@ -538,8 +538,8 @@ function assertCompositionViolationFinding(result: unknown): void {
  * empty `CLAUDE_CONFIG_DIR` neutralizes any ambient value, so the enumeration never touches the developer's real
  * `~/.claude`. Exercises the full projects-root resolution → store walk → frontmatter parse → feedback filter pipeline.
  */
-function makeMigrateFeedbackMemoriesSmokeTest(): SmokeTestInvocation {
-  const home = mkdtempSync(path.join(tmpdir(), 'migrate-feedback-memories-home-'));
+function makeFeedbackMemoriesSmokeTest(): SmokeTestInvocation {
+  const home = mkdtempSync(path.join(tmpdir(), 'feedback-memories-home-'));
   const memoryDir = path.join(home, '.claude', 'projects', '-store-smoke', 'memory');
   mkdirSync(memoryDir, { recursive: true });
   writeFileSync(
@@ -568,17 +568,17 @@ function makeMigrateFeedbackMemoriesSmokeTest(): SmokeTestInvocation {
   return {
     args: ['enumerate'],
     env: { ...process.env, HOME: home, CLAUDE_CONFIG_DIR: '' },
-    assertResult: assertMigrateFeedbackMemoriesSmokeResult,
+    assertResult: assertFeedbackMemoriesSmokeResult,
   };
 }
 
 /**
- * Assert the migrate-feedback-memories smoke enumerated exactly the seeded feedback memory, reading its slug and the
+ * Assert the feedback-memories smoke enumerated exactly the seeded feedback memory, reading its slug and the
  * origin session id from the nested `metadata` schema.
  */
-function assertMigrateFeedbackMemoriesSmokeResult(result: unknown): void {
+function assertFeedbackMemoriesSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
-    throw new TypeError('expected object result from migrate-feedback-memories');
+    throw new TypeError('expected object result from feedback-memories');
   }
   if (result.ok !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
