@@ -572,6 +572,83 @@ describe(syncCommand, () => {
         /Invalid declared source/,
       );
     });
+
+    it('reports each artifact origin in dry-run, flagging a source rulebook that shadows a library slug', async () => {
+      await writeLibraryRulebook('shadowed', 'delivery: ambient', 'Library body.');
+      await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
+      await writeLibraryRulebook('lib-only', 'delivery: ambient', 'Lib only.');
+      await declareWithSource('rulebooks:\n  use:\n    - shadowed\n    - lib-only\n');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain('[dry-run] sync would resolve:');
+      expect(output).toMatch(/shadowed\s+← source "org" \(shadows library\)/);
+      expect(output).toMatch(/lib-only\s+← library/);
+    });
+
+    it('reports declared skill and subagent origins in the dry-run resolution report', async () => {
+      await writeSourceSkill('source-skill');
+      await mkdir(path.join(sourceDir, 'subagents'), { recursive: true });
+      await writeFile(
+        path.join(sourceDir, 'subagents', 'source-agent.md'),
+        '---\nname: source-agent\ndescription: Org agent\n---\n\n# Source agent\n',
+        'utf8',
+      );
+      await declareWithSource('skills:\n  use:\n    - source-skill\nsubagents:\n  use:\n    - source-agent\n');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toMatch(/skill\s+source-skill\s+← source "org"/);
+      expect(output).toMatch(/subagent\s+source-agent\s+← source "org"/);
+    });
+
+    it('warns on a real run when a source rulebook shadows a library slug', async () => {
+      await writeLibraryRulebook('shadowed', 'delivery: ambient', 'Library body.');
+      await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
+      await declareWithSource('rulebooks:\n  use:\n    - shadowed\n');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+        output = warnSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        warnSpy.mockRestore();
+      }
+
+      expect(output).toContain('shadows a library slug');
+      expect(output).toContain('rulebook "shadowed" (source "org")');
+    });
+
+    it('does not warn on a real run when a source rulebook has no same-slug library artifact', async () => {
+      await writeSourceRulebook('source-only', 'delivery: ambient', 'Org rules.');
+      await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+        output = warnSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        warnSpy.mockRestore();
+      }
+
+      expect(output).not.toContain('shadows a library slug');
+    });
   });
 
   describe('declared skills', () => {

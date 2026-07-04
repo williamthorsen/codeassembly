@@ -5,7 +5,12 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { artifactFrontmatterPath, type ArtifactType } from '../artifact-types.ts';
-import { createSourceResolver, describeSearchedLocations, libraryResolver } from '../content-sources.ts';
+import {
+  createSourceResolver,
+  describeSearchedLocations,
+  hasLibraryArtifact,
+  libraryResolver,
+} from '../content-sources.ts';
 
 /** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
 const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
@@ -138,5 +143,39 @@ describe(libraryResolver, () => {
 
     expect(resolver.sources).toEqual([]);
     expect(resolver.libraryDir).toBe('/library');
+  });
+});
+
+describe(hasLibraryArtifact, () => {
+  let root: string;
+  let libraryDir: string;
+
+  beforeEach(async () => {
+    root = path.join(tmpdir(), `agents-test-has-library-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    libraryDir = path.join(root, 'library');
+    await mkdir(libraryDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it('reports true when the library holds the slug', async () => {
+    const filePath = path.join(libraryDir, artifactFrontmatterPath('rulebook', 'alpha'));
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, '---\nslug: alpha\n---\n', 'utf8');
+    const resolver = createSourceResolver([{ name: 'org', dir: path.join(root, 'org') }], libraryDir);
+
+    expect(await hasLibraryArtifact(resolver, 'rulebook', 'alpha')).toBe(true);
+  });
+
+  it('reports false when the library lacks the slug, even if a source provides it', async () => {
+    const orgDir = path.join(root, 'org');
+    const filePath = path.join(orgDir, artifactFrontmatterPath('rulebook', 'alpha'));
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, '---\nslug: alpha\n---\n', 'utf8');
+    const resolver = createSourceResolver([{ name: 'org', dir: orgDir }], libraryDir);
+
+    expect(await hasLibraryArtifact(resolver, 'rulebook', 'alpha')).toBe(false);
   });
 });

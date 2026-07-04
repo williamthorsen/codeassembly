@@ -9,14 +9,15 @@ import { writeIfChanged } from './fs-helpers.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
 
 /**
- * A declared subagent resolved through the source resolver: its stable slug, the source `.md` file to render from, and
- * the content root its includes resolve against — the library for a library subagent, the declaring source for a
- * source subagent.
+ * A declared subagent resolved through the source resolver: its stable slug, the source `.md` file to render from, the
+ * content root its includes resolve against — the library for a library subagent, the declaring source for a source
+ * subagent — and the source it resolved from (the declaring source's name, or `undefined` for the built-in library).
  */
 export interface ResolvedSubagent {
   readonly slug: string;
   readonly srcPath: string;
   readonly contentRoot: string;
+  readonly source: string | undefined;
 }
 
 /** The per-harness inputs a declared-subagent deploy depends on, resolved once per harness by `sync`. */
@@ -83,5 +84,6 @@ export async function resolveDeclaredSubagent(slug: string, resolver: SourceReso
     slug,
     srcPath: path.join(resolved.dir, artifactFrontmatterPath('subagent', slug)),
     contentRoot: resolved.dir,
+    source: resolved.source,
   };
 }

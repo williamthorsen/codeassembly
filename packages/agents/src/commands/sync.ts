@@ -5,10 +5,15 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { artifactFrontmatterPath } from '../lib/artifact-types.ts';
+import { artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { createSourceResolver, describeSearchedLocations, type SourceResolver } from '../lib/content-sources.ts';
+import {
+  createSourceResolver,
+  describeSearchedLocations,
+  hasLibraryArtifact,
+  type SourceResolver,
+} from '../lib/content-sources.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
@@ -41,6 +46,20 @@ interface ResolvedRulebook {
   readonly ambient: boolean;
   readonly skill: boolean;
   readonly description: string | undefined;
+  /** The name of the declared source it resolved from, or `undefined` for the built-in library. */
+  readonly source: string | undefined;
+}
+
+/**
+ * One deployed artifact's resolution outcome: its type and slug, the source it resolved from (`undefined` = library),
+ * and whether it masks a same-slug library artifact. Drives both the dry-run resolution report and the real-run shadow
+ * warning.
+ */
+interface ResolutionEntry {
+  readonly type: ArtifactType;
+  readonly slug: string;
+  readonly source: string | undefined;
+  readonly shadowsLibrary: boolean;
 }
 
 /** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
@@ -259,9 +278,14 @@ async function reconcileDomain(
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
 
+  // Attribute each deployed artifact to the source it resolved from, flagging any that shadows a same-slug library
+  // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
+  const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
+
   if (options.dryRun) {
     reportDryRun({
       ambientHostName: path.basename(ambientHostPath),
+      resolutionReport,
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
       harnessSkillTargets,
@@ -354,6 +378,13 @@ async function reconcileDomain(
       `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
       `${subagentRetractions} declared-subagent file(s).`,
   );
+
+  // A declared source that provides a slug also present in the library shadows it silently. On a real run the report
+  // is not printed, so surface any shadow as a warning — this is when the surprising deploy actually takes effect.
+  const shadows = resolutionReport.filter((entry) => entry.shadowsLibrary);
+  if (shadows.length > 0) {
+    console.warn(renderShadowWarning(shadows));
+  }
 }
 
 // region | Helpers
@@ -762,6 +793,7 @@ function resolvePromptsYmlPaths(options: InstallOptions, domain: SyncDomain): Re
 /** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
 interface DryRunPlan {
   readonly ambientHostName: string;
+  readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
   readonly retracted: ReadonlyArray<string>;
   readonly harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>;
@@ -776,6 +808,9 @@ interface DryRunPlan {
 
 /** Prints the writes and retractions a real run would perform. */
 function reportDryRun(plan: DryRunPlan): void {
+  if (plan.resolutionReport.length > 0) {
+    console.info(renderResolutionReport(plan.resolutionReport));
+  }
   console.info('[dry-run] sync would:');
   for (const rulebook of plan.resolved) {
     const inline = rulebook.ambient ? ` (+ inline into ${plan.ambientHostName})` : '';
@@ -824,6 +859,80 @@ function reportDryRun(plan: DryRunPlan): void {
   }
 }
 
+/** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
+const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
+  rulebook: 0,
+  skill: 1,
+  subagent: 2,
+  collection: 3,
+};
+
+/**
+ * Attributes each deployed rulebook, skill, and subagent to the source it resolved from, flagging any source-resolved
+ * artifact whose slug also exists in the library as shadowing it. The library probe runs only for source-resolved
+ * artifacts — a library-resolved artifact cannot shadow the library — and is batched across all of them.
+ */
+async function buildResolutionReport(
+  resolver: SourceResolver,
+  rulebooks: ReadonlyArray<ResolvedRulebook>,
+  skills: ReadonlyArray<ResolvedSkill>,
+  subagents: ReadonlyArray<ResolvedSubagent>,
+): Promise<ReadonlyArray<ResolutionEntry>> {
+  const artifacts: Array<{ type: ArtifactType; slug: string; source: string | undefined }> = [];
+  for (const rulebook of rulebooks) {
+    artifacts.push({ type: 'rulebook', slug: rulebook.slug, source: rulebook.source });
+  }
+  for (const skill of skills) {
+    artifacts.push({ type: 'skill', slug: skill.slug, source: skill.source });
+  }
+  for (const subagent of subagents) {
+    artifacts.push({ type: 'subagent', slug: subagent.slug, source: subagent.source });
+  }
+  return Promise.all(
+    artifacts.map(async (artifact) => ({
+      ...artifact,
+      shadowsLibrary:
+        artifact.source !== undefined && (await hasLibraryArtifact(resolver, artifact.type, artifact.slug)),
+    })),
+  );
+}
+
+/** Orders resolution entries by artifact type, then by slug, so the report is deterministic. */
+function compareResolutionEntries(a: ResolutionEntry, b: ResolutionEntry): number {
+  if (a.type !== b.type) {
+    return ARTIFACT_TYPE_ORDER[a.type] - ARTIFACT_TYPE_ORDER[b.type];
+  }
+  return a.slug.localeCompare(b.slug);
+}
+
+/**
+ * Renders the per-artifact resolution report — each deployed artifact and the source it resolved from (`← library` or
+ * `← source "<name>"`), with `(shadows library)` appended on a shadow — sorted by type then slug. Type and slug columns
+ * are padded for scannability. Pure and deterministic for a given entry set.
+ */
+function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string {
+  const sorted = entries.toSorted(compareResolutionEntries);
+  const typeWidth = Math.max(...sorted.map((entry) => entry.type.length));
+  const slugWidth = Math.max(...sorted.map((entry) => entry.slug.length));
+  const lines = sorted.map((entry) => {
+    const origin = entry.source === undefined ? 'library' : `source "${entry.source}"`;
+    const shadow = entry.shadowsLibrary ? ' (shadows library)' : '';
+    return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← ${origin}${shadow}`;
+  });
+  return ['[dry-run] sync would resolve:', ...lines].join('\n');
+}
+
+/** Renders the real-run warning naming each deployed artifact that shadows a same-slug library artifact. */
+function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
+  const details = shadows
+    .toSorted(compareResolutionEntries)
+    .map((entry) => `${entry.type} "${entry.slug}" (source "${entry.source}")`)
+    .join(', ');
+  const plural = shadows.length === 1 ? '' : 's';
+  const verb = shadows.length === 1 ? 's' : '';
+  return `⚠️ ${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
+}
+
 /**
  * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), validates
  * its frontmatter, and returns its neutral body and delivery. A missing frontmatter file throws an error naming the
@@ -856,6 +965,7 @@ async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<
     ambient: rulebook.delivery.includes('ambient'),
     skill: rulebook.delivery.includes('skill'),
     description: rulebook.description,
+    source: resolved.source,
   };
 }
 
