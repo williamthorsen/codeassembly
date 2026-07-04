@@ -66,6 +66,51 @@ export interface EnumerateFailure {
 
 export type EnumerateResult = EnumerateSuccess | EnumerateFailure;
 
+/** A single memory's identity within a project summary, carried for verbose rendering. */
+export interface MemorySummary {
+  /** Filename stem, without the `.md` extension. */
+  slug: string;
+  /** The frontmatter `description`, when present. */
+  description: string | null;
+}
+
+/**
+ * One project store's feedback-memory rollup: its count, the newest memory's modification time, and each memory's
+ * identity for verbose rendering.
+ */
+export interface ProjectSummary {
+  /** The project-store slug — the identifier `--store` accepts. */
+  store: string;
+  /** Display label: the resolved repo directory's basename, or the slug itself when the store has no live repo. */
+  label: string;
+  /** Absolute path to the origin repo when the slug resolves to a live directory, else null. */
+  repoPath: string | null;
+  /** Number of feedback memories in the store. */
+  count: number;
+  /** ISO-8601 modification time of the store's most recently modified memory file. */
+  lastModified: string;
+  /** Each memory's slug and description, ordered by slug. */
+  memories: MemorySummary[];
+}
+
+/** The per-project rollup returned by `summarizeFeedbackMemories`, with projects sorted alphabetically by label. */
+export interface FeedbackMemorySummary {
+  ok: true;
+  /** Machine hostname the summary was computed on. */
+  machine: string;
+  /** Absolute path of the projects root that was walked. */
+  projectsRoot: string;
+  /** One entry per project store, sorted alphabetically by label. */
+  projects: ProjectSummary[];
+  /** Total feedback memories across every listed project. */
+  total: number;
+  /** Files whose frontmatter could not be parsed, passed through from enumeration. */
+  skipped: SkippedMemory[];
+}
+
+/** The result of summarizing: a successful rollup, or an enumeration failure propagated unchanged. */
+export type SummarizeResult = FeedbackMemorySummary | EnumerateFailure;
+
 /** The outcome of deleting one memory and reconciling its store's `MEMORY.md`. */
 export interface DeleteOutcome {
   /** Absolute path of the memory targeted for deletion. */
@@ -94,3 +139,9 @@ export interface FeedbackMemoriesFailure {
 export type DeleteResult = DeleteSuccess | FeedbackMemoriesFailure;
 
 export type FeedbackMemoriesResult = EnumerateResult | DeleteResult;
+
+/**
+ * What `runFeedbackMemories` hands the process entry point: a JSON-serializable result for `enumerate` and `delete`, or
+ * pre-rendered human text for `list` and `--help`. `main` writes each to stdout accordingly.
+ */
+export type RenderedResult = { render: 'json'; value: FeedbackMemoriesResult } | { render: 'text'; value: string };
