@@ -297,13 +297,45 @@ describe(resolveClosure, () => {
       expect(closure.subagents).toEqual(['source-agent']);
     });
 
-    it('fails a source-resolved collection as not-yet-supported before expanding its members', async () => {
-      await writeArtifact(sourceDir, 'collection', 'source-collection', '@library');
+    it('expands a source collection with explicit members, resolving each member source-first', async () => {
+      await writeArtifact(sourceDir, 'skill', 'source-skill');
+      await writeArtifact(contentDir, 'rulebook', 'library-rule');
+      await writeArtifact(sourceDir, 'collection', 'source-collection', {
+        rulebook: ['library-rule'],
+        skill: ['source-skill'],
+      });
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
 
-      await expect(resolveClosure({ collection: ['source-collection'] }, resolver)).rejects.toThrow(
-        /External-source collection "source-collection".*source "org".*not yet supported/s,
-      );
+      const closure = await resolveClosure({ collection: ['source-collection'] }, resolver);
+
+      expect(closure.skills).toEqual(['source-skill']);
+      expect(closure.rulebooks).toEqual(['library-rule']);
+    });
+
+    it('enumerates the source catalog for a source collection whose members is @library', async () => {
+      await writeArtifact(sourceDir, 'skill', 'source-only-skill');
+      await writeArtifact(sourceDir, 'subagent', 'source-only-agent');
+      await writeArtifact(contentDir, 'skill', 'library-only-skill');
+      await writeArtifact(sourceDir, 'collection', 'source-all', '@library');
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const closure = await resolveClosure({ collection: ['source-all'] }, resolver);
+
+      expect(closure.skills.toSorted()).toEqual(['source-only-skill']);
+      expect(closure.subagents.toSorted()).toEqual(['source-only-agent']);
+      expect(closure.skills).not.toContain('library-only-skill');
+    });
+
+    it('still enumerates only the built-in catalog for a library @library collection when sources are declared', async () => {
+      await writeArtifact(contentDir, 'skill', 'library-skill');
+      await writeArtifact(sourceDir, 'skill', 'source-skill');
+      await writeArtifact(contentDir, 'collection', 'library-all', '@library');
+      const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
+
+      const closure = await resolveClosure({ collection: ['library-all'] }, resolver);
+
+      expect(closure.skills.toSorted()).toEqual(['library-skill']);
+      expect(closure.skills).not.toContain('source-skill');
     });
 
     it('still resolves a library collection through a resolver that also carries declared sources', async () => {

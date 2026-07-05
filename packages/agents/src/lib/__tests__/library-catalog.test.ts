@@ -5,9 +5,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ArtifactDependencies } from '../dependency-frontmatter.ts';
-import { enumerateLibrarySlugs } from '../library-catalog.ts';
+import { enumerateCatalogSlugs } from '../library-catalog.ts';
 
-describe(enumerateLibrarySlugs, () => {
+describe(enumerateCatalogSlugs, () => {
   let contentDir: string;
 
   beforeEach(async () => {
@@ -25,7 +25,7 @@ describe(enumerateLibrarySlugs, () => {
     await writeSkill(contentDir, 'people-report');
     await writeSubagent(contentDir, 'canary');
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(sortCatalog(catalog)).toEqual({
       rulebook: ['commit-conventions', 'typescript-conventions'],
@@ -38,7 +38,7 @@ describe(enumerateLibrarySlugs, () => {
     await writeSkill(contentDir, 'aliased-skill', 'a-different-name');
     await writeSubagent(contentDir, 'aliased-subagent', 'a-different-name');
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog.skill).toEqual(['aliased-skill']);
     expect(catalog.subagent).toEqual(['aliased-subagent']);
@@ -52,7 +52,7 @@ describe(enumerateLibrarySlugs, () => {
     await writeSubagent(contentDir, 'canary');
     await writeSubagent(contentDir, '.hidden');
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog).toEqual({ rulebook: ['typescript-conventions'], skill: ['people-report'], subagent: ['canary'] });
   });
@@ -61,7 +61,7 @@ describe(enumerateLibrarySlugs, () => {
     await writeSkill(contentDir, 'people-report');
     await mkdir(path.join(contentDir, 'skills', 'not-a-skill'), { recursive: true });
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog.skill).toEqual(['people-report']);
   });
@@ -70,7 +70,7 @@ describe(enumerateLibrarySlugs, () => {
     await writeSkill(contentDir, 'people-report');
     await mkdir(path.join(contentDir, 'skills', 'weird', 'SKILL.md'), { recursive: true });
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog.skill).toEqual(['people-report']);
   });
@@ -81,7 +81,7 @@ describe(enumerateLibrarySlugs, () => {
     await mkdir(collectionsDir, { recursive: true });
     await writeFile(path.join(collectionsDir, 'all.md'), "---\nname: all\nmembers: '@library'\n---\n\n# all\n", 'utf8');
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog).not.toHaveProperty('collection');
     expect(catalog).toEqual({ rulebook: [], skill: ['people-report'], subagent: [] });
@@ -90,7 +90,7 @@ describe(enumerateLibrarySlugs, () => {
   it('treats an absent type directory as empty', async () => {
     await writeSkill(contentDir, 'people-report');
 
-    const catalog = await enumerateLibrarySlugs(contentDir);
+    const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog).toEqual({ rulebook: [], skill: ['people-report'], subagent: [] });
   });

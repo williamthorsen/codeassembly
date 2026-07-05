@@ -104,4 +104,33 @@ describe('sync with a declared source (real library fallback)', () => {
     expect(existsSync(skillPath('org-skill'))).toBe(false);
     expect(existsSync(subagentPath('org-agent'))).toBe(false);
   });
+
+  it('deploys a source-declared collection, resolving members across the source and the real library, then retracts', async () => {
+    await mkdir(path.join(sourceDir, 'skills', 'org-skill'), { recursive: true });
+    await writeFile(
+      path.join(sourceDir, 'skills', 'org-skill', 'SKILL.md'),
+      '---\nname: org-skill\n---\n\n# Org skill\n\nOrg-provided skill.\n',
+      'utf8',
+    );
+    await mkdir(path.join(sourceDir, 'collections'), { recursive: true });
+    await writeFile(
+      path.join(sourceDir, 'collections', 'org-bundle.md'),
+      '---\nname: org-bundle\nmembers:\n  rulebooks:\n    - shell-conventions\n  skills:\n    - org-skill\n---\n\n# Org bundle\n',
+      'utf8',
+    );
+    await declare('collections:\n  use:\n    - org-bundle\n');
+
+    await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+    // A source collection is traversal-only: its members deploy — the source skill and the real library rulebook —
+    // while the collection itself is never emitted.
+    expect(await readFile(skillPath('org-skill'), 'utf8')).toContain('Org-provided skill.');
+    expect(await readFile(neutralPath('shell-conventions'), 'utf8')).toContain('# Shell script conventions');
+
+    await declare('collections:\n  use: []\n');
+    await syncCommand(makeOptions(), projectRoot, resolveContentDir());
+
+    expect(existsSync(skillPath('org-skill'))).toBe(false);
+    expect(existsSync(neutralPath('shell-conventions'))).toBe(false);
+  });
 });

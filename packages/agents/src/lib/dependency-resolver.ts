@@ -11,7 +11,7 @@ import {
 } from './dependency-frontmatter.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { extractInvocationEdges } from './invocation-tokens.ts';
-import { enumerateLibrarySlugs } from './library-catalog.ts';
+import { enumerateCatalogSlugs } from './library-catalog.ts';
 
 /** The directly-declared slugs per type that seed closure resolution; an absent type seeds nothing. */
 export type DirectArtifacts = Partial<Record<ArtifactType, ReadonlyArray<string>>>;
@@ -80,12 +80,12 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
 
 /**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
- * every location searched when the artifact resolves from no source or the library. A collection that resolves from a
- * non-library source throws a not-yet-supported error naming that source — before its `members:` are read — because a
- * source collection's `'@library'` sentinel would enumerate the built-in library catalog, not the source; a skill or
- * subagent resolves from any source, its include-expanded body read against that source's own root. A collection's
- * edges come from `members:` — the full
- * library catalog when it carries `'@library'`, otherwise its explicit members. Every other type's edges come from
+ * every location searched when the artifact resolves from no source or the library. Every type resolves from any
+ * source: a skill or subagent expands its include-expanded body against that source's own root, and a collection's
+ * `'@library'` sentinel enumerates the content root it resolved from — the built-in library for a library collection,
+ * the owning source for a source collection (a library collection's resolved directory is the library, so one rule
+ * covers both). A collection's edges come from `members:` — that resolved-root catalog
+ * when it carries `'@library'`, otherwise its explicit members. Every other type's edges come from
  * `dependencies:`. A skill or subagent additionally unions the invocation tokens in its include-expanded body
  * (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a token inside a shared
  * partial becomes an edge for every artifact that includes it — and a subagent further unions its top-level `skills:`
@@ -103,21 +103,15 @@ async function readArtifactEdges(
       `Referenced ${type} "${slug}" was not found in any of: ${describeSearchedLocations(resolver, type, slug)}`,
     );
   }
-  // A source-resolved collection is deferred: its `'@library'` members sentinel would enumerate the built-in library
-  // catalog, not the source. Skills and subagents carry no such ambiguity, so only collections stay gated here.
-  if (type === 'collection' && resolved.source !== undefined) {
-    throw new Error(
-      `External-source collection "${slug}" resolved from source "${resolved.source}" is not yet supported`,
-    );
-  }
-
   const filePath = path.join(resolved.dir, artifactFrontmatterPath(type, slug));
   const content = await readFile(filePath, 'utf8');
 
   const label = `${type} ${slug}`;
   if (type === 'collection') {
     const members = readMembers(content, label);
-    return members.kind === 'library' ? await enumerateLibrarySlugs(resolver.libraryDir) : members.edges;
+    // `'@library'` enumerates the content root the collection resolved from, so a source collection expands its own
+    // source rather than the built-in library. A library collection's `resolved.dir` is `libraryDir`, so this is exact.
+    return members.kind === 'library' ? await enumerateCatalogSlugs(resolved.dir) : members.edges;
   }
 
   const dependencies = readDependencies(content, label);

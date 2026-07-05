@@ -5,14 +5,15 @@ import type { ArtifactDependencies } from './dependency-frontmatter.ts';
 import { listVisibleMarkdownFiles, listVisibleSubdirectories, readDirEntries } from './fs-helpers.ts';
 
 /**
- * Enumerates the deployable content library as a per-type slug map (`{ rulebook, skill, subagent }`), computed from
- * the filesystem so a newly added artifact joins with no edit. Collections are never enumerated — they are
+ * Enumerates a content root's deployable artifacts as a per-type slug map (`{ rulebook, skill, subagent }`), computed
+ * from the filesystem so a newly added artifact joins with no edit. The root is whichever directory the caller passes —
+ * the built-in library, or a declared source for a source-scoped collection. Collections are never enumerated — they are
  * traversal-only nodes and "every collection" would be self-referential. The slugs are filesystem basenames (skill =
  * subdirectory name, rulebook/subagent = filename without `.md`), the form `artifactFrontmatterPath` maps back to a
  * file; the frontmatter `name` is deliberately not used. The result is the `ArtifactDependencies` edge shape, so the
  * resolver consumes it directly as a collection's expanded members.
  */
-export async function enumerateLibrarySlugs(contentDir: string): Promise<ArtifactDependencies> {
+export async function enumerateCatalogSlugs(contentDir: string): Promise<ArtifactDependencies> {
   const [rulebook, skill, subagent] = await Promise.all([
     listMarkdownBasenames(path.join(contentDir, ARTIFACT_TYPES.rulebook.contentPath)),
     listSkillDirectories(path.join(contentDir, ARTIFACT_TYPES.skill.contentPath)),
