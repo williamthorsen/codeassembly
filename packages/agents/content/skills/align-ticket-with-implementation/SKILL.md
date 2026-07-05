@@ -45,6 +45,10 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 <!-- include: ../_partials/ticket-concision.md / -->
 
+<!-- include: ../_partials/ticket-placement.md / -->
+
+When aligning to an existing implementation, _the implementation_ is the code on the branch — describe what the code now does, and resist transcribing its mechanism back into the ticket.
+
 - Keep tone professional and objective
 - Focus on what was broken and what needed fixing
 - Prioritize functional issues in "Must have"

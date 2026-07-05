@@ -32,6 +32,10 @@ Create the ticket body describing WHAT needs to be done — problem, context, an
 
 <!-- include: ../_partials/ticket-concision.md / -->
 
+<!-- include: ../_partials/ticket-placement.md / -->
+
+`create-ticket` produces no plan, so _the implementation_ is derived when the work is later planned — state the subject and outcomes, and leave mechanism for that step.
+
 Also draft a short title (without the `ticket_ref` prefix) for use in step 5.
 
 ### 3. Resolve platform
