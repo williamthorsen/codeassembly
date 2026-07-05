@@ -99,18 +99,16 @@ When the ticket needs work, produce or update it to capture the proposed approac
 
 ## Proposed solution
 
-{The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, and the chosen approach — including "X, not Y" where a rejected option is worth recording. Keep this section outcome-shaped: Specific code, syntax, and file-level technique belong in the plan, not here.}
+{The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, and the chosen approach — including "X, not Y" where a rejected option is worth recording. Keep this section outcome-shaped per the placement doctrine below.}
 
 <!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
 ```
 
 <!-- include: ../_partials/ticket-concision.md / -->
 
-**❌ Out of scope here.** Example of what doesn't belong under `## Proposed solution`:
+<!-- include: ../_partials/ticket-placement.md / -->
 
-> Modify line 42 of `payload.ts` to use a `Map<string, T>`, then re-export from `helpers.ts`.
-
-File paths, line numbers, code, and syntax-level prescription belong in the implementation plan.
+Here, _the implementation_ is the plan artifact (Phase 5): mechanism the ticket omits is recorded there, not dropped.
 
 **Test criterion convention:** when a ticket involves code changes to testable behavior, the acceptance criteria must include a test criterion (e.g., "New/modified behavior in this change is covered by tests"). Omit the test criterion only when the change falls entirely within the carve-outs defined in the `testing-conventions` skill.
 
