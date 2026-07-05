@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { libraryResolver } from '../content-sources.ts';
+import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { deploySkill, resolveDeclaredSkill } from '../skill-deploy.ts';
@@ -163,8 +163,8 @@ describe(deploySkill, () => {
   }
 
   /** Builds a ResolvedSkill without the deploy-field check, so deploySkill tests can use minimal fixtures. */
-  function resolvedSkill(slug: string): { slug: string; srcDir: string; contentRoot: string } {
-    return { slug, srcDir: path.join(librarySkillsDir, slug), contentRoot: librarySkillsDir };
+  function resolvedSkill(slug: string): { slug: string; srcDir: string; contentRoot: string; source: undefined } {
+    return { slug, srcDir: path.join(librarySkillsDir, slug), contentRoot: librarySkillsDir, source: undefined };
   }
 
   // endregion | Helpers
@@ -197,6 +197,22 @@ describe(resolveDeclaredSkill, () => {
     expect(resolved.slug).toBe('people-report');
     expect(resolved.srcDir).toBe(path.join(contentDir, 'skills', 'people-report'));
     expect(resolved.contentRoot).toBe(contentDir);
+    expect(resolved.source).toBeUndefined();
+  });
+
+  it('carries the declared source name when the skill resolves from a source', async () => {
+    const sourceDir = path.join(contentDir, 'org');
+    const dir = path.join(sourceDir, 'skills', 'people-report');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'SKILL.md'), '---\nname: people-report\n---\n\n# people-report\n', 'utf8');
+
+    const resolved = await resolveDeclaredSkill(
+      'people-report',
+      createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir),
+    );
+
+    expect(resolved.source).toBe('org');
+    expect(resolved.contentRoot).toBe(sourceDir);
   });
 
   it('leaves the target harnesses undefined when no `harnesses:` field is present', async () => {

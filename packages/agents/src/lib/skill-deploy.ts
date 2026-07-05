@@ -17,14 +17,16 @@ const skillMarker = makeArtifactMarker('skill');
 
 /**
  * A declared skill resolved through the source resolver: its stable slug, the directory to copy from, the content root
- * its includes resolve against, and the harnesses it targets. `contentRoot` is the library for a library skill and the
- * declaring source for a source skill. `targetHarnesses` is absent when the skill carries no `harnesses:` field,
+ * its includes resolve against, the source it resolved from, and the harnesses it targets. `contentRoot` is the library
+ * for a library skill and the declaring source for a source skill. `source` is the declaring source's name, or
+ * `undefined` for the built-in library. `targetHarnesses` is absent when the skill carries no `harnesses:` field,
  * meaning it deploys to all harnesses.
  */
 export interface ResolvedSkill {
   readonly slug: string;
   readonly srcDir: string;
   readonly contentRoot: string;
+  readonly source: string | undefined;
   readonly targetHarnesses?: ReadonlyArray<HarnessId>;
 }
 
@@ -48,7 +50,7 @@ export async function resolveDeclaredSkill(slug: string, resolver: SourceResolve
   const content = await readFile(path.join(srcDir, 'SKILL.md'), 'utf8');
 
   const targetHarnesses = readTargetHarnesses(content, slug);
-  const base = { slug, srcDir, contentRoot };
+  const base = { slug, srcDir, contentRoot, source: resolved.source };
   return targetHarnesses === undefined ? base : { ...base, targetHarnesses };
 }
 

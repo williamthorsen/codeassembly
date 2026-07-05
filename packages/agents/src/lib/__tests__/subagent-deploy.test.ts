@@ -7,7 +7,7 @@ import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { makeArtifactMarker } from '../artifact-marker.ts';
-import { libraryResolver } from '../content-sources.ts';
+import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
@@ -91,7 +91,12 @@ describe(deploySubagent, () => {
     const destPath = path.join(destParent, 'canary.md');
 
     await deploySubagent(
-      { slug: 'canary', srcPath: path.join(librarySubagentsDir, 'canary.md'), contentRoot: contentDir },
+      {
+        slug: 'canary',
+        srcPath: path.join(librarySubagentsDir, 'canary.md'),
+        contentRoot: contentDir,
+        source: undefined,
+      },
       destPath,
       claudeContext(),
     );
@@ -107,7 +112,12 @@ describe(deploySubagent, () => {
   it('re-deploys unchanged content as the same bytes without rewriting the file', async () => {
     await writeLibrarySubagent('canary', SOURCE);
     const destPath = path.join(destParent, 'canary.md');
-    const resolved = { slug: 'canary', srcPath: path.join(librarySubagentsDir, 'canary.md'), contentRoot: contentDir };
+    const resolved = {
+      slug: 'canary',
+      srcPath: path.join(librarySubagentsDir, 'canary.md'),
+      contentRoot: contentDir,
+      source: undefined,
+    };
     const expected = await renderExpectedDeploy(resolved.srcPath);
     await deploySubagent(resolved, destPath, claudeContext());
     expect(await readFile(destPath, 'utf8')).toBe(expected);
@@ -151,6 +161,21 @@ describe(resolveDeclaredSubagent, () => {
     expect(resolved.slug).toBe('canary');
     expect(resolved.srcPath).toBe(path.join(librarySubagentsDir, 'canary.md'));
     expect(resolved.contentRoot).toBe(contentDir);
+    expect(resolved.source).toBeUndefined();
+  });
+
+  it('carries the declared source name when the subagent resolves from a source', async () => {
+    const sourceDir = path.join(contentDir, 'org');
+    await mkdir(path.join(sourceDir, 'subagents'), { recursive: true });
+    await writeFile(path.join(sourceDir, 'subagents', 'canary.md'), '---\nname: canary\n---\n\n# canary\n', 'utf8');
+
+    const resolved = await resolveDeclaredSubagent(
+      'canary',
+      createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir),
+    );
+
+    expect(resolved.source).toBe('org');
+    expect(resolved.contentRoot).toBe(sourceDir);
   });
 
   it('throws an error naming the slug and every location searched when the subagent resolves nowhere', async () => {

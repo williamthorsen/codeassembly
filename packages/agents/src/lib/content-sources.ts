@@ -65,6 +65,15 @@ export function describeSearchedLocations(resolver: SourceResolver, type: Artifa
     .join(', ');
 }
 
+/**
+ * Reports whether the built-in library carries a `(type, slug)` artifact. Used to detect a shadow: a source-resolved
+ * artifact whose slug also exists in the library is masking the library one. Probes `resolver.libraryDir` directly,
+ * so it answers regardless of which candidate won the resolution.
+ */
+export async function hasLibraryArtifact(resolver: SourceResolver, type: ArtifactType, slug: string): Promise<boolean> {
+  return fileExists(path.join(resolver.libraryDir, artifactFrontmatterPath(type, slug)));
+}
+
 // region | Helpers
 
 /**
