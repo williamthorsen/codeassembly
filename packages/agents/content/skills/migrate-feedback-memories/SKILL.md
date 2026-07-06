@@ -64,12 +64,17 @@ Then decide one destination per memory:
 
 ### 3. Dedup capture candidates by origin
 
-For each capture candidate, invoke the {skill:kb-retrieve-events} skill on the memory's topic, and for any equivalent event it surfaces, read the `Origin: project …, machine …, session …` line each migration writes into an event body (step 5), when present.
+For each capture candidate, invoke the {skill:kb-retrieve-events} skill on the memory's topic. That skill surfaces candidates by term and tag overlap, so a hit may share only a tag (e.g. `feedback`) with the memory rather than its actual lesson — treat every hit as a _candidate_ duplicate, not a confirmed one. For each surfaced event, read the `Origin: project …, machine …, session …` line each migration writes into an event body (step 5), when present.
 
-- **Delete** the candidate only when a surfaced event shares its origin — matched on the `originSessionId` when the memory has one (a session id uniquely identifies the source memory), else on the origin `store` by judgment. Such an event _is_ this memory, already captured on an earlier run or migrated from another machine, so re-capturing would double-count. This is what makes a re-run, and a second machine's run, converge.
-- **Keep the capture** when an equivalent event exists but carries a _different_ origin. A lesson that recurred in separate projects is genuine recurrence, and the KB counts and ranks events by it (see {skill:kb-retrieve-events}), so each occurrence is captured as its own event; do not collapse distinct origins into one.
+An event is this memory — already captured — only when **both** conditions hold: its topic records the memory's lesson **and** its origin matches. A session id does not uniquely identify a source memory: one working session routinely emits several feedback memories and/or captured events, each on a different topic, so a shared `originSessionId` (or `store`) establishes common origin, not common lesson.
+
+- **Delete** the candidate only when a surfaced event both records the memory's lesson and shares its origin — origin matched on the `originSessionId` when the memory has one, else on the origin `store` by judgment. Such an event _is_ this memory, already captured on an earlier run or migrated from another machine, so re-capturing would double-count. This is what makes a re-run, and a second machine's run, converge.
+- **Keep the capture** when a surfaced event's topic _diverges_ from the memory's, even if the origins match. Deleting on the origin match alone would remove the memory without ever capturing its lesson — an unrecoverable loss.
+- **Keep the capture** when an equivalent event carries a _different_ origin. A lesson that recurred in separate projects is genuine recurrence, and the KB counts and ranks events by it (see {skill:kb-retrieve-events}), so each occurrence is captured as its own event; do not collapse distinct origins into one.
 
 The lone exception is a memory _deliberately replicated_ as scaffolding — one rule copied verbatim into many stores rather than arising independently in each — which is one rule in many copies, not many occurrences. Collapse those to a single capture by judgment.
+
+> **Worked example.** During the node-monorepo-tools migration, memory `merge-title-multiscope-bare-type` (origin session `187b2cdd`) surfaced a same-session event about an unrelated gradient-marker mistake. The session ids matched; the topics did not. Deleting on the session-id match would have removed the memory without capturing its merge-title lesson — the collision surfaced only by reading the matched event's topic.
 
 ### 4. Present the routing plan (default mode)
 
