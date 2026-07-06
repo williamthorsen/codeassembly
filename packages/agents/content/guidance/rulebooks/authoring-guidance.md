@@ -38,7 +38,7 @@ Tokens are honored only in skills and subagents — the types whose bodies pass 
 
 ## Collections
 
-A collection's only payload is a `members:` block — the constituents it pulls into the deployed closure. List them per type (the same shape `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the library:
+A collection's only payload is a `members:` block — the constituents it pulls into the deployed closure. List them per type (the same shape `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the content root the collection belongs to — the built-in library, or the owning source for a source collection:
 
 ```yaml
 members:
