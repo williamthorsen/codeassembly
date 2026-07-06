@@ -4,7 +4,7 @@
  */
 import path from 'node:path';
 
-import { extractTicketId } from './extract-ticket-id.ts';
+import { extractTicketId, isPrIdentifier } from './extract-ticket-id.ts';
 import type { BranchManifest, ResolvedPreferences } from './types.ts';
 
 /** Default values when not set in preferences. */
@@ -95,16 +95,20 @@ function resolveBaseDir(rawBaseDir: string, cwd: string, home: string): string {
 
 /**
  * Resolves the ticket base URL from preferences and, when a ticket id is also known, the full
- * ticket URL built from base and id. Either is null when its inputs are absent — leaving `ticketUrl`
- * for a skill to resolve and store (e.g. GitHub, which fetches the URL via `gh`). An explicitly
- * stored URL overrides the constructed default through `carryForwardStoredUrls`.
+ * ticket URL built from base and id. Either is null when its inputs are absent, leaving `ticketUrl`
+ * for a skill to resolve and store (e.g. GitHub, which fetches the URL via `gh`). A PR-sentinel id
+ * (`PR-<n>`) is not a ticket, so no ticket URL is built for it. An explicitly stored URL overrides
+ * the constructed default through `carryForwardStoredUrls`.
  */
 function resolveTicketUrls(
   preferences: ResolvedPreferences,
   ticketId: string | null,
 ): { ticketBaseUrl: string | null; ticketUrl: string | null } {
   const ticketBaseUrl = preferences.ticket?.base_url ?? null;
-  const ticketUrl = ticketBaseUrl !== null && ticketId !== null ? joinTicketUrl(ticketBaseUrl, ticketId) : null;
+  const ticketUrl =
+    ticketBaseUrl !== null && ticketId !== null && !isPrIdentifier(ticketId)
+      ? joinTicketUrl(ticketBaseUrl, ticketId)
+      : null;
   return { ticketBaseUrl, ticketUrl };
 }
 

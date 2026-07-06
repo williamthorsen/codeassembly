@@ -88,6 +88,11 @@ It "returns empty for a plain word branch"
 When call extract_jira_id "main"
 The output should equal ""
 End
+
+It "extracts a PR sentinel identifier"
+When call extract_jira_id "PR-123"
+The output should equal "PR-123"
+End
 End
 
 Describe "extract_bare_number"
