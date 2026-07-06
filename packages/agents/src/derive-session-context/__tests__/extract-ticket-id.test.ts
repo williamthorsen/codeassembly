@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractTicketId } from '../extract-ticket-id.ts';
+import { extractTicketId, isPrIdentifier } from '../extract-ticket-id.ts';
 
 describe(extractTicketId, () => {
   // The behavior table in `_data/ticket-id-extraction.md` is the test oracle. Each row of that
@@ -16,6 +16,7 @@ describe(extractTicketId, () => {
       { input: 'MAC-147-some-description', expected: 'MAC-147' },
       { input: 'feat-2', expected: 'FEAT-2' },
       { input: 'feat/foo-2', expected: 'FOO-2' },
+      { input: 'PR-123', expected: 'PR-123' },
       { input: 'main', expected: null },
     ];
 
@@ -101,5 +102,26 @@ describe(extractTicketId, () => {
         ticket_ref: '99',
       });
     });
+  });
+});
+
+describe(isPrIdentifier, () => {
+  it('recognizes the canonical PR sentinel', () => {
+    expect(isPrIdentifier('PR-123')).toBe(true);
+  });
+
+  it('rejects a Jira-style ticket id and a bare issue number', () => {
+    expect(isPrIdentifier('MAC-130')).toBe(false);
+    expect(isPrIdentifier('152')).toBe(false);
+  });
+
+  it('rejects a lowercase or malformed sentinel', () => {
+    expect(isPrIdentifier('pr-123')).toBe(false);
+    expect(isPrIdentifier('PR-')).toBe(false);
+    expect(isPrIdentifier('PR-12a')).toBe(false);
+  });
+
+  it('treats null as not a PR identifier', () => {
+    expect(isPrIdentifier(null)).toBe(false);
   });
 });

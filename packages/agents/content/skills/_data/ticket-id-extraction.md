@@ -24,6 +24,7 @@ The following inputs are the test oracle for both implementations.
 | `MAC-147-some-description`  | `MAC-147`      |
 | `feat-2`                    | `FEAT-2`       |
 | `feat/foo-2`                | `FOO-2`        |
+| `PR-123`                    | `PR-123`       |
 | `main`                      | _(empty)_      |
 
 Two of these cases are surprising in isolation but follow directly from the contract:
@@ -32,6 +33,10 @@ Two of these cases are surprising in isolation but follow directly from the cont
 - `feat/foo-2 → FOO-2`: The match is unanchored, so `foo-2` later in the string matches even though `feat/` does not.
 
 This is intentional — case-insensitive unanchored matching is the price of supporting `wt/mac-130` and `wthorsen/MAC-130` uniformly. Callers that want stricter shapes should not rely on this contract; use the bare-numeric fallback (described below) instead.
+
+## Pull-request identifier
+
+`PR-<n>` (e.g. `PR-123`) matches the pattern like any other two-letter prefix, so it extracts to `PR-123`. This is a sanctioned identity for a pull request that has no backing ticket, giving it a branch name and an artifact directory. Downstream URL derivation treats a `PR-<n>` id as a non-ticket: `derive-session-context` builds no ticket URL for it, even when a ticket base URL is configured (see `resolveTicketUrls` in `compose-manifest.ts`).
 
 ## Bare-numeric fallback (out of scope)
 

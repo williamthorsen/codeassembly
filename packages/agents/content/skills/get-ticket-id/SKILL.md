@@ -20,6 +20,8 @@ Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more 
 
 Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract — branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
 
+Note: `PR-<n>` (e.g., `PR-123`) is a sanctioned identifier for a pull request that has no backing ticket. It matches the pattern like any two-letter prefix, so it resolves to `PR-123` and supplies a branch name and artifact directory. Downstream URL derivation treats it as a non-ticket and builds no ticket URL for it.
+
 ## Implementation
 
 ### From branch name

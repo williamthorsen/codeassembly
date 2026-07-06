@@ -365,5 +365,18 @@ describe(composeManifest, () => {
       expect(manifest.ticket_base_url).toBe('https://org.atlassian.net/browse/');
       expect(manifest.ticket_url).toBeNull();
     });
+
+    it('leaves ticket_url null for a PR-sentinel id even when a base_url is configured', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
+        branchName: 'PR-123',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.ticket_id).toBe('PR-123');
+      expect(manifest.ticket_base_url).toBe('https://org.atlassian.net/browse/');
+      expect(manifest.ticket_url).toBeNull();
+    });
   });
 });

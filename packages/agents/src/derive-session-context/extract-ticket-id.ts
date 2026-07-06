@@ -18,6 +18,9 @@ const JIRA_STYLE_PATTERN = /[A-Za-z]{2,}-[0-9]+/;
 /** Bare-numeric prefix: one or more digits anchored at the start of the branch name. */
 const BARE_NUMERIC_PATTERN = /^[0-9]+/;
 
+/** Pull-request sentinel: `PR-` followed by digits, matched against the canonical uppercased id. */
+const PR_IDENTIFIER_PATTERN = /^PR-[0-9]+$/;
+
 /**
  * Returns the ticket ID and display ref for `branchName`, given the resolved
  * `project.ticket_ref_prefix` (or `undefined` when none is configured).
@@ -55,4 +58,12 @@ export function extractTicketId(input: { branchName: string; ticketRefPrefix?: s
     return { ticket_id: id, ticket_ref: id };
   }
   return { ticket_id: bareNumber, ticket_ref: bareNumber };
+}
+
+/**
+ * Whether `id` is a pull-request sentinel (`PR-<n>`) standing in for a ticket rather than a ticket ID.
+ * Matches the canonical uppercased form that extraction produces; `null` is not a PR identifier.
+ */
+export function isPrIdentifier(id: string | null): boolean {
+  return id !== null && PR_IDENTIFIER_PATTERN.test(id);
 }
