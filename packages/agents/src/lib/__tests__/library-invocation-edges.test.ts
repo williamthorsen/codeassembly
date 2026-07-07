@@ -1,8 +1,13 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
+import { artifactFrontmatterPath } from '../artifact-types.ts';
 import { resolveContentDir } from '../content-resolver.ts';
 import { libraryResolver } from '../content-sources.ts';
 import { resolveClosure } from '../dependency-resolver.ts';
+import { enumerateCatalogSlugs } from '../library-catalog.ts';
 
 // Asserts that the content library's invocation edges resolve: declaring a skill pulls the skills and subagents it
 // invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
@@ -47,5 +52,46 @@ describe('library invocation edges', () => {
     const closure = await resolveClosure({ skill: ['refine-plan'] }, libraryResolver(contentDir));
 
     expect(closure.subagents).toEqual(expect.arrayContaining(['plan-reviewer', 'plan-reviser']));
+  });
+
+  it('ships create-pr as a dependency of merge-pr, which names it in its body', async () => {
+    const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
+
+    expect(closure.skills).toContain('create-pr');
+  });
+
+  it('resolves the entire content library without a cycle or missing artifact', async () => {
+    // The whole-catalog resolution exercises every self-token (dropped, so no self-cycle) and every cross-reference
+    // edge (resolves to a real artifact) at once — the strongest end-to-end check on the reference reclassification.
+    const catalog = await enumerateCatalogSlugs(contentDir);
+
+    await expect(resolveClosure(catalog, libraryResolver(contentDir))).resolves.toBeDefined();
+  });
+
+  it('leaves no literal command reference to a known skill or subagent in any body', async () => {
+    // A self- or cross-reference must render through a `{skill:}` / `{subagent:}` token or be reworded to prose; a bare
+    // `/slug` naming a library artifact renders only on Claude. The trailing-boundary guard excludes script paths
+    // (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
+    const catalog = await enumerateCatalogSlugs(contentDir);
+    const known = new Set([...(catalog.skill ?? []), ...(catalog.subagent ?? [])]);
+    const tokenRe = /\{(?:skill|subagent):[a-z][a-z0-9-]*\}/g;
+    const literalRefRe = /(?<![\w./])\/([a-z][a-z0-9-]*)(?![\w/.-])/g;
+    const offenders: Array<string> = [];
+
+    for (const type of ['skill', 'subagent'] as const) {
+      for (const slug of catalog[type] ?? []) {
+        const body = (await readFile(path.join(contentDir, artifactFrontmatterPath(type, slug)), 'utf8')).replace(
+          tokenRe,
+          '',
+        );
+        for (const [, ref] of body.matchAll(literalRefRe)) {
+          if (ref !== undefined && known.has(ref)) {
+            offenders.push(`${type}:${slug} -> /${ref}`);
+          }
+        }
+      }
+    }
+
+    expect(offenders).toEqual([]);
   });
 });
