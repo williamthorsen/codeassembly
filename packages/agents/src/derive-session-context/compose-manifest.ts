@@ -4,13 +4,15 @@
  */
 import path from 'node:path';
 
-import { extractTicketId, isPrIdentifier } from './extract-ticket-id.ts';
+import { parseRemoteToOwnerRepo } from '../shared/parse-remote-url.ts';
+import { extractPrNumber, extractTicketId, isPrIdentifier } from './extract-ticket-id.ts';
 import type { BranchManifest, ResolvedPreferences } from './types.ts';
 
 /** Default values when not set in preferences. */
 const DEFAULT_SCM = 'github';
 const DEFAULT_BASE_DIR = '~/ai-artifacts';
-const DEFAULT_REMOTE_NAME = 'origin';
+/** Default remote name, used when preferences don't configure one. */
+export const DEFAULT_REMOTE_NAME = 'origin';
 const DEFAULT_REMOTE_BRANCH = 'main';
 const DEFAULT_ARTIFACT_PATHS: Readonly<Record<string, string>> = Object.freeze({
   chats: 'chats',
@@ -19,10 +21,20 @@ const DEFAULT_ARTIFACT_PATHS: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
+ * Per-`scm` pull-request URL shape: the canonical Cloud host and the path segment. Mirrors the
+ * shapes documented in `pr-resolution.md`; only `owner/repo` is taken from the git remote.
+ */
+const PR_URL_SHAPES: Readonly<Record<'github' | 'bitbucket', { host: string; prPath: string }>> = Object.freeze({
+  github: { host: 'github.com', prPath: 'pull' },
+  bitbucket: { host: 'bitbucket.org', prPath: 'pull-requests' },
+});
+
+/**
  * Composes the full manifest object. `cwd` is the working directory (used for `~` expansion,
  * relative-path resolution, and the project-slug fallback). `home` is used for `~` expansion when
  * supplied; it defaults to `os.homedir()` via the caller. `now` is the moment to stamp into
- * `created_at`.
+ * `created_at`. `remoteUrl` is the git remote's fetch URL (or `null`), used to seed `pr_url` for a
+ * `PR-<n>` identity; absent or unresolvable leaves `pr_url` null.
  */
 export function composeManifest(input: {
   preferences: ResolvedPreferences;
@@ -30,8 +42,9 @@ export function composeManifest(input: {
   cwd: string;
   home: string;
   now: Date;
+  remoteUrl?: string | null;
 }): BranchManifest {
-  const { preferences, branchName, cwd, home, now } = input;
+  const { preferences, branchName, cwd, home, now, remoteUrl = null } = input;
 
   const ticketRefPrefix = preferences.project?.ticket_ref_prefix;
   const ticketResult =
@@ -57,6 +70,7 @@ export function composeManifest(input: {
   }
 
   const { ticketBaseUrl, ticketUrl } = resolveTicketUrls(preferences, ticketResult.ticket_id);
+  const prUrl = resolvePrUrl(scm, ticketResult.ticket_id, remoteUrl);
 
   return {
     ticket_id: ticketResult.ticket_id,
@@ -70,7 +84,7 @@ export function composeManifest(input: {
     created_at: formatIsoUtc(now),
     ticket_url: ticketUrl,
     ticket_base_url: ticketBaseUrl,
-    pr_url: null,
+    pr_url: prUrl,
   };
 }
 
@@ -118,6 +132,25 @@ function resolveTicketUrls(
  */
 function joinTicketUrl(baseUrl: string, ticketId: string): string {
   return `${baseUrl.replace(/\/+$/, '')}/${ticketId}`;
+}
+
+/**
+ * Builds the pull-request URL for a `PR-<n>` sentinel id from the git remote's `owner/repo` and the
+ * `scm`-selected URL shape. Returns null for a non-PR id, when no remote is known, or when the
+ * remote cannot be parsed to `owner/repo`. The host and path segment come from `scm`; only the
+ * `owner/repo` is taken from the remote. An explicitly stored `pr_url` overrides this seeded default.
+ */
+function resolvePrUrl(scm: 'github' | 'bitbucket', ticketId: string | null, remoteUrl: string | null): string | null {
+  const prNumber = extractPrNumber(ticketId);
+  if (prNumber === null || remoteUrl === null) {
+    return null;
+  }
+  const ownerRepo = parseRemoteToOwnerRepo(remoteUrl);
+  if (ownerRepo === null) {
+    return null;
+  }
+  const { host, prPath } = PR_URL_SHAPES[scm];
+  return `https://${host}/${ownerRepo}/${prPath}/${prNumber}`;
 }
 
 /** Formats a `Date` as an ISO 8601 UTC string trimmed to second precision (e.g., `2026-05-26T02:07:41Z`). */

@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
-import { normalizeRemoteUrl, parseArgs, runCapture } from '../cli.ts';
+import { parseArgs, runCapture } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -182,34 +182,6 @@ describe(parseArgs, () => {
 
   it('rejects an unexpected positional argument', () => {
     expect(() => parseArgs(['--summary', 'x', 'stray'])).toThrow(/unexpected argument/);
-  });
-});
-
-describe(normalizeRemoteUrl, () => {
-  it('normalizes an SSH remote to owner/name', () => {
-    expect(normalizeRemoteUrl('git@github.com:williamthorsen/codeassembly.git')).toBe('williamthorsen/codeassembly');
-  });
-
-  it('normalizes an HTTPS remote to owner/name', () => {
-    expect(normalizeRemoteUrl('https://github.com/williamthorsen/codeassembly.git')).toBe(
-      'williamthorsen/codeassembly',
-    );
-  });
-
-  it('strips a missing .git suffix gracefully', () => {
-    expect(normalizeRemoteUrl('https://github.com/williamthorsen/codeassembly')).toBe('williamthorsen/codeassembly');
-  });
-
-  it('reduces a nested path to its last two segments', () => {
-    expect(normalizeRemoteUrl('https://gitlab.com/group/subgroup/project.git')).toBe('subgroup/project');
-  });
-
-  it('returns undefined for a single-segment URL with no owner/name pair', () => {
-    expect(normalizeRemoteUrl('https://github.com/onlyone.git')).toBeUndefined();
-  });
-
-  it('returns undefined for an unparseable URL', () => {
-    expect(normalizeRemoteUrl('not-a-url')).toBeUndefined();
   });
 });
 

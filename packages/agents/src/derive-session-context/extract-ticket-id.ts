@@ -61,6 +61,17 @@ export function extractTicketId(input: { branchName: string; ticketRefPrefix?: s
 }
 
 /**
+ * Returns the numeric part of a `PR-<n>` sentinel id (e.g. `PR-950` → `950`), or `null` when `id` is
+ * not a PR identifier. Operates on the canonical uppercased form extraction produces.
+ */
+export function extractPrNumber(id: string | null): string | null {
+  if (id === null || !PR_IDENTIFIER_PATTERN.test(id)) {
+    return null;
+  }
+  return id.slice('PR-'.length);
+}
+
+/**
  * Whether `id` is a pull-request sentinel (`PR-<n>`) standing in for a ticket rather than a ticket ID.
  * Matches the canonical uppercased form that extraction produces; `null` is not a PR identifier.
  */

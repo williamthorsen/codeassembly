@@ -1,10 +1,14 @@
+import { execFile } from 'node:child_process';
 import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { deriveSessionContext, parseArgs, sanitizeBranch } from '../cli.ts';
+
+const execFileAsync = promisify(execFile);
 
 const NOW = new Date('2026-05-26T02:07:41Z');
 
@@ -481,6 +485,47 @@ describe(deriveSessionContext, () => {
     expect(result.scm).toBe('github');
     expect(result.ticket_base_url).toBeNull();
   });
+
+  it('seeds pr_url from a PR-<n> identity using the git remote', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    await initGitRepo(workDir, 'git@github.com:owner/repo.git');
+    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
+    expect(manifest.ticket_id).toBe('PR-950');
+    expect(manifest.pr_url).toBe('https://github.com/owner/repo/pull/950');
+  });
+
+  it('leaves pr_url null on a PR-<n> branch when no git remote is configured', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    await initGitRepo(workDir);
+    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
+    expect(manifest.pr_url).toBeNull();
+  });
+
+  it('carries a stored pr_url forward across a recompose, overriding the seeded default', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
+    await initGitRepo(workDir, 'git@github.com:owner/repo.git');
+    const stored = 'https://github.com/owner/repo/pull/999';
+    // Seed a stale manifest (missing the required `scm`) that carries a stored pr_url. The recompose
+    // would seed .../pull/950 from the remote and the PR-950 identity; carry-forward must win.
+    const manifestPath = path.join(workDir, '.agents', 'PR-950.branch-manifest.json');
+    await mkdir(path.dirname(manifestPath), { recursive: true });
+    const stale = {
+      ticket_id: 'PR-950',
+      ticket_ref: 'PR-950',
+      project_slug: 'seeded',
+      default_branch: 'origin/main',
+      branch_name: 'PR-950',
+      artifact_base_dir: '/tmp/seeded',
+      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
+      created_at: '2025-01-01T00:00:00Z',
+      pr_url: stored,
+    };
+    await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
+
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
+    expect(recomposed.scm).toBe('github');
+    expect(recomposed.pr_url).toBe(stored);
+  });
 });
 
 // region | Helpers
@@ -489,6 +534,14 @@ async function writeProjectPrefs(workDir: string, body: string): Promise<void> {
   const agentsDir = path.join(workDir, '.agents');
   await mkdir(agentsDir, { recursive: true });
   await writeFile(path.join(agentsDir, 'preferences.yaml'), body, 'utf8');
+}
+
+/** Initializes a throwaway git repo at `dir`, optionally adding an `origin` remote. */
+async function initGitRepo(dir: string, remoteUrl?: string): Promise<void> {
+  await execFileAsync('git', ['-C', dir, 'init']);
+  if (remoteUrl !== undefined) {
+    await execFileAsync('git', ['-C', dir, 'remote', 'add', 'origin', remoteUrl]);
+  }
 }
 
 // endregion | Helpers

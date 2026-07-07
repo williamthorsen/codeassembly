@@ -27,6 +27,7 @@ import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
+import { parseRemoteToOwnerRepo } from '../shared/parse-remote-url.ts';
 import { isEventPushed } from './event-push-state.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
@@ -361,9 +362,8 @@ function isEntryPoint(): boolean {
 }
 
 /**
- * Resolves the `owner/name` git remote at `cwd`, best-effort. Prefers the `origin` remote and falls back to the first
- * listed remote when `origin` is absent. Both SSH (`git@host:owner/name.git`) and HTTPS (`https://host/owner/name.git`)
- * URL forms are parsed, the `.git` suffix is stripped, and the result is normalized to `owner/name`. Any failure (no
+ * Resolves the `owner/repo` of the git remote at `cwd`, best-effort. Prefers the `origin` remote and falls back to the
+ * first listed remote when `origin` is absent, then parses the resulting URL to its `owner/repo`. Any failure (no
  * remote, unparseable URL) returns `undefined` so the capture is never blocked.
  */
 async function resolveRepo(cwd: string): Promise<string | undefined> {
@@ -371,7 +371,7 @@ async function resolveRepo(cwd: string): Promise<string | undefined> {
   if (url === undefined) {
     return undefined;
   }
-  return normalizeRemoteUrl(url);
+  return parseRemoteToOwnerRepo(url) ?? undefined;
 }
 
 /**
@@ -400,36 +400,6 @@ async function resolveRemoteUrl(cwd: string): Promise<string | undefined> {
     }
     return undefined;
   }
-}
-
-/**
- * Normalizes an SSH or HTTPS git remote URL to `owner/name`, or `undefined` when it cannot be parsed.
- *
- * @internal - Exported to allow testing.
- */
-export function normalizeRemoteUrl(url: string): string | undefined {
-  const withoutSuffix = url.replace(/\.git$/, '');
-
-  const sshMatch = /^[^@]+@[^:]+:(?<path>.+)$/.exec(withoutSuffix);
-  if (sshMatch?.groups?.path !== undefined) {
-    return takeOwnerName(sshMatch.groups.path);
-  }
-
-  const httpsMatch = /^https?:\/\/[^/]+\/(?<path>.+)$/.exec(withoutSuffix);
-  if (httpsMatch?.groups?.path !== undefined) {
-    return takeOwnerName(httpsMatch.groups.path);
-  }
-
-  return undefined;
-}
-
-/** Reduces a remote path (which may carry extra subgroups) to its last two `owner/name` segments. */
-function takeOwnerName(path: string): string | undefined {
-  const segments = path.split('/').filter((segment) => segment.length > 0);
-  if (segments.length < 2) {
-    return undefined;
-  }
-  return segments.slice(-2).join('/');
 }
 
 // endregion | Helpers

@@ -38,7 +38,7 @@ import { promisify } from 'node:util';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
-import { composeManifest } from './compose-manifest.ts';
+import { composeManifest, DEFAULT_REMOTE_NAME } from './compose-manifest.ts';
 import { readPreferences } from './read-preferences.ts';
 import type { BranchManifest } from './types.ts';
 
@@ -274,12 +274,17 @@ async function resolveBaseManifest(input: {
   }
 
   const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
+  // Resolve the git remote only here, on the fresh-compose path — the cache-hit fast path above
+  // returns without paying for it. Used to seed `pr_url` for a `PR-<n>` identity.
+  const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
+  const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
   const composed = composeManifest({
     preferences: readResult.preferences,
     branchName: input.branch,
     cwd: input.cwd,
     home: input.home,
     now: input.now,
+    remoteUrl,
   });
   const carried = await carryForwardStoredUrls(composed, input.newPath);
   return { manifest: carried, needsWrite: true };
@@ -359,6 +364,22 @@ async function resolveCurrentBranch(cwd: string): Promise<string> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Could not resolve current branch (is this a git repository?): ${message}`);
+  }
+}
+
+/**
+ * Best-effort resolution of the git remote's fetch URL at `cwd` for the named remote. Returns the
+ * raw URL (e.g. `git@github.com:owner/repo.git`) or null on any failure — no remote, not a git
+ * repository, or `git` being unavailable — so a caller can treat an unresolvable remote as absent
+ * rather than handling an error.
+ */
+async function resolveRemoteUrl(cwd: string, remoteName: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', cwd, 'remote', 'get-url', remoteName]);
+    const trimmed = stdout.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  } catch {
+    return null;
   }
 }
 
