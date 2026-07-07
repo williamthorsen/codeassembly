@@ -14,7 +14,7 @@ Perform a single review-and-revise round on a saved implementation plan, checkin
 
 ## Arguments
 
-- Plan file path (required): Path to a saved plan artifact (e.g., the `{timestamp}_{slug}_plan.md` from `{skill:save-plan}`)
+- Plan file path (required): Path to a saved plan artifact (e.g., the `{timestamp}_{slug}_plan.md` from `save-plan`)
 - Ticket source (required): File path or URL (GitHub issue URL, Jira URL, etc.)
 
 ## Visibility
