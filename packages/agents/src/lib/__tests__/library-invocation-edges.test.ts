@@ -1,9 +1,8 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { artifactFrontmatterPath } from '../artifact-types.ts';
 import { resolveContentDir } from '../content-resolver.ts';
 import { libraryResolver } from '../content-sources.ts';
 import { resolveClosure } from '../dependency-resolver.ts';
@@ -68,26 +67,23 @@ describe('library invocation edges', () => {
     await expect(resolveClosure(catalog, libraryResolver(contentDir))).resolves.toBeDefined();
   });
 
-  it('leaves no literal command reference to a known skill or subagent in any body', async () => {
-    // A self- or cross-reference must render through a `{skill:}` / `{subagent:}` token or be reworded to prose; a bare
-    // `/slug` naming a library artifact renders only on Claude. The trailing-boundary guard excludes script paths
-    // (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
+  it('leaves no literal command reference to a known skill or subagent in any deployed content', async () => {
+    // A bare `/slug` naming a library artifact is never rewritten — the render pass only touches `{skill:}` /
+    // `{subagent:}` tokens — so it renders only on Claude wherever it lives. The guard scans every deployed markdown
+    // file, not just top-level skill/subagent bodies: `_data` reference docs, `_partials`, rulebooks, and collections
+    // all ship too, and a literal reference in a non-rendered doc is the same defect. The trailing-boundary guard
+    // excludes script paths (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
     const catalog = await enumerateCatalogSlugs(contentDir);
     const known = new Set([...(catalog.skill ?? []), ...(catalog.subagent ?? [])]);
     const tokenRe = /\{(?:skill|subagent):[a-z][a-z0-9-]*\}/g;
     const literalRefRe = /(?<![\w./])\/([a-z][a-z0-9-]*)(?![\w/.-])/g;
     const offenders: Array<string> = [];
 
-    for (const type of ['skill', 'subagent'] as const) {
-      for (const slug of catalog[type] ?? []) {
-        const body = (await readFile(path.join(contentDir, artifactFrontmatterPath(type, slug)), 'utf8')).replace(
-          tokenRe,
-          '',
-        );
-        for (const [, ref] of body.matchAll(literalRefRe)) {
-          if (ref !== undefined && known.has(ref)) {
-            offenders.push(`${type}:${slug} -> /${ref}`);
-          }
+    for (const file of await listMarkdownFilesRecursively(contentDir)) {
+      const body = (await readFile(file, 'utf8')).replace(tokenRe, '');
+      for (const [, ref] of body.matchAll(literalRefRe)) {
+        if (ref !== undefined && known.has(ref)) {
+          offenders.push(`${path.relative(contentDir, file)} -> /${ref}`);
         }
       }
     }
@@ -95,3 +91,17 @@ describe('library invocation edges', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/** Lists every markdown file under `dir` recursively — the full set of deployed content the completeness guard scans. */
+async function listMarkdownFilesRecursively(dir: string): Promise<Array<string>> {
+  const found: Array<string> = [];
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      found.push(...(await listMarkdownFilesRecursively(full)));
+    } else if (entry.name.endsWith('.md')) {
+      found.push(full);
+    }
+  }
+  return found;
+}
