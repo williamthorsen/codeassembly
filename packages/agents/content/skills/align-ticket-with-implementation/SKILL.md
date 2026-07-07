@@ -49,6 +49,8 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 
 When aligning to an existing implementation, _the implementation_ is the code on the branch — describe what the code now does, and resist transcribing its mechanism back into the ticket.
 
+**Spike mode.** If the branch implements a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md), reconciling whether the investigation answered its questions rather than whether the branch met acceptance criteria.
+
 - Keep tone professional and objective
 - Focus on what was broken and what needed fixing
 - Prioritize functional issues in "Must have"

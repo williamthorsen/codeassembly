@@ -82,6 +82,8 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 ### Phase 4: Refine the ticket
 
+**Spike mode.** If this is a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md) in place of the skeleton below; everything else in this phase is unchanged.
+
 If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately — and brainstorming didn't surface changes — confirm with the user and adopt it as-is. Skip the rewrite. Only add or revise sections where the Q&A revealed gaps or shifts in understanding.
 
 When the ticket needs work, produce or update it to capture the proposed approach:
@@ -130,6 +132,8 @@ Do NOT start this phase until the ticket from Phase 4 has been explicitly approv
 Produce a plan that gives a competent coder everything they need — and enough context to adapt when the codebase doesn't match expectations.
 
 > Phase 5 produces the same implementation plan as the standalone `plan` skill, drawn from one shared template. When a ticket is already good and only the plan is needed, run `plan` directly to skip the design phase.
+
+**Spike mode.** If this is a spike, use the spike plan template in [spike conventions](../_data/spike-conventions.md) in place of the template below; everything else in this phase is unchanged.
 
 <!-- include: ../_partials/plan-template.md / -->
 
