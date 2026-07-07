@@ -6,13 +6,13 @@ user-invocable: true
 
 # Revise comments
 
-Apply the comment-discipline audit to a target file set. Edits comments in place per the deletion rules and carve-outs. The default workflow is `/revise-comments` after a feature is implemented; explicit paths support cleaning up legacy code.
+Apply the comment-discipline audit to a target file set. Edits comments in place per the deletion rules and carve-outs. The default workflow is `{skill:revise-comments}` after a feature is implemented; explicit paths support cleaning up legacy code.
 
 ## Invocation
 
-- `/revise-comments` — default target is files committed on the current branch relative to the default branch. To audit uncommitted work, pass explicit paths (`/revise-comments .` covers the working tree).
-- `/revise-comments <path> [<path>...]` — explicit file or directory targets. Directories are processed recursively.
-- `/revise-comments --dry-run [...]` — produce the summary without applying edits. Triage and dry-run are unified under this flag.
+- `{skill:revise-comments}` — default target is files committed on the current branch relative to the default branch. To audit uncommitted work, pass explicit paths (`{skill:revise-comments} .` covers the working tree).
+- `{skill:revise-comments} <path> [<path>...]` — explicit file or directory targets. Directories are processed recursively.
+- `{skill:revise-comments} --dry-run [...]` — produce the summary without applying edits. Triage and dry-run are unified under this flag.
 
 ## Process
 

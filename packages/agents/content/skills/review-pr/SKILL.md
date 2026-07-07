@@ -91,31 +91,31 @@ Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting a
 ```bash
 # Check out the PR branch first, then review it.
 gh pr checkout 1024
-/review-pr 1024
+{skill:review-pr} 1024
 ```
 
 ### Review a PR by URL
 
 ```bash
 gh pr checkout https://github.com/williamthorsen/codeassembly/pull/1024
-/review-pr https://github.com/williamthorsen/codeassembly/pull/1024
+{skill:review-pr} https://github.com/williamthorsen/codeassembly/pull/1024
 ```
 
 ### Review a stacked PR with a non-default diff base
 
 ```bash
 gh pr checkout 1024
-/review-pr 1024 --diff-base=feature/parent-branch
+{skill:review-pr} 1024 --diff-base=feature/parent-branch
 ```
 
 ### Override the auto-resolved ticket
 
 ```bash
-/review-pr 1024 --ticket=#553
+{skill:review-pr} 1024 --ticket=#553
 ```
 
 ## Important
 
 - **Always check out the PR first.** The delegate compares `git rev-parse HEAD` to the PR's head commit and fails closed if they differ. The error message includes the platform-specific checkout command (e.g., `gh pr checkout <n>`).
 - **The orchestrator owns no review logic.** All findings, scoring, and the "Specification compliance" rendering happen inside `review-branch`. This skill is platform detection + delegate dispatch + invocation of the shared review process.
-- **Two specification sources by default.** Unlike `/review-branch` (one source: the ticket), `/review-pr` adds the PR description as a second source so the review evaluates the implementation against both. Source-vs-source divergence is reported in the `## Specification consistency` section of the review output (see `review-branch/SKILL.md`).
+- **Two specification sources by default.** Unlike `/review-branch` (one source: the ticket), `{skill:review-pr}` adds the PR description as a second source so the review evaluates the implementation against both. Source-vs-source divergence is reported in the `## Specification consistency` section of the review output (see `review-branch/SKILL.md`).
