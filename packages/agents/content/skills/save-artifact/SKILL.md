@@ -60,7 +60,7 @@ Run artifacts are saved by the skills that produce them (`review-branch`, `respo
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
-- `deferred-findings` — Record of findings deferred during a `/wrap-up` session, with cross-references to any tickets created (ticket-scoped when a ticket is in session; falls back to project-scoped `deferred-findings/` otherwise)
+- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to any tickets created (ticket-scoped when a ticket is in session; falls back to project-scoped `deferred-findings/` otherwise)
 
 ### Run artifacts
 

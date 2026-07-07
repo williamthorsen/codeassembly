@@ -50,7 +50,7 @@ Choose the destination deliberately. When the lesson is specific to a project, p
 
 ### Amending an event
 
-An event is editable until it is pushed to the store's remote and immutable after, so `--amend <id>` is how you correct a capture that is still local — for example, an event a `/capture-feedback` pass got wrong. Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
+An event is editable until it is pushed to the store's remote and immutable after, so `--amend <id>` is how you correct a capture that is still local — for example, an event a `capture-feedback` pass got wrong. Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
 
 When the event has already been pushed, the amend is refused. Re-run with `--allow-pushed` to rewrite it deliberately (this rewrites pushed history), or capture a new event instead.
 
