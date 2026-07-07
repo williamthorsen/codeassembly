@@ -6,9 +6,8 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, Frontmatter, KbRoot, ParsedNote, Schema } from '@codeassembly/kb';
-import { writeFrontmatter } from '@codeassembly/kb/frontmatter';
-import { loadSchema } from '@codeassembly/kb/schema';
+import type { AliasMap, KbRoot } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { loadAliases } from '@codeassembly/kb/tags';
 
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
@@ -28,13 +27,14 @@ import { verify } from './operations/verify.ts';
 import type {
   AddAddressedByResult,
   EditBatchSuccess,
+  EditFailure,
   EditResult,
   EditSingleSuccess,
   EditSupersedeSuccess,
   OperationName,
   ParsedArgs,
 } from './types.ts';
-import { validateFrontmatter, writeBackNote } from './write-back.ts';
+import { renderGuarded, writeBackNote } from './write-back.ts';
 
 /** Operation flags, in the documented surface order in SKILL.md. Each name doubles as the operation name. */
 const OPERATION_FLAGS = [
@@ -141,11 +141,11 @@ export async function runEdit(input: {
     return loadFailureToResult(loadOutcome);
   }
 
-  const { schema, aliases } = await loadKbContext({ kb: kbOutcome.kb });
+  const aliases = await loadAliasesForKb({ kb: kbOutcome.kb });
 
   const prepared = await prepareOperation({
     args,
-    note: loadOutcome.note,
+    record: loadOutcome.record,
     aliases,
     now: input.now,
     stdin: input.stdin,
@@ -154,19 +154,9 @@ export async function runEdit(input: {
     return prepared.failure;
   }
 
-  const writeOutcome = await writeBackNote({
-    path: notePath,
-    frontmatter: prepared.frontmatter,
-    body: prepared.body,
-    schema,
-  });
+  const writeOutcome = await writeBackNote({ path: notePath, record: prepared.record });
   if (!writeOutcome.ok) {
-    return {
-      ok: false,
-      error: 'schema-validation',
-      message: `frontmatter did not pass schema validation: ${writeOutcome.findings.map((f) => f.message).join('; ')}`,
-      details: { findings: writeOutcome.findings },
-    };
+    return validationFailure(writeOutcome.errors);
   }
 
   const success: EditSingleSuccess = {
@@ -174,7 +164,7 @@ export async function runEdit(input: {
     operation: args.operation,
     path: notePath,
     kb: kbOutcome.kb,
-    frontmatter: prepared.frontmatter,
+    record: prepared.record,
   };
   if (prepared.originalTags !== undefined) {
     success.originalTags = prepared.originalTags;
@@ -247,16 +237,9 @@ function kbRootFor(kb: ResolvedKb): KbRoot {
   return { path: kb.path, kbDir: `${kb.path}/.kb`, via: 'ancestor-walk' };
 }
 
-/** Loads schema and aliases for a resolved KB. Falls back to an empty alias map on a malformed aliases file. */
-async function loadKbContext(input: { kb: ResolvedKb }): Promise<{ schema: Schema; aliases: AliasMap }> {
-  const kbRoot = kbRootFor(input.kb);
-  const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
-  return { schema, aliases };
-}
-
-/** Loads only the destination schema for a resolved KB, for operations like `add-addressed-by` that never canonicalize tags. */
-async function loadSchemaForKb(input: { kb: ResolvedKb }): Promise<Schema> {
-  return loadSchema({ kbRoot: kbRootFor(input.kb) });
+/** Loads tag aliases for a resolved KB. Falls back to an empty alias map on a malformed aliases file. */
+async function loadAliasesForKb(input: { kb: ResolvedKb }): Promise<AliasMap> {
+  return loadAliasesWithWarning({ kbRoot: kbRootFor(input.kb) });
 }
 
 /**
@@ -291,60 +274,61 @@ function loadFailureToResult(outcome: Exclude<Awaited<ReturnType<typeof loadNote
   };
 }
 
-/** Shape returned by `prepareOperation`: a mutated frontmatter+body plus optional per-op metadata. */
+/** Builds the top-level `validation` failure for a record whose rendered frontmatter did not re-parse as an assertion. */
+function validationFailure(errors: string[]): EditFailure {
+  return {
+    ok: false,
+    error: 'validation',
+    message: `rendered frontmatter did not re-parse as an assertion: ${errors.join('; ')}`,
+    details: { errors },
+  };
+}
+
+/** Shape returned by `prepareOperation`: a mutated record plus optional per-op metadata. */
 interface PreparedOperation {
   ok: true;
-  frontmatter: Frontmatter;
-  body: string;
+  record: KbAssertion;
   originalTags?: string[];
   canonicalTags?: string[];
 }
 
-/** Dispatches an operation to its module and returns the prepared write payload, or a top-level failure. */
+/** Dispatches an operation to its module and returns the prepared record, or a top-level failure. */
 async function prepareOperation(input: {
   args: Exclude<ParsedArgs, { operation: 'supersede-with' | 'add-addressed-by' }>;
-  note: ParsedNote;
+  record: KbAssertion;
   aliases: AliasMap;
   now: Date;
   stdin: Readable;
 }): Promise<PreparedOperation | { ok: false; failure: EditResult }> {
-  const frontmatter = nonNullFrontmatter(input.note);
-  const body = input.note.body;
+  const { record } = input;
 
   switch (input.args.operation) {
-    case 'bump-updated': {
-      const result = bumpUpdated({ frontmatter, body, now: input.now });
-      return { ok: true, ...result };
-    }
-    case 'verify': {
-      const result = verify({ frontmatter, body, now: input.now });
-      return { ok: true, ...result };
-    }
+    case 'bump-updated':
+      return { ok: true, record: bumpUpdated(record, input.now) };
+    case 'verify':
+      return { ok: true, record: verify(record, input.now) };
     case 'retag': {
-      const result = retag({ frontmatter, body, tags: input.args.tags, aliases: input.aliases });
-      return { ok: true, ...result };
+      const result = retag(record, input.args.tags, input.aliases);
+      return {
+        ok: true,
+        record: result.record,
+        originalTags: result.originalTags,
+        canonicalTags: result.canonicalTags,
+      };
     }
     case 'append': {
       const addition = await readAll(input.stdin);
-      const result = append({ frontmatter, body, addition, now: input.now });
+      const result = append(record, addition, input.now);
       if (!result.ok) {
         return { ok: false, failure: { ok: false, error: 'invalid-args', message: result.message } };
       }
-      return { ok: true, frontmatter: result.frontmatter, body: result.body };
+      return { ok: true, record: result.record };
     }
     default: {
       const _exhaustive: never = input.args;
       throw new Error(`unhandled operation: ${JSON.stringify(_exhaustive)}`);
     }
   }
-}
-
-/** Pulls the typed frontmatter off a loaded note; loadNote guarantees it is non-null at this point. */
-function nonNullFrontmatter(note: ParsedNote): Frontmatter {
-  if (note.frontmatter === null) {
-    throw new Error(`internal error: note at ${note.path} unexpectedly has null frontmatter after loadNote`);
-  }
-  return note.frontmatter;
 }
 
 /**
@@ -403,39 +387,31 @@ async function runSupersedeWith(input: {
     return loadFailureToResult(newLoad);
   }
 
-  const { schema, aliases } = await loadKbContext({ kb: oldKb.kb });
+  const aliases = await loadAliasesForKb({ kb: oldKb.kb });
 
   const prepared = prepareSupersedeWith({
-    oldNote: oldLoad.note,
-    oldFrontmatter: nonNullFrontmatter(oldLoad.note),
-    newNote: newLoad.note,
-    newFrontmatter: nonNullFrontmatter(newLoad.note),
+    oldRecord: oldLoad.record,
+    oldPath,
+    newRecord: newLoad.record,
+    newPath,
     kbPath: oldKb.kb.path,
     aliases,
     now: input.now,
   });
 
-  const oldRendered = writeFrontmatter({ frontmatter: prepared.old.frontmatter, body: prepared.old.body });
-  const newRendered = writeFrontmatter({ frontmatter: prepared.new.frontmatter, body: prepared.new.body });
-
-  const oldFindings = validateFrontmatter({ content: oldRendered, path: oldPath, schema });
-  const newFindings = validateFrontmatter({ content: newRendered, path: newPath, schema });
-  const allFindings = [...oldFindings, ...newFindings];
-  if (allFindings.length > 0) {
-    return {
-      ok: false,
-      error: 'schema-validation',
-      message: `frontmatter did not pass schema validation: ${allFindings.map((f) => f.message).join('; ')}`,
-      details: { findings: allFindings },
-    };
+  const oldRendered = renderGuarded(prepared.old);
+  const newRendered = renderGuarded(prepared.new);
+  if (!oldRendered.ok || !newRendered.ok) {
+    const errors = [...(oldRendered.ok ? [] : oldRendered.errors), ...(newRendered.ok ? [] : newRendered.errors)];
+    return validationFailure(errors);
   }
 
   const commitOutcome = await commitSupersede({
     oldPath,
     newPath,
-    oldOriginalContent: oldLoad.note.content,
-    oldNewContent: oldRendered,
-    newNewContent: newRendered,
+    oldOriginalContent: oldLoad.content,
+    oldNewContent: oldRendered.content,
+    newNewContent: newRendered.content,
   });
   if (!commitOutcome.ok) {
     return {
@@ -452,8 +428,8 @@ async function runSupersedeWith(input: {
     oldPath,
     newPath,
     kb: oldKb.kb,
-    oldFrontmatter: prepared.old.frontmatter,
-    newFrontmatter: prepared.new.frontmatter,
+    oldRecord: prepared.old,
+    newRecord: prepared.new,
   };
   return success;
 }
@@ -508,31 +484,14 @@ async function editOneAddressedBy(input: {
     return toRecordFailure(input.notePath, loadFailureToResult(loadOutcome));
   }
 
-  const schema = await loadSchemaForKb({ kb: kbOutcome.kb });
-  const prepared = addAddressedBy({
-    frontmatter: nonNullFrontmatter(loadOutcome.note),
-    body: loadOutcome.note.body,
-    references: input.references,
-    now: input.now,
-  });
+  const prepared = addAddressedBy(loadOutcome.record, input.references, input.now);
 
-  const writeOutcome = await writeBackNote({
-    path: input.notePath,
-    frontmatter: prepared.frontmatter,
-    body: prepared.body,
-    schema,
-  });
+  const writeOutcome = await writeBackNote({ path: input.notePath, record: prepared });
   if (!writeOutcome.ok) {
-    return {
-      ok: false,
-      path: input.notePath,
-      error: 'schema-validation',
-      message: `frontmatter did not pass schema validation: ${writeOutcome.findings.map((f) => f.message).join('; ')}`,
-      details: { findings: writeOutcome.findings },
-    };
+    return toRecordFailure(input.notePath, validationFailure(writeOutcome.errors));
   }
 
-  return { ok: true, path: input.notePath, kb: kbOutcome.kb, frontmatter: prepared.frontmatter };
+  return { ok: true, path: input.notePath, kb: kbOutcome.kb, record: prepared };
 }
 
 /** Projects a top-level recoverable `EditFailure` onto a per-record failure entry, attaching the record's path. */

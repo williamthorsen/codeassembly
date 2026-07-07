@@ -419,7 +419,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Stands up a fixture KB with a single seed note and returns a `SmokeTestInvocation` that runs the bundle with
  * `--bump-updated` against it. Exercises the load → mutate → write-back pipeline end to end, which is the only
- * code path that wires the bundled `parseNote`, schema loader, and atomic write together. `HOME` is overridden to
+ * code path that wires the bundled record parse, mutation, and atomic write together. `HOME` is overridden to
  * the fixture dir so the dev's real `~/.claude/kb.yaml` does not pollute KB resolution.
  *
  * The fixture is process-lifetime — `mkdtempSync` runs at module load and the OS reclaims short-lived temp
@@ -454,12 +454,12 @@ function assertKbEditSmokeResult(result: unknown): void {
   if (result.operation !== 'bump-updated') {
     throw new Error(`expected operation 'bump-updated', got ${JSON.stringify(result.operation)}`);
   }
-  const frontmatter = result.frontmatter;
-  if (!isRecord(frontmatter)) {
-    throw new TypeError('expected frontmatter object on kb-edit result');
+  const record = result.record;
+  if (!isRecord(record)) {
+    throw new TypeError('expected record object on kb-edit result');
   }
-  if (typeof frontmatter.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(frontmatter.updated)) {
-    throw new Error(`expected updated to be YYYY-MM-DDTHH:MM:SSZ, got ${JSON.stringify(frontmatter.updated)}`);
+  if (typeof record.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(record.updated)) {
+    throw new Error(`expected updated to be YYYY-MM-DDTHH:MM:SSZ, got ${JSON.stringify(record.updated)}`);
   }
 }
 

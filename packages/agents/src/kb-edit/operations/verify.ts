@@ -1,23 +1,11 @@
-import type { Frontmatter } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 
 import { formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
- * Sets `last-verified:` to today (UTC), inserting the field if it isn't already present. Does **not** bump
- * `updated:` — the schema treats `last-verified:` as a re-verification event distinct from a content edit.
- *
- * The `extra` map preserves key order on round-trip, so the first `--verify` adds `last-verified` at the
- * end of the YAML map and subsequent runs update the value in place.
+ * Sets `lastVerified` to `now` (UTC). Does **not** bump `updated`: re-verification is a curatorial event distinct from
+ * a content edit, so it stays available regardless of a note's edit history.
  */
-export function verify(input: { frontmatter: Frontmatter; body: string; now: Date }): {
-  frontmatter: Frontmatter;
-  body: string;
-} {
-  return {
-    frontmatter: {
-      ...input.frontmatter,
-      extra: { ...input.frontmatter.extra, 'last-verified': formatUtcTimestamp(input.now) },
-    },
-    body: input.body,
-  };
+export function verify(record: KbAssertion, now: Date): KbAssertion {
+  return { ...record, lastVerified: formatUtcTimestamp(now) };
 }

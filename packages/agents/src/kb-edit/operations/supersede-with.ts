@@ -1,65 +1,57 @@
 import { relative } from 'node:path';
 
-import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb';
+import type { AliasMap } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { canonicalize } from '@codeassembly/kb/tags';
 
 import { dedupeInOrder, formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
 /**
- * Prepares the in-memory edits for `--supersede-with`. Old note: `superseded-by` pointer plus a `deprecated` tag
+ * Prepares the in-memory edits for `--supersede-with`. Old note: `supersededBy` pointer plus a `deprecated` tag
  * (canonicalized through the alias map, idempotent if already present). New note: `supersedes` pointer. Both notes'
- * `updated:` are bumped.
+ * `updated` are bumped.
  *
- * Pointers are written KB-relative so a vault can be moved without rewriting every chain. The KB-relative
- * computation runs here so the operation owns its pointer convention rather than scattering `relative()` calls
- * across the orchestrator.
+ * Pointers are written KB-relative so a vault can be moved without rewriting every chain. The KB-relative computation
+ * runs here so the operation owns its pointer convention rather than scattering `relative()` calls across the
+ * orchestrator.
  *
- * Returns only the prepared `{ frontmatter, body }` pair per file. The atomic two-file write is the caller's job
- * (see `runEdit`), because rollback is tied to the on-disk staging sequence and lives at that layer.
+ * Returns only the prepared records per file. The atomic two-file write is the caller's job (see `runEdit`), because
+ * rollback is tied to the on-disk staging sequence and lives at that layer.
  */
 export function prepareSupersedeWith(input: {
-  oldNote: ParsedNote;
-  oldFrontmatter: Frontmatter;
-  newNote: ParsedNote;
-  newFrontmatter: Frontmatter;
+  oldRecord: KbAssertion;
+  oldPath: string;
+  newRecord: KbAssertion;
+  newPath: string;
   kbPath: string;
   aliases: AliasMap;
   now: Date;
-}): {
-  old: { frontmatter: Frontmatter; body: string };
-  new: { frontmatter: Frontmatter; body: string };
-} {
+}): { old: KbAssertion; new: KbAssertion } {
   const today = formatUtcTimestamp(input.now);
-  const oldRelative = relative(input.kbPath, input.oldNote.path);
-  const newRelative = relative(input.kbPath, input.newNote.path);
+  const oldRelative = relative(input.kbPath, input.oldPath);
+  const newRelative = relative(input.kbPath, input.newPath);
 
-  const oldTagsWithDeprecated = addDeprecatedTag({
-    existingTags: input.oldFrontmatter.tags,
-    aliases: input.aliases,
-  });
+  const oldTagsWithDeprecated = addDeprecatedTag({ existingTags: input.oldRecord.tags, aliases: input.aliases });
 
-  const oldPrepared: Frontmatter = {
-    ...input.oldFrontmatter,
+  const old: KbAssertion = {
+    ...input.oldRecord,
     tags: oldTagsWithDeprecated,
     updated: today,
-    extra: { ...input.oldFrontmatter.extra, 'superseded-by': newRelative },
+    supersededBy: newRelative,
   };
 
-  const newPrepared: Frontmatter = {
-    ...input.newFrontmatter,
+  const superseding: KbAssertion = {
+    ...input.newRecord,
     updated: today,
-    extra: { ...input.newFrontmatter.extra, supersedes: oldRelative },
+    supersedes: oldRelative,
   };
 
-  return {
-    old: { frontmatter: oldPrepared, body: input.oldNote.body },
-    new: { frontmatter: newPrepared, body: input.newNote.body },
-  };
+  return { old, new: superseding };
 }
 
 /**
- * Adds the `deprecated` tag to a list, canonicalizing through the alias map and deduping in first-occurrence
- * order. Already-present (canonical) `deprecated` results in a no-op.
+ * Adds the `deprecated` tag to a list, canonicalizing through the alias map and deduping in first-occurrence order.
+ * Already-present (canonical) `deprecated` results in a no-op.
  */
 function addDeprecatedTag(input: { existingTags: readonly string[]; aliases: AliasMap }): string[] {
   const canonicalDeprecated = canonicalize('deprecated', input.aliases);

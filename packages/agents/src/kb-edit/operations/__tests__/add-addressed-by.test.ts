@@ -1,4 +1,4 @@
-import type { Frontmatter } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { addAddressedBy } from '../add-addressed-by.ts';
@@ -6,88 +6,60 @@ import { addAddressedBy } from '../add-addressed-by.ts';
 const NOW = new Date('2026-05-24T14:35:00Z');
 const TODAY = '2026-05-24T14:35:00Z';
 
-function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
+/** Builds a baseline assertion record for the operation under test, with overrides merged in. */
+function buildAssertion(overrides: Partial<KbAssertion> = {}): KbAssertion {
   return {
+    recordType: 'assertion',
     title: 'Example',
-    recordType: 'event',
     created: '2026-05-01T08:17:23Z',
     updated: '2026-05-01T08:17:23Z',
     tags: ['example'],
+    addressedBy: [],
     extra: {},
+    body: 'body',
     ...overrides,
   };
 }
 
 describe(addAddressedBy, () => {
-  it('creates the addressed-by field when absent and bumps updated', () => {
-    const result = addAddressedBy({ frontmatter: frontmatter(), body: 'b', references: ['[[fix]]'], now: NOW });
+  it('adds to the addressed-by list when empty and bumps updated', () => {
+    const result = addAddressedBy(buildAssertion(), ['[[fix]]'], NOW);
 
-    expect(result.frontmatter.extra['addressed-by']).toEqual(['[[fix]]']);
-    expect(result.frontmatter.updated).toBe(TODAY);
-    expect(result.body).toBe('b');
+    expect(result.addressedBy).toEqual(['[[fix]]']);
+    expect(result.updated).toBe(TODAY);
+    expect(result.body).toBe('body');
   });
 
   it('appends to existing entries, preserving order', () => {
-    const result = addAddressedBy({
-      frontmatter: frontmatter({ extra: { 'addressed-by': ['#789'] } }),
-      body: 'b',
-      references: ['[[fix]]', 'commit-abc'],
-      now: NOW,
-    });
+    const result = addAddressedBy(buildAssertion({ addressedBy: ['#789'] }), ['[[fix]]', 'commit-abc'], NOW);
 
-    expect(result.frontmatter.extra['addressed-by']).toEqual(['#789', '[[fix]]', 'commit-abc']);
+    expect(result.addressedBy).toEqual(['#789', '[[fix]]', 'commit-abc']);
   });
 
   it('de-duplicates against existing entries in first-occurrence order', () => {
-    const result = addAddressedBy({
-      frontmatter: frontmatter({ extra: { 'addressed-by': ['#789', '[[fix]]'] } }),
-      body: 'b',
-      references: ['[[fix]]', '#999'],
-      now: NOW,
-    });
+    const result = addAddressedBy(buildAssertion({ addressedBy: ['#789', '[[fix]]'] }), ['[[fix]]', '#999'], NOW);
 
-    expect(result.frontmatter.extra['addressed-by']).toEqual(['#789', '[[fix]]', '#999']);
+    expect(result.addressedBy).toEqual(['#789', '[[fix]]', '#999']);
   });
 
   it('de-duplicates references supplied in the same call', () => {
-    const result = addAddressedBy({
-      frontmatter: frontmatter(),
-      body: 'b',
-      references: ['[[fix]]', '[[fix]]'],
-      now: NOW,
-    });
+    const result = addAddressedBy(buildAssertion(), ['[[fix]]', '[[fix]]'], NOW);
 
-    expect(result.frontmatter.extra['addressed-by']).toEqual(['[[fix]]']);
+    expect(result.addressedBy).toEqual(['[[fix]]']);
   });
 
-  it('coerces a mis-authored scalar addressed-by to a one-element list before appending', () => {
-    const result = addAddressedBy({
-      frontmatter: frontmatter({ extra: { 'addressed-by': '#789' } }),
-      body: 'b',
-      references: ['[[fix]]'],
-      now: NOW,
-    });
+  it('preserves other fields', () => {
+    const result = addAddressedBy(buildAssertion({ extra: { diataxis: 'howto' } }), ['[[fix]]'], NOW);
 
-    expect(result.frontmatter.extra['addressed-by']).toEqual(['#789', '[[fix]]']);
+    expect(result.extra.diataxis).toBe('howto');
   });
 
-  it('preserves other extra fields', () => {
-    const result = addAddressedBy({
-      frontmatter: frontmatter({ extra: { diataxis: 'howto' } }),
-      body: 'b',
-      references: ['[[fix]]'],
-      now: NOW,
-    });
+  it('does not mutate the input record', () => {
+    const record = buildAssertion({ addressedBy: ['#789'] });
 
-    expect(result.frontmatter.extra.diataxis).toBe('howto');
-  });
+    addAddressedBy(record, ['[[fix]]'], NOW);
 
-  it('does not mutate the input frontmatter', () => {
-    const fm = frontmatter({ extra: { 'addressed-by': ['#789'] } });
-
-    addAddressedBy({ frontmatter: fm, body: 'b', references: ['[[fix]]'], now: NOW });
-
-    expect(fm.extra['addressed-by']).toEqual(['#789']);
-    expect(fm.updated).toBe('2026-05-01T08:17:23Z');
+    expect(record.addressedBy).toEqual(['#789']);
+    expect(record.updated).toBe('2026-05-01T08:17:23Z');
   });
 });
