@@ -6,9 +6,9 @@ user-invocable: true
 
 # Capture a new knowledge-base note
 
-Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, generates UTC dates, canonicalizes known-alias tags, validates the proposed frontmatter against the destination KB's schema, and writes the file atomically under the KB's assertions root (`content/assertions/`). You do the judgment work — pick the topic folder, the Diátaxis label, the title, and the tags; survey the destination KB's existing layout; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
+Add a new note to the knowledge base. A bundled helper does the mechanical work — it resolves which knowledge base to write to, generates UTC dates, canonicalizes known-alias tags, composes a typed assertion record, and writes the file atomically under the KB's assertions root (`content/assertions/`). You do the judgment work — pick the topic folder, the Diátaxis label, the title, and the tags; survey the destination KB's existing layout; run `kb-retrieve` to find related notes; and compose the body, including cross-references where they aid comprehension.
 
-The split is deliberate: the helper is narrow and mechanical; the classification and composition are wide and judgment-driven. Treat the helper as a guardrail (it refuses to write notes that fail validation or collide with an existing file), not as a classifier.
+The split is deliberate: the helper is narrow and mechanical; the classification and composition are wide and judgment-driven. Treat the helper as a guardrail (it refuses a title that cannot be a filename and will not overwrite an existing file), not as a classifier.
 
 **Announce at start:** "Using kb-add to capture {short description of the note}."
 
@@ -95,7 +95,7 @@ EOF
 
 The helper prints a JSON object to stdout:
 
-- `ok: true` with `path`, `kb`, `frontmatter`, `originalTags`, `canonicalTags` on success.
+- `ok: true` with `path`, `kb`, `record`, `originalTags`, `canonicalTags` on success.
 - `ok: false` with `error`, `message`, and optional `details` on a recoverable failure.
 
 ### 8. Handle the result
@@ -108,9 +108,8 @@ On `ok: false`, route by the `error` code:
 - `missing-destination` — no `.kb/` was discovered and no `--kb` was given. Ask the user where the note should go, passing `--kb <name>` for a specific KB or `--kb @default` for the registry default (or, in auto mode, fail visibly with the categorical reason).
 - `no-default` — `--kb @default` was given but no `default_kb` is configured. Surface the message; have the user name a KB explicitly or configure a default.
 - `invalid-args` / `invalid-title` — Surface the helper's message and propose a corrected invocation. A `--folder` that re-names the `assertions/` segment lands here; drop the archetype segment and pass the topic subpath only.
-- `schema-validation` — Surface the findings; either correct the proposed frontmatter or, when the user is willing, declare a new type in the KB's `.kb/schema.yaml`.
 - `collision` — A note already exists at the target path. Decide whether to re-title, append the new material to the existing note (read it first, then write a follow-up edit), or abort.
 
 ## Completion
 
-A written note at the reported path, with valid frontmatter per the destination KB's schema, plus the canonicalization audit trail so the user can verify which alias tags were rewritten.
+A written note at the reported path, conforming to the assertion record contract, plus the canonicalization audit trail so the user can verify which alias tags were rewritten.
