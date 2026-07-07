@@ -86,10 +86,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, resolves the writable KB that owns the note, loads the note and the
- * KB's schema/aliases, dispatches to the operation module, and atomically writes the result back. Recoverable
- * failures (no KB, readonly KB, note not found, note parse error, schema validation, op-side rejections) become
- * structured `{ ok: false, ... }` results. System failures (out-of-disk, EPERM) propagate to `main`'s try/catch.
+ * Runs the helper end to end: parses args, resolves the writable KB that owns the note, loads the note as an
+ * assertion record and the KB's tag aliases, dispatches to the operation module, and atomically writes the result
+ * back. Recoverable failures (no KB, readonly KB, note not found, a note that does not parse as an assertion, op-side
+ * rejections) become structured `{ ok: false, ... }` results. System failures (out-of-disk, EPERM) propagate to
+ * `main`'s try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -333,7 +334,7 @@ async function prepareOperation(input: {
 
 /**
  * Orchestrates `--supersede-with`: resolves and validates both paths into the same KB, prepares the in-memory
- * edits, validates both resulting frontmatters against the schema, then commits both writes with best-effort
+ * edits, re-parses both rendered records as a guard, then commits both writes with best-effort
  * atomicity. On the second rename's failure, the captured original bytes of the old note are restored. If
  * restoration also fails, the result surfaces as `partial-supersede` with both paths in `details`.
  */
@@ -438,8 +439,8 @@ async function runSupersedeWith(input: {
  * Orchestrates `--add-addressed-by`: applies the same reference list to each target record independently. Every target
  * resolves its own writable KB, loads, appends to `addressed-by`, and writes atomically; a recoverable failure on one
  * target is captured in that record's result and does not abort the others. Per-record isolation covers the
- * recoverable `EditResult` failures only: an unexpected throw (a malformed `.kb/schema.yaml`, a filesystem error)
- * still propagates to `main`, as it does for the single-file operations. The append de-duplicates, so a re-run is
+ * recoverable `EditResult` failures only: an unexpected throw (a filesystem error) still propagates to `main`, as it
+ * does for the single-file operations. The append de-duplicates, so a re-run is
  * idempotent for `addressed-by` (entries are never duplicated) even though each run re-bumps `updated:`; no cross-file
  * rollback is needed.
  */
