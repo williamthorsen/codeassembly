@@ -202,7 +202,7 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'bump-updated') {
-      expect(result.frontmatter.updated).toBe(TODAY);
+      expect(result.record.updated).toBe(TODAY);
       const written = await readFile(notePath, 'utf8');
       expect(written).toContain(`updated: ${TODAY}`);
       expect(written).toContain('Original body.');
@@ -222,8 +222,8 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'verify') {
-      expect(result.frontmatter.extra['last-verified']).toBe(TODAY);
-      expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
+      expect(result.record.lastVerified).toBe(TODAY);
+      expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
       const written = await readFile(notePath, 'utf8');
       expect(written).toContain(`last-verified: ${TODAY}`);
       expect(written).toContain('updated: 2026-05-01T08:17:23Z');
@@ -245,8 +245,8 @@ describe(runEdit, () => {
     if (result.ok && result.operation === 'retag') {
       expect(result.originalTags).toEqual(['one', 'two', 'three']);
       expect(result.canonicalTags).toEqual(['one', 'two', 'three']);
-      expect(result.frontmatter.tags).toEqual(['one', 'two', 'three']);
-      expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
+      expect(result.record.tags).toEqual(['one', 'two', 'three']);
+      expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
       const written = await readFile(notePath, 'utf8');
       expect(written).toContain('updated: 2026-05-01T08:17:23Z');
     }
@@ -267,7 +267,7 @@ describe(runEdit, () => {
     if (result.ok && result.operation === 'append') {
       const written = await readFile(notePath, 'utf8');
       expect(written).toContain('Original body.\n\nAppended paragraph.');
-      expect(result.frontmatter.updated).toBe(TODAY);
+      expect(result.record.updated).toBe(TODAY);
     }
   });
 
@@ -379,9 +379,8 @@ describe(runEdit, () => {
     expect(written).toBe(SAMPLE_NOTE);
   });
 
-  it('returns schema-validation when the result fails frontmatter rules', async () => {
-    // Stand up a fixture note with a `recordType` outside the default vocabulary.
-    // Bumping `updated:` re-validates the resulting frontmatter, so this surfaces as schema-validation.
+  it('returns note-parse when the note is not a valid assertion', async () => {
+    // A `recordType` outside the assertion contract fails to project as a KbAssertion at load time.
     const { kbPath } = await makeKbWithNote();
     const path = join(kbPath, 'bad-record-type.md');
     await writeFile(
@@ -400,8 +399,8 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('schema-validation');
-      expect(result.details?.findings?.some((f) => f.rule === 'frontmatter.recordType')).toBe(true);
+      expect(result.error).toBe('note-parse');
+      expect(result.details?.parseError).toContain('recordType');
     }
   });
 
@@ -420,11 +419,11 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'supersede-with') {
-      expect(result.oldFrontmatter.extra['superseded-by']).toBe('New.md');
-      expect(result.newFrontmatter.extra.supersedes).toBe('Sample.md');
-      expect(result.oldFrontmatter.tags).toContain('deprecated');
-      expect(result.oldFrontmatter.updated).toBe(TODAY);
-      expect(result.newFrontmatter.updated).toBe(TODAY);
+      expect(result.oldRecord.supersededBy).toBe('New.md');
+      expect(result.newRecord.supersedes).toBe('Sample.md');
+      expect(result.oldRecord.tags).toContain('deprecated');
+      expect(result.oldRecord.updated).toBe(TODAY);
+      expect(result.newRecord.updated).toBe(TODAY);
     }
 
     const oldOnDisk = await readFile(oldPath, 'utf8');
@@ -499,10 +498,10 @@ describe(runEdit, () => {
     expect(await readFile(oldPath, 'utf8')).toBe(SAMPLE_NOTE);
   });
 
-  it('does not commit either write when validation of the resulting frontmatter fails', async () => {
+  it('does not commit either write when a note is not a valid assertion', async () => {
     const { kbPath, notePath: oldPath } = await makeKbWithNote();
     const newPath = join(kbPath, 'BadType.md');
-    // New note has a recordType outside the schema vocabulary; supersede-with validates both before either rename.
+    // New note has a recordType outside the assertion contract; it fails to load before either rename.
     await writeFile(
       newPath,
       '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [x]\n---\n\nbody\n',
@@ -519,7 +518,7 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('schema-validation');
+      expect(result.error).toBe('note-parse');
     }
     // Both files untouched.
     const oldAfter = await readFile(oldPath, 'utf8');
@@ -543,8 +542,8 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'supersede-with') {
-      expect(result.oldFrontmatter.tags).toContain('archived');
-      expect(result.oldFrontmatter.tags).not.toContain('deprecated');
+      expect(result.oldRecord.tags).toContain('archived');
+      expect(result.oldRecord.tags).not.toContain('deprecated');
     }
   });
 
@@ -571,7 +570,7 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'supersede-with') {
-      const occurrences = result.oldFrontmatter.tags.filter((t) => t === 'deprecated');
+      const occurrences = result.oldRecord.tags.filter((t) => t === 'deprecated');
       expect(occurrences).toHaveLength(1);
     }
   });
@@ -590,11 +589,11 @@ describe(runEdit, () => {
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'add-addressed-by') {
       expect(result.results).toHaveLength(1);
-      const [record] = result.results;
-      expect(record?.ok).toBe(true);
-      if (record?.ok) {
-        expect(record.frontmatter.extra['addressed-by']).toEqual(['[[fix]]']);
-        expect(record.frontmatter.updated).toBe(TODAY);
+      const [entry] = result.results;
+      expect(entry?.ok).toBe(true);
+      if (entry?.ok) {
+        expect(entry.record.addressedBy).toEqual(['[[fix]]']);
+        expect(entry.record.updated).toBe(TODAY);
       }
       const written = await readFile(notePath, 'utf8');
       expect(written).toContain('addressed-by');
@@ -660,17 +659,17 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok && result.operation === 'add-addressed-by') {
-      const [record] = result.results;
-      if (record?.ok) {
-        expect(record.frontmatter.extra['addressed-by']).toEqual(['[[fix]]']);
+      const [entry] = result.results;
+      if (entry?.ok) {
+        expect(entry.record.addressedBy).toEqual(['[[fix]]']);
       }
     }
   });
 
-  it('reports a per-record schema-validation failure while writing the valid targets', async () => {
+  it('reports a per-record note-parse failure while writing the valid targets', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
     const badType = join(kbPath, 'BadType.md');
-    // A recordType outside the schema vocabulary: appending re-validates the frontmatter, so this record fails.
+    // A recordType outside the assertion contract: the target fails to load, so it is skipped.
     await writeFile(
       badType,
       '---\ntitle: x\nrecordType: rant\ncreated: 2026-05-01T08:17:23Z\nupdated: 2026-05-01T08:17:23Z\ntags: [x]\n---\n\nbody\n',
@@ -692,7 +691,7 @@ describe(runEdit, () => {
       const badRecord = byPath.get(badType);
       expect(badRecord?.ok).toBe(false);
       if (badRecord && !badRecord.ok) {
-        expect(badRecord.error).toBe('schema-validation');
+        expect(badRecord.error).toBe('note-parse');
       }
       // The valid record was written; the failing one was left untouched.
       expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');

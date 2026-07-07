@@ -1,11 +1,11 @@
 // Shapes for the kb-edit helper: parsed CLI input and the JSON result emitted to stdout.
 //
 // The helper's stdout payload is a discriminated union on `ok`. Recoverable failures (collision-adjacent issues such
-// as `note-not-found`, schema validation, readonly KB, supersede-target-missing, and partial-supersede) return
+// as `note-not-found`, validation, readonly KB, supersede-target-missing, and partial-supersede) return
 // `{ ok: false, error, details? }`; successes return `{ ok: true, ... }`. System errors (out-of-disk, permission
 // denied) are out of band: they print to stderr and exit non-zero.
 
-import type { Finding, Frontmatter } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 
@@ -34,8 +34,8 @@ export interface EditSingleSuccess {
   path: string;
   /** The KB the note belongs to. */
   kb: ResolvedKb;
-  /** The frontmatter that was written, post-canonicalization. */
-  frontmatter: Frontmatter;
+  /** The assertion record that was written, post-canonicalization. */
+  record: KbAssertion;
   /** Tag list as the agent supplied it before canonicalization. Set only for `retag`. */
   originalTags?: string[];
   /** Tag list as written to disk, after canonicalization. Set only for `retag`. */
@@ -52,15 +52,15 @@ export interface EditSupersedeSuccess {
   newPath: string;
   /** The KB both notes belong to. */
   kb: ResolvedKb;
-  /** Frontmatter written to the old note, including `superseded-by` and the `deprecated` tag. */
-  oldFrontmatter: Frontmatter;
-  /** Frontmatter written to the new note, including `supersedes`. */
-  newFrontmatter: Frontmatter;
+  /** The old note's record as written, including `supersededBy` and the `deprecated` tag. */
+  oldRecord: KbAssertion;
+  /** The new note's record as written, including `supersedes`. */
+  newRecord: KbAssertion;
 }
 
 /** Per-record outcome for the multi-target `add-addressed-by` operation. */
 export type AddAddressedByResult =
-  | { ok: true; path: string; kb: ResolvedKb; frontmatter: Frontmatter }
+  | { ok: true; path: string; kb: ResolvedKb; record: KbAssertion }
   | { ok: false; path: string; error: EditErrorCode; message: string; details?: EditErrorDetails };
 
 /**
@@ -94,7 +94,7 @@ export type EditErrorCode =
   | 'no-kb-resolvable'
   | 'note-not-found'
   | 'note-parse'
-  | 'schema-validation'
+  | 'validation'
   | 'readonly-kb'
   | 'supersede-target-missing'
   | 'partial-supersede';
@@ -103,10 +103,10 @@ export type EditErrorCode =
 export interface EditErrorDetails {
   /** Path that failed to resolve, set when `error: 'note-not-found'` or `'supersede-target-missing'`. */
   missingPath?: string;
-  /** YAML parse error message, set when `error: 'note-parse'`. */
+  /** YAML or contract parse error message, set when `error: 'note-parse'`. */
   parseError?: string;
-  /** Findings, set when `error: 'schema-validation'`. */
-  findings?: Finding[];
+  /** Re-parse errors, set when `error: 'validation'`. */
+  errors?: string[];
   /** Registry name of the readonly KB that refused the write, set when `error: 'readonly-kb'`. */
   readonlyKbName?: string;
   /** Absolute path of the readonly KB that refused the write, set when `error: 'readonly-kb'`. */

@@ -38,9 +38,8 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
  * carries a single canonical state, editable in place via `capture-event --amend` until it is pushed and immutable
  * after.
  *
- * Validation round-trips the rendered note through `parseNoteContent` and `runRules`, mirroring `kb-add`'s
- * prepare-then-validate flow. When any finding has `severity: 'error'`, the outcome is `{ ok: false, findings }` and
- * nothing is written.
+ * Validation round-trips the rendered note through `parseNoteContent` and `runRules`. When any finding has
+ * `severity: 'error'`, the outcome is `{ ok: false, findings }` and nothing is written.
  */
 export function prepareEvent(input: {
   args: ParsedArgs;

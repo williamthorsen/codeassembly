@@ -121,7 +121,7 @@ describe(parseArgs, () => {
 });
 
 describe(runAdd, () => {
-  it('writes a note to a discovered KB and reports the path and frontmatter', async () => {
+  it('writes a note to a discovered KB and reports the path and record', async () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
@@ -136,10 +136,10 @@ describe(runAdd, () => {
     if (result.ok) {
       expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'Working with streams.md'));
       expect(result.kb.source).toBe('discovered');
-      expect(result.frontmatter.title).toBe('Working with streams');
-      expect(result.frontmatter.created).toBe(TODAY);
-      expect(result.frontmatter.updated).toBe(TODAY);
-      expect(result.frontmatter.extra['last-verified']).toBe(TODAY);
+      expect(result.record.title).toBe('Working with streams');
+      expect(result.record.created).toBe(TODAY);
+      expect(result.record.updated).toBe(TODAY);
+      expect(result.record.lastVerified).toBe(TODAY);
       const content = await readFile(result.path, 'utf8');
       expect(content).toContain('title: Working with streams');
       expect(content).toContain('How to work with Node streams.');
@@ -177,7 +177,7 @@ describe(runAdd, () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       const content = await readFile(result.path, 'utf8');
-      expect(content).toMatch(/^---\ntitle: Stub\n/);
+      expect(content).toMatch(/^---\nrecordType: assertion\ntitle: Stub\n/);
     }
   });
 
@@ -276,8 +276,8 @@ describe(runAdd, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.frontmatter.recordType).toBe('assertion');
-      expect(result.frontmatter.extra.diataxis).toBe('howto');
+      expect(result.record.recordType).toBe('assertion');
+      expect(result.record.extra.diataxis).toBe('howto');
       const written = await readFile(result.path, 'utf8');
       expect(written).toMatch(/^recordType: assertion$/m);
       expect(written).toContain('diataxis: howto');
@@ -297,8 +297,8 @@ describe(runAdd, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.frontmatter.recordType).toBe('assertion');
-      expect(result.frontmatter.extra).not.toHaveProperty('diataxis');
+      expect(result.record.recordType).toBe('assertion');
+      expect(result.record.extra).not.toHaveProperty('diataxis');
     }
   });
 
@@ -437,7 +437,7 @@ describe(runAdd, () => {
         // Empty-map fallback fired: canonicalTags equals originalTags (no rewriting happened).
         expect(result.originalTags).toEqual(['node.js', 'react']);
         expect(result.canonicalTags).toEqual(['node.js', 'react']);
-        expect(result.frontmatter.tags).toEqual(['node.js', 'react']);
+        expect(result.record.tags).toEqual(['node.js', 'react']);
       }
 
       const stderrCalls = stderrSpy.mock.calls

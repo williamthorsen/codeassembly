@@ -7,7 +7,6 @@ import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
 import type { AliasMap, KbRoot } from '@codeassembly/kb';
-import { loadSchema } from '@codeassembly/kb/schema';
 import { loadAliases } from '@codeassembly/kb/tags';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
@@ -92,10 +91,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, reads the note body from stdin, resolves a single KB, loads its schema and
- * aliases, prepares and validates the frontmatter, and writes the note. Recoverable failures (no resolvable KB,
- * collision, schema validation, invalid title or args) become structured `{ ok: false, ... }` results. System failures
- * (out-of-disk, permission denied) propagate to the caller's try/catch in `main`.
+ * Runs the helper end to end: parses args, resolves a single KB, loads its tag aliases, reads the note body from
+ * stdin, composes a born-verified assertion record, and writes the note. Recoverable failures (no resolvable KB,
+ * collision, invalid title or args) become structured `{ ok: false, ... }` results. System failures (out-of-disk,
+ * permission denied) propagate to the caller's try/catch in `main`.
  *
  * @internal - Exported to allow testing.
  */
@@ -155,26 +154,16 @@ export async function runAdd(input: {
   const kb = resolved.kb;
 
   const kbRoot = { path: kb.path, kbDir: join(kb.path, '.kb'), via: 'ancestor-walk' as const };
-  const [schema, aliases] = await Promise.all([loadSchema({ kbRoot }), loadAliasesWithWarning({ kbRoot })]);
-
-  const prep = prepareNote({ args, schema, aliases, now: input.now });
-  if (!prep.ok) {
-    return {
-      ok: false,
-      error: 'schema-validation',
-      message: `frontmatter did not pass schema validation: ${prep.findings.map((finding) => finding.message).join('; ')}`,
-      details: { findings: prep.findings },
-    };
-  }
+  const aliases = await loadAliasesWithWarning({ kbRoot });
 
   const body = await readAll(input.stdin);
+  const prepared = prepareNote({ args, aliases, now: input.now, body });
 
   const write = await writeNote({
     kbPath: kb.path,
     folder: args.folder,
     title: args.title,
-    frontmatter: prep.prepared.frontmatter,
-    body,
+    record: prepared.record,
   });
 
   if (!write.ok) {
@@ -202,9 +191,9 @@ export async function runAdd(input: {
     ok: true,
     path: write.path,
     kb,
-    frontmatter: prep.prepared.frontmatter,
-    originalTags: prep.prepared.originalTags,
-    canonicalTags: prep.prepared.canonicalTags,
+    record: prepared.record,
+    originalTags: prepared.originalTags,
+    canonicalTags: prepared.canonicalTags,
   };
 }
 

@@ -1,12 +1,16 @@
-import type { ParsedNote } from '@codeassembly/kb';
-import { parseNote } from '@codeassembly/kb/frontmatter';
+import { readFile } from 'node:fs/promises';
+
+import { readNoteContent } from '@codeassembly/kb/note-io';
+import { type KbAssertion, parseAssertion } from '@codeassembly/kb/records';
 
 import { isEnoent } from '../lib/type-guards.ts';
 
-/** Successful load: a fully-parsed note with valid frontmatter. */
+/** Successful load: the note parsed into a typed assertion record, plus its original bytes for rollback. */
 export interface LoadSuccess {
   ok: true;
-  note: ParsedNote;
+  record: KbAssertion;
+  /** The note's original on-disk content, retained so a supersede rollback can restore it. */
+  content: string;
 }
 
 /** Categorical load failures the helper surfaces as structured results. */
@@ -18,18 +22,17 @@ export type LoadFailure =
 export type LoadOutcome = LoadSuccess | LoadFailure;
 
 /**
- * Reads a note from disk and parses its frontmatter, surfacing the two failure modes kb-edit cares about as
+ * Reads a note from disk and parses it as an assertion record, surfacing the two failure modes kb-edit cares about as
  * categorical results.
  *
- * `ENOENT` becomes `note-not-found`; a YAML parse error recorded by kb's parser becomes `note-parse`. Other
- * I/O errors (permission denied, EIO) re-throw so callers can surface them as system errors via the main process's
- * stderr/exit path. A note with no frontmatter block at all also resolves as `note-parse`, since kb-edit cannot
- * mutate frontmatter that isn't there.
+ * `ENOENT` becomes `note-not-found`. A missing frontmatter block, a YAML parse error, or a field map that does not
+ * satisfy the assertion contract each become `note-parse`, so an unmutatable or off-contract note is refused rather
+ * than edited. Other I/O errors (permission denied, EIO) re-throw so callers surface them as system errors.
  */
 export async function loadNote(input: { path: string }): Promise<LoadOutcome> {
-  let parsed: ParsedNote;
+  let content: string;
   try {
-    parsed = await parseNote({ path: input.path });
+    content = await readFile(input.path, 'utf8');
   } catch (error) {
     if (isEnoent(error)) {
       return { ok: false, reason: 'note-not-found', path: input.path };
@@ -37,19 +40,15 @@ export async function loadNote(input: { path: string }): Promise<LoadOutcome> {
     throw error;
   }
 
-  const raw = parsed.frontmatterRaw;
-  if (raw === null) {
-    return { ok: false, reason: 'note-parse', path: input.path, parseError: 'no frontmatter block found' };
-  }
-  if (raw.parseError !== undefined) {
-    return { ok: false, reason: 'note-parse', path: input.path, parseError: raw.parseError };
-  }
-  if (parsed.frontmatter === null) {
-    // A frontmatter block was present and parsed without YAML errors, but the projection to typed Frontmatter
-    // collapsed to null — for example, the block parsed as a scalar or sequence rather than a map. Treat as
-    // unmutatable so callers don't operate on a missing frontmatter object.
-    return { ok: false, reason: 'note-parse', path: input.path, parseError: 'frontmatter is not a YAML map' };
+  const read = readNoteContent(content);
+  if (read.error !== undefined) {
+    return { ok: false, reason: 'note-parse', path: input.path, parseError: read.error };
   }
 
-  return { ok: true, note: parsed };
+  const parsed = parseAssertion(read.fields, read.body);
+  if (!parsed.ok) {
+    return { ok: false, reason: 'note-parse', path: input.path, parseError: parsed.errors.join('; ') };
+  }
+
+  return { ok: true, record: parsed.record, content };
 }

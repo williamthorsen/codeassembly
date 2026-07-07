@@ -1,4 +1,5 @@
-import type { AliasMap, Frontmatter, ParsedNote } from '@codeassembly/kb';
+import type { AliasMap } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { prepareSupersedeWith } from '../supersede-with.ts';
@@ -6,143 +7,112 @@ import { prepareSupersedeWith } from '../supersede-with.ts';
 const NOW = new Date('2026-05-24T14:35:00Z');
 const KB_PATH = '/tmp/vault';
 
-function note(input: { name: string; tags?: string[]; extra?: Record<string, unknown> }): ParsedNote {
-  const tags = input.tags ?? ['example'];
-  const extra = input.extra ?? {};
-  const frontmatter: Frontmatter = {
-    title: input.name.replace(/\.md$/, ''),
+/** Builds a baseline assertion record for the operation under test, with overrides merged in. */
+function buildAssertion(overrides: Partial<KbAssertion> = {}): KbAssertion {
+  return {
     recordType: 'assertion',
+    title: 'Example',
     created: '2026-05-01T08:17:23Z',
     updated: '2026-05-01T08:17:23Z',
-    tags,
-    extra,
-  };
-  return {
-    path: `${KB_PATH}/${input.name}`,
-    content: '',
-    frontmatter,
-    frontmatterRaw: { text: '', startLine: 1, endLine: 6 },
+    tags: ['example'],
+    addressedBy: [],
+    extra: {},
     body: '\nBody.\n',
-    bodyStartLine: 7,
+    ...overrides,
   };
-}
-
-function frontmatterOf(parsed: ParsedNote): Frontmatter {
-  if (parsed.frontmatter === null) {
-    throw new Error('test setup: expected non-null frontmatter');
-  }
-  return parsed.frontmatter;
 }
 
 const NO_ALIASES: AliasMap = new Map();
 
 describe(prepareSupersedeWith, () => {
   it('writes superseded-by on old, supersedes on new, and adds deprecated to old', () => {
-    const oldNote = note({ name: 'old.md' });
-    const newNote = note({ name: 'new.md' });
-
     const result = prepareSupersedeWith({
-      oldNote,
-      oldFrontmatter: frontmatterOf(oldNote),
-      newNote,
-      newFrontmatter: frontmatterOf(newNote),
+      oldRecord: buildAssertion(),
+      oldPath: `${KB_PATH}/old.md`,
+      newRecord: buildAssertion(),
+      newPath: `${KB_PATH}/new.md`,
       kbPath: KB_PATH,
       aliases: NO_ALIASES,
       now: NOW,
     });
 
-    expect(result.old.frontmatter.extra['superseded-by']).toBe('new.md');
-    expect(result.new.frontmatter.extra.supersedes).toBe('old.md');
-    expect(result.old.frontmatter.tags).toContain('deprecated');
+    expect(result.old.supersededBy).toBe('new.md');
+    expect(result.new.supersedes).toBe('old.md');
+    expect(result.old.tags).toContain('deprecated');
   });
 
   it('bumps updated on both notes', () => {
-    const oldNote = note({ name: 'old.md' });
-    const newNote = note({ name: 'new.md' });
-
     const result = prepareSupersedeWith({
-      oldNote,
-      oldFrontmatter: frontmatterOf(oldNote),
-      newNote,
-      newFrontmatter: frontmatterOf(newNote),
+      oldRecord: buildAssertion(),
+      oldPath: `${KB_PATH}/old.md`,
+      newRecord: buildAssertion(),
+      newPath: `${KB_PATH}/new.md`,
       kbPath: KB_PATH,
       aliases: NO_ALIASES,
       now: NOW,
     });
 
-    expect(result.old.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
-    expect(result.new.frontmatter.updated).toBe('2026-05-24T14:35:00Z');
+    expect(result.old.updated).toBe('2026-05-24T14:35:00Z');
+    expect(result.new.updated).toBe('2026-05-24T14:35:00Z');
   });
 
   it('writes KB-relative pointers when notes are in subfolders', () => {
-    const oldNote: ParsedNote = { ...note({ name: 'old.md' }), path: `${KB_PATH}/legacy/old.md` };
-    const newNote: ParsedNote = { ...note({ name: 'new.md' }), path: `${KB_PATH}/current/new.md` };
-
     const result = prepareSupersedeWith({
-      oldNote,
-      oldFrontmatter: frontmatterOf(oldNote),
-      newNote,
-      newFrontmatter: frontmatterOf(newNote),
+      oldRecord: buildAssertion(),
+      oldPath: `${KB_PATH}/legacy/old.md`,
+      newRecord: buildAssertion(),
+      newPath: `${KB_PATH}/current/new.md`,
       kbPath: KB_PATH,
       aliases: NO_ALIASES,
       now: NOW,
     });
 
-    expect(result.old.frontmatter.extra['superseded-by']).toBe('current/new.md');
-    expect(result.new.frontmatter.extra.supersedes).toBe('legacy/old.md');
+    expect(result.old.supersededBy).toBe('current/new.md');
+    expect(result.new.supersedes).toBe('legacy/old.md');
   });
 
   it('is idempotent when deprecated tag is already present', () => {
-    const oldNote = note({ name: 'old.md', tags: ['legacy', 'deprecated'] });
-    const newNote = note({ name: 'new.md' });
-
     const result = prepareSupersedeWith({
-      oldNote,
-      oldFrontmatter: frontmatterOf(oldNote),
-      newNote,
-      newFrontmatter: frontmatterOf(newNote),
+      oldRecord: buildAssertion({ tags: ['legacy', 'deprecated'] }),
+      oldPath: `${KB_PATH}/old.md`,
+      newRecord: buildAssertion(),
+      newPath: `${KB_PATH}/new.md`,
       kbPath: KB_PATH,
       aliases: NO_ALIASES,
       now: NOW,
     });
 
-    expect(result.old.frontmatter.tags.filter((t) => t === 'deprecated')).toHaveLength(1);
-    expect(result.old.frontmatter.tags).toEqual(['legacy', 'deprecated']);
+    expect(result.old.tags.filter((t) => t === 'deprecated')).toHaveLength(1);
+    expect(result.old.tags).toEqual(['legacy', 'deprecated']);
   });
 
   it('canonicalizes deprecated through the alias map before adding it', () => {
     const aliases: AliasMap = new Map([['deprecated', 'archived']]);
-    const oldNote = note({ name: 'old.md', tags: ['legacy'] });
-    const newNote = note({ name: 'new.md' });
-
     const result = prepareSupersedeWith({
-      oldNote,
-      oldFrontmatter: frontmatterOf(oldNote),
-      newNote,
-      newFrontmatter: frontmatterOf(newNote),
+      oldRecord: buildAssertion({ tags: ['legacy'] }),
+      oldPath: `${KB_PATH}/old.md`,
+      newRecord: buildAssertion(),
+      newPath: `${KB_PATH}/new.md`,
       kbPath: KB_PATH,
       aliases,
       now: NOW,
     });
 
-    expect(result.old.frontmatter.tags).toEqual(['legacy', 'archived']);
+    expect(result.old.tags).toEqual(['legacy', 'archived']);
   });
 
-  it('preserves other extra fields on both notes', () => {
-    const oldNote = note({ name: 'old.md', extra: { 'applies-to': 'node 22' } });
-    const newNote = note({ name: 'new.md', extra: { 'last-verified': '2026-04-15T13:28:14Z' } });
-
+  it('preserves other fields on both notes', () => {
     const result = prepareSupersedeWith({
-      oldNote,
-      oldFrontmatter: frontmatterOf(oldNote),
-      newNote,
-      newFrontmatter: frontmatterOf(newNote),
+      oldRecord: buildAssertion({ extra: { 'applies-to': 'node 22' } }),
+      oldPath: `${KB_PATH}/old.md`,
+      newRecord: buildAssertion({ lastVerified: '2026-04-15T13:28:14Z' }),
+      newPath: `${KB_PATH}/new.md`,
       kbPath: KB_PATH,
       aliases: NO_ALIASES,
       now: NOW,
     });
 
-    expect(result.old.frontmatter.extra['applies-to']).toBe('node 22');
-    expect(result.new.frontmatter.extra['last-verified']).toBe('2026-04-15T13:28:14Z');
+    expect(result.old.extra['applies-to']).toBe('node 22');
+    expect(result.new.lastVerified).toBe('2026-04-15T13:28:14Z');
   });
 });

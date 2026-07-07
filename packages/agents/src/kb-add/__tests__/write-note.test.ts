@@ -2,19 +2,25 @@ import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/prom
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import type { Frontmatter } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { composeFilename, writeNote } from '../write-note.ts';
 
-const baseFrontmatter: Frontmatter = {
-  title: 'Sample',
-  recordType: 'assertion',
-  created: '2026-05-24T09:14:22Z',
-  updated: '2026-05-24T13:58:12Z',
-  tags: ['sample'],
-  extra: {},
-};
+/** Builds a baseline assertion record for the writer under test, with overrides merged in. */
+function buildRecord(overrides: Partial<KbAssertion> = {}): KbAssertion {
+  return {
+    recordType: 'assertion',
+    title: 'Sample',
+    created: '2026-05-24T09:14:22Z',
+    updated: '2026-05-24T13:58:12Z',
+    tags: ['sample'],
+    addressedBy: [],
+    extra: {},
+    body: '',
+    ...overrides,
+  };
+}
 
 describe(composeFilename, () => {
   it('appends .md to a trimmed title', () => {
@@ -68,8 +74,7 @@ describe(writeNote, () => {
       kbPath,
       folder: null,
       title: 'Hello',
-      frontmatter: baseFrontmatter,
-      body: 'Body text.\n',
+      record: buildRecord({ body: '\nBody text.\n' }),
     });
 
     const expectedPath = join(kbPath, 'content', 'assertions', 'Hello.md');
@@ -84,8 +89,7 @@ describe(writeNote, () => {
       kbPath,
       folder: 'languages/typescript',
       title: 'Generics',
-      frontmatter: baseFrontmatter,
-      body: '',
+      record: buildRecord(),
     });
 
     expect(outcome.ok).toBe(true);
@@ -105,8 +109,7 @@ describe(writeNote, () => {
       kbPath,
       folder: null,
       title: 'Hello',
-      frontmatter: baseFrontmatter,
-      body: 'New body.\n',
+      record: buildRecord({ body: '\nNew body.\n' }),
     });
 
     expect(outcome).toEqual({ ok: false, reason: 'collision', existingPath: existing });
@@ -122,8 +125,7 @@ describe(writeNote, () => {
       kbPath,
       folder: 'languages/typescript',
       title: 'Generics',
-      frontmatter: baseFrontmatter,
-      body: 'New body.\n',
+      record: buildRecord({ body: '\nNew body.\n' }),
     });
 
     expect(outcome).toEqual({ ok: false, reason: 'collision', existingPath: join(nestedDir, 'Generics.md') });
@@ -135,8 +137,7 @@ describe(writeNote, () => {
       kbPath,
       folder: null,
       title: 'foo/bar',
-      frontmatter: baseFrontmatter,
-      body: '',
+      record: buildRecord(),
     });
 
     expect(outcome).toMatchObject({ ok: false, reason: 'invalid-title' });
@@ -148,8 +149,7 @@ describe(writeNote, () => {
       kbPath,
       folder: null,
       title: 'Hello',
-      frontmatter: baseFrontmatter,
-      body: 'Body.\n',
+      record: buildRecord({ body: '\nBody.\n' }),
     });
 
     expect(await readdir(join(kbPath, 'content', 'assertions'))).toEqual(['Hello.md']);
@@ -160,8 +160,7 @@ describe(writeNote, () => {
       kbPath,
       folder: '../../etc',
       title: 'Escape',
-      frontmatter: baseFrontmatter,
-      body: 'Body.\n',
+      record: buildRecord({ body: '\nBody.\n' }),
     });
 
     expect(outcome).toMatchObject({ ok: false, reason: 'invalid-folder' });
@@ -173,8 +172,7 @@ describe(writeNote, () => {
       kbPath,
       folder: 'a/../../sibling',
       title: 'Escape',
-      frontmatter: baseFrontmatter,
-      body: 'Body.\n',
+      record: buildRecord({ body: '\nBody.\n' }),
     });
 
     expect(outcome).toMatchObject({ ok: false, reason: 'invalid-folder' });
@@ -185,8 +183,7 @@ describe(writeNote, () => {
       kbPath,
       folder: 'a/b/..',
       title: 'Inside',
-      frontmatter: baseFrontmatter,
-      body: '',
+      record: buildRecord(),
     });
 
     expect(outcome.ok).toBe(true);
@@ -200,8 +197,7 @@ describe(writeNote, () => {
       kbPath,
       folder: 'assertions/tools',
       title: 'Doubled',
-      frontmatter: baseFrontmatter,
-      body: '',
+      record: buildRecord(),
     });
 
     expect(outcome).toMatchObject({ ok: false, reason: 'invalid-folder' });

@@ -37,20 +37,122 @@ describe(parseAssertion, () => {
     expect(result.ok).toBe(false);
   });
 
-  it('preserves unrecognized fields in extra', () => {
-    const result = parseAssertion({ ...validFields, 'last-verified': '2026-05-14', sources: ['a'] }, '');
+  it('reads last-verified, addressed-by, supersedes, and superseded-by as typed fields, not extra', () => {
+    const result = parseAssertion(
+      {
+        ...validFields,
+        'last-verified': '2026-05-14',
+        'addressed-by': ['#812'],
+        supersedes: 'old-note.md',
+        'superseded-by': 'new-note.md',
+      },
+      '',
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.record.extra).toEqual({ 'last-verified': '2026-05-14', sources: ['a'] });
+    expect(result.record.lastVerified).toBe('2026-05-14');
+    expect(result.record.addressedBy).toEqual(['#812']);
+    expect(result.record.supersedes).toBe('old-note.md');
+    expect(result.record.supersededBy).toBe('new-note.md');
+    expect(result.record.extra).toEqual({});
+  });
+
+  it('defaults addressed-by to an empty list and leaves the optional pointers undefined when absent', () => {
+    const result = parseAssertion(validFields, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.addressedBy).toEqual([]);
+    expect(result.record.lastVerified).toBeUndefined();
+    expect(result.record.supersedes).toBeUndefined();
+    expect(result.record.supersededBy).toBeUndefined();
+  });
+
+  it('reports a non-list addressed-by', () => {
+    const result = parseAssertion({ ...validFields, 'addressed-by': 42 }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('addressed-by');
+  });
+
+  it('rejects an invalid last-verified date', () => {
+    const result = parseAssertion({ ...validFields, 'last-verified': 'recently' }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('last-verified');
+  });
+
+  it('rejects a non-string supersedes', () => {
+    const result = parseAssertion({ ...validFields, supersedes: 42 }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('supersedes');
+  });
+
+  it('preserves genuinely unknown fields in extra', () => {
+    const result = parseAssertion({ ...validFields, sources: ['a'], 'applies-to': 'x' }, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.extra).toEqual({ sources: ['a'], 'applies-to': 'x' });
   });
 });
 
 describe(renderAssertion, () => {
   it('round-trips a well-formed assertion through parse', () => {
-    const parsed = parseAssertion({ ...validFields, 'last-verified': '2026-05-14' }, '\nThe body.\n');
+    const parsed = parseAssertion(
+      { ...validFields, 'last-verified': '2026-05-14', 'addressed-by': ['#812'], sources: ['a'] },
+      '\nThe body.\n',
+    );
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
     const { fields, body } = renderAssertion(parsed.record);
     expect(parseAssertion(fields, body)).toEqual(parsed);
+  });
+
+  it('omits addressed-by and the optional pointers when unset', () => {
+    const parsed = parseAssertion(validFields, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderAssertion(parsed.record).fields);
+    expect(keys).not.toContain('addressed-by');
+    expect(keys).not.toContain('last-verified');
+    expect(keys).not.toContain('supersedes');
+    expect(keys).not.toContain('superseded-by');
+  });
+
+  it('emits the typed fields in order after the spine and before extra', () => {
+    const parsed = parseAssertion(
+      {
+        ...validFields,
+        'addressed-by': ['#812'],
+        'last-verified': '2026-05-14',
+        supersedes: 'old-note.md',
+        'superseded-by': 'new-note.md',
+        sources: ['a'],
+      },
+      '',
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderAssertion(parsed.record).fields);
+    expect(keys).toEqual([
+      'recordType',
+      'title',
+      'created',
+      'updated',
+      'tags',
+      'addressed-by',
+      'last-verified',
+      'supersedes',
+      'superseded-by',
+      'sources',
+    ]);
+  });
+
+  it('emits only the assertion fields — never a foreign key', () => {
+    const parsed = parseAssertion(validFields, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderAssertion(parsed.record).fields);
+    expect(keys).toEqual(['recordType', 'title', 'created', 'updated', 'tags']);
   });
 });

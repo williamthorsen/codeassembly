@@ -1,41 +1,21 @@
-import type { AliasMap, Finding, Frontmatter, Schema } from '@codeassembly/kb';
-import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter';
-import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
+import type { AliasMap } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { canonicalize } from '@codeassembly/kb/tags';
 
 import { dedupeInOrder, formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import type { ParsedArgs, PreparedNote } from './types.ts';
 
-/** Successful preparation: a fully-typed `Frontmatter` plus the canonicalization audit trail. */
-export interface PrepareSuccess {
-  ok: true;
-  prepared: PreparedNote;
-}
-
-/** Schema-validation failure: surfaces the error-severity findings the helper turns into a structured result. */
-export interface PrepareFailure {
-  ok: false;
-  findings: Finding[];
-}
-
-/** The outcome of preparing a note for write. */
-export type PrepareOutcome = PrepareSuccess | PrepareFailure;
-
 /**
- * Composes a typed `Frontmatter` from parsed CLI args, stamps `created`, `updated`, and `last-verified` from one
- * second-precision UTC instant so the note is born verified, canonicalizes tags via the supplied alias map, and
- * validates the result against the destination KB's schema using the `frontmatterRule` from kb. Every note carries
- * `recordType: assertion` as the stored discriminant — `kb-add` only writes assertions. Any Diátaxis label the agent
- * supplies via `--diataxis` is a vault facet, written to the note's `extra` fields rather than a top-level field.
+ * Composes a born-verified assertion record from parsed CLI args: stamps `created`, `updated`, and `lastVerified` from
+ * one second-precision UTC instant, canonicalizes tags via the supplied alias map (deduped in first-occurrence order),
+ * and records any Diátaxis label the agent supplied via `--diataxis` as a vault facet in `extra`. Every note carries
+ * `recordType: 'assertion'` as the stored discriminant — `kb-add` only writes assertions.
  *
- * Validation is performed by round-tripping the rendered frontmatter through `parseNoteContent` and feeding the parsed
- * note through `runRules`. The round trip is the cheapest way to give the rule a real `ParsedNote` carrying valid
- * `frontmatterRaw` and an actual `yaml.Document` without reaching into kb internals.
- *
- * When any finding has `severity: 'error'`, the outcome is `{ ok: false, findings }` and nothing is written.
+ * The record's fields are typed by construction, so there is no separate validation pass: a title that cannot serve as
+ * a filename is rejected downstream by the writer, and every other field is stamped from trusted inputs.
  */
-export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: AliasMap; now: Date }): PrepareOutcome {
-  const { args, schema, aliases, now } = input;
+export function prepareNote(input: { args: ParsedArgs; aliases: AliasMap; now: Date; body: string }): PreparedNote {
+  const { args, aliases, now, body } = input;
 
   const originalTags = [...args.tags];
   // Canonicalization can collapse distinct inputs (`node.js`, `node`) onto the same canonical (`nodejs`). Keep the
@@ -48,33 +28,18 @@ export function prepareNote(input: { args: ParsedArgs; schema: Schema; aliases: 
   if (args.diataxis !== null) {
     extra.diataxis = args.diataxis;
   }
-  extra['last-verified'] = today;
 
-  const frontmatter: Frontmatter = {
-    title: args.title,
+  const record: KbAssertion = {
     recordType: 'assertion',
+    title: args.title,
     created: today,
     updated: today,
     tags: canonicalTags,
+    addressedBy: [],
+    lastVerified: today,
     extra,
+    body,
   };
 
-  const findings = validate({ frontmatter, schema });
-  const errorFindings = findings.filter((finding) => finding.severity === 'error');
-  if (errorFindings.length > 0) {
-    return { ok: false, findings: errorFindings };
-  }
-
-  return { ok: true, prepared: { frontmatter, originalTags, canonicalTags } };
+  return { record, originalTags, canonicalTags };
 }
-
-// region | Helpers
-
-/** Renders the frontmatter to a note string, re-parses it, and runs the frontmatter rule against the parsed shape. */
-function validate(input: { frontmatter: Frontmatter; schema: Schema }): Finding[] {
-  const rendered = writeFrontmatter({ frontmatter: input.frontmatter, body: '' });
-  const parsed = parseNoteContent({ content: rendered, path: '<kb-add proposal>' });
-  return runRules({ rules: [frontmatterRule], notes: [parsed], schema: input.schema });
-}
-
-// endregion | Helpers

@@ -12,17 +12,18 @@ async function makeTempDir(prefix: string): Promise<string> {
 
 const VALID_NOTE = `---
 title: Example
-type: howto
+recordType: assertion
 created: 2026-05-01
 updated: 2026-05-01
 tags: [example]
+type: howto
 ---
 
 Body text.
 `;
 
 describe(loadNote, () => {
-  it('returns the parsed note when the file exists and frontmatter is valid', async () => {
+  it('returns the parsed record when the file exists and frontmatter is a valid assertion', async () => {
     const dir = await makeTempDir('kb-edit-load-ok-');
     const path = join(dir, 'note.md');
     await writeFile(path, VALID_NOTE, 'utf8');
@@ -31,9 +32,10 @@ describe(loadNote, () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.note.frontmatter?.title).toBe('Example');
-      expect(result.note.frontmatter?.tags).toEqual(['example']);
-      expect(result.note.body.trim()).toBe('Body text.');
+      expect(result.record.title).toBe('Example');
+      expect(result.record.tags).toEqual(['example']);
+      expect(result.record.body.trim()).toBe('Body text.');
+      expect(result.content).toBe(VALID_NOTE);
     }
   });
 
@@ -77,17 +79,17 @@ describe(loadNote, () => {
     }
   });
 
-  it('returns note-parse when the frontmatter block is not a YAML map', async () => {
-    const dir = await makeTempDir('kb-edit-load-not-map-');
+  it('returns note-parse when the frontmatter does not satisfy the assertion contract', async () => {
+    const dir = await makeTempDir('kb-edit-load-off-contract-');
     const path = join(dir, 'note.md');
-    // Frontmatter parses successfully but yields a sequence instead of a map.
+    // Frontmatter parses as a sequence, not an assertion map, so the record fails to project.
     await writeFile(path, '---\n- one\n- two\n---\n\nBody\n', 'utf8');
 
     const result = await loadNote({ path });
 
     expect(result.ok).toBe(false);
     if (!result.ok && result.reason === 'note-parse') {
-      expect(result.parseError).toBe('frontmatter is not a YAML map');
+      expect(result.parseError).toContain('recordType');
     }
   });
 });

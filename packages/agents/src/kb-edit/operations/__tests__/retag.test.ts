@@ -1,16 +1,20 @@
-import type { AliasMap, Frontmatter } from '@codeassembly/kb';
+import type { AliasMap } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { retag } from '../retag.ts';
 
-function frontmatter(overrides: Partial<Frontmatter> = {}): Frontmatter {
+/** Builds a baseline assertion record for the operation under test, with overrides merged in. */
+function buildAssertion(overrides: Partial<KbAssertion> = {}): KbAssertion {
   return {
-    title: 'Example',
     recordType: 'assertion',
+    title: 'Example',
     created: '2026-05-01T08:17:23Z',
     updated: '2026-05-01T08:17:23Z',
     tags: ['old', 'tags'],
+    addressedBy: [],
     extra: {},
+    body: 'body',
     ...overrides,
   };
 }
@@ -23,59 +27,39 @@ const NODE_ALIASES: AliasMap = new Map([
 
 describe(retag, () => {
   it('replaces the tag list with the supplied tags and leaves updated unchanged', () => {
-    const result = retag({
-      frontmatter: frontmatter(),
-      body: 'b',
-      tags: ['new', 'set'],
-      aliases: NO_ALIASES,
-    });
+    const result = retag(buildAssertion(), ['new', 'set'], NO_ALIASES);
 
-    expect(result.frontmatter.tags).toEqual(['new', 'set']);
-    expect(result.frontmatter.updated).toBe('2026-05-01T08:17:23Z');
+    expect(result.record.tags).toEqual(['new', 'set']);
+    expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
   });
 
   it('returns originalTags and canonicalTags for audit', () => {
-    const result = retag({
-      frontmatter: frontmatter(),
-      body: 'b',
-      tags: ['node.js', 'react'],
-      aliases: NODE_ALIASES,
-    });
+    const result = retag(buildAssertion(), ['node.js', 'react'], NODE_ALIASES);
 
     expect(result.originalTags).toEqual(['node.js', 'react']);
     expect(result.canonicalTags).toEqual(['nodejs', 'react']);
-    expect(result.frontmatter.tags).toEqual(['nodejs', 'react']);
+    expect(result.record.tags).toEqual(['nodejs', 'react']);
   });
 
   it('dedupes after canonicalization in first-occurrence order', () => {
     // node.js and node both canonicalize to nodejs; the second arrival is dropped.
-    const result = retag({
-      frontmatter: frontmatter(),
-      body: 'b',
-      tags: ['node.js', 'react', 'node'],
-      aliases: NODE_ALIASES,
-    });
+    const result = retag(buildAssertion(), ['node.js', 'react', 'node'], NODE_ALIASES);
 
     expect(result.canonicalTags).toEqual(['nodejs', 'react']);
   });
 
   it('accepts an empty list and writes empty tags', () => {
-    const result = retag({
-      frontmatter: frontmatter(),
-      body: 'b',
-      tags: [],
-      aliases: NO_ALIASES,
-    });
+    const result = retag(buildAssertion(), [], NO_ALIASES);
 
-    expect(result.frontmatter.tags).toEqual([]);
+    expect(result.record.tags).toEqual([]);
     expect(result.canonicalTags).toEqual([]);
   });
 
-  it('does not mutate the input frontmatter', () => {
-    const fm = frontmatter();
+  it('does not mutate the input record', () => {
+    const record = buildAssertion();
 
-    retag({ frontmatter: fm, body: 'b', tags: ['x'], aliases: NO_ALIASES });
+    retag(record, ['x'], NO_ALIASES);
 
-    expect(fm.tags).toEqual(['old', 'tags']);
+    expect(record.tags).toEqual(['old', 'tags']);
   });
 });
