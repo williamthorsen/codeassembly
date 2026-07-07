@@ -379,4 +379,79 @@ describe(composeManifest, () => {
       expect(manifest.ticket_url).toBeNull();
     });
   });
+
+  describe('PR URL construction', () => {
+    it('constructs a GitHub pr_url from a PR-<n> identity and an SSH remote', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'PR-950',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+        remoteUrl: 'git@github.com:owner/repo.git',
+      });
+      expect(manifest.ticket_id).toBe('PR-950');
+      expect(manifest.pr_url).toBe('https://github.com/owner/repo/pull/950');
+    });
+
+    it('constructs a GitHub pr_url from an HTTPS remote, stripping the .git suffix', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'PR-42',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+        remoteUrl: 'https://github.com/owner/repo.git',
+      });
+      expect(manifest.pr_url).toBe('https://github.com/owner/repo/pull/42');
+    });
+
+    it('uses the Bitbucket URL shape when scm is bitbucket', () => {
+      const manifest = composeManifest({
+        preferences: { scm: 'bitbucket', project: { slug: 'x' } },
+        branchName: 'PR-7',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+        remoteUrl: 'git@bitbucket.org:workspace/repo.git',
+      });
+      expect(manifest.pr_url).toBe('https://bitbucket.org/workspace/repo/pull-requests/7');
+    });
+
+    it('leaves pr_url null for a non-PR identity even when a remote is present', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'MAC-130',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+        remoteUrl: 'git@github.com:owner/repo.git',
+      });
+      expect(manifest.pr_url).toBeNull();
+    });
+
+    it('leaves pr_url null for a PR identity when no remote is known', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'PR-950',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+        remoteUrl: null,
+      });
+      expect(manifest.pr_url).toBeNull();
+    });
+
+    it('leaves pr_url null when the remote cannot be parsed to owner/repo', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        branchName: 'PR-950',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+        remoteUrl: 'not-a-remote-url',
+      });
+      expect(manifest.pr_url).toBeNull();
+    });
+  });
 });

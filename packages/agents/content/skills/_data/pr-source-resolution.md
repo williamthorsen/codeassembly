@@ -8,6 +8,7 @@ Resolve the pull-request URL a skill operates on at session start, and reuse it 
 
 The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `pr_url` so it is reused across sessions instead of being re-discovered each time. The manifest is the single store; reads happen for free through the manifest JSON the deriver emits, and every write goes through the deriver's mutation flags — never by hand-editing the JSON.
 
+- **Seed** — on a `PR-<n>` branch identity, the deriver seeds `pr_url` at compose time by building the platform's PR URL shape from the git remote's `owner/repo` and the PR number (host and path from `scm` per [`pr-resolution.md`](pr-resolution.md); `null` when the remote cannot be resolved). This mirrors how the deriver seeds `ticket_url` from a base and id (see [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url)). An explicitly stored URL overrides the seed.
 - **Prefer** — use a stored `pr_url` as the default before discovering one from the platform.
 - **Persist** — after a PR URL is resolved, store it: run `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{url}"`.
 - **Invalidate** — when the stored URL does not yield the expected PR (the resource is not found at that URL — stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-pr-url`, then re-resolve. This rule is platform-agnostic: there is no carve-out.

@@ -1,6 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractTicketId, isPrIdentifier } from '../extract-ticket-id.ts';
+import { extractPrNumber, extractTicketId, isPrIdentifier } from '../extract-ticket-id.ts';
+
+describe(extractPrNumber, () => {
+  it('returns the numeric part of a PR sentinel', () => {
+    expect(extractPrNumber('PR-950')).toBe('950');
+  });
+
+  it('returns null for a non-PR identity', () => {
+    expect(extractPrNumber('MAC-130')).toBeNull();
+    expect(extractPrNumber('152')).toBeNull();
+  });
+
+  it('returns null for a malformed sentinel or null', () => {
+    expect(extractPrNumber('pr-123')).toBeNull();
+    expect(extractPrNumber('PR-')).toBeNull();
+    expect(extractPrNumber(null)).toBeNull();
+  });
+});
 
 describe(extractTicketId, () => {
   // The behavior table in `_data/ticket-id-extraction.md` is the test oracle. Each row of that

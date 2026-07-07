@@ -74,8 +74,8 @@ export interface BranchManifest {
   readonly ticket_base_url?: string | null;
   /**
    * The resolved pull-request URL, stored so PR-aware skills can reuse it across sessions. Optional
-   * and excluded from the required-field set so pre-existing manifests stay valid; a fresh compose
-   * seeds `null`.
+   * and excluded from the required-field set so pre-existing manifests stay valid. A fresh compose
+   * seeds it from a `PR-<n>` branch identity (the constructed PR URL), or `null` otherwise.
    */
   readonly pr_url?: string | null;
 }
