@@ -13,7 +13,7 @@ Summarize changes made in recent commits or the working tree.
 - No arguments: Summarize the last commit
 - `<n>`: Summarize the last N commits
 - `working-tree`: Summarize uncommitted changes
-- `--run-id={id}`: Optional. Recorded in frontmatter to link the devlog to a completed orchestrated run. Typically supplied by `/wrap-up`; not used in direct invocations.
+- `--run-id={id}`: Optional. Recorded in frontmatter to link the devlog to a completed orchestrated run. Typically supplied by the `wrap-up` skill; not used in direct invocations.
 
 ## Output format
 

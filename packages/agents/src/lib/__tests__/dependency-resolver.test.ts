@@ -240,6 +240,44 @@ describe(resolveClosure, () => {
 
       expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: [] });
     });
+
+    it('drops a skill body self-token so a self-reference renders without becoming an edge', async () => {
+      await writeArtifactWithBody(
+        contentDir,
+        'skill',
+        'capture-feedback',
+        'Invoke {skill:capture-feedback} on feedback.',
+      );
+
+      const closure = await resolveClosure({ skill: ['capture-feedback'] }, libraryResolver(contentDir));
+
+      expect(closure.skills).toEqual(['capture-feedback']);
+    });
+
+    it('drops a subagent body self-token so a self-reference renders without becoming an edge', async () => {
+      await writeArtifactWithBody(contentDir, 'subagent', 'planner', 'Re-dispatch {subagent:planner} to continue.');
+
+      const closure = await resolveClosure({ subagent: ['planner'] }, libraryResolver(contentDir));
+
+      expect(closure.subagents).toEqual(['planner']);
+    });
+
+    it('still throws on a genuine cycle formed by body tokens', async () => {
+      await writeArtifactWithBody(contentDir, 'skill', 'alpha', 'See {skill:beta}.');
+      await writeArtifactWithBody(contentDir, 'skill', 'beta', 'See {skill:alpha}.');
+
+      await expect(resolveClosure({ skill: ['alpha'] }, libraryResolver(contentDir))).rejects.toThrow(
+        /cycle.*skill:alpha → skill:beta → skill:alpha/s,
+      );
+    });
+
+    it('still throws on a self-dependency declared in frontmatter', async () => {
+      await writeArtifactWithBody(contentDir, 'skill', 'selfdep', '# selfdep', { skill: ['selfdep'] });
+
+      await expect(resolveClosure({ skill: ['selfdep'] }, libraryResolver(contentDir))).rejects.toThrow(
+        /cycle.*skill:selfdep → skill:selfdep/s,
+      );
+    });
   });
 
   describe('resolving through declared sources', () => {

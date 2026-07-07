@@ -694,7 +694,7 @@ The first `coder_change-summary` in a run has no dispositions (nothing to respon
 - `pull-request` — PR description file
 - `review` — Code review (ticket-level, commit scope)
 - `ticket` — Issue ticket
-- `deferred-findings` — Record of findings deferred during a `/wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
+- `deferred-findings` — Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
 
 ### Non-ticket artifacts
 

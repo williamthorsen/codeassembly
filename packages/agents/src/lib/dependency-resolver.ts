@@ -89,8 +89,10 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
  * `dependencies:`. A skill or subagent additionally unions the invocation tokens in its include-expanded body
  * (`{skill:<slug>}` / `{subagent:<slug>}`, the same surface the render pass rewrites) — so a token inside a shared
  * partial becomes an edge for every artifact that includes it — and a subagent further unions its top-level `skills:`
- * injection list. A rulebook keeps `dependencies:` only; its body is embedded without the render pass. Every unioned
- * edge enters the closure without a duplicate `dependencies:` declaration.
+ * injection list. A body token that names the artifact itself is dropped rather than unioned: a self-reference renders
+ * per harness but is not a dependency and must not trip the cycle check; a self-dependency written in `dependencies:`
+ * is not dropped, so it still errors. A rulebook keeps `dependencies:` only; its body is embedded without the render
+ * pass. Every unioned edge enters the closure without a duplicate `dependencies:` declaration.
  */
 async function readArtifactEdges(
   type: ArtifactType,
@@ -126,11 +128,16 @@ async function readArtifactEdges(
   // by both a token and `dependencies:` collapses to one visit.
   const expanded = await expandIncludes(filePath, resolved.dir);
   const tokens = extractInvocationEdges(expanded);
+  // A body token that names its own artifact is a render-only self-reference, not a dependency: drop it before it
+  // becomes an edge and reaches the cycle check. Only a same-kind, same-slug token self-collides, so filter per kind.
+  // A self-dependency declared in frontmatter is left untouched and still surfaces as a cycle error.
+  const bodySkills = type === 'skill' ? tokens.skills.filter((edge) => edge !== slug) : tokens.skills;
+  const bodySubagents = type === 'subagent' ? tokens.subagents.filter((edge) => edge !== slug) : tokens.subagents;
   const injectedSkills = type === 'subagent' ? readInjectedSkills(content, label) : [];
   return {
     ...dependencies,
-    skill: [...(dependencies.skill ?? []), ...tokens.skills, ...injectedSkills],
-    subagent: [...(dependencies.subagent ?? []), ...tokens.subagents],
+    skill: [...(dependencies.skill ?? []), ...bodySkills, ...injectedSkills],
+    subagent: [...(dependencies.subagent ?? []), ...bodySubagents],
   };
 }
 

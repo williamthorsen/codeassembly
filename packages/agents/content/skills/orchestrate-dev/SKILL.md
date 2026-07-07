@@ -97,4 +97,4 @@ architecture (optional) -> planning (optional) -> implementation (required) -> r
 
 ## After the run
 
-The orchestrate engine automatically offers `/wrap-up` when the run-summary contains deferred items or insights (Phase 6). For sessions where the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `{skill:wrap-up}` manually.
+The orchestrate engine automatically offers `{skill:wrap-up}` when the run-summary contains deferred items or insights (Phase 6). For sessions where the orchestrator did not trigger wrap-up, or for follow-up housekeeping, invoke `{skill:wrap-up}` manually.

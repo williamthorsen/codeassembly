@@ -754,7 +754,7 @@ After the summary is presented and `complete_run` has been called, check whether
 
 Like Phase 5, this is an inherent engine responsibility — not a pipeline phase. It does not get `phase_decision` or `phase_started`/`phase_completed` events.
 
-The `/wrap-up` skill will assess the session (including the run-summary artifact), present a checklist of recommended actions (tickets for deferred items, documentation for discoveries), and wait for user confirmation before executing. This is one of two exceptions to the autonomous execution constraint: The orchestrator pauses here for human input (the other is the MCP availability check in step 4 of run initialization when `mcp_policy` is `prompt`).
+The `{skill:wrap-up}` skill will assess the session (including the run-summary artifact), present a checklist of recommended actions (tickets for deferred items, documentation for discoveries), and wait for user confirmation before executing. This is one of two exceptions to the autonomous execution constraint: The orchestrator pauses here for human input (the other is the MCP availability check in step 4 of run initialization when `mcp_policy` is `prompt`).
 
 If the run-summary has no deferred items and no insights, skip this phase silently.
 

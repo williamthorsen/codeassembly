@@ -6,7 +6,7 @@ user-invocable: true
 
 # Save plan
 
-Save the plan from the current conversation as a ticket-scoped artifact. Useful after built-in plan mode, `/plan`, or any conversation that produced a plan.
+Save the plan from the current conversation as a ticket-scoped artifact. Useful after built-in plan mode, `plan`, or any conversation that produced a plan.
 
 ## Process
 

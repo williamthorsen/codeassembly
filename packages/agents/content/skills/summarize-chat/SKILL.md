@@ -98,4 +98,4 @@ Report the file path when done. That's all the user needs to know.
 
 ## See also
 
-For comprehensive post-session housekeeping (creating tickets for deferred items, documenting discoveries, generating devlogs in addition to chat summaries), use `/wrap-up`.
+For comprehensive post-session housekeeping (creating tickets for deferred items, documenting discoveries, generating devlogs in addition to chat summaries), use `{skill:wrap-up}`.

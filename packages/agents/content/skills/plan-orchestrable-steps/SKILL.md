@@ -9,7 +9,7 @@ dependencies:
 
 # Plan
 
-Decompose a story or task into independently orchestrable implementation steps. Each step produces a self-contained task description suitable for `/orchestrate-dev`. The plan is refined interactively through user feedback.
+Decompose a story or task into independently orchestrable implementation steps. Each step produces a self-contained task description suitable for `orchestrate-dev`. The plan is refined interactively through user feedback.
 
 ## Arguments
 
@@ -107,7 +107,7 @@ When the user approves the plan:
 ├── orchestration-plan.json                              <- machine-readable plan (mutable, overwritten each iteration)
 ├── 20260219-143000Z_planner_orchestration-plan.md       <- human-readable plan snapshot (iteration 1)
 ├── 20260219-144500Z_planner_orchestration-plan.md       <- human-readable plan snapshot (iteration 2, after feedback)
-└── {run-id}/                              <- orchestration run directories (created later by /orchestrate-dev)
+└── {run-id}/                              <- orchestration run directories (created later by orchestrate-dev)
 ```
 
 - `orchestration-plan.json` is a **ticket-level mutable artifact** — it is overwritten on each planning iteration, not timestamped
@@ -118,4 +118,4 @@ When the user approves the plan:
 
 - All codebase exploration and plan generation is delegated to the planner agent — do not analyze code directly
 - The feedback loop is interactive — always wait for user input before resuming the planner
-- Do not proceed to orchestration — the user invokes `/orchestrate-dev` separately when ready
+- Do not proceed to orchestration — the user invokes `orchestrate-dev` separately when ready

@@ -38,7 +38,7 @@ Read the PR's metadata for the steps below:
 gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
 ```
 
-If no PR can be resolved or discovered, stop with: "No open PR found for branch `{branch_name}`. Create one with `/create-pr` first."
+If no PR can be resolved or discovered, stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
 
 Capture `title` (PR title), `body` (PR body), `labels` (label objects), and `number` from the response. These feed the steps below.
 
