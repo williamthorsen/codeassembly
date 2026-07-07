@@ -30,6 +30,8 @@ Create the ticket body describing WHAT needs to be done — problem, context, an
 <!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
 ```
 
+**Spike mode.** If the ticket describes a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md) in place of the skeleton above.
+
 <!-- include: ../_partials/ticket-concision.md / -->
 
 <!-- include: ../_partials/ticket-placement.md / -->

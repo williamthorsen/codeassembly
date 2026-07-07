@@ -25,6 +25,8 @@ The plan begins with YAML frontmatter conforming to the canonical schema; see th
 
 The body following the frontmatter uses the shared implementation-plan template, the same one `design-and-plan` Phase 5 inlines, so both skills emit an identical plan:
 
+**Spike mode.** If the task is a spike, use the spike plan template in [spike conventions](../_data/spike-conventions.md) in place of the template below.
+
 <!-- include: ../_partials/plan-template.md / -->
 
 ## Guidance
