@@ -1,10 +1,9 @@
-import { randomBytes } from 'node:crypto';
-import { mkdir, rename, unlink, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { join, relative, resolve, sep } from 'node:path';
 
-import type { Frontmatter } from '@codeassembly/kb';
 import { pathExists } from '@codeassembly/kb/filesystem';
-import { writeFrontmatter } from '@codeassembly/kb/frontmatter';
+import { writeNote as writeNoteAtomic } from '@codeassembly/kb/note-io';
+import { type KbAssertion, renderAssertion } from '@codeassembly/kb/records';
 
 /** The KB-root-relative location kb-add writes assertions under; `assertions` mirrors the hardcoded `recordType: assertion`. */
 const CONTENT_ROOT = 'content';
@@ -39,8 +38,8 @@ export type WriteOutcome = WriteSuccess | WriteFailure;
  * segment (`invalid-folder`).
  *
  * The target folder is created with `mkdir -p` semantics when absent. On filename collision the function returns a
- * structured error without modifying anything on disk. Otherwise the note is written atomically via a same-directory
- * temp file plus `rename`, so a process kill mid-write cannot leave a partial file at the destination path.
+ * structured error without modifying anything on disk. Otherwise the note is rendered and written atomically via a
+ * same-directory temp file plus `rename`, so a process kill mid-write cannot leave a partial file at the destination.
  *
  * The collision check is not atomic with the subsequent rename: a second invocation that completes between the
  * `pathExists` probe and the final rename will be silently overwritten. Single-user CLI use is safe; concurrent
@@ -50,8 +49,7 @@ export async function writeNote(input: {
   kbPath: string;
   folder: string | null;
   title: string;
-  frontmatter: Frontmatter;
-  body: string;
+  record: KbAssertion;
 }): Promise<WriteOutcome> {
   const filenameOutcome = composeFilename(input.title);
   if (!filenameOutcome.ok) {
@@ -83,8 +81,8 @@ export async function writeNote(input: {
 
   await mkdir(targetDir, { recursive: true });
 
-  const content = writeFrontmatter({ frontmatter: input.frontmatter, body: input.body });
-  await atomicWrite({ targetPath, content });
+  const { fields, body } = renderAssertion(input.record);
+  await writeNoteAtomic(targetPath, fields, body);
 
   return { ok: true, path: targetPath };
 }
@@ -120,22 +118,6 @@ export function composeFilename(
 }
 
 // region | Helpers
-
-/**
- * Atomic write via same-directory temp file plus rename. The temp filename uses a random suffix so concurrent writes
- * to nearby paths cannot collide. A failed rename triggers a best-effort temp-file cleanup, then re-throws so a
- * permission or disk error surfaces unambiguously.
- */
-async function atomicWrite(input: { targetPath: string; content: string }): Promise<void> {
-  const tempPath = `${input.targetPath}.${randomBytes(8).toString('hex')}.tmp`;
-  await writeFile(tempPath, input.content, 'utf8');
-  try {
-    await rename(tempPath, input.targetPath);
-  } catch (error) {
-    await unlink(tempPath).catch(() => {});
-    throw error;
-  }
-}
 
 /**
  * Returns true when `target` resolves to a location inside `root` (or to `root` itself). Compares lexically resolved

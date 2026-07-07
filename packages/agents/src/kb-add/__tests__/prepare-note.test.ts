@@ -1,6 +1,5 @@
 import type { AliasMap } from '@codeassembly/kb';
-import { defaultSchema } from '@codeassembly/kb';
-import { parseNoteContent, writeFrontmatter } from '@codeassembly/kb/frontmatter';
+import { parseAssertion, renderAssertion } from '@codeassembly/kb/records';
 import { parseAliases } from '@codeassembly/kb/tags';
 import { describe, expect, it } from 'vitest';
 
@@ -26,98 +25,72 @@ aliases:
 
 describe(prepareNote, () => {
   it('writes recordType: assertion as the stored discriminant', () => {
-    const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+    const { record } = prepareNote({ args: baseArgs, aliases: emptyAliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.frontmatter.recordType).toBe('assertion');
-    }
+    expect(record.recordType).toBe('assertion');
   });
 
   it('writes the Diátaxis --diataxis label into extra, not a top-level field', () => {
-    const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+    const { record } = prepareNote({ args: baseArgs, aliases: emptyAliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.frontmatter.extra.diataxis).toBe('howto');
-      expect(result.prepared.frontmatter).not.toHaveProperty('diataxis');
-    }
+    expect(record.extra.diataxis).toBe('howto');
+    expect(record).not.toHaveProperty('diataxis');
   });
 
   it('omits the extra diataxis field when --diataxis is not supplied', () => {
     const args: ParsedArgs = { ...baseArgs, diataxis: null };
-    const result = prepareNote({ args, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+    const { record } = prepareNote({ args, aliases: emptyAliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.frontmatter.extra).not.toHaveProperty('diataxis');
-    }
+    expect(record.extra).not.toHaveProperty('diataxis');
   });
 
   it('stamps created, updated, and last-verified from one second-precision instant', () => {
-    const result = prepareNote({ args: baseArgs, schema: defaultSchema, aliases: emptyAliases, now: NOW });
+    const { record } = prepareNote({ args: baseArgs, aliases: emptyAliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.frontmatter.created).toBe(TODAY);
-      expect(result.prepared.frontmatter.updated).toBe(TODAY);
-      expect(result.prepared.frontmatter.extra['last-verified']).toBe(TODAY);
-    }
+    expect(record.created).toBe(TODAY);
+    expect(record.updated).toBe(TODAY);
+    expect(record.lastVerified).toBe(TODAY);
+  });
+
+  it('carries the note body onto the record', () => {
+    const { record } = prepareNote({ args: baseArgs, aliases: emptyAliases, now: NOW, body: 'The body.\n' });
+
+    expect(record.body).toBe('The body.\n');
   });
 
   it('canonicalizes known-alias tags while preserving the agent-supplied order in originalTags', () => {
     const args: ParsedArgs = { ...baseArgs, tags: ['node.js', 'streams', 'node'] };
-    const result = prepareNote({ args, schema: defaultSchema, aliases, now: NOW });
+    const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      // Original tag list is preserved verbatim for the audit trail, including aliases that collapse onto the same
-      // canonical. The written tag list deduplicates in first-occurrence order so the note does not ship
-      // semantically duplicate tags like `['nodejs', 'streams', 'nodejs']`.
-      expect(result.prepared.originalTags).toEqual(['node.js', 'streams', 'node']);
-      expect(result.prepared.canonicalTags).toEqual(['nodejs', 'streams']);
-      expect(result.prepared.frontmatter.tags).toEqual(['nodejs', 'streams']);
-    }
+    // Original tag list is preserved verbatim for the audit trail, including aliases that collapse onto the same
+    // canonical. The written tag list deduplicates in first-occurrence order so the note does not ship
+    // semantically duplicate tags like `['nodejs', 'streams', 'nodejs']`.
+    expect(result.originalTags).toEqual(['node.js', 'streams', 'node']);
+    expect(result.canonicalTags).toEqual(['nodejs', 'streams']);
+    expect(result.record.tags).toEqual(['nodejs', 'streams']);
   });
 
   it('deduplicates exact-repeat canonical tags in first-occurrence order', () => {
     // Same canonical input twice should resolve to one tag, not two.
     const args: ParsedArgs = { ...baseArgs, tags: ['streams', 'streams', 'nodejs'] };
-    const result = prepareNote({ args, schema: defaultSchema, aliases, now: NOW });
+    const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.originalTags).toEqual(['streams', 'streams', 'nodejs']);
-      expect(result.prepared.canonicalTags).toEqual(['streams', 'nodejs']);
-    }
+    expect(result.originalTags).toEqual(['streams', 'streams', 'nodejs']);
+    expect(result.canonicalTags).toEqual(['streams', 'nodejs']);
   });
 
   it('passes unknown tags through unchanged', () => {
     const args: ParsedArgs = { ...baseArgs, tags: ['newvocab'] };
-    const result = prepareNote({ args, schema: defaultSchema, aliases, now: NOW });
+    const result = prepareNote({ args, aliases, now: NOW, body: '' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.canonicalTags).toEqual(['newvocab']);
-    }
+    expect(result.canonicalTags).toEqual(['newvocab']);
   });
 
-  it('round-trips: rendered frontmatter re-parses back to the prepared shape', () => {
+  it('round-trips: the rendered record re-parses back to the prepared record', () => {
     const args: ParsedArgs = { ...baseArgs, tags: ['node.js', 'streams'] };
-    const result = prepareNote({ args, schema: defaultSchema, aliases, now: NOW });
+    const { record } = prepareNote({ args, aliases, now: NOW, body: '\nThe body.\n' });
 
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      const rendered = writeFrontmatter({ frontmatter: result.prepared.frontmatter, body: '' });
-      const parsed = parseNoteContent({ content: rendered });
-      expect(parsed.frontmatter).toEqual({
-        title: 'Working with Node streams',
-        recordType: 'assertion',
-        created: TODAY,
-        updated: TODAY,
-        tags: ['nodejs', 'streams'],
-        extra: { diataxis: 'howto', 'last-verified': TODAY },
-      });
-    }
+    const { fields, body } = renderAssertion(record);
+    expect(parseAssertion(fields, body)).toEqual({ ok: true, record });
   });
 });

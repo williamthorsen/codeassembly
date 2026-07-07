@@ -1,10 +1,10 @@
 // Shapes for the kb-add helper: parsed CLI input, the resolved write target, and the JSON result emitted to stdout.
 //
-// The helper's stdout payload is a discriminated union on `ok`. Recoverable failures (collision, schema validation,
-// no resolvable KB, invalid title) return `{ ok: false, error, details? }`; successes return `{ ok: true, ... }`.
-// System errors (out-of-disk, permission denied) are out of band: They print to stderr and exit non-zero.
+// The helper's stdout payload is a discriminated union on `ok`. Recoverable failures (collision, no resolvable KB,
+// invalid title) return `{ ok: false, error, details? }`; successes return `{ ok: true, ... }`. System errors
+// (out-of-disk, permission denied) are out of band: They print to stderr and exit non-zero.
 
-import type { Finding, Frontmatter } from '@codeassembly/kb';
+import type { KbAssertion } from '@codeassembly/kb/records';
 
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 
@@ -23,10 +23,10 @@ export interface ParsedArgs {
   tags: string[];
 }
 
-/** The prepared note ready to be written: the rendered frontmatter, the body, and the canonicalization audit trail. */
+/** The prepared note ready to be written: the assertion record and the canonicalization audit trail. */
 export interface PreparedNote {
-  /** Frontmatter with canonical tags and a born-verified triad: `created`, `updated`, and the `extra['last-verified']` field stamped from one instant. */
-  frontmatter: Frontmatter;
+  /** The born-verified assertion record: `created`, `updated`, and `lastVerified` stamped from one instant. */
+  record: KbAssertion;
   /** Tag list as the agent supplied it, before alias canonicalization. */
   originalTags: string[];
   /** Tag list as written to disk, after alias canonicalization. */
@@ -40,8 +40,8 @@ export interface AddSuccess {
   path: string;
   /** The KB the note was written to. */
   kb: ResolvedKb;
-  /** The frontmatter that was written, post-canonicalization. */
-  frontmatter: Frontmatter;
+  /** The assertion record that was written, post-canonicalization. */
+  record: KbAssertion;
   /** Tag list as the agent supplied it, before alias canonicalization. */
   originalTags: string[];
   /** Tag list as written to disk, after alias canonicalization. */
@@ -66,7 +66,6 @@ export type AddErrorCode =
   | 'no-default'
   | 'invalid-args'
   | 'invalid-title'
-  | 'schema-validation'
   | 'collision'
   | 'readonly-kb';
 
@@ -74,8 +73,6 @@ export type AddErrorCode =
 export interface AddErrorDetails {
   /** Path of the existing file, set when `error: 'collision'`. */
   existingPath?: string;
-  /** Findings, set when `error: 'schema-validation'`. */
-  findings?: Finding[];
   /** Name of the explicit KB that did not resolve, set when `error: 'no-kb-resolvable'` after `--kb` was supplied. */
   requestedKb?: string;
   /** Registry name of the readonly KB that refused the write, set when `error: 'readonly-kb'`. */
