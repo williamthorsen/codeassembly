@@ -3,7 +3,6 @@ import { join, relative, sep } from 'node:path';
 import type { NoteScopeMatcher } from '@codeassembly/kb/config';
 import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@codeassembly/kb/config';
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
-import { loadSchema } from '@codeassembly/kb/schema';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
 import { recallNotes } from './recall.ts';
@@ -14,9 +13,9 @@ import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from '.
  * Runs the shared, type-blind recall pipeline both retrieve commands call: resolves which knowledge bases to search,
  * recalls candidate notes with ripgrep, scopes the hits to each KB's configured note set, parses each surviving note,
  * and applies the mechanical `--diataxis`/`--tag`/`--folder` filters. Returns the parsed hits plus the run-level signals
- * — searched KBs, ordered health warnings (including a malformed-schema warning per offending store), the pre-filter hit
- * count, and an empty-scope diagnostic — that each command composes its own candidate table and diagnostics from. Each
- * command selects the hits it owns by the parsed note's `recordType`.
+ * — searched KBs, ordered health warnings, the pre-filter hit count, and an empty-scope diagnostic — that each command
+ * composes its own candidate table and diagnostics from. Each command selects the hits it owns by the parsed note's
+ * `recordType`.
  *
  * An empty scope (no KB discovered or configured, an unknown `--store`, or a malformed registry) returns no hits and an
  * `emptyScopeDiagnostic`; a no-match run returns no hits with `recalledCount` 0. A note whose file cannot be read at
@@ -61,8 +60,6 @@ export async function searchNotes(input: {
   const { matchers, warnings: configWarnings } = await loadMatchersForHits({ hits: rawHits, scopedKbs: inScopeKbs });
   const noteHits = rawHits.filter((hit) => isNoteHit(hit, matchers));
 
-  const schemaWarnings = await collectSchemaWarnings({ hits: noteHits, scopedKbs: inScopeKbs });
-
   const unreadableWarnings: string[] = [];
   const hits: SearchHit[] = [];
   for (const hit of noteHits) {
@@ -84,12 +81,7 @@ export async function searchNotes(input: {
   return {
     hits,
     scopedKbs: searchedKbs,
-    warnings: [
-      ...composeWarnings({ registryError, missingKbs }),
-      ...configWarnings,
-      ...schemaWarnings,
-      ...unreadableWarnings,
-    ],
+    warnings: [...composeWarnings({ registryError, missingKbs }), ...configWarnings, ...unreadableWarnings],
     recalledCount: noteHits.length,
   };
 }
@@ -119,7 +111,7 @@ function toRelativePath(kbPath: string, notePath: string): string {
  * Builds a note-scope matcher for every KB that produced a hit, keyed by KB root path, so recall can drop hits that
  * fall outside the KB's configured `targets`/`exclude` — the same definition `kb check` enforces. A KB whose
  * `.kb/config.yaml` is malformed degrades to {@link defaultKbConfig} and contributes a config-health warning, so one
- * bad config never fails a multi-store search (mirroring {@link loadSchemasForHits}).
+ * bad config never fails a multi-store search.
  */
 async function loadMatchersForHits(input: {
   hits: RawHit[];
@@ -149,36 +141,6 @@ function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; err
   return name === null
     ? `discovered KB config invalid at ${input.kbPath}: ${message}`
     : `registry KB "${name}" config invalid: ${message}`;
-}
-
-/**
- * Validates the `.kb/schema.yaml` of every KB that produced a hit by loading it, collecting one schema-health warning
- * per KB whose schema fails to load. Only KBs with hits are read. Recall and the candidate shape do not depend on the
- * schema, so a malformed one never fails the search — it is reported to the operator and the search continues, mirroring
- * the config check in {@link loadMatchersForHits}.
- */
-async function collectSchemaWarnings(input: { hits: RawHit[]; scopedKbs: ScopedKb[] }): Promise<string[]> {
-  const warnings: string[] = [];
-  for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
-    try {
-      await loadSchema({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
-    } catch (error) {
-      warnings.push(formatSchemaInvalid({ kbPath, scopedKbs: input.scopedKbs, error }));
-    }
-  }
-  return warnings;
-}
-
-/**
- * Phrases the schema-health warning for a KB whose `.kb/schema.yaml` could not be loaded. A named registry entry
- * reports its name; a `.kb/`-discovered KB (no registry name) reports its path.
- */
-function formatSchemaInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; error: unknown }): string {
-  const name = input.scopedKbs.find((kb) => kb.path === input.kbPath)?.name ?? null;
-  const message = input.error instanceof Error ? input.error.message : String(input.error);
-  return name === null
-    ? `discovered KB schema invalid at ${input.kbPath}: ${message}`
-    : `registry KB "${name}" schema invalid: ${message}`;
 }
 
 /**

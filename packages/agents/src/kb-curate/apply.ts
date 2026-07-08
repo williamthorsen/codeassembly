@@ -1,8 +1,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { basename } from 'node:path';
 
-import type { Finding, VaultIndex } from '@codeassembly/kb';
+import type { Finding } from '@codeassembly/kb';
 import type { EnumeratedNote } from '@codeassembly/kb/check';
+import { asStringList } from '@codeassembly/kb/note-io';
+import { buildVaultIndex } from '@codeassembly/kb/vault-integrity';
 
 import { canonicalizeTags } from './apply/canonicalize-tags.ts';
 import { rewriteWikilinks } from './apply/rewrite-wikilinks.ts';
@@ -11,9 +12,8 @@ import type { AppliedFix } from './types.ts';
 /**
  * Performs the two mechanically safe fixes for a `--apply` run and returns one {@link AppliedFix} per attempted fix:
  *
- * - **Tag canonicalization** — for each note that produced a `frontmatter.tag-alias` finding, delegate to `kb-edit
- *   --retag` (subprocess) once, so `kb-edit` stays the sole writer of frontmatter. A single failure does not abort
- *   the run.
+ * - **Tag canonicalization** — for each note that produced a `tag-alias` finding, delegate to `kb-edit --retag`
+ *   (subprocess) once, so `kb-edit` stays the sole writer of frontmatter. A single failure does not abort the run.
  * - **Path-only wikilink rewrites** — sweep every note body, rewriting stale path-qualified links whose basename
  *   resolves to exactly one note. These touch the body, not the frontmatter, so they are written inline.
  *
@@ -34,39 +34,41 @@ export async function applyFixes(input: {
 
 // region | Helpers
 
-/** Runs `kb-edit --retag` once per note that has a `frontmatter.tag-alias` finding, in vault order. */
+/** Runs `kb-edit --retag` once per note that has a `tag-alias` finding, in vault order. */
 async function canonicalizeAffectedNotes(input: {
   notes: readonly EnumeratedNote[];
   findings: readonly Finding[];
 }): Promise<AppliedFix[]> {
   const affectedPaths = new Set(
-    input.findings.filter((finding) => finding.rule === 'frontmatter.tag-alias').map((finding) => finding.path),
+    input.findings.filter((finding) => finding.rule === 'tag-alias').map((finding) => finding.path),
   );
   const fixes: AppliedFix[] = [];
   for (const entry of input.notes) {
-    if (!affectedPaths.has(entry.note.path)) continue;
-    const currentTags = entry.note.frontmatter?.tags ?? [];
-    fixes.push(await canonicalizeTags({ notePath: entry.note.path, currentTags }));
+    if (!affectedPaths.has(entry.path)) continue;
+    const currentTags = asStringList(entry.fields.tags) ?? [];
+    fixes.push(await canonicalizeTags({ notePath: entry.path, currentTags }));
   }
   return fixes;
 }
 
 /** Sweeps every note body for stale path-qualified wikilinks and rewrites them inline, in vault order. */
 async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }): Promise<AppliedFix[]> {
-  const vaultIndex = buildRelativeIndex(input.notes);
+  // Index on vault-relative paths so a rewrite resolves a link to a note's relative target, not the absolute path
+  // the detection index keys on.
+  const vaultIndex = buildVaultIndex(input.notes.map((entry) => ({ path: entry.relativePath })));
   const fixes: AppliedFix[] = [];
   for (const entry of input.notes) {
-    const result = rewriteWikilinks({ body: entry.note.body, vaultIndex });
+    const result = rewriteWikilinks({ body: entry.body, vaultIndex });
     if (!result.changed) continue;
     // Re-read current on-disk content rather than splicing into the enumeration snapshot: a tag fix that ran
     // earlier in this run rewrote the frontmatter on disk, and writing from the stale snapshot would silently
     // revert it. The body is untouched by the tag fix, so the snapshot's body still anchors the replacement.
     let currentContent: string;
     try {
-      currentContent = await readFile(entry.note.path, 'utf8');
+      currentContent = await readFile(entry.path, 'utf8');
     } catch (error) {
       fixes.push({
-        path: entry.note.path,
+        path: entry.path,
         rule: 'wikilinks.path-rewrite',
         ok: false,
         operation: 'rewrite-wikilink',
@@ -74,10 +76,10 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
       });
       continue;
     }
-    const newContent = replaceBody(currentContent, entry.note.body, result.body);
+    const newContent = replaceBody(currentContent, entry.body, result.body);
     if (newContent === null) {
       fixes.push({
-        path: entry.note.path,
+        path: entry.path,
         rule: 'wikilinks.path-rewrite',
         ok: false,
         operation: 'rewrite-wikilink',
@@ -86,9 +88,9 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
       continue;
     }
     try {
-      await writeFile(entry.note.path, newContent, 'utf8');
+      await writeFile(entry.path, newContent, 'utf8');
       fixes.push({
-        path: entry.note.path,
+        path: entry.path,
         rule: 'wikilinks.path-rewrite',
         ok: true,
         operation: 'rewrite-wikilink',
@@ -96,7 +98,7 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
       });
     } catch (error) {
       fixes.push({
-        path: entry.note.path,
+        path: entry.path,
         rule: 'wikilinks.path-rewrite',
         ok: false,
         operation: 'rewrite-wikilink',
@@ -105,25 +107,6 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
     }
   }
   return fixes;
-}
-
-/**
- * Builds a basename → vault-relative-paths index over the enumerated notes. The rewrite sweep resolves a link's
- * basename here and rewrites to the matching note's vault-relative path, so the index values must be the relative
- * paths (not the absolute paths the detection index keys on).
- */
-function buildRelativeIndex(notes: readonly EnumeratedNote[]): VaultIndex {
-  const index = new Map<string, Set<string>>();
-  for (const entry of notes) {
-    const key = basename(entry.relativePath).replace(/\.md$/, '');
-    let set = index.get(key);
-    if (set === undefined) {
-      set = new Set();
-      index.set(key, set);
-    }
-    set.add(entry.relativePath);
-  }
-  return index;
 }
 
 /**

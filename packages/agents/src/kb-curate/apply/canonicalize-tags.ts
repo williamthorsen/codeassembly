@@ -40,7 +40,7 @@ export async function canonicalizeTags(input: {
   if (kbEditPath === null) {
     return {
       path: notePath,
-      rule: 'frontmatter.tag-alias',
+      rule: 'tag-alias',
       ok: false,
       operation: 'kb-edit --retag',
       message: 'sibling kb-edit.mjs not found; tag canonicalization requires kb-edit to be co-located',
@@ -53,13 +53,13 @@ export async function canonicalizeTags(input: {
   if (!outcome.ok) {
     return {
       path: notePath,
-      rule: 'frontmatter.tag-alias',
+      rule: 'tag-alias',
       ok: false,
       operation: 'kb-edit --retag',
       message: outcome.message,
     };
   }
-  return { path: notePath, rule: 'frontmatter.tag-alias', ok: true, operation: 'kb-edit --retag' };
+  return { path: notePath, rule: 'tag-alias', ok: true, operation: 'kb-edit --retag' };
 }
 
 // region | Helpers

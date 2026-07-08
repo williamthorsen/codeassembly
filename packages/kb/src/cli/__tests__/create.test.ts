@@ -19,7 +19,7 @@ describe('kb create', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain(basename(cwd));
     expect(result.stdout).toContain('Registered in');
-    expect(await pathExists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(cwd, '.kb', 'config.yaml'))).toBe(true);
     expect(await pathExists(join(cwd, 'content', 'events'))).toBe(true);
     const config = await loadKbRegistry({ userConfigPath: getRegistryPathFor(home) });
     expect(config.entries[0]?.name).toBe(basename(cwd));
@@ -44,7 +44,7 @@ describe('kb create', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('Not registered');
-    expect(await pathExists(join(cwd, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(cwd, '.kb', 'config.yaml'))).toBe(true);
     expect(await pathExists(getRegistryPathFor(home))).toBe(false);
   });
 

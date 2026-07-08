@@ -259,7 +259,7 @@ describe(runRetrieve, () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('degrades a malformed store schema to the default and warns instead of failing the search', async () => {
+  it('leaves a malformed store schema inert: it no longer affects recall or warns', async () => {
     const result = await runRetrieve({
       argv: ['brokenschema'],
       startDir: MALFORMED_SCHEMA_VAULT,
@@ -268,14 +268,13 @@ describe(runRetrieve, () => {
     });
 
     expect(result.candidates.length).toBeGreaterThan(0);
-    expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0]).toMatch(/schema invalid/);
-    // Degraded to the default schema: the assertion note still ranks by freshness (2026-04-20 to 2026-05-01).
+    expect(result.warnings).toEqual([]);
+    // Ranking is unaffected: the assertion note still ranks by freshness (2026-04-20 to 2026-05-01).
     expect(result.candidates[0]?.lastVerifiedAgeDays).toBe(11);
     expect(result.diagnostic).toBeUndefined();
   });
 
-  it('surfaces the valid store assertion while degrading a malformed sibling schema in one multi-store search', async () => {
+  it('surfaces the valid store assertion and excludes non-assertion records in one multi-store search', async () => {
     const result = await runRetrieve({
       argv: ['crossstore', '--all-kbs'],
       startDir: MULTI_SCHEMA_REGISTRY,
@@ -285,10 +284,10 @@ describe(runRetrieve, () => {
 
     const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
     const plain = result.candidates.find((candidate) => candidate.path.includes('plain-note.md'));
-    // The custom insight type is excluded; the assertion surfaces, and the malformed sibling schema degrades with one warning.
+    // A non-assertion record type is excluded from recall; the assertion surfaces; the malformed sibling schema is inert.
     expect(insight).toBeUndefined();
     expect(plain).toBeDefined();
-    expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(1);
+    expect(result.warnings.filter((warning) => /schema invalid/.test(warning))).toHaveLength(0);
   });
 
   it('recalls only notes inside the configured targets, skipping root and excluded markdown', async () => {

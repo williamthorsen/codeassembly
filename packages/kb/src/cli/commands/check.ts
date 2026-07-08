@@ -19,8 +19,8 @@ export interface CommandOutput {
 /** Usage text for `kb check`. */
 export const CHECK_HELP = `Usage: kb check [paths...] [options]
 
-Validate notes in a knowledge base against its schema, tag aliases, and
-cross-note link and path rules. With no path arguments, every note is checked.
+Validate notes in a knowledge base against its tag aliases and cross-note
+link and path rules. With no path arguments, every note is checked.
 Cross-note rules always resolve against the whole vault.
 
 Targeting (mutually exclusive):
@@ -42,7 +42,7 @@ Exit codes:
   0  no error-severity findings in the checked notes (warnings allowed)
   1  one or more error-severity findings in the checked notes
   2  usage error, unresolvable store or --vs ref, a path matching no note, or
-     malformed config/schema/aliases
+     malformed config or aliases
 `;
 
 /**
@@ -50,8 +50,8 @@ Exit codes:
  *
  * Store resolution composes the package's own exports inline — `findKbRoot` for the default ancestor-walk and
  * `tryLoadKbRegistry` for an explicit `--kb <name>`. The lookup is read-only, so a store's registry `readonly` flag
- * is ignored. A malformed `.kb/config.yaml`/`schema.yaml`/`tag-aliases.yaml` surfaces as a `KbLoaderError` from
- * `check`, which maps to exit 2; any other error from `check` propagates to the caller as a real crash.
+ * is ignored. A malformed `.kb/config.yaml`/`tag-aliases.yaml` surfaces as a `KbLoaderError` from `check`, which maps
+ * to exit 2; any other error from `check` propagates to the caller as a real crash.
  */
 export async function runCheck(input: { argv: readonly string[]; cwd: string; home?: string }): Promise<CommandOutput> {
   let options: CheckOptions;
@@ -216,7 +216,7 @@ async function resolveSelection(input: {
     return { ok: false, message: `no notes matched: ${selection.unmatched.join(', ')}` };
   }
 
-  const selectedPaths = new Set(selection.selected.map((entry) => entry.note.path));
+  const selectedPaths = new Set(selection.selected.map((entry) => entry.path));
   const findings = result.findings.filter((finding) => selectedPaths.has(finding.path));
   return { ok: true, scope, notes: selection.selected, findings };
 }

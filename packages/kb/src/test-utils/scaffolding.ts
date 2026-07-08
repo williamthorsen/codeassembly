@@ -37,11 +37,10 @@ export function kbRootAt(path: string): KbRoot {
 }
 
 /** Stands up a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */
-export async function makeKbRoot(seeds: { schema?: string; config?: string; aliases?: string } = {}): Promise<KbRoot> {
+export async function makeKbRoot(seeds: { config?: string; aliases?: string } = {}): Promise<KbRoot> {
   const path = await makeTempDir('kb-root-');
   const kbDir = join(path, '.kb');
   await mkdir(kbDir, { recursive: true });
-  if (seeds.schema !== undefined) await writeFile(join(kbDir, 'schema.yaml'), seeds.schema, 'utf8');
   if (seeds.config !== undefined) await writeFile(join(kbDir, 'config.yaml'), seeds.config, 'utf8');
   if (seeds.aliases !== undefined) await writeFile(join(kbDir, 'tag-aliases.yaml'), seeds.aliases, 'utf8');
   return kbRootAt(path);

@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture an event
 
-Append an event record to the shared knowledge substrate, or amend an existing one that has not yet been pushed. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the session, the working directory, and a best-effort `repo`), validates the event's required set against the store's schema, and writes the record atomically. You supply the `summary` and the event body.
+Append an event record to the shared knowledge substrate, or amend an existing one that has not yet been pushed. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the session, the working directory, and a best-effort `repo`), validates the event record's required fields, and writes the record atomically. You supply the `summary` and the event body.
 
 This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cross-referencing, and no dedup. The point is to capture the event cheaply and move on; recall and triage happen later via `kb-retrieve`.
 
@@ -83,7 +83,7 @@ EOF
 The helper prints a JSON object to stdout:
 
 - `ok: true` with `id`, `capturedAt`, `path`, `store` on success.
-- `ok: false` with `error`, `message`, and optional `findings` on a recoverable failure.
+- `ok: false` with `error`, `message`, and optional `errors` on a recoverable failure.
 
 ### 3. Handle the result
 
@@ -96,11 +96,11 @@ On `ok: false`, route by the `error` code:
 - `store-not-registered` — the named store is not in `kb.yaml`. Confirm the store name or register it.
 - `readonly-store` — the store is marked readonly; captures are refused.
 - `no-default-store` — `--store @default` was given but no `default_kb` is configured. Name a store explicitly or configure a default with `kb set-default`.
-- `schema-validation` — surface the `findings`, then supply the missing field and retry.
+- `schema-validation` — surface the `errors`, then supply the missing field and retry.
 - `amend-not-found` — `--amend` named an id with no event at it. Confirm the id and store.
 - `amend-parse` — the event to amend is not a valid event record. Inspect the file.
 - `event-pushed` — the event is already pushed. Re-run with `--allow-pushed` to amend it anyway, or capture a new event instead.
 
 ## Completion
 
-A written record at the reported path, validated against the store's schema. A fresh capture never overwrites an existing event; an event stays editable via `--amend` until it is pushed to the remote, and is immutable after.
+A written record at the reported path, validated as an event record. A fresh capture never overwrites an existing event; an event stays editable via `--amend` until it is pushed to the remote, and is immutable after.

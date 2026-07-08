@@ -4,23 +4,8 @@ import { type Document, isMap, isPair, isScalar, isSeq, parseDocument } from 'ya
 
 import { isRecord } from '../type-guards.ts';
 import type { Frontmatter, FrontmatterRaw, ParsedNote } from '../types.ts';
-import { type FrontmatterDocument } from './yaml-position.ts';
 
 const FENCE = '---';
-
-/**
- * Builds the raw `yaml.Document` for an already-parsed note's frontmatter, or `null` when the note has no frontmatter
- * block.
- *
- * @internal
- */
-export function documentFor(note: ParsedNote): FrontmatterDocument | null {
-  if (note.frontmatterRaw === null) {
-    return null;
-  }
-  const doc = parseDocument(note.frontmatterRaw.text, { schema: 'core' });
-  return { doc, raw: note.frontmatterRaw };
-}
 
 /**
  * Reads a note from disk and parse it into a `ParsedNote`. I/O errors (e.g. a missing file) are thrown;
@@ -64,19 +49,6 @@ export function parseNoteContent(input: { content: string; path?: string }): Par
   const frontmatter = parseError === undefined ? toFrontmatter(doc) : null;
 
   return { path, content, frontmatter, frontmatterRaw, body, bodyStartLine };
-}
-
-/**
- * Parses a note and returns its raw `yaml.Document` alongside the slice metadata.
- *
- * @internal - Exported to allow testing
- */
-export function parseNoteWithDocument(
-  content: string,
-  path = '<string>',
-): { note: ParsedNote; document: FrontmatterDocument | null } {
-  const note = parseNoteContent({ content, path });
-  return { note, document: documentFor(note) };
 }
 
 // region | Helpers

@@ -8,7 +8,6 @@ import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
-import type { KbRoot } from '@codeassembly/kb';
 import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
 import {
   EVENT_IMPACT_LEVELS,
@@ -18,7 +17,6 @@ import {
   parseEvent,
   renderEvent,
 } from '@codeassembly/kb/records';
-import { loadSchema } from '@codeassembly/kb/schema';
 import { ulid } from 'ulid';
 
 import { formatUtcTimestamp, isSafeEventId } from '../kb-shared/note-helpers.ts';
@@ -73,8 +71,8 @@ if (isEntryPoint()) {
 /**
  * Runs the helper end to end: parses args, reads the event body from stdin, and resolves the target store (a concrete
  * `--store` by name, or the registry's `default_kb` via the `@default` sentinel; an omitted `--store` is refused). A
- * fresh capture loads the store schema, fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`,
- * best-effort `repo`), validates the event record type's required spine, and writes `content/events/{id}.md` without
+ * fresh capture fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`, best-effort `repo`),
+ * validates the event record's required spine, and writes `content/events/{id}.md` without
  * overwriting an existing id. With `--amend <id>`, it instead rewrites that existing event in place; see
  * {@link amendEvent}.
  *
@@ -145,8 +143,6 @@ export async function runCapture(input: {
     return amendEvent({ args, store, body });
   }
 
-  const kbRoot: KbRoot = { path: store.path, kbDir: join(store.path, '.kb'), via: 'ancestor-walk' };
-  const schema = await loadSchema({ kbRoot });
   const session = input.env.CLAUDE_CODE_SESSION_ID ?? '';
   const repo = await resolveRepo(input.cwd);
   const context: CaptureContext = { session, cwd: input.cwd, ...(repo !== undefined && { repo }) };
@@ -156,15 +152,14 @@ export async function runCapture(input: {
     context,
     id: ulid(),
     capturedAt: formatUtcTimestamp(input.now),
-    schema,
     body,
   });
   if (!prep.ok) {
     return {
       ok: false,
       error: 'schema-validation',
-      message: `event did not pass schema validation: ${prep.findings.map((finding) => finding.message).join('; ')}`,
-      findings: prep.findings,
+      message: `event did not pass validation: ${prep.errors.join('; ')}`,
+      errors: prep.errors,
     };
   }
 

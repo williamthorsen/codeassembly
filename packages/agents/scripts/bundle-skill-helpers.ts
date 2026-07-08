@@ -114,26 +114,13 @@ export const targets: BundleTarget[] = [
 /**
  * Stands up an event store plus an isolated home registering it as `default_kb`, and a throwaway git repo with an
  * `origin` remote, then returns a `SmokeTestInvocation` that captures a single event against them with `--store
- * @default`. Exercises the full `@default` sentinel resolution → load schema → validate the event record type's spine →
- * write pipeline end to end, which is the only path that wires the bundled resolver, schema loader, and immutable write
- * together. The store's own `schema.yaml` declares the `event` record type, so its required-set validation is genuinely
- * run.
+ * @default`. Exercises the full `@default` sentinel resolution → validate the `event` record's spine via `parseEvent` →
+ * write pipeline end to end, which is the only path that wires the bundled resolver, the per-type record layer, and the
+ * immutable write together.
  */
 function makeCaptureEventSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'capture-event-store-'));
   mkdirSync(path.join(storePath, '.kb'), { recursive: true });
-  writeFileSync(
-    path.join(storePath, '.kb', 'schema.yaml'),
-    [
-      'recordTypes:',
-      '  event:',
-      '    recall: recurrence-recency',
-      '    required: [id, captured-at, session, cwd, summary]',
-      '    optional: [repo, skill, model, tags, correction, owner, locality, severity]',
-      '',
-    ].join('\n'),
-    'utf8',
-  );
 
   const home = mkdtempSync(path.join(tmpdir(), 'capture-event-home-'));
   mkdirSync(path.join(home, '.agents'), { recursive: true });
@@ -194,18 +181,6 @@ function assertCaptureEventSmokeResult(result: unknown): void {
 function makeKbUpdateEventsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'kb-update-events-store-'));
   mkdirSync(path.join(storePath, '.kb'), { recursive: true });
-  writeFileSync(
-    path.join(storePath, '.kb', 'schema.yaml'),
-    [
-      'recordTypes:',
-      '  event:',
-      '    recall: recurrence-recency',
-      '    required: [id, captured-at, session, cwd, summary]',
-      '    optional: [repo, skill, model, harness, tags, addressed-by]',
-      '',
-    ].join('\n'),
-    'utf8',
-  );
 
   const eventsDir = path.join(storePath, 'content', 'events');
   mkdirSync(eventsDir, { recursive: true });
@@ -285,18 +260,6 @@ function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): vo
 function makeKbRetrieveEventsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-store-'));
   mkdirSync(path.join(storePath, '.kb'), { recursive: true });
-  writeFileSync(
-    path.join(storePath, '.kb', 'schema.yaml'),
-    [
-      'recordTypes:',
-      '  event:',
-      '    recall: recurrence-recency',
-      '    required: [id, captured-at, session, cwd, summary]',
-      '    optional: [repo, tags, addressed-by]',
-      '',
-    ].join('\n'),
-    'utf8',
-  );
 
   const eventsDir = path.join(storePath, 'content', 'events');
   mkdirSync(eventsDir, { recursive: true });

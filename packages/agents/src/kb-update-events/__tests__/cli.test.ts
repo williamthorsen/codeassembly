@@ -2,11 +2,8 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { parseNoteContent } from '@codeassembly/kb/frontmatter';
 import { readNoteContent } from '@codeassembly/kb/note-io';
 import { parseEvent } from '@codeassembly/kb/records';
-import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
-import { loadSchema } from '@codeassembly/kb/schema';
 import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runUpdate } from '../cli.ts';
@@ -258,7 +255,7 @@ describe(runUpdate, () => {
     expect(result.error).toBe('store-not-registered');
   });
 
-  it('writes an edited event that still passes the store frontmatter rule', async () => {
+  it('writes an edited event that still validates as an event record', async () => {
     const { storePath, home } = await makeStore('codeassembly');
     const path = await seedEvent(storePath, EVENT_ID);
 
@@ -266,11 +263,7 @@ describe(runUpdate, () => {
     expect(result.ok).toBe(true);
 
     const written = await readFile(path, 'utf8');
-    const schema = await loadSchema({
-      kbRoot: { path: storePath, kbDir: join(storePath, '.kb'), via: 'ancestor-walk' },
-    });
-    const parsed = parseNoteContent({ content: written, path });
-    const findings = runRules({ rules: [frontmatterRule], notes: [parsed], schema });
-    expect(findings.filter((finding) => finding.severity === 'error')).toEqual([]);
+    const { fields, body } = readNoteContent(written);
+    expect(parseEvent(fields, body).ok).toBe(true);
   });
 });

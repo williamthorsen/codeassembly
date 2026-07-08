@@ -210,7 +210,7 @@ describe(runCurate, () => {
   it('produces the generic and curate findings together for a content-structured vault', async () => {
     const { kbPath, home } = await makeVault({
       'Bad.md':
-        '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\nlast-verified: 2026-05-20\ntags: [x]\ntype: howto\n---\n\nSee [[Ghost]].\n',
+        '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\nlast-verified: 2025-01-01\ntags: [x]\ntype: howto\n---\n\nSee [[Ghost]].\n',
     });
 
     const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });
@@ -218,8 +218,9 @@ describe(runCurate, () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     const rules = result.findings.map((finding) => finding.rule);
-    expect(rules).toContain('frontmatter.required');
+    // A check finding (unresolved link) and a curate finding (stale verification) surface together.
     expect(rules).toContain('wikilinks.unresolved');
+    expect(rules).toContain('verification.stale');
   });
 
   it('returns invalid-config when the store config.yaml is malformed', async () => {
@@ -233,22 +234,11 @@ describe(runCurate, () => {
     expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('config.yaml') });
   });
 
-  it('returns invalid-config when the store schema.yaml is malformed', async () => {
-    const { kbPath, home } = await makeVault({
-      'Note.md': VALID,
-      '.kb/schema.yaml': 'types: [howto\n',
-    });
-
-    const result = await runCurate({ argv: [], startDir: kbPath, now: NOW, home });
-
-    expect(result).toEqual({ ok: false, error: 'invalid-config', message: expect.stringContaining('schema.yaml') });
-  });
-
   it('propagates a non-loader error from check rather than returning invalid-config', async () => {
     const { kbPath, home } = await makeVault({ 'Note.md': VALID });
-    vi.mocked(check).mockRejectedValueOnce(new Error('rule engine crashed'));
+    vi.mocked(check).mockRejectedValueOnce(new Error('checker crashed'));
 
-    await expect(runCurate({ argv: [], startDir: kbPath, now: NOW, home })).rejects.toThrow(/rule engine crashed/);
+    await expect(runCurate({ argv: [], startDir: kbPath, now: NOW, home })).rejects.toThrow(/checker crashed/);
   });
 
   it('returns invalid-config when the residual check after --apply throws a KbLoaderError', async () => {

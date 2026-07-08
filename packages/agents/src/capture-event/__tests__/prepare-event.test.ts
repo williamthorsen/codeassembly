@@ -1,23 +1,10 @@
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
-import type { KbRoot, Schema } from '@codeassembly/kb';
-import { loadSchema } from '@codeassembly/kb/schema';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { prepareEvent } from '../prepare-event.ts';
 import type { CaptureContext, ParsedArgs } from '../types.ts';
 
-const EVENT_SCHEMA = `recordTypes:
-  event:
-    recall: recurrence-recency
-    required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity, impact]
-`;
-
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
-const CAPTURED_AT = '2026-06-04T06:57:22.000Z';
+const CAPTURED_AT = '2026-06-04T06:57:22Z';
 
 const CONTEXT: CaptureContext = { session: 'session-abc', cwd: '/tmp/work', repo: 'owner/name' };
 
@@ -37,23 +24,12 @@ function argsFor(overrides: Partial<ParsedArgs>): ParsedArgs {
 }
 
 describe(prepareEvent, () => {
-  let schema: Schema;
-
-  beforeAll(async () => {
-    const storeRoot = await mkdtemp(join(tmpdir(), 'capture-prepare-'));
-    await mkdir(join(storeRoot, '.kb'), { recursive: true });
-    await writeFile(join(storeRoot, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
-    const kbRoot: KbRoot = { path: storeRoot, kbDir: join(storeRoot, '.kb'), via: 'ancestor-walk' };
-    schema = await loadSchema({ kbRoot });
-  });
-
   it('writes recordType: event as the stored discriminant', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: 'Noticed a thing.',
     });
 
@@ -69,7 +45,6 @@ describe(prepareEvent, () => {
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: 'Noticed a thing.',
     });
 
@@ -85,7 +60,6 @@ describe(prepareEvent, () => {
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: 'Noticed a thing.',
     });
 
@@ -102,7 +76,6 @@ describe(prepareEvent, () => {
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: 'Noticed a thing.',
     });
 
@@ -119,7 +92,6 @@ describe(prepareEvent, () => {
       context: { session: 'session-abc', cwd: '/tmp/work' },
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: '',
     });
 
@@ -136,7 +108,6 @@ describe(prepareEvent, () => {
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: '',
     });
 
@@ -155,7 +126,6 @@ describe(prepareEvent, () => {
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: '',
     });
 
@@ -171,7 +141,6 @@ describe(prepareEvent, () => {
       context: CONTEXT,
       id: ID,
       capturedAt: CAPTURED_AT,
-      schema,
       body: '',
     });
 

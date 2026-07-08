@@ -1,6 +1,5 @@
-import type { Finding, Schema } from '@codeassembly/kb';
-import { parseNoteContent } from '@codeassembly/kb/frontmatter';
-import { frontmatterRule, runRules } from '@codeassembly/kb/rules';
+import { readNoteContent } from '@codeassembly/kb/note-io';
+import { parseEvent } from '@codeassembly/kb/records';
 import { stringify } from 'yaml';
 
 import type { CaptureContext, ParsedArgs } from './types.ts';
@@ -21,10 +20,10 @@ export interface PrepareSuccess {
   prepared: PreparedEvent;
 }
 
-/** Schema-validation failure: the error-severity findings the helper turns into a structured result. */
+/** Validation failure: the human-readable errors that blocked the event. */
 export interface PrepareFailure {
   ok: false;
-  findings: Finding[];
+  errors: string[];
 }
 
 /** The outcome of preparing an event for write. */
@@ -32,24 +31,22 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 
 /**
  * Assembles an event record from agent-supplied args and auto-filled context, renders it to a note string, and
- * validates the result against the store's schema via `frontmatterRule`. The record carries the stored
- * `recordType: event` discriminant and the event spine (`id`, `captured-at`, `session`, `cwd`, `repo`, `summary`) plus
- * any supplied `skill`/`model`/`harness`/`tags`/`impact`. No `updated`/`last-verified` field is written: an event
- * carries a single canonical state, editable in place via `capture-event --amend` until it is pushed and immutable
- * after.
+ * validates the result as an `event` record via `parseEvent`. The record carries the stored `recordType: event`
+ * discriminant and the event spine (`id`, `captured-at`, `session`, `cwd`, `repo`, `summary`) plus any supplied
+ * `skill`/`model`/`harness`/`tags`/`impact`. No `updated`/`last-verified` field is written: an event carries a single
+ * canonical state, editable in place via `capture-event --amend` until it is pushed and immutable after.
  *
- * Validation round-trips the rendered note through `parseNoteContent` and `runRules`. When any finding has
- * `severity: 'error'`, the outcome is `{ ok: false, findings }` and nothing is written.
+ * Validation round-trips the rendered note through `readNoteContent` and `parseEvent`. When the record does not
+ * validate, the outcome is `{ ok: false, errors }` and nothing is written.
  */
 export function prepareEvent(input: {
   args: ParsedArgs;
   context: CaptureContext;
   id: string;
   capturedAt: string;
-  schema: Schema;
   body: string;
 }): PrepareOutcome {
-  const { args, context, id, capturedAt, schema, body } = input;
+  const { args, context, id, capturedAt, body } = input;
 
   const fields: Array<[string, string | string[]]> = [
     ['recordType', 'event'],
@@ -80,10 +77,9 @@ export function prepareEvent(input: {
 
   const content = renderEventNote(fields, body);
 
-  const findings = validate({ content, schema });
-  const errorFindings = findings.filter((finding) => finding.severity === 'error');
-  if (errorFindings.length > 0) {
-    return { ok: false, findings: errorFindings };
+  const errors = validate(content);
+  if (errors.length > 0) {
+    return { ok: false, errors };
   }
 
   return { ok: true, prepared: { id, capturedAt, content } };
@@ -91,10 +87,11 @@ export function prepareEvent(input: {
 
 // region | Helpers
 
-/** Re-parses the rendered note and runs the frontmatter rule against it under the store's schema. */
-function validate(input: { content: string; schema: Schema }): Finding[] {
-  const parsed = parseNoteContent({ content: input.content, path: '<capture-event proposal>' });
-  return runRules({ rules: [frontmatterRule], notes: [parsed], schema: input.schema });
+/** Re-parses the rendered note and validates it as an `event` record, returning any validation errors. */
+function validate(content: string): string[] {
+  const { fields, body } = readNoteContent(content);
+  const result = parseEvent(fields, body);
+  return result.ok ? [] : result.errors;
 }
 
 /**

@@ -1,8 +1,8 @@
 /**
- * The typed error thrown by the KB loaders (`loadKbConfig`, `loadSchema`, `loadAliases`) on a structural defect:
- * malformed YAML, a schema violation, or an illegal override. The `kind` discriminant lets a caller distinguish a
- * recoverable config/schema/alias defect from any other throw (an enumeration or rule crash) without matching on
- * message text or relying on `instanceof` surviving a bundle boundary.
+ * The typed error thrown by the KB loaders (`loadKbConfig`, `loadAliases`) on a structural defect: malformed YAML or
+ * wrong types. The `kind` discriminant lets a caller distinguish a recoverable config or alias defect from any other
+ * throw (an enumeration or detection crash) without matching on message text or relying on `instanceof` surviving a
+ * bundle boundary.
  */
 export class KbLoaderError extends Error {
   /** Discriminant for narrow catch boundaries; survives serialization and bundling unlike `instanceof`. */

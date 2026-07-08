@@ -17,7 +17,7 @@ describe(create, () => {
     const outcome = await create({ targetDir, register: true, registryPath });
 
     assert.ok(outcome.ok);
-    expect(await pathExists(join(targetDir, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(targetDir, '.kb', 'schema.yaml'))).toBe(false);
     expect(await pathExists(join(targetDir, '.kb', 'config.yaml'))).toBe(true);
     expect(await pathExists(join(targetDir, '.kb', 'tag-aliases.yaml'))).toBe(true);
     expect(await pathExists(join(targetDir, 'content', 'events'))).toBe(true);
@@ -54,7 +54,7 @@ describe(create, () => {
 
     assert.ok(outcome.ok);
     expect(outcome.created.registered).toBe(false);
-    expect(await pathExists(join(targetDir, '.kb', 'schema.yaml'))).toBe(true);
+    expect(await pathExists(join(targetDir, '.kb', 'config.yaml'))).toBe(true);
   });
 
   it('returns kb-exists and scaffolds nothing when .kb already exists', async () => {

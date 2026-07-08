@@ -1,8 +1,0 @@
-# Tag aliases vendored for the parity fixture set.
-#
-# A representative subset of github.com/williamthorsen/vaults.coding's
-# .kb/tag-aliases.yaml — only the canonicals the parity notes exercise.
-aliases:
-  git: [git-sparse-checkout, version-control, vcs]
-  nodejs: [node.js, node]
-  react: [react.js, reactjs]

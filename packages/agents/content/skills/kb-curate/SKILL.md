@@ -28,7 +28,7 @@ A value-bearing flag accepts both `--kb coding` and `--kb=coding`. With no flags
 
 The knowledge base is resolved the same way as `kb-add`: a concrete `--kb <name>` beats a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Curating spans a single KB per run — wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
-Which notes are curated is governed by the store's `.kb/config.yaml`: by default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `schema.yaml`, or `tag-aliases.yaml` fails the run with `invalid-config` rather than being silently ignored.
+Which notes are curated is governed by the store's `.kb/config.yaml`: by default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml` or `tag-aliases.yaml` fails the run with `invalid-config` rather than being silently ignored.
 
 ## Runtime dependencies
 
@@ -37,15 +37,14 @@ Which notes are curated is governed by the store's `.kb/config.yaml`: by default
 
 ## Detection categories
 
-The helper reports findings across five categories. Each finding carries a rule code and a severity aligned with the `@codeassembly/kb` rule contract.
+The helper reports findings across five categories. Each finding carries a rule code and a severity.
 
 | Rule code               | Severity | Meaning                                                                                |
 | ----------------------- | -------- | -------------------------------------------------------------------------------------- |
 | `wikilinks.unresolved`  | error    | A `[[Target]]` does not resolve to any vault note.                                     |
-| `wikilinks.ambiguous`   | warning  | A `[[Target]]` basename matches more than one note.                                    |
+| `wikilinks.basename`    | warning  | Two or more notes share a basename (reported once for the vault).                      |
 | `paths.user-home`       | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                   |
-| `frontmatter.tag-alias` | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
-| `frontmatter.*`         | error    | Other frontmatter defects (missing, parse, required, type, date).                      |
+| `tag-alias`             | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
 | `verification.unmarked` | warning  | The note has no `last-verified` field; reported only when the vault uses verification. |
 | `verification.stale`    | warning  | `last-verified` is older than `--stale-after` days.                                    |
 | `supersede.dangling`    | error    | A `superseded-by`/`supersedes` target is not a vault note.                             |
@@ -58,7 +57,7 @@ The helper reports findings across five categories. Each finding carries a rule 
 
 Only two fixes are applied; everything else stays report-only.
 
-- **Tag canonicalization** — for each note with a `frontmatter.tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
+- **Tag canonicalization** — for each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
 - **Path-only wikilink rewrites** — a cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: a bare-basename link that resolves uniquely is valid, carries no finding, and is left untouched, so remediation never flips a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
 
 Each fix returns a per-finding result reporting `ok: true/false` and the operation invoked. A single fix failure does not abort the run.
@@ -69,7 +68,7 @@ The remaining findings name the operator's next step:
 
 - **Stale or unmarked verification** → re-confirm the note, then `kb-edit <path> --verify`.
 - **Supersede defects** → repair with `kb-edit <old> --supersede-with <new>`, or correct the offending frontmatter field.
-- **Unresolved or ambiguous wikilinks, hardcoded paths** → resolve manually; these are too context-dependent to auto-fix.
+- **Unresolved wikilinks, basename collisions, hardcoded paths** → resolve manually; these are too context-dependent to auto-fix.
 
 ## Process
 
@@ -97,7 +96,7 @@ On failure, `ok: false` plus a categorical `error` code:
 | Code               | What it means                                                                                                                                | What to do                                                                   |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                                                                      | Correct the invocation. The message names the specific defect.               |
-| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/schema.yaml`, or `.kb/tag-aliases.yaml` in the store.                                                    | Fix the named file. The message names the offending file.                    |
+| `invalid-config`   | A malformed `.kb/config.yaml` or `.kb/tag-aliases.yaml` in the store.                                                                        | Fix the named file. The message names the offending file.                    |
 | `no-kb-resolvable` | A KB could not be resolved: `--kb` matched no entry, or no `--kb` and no discoverable `.kb/`, or `--kb @default` with no configured default. | Confirm the `--kb` name, run from inside the vault, or pass `--kb @default`. |
 | `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                                                                        | Drop `--apply` for a read-only report, or use a writable KB.                 |
 

@@ -1,13 +1,20 @@
-import { parseNoteContent } from '@codeassembly/kb/frontmatter';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
+import { readNoteContent } from '@codeassembly/kb/note-io';
 import { describe, expect, it } from 'vitest';
 
 import { detectStaleness, vaultUsesVerification } from '../detect-staleness.ts';
 
 const NOW = new Date('2026-05-29T00:00:00Z');
 
-function note(extraFrontmatter: string): ReturnType<typeof parseNoteContent> {
+function note(extraFrontmatter: string): EnumeratedNote {
   const content = `---\ntitle: A\ntype: howto\ncreated: 2026-01-01\nupdated: 2026-01-01\ntags: [x]\n${extraFrontmatter}---\n\nBody.\n`;
-  return parseNoteContent({ content, path: 'Note.md' });
+  return enumeratedNote('Note.md', content);
+}
+
+/** Builds an EnumeratedNote from raw note content, as `check`'s enumeration would. */
+function enumeratedNote(path: string, content: string): EnumeratedNote {
+  const { fields, body, bodyStartLine, error } = readNoteContent(content);
+  return { path, relativePath: path, fields, body, content, bodyStartLine, ...(error !== undefined && { error }) };
 }
 
 describe(detectStaleness, () => {
@@ -70,7 +77,7 @@ describe(detectStaleness, () => {
   });
 
   it('treats a malformed-frontmatter note as unmarked when the vault uses verification', () => {
-    const broken = parseNoteContent({ content: '---\ntitle: [bad\n---\n\nBody.\n', path: 'Broken.md' });
+    const broken = enumeratedNote('Broken.md', '---\ntitle: [bad\n---\n\nBody.\n');
 
     expect(detectStaleness({ note: broken, now: NOW, staleAfterDays: 90, vaultUsesVerification: true })[0]?.rule).toBe(
       'verification.unmarked',

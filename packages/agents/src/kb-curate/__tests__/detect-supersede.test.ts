@@ -1,5 +1,5 @@
-import type { ParsedNote } from '@codeassembly/kb';
-import { parseNoteContent } from '@codeassembly/kb/frontmatter';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
+import { readNoteContent } from '@codeassembly/kb/note-io';
 import { describe, expect, it } from 'vitest';
 
 import { detectSupersede } from '../detect-supersede.ts';
@@ -7,15 +7,21 @@ import { detectSupersede } from '../detect-supersede.ts';
 const ROOT = '/vault';
 
 /** Builds a note at `/vault/<name>.md` with optional `superseded-by` / `supersedes` references. */
-function note(name: string, refs: { supersededBy?: string; supersedes?: string } = {}): ParsedNote {
+function note(name: string, refs: { supersededBy?: string; supersedes?: string } = {}): EnumeratedNote {
   const lines = ['---', `title: ${name}`, 'type: howto', 'created: 2026-01-01', 'updated: 2026-01-01', 'tags: [x]'];
   if (refs.supersededBy !== undefined) lines.push(`superseded-by: ${refs.supersededBy}`);
   if (refs.supersedes !== undefined) lines.push(`supersedes: ${refs.supersedes}`);
   lines.push('---', '', 'Body.', '');
-  return parseNoteContent({ content: lines.join('\n'), path: `${ROOT}/${name}.md` });
+  return enumeratedNote(`${ROOT}/${name}.md`, lines.join('\n'));
 }
 
-function rules(notes: ParsedNote[]): string[] {
+/** Builds an EnumeratedNote from raw note content, as `check`'s enumeration would. */
+function enumeratedNote(path: string, content: string): EnumeratedNote {
+  const { fields, body, bodyStartLine, error } = readNoteContent(content);
+  return { path, relativePath: path, fields, body, content, bodyStartLine, ...(error !== undefined && { error }) };
+}
+
+function rules(notes: EnumeratedNote[]): string[] {
   return detectSupersede(notes).map((finding) => finding.rule);
 }
 

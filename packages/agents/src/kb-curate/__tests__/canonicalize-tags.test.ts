@@ -23,7 +23,7 @@ describe(canonicalizeTags, () => {
 
     expect(fix).toEqual({
       path: '/vault/Note.md',
-      rule: 'frontmatter.tag-alias',
+      rule: 'tag-alias',
       ok: true,
       operation: 'kb-edit --retag',
     });
