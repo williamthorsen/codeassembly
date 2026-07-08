@@ -15,7 +15,6 @@ When the registry has no default knowledge base, the new store becomes the defau
 If other knowledge bases are already registered, you are prompted to choose one (or set it later with "kb set-default").
 
 Creates:
-  .kb/schema.yaml        record-type schema (a copy of the bundled default)
   .kb/config.yaml        check configuration (commented; defaults apply)
   .kb/tag-aliases.yaml   tag-alias map (empty)
   content/, content/events/

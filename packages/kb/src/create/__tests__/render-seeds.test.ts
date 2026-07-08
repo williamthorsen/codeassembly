@@ -2,21 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { defaultKbConfig } from '../../config/config-schema.ts';
 import { loadKbConfig } from '../../config/load-config.ts';
-import { defaultSchema } from '../../schema/default-schema.ts';
-import { loadSchema } from '../../schema/load-schema.ts';
 import { loadAliases } from '../../tags/load-aliases.ts';
 import { makeKbRoot } from '../../test-utils/scaffolding.ts';
-import { renderAliasesSeed, renderConfigSeed, renderSchemaSeed } from '../render-seeds.ts';
-
-describe(renderSchemaSeed, () => {
-  it('produces a schema that loads back to the bundled default schema', async () => {
-    const kbRoot = await makeKbRoot({ schema: renderSchemaSeed() });
-
-    const schema = await loadSchema({ kbRoot });
-
-    expect(schema).toEqual(defaultSchema);
-  });
-});
+import { renderAliasesSeed, renderConfigSeed } from '../render-seeds.ts';
 
 describe(renderConfigSeed, () => {
   it('produces a fully-commented config that loads back to the default config', async () => {

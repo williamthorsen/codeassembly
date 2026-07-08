@@ -90,7 +90,8 @@ describe(enumerateNotes, () => {
     const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
 
     expect(notes).toHaveLength(1);
-    expect(notes[0]?.note.frontmatter).toBeNull();
+    expect(notes[0]?.error).toBeDefined();
+    expect(notes[0]?.fields).toEqual({});
     expect(notes[0]?.relativePath).toBe('content/broken.md');
   });
 

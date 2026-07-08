@@ -4,16 +4,28 @@ import process from 'node:process';
 
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';
-import { parseNoteContent } from '../frontmatter/parse-note.ts';
-import type { ParsedNote } from '../types.ts';
+import { readNoteContent } from '../note-io/read-note.ts';
 import { isGlobSegment } from './glob-segments.ts';
 
-/** A parsed note together with its KB-root-relative path, used for index keying and canonical wikilink targets. */
+/**
+ * A note reduced to the fields the check pipeline and curate consume: its paths, its frontmatter field map, its body
+ * and body-start line (for file-absolute link lines), its full content (for the paths lint), and any parse error.
+ */
 export interface EnumeratedNote {
-  /** The parsed note, carrying its absolute path. */
-  note: ParsedNote;
+  /** Absolute path the note was read from. */
+  path: string;
   /** The note's path relative to the KB root, slash-separated. */
   relativePath: string;
+  /** The frontmatter field map, empty when the block is absent or unparseable. */
+  fields: Record<string, unknown>;
+  /** The note body (everything after the frontmatter block). */
+  body: string;
+  /** The full original note content. */
+  content: string;
+  /** 1-based file line where the body begins. */
+  bodyStartLine: number;
+  /** Frontmatter parse or absence diagnostic, when the block was missing or could not be parsed. */
+  error?: string;
 }
 
 /**
@@ -25,10 +37,10 @@ export interface EnumeratedNote {
  * (`content/**` descends only into `content/`); a target with no leading literal (e.g. `**\/*.md`) falls back to a
  * full walk. Excludes are honored during descent so an excluded subtree is never entered.
  *
- * Notes with malformed or absent frontmatter are kept — `parseNoteContent` degrades them to `frontmatter: null`
- * rather than throwing, so they remain valid wikilink targets and surface their own `frontmatter.*` findings. A note
- * that cannot be read, or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than
- * aborting the walk. Each note's `path` is absolute; `relativePath` is the slash-separated path from the KB root.
+ * Notes with malformed or absent frontmatter are kept — `readNoteContent` records the parse error in `error` and
+ * returns an empty field map rather than throwing, so they remain valid wikilink targets. A note that cannot be read,
+ * or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk. Each
+ * note's `path` is absolute; `relativePath` is the slash-separated path from the KB root.
  */
 export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }): Promise<EnumeratedNote[]> {
   const { kbRoot, config } = input;
@@ -96,8 +108,16 @@ async function walk(input: {
 
     try {
       const content = await readFile(absolutePath, 'utf8');
-      const note = parseNoteContent({ content, path: absolutePath });
-      out.push({ note, relativePath });
+      const { fields, body, bodyStartLine, error: parseError } = readNoteContent(content);
+      out.push({
+        path: absolutePath,
+        relativePath,
+        fields,
+        body,
+        content,
+        bodyStartLine,
+        ...(parseError !== undefined && { error: parseError }),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       process.stderr.write(`kb: warning: could not read note ${absolutePath}; skipping: ${message}\n`);

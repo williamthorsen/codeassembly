@@ -1,11 +1,10 @@
 import { stringify } from 'yaml';
 
 import { defaultKbConfig } from '../config/config-schema.ts';
-import { defaultSchema } from '../schema/default-schema.ts';
 
-// Renders the textual contents of the three `.kb/` seed files for a new store. The schema and config values are
-// serialized from the in-package constants (`defaultSchema`, `defaultKbConfig`) so a generated store can never drift
-// from the bundled defaults; only the explanatory comment prose is hand-authored.
+// Renders the textual contents of the two `.kb/` seed files for a new store. The config values are serialized from the
+// in-package `defaultKbConfig` constant so a generated store can never drift from the bundled default; only the
+// explanatory comment prose is hand-authored.
 
 const ALIASES_HEADER = `# Tag aliases for this knowledge store.
 #
@@ -23,20 +22,6 @@ const CONFIG_HEADER = `# Check configuration for this knowledge store.
 #
 `;
 
-const SCHEMA_HEADER = `# Schema for this knowledge store.
-#
-# This file overrides the bundled default schema outright (the override is a replacement, not a merge). Each record
-# type declares its required and optional fields plus its recall policy; a record's family is the
-# stored \`recordType\` discriminant.
-#
-# Date fields (created, updated, last-verified) are written as second-precision UTC timestamps
-# (YYYY-MM-DDTHH:MM:SSZ); bare YYYY-MM-DD dates remain valid for hand-authored and legacy notes.
-#
-# Safe to edit: add record types, or add optional fields. Do NOT remove or rename the default record types or their
-# required fields — the kb-* skills (kb-add, capture-event, kb-edit) depend on them. Delete this file to re-inherit
-# the bundled default.
-`;
-
 /** Renders `.kb/tag-aliases.yaml`: an empty `aliases: {}` map under an explanatory header. */
 export function renderAliasesSeed(): string {
   return `${ALIASES_HEADER}aliases: {}\n`;
@@ -45,11 +30,6 @@ export function renderAliasesSeed(): string {
 /** Renders `.kb/config.yaml`: a fully-commented stub whose example values are the live `defaultKbConfig`. */
 export function renderConfigSeed(): string {
   return `${CONFIG_HEADER}${commentBlock(stringify(defaultKbConfig))}\n`;
-}
-
-/** Renders `.kb/schema.yaml`: the bundled default record types, serialized, under an explanatory header. */
-export function renderSchemaSeed(): string {
-  return `${SCHEMA_HEADER}${stringify({ recordTypes: defaultSchema.recordTypes })}`;
 }
 
 // region | Helpers

@@ -23,22 +23,21 @@ const NOW = new Date('2026-06-04T06:57:22.000Z');
 
 const ID = '01HZZZZZZZZZZZZZZZZZZZZZZZZ';
 
-const EVENT_SCHEMA = `recordTypes:
-  event:
-    recall: recurrence-recency
-    required: [id, captured-at, session, cwd, summary]
-    optional: [repo, skill, model, harness, tags, correction, owner, locality, severity, impact]
+const STORE_CONFIG = `targets:
+  - 'content/**/*.md'
+exclude:
+  - '**/node_modules/**'
 `;
 
 function bodyStream(body: string): Readable {
   return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
-/** Create a temp event store directory carrying a `recordTypes:` schema, returning its path. */
+/** Create a temp event store directory carrying a default `.kb/config.yaml`, returning its path. */
 async function makeStoreDir(): Promise<string> {
   const storePath = await mkdtemp(join(tmpdir(), 'capture-cli-store-'));
   await mkdir(join(storePath, '.kb'), { recursive: true });
-  await writeFile(join(storePath, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
+  await writeFile(join(storePath, '.kb', 'config.yaml'), STORE_CONFIG, 'utf8');
   return storePath;
 }
 
@@ -298,7 +297,6 @@ describe(runCapture, () => {
     const { storePath, home } = await makeStore('codeassembly');
     const cwdWithKb = await mkdtemp(join(tmpdir(), 'capture-cli-cwdkb-'));
     await mkdir(join(cwdWithKb, '.kb'), { recursive: true });
-    await writeFile(join(cwdWithKb, '.kb', 'schema.yaml'), EVENT_SCHEMA, 'utf8');
 
     const result = await runCapture({
       argv: ['--store', 'codeassembly', '--summary', 'Noticed a thing'],
@@ -350,7 +348,7 @@ describe(runCapture, () => {
       argv: ['--store', 'named', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: '/tmp/elsewhere',
-      env: {},
+      env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
       home,
     });

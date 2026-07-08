@@ -1,25 +1,26 @@
 # @codeassembly/kb
 
 Foundation library for knowledge-base tooling.
-Provides knowledge-base discovery, registry loading, schema resolution, frontmatter parsing and writing, tag canonicalization, and a composable validation-rule engine.
+Provides knowledge-base discovery, registry loading, frontmatter parsing and writing, tag canonicalization, and type-blind vault-integrity checks.
 It underpins the knowledge-base skills — among them `kb-retrieve` (assertion recall) and `kb-retrieve-events` (event recall), `kb-add`, `kb-curate`, `capture-event`, and `kb-update-events` — and the planned `@codeassembly/kb-mcp` server.
 
 ## Exports
 
-The package exposes nine subpath entries plus a root barrel:
+The package exposes ten subpath entries plus a root barrel:
 
-| Entry           | Description                                                               |
-| --------------- | ------------------------------------------------------------------------- |
-| `.`             | The most-used types plus `defaultSchema` and the rule constants           |
-| `./check`       | `check`: config-driven enumeration plus the generic rules, in one call    |
-| `./config`      | `.kb/config.yaml` loading and the typed `KbLoaderError` the loaders throw |
-| `./create`      | `create`: scaffold a new store and register it in `kb.yaml`               |
-| `./discovery`   | KB root discovery and `kb.yaml` registry loading, merging, and writing    |
-| `./filesystem`  | Filesystem-existence helpers with an explicit absence policy              |
-| `./schema`      | The bundled default schema and per-KB `.kb/schema.yaml` resolution        |
-| `./frontmatter` | Note parsing into typed frontmatter and writing it back to YAML           |
-| `./tags`        | `.kb/tag-aliases.yaml` loading and tag canonicalization                   |
-| `./rules`       | The `frontmatterRule` / `tagAliasRule` validators and `runRules`          |
+| Entry               | Description                                                                    |
+| ------------------- | ------------------------------------------------------------------------------ |
+| `.`                 | The most-used types plus `buildVaultIndex`                                     |
+| `./check`           | `check`: config-driven enumeration composed with vault integrity and the lints |
+| `./config`          | `.kb/config.yaml` loading and the typed `KbLoaderError` the loaders throw      |
+| `./create`          | `create`: scaffold a new store and register it in `kb.yaml`                    |
+| `./discovery`       | KB root discovery and `kb.yaml` registry loading, merging, and writing         |
+| `./filesystem`      | Filesystem-existence helpers with an explicit absence policy                   |
+| `./frontmatter`     | Note parsing into typed frontmatter and writing it back to YAML                |
+| `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
+| `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
+| `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
+| `./vault-integrity` | Type-blind `[[link]]` resolution and basename-uniqueness over a note set       |
 
 Every public function takes a single plain-object input so a future MCP wrapper can mechanically bind Zod-validated payloads.
 The library throws on errors; success/failure shaping is left to consumers.
@@ -80,49 +81,11 @@ const config = await loadKbRegistry({ projectDir: process.cwd() });
 // config.entries: KbRegistryEntry[] with absolute, resolved paths
 ```
 
-## The default schema
-
-A record's family is the stored `recordType` discriminant, valued against the schema's declared record-type vocabulary. `defaultSchema` is a deep-frozen `Schema` constant keyed by record type: an `assertion` record type (the canonical vault note, ranked by freshness) and an `event` record type (the ULID-keyed record written by `capture-event`, ranked by recurrence-recency):
-
-```ts
-{
-  recordTypes: {
-    assertion: {
-      required: ['created', 'tags', 'title', 'updated'],
-      optional: ['addressed-by', 'addresses', 'applies-to', 'diataxis', 'last-verified', 'sources', 'superseded-by', 'supersedes'],
-      recall: 'freshness',
-    },
-    event: {
-      required: ['captured-at', 'cwd', 'id', 'session', 'summary'],
-      optional: ['addressed-by', 'correction', 'model', 'repo', 'skill', 'tags'],
-      recall: 'recurrence-recency',
-    },
-  },
-}
-```
-
-`loadSchema({ kbRoot })` returns `defaultSchema` verbatim when the KB has no `.kb/schema.yaml`. A `.kb/schema.yaml` declares a `recordTypes:` block keyed by record-type name; each record type declares its own `required`, `optional`, and `recall`. The declared vocabulary **replaces** the bundled default outright. `recordType` is implicitly required on every record: It is the discriminant, so it is never listed in a record type's `required:` array.
-
-```yaml
-# .kb/schema.yaml
-recordTypes:
-  assertion:
-    required: [created, tags, title, updated]
-    optional: [addressed-by, addresses, applies-to, diataxis, last-verified, sources, superseded-by, supersedes]
-    recall: freshness
-  event:
-    required: [captured-at, cwd, id, session, summary]
-    optional: [addressed-by, correction, model, repo, skill, tags]
-    recall: recurrence-recency
-```
-
-Validation reads a record type's required set directly via `resolveRequiredForRecordType(schema, recordType)`. A malformed or structurally invalid `.kb/schema.yaml` throws at load time, naming the offending file.
-
-### The addressed-by/addresses relation
+## The addressed-by/addresses relation
 
 `addressed-by`/`addresses` is an inverse-pair relation that threads a problem record to whatever was done about it: a fix, a mitigation, an improved guidance note. Both are optional, multi-valued list fields:
 
-- `addressed-by` (on the problem record, available on `assertion` and `event`) is the canonical, recall-facing field: a list of references to whatever addressed the problem. It is the only viable store when the responder is external, so its entries are heterogeneous: a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL. The field's shape is validated as a list (the `frontmatter.list` rule), while its entries are free-form, like `sources`. It is set on events with `kb-update-events` and on assertions with `kb-edit`.
+- `addressed-by` (on the problem record, available on `assertion` and `event`) is the canonical, recall-facing field: a list of references to whatever addressed the problem. It is the only viable store when the responder is external, so its entries are heterogeneous: a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL. The field's shape is validated as a list by the record parser, while its entries are free-form, like `sources`. It is set on events with `kb-update-events` and on assertions with `kb-edit`.
 - `addresses` (on a KB-note responder, available on `assertion`) is the optional inverse for the rare "what does this address?" query. It is **non-authoritative**: keeping it in sync would be an N-file write, so `kb-curate` deliberately does not police it.
 
 The relation is many-to-many (one response can address many problems, and one problem can accrue many responses) and is surfaced flat by recall, with no chain-walking. This is distinct from `supersedes`/`superseded-by`, which _deprecates_ a record through a policed 1:1 chain; an addressed problem is not deprecated. It remains a true observation whose recurrence is worth keeping.
@@ -141,21 +104,21 @@ missing files (when a path is given) throw.
 `loadAliases({ kbRoot })` reads `.kb/tag-aliases.yaml` into an `AliasMap`, rejecting collisions and self-aliases at load time; an absent file yields an empty map.
 `canonicalize(tag, aliases)` resolves a tag to its canonical form; `findAliasFor(tag, aliases)` returns the canonical form only when the input is a known alias.
 
-## Validation rules
+## Vault integrity and lints
 
-`frontmatterRule` and `tagAliasRule` are `KbRule` objects (`{ name, check }`) that produce `Finding[]`.
-`runRules({ rules, notes, schema, aliases })` applies a rule set across notes and concatenates the findings.
-The `KbRule` interface is the extension point for future rules.
+`checkVaultIntegrity(notes)` runs whole-vault, type-blind checks over a `{ path, body, bodyStartLine }[]` note set: an unresolved `[[link]]` is an error (`wikilinks.unresolved`), and a basename shared by two or more notes is one vault-wide warning (`wikilinks.basename`). `buildVaultIndex(notes)` builds the basename → paths index the layer and curate's wikilink rewriter share.
+
+The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
 
 ```ts
-import { frontmatterRule, runRules, tagAliasRule } from '@codeassembly/kb/rules';
+import { checkVaultIntegrity } from '@codeassembly/kb/vault-integrity';
 
-const findings = runRules({ rules: [frontmatterRule, tagAliasRule], notes, schema, aliases });
+const findings = checkVaultIntegrity(notes);
 ```
 
 ## Checking a store
 
-`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml`, `.kb/schema.yaml`, and `.kb/tag-aliases.yaml`, enumerates the notes the config selects, validates each record against the store's schema, and runs the cross-note link and path rules. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
+`check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml` and `.kb/tag-aliases.yaml`, enumerates the notes the config selects, and composes whole-vault integrity with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
 
 ```ts
 import { check } from '@codeassembly/kb/check';
@@ -163,7 +126,7 @@ import { check } from '@codeassembly/kb/check';
 const { notes, findings } = await check({ kbRoot });
 ```
 
-A structural defect in any of the three loaded files throws a `KbLoaderError` (see below). Any other error from enumeration or rule execution propagates unchanged.
+A structural defect in either loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
 
 ### Which notes are checked: `.kb/config.yaml`
 
@@ -202,12 +165,11 @@ It creates these files and directories:
 
 | Path                          | Contents                                                                                                  |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `.kb/schema.yaml`             | A copy of the bundled default schema, ready to customize                                                  |
 | `.kb/config.yaml`             | A fully-commented check config; the bundled defaults apply as-is                                          |
 | `.kb/tag-aliases.yaml`        | An empty `aliases: {}` map                                                                                |
 | `content/`, `content/events/` | The note tree; `capture-event` writes events to `content/events/`, `kb-update-events` edits them in place |
 
-The schema and config seeds are serialized from the in-package `defaultSchema` and `defaultKbConfig`, so a new store cannot drift from the bundled defaults. The generated `.kb/schema.yaml` **replaces** the default outright (the override is a replacement, not a merge): add record types or optional fields freely, but do not remove or rename the default `assertion`/`event` record types or their required fields, since the `kb-*` skills depend on them. Delete the file to re-inherit the bundled default.
+The config seed is serialized from the in-package `defaultKbConfig`, so a new store cannot drift from the bundled default.
 
 The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. The registry write preserves any existing comments in `kb.yaml`. `kb create` refuses to clobber: it exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered.
 
@@ -249,15 +211,15 @@ Because the exit code reflects only the selected notes, a per-batch or pre-commi
 
 Exit codes:
 
-| Code | Meaning                                                                                                                           |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that selects no notes also exits 0.                 |
-| `1`  | One or more error-severity findings in the checked notes.                                                                         |
-| `2`  | A usage error, an unresolvable store or `--vs` ref, a path matching no note, or a malformed `config`/`schema`/`tag-aliases` file. |
+| Code | Meaning                                                                                                                     |
+| ---- | --------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that selects no notes also exits 0.           |
+| `1`  | One or more error-severity findings in the checked notes.                                                                   |
+| `2`  | A usage error, an unresolvable store or `--vs` ref, a path matching no note, or a malformed `config` or `tag-aliases` file. |
 
 ## Error and exception model
 
-Validation rules **return** findings; they never throw. Loaders (`loadKbConfig`, `loadSchema`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects, malformed YAML, or illegal overrides, with the offending file path named in the message. `KbLoaderError` (exported from `@codeassembly/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config/schema/alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
+The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@codeassembly/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability
 

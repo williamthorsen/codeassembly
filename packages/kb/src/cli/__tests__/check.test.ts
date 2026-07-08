@@ -24,7 +24,8 @@ vi.mock('../../check/check.ts', async () => {
 
 const VALID =
   '---\ntitle: A\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
-const MISSING_UPDATED = '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n';
+const UNRESOLVED_LINK =
+  '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [x]\n---\n\nSee [[Nonexistent]].\n';
 
 describe(run, () => {
   afterEach(() => {
@@ -41,12 +42,12 @@ describe(run, () => {
   });
 
   it('exits 1 when an error-severity finding is present', async () => {
-    const store = await makeStore({ 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Bad.md': UNRESOLVED_LINK });
 
     const result = await run({ argv: ['check'], cwd: store });
 
     expect(result.exitCode).toBe(1);
-    expect(result.stdout).toContain('frontmatter.required');
+    expect(result.stdout).toContain('wikilinks.unresolved');
   });
 
   it('exits 0 without the clean-run check when no notes match the targets', async () => {
@@ -119,11 +120,11 @@ describe(run, () => {
     const result = await run({ argv: ['check'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('warning frontmatter.tag-alias');
+    expect(result.stdout).toContain('warning tag-alias');
   });
 
   it('resolves a store by --kb from the registry and emits the JSON shape', async () => {
-    const store = await makeStore({ 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Bad.md': UNRESOLVED_LINK });
     const home = await makeHome('coding', store);
 
     const result = await run({ argv: ['check', '--kb', 'coding', '--json'], cwd: store, home });
@@ -149,12 +150,12 @@ describe(run, () => {
   });
 
   it('groups findings by file with severity, rule, and line in human output', async () => {
-    const store = await makeStore({ 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Bad.md': UNRESOLVED_LINK });
 
     const result = await run({ argv: ['check'], cwd: store });
 
     expect(result.stdout).toContain(join(store, 'content', 'Bad.md'));
-    expect(result.stdout).toMatch(/error frontmatter\.required \(line \d+\): /);
+    expect(result.stdout).toMatch(/error wikilinks\.unresolved \(line \d+\): /);
   });
 
   it('does not write files during a check', async () => {
@@ -189,15 +190,15 @@ describe(run, () => {
 
   it('propagates a non-loader error from check rather than swallowing it as a config error', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
-    vi.mocked(check).mockRejectedValueOnce(new Error('rule engine crashed'));
+    vi.mocked(check).mockRejectedValueOnce(new Error('checker crashed'));
 
-    await expect(run({ argv: ['check'], cwd: store })).rejects.toThrow(/rule engine crashed/);
+    await expect(run({ argv: ['check'], cwd: store })).rejects.toThrow(/checker crashed/);
   });
 });
 
 describe('kb check targeting', () => {
   it('validates only the notes matched by a path argument', async () => {
-    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': UNRESOLVED_LINK });
 
     const whole = await run({ argv: ['check'], cwd: store });
     const scoped = await run({ argv: ['check', 'content/Clean.md'], cwd: store });
@@ -208,7 +209,7 @@ describe('kb check targeting', () => {
   });
 
   it('validates only the notes beneath a directory argument', async () => {
-    const store = await makeStore({ 'content/sub/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/sub/Clean.md': VALID, 'content/Bad.md': UNRESOLVED_LINK });
 
     const result = await run({ argv: ['check', 'content/sub'], cwd: store });
 
@@ -252,7 +253,7 @@ describe('kb check targeting', () => {
   });
 
   it('reflects the selected count in the JSON summary for a path argument', async () => {
-    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': UNRESOLVED_LINK });
 
     const result = await run({ argv: ['check', 'content/Bad.md', '--json'], cwd: store });
     const payload: unknown = JSON.parse(result.stdout);
@@ -262,7 +263,7 @@ describe('kb check targeting', () => {
   });
 
   it('validates only the notes changed since a ref', async () => {
-    const store = await makeStore({ 'content/BadUnchanged.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/BadUnchanged.md': UNRESOLVED_LINK });
     initGitRepo(store);
     const base = commitAll(store, 'base');
     await writeFile(join(store, 'content', 'GoodChanged.md'), VALID, 'utf8');
@@ -287,7 +288,7 @@ describe('kb check targeting', () => {
   });
 
   it('composes --kb with a path argument, narrowing within the named store', async () => {
-    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Bad.md': UNRESOLVED_LINK });
     const home = await makeHome('coding', store);
 
     const whole = await run({ argv: ['check', '--kb', 'coding'], cwd: store, home });
@@ -300,7 +301,7 @@ describe('kb check targeting', () => {
   it('checks only the changed metacharacter-named note, not its glob-expanded siblings', async () => {
     // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so a
     // `--vs` run that touched only the clean `Draft[v2].md` must not be failed by the sibling.
-    const store = await makeStore({ 'content/Draft2.md': MISSING_UPDATED });
+    const store = await makeStore({ 'content/Draft2.md': UNRESOLVED_LINK });
     initGitRepo(store);
     const base = commitAll(store, 'base');
     await writeFile(join(store, 'content', 'Draft[v2].md'), VALID, 'utf8');
@@ -315,7 +316,7 @@ describe('kb check targeting', () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
     initGitRepo(store);
     const base = commitAll(store, 'base');
-    await writeFile(join(store, 'content', 'Café.md'), MISSING_UPDATED, 'utf8');
+    await writeFile(join(store, 'content', 'Café.md'), UNRESOLVED_LINK, 'utf8');
     commitAll(store, 'add a non-ascii note');
 
     const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });

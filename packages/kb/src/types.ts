@@ -41,31 +41,6 @@ export interface KbRegistry {
   };
 }
 
-/**
- * A record-type-and-field schema for a knowledge base.
- *
- * The schema is a single level keyed by record type (e.g. `assertion`, `event`). Each record type declares its own
- * required and optional fields plus its recall and immutability policy. A record's family is the stored `recordType`
- * discriminant, validated against the declared record-type vocabulary.
- */
-export interface Schema {
-  /** Per-record-type vocabulary, keyed by record-type name (e.g. `assertion`, `event`). */
-  recordTypes: RecordTypesSchema;
-}
-
-/** The record-type vocabulary of a store, keyed by record-type name (e.g. `event`, `assertion`). */
-export type RecordTypesSchema = Readonly<Record<string, RecordTypeSchema>>;
-
-/** A single record type's required/optional field sets and recall policy. */
-export interface RecordTypeSchema {
-  /** Field names every record of this type must declare (excluding the implicit `recordType` discriminant). */
-  required: readonly string[];
-  /** Field names a record of this type may optionally declare. */
-  optional: readonly string[];
-  /** How recall ranks records of this type, e.g. `freshness` or `recurrence-recency`. */
-  recall: string;
-}
-
 /** Strongly-typed frontmatter for a note. */
 export interface Frontmatter {
   title: string;
@@ -125,10 +100,3 @@ export interface Finding {
 
 /** A lowercase-keyed map from tag alias to its canonical form. */
 export type AliasMap = ReadonlyMap<string, string>;
-
-/**
- * A vault-wide lookup from a note basename (without the `.md` extension) to the set of note paths that share it.
- * A single-path entry resolves a wikilink unambiguously; a multi-path entry is ambiguous. Consumed by cross-note
- * rules (e.g. `wikilinks`) that need context beyond the single note under validation.
- */
-export type VaultIndex = ReadonlyMap<string, ReadonlySet<string>>;

@@ -153,9 +153,9 @@ type GuardedCheck =
   { ok: true; value: { notes: readonly EnumeratedNote[]; findings: Finding[] } } | { ok: false; failure: CurateResult };
 
 /**
- * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config/schema/aliases) to a structured
- * `invalid-config` failure. Any other throw — an enumeration or rule crash — propagates as a real failure rather than
- * being relabeled as a config error. Both `runCurate` check calls route through here so the guard cannot drift.
+ * Runs {@link curateCheck} and maps a `KbLoaderError` (malformed config or aliases) to a structured
+ * `invalid-config` failure. Any other throw — an enumeration or detection crash — propagates as a real failure rather
+ * than being relabeled as a config error. Both `runCurate` check calls route through here so the guard cannot drift.
  */
 async function guardedCurateCheck(input: { kbRoot: string; now: Date; staleAfterDays: number }): Promise<GuardedCheck> {
   try {
@@ -169,10 +169,10 @@ async function guardedCurateCheck(input: { kbRoot: string; now: Date; staleAfter
 }
 
 /**
- * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration: the generic
- * frontmatter/tag-alias/wikilink/path findings come from `check`, and verification-staleness plus supersede-graph
- * findings are detected here. The combined set is sorted by path, then line, then rule. A loader defect propagates as
- * a `KbLoaderError` for the caller to map to `invalid-config`.
+ * Runs the shared `check` for a KB and layers curate's own detectors over the same enumeration: the
+ * link/basename/tag-alias/paths findings come from `check`, and verification-staleness plus supersede-graph findings
+ * are detected here. The combined set is sorted by path, then line, then rule. A loader defect propagates as a
+ * `KbLoaderError` for the caller to map to `invalid-config`.
  */
 async function curateCheck(input: {
   kbRoot: string;

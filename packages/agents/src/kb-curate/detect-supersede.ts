@@ -1,6 +1,7 @@
 import { dirname, isAbsolute, resolve } from 'node:path';
 
-import type { Finding, ParsedNote } from '@codeassembly/kb';
+import type { Finding } from '@codeassembly/kb';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
 
 /** A note's resolved supersession edges, keyed by absolute path. */
 interface SupersedeNode {
@@ -20,7 +21,7 @@ interface SupersedeNode {
  *
  * Findings are returned in vault order (the order `notes` was enumerated in).
  */
-export function detectSupersede(notes: readonly ParsedNote[]): Finding[] {
+export function detectSupersede(notes: readonly EnumeratedNote[]): Finding[] {
   const present = new Set(notes.map((note) => note.path));
   const graph = new Map<string, SupersedeNode>();
   for (const note of notes) {
@@ -95,7 +96,10 @@ function asymmetricFindings(input: { path: string; graph: ReadonlyMap<string, Su
  * gets one `supersede.cycle` finding. Edges to notes outside the vault terminate the walk (a dangling edge cannot
  * close a cycle).
  */
-function cycleFindings(input: { notes: readonly ParsedNote[]; graph: ReadonlyMap<string, SupersedeNode> }): Finding[] {
+function cycleFindings(input: {
+  notes: readonly EnumeratedNote[];
+  graph: ReadonlyMap<string, SupersedeNode>;
+}): Finding[] {
   const { notes, graph } = input;
   const onCycle = new Set<string>();
   // The supersede graph is functional: each note has at most one outgoing `superseded-by` edge, so every walk
@@ -141,8 +145,8 @@ function cycleFindings(input: { notes: readonly ParsedNote[]; graph: ReadonlyMap
 }
 
 /** Resolves a `superseded-by`/`supersedes` reference to an absolute path against the note's directory; `null` when absent. */
-function resolveRef(note: ParsedNote, key: 'superseded-by' | 'supersedes'): string | null {
-  const raw = note.frontmatter?.extra[key];
+function resolveRef(note: EnumeratedNote, key: 'superseded-by' | 'supersedes'): string | null {
+  const raw = note.fields[key];
   if (typeof raw !== 'string' || raw.trim() === '') {
     return null;
   }

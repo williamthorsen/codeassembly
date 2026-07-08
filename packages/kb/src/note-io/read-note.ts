@@ -4,10 +4,12 @@ import { parseFrontmatterFields } from './yaml-fields.ts';
 
 const FENCE = '---';
 
-/** The outcome of splitting a note: its frontmatter field map, its body, and any frontmatter parse error. */
+/** The outcome of splitting a note: its frontmatter field map, its body, the body's start line, and any parse error. */
 export interface ReadNote {
   fields: Record<string, unknown>;
   body: string;
+  /** 1-based file line where the body begins (line 1 when there is no frontmatter block). */
+  bodyStartLine: number;
   error?: string;
 }
 
@@ -24,14 +26,15 @@ export async function readNote(path: string): Promise<ReadNote> {
 export function readNoteContent(content: string): ReadNote {
   const lines = content.split('\n');
   if (lines[0] !== FENCE) {
-    return { fields: {}, body: content, error: 'no frontmatter block found' };
+    return { fields: {}, body: content, bodyStartLine: 1, error: 'no frontmatter block found' };
   }
   const endIndex = lines.findIndex((line, index) => index > 0 && line === FENCE);
   if (endIndex === -1) {
-    return { fields: {}, body: content, error: 'no frontmatter block found' };
+    return { fields: {}, body: content, bodyStartLine: 1, error: 'no frontmatter block found' };
   }
   const text = lines.slice(1, endIndex).join('\n');
   const body = lines.slice(endIndex + 1).join('\n');
+  const bodyStartLine = endIndex + 2;
   const { fields, error } = parseFrontmatterFields(text);
-  return { fields, body, ...(error !== undefined && { error }) };
+  return { fields, body, bodyStartLine, ...(error !== undefined && { error }) };
 }

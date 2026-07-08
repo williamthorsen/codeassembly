@@ -1,4 +1,5 @@
-import type { Finding, ParsedNote } from '@codeassembly/kb';
+import type { Finding } from '@codeassembly/kb';
+import type { EnumeratedNote } from '@codeassembly/kb/check';
 
 import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 
@@ -16,13 +17,13 @@ import { computeAgeDays } from '../kb-shared/note-helpers.ts';
  * no `last-verified`, so it is treated as unmarked.
  */
 export function detectStaleness(input: {
-  note: ParsedNote;
+  note: EnumeratedNote;
   now: Date;
   staleAfterDays: number;
   vaultUsesVerification: boolean;
 }): Finding[] {
   const { note, now, staleAfterDays, vaultUsesVerification } = input;
-  const lastVerified = extractString(note.frontmatter?.extra, 'last-verified');
+  const lastVerified = extractString(note.fields, 'last-verified');
   const ageDays = lastVerified === null ? null : computeAgeDays(lastVerified, now);
 
   if (ageDays === null) {
@@ -58,21 +59,18 @@ export function detectStaleness(input: {
  * parseable `last-verified` value. A malformed stamp does not count, so a vault whose only verification-ish value
  * is unparseable is treated as not using verification.
  */
-export function vaultUsesVerification(notes: readonly ParsedNote[], now: Date): boolean {
+export function vaultUsesVerification(notes: readonly EnumeratedNote[], now: Date): boolean {
   return notes.some((note) => {
-    const lastVerified = extractString(note.frontmatter?.extra, 'last-verified');
+    const lastVerified = extractString(note.fields, 'last-verified');
     return lastVerified !== null && computeAgeDays(lastVerified, now) !== null;
   });
 }
 
 // region | Helpers
 
-/** Reads a string-valued field from a frontmatter `extra` map; `null` when absent or non-string. */
-function extractString(extra: Record<string, unknown> | undefined, key: string): string | null {
-  if (extra === undefined) {
-    return null;
-  }
-  const value = extra[key];
+/** Reads a string-valued field from a note's frontmatter field map; `null` when absent or non-string. */
+function extractString(fields: Record<string, unknown>, key: string): string | null {
+  const value = fields[key];
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
 }
 

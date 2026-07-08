@@ -6,7 +6,7 @@ import { registerStore } from '../discovery/register-store.ts';
 import { setDefaultKb } from '../discovery/set-default-kb.ts';
 import { pathExists } from '../filesystem/exists.ts';
 import type { KbRegistry } from '../types.ts';
-import { renderAliasesSeed, renderConfigSeed, renderSchemaSeed } from './render-seeds.ts';
+import { renderAliasesSeed, renderConfigSeed } from './render-seeds.ts';
 
 /**
  * What `create` did about the registry's `default_kb` pointer when registering a store:
@@ -110,13 +110,12 @@ function nameRegisteredMessage(name: string, registryPath: string): string {
 async function scaffold(storePath: string): Promise<readonly string[]> {
   const kbDir = join(storePath, KB_DIR);
   await mkdir(kbDir, { recursive: true });
-  await writeFile(join(kbDir, 'schema.yaml'), renderSchemaSeed(), 'utf8');
   await writeFile(join(kbDir, 'config.yaml'), renderConfigSeed(), 'utf8');
   await writeFile(join(kbDir, 'tag-aliases.yaml'), renderAliasesSeed(), 'utf8');
 
   await mkdir(join(storePath, 'content', 'events'), { recursive: true });
 
-  return ['.kb/schema.yaml', '.kb/config.yaml', '.kb/tag-aliases.yaml', 'content/', 'content/events/'];
+  return ['.kb/config.yaml', '.kb/tag-aliases.yaml', 'content/', 'content/events/'];
 }
 
 // endregion | Helpers

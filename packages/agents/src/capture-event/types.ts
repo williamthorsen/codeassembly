@@ -5,7 +5,6 @@
 // validation, invalid args) return `{ ok: false, error, ... }`; a success returns `{ ok: true, ... }`. System errors
 // (out-of-disk, permission denied) are out of band: they print to stderr and exit non-zero.
 
-import type { Finding } from '@codeassembly/kb';
 import type { EventImpact } from '@codeassembly/kb/records';
 
 /** Parsed command-line invocation of the capture-event helper. */
@@ -63,8 +62,8 @@ export interface CaptureFailure {
   error: CaptureErrorCode;
   /** Short human-readable explanation. */
   message: string;
-  /** Schema-validation findings, set when `error: 'schema-validation'`. */
-  findings?: Finding[];
+  /** Validation errors, set when `error: 'schema-validation'`. */
+  errors?: string[];
 }
 
 /** Categorical error codes the helper can return without an unexpected throw. */
