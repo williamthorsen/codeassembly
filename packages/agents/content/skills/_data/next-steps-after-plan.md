@@ -72,4 +72,4 @@ The selected option carries the ■■□ marker in the rendered output. The oth
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
 
-See [`scope-and-deferral.md`](scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; the cost reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
+See [`scope-and-deferral.md`](scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
