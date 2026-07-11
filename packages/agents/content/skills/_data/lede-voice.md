@@ -39,6 +39,8 @@ Verb choice and temporal framing make the delta explicit:
 - **Use "now"/"no longer" markers** when describing a behavioral change to an existing surface, not just a new addition.
 - **Avoid neutral state verbs** that describe the post-change system as if it had always behaved that way: `canonicalizes`, `handles`, `provides`, `supports` — when used as flat descriptions rather than as part of a "now does X" or "supports a new Y" frame.
 
+**Exception for agent-guidance diffs.** When the change edits agent instructions, guidance, or rules, narrate the change to the _instruction_ ("agents are now instructed to X"), not the agent's behavior ("the agent now does X"). Agent compliance is nondeterministic and not assertable from the diff; see the agent-guidance carve-out under Rule 1.
+
 The two rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass both rules and still read like documentation rather than an announcement.
 
 **Bad → Good — change-narrating voice**
@@ -72,7 +74,7 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed"; specifically, user-facing behavior change or migration info. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
 
-**For documentation changes specifically.** The outcome is not the change to the documentation; the outcome is what readers of the doc will now know, be able to do, or be guided away from.
+**For documentation changes specifically.** The outcome is not the change to the documentation; the outcome is what readers of the doc will now know, be able to do, or be guided away from. (When the doc's readers are agents, such as skills, subagent prompts, or AGENTS.md-style guidance, "what readers will now do" is itself an unverifiable compliance claim; see the agent-guidance carve-out below.)
 
 **Bad** (mechanism: names the edit site and the refactor move):
 
@@ -83,6 +85,18 @@ If a sentence describes how the change was implemented (mechanism, internal data
 > Guidance on table-driven tests is now consolidated in one place, so readers no longer follow a stale stub to outdated advice.
 
 The Bad version describes a refactor move ("X is replaced by a pointer") and names the internal edit site — both mechanism. The Good version names what readers now get (current guidance, no stale stub) and survives the counterfactual: A different restructuring that still routed readers to current guidance would yield the same sentence.
+
+**For agent-guidance changes specifically.** When the diff's subject is agent instructions, guidance, or rules, the change targets the _instruction surface_, not the agent's resulting behavior. Frame the delta as what the guidance now instructs ("agents are now instructed to X," "the guidance now directs X"), never as accomplished behavior ("the agent now does X"). Agent compliance is downstream and nondeterministic, so a behavior claim over-states what the diff can guarantee. This redirects the change-narrating voice; it does not abandon it, since "are now instructed to" is itself a change verb. When the point is the _benefit_ the guidance reaches for, state it as intent ("with the aim of X"), not a guaranteed result ("now comes out X").
+
+**Bad** (asserts nondeterministic behavior as fact):
+
+> In interactive sessions, the agent now defaults to a concise reply.
+
+**Good:**
+
+> Agents in interactive sessions are now instructed to keep replies concise, while still surfacing any flaw or risk worth raising.
+
+The Bad version claims a downstream behavior the diff cannot verify (guidance often fails to take); the Good version claims only the instruction, which is present in the diff.
 
 ### Rule 2: Identifier ban
 
