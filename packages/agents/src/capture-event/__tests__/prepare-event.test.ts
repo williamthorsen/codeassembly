@@ -149,4 +149,31 @@ describe(prepareEvent, () => {
       expect(result.prepared.content).not.toMatch(/^impact:/m);
     }
   });
+
+  it('renders repo, skill, model, and harness after the typed spine, matching the amend path', () => {
+    const result = prepareEvent({
+      args: argsFor({
+        skill: 'kb-retrieve',
+        model: 'claude-opus-4-8',
+        harness: 'claude',
+        tags: ['recall', 'kb'],
+        impact: 'high',
+      }),
+      context: CONTEXT,
+      id: ID,
+      capturedAt: CAPTURED_AT,
+      body: '',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const lines = result.prepared.content.split('\n');
+      const lineOf = (field: string): number => lines.findIndex((line) => line.startsWith(`${field}:`));
+      // renderEvent emits the typed spine (summary, tags, impact) before the untyped extra fields
+      // (repo, skill, model, harness); pinning that order keeps a fresh capture identical to its later amendment.
+      const lastTyped = Math.max(lineOf('summary'), lineOf('tags'), lineOf('impact'));
+      const firstExtra = Math.min(lineOf('repo'), lineOf('skill'), lineOf('model'), lineOf('harness'));
+      expect(lastTyped).toBeLessThan(firstExtra);
+    }
+  });
 });
