@@ -23,20 +23,20 @@ Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_i
 Create the ticket body describing WHAT needs to be done — problem, context, and acceptance criteria. Do NOT include the plan inline. Do NOT include the ticket ID in the heading yet (it's not known until step 5).
 
 ```markdown
-## Description
-
-{What needs to be done and why — the problem and its context}
-
-<!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
+<!-- include: ../_partials/ticket-skeleton.md / -->
 ```
 
 **Spike mode.** If the ticket describes a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md) in place of the skeleton above.
+
+<!-- include: ../_partials/ticket-skeleton-tiers.md / -->
 
 <!-- include: ../_partials/ticket-concision.md / -->
 
 <!-- include: ../_partials/ticket-placement.md / -->
 
 `create-ticket` produces no plan, so _the implementation_ is derived when the work is later planned — state the subject and outcomes, and leave mechanism for that step.
+
+<!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
 Also draft a short title (without the `ticket_ref` prefix) for use in step 5.
 
