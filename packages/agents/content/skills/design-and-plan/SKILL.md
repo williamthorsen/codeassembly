@@ -60,7 +60,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 1. **Explore project context:** check relevant files, docs, recent commits to understand the affected area of the codebase.
 
-2. **Evaluate the ticket on its merits** — apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation surfaces a divergence from the ticket as written, raise it to the user before forming questions or designing.
+2. **Evaluate the ticket on its merits** — apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation surfaces a divergence from the ticket as written, raise it to the user before forming questions or designing. Divergence includes scope that should grow: work the problem requires folds into this change by default rather than a follow-up (see [scope-and-deferral](../_data/scope-and-deferral.md)).
 
 3. **Ask clarifying questions** — one at a time:
    - Purpose and motivation
