@@ -1,6 +1,5 @@
-import { readNoteContent } from '@codeassembly/kb/note-io';
-import { parseEvent } from '@codeassembly/kb/records';
-import { stringify } from 'yaml';
+import { readNoteContent, renderNote } from '@codeassembly/kb/note-io';
+import { type KbEvent, parseEvent, renderEvent } from '@codeassembly/kb/records';
 
 import type { CaptureContext, ParsedArgs } from './types.ts';
 
@@ -30,14 +29,17 @@ export interface PrepareFailure {
 export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 
 /**
- * Assembles an event record from agent-supplied args and auto-filled context, renders it to a note string, and
- * validates the result as an `event` record via `parseEvent`. The record carries the stored `recordType: event`
- * discriminant and the event spine (`id`, `captured-at`, `session`, `cwd`, `repo`, `summary`) plus any supplied
- * `skill`/`model`/`harness`/`tags`/`impact`. No `updated`/`last-verified` field is written: an event carries a single
- * canonical state, editable in place via `capture-event --amend` until it is pushed and immutable after.
+ * Composes a `KbEvent` from agent-supplied args and auto-filled context, renders it through the record module's
+ * `renderEvent`, and validates the serialized note as an `event` record by re-parsing through `parseEvent`. The record
+ * carries the stored `recordType: event` discriminant and the typed event spine (`id`, `captured-at`, `session`, `cwd`,
+ * `summary`, plus any supplied `tags`/`impact`); `repo`/`skill`/`model`/`harness` have no typed field and ride in
+ * `extra`, which `renderEvent` emits after the spine. No `updated`/`last-verified` field is written: an event carries a
+ * single canonical state, editable in place via `capture-event --amend` until it is pushed and immutable after.
  *
- * Validation round-trips the rendered note through `readNoteContent` and `parseEvent`. When the record does not
- * validate, the outcome is `{ ok: false, errors }` and nothing is written.
+ * Rendering the composed record through the same `renderEvent`/`renderNote` path the amend path uses keeps a fresh
+ * capture and its later amendments identical in field order. Validation round-trips the serialized note through
+ * `readNoteContent` and `parseEvent`; when the record does not validate, the outcome is `{ ok: false, errors }` and
+ * nothing is written.
  */
 export function prepareEvent(input: {
   args: ParsedArgs;
@@ -48,34 +50,36 @@ export function prepareEvent(input: {
 }): PrepareOutcome {
   const { args, context, id, capturedAt, body } = input;
 
-  const fields: Array<[string, string | string[]]> = [
-    ['recordType', 'event'],
-    ['id', id],
-    ['captured-at', capturedAt],
-    ['session', context.session],
-    ['cwd', context.cwd],
-  ];
+  const extra: Record<string, unknown> = {};
   if (context.repo !== undefined) {
-    fields.push(['repo', context.repo]);
+    extra.repo = context.repo;
   }
-  fields.push(['summary', args.summary]);
   if (args.skill !== null) {
-    fields.push(['skill', args.skill]);
+    extra.skill = args.skill;
   }
   if (args.model !== null) {
-    fields.push(['model', args.model]);
+    extra.model = args.model;
   }
   if (args.harness !== null) {
-    fields.push(['harness', args.harness]);
-  }
-  if (args.tags.length > 0) {
-    fields.push(['tags', args.tags]);
-  }
-  if (args.impact !== null) {
-    fields.push(['impact', args.impact]);
+    extra.harness = args.harness;
   }
 
-  const content = renderEventNote(fields, body);
+  const record: KbEvent = {
+    recordType: 'event',
+    id,
+    capturedAt,
+    session: context.session,
+    cwd: context.cwd,
+    summary: args.summary,
+    tags: args.tags,
+    addressedBy: [],
+    ...(args.impact !== null && { impact: args.impact }),
+    extra,
+    body,
+  };
+
+  const rendered = renderEvent(record);
+  const content = renderNote(rendered.fields, rendered.body);
 
   const errors = validate(content);
   if (errors.length > 0) {
@@ -93,44 +97,5 @@ function validate(content: string): string[] {
   const result = parseEvent(fields, body);
   return result.ok ? [] : result.errors;
 }
-
-/**
- * Renders the event frontmatter in declaration order followed by the body. Each value is delegated to the `yaml`
- * serializer's `core`-schema stringifier so a value that would otherwise re-parse as a non-string (e.g. a numeric
- * `summary`) is quoted and round-trips faithfully.
- */
-function renderEventNote(fields: ReadonlyArray<[string, string | string[]]>, body: string): string {
-  const lines = ['---'];
-  for (const [key, value] of fields) {
-    lines.push(`${key}: ${Array.isArray(value) ? renderFlowList(value) : renderScalar(value)}`);
-  }
-  lines.push('---', '');
-  const normalizedBody = body.startsWith('\n') ? body.slice(1) : body;
-  return `${lines.join('\n')}\n${normalizedBody}`;
-}
-
-/** Renders a string array as a flow-style `[a, b, c]` sequence. */
-function renderFlowList(values: readonly string[]): string {
-  return `[${values.map((value) => renderScalar(value)).join(', ')}]`;
-}
-
-/** Renders a string scalar, delegating the quoting decision to the `yaml` core-schema stringifier. */
-function renderScalar(value: string): string {
-  const rendered = stringify(value, SCALAR_STRINGIFY_OPTIONS).replace(/\n$/, '');
-  if (rendered.includes('\n')) {
-    return stringify(value, { ...SCALAR_STRINGIFY_OPTIONS, defaultStringType: 'QUOTE_DOUBLE' }).replace(/\n$/, '');
-  }
-  return rendered;
-}
-
-// Mirrors `write-frontmatter.ts`: `core` schema plus plain default keeps round-trip-safe strings unquoted and quotes
-// only those that would re-parse to a non-string.
-const SCALAR_STRINGIFY_OPTIONS = {
-  schema: 'core',
-  defaultStringType: 'PLAIN',
-  defaultKeyType: 'PLAIN',
-  singleQuote: true,
-  lineWidth: 0,
-} as const;
 
 // endregion | Helpers
