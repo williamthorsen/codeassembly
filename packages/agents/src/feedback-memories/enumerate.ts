@@ -5,57 +5,64 @@ import { basename, join } from 'node:path';
 import { readNoteContent } from '@codeassembly/kb/note-io';
 
 import { isMissingFile, isRecord } from '../lib/type-guards.ts';
+import { resolveMemoryStore } from './resolve-memory-store.ts';
 import { resolveRepoPath } from './resolve-repo-path.ts';
 import type { EnumerateResult, FeedbackMemory, SkippedMemory } from './types.ts';
 
 /**
  * Walks every `<projects-root>/<project>/memory/` directory and returns each memory whose effective type is `feedback`.
- * When `store` is set, enumeration is scoped to that one project store, so a machine with many memories can be worked
- * one store per invocation. Membership is decided by parsed frontmatter — `metadata.type` when nested, else a top-level
- * `type` — never by filename or a single-schema regex, so both the legacy and current memory schemas are enumerated. A
- * file that cannot be read as a note is reported in `skipped` rather than dropped. An absent projects root is the one
- * categorical failure; a `store` naming no directory under it is a `no-such-store` failure, so a mistyped slug fails
+ * When `memoryStore` is set, enumeration is scoped to that one memory store — named by its directory or by the label
+ * `list` displays — so a machine with many memories can be worked one store per invocation. Membership is decided by
+ * parsed frontmatter — `metadata.type` when nested, else a top-level `type` — never by filename or a single-schema
+ * regex, so both the legacy and current memory schemas are enumerated. A file that cannot be read as a note is reported
+ * in `skipped` rather than dropped. An absent projects root is the one categorical failure; a `memoryStore` that
+ * resolves to no store, or to more than one, fails per `resolveMemoryStore`, so a mistyped or ambiguous name fails
  * loudly rather than looking like a clean store; an absent per-store `memory/` directory is simply skipped.
  */
 export async function enumerateFeedbackMemories(input: {
   projectsRoot: string;
-  store?: string;
+  memoryStore?: string;
   machine?: string;
 }): Promise<EnumerateResult> {
   const machine = input.machine ?? hostname();
 
-  let stores: string[];
+  let memoryStores: string[];
   try {
     const entries = await readdir(input.projectsRoot, { withFileTypes: true });
-    stores = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+    memoryStores = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
   } catch (error) {
     if (isMissingFile(error)) {
       return { ok: false, error: 'no-projects-root', message: `no projects root at ${input.projectsRoot}` };
     }
     throw error;
   }
-  stores = stores.toSorted();
+  memoryStores = memoryStores.toSorted();
 
-  if (input.store !== undefined) {
-    if (!stores.includes(input.store)) {
-      return { ok: false, error: 'no-such-store', message: `no store "${input.store}" under ${input.projectsRoot}` };
+  if (input.memoryStore !== undefined) {
+    const resolved = await resolveMemoryStore({
+      requested: input.memoryStore,
+      memoryStores,
+      projectsRoot: input.projectsRoot,
+    });
+    if (!resolved.ok) {
+      return resolved;
     }
-    stores = [input.store];
+    memoryStores = [resolved.memoryStore];
   }
 
   const memories: FeedbackMemory[] = [];
   const skipped: SkippedMemory[] = [];
 
-  for (const store of stores) {
-    const memoryDir = join(input.projectsRoot, store, 'memory');
+  for (const memoryStore of memoryStores) {
+    const memoryDir = join(input.projectsRoot, memoryStore, 'memory');
     const files = await listMemoryFiles(memoryDir);
     const memoryIndexPath = join(memoryDir, 'MEMORY.md');
     // Resolve the store's origin repo once — every memory in it shares the slug — and only when it has memories to route.
-    const repoPath = files.length > 0 ? await resolveRepoPath(store) : null;
+    const repoPath = files.length > 0 ? await resolveRepoPath(memoryStore) : null;
 
     for (const file of files) {
       const path = join(memoryDir, file);
-      const record = await readMemory({ path, store, repoPath, machine, memoryIndexPath });
+      const record = await readMemory({ path, memoryStore, repoPath, machine, memoryIndexPath });
       if (record.kind === 'feedback') {
         memories.push(record.memory);
       } else if (record.kind === 'unreadable') {
@@ -87,7 +94,7 @@ async function listMemoryFiles(memoryDir: string): Promise<string[]> {
 /** Reads one memory file and classifies it as a feedback memory, some other memory, or an unreadable note. */
 async function readMemory(input: {
   path: string;
-  store: string;
+  memoryStore: string;
   repoPath: string | null;
   machine: string;
   memoryIndexPath: string;
@@ -107,7 +114,7 @@ async function readMemory(input: {
     kind: 'feedback',
     memory: {
       path: input.path,
-      store: input.store,
+      memoryStore: input.memoryStore,
       repoPath: input.repoPath,
       machine: input.machine,
       slug: basename(input.path, '.md'),

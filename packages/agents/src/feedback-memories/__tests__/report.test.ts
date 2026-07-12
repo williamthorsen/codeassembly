@@ -15,7 +15,7 @@ describe(reportSummary, () => {
         total: 3,
         projects: [
           {
-            store: '-a',
+            memoryStore: '-a',
             label: 'app',
             repoPath: '/app',
             count: 2,
@@ -23,7 +23,7 @@ describe(reportSummary, () => {
             memories: [],
           },
           {
-            store: '-b',
+            memoryStore: '-b',
             label: 'web',
             repoPath: '/web',
             count: 1,
@@ -49,7 +49,7 @@ describe(reportSummary, () => {
         total: 1,
         projects: [
           {
-            store: '-a',
+            memoryStore: '-a',
             label: 'app',
             repoPath: '/app',
             count: 1,
@@ -72,7 +72,7 @@ describe(reportSummary, () => {
         total: 1,
         projects: [
           {
-            store: '-a',
+            memoryStore: '-a',
             label: 'app',
             repoPath: '/app',
             count: 1,
@@ -95,7 +95,7 @@ describe(reportSummary, () => {
         total: 1,
         projects: [
           {
-            store: '-a',
+            memoryStore: '-a',
             label: 'app',
             repoPath: '/app',
             count: 1,
@@ -122,7 +122,7 @@ describe(reportSummary, () => {
         total: 1,
         projects: [
           {
-            store: '-a',
+            memoryStore: '-a',
             label: 'app',
             repoPath: '/app',
             count: 1,

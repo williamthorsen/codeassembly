@@ -496,7 +496,7 @@ function assertCompositionViolationFinding(result: unknown): void {
 }
 
 /**
- * Stands up an isolated home holding one nested-schema feedback memory under a project store, then returns a
+ * Stands up an isolated home holding one nested-schema feedback memory under a memory store, then returns a
  * `SmokeTestInvocation` that runs `enumerate` against it. `HOME` points the projects-root walk at the fixture and an
  * empty `CLAUDE_CONFIG_DIR` neutralizes any ambient value, so the enumeration never touches the developer's real
  * `~/.claude`. Exercises the full projects-root resolution → store walk → frontmatter parse → feedback filter pipeline.
