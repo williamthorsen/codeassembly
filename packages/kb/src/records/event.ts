@@ -114,13 +114,17 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
   };
 }
 
-/** Projects an event back to a frontmatter field map (declared fields first, then preserved `extra`) plus its body. */
+/**
+ * Projects an event back to a frontmatter field map (declared fields first, then preserved `extra`) plus its body. An
+ * empty `session` is omitted like an absent one, mirroring {@link parseEvent}: the two spellings of "no session" have a
+ * single representation on both edges of the module, so no record can reacquire the empty field on a write.
+ */
 export function renderEvent(record: KbEvent): { fields: Record<string, unknown>; body: string } {
   const fields: Record<string, unknown> = {
     recordType: record.recordType,
     id: record.id,
     'captured-at': record.capturedAt,
-    ...(record.session !== undefined && { session: record.session }),
+    ...(record.session !== undefined && record.session.length > 0 && { session: record.session }),
     cwd: record.cwd,
     summary: record.summary,
   };

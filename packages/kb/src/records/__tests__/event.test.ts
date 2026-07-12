@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EVENT_IMPACT_LEVELS, isEventImpact, parseEvent, renderEvent } from '../event.ts';
+import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '../event.ts';
 
 const validFields = {
   recordType: 'event',
@@ -147,6 +147,22 @@ describe(renderEvent, () => {
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
     expect(Object.keys(renderEvent(parsed.record).fields)).not.toContain('session');
+  });
+
+  it('omits an empty session on a record composed directly rather than parsed', () => {
+    const record: KbEvent = {
+      recordType: 'event',
+      id: '01HZCEVENTAAAAAAAAAAAAAAAA',
+      capturedAt: '2026-06-18T09:41:02Z',
+      session: '',
+      cwd: '/tmp/work',
+      summary: 'Noticed a phantomwidget glitch',
+      tags: [],
+      addressedBy: [],
+      extra: {},
+      body: '',
+    };
+    expect(Object.keys(renderEvent(record).fields)).not.toContain('session');
   });
 
   it('omits tags and addressed-by when empty', () => {
