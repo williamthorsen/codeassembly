@@ -124,14 +124,14 @@ describe(runFeedbackMemories, () => {
     expect(result.error).toBe('invalid-args');
   });
 
-  it('scopes enumeration to one store with --store', async () => {
+  it('scopes enumeration to one store with --memory-store', async () => {
     const home = await mkdtemp(join(tmpdir(), 'fm-cli-home-'));
     await writeStoreMemory(home, '-store-a', 'feedback-a.md');
     await writeStoreMemory(home, '-store-b', 'feedback-b.md');
 
     const result = jsonValue(
       await runFeedbackMemories({
-        argv: ['enumerate', '--store', '-store-b'],
+        argv: ['enumerate', '--memory-store', '-store-b'],
         stdin: bodyStream(''),
         env: {},
         home,
@@ -141,17 +141,17 @@ describe(runFeedbackMemories, () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok || !('memories' in result)) return;
-    expect(result.memories.map((memory) => memory.store)).toEqual(['-store-b']);
+    expect(result.memories.map((memory) => memory.memoryStore)).toEqual(['-store-b']);
   });
 
-  it('accepts the --store=<slug> form', async () => {
+  it('accepts the --memory-store=<name> form', async () => {
     const home = await mkdtemp(join(tmpdir(), 'fm-cli-home-'));
     await writeStoreMemory(home, '-store-a', 'feedback-a.md');
     await writeStoreMemory(home, '-store-b', 'feedback-b.md');
 
     const result = jsonValue(
       await runFeedbackMemories({
-        argv: ['enumerate', '--store=-store-a'],
+        argv: ['enumerate', '--memory-store=-store-a'],
         stdin: bodyStream(''),
         env: {},
         home,
@@ -161,18 +161,41 @@ describe(runFeedbackMemories, () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok || !('memories' in result)) return;
-    expect(result.memories.map((memory) => memory.store)).toEqual(['-store-a']);
+    expect(result.memories.map((memory) => memory.memoryStore)).toEqual(['-store-a']);
   });
 
-  it('returns invalid-args when --store has no value', async () => {
+  it('returns invalid-args when --memory-store has no value', async () => {
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['enumerate', '--store'], stdin: bodyStream(''), env: {} }),
+      await runFeedbackMemories({ argv: ['enumerate', '--memory-store'], stdin: bodyStream(''), env: {} }),
     );
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe('invalid-args');
-    expect(result.message).toContain('--store requires');
+    expect(result.message).toContain('--memory-store requires');
+  });
+
+  it('rejects the KB-store --store flag, naming the memory-store selector', async () => {
+    const result = jsonValue(
+      await runFeedbackMemories({ argv: ['enumerate', '--store', '-store-a'], stdin: bodyStream(''), env: {} }),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('invalid-args');
+    expect(result.message).toContain('--store selects a KB store');
+    expect(result.message).toContain('--memory-store');
+  });
+
+  it('rejects the --store=<slug> form on list', async () => {
+    const result = jsonValue(
+      await runFeedbackMemories({ argv: ['list', '--store=-store-a'], stdin: bodyStream(''), env: {} }),
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('invalid-args');
+    expect(result.message).toContain('--store selects a KB store');
   });
 
   it('lists feedback-memory counts per project as a human-readable table', async () => {
@@ -216,14 +239,14 @@ describe(runFeedbackMemories, () => {
     expect(output).toContain('an example feedback memory');
   });
 
-  it('scopes list to one store with --store', async () => {
+  it('scopes list to one store with --memory-store', async () => {
     const home = await mkdtemp(join(tmpdir(), 'fm-cli-home-'));
     await writeStoreMemory(home, '-store-a', 'feedback-a.md');
     await writeStoreMemory(home, '-store-b', 'feedback-b.md');
 
     const output = textValue(
       await runFeedbackMemories({
-        argv: ['list', '--store', '-store-b'],
+        argv: ['list', '--memory-store', '-store-b'],
         stdin: bodyStream(''),
         env: {},
         home,

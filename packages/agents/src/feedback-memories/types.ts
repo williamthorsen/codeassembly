@@ -12,10 +12,10 @@
 export interface FeedbackMemory {
   /** Absolute path to the memory file. */
   path: string;
-  /** The project-store slug (the `<project>` directory name under the projects root); the origin-project identifier. */
-  store: string;
+  /** The memory-store slug (the `<project>` directory name under the projects root); the origin-project identifier. */
+  memoryStore: string;
   /**
-   * Absolute path to the origin project's working directory when the store slug resolves to a live repo on this
+   * Absolute path to the origin project's working directory when the memory-store slug resolves to a live repo on this
    * machine, else `null`. Lets a caller ground routing decisions in that project's guidance; `null` when the slug
    * decodes to no existing directory (a dead store, or a name whose `.` punctuation cannot be recovered).
    */
@@ -32,7 +32,7 @@ export interface FeedbackMemory {
   originSessionId: string | null;
   /** The memory body (everything after the frontmatter block). */
   body: string;
-  /** Absolute path to the sibling `MEMORY.md` index for this store. */
+  /** Absolute path to the sibling `MEMORY.md` index for this memory store. */
   memoryIndexPath: string;
 }
 
@@ -51,16 +51,19 @@ export interface EnumerateSuccess {
   machine: string;
   /** Absolute path of the projects root that was walked. */
   projectsRoot: string;
-  /** Every feedback memory found, ordered by store then slug for stable output. */
+  /** Every feedback memory found, ordered by memory store then slug for stable output. */
   memories: FeedbackMemory[];
   /** Files whose frontmatter could not be parsed. */
   skipped: SkippedMemory[];
 }
 
-/** The `enumerate` subcommand's stdout payload when the projects root is absent, or a `--store` names no store. */
+/**
+ * The `enumerate` subcommand's stdout payload when the projects root is absent, or a `--memory-store` names no memory
+ * store on the machine.
+ */
 export interface EnumerateFailure {
   ok: false;
-  error: 'no-projects-root' | 'no-such-store';
+  error: 'no-projects-root' | 'no-such-memory-store';
   message: string;
 }
 
@@ -75,19 +78,19 @@ export interface MemorySummary {
 }
 
 /**
- * One project store's feedback-memory rollup: its count, the newest memory's modification time, and each memory's
+ * One memory store's feedback-memory rollup: its count, the newest memory's modification time, and each memory's
  * identity for verbose rendering.
  */
 export interface ProjectSummary {
-  /** The project-store slug — the identifier `--store` accepts. */
-  store: string;
+  /** The memory-store slug — the directory name `--memory-store` accepts. */
+  memoryStore: string;
   /** Display label: the resolved repo directory's basename, or the slug itself when the store has no live repo. */
   label: string;
   /** Absolute path to the origin repo when the slug resolves to a live directory, else null. */
   repoPath: string | null;
-  /** Number of feedback memories in the store. */
+  /** Number of feedback memories in the memory store. */
   count: number;
-  /** ISO-8601 modification time of the store's most recently modified memory file. */
+  /** ISO-8601 modification time of the memory store's most recently modified memory file. */
   lastModified: string;
   /** Each memory's slug and description, ordered by slug. */
   memories: MemorySummary[];
@@ -100,7 +103,7 @@ export interface FeedbackMemorySummary {
   machine: string;
   /** Absolute path of the projects root that was walked. */
   projectsRoot: string;
-  /** One entry per project store, sorted alphabetically by label. */
+  /** One entry per memory store, sorted alphabetically by label. */
   projects: ProjectSummary[];
   /** Total feedback memories across every listed project. */
   total: number;

@@ -85,7 +85,7 @@ describe(enumerateFeedbackMemories, () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.memories.map((memory) => memory.slug)).toEqual(['feedback-nested-example', 'run-nmr-from-root']);
-    expect(result.memories.every((memory) => memory.store === '-store-a')).toBe(true);
+    expect(result.memories.every((memory) => memory.memoryStore === '-store-a')).toBe(true);
     expect(result.memories.every((memory) => memory.machine === MACHINE)).toBe(true);
   });
 
@@ -174,7 +174,7 @@ describe(enumerateFeedbackMemories, () => {
     expect(result.skipped).toEqual([]);
   });
 
-  it('orders memories by store then slug for stable output', async () => {
+  it('orders memories by memory store then slug for stable output', async () => {
     const root = await makeProjectsRoot();
     await writeMemory(root, '-store-b', 'zebra.md', LEGACY_NO_SESSION);
     await writeMemory(root, '-store-a', 'run-nmr-from-root.md', LEGACY_FEEDBACK);
@@ -184,34 +184,38 @@ describe(enumerateFeedbackMemories, () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.memories.map((memory) => `${memory.store}/${memory.slug}`)).toEqual([
+    expect(result.memories.map((memory) => `${memory.memoryStore}/${memory.slug}`)).toEqual([
       '-store-a/feedback-nested-example',
       '-store-a/run-nmr-from-root',
       '-store-b/zebra',
     ]);
   });
 
-  it('scopes enumeration to a single store when store is set', async () => {
+  it('scopes enumeration to a single store when memoryStore is set', async () => {
     const root = await makeProjectsRoot();
     await writeMemory(root, '-store-a', 'feedback-nested-example.md', NESTED_FEEDBACK);
     await writeMemory(root, '-store-b', 'atlaskit-xcss.md', LEGACY_NO_SESSION);
 
-    const result = await enumerateFeedbackMemories({ projectsRoot: root, store: '-store-b', machine: MACHINE });
+    const result = await enumerateFeedbackMemories({ projectsRoot: root, memoryStore: '-store-b', machine: MACHINE });
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.memories.map((memory) => memory.store)).toEqual(['-store-b']);
+    expect(result.memories.map((memory) => memory.memoryStore)).toEqual(['-store-b']);
   });
 
-  it('fails with no-such-store when store names no directory under the root', async () => {
+  it('fails with no-such-memory-store when memoryStore names no directory under the root', async () => {
     const root = await makeProjectsRoot();
     await writeMemory(root, '-store-a', 'feedback-nested-example.md', NESTED_FEEDBACK);
 
-    const result = await enumerateFeedbackMemories({ projectsRoot: root, store: '-store-missing', machine: MACHINE });
+    const result = await enumerateFeedbackMemories({
+      projectsRoot: root,
+      memoryStore: '-store-missing',
+      machine: MACHINE,
+    });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error).toBe('no-such-store');
+    expect(result.error).toBe('no-such-memory-store');
   });
 
   it('fails with no-projects-root when the projects root is absent', async () => {

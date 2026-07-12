@@ -13,6 +13,8 @@ import { resolveProjectsRoot } from './resolve-projects-root.ts';
 import { summarizeFeedbackMemories } from './summarize.ts';
 import type { FeedbackMemoriesFailure, FeedbackMemoriesResult, RenderedResult } from './types.ts';
 
+const MEMORY_STORE_FLAG = '--memory-store';
+
 /** Executes the helper from `process.argv` and writes its result to stdout: text for `list` and `--help`, else JSON. */
 async function main(): Promise<void> {
   try {
@@ -42,10 +44,10 @@ if (isEntryPoint()) {
 /**
  * Runs the helper end to end, dispatching on the subcommand. `list` (read-only) renders a per-project summary of
  * feedback-memory counts and recency for humans; `enumerate` (read-only) lists every feedback memory as JSON with
- * provenance. Both accept `--store <slug>` to scope to one store, and `list` also accepts `--verbose`. `delete` reads
- * newline-separated memory paths from stdin, removes each file, and reconciles the affected `MEMORY.md` indexes.
- * `--help` prints usage. A missing or unknown subcommand, or an unexpected argument, is a recoverable `invalid-args`
- * result. System failures propagate to the caller's try/catch.
+ * provenance. Both accept `--memory-store <name>` to scope to one memory store, and `list` also accepts `--verbose`.
+ * `delete` reads newline-separated memory paths from stdin, removes each file, and reconciles the affected `MEMORY.md`
+ * indexes. `--help` prints usage. A missing or unknown subcommand, or an unexpected argument, is a recoverable
+ * `invalid-args` result. System failures propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -70,7 +72,7 @@ export async function runFeedbackMemories(input: {
     }
     const summary = await summarizeFeedbackMemories({
       projectsRoot: projectsRootFor(input),
-      ...(parsed.store !== undefined && { store: parsed.store }),
+      ...(parsed.memoryStore !== undefined && { memoryStore: parsed.memoryStore }),
       ...(input.machine !== undefined && { machine: input.machine }),
     });
     if (!summary.ok) {
@@ -92,7 +94,7 @@ export async function runFeedbackMemories(input: {
     return json(
       await enumerateFeedbackMemories({
         projectsRoot: projectsRootFor(input),
-        ...(parsed.store !== undefined && { store: parsed.store }),
+        ...(parsed.memoryStore !== undefined && { memoryStore: parsed.memoryStore }),
         ...(input.machine !== undefined && { machine: input.machine }),
       }),
     );
@@ -136,72 +138,93 @@ function projectsRootFor(input: { home?: string; env?: NodeJS.ProcessEnv }): str
 }
 
 /**
- * Matches a `--store` flag at `rest[index]` in either the `--store <slug>` or `--store=<slug>` form, returning the slug
- * and how many argv items it consumed, a parse error, or null when the argument is not a `--store` form. A value that
- * opens with `--` is treated as missing, so a dangling `--store` before another flag fails rather than swallowing it —
- * store slugs begin with a single `-`, so a real slug is never mistaken for a flag.
+ * Matches a `--memory-store` flag at `rest[index]` in either the `--memory-store <name>` or `--memory-store=<name>`
+ * form, returning the name and how many argv items it consumed, a parse error, or null when the argument is not a
+ * `--memory-store` form. A value that opens with `--` is treated as missing, so a dangling `--memory-store` before
+ * another flag fails rather than swallowing it — memory-store slugs begin with a single `-`, so a real name is never
+ * mistaken for a flag.
  */
-function matchStoreFlag(
+function matchMemoryStoreFlag(
   rest: readonly string[],
   index: number,
-): { store: string; consumed: number } | { error: string } | null {
+): { memoryStore: string; consumed: number } | { error: string } | null {
   const arg = rest[index];
-  if (arg === '--store') {
+  if (arg === MEMORY_STORE_FLAG) {
     const value = rest[index + 1];
     if (value === undefined || value.startsWith('--')) {
-      return { error: '--store requires a store slug' };
+      return { error: `${MEMORY_STORE_FLAG} requires a memory-store name` };
     }
-    return { store: value, consumed: 2 };
+    return { memoryStore: value, consumed: 2 };
   }
-  if (arg !== undefined && arg.startsWith('--store=')) {
-    const value = arg.slice('--store='.length);
+  const assigned = `${MEMORY_STORE_FLAG}=`;
+  if (arg !== undefined && arg.startsWith(assigned)) {
+    const value = arg.slice(assigned.length);
     if (value.length === 0) {
-      return { error: '--store requires a store slug' };
+      return { error: `${MEMORY_STORE_FLAG} requires a memory-store name` };
     }
-    return { store: value, consumed: 1 };
+    return { memoryStore: value, consumed: 1 };
   }
   return null;
 }
 
-/** Parses the `enumerate` subcommand's optional `--store <slug>` flag; any other argument is rejected. */
-function parseEnumerateArgs(rest: readonly string[]): { ok: true; store?: string } | { ok: false; message: string } {
-  let store: string | undefined;
+/** Parses the `enumerate` subcommand's optional `--memory-store <name>` flag; any other argument is rejected. */
+function parseEnumerateArgs(
+  rest: readonly string[],
+): { ok: true; memoryStore?: string } | { ok: false; message: string } {
+  let memoryStore: string | undefined;
   for (let index = 0; index < rest.length; index++) {
-    const matched = matchStoreFlag(rest, index);
+    const matched = matchMemoryStoreFlag(rest, index);
     if (matched === null) {
-      return { ok: false, message: `enumerate accepts only --store <slug>; got: ${rest[index]}` };
+      return { ok: false, message: rejectArg(`enumerate accepts only ${MEMORY_STORE_FLAG} <name>`, rest[index]) };
     }
     if ('error' in matched) {
       return { ok: false, message: matched.error };
     }
-    store = matched.store;
+    memoryStore = matched.memoryStore;
     index += matched.consumed - 1;
   }
-  return store === undefined ? { ok: true } : { ok: true, store };
+  return memoryStore === undefined ? { ok: true } : { ok: true, memoryStore };
 }
 
-/** Parses the `list` subcommand's optional `--store <slug>` and `--verbose` flags; any other argument is rejected. */
+/**
+ * Parses the `list` subcommand's optional `--memory-store <name>` and `--verbose` flags; any other argument is rejected.
+ */
 function parseListArgs(
   rest: readonly string[],
-): { ok: true; store?: string; verbose: boolean } | { ok: false; message: string } {
-  let store: string | undefined;
+): { ok: true; memoryStore?: string; verbose: boolean } | { ok: false; message: string } {
+  let memoryStore: string | undefined;
   let verbose = false;
   for (let index = 0; index < rest.length; index++) {
     if (rest[index] === '--verbose') {
       verbose = true;
       continue;
     }
-    const matched = matchStoreFlag(rest, index);
+    const matched = matchMemoryStoreFlag(rest, index);
     if (matched === null) {
-      return { ok: false, message: `list accepts only --store <slug> and --verbose; got: ${rest[index]}` };
+      return {
+        ok: false,
+        message: rejectArg(`list accepts only ${MEMORY_STORE_FLAG} <name> and --verbose`, rest[index]),
+      };
     }
     if ('error' in matched) {
       return { ok: false, message: matched.error };
     }
-    store = matched.store;
+    memoryStore = matched.memoryStore;
     index += matched.consumed - 1;
   }
-  return store === undefined ? { ok: true, verbose } : { ok: true, store, verbose };
+  return memoryStore === undefined ? { ok: true, verbose } : { ok: true, memoryStore, verbose };
+}
+
+/**
+ * Builds the rejection message for an argument the subcommand does not accept. A `--store` form is answered by naming
+ * the distinction rather than by the generic message: `--store` selects a KB store for the `capture-event` and `kb-*`
+ * skills, and reaching for it here is exactly the confusion `--memory-store` is named to prevent.
+ */
+function rejectArg(accepted: string, arg: string | undefined): string {
+  if (arg === '--store' || (arg !== undefined && arg.startsWith('--store='))) {
+    return `--store selects a KB store; this helper takes ${MEMORY_STORE_FLAG} <name>`;
+  }
+  return `${accepted}; got: ${arg}`;
 }
 
 /** Splits newline-separated stdin into a list of non-empty, trimmed memory paths. */
@@ -223,8 +246,8 @@ function usage(): string {
     "feedback-memories — inspect this machine's feedback memories",
     '',
     'Usage:',
-    '  feedback-memories list [--store <slug>] [--verbose]',
-    '  feedback-memories enumerate [--store <slug>]',
+    '  feedback-memories list [--memory-store <name>] [--verbose]',
+    '  feedback-memories enumerate [--memory-store <name>]',
     '  feedback-memories delete < paths-on-stdin',
     '  feedback-memories --help',
     '',
@@ -235,10 +258,10 @@ function usage(): string {
     '  delete      Remove the newline-separated memory paths piped on stdin and reconcile each MEMORY.md.',
     '',
     'Options:',
-    '  --store <slug>  Scope to one project store. <slug> is the project directory name, as shown in',
-    "                  enumerate's `store` field (e.g. -Users-me-repos-app).",
-    '  --verbose       (list) List each memory with its description.',
-    '  -h, --help      Show this help.',
+    '  --memory-store <name>  Scope to one memory store. <name> is the store directory name, as shown in',
+    "                         enumerate's `memoryStore` field (e.g. -Users-me-repos-app).",
+    '  --verbose              (list) List each memory with its description.',
+    '  -h, --help             Show this help.',
   ].join('\n');
 }
 

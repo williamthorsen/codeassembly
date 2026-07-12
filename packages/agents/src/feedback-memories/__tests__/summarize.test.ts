@@ -44,11 +44,11 @@ describe(summarizeFeedbackMemories, () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.total).toBe(3);
-    const byStore = Object.fromEntries(result.projects.map((project) => [project.store, project]));
-    expect(byStore['-store-a']?.count).toBe(2);
-    expect(byStore['-store-a']?.lastModified).toBe('2026-06-15T12:30:00.000Z');
-    expect(byStore['-store-b']?.count).toBe(1);
-    expect(byStore['-store-b']?.lastModified).toBe('2026-05-20T08:00:00.000Z');
+    const byMemoryStore = Object.fromEntries(result.projects.map((project) => [project.memoryStore, project]));
+    expect(byMemoryStore['-store-a']?.count).toBe(2);
+    expect(byMemoryStore['-store-a']?.lastModified).toBe('2026-06-15T12:30:00.000Z');
+    expect(byMemoryStore['-store-b']?.count).toBe(1);
+    expect(byMemoryStore['-store-b']?.lastModified).toBe('2026-05-20T08:00:00.000Z');
   });
 
   it('sorts projects alphabetically by label', async () => {
@@ -76,15 +76,15 @@ describe(summarizeFeedbackMemories, () => {
     expect(result.projects[0]?.memories).toEqual([{ slug: 'feedback-first', description: 'first description' }]);
   });
 
-  it('propagates a no-such-store failure from enumeration', async () => {
+  it('propagates a no-such-memory-store failure from enumeration', async () => {
     const root = await makeProjectsRoot();
     await writeMemory(root, '-store-a', 'feedback-a.md', new Date('2026-06-01T00:00:00.000Z'));
 
-    const result = await summarizeFeedbackMemories({ projectsRoot: root, store: '-missing', machine: MACHINE });
+    const result = await summarizeFeedbackMemories({ projectsRoot: root, memoryStore: '-missing', machine: MACHINE });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error).toBe('no-such-store');
+    expect(result.error).toBe('no-such-memory-store');
   });
 
   it('propagates a no-projects-root failure from enumeration', async () => {

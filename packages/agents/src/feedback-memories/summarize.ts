@@ -5,19 +5,19 @@ import { enumerateFeedbackMemories } from './enumerate.ts';
 import type { FeedbackMemory, ProjectSummary, SummarizeResult } from './types.ts';
 
 /**
- * Rolls the flat feedback-memory enumeration up into a per-project summary: one entry per store carrying its memory
- * count, the newest memory file's modification time, and each memory's slug and description. Projects are sorted
- * alphabetically by label (case-insensitive). An enumeration failure — an absent projects root, or a scoped store that
- * names nothing — is propagated unchanged, so a caller distinguishes it the same way it would from `enumerate`.
+ * Rolls the flat feedback-memory enumeration up into a per-project summary: one entry per memory store carrying its
+ * memory count, the newest memory file's modification time, and each memory's slug and description. Projects are sorted
+ * alphabetically by label (case-insensitive). An enumeration failure — an absent projects root, or a scoped memory store
+ * that names nothing — is propagated unchanged, so a caller distinguishes it the same way it would from `enumerate`.
  */
 export async function summarizeFeedbackMemories(input: {
   projectsRoot: string;
-  store?: string;
+  memoryStore?: string;
   machine?: string;
 }): Promise<SummarizeResult> {
   const enumerated = await enumerateFeedbackMemories({
     projectsRoot: input.projectsRoot,
-    ...(input.store !== undefined && { store: input.store }),
+    ...(input.memoryStore !== undefined && { memoryStore: input.memoryStore }),
     ...(input.machine !== undefined && { machine: input.machine }),
   });
   if (!enumerated.ok) {
@@ -25,10 +25,10 @@ export async function summarizeFeedbackMemories(input: {
   }
 
   const projects: ProjectSummary[] = [];
-  for (const [store, memories] of groupByStore(enumerated.memories)) {
+  for (const [memoryStore, memories] of groupByMemoryStore(enumerated.memories)) {
     projects.push({
-      store,
-      label: deriveLabel(memories[0]?.repoPath ?? null, store),
+      memoryStore,
+      label: deriveLabel(memories[0]?.repoPath ?? null, memoryStore),
       repoPath: memories[0]?.repoPath ?? null,
       count: memories.length,
       lastModified: await newestMtime(memories),
@@ -50,17 +50,20 @@ export async function summarizeFeedbackMemories(input: {
 // region | Helpers
 
 /** Returns the store's display label: the resolved repo directory's basename, or the raw slug when no repo resolves. */
-export function deriveLabel(repoPath: string | null, store: string): string {
-  return repoPath !== null ? basename(repoPath) : store;
+export function deriveLabel(repoPath: string | null, memoryStore: string): string {
+  return repoPath !== null ? basename(repoPath) : memoryStore;
 }
 
-/** Groups enumerated memories by store slug, preserving enumeration's per-store ordering; every group is non-empty. */
-function groupByStore(memories: readonly FeedbackMemory[]): Map<string, FeedbackMemory[]> {
+/**
+ * Groups enumerated memories by memory-store slug, preserving enumeration's per-store ordering; every group is
+ * non-empty.
+ */
+function groupByMemoryStore(memories: readonly FeedbackMemory[]): Map<string, FeedbackMemory[]> {
   const groups = new Map<string, FeedbackMemory[]>();
   for (const memory of memories) {
-    const group = groups.get(memory.store) ?? [];
+    const group = groups.get(memory.memoryStore) ?? [];
     group.push(memory);
-    groups.set(memory.store, group);
+    groups.set(memory.memoryStore, group);
   }
   return groups;
 }
