@@ -10,7 +10,7 @@ set -euo pipefail
 # CLI; this script forwards everything to it.
 #
 # Usage:
-#   feedback-memories.sh list [--store <slug>] [--verbose]
+#   feedback-memories.sh list [--memory-store <name>] [--verbose]
 #   feedback-memories.sh --help
 
 readonly PROG="$(basename "$0")"
