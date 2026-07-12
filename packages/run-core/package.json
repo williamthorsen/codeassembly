@@ -7,29 +7,33 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/esm/index.js",
-      "types": "./src/index.ts"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js"
     },
     "./config": {
       "source": "./src/config.ts",
-      "import": "./dist/esm/config.js",
-      "types": "./src/config.ts"
+      "types": "./dist/esm/config.d.ts",
+      "import": "./dist/esm/config.js"
     },
     "./parsers": {
       "source": "./src/parsers/run-data-parser.ts",
-      "import": "./dist/esm/parsers/run-data-parser.js",
-      "types": "./src/parsers/run-data-parser.ts"
+      "types": "./dist/esm/parsers/run-data-parser.d.ts",
+      "import": "./dist/esm/parsers/run-data-parser.js"
     },
     "./scanners": {
       "source": "./src/scanners/index.ts",
-      "import": "./dist/esm/scanners/index.js",
-      "types": "./src/scanners/index.ts"
+      "types": "./dist/esm/scanners/index.d.ts",
+      "import": "./dist/esm/scanners/index.js"
     }
   },
   "main": "./dist/esm/index.js",
   "bin": {
     "codeassembly-runs": "bin/codeassembly-runs.js"
   },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "build": "nmr compile && nmr generate-typings",
     "prepare": "nmr compile && nmr generate-typings"

@@ -7,64 +7,68 @@
   "exports": {
     ".": {
       "source": "./src/index.ts",
-      "import": "./dist/esm/index.js",
-      "types": "./src/index.ts"
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js"
     },
     "./check": {
       "source": "./src/check/index.ts",
-      "import": "./dist/esm/check/index.js",
-      "types": "./src/check/index.ts"
+      "types": "./dist/esm/check/index.d.ts",
+      "import": "./dist/esm/check/index.js"
     },
     "./config": {
       "source": "./src/config/index.ts",
-      "import": "./dist/esm/config/index.js",
-      "types": "./src/config/index.ts"
+      "types": "./dist/esm/config/index.d.ts",
+      "import": "./dist/esm/config/index.js"
     },
     "./create": {
       "source": "./src/create/index.ts",
-      "import": "./dist/esm/create/index.js",
-      "types": "./src/create/index.ts"
+      "types": "./dist/esm/create/index.d.ts",
+      "import": "./dist/esm/create/index.js"
     },
     "./discovery": {
       "source": "./src/discovery/index.ts",
-      "import": "./dist/esm/discovery/index.js",
-      "types": "./src/discovery/index.ts"
+      "types": "./dist/esm/discovery/index.d.ts",
+      "import": "./dist/esm/discovery/index.js"
     },
     "./filesystem": {
       "source": "./src/filesystem/index.ts",
-      "import": "./dist/esm/filesystem/index.js",
-      "types": "./src/filesystem/index.ts"
+      "types": "./dist/esm/filesystem/index.d.ts",
+      "import": "./dist/esm/filesystem/index.js"
     },
     "./frontmatter": {
       "source": "./src/frontmatter/index.ts",
-      "import": "./dist/esm/frontmatter/index.js",
-      "types": "./src/frontmatter/index.ts"
+      "types": "./dist/esm/frontmatter/index.d.ts",
+      "import": "./dist/esm/frontmatter/index.js"
     },
     "./note-io": {
       "source": "./src/note-io/index.ts",
-      "import": "./dist/esm/note-io/index.js",
-      "types": "./src/note-io/index.ts"
+      "types": "./dist/esm/note-io/index.d.ts",
+      "import": "./dist/esm/note-io/index.js"
     },
     "./records": {
       "source": "./src/records/index.ts",
-      "import": "./dist/esm/records/index.js",
-      "types": "./src/records/index.ts"
+      "types": "./dist/esm/records/index.d.ts",
+      "import": "./dist/esm/records/index.js"
     },
     "./tags": {
       "source": "./src/tags/index.ts",
-      "import": "./dist/esm/tags/index.js",
-      "types": "./src/tags/index.ts"
+      "types": "./dist/esm/tags/index.d.ts",
+      "import": "./dist/esm/tags/index.js"
     },
     "./vault-integrity": {
       "source": "./src/vault-integrity/index.ts",
-      "import": "./dist/esm/vault-integrity/index.js",
-      "types": "./src/vault-integrity/index.ts"
+      "types": "./dist/esm/vault-integrity/index.d.ts",
+      "import": "./dist/esm/vault-integrity/index.js"
     }
   },
   "main": "./dist/esm/index.js",
   "bin": {
     "kb": "bin/kb.js"
   },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "build": "nmr compile && nmr generate-typings",
     "prepare": "nmr compile && nmr generate-typings"
