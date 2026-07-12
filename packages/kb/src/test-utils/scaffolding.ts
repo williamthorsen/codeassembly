@@ -1,8 +1,8 @@
 // Shared test-support helpers for @codeassembly/kb.
 //
-// This directory is excluded from the published build via the `**/test-utils/**` ignore in `config/build.ts`,
-// so it may freely import `node:` test scaffolding without shipping to `dist`. Consumers are the package's
-// `**/__tests__/*.test.ts` files; per-test setup that genuinely varies stays local to each test.
+// `nmr-compile` ignores only `**/__tests__/**`, so this directory is compiled into `dist`; the package's `files`
+// allowlist keeps it out of the published tarball, so it may freely import `node:` test scaffolding. Consumers are
+// the package's `**/__tests__/*.test.ts` files; per-test setup that genuinely varies stays local to each test.
 
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';

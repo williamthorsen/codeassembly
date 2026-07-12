@@ -1,0 +1,13 @@
+// TSConfig for declaration emit. esbuild owns the .js; tsc owns only the .d.ts.
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "./dist/esm",
+  },
+  // Tests are not part of the published type surface.
+  "exclude": ["**/__tests__/**", "**/*.test.ts"],
+  "include": ["src/"],
+}
