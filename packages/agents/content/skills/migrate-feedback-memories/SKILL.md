@@ -22,10 +22,10 @@ The split is deliberate: the helper is narrow and mechanical (it never classifie
 
 ## Arguments
 
-| Argument                | Description                                                                            | Required |
-| ----------------------- | -------------------------------------------------------------------------------------- | -------- |
-| `--auto`                | Skip the batch-review confirmation and execute the inferred routing. Dedup still runs. | No       |
-| `--memory-store <name>` | Scope the run to a single memory store. Omit to process every store.                   | No       |
+| Argument                | Description                                                                                              | Required |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- | -------- |
+| `--auto`                | Skip the batch-review confirmation and execute the inferred routing. Dedup still runs.                   | No       |
+| `--memory-store <name>` | Scope the run to a single memory store, by directory name or project label. Omit to process every store. | No       |
 
 The `--auto` flag is consumed by you, not the helper; it controls whether you present the routing plan before executing. `--memory-store <name>` passes through to the enumerator (both `--memory-store x` and `--memory-store=x` are accepted); reach for it to work one store per invocation on a machine with many memories, where a fresh, single-project context classifies more accurately than one run holding every store.
 
@@ -48,7 +48,7 @@ Run the helper's `enumerate` subcommand — it is read-only:
 node {harness_home_dir}/skills/migrate-feedback-memories/feedback-memories.mjs enumerate [--memory-store <name>]
 ```
 
-Omit `--memory-store` to enumerate every store on the machine; pass `--memory-store <name>` — the directory name reported in each memory's `memoryStore` field — to scope the run to one store. A `--memory-store` value that names no store on the machine returns `{ ok: false, error: 'no-such-memory-store' }`, so a mistyped name fails loudly rather than looking like an already-clean store.
+Omit `--memory-store` to enumerate every store on the machine; pass `--memory-store <name>` to scope the run to one store. The name is either the directory name reported in each memory's `memoryStore` field, or the project label the `list` subcommand prints (`configs-macos` rather than `-Users-me-repos-configs-macos`) — prefer the directory name when you have it, since it is unambiguous. A value that names no store returns `{ ok: false, error: 'no-such-memory-store' }` and a label shared by two stores returns `{ ok: false, error: 'ambiguous-memory-store' }` listing them, so a mistyped or ambiguous name fails loudly rather than looking like an already-clean store.
 
 It prints `{ ok, machine, projectsRoot, memories, skipped }`. Each entry in `memories` carries `path`, `memoryStore`, `machine`, `slug`, `name`, `description`, `originSessionId`, `body`, `memoryIndexPath`, and `repoPath` — the origin project's working directory when the memory-store slug resolves to a live repo on this machine, else null. `skipped` lists memory files that have a frontmatter fence but unparseable YAML — read and route each one by hand (they are usually feedback memories whose `name:` value needs quoting).
 

@@ -74,6 +74,11 @@ async function writeMemory(root: string, store: string, filename: string, conten
   await writeFile(join(dir, filename), content, 'utf8');
 }
 
+/** Builds the memory-store slug a repo path produces, the way Claude Code does: every path separator becomes `-`. */
+function slugFor(repoPath: string): string {
+  return repoPath.split('/').join('-');
+}
+
 describe(enumerateFeedbackMemories, () => {
   it('enumerates both frontmatter schemas and both filename conventions', async () => {
     const root = await makeProjectsRoot();
@@ -201,6 +206,25 @@ describe(enumerateFeedbackMemories, () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.memories.map((memory) => memory.memoryStore)).toEqual(['-store-b']);
+  });
+
+  it('scopes enumeration to a store named by the label list displays', async () => {
+    const root = await makeProjectsRoot();
+    const repoPath = join(await mkdtemp(join(tmpdir(), 'fm-repo-')), 'labelled-app');
+    await mkdir(repoPath, { recursive: true });
+    await writeMemory(root, slugFor(repoPath), 'feedback-nested-example.md', NESTED_FEEDBACK);
+    await writeMemory(root, '-store-a', 'atlaskit-xcss.md', LEGACY_NO_SESSION);
+
+    const result = await enumerateFeedbackMemories({
+      projectsRoot: root,
+      memoryStore: 'labelled-app',
+      machine: MACHINE,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.memories.map((memory) => memory.slug)).toEqual(['feedback-nested-example']);
+    expect(result.memories[0]?.repoPath).toBe(repoPath);
   });
 
   it('fails with no-such-memory-store when memoryStore names no directory under the root', async () => {

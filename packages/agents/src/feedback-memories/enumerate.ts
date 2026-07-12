@@ -5,18 +5,19 @@ import { basename, join } from 'node:path';
 import { readNoteContent } from '@codeassembly/kb/note-io';
 
 import { isMissingFile, isRecord } from '../lib/type-guards.ts';
+import { resolveMemoryStore } from './resolve-memory-store.ts';
 import { resolveRepoPath } from './resolve-repo-path.ts';
 import type { EnumerateResult, FeedbackMemory, SkippedMemory } from './types.ts';
 
 /**
  * Walks every `<projects-root>/<project>/memory/` directory and returns each memory whose effective type is `feedback`.
- * When `memoryStore` is set, enumeration is scoped to that one memory store, so a machine with many memories can be
- * worked one store per invocation. Membership is decided by parsed frontmatter — `metadata.type` when nested, else a
- * top-level `type` — never by filename or a single-schema regex, so both the legacy and current memory schemas are
- * enumerated. A file that cannot be read as a note is reported in `skipped` rather than dropped. An absent projects root
- * is the one categorical failure; a `memoryStore` naming no directory under it is a `no-such-memory-store` failure, so a
- * mistyped slug fails loudly rather than looking like a clean store; an absent per-store `memory/` directory is simply
- * skipped.
+ * When `memoryStore` is set, enumeration is scoped to that one memory store — named by its directory or by the label
+ * `list` displays — so a machine with many memories can be worked one store per invocation. Membership is decided by
+ * parsed frontmatter — `metadata.type` when nested, else a top-level `type` — never by filename or a single-schema
+ * regex, so both the legacy and current memory schemas are enumerated. A file that cannot be read as a note is reported
+ * in `skipped` rather than dropped. An absent projects root is the one categorical failure; a `memoryStore` that
+ * resolves to no store, or to more than one, fails per `resolveMemoryStore`, so a mistyped or ambiguous name fails
+ * loudly rather than looking like a clean store; an absent per-store `memory/` directory is simply skipped.
  */
 export async function enumerateFeedbackMemories(input: {
   projectsRoot: string;
@@ -38,14 +39,15 @@ export async function enumerateFeedbackMemories(input: {
   memoryStores = memoryStores.toSorted();
 
   if (input.memoryStore !== undefined) {
-    if (!memoryStores.includes(input.memoryStore)) {
-      return {
-        ok: false,
-        error: 'no-such-memory-store',
-        message: `no memory store "${input.memoryStore}" under ${input.projectsRoot}`,
-      };
+    const resolved = await resolveMemoryStore({
+      requested: input.memoryStore,
+      memoryStores,
+      projectsRoot: input.projectsRoot,
+    });
+    if (!resolved.ok) {
+      return resolved;
     }
-    memoryStores = [input.memoryStore];
+    memoryStores = [resolved.memoryStore];
   }
 
   const memories: FeedbackMemory[] = [];

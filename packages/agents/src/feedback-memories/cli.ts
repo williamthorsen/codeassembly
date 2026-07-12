@@ -258,8 +258,9 @@ function usage(): string {
     '  delete      Remove the newline-separated memory paths piped on stdin and reconcile each MEMORY.md.',
     '',
     'Options:',
-    '  --memory-store <name>  Scope to one memory store. <name> is the store directory name, as shown in',
-    "                         enumerate's `memoryStore` field (e.g. -Users-me-repos-app).",
+    '  --memory-store <name>  Scope to one memory store. <name> is either the store directory name, as shown',
+    "                         in enumerate's `memoryStore` field (e.g. -Users-me-repos-app), or the project",
+    '                         label that list prints (e.g. app).',
     '  --verbose              (list) List each memory with its description.',
     '  -h, --help             Show this help.',
   ].join('\n');

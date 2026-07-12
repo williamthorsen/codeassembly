@@ -59,11 +59,11 @@ export interface EnumerateSuccess {
 
 /**
  * The `enumerate` subcommand's stdout payload when the projects root is absent, or a `--memory-store` names no memory
- * store on the machine.
+ * store on the machine — or names more than one, when a label is shared by two stores.
  */
 export interface EnumerateFailure {
   ok: false;
-  error: 'no-projects-root' | 'no-such-memory-store';
+  error: 'ambiguous-memory-store' | 'no-projects-root' | 'no-such-memory-store';
   message: string;
 }
 

@@ -1,6 +1,6 @@
 import { stat } from 'node:fs/promises';
-import { basename } from 'node:path';
 
+import { deriveLabel } from './derive-label.ts';
 import { enumerateFeedbackMemories } from './enumerate.ts';
 import type { FeedbackMemory, ProjectSummary, SummarizeResult } from './types.ts';
 
@@ -48,11 +48,6 @@ export async function summarizeFeedbackMemories(input: {
 }
 
 // region | Helpers
-
-/** Returns the store's display label: the resolved repo directory's basename, or the raw slug when no repo resolves. */
-export function deriveLabel(repoPath: string | null, memoryStore: string): string {
-  return repoPath !== null ? basename(repoPath) : memoryStore;
-}
 
 /**
  * Groups enumerated memories by memory-store slug, preserving enumeration's per-store ordering; every group is
