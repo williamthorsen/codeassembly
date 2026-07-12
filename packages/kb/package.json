@@ -67,7 +67,8 @@
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "!dist/esm/test-utils"
   ],
   "scripts": {
     "build": "nmr compile && nmr generate-typings",
