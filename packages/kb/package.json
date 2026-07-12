@@ -66,8 +66,8 @@
     "kb": "bin/kb.js"
   },
   "scripts": {
-    "build": "nmr compile",
-    "prepare": "nmr compile"
+    "build": "nmr compile && nmr generate-typings",
+    "prepare": "nmr compile && nmr generate-typings"
   },
   "dependencies": {
     "picomatch": "4.0.4",
