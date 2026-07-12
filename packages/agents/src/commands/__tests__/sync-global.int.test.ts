@@ -42,10 +42,14 @@ describe('sync --global (real library, all collection)', () => {
     const commit = await readFile(path.join(skillsDir, 'commit', 'SKILL.md'), 'utf8');
     expect(commit).toContain('<!-- codeassembly-skill:commit -->');
 
-    // Transforms ran across the real catalog: a skill that uses both includes and tool placeholders deploys with
-    // neither a leftover include directive nor an unrewritten `{tool:…}` placeholder.
+    // Transforms ran across the real catalog. The three ticket-emitting skills share the ticket-authoring
+    // partials, so each must deploy with every include directive expanded; design-and-plan additionally
+    // exercises `{tool:…}` placeholder rewriting.
+    for (const emitter of ['create-ticket', 'design-and-plan', 'align-ticket-with-implementation']) {
+      const deployed = await readFile(path.join(skillsDir, emitter, 'SKILL.md'), 'utf8');
+      expect(deployed, `${emitter} deployed with an unexpanded include directive`).not.toContain('<!-- include:');
+    }
     const designAndPlan = await readFile(path.join(skillsDir, 'design-and-plan', 'SKILL.md'), 'utf8');
-    expect(designAndPlan).not.toContain('<!-- include:');
     expect(designAndPlan).not.toContain('{tool:');
 
     // Subagents and rulebooks reach the home domain through `@library` too.

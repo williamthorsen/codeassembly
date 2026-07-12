@@ -91,20 +91,10 @@ When the ticket needs work, produce or update it to capture the proposed approac
 ```markdown
 # {Title}
 
-## Problem
-
-{Clear statement of what needs to be solved and why}
-
-## Context
-
-{Relevant background, constraints, prior art, related systems}
-
-## Proposed solution
-
-{The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, and the chosen approach — including "X, not Y" where a rejected option is worth recording. Keep this section outcome-shaped per the placement doctrine below.}
-
-<!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
+<!-- include: ../_partials/ticket-skeleton.md / -->
 ```
+
+<!-- include: ../_partials/ticket-skeleton-tiers.md / -->
 
 <!-- include: ../_partials/ticket-concision.md / -->
 
@@ -112,9 +102,7 @@ When the ticket needs work, produce or update it to capture the proposed approac
 
 Here, _the implementation_ is the plan artifact (Phase 5): mechanism the ticket omits is recorded there, not dropped.
 
-**Test criterion convention:** when a ticket involves code changes to testable behavior, the acceptance criteria must include a test criterion (e.g., "New/modified behavior in this change is covered by tests"). Omit the test criterion only when the change falls entirely within the carve-outs defined in the `testing-conventions` skill.
-
-**Documentation criterion convention:** when a ticket involves changes that add, remove, or rename user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), the acceptance criteria must include corresponding updates to documentation, help text, and usage examples — including removal of references to anything that no longer exists.
+<!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
 Present the ticket to the user. Revise until approved.
 
