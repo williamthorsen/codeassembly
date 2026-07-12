@@ -1,21 +1,27 @@
-# Ticket creation cost
+# Scope and deferral decisions
 
-Source of truth for cost-aware disposition of findings and follow-up items. Skills that propose ticket creation reference this document to avoid over-ticketing trivial work.
+Governs one decision: when work surfaces that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change), does it fold into the current change, or spin off into a separate ticket?
 
-The principle: Every ticket carries fixed overhead beyond the work itself. The agent must weigh that overhead before recommending a separate ticket, and route findings into the lane that best matches their weight.
+## The default: fold in
 
-## Per-ticket overhead
+Work the problem requires, or that is cheap and serves the ticket's goal, folds into the current change by default. A ticket is a signal of intent, not a boundary; it belongs to us and can be refined. Spinning off a separate ticket needs an affirmative, stated reason:
 
-A new ticket is not free. Even before any code is written, each ticket incurs:
+- a genuinely separable concern,
+- a materially different risk surface,
+- size that would swamp the current change, or
+- independent prioritization (the work can wait and competes with other backlog priorities on its own merits).
 
-- **Backlog maintenance** — the ticket must be triaged, labeled, prioritized, and kept current alongside everything else in the backlog.
-- **Familiarization** — whoever picks the ticket up later (often after context has drained) must rebuild the mental model of what was deferred and why.
-- **Design and planning** — even small tickets get a plan, a branch, and an approach.
-- **Implementation** — the actual code change.
-- **Review** — review cycles run regardless of change size; small changes still consume reviewer attention.
-- **PR creation, approval, and merge** — every change goes through the same PR-and-merge protocol.
+"The ticket didn't mention it" is never such a reason, and must not be offered as one. When the discovered work addresses the same underlying problem, closing only the ticket-named part leaves the problem partially solved, so that work is required, not optional.
 
-For a one-line vocabulary fix or a two-line cleanup, the overhead can dwarf the underlying work by an order of magnitude. Routing such items into a separate ticket is not free risk-management — it is unnecessary cost.
+**Authority.** Scope is the user's decision, not the agent's. Surface discovered work, recommend a disposition with its tradeoffs, and let the user choose; never declare work "out of scope" as settled fact.
+
+**Feature responsibility.** When the current change introduces a feature, an avoidable user-visible defect that feature causes is in-scope-by-default, a likely bug to fix here, not an automatic follow-up. Meeting the ticket's written acceptance criteria does not license shipping a defect the change itself introduced.
+
+## Why a separate ticket is expensive
+
+A new ticket is not free. Beyond the work itself, it commits the whole pipeline (creation, reading, evaluation, design, planning, implementation, review, checks, push, PR, approval, merge, and cleanup) and carries an opportunity cost against everything else in the backlog. Small, clean tickets yield small, clean PRs that are easy to approve; that value is real, but it must clear the pipeline-and-opportunity bar, weighed against the whole flow rather than any single step. For a one-line vocabulary fix or a two-line cleanup, the overhead can dwarf the underlying work by an order of magnitude; routing it into a separate ticket is not risk-management but unnecessary cost.
+
+Once work is judged genuinely separable, ticket it immediately rather than parking it in the conversation; a tracker moves that state out of the user's head. That governs _how_ to defer; the fold-in default governs _whether_. The two compose: decide the disposition here, and execute create-immediately when the disposition is "separate ticket."
 
 ## Three-lane disposition model
 

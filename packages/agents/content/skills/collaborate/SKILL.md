@@ -70,7 +70,7 @@ This — a numbered gradient list in the message body:
 
 When you deem appropriate, proactively dispatch subagents to perform tasks. Good examples:
 
-- A substantive out-of-scope issue has arisen, and a separate ticket is the right disposition under the three-lane model in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md) (the trivial **do now** and **batch later** lanes have already been ruled out, and the ticket content is already known). Dispatch a subagent to create the ticket while you and the developer move on.
+- A substantive out-of-scope issue has arisen, and a separate ticket is the right disposition under the three-lane model in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) (the trivial **do now** and **batch later** lanes have already been ruled out, and the ticket content is already known). Dispatch a subagent to create the ticket while you and the developer move on.
 - You are discussing multiple issues with the developer, and some of them would benefit from research. Dispatch subagents for the research while you and the developer continue to discuss the other issues.
 
 ## Skill improvement

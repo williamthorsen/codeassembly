@@ -97,7 +97,7 @@ Items at levels 1–2 (trivial or mechanical) are **drive-by candidates** — si
 
 Items at levels 3–4 remain in the standard findings pool for the housekeeping menu in Phase 2b.
 
-The complexity assessment feeds into the cost-aware disposition flow described in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md): Trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
+The complexity assessment feeds into the cost-aware disposition flow described in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md): Trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
 
 #### 1c. Scan for insights
 
@@ -130,7 +130,7 @@ Run `git status` and `git log --oneline {default_branch}..HEAD` to understand:
 
 ### Phase 2a: Drive-by fixes
 
-If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model — see [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md) for the principle. Skip this phase entirely if no items qualify — do not show an empty section.
+If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model — see [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) for the principle. Skip this phase entirely if no items qualify — do not show an empty section.
 
 #### Suitability check
 
@@ -171,7 +171,7 @@ Apply drive-by fixes? Reply "all", numbers, or "skip"
 
 Present the user with an inventory of remaining addressable items and a numbered action menu. Only include sections that have at least one item. Items applied as drive-by fixes in Phase 2a do not appear here.
 
-The action menu offers two distinct ticket-creation actions ("Batch tickets for findings" and "Create tickets for findings"); their conditions and recommendation rules — drawn from the cost-aware disposition model in [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md) — are documented under [standard actions](#standard-actions) below.
+The action menu offers two distinct ticket-creation actions ("Batch tickets for findings" and "Create tickets for findings"); their conditions and recommendation rules — drawn from the cost-aware disposition model in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) — are documented under [standard actions](#standard-actions) below.
 
 #### Output format
 
@@ -230,7 +230,7 @@ The actions menu is built dynamically based on which sections are populated:
 | Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment`      |
 | Save session devlog             | Always (unless trivial)                    | `{skill:create-devlog}` |
 
-**Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives — only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. The "Batch tickets for findings" action implements the **batch later** lane; "Create tickets for findings" implements the **separate ticket** lane from [`_data/ticket-creation-cost.md`](../_data/ticket-creation-cost.md).
+**Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives — only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. The "Batch tickets for findings" action implements the **batch later** lane; "Create tickets for findings" implements the **separate ticket** lane from [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md).
 
 **Dropping findings.** Findings the user does not select for a ticket-creation action are implicitly dropped — menu omission is the close-without-tracking signal. The agent does not prompt to confirm; the user's selection is taken at face value. Dropped findings are still recorded in the report's `### Dropped` section and the deferred-findings artifact's `## Dropped` section so they remain discoverable.
 
