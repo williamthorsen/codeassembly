@@ -33,6 +33,29 @@ describe(parseEvent, () => {
     expect(result.ok).toBe(false);
   });
 
+  it('parses an event captured with no session', () => {
+    const { session: _session, ...withoutSession } = validFields;
+    const result = parseEvent(withoutSession, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.session).toBeUndefined();
+  });
+
+  it('reads a stored empty session as absent rather than as an empty string', () => {
+    const result = parseEvent({ ...validFields, session: '' }, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.session).toBeUndefined();
+    expect(result.record.extra).toEqual({});
+  });
+
+  it('reports a non-string session', () => {
+    const result = parseEvent({ ...validFields, session: 42 }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('session');
+  });
+
   it('reads tags and addressed-by as typed fields, not extra', () => {
     const result = parseEvent({ ...validFields, tags: ['fix'], 'addressed-by': ['#849'] }, '');
     expect(result.ok).toBe(true);
@@ -108,6 +131,22 @@ describe(renderEvent, () => {
     if (!parsed.ok) return;
     const { fields, body } = renderEvent(parsed.record);
     expect(parseEvent(fields, body)).toEqual(parsed);
+  });
+
+  it('omits session when the event carries none', () => {
+    const { session: _session, ...withoutSession } = validFields;
+    const parsed = parseEvent(withoutSession, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderEvent(parsed.record).fields);
+    expect(keys).toEqual(['recordType', 'id', 'captured-at', 'cwd', 'summary']);
+  });
+
+  it('drops the empty session of a record stored before session became optional', () => {
+    const parsed = parseEvent({ ...validFields, session: '' }, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(Object.keys(renderEvent(parsed.record).fields)).not.toContain('session');
   });
 
   it('omits tags and addressed-by when empty', () => {
