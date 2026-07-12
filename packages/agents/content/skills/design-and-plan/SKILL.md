@@ -68,7 +68,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
    - Success criteria and edge cases
    - Prefer multiple choice when possible
    - Only one question per message
-   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 **Important:** Do not use `{tool:AskUserQuestion}` or any interactive selector (pop-up, arrow-key, structured-choice) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
 
@@ -76,7 +76,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.
 2. **When the solution is not obvious:** propose 2-3 approaches with trade-offs. Lead with your recommendation and explain why. Rank options per [design priorities](../_data/design-priorities.md).
-   - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 3. **Present the design** in sections scaled to complexity. Ask after each section whether it looks right.
 4. **Get explicit approval** before proceeding.
 
@@ -153,7 +153,7 @@ Design and plan complete:
 ```
 
 <HARD-GATE>
-Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.
@@ -166,3 +166,7 @@ Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its o
 - **Scale to complexity**: A simple task gets a short design and a short plan
 - **Plan for engineers, not transcribers**: Communicate decisions, not ceremony
 - **The ticket is the contract**: If facts on the ground differ from the plan, the ticket's acceptance criteria are the source of truth
+
+<!-- include: ../_partials/next-steps-after-plan.md / -->
+
+<!-- include: ../_partials/option-format.md / -->

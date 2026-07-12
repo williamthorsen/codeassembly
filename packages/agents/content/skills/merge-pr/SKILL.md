@@ -128,7 +128,7 @@ Describe the accomplishment from the reader's standpoint. One short paragraph is
 If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question at a time before showing the final commit:
 
 - For each ambiguous dimension, present a numbered list of the dimension's `candidates` array, plus an "other (specify)" option. Ask the user to pick. If the candidates array is empty, ask open-ended.
-  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
 
 Then render the proposed merge to the user:
@@ -182,3 +182,5 @@ The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels 
 - Local state is intentionally untouched after the merge. Branch deletion happens on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows — `gh pr merge --delete-branch` fails when the base branch is held by another worktree.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
+
+<!-- include: ../_partials/option-format.md / -->

@@ -74,7 +74,7 @@ For each finding, assign one of these scopes:
 - The distinction is **scope** (general vs project-specific), not nature (prescriptive vs descriptive). Project-specific conventions, commands, and architectural decisions all belong in PROJECT.md regardless of whether they are rules or facts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, ask the user — one question at a time, prefer multiple choice.
-  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - Content that is obvious from reading the code (e.g., "this project uses TypeScript") adds no value. Include only what would save an agent from a wrong assumption or a slow discovery.
 
 ### Phase 3: Generate
@@ -168,3 +168,5 @@ Before presenting the draft, verify:
 - **Interactive** — ask when classification is unclear, but don't overwhelm with questions
 - **Portable** — this skill works in any repo that follows the `.agents/PROJECT.md` convention
 - **Honest about uncertainty** — if something might belong in general guidance, say so rather than silently including it
+
+<!-- include: ../_partials/option-format.md / -->

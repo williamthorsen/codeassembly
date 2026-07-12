@@ -80,5 +80,9 @@ Plan saved: {plan_path}
 ```
 
 <HARD-GATE>
-Read [next-steps-after-plan](../_data/next-steps-after-plan.md) and follow its options, output format, and recommendation rules exactly. Do not improvise the options. For recommendation context, supply the source's design provenance from the resolve step — `plan` adds no interactive design phase of its own. Include both `{plan_path}` and `{ticket_source}` in each skill-invoking option line; omit the ticket path when the source was a free-form description rather than a ticket.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. For recommendation context, supply the source's design provenance from the resolve step — `plan` adds no interactive design phase of its own. Include both `{plan_path}` and `{ticket_source}` in each skill-invoking option line; omit the ticket path when the source was a free-form description rather than a ticket.
 </HARD-GATE>
+
+<!-- include: ../_partials/next-steps-after-plan.md / -->
+
+<!-- include: ../_partials/option-format.md / -->

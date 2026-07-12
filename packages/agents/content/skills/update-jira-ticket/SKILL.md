@@ -148,7 +148,7 @@ Use only if `INVALID_INPUT` still fires after the pre-flight checker returned `o
 
 #### 1. Surface the failure to the user
 
-Do not create a probe ticket silently. Present the situation to the user and let them choose how to proceed. Use the [recommendation-gradient format](../_data/recommendation-gradient.md):
+Do not create a probe ticket silently. Present the situation to the user and let them choose how to proceed. Use the [option format](#option-format):
 
 > Jira rejected this payload and the pre-flight checker found no known issues. This is likely a new failure class. How should I proceed?
 >
@@ -226,3 +226,5 @@ If recorded failures distribute across truly **unknown classes** (no clear patte
 - Passing a file path to `description_html` / `comment_html`.
 - Retrying past the 4-retry cap.
 - Skipping the failure record after a recovery — this removes the evidence needed to extend the checker.
+
+<!-- include: ../_partials/option-format.md / -->
