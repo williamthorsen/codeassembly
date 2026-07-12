@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture an event
 
-Append an event record to the shared knowledge substrate, or amend an existing one that has not yet been pushed. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the session, the working directory, and a best-effort `repo`), validates the event record's required fields, and writes the record atomically. You supply the `summary` and the event body.
+Append an event record to the shared knowledge substrate, or amend an existing one that has not yet been pushed. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the working directory, and a best-effort `session` and `repo`), validates the event record's required fields, and writes the record atomically. You supply the `summary` and the event body.
 
 This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cross-referencing, and no dedup. The point is to capture the event cheaply and move on; recall and triage happen later via `kb-retrieve`.
 
@@ -38,7 +38,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`; `--allo
 
 ### Auto-filled vs agent-supplied
 
-- **Auto-filled by the helper:** `recordType` (`event`), `id` (ULID), `captured-at`, `session` (`CLAUDE_CODE_SESSION_ID`), `cwd`, and `repo` (the `owner/name` git remote at `cwd`, best-effort — omitted silently when no remote resolves).
+- **Auto-filled by the helper:** `recordType` (`event`), `id` (ULID), `captured-at`, `cwd`, `session` (`CLAUDE_CODE_SESSION_ID`, best-effort — omitted silently on a harness that exposes no session id), and `repo` (the `owner/name` git remote at `cwd`, best-effort — omitted silently when no remote resolves).
 - **Template-injected:** `harness` — `codeassembly-agents` writes the agent platform (`claude` or `rovodev`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
 - **Agent-supplied:** `summary`, the optional `skill`/`model`/`tags`/`impact`, and the body.
 
