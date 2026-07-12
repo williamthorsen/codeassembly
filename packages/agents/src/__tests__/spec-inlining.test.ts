@@ -35,6 +35,7 @@ const OPTION_FORMAT: Spec = {
     'a recommendation that does not match the strongest marker is a defect',
     '| ■■■    | strongly recommended |',
     `${NBSP.repeat(3)}➕`,
+    'Apply this even when an option has only one pro or con.',
   ],
 };
 
