@@ -4,6 +4,23 @@ Partials are reusable Markdown fragments shared across skills, subagents, and pl
 
 This README is the canonical reference for the partial system. The expander is implemented in `packages/agents/src/lib/directive-expander.ts`.
 
+## Choosing a bucket
+
+Shared Markdown lives in one of two buckets. The choice is not stylistic — it decides whether the agent reliably sees the content.
+
+- **`_partials/` — content the agent must reproduce.** Output blocks, option menus, render formats, checklists it works through. Inlined at install time, so it is in context the moment the agent generates output.
+- **`_data/` — content the agent consults conditionally.** Resolution tables, classification rubrics, doctrine references. Reached by a runtime Markdown link and read only when the situation calls for it.
+
+A runtime link is an optional read. Where the model already holds a strong prior for what the content looks like — and it does, for anything resembling a standard option menu or output block — it generates from that prior instead of taking the hop. Emphasis is not a remedy: a `<HARD-GATE>` reading "follow its options and output format exactly; do not improvise" sat over one such link, and the block was improvised anyway. Never put must-reproduce content behind a runtime link.
+
+Inlining is not free — a partial's cost is paid by every consumer — so content the agent needs only sometimes stays in `_data/`. A spec that is partly must-reproduce and partly reference splits along that seam: the render contract becomes a partial, and the doctrine stays in `_data/` and includes the partial, so there is still one source of truth.
+
+Inline a spec **once per skill, as a section**, and point every use site at it with an in-file anchor (`[option format](#option-format)`). Anchor-only links pass through the link rewriter untouched. A skill with two use sites would otherwise carry the block twice, and a reference from inside a numbered procedure cannot absorb a long block inline. An in-file anchor costs nothing, because the content is already in context — the filesystem hop is the defect, not the pointer.
+
+### Skill-local pointers are load-bearing
+
+Several skill bodies — `collaborate`, `design-and-plan`, and `refine-plan` among them — carry a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional: agents follow a behavioural rule more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
+
 ## Directive grammar
 
 Three include shapes are recognized. Each must occupy a full line, with optional leading and trailing whitespace. Inline directives inside prose or code spans are not expanded.
