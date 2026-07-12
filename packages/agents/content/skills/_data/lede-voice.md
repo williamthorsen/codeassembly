@@ -72,7 +72,7 @@ If a sentence describes how the change was implemented (mechanism, internal data
 
 **Indirect outcomes** (reliability, maintainability, performance) are permitted **only if specific**. "More reliable progress visibility during long runs" describes a real outcome a reader would notice; "improves reliability" or "modernizes the architecture" is generic puffery and is forbidden. The test: If the same sentence could be written about almost any change, it is too generic.
 
-A few kinds of change specialize what counts as an outcome. The carve-outs below refine the test for those cases; any work type not listed follows the general test above.
+A few kinds of change specialize what counts as an outcome. The carve-outs below refine the test for those cases; a change that none of them covers follows the general test above.
 
 **For `fix:` entries specifically.** Sentences after the opening symptom-frame must add user-relevant content beyond the implicit "bug fixed"; specifically, user-facing behavior change or migration info. Each such sentence describes what the user can now do (or no longer needs to do), not how the fix works internally. "The CLIs now read their version from `package.json`" is mechanism. "A fresh `pnpm install` or rebuild is no longer required" is migration info. The test: Could the same sentence be true after a different implementation of the change? If yes, it is user-facing behavior; if no, it is mechanism. This counterfactual applies to any sentence in any work type, not just `fix:`.
 
