@@ -41,7 +41,7 @@ Check commit messages for additional context.
      {Optional supporting facts the subagent may need for accuracy.}
    ```
 
-   Lead with the outcome before naming files: `outcome` is the reader-facing delta the lede must carry, and it must be mechanism-free — state what changes for the reader, not how it was built. Do not pre-draft the lede here; implementation detail packed into `outcome` is laundering, and the subagent is required to cut it regardless. `context` is supplementary material the subagent may draw on for accuracy.
+   Lead with the outcome before naming files: `outcome` is the reader-facing delta the lede must carry, and it must be mechanism-free — state what changes for the reader, not how it was built. Do not pre-draft the lede here; implementation detail packed into `outcome` is laundering, and the subagent is required to cut it regardless. For a change to agent guidance, frame `outcome` as the instruction ("agents are now instructed to X"), not the resulting behavior ("the agent now does X"); see the agent-guidance carve-out in `lede-voice.md`. `context` is supplementary material the subagent may draw on for accuracy.
 
    Use the subagent's returned text as the content of the `## What` section. The subagent owns voice; you own the outcome. If the subagent returns an error message (missing-field or similar), correct the dispatch inputs and retry.
 
