@@ -48,7 +48,7 @@ When you do ask, prefer forms the user can answer unambiguously:
 
 - **A confirmation prompt** (end with `👍🏼👎🏼`). The marker carries a fixed comprehension contract — a clear affirmation proceeds, a clear negation doesn't, anything else is conversation. Full spec in `AGENTS.md` under "Prompt formatting". (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - **A numbered options list.** Include a "some other approach (describe)" option if alternatives should stay open.
-  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 **Never use an interactive selector to pose the question.** Calling `{tool:AskUserQuestion}` (or any pop-up / arrow-key picker) cannot render the strength markers or pros and cons the gradient requires, so it silently discards the convention. Always write the choice as plain text in the message body.
 
@@ -76,3 +76,5 @@ When you deem appropriate, proactively dispatch subagents to perform tasks. Good
 ## Skill improvement
 
 - When the user corrects the agent, or specifies a new desired behavior, that feedback is evidence for refining a skill, subagent, rulebook, general guidance, or helper. Invoke the `{skill:capture-feedback}` skill: it applies the immediate fix when there is something concrete and records a generalized `feedback` event — tagged `mistake` when existing guidance was missed — for a later refinement pass to mine.
+
+<!-- include: ../_partials/option-format.md / -->

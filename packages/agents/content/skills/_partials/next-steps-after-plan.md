@@ -1,8 +1,6 @@
-# Next steps after plan
+## Next-steps options
 
-Standard next-steps block for skills that produce or refine an implementation plan. Skills reference this file to maintain a consistent format and recommendation logic.
-
-## Options
+### Options
 
 | #   | Emoji | Option                                   | Description                                                             |
 | --- | ----- | ---------------------------------------- | ----------------------------------------------------------------------- |
@@ -11,9 +9,9 @@ Standard next-steps block for skills that produce or refine an implementation pl
 | 3   | 🚀🔍  | Implement directly with follow-up review | Implement, then run a single end-of-work review pass as a separate step |
 | 4   | 🚀    | Implement directly                       | Implement without a follow-up review (reserved for trivial work)        |
 
-## Output format
+### Output format
 
-Present all four options as a numbered list in [recommendation-gradient](./recommendation-gradient.md) form. Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted; see the [recommendation gradient's don'ts](./recommendation-gradient.md#donts) for the rule. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
+Present all four options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
 
 Options that invoke a skill include context-clearing guidance:
 
@@ -45,7 +43,7 @@ Skill names for each option:
 - 🚀🔍 **Implement directly with follow-up review** -> no plan-time skill invocation; implement manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
 - 🚀 **Implement directly** -> no skill invocation; implement manually or ask the agent to begin
 
-## Recommendation rules
+### Recommendation rules
 
 Select the recommended option by checking these rules in order and stopping at the first match.
 
@@ -66,10 +64,10 @@ Select the recommended option by checking these rules in order and stopping at t
 3. **Implement directly** — recommend instead of rule 2 when the work is trivial enough that a review pass would catch nothing meaningful (e.g., a typo fix, unused-import removal, single-file mechanical rename). Complexity levels 1–2 trivial only.
 4. **Orchestrate** — all other cases (default). Cross-cutting changes, novel patterns, or work whose consequences ripple beyond the immediate change site fall here.
 
-### Marker strengths
+#### Marker strengths
 
-The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice. See [recommendation-gradient markers](./recommendation-gradient.md#markers) for the full marker table and worked examples of the ■■■ and □□□ cases.
+The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
 
-See [`scope-and-deferral.md`](scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
+See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.

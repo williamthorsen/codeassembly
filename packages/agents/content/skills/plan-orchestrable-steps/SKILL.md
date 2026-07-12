@@ -55,7 +55,7 @@ Read `{artifact-dir}/orchestration-plan.json`. Present to the user:
 - **Dependency graph**: Which steps can run in parallel vs. which are sequential
 - **Risks**: Items that need user attention
 - **Questions**: Items the planner could not resolve from codebase analysis
-  - When asking option-style questions, follow [`_data/recommendation-gradient.md`](../_data/recommendation-gradient.md). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+  - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
 ### 4. User feedback loop
 
@@ -119,3 +119,5 @@ When the user approves the plan:
 - All codebase exploration and plan generation is delegated to the planner agent — do not analyze code directly
 - The feedback loop is interactive — always wait for user input before resuming the planner
 - Do not proceed to orchestration — the user invokes `orchestrate-dev` separately when ready
+
+<!-- include: ../_partials/option-format.md / -->

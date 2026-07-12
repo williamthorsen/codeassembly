@@ -48,7 +48,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 8. **Assign a score** out of 10.
 9. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 10. **Save the review** per the [Saving](#saving) section.
-11. **Present next steps**: After saving, present a next-steps prompt following [next-steps-after-review](../_data/next-steps-after-review.md). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact.
+11. **Present next steps**: After saving, present a next-steps prompt following [next-steps options](#next-steps-options). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact.
 
 ## Frontmatter resolution
 
@@ -277,3 +277,7 @@ The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files — the chronological sequence of files is the history.
+
+<!-- include: ../_partials/next-steps-after-review.md / -->
+
+<!-- include: ../_partials/option-format.md / -->
