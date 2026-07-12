@@ -31,10 +31,11 @@ export type PrepareOutcome = PrepareSuccess | PrepareFailure;
 /**
  * Composes a `KbEvent` from agent-supplied args and auto-filled context, renders it through the record module's
  * `renderEvent`, and validates the serialized note as an `event` record by re-parsing through `parseEvent`. The record
- * carries the stored `recordType: event` discriminant and the typed event spine (`id`, `captured-at`, `session`, `cwd`,
- * `summary`, plus any supplied `tags`/`impact`); `repo`/`skill`/`model`/`harness` have no typed field and ride in
- * `extra`, which `renderEvent` emits after the spine. No `updated`/`last-verified` field is written: an event carries a
- * single canonical state, editable in place via `capture-event --amend` until it is pushed and immutable after.
+ * carries the stored `recordType: event` discriminant and the typed event spine (`id`, `captured-at`, `cwd`, `summary`,
+ * plus `session` when the harness exposes one and any supplied `tags`/`impact`); `repo`/`skill`/`model`/`harness` have
+ * no typed field and ride in `extra`, which `renderEvent` emits after the spine. No `updated`/`last-verified` field is
+ * written: an event carries a single canonical state, editable in place via `capture-event --amend` until it is pushed
+ * and immutable after.
  *
  * Rendering the composed record through the same `renderEvent`/`renderNote` path the amend path uses keeps a fresh
  * capture and its later amendments identical in field order. Validation round-trips the serialized note through
@@ -68,7 +69,7 @@ export function prepareEvent(input: {
     recordType: 'event',
     id,
     capturedAt,
-    session: context.session,
+    ...(context.session !== undefined && { session: context.session }),
     cwd: context.cwd,
     summary: args.summary,
     tags: args.tags,

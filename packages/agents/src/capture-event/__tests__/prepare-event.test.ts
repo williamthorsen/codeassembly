@@ -102,6 +102,21 @@ describe(prepareEvent, () => {
     }
   });
 
+  it('writes an event with session absent when the harness exposes no session id', () => {
+    const result = prepareEvent({
+      args: argsFor({}),
+      context: { cwd: '/tmp/work', repo: 'owner/name' },
+      id: ID,
+      capturedAt: CAPTURED_AT,
+      body: '',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prepared.content).not.toMatch(/^session:/m);
+    }
+  });
+
   it('renders the agent-supplied skill, model, harness, and tags into the record', () => {
     const result = prepareEvent({
       args: argsFor({ skill: 'kb-retrieve', model: 'claude-opus-4-8', harness: 'claude', tags: ['recall', 'kb'] }),

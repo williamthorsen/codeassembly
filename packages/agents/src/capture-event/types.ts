@@ -34,8 +34,8 @@ export interface ParsedArgs {
 
 /** The auto-filled context an event carries beyond the agent-supplied fields. */
 export interface CaptureContext {
-  /** Session identifier read from `CLAUDE_CODE_SESSION_ID`. */
-  session: string;
+  /** Session identifier read from `CLAUDE_CODE_SESSION_ID`; omitted when the harness exposes none. */
+  session?: string;
   /** Absolute working directory the capture ran from. */
   cwd: string;
   /** `owner/name` git remote at `cwd`, best-effort; omitted when unresolvable. */

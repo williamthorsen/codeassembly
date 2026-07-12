@@ -71,8 +71,8 @@ if (isEntryPoint()) {
 /**
  * Runs the helper end to end: parses args, reads the event body from stdin, and resolves the target store (a concrete
  * `--store` by name, or the registry's `default_kb` via the `@default` sentinel; an omitted `--store` is refused). A
- * fresh capture fills in the auto-derived context (ULID `id`, `captured-at`, `session`, `cwd`, best-effort `repo`),
- * validates the event record's required spine, and writes `content/events/{id}.md` without
+ * fresh capture fills in the auto-derived context (ULID `id`, `captured-at`, `cwd`, and a best-effort `session` and
+ * `repo`), validates the event record's required spine, and writes `content/events/{id}.md` without
  * overwriting an existing id. With `--amend <id>`, it instead rewrites that existing event in place; see
  * {@link amendEvent}.
  *
@@ -143,9 +143,13 @@ export async function runCapture(input: {
     return amendEvent({ args, store, body });
   }
 
-  const session = input.env.CLAUDE_CODE_SESSION_ID ?? '';
+  const session = input.env.CLAUDE_CODE_SESSION_ID;
   const repo = await resolveRepo(input.cwd);
-  const context: CaptureContext = { session, cwd: input.cwd, ...(repo !== undefined && { repo }) };
+  const context: CaptureContext = {
+    cwd: input.cwd,
+    ...(session !== undefined && session.length > 0 && { session }),
+    ...(repo !== undefined && { repo }),
+  };
 
   const prep = prepareEvent({
     args,
