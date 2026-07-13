@@ -213,6 +213,75 @@ describe(runCapture, () => {
     }
   });
 
+  it('captures an event with no session field when the harness exposes no session id', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+
+    const result = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: repo,
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const written = await readFile(result.path, 'utf8');
+      expect(written).not.toMatch(/^session:/m);
+      expect(written).toContain('summary: Noticed a thing');
+    }
+  });
+
+  it('treats a blank session id as no session at all', async () => {
+    const { home } = await makeStore('codeassembly');
+    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+
+    const result = await runCapture({
+      argv: ['--store', '@default', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: repo,
+      env: { CLAUDE_CODE_SESSION_ID: '' },
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const written = await readFile(result.path, 'utf8');
+      expect(written).not.toMatch(/^session:/m);
+    }
+  });
+
+  it('amends an event stored with an empty session, dropping the empty field', async () => {
+    const { storePath, home } = await makeStore('codeassembly');
+    await mkdir(join(storePath, 'content', 'events'), { recursive: true });
+    await writeFile(
+      join(storePath, 'content', 'events', `${ID}.md`),
+      `---\nrecordType: event\nid: ${ID}\ncaptured-at: 2026-06-04T06:57:22Z\nsession: ''\ncwd: /tmp/work\nsummary: Original summary\nharness: rovodev\n---\n\nOriginal body.\n`,
+      'utf8',
+    );
+
+    const amended = await runCapture({
+      argv: ['--store', '@default', '--amend', ID, '--summary', 'Corrected summary'],
+      stdin: bodyStream('Corrected body.'),
+      cwd: '/tmp/different-cwd',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(amended.ok).toBe(true);
+    if (amended.ok) {
+      const written = await readFile(amended.path, 'utf8');
+      expect(written).not.toMatch(/^session:/m);
+      expect(written).toContain('summary: Corrected summary');
+      expect(written).toContain('harness: rovodev');
+      expect(written).toContain('cwd: /tmp/work');
+    }
+  });
+
   it('writes the impact field when --impact is supplied', async () => {
     const { home } = await makeStore('codeassembly');
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');

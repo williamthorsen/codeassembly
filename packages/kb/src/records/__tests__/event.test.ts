@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EVENT_IMPACT_LEVELS, isEventImpact, parseEvent, renderEvent } from '../event.ts';
+import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '../event.ts';
 
 const validFields = {
   recordType: 'event',
@@ -31,6 +31,29 @@ describe(parseEvent, () => {
   it('rejects an invalid captured-at', () => {
     const result = parseEvent({ ...validFields, 'captured-at': 'whenever' }, '');
     expect(result.ok).toBe(false);
+  });
+
+  it('parses an event captured with no session', () => {
+    const { session: _session, ...withoutSession } = validFields;
+    const result = parseEvent(withoutSession, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.session).toBeUndefined();
+  });
+
+  it('reads a stored empty session as absent rather than as an empty string', () => {
+    const result = parseEvent({ ...validFields, session: '' }, '');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.record.session).toBeUndefined();
+    expect(result.record.extra).toEqual({});
+  });
+
+  it('reports a non-string session', () => {
+    const result = parseEvent({ ...validFields, session: 42 }, '');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.errors.join(' ')).toContain('session');
   });
 
   it('reads tags and addressed-by as typed fields, not extra', () => {
@@ -108,6 +131,38 @@ describe(renderEvent, () => {
     if (!parsed.ok) return;
     const { fields, body } = renderEvent(parsed.record);
     expect(parseEvent(fields, body)).toEqual(parsed);
+  });
+
+  it('omits session when the event carries none', () => {
+    const { session: _session, ...withoutSession } = validFields;
+    const parsed = parseEvent(withoutSession, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const keys = Object.keys(renderEvent(parsed.record).fields);
+    expect(keys).toEqual(['recordType', 'id', 'captured-at', 'cwd', 'summary']);
+  });
+
+  it('drops the empty session of a record stored before session became optional', () => {
+    const parsed = parseEvent({ ...validFields, session: '' }, '');
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(Object.keys(renderEvent(parsed.record).fields)).not.toContain('session');
+  });
+
+  it('omits an empty session on a record composed directly rather than parsed', () => {
+    const record: KbEvent = {
+      recordType: 'event',
+      id: '01HZCEVENTAAAAAAAAAAAAAAAA',
+      capturedAt: '2026-06-18T09:41:02Z',
+      session: '',
+      cwd: '/tmp/work',
+      summary: 'Noticed a phantomwidget glitch',
+      tags: [],
+      addressedBy: [],
+      extra: {},
+      body: '',
+    };
+    expect(Object.keys(renderEvent(record).fields)).not.toContain('session');
   });
 
   it('omits tags and addressed-by when empty', () => {

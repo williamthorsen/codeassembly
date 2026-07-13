@@ -24,7 +24,8 @@ export interface KbEvent {
   recordType: 'event';
   id: string;
   capturedAt: string;
-  session: string;
+  /** Harness-dependent provenance: absent when the harness that captured the event exposes no session id. */
+  session?: string;
   cwd: string;
   summary: string;
   tags: string[];
@@ -58,7 +59,7 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
   }
 
   const id = requireString(fields.id, 'id', errors);
-  const session = requireString(fields.session, 'session', errors);
+  const session = readOptionalNonEmptyString(fields.session, 'session', errors);
   const cwd = requireString(fields.cwd, 'cwd', errors);
   const summary = requireString(fields.summary, 'summary', errors);
 
@@ -80,7 +81,6 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
     errors.length > 0 ||
     id === undefined ||
     capturedAt === undefined ||
-    session === undefined ||
     cwd === undefined ||
     summary === undefined ||
     tags === undefined ||
@@ -102,7 +102,7 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
       recordType: 'event',
       id,
       capturedAt,
-      session,
+      ...(session !== undefined && { session }),
       cwd,
       summary,
       tags,
@@ -114,13 +114,17 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
   };
 }
 
-/** Projects an event back to a frontmatter field map (declared fields first, then preserved `extra`) plus its body. */
+/**
+ * Projects an event back to a frontmatter field map (declared fields first, then preserved `extra`) plus its body. An
+ * empty `session` is omitted like an absent one, mirroring {@link parseEvent}: the two spellings of "no session" have a
+ * single representation on both edges of the module, so no record can reacquire the empty field on a write.
+ */
 export function renderEvent(record: KbEvent): { fields: Record<string, unknown>; body: string } {
   const fields: Record<string, unknown> = {
     recordType: record.recordType,
     id: record.id,
     'captured-at': record.capturedAt,
-    session: record.session,
+    ...(record.session !== undefined && record.session.length > 0 && { session: record.session }),
     cwd: record.cwd,
     summary: record.summary,
   };
@@ -165,6 +169,22 @@ function readListField(value: unknown, field: string, errors: string[]): string[
     return undefined;
   }
   return list;
+}
+
+/**
+ * Reads an optional string field for which the empty string carries no more meaning than absence: both yield
+ * `undefined`, so the record holds one representation of "not supplied". A present non-string value records an error and
+ * yields `undefined`.
+ */
+function readOptionalNonEmptyString(value: unknown, field: string, errors: string[]): string | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
+  errors.push(`${field}: expected a string`);
+  return undefined;
 }
 
 /** Reads a required string field, pushing an error when it is absent or empty; returns the value or `undefined`. */
