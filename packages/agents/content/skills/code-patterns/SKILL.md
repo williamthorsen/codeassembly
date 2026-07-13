@@ -18,7 +18,7 @@ Rules for how code is structured, organized, and documented.
 
 ## Documentation
 
-The positive baseline for descriptions on functions, methods, classes, and components lives in [`comment-discipline.md`](../_data/comment-discipline.md). The subsections below cover documentation form.
+The positive baseline for descriptions on functions, methods, classes, and components is stated under [comment discipline](#comment-discipline). The subsections below cover documentation form.
 
 ### JSDoc parameters
 
@@ -46,11 +46,7 @@ Do not use multi-line boxed separators (`// --------` / `// Label` / `// -------
   // endregion | Helpers
   ```
 
-## Code comments
-
-Comments are written for the future reader, not the recent conversation. The full rule set (positive baseline, ten deletion rules, carve-outs for test comments and `eslint-disable` rationales) lives in [`comment-discipline.md`](../_data/comment-discipline.md).
-
-<!-- include: ../../_partials/comment-audit-checklist.md / -->
+<!-- include: ../../_partials/comment-discipline.md / -->
 
 ## Naming
 

@@ -57,21 +57,17 @@ Examples:
 3. **Outcome-focused**: What happens, not just that something happens
 4. **Readable**: Anyone can understand the test purpose without reading the code
 
-## Test comments
+<!-- include: ../../_partials/comment-discipline.md / -->
 
-Comment discipline applies to test files the same as to source. The full rule set lives in [`comment-discipline.md`](../_data/comment-discipline.md). The most common legitimate reasons to write a comment inside a test:
+### Test files
 
-- **Non-obvious setup.** When the fixture construction does not match the test name, a sentence explaining the setup is warranted.
-- **Indirect assertions.** When the test must assert on a proxy (e.g., on a `className` because the styled behavior is not observable in jsdom), name the reason for the indirection.
-- **Intentional skips.** When a test is skipped, the skip rationale is required.
-
-Everything else is over-commenting. Test names already communicate intent; assertions communicate the check.
+Test files are governed the same as source. Test names already communicate intent and assertions communicate the check, so everything outside the test-comment carve-out is over-commenting.
 
 ## Test structure
 
 Tests should make their variation easy to see. When N adjacent tests differ only in one input but share a wall of identical setup, the reader has to diff three or four nearly-identical render calls to find what's actually being tested. The fix is not "delete things"; it's "factor the shared part out so the variation reads as variation."
 
-This is the same signal-buried-in-noise failure mode that [`comment-discipline.md`](../_data/comment-discipline.md) addresses on the comment side. Different mechanism, same principle.
+This is the same signal-buried-in-noise failure mode that [comment discipline](#comment-discipline) addresses on the comment side. Different mechanism, same principle.
 
 ### Rules
 

@@ -77,17 +77,7 @@ Focus exclusively on simplification opportunities in changed code:
 - Premature abstractions that don't earn their weight
 - Overly defensive patterns (redundant null checks, unnecessary try/catch wrappers, excessive validation of trusted internal inputs)
 - Unnecessary nesting and complexity
-- Comment-discipline violations. See `{harness_home_dir}/skills/_data/comment-discipline.md` for the full taxonomy. Common patterns to flag:
-  - Comments that restate or paraphrase the code below them
-  - Tutorial-style file headers that duplicate per-function JSDoc
-  - Conversation memorialization (references to chat-time reasoning, tickets, or PRs in code comments)
-  - Defensive prose about unreachable cases (encode as type or assertion instead)
-  - Re-teaching of the library being used
-  - The same fact documented in two places
-  - Process commentary ("centralizes the typing boundary," "future readers should note…")
-  - Domain leaks in shared/common code
-  - Inline "what" comments that describe what the code does instead of explaining why a non-obvious decision was made
-  - `eslint-disable` rationales that explain the surrounding decision rather than the specific suppression
+- Comment-discipline violations — put every comment in the changed code through the three comment-discipline tests in your context
 - Test-structure violations. See `{harness_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
   - Adjacent tests with near-identical setup where only one input varies (parameterize with `it.each` or extract a helper)
   - Specific-fixture-label assertions repeated per row when the rule is a count or predicate

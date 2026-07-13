@@ -48,6 +48,12 @@ Before emitting any F/W/T/R/S finding, confirm it hands the author a concrete de
 
 Compose each finding at the tight altitude ([concision principle](../_data/concision.md)): State the defect, its location, and the decision the author must make, then stop. Cut code the author can already see, hedged narration, and rationale for why you looked. Every reader pays for each line, so weigh each sentence against the decision it enables, not its completeness.
 
+## Comment findings
+
+Comment text you propose for a source file — a replacement doc comment, a suggested inline comment — is a source comment, and it takes the full [comment discipline](#comment-discipline) audit. Prefer a short `todo:` naming what is stale over a rewritten comment, and never carry an example value lifted from the source.
+
+"Add a comment explaining X" is a finding only when X is a constraint the code cannot show. Do not request a comment the discipline would delete.
+
 ## Finding references
 
 Conventions for how findings reference files and code locations.
@@ -69,3 +75,5 @@ When posting findings as PR comments (e.g., inline comments on a pull request), 
 | `S`            | `suggestion:`                                                   |
 | `R`            | `recommendation:`                                               |
 | `-L` suffix    | `legacy {severity}:` (e.g., `legacy fixme:`, `legacy warning:`) |
+
+<!-- include: ../../_partials/comment-discipline.md / -->
