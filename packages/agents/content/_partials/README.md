@@ -6,14 +6,16 @@ This README is the canonical reference for the partial system. The expander is i
 
 ## Choosing a bucket
 
-Shared Markdown lives in one of two buckets. The choice is not stylistic — it decides whether the agent reliably sees the content.
+Shared Markdown lives in one of two buckets. The bucket is chosen by _when_ the agent needs the content, not by _what kind_ of content it is — and the choice decides whether the agent reliably sees it at all.
 
-- **`_partials/` — content the agent must reproduce.** Output blocks, option menus, render formats, checklists it works through. Inlined at install time, so it is in context the moment the agent generates output.
-- **`_data/` — content the agent consults conditionally.** Resolution tables, classification rubrics, doctrine references. Reached by a runtime Markdown link and read only when the situation calls for it.
+- **`_partials/` — content the agent must reproduce, or must apply as it writes.** Output blocks, option menus, render formats, checklists it works through, and the doctrine governing an act it performs every time (what belongs in a comment, how tight a ticket must be). Inlined at install time, so it is in context the moment the agent acts.
+- **`_data/` — content the agent consults when a situation arises.** Resolution tables, classification rubrics, ranking criteria. Reached by a runtime Markdown link and read only when the situation calls for it.
 
 A runtime link is an optional read. Where the model already holds a strong prior for what the content looks like — and it does, for anything resembling a standard option menu or output block — it generates from that prior instead of taking the hop. Emphasis is not a remedy: a `<HARD-GATE>` reading "follow its options and output format exactly; do not improvise" sat over one such link, and the block was improvised anyway. Never put must-reproduce content behind a runtime link.
 
-Inlining is not free — a partial's cost is paid by every consumer — so content the agent needs only sometimes stays in `_data/`. A spec that is partly must-reproduce and partly reference splits along that seam: the render contract becomes a partial, and the doctrine stays in `_data/` and includes the partial, so there is still one source of truth.
+Doctrine is not automatically reference material. A doctrine the agent applies every time it performs the act — comment discipline, whenever it writes a comment — binds only when it is already in context, and behind a link it does not bind at all, however well written. A doctrine consulted only when a decision arises stays in `_data/`.
+
+Inlining is not free — a partial's cost is paid by every consumer — so content the agent needs only sometimes stays in `_data/`. A spec that is partly apply-time and partly reference splits along that seam: the binding contract becomes a partial, and the reference material stays in `_data/` and includes the partial, so there is still one source of truth. Where a doctrine has no reference-only residue, it is a partial outright and no `_data/` doc survives it.
 
 Inline a spec **once per skill, as a section**, and point every use site at it with an in-file anchor (`[option format](#option-format)`). Anchor-only links pass through the link rewriter untouched. A skill with two use sites would otherwise carry the block twice, and a reference from inside a numbered procedure cannot absorb a long block inline. An in-file anchor costs nothing, because the content is already in context — the filesystem hop is the defect, not the pointer.
 
