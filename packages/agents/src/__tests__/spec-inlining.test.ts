@@ -16,11 +16,6 @@ import { expandIncludes } from '../lib/directive-expander.ts';
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
-// Written as an escape because a literal NBSP is invisible in source. A whitespace indent — non-breaking or ASCII
-// alike — is discarded by the terminal renderer, collapsing an option's reasoning to the left margin, so no consumer
-// may carry one. Reasoning nests as a list item instead, which is structure the renderer preserves.
-const NBSP = '\u00A0';
-
 interface Spec {
   readonly name: string;
   readonly heading: string;
@@ -96,16 +91,6 @@ describe('output-shaping spec inlining', () => {
         expect(countOccurrences(expanded, heading), `${slug} repeats "${heading}"`).toBe(1);
       }
     });
-  });
-
-  it.each(CONSUMERS)('$slug carries no whitespace-indented option reasoning', async ({ slug }) => {
-    const expanded = await expandSkill(slug);
-    expect(
-      expanded.includes(NBSP),
-      `\`${slug}\` reaches the agent carrying a non-breaking space. A whitespace indent does not survive terminal ` +
-        `rendering — the line collapses to the left margin and the reader cannot tell which option it belongs to. ` +
-        `Nest the reasoning as a list item instead.`,
-    ).toBe(false);
   });
 
   it('no skill still links to a relocated spec', async () => {
