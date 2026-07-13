@@ -1,8 +1,10 @@
 # Action items
 
-Every response that asks the user for something ends with a block holding every ask and nothing else. Prose above may discuss; only the block may ask. A response with no ask carries no block, and that absence tells the user the turn needs nothing from them.
+The user runs several sessions at once and skims. An ask buried in narrative is an ask missed, and the absence of a block tells the user the turn needs nothing from them.
 
-The user runs several sessions at once and skims. An ask buried in narrative is an ask missed.
+The render contract comes first; the doctrine behind it follows. Skills that close a turn by asking carry the contract inlined, so what they consult here is the doctrine.
+
+<!-- include: ../_partials/action-items.md / -->
 
 ## Sweep before sending
 
@@ -37,17 +39,13 @@ An item is a question, punctuated as one, naming the concrete action:
 
 The prefix follows from the marker, so it demands no classification the agent was not already making. A-items come first: they are what the turn is blocked on.
 
-Numbering is reserved for options, so a reference is never ambiguous. The user answers the whole block in one line — "A1 y, A2 2". A single-item block carries no prefix, since there is nothing to disambiguate.
+A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line — "A1 y, A2 2". A single-item block carries no prefix, since there is nothing to disambiguate.
 
 ## Rendering
 
 The block is the last element of the response, under a bolded label, cut off from the prose by a horizontal rule. Options follow [recommendation-gradient](./recommendation-gradient.md).
 
 Structure is fixed at three tiers — item, options, reasoning — and never goes deeper. One level of nesting is the deepest that renders reliably in a terminal, so the convention is written never to need a second.
-
-The render contract below is what skills carry inlined, so what they consult here is the doctrine around it.
-
-<!-- include: ../_partials/action-items.md / -->
 
 ## Deference
 
