@@ -145,11 +145,11 @@ The disposition conflates two decisions: whether the change belongs (substance),
 
 > T1: ACCEPT. `createApiKey` is exported from the public `api/keys.ts` surface; the codebase's other public-API entry points (`createUser`, `createOrganization`) all validate their inputs at entry. The missing guard violates the established public-API invariant, so the change belongs. Timing is decided separately: The storage refactor's scope is otherwise tight, and adding the guard pulls in test fixtures unrelated to the refactor's purpose. The guard ships in a follow-up, and the follow-up ticket is filed now (per `create-tickets-immediately` guidance), not held as a maybe.
 
-## Comment discipline
+<!-- include: ../../_partials/comment-discipline.md / -->
 
-When you implement an ACCEPTed finding by editing code, you are mid-conversation with the reviewer, and that voice must not leak into the source. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
+### Writing code after a review
 
-<!-- include: ../../_partials/comment-audit-checklist.md / -->
+Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, and that is when the voice leaks. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
 
 **Before** (narrates the review, cites a finding and an acceptance criterion):
 
@@ -165,8 +165,6 @@ expect(query).not.toHaveProperty('directReportsOnly', true);
 // A non-manager viewer emits no directReportsOnly narrowing; the GraphQL surface is the binding contract.
 expect(query).not.toHaveProperty('directReportsOnly', true);
 ```
-
-Full rule set: [comment-discipline.md](../_data/comment-discipline.md).
 
 ## Disposition vocabulary
 
