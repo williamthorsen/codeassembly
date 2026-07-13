@@ -1,5 +1,7 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+const gitIsolationSetupFile = new URL('vitest.setup.ts', import.meta.url).pathname;
+
 export const baseConfig = defineConfig({
   resolve: {
     // Prefer "source" exports condition so workspace packages resolve from .ts source
@@ -26,6 +28,7 @@ export const baseConfig = defineConfig({
       provider: 'v8',
     },
     exclude: ['**/node_modules/**'],
+    setupFiles: [gitIsolationSetupFile],
     silent: 'passed-only', // see logs from failing tests only
     watch: false, // don't enter watch mode unless the `--watch` flag is passed
   },
