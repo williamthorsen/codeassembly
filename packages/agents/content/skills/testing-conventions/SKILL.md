@@ -59,6 +59,8 @@ Examples:
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
+### Test files
+
 Test files are governed the same as source. Test names already communicate intent and assertions communicate the check, so everything outside the test-comment carve-out is over-commenting.
 
 ## Test structure

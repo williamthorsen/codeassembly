@@ -77,8 +77,7 @@ Focus exclusively on simplification opportunities in changed code:
 - Premature abstractions that don't earn their weight
 - Overly defensive patterns (redundant null checks, unnecessary try/catch wrappers, excessive validation of trusted internal inputs)
 - Unnecessary nesting and complexity
-- Comment-discipline violations — put every comment in the changed code through the three tests stated in the `code-patterns` skill, which is in your context
-  - `eslint-disable` rationales that explain the surrounding decision rather than the specific suppression
+- Comment-discipline violations — put every comment in the changed code through the three comment-discipline tests in your context
 - Test-structure violations. See `{harness_home_dir}/skills/testing-conventions/SKILL.md` for the full rule set. Common patterns to flag:
   - Adjacent tests with near-identical setup where only one input varies (parameterize with `it.each` or extract a helper)
   - Specific-fixture-label assertions repeated per row when the rule is a count or predicate

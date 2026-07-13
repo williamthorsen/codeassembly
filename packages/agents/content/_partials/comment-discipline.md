@@ -33,7 +33,7 @@ These survive the tests. They are permissions, not requirements.
 - **Test comments** — non-obvious setup the test name does not convey; an indirect assertion, naming the reason for the indirection; the rationale for a skip.
 - **`eslint-disable` rationales** — why _this_ rule is suppressed _here_, and nothing more: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.` The carve-out governs the comment, not the suppression; whether to suppress at all is an `anti-patterns` question.
 
-### Worked examples
+### Before and after
 
 **Written for the reviewer** — fails the stranger test. The comment defends the edit and describes what the code is _not_.
 
