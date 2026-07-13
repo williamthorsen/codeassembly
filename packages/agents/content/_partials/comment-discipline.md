@@ -14,7 +14,7 @@ Apply all three to every comment you write or keep. A comment that fails one is 
 
 **1. The stranger test — would this interest only someone who watched the change happen?** Then cut it.
 
-Tells: _rather than_, _instead of_, _deliberately_, _used to_, _previously_, _replaces_, _we discussed_, _as agreed_, _see PR #N_, _added by TICKET-123_, _mirrors `Sibling.spec.tsx`_, _matches the X precedent_, _future readers should note_. So is any defense of the edit, any counterfactual whose other branch was never possible, and any narration of how or where the code is run.
+Tells: _rather than_, _instead of_, _deliberately_, _used to_, _previously_, _replaces_, _we discussed_, _as agreed_, _see PR #N_, _added by TICKET-123_, _matches the X precedent_, _future readers should note_. So is any defense of the edit, any counterfactual whose other branch was never possible, and any narration of how or where the code is run.
 
 State the code as it **is**, in the present tense — never as it was, as it might have been, or as it is not.
 
