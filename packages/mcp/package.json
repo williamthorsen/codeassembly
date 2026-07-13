@@ -4,6 +4,13 @@
   "private": true,
   "description": "MCP server for orchestrated run management",
   "type": "module",
+  "bin": {
+    "codeassembly-mcp": "bin/codeassembly-mcp.js"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "build": "nmr compile",
     "prepare": "nmr compile"

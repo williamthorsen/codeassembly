@@ -31,6 +31,8 @@ MCP server for orchestrated run management. Wraps run-core capabilities as five 
 
 **Package:** `@codeassembly/mcp` (private)
 
+**Bin:** `codeassembly-mcp` — the stdio server entry point. `.claude/settings.json` launches the server through `packages/mcp/bin/codeassembly-mcp.js`.
+
 ### Agents (`packages/agents/`)
 
 The agents package is a CLI tool (`codeassembly-agents`) that installs reusable AI skills and subagent definitions into harness-specific directories. It also serves as the canonical home for all skill and subagent content.
@@ -258,11 +260,13 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 
 ### Build system
 
-- Uses esbuild via custom `config/build.ts` for TypeScript packages
-- Intelligent caching based on content hashes
-- Automatic `.ts` to `.js` extension rewriting
-- Alias resolution support (`~src/` -> `src/`)
+- Uses `nmr-compile` (from `@williamthorsen/nmr`) for TypeScript packages, emitting `.js` and `.d.ts` in a single TypeScript pass
+- Intelligent caching based on content hashes, keyed under `node_modules/.cache/nmr-compile/`
+- Automatic `.ts` to `.js` extension rewriting, in compiled output and emitted declarations alike
+- Alias resolution support for `~/`-prefixed imports
 - Factory uses Vite with `@vitejs/plugin-react` for the web app
+
+Deleting `dist/` does not force a rebuild. The build cache lives outside it and is keyed on inputs alone, so a rebuild after a manual delete skips and leaves `dist/` empty. Clear `node_modules/.cache/nmr-compile/` too. Tracked upstream at williamthorsen/node-monorepo-tools#470.
 
 ### TypeScript
 
