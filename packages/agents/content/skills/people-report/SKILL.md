@@ -30,16 +30,18 @@ Generate HR analytics reports from employee data provided as CSV paste or file p
 
 If `--report-type` is provided, use the specified types. Skip the prompt.
 
-If `--report-type` is omitted, present the four report types and ask the user to choose one or more:
+If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report the user wants is a taste call, so the options carry no strength markers:
 
-> Which report type(s) would you like?
+> ---
+>
+> **Action items**
+>
+> Which report type(s) would you like? Select one or more.
 >
 > 1. Headcount — org snapshot by team, location, level, tenure
 > 2. Attrition — turnover analysis by team, trends
 > 3. Diversity — representation metrics by level, team, pipeline
 > 4. Org health — span of control, layers, team sizes, flight risk
->
-> You can select multiple (e.g., "1 and 3").
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -55,25 +57,34 @@ Accept CSV, TSV, or any tabular format. If the user provides a file path, read i
 
 Examine the column headers and infer their meaning. Map each column to a recognized field based on common naming patterns (e.g., `Dept`, `Department`, `Team`, `Business Unit` all map to the department/team concept).
 
-**If any column mapping is ambiguous**, confirm with the user before proceeding:
+**If any column mapping is ambiguous**, confirm with the user before proceeding. One item per ambiguous column, so the user can resolve them all in a single reply:
 
-> I'm not sure what these columns represent:
+> Two of your columns have no unambiguous mapping.
 >
-> - `DoT` — is this date of termination or date of transfer?
-> - `L` — is this level or location?
+> ---
+>
+> **Action items**
+>
+> **Q1** — `DoT`: is this date of termination or date of transfer? 🤔
+>
+> **Q2** — `L`: is this level or location? 🤔
 
 Do not guess silently on ambiguous columns.
 
-After resolving all columns, confirm the mapping with the user:
+After resolving all columns, confirm the mapping with the user. The mapping itself is prose; only the confirmation is an item:
 
-> I found {N} rows. Here's how I mapped your columns:
+> I found {N} rows and mapped your columns:
 >
 > - `Dept` → department
 > - `Hire Date` → start date
 > - `Emp ID` → employee identifier
 > - ...
 >
-> Does this look right?
+> ---
+>
+> **Action items**
+>
+> Proceed with this column mapping? 👍🏼👎🏼
 
 Proceed only after the user confirms.
 
