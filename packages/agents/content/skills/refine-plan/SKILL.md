@@ -100,11 +100,11 @@ Evaluate the finding counts:
   **C1 — {title}**
   {question text}
   1. ■■■ {recommended option}:
-     ➕ {strongest argument};
-     ➕ {secondary argument}.
+     - ➕ {strongest argument}
+     - ➕ {secondary argument}
   2. ■□□ {alternative option}:
-     ➕ {pro};
-     ➖ {con}.
+     - ➕ {pro}
+     - ➖ {con}
 
   **X2 — {title}**
   {open-ended question text — describe what you want in free-form text}
@@ -113,6 +113,8 @@ Evaluate the finding counts:
   ```
 
   Wait for the user's response. Capture their answers as `user_answers`.
+
+<!-- include: ../_partials/action-items.md / -->
 
 ### 5. Dispatch plan-reviser
 

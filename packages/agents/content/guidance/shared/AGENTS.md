@@ -42,6 +42,8 @@ Detail adds value up to a peak, then taxes the reader and buries the signal. Com
 
 ## Prompt formatting
 
+Every response that asks for something ends with a labelled action-items block holding every ask and nothing else; where a skill defines its own canonical block for asks, that block governs instead. Prose above may discuss; only the block may ask. Before ending a turn, sweep the draft for anything that invites a response: a soft offer — "let me know if", "say the word and I will", "worth knowing", "I can also" — is an ask, and leaving it in the narrative is how asks get missed. A response with no ask carries no block. Full spec: `_data/action-items.md` in the agents skills tree.
+
 When prompting the user for input, never use interactive UI controls (pop-up, arrow-key, or structured-choice selectors); use plain text, with options as a numbered list. Use visual markers to make prompts more noticeable:
 
 - **Confirmation prompts** (the user's response is approve-or-redirect; "no" means "let's adjust or discuss," not a concrete alternative action): End with `👍🏼👎🏼`.

@@ -11,7 +11,7 @@
 
 ### Output format
 
-Present all four options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise.
+Present all four options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation.
 
 Options that invoke a skill include context-clearing guidance:
 
@@ -23,16 +23,11 @@ Example (rendered for the default case, where the recommendation rules below sel
 ```
 Next steps:
 1. 🧠 ■□□ Refine plan:
-   Clear context and use the `refine-plan` skill with
-   plan: {plan_path},
-   ticket: {ticket_source}
+   - Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
 2. 🎶 ■■□ Orchestrate:
-   Clear context and use the `orchestrate-dev` skill with
-   plan: {plan_path},
-   ticket: {ticket_source}
+   - Clear context and use the `orchestrate-dev` skill with plan: {plan_path}, ticket: {ticket_source}
 3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   Implement directly, then clear context and use the `review-branch` skill with
-   ticket: {ticket_source}
+   - Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
 4. 🚀 ■□□ Implement directly
 ```
 

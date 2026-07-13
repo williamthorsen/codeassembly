@@ -38,23 +38,23 @@ B. Extract a small dedicated module with a narrow interface and inject it.
 
 ```
 1. ■■■ Extend the god-class:
-   ➕ minimal diff;
-   ➕ no new files;
-   ➕ matches surrounding code.
+   - ➕ minimal diff
+   - ➕ no new files
+   - ➕ matches surrounding code
 2. ■□□ Extract a module:
-   ➖ more files;
-   ➖ touches injection sites.
+   - ➖ more files
+   - ➖ touches injection sites
 ```
 
 **Correctness-led ranking** (do this):
 
 ```
 1. ■■■ Extract a module:
-   ➕ narrow interface;
-   ➕ testable in isolation;
-   ➕ untangles concerns the god-class already conflates.
+   - ➕ narrow interface
+   - ➕ testable in isolation
+   - ➕ untangles concerns the god-class already conflates
 2. □□□ Extend the god-class:
-   ➖ deepens an existing SRP violation; convenience gain is one-off, complexity cost compounds.
+   - ➖ deepens an existing SRP violation; convenience gain is one-off, complexity cost compounds
 ```
 
 The factual lists about each option are similar; the **ranking** flips because the criteria changed.

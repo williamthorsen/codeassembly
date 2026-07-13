@@ -41,6 +41,8 @@ If `--report-type` is omitted, present the four report types and ask the user to
 >
 > You can select multiple (e.g., "1 and 3").
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### 2. Collect data
 
 Ask the user to provide employee data:

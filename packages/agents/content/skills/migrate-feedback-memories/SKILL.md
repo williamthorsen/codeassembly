@@ -82,6 +82,8 @@ The lone exception is a memory _deliberately replicated_ as scaffolding — one 
 
 Show every memory with its destination, and for each capture the proposed `--tags`, `--skill`, and `--impact`. Present it as one batch for review — per-item confirmation is impractical at this scale. Wait for approval or adjustments. In auto mode, skip this step.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### 5. Execute
 
 On approval, run all captures first, then a single deletion pass:

@@ -57,6 +57,8 @@ Read `{artifact-dir}/orchestration-plan.json`. Present to the user:
 - **Questions**: Items the planner could not resolve from codebase analysis
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### 4. User feedback loop
 
 Wait for user input. The user may:

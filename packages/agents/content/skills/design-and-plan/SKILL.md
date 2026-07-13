@@ -72,6 +72,8 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 **Important:** Do not use `{tool:AskUserQuestion}` or any interactive selector (pop-up, arrow-key, structured-choice) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### Phase 3: Converge on a design
 
 1. **When the solution is obvious:** present the recommended approach directly. Don't manufacture alternatives for the sake of it.

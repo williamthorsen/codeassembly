@@ -251,6 +251,8 @@ These are defaults. Always include any section where items were actually found, 
 
 **Wait for the user to respond before proceeding.** Do not execute any actions until the user confirms.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### Phase 3: Execution
 
 Parse the user's response to the Phase 2b action menu and execute confirmed actions.

@@ -70,6 +70,8 @@ Write the note body. Embed cross-references inline where the reference contribut
 
 In default mode, present the proposed KB, folder, Diátaxis label, title, tags, and body to the user. Wait for confirmation or a redirect. In auto mode, skip this step.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### 7. Invoke the helper
 
 Pipe the composed body to the bundled helper. A heredoc keeps multi-line bodies legible without the quoting and escaping gymnastics that `echo "$BODY"` invites once the note contains backticks, blank lines, or shell metacharacters:

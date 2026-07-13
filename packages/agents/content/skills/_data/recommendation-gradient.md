@@ -25,17 +25,21 @@ Same surface phrasing, two correct renderings:
 > Want me to:
 >
 > 1. ■■□ Extract the helper now:
->       ➕ enables reuse across the next two call sites;
->       ➖ adds a file and a name to maintain.
+>    - ➕ enables reuse across the next two call sites
+>    - ➖ adds a file and a name to maintain
 > 2. ■□□ Keep it inline:
->       ➕ minimal surface area today;
->       ➖ duplicates the next time the pattern recurs.
+>    - ➕ minimal surface area today
+>    - ➖ duplicates the next time the pattern recurs
 
 Both "yes" (extract) and "no" (inline) are concrete agent actions with their own tradeoffs.
 
 ## Ranking criteria
 
 Rank options on correctness — behavior, API quality, architectural soundness, testability, maintainability — and treat convenience considerations (effort, blast radius, consistency with existing code) as secondary. See [design priorities](./design-priorities.md) for the full rule and a before/after example.
+
+## Where these lists appear
+
+An option-style question is rendered inside an [action-items block](./action-items.md) — the terminal block that every response carrying an ask ends with.
 
 ## Further examples
 
@@ -44,9 +48,9 @@ Single question without markers (pure taste call):
 ```
 Want me to:
 1. Use camelCase:
-   ➕ matches the host file's local style.
+   - ➕ matches the host file's local style
 2. Use kebab-case:
-   ➕ matches the package's public API style.
+   - ➕ matches the package's public API style
 ```
 
 Multiple questions in one response (Q1/Q2 identifiers):
@@ -54,13 +58,13 @@ Multiple questions in one response (Q1/Q2 identifiers):
 ```
 **Q1 — Naming convention?**
 1. Use camelCase:
-   ➕ matches the host file's local style.
+   - ➕ matches the host file's local style
 2. Use kebab-case:
-   ➕ matches the package's public API style.
+   - ➕ matches the package's public API style
 
 **Q2 — File location?**
 1. ■■□ Co-locate with consumer:
-   ➕ keeps related code close.
+   - ➕ keeps related code close
 2. ■□□ Place in shared utility module:
-   ➕ reusable across packages.
+   - ➕ reusable across packages
 ```

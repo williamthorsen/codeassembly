@@ -151,6 +151,8 @@ The triangle delimiters wrap the title and body — the parts that will actually
 
 If the user declines, stop with no API call and no artifact. If they approve, continue.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### 8. Detect platform and select delegate
 
 Read `scm` from session context:
