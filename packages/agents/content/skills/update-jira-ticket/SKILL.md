@@ -153,14 +153,14 @@ Do not create a probe ticket silently. Present the situation to the user and let
 > Jira rejected this payload and the pre-flight checker found no known issues. This is likely a new failure class. How should I proceed?
 >
 > 1. ■■□ Probe and bisect:
->    ➕ pinpoints the exact failing fragment for a fix or a future checker rule;
->    ➖ creates a real ticket tagged `mcp-probe` that needs eventual cleanup.
+>    - ➕ pinpoints the exact failing fragment for a fix or a future checker rule
+>    - ➖ creates a real ticket tagged `mcp-probe` that needs eventual cleanup
 > 2. ■□□ Show the payload for manual submission:
->    ➕ no probe ticket created; you can edit and submit via the Jira UI;
->    ➖ no diagnostic captured for future hardening.
+>    - ➕ no probe ticket created; you can edit and submit via the Jira UI
+>    - ➖ no diagnostic captured for future hardening
 > 3. ■□□ Skip ticket creation:
->    ➕ no further side effects;
->    ➖ the failure class remains unidentified.
+>    - ➕ no further side effects
+>    - ➖ the failure class remains unidentified
 
 #### 2. If the user picks option 1 (probe and bisect)
 

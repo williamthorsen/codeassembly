@@ -2,7 +2,7 @@
 
 The next-steps block has three independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header.
 
-Use `~/`-relative paths where possible and absolute paths otherwise.
+Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
 
 ### Deviations sub-block
 
@@ -26,7 +26,7 @@ Next steps:
 
 Deviations from ticket:
 1. 📝 ■■□ Update ticket:
-   Use the `design-and-plan` skill with ticket: {ticket_source}
+   - Use the `design-and-plan` skill with ticket: {ticket_source}
 2. ⏭️ ■□□ Leave as-is
 ```
 
@@ -66,9 +66,9 @@ Case 2 — implementation matches ticket; PR description is the stale source:
 ```
 Source divergence:
 1. 📝 ■■□ Update PR description:
-   Edit the PR description to match the implementation, which matches the ticket.
+   - Edit the PR description to match the implementation, which matches the ticket
 2. 🧠 ■□□ Revisit design:
-   Use the `design-and-plan` skill with ticket: {ticket_source}
+   - Use the `design-and-plan` skill with ticket: {ticket_source}
 3. ⏭️ ■□□ Leave as-is
 ```
 
@@ -77,9 +77,9 @@ Case 3 — implementation matches PR description; ticket is the stale source:
 ```
 Source divergence:
 1. 📝 ■■□ Update ticket:
-   Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth.
+   - Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth
 2. 🧠 ■□□ Revisit design:
-   Use the `design-and-plan` skill with ticket: {ticket_source}
+   - Use the `design-and-plan` skill with ticket: {ticket_source}
 3. ⏭️ ■□□ Leave as-is
 ```
 
@@ -88,9 +88,9 @@ Case 4 — implementation matches neither source (severe):
 ```
 Source divergence:
 1. 🧠 ■■□ Revisit design:
-   Use the `design-and-plan` skill with ticket: {ticket_source}; the implementation diverged from both specs, so reconciliation is needed.
+   - Use the `design-and-plan` skill with ticket: {ticket_source}; the implementation diverged from both specs, so reconciliation is needed
 2. 📝 ■□□ Update ticket and PR description:
-   Use the `align-ticket-with-implementation` skill to ratify the implementation as the new shared source of truth (edit the PR description as a separate step).
+   - Use the `align-ticket-with-implementation` skill to ratify the implementation as the new shared source of truth (edit the PR description as a separate step)
 3. ⏭️ ■□□ Leave as-is
 ```
 
@@ -136,11 +136,11 @@ Next steps:
 
 Actionable findings:
 1. 🧠 ■□□ Design and plan:
-   Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
+   - Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
 2. 🎶 ■■□ Orchestrate:
-   Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
+   - Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
 3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
+   - Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
 4. 🚀 ■□□ Implement directly
 ```
 
@@ -184,22 +184,22 @@ Next steps:
 
 Deviations from ticket:
 1. 📝 ■■□ Update ticket:
-   Use the `design-and-plan` skill with ticket: {ticket_source}
+   - Use the `design-and-plan` skill with ticket: {ticket_source}
 2. ⏭️ ■□□ Leave as-is
 
 Source divergence:
 1. 📝 ■■□ Update ticket:
-   Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth.
+   - Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth
 2. 🧠 ■□□ Revisit design:
-   Use the `design-and-plan` skill with ticket: {ticket_source}
+   - Use the `design-and-plan` skill with ticket: {ticket_source}
 3. ⏭️ ■□□ Leave as-is
 
 Actionable findings:
 1. 🧠 ■□□ Design and plan:
-   Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
+   - Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
 2. 🎶 ■■□ Orchestrate:
-   Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
+   - Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
 3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
+   - Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
 4. 🚀 ■□□ Implement directly
 ```

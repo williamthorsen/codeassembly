@@ -77,6 +77,8 @@ For each finding, assign one of these scopes:
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - Content that is obvious from reading the code (e.g., "this project uses TypeScript") adds no value. Include only what would save an agent from a wrong assumption or a slow discovery.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### Phase 3: Generate
 
 #### 3a. Ensure prerequisites

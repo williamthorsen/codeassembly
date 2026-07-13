@@ -16,10 +16,6 @@ import { expandIncludes } from '../lib/directive-expander.ts';
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
-// Written as an escape because a literal NBSP is invisible in source and is easily normalized to a plain space by
-// an editor or formatter — the exact corruption the assertion below exists to catch.
-const NBSP = '\u00A0';
-
 interface Spec {
   readonly name: string;
   readonly heading: string;
@@ -34,7 +30,7 @@ const OPTION_FORMAT: Spec = {
     '**Number every option**',
     'a recommendation that does not match the strongest marker is a defect',
     '| ■■■    | strongly recommended |',
-    `${NBSP.repeat(3)}➕`,
+    '   - ➕ minimal surface area',
     'Apply this even when an option has only one pro or con.',
   ],
 };

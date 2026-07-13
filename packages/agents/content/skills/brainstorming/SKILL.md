@@ -80,6 +80,8 @@ digraph brainstorming {
 - Cover architecture, components, data flow, error handling, testing
 - Be ready to go back and clarify if something doesn't make sense
 
+<!-- include: ../_partials/action-items.md / -->
+
 ## After the Design
 
 **Documentation:**

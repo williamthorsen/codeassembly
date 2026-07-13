@@ -56,15 +56,21 @@ Not this — an interactive picker, flat label plus description, no markers:
 
 > `{tool:AskUserQuestion}`: "Which config layout?" with options "Single file" / "Two configs".
 
-This — a numbered gradient list in the message body:
+This — a numbered gradient list, in the action-items block that closes the turn:
 
+> ---
+>
+> **Action items**
+>
 > Want me to:
 >
 > 1. ■□□ Use a single config file:
->       ➕ minimal surface area;
->       ➖ couples concerns.
+>    - ➕ minimal surface area
+>    - ➖ couples concerns
 > 2. ■■□ Split into two configs:
->       ➕ separates lifecycle and runtime concerns.
+>    - ➕ separates lifecycle and runtime concerns
+
+<!-- include: ../_partials/action-items.md / -->
 
 ## Efficient context usage
 

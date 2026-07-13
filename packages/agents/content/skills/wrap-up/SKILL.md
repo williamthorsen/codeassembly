@@ -251,6 +251,8 @@ These are defaults. Always include any section where items were actually found, 
 
 **Wait for the user to respond before proceeding.** Do not execute any actions until the user confirms.
 
+<!-- include: ../_partials/action-items.md / -->
+
 ### Phase 3: Execution
 
 Parse the user's response to the Phase 2b action menu and execute confirmed actions.
@@ -390,12 +392,16 @@ Omit empty sections. The "Artifacts saved" section is omitted when no artifacts 
 After the results report, check whether the branch has commits ahead of the default branch (`git log --oneline {default_branch}..HEAD`). If there are commits — whether from the session's earlier work, drive-by fixes applied in Phase 2a, or both — prompt the user to create a PR:
 
 ```
-Ready to create a PR? If yes, I'll use `{skill:create-pr}` to open the pull request. 👍🏼👎🏼
+---
+
+**Action items**
+
+Create a pull request for this branch? I'll open it with `{skill:create-pr}`. 👍🏼👎🏼
 ```
 
 Skip this prompt if there are no commits on the branch (e.g., a research/exploration session with no code changes).
 
-This is advisory — not an action in a numbered menu. Consistent with the "never auto-execute" constraint.
+The prompt closes the turn that carries the results report, so it goes in an action-items block of its own. It is not an entry in the Phase 2b action menu, and it never auto-executes.
 
 ## Ticket title conventions
 

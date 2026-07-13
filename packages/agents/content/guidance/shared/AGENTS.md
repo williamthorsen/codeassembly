@@ -42,6 +42,8 @@ Detail adds value up to a peak, then taxes the reader and buries the signal. Com
 
 ## Prompt formatting
 
+Every response that asks for something ends with a labelled action-items block holding every ask and nothing else; where a skill defines its own canonical block for asks, that block governs instead. Prose above may discuss; only the block may ask. Before ending a turn, sweep the draft for anything that invites a response: a soft offer — "let me know if", "say the word and I will", "worth knowing", "I can also" — is an ask, and leaving it in the narrative is how asks get missed. A response with no ask carries no block. Full spec: `_data/action-items.md` in the agents skills tree.
+
 When prompting the user for input, never use interactive UI controls (pop-up, arrow-key, or structured-choice selectors); use plain text, with options as a numbered list. Use visual markers to make prompts more noticeable:
 
 - **Confirmation prompts** (the user's response is approve-or-redirect; "no" means "let's adjust or discuss," not a concrete alternative action): End with `👍🏼👎🏼`.
@@ -58,8 +60,6 @@ Examples:
 - "What additional features should I include? 🤔"
 
 **Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
-
-**Skill-local reinforcement.** Rules that govern how an agent presents output — like the numbered-options convention above — should also be referenced in the bodies of skills that perform that behaviour, at the step where the output is produced. Skill-local examples override global prose rules: Agents imitate the nearest concrete example more reliably than they follow a directive read once at session start. Treat skill-local pointers to behavioural specs as load-bearing redundancy, not duplication — global rules only take effect if they are reflected in the skill's own examples.
 
 ## Code descriptions
 

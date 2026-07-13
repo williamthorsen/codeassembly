@@ -19,7 +19,7 @@ Inline a spec **once per skill, as a section**, and point every use site at it w
 
 ### Skill-local pointers are load-bearing
 
-Several skill bodies — `collaborate`, `design-and-plan`, and `refine-plan` among them — carry a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional: agents follow a behavioural rule more reliably when the directive sits near the action it governs. Do not remove these pointers during DRY-driven refactors — the redundancy is load-bearing.
+Several skill bodies — `collaborate`, `design-and-plan`, and `refine-plan` among them — carry a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional, and a DRY-driven refactor must not strip it. The rule and its rationale live in the authoring rulebook, under "Skill-local reinforcement".
 
 ## Directive grammar
 
