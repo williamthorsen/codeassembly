@@ -61,8 +61,6 @@ Examples:
 
 **Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
 
-**Skill-local reinforcement.** Rules that govern how an agent presents output — like the numbered-options convention above — should also be referenced in the bodies of skills that perform that behaviour, at the step where the output is produced. Skill-local examples override global prose rules: Agents imitate the nearest concrete example more reliably than they follow a directive read once at session start. Treat skill-local pointers to behavioural specs as load-bearing redundancy, not duplication — global rules only take effect if they are reflected in the skill's own examples.
-
 ## Code descriptions
 
 - Every non-trivial function, method, class, and component gets a brief description.
