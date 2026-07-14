@@ -26,6 +26,7 @@ import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isRecord } from '../lib/type-guards.ts';
 import { resolveCurrentBranch } from '../shared/branch-helpers.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
+import { resolveSession } from '../shared/resolve-session.ts';
 import { composeEnvelope } from './compose-envelope.ts';
 import { resolveEventPath } from './resolve-event-path.ts';
 import {
@@ -85,7 +86,6 @@ export async function runEmit(input: {
   env: NodeJS.ProcessEnv;
   cwd: string;
   now: Date;
-  home?: string;
 }): Promise<EmitResult> {
   let args: ParsedArgs;
   try {
@@ -112,7 +112,7 @@ export async function runEmit(input: {
     payload: payload.value,
   });
   const filePath = resolveEventPath({
-    home: args.home ?? input.home ?? homedir(),
+    home: args.home ?? homedir(),
     ...(context.repo !== undefined && { repo: context.repo }),
     ...(context.branch !== undefined && { branch: context.branch }),
     ...(context.session !== undefined && { session: context.session }),
@@ -170,10 +170,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  * relay — can still attribute the event to the session that produced it.
  */
 async function resolveContext(input: { args: ParsedArgs; cwd: string; env: NodeJS.ProcessEnv }): Promise<EmitContext> {
-  const repo = await resolveRepo(input.cwd);
-  const branch = await resolveBranch(input.cwd);
-  const envSession = input.env.CLAUDE_CODE_SESSION_ID;
-  const session = input.args.session ?? (envSession !== undefined && envSession.length > 0 ? envSession : undefined);
+  // The repo and branch reads are independent, and the repo read is itself two chained git invocations. Overlapping
+  // them keeps the emission's git cost to the longer chain rather than the sum, on a helper the agent blocks on at
+  // every lifecycle boundary.
+  const [repo, branch] = await Promise.all([resolveRepo(input.cwd), resolveBranch(input.cwd)]);
+  const session = input.args.session ?? resolveSession(input.env);
 
   return {
     ...(repo !== undefined && { repo }),
