@@ -44,9 +44,9 @@ Skill names for each option:
 
 Select the recommended option by checking these rules in order and stopping at the first match.
 
-1. **Refine plan** — recommend only when you can name a load-bearing decision the plan leaves unsettled that a refine pass would surface. Name it, or rule 1 does not match.
+1. **Refine plan** — recommend only when you can name a load-bearing decision the plan leaves unsettled that a refine pass would surface.
 
-   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, carried in from prior design work, verified against source, or copied from an established pattern already in the codebase.
+   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, carried in from prior design work, verified against source, or copied from an established pattern already in the codebase. The calling skill's recommendation context tells you which: a plan whose forks were challenged and ratified interactively carries settled decisions, and a plan produced with no design phase is likelier to carry unsettled ones.
 
    Rule 1 also fails when the plan's residual unknowns are **empirical** — answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
 
@@ -70,6 +70,6 @@ Select the recommended option by checking these rules in order and stopping at t
 
 The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
 
-Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). That context is what rule 1's settled/unsettled test reads: a plan whose forks were challenged and ratified interactively carries settled decisions, and a plan produced with no design phase is likelier to carry unsettled ones.
+Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Rule 1's settled/unsettled test is where it acts.
 
 See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
