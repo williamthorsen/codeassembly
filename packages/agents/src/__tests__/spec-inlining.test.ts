@@ -38,7 +38,13 @@ const OPTION_FORMAT: Spec = {
 const NEXT_STEPS_AFTER_PLAN: Spec = {
   name: 'next-steps-after-plan',
   heading: '## Next-steps options',
-  rules: ['| 3   | 🚀🔍  | Implement directly with follow-up review', '🎶 **Orchestrate** -> `orchestrate-dev`'],
+  rules: [
+    '| 3   | 🚀🔍  | Implement directly with follow-up review',
+    '🎶 **Orchestrate** -> `orchestrate-dev`',
+    // Rule 1's verdict clause. Without it the rule reverts to matching on structural triggers alone, which every
+    // substantive plan trips, and Refine plan is recommended by default again.
+    'Name it, or rule 1 does not match.',
+  ],
 };
 
 const NEXT_STEPS_AFTER_REVIEW: Spec = {
