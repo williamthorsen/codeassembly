@@ -9,6 +9,7 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
+import { ALIASES_FILE, CONFIG_FILE, resolveKbDir } from '../layout/index.ts';
 import type { Finding, KbRoot } from '../types.ts';
 
 /** Stages everything under `dir` and commits it with `message`, returning the new commit SHA. */
@@ -33,16 +34,15 @@ export function initGitRepo(dir: string): void {
 
 /** Wraps a filesystem path as a `KbRoot` with ancestor-walk provenance, performing no I/O. */
 export function kbRootAt(path: string): KbRoot {
-  return { path, kbDir: join(path, '.kb'), via: 'ancestor-walk' };
+  return { path, kbDir: resolveKbDir(path), via: 'ancestor-walk' };
 }
 
 /** Stands up a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */
 export async function makeKbRoot(seeds: { config?: string; aliases?: string } = {}): Promise<KbRoot> {
   const path = await makeTempDir('kb-root-');
-  const kbDir = join(path, '.kb');
-  await mkdir(kbDir, { recursive: true });
-  if (seeds.config !== undefined) await writeFile(join(kbDir, 'config.yaml'), seeds.config, 'utf8');
-  if (seeds.aliases !== undefined) await writeFile(join(kbDir, 'tag-aliases.yaml'), seeds.aliases, 'utf8');
+  await mkdir(resolveKbDir(path), { recursive: true });
+  if (seeds.config !== undefined) await writeFile(join(path, CONFIG_FILE), seeds.config, 'utf8');
+  if (seeds.aliases !== undefined) await writeFile(join(path, ALIASES_FILE), seeds.aliases, 'utf8');
   return kbRootAt(path);
 }
 
@@ -59,7 +59,7 @@ export async function makeRegistryPath(): Promise<string> {
 /** Stands up a temp store with an initialized `.kb/` and the given `relativePath → content` files; returns its path. */
 export async function makeStore(files: Record<string, string>): Promise<string> {
   const root = await makeTempDir('kb-store-');
-  await mkdir(join(root, '.kb'), { recursive: true });
+  await mkdir(resolveKbDir(root), { recursive: true });
   await writeFiles(root, files);
   return root;
 }

@@ -3,13 +3,11 @@ import { join } from 'node:path';
 
 import { parse } from 'yaml';
 
+import { CONFIG_FILE } from '../layout/index.ts';
 import { isEnoent } from '../type-guards.ts';
 import type { KbRoot } from '../types.ts';
 import { configFileShape, defaultKbConfig, type KbConfig } from './config-schema.ts';
 import { KbLoaderError } from './kb-loader-error.ts';
-
-/** Relative location of the check-config file within a KB root. */
-export const CONFIG_FILE = join('.kb', 'config.yaml');
 
 /**
  * Loads the effective check configuration for a KB root. Returns {@link defaultKbConfig} verbatim when no

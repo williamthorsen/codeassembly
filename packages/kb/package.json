@@ -40,6 +40,11 @@
       "types": "./dist/esm/frontmatter/index.d.ts",
       "import": "./dist/esm/frontmatter/index.js"
     },
+    "./layout": {
+      "source": "./src/layout/index.ts",
+      "types": "./dist/esm/layout/index.d.ts",
+      "import": "./dist/esm/layout/index.js"
+    },
     "./note-io": {
       "source": "./src/note-io/index.ts",
       "types": "./dist/esm/note-io/index.d.ts",
