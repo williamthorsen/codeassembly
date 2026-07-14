@@ -41,7 +41,8 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
   rules: [
     '| 3   | 🚀🔍  | Implement directly with follow-up review',
     '🎶 **Orchestrate** -> `orchestrate-dev`',
-    // The four clauses rule 1 rests on. Each fails a distinct way, and each restores a shipped bug when removed.
+    // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
+    // one of them reintroduces the failure named beneath it.
     // Rule 1's test. Without it the rule states no condition at all.
     'recommend only when you can name a load-bearing decision the plan leaves unsettled',
     // What "unsettled" means. Without it the term is undefined and the agent falls back to instinct.
@@ -49,10 +50,10 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // Why a refine pass cannot resolve an empirical unknown, which is what routes such plans to rule 2.
     'A refine pass re-reads the plan and structurally cannot answer those',
     // The demotion of the structural triggers. Without it they are sufficient again, and every substantive plan
-    // trips them — the bug this rule was rewritten to fix.
+    // trips them.
     'They are evidence to weigh, and none of them matches rule 1 on its own',
     // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
-    // render the recommendation. Without it rule 1 is advice, which is the state it was in when it was ignored.
+    // render the recommendation. Without it rule 1 is only advice.
     'must carry a `➕` line naming the specific unsettled decision the pass would surface',
   ],
 };
