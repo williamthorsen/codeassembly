@@ -5,11 +5,14 @@
 
 export {
   ALIASES_FILE,
+  ASSERTIONS_DIR,
+  ASSERTIONS_SEGMENT,
   buildEventPath,
   CONFIG_FILE,
   CONTENT_DIR,
   EVENTS_DIR,
   KB_DIR,
+  resolveAssertionsDir,
   resolveEventPath,
   resolveEventsDir,
   resolveKbDir,

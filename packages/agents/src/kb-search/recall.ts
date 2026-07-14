@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { directoryExists } from '@codeassembly/kb/filesystem';
-import { resolveKbDir } from '@codeassembly/kb/layout';
+import { KB_DIR, resolveKbDir } from '@codeassembly/kb/layout';
 import type { AliasMap } from '@codeassembly/kb/tags';
 import { loadAliases } from '@codeassembly/kb/tags';
 
@@ -194,7 +194,7 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
         '--glob',
         '*.md',
         '--glob',
-        '!.kb/**',
+        `!${KB_DIR}/**`,
         '--context',
         String(SNIPPET_CONTEXT_LINES),
         '--json',

@@ -13,8 +13,14 @@ export const KB_DIR = '.kb';
 /** The directory holding the store's notes. */
 export const CONTENT_DIR = 'content';
 
+/** The `content/` subdirectory holding assertion records. Named on its own because a caller may need to recognize the segment, not just the path. */
+export const ASSERTIONS_SEGMENT = 'assertions';
+
 /** The tag-alias map. */
 export const ALIASES_FILE = `${KB_DIR}/tag-aliases.yaml`;
+
+/** The directory holding the store's assertion records. */
+export const ASSERTIONS_DIR = `${CONTENT_DIR}/${ASSERTIONS_SEGMENT}`;
 
 /** The check configuration. */
 export const CONFIG_FILE = `${KB_DIR}/config.yaml`;
@@ -28,6 +34,11 @@ export const EVENTS_DIR = `${CONTENT_DIR}/events`;
  */
 export function buildEventPath(id: string): string {
   return `${EVENTS_DIR}/${id}.md`;
+}
+
+/** Resolves the absolute path of a store's assertions directory. */
+export function resolveAssertionsDir(storePath: string): string {
+  return join(storePath, ASSERTIONS_DIR);
 }
 
 /** Resolves an event record's absolute path within a store. */
