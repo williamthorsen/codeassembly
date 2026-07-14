@@ -24,6 +24,7 @@ import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
+import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
@@ -137,11 +138,11 @@ export async function runCapture(input: {
     return amendEvent({ args, store, body });
   }
 
-  const session = input.env.CLAUDE_CODE_SESSION_ID;
+  const session = resolveSession(input.env);
   const repo = await resolveRepo(input.cwd);
   const context: CaptureContext = {
     cwd: input.cwd,
-    ...(session !== undefined && session.length > 0 && { session }),
+    ...(session !== undefined && { session }),
     ...(repo !== undefined && { repo }),
   };
 
