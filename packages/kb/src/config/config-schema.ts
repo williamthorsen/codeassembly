@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { CONTENT_DIR } from '../layout/index.ts';
+
 /**
  * The on-disk `.kb/config.yaml` shape. Both fields are optional so a file may override only the dimension it cares
  * about; an absent field falls back to {@link defaultKbConfig}.
@@ -23,6 +25,6 @@ export interface KbConfig {
  * implicitly, so the default exclude only names `node_modules`.
  */
 export const defaultKbConfig: KbConfig = {
-  targets: ['content/**/*.md'],
+  targets: [`${CONTENT_DIR}/**/*.md`],
   exclude: ['**/node_modules/**'],
 };
