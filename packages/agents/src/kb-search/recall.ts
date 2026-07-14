@@ -116,7 +116,7 @@ function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
 /** Loads a KB's `tag-aliases.yaml`, returning an empty map when the file is absent or unreadable. */
 async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   try {
-    return await loadAliases({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath), via: 'ancestor-walk' } });
+    return await loadAliases({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath) } });
   } catch {
     // A malformed alias file degrades to no expansion rather than failing the whole run.
     return new Map();

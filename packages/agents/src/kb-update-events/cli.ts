@@ -252,7 +252,7 @@ function isEntryPoint(): boolean {
 
 /** Loads tag aliases for a store, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map with a warning. */
 async function loadAliasesForStore(storePath: string): Promise<AliasMap> {
-  const kbRoot: KbRoot = { path: storePath, kbDir: resolveKbDir(storePath), via: 'ancestor-walk' };
+  const kbRoot: KbRoot = { path: storePath, kbDir: resolveKbDir(storePath) };
   try {
     return await loadAliases({ kbRoot });
   } catch (error) {

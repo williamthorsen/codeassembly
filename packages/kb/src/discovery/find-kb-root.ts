@@ -13,7 +13,7 @@ export async function findKbRoot(input: { startDir: string }): Promise<KbRoot | 
     const kbDir = resolveKbDir(current);
     // An unreadable ancestor should be skipped, not abort the upward walk, so any stat failure means "no KB here".
     if (await directoryExists(kbDir, { treatErrorsAsAbsent: true })) {
-      return { path: current, kbDir, via: 'ancestor-walk' };
+      return { path: current, kbDir };
     }
   }
   return null;

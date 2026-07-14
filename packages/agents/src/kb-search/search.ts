@@ -123,7 +123,7 @@ async function loadMatchersForHits(input: {
   for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
     let config = defaultKbConfig;
     try {
-      config = await loadKbConfig({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath), via: 'ancestor-walk' } });
+      config = await loadKbConfig({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath) } });
     } catch (error) {
       warnings.push(formatConfigInvalid({ kbPath, scopedKbs: input.scopedKbs, error }));
     }

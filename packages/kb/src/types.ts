@@ -4,14 +4,12 @@
 // The modules below all consume the same shapes, so co-locating them keeps the contract single-sourced.
 // It is types-only and produces no runtime emissions.
 
-/** A discovered knowledge-base root and how it was found. */
+/** A knowledge-base root: the directory holding a `.kb/`, and that `.kb/` itself. */
 export interface KbRoot {
   /** Absolute path to the directory containing the `.kb/` folder. */
   path: string;
   /** Absolute path to the `.kb/` directory itself. */
   kbDir: string;
-  /** How the root was located. */
-  via: 'ancestor-walk';
 }
 
 /** A single knowledge base declared in a `kb.yaml` registry, normalized in memory. */

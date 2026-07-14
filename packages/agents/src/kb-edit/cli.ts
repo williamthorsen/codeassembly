@@ -236,7 +236,7 @@ async function resolveKbForPath(input: {
 
 /** Builds the `KbRoot` descriptor for a resolved KB. */
 function kbRootFor(kb: ResolvedKb): KbRoot {
-  return { path: kb.path, kbDir: resolveKbDir(kb.path), via: 'ancestor-walk' };
+  return { path: kb.path, kbDir: resolveKbDir(kb.path) };
 }
 
 /** Loads tag aliases for a resolved KB. Falls back to an empty alias map on a malformed aliases file. */

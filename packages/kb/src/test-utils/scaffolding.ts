@@ -32,9 +32,9 @@ export function initGitRepo(dir: string): void {
   runGit(dir, 'config', 'commit.gpgsign', 'false');
 }
 
-/** Wraps a filesystem path as a `KbRoot` with ancestor-walk provenance, performing no I/O. */
+/** Wraps a filesystem path as a `KbRoot`, performing no I/O. */
 export function kbRootAt(path: string): KbRoot {
-  return { path, kbDir: resolveKbDir(path), via: 'ancestor-walk' };
+  return { path, kbDir: resolveKbDir(path) };
 }
 
 /** Stands up a temp KB root with an initialized `.kb/`, writes any supplied seed files into it, and returns its `KbRoot`. */

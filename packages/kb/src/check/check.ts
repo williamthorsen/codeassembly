@@ -32,7 +32,7 @@ export interface CheckResult {
  * config defect.
  */
 export async function check(input: { kbRoot: string }): Promise<CheckResult> {
-  const kbRoot: KbRoot = { path: input.kbRoot, kbDir: resolveKbDir(input.kbRoot), via: 'ancestor-walk' };
+  const kbRoot: KbRoot = { path: input.kbRoot, kbDir: resolveKbDir(input.kbRoot) };
 
   const [config, aliases] = await Promise.all([loadKbConfig({ kbRoot }), loadAliases({ kbRoot })]);
 

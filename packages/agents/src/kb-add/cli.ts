@@ -153,7 +153,7 @@ export async function runAdd(input: {
   }
   const kb = resolved.kb;
 
-  const kbRoot = { path: kb.path, kbDir: resolveKbDir(kb.path), via: 'ancestor-walk' as const };
+  const kbRoot = { path: kb.path, kbDir: resolveKbDir(kb.path) };
   const aliases = await loadAliasesWithWarning({ kbRoot });
 
   const body = await readAll(input.stdin);
