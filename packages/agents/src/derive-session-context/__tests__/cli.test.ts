@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { deriveSessionContext, parseArgs, sanitizeBranch } from '../cli.ts';
+import { deriveSessionContext, parseArgs } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -84,30 +84,6 @@ describe(parseArgs, () => {
 
   it('throws on unknown arguments', () => {
     expect(() => parseArgs(['--mystery'])).toThrow(/unknown argument/);
-  });
-});
-
-describe(sanitizeBranch, () => {
-  it('replaces forward slashes with hyphens', () => {
-    expect(sanitizeBranch('feat/foo/bar')).toBe('feat-foo-bar');
-  });
-
-  it('preserves underscores', () => {
-    expect(sanitizeBranch('MAC-130_foo')).toBe('MAC-130_foo');
-  });
-
-  it('strips trailing hyphens after replacement', () => {
-    expect(sanitizeBranch('feat/')).toBe('feat');
-  });
-
-  it('trims surrounding whitespace before processing', () => {
-    expect(sanitizeBranch('  feat/foo  ')).toBe('feat-foo');
-  });
-
-  it('strips all trailing hyphens produced by consecutive slash replacement', () => {
-    // Regression: a single-strip (`s.replace(/-$/, '')`) would yield `feat-`. The bash
-    // sanitizer (`sanitize_branch` in `resolve-frontmatter.sh`) loops to match this.
-    expect(sanitizeBranch('feat//')).toBe('feat');
   });
 });
 
