@@ -17,6 +17,7 @@ import { bundleSkillHelpers, type BundleTarget, packageRoot, targets } from '../
 import {
   makeCaptureEventSmokeTest,
   makeDeriveSessionContextSmokeTest,
+  makeEmitEventSmokeTest,
   makeFeedbackMemoriesSmokeTest,
   makeKbCurateSmokeTest,
   makeKbEditSmokeTest,
@@ -32,6 +33,7 @@ import {
 const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
   'src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
+  'src/emit-event/cli.ts': makeEmitEventSmokeTest(),
   'src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
   'src/kb-curate/cli.ts': makeKbCurateSmokeTest(),
   'src/kb-edit/cli.ts': makeKbEditSmokeTest(),

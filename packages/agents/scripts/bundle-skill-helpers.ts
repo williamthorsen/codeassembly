@@ -69,6 +69,10 @@ export const targets: BundleTarget[] = [
     entry: 'src/feedback-memories/cli.ts',
     outFile: 'content/skills/migrate-feedback-memories/feedback-memories.mjs',
   },
+  {
+    entry: 'src/emit-event/cli.ts',
+    outFile: 'content/skills/emit-event/emit-event.mjs',
+  },
 ];
 
 // A CommonJS dependency (`yaml`) reaches Node built-ins via bare `require('process')` calls.
