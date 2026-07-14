@@ -1,8 +1,9 @@
-import { join, relative, sep } from 'node:path';
+import { relative, sep } from 'node:path';
 
 import type { NoteScopeMatcher } from '@codeassembly/kb/config';
 import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@codeassembly/kb/config';
 import type { ParsedNote } from '@codeassembly/kb/frontmatter';
+import { resolveKbDir } from '@codeassembly/kb/layout';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
 import { recallNotes } from './recall.ts';
@@ -122,7 +123,7 @@ async function loadMatchersForHits(input: {
   for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
     let config = defaultKbConfig;
     try {
-      config = await loadKbConfig({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
+      config = await loadKbConfig({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath), via: 'ancestor-walk' } });
     } catch (error) {
       warnings.push(formatConfigInvalid({ kbPath, scopedKbs: input.scopedKbs, error }));
     }

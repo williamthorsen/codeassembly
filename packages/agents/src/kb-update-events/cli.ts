@@ -1,11 +1,11 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import type { AliasMap, KbRoot } from '@codeassembly/kb';
+import { resolveEventPath, resolveKbDir } from '@codeassembly/kb/layout';
 import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
 import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@codeassembly/kb/records';
 import { loadAliases } from '@codeassembly/kb/tags';
@@ -178,7 +178,7 @@ async function editOne(input: {
     };
   }
 
-  const path = join(storePath, 'content', 'events', `${id}.md`);
+  const path = resolveEventPath({ storePath, id });
 
   let read: ReadNote;
   try {
@@ -252,7 +252,7 @@ function isEntryPoint(): boolean {
 
 /** Loads tag aliases for a store, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map with a warning. */
 async function loadAliasesForStore(storePath: string): Promise<AliasMap> {
-  const kbRoot: KbRoot = { path: storePath, kbDir: join(storePath, '.kb'), via: 'ancestor-walk' };
+  const kbRoot: KbRoot = { path: storePath, kbDir: resolveKbDir(storePath), via: 'ancestor-walk' };
   try {
     return await loadAliases({ kbRoot });
   } catch (error) {

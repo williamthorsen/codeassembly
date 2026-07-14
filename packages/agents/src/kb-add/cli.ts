@@ -1,12 +1,12 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
 import type { AliasMap, KbRoot } from '@codeassembly/kb';
+import { resolveKbDir } from '@codeassembly/kb/layout';
 import { loadAliases } from '@codeassembly/kb/tags';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
@@ -153,7 +153,7 @@ export async function runAdd(input: {
   }
   const kb = resolved.kb;
 
-  const kbRoot = { path: kb.path, kbDir: join(kb.path, '.kb'), via: 'ancestor-walk' as const };
+  const kbRoot = { path: kb.path, kbDir: resolveKbDir(kb.path), via: 'ancestor-walk' as const };
   const aliases = await loadAliasesWithWarning({ kbRoot });
 
   const body = await readAll(input.stdin);
