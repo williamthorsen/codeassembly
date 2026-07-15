@@ -38,7 +38,6 @@
     "@williamthorsen/release-kit": "8.0.0",
     "@williamthorsen/strict-lint": "6.3.2",
     "dotenv": "17.4.2",
-    "esbuild": "0.28.1",
     "eslint": "9.39.5",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jest-dom": "5.5.0",
