@@ -2,8 +2,8 @@
 
 import { existsSync } from 'node:fs';
 
-// Thin wrapper so pnpm can symlink the bin at install time, before `dist/` exists.
-// The real entry point loads at runtime from the build output.
+// Committed launch path for the stdio server, so `.claude/settings.json` targets a file that
+// exists before `dist/` is built. The real entry point loads at runtime from the build output.
 // See packages/run-core/README.md ("Bin wrapper pattern") for details.
 const entryPoint = new URL('../dist/esm/cli.js', import.meta.url);
 
