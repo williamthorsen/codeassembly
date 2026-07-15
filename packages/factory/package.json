@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@codeassembly/run-core": "workspace:*",
-    "@xyflow/react": "12.11.1",
+    "@xyflow/react": "12.11.2",
     "cors": "2.8.6",
     "excalibur": "0.32.0",
     "express": "5.2.1",

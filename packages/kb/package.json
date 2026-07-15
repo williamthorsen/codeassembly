@@ -80,7 +80,7 @@
     "prepare": "nmr compile && nmr generate-typings"
   },
   "dependencies": {
-    "picomatch": "4.0.4",
+    "picomatch": "4.0.5",
     "yaml": "2.9.0",
     "zod": "4.4.3"
   },
