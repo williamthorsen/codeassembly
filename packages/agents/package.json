@@ -15,7 +15,7 @@
     "fmt:sh:check": "shfmt --list **/*.sh",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",
-    "test:smoke": "tsx scripts/smoke-test-skill-helpers.ts"
+    "test:smoke": "tsx scripts/__tests__/smoke-test-skill-helpers.ts"
   },
   "dependencies": {
     "@codeassembly/kb": "workspace:*",
