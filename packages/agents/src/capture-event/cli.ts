@@ -26,7 +26,6 @@ import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import { parseRemoteToOwnerRepo } from '../shared/parse-remote-url.ts';
-import { isEventPushed } from './event-push-state.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
@@ -43,7 +42,6 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'tags', takesValue: true },
   { name: 'impact', takesValue: true },
   { name: 'amend', takesValue: true },
-  { name: 'allow-pushed', takesValue: false },
 ];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -77,7 +75,7 @@ if (isEntryPoint()) {
  * {@link amendEvent}.
  *
  * Recoverable failures (invalid args, an omitted `--store`, an unregistered/readonly store, no configured default,
- * schema validation, and the amend-specific not-found/parse/pushed cases) become structured `{ ok: false, ... }`
+ * schema validation, and the amend-specific not-found/parse cases) become structured `{ ok: false, ... }`
  * results. System failures (out-of-disk, permission denied) propagate to the caller's try/catch.
  *
  * @internal - Exported to allow testing.
@@ -174,7 +172,7 @@ export async function runCapture(input: {
 
 /**
  * Parses the helper's argv. Each value-bearing flag accepts both `--flag value` and `--flag=value`; `--tags` accepts a
- * comma-separated list, `--impact` accepts one declared impact level, and `--allow-pushed` is a boolean flag. Unknown
+ * comma-separated list, and `--impact` accepts one declared impact level. Unknown
  * flags, an unexpected positional, an empty value for any value-bearing flag, a missing `--summary`, an out-of-enum
  * `--impact`, or an `--amend` id that is not a bare filename stem throw with a usage-style message. The body comes from
  * stdin rather than the command line, so the layout is flag-only.
@@ -220,7 +218,6 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
     impact,
     amend,
-    allowPushed: flags.some((flag) => flag.name === 'allow-pushed'),
   };
 }
 
@@ -230,10 +227,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  * Amends an existing event in place. It rewrites `summary` and the body from the invocation and overrides
  * `skill`/`model`/`tags`/`impact` only when they are supplied, preserving everything else: provenance (`id`,
  * `captured-at`, `session`, `cwd`, `repo`, `harness`), `addressed-by`, and any curatorial field the caller did not
- * restate. The overwrite is refused when the event is already pushed to the store's remote unless `--allow-pushed` was
- * given, so a pushed event stays immutable while an unpushed one remains editable. The filename id is authoritative, so
- * a corrupted frontmatter id cannot redirect the write. A missing or unparseable target becomes a structured
- * `amend-not-found`/`amend-parse` result.
+ * restate. The filename id is authoritative, so a corrupted frontmatter id cannot redirect the write. A missing or
+ * unparseable target becomes a structured `amend-not-found`/`amend-parse` result.
  */
 async function amendEvent(input: {
   args: ParsedArgs;
@@ -267,14 +262,6 @@ async function amendEvent(input: {
       ok: false,
       error: 'amend-parse',
       message: `event at ${eventPath} is not a valid event: ${parsed.errors.join('; ')}`,
-    };
-  }
-
-  if (!args.allowPushed && (await isEventPushed({ storePath: store.path, id }))) {
-    return {
-      ok: false,
-      error: 'event-pushed',
-      message: `event ${id} is already pushed to the remote; re-run with --allow-pushed to amend it anyway, or capture a new event instead`,
     };
   }
 

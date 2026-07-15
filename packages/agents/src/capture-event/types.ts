@@ -28,8 +28,6 @@ export interface ParsedArgs {
   impact: EventImpact | null;
   /** The id of an existing event to amend instead of capturing a new one; `null` for a fresh capture. */
   amend: string | null;
-  /** Whether to amend an event even though it is already pushed; ignored for a fresh capture. */
-  allowPushed: boolean;
 }
 
 /** The auto-filled context an event carries beyond the agent-supplied fields. */
@@ -75,8 +73,7 @@ export type CaptureErrorCode =
   | 'no-default-store'
   | 'schema-validation'
   | 'amend-not-found'
-  | 'amend-parse'
-  | 'event-pushed';
+  | 'amend-parse';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type CaptureResult = CaptureSuccess | CaptureFailure;

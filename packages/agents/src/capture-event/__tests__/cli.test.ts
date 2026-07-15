@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { appendFile, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
@@ -10,12 +10,6 @@ import { describe, expect, it } from 'vitest';
 import { parseArgs, runCapture } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
-
-/** The upstream branch the fixture store tracks. Deliberately not `main` — see {@link makeGitBackedStore}. */
-const UPSTREAM_BRANCH = 'trunk';
-
-/** The remote-tracking ref the fixture publishes to, standing in for what a push would update. */
-const UPSTREAM_REF = `refs/remotes/origin/${UPSTREAM_BRANCH}`;
 
 /** Initialize a throwaway git repo with a single named remote, so `resolveRepo` can derive an `owner/name`. */
 async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Promise<string> {
@@ -62,71 +56,6 @@ async function makeStore(name: string): Promise<{ storePath: string; home: strin
   return { storePath, home };
 }
 
-/**
- * Stand up a git-backed event store with a seeded upstream commit, registered under `name`. The upstream is synthesized
- * locally — no bare remote, no `git push` — because a push is fixture here, not subject, and the process spawns it costs
- * are what make this suite contend with itself under parallel runs.
- *
- * The store's branch deliberately tracks `origin/trunk` rather than `origin/main`. `isEventPushed` reads the branch's
- * *configured* upstream, and if the fixture tracked the default name, an implementation that hardcoded `origin/main`
- * would resolve identically and the test could not tell the two apart. Tracking a non-default name is what makes that
- * substitution fail.
- */
-async function makeGitBackedStore(name: string): Promise<{ storePath: string; home: string }> {
-  const storePath = await makeStoreDir();
-  await execFileAsync('git', ['-C', storePath, 'init', '--quiet', '-b', 'main']);
-  await writeGitTrackingConfig(storePath);
-  await execFileAsync('git', ['-C', storePath, 'add', '-A']);
-  await execFileAsync('git', ['-C', storePath, 'commit', '--quiet', '-m', 'seed']);
-  await publish(storePath);
-
-  const home = await mkdtemp(join(tmpdir(), 'capture-cli-githome-'));
-  await mkdir(join(home, '.agents'), { recursive: true });
-  await writeFile(
-    join(home, '.agents', 'kb.yaml'),
-    `default_kb: ${name}\nkbs:\n  ${name}:\n    path: ${storePath}\n`,
-    'utf8',
-  );
-
-  return { storePath, home };
-}
-
-/** Stage and commit the store's working tree, then publish it to the synthesized upstream. */
-async function commitAndPublish(storePath: string): Promise<void> {
-  await execFileAsync('git', ['-C', storePath, 'add', '-A']);
-  await execFileAsync('git', ['-C', storePath, 'commit', '--quiet', '-m', 'capture']);
-  await publish(storePath);
-}
-
-/** Advance the store's upstream ref to its current `HEAD`, standing in for what a `git push` would do. */
-async function publish(storePath: string): Promise<void> {
-  await execFileAsync('git', ['-C', storePath, 'update-ref', UPSTREAM_REF, 'HEAD']);
-}
-
-/**
- * Write the tracking configuration that makes `@{upstream}` resolve, appended to `.git/config` in one write rather than
- * set through a `git config` subprocess apiece. All three parts are load-bearing: without the remote's fetch refspec,
- * git cannot map the branch onto a remote-tracking ref and `@{upstream}` fails outright with "upstream branch not stored
- * as a remote-tracking branch". The remote is never dialed — its URL exists only to satisfy the config's shape.
- */
-async function writeGitTrackingConfig(storePath: string): Promise<void> {
-  const config = [
-    '[user]',
-    '\temail = test@example.com',
-    '\tname = Test',
-    '[commit]',
-    '\tgpgsign = false',
-    '[remote "origin"]',
-    `\turl = ${storePath}`,
-    '\tfetch = +refs/heads/*:refs/remotes/origin/*',
-    '[branch "main"]',
-    '\tremote = origin',
-    `\tmerge = refs/heads/${UPSTREAM_BRANCH}`,
-    '',
-  ].join('\n');
-  await appendFile(join(storePath, '.git', 'config'), config, 'utf8');
-}
-
 describe(parseArgs, () => {
   it('parses every value-bearing flag in long form', () => {
     const parsed = parseArgs([
@@ -155,20 +84,17 @@ describe(parseArgs, () => {
       tags: ['one', 'two', 'three'],
       impact: 'high',
       amend: null,
-      allowPushed: false,
     });
   });
 
-  it('parses --amend and the --allow-pushed boolean flag', () => {
-    const parsed = parseArgs(['--summary', 'x', '--amend', ID, '--allow-pushed']);
+  it('parses --amend', () => {
+    const parsed = parseArgs(['--summary', 'x', '--amend', ID]);
     expect(parsed.amend).toBe(ID);
-    expect(parsed.allowPushed).toBe(true);
   });
 
-  it('leaves amend null and allowPushed false when both are omitted', () => {
+  it('leaves amend null when omitted', () => {
     const parsed = parseArgs(['--summary', 'x']);
     expect(parsed.amend).toBeNull();
-    expect(parsed.allowPushed).toBe(false);
   });
 
   it('rejects an --amend id that is not a bare filename stem', () => {
@@ -654,51 +580,6 @@ describe(runCapture, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('amend-not-found');
-    }
-  });
-
-  it('refuses to amend a pushed event, then allows it with --allow-pushed', async () => {
-    const { storePath, home } = await makeGitBackedStore('codeassembly');
-
-    const created = await runCapture({
-      argv: ['--store', '@default', '--summary', 'Pushed summary'],
-      stdin: bodyStream('Pushed body.'),
-      cwd: storePath,
-      env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
-      now: NOW,
-      home,
-    });
-    expect(created.ok).toBe(true);
-    if (!created.ok) return;
-    await commitAndPublish(storePath);
-
-    const refused = await runCapture({
-      argv: ['--store', '@default', '--amend', created.id, '--summary', 'Reworded'],
-      stdin: bodyStream('Reworded body.'),
-      cwd: storePath,
-      env: {},
-      now: NOW,
-      home,
-    });
-    expect(refused.ok).toBe(false);
-    if (!refused.ok) {
-      expect(refused.error).toBe('event-pushed');
-      expect(refused.message).toContain('--allow-pushed');
-    }
-
-    const forced = await runCapture({
-      argv: ['--store', '@default', '--amend', created.id, '--summary', 'Reworded', '--allow-pushed'],
-      stdin: bodyStream('Reworded body.'),
-      cwd: storePath,
-      env: {},
-      now: NOW,
-      home,
-    });
-    expect(forced.ok).toBe(true);
-    if (forced.ok) {
-      const written = await readFile(forced.path, 'utf8');
-      expect(written).toContain('Reworded body.');
-      expect(written).not.toContain('Pushed body.');
     }
   });
 });
