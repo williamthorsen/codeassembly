@@ -229,13 +229,13 @@ Prefix the status line with a colored emoji for visual distinction:
 
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
 
-   **Write breadcrumb** (MCP success path only): After a successful `init_run`, write the active run directory to a breadcrumb file so that Claude Code hooks can discover it:
+   **Write breadcrumb** (MCP success path only): After a successful `init_run`, write the active run directory to a breadcrumb file so that `resolve-frontmatter.sh` can resolve the active run's `run_id` when stamping artifact frontmatter:
 
    ```
    mkdir -p .claude/tmp && echo "{run-dir}" > .claude/tmp/active-run-dir
    ```
 
-   Only write the breadcrumb after a successful `init_run` (MCP available). Do not write it on the MCP-unavailable fallback path. When MCP is unavailable, no `run-log.jsonl` is created, so the hooks have nothing to append to.
+   Only write the breadcrumb after a successful `init_run` (MCP available). Do not write it on the MCP-unavailable fallback path, where no run directory is created and there is no `run_id` to resolve.
 
    **Failure — MCP unavailable** (tool not found / server not connected): Resolve `mcp_policy` (see "Resolving MCP policy" above) and apply the policy:
    - `required`: Abort with a clear message explaining that MCP is unavailable and the policy requires it.
