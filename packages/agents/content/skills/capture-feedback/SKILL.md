@@ -59,7 +59,7 @@ Invoke the `{skill:capture-event}` skill to append the record, composing its arg
 
 State what was fixed — or that the feedback was behavioral-only — and the captured record's id and path.
 
-If the user then says the record is inaccurate, correct it in place with `capture-event --amend <id>` rather than capturing a second record — the event is still local and therefore editable. Capture a fresh record only when the correction is a genuinely distinct lesson.
+If the user then says the record is inaccurate, correct it in place with `capture-event --amend <id>` rather than capturing a second record — amend rewrites the record in place. Capture a fresh record only when the correction is a genuinely distinct lesson.
 
 ## Completion
 
