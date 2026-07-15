@@ -38,7 +38,24 @@ const OPTION_FORMAT: Spec = {
 const NEXT_STEPS_AFTER_PLAN: Spec = {
   name: 'next-steps-after-plan',
   heading: '## Next-steps options',
-  rules: ['| 3   | 🚀🔍  | Implement directly with follow-up review', '🎶 **Orchestrate** -> `orchestrate-dev`'],
+  rules: [
+    '| 3   | 🚀🔍  | Implement directly with follow-up review',
+    '🎶 **Orchestrate** -> `orchestrate-dev`',
+    // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
+    // one of them reintroduces the failure named beneath it.
+    // Rule 1's test. Without it the rule states no condition at all.
+    'recommend only when you can name a load-bearing decision the plan leaves unsettled',
+    // What "unsettled" means. Without it the term is undefined and the agent falls back to instinct.
+    'ratified interactively, carried in from prior design work, verified against source, or copied from an established pattern',
+    // Why a refine pass cannot resolve an empirical unknown, which is what routes such plans to rule 2.
+    'A refine pass re-reads the plan and structurally cannot answer those',
+    // The demotion of the structural triggers. Without it they are sufficient again, and every substantive plan
+    // trips them.
+    'They are evidence to weigh, and none of them matches rule 1 on its own',
+    // The obligation that makes the test structural rather than advisory: an agent with nothing to name cannot
+    // render the recommendation. Without it rule 1 is only advice.
+    'must carry a `➕` line naming the specific unsettled decision the pass would surface',
+  ],
 };
 
 const NEXT_STEPS_AFTER_REVIEW: Spec = {

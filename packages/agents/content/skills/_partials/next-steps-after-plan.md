@@ -13,6 +13,8 @@
 
 Present all four options as a numbered list per [option format](#option-format). Each option carries a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific plan presents a context-specific tradeoff bearing on which option fits (e.g., "plan introduces a new dependency boundary," "single module with no downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation.
 
+**One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must carry a `➕` line naming the specific unsettled decision the pass would surface (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape this requirement exists to forbid. Selecting Refine plan without such a line is a defect — if the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
+
 Options that invoke a skill include context-clearing guidance:
 
 - **Refine plan** and **Orchestrate**: Prepend "Clear context and use..." because the plan artifact is self-contained and orchestration dispatches fresh subagents; prior conversation wastes tokens and can introduce bias.
@@ -42,18 +44,23 @@ Skill names for each option:
 
 Select the recommended option by checking these rules in order and stopping at the first match.
 
-1. **Refine plan** — recommend when both of the following are true:
+1. **Refine plan** — recommend only when you can name a load-bearing decision the plan leaves unsettled that a refine pass would surface.
 
-   The plan involves any of:
+   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, carried in from prior design work, verified against source, or copied from an established pattern already in the codebase. The calling skill's recommendation context tells you which: a plan whose forks were challenged and ratified interactively carries settled decisions, and a plan produced with no design phase is likelier to carry unsettled ones.
+
+   Rule 1 also fails when the plan's residual unknowns are **empirical** — answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
+
+   "The plan might have a flaw I missed" does not satisfy the test. That is a reassurance about work already done, not an unsettled decision.
+
+   The following make a plan _more likely_ to carry an unsettled decision. They are evidence to weigh, and none of them matches rule 1 on its own:
    - Changes to dependency boundaries (which libraries are used, which APIs are consumed, or how they're configured)
    - Changes to the shape or semantics of behavioral contracts or data structures
    - Far-reaching downstream consequences
    - Changes to control flow, state management, or execution order
    - Introduction of new interfaces, modules, or subsystems
+   - A prior `refine-plan` round significantly altered the plan or expanded the scope of the changes needed to implement it
 
-   AND either of:
-   - The plan has not been previously refined
-   - A prior iteration of `refine-plan` resulted in significant alteration of the plan or significant expansion of the scope of the changes required to implement the plan
+   When rule 1 matches, the rendered option must name that decision on a `➕` line. Being unable to write the line means rule 1 did not match.
 
 2. **Implement directly with follow-up review** — recommend when the work's verification surface fits a single end-of-work review pass: single module/package, the plan is precise (or follows an established pattern closely), and the implementation's consequences are bounded enough that compiler + tests + one review pass would catch the meaningful classes of mistake. The default for non-trivial bounded work; trivial work at complexity levels 1–2 falls to rule 3.
 3. **Implement directly** — recommend instead of rule 2 when the work is trivial enough that a review pass would catch nothing meaningful (e.g., a typo fix, unused-import removal, single-file mechanical rename). Complexity levels 1–2 trivial only.
@@ -63,6 +70,6 @@ Select the recommended option by checking these rules in order and stopping at t
 
 The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
 
-Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Apply these rules using that context.
+Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). Rule 1's settled/unsettled test is where it acts.
 
 See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) composes with the recommendation rules above: The rules here pick the next-step _skill_; that reference governs whether work that surfaces alongside the current plan should spawn a new ticket or ship adjacent.
