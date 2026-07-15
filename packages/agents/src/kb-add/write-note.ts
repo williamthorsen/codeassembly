@@ -2,12 +2,9 @@ import { mkdir } from 'node:fs/promises';
 import { join, relative, resolve, sep } from 'node:path';
 
 import { pathExists } from '@codeassembly/kb/filesystem';
+import { ASSERTIONS_DIR, ASSERTIONS_SEGMENT, resolveAssertionsDir } from '@codeassembly/kb/layout';
 import { writeNote as writeNoteAtomic } from '@codeassembly/kb/note-io';
 import { type KbAssertion, renderAssertion } from '@codeassembly/kb/records';
-
-/** The KB-root-relative location kb-add writes assertions under; `assertions` mirrors the hardcoded `recordType: assertion`. */
-const CONTENT_ROOT = 'content';
-const ASSERTIONS_DIR = 'assertions';
 
 /** Successful write: the absolute path the note landed at. */
 export interface WriteSuccess {
@@ -56,7 +53,7 @@ export async function writeNote(input: {
     return filenameOutcome;
   }
 
-  const assertionsRoot = join(input.kbPath, CONTENT_ROOT, ASSERTIONS_DIR);
+  const assertionsRoot = resolveAssertionsDir(input.kbPath);
   const targetDir = input.folder === null ? assertionsRoot : join(assertionsRoot, input.folder);
   if (!isWithin({ root: assertionsRoot, target: targetDir })) {
     return {
@@ -69,7 +66,7 @@ export async function writeNote(input: {
     return {
       ok: false,
       reason: 'invalid-folder',
-      message: `folder "${input.folder ?? ''}" must not begin with "${ASSERTIONS_DIR}/"; kb-add writes under content/assertions/ automatically — pass the topic subpath only`,
+      message: `folder "${input.folder ?? ''}" must not begin with "${ASSERTIONS_SEGMENT}/"; kb-add writes under ${ASSERTIONS_DIR}/ automatically — pass the topic subpath only`,
     };
   }
 
@@ -141,7 +138,7 @@ function isWithin(input: { root: string; target: string }): boolean {
  * `kb-add` owns that segment, so the caller passes the topic subpath only.
  */
 function namesArchetypeSegment(input: { assertionsRoot: string; targetDir: string }): boolean {
-  return relative(input.assertionsRoot, input.targetDir).split(sep)[0] === ASSERTIONS_DIR;
+  return relative(input.assertionsRoot, input.targetDir).split(sep)[0] === ASSERTIONS_SEGMENT;
 }
 
 // endregion | Helpers

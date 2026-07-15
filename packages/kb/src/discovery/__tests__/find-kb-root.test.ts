@@ -13,7 +13,6 @@ describe(findKbRoot, () => {
     expect(root).toEqual({
       path: NESTED_PROJECT,
       kbDir: join(NESTED_PROJECT, '.kb'),
-      via: 'ancestor-walk',
     });
   });
 

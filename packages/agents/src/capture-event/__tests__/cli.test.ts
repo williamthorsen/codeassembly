@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
@@ -10,6 +10,12 @@ import { describe, expect, it } from 'vitest';
 import { parseArgs, runCapture } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
+
+/** The upstream branch the fixture store tracks. Deliberately not `main` — see {@link makeGitBackedStore}. */
+const UPSTREAM_BRANCH = 'trunk';
+
+/** The remote-tracking ref the fixture publishes to, standing in for what a push would update. */
+const UPSTREAM_REF = `refs/remotes/origin/${UPSTREAM_BRANCH}`;
 
 /** Initialize a throwaway git repo with a single named remote, so `resolveRepo` can derive an `owner/name`. */
 async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Promise<string> {
@@ -56,19 +62,23 @@ async function makeStore(name: string): Promise<{ storePath: string; home: strin
   return { storePath, home };
 }
 
-/** Stand up a git-backed event store on `main` with a bare upstream and a seeded pushed commit, registered under `name`. */
+/**
+ * Stand up a git-backed event store with a seeded upstream commit, registered under `name`. The upstream is synthesized
+ * locally — no bare remote, no `git push` — because a push is fixture here, not subject, and the process spawns it costs
+ * are what make this suite contend with itself under parallel runs.
+ *
+ * The store's branch deliberately tracks `origin/trunk` rather than `origin/main`. `isEventPushed` reads the branch's
+ * *configured* upstream, and if the fixture tracked the default name, an implementation that hardcoded `origin/main`
+ * would resolve identically and the test could not tell the two apart. Tracking a non-default name is what makes that
+ * substitution fail.
+ */
 async function makeGitBackedStore(name: string): Promise<{ storePath: string; home: string }> {
-  const remote = await mkdtemp(join(tmpdir(), 'capture-cli-remote-'));
-  await execFileAsync('git', ['init', '--quiet', '--bare', '-b', 'main', remote]);
-
   const storePath = await makeStoreDir();
   await execFileAsync('git', ['-C', storePath, 'init', '--quiet', '-b', 'main']);
-  await execFileAsync('git', ['-C', storePath, 'config', 'user.email', 'test@example.com']);
-  await execFileAsync('git', ['-C', storePath, 'config', 'user.name', 'Test']);
-  await execFileAsync('git', ['-C', storePath, 'remote', 'add', 'origin', remote]);
+  await writeGitTrackingConfig(storePath);
   await execFileAsync('git', ['-C', storePath, 'add', '-A']);
   await execFileAsync('git', ['-C', storePath, 'commit', '--quiet', '-m', 'seed']);
-  await execFileAsync('git', ['-C', storePath, 'push', '--quiet', '-u', 'origin', 'main']);
+  await publish(storePath);
 
   const home = await mkdtemp(join(tmpdir(), 'capture-cli-githome-'));
   await mkdir(join(home, '.agents'), { recursive: true });
@@ -81,11 +91,40 @@ async function makeGitBackedStore(name: string): Promise<{ storePath: string; ho
   return { storePath, home };
 }
 
-/** Stage, commit, and push the store's current working tree to its upstream. */
-async function commitAndPush(storePath: string): Promise<void> {
+/** Stage and commit the store's working tree, then publish it to the synthesized upstream. */
+async function commitAndPublish(storePath: string): Promise<void> {
   await execFileAsync('git', ['-C', storePath, 'add', '-A']);
   await execFileAsync('git', ['-C', storePath, 'commit', '--quiet', '-m', 'capture']);
-  await execFileAsync('git', ['-C', storePath, 'push', '--quiet']);
+  await publish(storePath);
+}
+
+/** Advance the store's upstream ref to its current `HEAD`, standing in for what a `git push` would do. */
+async function publish(storePath: string): Promise<void> {
+  await execFileAsync('git', ['-C', storePath, 'update-ref', UPSTREAM_REF, 'HEAD']);
+}
+
+/**
+ * Write the tracking configuration that makes `@{upstream}` resolve, appended to `.git/config` in one write rather than
+ * set through a `git config` subprocess apiece. All three parts are load-bearing: without the remote's fetch refspec,
+ * git cannot map the branch onto a remote-tracking ref and `@{upstream}` fails outright with "upstream branch not stored
+ * as a remote-tracking branch". The remote is never dialed — its URL exists only to satisfy the config's shape.
+ */
+async function writeGitTrackingConfig(storePath: string): Promise<void> {
+  const config = [
+    '[user]',
+    '\temail = test@example.com',
+    '\tname = Test',
+    '[commit]',
+    '\tgpgsign = false',
+    '[remote "origin"]',
+    `\turl = ${storePath}`,
+    '\tfetch = +refs/heads/*:refs/remotes/origin/*',
+    '[branch "main"]',
+    '\tremote = origin',
+    `\tmerge = refs/heads/${UPSTREAM_BRANCH}`,
+    '',
+  ].join('\n');
+  await appendFile(join(storePath, '.git', 'config'), config, 'utf8');
 }
 
 describe(parseArgs, () => {
@@ -631,7 +670,7 @@ describe(runCapture, () => {
     });
     expect(created.ok).toBe(true);
     if (!created.ok) return;
-    await commitAndPush(storePath);
+    await commitAndPublish(storePath);
 
     const refused = await runCapture({
       argv: ['--store', '@default', '--amend', created.id, '--summary', 'Reworded'],

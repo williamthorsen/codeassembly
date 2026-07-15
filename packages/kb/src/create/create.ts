@@ -5,6 +5,15 @@ import { loadKbRegistry } from '../discovery/load-registry.ts';
 import { registerStore } from '../discovery/register-store.ts';
 import { setDefaultKb } from '../discovery/set-default-kb.ts';
 import { pathExists } from '../filesystem/exists.ts';
+import {
+  ALIASES_FILE,
+  CONFIG_FILE,
+  CONTENT_DIR,
+  EVENTS_DIR,
+  KB_DIR,
+  resolveEventsDir,
+  resolveKbDir,
+} from '../layout/index.ts';
 import type { KbRegistry } from '../types.ts';
 import { renderAliasesSeed, renderConfigSeed } from './render-seeds.ts';
 
@@ -49,7 +58,7 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
   const storePath = resolve(input.targetDir);
   const name = input.name ?? basename(storePath);
 
-  if (await pathExists(join(storePath, KB_DIR))) {
+  if (await pathExists(resolveKbDir(storePath))) {
     return { ok: false, reason: 'kb-exists', message: `a ${KB_DIR}/ store already exists at ${storePath}` };
   }
 
@@ -77,8 +86,6 @@ export async function create(input: CreateInput): Promise<CreateOutcome> {
 }
 
 // region | Helpers
-
-const KB_DIR = '.kb';
 
 /**
  * Decides — and, for the sole-KB case, applies — what happens to `default_kb` for a freshly-registered store, given
@@ -108,14 +115,13 @@ function nameRegisteredMessage(name: string, registryPath: string): string {
 
 /** Writes the `.kb/` seed files and the content directories, returning the store-relative paths created. */
 async function scaffold(storePath: string): Promise<readonly string[]> {
-  const kbDir = join(storePath, KB_DIR);
-  await mkdir(kbDir, { recursive: true });
-  await writeFile(join(kbDir, 'config.yaml'), renderConfigSeed(), 'utf8');
-  await writeFile(join(kbDir, 'tag-aliases.yaml'), renderAliasesSeed(), 'utf8');
+  await mkdir(resolveKbDir(storePath), { recursive: true });
+  await writeFile(join(storePath, CONFIG_FILE), renderConfigSeed(), 'utf8');
+  await writeFile(join(storePath, ALIASES_FILE), renderAliasesSeed(), 'utf8');
 
-  await mkdir(join(storePath, 'content', 'events'), { recursive: true });
+  await mkdir(resolveEventsDir(storePath), { recursive: true });
 
-  return ['.kb/config.yaml', '.kb/tag-aliases.yaml', 'content/', 'content/events/'];
+  return [CONFIG_FILE, ALIASES_FILE, `${CONTENT_DIR}/`, `${EVENTS_DIR}/`];
 }
 
 // endregion | Helpers

@@ -4,11 +4,9 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';
+import { ALIASES_FILE } from '../layout/index.ts';
 import { isEnoent, isRecord } from '../type-guards.ts';
 import type { AliasMap, KbRoot } from '../types.ts';
-
-/** Relative location of the tag-aliases file within a KB root. */
-export const ALIASES_FILE = join('.kb', 'tag-aliases.yaml');
 
 /**
  * Loads `.kb/tag-aliases.yaml` from a KB root into a typed `AliasMap`, returning an empty map when the file is absent.

@@ -1,7 +1,6 @@
-import { join } from 'node:path';
-
 import type { KbConfig } from '../config/config-schema.ts';
 import { loadKbConfig } from '../config/load-config.ts';
+import { resolveKbDir } from '../layout/index.ts';
 import { pathsFindings } from '../lints/paths.ts';
 import { tagAliasFindings } from '../lints/tag-alias.ts';
 import { loadAliases } from '../tags/load-aliases.ts';
@@ -33,7 +32,7 @@ export interface CheckResult {
  * config defect.
  */
 export async function check(input: { kbRoot: string }): Promise<CheckResult> {
-  const kbRoot: KbRoot = { path: input.kbRoot, kbDir: join(input.kbRoot, '.kb'), via: 'ancestor-walk' };
+  const kbRoot: KbRoot = { path: input.kbRoot, kbDir: resolveKbDir(input.kbRoot) };
 
   const [config, aliases] = await Promise.all([loadKbConfig({ kbRoot }), loadAliases({ kbRoot })]);
 

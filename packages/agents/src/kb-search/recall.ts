@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
-import { join } from 'node:path';
 import { promisify } from 'node:util';
 
 import { directoryExists } from '@codeassembly/kb/filesystem';
+import { KB_DIR, resolveKbDir } from '@codeassembly/kb/layout';
 import type { AliasMap } from '@codeassembly/kb/tags';
 import { loadAliases } from '@codeassembly/kb/tags';
 
@@ -116,7 +116,7 @@ function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
 /** Loads a KB's `tag-aliases.yaml`, returning an empty map when the file is absent or unreadable. */
 async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
   try {
-    return await loadAliases({ kbRoot: { path: kbPath, kbDir: join(kbPath, '.kb'), via: 'ancestor-walk' } });
+    return await loadAliases({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath) } });
   } catch {
     // A malformed alias file degrades to no expansion rather than failing the whole run.
     return new Map();
@@ -194,7 +194,7 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
         '--glob',
         '*.md',
         '--glob',
-        '!.kb/**',
+        `!${KB_DIR}/**`,
         '--context',
         String(SNIPPET_CONTEXT_LINES),
         '--json',

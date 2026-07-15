@@ -2,12 +2,12 @@
 /* eslint unicorn/no-process-exit: off */
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
-import { join } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import { resolveEventPath } from '@codeassembly/kb/layout';
 import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
 import {
   EVENT_IMPACT_LEVELS,
@@ -246,7 +246,7 @@ async function amendEvent(input: {
     throw new Error('amendEvent called without an --amend id');
   }
 
-  const eventPath = join(store.path, 'content', 'events', `${id}.md`);
+  const eventPath = resolveEventPath({ storePath: store.path, id });
 
   let read: ReadNote;
   try {
