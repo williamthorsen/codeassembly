@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture an event
 
-Append an event record to the shared knowledge substrate, or amend an existing one that has not yet been pushed. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the working directory, and a best-effort `session` and `repo`), validates the event record's required fields, and writes the record atomically. You supply the `summary` and the event body.
+Append an event record to the shared knowledge substrate, or amend an existing one. A bundled helper does the mechanical work — it resolves the event store by name, auto-fills the record's context (a ULID `id`, the capture timestamp, the working directory, and a best-effort `session` and `repo`), validates the event record's required fields, and writes the record atomically. You supply the `summary` and the event body.
 
 This is a pure append. Unlike `kb-add`, it runs no survey, no `kb-retrieve` cross-referencing, and no dedup. The point is to capture the event cheaply and move on; recall and triage happen later via `kb-retrieve`.
 
@@ -22,19 +22,18 @@ A **skill-caused mistake** — an error a clearer skill definition would have pr
 
 ## Arguments
 
-| Argument         | Description                                                                       | Required |
-| ---------------- | --------------------------------------------------------------------------------- | -------- |
-| `--summary`      | A human-readable one-line summary; becomes the record's label on recall.          | Yes      |
-| `--store`        | Registry name of the event store, or `@default` for the `default_kb`.             | Yes      |
-| `--skill`        | The skill the event relates to.                                                   | No       |
-| `--model`        | The model identifier in play.                                                     | No       |
-| `--harness`      | The agent platform (`claude`, `rovodev`); install-injected — keep as-is.          | Injected |
-| `--tags`         | Comma-separated tag list.                                                         | No       |
-| `--impact`       | Impact rating: one of `low`, `medium`, `high`, `critical`. Omit to leave unrated. | No       |
-| `--amend`        | Id of an existing event to rewrite in place instead of capturing a new one.       | No       |
-| `--allow-pushed` | With `--amend`, rewrite even an event already pushed to the remote.               | No       |
+| Argument    | Description                                                                       | Required |
+| ----------- | --------------------------------------------------------------------------------- | -------- |
+| `--summary` | A human-readable one-line summary; becomes the record's label on recall.          | Yes      |
+| `--store`   | Registry name of the event store, or `@default` for the `default_kb`.             | Yes      |
+| `--skill`   | The skill the event relates to.                                                   | No       |
+| `--model`   | The model identifier in play.                                                     | No       |
+| `--harness` | The agent platform (`claude`, `rovodev`); install-injected — keep as-is.          | Injected |
+| `--tags`    | Comma-separated tag list.                                                         | No       |
+| `--impact`  | Impact rating: one of `low`, `medium`, `high`, `critical`. Omit to leave unrated. | No       |
+| `--amend`   | Id of an existing event to rewrite in place instead of capturing a new one.       | No       |
 
-A value-bearing flag accepts both `--summary text` and `--summary=text`; `--allow-pushed` is a boolean flag. The event body is read from stdin to EOF; an empty body is allowed.
+A value-bearing flag accepts both `--summary text` and `--summary=text`. The event body is read from stdin to EOF; an empty body is allowed.
 
 ### Auto-filled vs agent-supplied
 
@@ -50,9 +49,9 @@ Choose the destination deliberately. When the lesson is specific to a project, p
 
 ### Amending an event
 
-An event is editable until it is pushed to the store's remote and immutable after, so `--amend <id>` is how you correct a capture that is still local — for example, an event a `capture-feedback` pass got wrong. Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
+`--amend <id>` rewrites an existing capture in place — for example, an event a `capture-feedback` pass got wrong. Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
 
-When the event has already been pushed, the amend is refused. Re-run with `--allow-pushed` to rewrite it deliberately (this rewrites pushed history), or capture a new event instead.
+Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so the correction lands as a new record rather than a change to history.
 
 ## Runtime dependencies
 
@@ -99,8 +98,7 @@ On `ok: false`, route by the `error` code:
 - `schema-validation` — surface the `errors`, then supply the missing field and retry.
 - `amend-not-found` — `--amend` named an id with no event at it. Confirm the id and store.
 - `amend-parse` — the event to amend is not a valid event record. Inspect the file.
-- `event-pushed` — the event is already pushed. Re-run with `--allow-pushed` to amend it anyway, or capture a new event instead.
 
 ## Completion
 
-A written record at the reported path, validated as an event record. A fresh capture never overwrites an existing event; an event stays editable via `--amend` until it is pushed to the remote, and is immutable after.
+A written record at the reported path, validated as an event record. A fresh capture never overwrites an existing event; use `--amend` to rewrite one in place.
