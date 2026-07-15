@@ -37,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
+import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
 import { composeManifest, DEFAULT_REMOTE_NAME } from './compose-manifest.ts';
 import { readPreferences } from './read-preferences.ts';
@@ -143,21 +144,6 @@ export async function deriveSessionContext(input: {
   const mutated = applyMutations(base.manifest, mutations);
   await writeManifest(newPath, mutated);
   return mutated;
-}
-
-/**
- * Sanitizes a branch name for filesystem use: replace `/` with `-`, trim trailing `-`.
- * Mirrors the sanitization performed by `resolve-frontmatter.sh` so previously-written manifests
- * remain reachable. Underscores are deliberately preserved (see `_data/branch-format.md`).
- *
- * @internal Exported for testing.
- */
-export function sanitizeBranch(branch: string): string {
-  let sanitized = branch.trim().replaceAll('/', '-');
-  while (sanitized.endsWith('-')) {
-    sanitized = sanitized.slice(0, -1);
-  }
-  return sanitized;
 }
 
 /**
@@ -354,17 +340,6 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
 /** True when `value` is a string or `null` (matches the `string | null` union in `BranchManifest`). */
 function isStringOrNull(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
-}
-
-/** Resolves the current branch name via `git -C {cwd} branch --show-current`. */
-async function resolveCurrentBranch(cwd: string): Promise<string> {
-  try {
-    const { stdout } = await execFileAsync('git', ['-C', cwd, 'branch', '--show-current']);
-    return stdout.trim();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Could not resolve current branch (is this a git repository?): ${message}`);
-  }
 }
 
 /**

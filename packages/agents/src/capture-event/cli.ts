@@ -1,11 +1,9 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
-import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 
 import { resolveEventPath } from '@codeassembly/kb/layout';
 import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
@@ -25,12 +23,11 @@ import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
-import { parseRemoteToOwnerRepo } from '../shared/parse-remote-url.ts';
+import { resolveRepo } from '../shared/resolve-repo.ts';
+import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareEvent } from './prepare-event.ts';
 import type { CaptureContext, CaptureResult, ParsedArgs } from './types.ts';
 import { writeEvent } from './write-event.ts';
-
-const execFileAsync = promisify(execFile);
 
 /** The value-bearing flags this helper accepts; the body comes from stdin, so the layout is flag-only. */
 const FLAGS: readonly FlagSpec[] = [
@@ -141,11 +138,11 @@ export async function runCapture(input: {
     return amendEvent({ args, store, body });
   }
 
-  const session = input.env.CLAUDE_CODE_SESSION_ID;
+  const session = resolveSession(input.env);
   const repo = await resolveRepo(input.cwd);
   const context: CaptureContext = {
     cwd: input.cwd,
-    ...(session !== undefined && session.length > 0 && { session }),
+    ...(session !== undefined && { session }),
     ...(repo !== undefined && { repo }),
   };
 
@@ -344,47 +341,6 @@ function isEntryPoint(): boolean {
     const message = error instanceof Error ? error.message : String(error);
     process.stderr.write(`capture-event: warning: could not determine entry point: ${message}\n`);
     return false;
-  }
-}
-
-/**
- * Resolves the `owner/repo` of the git remote at `cwd`, best-effort. Prefers the `origin` remote and falls back to the
- * first listed remote when `origin` is absent, then parses the resulting URL to its `owner/repo`. Any failure (no
- * remote, unparseable URL) returns `undefined` so the capture is never blocked.
- */
-async function resolveRepo(cwd: string): Promise<string | undefined> {
-  const url = await resolveRemoteUrl(cwd);
-  if (url === undefined) {
-    return undefined;
-  }
-  return parseRemoteToOwnerRepo(url) ?? undefined;
-}
-
-/**
- * Reads the preferred remote's fetch URL via `git remote`, preferring `origin` and falling back to the first listed
- * remote. Returns `undefined` for the expected best-effort cases (no remote, unparseable URL, non-git directory). When
- * the `git` binary itself is unavailable (`ENOENT`), it emits a one-line warning before returning `undefined`, so a
- * broken environment is distinguished from an absent remote rather than silently suppressed.
- */
-async function resolveRemoteUrl(cwd: string): Promise<string | undefined> {
-  try {
-    const { stdout: remotes } = await execFileAsync('git', ['-C', cwd, 'remote']);
-    const [first, ...rest] = remotes
-      .split('\n')
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0);
-    if (first === undefined) {
-      return undefined;
-    }
-    const preferred = [first, ...rest].includes('origin') ? 'origin' : first;
-    const { stdout: url } = await execFileAsync('git', ['-C', cwd, 'remote', 'get-url', preferred]);
-    const trimmed = url.trim();
-    return trimmed.length > 0 ? trimmed : undefined;
-  } catch (error) {
-    if (isEnoent(error)) {
-      process.stderr.write('capture-event: warning: git is not available; omitting repo from the event\n');
-    }
-    return undefined;
   }
 }
 
