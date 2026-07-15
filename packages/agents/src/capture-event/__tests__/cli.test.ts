@@ -487,7 +487,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('amends an unpushed event, editing content while preserving provenance and unsupplied fields', async () => {
+  it('amends an event, editing content while preserving provenance and unsupplied fields', async () => {
     const { home } = await makeStore('codeassembly');
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
