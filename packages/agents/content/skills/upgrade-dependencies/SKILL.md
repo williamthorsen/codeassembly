@@ -1,6 +1,6 @@
 ---
-name: upgrading-dependencies
-description: Use when upgrading, updating, or bumping Node.js/pnpm project dependencies. Covers routine patch/minor updates, major version migrations, security vulnerability remediation, and peer dependency conflict resolution.
+name: upgrade-dependencies
+description: Use when upgrading, updating, or bumping dependencies in any project managed by package.json. Covers routine patch/minor updates, major version migrations, security vulnerability remediation, and peer dependency conflict resolution.
 user-invocable: true
 ---
 
