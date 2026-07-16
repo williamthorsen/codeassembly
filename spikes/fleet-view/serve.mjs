@@ -61,7 +61,12 @@ function start() {
   });
 
   try {
-    watch(CONFIG.eventsDir, { recursive: true }, handleWatchEvent);
+    const watcher = watch(CONFIG.eventsDir, { recursive: true }, handleWatchEvent);
+    watcher.on('error', (error) => {
+      // An async watch error — the tree removed mid-run or an OS watch limit —
+      // must not crash the long-running window; the rescan keeps state current.
+      process.stderr.write(`fleet-view: watch error (${error.message}); relying on ${CONFIG.rescanMs}ms rescan\n`);
+    });
   } catch (error) {
     // fs.watch fails when the tree does not exist yet, or on platforms without
     // recursive support; the periodic rescan is the correctness backstop.
@@ -101,7 +106,7 @@ function broadcast() {
   lastSnapshotJson = json;
   const frame = `data: ${json}\n\n`;
   for (const res of clients) {
-    res.write(frame);
+    sendToClient(res, frame);
   }
 }
 
@@ -243,11 +248,13 @@ function handleSse(req, res) {
     'Cache-Control': 'no-cache',
     Connection: 'keep-alive',
   });
-  res.write(`data: ${JSON.stringify(buildSnapshot(Date.now()))}\n\n`);
+  // Drop a client whose socket errors so a later broadcast write can't crash the process.
+  res.on('error', () => clients.delete(res));
   clients.add(res);
   req.on('close', () => {
     clients.delete(res);
   });
+  sendToClient(res, `data: ${JSON.stringify(buildSnapshot(Date.now()))}\n\n`);
 }
 
 // Handle a raw fs.watch event, debounced so a burst folds and broadcasts once.
@@ -344,7 +351,17 @@ function scanAndFold() {
 // Send an SSE comment heartbeat so idle connections survive proxies and browsers.
 function sendHeartbeat() {
   for (const res of clients) {
-    res.write(':\n\n');
+    sendToClient(res, ':\n\n');
+  }
+}
+
+// Write one SSE frame to a client, dropping it if the socket is already gone, so
+// one dead connection can neither break the broadcast loop nor crash the process.
+function sendToClient(res, frame) {
+  try {
+    res.write(frame);
+  } catch {
+    clients.delete(res);
   }
 }
 
