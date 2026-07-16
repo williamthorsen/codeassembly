@@ -33,8 +33,8 @@ importers:
         specifier: 5.17.6
         version: 5.17.6(@types/estree@1.0.8)(@typescript-eslint/utils@8.64.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       '@williamthorsen/nmr':
-        specifier: 0.16.0
-        version: 0.16.0
+        specifier: 0.18.1
+        version: 0.18.1(typescript@5.9.3)
       '@williamthorsen/release-kit':
         specifier: 8.0.0
         version: 8.0.0
@@ -44,9 +44,6 @@ importers:
       dotenv:
         specifier: 17.4.2
         version: 17.4.2
-      esbuild:
-        specifier: 0.28.1
-        version: 0.28.1
       eslint:
         specifier: 9.39.5
         version: 9.39.5(jiti@2.7.0)
@@ -114,6 +111,9 @@ importers:
       '@williamthorsen/toolbelt.strings':
         specifier: 3.1.4
         version: 3.1.4
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
 
   packages/factory:
     dependencies:
@@ -1139,15 +1139,14 @@ packages:
       eslint: '>=9'
       typescript: '>=5'
 
-  '@williamthorsen/nmr-core@0.5.0':
-    resolution: {integrity: sha512-7Jdo+IdZ2lsY7hNV+/zbU2TdL8TJNZFGKBEo43N6jfBaPNfoWHBqRouW+O9CZf1OdzkTbfxmPcs/PBbnIWYD3g==}
-
   '@williamthorsen/nmr-core@0.7.0':
     resolution: {integrity: sha512-0Go/8helfB+nXldaAt6z9lDpV0m7gu9tZ8rrmu2KhEVGeH3VrnLB83wNwm41lZffmooC5tkj3cD3Z04xzt6yJg==}
 
-  '@williamthorsen/nmr@0.16.0':
-    resolution: {integrity: sha512-lPZ58Jt2JSF2eAFUoiOEIBhTwkgdR9eNZKVk0K22tnB5T/e6kaeiaxUQ46bDK/T9urjYMniAfYYPs8iJFjk6MQ==}
+  '@williamthorsen/nmr@0.18.1':
+    resolution: {integrity: sha512-wEXadR7+jQiPZnjuCSiiAAj3GD4IRQ3hKAH2b96HEWDxRytg6DeFU7uLZlS1wSmg9DSLmo4Hdg6Y/d8BOOqzdA==}
     hasBin: true
+    peerDependencies:
+      typescript: '>=5.7.0'
 
   '@williamthorsen/release-kit@8.0.0':
     resolution: {integrity: sha512-MYAC5QmoDtzIiN01H1rjZrQZREQYbh13S+CTY3f+YDt2QnkMDbHSTdGsI84CEcEz4VuQyiHkU12vdtPkW5rYyQ==}
@@ -4282,16 +4281,14 @@ snapshots:
       - '@types/estree'
       - supports-color
 
-  '@williamthorsen/nmr-core@0.5.0': {}
-
   '@williamthorsen/nmr-core@0.7.0': {}
 
-  '@williamthorsen/nmr@0.16.0':
+  '@williamthorsen/nmr@0.18.1(typescript@5.9.3)':
     dependencies:
-      '@williamthorsen/nmr-core': 0.5.0
-      esbuild: 0.28.1
+      '@williamthorsen/nmr-core': 0.7.0
       glob: 13.0.6
       jiti: 2.7.0
+      typescript: 5.9.3
       yaml: 2.9.0
       zod: 4.4.3
 

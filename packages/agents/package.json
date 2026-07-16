@@ -25,7 +25,8 @@
   },
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.7",
-    "@williamthorsen/toolbelt.strings": "3.1.4"
+    "@williamthorsen/toolbelt.strings": "3.1.4",
+    "esbuild": "0.28.1"
   },
   "engines": {
     "node": ">=24"

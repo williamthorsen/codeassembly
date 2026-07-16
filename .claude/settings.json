@@ -5,7 +5,7 @@
   "mcpServers": {
     "codeassembly": {
       "command": "node",
-      "args": ["packages/mcp/dist/esm/cli.js"]
+      "args": ["packages/mcp/bin/codeassembly-mcp.js"]
     }
   }
 }
