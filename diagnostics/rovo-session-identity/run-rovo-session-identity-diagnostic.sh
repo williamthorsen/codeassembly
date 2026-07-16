@@ -102,7 +102,7 @@ main() {
       echo "--- dir=$dir"
       echo "${ROVO_COMMAND[*]} \"$prompt\""
     else
-      output_file="$runs_dir/${stamp}-${index}.out"
+      output_file="$runs_dir/${stamp}-${index}.out.log"
       echo "$PROG: Launching diagnostic in $dir (output: $output_file)"
       (cd "$dir" && "${ROVO_COMMAND[@]}" "$prompt") >"$output_file" 2>&1 &
       pids+=("$!")
