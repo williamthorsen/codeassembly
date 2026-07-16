@@ -19,6 +19,8 @@ export default [
     '**/coverage/**',
     '**/dist/**',
     '**/local/**',
+    // Throwaway spikes live outside the workspace and are exempt from lint.
+    'spikes/**',
     // Ignore test fixtures that are intentionally syntactically broken.
     '**/__tests__/**/fixtures/**/malformed-aliases/**',
     '**/__tests__/**/fixtures/**/malformed-no-kb/**',
