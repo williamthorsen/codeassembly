@@ -28,7 +28,7 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 4's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 6's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
 
 2. **Assess relevancy** — determine whether the ticket may be stale and, if so, verify it is still relevant.
 
@@ -108,11 +108,6 @@ Here, _the implementation_ is the plan artifact (Phase 5): mechanism the ticket 
 
 Present the ticket to the user. Revise until approved.
 
-**Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent.
-
-- GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
-- Other platforms: Note that automated update is not yet supported; suggest manual update
-
 ### Phase 5: Generate implementation plan
 
 <HARD-GATE>
@@ -129,7 +124,11 @@ Produce a plan that gives a competent coder everything they need — and enough 
 
 Present the plan to the user. Revise until approved.
 
-### Phase 6: Save artifacts and stop
+### Phase 6: Sweep for completeness, save artifacts, and stop
+
+<!-- include: ../_partials/ticket-and-plan-completeness.md / -->
+
+Then save both artifacts:
 
 1. Resolve artifact directory using `save-artifact` conventions:
    - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
@@ -153,6 +152,11 @@ Design and plan complete:
   Ticket: {ticket_path}
   Plan:   {plan_path}
 ```
+
+**Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent. The offer joins the next-steps block below as an additional ask, keeping that block's identifiers; it never opens a turn of its own. On consent:
+
+- GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
+- Other platforms: Note that automated update is not yet supported; suggest manual update
 
 <HARD-GATE>
 Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
