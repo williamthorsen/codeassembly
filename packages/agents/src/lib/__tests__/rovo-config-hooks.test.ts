@@ -10,33 +10,31 @@ import {
   RovoConfigParseError,
 } from '../rovo-config-hooks.ts';
 
-describe(checkHookEntries, () => {
-  it('reports present, drifted, and absent', () => {
-    const document = parseConfig('');
-    ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'present')], isOwned);
+/** A test sentinel: ownership is marked by a `--ca` token in any command. Encoding is the caller's choice. */
+const isOwned: HookSentinelMatcher = (entry) => entry.commands.some((command) => command.includes('--ca'));
 
-    const results = checkHookEntries(
-      document,
-      [
-        buildOwnedEntry('sessionStart', 'present'),
-        { eventKey: 'sessionStart', entry: { name: 'present', commands: ['run present --ca --changed'] } },
-        buildOwnedEntry('sessionEnd', 'missing'),
-      ],
-      isOwned,
-    );
+/** Builds an owned entry for `eventKey` carrying the sentinel token. */
+function buildOwnedEntry(eventKey: string, name: string): OwnedHookEntry {
+  return { eventKey, entry: { name, commands: [`run ${name} --ca`] } };
+}
 
-    expect(results[0]?.status).toBe('present');
-    expect(results[1]?.status).toBe('drifted');
-    expect(results[2]?.status).toBe('absent');
-  });
-});
+/** Parses YAML source into a document, preserving any parse errors for the parse-guard tests. */
+function parseConfig(source: string): Document {
+  return parseDocument(source);
+}
+
+/** The number of items in the named event array, or -1 when it is missing or malformed. */
+function eventArrayLength(document: Document, eventKey: string): number {
+  const array = document.getIn(['eventHooks', 'events', eventKey]);
+  return isSeq(array) ? array.items.length : -1;
+}
 
 describe(ensureHookEntries, () => {
   it('creates eventHooks, events, and the array when the document is empty', () => {
     const document = parseConfig('');
-    const changed = ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned);
+    const result = ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned);
 
-    expect(changed).toBe(true);
+    expect(result.changed).toBe(true);
     expect(String(document)).toContain('eventHooks:');
     expect(checkHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned)[0]?.status).toBe('present');
   });
@@ -45,7 +43,7 @@ describe(ensureHookEntries, () => {
     const document = parseConfig('');
     ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned);
 
-    expect(ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned)).toBe(false);
+    expect(ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned).changed).toBe(false);
   });
 
   it('replaces a drifted owned entry in place rather than duplicating it', () => {
@@ -56,12 +54,39 @@ describe(ensureHookEntries, () => {
       eventKey: 'sessionStart',
       entry: { name: 'a', commands: ['run a --ca --extra'] },
     };
-    const changed = ensureHookEntries(document, [drifted], isOwned);
+    const result = ensureHookEntries(document, [drifted], isOwned);
 
-    expect(changed).toBe(true);
-    const array = document.getIn(['eventHooks', 'events', 'sessionStart']);
-    expect(isSeq(array) ? array.items.length : -1).toBe(1);
+    expect(result.changed).toBe(true);
+    expect(eventArrayLength(document, 'sessionStart')).toBe(1);
     expect(String(document)).toContain('--extra');
+  });
+
+  it('installs two owned entries in the same event array, keeps a re-run a no-op, and drifts only one', () => {
+    const document = parseConfig('');
+    const both = [buildOwnedEntry('sessionStart', 'a'), buildOwnedEntry('sessionStart', 'b')];
+
+    expect(ensureHookEntries(document, both, isOwned).changed).toBe(true);
+    expect(eventArrayLength(document, 'sessionStart')).toBe(2);
+
+    expect(ensureHookEntries(document, both, isOwned).changed).toBe(false);
+
+    const drifted: OwnedHookEntry[] = [
+      buildOwnedEntry('sessionStart', 'a'),
+      { eventKey: 'sessionStart', entry: { name: 'b', commands: ['run b --ca --v2'] } },
+    ];
+    expect(ensureHookEntries(document, drifted, isOwned).changed).toBe(true);
+    expect(eventArrayLength(document, 'sessionStart')).toBe(2);
+
+    const statuses = checkHookEntries(document, drifted, isOwned).map((check) => check.status);
+    expect(statuses).toEqual(['present', 'present']);
+  });
+
+  it('throws when a supplied entry does not satisfy the sentinel matcher', () => {
+    const document = parseConfig('');
+    const unsentineled: OwnedHookEntry = { eventKey: 'sessionStart', entry: { name: 'a', commands: ['run a'] } };
+
+    expect(() => ensureHookEntries(document, [unsentineled], isOwned)).toThrow(/sentinel/);
+    expect(String(document)).not.toContain('eventHooks');
   });
 
   it('leaves foreign entries, foreign comments, and unrelated keys untouched', () => {
@@ -110,10 +135,10 @@ describe(ensureHookEntries, () => {
       { eventKey: 'sessionStart', entry: { name: 'ca-start', commands: ['run start --ca --v2'] } },
       { eventKey: 'sessionEnd', entry: { name: 'ca-end', commands: ['run end --ca --v2'] } },
     ];
-    const changed = ensureHookEntries(document, drifted, isOwned);
+    const result = ensureHookEntries(document, drifted, isOwned);
     const out = String(document);
 
-    expect(changed).toBe(true);
+    expect(result.changed).toBe(true);
     expect(out).toContain('run start --ca --v2');
     expect(out).toContain('run end --ca --v2');
     expect(out).toContain('name: foreign-a');
@@ -121,8 +146,37 @@ describe(ensureHookEntries, () => {
   });
 });
 
+describe(checkHookEntries, () => {
+  it('reports present, drifted, and absent by name', () => {
+    const document = parseConfig('');
+    ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'present')], isOwned);
+
+    const results = checkHookEntries(
+      document,
+      [
+        buildOwnedEntry('sessionStart', 'present'),
+        { eventKey: 'sessionStart', entry: { name: 'present', commands: ['run present --ca --changed'] } },
+        buildOwnedEntry('sessionEnd', 'missing'),
+      ],
+      isOwned,
+    );
+
+    expect(results[0]?.status).toBe('present');
+    expect(results[1]?.status).toBe('drifted');
+    expect(results[2]?.status).toBe('absent');
+  });
+
+  it('reports drifted when the event holds owned entries but none matches the supplied name', () => {
+    const document = parseConfig('');
+    ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a')], isOwned);
+
+    const result = checkHookEntries(document, [buildOwnedEntry('sessionStart', 'other')], isOwned);
+    expect(result[0]?.status).toBe('drifted');
+  });
+});
+
 describe(removeHookEntries, () => {
-  it('deletes only owned entries, preserving foreign entries and comments', () => {
+  it('deletes only owned entries, preserving foreign entries and comments, and counts removals', () => {
     const source = [
       'eventHooks:',
       '  events:',
@@ -135,10 +189,10 @@ describe(removeHookEntries, () => {
     ].join('\n');
     const document = parseConfig(source);
 
-    const changed = removeHookEntries(document, isOwned);
+    const result = removeHookEntries(document, isOwned);
     const out = String(document);
 
-    expect(changed).toBe(true);
+    expect(result).toEqual({ changed: true, removedCount: 1 });
     expect(out).toContain('name: foreign # keep me');
     expect(out).not.toContain('--ca');
   });
@@ -147,9 +201,10 @@ describe(removeHookEntries, () => {
     const document = parseConfig('otherKey: 1\n');
     ensureHookEntries(document, [buildOwnedEntry('sessionStart', 'a'), buildOwnedEntry('sessionEnd', 'b')], isOwned);
 
-    removeHookEntries(document, isOwned);
+    const result = removeHookEntries(document, isOwned);
     const out = String(document);
 
+    expect(result).toEqual({ changed: true, removedCount: 2 });
     expect(out).not.toContain('eventHooks');
     expect(out).toContain('otherKey: 1');
   });
@@ -176,11 +231,11 @@ describe(removeHookEntries, () => {
     expect(out).not.toContain('sessionStart:');
   });
 
-  it('returns false when no owned entries exist', () => {
+  it('returns unchanged when no owned entries exist', () => {
     const document = parseConfig(
       'eventHooks:\n  events:\n    sessionStart:\n      - name: foreign\n        commands: [echo hi]\n',
     );
-    expect(removeHookEntries(document, isOwned)).toBe(false);
+    expect(removeHookEntries(document, isOwned)).toEqual({ changed: false, removedCount: 0 });
   });
 });
 
@@ -198,20 +253,3 @@ describe(RovoConfigParseError, () => {
     expect(() => removeHookEntries(document, isOwned)).toThrow(RovoConfigParseError);
   });
 });
-
-// region | Helpers
-
-/** Parses YAML source into a document, preserving any parse errors for the parse-guard tests. */
-function parseConfig(source: string): Document {
-  return parseDocument(source);
-}
-
-/** A test sentinel: ownership is marked by a `--ca` token in any command. Encoding is the caller's choice. */
-const isOwned: HookSentinelMatcher = (entry) => entry.commands.some((command) => command.includes('--ca'));
-
-/** Builds an owned entry for `eventKey` carrying the sentinel token. */
-function buildOwnedEntry(eventKey: string, name: string): OwnedHookEntry {
-  return { eventKey, entry: { name, commands: [`run ${name} --ca`] } };
-}
-
-// endregion | Helpers
