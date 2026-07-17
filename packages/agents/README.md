@@ -18,6 +18,104 @@ Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`
 
 Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. Run `codeassembly-agents --help` for the authoritative list.
 
+## Session-lifecycle hooks
+
+Skills report the work they do, but they cannot report a session opening, exiting, or handing a turn back to you — at those moments no skill is running. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
+
+| Event             | Claude Code        | Rovo Dev           |
+| ----------------- | ------------------ | ------------------ |
+| `session.started` | `SessionStart`     | `on_session_start` |
+| `session.ended`   | `SessionEnd`       | `on_session_end`   |
+| `turn.started`    | `UserPromptSubmit` | `on_user_prompt`   |
+| `turn.completed`  | `Stop`             | `on_complete`      |
+
+`install` places the relay in each harness's `scripts/` directory. Wiring it to the hooks is a separate step: the harness configs below are yours, and nothing writes to them on your behalf. Add the entries for the harnesses you want.
+
+The relay reports a boundary and nothing more. It never carries your prompt text, and it always exits 0 — a relay that failed loudly would be worse than the missing event, since Claude Code reads a `Stop` hook's non-zero exit as a signal to keep the agent from stopping.
+
+### Claude Code
+
+In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays, so the relay never has to infer where it was called from:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionStart"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionEnd"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook UserPromptSubmit"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook Stop"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Omit `matcher` on all four. `SessionStart` and `SessionEnd` accept one to select a start source or an end reason, and leaving it out is what relays every one of them; `UserPromptSubmit` and `Stop` ignore it.
+
+Keep the whole invocation in `command` rather than splitting the flags into an `args` array: `~` expands only in the single-string form.
+
+### Rovo Dev
+
+In `~/.rovodev/config.yml`, under `eventHooks`:
+
+```yaml
+eventHooks:
+  events:
+    - name: on_session_start
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_start
+    - name: on_session_end
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_end
+    - name: on_user_prompt
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_user_prompt
+    - name: on_complete
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_complete
+```
+
+Write your home directory out in full, as above: Rovo's own generated entries use absolute paths, and `~` is not known to expand here.
+
+Two things to know about Rovo:
+
+- **Restart to pick up the change.** Rovo reads its config at startup, so a running session ignores hooks added under it.
+- **`on_complete` fires when a run completes successfully.** A turn that errors or is aborted may not report its end, leaving that session reading as still working until its next event.
+
 ## Project declaration
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly-agents init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).

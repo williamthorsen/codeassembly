@@ -76,8 +76,8 @@ describe(parseHookPayload, () => {
   });
 
   it('carries through the mapping’s discriminator keys and nothing else', () => {
-    // `prompt` is the shape of the field the relay must not carry: the turn boundary is the signal, not what was said.
-    const stdin = JSON.stringify({ session_id: 'abc', source: 'resume', prompt: 'secret', reason: 'clear' });
+    // `user_input` is the field the relay must not carry: the turn boundary is the signal, not what was said.
+    const stdin = JSON.stringify({ session_id: 'abc', source: 'resume', user_input: 'secret', reason: 'clear' });
 
     expect(parseHookPayload({ stdin, mapping })).toMatchObject({
       ok: true,
@@ -227,7 +227,7 @@ describe(runRelay, () => {
 
     const result = await runRelay({
       argv: ['--harness', 'claude', '--hook', 'UserPromptSubmit', '--home', home],
-      stdin: JSON.stringify({ session_id: 's1', cwd, prompt: 'do the thing' }),
+      stdin: JSON.stringify({ session_id: 's1', cwd, user_input: 'do the thing' }),
       cwd: '/nowhere',
       env: {},
       now: NOW,
