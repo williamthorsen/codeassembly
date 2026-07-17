@@ -31,6 +31,12 @@ import type {
 } from '../lib/types.js';
 
 /**
+ * The extensions that ship from `content/scripts/` to a harness home: `.sh` helpers a skill invokes, and `.mjs` bundles
+ * the harness itself invokes. Anything else there — the README — documents the directory rather than shipping from it.
+ */
+const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
+
+/**
  * Executes the install command, installing skills and subagents for the specified harnesses.
  */
 export async function installCommand(
@@ -367,8 +373,8 @@ async function installScripts(
       continue;
     }
 
-    // Skip non-script files (e.g. README.md); only `.sh` helpers ship to harness homes.
-    if (!entry.endsWith('.sh')) {
+    // Skip non-script files (e.g. README.md); only helper scripts ship to harness homes.
+    if (!SCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension))) {
       continue;
     }
 

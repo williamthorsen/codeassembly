@@ -23,6 +23,7 @@ import {
   makeKbEditSmokeTest,
   makeKbRetrieveEventsSmokeTest,
   makeKbUpdateEventsSmokeTest,
+  makeRelayHookEventSmokeTest,
   makeUpdateJiraTicketSmokeTest,
   type SmokeTestInvocation,
 } from '../testing/smoke-test-utils.ts';
@@ -39,6 +40,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/kb-edit/cli.ts': makeKbEditSmokeTest(),
   'src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
   'src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
+  'src/relay-hook-event/cli.ts': makeRelayHookEventSmokeTest(),
   'src/update-jira-ticket/cli.ts': makeUpdateJiraTicketSmokeTest(),
 };
 

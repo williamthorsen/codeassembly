@@ -310,6 +310,27 @@ describe(installCommand, () => {
       expect(statSync(scriptPath).mode & 0o777).toBe(0o755);
     });
 
+    it('places a bundled .mjs helper alongside the shell scripts', async () => {
+      const claudeHome = await setupClaudeHome();
+      // The hook relay ships as a bundled `.mjs` rather than a `.sh`: the harness invokes it directly, so it reaches a
+      // harness home by the same path as the shell helpers a skill invokes.
+      await buildContentTree(contentDir, { scripts: { 'relay-demo.mjs': 'process.stdout.write("{}")\n' } });
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'scripts', 'relay-demo.mjs'))).toBe(true);
+      expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
+    });
+
+    it('installs no file that is neither a shell script nor a bundle', async () => {
+      const claudeHome = await setupClaudeHome();
+      await buildContentTree(contentDir, { scripts: { 'README.md': '# Helper scripts\n' } });
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'scripts', 'README.md'))).toBe(false);
+    });
+
     it('records script entries with a sha256 hash and linked:false in copy mode', async () => {
       await setupClaudeHome();
 

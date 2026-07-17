@@ -1,14 +1,17 @@
 /**
- * Build step: Bundle each skill's TypeScript helper into a single self-contained `.mjs` placed inside
- * the skill's content directory.
+ * Build step: Bundle each TypeScript helper into a single self-contained `.mjs` placed inside the content tree.
  *
- * A skill installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
- * esbuild bundles the helper with `@codeassembly/kb` and its `yaml` / `zod` dependencies inlined, producing
- * a file that runs under `node` with no monorepo packages present on disk.
- * The bundle is written into `content/skills/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
+ * A helper installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
+ * esbuild bundles it with `@codeassembly/kb` and its `yaml` / `zod` dependencies inlined, producing a file that runs
+ * under `node` with no monorepo packages present on disk.
+ * The bundle is written under `content/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
  * and the dev and built layouts both ship the helper.
  *
- * The bundle list is a plain array of `BundleTarget` entries; new skills register themselves by appending one.
+ * A helper's destination follows its consumer: a skill's helper bundles into that skill's own directory under
+ * `content/skills/`, while a helper with no skill to belong to — one the harness itself invokes — bundles into
+ * `content/scripts/`, alongside the shell helpers that install to every harness home.
+ *
+ * The bundle list is a plain array of `BundleTarget` entries; a new helper registers itself by appending one.
  */
 import path from 'node:path';
 import process from 'node:process';
@@ -19,7 +22,7 @@ import { build } from 'esbuild';
 /** Absolute path to the `@codeassembly/agents` package root. */
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-/** One skill helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
+/** One helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
 export interface BundleTarget {
   /** Path to the helper's entry module, relative to the package root. */
   entry: string;
@@ -27,7 +30,7 @@ export interface BundleTarget {
   outFile: string;
 }
 
-/** Every skill helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
+/** Every helper bundle; the smoke test reuses this list to exercise each built `.mjs`. */
 export const targets: BundleTarget[] = [
   {
     entry: 'src/kb-add/cli.ts',
@@ -72,6 +75,10 @@ export const targets: BundleTarget[] = [
   {
     entry: 'src/emit-event/cli.ts',
     outFile: 'content/skills/emit-event/emit-event.mjs',
+  },
+  {
+    entry: 'src/relay-hook-event/cli.ts',
+    outFile: 'content/scripts/relay-hook-event.mjs',
   },
 ];
 

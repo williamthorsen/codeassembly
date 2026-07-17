@@ -1,8 +1,13 @@
 # Helper scripts
 
-Shared shell helpers consumed by skills and subagents. The install pipeline copies (or symlinks) each `.sh` file in this directory into `~/<platform_home>/scripts/` for every platform target (e.g., `~/.claude/scripts/`, `~/.codex/scripts/`).
+Shared helpers installed into every platform target. The install pipeline copies (or symlinks) each `.sh` and `.mjs` file in this directory into `~/<platform_home>/scripts/` (e.g., `~/.claude/scripts/`, `~/.codex/scripts/`).
 
-Non-`.sh` files in this directory (such as this README) are not installed.
+Two kinds of helper live here, distinguished by who invokes them:
+
+- **`.sh` — invoked by an agent.** Shell helpers a skill or subagent runs, via the `{harness_home_dir}/scripts/` prefix documented below.
+- **`.mjs` — invoked by the harness.** Bundled TypeScript helpers wired into a harness's own configuration, with no agent in the loop. The bundles are build output, generated into this directory by `scripts/bundle-skill-helpers.ts` and git-ignored; the source lives under `src/`.
+
+Files of any other extension (such as this README) are not installed.
 
 ## Invocation convention
 
@@ -20,11 +25,17 @@ Prose mentions of script names that are not invocations (e.g., ``"the `describe-
 
 ## Scripts
 
+Agent-invoked:
+
 - `describe-change.sh`: Renders titles for commits, tickets, PRs, and merges from declarative templates.
 - `get-ticket-id.sh`: Extracts a ticket ID from a branch name.
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields.
 - `resolve-merge-options.sh`: Resolves merge-method and squash-title inputs from CLI overrides, label maps, and commit majority.
 - `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.
+
+Harness-invoked:
+
+- `relay-hook-event.mjs`: Relays a harness event hook to a lifecycle event. Configured as a hook command, never run by an agent.
 
 ## Drift detection
 
