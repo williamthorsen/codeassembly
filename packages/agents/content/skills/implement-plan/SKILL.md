@@ -9,7 +9,7 @@ dependencies:
 
 # Implement plan
 
-Implement the work a plan artifact describes. This skill is the canonical implementation path: it governs the phase the same way whether the plan was produced moments ago in this conversation or handed to a fresh session on another harness, because it re-resolves everything it needs from the environment rather than relying on conversation history.
+Implement the work a feature plan describes. This skill is the canonical path for implementing a plan: it governs the phase the same way whether the plan was produced moments ago in this conversation or handed to a fresh session on another harness, because it re-resolves everything it needs from the environment rather than relying on conversation history.
 
 ## Arguments
 
@@ -17,6 +17,10 @@ Implement the work a plan artifact describes. This skill is the canonical implem
 | ------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `--plan=<path>`     | The plan artifact to implement.                                                                            | Auto-resolved (see below) |
 | `--ticket=<source>` | The ticket the plan serves. Resolved per [ticket source resolution](../_data/ticket-source-resolution.md). | Auto-resolved (see below) |
+
+## Scope
+
+This skill implements a feature plan — the `## Tasks` / `## Verification` shape the plan template defines. A spike plan carries `## Investigation steps` and a `## Deliverable` instead (see [spike conventions](../_data/spike-conventions.md)): it is carried out to produce findings rather than implemented to produce a diff, and none of the steps below read its shape. Resolve a spike plan and the run stops here — say so and carry out its investigation steps directly.
 
 ## The contract
 

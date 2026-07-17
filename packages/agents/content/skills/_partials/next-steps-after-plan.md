@@ -14,6 +14,8 @@ Present all three options as a numbered list per [option format](#option-format)
 
 **One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must carry a `➕` line naming the specific unsettled decision the pass would surface (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape this requirement exists to forbid. Selecting Refine plan without such a line is a defect — if the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
 
+**Spike plans.** A spike plan carries `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, invoking no skill — the agent works the investigation steps directly. Options 1 and 2 are unchanged.
+
 Options that invoke a skill include context-clearing guidance:
 
 - **Refine plan** and **Orchestrate**: Prepend "Clear context and use..." because the plan artifact is self-contained and orchestration dispatches fresh subagents; prior conversation wastes tokens and can introduce bias.
