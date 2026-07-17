@@ -13,4 +13,4 @@ Run the sweep in the main session, never in a subagent. Only the session holds t
 
 **Route each gap by kind**, per the placement doctrine: the change's subject and outcomes fold into the ticket, mechanism folds into the plan. Where the gap came up in conversation does not decide where it lands. When the invocation produces no ticket artifact, a subject-level gap folds into the plan's context section.
 
-**Report and proceed.** When the sweep finds gaps, fold them in and report the amendments as a brief list, then save. The report is informational: the amendments carry what the approval already covered, so it opens no new approval gate and asks nothing. When the sweep finds nothing, save silently — a clean sweep is not worth a line.
+**Report and proceed.** When the sweep finds gaps, fold them in and report the amendments as a brief list, then save. The report is informational: the amendments carry decisions the conversation already settled, so it opens no new approval gate and asks nothing. When the sweep finds nothing, save silently — a clean sweep is not worth a line.
