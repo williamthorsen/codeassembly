@@ -31,7 +31,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 2. **Resolve the plan** — stop at the first source that yields one:
    - **Explicit `--plan=<path>`**: read it.
    - **Already in context**: this session produced or read the plan. Use it as-is; do not re-read the file.
-   - **Newest plan for the ticket**: the `*_plan.md` with the greatest `YYYYMMDD-HHMMSSZ` filename prefix under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` (run subdirectories included). Filenames sort chronologically, so the lexicographically greatest is the newest.
+   - **Newest plan for the ticket**: the newest of `*_plan.md` and `*_plan-v*.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` (run subdirectories included), by the greatest `YYYYMMDD-HHMMSSZ` filename prefix. Both forms carry that prefix, so they sort chronologically together and the lexicographically greatest is the newest across the two. `refine-plan` writes its revision as `_plan-v2.md` under a later prefix than the plan it revises, so matching both forms is what lets a refined plan win over the original it supersedes. Do not widen to `*_plan*.md`, which also matches the `_plan-review.md` artifact written beside the revision.
    - **Ask**: no plan is resolvable. Ask the user for a path rather than implementing from the ticket alone — a caller who invoked this skill has a plan in mind.
 
    Announce the resolved path and its timestamp before executing anything. Several plans can exist for one ticket, and the newest is not always the intended one: this announcement is how the user catches a superseded plan while the choice is still free. It is not ceremony, and it is not skippable when the resolution was unambiguous.
