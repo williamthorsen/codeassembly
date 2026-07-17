@@ -36,6 +36,10 @@ The body following the frontmatter uses the shared implementation-plan template,
 - Call out risks and unknowns explicitly
 - When comparing approaches, rank options per [design priorities](../_data/design-priorities.md)
 
+## Sweep for completeness
+
+<!-- include: ../_partials/ticket-and-plan-completeness.md / -->
+
 ## Saving
 
 Resolve artifact directory based on context.

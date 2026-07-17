@@ -28,7 +28,7 @@ Do NOT generate the implementation plan until the design has been agreed upon an
 
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 4's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 6's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so a later session needs no ticket argument.
 
 2. **Assess relevancy** — determine whether the ticket may be stale and, if so, verify it is still relevant.
 
@@ -108,11 +108,6 @@ Here, _the implementation_ is the plan artifact (Phase 5): mechanism the ticket 
 
 Present the ticket to the user. Revise until approved.
 
-**Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent.
-
-- GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
-- Other platforms: Note that automated update is not yet supported; suggest manual update
-
 ### Phase 5: Generate implementation plan
 
 <HARD-GATE>
@@ -129,7 +124,11 @@ Produce a plan that gives a competent coder everything they need — and enough 
 
 Present the plan to the user. Revise until approved.
 
-### Phase 6: Save artifacts and stop
+### Phase 6: Sweep for completeness, save artifacts, and stop
+
+<!-- include: ../_partials/ticket-and-plan-completeness.md / -->
+
+Then save both artifacts:
 
 1. Resolve artifact directory using `save-artifact` conventions:
    - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
@@ -154,8 +153,30 @@ Design and plan complete:
   Plan:   {plan_path}
 ```
 
+**Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference) and the refined ticket differs from the remote body. Phase 4 may adopt a good source ticket unchanged and the sweep may find nothing to fold in; the remote is then already current, and no offer is made. This is a shared-state action — do not update without explicit consent, and never open a turn of its own for the ask.
+
+Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. Each sub-block numbers from 1 and carries its own label; the consent stays orthogonal to the single-select next-step choice, and the four next-steps options keep their own identifiers and order. Recommend the update (■■□): the offer appears only when the remote body is stale against the refined ticket.
+
+```
+Next steps:
+
+Remote issue:
+1. 📝 ■■□ Update {ticket_ref} with the refined ticket
+2. ⏭️ ■□□ Leave as-is
+
+Next action:
+1. 🧠 ■□□ Refine plan:
+   - Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
+...
+```
+
+On consent:
+
+- GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
+- Other platforms: Note that automated update is not yet supported; suggest manual update
+
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `Remote issue:` and `Next action:` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.
