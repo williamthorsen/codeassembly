@@ -102,6 +102,17 @@ describe(ensureClaudeHookEntries, () => {
     expect(await readFile(file, 'utf8')).toBe(JSON.stringify({ model: 'opus', hooks: { PreToolUse: [GROUP] } }));
   });
 
+  it.each([
+    { name: 'an empty document', text: '{}\n' },
+    { name: 'an empty document spanning lines', text: '{\n}\n' },
+  ])('gives $name the same formatting as a missing file', async ({ text }) => {
+    const file = await writeSettings(text);
+
+    await ensureClaudeHookEntries(file, [ENTRY], SENTINEL);
+
+    expect(await readFile(file, 'utf8')).toBe(`${JSON.stringify({ hooks: { PreToolUse: [GROUP] } }, undefined, 2)}\n`);
+  });
+
   it('expands inline arrays and objects onto separate lines', async () => {
     const file = await writeSettings('{\n  "permissions": { "allow": ["Bash"] }\n}\n');
 

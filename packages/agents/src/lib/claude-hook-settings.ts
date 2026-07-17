@@ -65,13 +65,17 @@ export async function removeClaudeHookEntries(filePath: string, sentinel: string
 
 // region | Helpers
 
-/** Reads the indent unit from the first indented line; a file holding no line break is compact and stays compact. */
+/**
+ * Reads the indent unit from the first indented line. A single-line document holding members demonstrates compact style
+ * and keeps it; a document with no members demonstrates nothing, so it takes the default that a missing file takes.
+ */
 function detectIndent(body: string): string | number {
   const unit = /\n([ \t]+)\S/.exec(body)?.[1];
   if (unit !== undefined) {
     return unit;
   }
-  return body.includes('\n') ? DEFAULT_FORMAT.indent : 0;
+  const isEmptyDocument = /^\{\s*\}$/.test(body.trim());
+  return !isEmptyDocument && !body.includes('\n') ? 0 : DEFAULT_FORMAT.indent;
 }
 
 function detectJsonFormat(text: string): JsonFormat {
