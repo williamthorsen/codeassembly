@@ -39,8 +39,17 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
   name: 'next-steps-after-plan',
   heading: '## Next-steps options',
   rules: [
-    '| 3   | 🚀🔍  | Implement directly with follow-up review',
+    '| 3   | 🚀    | Implement   |',
     '🎶 **Orchestrate** -> `orchestrate-dev`',
+    // The Implement option's skill mapping. Without it the agent improvises "implement manually", which is the
+    // ungoverned path this option exists to replace.
+    '🚀 **Implement** -> `implement-plan`',
+    // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
+    // enough to turn away — the round trip the carve-out exists to prevent.
+    'Render option 3 as 🔬 Investigate, invoking no skill',
+    // The rule a spike lands on. Without it the cascade's feature-shaped rule 2 fails on an investigation and falls
+    // through to rule 3, recommending the development pipeline for work that produces no diff.
+    'rule 2 matches whenever rule 1 does not',
     // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
     // one of them reintroduces the failure named beneath it.
     // Rule 1's test. Without it the rule states no condition at all.
@@ -67,6 +76,7 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
 const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: ReadonlyArray<Spec> }> = [
   { slug: 'collaborate', specs: [OPTION_FORMAT] },
   { slug: 'design-and-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
+  { slug: 'implement-plan', specs: [OPTION_FORMAT] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
   { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
   { slug: 'plan-orchestrable-steps', specs: [OPTION_FORMAT] },
