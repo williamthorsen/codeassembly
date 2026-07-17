@@ -153,13 +153,30 @@ Design and plan complete:
   Plan:   {plan_path}
 ```
 
-**Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent. The offer joins the next-steps block below as an additional ask, keeping that block's identifiers; it never opens a turn of its own. On consent:
+**Remote issue update** — offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference). This is a shared-state action — do not update without explicit consent, and never open a turn of its own for the ask.
+
+Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. Each sub-block numbers from 1 and carries its own label; the consent stays orthogonal to the single-select next-step choice, and the four next-steps options keep their own identifiers and order. Recommend the update (■■□) — the refined ticket is newer than the remote body, which is why the offer appears at all.
+
+```
+Next steps:
+
+Remote issue:
+1. 📝 ■■□ Update {ticket_ref} with the refined ticket
+2. ⏭️ ■□□ Leave as-is
+
+Implementation:
+1. 🧠 ■□□ Refine plan:
+   - Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
+...
+```
+
+On consent:
 
 - GitHub: Write the refined body to a scratch file using the [gh body file](../_data/gh-body-file.md) pattern, then `gh issue edit {number} --body-file "$body_path"`.
 - Other platforms: Note that automated update is not yet supported; suggest manual update
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `Remote issue:` and `Implementation:` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively with user approval at each stage — use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
 **STOP.** Do not invoke any other skill. Do not begin implementation.
