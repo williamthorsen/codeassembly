@@ -34,6 +34,8 @@ A value-bearing flag accepts both `--type value` and `--type=value`.
 
 | Type               | Emit when                                                                       |
 | ------------------ | ------------------------------------------------------------------------------- |
+| `session.started`  | **Relayed, not yours.** A session opened. Payload: the harness's start reason.  |
+| `turn.started`     | **Relayed, not yours.** The user submitted a prompt.                            |
 | `skill.started`    | A skill begins. Payload: the skill name, and any argument that framed the run.  |
 | `skill.progress`   | A skill reaches a milestone worth showing mid-run. Payload: what just finished. |
 | `skill.completed`  | A skill finishes. Payload: the outcome.                                         |
@@ -41,6 +43,10 @@ A value-bearing flag accepts both `--type value` and `--type=value`.
 | `input.requested`  | The skill has asked the user something and is waiting.                          |
 | `input.received`   | The user has answered.                                                          |
 | `pr.created`       | A pull request has been opened. Payload: its number and URL.                    |
+| `turn.completed`   | **Relayed, not yours.** The agent finished responding.                          |
+| `session.ended`    | **Relayed, not yours.** A session exited, switched, or forked.                  |
+
+The four relayed types are emitted by the hook relay the CLI installs into the harness, which fires at boundaries no skill is running to observe. **Never emit one from a skill**: you would double-count a boundary the harness already reports. They are listed here so you recognize them when reading a log, not so you can produce them.
 
 The vocabulary is convention, not a gate: an undeclared type warns on stderr and is appended anyway. Prefer a declared type — a watching surface only renders what it recognizes — but emit a new one rather than dropping an event that has no home yet.
 
