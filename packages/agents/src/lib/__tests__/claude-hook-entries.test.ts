@@ -48,6 +48,14 @@ describe(checkHookEntries, () => {
     expect(checkHookEntries(settings, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status: 'present' }]);
   });
 
+  it('reports present for a supplied entry that ensure would keep beside an owned entry it would drop', () => {
+    const stale = buildGroup(`${SENTINEL} relay --old`, 'Write');
+    const settings = { hooks: { PreToolUse: [OWNED, stale] } };
+
+    expect(checkHookEntries(settings, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status: 'present' }]);
+    expect(ensureHookEntries(settings, [ENTRY], SENTINEL).result).toEqual({ changed: true });
+  });
+
   it('reports each supplied entry independently', () => {
     const other: ClaudeHookEntry = { event: 'Stop', group: buildGroup(`${SENTINEL} stop`, '') };
 

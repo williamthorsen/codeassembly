@@ -119,8 +119,9 @@ function renderSettings(settings: Record<string, unknown>, format: JsonFormat): 
 }
 
 /**
- * Writes the settings in the file's own formatting. Writing in place rather than through a temp file and a rename is
- * what keeps a symlinked settings file — the shape a dotfiles-managed setup takes — a symlink.
+ * Writes the settings in the file's own formatting, in place: a settings file that is a symlink stays a symlink, with
+ * its target updated, which is the shape a dotfiles-managed setup takes. The write is not atomic, so an interrupted
+ * write leaves a document Claude Code rejects as a whole.
  */
 async function writeSettingsFile(
   filePath: string,

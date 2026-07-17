@@ -26,6 +26,10 @@ export interface HookEntriesTransform<TResult> {
  * Reports each supplied entry as `present` (an owned entry under its event is deep-equal to it), `drifted` (its event
  * holds owned entries but none match), or `absent` (its event holds no owned entry). Deep equality ignores key order,
  * so a re-serialized file never reads as drift.
+ *
+ * The report is scoped to the entries supplied. An owned entry the caller does not supply has nothing to be reported
+ * against, so an all-present result does not imply `ensureHookEntries` would leave the document unchanged: it would
+ * still drop that entry.
  */
 export function checkHookEntries(
   settings: unknown,
