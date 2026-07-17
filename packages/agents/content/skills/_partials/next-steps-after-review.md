@@ -4,20 +4,24 @@ The next-steps block has three independent sub-blocks. Each is shown only when i
 
 Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
 
+**Naming a skill in the render.** Name a skill in the rendered option only when the user must carry the invocation across a session boundary — clearing context, handing off to another session, or waiting for someone else to act. When the agent runs the skill in the current session, the skill name lives in the sub-block's Options table and the rendered line is a bare action. This keeps each rendered line to the step the user performs.
+
+**Reviewer and author roles.** A review surfaces findings; the author disposes of them. The options below route the reviewer's output to the author or record what the review found — they never ask the reviewer to re-design, re-plan, or orchestrate a workflow, none of which is the reviewer's job.
+
 ### Deviations sub-block
 
 Shown when the ticket compliance section reports gaps (partial or unaddressed acceptance criteria) or unplanned work.
 
 #### Options
 
-| #   | Emoji | Option        | Description                                          |
-| --- | ----- | ------------- | ---------------------------------------------------- |
-| 1   | 📝    | Update ticket | Revise the ticket to match the actual implementation |
-| 2   | ⏭️    | Leave as-is   | Accept the deviation without updating the ticket     |
+| #   | Emoji | Option                         | Description                                                                                                 |
+| --- | ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria to match the implementation, via `align-ticket-with-implementation` |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                            |
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. The agent runs `align-ticket-with-implementation` in the current session, so the render is a bare action; the skill lives in the Options table above.
 
 Example (rendered for the recommendation case):
 
@@ -25,8 +29,7 @@ Example (rendered for the recommendation case):
 Next steps:
 
 Deviations from ticket:
-1. 📝 ■■□ Update ticket:
-   - Use the `design-and-plan` skill with ticket: {ticket_source}
+1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is
 ```
 
@@ -34,28 +37,27 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Recommendation rules
 
-1. **Recommend "Update ticket"** (■■□ on Update ticket, ■□□ on Leave as-is): acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured.
+1. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured.
 2. **No recommendation** (omit markers from both options): deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). The user decides.
 
 When uncertain, recommend updating the ticket.
 
 ### Source divergence sub-block
 
-Shown when the consistency section of the review reports a `partial` or `severe` verdict. The option set varies by case (which spec source the implementation matches, drawn from the consistency-section table — see `review-branch/SKILL.md` § Specification consistency).
+Shown when the consistency section of the review reports a `partial` or `severe` verdict. The consistency section renders only when two spec sources are present (ticket and PR description), so this sub-block appears in PR reviews. The option set varies by case (which spec source the implementation matches, drawn from the consistency-section table — see `review-branch/SKILL.md` § Specification consistency).
 
 #### Options
 
 The base option pool is:
 
-| Emoji | Option                           | Action                                                                                    |
-| ----- | -------------------------------- | ----------------------------------------------------------------------------------------- |
-| 📝    | Update PR description            | Edit the PR description to match the implementation                                       |
-| 📝    | Update ticket                    | Use `align-ticket-with-implementation` to ratify the implementation as the ticket's truth |
-| 📝    | Update ticket and PR description | Use `align-ticket-with-implementation`, then edit the PR description as a separate step   |
-| 🧠    | Revisit design                   | Use `design-and-plan` to reconcile the implementation and specs                           |
-| ⏭️    | Leave as-is                      | Accept the divergence                                                                     |
+| Emoji | Option                           | Action                                                                                                         |
+| ----- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 📝    | Update PR description            | Edit the PR description to match the implementation                                                            |
+| 📝    | Update the stale ticket          | Ratify the implementation in the ticket, via `align-ticket-with-implementation`                                |
+| 📝    | Update ticket and PR description | Ratify the implementation in the ticket (via `align-ticket-with-implementation`), then edit the PR description |
+| ⏭️    | Leave as-is                      | Accept the divergence                                                                                          |
 
-Each case renders three of these options; the specific options and their ordering are shown in the Output format section.
+Each case renders two of these options; the specific options and their ordering are shown in the Output format section. The agent performs each of these in the current session (a ticket amendment, a PR-description edit, or both), so the render is a bare action and the skill lives in the pool above.
 
 #### Output format
 
@@ -67,139 +69,137 @@ Case 2 — implementation matches ticket; PR description is the stale source:
 Source divergence:
 1. 📝 ■■□ Update PR description:
    - Edit the PR description to match the implementation, which matches the ticket
-2. 🧠 ■□□ Revisit design:
-   - Use the `design-and-plan` skill with ticket: {ticket_source}
-3. ⏭️ ■□□ Leave as-is
+2. ⏭️ ■□□ Leave as-is
 ```
 
 Case 3 — implementation matches PR description; ticket is the stale source:
 
 ```
 Source divergence:
-1. 📝 ■■□ Update ticket:
-   - Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth
-2. 🧠 ■□□ Revisit design:
-   - Use the `design-and-plan` skill with ticket: {ticket_source}
-3. ⏭️ ■□□ Leave as-is
+1. 📝 ■■□ Update the stale ticket
+2. ⏭️ ■□□ Leave as-is
 ```
 
 Case 4 — implementation matches neither source (severe):
 
 ```
 Source divergence:
-1. 🧠 ■■□ Revisit design:
-   - Use the `design-and-plan` skill with ticket: {ticket_source}; the implementation diverged from both specs, so reconciliation is needed
-2. 📝 ■□□ Update ticket and PR description:
-   - Use the `align-ticket-with-implementation` skill to ratify the implementation as the new shared source of truth (edit the PR description as a separate step)
-3. ⏭️ ■□□ Leave as-is
+1. 📝 Update ticket and PR description
+2. ⏭️ Leave as-is
 ```
+
+Case 4 renders marker-free: the reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here — the review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
 
 Source-divergence options preserve conversation context because the divergence diagnosis from the review is the seed for whichever reconciliation action is taken.
 
 #### Recommendation rules
 
-In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one — update it to match reality. When the implementation matches neither, `design-and-plan` is the corrective: it handles both reconciliation cases (drift was intentional → ratify in the ticket; drift was unintended → plan against current reality with the existing code as material).
+In the typical flow, the ticket is written first and rarely revised, while the PR description describes the implementation as built. When the two diverge and the implementation matches one of them, the unmatched source is the stale one — update it to match reality. When the implementation matches neither (severe), the reviewer cannot attribute the fault, so the menu offers only ratification and leaves the code-is-wrong path to the findings.
 
 Determine the case from the implementation column of the consistency-section table:
 
-| Implementation column shows                   | Verdict      | Case | Recommended option    |
-| --------------------------------------------- | ------------ | ---- | --------------------- |
-| `🟢 ticket, 🟠/🔴 PR` on every divergent row  | 🟠 `partial` | 2    | Update PR description |
-| `🟠/🔴 ticket, 🟢 PR` on every divergent row  | 🟠 `partial` | 3    | Update ticket         |
-| `🟠/🔴 ticket, 🟠/🔴 PR` on any divergent row | 🔴 `severe`  | 4    | Revisit design        |
+| Implementation column shows                   | Verdict      | Case | Recommended option      |
+| --------------------------------------------- | ------------ | ---- | ----------------------- |
+| `🟢 ticket, 🟠/🔴 PR` on every divergent row  | 🟠 `partial` | 2    | Update PR description   |
+| `🟠/🔴 ticket, 🟢 PR` on every divergent row  | 🟠 `partial` | 3    | Update the stale ticket |
+| `🟠/🔴 ticket, 🟠/🔴 PR` on any divergent row | 🔴 `severe`  | 4    | None (marker-free)      |
 
 #### Marker strengths
 
-The recommended option carries the ■■□ marker. Other options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the recommended option only when you would actively push back against any other choice.
+For cases 2 and 3, the recommended option carries the ■■□ marker and the other option carries ■□□. Case 4 carries no markers. Reserve ■■■ for the recommended option only when you would actively push back against any other choice.
 
 ### Findings sub-block
 
 Shown when the review contains actionable findings (F, W, or T categories).
 
-#### Options
+The option set depends on whether the review covers a pull request. Select the variant by the review the agent just produced: a `review-pr` run carries a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
 
-| #   | Emoji | Option                                   | Description                                                                    |
-| --- | ----- | ---------------------------------------- | ------------------------------------------------------------------------------ |
-| 1   | 🧠    | Design and plan                          | Rethink the approach before fixing                                             |
-| 2   | 🎶    | Orchestrate                              | Run the full orchestrated development pipeline                                 |
-| 3   | 🚀🔍  | Implement directly with follow-up review | Fix the findings, then run a single end-of-work review pass as a separate step |
-| 4   | 🚀    | Implement directly                       | Fix the findings without a follow-up review (reserved for trivial findings)    |
+#### Options — PR variant (review-pr)
+
+| #   | Emoji | Option                  | Description                                                                                                                                  |
+| --- | ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR | Post the findings as comments on the pull request. On Bitbucket, via `bb-pr-inline-comment`; GitHub has no posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly      | Fix the findings in this session                                                                                                             |
+
+#### Options — local-branch variant (review-branch)
+
+| #   | Emoji | Option                                                      | Description                                            |
+| --- | ----- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| 1   | 📋    | Ask the author to address the findings                      | Hand the findings to the author for disposition        |
+| 2   | 📋🔍  | Wait for the author to address the findings, then re-review | Wait for the author's fixes, then re-review the branch |
+| 3   | 🚀    | Implement directly                                          | Fix the findings in this session                       |
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "fixes touch three modules with downstream effects"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include all known paths (ticket) in each option line; omit paths that are not available in the current context.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific findings present a context-specific tradeoff bearing on which option fits (e.g., "the fixes touch a shared contract used outside this package"). Generic option properties are noise and must be omitted.
 
-Example (rendered for the default case, where the recommendation rules below select Orchestrate):
+PR variant (rendered for the default case):
 
 ```
 Next steps:
 
 Actionable findings:
-1. 🧠 ■□□ Design and plan:
-   - Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
-2. 🎶 ■■□ Orchestrate:
-   - Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   - Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
-4. 🚀 ■□□ Implement directly
+1. 📋 ■■□ Post findings on the PR
+2. 🚀 ■□□ Implement directly
 ```
 
-Options that invoke a skill include context-clearing guidance:
+Local-branch variant (rendered for the default case):
 
-- **Design and plan** and **Orchestrate**: Prepend "Clear context and use..." because the plan/ticket artifact is self-contained and orchestration dispatches fresh subagents.
-- **Implement directly with follow-up review** and **Implement directly**: No "Clear context" prefix; conversation history is valuable for manual implementation. The follow-up-review variant adds a separate `review-branch` step after fixes are made.
+```
+Next steps:
 
-Skill names for each option:
+Actionable findings:
+1. 📋 ■■□ Ask the author to address the findings
+2. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+3. 🚀 ■□□ Implement directly
 
-- 🧠 **Design and plan** -> `design-and-plan`
-- 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🚀🔍 **Implement directly with follow-up review** -> no fix-time skill invocation; implement fixes manually, then run `review-branch` (or `orchestrate-review`) as a separate post-implementation step
-- 🚀 **Implement directly** -> no skill invocation; implement fixes manually or ask the agent to begin
+If the author is an agent, run `respond-to-review` in that session.
+```
+
+Which skill names appear in the render follows the session-boundary rule:
+
+- **Post findings on the PR** — the agent posts in the current session, so no skill is named in the render; the posting mechanism (`bb-pr-inline-comment` on Bitbucket) lives in the Options table.
+- **Ask the author to address the findings** — the author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
+- **Wait for the author to address the findings, then re-review** — names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix: the reviewer's memory of what it found is what lets it check the fixes.
+- **Implement directly** — the reviewer makes the fixes in this session; no skill is invoked.
 
 #### Recommendation rules
 
-Select the recommended option by checking these rules in order and stopping at the first match.
+**PR variant:**
 
-1. **Design and plan** — findings suggest the approach needs rethinking ([complexity level 4](../_data/complexity-classification.md)): architectural issues, fundamental design problems, or multiple FIXMEs that point to a flawed strategy.
-2. **Implement directly with follow-up review** — findings are localized and a single end-of-work review pass would verify the fixes: single module/package, fixes are bounded, no downstream effects expected. The default for most actionable findings ([complexity level 3 bounded](../_data/complexity-classification.md), or non-trivial findings at levels 1–2).
-3. **Implement directly** — findings are trivial enough that a re-review would catch nothing meaningful (e.g., a single typo fix, unused-import removal). [Complexity levels 1–2 trivial only](../_data/complexity-classification.md).
-4. **Orchestrate** — all other cases (default). Findings are non-trivial AND cross-cutting ([complexity level 3 with downstream effects](../_data/complexity-classification.md), or a mix of warnings and TODOs that span multiple modules).
+1. **Post findings on the PR** — the default. The author is typically someone else; comments on the PR are how the findings reach them.
+2. **Implement directly** — the fixes are simple and ours to make.
+
+**Local-branch variant:**
+
+1. **Ask the author to address the findings** — the default. The reviewer surfaces; the author disposes.
+2. **Wait for the author to address the findings, then re-review** — the fixes are substantial enough that the result needs another review pass.
+3. **Implement directly** — the findings are trivial enough for the reviewer to fix in place.
 
 #### Marker strengths
 
-The selected option carries the ■■□ marker in the rendered output. The other three options carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
+The selected option carries the ■■□ marker in the rendered output; the others carry ■□□ by default. Reserve □□□ for an alternative with a clear drawback in the current context. Reserve ■■■ for the selected option only when you would actively push back against any other choice.
 
-Complexity levels classify individual findings, but the recommendation applies to the collection. Multiple low-level findings that together indicate a design flaw may warrant a higher recommendation than any single finding's level suggests. When uncertain between two options, recommend the more thorough one.
+Complexity levels classify individual findings, but the recommendation applies to the collection. When uncertain between two options, recommend the one that keeps a human in the loop.
 
-Each skill supplies its own recommendation context (e.g., finding counts and categories, severity of deviations). Apply these rules using that context.
-
-See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the cost-aware disposition that governs whether a deferred finding becomes a separate ticket, joins a batch, or ships as a drive-by. The recommendation rules above pick the _implementation skill_; that reference applies to any finding that the user defers rather than addressing immediately.
+See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the cost-aware disposition that governs whether a deferred finding becomes a separate ticket, joins a batch, or ships as a drive-by. It applies to any finding that the user defers rather than addressing immediately.
 
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. The example below illustrates one possible arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
 
 ```
 Next steps:
 
 Deviations from ticket:
-1. 📝 ■■□ Update ticket:
-   - Use the `design-and-plan` skill with ticket: {ticket_source}
+1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is
 
 Source divergence:
-1. 📝 ■■□ Update ticket:
-   - Use the `align-ticket-with-implementation` skill to ratify the implementation as the ticket's source of truth
-2. 🧠 ■□□ Revisit design:
-   - Use the `design-and-plan` skill with ticket: {ticket_source}
-3. ⏭️ ■□□ Leave as-is
+1. 📝 ■■□ Update the stale ticket
+2. ⏭️ ■□□ Leave as-is
 
 Actionable findings:
-1. 🧠 ■□□ Design and plan:
-   - Clear context and use the `design-and-plan` skill with ticket: {ticket_source}
-2. 🎶 ■■□ Orchestrate:
-   - Clear context and use the `orchestrate-dev` skill with ticket: {ticket_source}
-3. 🚀🔍 ■□□ Implement directly with follow-up review:
-   - Implement directly, then clear context and use the `review-branch` skill with ticket: {ticket_source}
-4. 🚀 ■□□ Implement directly
+1. 📋 ■■□ Post findings on the PR
+2. 🚀 ■□□ Implement directly
 ```
