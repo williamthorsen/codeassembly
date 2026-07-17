@@ -37,7 +37,7 @@ Skill names for each option:
 
 - 🧠 **Refine plan** -> `refine-plan`
 - 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🚀 **Implement** -> `implement-plan`
+- 🚀 **Implement** -> `implement-plan`; on a spike plan the option is 🔬 **Investigate** and invokes no skill
 
 ### Recommendation rules
 
