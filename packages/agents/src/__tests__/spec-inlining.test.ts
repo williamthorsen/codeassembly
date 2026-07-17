@@ -44,6 +44,9 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // The Implement option's skill mapping. Without it the agent improvises "implement manually", which is the
     // ungoverned path this option exists to replace.
     '🚀 **Implement** -> `implement-plan`',
+    // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
+    // enough to turn away — the round trip the carve-out exists to prevent.
+    'Render option 3 as 🔬 Investigate, invoking no skill',
     // Rule 1's four load-bearing clauses, plus the Output-format obligation that makes it binding. Removing any
     // one of them reintroduces the failure named beneath it.
     // Rule 1's test. Without it the rule states no condition at all.
