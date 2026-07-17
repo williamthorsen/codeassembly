@@ -1,6 +1,6 @@
 ---
 name: implement-plan
-description: Implement a plan artifact's tasks in order against the ticket's acceptance criteria
+description: Implement a feature plan's tasks in order against the ticket's acceptance criteria
 user-invocable: true
 dependencies:
   skills:
@@ -20,7 +20,7 @@ Implement the work a feature plan describes. This skill is the canonical path fo
 
 ## Scope
 
-This skill implements a feature plan — the `## Tasks` / `## Verification` shape the plan template defines. A spike plan carries `## Investigation steps` and a `## Deliverable` instead (see [spike conventions](../_data/spike-conventions.md)): it is carried out to produce findings rather than implemented to produce a diff, and none of the steps below read its shape. Resolve a spike plan and the run stops here — say so and carry out its investigation steps directly.
+This skill implements a feature plan — the `## Tasks` / `## Verification` shape the plan template defines. A spike plan carries `## Investigation steps` and a `## Deliverable` instead (see [spike conventions](../_data/spike-conventions.md)): it is carried out to produce findings rather than implemented to produce a diff, and none of the steps below read its shape. Step 4 turns one away.
 
 ## The contract
 
@@ -48,6 +48,8 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
    - **No ticket**: every source failed — the plan was produced from a free-form description, or the ticket is unreachable. Announce that no ticket governs the run and execute against the plan as the sole contract. Do not stall on a missing ticket; do not silently substitute the plan for one without saying so.
 
 4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section — it names where the plan expects to need adaptation.
+
+   Check the shape as you read: a plan carrying `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Emit `skill.completed` (payload `{"outcome":"stopped: spike plan"}`) per [Lifecycle events](#lifecycle-events), then stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
 5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience.
 
