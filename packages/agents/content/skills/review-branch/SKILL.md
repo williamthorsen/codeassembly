@@ -94,10 +94,11 @@ Uniquely number all issues for easy reference. See [finding scheme](../_data/art
 - Recommendations: `R{n}` — advisable but discretionary
 - Suggestions: `S{n}` — optional improvement
 - Legacy: `{F,W,T,R,S}{n}-L` — observation in pre-existing code, not authored in this change. Same severity letter as the equivalent author finding; number it from that letter's shared sequence first, then append `-L` as a marker (e.g., after `F1`, `F2`, the first legacy FIXME is `F3-L`)
+- Insights: `I{n}` — knowledge worth preserving, gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score
 
 ## Output format
 
-Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix); render them as shown. Each finding under "Action required" and "Areas for improvement" follows the canonical per-finding template shown below — see [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) for the rules governing the `Location:` field.
+Section-header icons (🚨, ⚠️, 📋, 🧠, ☝️, 🔍) come from the canonical [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix), and the 💡 insights icon from [knowledge items](../_data/artifact-conventions.md#knowledge-items); render them as shown. Each finding under "Action required" and "Areas for improvement" follows the canonical per-finding template shown below — see [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references) for the rules governing the `Location:` field.
 
 When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so the heading reads naturally without it — e.g., `# Code review: {description}`.
 
@@ -154,6 +155,15 @@ The body following the frontmatter has this structure:
 ### Legacy observations 🔍
 
 {Observations in pre-existing code, using severity-tagged IDs with `-L` suffix (e.g., `F3-L`, `T2-L`). Frame as future opportunities, don't count against score}
+
+## Insights
+
+{Knowledge worth preserving that is not a finding — a pattern, gotcha, or architectural learning surfaced during review. Gated per the [insight gate](../review-criteria/SKILL.md#insight-gate); no severity, does not count against the score. Omit this section entirely when there are none.}
+
+### I1: {title}
+
+- **Description:** {the insight and why a future reader is worse off without it}
+- **Destination:** {optional: `ticket comment` or `devlog`}
 
 ## Technical assessment
 

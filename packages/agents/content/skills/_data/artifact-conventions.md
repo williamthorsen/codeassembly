@@ -839,13 +839,23 @@ Apply this gate **hardest** to R and S, where the low criticality bar invites fi
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality, are never merge-blocking, and are never emitted by code review skills. They appear in housekeeping artifacts (wrap-up inventories, chat summaries, devlogs) where conveying knowledge — not assigning blame or action — is the point.
+Knowledge items capture observations and learnings worth preserving. They are not findings: they have no criticality and are never merge-blocking. They belong wherever knowledge is worth carrying forward — housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
 | `I{n}` | Insight  | 💡   | knowledge |
 
-Consumers that present insights (`wrap-up`, `summarize-chat`) should render the icon alongside the prefix or label to mirror the convention used for findings.
+Consumers that present insights (`wrap-up`, `summarize-chat`, review skills and reviewer agents) should render the icon alongside the prefix or label to mirror the convention used for findings.
+
+### Insight gate
+
+An insight is the deliberate complement to a finding: a finding hands the author a decision to act on now; an insight preserves knowledge a future reader would otherwise rediscover. Reviewers may emit insights, but only through a gate as strict as the [Actionability gate](#actionability-gate) — "no severity, no action" is exactly the low bar that invites filler.
+
+Emit an insight only when it is **non-obvious knowledge a future reader is materially worse off without**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
+
+**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change the author should weigh, it is an `S`, not an insight — and when in doubt with any action implied, classify it as `S`.
+
+Insights never carry criticality, never block a merge, and never count toward a review score or the [Overall criticality mapping](#overall-criticality-mapping).
 
 ## Artifact lifecycle
 

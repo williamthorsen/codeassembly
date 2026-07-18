@@ -99,9 +99,20 @@ Items at levels 3–4 remain in the standard findings pool for the housekeeping 
 
 The complexity assessment feeds into the cost-aware disposition flow described in [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md): Trivial items prefer **do now** (Phase 2a drive-bys); items that can't ship as drive-bys but share scope or source prefer **batch later** (Phase 2b batch action); substantive items get a **separate ticket** (Phase 2b per-item ticketing).
 
-#### 1c. Scan for insights
+#### 1c. Collect insights
 
 Insights are notable observations worth preserving — patterns learned, surprising findings, or knowledge that would benefit future work.
+
+**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a — the two never both apply, so there is no structured-vs-structured overlap to dedup:
+
+- **Orchestrated run → run-summary**: Read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory. It already aggregates and dedups the `I{n}` insights from every reviewer-subagent artifact in the run, so reading it — rather than the per-reviewer artifacts — captures each insight exactly once.
+- **Non-orchestrated run → review artifact**: Read the `## Insights` section of the standalone review artifact (`*_reviewer_review.md`). Reviewer-subagent artifacts exist only in orchestrated runs, so outside orchestration this is the sole structured insight source.
+
+Either way, reviewers emit these under the insight gate, so they are vetted knowledge, not heuristic guesses.
+
+**Conversation scanning** (heuristic — may produce false positives):
+
+Structured sources take precedence. When scanning conversation, skip any insight already captured from a structured source (the same observation) to avoid duplicates — a review-emitted insight and its conversation echo are one item, and the structured one wins.
 
 Scan the conversation for:
 
@@ -113,10 +124,10 @@ Scan the conversation for:
 
 Look for language like: "interesting", "discovered", "realized", "turns out", "surprisingly", "TIL", "worth noting", "insight", "lesson", "gotcha", "caveat".
 
-For each insight found, assign an `I{n}` ID (sequentially: I1, I2, ...) and suggest a destination:
+For each insight (structured or conversation-scanned), assign an `I{n}` ID (sequentially: I1, I2, ...) and resolve a destination:
 
-- `ticket comment` — if the insight relates to the current ticket's work
-- `devlog` — if the insight is general knowledge not specific to one ticket
+- Honor a destination the source insight already carries — a reviewer may suggest `ticket comment` or `devlog`.
+- Otherwise: `ticket comment` if the insight relates to the current ticket's work; `devlog` if it is general knowledge not specific to one ticket.
 
 If no ticket is available (from the session-context manifest), default all destinations to `devlog`.
 
