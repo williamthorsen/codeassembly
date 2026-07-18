@@ -40,7 +40,7 @@ gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
 
 If no PR can be resolved or discovered, stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
 
-Capture `title` (PR title), `body` (PR body), `labels` (label objects), and `number` from the response. These feed the steps below.
+Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`, and `headRefName` (head branch) from the response. These feed the steps below.
 
 ### 3. Resolve scope and type
 
@@ -144,10 +144,16 @@ Proposed merge for PR #{pr_number}:
   {body}
   ▲
 
-Proceed with merge? 👍🏼👎🏼
+{confirmation}
 ```
 
-The triangle delimiters wrap the title and body — the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `Proceed with merge?` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
+The triangle delimiters wrap the title and body — the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
+
+Render `{confirmation}` so the ask itself names every destructive side effect the approval authorizes. The permission auto-classifier grants only what the ask text names, so a branch deletion shown only in the `Delete:` line above is not authorized — the ask must name it too:
+
+- `none` → `Merge PR #{pr_number}? 👍🏼👎🏼`
+- `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
+- `both` → `Merge PR #{pr_number} and delete the local and remote branch {headRefName}? 👍🏼👎🏼`
 
 If the user declines, stop with no API call and no artifact. If they approve, continue.
 

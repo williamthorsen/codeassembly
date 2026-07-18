@@ -30,6 +30,8 @@ An item is a question, punctuated as one, naming the concrete action:
 - **Not this:** "Should I do something about the trap?" — vague. The user cannot answer without first asking what you mean.
 - **Not this:** "Add the packaging note to #977." — declarative. It reads as a statement of what you are about to do, and pre-empts the decision that is the user's to make.
 
+**Naming side effects.** An ask that authorizes a consequential, hard-to-reverse side effect — deleting a remote branch, force-pushing, closing an issue — must name it in the ask text, not only in metadata beside it. Consent extends only to what the ask names — for the human, and for a permission auto-classifier, which reads the ask text and nothing around it.
+
 ### Kinds
 
 | Prefix | Kind                                                                                        | Marker                                                            |
