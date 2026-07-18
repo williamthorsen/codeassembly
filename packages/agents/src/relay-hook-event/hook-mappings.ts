@@ -35,6 +35,14 @@ export function listRelayHarnesses(): readonly string[] {
 }
 
 /**
+ * The hook names the relay serves for `harness`, in table order. The hook-entry catalog composes the configured
+ * entries from this list, so the entries a harness config carries and the hooks this relay answers cannot drift apart.
+ */
+export function listRelayHooks(harness: HarnessId): readonly string[] {
+  return Object.keys(HOOK_MAPPINGS[harness]);
+}
+
+/**
  * The mapping for `hook` under `harness`, or `undefined` when the table does not know the name. An unknown name is an
  * ordinary outcome rather than an error: a harness config is a durable user-curated file that can name a hook this
  * version's table has not caught up with, or has stopped serving.

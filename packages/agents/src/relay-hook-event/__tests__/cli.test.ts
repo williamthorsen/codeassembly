@@ -38,6 +38,14 @@ describe(parseArgs, () => {
     });
   });
 
+  it('accepts and ignores the ownership sentinel a configured entry carries', () => {
+    expect(parseArgs(['--harness', 'claude', '--hook', 'Stop', '--sentinel', 'codeassembly-agents'])).toEqual({
+      harness: 'claude',
+      hook: 'Stop',
+      home: null,
+    });
+  });
+
   it('throws when --harness is missing', () => {
     expect(() => parseArgs(['--hook', 'Stop'])).toThrow(/--harness is required/);
   });

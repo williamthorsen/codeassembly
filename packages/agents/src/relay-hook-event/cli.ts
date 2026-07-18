@@ -15,9 +15,12 @@
  * non-zero hook exits as control signals rather than as failures.
  *
  * Flags:
- *   --harness <id>   The harness whose hook fired (`claude`, `rovodev`). Required.
- *   --hook <name>    The harness's own name for the hook, e.g. `SessionStart`. Required.
- *   --home <path>    Events-root override, so a test can point the write at a fixture directory.
+ *   --harness <id>      The harness whose hook fired (`claude`, `rovodev`). Required.
+ *   --hook <name>       The harness's own name for the hook, e.g. `SessionStart`. Required.
+ *   --home <path>       Events-root override, so a test can point the write at a fixture directory.
+ *   --sentinel <token>  Ownership marker the configured hook entries carry so the config tools can find them again.
+ *                       Accepted and ignored here: it rides as an ordinary argument so it survives any execution
+ *                       semantics a harness uses, rather than relying on shell comment stripping.
  */
 import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -43,6 +46,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'harness', takesValue: true },
   { name: 'hook', takesValue: true },
   { name: 'home', takesValue: true },
+  { name: 'sentinel', takesValue: true },
 ];
 
 /** The payload key each harness reports the session's id under. */
