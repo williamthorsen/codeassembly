@@ -179,6 +179,7 @@ Scope re-reviews to your domain: test coverage quality, behavioral gaps, and mis
 
 - **Only actionable findings**: No praise, no generic "add more tests" advice
 <!-- include: _partials/review-finding-actionability-gate.md / -->
+<!-- include: _partials/review-insight-gate.md / -->
 - **No false positives**: If you're not confident a test gap matters, don't flag it
 - **Context-aware**: Understand the project's testing conventions and framework before flagging violations
 - **Proportional**: Match scrutiny to the risk level of the untested behavior
