@@ -17,8 +17,17 @@ user-invocable: false
 - **Type-only changes** — type definitions, interfaces, and type aliases that produce no runtime code
 - **Markdown and documentation content** — prose files with no executable behavior
 - **Build scripts and tooling** — scripts whose correctness is verified by the build or lint pipeline rather than unit tests, and that expose no independently testable API surface
+- **Removal-only changes** — a change that only deletes code, text, or behavior introduces no new positive behavior to cover, so it needs no new test.
 
 If a change does not fall into one of these categories, it requires tests. When in doubt, write the test.
+
+### Do not test that removed things stay removed
+
+When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: it can fail only if someone reverts that exact line, so it guards no regression class and accretes without bound. The positive assertion describing the replacement behavior is the real guard.
+
+Diagnostic: would this test exist if the deleted code had never existed? If no, don't write it.
+
+Verify the removal is complete once, as a pre-merge check (a `grep`, a plan Verification step), not a standing test. This applies to any change that removes something, not only removal-only changes.
 
 ## Naming of tests
 
