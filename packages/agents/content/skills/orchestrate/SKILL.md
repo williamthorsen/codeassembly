@@ -692,14 +692,14 @@ Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The 
 
 ## Insights
 
-{Notable observations that emerged during the run. Include only items worth preserving — omit this section entirely if nothing notable emerged.
+{Aggregate the `I{n}` insights emitted across this run's reviewer artifacts, deduplicating an insight that several reviewers raised into a single entry. Reviewers emit these under the insight gate, so prefer their vetted items over re-derived narration; add an orchestrator-level observation only when it is worth preserving and no reviewer already captured it. Include only items worth preserving — omit this section entirely if none emerged.
 
-Examples of what belongs here:
+What belongs here:
 
 - Architectural patterns discovered or validated
 - Design trade-offs surfaced during review
 - Conventions or project-specific patterns learned
-- Surprising findings from reviewers that revealed something non-obvious
+- Non-obvious knowledge a reviewer flagged as an insight
 - Technical debt or risks identified but not in scope to address}
 
 ## Deferred items
