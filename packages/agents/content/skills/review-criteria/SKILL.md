@@ -58,6 +58,10 @@ Comment text you propose for a source file — a replacement doc comment, a sugg
 
 "Add a comment explaining X" is a finding only when X is a constraint the code cannot show. Do not request a comment the discipline would delete.
 
+## Do not recommend tests that assert removed things stay removed
+
+Do not raise a finding recommending a test that asserts deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: it encodes history, fails only on a verbatim revert, and accretes without bound. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions; see the `testing-conventions` skill for the authoring-side rule.
+
 ## Finding references
 
 Conventions for how findings reference files and code locations.
