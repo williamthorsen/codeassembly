@@ -23,7 +23,6 @@ export const EVENT_TYPES = [
   'skill.completed',
   'artifact.written',
   'input.requested',
-  'input.received',
   'pr.created',
   'turn.completed',
   'session.ended',

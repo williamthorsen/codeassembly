@@ -315,8 +315,6 @@ function resolvePhase(event, currentSkill) {
       return { phase: 'awaiting input', label: 'awaiting input' };
     case 'input.requested':
       return { phase: 'awaiting input', label: 'awaiting input' };
-    case 'input.received':
-      return { phase: 'running', label: 'running' };
     case 'skill.started':
     case 'skill.progress': {
       const skill = currentSkill ?? event.payload?.skill;

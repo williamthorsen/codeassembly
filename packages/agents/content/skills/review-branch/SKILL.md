@@ -40,16 +40,16 @@ This skill is the canonical home of the shared review process. `review-pr` invok
      - Append the chosen candidate as a `ticket` source carrying its `provenance` and `last_updated`. When both candidates existed, hold the rejected candidate's `last_updated` in-process for the divergence note — it rides working memory, not the `spec_sources` record, because resolution here and rendering in the output are the same `review-branch` invocation (which is also why the record needs only one `last_updated`).
    - **No source available**: Leave the list empty. The "Specification compliance" section is omitted from the output.
 
-   `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it. Once the list is resolved, emit `skill.progress` (payload `{"step":"spec-sources-resolved"}`) per [Lifecycle events](#lifecycle-events).
+   `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
 
 4. **Read prior artifacts**: If a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
-5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`. Then emit `skill.progress` (payload `{"step":"diff-analyzed"}`) per [Lifecycle events](#lifecycle-events).
+5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
 7. **Challenge your own findings**: re-read each finding and delete every one you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
-8. **Assign a score** out of 10. Then emit `skill.progress` (payload `{"step":"review-composed","score":<n>}`, where `<n>` is the score out of 10) per [Lifecycle events](#lifecycle-events).
+8. **Assign a score** out of 10.
 9. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 10. **Save the review** per the [Saving](#saving) section.
-11. **Present next steps**: After saving, present a next-steps prompt following [next-steps options](#next-steps-options). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact. As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events); on the turn where the user answers, emit `input.received` (payload `{"prompt":"next-steps"}`) before acting on the choice.
+11. **Present next steps**: After saving, present a next-steps prompt following [next-steps options](#next-steps-options). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact. As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 ## Frontmatter resolution
 
