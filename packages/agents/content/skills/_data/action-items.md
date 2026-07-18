@@ -41,6 +41,10 @@ The prefix follows from the marker, so it demands no classification the agent wa
 
 A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line — "A1 y, A2 2". A single-item block carries no prefix, since there is nothing to disambiguate.
 
+**Blocks with more than one list.** A canonical block can hold several independently-numbered lists — a next-steps menu offering a remote-issue select and a next-action select. Each list is an item: it carries its `A`/`Q` identifier as a bold prefix on its header (`**A1 — Remote issue:**`) and keeps its own 1-based option numbering. This is the same rule as for any multi-item block, and canonical blocks are not exempt — a bare `Remote issue:` label is not an identifier the reader can cite. A block with a single list carries no prefix.
+
+**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, where the user picks any subset ("reply with numbers, or 'all'"). Its actions carry no options of their own, so the bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. The letter prefix is what a single-select list needs and a multi-select does not: in the first it fences the list identifier off from the option numbers beneath it; in the second there are no option numbers to fence off.
+
 ## Rendering
 
 The block is the last element of the response, under a bolded label, cut off from the prose by a horizontal rule. Options follow [recommendation-gradient](./recommendation-gradient.md).

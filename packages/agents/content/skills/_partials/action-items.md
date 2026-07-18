@@ -19,3 +19,5 @@ Prefix an action you propose to take with `A`, and a question that asks only for
 
 **Q1** — Which package owns the shared fixture once it moves? 🤔
 ```
+
+When the block presents more than one independently-numbered list — a next-steps menu with two or more selects — put each list's identifier as a bold prefix on its header (`**A1 — Remote issue:**`) and keep each list's own 1-based numbering, so a bare numeral always names an option and `A1: 1, A2: 3` answers the block. A single-list block needs no such prefix.
