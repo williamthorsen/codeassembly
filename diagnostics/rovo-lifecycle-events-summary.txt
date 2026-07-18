@@ -1,0 +1,41 @@
+== session files: 11
+== lane names redacted (stable labels; rerun with --full locally for real names)
+
+== date range
+2026-07-16T04:59:38.961Z  ->  2026-07-18T19:11:09.742Z
+
+== events by harness
+ 111 rovodev
+
+== events by type
+  35 skill.progress
+  14 skill.started
+  14 skill.completed
+  13 turn.started
+  13 turn.completed
+  11 artifact.written
+   5 input.requested
+   3 pr.created
+   2 session.ended
+   1 session.started
+
+== skill.started runs by harness and skill
+   5 rovodev  review-branch
+   3 rovodev  review-pr
+   3 rovodev  respond-to-review
+   3 rovodev  create-pr
+
+== lanes with more than one session
+   2 lane-7
+   2 lane-5
+   2 lane-4
+
+== harnesses per lane (a lane listing two harnesses is mixed-harness evidence)
+lane-1: rovodev
+lane-2: rovodev
+lane-3: rovodev
+lane-4: rovodev
+lane-5: rovodev
+lane-6: rovodev
+lane-7: rovodev
+lane-8: rovodev
