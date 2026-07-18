@@ -44,6 +44,10 @@ Findings use the canonical [finding scheme](../_data/artifact-conventions.md#fin
 
 Before emitting any F/W/T/R/S finding, confirm it hands the author a concrete decision they can act on **in this change**: fix, defer with a ticket, or explicitly accept. Hedging language inside a finding ("no action this PR", "not actionable here", "just capturing a thought", "call it out only if X", "would matter once Y") is your own signal that it does not belong; drop it, don't soften it. A finding that endorses the current state and then proposes a change anyway is incoherent; drop it. Self-test: _would I make this exact change right now if it were my code?_ If no, it is not a finding. Apply this hardest to R and S. Full treatment, including where dropped content goes: [finding scheme § Actionability gate](../_data/artifact-conventions.md#actionability-gate).
 
+## Insight gate
+
+Reviewers may emit insights (`I{n}`) — knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: emit it only when it is non-obvious knowledge a future reader is materially worse off without, and name that benefit. Distinguish it from a Suggestion (`S`): an `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
+
 ## Finding concision
 
 Compose each finding at the tight altitude ([concision principle](../_data/concision.md)): State the defect, its location, and the decision the author must make, then stop. Cut code the author can already see, hedged narration, and rationale for why you looked. Every reader pays for each line, so weigh each sentence against the decision it enables, not its completeness.
