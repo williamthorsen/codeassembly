@@ -1,6 +1,7 @@
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
-import type { InstallOptions } from '../lib/types.js';
+import type { HarnessId, InstallOptions } from '../lib/types.js';
+import { checkHarnessHookEntries } from './configure-hooks.ts';
 
 /**
  * Executes the status command, showing the current state of installed items.
@@ -22,6 +23,8 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
     const harnessManifest = manifest.harnesses[harnessId];
     if (!harnessManifest) {
       console.info(`\n${harnessId}: not installed`);
+      // Hook entries can exist without an install (configure-hooks alone); stay quiet only when there are none.
+      await reportHookEntryStatus(harnessId, true, baseDir);
       continue;
     }
 
@@ -53,6 +56,36 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
     }
 
     console.info(`  Summary: ${currentCount} current, ${modifiedCount} modified, ${missingCount} missing`);
+    await reportHookEntryStatus(harnessId, false, baseDir);
+  }
+}
+
+/**
+ * Reports the session-lifecycle hook entries' state in the harness's config file. When `quietWhenUnconfigured` is set
+ * (the harness has no installation), an all-absent result prints nothing rather than noise about a feature not in use.
+ */
+async function reportHookEntryStatus(
+  harnessId: HarnessId,
+  quietWhenUnconfigured: boolean,
+  baseDir?: string,
+): Promise<void> {
+  const statuses = await checkHarnessHookEntries(harnessId, baseDir);
+  const presentCount = statuses.filter((entry) => entry.status === 'present').length;
+  const driftedCount = statuses.filter((entry) => entry.status === 'drifted').length;
+  const absentCount = statuses.filter((entry) => entry.status === 'absent').length;
+
+  if (absentCount === statuses.length) {
+    if (!quietWhenUnconfigured) {
+      console.info('  Hooks: not configured');
+    }
+    return;
+  }
+
+  console.info(`  Hooks: ${presentCount} present, ${driftedCount} drifted, ${absentCount} absent`);
+  for (const entry of statuses) {
+    if (entry.status !== 'present') {
+      console.info(`    ${entry.status}: ${entry.hook}`);
+    }
   }
 }
 

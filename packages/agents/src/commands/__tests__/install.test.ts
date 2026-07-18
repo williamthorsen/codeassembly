@@ -299,6 +299,34 @@ describe(installCommand, () => {
     expect(rovodevPaths).not.toContain('prompts.yml');
   });
 
+  describe('session-lifecycle hooks', () => {
+    it('wires the hook entries into the harness config by default', async () => {
+      const claudeHome = await setupClaudeHome();
+
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+      const settings = await readFile(path.join(claudeHome, 'settings.json'), 'utf8');
+      expect(settings).toContain('--sentinel codeassembly-agents');
+      expect(settings).toContain('SessionStart');
+    });
+
+    it('leaves the harness config untouched with --skip-hooks', async () => {
+      const claudeHome = await setupClaudeHome();
+
+      await installCommand(makeOptions({ harness: 'claude', hooks: false }), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
+    });
+
+    it('leaves the harness config untouched in dry-run mode', async () => {
+      const claudeHome = await setupClaudeHome();
+
+      await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
+    });
+  });
+
   describe('scripts', () => {
     it('places scripts and sets the executable bit', async () => {
       const claudeHome = await setupClaudeHome();

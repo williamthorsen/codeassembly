@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { existsSync, lstatSync } from 'node:fs';
-import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -63,6 +63,23 @@ describe('uninstallCommand', () => {
     await writeManifest(getManifestPath(tempDir), manifest);
     return { linkPath, source };
   }
+
+  it('removes the session-lifecycle hook entries but not foreign settings content', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+    const settingsPath = path.join(claudeHome, 'settings.json');
+    await writeFile(settingsPath, `${JSON.stringify({ model: 'opus' }, undefined, 2)}\n`, 'utf8');
+
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    expect(await readFile(settingsPath, 'utf8')).toContain('--sentinel codeassembly-agents');
+
+    await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+
+    const settings = await readFile(settingsPath, 'utf8');
+    expect(settings).not.toContain('--sentinel codeassembly-agents');
+    expect(settings).toContain('"model": "opus"');
+  });
 
   it('should remove only manifest-tracked files', async () => {
     const claudeHome = path.join(tempDir, '.claude');

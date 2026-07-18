@@ -29,9 +29,16 @@ Skills report the work they do, but they cannot report a session opening, exitin
 | `turn.started`    | `UserPromptSubmit` | `on_user_prompt`   |
 | `turn.completed`  | `Stop`             | `on_complete`      |
 
-`install` places the relay in each harness's `scripts/` directory. Wiring it to the hooks is a separate step: the harness configs below are yours, and nothing writes to them on your behalf. Add the entries for the harnesses you want.
+`install` places the relay in each harness's `scripts/` directory and then wires the entries below into the harness config (`~/.claude/settings.json`, `~/.rovodev/config.yml`) by default. The wiring is its own step, shared across the CLI:
 
-The relay reports a boundary and nothing more. It never carries your prompt text, and it always exits 0 — a relay that failed loudly would be worse than the missing event, since Claude Code reads a `Stop` hook's non-zero exit as a signal to keep the agent from stopping.
+- `install --skip-hooks` installs everything else and leaves the configs untouched.
+- `codeassembly-agents configure-hooks` runs just the wiring, for re-applying it later.
+- `configure-hooks --print` prints the entries without writing anything — the manual-adoption path for a config you manage elsewhere. The snippets below are exactly what it emits.
+- `uninstall` removes the entries; `status` reports each one as present, drifted, or absent.
+
+Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: the CLI creates, replaces, and removes only entries whose command carries it, so your own hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
+
+The relay reports a boundary and nothing more. It never carries your prompt text, and it always exits 0 — a relay that failed loudly would be worse than the missing event, since both harnesses read some non-zero hook exits as a signal to block the agent.
 
 ### Claude Code
 
@@ -45,7 +52,7 @@ In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionStart"
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionStart --sentinel codeassembly-agents"
           }
         ]
       }
@@ -55,7 +62,7 @@ In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionEnd"
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionEnd --sentinel codeassembly-agents"
           }
         ]
       }
@@ -65,7 +72,7 @@ In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook UserPromptSubmit"
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook UserPromptSubmit --sentinel codeassembly-agents"
           }
         ]
       }
@@ -75,7 +82,7 @@ In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays
         "hooks": [
           {
             "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook Stop"
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook Stop --sentinel codeassembly-agents"
           }
         ]
       }
@@ -97,19 +104,19 @@ eventHooks:
   events:
     - name: on_session_start
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_start
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_start --sentinel codeassembly-agents
     - name: on_session_end
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_end
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_end --sentinel codeassembly-agents
     - name: on_user_prompt
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_user_prompt
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_user_prompt --sentinel codeassembly-agents
     - name: on_complete
       commands:
-        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_complete
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_complete --sentinel codeassembly-agents
 ```
 
-Write your home directory out in full, as above: Rovo's own generated entries use absolute paths, and `~` is not known to expand here.
+Write your home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes your machine's absolute path here, matching the entries Rovo's own tooling generates.
 
 Two things to know about Rovo:
 

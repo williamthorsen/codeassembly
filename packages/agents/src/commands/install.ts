@@ -29,6 +29,7 @@ import type {
   ManifestEntry,
   SharedManifest,
 } from '../lib/types.js';
+import { ensureHarnessHookEntries } from './configure-hooks.ts';
 
 /**
  * The extensions that ship from `content/scripts/` to a harness home: `.sh` helpers a skill invokes, and `.mjs` bundles
@@ -117,6 +118,16 @@ export async function installCommand(
       options,
     );
     entries.push(...scriptEntries);
+
+    // Wire the session-lifecycle hook entries once the relay script is in place, so the configured commands point at
+    // a script that exists. `--skip-hooks` leaves the harness config untouched.
+    if (options.hooks !== false) {
+      if (options.dryRun) {
+        console.info('    [hooks] Would wire session-lifecycle hook entries');
+      } else {
+        await ensureHarnessHookEntries(harnessId, baseDir);
+      }
+    }
 
     // Install harness-specific guidance file
     const guidanceEntries = await installHarnessGuidance(contentDir, paths, harnessId, existingByPath, options);
