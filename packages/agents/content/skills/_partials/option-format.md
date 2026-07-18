@@ -23,7 +23,7 @@ Nesting stops at one level. An option never contains sub-options, and a pro neve
 
 **Keep pros and cons context-specific.** Each `➕` and `➖` speaks to the decision at hand — this plan, these findings, this design choice. Restatements of an option's inherent properties ("longer wall time", "structured review pass", "ships faster") are noise; the option's name and marker already communicate them. Where no context-specific reasoning applies, omit pros and cons entirely — the marker alone is sufficient. Add no tiebreaker text for equal-strength options; the developer picks the number.
 
-**Identify each question** when a single response carries 2 or more option-style questions: prefix them `Q1`, `Q2`, and so on, so the user can reference answers unambiguously. Where the underlying data already carries stable identifiers — plan-review findings such as `C1` or `X2` — use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](../_data/action-items.md), identifiers are mandatory whenever the block holds more than one item, and they distinguish actions (`A`) from questions (`Q`).
+**Identify each question** when a single response carries 2 or more option-style questions: prefix them `Q1`, `Q2`, and so on, so the user can reference answers unambiguously. Where the underlying data already carries stable identifiers — plan-review findings such as `C1` or `X2` — use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](../_data/action-items.md), identifiers are mandatory whenever the block holds more than one item (or more than one independently-numbered list), and they distinguish actions (`A`) from questions (`Q`).
 
 Example:
 
