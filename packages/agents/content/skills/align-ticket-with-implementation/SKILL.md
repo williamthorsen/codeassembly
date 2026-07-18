@@ -23,23 +23,10 @@ git diff $DEFAULT_BRANCH...HEAD
 The artifact begins with YAML frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema. See [Frontmatter resolution](#frontmatter-resolution) below for field resolution. The frontmatter conforms to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter).
 
 ```markdown
-# {Title}
-
-## Description
-
-{One-sentence summary}
-
-### Issues
-
-- {Issue 1}
-- {Issue 2}
-
-<!-- include: ../_partials/acceptance-criteria-scaffold.md / -->
-
-## Context
-
-{Brief note if changes are part of larger effort}
+<!-- include: ../_partials/ticket-skeleton.md / -->
 ```
+
+<!-- include: ../_partials/ticket-skeleton-tiers.md / -->
 
 ## Guidance
 
@@ -48,6 +35,8 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 <!-- include: ../_partials/ticket-placement.md / -->
 
 When aligning to an existing implementation, _the implementation_ is the code on the branch — describe what the code now does, and resist transcribing its mechanism back into the ticket.
+
+The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach the branch actually took, not a proposal still under consideration.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
