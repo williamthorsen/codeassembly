@@ -32,12 +32,14 @@ An item is a question, punctuated as one, naming the concrete action:
 
 ### Kinds
 
-| Prefix | Kind                                                                                           | Marker                                                            |
-| ------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `A`    | An action you propose to take.                                                                 | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
-| `Q`    | Information or a judgment you need. Nothing happens on your side merely by the user answering. | `🤔`                                                              |
+| Prefix | Kind                                                                                        | Marker                                                            |
+| ------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `A`    | An action you propose to take: a "yes" makes you act.                                       | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
+| `Q`    | Information or a judgment you need: a "yes" only informs you; nothing happens on your side. | `🤔`                                                              |
 
 The prefix follows from the marker, so it demands no classification the agent was not already making. A-items come first: they are what the turn is blocked on.
+
+A statement that is not an ask (a status note, a merge-ready report) is neither `A` nor `Q`; it stays in the prose, never the block. The prefix and marker always agree: an `A` never carries `🤔`, a `Q` never carries `👍🏼👎🏼`.
 
 A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line — "A1 y, A2 2". A single-item block carries no prefix, since there is nothing to disambiguate.
 
