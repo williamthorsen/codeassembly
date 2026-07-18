@@ -120,12 +120,20 @@ export async function installCommand(
     entries.push(...scriptEntries);
 
     // Wire the session-lifecycle hook entries once the relay script is in place, so the configured commands point at
-    // a script that exists. `--skip-hooks` leaves the harness config untouched.
+    // a script that exists. `--skip-hooks` leaves the harness config untouched. A failure — an unparseable config —
+    // costs the hooks a warning, never the rest of the install: the manifest must still record what was copied.
     if (options.hooks !== false) {
       if (options.dryRun) {
         console.info('    [hooks] Would wire session-lifecycle hook entries');
       } else {
-        await ensureHarnessHookEntries(harnessId, baseDir);
+        try {
+          await ensureHarnessHookEntries(harnessId, baseDir);
+        } catch (error) {
+          console.warn(
+            `  ⚠️ Skipping hook wiring: ${error instanceof Error ? error.message : String(error)} ` +
+              '(fix the config, then run configure-hooks)',
+          );
+        }
       }
     }
 

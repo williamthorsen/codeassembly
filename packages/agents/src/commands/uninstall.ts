@@ -32,8 +32,13 @@ export async function uninstallCommand(
     console.info(`\nUninstalling for harness: ${harnessId}`);
 
     // Remove the hook entries regardless of manifest state: they live inside a shared user config rather than as
-    // tracked files, and configure-hooks can have written them without an install.
-    await removeHarnessHookEntries(harnessId, baseDir);
+    // tracked files, and configure-hooks can have written them without an install. An unparseable config costs the
+    // hook removal a warning, never the removal of the tracked items or the manifest update.
+    try {
+      await removeHarnessHookEntries(harnessId, baseDir);
+    } catch (error) {
+      console.warn(`  ⚠️ Skipping hook-entry removal: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
     const harnessManifest = manifest.harnesses[harnessId];
     if (!harnessManifest) {

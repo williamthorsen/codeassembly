@@ -4,7 +4,7 @@ import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
@@ -63,6 +63,29 @@ describe('uninstallCommand', () => {
     await writeManifest(getManifestPath(tempDir), manifest);
     return { linkPath, source };
   }
+
+  it('warns and still removes tracked items when the harness config cannot be parsed', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeInstallOptions({ hooks: false }), tempDir, contentDir);
+    const settingsPath = path.join(claudeHome, 'settings.json');
+    await writeFile(settingsPath, '{ not json', 'utf8');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let warnLines: ReadonlyArray<string>;
+    try {
+      await uninstallCommand({ harness: 'claude', force: false }, tempDir);
+      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    expect(warnLines.some((line) => line.includes('Skipping hook-entry removal'))).toBe(true);
+    const manifest = await readManifest(getManifestPath(tempDir));
+    expect(manifest.harnesses.claude).toBeUndefined();
+  });
 
   it('removes the session-lifecycle hook entries but not foreign settings content', async () => {
     const claudeHome = path.join(tempDir, '.claude');

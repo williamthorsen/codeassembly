@@ -325,6 +325,27 @@ describe(installCommand, () => {
 
       expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
     });
+
+    it('warns and completes the install when the harness config cannot be parsed', async () => {
+      const claudeHome = await setupClaudeHome();
+      const settingsPath = path.join(claudeHome, 'settings.json');
+      await writeFile(settingsPath, '{ not json', 'utf8');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let warnLines: ReadonlyArray<string>;
+      try {
+        await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+        warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
+      } finally {
+        warnSpy.mockRestore();
+      }
+
+      expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
+      // The broken config is left alone, and the rest of the install still lands and is tracked.
+      expect(await readFile(settingsPath, 'utf8')).toBe('{ not json');
+      const manifest = await readManifest(getManifestPath(tempDir));
+      expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
+    });
   });
 
   describe('scripts', () => {

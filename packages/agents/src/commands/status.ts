@@ -1,7 +1,7 @@
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { detectDrift, getManifestPath, readManifest, resolveSharedHome } from '../lib/manifest.js';
 import type { HarnessId, InstallOptions } from '../lib/types.js';
-import { checkHarnessHookEntries } from './configure-hooks.ts';
+import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
 
 /**
  * Executes the status command, showing the current state of installed items.
@@ -69,7 +69,14 @@ async function reportHookEntryStatus(
   quietWhenUnconfigured: boolean,
   baseDir?: string,
 ): Promise<void> {
-  const statuses = await checkHarnessHookEntries(harnessId, baseDir);
+  let statuses: ReadonlyArray<HookEntryStatus>;
+  try {
+    statuses = await checkHarnessHookEntries(harnessId, baseDir);
+  } catch (error) {
+    // An unparseable config is itself a status worth reporting; it must not abort the rest of the report.
+    console.warn(`  ⚠️ Hooks: could not read the config: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
   const presentCount = statuses.filter((entry) => entry.status === 'present').length;
   const driftedCount = statuses.filter((entry) => entry.status === 'drifted').length;
   const absentCount = statuses.filter((entry) => entry.status === 'absent').length;
