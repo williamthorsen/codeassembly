@@ -103,10 +103,12 @@ The complexity assessment feeds into the cost-aware disposition flow described i
 
 Insights are notable observations worth preserving — patterns learned, surprising findings, or knowledge that would benefit future work.
 
-**Structured sources** (high confidence):
+**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a — the two never both apply, so there is no structured-vs-structured overlap to dedup:
 
-- **Review artifacts**: Extract `I{n}` insights from the `## Insights` / `### Insights` section of review artifacts (both the standalone review and reviewer-subagent artifacts). Reviewers emit these under the insight gate, so they are already vetted knowledge, not heuristic guesses.
-- **Run-summary artifact**: If an orchestrated run was detected, read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory.
+- **Orchestrated run → run-summary**: Read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory. It already aggregates and dedups the `I{n}` insights from every reviewer-subagent artifact in the run, so reading it — rather than the per-reviewer artifacts — captures each insight exactly once.
+- **Non-orchestrated run → review artifact**: Read the `## Insights` section of the standalone review artifact (`*_reviewer_review.md`). Reviewer-subagent artifacts exist only in orchestrated runs, so outside orchestration this is the sole structured insight source.
+
+Either way, reviewers emit these under the insight gate, so they are vetted knowledge, not heuristic guesses.
 
 **Conversation scanning** (heuristic — may produce false positives):
 
