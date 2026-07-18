@@ -1,6 +1,6 @@
 ## Next-steps options
 
-The next-steps block has three independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header.
+The next-steps block has three independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header. When two or more sub-blocks appear, label each with its `A` identifier as a bold prefix (`**A1 — Deviations from ticket:**`, and so on) and keep each sub-block's own 1-based numbering, so the user answers `A1: 1, A2: 2`; a lone sub-block carries no identifier.
 
 Use `~/`-relative paths where possible and absolute paths otherwise. Every line subordinate to an option — invocation guidance as much as a pro or con — is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
 
@@ -191,15 +191,15 @@ When multiple sub-blocks are shown, present them as separate sections within a s
 ```
 Next steps:
 
-Deviations from ticket:
+**A1 — Deviations from ticket:**
 1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is
 
-Source divergence:
+**A2 — Source divergence:**
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
 
-Actionable findings:
+**A3 — Actionable findings:**
 1. 📋 ■■□ Post findings on the PR
 2. 🚀 ■□□ Implement directly
 ```
