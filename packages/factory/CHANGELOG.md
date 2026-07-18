@@ -2,9 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
-## [factory-v0.2.0] - 2026-05-04
+## 0.2.1 — 2026-07-18
+
+### ♻️ Refactoring
+
+- Deduplicate the isRecord type guard across factory and run-core (#707)
+
+  Consolidates a duplicated type guard onto a single shared definition per package. The unified guard also rejects malformed array data, so such data can no longer surface bogus reviewer names in the rendered run visualizations.
+
+### 🧪 Tests
+
+- Use full timestamps in test fixtures, not bare dates (#826)
+
+  Test fixtures now seed date fields with full-precision UTC timestamps, the same form real notes carry, instead of bare day-only dates that no writer actually produces. Fixtures that deliberately exercise legacy day-only date parsing and validation keep their bare dates.
+
+### ⚙️ Tooling
+
+- Exclude generated files from Prettier formatting
+
+### 📚 Documentation
+
+- Remove local-only references from design docs (#944)
+
+  Removes local-machine file paths or unresolved internal-only references (ticket numbers, branch numbers, pointers to material outside the repo) from design and planning docs.
+
+## 0.2.0 — 2026-05-04
 
 ### 🎉 Features
+
+- Scaffold orchestration visualizer foundation (Phases 0–3) (#1)
+
+  Scaffolds the CodeAssembly Factory package — a retro-styled orchestration visualizer built with Excalibur.js, React, and Express. Removes all template packages from the monorepo and replaces them with a single `factory` workspace that reads `status.json` run data from `~/.ai/projects/`, serves it via an Express API, and renders it as an interactive game scene with stations, agents, artifacts, and gates.
 
 - Support run-index.json (v2) in status adapter (#4)
 
@@ -16,17 +44,30 @@ All notable changes to this project will be documented in this file.
 
   Introduces a `RoleType` abstraction layer (5 visual types: orchestrator, analyst, planner, author, reviewer) that decouples agent appearance from individual role names, and extends the mapper to create agents for all 7 orchestration phases. Also adds v2 `run-index.json` support to the status adapter with proper validation and v1 backward compatibility.
 
+- Implement sprite infrastructure and basic animations (#9)
+
+  Replaces the flat colored rectangles used for agent actors with sprite-based character animations. Introduces a new `sprites` module containing animation definitions, an SVG placeholder sprite generator, and a caching sprite loader that integrates with Excalibur's `ImageSource`, `SpriteSheet`, and `Animation` APIs. Agents now render as color-coded stick figures (circle head, rectangle body, line arm) with idle bobbing animation.
+
 - Add agent movement and status-driven animation transitions (#14)
 
   Adds incremental agent lifecycle management to the factory scene: agents are dynamically added, removed (with fade-out), and repositioned as run status changes. Each agent's animation state (idle, walking, working, celebrating, concerned) is resolved from the run phase status. Agents at the same station are arranged in a grid layout, and the camera auto-zooms to fit all 7 stations within the viewport.
+
+- Persist URL selections and reorder status bar (#15)
+
+  Add a `useSelectionParams` hook that persists project/ticket/run dropdown selections as URL query parameters via `history.replaceState`. `RunSelector` initializes its state from URL params on mount, validates them against loaded data, and syncs changes back on every dropdown interaction. The status bar field order is also corrected from Run/Status/Branch/Duration to Project/Ticket/Run/Status/Duration.
 
 - Add RunList component with clickable run list in sidebar (#29)
 
   Adds a `RunList` component to the Factory sidebar that displays all orchestration runs in a flat, scrollable list sorted by most recent. Each item shows a CGA-16 color-coded status indicator, is clickable to select the run for viewing, and has a dismiss button. A "Clear all" button dismisses all visible runs at once. The `fetchProjects` call is lifted from `RunSelector` to `App.tsx` so both components share the same `ProjectIndex` data.
 
+- Multi-level platforms and agent positioning (#31)
+
+  Replaces the single-platform horizontal layout with a multi-level assembly line where parallel reviewers occupy separate vertical floors connected by ladders. Introduces a pure layout engine that computes all scene geometry, add orchestrator positioning at the active phase station, and make agent diffing level-aware.
+
 - Auto-refresh projects list with file watching (#32)
 
   Add automatic detection of new tickets and surface them in the Factory dropdown within seconds, without requiring a server restart. The server watches the filesystem for changes and rescans; the client polls for updates every 5 seconds.
+
   - Expose basePath from ProjectScanner
   - Add ProjectWatcher for filesystem change detection
   - Start ProjectWatcher after initial scan
@@ -51,6 +92,18 @@ All notable changes to this project will be documented in this file.
 
   New schemas: run-index-schema.ts (13 exported validators), status-json-schema.ts (V1 reusing shared enums). New tests: 161 tests covering all enum values, nullable/optional fields, forward-compatible phase entries, artifact entries, CLI directory scanning, and error differentiation.
 
+- Show agents as soon as their phase is current (#45)
+
+  Adds phase inference to the Factory visualization so agents appear at their stations as soon as their phase becomes current, rather than waiting until phase data is written to `run-index.json`. A new `findCurrentPhase` utility infers the active phase from sequential phase ordering and `phaseDecisions`, then threads the result through station activation, agent creation, orchestrator positioning, and animation state resolution.
+
+- Persist local user settings (#47)
+
+  Adds server-side persistence for dismissed-run state in the Factory sidebar. A new `SettingsStore` service reads and writes `settings.json` to a configurable directory, exposed via `GET/PATCH /api/settings` endpoints. The `useDismissedRuns` hook is rewritten to sync with the server using optimistic updates, and dismissals now record the run's status so that re-executed runs automatically reappear.
+
+- Add agent spawning and artifact-carrying visuals (#48)
+
+  Agents now spawn at their station only when their phase begins (not from run start), the orchestrator displays a colored artifact indicator while walking between stations, and a brief 300ms hand-off pause occurs upon arrival. Null-safety guards (`isPresent()`) replace `!== undefined` checks throughout phase evaluation, fixing a runtime bug where Zod's `null` phase values slipped past TypeScript's `| undefined` type.
+
 - Improve run listing readability in sidebar (#50)
 
   Restructures the Factory sidebar's `RunList` component to prioritize project/ticket identity over raw run IDs, adds human-readable timestamps, improves color legibility, and adds timing tooltips. Threads `completedAt` from the server-side scanner through to the client UI.
@@ -67,9 +120,14 @@ All notable changes to this project will be documented in this file.
 
   Follow-up: CODY-55 tracks directional sprite facing (`scaleX = -1`) so the orchestrator and delegatee visually face each other.
 
+- Add directional sprite facing for approaching orchestrator (#61)
+
+  Adds a `setFacing(direction)` method to `AgentActor` using Excalibur's `graphics.flipHorizontal` property, and calls it from `FactoryScene` when agents are added or after the orchestrator finishes walking. When the orchestrator approaches a delegatee (`approaching: true`), its sprite now faces right toward the delegatee instead of facing left like all other agents.
+
 - Improve representational quality of gates (#64)
 
   Rewrite `GateActor` as a stateful, animated actor so that nonblocking gates are visually low (2px vs 40px blocking) and the transition is animated over 1 second. The orchestrator waits at a gate until the animation completes before walking through.
+
   - GateActor uses `Rectangle` graphic with `onPreUpdate` frame-by-frame height interpolation, bottom-edge pinned to the platform surface.
   - Gates persist across `rebuildStaticElements` via `gateMap` (mirrors the existing `agentMap` pattern), with diffing in `updateGates`.
   - `waitForOpen()` promise coordination lets the orchestrator await gate transitions; resolvers flush unconditionally on animation completion to prevent leaks on direction reversal.
@@ -97,6 +155,7 @@ All notable changes to this project will be documented in this file.
   Adds a demo playback mode to Factory that replays orchestrated runs using an event-sourced architecture. A new v3 `run-index.json` header-only format paired with `run-log.jsonl` append-only event stream enables any completed run to be replayed without conversion. The playback system produces `CanonicalRunStatus` — the same type consumed by live visualizations — so the UI is data-source-agnostic.
 
   Details:
+
   - Data layer: `RunHeader`/`RunEvent` types and Zod schemas for `run-log.jsonl` validation, v3 `run-index.json` header-only schema.
   - Event folder: shared `foldEvents(header, events)` function that reconstructs `CanonicalRunStatus` from header + event array, used by both server and client.
   - Server: status adapter v3 path with v2/v1 backward compatibility fallback chain.
@@ -251,6 +310,7 @@ All notable changes to this project will be documented in this file.
 
   Lifts selection state (project, ticket, run) from `RunSelector` to `App`, establishing a single source of truth that both `RunSelector` and `RunList` share. `RunSelector` is converted from an uncontrolled component with internal state to a controlled component that receives selection values as props. A `useEffect` in `App` drives URL param updates whenever selection changes.
 
+- Fix avatar & artifact positions and left-align labels
 - Handle newer parallelReview schema shapes in scene mapper (#102)
 
   The orchestrate skill evolved its run-index.json format, producing three
@@ -354,6 +414,4 @@ All notable changes to this project will be documented in this file.
 
   Removes the noisy boxed and rulered comment separators that had accumulated across the codebase and replaces every occurrence with simpler forms or folding-region markers. Introduces a reusable sweep script to automate this process. Documents the convention in the `code-patterns` skill so future agent-generated TypeScript follows the same rule.
 
-## [factory-v0.1.0] - 2026-02-26
-
-<!-- generated by git-cliff -->
+<!-- Generated by release-kit. Do not edit this file. Use .meta/changelog-overrides.json to override entries. -->

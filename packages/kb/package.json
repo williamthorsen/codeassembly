@@ -1,6 +1,6 @@
 {
   "name": "@codeassembly/kb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Knowledge-base foundation: discovery, config, frontmatter parsing, records, tags, and vault-integrity checks",
   "type": "module",

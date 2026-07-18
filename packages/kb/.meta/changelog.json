@@ -1,0 +1,186 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-07-18",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Add a config-driven kb check CLI and library export (#735)",
+            "body": "Adds a `kb check` command (and matching `@codeassembly/kb/check` export) that validates an entire knowledge-base store against its rules in one step. Each store controls what gets checked through a new `.kb/config.yaml`, and the command's exit codes let it gate scripts and CI. A malformed config, schema, or tag-alias file now stops the run with a clear error instead of being quietly worked around.",
+            "hash": "92facbcf45f0294aa44dee62d572ca02b924243f"
+          },
+          {
+            "description": "Add a kb create command to provision new KB stores (#755)",
+            "body": "Adds a `kb create` command that provisions a new knowledge base in one step, replacing the manual copy-and-edit of a bespoke provisioning script. It scaffolds the store's starter configuration and content folders and registers the store so the other kb tools discover it. Re-running is safe: it will not overwrite an existing store or claim a name that is already registered. The command is available both on the command line and as a library export.",
+            "hash": "1f14de29ddacad6e64a5283e4930fffe378b7f7c"
+          },
+          {
+            "description": "Alphabetize the default schema's field lists and add diataxis to assertion (#760)",
+            "body": "A Diátaxis documentation type is now a recognized optional field on assertion notes, and new stores provisioned by `kb create` recognize it from the start.",
+            "hash": "f6d38161d40c2510104564774232eb4b82a51622"
+          },
+          {
+            "description": "Add note targeting to kb check via paths and --vs (#769)",
+            "body": "`kb check` now accepts positional arguments specifying a subset of notes to check (glob patterns, files, or directories)  and a `--vs=<ref>` option to check only the notes changed versus a git ref.",
+            "hash": "a47fdf023515cfdf1ea56136f4b1548655b1999f"
+          },
+          {
+            "description": "Adopt explicit-UTC second-precision timestamps for KB date fields (#773)",
+            "body": "KB note dates and event capture times are now recorded as UTC timestamps precise to the second, so a note can no longer be saved as verified before it was created. The older date-only form is still accepted, so notes in existing stores stay valid. The agent-supplied `--last-verified` flag is removed; callers that pass it now get an unknown-flag error. Adding the first note to a store that previously had none now switches on store-wide verification-staleness checks in `kb-curate`, surfacing older unmarked notes as re-verification candidates.",
+            "breaking": true,
+            "hash": "78edfabb239ed5eb75d2c8d7964c8430759c968b"
+          },
+          {
+            "description": "Designate the default KB with a top-level default_kb pointer (#786)",
+            "body": "Designates each machine's default knowledge base with a single top-level `default_kb` key in `kb.yaml`, naming a registered KB. The named KB is the fallback for knowledge-base search and the default destination for `capture-event`, so lessons meant for the current environment stay out of shared project knowledge bases.\n\n🚨 **Breaking:** Replaces the per-entry `default: true` flag — set a top-level `default_kb: <name>` instead. `capture-event` with no `--store` now records to the `default_kb` rather than a hardcoded `codeassembly` store, and refuses the capture when neither is set.",
+            "breaking": true,
+            "hash": "4a4c25f82a7d022acdab7e120dddca9df120ee0e"
+          },
+          {
+            "description": "Add an addressed-by/addresses relation linking problems to their responses (#787)",
+            "body": "Adds optional `addressed-by` and `addresses` fields to knowledge-base records, so the actions taken to fix or mitigate a problem can be recorded on the problem, the fix, or both.",
+            "hash": "5fd7dab4cfad1a06c20478a90cb4a01e802c4aa1"
+          },
+          {
+            "description": "Add a kb set-default command for the default knowledge base (#798)",
+            "body": "Adds a `kb set-default` command for choosing the machine's default knowledge base from the command line — by name, or interactively from a list of registered knowledge bases. Previously the default could only be changed by hand-editing the registry file.",
+            "hash": "c39488f91fc3a073912ae54d5276d921553d401a"
+          },
+          {
+            "description": "Set the default knowledge base when creating one (#799)",
+            "body": "`kb create` now configures a default knowledge base automatically, so a new user no longer has to run a separate command before working with one. When no default is set yet, the newly created knowledge base becomes the default; when other knowledge bases are already registered without a default, `kb create` prompts for which one to use on an interactive terminal, or points to `kb set-default` when run non-interactively.",
+            "hash": "c9424d6781323fc61591ebcd368b7be2daa87c7c"
+          },
+          {
+            "description": "Record the agent harness in captured events (#822)",
+            "body": "The `capture-event` skill now records which agent platform produced each event alongside the model. Anyone recalling or analyzing events can tell them apart by the platform whose guidance was in effect when they were captured.",
+            "hash": "7da6251e285ab9ed2b1cd99cb8807b2851fced84"
+          },
+          {
+            "description": "Add kb-update-events for batch event editing (#867)",
+            "body": "Adds a `kb-update-events` command that lets agents annotate events already captured in the knowledge store, either marking them as addressed by a reference or replacing their tags. Previously, events were frozen at capture; they can now be updated after the fact. A single invocation can update many events at once, reporting success or failure for each.",
+            "hash": "e3d3d1176f62d56fb5b4818c2a5f18a069e13948"
+          },
+          {
+            "description": "Add kb-retrieve-events for event recall (#872)",
+            "body": "Adds `kb-retrieve-events`, a command for recalling captured events on their own terms. It ranks results by how often a pattern recurs and then by recency, and shows each event's summary, capture time, and repository, along with how many matched events share that repository and any record of what was done about the problem. `kb-retrieve` now returns assertions only; when a query matches only events, each command's empty result points to its sibling. A note that has lost its record type still appears under `kb-retrieve`.",
+            "hash": "e2b836a57dbab44705a73f5dc27b15c0fc4e9511"
+          },
+          {
+            "description": "Add a mutable impact rating to events (#901)",
+            "body": "Events in the knowledge base can now carry an optional impact rating (low, medium, high, or critical) denoting the estimated impact of addressing the event.",
+            "hash": "b7dc4a15d7984f9d17b0f0599675801808425714"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Require an explicit --store on every capture-event call (#806)",
+            "body": "Fixes an issue where recording an event with `capture-event` could silently file it in the default knowledge base whenever the destination store was left unspecified, misfiling events that should have gone elsewhere. Naming the destination with `--store` is now required: omitting it refuses the capture and reports the available stores and which one is the registry default. The registry default is still reachable, now by naming it explicitly with `--store @default`.",
+            "hash": "24946e9ce78c10ba5795ff54aa2259b4dc5a597b"
+          },
+          {
+            "description": "Scope kb-retrieve recall to the configured note set (#829)",
+            "body": "Fixes an issue where searching with `kb-retrieve` could return markdown files that aren't notes, such as a top-level README or a draft under an excluded path, even though the rest of the toolchain never treats them as part of the knowledge base. Searches now return only the notes the knowledge base declares, the same set the `kb check` command validates against.",
+            "hash": "96eabb421b4355070f8c23f621c525b72837b5cb"
+          },
+          {
+            "description": "Support events from a harness that exposes no session id (#981)",
+            "body": "Fixes an issue where agents running on a harness that exposes no session id could not capture events at all. Events already stored without a session id can now be marked as addressed, retagged, or rated for impact, so an event whose problem has since been fixed no longer resurfaces as a live candidate on every recall.",
+            "hash": "0dc36b1a02997532183bf89179b6f8056e169bb1"
+          }
+        ]
+      },
+      {
+        "title": "🏗️ Internal features",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Add type-blind note I/O and declared per-type record modules (#858)",
+            "body": "The kb package can now read and write the two knowledge-store record shapes: the knowledge entries themselves and the observations captured to refine them, each on its own terms, so an observation no longer carries fields that belong only to a knowledge entry. Fields it doesn't recognize are preserved unchanged, so records survive a read-write round trip intact.",
+            "hash": "6c0709a744747c0c12947bbb5beb7fd4ab5b9c0b"
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rename @codeassembly/kb-core to @codeassembly/kb (#726)",
+            "body": "Renames the knowledge-base foundation package from `@codeassembly/kb-core` to `@codeassembly/kb`; code that depends on it should update its import to the new name. The registry loader for `kb.yaml` is also renamed, so in-repo callers should switch to the new loader and its return type.",
+            "hash": "7a6092da8b2b2735bf95987f41a989a1ce05dee2"
+          },
+          {
+            "description": "Redesign the record taxonomy around a stored recordType discriminant (#742)",
+            "body": "Settles the knowledge-base record taxonomy ahead of publication: Each record now declares whether it is an assertion or an event, instead of having that type guessed from its other fields, so a misfiled record can no longer be silently treated as the wrong kind. A store's `.kb/schema.yaml` must now declare its record-type vocabulary in the new single-list form; the older two-level and flat shapes no longer load and fail with a clear error. The `capture-event` skill no longer accepts `--type` or `--correction` and records a plain event, and the `--type` label on `kb-add` is now optional. Recall now groups repeated events by repository.",
+            "hash": "2bcd969f0423a4ef60a601a2ec79fc4cfc993ef8"
+          },
+          {
+            "description": "Consolidate duplicated kb test helpers into a shared module (#758)",
+            "body": "Consolidates the knowledge-base package's duplicated test helpers — temporary-directory setup, path-existence checks, and KB scaffolding — into one shared test-support module.",
+            "hash": "e03a0431ff79bcdd5d25f35fd1d09e03ca1ef264"
+          },
+          {
+            "description": "Remove the unused immutable record-type schema flag (#765)",
+            "body": "Removes the `immutable` field from the record-type schema in `.kb/schema.yaml`. The field was never enforced, so its presence implied a write-once guarantee that authors never actually had. A schema that still declares `immutable:` keeps loading, with the key now ignored rather than rejected.",
+            "hash": "9b7386f9e8fe41f3e3f5d5360e59027141992bae"
+          },
+          {
+            "description": "Normalize declaration ordering across the kb package (#770)",
+            "body": "Every source file in the kb package now follows a single declaration-ordering convention — exported declarations first, non-exported helpers grouped at the end — so a developer can locate any function by its position rather than learning each file's own arrangement.",
+            "hash": "169fcd1382ad5b94c93a851933c409d28d0f7c5d"
+          },
+          {
+            "description": "Route the assertion write commands through KbAssertion (#959)",
+            "body": "kb-add and kb-edit now enforce the same assertion contract as the rest of the knowledge-base pipeline, so a note that doesn't conform is refused up front with a specific reason instead of slipping through to a late, generic validation failure.",
+            "hash": "aae0bfd057e635b6089e52ac13bea5ed10fde56f"
+          },
+          {
+            "description": "Replace rule engine with a type-blind vault-integrity layer (#961)",
+            "body": "Refocuses `kb check` on cross-note integrity instead of per-note frontmatter validation: it now flags wikilinks that resolve to no note and note basenames shared by two or more notes. A duplicate basename is now reported once per vault, rather than once per link that references it.\n\nThe per-store schema override is gone: `kb create` no longer writes `.kb/schema.yaml`, any existing file is ignored, and the record types are now fixed rather than configurable per store. When validation fails, `capture-event` now reports plain error messages.\n\nFor `@codeassembly/kb` consumers, the `@codeassembly/kb/rules` and `@codeassembly/kb/schema` subpaths are removed, and a new `@codeassembly/kb/vault-integrity` subpath is added.",
+            "hash": "cb69dbe6b0da998f86fd3ab528ecea31f9a88bcb"
+          },
+          {
+            "description": "Give the store's on-disk layout a single owner (#992)",
+            "body": "Consolidates a knowledge base's on-disk layout (its metadata directory and its note tree) behind a single source of truth that the rest of the codebase reads from, so moving any part of the layout can no longer leave other code pointing at the old location. Previously these conventions were duplicated, and a single drift could silently disable an event store's immutability guarantee. Separately, removes a source of intermittent failures in the agents test suite.",
+            "hash": "f7def5baf4f9497e8fc7791368ba0171562aa930"
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Use full timestamps in test fixtures, not bare dates (#826)",
+            "body": "Test fixtures now seed date fields with full-precision UTC timestamps, the same form real notes carry, instead of bare day-only dates that no writer actually produces. Fixtures that deliberately exercise legacy day-only date parsing and validation keep their bare dates.",
+            "hash": "02e1f734eb30b49a244a96bcaee6cf42760841dc"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Fix type resolution in the published kb and run-core packages (#975)",
+            "body": "Fixes the published form of `@codeassembly/kb` and `@codeassembly/run-core`: Installing either package previously delivered no usable type declarations, and a packed copy carried no build output at all. Types now resolve correctly for consumers of both packages, which unblocks the pending `nmr` upgrade.",
+            "hash": "6d6c3c7241209fc05174a1a3ad0202cd07297cc6"
+          },
+          {
+            "description": "Migrate build to nmr-compile and give mcp an entry point (#1001)",
+            "body": "Building the monorepo's TypeScript packages is now a single compile step that emits both JavaScript and type declarations, so the separate typings pass and a repo-local build script are both gone. When the MCP server is started before the build has run, it now reports that the build output is missing instead of failing with a cryptic module-resolution error, and when a package's command-line tool fails to start, it now reports the real cause instead of always advising a rebuild.",
+            "hash": "56a594165c3a9d8adad83bb51491b74bc9a0435c"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -2,7 +2,792 @@
 
 All notable changes to this project will be documented in this file.
 
-## [agents-v0.2.0] - 2026-05-04
+## 0.3.0 — 2026-07-18
+
+### 🎉 Features
+
+- Make recommendation-gradient the interactive default (#532)
+
+  Promotes the recommendation-gradient format from a per-skill reference to a universal interactive convention. Whenever an agent presents 2+ numbered options to the user — in any skill, or with no skill active — each option is now expected to carry a strength marker (■■■/■■□/■□□/□□□) and `➕`/`➖` pros and cons. Adds a `Q1`/`Q2` identifier convention so users can reference answers unambiguously when a single response stacks multiple option-style questions. Switches the indent character that visually separates pros/cons from each option title to a non-breaking space, so the indent survives whitespace normalization in agent output rather than collapsing.
+
+- Delimit publishable content in merge approval prompt (#533)
+
+  Improves the legibility of the pre-merge approval prompt by wrapping the merge commit's title and body in inward-pointing triangle delimiters. Anything outside the triangles — strategy and deletion fields, CI status, free-form commentary — is unambiguously metadata; anything inside is what will actually be published. The same delimiter treatment is applied to the Bitbucket "auto-merge unavailable" fallback notice so the two merge-preview surfaces stay visually consistent.
+
+- Document code+mark restriction in update-jira-ticket (#534)
+
+  Adds a "Composition rules" section to the `update-jira-ticket` skill documenting that `<code>` cannot be combined with other inline marks (`<strong>`, `<em>`, `<a>`, `<strike>`, `<u>`, `<sub>`, `<sup>`) on the same text run, in either nesting direction. Agents encountering this trigger now find the rule by section heading rather than running a bisection cycle. Also extends the existing Confluence-namespace exclusion to cover `<ri:*>` resource identifiers alongside `<ac:*>`, since both have the same failure mode in ADF.
+
+- Inline shared guidance into platform files at install time (#539)
+
+  Improves how shared agent instructions reach platform AI assistants. Source guidance files now use a build-time include directive (`<!-- include: {source-relative-path} -->`) that the installer resolves and inlines directly into the platform-specific files. The previous mechanism (inline `@~/path` runtime references) was unreliable.
+
+- Extract release-notes voice into shared rules (#549)
+
+  Tightens the voice rules that `summarize-change` and `commit` apply when authoring `## What` sections, commit bodies, and PR descriptions. The rules are now centralized in a single shared file with two mechanically enforceable checks — a per-sentence outcome test and an identifier ban — that catch verbose drafts which previously slipped past softer tests.
+
+- Add critical-evaluation guidance to collaboration skill (#550)
+
+  Agents working in interactive mode now treat requests for an opinion — phrasings like "WDYT?", "Is this right?", "Any concerns?", or "Should we…?" — as invitations to critical evaluation rather than validation. When invited, agents are directed to engage with the merits, broaden the frame beyond the developer's immediate framing, verify when their knowledge may be stale, and push back civilly when they disagree.
+
+- Add work-type emojis and breaking tag to PR descriptions (#554)
+
+  PR descriptions now use canonical emojis in section headers and tag breaking changes inline, mirroring release-notes rendering. Several work-type labels are refreshed to match those release-notes conventions.
+
+- Treat tickets as requests; design as if from the beginning (#562)
+
+  Agents working from tickets now treat them as requests rather than specifications and explicitly consider whether the proposed change is worth making at all. When proposing designs, agents target the shape the code would have had if the new behavior had been there from the start, treating workarounds, carve-outs, and bolt-ons as anti-patterns to avoid.
+
+  The new behavior applies wherever tickets are turned into designs: `design-and-plan`, `assess-ticket`, `plan`, and `software-engineering` all consume the updated guidance.
+
+- Auto-retry interrupted reviewer dispatches (#566)
+
+  Orchestrated runs no longer fall back to manual review when an individual reviewer runs out of turns mid-investigation. The engine retries the reviewer once with a tighter prompt, recovering automatically from interruptions that previously required a fresh run.
+
+- Replace /review-change with /review-branch and /review-pr (#570)
+
+  Code review now has two commands. `/review-branch` reviews the current branch against a diff base; `/review-pr <id>` reviews a pull request and evaluates the implementation against both the linked ticket and the PR description. Both accept `--diff-base=<ref>` (default: project's default branch) and `--ticket=<source>` (default: auto-resolved). The previous `/review-change` is removed; to review a specific commit, check it out and run `/review-branch --diff-base=<ref>~1`.
+
+- Support partials in skills and subagent definitions (#571)
+
+  Authors of subagent and skill markdown can now extract repeated content into shared partials and reference them via include directives, with optional inline slot content for per-call variation. This eliminates the cross-file drift that was already producing false-positive findings during automated review.
+
+- Restructure voice and format rules to enforce inline at point-of-use (#573)
+
+  Voice rules — the per-sentence outcome test and identifier ban — and an explicit audit step are now part of every voice-authoring skill at the point of authoring. Agents encounter the rules in their working context just before producing voice content, rather than through a forward reference that was reliably skipped.
+
+- Redefine 👍🏼👎🏼 as a confirmation contract (#586)
+
+  Redefines the `👍🏼👎🏼` marker in agent prompt formatting as a confirmation contract with fixed comprehension semantics. A clear affirmation proceeds with the proposed action; a clear negation stops; anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. The marker can be appended to any prompt seeking confirmation, including phrasings with an alternative clause (e.g., "Apply these revisions (say no if you'd like to adjust something else first)?").
+
+- Require repo-relative paths in review finding locations (#594)
+
+  Code-review findings now reference files using repo-relative paths, so readers can identify the right file without grepping when the repo has multiple files with the same name. The path also appears at the top of each finding for at-a-glance scanning.
+
+- Unify artifact frontmatter under a canonical metadata schema (#596)
+
+  Every artifact written by an agent — reviews, devlogs, plans, change summaries, response files, run summaries, deferred-findings, and orchestrated subagent outputs — now carries the same canonical metadata under a single documented schema. Identifying which branch and PR an artifact applies to is zero-effort post-write. Existing artifacts are not modified.
+
+- Guide agents to prefer partials over duplicated content (#598)
+
+  The `code-simplification-reviewer` subagent now consults project-documented DRY mechanisms (partials, includes, snippets, macros) before recommending pointer-indirection as a remediation for duplication. Where the project documents a single-source mechanism that preserves verbatim consumer output, the reviewer recommends that mechanism instead.
+
+- Revise `respond-to-review` to be less deferential to reviewer recommendations (#600)
+
+  Sharpens `respond-to-review` so the agent no longer accepts reviewer recommendations that move, promote, or restructure code or guidance without verifying that the destination's stated doctrine actually accommodates it. For such recommendations, pushback is the default posture; acceptance requires affirmative evidence: The destination's doctrine must clearly accommodate the change, and the move must resolve a real duplication or location problem.
+
+  Hedging language in a recommendation is now treated as a signal that the premise needs independent verification rather than as license to accept on the reviewer's word.
+
+- Make subagent tool-name references platform-portable (#601)
+
+  Subagents and skills now render with each platform's native tool names in body prose. Authors reference tools by canonical name via `{tool:NAME}` placeholders; per-platform mappings live in `content/subagents/_data/{platform}.yml` under a new `_tools:` key. Typos in placeholder names abort install with a file-and-line-anchored error. Frontmatter `tools:` lines and Claude installs are unchanged.
+
+- Add change-narrating voice and jargon to lede-voice (#602)
+
+  Adds two new sections to `lede-voice` — one on change-narrating voice (verbs like `introduces`, `now`, `no longer`), and one on jargon discipline (define-while-naming when the audience may not share a term of art). Tightens the identifier rule so allowed identifiers still earn their words at the lede: A top-level config-file path is named only when the reader needs to act on it, not just to acknowledge that one exists.
+
+  The inline audit checklist for commit-message authoring now names its own limits, pointing readers at the new sections for register and jargon judgments it doesn't test.
+
+- Discourage code-level detail in design-and-plan tickets (#614)
+
+  The `design-and-plan` skill emits tickets whose approach section is now titled `Proposed solution` and is constrained to outcome and architectural fit. File paths, line numbers, code, and syntax-level prescription are out of scope for that section; they belong in the implementation plan.
+
+- Stop reporting "behavior unchanged" in changelog entries (#615)
+
+  Agents are now instructed to avoid reporting "behavior unchanged" in changelog entries and commit bodies.
+
+- Decouple review dispositions from reviewer framing (#616)
+
+  The `respond-to-review` skill now decides review dispositions on whether the change belongs in the codebase, not on the reviewer's suggested handling. Hybrid forms like `ACCEPT (follow-up)` are no longer valid; the disposition vocabulary remains ACCEPT, REJECT, and PARTIAL.
+
+- Add changelog-writer subagent (#620)
+
+  Introduces a `changelog-writer` subagent that composes, rewrites, or audits changelog and release-notes entries against the lede-voice doctrine. The `summarize-change` skill now dispatches it when composing the `## What` section, so PR-description voice is enforced without authors needing to internalize the rules.
+
+- Apply recommendation gradient to all substantive option choices (#625)
+
+  Expands the recommendation gradient to cover every option-style choice with substantive tradeoffs, including the next-steps menus shown after a plan or review. Confirmation prompts (`👍🏼👎🏼`) are now reserved for procedural approve-or-redirect cases.
+
+  Post-plan and post-review menus now surface an additional option: "Implement directly with follow-up review".
+
+  Guidance on presentation of options has been refined: Pros and cons must relate to the specific decision at hand, not restate an option's inherent properties.
+
+- Surface ticket-vs-PR-description divergence in /review-pr (#628)
+
+  Adds a "Specification consistency" section to `/review-pr` output that flags divergence across the ticket, PR description, and implementation, with a per-aspect breakdown and an overall verdict. When there is a divergence, options to address the divergence are presented.
+
+  Renames the `ex-post-facto` skill to `align-ticket-with-implementation`.
+
+- Add kb-retrieve skill for querying the knowledge base (#645)
+
+  Adds a new `/kb-retrieve` slash command that searches configured knowledge bases for notes relevant to a query and returns ranked results annotated with freshness, volatility, and deprecation status. The default search covers the project-local knowledge base and the global vault; `--all-kbs` widens the search to every registered knowledge base, and `--type`, `--tag`, and `--folder` narrow it.
+
+- Add kb-add skill for capturing knowledge-base notes (#652)
+
+  Adds a `/kb-add` skill for capturing knowledge-base notes from a chat. The agent classifies the note, pulls related entries via `/kb-retrieve` for cross-referencing, and proposes the draft for confirmation before writing — or writes it directly when invoked with `--auto`.
+
+- Add comment discipline to agent guidance and review pipeline (#659)
+
+  Introduces a comment-discipline rule that instructs agents writing code to omit common over-commenting patterns: next-line paraphrasing, conversation references, ephemeral ticket references, tutorial-style file headers, and defensive prose about unreachable cases. `/review-branch` now flags any such patterns that slip through.
+
+- Add test-structure discipline to agent guidance and review pipeline (#669)
+
+  Agents writing tests in this codebase are now instructed to use parameterized tables or named helpers to avoid repetitive setup, instead of leaving near-identical copies for the reader that obscure variation among tests. Adjacent tests with buried variation are now flagged during review.
+
+- Add kb-edit skill for post-creation note maintenance (#676)
+
+  Adds a `kb-edit` skill for modifying existing knowledge-base notes: refreshing dates, re-verifying a note without counting it as a content edit, appending text, replacing tags, and superseding one note with another. Previously the only way to change an existing note was to edit the file by hand. The `readonly: true` flag in a KB's `kb.yaml` is now honored on writes from both `kb-edit` and `kb-add`; previously the flag was accepted but ignored.
+
+- Add /revise-comments to audit and edit existing comments (#680)
+
+  Adds a `/revise-comments` command that applies the project's comment-discipline rules to a target file set, rewriting or removing comments in place and reporting what changed in each file. By default it operates on the files committed on the current branch; explicit paths extend its reach to legacy code or uncommitted work, and `--dry-run` previews the edits without writing. Test comments and intentional `eslint-disable` directives are left untouched.
+
+- Add kb-curate skill for vault-wide KB hygiene (#681)
+
+  Adds a `/kb-curate` skill that audits a knowledge base for hygiene problems: broken links between notes, hardcoded home-directory paths, tags that have drifted from their canonical form, verification that is stale or was never recorded, and broken supersede chains between notes. It reports findings without touching the vault by default; run with `--apply` and it additionally repairs the two issues it can fix safely, normalizing drifted tags and reconnecting stale links whose target is unambiguous.
+
+- Treat suppression directives as reviewable design signals (#686)
+
+  Adds guidance that treats a lint or type suppression as a design signal rather than a routine fix. Authors are now directed to try reworking the code, reconfiguring the rule, or defining a scoped exception before suppressing inline, and to attach a rationale to any suppression they keep, naming the rule, why it doesn't apply, and the alternatives rejected. Reviewers now flag suppressions introduced by the change under review as findings, rather than skipping them as routine lint.
+
+- Consolidate the kb.yaml loader and surface registry defects in kb-retrieve (#695)
+
+  When the knowledge-base registry is broken — a malformed config file, or an entry pointing at a directory that no longer exists — `kb-retrieve` now names the specific defect instead of reporting a generic "no knowledge base configured" or "no notes matched." The warning appears even when other knowledge bases still return results, so a broken setup is a one-line fix rather than a multi-step hunt.
+
+- Skip HTML sanitization for the markdown Jira-update tool (#710)
+
+  The Jira-update skill now chooses its update path based on which Jira tool the agent has, rather than steering every agent through HTML sanitization. When the available tool accepts Markdown, the skill directs the update to be authored and submitted as Markdown directly, sparing the agent the work of producing sanitized HTML it never needed.
+
+- Add event capture and a kind-aware record-store core (#717)
+
+  Introduces a way for agents to capture a mistake or a passing observation the moment it happens, in a single phrase, and save it to a centralized store. Agents can recall these observations later, ranked by how often and how recently the same kind of issue has recurred, so the patterns worth acting on rise to the top.
+
+- Relocate event records to content/events/ and document the fix-tag convention (#719)
+
+  Documents how to record a solved problem in the capture-event skill, so past fixes can later be recalled together as a group. Captured event records are now filed alongside the knowledge store's other content rather than at its root.
+
+- Add a config-driven kb check CLI and library export (#735)
+
+  Adds a `kb check` command (and matching `@codeassembly/kb/check` export) that validates an entire knowledge-base store against its rules in one step. Each store controls what gets checked through a new `.kb/config.yaml`, and the command's exit codes let it gate scripts and CI. A malformed config, schema, or tag-alias file now stops the run with a clear error instead of being quietly worked around.
+
+- Add init and sync commands for the project rulebook library (#738)
+
+  Adds rulebooks: a project can now opt into specific units of agent guidance instead of taking all of it or none. Run `codeassembly-agents init` to scaffold the project's rulebook declaration, list the rulebooks the project wants in `.agents/rulebooks.yaml`, then run `codeassembly-agents sync` to apply the declaration. Re-running sync makes no further changes once a project is in sync, and removing a rulebook from the declaration retracts its guidance on the next sync. Shell-script conventions are available as the first rulebook.
+
+- Add skill delivery mode for rulebooks (#754)
+
+  Adds on-demand skill delivery for rulebooks, which previously could only ship as always-on ambient guidance. A project that declares a rulebook for skill delivery now gets it installed by `codeassembly-agents sync` as guidance that agents invoke only when relevant, rather than carrying it at all times. Undeclaring the rulebook or switching it away from skill delivery removes the generated skill on the next sync, and hand-authored skills are left untouched. The shell-conventions rulebook now ships in both ambient and skill form.
+
+- Add a kb create command to provision new KB stores (#755)
+
+  Adds a `kb create` command that provisions a new knowledge base in one step, replacing the manual copy-and-edit of a bespoke provisioning script. It scaffolds the store's starter configuration and content folders and registers the store so the other kb tools discover it. Re-running is safe: it will not overwrite an existing store or claim a name that is already registered. The command is available both on the command line and as a library export.
+
+- Rename the Diátaxis --type flag to --diataxis (#757)
+
+  The `kb-add` and `kb-retrieve` skills now take a `--diataxis` flag for setting and filtering a note's Diátaxis label, replacing the former `--type` flag, which is now rejected.
+
+- Honor the schema recall policy in kb-retrieve (#764)
+
+  A knowledge base store's recall policy now controls how `kb-retrieve` ranks a record type's notes; previously the policy was declared but had no effect on retrieval. Custom record types now rank by whichever policy they declare, so their notes can be ordered by recency, or by how often and how recently they recur.
+
+- 🚨 **Breaking:** Adopt explicit-UTC second-precision timestamps for KB date fields (#773)
+
+  KB note dates and event capture times are now recorded as UTC timestamps precise to the second, so a note can no longer be saved as verified before it was created. The older date-only form is still accepted, so notes in existing stores stay valid. The agent-supplied `--last-verified` flag is removed; callers that pass it now get an unknown-flag error. Adding the first note to a store that previously had none now switches on store-wide verification-staleness checks in `kb-curate`, surfacing older unmarked notes as re-verification candidates.
+
+- Unify plan and design-and-plan on a shared plan template (#782)
+
+  The `plan` skill now turns a ticket directly into an implementation plan, so a user who already has a solid ticket can skip the interactive design dialogue that `design-and-plan` runs and go straight to planning. Plans from `plan` and `design-and-plan` are now interchangeable: The orchestrated pipeline trusts a plan from `plan` as much as one from `design-and-plan`.
+
+- 🚨 **Breaking:** Designate the default KB with a top-level default_kb pointer (#786)
+
+  Designates each machine's default knowledge base with a single top-level `default_kb` key in `kb.yaml`, naming a registered KB. The named KB is the fallback for knowledge-base search and the default destination for `capture-event`, so lessons meant for the current environment stay out of shared project knowledge bases.
+
+  🚨 **Breaking:** Replaces the per-entry `default: true` flag — set a top-level `default_kb: <name>` instead. `capture-event` with no `--store` now records to the `default_kb` rather than a hardcoded `codeassembly` store, and refuses the capture when neither is set.
+
+- Add an addressed-by/addresses relation linking problems to their responses (#787)
+
+  Adds optional `addressed-by` and `addresses` fields to knowledge-base records, so the actions taken to fix or mitigate a problem can be recorded on the problem, the fix, or both.
+
+- Store and reuse resolved ticket and PR URLs in the branch manifest (#789)
+
+  Resolved ticket and pull-request URLs are now remembered, so a remote URL is supplied at most once instead of re-pasted on every command that needs it. After a URL is resolved (or a ticket or PR is created), later commands reuse it automatically; a stored URL that no longer points at its ticket or PR is dropped and re-resolved, and a newer user-supplied URL replaces the stored one. The `review-pr` command no longer requires a PR argument when a PR URL is already remembered.
+
+- Add a kb-edit operation to append addressed-by references (#808)
+
+  Lets a knowledge-base author record what addressed a problem (a fix, a mitigation, a PR, a commit, or a URL) with a single `kb-edit` command, instead of hand-editing a note's frontmatter, so that recalling the problem later surfaces the response alongside it. A single command can attach the same reference to several records at once, linking one response to every incident it addressed.
+
+- Default ticket-emitting skills to concise tickets (#811)
+
+  Skills that produce tickets (`design-and-plan`, `create-ticket`, and `align-ticket-with-implementation`) have been revised to encourage concision. Agents are instructed to omit design-process narrative, in particular.
+
+- Record the agent harness in captured events (#822)
+
+  The `capture-event` skill now records which agent platform produced each event alongside the model. Anyone recalling or analyzing events can tell them apart by the platform whose guidance was in effect when they were captured.
+
+- 🚨 **Breaking:** Rename platform to harness (runtime) and scm (VCS host) (#832)
+
+  The `--platform` install flag is replaced by `--harness` for selecting which agent runtime to target. Projects now set their version-control host with a `scm` key in `.agents/preferences.yaml`; an existing `platform` key keeps working as a deprecated alias. Authors should switch any scripts that pass `--platform` over to `--harness`, and rename `platform` to `scm` in their preferences before the alias is removed.
+
+- Rename collaboration skill to collaborate and make it user-invocable (#837)
+
+  The `collaboration` skill is renamed to `collaborate` and can now be invoked directly as a command, rather than running only when an interactive session triggers it.
+
+- Name skill-delivered rulebooks with a consult- prefix (#839)
+
+  Rulebooks delivered as skills are now invoked as `/consult-<slug>` (for example, `/consult-shell-conventions`) rather than the bare slug, so the command reads as bringing the guidance to bear rather than asking for its raw contents. Authors can override the generated command name from the rulebook's frontmatter. Declaring two skill-delivered rulebooks whose commands collide now fails the sync with an error naming both, instead of silently overwriting one.
+
+- 🚨 **Breaking:** Introduce the codeassembly.yaml rulebook declaration format (#866)
+
+  Adds a new `.agents/codeassembly.yaml` file through which projects opt into shared rulebooks. A project can adopt rulebooks, drop ones it inherits from a broader scope, or opt out of broader scopes entirely, and a gitignored local file holds per-checkout overrides.
+
+  The former `.agents/rulebooks.yaml` is no longer read. The `shell-conventions` guidance is no longer installed automatically as a standalone skill; a project now receives it by declaring the `shell-conventions` rulebook and running `codeassembly-agents sync`.
+
+- Add kb-update-events for batch event editing (#867)
+
+  Adds a `kb-update-events` command that lets agents annotate events already captured in the knowledge store, either marking them as addressed by a reference or replacing their tags. Previously, events were frozen at capture; they can now be updated after the fact. A single invocation can update many events at once, reporting success or failure for each.
+
+- Add library list command to enumerate artifacts (#868)
+
+  Adds a `library list` command to the `codeassembly-agents` CLI that lists every available rulebook, skill, and subagent in one place, so users can discover what the library offers without reading the source tree.
+
+- Add kb-retrieve-events for event recall (#872)
+
+  Adds `kb-retrieve-events`, a command for recalling captured events on their own terms. It ranks results by how often a pattern recurs and then by recency, and shows each event's summary, capture time, and repository, along with how many matched events share that repository and any record of what was done about the problem. `kb-retrieve` now returns assertions only; when a query matches only events, each command's empty result points to its sibling. A note that has lost its record type still appears under `kb-retrieve`.
+
+- 🚨 **Breaking:** Make skills declarable & deployable via codeassembly.yaml (#873)
+
+  Projects can now opt individual skills into delivery by declaring them in `codeassembly.yaml`, so a skill reaches only the projects that ask for it instead of every catalogued skill installing everywhere. Running `sync` delivers each declared skill into the project and withdraws it again once its declaration is removed.
+
+- Make subagents declarable and deployable via codeassembly.yaml (#875)
+
+  Subagents can now be declared in codeassembly.yaml and deployed per project, the same way rulebooks and skills already can. Declaring a subagent for a project delivers it to that project; removing the declaration retracts it, so subagents are no longer installed globally with no way to opt in. The library listing now shows whether each subagent is delivered globally or by per-project declaration.
+
+- Add collections and transitive dependency resolution (#876)
+
+  Projects can now opt into a curated set of artifacts in one line: declaring a collection in `codeassembly.yaml` deploys every artifact it depends on, and everything those depend on in turn. Any artifact can now declare its own dependencies, so deploying one brings along its full set. A `recommended` collection ships as a curated starter set projects can opt into, and `library list` now lists collections alongside rulebooks, skills, and subagents.
+
+- Add capture-feedback skill (#882)
+
+  Adds a `capture-feedback` skill that records information about a desired behavior modification at the time when an undesired behavior is observed.
+
+- Add a user-global deployment domain via sync --global (#884)
+
+  Adds `codeassembly-agents sync --global`, which deploys skills, subagents, and rulebooks at the user level so guidance declared once applies across every project without per-repo setup. By default it enables the recommended set, so a single run lands a ready-to-use baseline. Skills and subagents a user authored or installed by hand are never overwritten or deleted, and a bare `sync` run from the home directory is refused with a pointer to `sync --global`.
+
+- Add collection members key with computed @library membership (#889)
+
+  Introduces an `all` collection that deploys the entire content library (every rulebook, skill, and subagent) and automatically includes newly added artifacts, so there is no list to maintain by hand. The guidance artifacts in a collection are now declared as `members` rather than `dependencies`.
+
+- Resolve and persist ticket URLs for bare or omitted references (#890)
+
+  For platforms whose URL can't be derived from the ticket ID, the ticket URL can now be resolved relative to a base URL specified in preferences. Resolved ticket URLs persist across sessions; once a URL is supplied or constructed, later commands need no ticket argument.
+
+- Apply skill transforms when sync deploys declared skills (#893)
+
+  Skills that use include directives, tool-name placeholders, or relative Markdown links now deploy correctly through `sync`. When a skill's include directives or tool-name placeholders can't be resolved for a target harness, `sync` fails the run and writes nothing.
+
+- 🚨 **Breaking:** Retire unconditional install (#894)
+
+  The full catalog of skills, subagents, and rulebooks can now be deployed to a home or project by opting into it with a single declaration. For a home, the new `init --global` command scaffolds that opt-in, and `sync --global` deploys the catalog into the home agent directories. Breaking: `install` no longer deploys the catalog; it now handles only shared guidance, harness-specific content, scripts, and support data. Existing setups need a one-time migration: re-run `install` to prune the old catalog copies, then run `sync --global`.
+
+- Add authoring-guidance rulebook for agents (#896)
+
+  Adds guidance instructing agents how to author a CodeAssembly skill, subagent, rulebook, or collection: how to declare dependencies between artifacts, how a collection lists its members, the frontmatter fields each artifact type takes, and the naming rules.
+
+- Add a mutable impact rating to events (#901)
+
+  Events in the knowledge base can now carry an optional impact rating (low, medium, high, or critical) denoting the estimated impact of addressing the event.
+
+- Add `{skill:}` and `{subagent:}` invocation tokens (#905)
+
+  Lets skill and subagent authors invoke another skill or subagent inline with a single token that renders to the form each harness expects and is automatically counted as a dependency. The invocation no longer has to be declared as a separate dependency and kept in sync with the prose that performs it. A token naming a skill or subagent that doesn't exist now fails the deploy, the same as a missing declared dependency.
+
+- Surface event impact in recall and filter by it (#906)
+
+  Adds a `--min-impact` filter to `kb-retrieve-events` that restricts results to events rated at or above a chosen impact level, so triaging to the observations most worth acting on takes a single step. Each event's impact rating now appears in the results.
+
+- Make events editable until pushed to the remote (#910)
+
+  Knowledge-base events are now editable until pushed to the shared store. This avoids a situation where an event captured inaccurately or by mistake required a second, duplicate capture to correct it. Once pushed, an event can be overridden by means of deliberate override.
+
+- Generate project-scoped Rovo Dev prompts.yml on sync (#911)
+
+  Syncing a project now adds its skills to Rovo Dev's list of available skills. Previously a synced skill could be invoked only by typing its exact name and never appeared in that list. Prompt entries hand-authored in the project are preserved, and the list stays current as project skills are added or removed.
+
+- 🚨 **Breaking:** Deploy harness-specific skills via the declarative mechanism (#912)
+
+  Skills can now target specific coding-agent harnesses, so a single skill can serve several harnesses without keeping a separate copy for each; a skill that declares no targets deploys to every harness. Installing no longer deploys skills or generates Rovo Dev's `prompts.yml`; skills reach a harness only when declared and synced, and syncing merges that file rather than overwriting it, so hand-authored entries survive. The library listing now shows which harnesses each skill targets.
+
+- Establish the concision spine and wire the ticket and review-comment gates (#923)
+
+  Introduces a shared concision principle for agents to apply when authoring code comments, changelog entries, tickets, review findings, and review comments, with the aim of making each of these more concise.
+
+- Extend compose-time concision to plans, devlogs, summaries (#925)
+
+  Extends the concision guidance that already governs tickets and review comments to plans, devlogs, and chat summaries, with the aim of making these artifacts tighter and easier to scan.
+
+- Default interactive chat to concise with deep-dive opt-in (#926)
+
+  Agents in interactive sessions are instructed to provide concise replies, leading with the answer or recommendation and holding the full walk-through until the reader asks to go deeper, but continuing to surface any flaw, risk, or dissent worth raising.
+
+- Route generalizable feedback to capture-feedback, not memory (#929)
+
+  Agents are now instructed to store generalizable corrections and conventions in a shared knowledge base rather than local memory. Per-project memories are now reserved for facts that are genuinely local and shouldn't propagate.
+
+- Add migrate-feedback-memories skill to route memories home (#930)
+
+  Adds a `migrate-feedback-memories` skill that consolidates the feedback memories accumulated on a machine, routing each to its proper home in a single reviewable pass. Generalizable lessons are captured into the shared knowledge base, each carrying a record of where it originated, so they propagate to every project and machine; memories already captured elsewhere or otherwise redundant are removed; and genuinely local notes are left in place. Nothing changes until the full routing plan is approved, and re-running after a completed migration makes no further changes.
+
+- Scope feedback-memory migration per store and ground triage in each project (#931)
+
+  The feedback-memory migration can now run one project store at a time, so a machine holding many memories no longer has to be migrated in a single sweeping pass. Each memory is now routed against the guidance its origin project has already established, rather than judged in isolation. A store whose origin project is no longer present on the machine is now routed anyway instead of stalling the run. A memory that records an agent breaking an established rule is now kept as a tracked mistake rather than deleted as redundant.
+
+- Resolve rulebooks from user-declared content sources (#935)
+
+  Adds support for drawing rulebooks from user-specified content directories, not just from the built-in library. A user can now override a rulebook the library ships or supply one the library lacks.
+
+- Support skills and subagents from user-declared content sources (#945)
+
+  Skills and subagents declared from a user's own content sources now deploy from those sources, not only from the built-in library. When a source and the built-in library both define a skill or subagent with the same name, the one from the source takes precedence. A source skill or subagent may reuse shared content from within its own source, but referencing content outside that source is rejected. Declaring collections from a source is not yet supported.
+
+- Add a feedback-memories list command and rename the toolbox (#946)
+
+  Adds a `feedback-memories list` command that inventories agent feedback memories across every project on the machine, reporting for each project how many it holds, when its most recent memory was last modified, and whether any memory files were found but couldn't be read. A verbose mode adds each memory's one-line description alongside the paths of any unreadable files, and the inventory can be narrowed to a single project.
+
+- Report the source each deployed artifact resolved from (#947)
+
+  Running `sync` now surfaces the origin of each deployed artifact, whether a declared content source or the built-in library, so a declared source masking a same-name built-in artifact (a shadow) no longer goes unnoticed. Running `sync --dry-run` shows the full origin report for every artifact, while a real run stays quiet unless a shadow occurs, then warns.
+
+- Keep implementation detail out of ticket drafts (#948)
+
+  The `design-and-plan`, `create-ticket`, and `align-ticket-with-implementation` skills now instruct agents to leave implementation mechanism (specific files, API and config names, step-by-step procedure) out of the ticket and defer it to the implementation, while retaining the detail that is the change's actual subject. For bug and refactoring tickets, the instruction keeps the existing code they change and defers only the fix procedure.
+
+- Support collections from user-declared content sources (#951)
+
+  A collection declared in a user content source now deploys its members, just like one from the built-in library; previously such a collection could not be used at all. When a user-source collection opts into the entire catalog, it draws that source's own artifacts rather than the built-in ones. Collections were the last artifact type limited to the built-in library, so a user content source can now supply every artifact type.
+
+- Support a PR number as a branch and artifact identifier (#954)
+
+  Adds support for a pull request with no backing ticket to serve the same role a ticket ID does: Naming a branch `PR-123` now gives that PR its own artifact directory and a stable reference. In a project with a configured ticket base URL (such as a Jira instance), `PR-<n>` no longer resolves to a link for a nonexistent ticket.
+
+- Add spike mode to the ticket and plan authoring skills (#955)
+
+  Adds an opt-in spike mode to the ticket- and plan-authoring skills, for investigations whose goal is to answer a question and enable a decision rather than ship software. A spike ticket centers on the question under investigation, a timebox, and a findings deliverable, with acceptance criteria expressed as questions to answer and decisions to enable rather than observable-behavior checkboxes. A spike plan is organized around lines of inquiry (each stating what it probes, how, and when it is answered) rather than a create-modify-test task list.
+
+- Resolve the PR URL from a PR-based branch identity (#956)
+
+  On a PR-based branch, the pull-request URL is now resolved automatically, so PR-aware skills — reviewing a PR, responding to review feedback, merging — pick it up from the branch instead of requiring the URL to be supplied again each session.
+
+- Standardize ticket-authoring doctrine across the emitting skills (#968)
+
+  The three ticket-authoring skills now reference one consistent standard for the ticket structure. The conventions for test and documentation acceptance criteria now apply to all three skills instead of only one.
+
+- Default to folding discovered work into the current change (#969)
+
+  Agents are now guided to treat a ticket as a signal rather than a boundary: Work discovered mid-task that the problem requires, or that is cheap and serves the ticket's goal, folds into the current change by default. Spinning off a separate ticket now calls for a stated reason beyond the ticket's silence, and the scope decision rests with the person, not the agent.
+
+- Frame agent-guidance changes as instructions, not accomplished behavior (#970)
+
+  Agents composing changelog and commit entries are now instructed to describe the change to guidance rather than a modified downstream behavior that the change itself cannot guarantee.
+
+- 🚨 **Breaking:** Disambiguate the memory-store selector and accept its displayed label (#979)
+
+  Renames the `migrate-feedback-memories` store selector from `--store` to `--memory-store`, which accepts the project label the skill displays when listing stores, not only the path-mangled directory name. Naming a store that does not exist, or a label that two stores share, now fails with an error instead of silently completing as though there were nothing to migrate. Across the skills, `--store` now refers only to the knowledge-base store that `capture-event`, `capture-feedback`, and the `kb-*` skills write to.
+
+- Add an action-items convention that separates asks from prose (#982)
+
+  Agents are now instructed to end any response containing an ask with a single labelled block of action items, placed last. Agents are forbidden from embedding asks in conversational text.
+
+  Agents are also now instructed to nest an option's reasoning beneath the option, fixing an issue where pros and cons would not be correctly indented in terminals that discard whitespace indents.
+
+- 🚨 **Breaking:** Rename and generalize the upgrade-dependencies skill (#1003)
+
+  Extends the dependency-upgrade guidance to any project managed by `package.json`, not just pnpm/Node projects. The guidance is now built to hold up on difficult major-version upgrades and to stay accurate as package-manager ecosystems change. The skill is now invoked as `upgrade-dependencies`; the former `upgrading-dependencies` name no longer resolves.
+
+- Add an implement-plan skill for the implementation phase (#1016)
+
+  Adds an `implement-plan` skill, bringing the implementation phase under the same governance the rest of the ticket lifecycle already had. An agent handed a saved feature plan is now instructed to carry it through to a finished branch: treating the ticket's acceptance criteria as the contract wherever plan and code disagree, leaving the plan itself unedited, and running the plan's own verification gates. The instructions hold whether the plan was written moments earlier in the same conversation or handed cold to a fresh session.
+
+  The menu offered after planning now presents three options rather than four, its two implement options collapsed into a single Implement. Whether the finished work wants a review pass is now decided once there is a diff to judge, rather than before any code exists.
+
+- Add a managed event-hook utility for Rovo config.yml (#1017)
+
+  Adds a utility for managing a project's own Rovo hooks within a shared config that other tools also write to. Callers can add their hooks, check whether each is present, missing, or has drifted from its intended form, and remove the ones they added. Hooks, comments, and settings written by other tools are left untouched, and a config that can't be parsed is never rewritten.
+
+- Add a personal rulebook with em-dash usage rule (#1024)
+
+  Introduces `williamthorsen-writing-preferences`, an opt-in personal writing rulebook that instructs agents never to emit the em-dash character. Where a dash is genuinely the best choice, agents are told to write it as two hyphens (`--`); otherwise, to choose the punctuation or wording that names the relationship.
+
+### 🐛 Bug fixes
+
+- Treat menu omission as drop in /wrap-up (#541)
+
+  Fixes an issue where the `/wrap-up` skill required users to explicitly drop findings they did not want to ticket. Findings the user does not select for ticket creation are now dropped silently — and still recorded in the wrap-up report and the deferred-findings artifact, so user discretion is preserved. The "Drop findings" menu action is removed.
+
+- Stop under-recommending direct implementation (#557)
+
+  Fixes the next-steps menu that pushed bounded single-package work to orchestration when a single review pass would have caught what mattered. Direct implementation is now recommended for that class, with two follow-up paths: direct implementation alone for changes a review pass would not improve, and direct implementation paired with a review pass otherwise.
+
+- Raise reviewer max_turns defaults (#564)
+
+  Mitigates the issue that reviewer agents in orchestrated runs were sometimes killed mid-investigation by `max_turns` exhaustion, forcing a full re-dispatch and wasting the prior round's work. Default ceilings now provide a 30–50% margin over observed worst-case tool-call counts.
+
+- Prohibit `version_message` argument in update-jira-ticket (#579)
+
+  Fixes the recurring wasted retry that agents trigger by passing a hallucinated `version_message` argument to `update_jira_issue` (and `create_jira_issue`). The `update-jira-ticket` skill now explicitly prohibits the argument.
+
+- Restore gradient usage with skill-local pointers (#582)
+
+  Fixes the failure of agents to use the recommendation-gradient format when presenting numbered option-style questions — including in plan refinement, merge composition, and project-guidance setup, where the format previously didn't appear.
+
+- Remove `<pre>` from update-jira-ticket allowlist (#585)
+
+  Removes `<pre>` from the elements permitted in `update_jira_issue` HTML payloads. Eliminates a class of opaque `INVALID_INPUT` failures that occurred when multi-line `<pre><code>` blocks contained quoted strings or apostrophes.
+
+  Multi-line code samples are now rendered as multiple `<p><code>` paragraphs or a single `<p>` with `<br>` separators and inline `<code>`. Single-line code continues to use inline `<code>` inside `<p>` or `<li>` as before.
+
+- Fix shellspec test suite hangs in agents package (#609)
+
+  Fixes two indefinite-hang bugs in the agents package: the shellspec test suite (`pnpm -F agents test:sh`) hung on common developer configurations, and PR-lookup calls (`gh pr list`, `curl`) hung on stock macOS. The shell-test suite now also runs automatically as part of `nmr -F agents test` and `nmr ci`. No migration required.
+
+- Use {platform_home_dir} for helper-script invocations (#613)
+
+  Fixes an issue where skills and subagents looked for a helper script in the wrong location, then wasted tool calls guessing at the install path.
+
+- Make skill tool-name references platform-portable (#619)
+
+  Fixes the issue that Claude-specific tool names were being invoked by some skills. Skills installed for Rovo Dev now use that platform's native tool names. References to `WebFetch` are reworded tool-neutrally because Rovo Dev has no native web-fetch counterpart and web access flows through MCP servers or shell tools.
+
+- Codify dispatch precondition for resolve-frontmatter (#626)
+
+  Fixes a confusing failure when a subagent runs `resolve-frontmatter.sh` and the branch manifest is missing. The error now identifies the dispatcher as the party that must invoke `get-session-context` before dispatch, distinguishes that skill from a script, and points to the precondition contract documented in `artifact-conventions.md`.
+
+- Make resolve-frontmatter work from any subdirectory (#627)
+
+  Fixes an issue where `resolve-frontmatter` failed with a manifest-missing error when invoked from any subdirectory of the repository. The script now resolves its manifest correctly regardless of the working directory, and when the manifest is genuinely absent the error message names the absolute path that was checked.
+
+- Make installable content paths resolve outside the monorepo (#632)
+
+  Fixes silent failures and broken references in installed skills and subagents when run outside this monorepo. `changelog-writer` audit results from non-monorepo contexts before this fix were unverified and should be rerun.
+
+- Skip .DS_Store and stray entries during rovodev install (#633)
+
+  Fixes a crash in `codeassembly-agents install --platform rovodev` that occurred when the destination skills directory contained any non-directory entry, such as a `.DS_Store` file dropped in by macOS Finder. Install now skips stray non-directory entries and completes normally.
+
+- Add update-jira-ticket pre-flight validator and rework recovery protocol (#654)
+
+  Fixes two failure modes in the `update-jira-ticket` skill:
+  - Agents repeatedly failing to update Jira tickets. A pre-flight check now catches the HTML patterns the MCP tool rejects and reports specific findings instead of opaque errors.
+  - "PROBE delete me" tickets leaking into the user's backlog. Probe creation is now opt-in and carries a label for one-query JQL cleanup.
+
+- Replace `get-session-context` skill with a bundled TS deriver (#663)
+
+  Fixes an issue where artifact writes failed when the branch manifest had not yet been initialized. Subagents and shell scripts can now create the manifest themselves instead of depending on a separate skill to do it as a side effect.
+
+- Tolerate unknown keys in `.agents/preferences.yaml` (#666)
+
+  Fixes an issue where skills that read `.agents/preferences.yaml` or `~/.agents/preferences.yaml` failed when the file contained keys outside the codeassembly schema.
+
+- Fix `&` corruption in rendered titles on bash 5.2+ (#667)
+
+  Fixes an issue where titles containing `&` were silently corrupted when generated by the `commit`, `create-ticket`, `create-pr`, and `merge-pr` skills, so a title like `Add A & B` came out as `Add A {title} B`. Workarounds such as avoiding `&` in titles are no longer needed.
+
+- Move user-global KB config to `~/.agents/kb.yaml` (#675)
+
+  Fixes an issue where Rovo Dev installations of the `kb-add` and `kb-retrieve` skills resolved the user-global KB registry as empty; only Claude Code installations could read it. The user-global config path is now `~/.agents/kb.yaml` instead of `~/.claude/kb.yaml`. Users with an existing file at the old path must move it; there is no fallback.
+
+- Tighten review-finding thresholds for genuine improvements (#679)
+
+  Cuts review noise from style-preference Suggestions and cosmetic Warnings. Reviewers must now produce evidence that a non-defect finding (Warning, TODO, Recommendation, or Suggestion) names a real improvement over the existing code, not merely an alternative; FIXME remains exempt as a defect claim.
+
+- Stop resolving the pr field at artifact-write time; set it only in PR-aware skills (#687)
+
+  Fixes several issues relating to PR lookup: Lookup was being performed by numerous skills even when no remote branch or PR existed; lookup failed for Bitbucket repos when API credentials were not found, even MCP server was available to perform the lookup.
+
+  Writing an artifact no longer triggers a network PR lookup, so artifact writes are faster and no longer depend on transport availability. In MCP-only Bitbucket environments, this removes a misleading credentials-failure message that previously appeared on nearly every write.
+
+- Keep change-summary ledes outcome-shaped (#688)
+
+  Revises the guidance on writing change summaries for documentation changes, instructing agents to describe what readers of the doc will do or know differently, instead of restating what the page says. This guidance applies across the changelog, commit, and merge flows alike, and headlines should now lead with the reader-facing outcome rather than a list of what changed.
+
+- Forbid interactive UI controls when prompting the user (#692)
+
+  Fixes an issue where coding agents would sometimes pop up an interactive picker for multiple-choice and clarifying questions instead of asking them in plain text. Agents are now directed always to present these questions as numbered text option lists, consistently across the supported agent platforms.
+
+- Self-anchor agents helpers at the git repo root (#703)
+
+  Fixes the agents bundled helpers so they work correctly when run from any subdirectory of a repository, not just the directory where the session started. Running a helper from a subdirectory no longer leaves stray `.agents/` directories behind there, and configured project preferences are now honored wherever the helper runs.
+
+- Give the lede pipeline authority to cut supplied mechanism (#708)
+
+  Strengthens agent guidance to fix an issue where implementation detail could leak into the headline section of a generated change summary or PR description, even though that section is meant to carry only the outcome. Detail-heavy changes should now result in a clean headline. A final-review pass has been added to ensure more reliable results.
+
+- Reframe legacy finding-ID rule to prevent ID collisions (#712)
+
+  Fixes a case where two findings in the same code review could be given the same reference number, so a bare reference like "T1" was ambiguous about which finding it meant. Every finding in a review now carries a distinct reference, and a citation points to exactly one finding.
+
+- Drop branch-cleanup advice and deletion-status fields from merge output (#722)
+
+  Fixes an issue where the completion output and saved record after a GitHub PR merge drifted off the merge result, appending unrequested local-branch cleanup steps and reporting branch-deletion statuses that only restated the deletion choice the user had already made.
+
+- Resolve review spec source by recency with an explicit override (#753)
+
+  Fixes an issue where branch and pull-request reviews could flag already-specified work as unplanned or off-spec, because they graded the implementation against a ticket snapshot frozen at planning time even after the ticket had moved on. Reviews now grade against whichever copy of the ticket is more current — the live remote issue or the local snapshot — and each review states which copy it used and when that copy was last updated. A new `--spec-source=remote|local` option lets a reviewer override that choice when they know which copy is authoritative.
+
+- Exclude top-level skills/_partials/ from skill installation (#788)
+
+  Fixes the issue where installing skills left a stray `_partials` directory in the target skills tree.
+
+- Expand templated script paths in installed subagents (#797)
+
+  Fixes an issue where an agent following an installed subagent's instructions could not run a helper script the subagent named, because the named path pointed nowhere; the scripts now resolve to runnable, absolute paths. Separately, orchestrated commits no longer occasionally ship without the configured commit-title prefix.
+
+- Repair collaboration skill's mistake-recording step (#805)
+
+  Fixes an issue where an agent following the collaboration skill's mistake-recording step failed to record the correction, so feedback captured right after a skill's guidance proved inadequate was silently lost. Such skill-caused mistakes are now tagged so they can be recalled together when deciding which skills to revise.
+
+- Require an explicit --store on every capture-event call (#806)
+
+  Fixes an issue where recording an event with `capture-event` could silently file it in the default knowledge base whenever the destination store was left unspecified, misfiling events that should have gone elsewhere. Naming the destination with `--store` is now required: omitting it refuses the capture and reports the available stores and which one is the registry default. The registry default is still reachable, now by naming it explicitly with `--store @default`.
+
+- Stop reviewers emitting self-disqualifying findings (#804)
+
+  Fixes an issue where code reviews surfaced findings that disqualified themselves, such as a recommendation hedged with "no action needed in this change" or a suggestion gated on a condition that isn't currently met. Reviews now carry only findings the author can act on in the change under review.
+
+- Gate kb-add's registry default behind an explicit @default sentinel (#814)
+
+  Fixes an issue where `kb-add` silently wrote a note to the registry's default knowledge base when no destination was named. With no `--kb` flag and no surrounding `.kb/` directory, `kb-add` now refuses and lists the registered knowledge bases instead of guessing; the registry default is reachable only by passing `--kb @default`. The same guardrail applies to `kb-curate`.
+
+- Stop --retag from bumping updated for curatorial tag edits (#823)
+
+  Fixes an issue where retagging a knowledge-base note with `kb-edit --retag` updated the note's last-changed timestamp. A tag cleanup is curatorial, so it no longer makes a record read as more recently changed than it actually is. The `kb-edit` skill also now spells out which editing operations count as a substantive change and which leave the record's recency untouched.
+
+- Write kb-add assertions under content/assertions (#819)
+
+  Notes added with `kb-add` now land in their correct location within the knowledge base instead of at its root, where misfiled notes fell outside the organized content tree. `kb-add` files each assertion under `content/assertions/`, and the `--folder` flag now names only the topic to file it under, rather than the full path.
+
+- Scope kb-retrieve recall to the configured note set (#829)
+
+  Fixes an issue where searching with `kb-retrieve` could return markdown files that aren't notes, such as a top-level README or a draft under an excluded path, even though the rest of the toolchain never treats them as part of the knowledge base. Searches now return only the notes the knowledge base declares, the same set the `kb check` command validates against.
+
+- Prune stale files on install (#836)
+
+  Fixes an issue where `install` left behind previously installed files whose source had since been deleted, so obsolete skills, subagents, scripts, and guidance could keep turning up where agents would discover and load them. Installing now removes these stale files; ones the user has modified are preserved unless `--force` is passed, and `--dry-run` previews the removals.
+
+- Make a no-findings review a valid, full-score result (#838)
+
+  Fixes a pattern where code reviews padded a clean change with low-value findings and then docked its score to match. A change with nothing to fix now earns a full score, and the review reports no findings rather than manufacturing some. Findings of every severity now move the score, closing a gap where the lowest-severity ones piled up without affecting it.
+
+- Remove dangling owned symlinks during uninstall (#844)
+
+  Fixes an issue where uninstalling left behind broken symlinks the tool had installed whose source file no longer existed, instead of removing them. A managed symlink whose target has changed is also now removed during uninstall rather than left in place, so clearing it no longer requires a force flag.
+
+- Wire comment-discipline into respond-to-review (#845)
+
+  The `respond-to-review` skill now directs the agent to apply `comment-discipline` when it edits code to implement an accepted finding, so comments describe what the code does rather than narrating the change, restating the reviewer's concern, or citing the finding that prompted the edit.
+
+- Deploy a subagent's injected skills with sync (#900)
+
+  Fixes an issue where deploying a subagent declaring a skill but not declaring that skill as a dependency could leave it pointing at a skill that was never installed. The skills a subagent injects at runtime are now automatically treated as dependencies and deployed when it is synced. An injected skill that does not exist in the library now fails the sync with a clear not-found error instead of being silently skipped.
+
+- Skip support directories with no installable files (#903)
+
+  Fixes an issue where `install` could abort partway through when a skill support directory contained nothing installable, such as a directory holding only a stray `.DS_Store`. These directories are now skipped, and the install completes normally.
+
+- Declare cross-artifact runtime dependencies (#908)
+
+  Fixes an issue where a skill installed on its own, without the other skills or subagents it invokes, would fail at runtime when it tried to call one that wasn't installed. Installing a skill now also installs the ones it invokes. Within a skill, references to the skills it invokes now render with the command prefix of the active agent tool rather than a fixed slash.
+
+- Prevent create-ticket from mis-associating backlog tickets (#928)
+
+  Fixes an issue where creating a backlog or follow-up ticket while working on a branch that already owned a different ticket overwrote the branch's ticket link and recorded the branch's id in the new ticket's saved files.
+
+- Attribute migrated feedback events to their origin project (#942)
+
+  Fixes an issue where migrating per-project feedback lessons into the shared knowledge base attributed each lesson to the migration run rather than the project it came from, so unrelated lessons were miscounted as a single recurring one. Migrated lessons are now attributed to their origin project.
+
+- Dedup migrated memories by topic, not session id alone (#949)
+
+  Fixes an issue where migrating feedback memories could permanently discard a memory whose lesson had not been captured anywhere else. A memory is now removed only once the knowledge base genuinely holds its lesson.
+
+- Render self-referential and cross-skill invocations per harness (#957)
+
+  Fixes an issue where a skill command named in a skill's or subagent's prose (its own command or a sibling skill's) rendered with the wrong prefix on harnesses other than Claude. Separately, a skill that only names another skill in passing no longer drags that named skill into the deployment.
+
+- Inline output-shaping specs so skills cannot improvise them (#980)
+
+  Addresses malformed next-steps menus and option-style questions: dropped numbering, a recommendation that didn't match the top-rated option, and menus that never appeared at all. Skills presenting these blocks are now instructed to build them from formatting rules the skill states directly. A companion rule directs that any shared instruction an agent must reproduce be stated in the skill that uses it, while material it only consults stays in a linked reference.
+
+- Support events from a harness that exposes no session id (#981)
+
+  Fixes an issue where agents running on a harness that exposes no session id could not capture events at all. Events already stored without a session id can now be marked as addressed, retagged, or rated for impact, so an event whose problem has since been fixed no longer resurfaces as a live candidate on every recall.
+
+- Carry comment discipline in every agent that writes comments (#983)
+
+  Fixes an issue where agents wrote source comments that argued the change to a reviewer, piled on counterfactuals, or narrated the code's history. Every agent that writes or judges a comment is now instructed on what belongs in one, including the orchestration agents, which previously carried no comment standard at all. The instruction now governs comment text wherever an agent writes it, including a replacement comment proposed inside a review finding. Reviews themselves are held to a narrower bar: They may ask for a comment only when it would record a constraint the code cannot show.
+
+- Recommend refine-plan only when decisions remain unsettled (#990)
+
+  Fixes an issue where agents frequently recommended a `refine-plan` pass on plans whose decisions had already been settled during design. Agents are now instructed to recommend the pass only when a decision the plan depends on is still unsettled, and to name that decision in the recommendation itself.
+
+- Remove the visualization hooks that logged an error on every prompt (#995)
+
+  Fixes an issue where submitting a prompt from a repository subdirectory logged a spurious "No such file or directory" error, cluttering the logs and chat history.
+
+- Sweep ticket and plan for missed decisions before saving (#1015)
+
+  Fixes a gap where tickets and plans could be saved without what the design conversation settled (rejected alternatives, agreed constraints and scope boundaries, edge cases, success criteria), leaving users to ask for a completeness pass by hand after the artifacts were already presented as done. Agents running `design-and-plan` or `plan` are now instructed to check both artifacts against the conversation before saving and to fold in whatever is missing, reporting the amendments without reopening approval. `design-and-plan` is also instructed to offer the remote-issue update after this check rather than before it, and only when the refined ticket differs from what the issue already carries.
+
+- Rebuild post-review next steps on the reviewer/author role model (#1020)
+
+  Fixes the issue that agents were offering inappropriate next steps (such as redesign or replanning) after a code review. Agents are now instructed to offer only the steps of handing findings to the author, addressing findings directly, or updating a misaligned ticket or PR description. The offered choices are fitted to where the review began, so a pull-request review and a local-branch review present different options for routing the findings.
+
+### 🏗️ Internal features
+
+- Migrate label-map schema reference to release-kit (#530)
+
+  Generated `.meta/label-map.json` files now reference the release-kit-hosted JSON schema in place of the codeassembly-hosted URL, and the `internal` commit type maps to the `internal` label (renamed from `utility` to align with release-kit's preset). Existing label-map files keep validating without changes: the previous schema URL points at an immutable git tag that continues to resolve.
+
+- Add an emit-event skill helper and lifecycle event envelope v0 (#998)
+
+  Skills can now emit session-lifecycle events (a run's progress, an artifact written, input requested or received, a pull request created) to a live, per-session log, so a watching surface can read it and show what a session is doing as it runs. Emission never blocks the calling skill and cannot fail from its side, so a telemetry problem never interrupts or alters the run being observed.
+
+- Instrument review-branch, respond-to-review, and create-pr with lifecycle events (#999)
+
+  The three most-used interactive skills (branch review, responding to review, and PR creation) are now instructed to emit lifecycle events throughout a run, so a watching surface can render what a session is doing as it works. The skills are instructed to treat emission as best-effort, so it never blocks or changes the work it observes.
+
+- Add a managed hook-entry utility for Claude Code settings.json (#1011)
+
+  Adds the ability to install CodeAssembly's own hook entries into Claude Code's settings file, check whether they are present, and remove them again. Installing is safe to rerun and brings a drifted entry back into line, and removal reaches entries left behind by earlier versions.
+
+- Emit session-lifecycle events via harness hooks (#1021)
+
+  Session lifecycle is now visible on both the Claude Code and Rovo Dev harnesses. A session appears the moment it opens, no longer staying invisible until its first tracked activity, and is marked ended when it exits or switches away rather than lingering as idle. Each turn boundary (a prompt submitted or a response finished) is now reflected as it happens, so the waiting-on-user state no longer rides an unreliable signal.
+
+### ♻️ Refactoring
+
+- Unify Jira-style ticket ID extraction across skills (#529)
+
+  Aligns the two ticket-ID extraction implementations (`get-ticket-id` Bash script and `get-session-context` zero-Bash spec) on a single canonical contract: case-insensitive `[A-Za-z]{2,}-[0-9]+`, first occurrence wins, uppercased on output. Trailing `.N` sub-ticket suffixes and `-description` slugs are tolerated in input but excluded from the canonical ID by greedy-digit boundary behavior. Author- and scope-prefixed branches (`wt/MAC-130`, `wthorsen/MAC-130`) and mixed-case inputs (`wt/compPlaN-795`) now produce identical, uppercased IDs from both extractors. The shared contract lives at `_data/ticket-id-extraction.md` and is cited from both consumer skills.
+
+- Remove duplicated rules from shared AGENTS.md (#547)
+
+  The shared agent-guidance file is trimmed to remove two rules whose actions only the main agent performs — the PR test-plan rule and the insight-recording rule. Both rules remain enforced inside their owning skills (`create-pr`, `summarize-change`, `merge-pr` for PR test plans; `wrap-up` for insights); behavior is unchanged.
+
+- Stop duplicating work-type tiers in commit/SKILL.md (#551)
+
+  The `commit` skill no longer enumerates work-type tier membership inline; tier membership is now sourced exclusively from the canonical taxonomy. Tier glosses (consumer-facing, not consumer-facing, tooling and supporting work) are preserved so dependent prose in the same skill remains self-supporting. Type assignments are unchanged.
+
+- Emit complete YAML frontmatter from resolve-frontmatter.sh (#604)
+
+  Skills and subagents authoring artifacts no longer compose YAML frontmatter by hand: `resolve-frontmatter.sh` now emits the complete frontmatter, which callers prepend verbatim. The `_partials/frontmatter-via-script.md` partial is removed. Existing `--format json` callers are unchanged.
+
+- Consolidate acceptance-criteria scaffold into a partial (#691)
+
+  The `create-ticket`, `align-ticket-with-implementation`, and `design-and-plan` skills now generate acceptance criteria in one consistent format: Must/Should/Nice-have tiers with checkbox items, omitting any tier that has no items. Tickets created with these skills no longer carry a "Fix lint" criterion.
+
+- Deduplicate filesystem-existence and type-guard helpers (#700)
+
+  Consolidates the duplicated filesystem-existence checks and the repeated error and plain-object type guards into shared helpers, so each behavior now has a single definition rather than near-identical private copies that could drift apart. Previously these copies silently disagreed on which errors meant "absent" — some re-threw permission errors while others swallowed them — and which copy you happened to edit decided the behavior; that choice is now deliberate and documented per caller.
+
+- Deduplicate the isRecord type guard across factory and run-core (#707)
+
+  Consolidates a duplicated type guard onto a single shared definition per package. The unified guard also rejects malformed array data, so such data can no longer surface bogus reviewer names in the rendered run visualizations.
+
+- Rename @codeassembly/kb-core to @codeassembly/kb (#726)
+
+  Renames the knowledge-base foundation package from `@codeassembly/kb-core` to `@codeassembly/kb`; code that depends on it should update its import to the new name. The registry loader for `kb.yaml` is also renamed, so in-repo callers should switch to the new loader and its return type.
+
+- Redesign the record taxonomy around a stored recordType discriminant (#742)
+
+  Settles the knowledge-base record taxonomy ahead of publication: Each record now declares whether it is an assertion or an event, instead of having that type guessed from its other fields, so a misfiled record can no longer be silently treated as the wrong kind. A store's `.kb/schema.yaml` must now declare its record-type vocabulary in the new single-list form; the older two-level and flat shapes no longer load and fail with a clear error. The `capture-event` skill no longer accepts `--type` or `--correction` and records a plain event, and the `--type` label on `kb-add` is now optional. Recall now groups repeated events by repository.
+
+- Replace js-yaml with the yaml library (#743)
+
+  Consolidates all YAML parsing on a single library, removing a redundant YAML dependency that overlapped with it.
+
+- Remove the unused immutable record-type schema flag (#765)
+
+  Removes the `immutable` field from the record-type schema in `.kb/schema.yaml`. The field was never enforced, so its presence implied a write-once guarantee that authors never actually had. A schema that still declares `immutable:` keeps loading, with the key now ignored rather than rejected.
+
+- Consolidate duplicated parseTagList and readAll helpers (#781)
+
+  Consolidates two duplicated internal helpers onto single shared definitions. Both helpers also gain direct unit-test coverage they previously lacked.
+
+- Rename PlatformConfig dir-name fields to *DirName (#801)
+
+  Renames the platform's directory-name fields to distinguish them from resolved-path fields.
+
+- Set the shell-conventions rulebook to skill-only delivery (#916)
+
+  Shell-script conventions no longer load into every agent session's standing guidance. They now surface only on demand, keeping that guidance out of the context of sessions that aren't writing shell scripts.
+
+- Narrow resolveClosure to SourceResolver only (#941)
+
+  Consolidates the internal artifact-resolution API on a single calling convention.
+
+- Route the assertion write commands through KbAssertion (#959)
+
+  kb-add and kb-edit now enforce the same assertion contract as the rest of the knowledge-base pipeline, so a note that doesn't conform is refused up front with a specific reason instead of slipping through to a late, generic validation failure.
+
+- Replace rule engine with a type-blind vault-integrity layer (#961)
+
+  Refocuses `kb check` on cross-note integrity instead of per-note frontmatter validation: it now flags wikilinks that resolve to no note and note basenames shared by two or more notes. A duplicate basename is now reported once per vault, rather than once per link that references it.
+
+  The per-store schema override is gone: `kb create` no longer writes `.kb/schema.yaml`, any existing file is ignored, and the record types are now fixed rather than configurable per store. When validation fails, `capture-event` now reports plain error messages.
+
+  For `@codeassembly/kb` consumers, the `@codeassembly/kb/rules` and `@codeassembly/kb/schema` subpaths are removed, and a new `@codeassembly/kb/vault-integrity` subpath is added.
+
+- Route the capture-event add path through KbEvent (#966)
+
+  Amending a captured event no longer reorders its unchanged frontmatter fields.
+
+- Give the store's on-disk layout a single owner (#992)
+
+  Consolidates a knowledge base's on-disk layout (its metadata directory and its note tree) behind a single source of truth that the rest of the codebase reads from, so moving any part of the layout can no longer leave other code pointing at the old location. Previously these conventions were duplicated, and a single drift could silently disable an event store's immutability guarantee. Separately, removes a source of intermittent failures in the agents test suite.
+
+- Separate the smoke-test code from the bundle build tooling (#996)
+
+  Building the skill-helper bundles no longer creates temporary directories or a throwaway git repository. The build now does only build work, rather than also standing up smoke-test fixtures.
+
+- Remove client-side event-immutability enforcement (#997)
+
+  `capture-event --amend` now rewrites an event in place whether or not it has been pushed; the `--allow-pushed` override flag previously needed to amend a pushed event is removed. To correct an event that may already have been shared, agents are now instructed to append a superseding event with `kb-update-events --add-addressed-by` rather than rewrite it.
+
+### 🧪 Tests
+
+- Add edge-case tests for artifact-frontmatter YAML emission (#618)
+
+  Closes three edge-case coverage gaps in artifact-frontmatter YAML emission: canonical field ordering, the bare-colon quoting boundary, and embedded single quotes in list elements.
+
+- Pin --kb resolution for a single-entry default registry (#698)
+
+  Adds a regression test covering `kb-add`'s `--kb` selection against a registry that holds a single knowledge base marked as the default.
+
+- Use full timestamps in test fixtures, not bare dates (#826)
+
+  Test fixtures now seed date fields with full-precision UTC timestamps, the same form real notes carry, instead of bare day-only dates that no writer actually produces. Fixtures that deliberately exercise legacy day-only date parsing and validation keep their bare dates.
+
+- Rationalize install-command tests onto fixtures to remove timeout flakes (#870)
+
+  Shrinks and streamlines install-command tests to avoid intermittent timeout failures that surfaced unpredictably under parallel-worker load.
+
+- Run real-install tests only as a deliberate integration step (#917)
+
+  Fixes a testing issue where unit test runs in the agents package could intermittently fail when a real content-library install runs long under load and overruns the test timeout. The real-install tests responsible now run only on demand, as a deliberate integration step invoked with `nmr test:integration`.
+
+### ⚙️ Tooling
+
+- Exclude generated files from Prettier formatting
+- Allow test:sh to run selected shellspec tests (#610)
+
+  The `test:sh` script in `@codeassembly/agents` now accepts positional arguments and forwards them to `shellspec`. Callers can run a single test file, a subset of files, or apply shellspec flags such as `--example PATTERN`, instead of always running the full suite.
+
+- Migrate build to nmr-compile and give mcp an entry point (#1001)
+
+  Building the monorepo's TypeScript packages is now a single compile step that emits both JavaScript and type declarations, so the separate typings pass and a repo-local build script are both gone. When the MCP server is started before the build has run, it now reports that the build output is missing instead of failing with a cryptic module-resolution error, and when a package's command-line tool fails to start, it now reports the real cause instead of always advising a rebuild.
+
+## 0.2.0 — 2026-05-04
 
 ### 🎉 Features
 
@@ -23,6 +808,10 @@ All notable changes to this project will be documented in this file.
 - Refine wrap-up: numbered findings, action menu
 
   Replace the checklist format with an inventory of prefixed, numbered items (fixme F1, todo T1, insight I1, etc.) and a numbered action menu, making it easy to see proposed actions and give per-item instructions.
+
+- Add mode system and two-threshold model to orchestrate-dev (#123)
+
+  Adds a `--mode=<vibe|strict>` argument to `/orchestrate-dev` and replaces the boolean `--fix-low`/`--no-fix-low` flag with a two-threshold model (`--approval-threshold` and `--budget-threshold`). Each mode is a preset bundle that configures pipeline phases, review thresholds, model assignments, and review round limits. The threshold model gives finer-grained control over which findings block approval versus which consume review budget opportunistically.
 
 - Migrate orchestrator to MCP and v3 events (#133)
 
@@ -347,7 +1136,7 @@ All notable changes to this project will be documented in this file.
 
   Replaces the 24-hour wall-clock heuristic for detecting active runs with structural signals from `run-index.json`. In `review-change`, an active run is now identified by matching `context.branch` to the current branch and verifying `completedAt` is absent. In `orchestrate`, the time-based "unknown (recent)" / "unknown (stale)" freshness sub-categories are collapsed into a single "unknown" category mapped to the **medium** trust tier.
 
-- Install \_data support files and filter dotfiles (#347)
+- Install _data support files and filter dotfiles (#347)
 
   The install command now deploys the `skills/_data/` support directory alongside skill directories, and filters dotfiles (`.DS_Store`, etc.) from both the install and build pipelines. Previously, all underscore-prefixed directories were skipped during installation, which prevented 20+ skills from accessing their referenced data files.
 
@@ -357,7 +1146,7 @@ All notable changes to this project will be documented in this file.
 
   Add `unlinkIfSymlink` helper and call it before writing `prompts.yml` and merged subagent files so they become real files at the target path.
 
-- Fix broken \_data/ relative paths in skill files (#352)
+- Fix broken _data/ relative paths in skill files (#352)
 
   Fixes broken `_data/` relative paths in 15 skill files so shared reference documents (artifact conventions, naming conventions, next-steps rules) are correctly resolved at runtime. Also normalizes 3 backtick-only references to markdown link syntax for consistent auto-resolution, deletes the redundant `case-conventions.md`, and consolidates `~/.claude/CLAUDE.md` content into `~/.agents/AGENTS.md`.
 
@@ -485,7 +1274,7 @@ All notable changes to this project will be documented in this file.
 
   Add `tokens?`,` toolUses?`, `durationMs?` to the event types table for `phase_completed`, `reviewer_completed`, `coder_fix_completed`, and `re_review_completed`. These optional fields are populated by the orchestrator when capturing Task result metrics; older runs omit them.
 
-## [agents-v0.1.0] - 2026-03-01
+## 0.1.0 — 2026-03-01
 
 ### 🎉 Features
 
@@ -506,4 +1295,4 @@ All notable changes to this project will be documented in this file.
 
   68 tests across 9 test files covering frontmatter merging, manifest operations, file installation, platform detection, and full command pipelines.
 
-<!-- generated by git-cliff -->
+<!-- Generated by release-kit. Do not edit this file. Use .meta/changelog-overrides.json to override entries. -->

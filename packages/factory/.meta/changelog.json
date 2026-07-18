@@ -1,5 +1,54 @@
 [
   {
+    "version": "0.2.1",
+    "date": "2026-07-18",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Deduplicate the isRecord type guard across factory and run-core (#707)",
+            "body": "Consolidates a duplicated type guard onto a single shared definition per package. The unified guard also rejects malformed array data, so such data can no longer surface bogus reviewer names in the rendered run visualizations.",
+            "hash": "1f6f746a16399b14aab6b55c68cbf5ef0d36210d"
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Use full timestamps in test fixtures, not bare dates (#826)",
+            "body": "Test fixtures now seed date fields with full-precision UTC timestamps, the same form real notes carry, instead of bare day-only dates that no writer actually produces. Fixtures that deliberately exercise legacy day-only date parsing and validation keep their bare dates.",
+            "hash": "02e1f734eb30b49a244a96bcaee6cf42760841dc"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Exclude generated files from Prettier formatting",
+            "hash": "b978f66228c8951fab9a99bbeb2af17126bae912"
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Remove local-only references from design docs (#944)",
+            "body": "Removes local-machine file paths or unresolved internal-only references (ticket numbers, branch numbers, pointers to material outside the repo) from design and planning docs.",
+            "hash": "5a7be87ebd8a007de0119a96cc20321d66eda80a"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.0",
     "date": "2026-05-04",
     "sections": [
@@ -9,211 +58,263 @@
         "items": [
           {
             "description": "Scaffold orchestration visualizer foundation (Phases 0–3) (#1)",
-            "body": "Scaffolds the CodeAssembly Factory package — a retro-styled orchestration visualizer built with Excalibur.js, React, and Express. Removes all template packages from the monorepo and replaces them with a single `factory` workspace that reads `status.json` run data from `~/.ai/projects/`, serves it via an Express API, and renders it as an interactive game scene with stations, agents, artifacts, and gates."
+            "body": "Scaffolds the CodeAssembly Factory package — a retro-styled orchestration visualizer built with Excalibur.js, React, and Express. Removes all template packages from the monorepo and replaces them with a single `factory` workspace that reads `status.json` run data from `~/.ai/projects/`, serves it via an Express API, and renders it as an interactive game scene with stations, agents, artifacts, and gates.",
+            "hash": "e10f2e44ddc0e9c30edf83a618fa72706a037052"
           },
           {
             "description": "Support run-index.json (v2) in status adapter (#4)",
-            "body": "Add parseRunData unified entry point that tries v2 (run-index.json) first, falls back to v1 (status.json). Normalize both formats to flat CanonicalRunStatus shape with new fields: mode, model, artifacts. Add ArtifactEntry type with v2 validation covering context, config, and artifact entries. Convert completedAt null to undefined for v1/v2 consistency.\n\nRename phaseDecision to phaseDecisions across all types, consumers, and test fixtures. Update project scanner and route handlers to use parseRunData instead of hardcoded status.json paths. Deduplicate shared validators and simplify normalizeV1 with destructure-and-spread."
+            "body": "Add parseRunData unified entry point that tries v2 (run-index.json) first, falls back to v1 (status.json). Normalize both formats to flat CanonicalRunStatus shape with new fields: mode, model, artifacts. Add ArtifactEntry type with v2 validation covering context, config, and artifact entries. Convert completedAt null to undefined for v1/v2 consistency.\n\nRename phaseDecision to phaseDecisions across all types, consumers, and test fixtures. Update project scanner and route handlers to use parseRunData instead of hardcoded status.json paths. Deduplicate shared validators and simplify normalizeV1 with destructure-and-spread.",
+            "hash": "43c31eff30bae132f8a5e0d12488ac7c3b7fcc18"
           },
           {
             "description": "Implement role-type architecture and all-phase agent mapping (#8)",
-            "body": "Introduces a `RoleType` abstraction layer (5 visual types: orchestrator, analyst, planner, author, reviewer) that decouples agent appearance from individual role names, and extends the mapper to create agents for all 7 orchestration phases. Also adds v2 `run-index.json` support to the status adapter with proper validation and v1 backward compatibility."
+            "body": "Introduces a `RoleType` abstraction layer (5 visual types: orchestrator, analyst, planner, author, reviewer) that decouples agent appearance from individual role names, and extends the mapper to create agents for all 7 orchestration phases. Also adds v2 `run-index.json` support to the status adapter with proper validation and v1 backward compatibility.",
+            "hash": "6d00fc23ad0957434a7e844a40281ac3cdb4900d"
           },
           {
             "description": "Implement sprite infrastructure and basic animations (#9)",
-            "body": "Replaces the flat colored rectangles used for agent actors with sprite-based character animations. Introduces a new `sprites` module containing animation definitions, an SVG placeholder sprite generator, and a caching sprite loader that integrates with Excalibur's `ImageSource`, `SpriteSheet`, and `Animation` APIs. Agents now render as color-coded stick figures (circle head, rectangle body, line arm) with idle bobbing animation."
+            "body": "Replaces the flat colored rectangles used for agent actors with sprite-based character animations. Introduces a new `sprites` module containing animation definitions, an SVG placeholder sprite generator, and a caching sprite loader that integrates with Excalibur's `ImageSource`, `SpriteSheet`, and `Animation` APIs. Agents now render as color-coded stick figures (circle head, rectangle body, line arm) with idle bobbing animation.",
+            "hash": "1babee9ba9d46eba9d7caf0db3448a8cb52d29eb"
           },
           {
             "description": "Add agent movement and status-driven animation transitions (#14)",
-            "body": "Adds incremental agent lifecycle management to the factory scene: agents are dynamically added, removed (with fade-out), and repositioned as run status changes. Each agent's animation state (idle, walking, working, celebrating, concerned) is resolved from the run phase status. Agents at the same station are arranged in a grid layout, and the camera auto-zooms to fit all 7 stations within the viewport."
+            "body": "Adds incremental agent lifecycle management to the factory scene: agents are dynamically added, removed (with fade-out), and repositioned as run status changes. Each agent's animation state (idle, walking, working, celebrating, concerned) is resolved from the run phase status. Agents at the same station are arranged in a grid layout, and the camera auto-zooms to fit all 7 stations within the viewport.",
+            "hash": "22e689273462a32bec6f4ba561602789b98c6f1e"
           },
           {
             "description": "Persist URL selections and reorder status bar (#15)",
-            "body": "Add a `useSelectionParams` hook that persists project/ticket/run dropdown selections as URL query parameters via `history.replaceState`. `RunSelector` initializes its state from URL params on mount, validates them against loaded data, and syncs changes back on every dropdown interaction. The status bar field order is also corrected from Run/Status/Branch/Duration to Project/Ticket/Run/Status/Duration."
+            "body": "Add a `useSelectionParams` hook that persists project/ticket/run dropdown selections as URL query parameters via `history.replaceState`. `RunSelector` initializes its state from URL params on mount, validates them against loaded data, and syncs changes back on every dropdown interaction. The status bar field order is also corrected from Run/Status/Branch/Duration to Project/Ticket/Run/Status/Duration.",
+            "hash": "de4db354a806d0c2b8b9fb4d885bf23cf97c4a1d"
           },
           {
             "description": "Add RunList component with clickable run list in sidebar (#29)",
-            "body": "Adds a `RunList` component to the Factory sidebar that displays all orchestration runs in a flat, scrollable list sorted by most recent. Each item shows a CGA-16 color-coded status indicator, is clickable to select the run for viewing, and has a dismiss button. A \"Clear all\" button dismisses all visible runs at once. The `fetchProjects` call is lifted from `RunSelector` to `App.tsx` so both components share the same `ProjectIndex` data."
+            "body": "Adds a `RunList` component to the Factory sidebar that displays all orchestration runs in a flat, scrollable list sorted by most recent. Each item shows a CGA-16 color-coded status indicator, is clickable to select the run for viewing, and has a dismiss button. A \"Clear all\" button dismisses all visible runs at once. The `fetchProjects` call is lifted from `RunSelector` to `App.tsx` so both components share the same `ProjectIndex` data.",
+            "hash": "e13855a5450e4272e97d53ee9e9ad636d5329c88"
           },
           {
             "description": "Multi-level platforms and agent positioning (#31)",
-            "body": "Replaces the single-platform horizontal layout with a multi-level assembly line where parallel reviewers occupy separate vertical floors connected by ladders. Introduces a pure layout engine that computes all scene geometry, add orchestrator positioning at the active phase station, and make agent diffing level-aware."
+            "body": "Replaces the single-platform horizontal layout with a multi-level assembly line where parallel reviewers occupy separate vertical floors connected by ladders. Introduces a pure layout engine that computes all scene geometry, add orchestrator positioning at the active phase station, and make agent diffing level-aware.",
+            "hash": "f5ff8a3999367ccb6725f78f4c9ca37f13852903"
           },
           {
             "description": "Auto-refresh projects list with file watching (#32)",
-            "body": "Add automatic detection of new tickets and surface them in the Factory dropdown within seconds, without requiring a server restart. The server watches the filesystem for changes and rescans; the client polls for updates every 5 seconds.\n\n* Expose basePath from ProjectScanner\n* Add ProjectWatcher for filesystem change detection\n* Start ProjectWatcher after initial scan\n* Poll for project updates every 5 seconds\n* Restore process.exit in shutdown handler to prevent hang\n\nCustom SIGINT/SIGTERM handlers override Node's default termination.\nWithout process.exit(0), the Express listening socket keeps the event\nloop alive and the process hangs on Ctrl+C. Also extract polling\ninterval to a named constant and guard ProjectWatcher against double\nstart() calls."
+            "body": "Add automatic detection of new tickets and surface them in the Factory dropdown within seconds, without requiring a server restart. The server watches the filesystem for changes and rescans; the client polls for updates every 5 seconds.\n\n* Expose basePath from ProjectScanner\n* Add ProjectWatcher for filesystem change detection\n* Start ProjectWatcher after initial scan\n* Poll for project updates every 5 seconds\n* Restore process.exit in shutdown handler to prevent hang\n\nCustom SIGINT/SIGTERM handlers override Node's default termination.\nWithout process.exit(0), the Express listening socket keeps the event\nloop alive and the process hangs on Ctrl+C. Also extract polling\ninterval to a named constant and guard ProjectWatcher against double\nstart() calls.",
+            "hash": "18cf045095b9eb82bb9450740301095ca81b2c24"
           },
           {
             "description": "Add orchestrator walk transitions along assembly line (#33)",
-            "body": "Replace the orchestrator's instant position-snap with animated walk transitions. The orchestrator now walks horizontally between stations along level 0 as the active phase changes, and transitions between levels at the review area via ladder waypoints (horizontal to ladder, vertical teleport, horizontal to station). During multi-reviewer review phases, the orchestrator is positioned at the highest reviewer level to visually \"oversee from above.\""
+            "body": "Replace the orchestrator's instant position-snap with animated walk transitions. The orchestrator now walks horizontally between stations along level 0 as the active phase changes, and transitions between levels at the review area via ladder waypoints (horizontal to ladder, vertical teleport, horizontal to station). During multi-reviewer review phases, the orchestrator is positioned at the highest reviewer level to visually \"oversee from above.\"",
+            "hash": "f23dcc2073f8fbbfe9998eb5ad9cb1b01163a636"
           },
           {
             "description": "Add Zod schema validation for run-index.json (#43)",
-            "body": "Replace ~170 lines of hand-rolled type-guard validation in status-adapter.ts with Zod schemas. Define V2 run-index.json and V1 status.json schemas with forward-compatible `.loose()` for unknown keys, `.nullish()` for null-tolerant fields, and enum validation for status/criticality values. Refactor parseRunIndex and parseStatusFile to use `.safeParse()` while preserving the public API and error messages.\n\nAdd a CLI validation script (`pnpm run validate:run-index`) that accepts a file or directory, recursively finds run-index.json files, validates each against the V2 schema, and reports per-field Zod errors with meaningful paths.\n\nNew schemas: run-index-schema.ts (13 exported validators), status-json-schema.ts (V1 reusing shared enums). New tests: 161 tests covering all enum values, nullable/optional fields, forward-compatible phase entries, artifact entries, CLI directory scanning, and error differentiation."
+            "body": "Replace ~170 lines of hand-rolled type-guard validation in status-adapter.ts with Zod schemas. Define V2 run-index.json and V1 status.json schemas with forward-compatible `.loose()` for unknown keys, `.nullish()` for null-tolerant fields, and enum validation for status/criticality values. Refactor parseRunIndex and parseStatusFile to use `.safeParse()` while preserving the public API and error messages.\n\nAdd a CLI validation script (`pnpm run validate:run-index`) that accepts a file or directory, recursively finds run-index.json files, validates each against the V2 schema, and reports per-field Zod errors with meaningful paths.\n\nNew schemas: run-index-schema.ts (13 exported validators), status-json-schema.ts (V1 reusing shared enums). New tests: 161 tests covering all enum values, nullable/optional fields, forward-compatible phase entries, artifact entries, CLI directory scanning, and error differentiation.",
+            "hash": "9c01eb3e97d9962f68346b626cdd3e2ea0a8f691"
           },
           {
             "description": "Show agents as soon as their phase is current (#45)",
-            "body": "Adds phase inference to the Factory visualization so agents appear at their stations as soon as their phase becomes current, rather than waiting until phase data is written to `run-index.json`. A new `findCurrentPhase` utility infers the active phase from sequential phase ordering and `phaseDecisions`, then threads the result through station activation, agent creation, orchestrator positioning, and animation state resolution."
+            "body": "Adds phase inference to the Factory visualization so agents appear at their stations as soon as their phase becomes current, rather than waiting until phase data is written to `run-index.json`. A new `findCurrentPhase` utility infers the active phase from sequential phase ordering and `phaseDecisions`, then threads the result through station activation, agent creation, orchestrator positioning, and animation state resolution.",
+            "hash": "71d6e6270bbb229336fcc89d5aa7d5404f2ad72c"
           },
           {
             "description": "Persist local user settings (#47)",
-            "body": "Adds server-side persistence for dismissed-run state in the Factory sidebar. A new `SettingsStore` service reads and writes `settings.json` to a configurable directory, exposed via `GET/PATCH /api/settings` endpoints. The `useDismissedRuns` hook is rewritten to sync with the server using optimistic updates, and dismissals now record the run's status so that re-executed runs automatically reappear."
+            "body": "Adds server-side persistence for dismissed-run state in the Factory sidebar. A new `SettingsStore` service reads and writes `settings.json` to a configurable directory, exposed via `GET/PATCH /api/settings` endpoints. The `useDismissedRuns` hook is rewritten to sync with the server using optimistic updates, and dismissals now record the run's status so that re-executed runs automatically reappear.",
+            "hash": "8612f165b6b873939d4ac0da770497f826ddea80"
           },
           {
             "description": "Add agent spawning and artifact-carrying visuals (#48)",
-            "body": "Agents now spawn at their station only when their phase begins (not from run start), the orchestrator displays a colored artifact indicator while walking between stations, and a brief 300ms hand-off pause occurs upon arrival. Null-safety guards (`isPresent()`) replace `!== undefined` checks throughout phase evaluation, fixing a runtime bug where Zod's `null` phase values slipped past TypeScript's `| undefined` type."
+            "body": "Agents now spawn at their station only when their phase begins (not from run start), the orchestrator displays a colored artifact indicator while walking between stations, and a brief 300ms hand-off pause occurs upon arrival. Null-safety guards (`isPresent()`) replace `!== undefined` checks throughout phase evaluation, fixing a runtime bug where Zod's `null` phase values slipped past TypeScript's `| undefined` type.",
+            "hash": "69296de1278a9d752d77a752ec6d1e70a1b7b465"
           },
           {
             "description": "Improve run listing readability in sidebar (#50)",
-            "body": "Restructures the Factory sidebar's `RunList` component to prioritize project/ticket identity over raw run IDs, adds human-readable timestamps, improves color legibility, and adds timing tooltips. Threads `completedAt` from the server-side scanner through to the client UI."
+            "body": "Restructures the Factory sidebar's `RunList` component to prioritize project/ticket identity over raw run IDs, adds human-readable timestamps, improves color legibility, and adds timing tooltips. Threads `completedAt` from the server-side scanner through to the client UI.",
+            "hash": "1c18ba7f378c0f15d0a99d06850c38faddb61895"
           },
           {
             "description": "Add resting animations for idle agents (#54)",
-            "body": "Adds a `resting` animation state — a relaxed arm-sway — that plays when an agent has completed its work and is waiting. This visually distinguishes \"done and waiting\" agents from \"not yet started\" agents, which remain in the `idle` bob animation. The orchestrator also uses `resting` as its default in-progress state while waiting at a station."
+            "body": "Adds a `resting` animation state — a relaxed arm-sway — that plays when an agent has completed its work and is waiting. This visually distinguishes \"done and waiting\" agents from \"not yet started\" agents, which remain in the `idle` bob animation. The orchestrator also uses `resting` as its default in-progress state while waiting at a station.",
+            "hash": "c3cb4a2e8d572651902befe17561a1d203434d91"
           },
           {
             "description": "Position orchestrator to left of delegatee (#56)",
-            "body": "Add `approaching?: boolean` to `AgentConfig` so the orchestrator stands one agent-spacing (36px) to the left of the leftmost agent at the target station instead of occupying a grid slot past the delegatee. Propagate the flag through the layout system (`agentPosition` early-return for level-0 and upper-level approach positions), the agent differ (`hasPositionChanged` helper with `?? false` coalescing), and both `FactoryScene` call sites.\n\nRemove the now-unused `agents` parameter from `buildOrchestratorAgent` and the `existingAtStation` computation since the orchestrator always uses `stackOffset: 0` when approaching. Extract a `leftmostSlotOffset` intermediate in the layout for geometric clarity.\n\nFollow-up: CODY-55 tracks directional sprite facing (`scaleX = -1`) so the orchestrator and delegatee visually face each other."
+            "body": "Add `approaching?: boolean` to `AgentConfig` so the orchestrator stands one agent-spacing (36px) to the left of the leftmost agent at the target station instead of occupying a grid slot past the delegatee. Propagate the flag through the layout system (`agentPosition` early-return for level-0 and upper-level approach positions), the agent differ (`hasPositionChanged` helper with `?? false` coalescing), and both `FactoryScene` call sites.\n\nRemove the now-unused `agents` parameter from `buildOrchestratorAgent` and the `existingAtStation` computation since the orchestrator always uses `stackOffset: 0` when approaching. Extract a `leftmostSlotOffset` intermediate in the layout for geometric clarity.\n\nFollow-up: CODY-55 tracks directional sprite facing (`scaleX = -1`) so the orchestrator and delegatee visually face each other.",
+            "hash": "cbad2ba10629a7b9bb278c6e612dd50826e6d5f9"
           },
           {
             "description": "Add directional sprite facing for approaching orchestrator (#61)",
-            "body": "Adds a `setFacing(direction)` method to `AgentActor` using Excalibur's `graphics.flipHorizontal` property, and calls it from `FactoryScene` when agents are added or after the orchestrator finishes walking. When the orchestrator approaches a delegatee (`approaching: true`), its sprite now faces right toward the delegatee instead of facing left like all other agents."
+            "body": "Adds a `setFacing(direction)` method to `AgentActor` using Excalibur's `graphics.flipHorizontal` property, and calls it from `FactoryScene` when agents are added or after the orchestrator finishes walking. When the orchestrator approaches a delegatee (`approaching: true`), its sprite now faces right toward the delegatee instead of facing left like all other agents.",
+            "hash": "c63d3e126d9ece239a1559304562707f2b7dd2d2"
           },
           {
             "description": "Improve representational quality of gates (#64)",
-            "body": "Rewrite `GateActor` as a stateful, animated actor so that nonblocking gates are visually low (2px vs 40px blocking) and the transition is animated over 1 second. The orchestrator waits at a gate until the animation completes before walking through.\n\n- GateActor uses `Rectangle` graphic with `onPreUpdate` frame-by-frame   height interpolation, bottom-edge pinned to the platform surface.\n- Gates persist across `rebuildStaticElements` via `gateMap` (mirrors the existing `agentMap` pattern), with diffing in `updateGates`.\n- `waitForOpen()` promise coordination lets the orchestrator await gate transitions; resolvers flush unconditionally on animation completion to prevent leaks on direction reversal."
+            "body": "Rewrite `GateActor` as a stateful, animated actor so that nonblocking gates are visually low (2px vs 40px blocking) and the transition is animated over 1 second. The orchestrator waits at a gate until the animation completes before walking through.\n\n- GateActor uses `Rectangle` graphic with `onPreUpdate` frame-by-frame   height interpolation, bottom-edge pinned to the platform surface.\n- Gates persist across `rebuildStaticElements` via `gateMap` (mirrors the existing `agentMap` pattern), with diffing in `updateGates`.\n- `waitForOpen()` promise coordination lets the orchestrator await gate transitions; resolvers flush unconditionally on animation completion to prevent leaks on direction reversal.",
+            "hash": "216b2138dcb77878f9d60eeca519d36beb797010"
           },
           {
             "description": "Update run-index.json incrementally during parallel review (#69)",
-            "body": "Updates the orchestrate skill's review-cycle module and the factory visualization to support incremental `run-index.json` writes at every state transition during the review cycle. Adds per-phase `startedAt`/`completedAt` timestamps, an iteration-level structure for `parallelReview`, and fixes a phase-inference bug where `isPhaseEvaluated()` conflated \"data present\" with \"phase completed.\""
+            "body": "Updates the orchestrate skill's review-cycle module and the factory visualization to support incremental `run-index.json` writes at every state transition during the review cycle. Adds per-phase `startedAt`/`completedAt` timestamps, an iteration-level structure for `parallelReview`, and fixes a phase-inference bug where `isPhaseEvaluated()` conflated \"data present\" with \"phase completed.\"",
+            "hash": "c6ffe9c43f24998e8128c48d5842e5c72e00b567"
           },
           {
             "description": "Move station labels to platform (#70)",
-            "body": "Reposition station labels from inside the station rectangle to the platform bar below, centered horizontally using `TextAlign.Center`. Display the role name (e.g., \"architect\") instead of the phase name (e.g., \"architecture\") for readability.\n\nAdd PHASE_ROLE constant mapping phases to display role names, add role field to StationConfig, and update `StationActor` to accept role as its first parameter with the new label offset `vec(50, 25)`.\n\nFix label Y offset from 25 to 45 so text centers vertically within the main platform rather than inside the station rectangle. The GraphicsGroup offset origin is the group's top-left, so reaching the platform center requires STATION_HEIGHT + PLATFORM_HEIGHT/2 - 5 (40 + 10 - 5 = 45), not STATION_HEIGHT/2 + PLATFORM_HEIGHT/2 - 5.\n\nAlso use spaces in display names (\"holistic reviewer\") instead of hyphens for readability."
+            "body": "Reposition station labels from inside the station rectangle to the platform bar below, centered horizontally using `TextAlign.Center`. Display the role name (e.g., \"architect\") instead of the phase name (e.g., \"architecture\") for readability.\n\nAdd PHASE_ROLE constant mapping phases to display role names, add role field to StationConfig, and update `StationActor` to accept role as its first parameter with the new label offset `vec(50, 25)`.\n\nFix label Y offset from 25 to 45 so text centers vertically within the main platform rather than inside the station rectangle. The GraphicsGroup offset origin is the group's top-left, so reaching the platform center requires STATION_HEIGHT + PLATFORM_HEIGHT/2 - 5 (40 + 10 - 5 = 45), not STATION_HEIGHT/2 + PLATFORM_HEIGHT/2 - 5.\n\nAlso use spaces in display names (\"holistic reviewer\") instead of hyphens for readability.",
+            "hash": "9f3c081a978edb710a976dbb65af752b911d00d2"
           },
           {
             "description": "Render individual artifact boxes with configurable layout (#77)",
-            "body": "Replaces the one-box-per-phase artifact rendering with per-artifact visual boxes arranged horizontally at each station. Adds configurable layout constants for artifact size, gap, and offset. Implements a dual-source data strategy that uses the top-level `artifacts` array when populated and falls back to phase-specific fields for backward compatibility. Adds rendering support for `codeSimplifier` and `holisticReview` phases."
+            "body": "Replaces the one-box-per-phase artifact rendering with per-artifact visual boxes arranged horizontally at each station. Adds configurable layout constants for artifact size, gap, and offset. Implements a dual-source data strategy that uses the top-level `artifacts` array when populated and falls back to phase-specific fields for backward compatibility. Adds rendering support for `codeSimplifier` and `holisticReview` phases.",
+            "hash": "aa59b2d19678e975364e8de96bfc6e93e4e4174e"
           },
           {
             "description": "Add demo playback mode with event-sourced run replay (#81)",
-            "body": "Adds a demo playback mode to Factory that replays orchestrated runs using an event-sourced architecture. A new v3 `run-index.json` header-only format paired with `run-log.jsonl` append-only event stream enables any completed run to be replayed without conversion. The playback system produces `CanonicalRunStatus` — the same type consumed by live visualizations — so the UI is data-source-agnostic.\n\nDetails:\n\n- Data layer: `RunHeader`/`RunEvent` types and Zod schemas for `run-log.jsonl` validation, v3 `run-index.json` header-only schema.\n- Event folder: shared `foldEvents(header, events)` function that reconstructs `CanonicalRunStatus` from header + event array, used by both server and client.\n- Server: status adapter v3 path with v2/v1 backward compatibility fallback chain.\n- Playback: `PlaybackController` with play/pause/stop, step forward/backward, variable speed (0.25x–128x), and timeline normalization (caps inter-event gaps at 10s).\n- React hooks: `usePlayback` (wraps controller) and `useDemoMode` (coordinates live/demo data source switching).\n- UI components: `DemoStatusLight` (pulsing color indicator) and `DemoControlPanel` (transport controls, speed controls, recording selector, timeline indicator).\n- Demo data: bundled recording of a moderately complex run exercising all 7 phases, 3 parallel reviewers, fix cycle, code simplifier, holistic review.\n- Integration: `App.tsx` seamlessly switches between live and demo data — the visualization never knows which data source it's using."
+            "body": "Adds a demo playback mode to Factory that replays orchestrated runs using an event-sourced architecture. A new v3 `run-index.json` header-only format paired with `run-log.jsonl` append-only event stream enables any completed run to be replayed without conversion. The playback system produces `CanonicalRunStatus` — the same type consumed by live visualizations — so the UI is data-source-agnostic.\n\nDetails:\n\n- Data layer: `RunHeader`/`RunEvent` types and Zod schemas for `run-log.jsonl` validation, v3 `run-index.json` header-only schema.\n- Event folder: shared `foldEvents(header, events)` function that reconstructs `CanonicalRunStatus` from header + event array, used by both server and client.\n- Server: status adapter v3 path with v2/v1 backward compatibility fallback chain.\n- Playback: `PlaybackController` with play/pause/stop, step forward/backward, variable speed (0.25x–128x), and timeline normalization (caps inter-event gaps at 10s).\n- React hooks: `usePlayback` (wraps controller) and `useDemoMode` (coordinates live/demo data source switching).\n- UI components: `DemoStatusLight` (pulsing color indicator) and `DemoControlPanel` (transport controls, speed controls, recording selector, timeline indicator).\n- Demo data: bundled recording of a moderately complex run exercising all 7 phases, 3 parallel reviewers, fix cycle, code simplifier, holistic review.\n- Integration: `App.tsx` seamlessly switches between live and demo data — the visualization never knows which data source it's using.",
+            "hash": "590c0116b4dd72805d0a2dcce60b902575189182"
           },
           {
             "description": "Show tooltip on hover over artifact boxes (#91)",
-            "body": "Adds hover tooltips to artifact boxes in the Factory visualization, displaying metadata (filename, role, agent, phase, timestamp) when the user hovers over an artifact. Establishes the first Excalibur→React communication channel — a callback pattern from game actors through the scene to React state — that future interactive features will reuse.\n\nDetails:\n\nThreads tooltip metadata (filename, role, agent, phase, timestamp) from `ArtifactEntry` through `ArtifactConfig`, `FactoryScene`, and `ArtifactActor` into React via a new callback-based communication channel. Pointer events on `ArtifactActor` fire up to `GameCanvas`, which manages hover state and renders a fixed-position `ArtifactTooltip` component. This establishes the first Excalibur-to-React communication path in the codebase."
+            "body": "Adds hover tooltips to artifact boxes in the Factory visualization, displaying metadata (filename, role, agent, phase, timestamp) when the user hovers over an artifact. Establishes the first Excalibur→React communication channel — a callback pattern from game actors through the scene to React state — that future interactive features will reuse.\n\nDetails:\n\nThreads tooltip metadata (filename, role, agent, phase, timestamp) from `ArtifactEntry` through `ArtifactConfig`, `FactoryScene`, and `ArtifactActor` into React via a new callback-based communication channel. Pointer events on `ArtifactActor` fire up to `GameCanvas`, which manages hover state and renders a fixed-position `ArtifactTooltip` component. This establishes the first Excalibur-to-React communication path in the codebase.",
+            "hash": "779e4e6feb88faac82132a00d4664f5e5a2377a2"
           },
           {
             "description": "Add React Flow foundation and visualization switcher (#109)",
-            "body": "Adds `@xyflow/react` to the factory package and introduces a flow-diagram visualization alongside the existing Excalibur-based factory view. A `VisualizationSwitcher` component provides a toggle between views, a `FlowDiagram` shell wraps React Flow with pan/zoom/minimap, and a `run-to-flow.ts` mapper transforms `CanonicalRunStatus` into positioned nodes and edges representing the orchestration pipeline."
+            "body": "Adds `@xyflow/react` to the factory package and introduces a flow-diagram visualization alongside the existing Excalibur-based factory view. A `VisualizationSwitcher` component provides a toggle between views, a `FlowDiagram` shell wraps React Flow with pan/zoom/minimap, and a `run-to-flow.ts` mapper transforms `CanonicalRunStatus` into positioned nodes and edges representing the orchestration pipeline.",
+            "hash": "c80fe68d202fed3a5c1a04c7da672ed93b2769b7"
           },
           {
             "description": "Create custom node components for flow diagram (#112)",
-            "body": "Adds 6 custom React Flow node types (OrchestratorNode, PhaseAgentNode, ReviewerNode, CoderShadowNode, SkippedPhaseNode, PhaseGroupNode) with a shared StatusDot sub-component and CSS. Extends the run-to-flow mapper to set `type` fields and populate phase-specific metadata on nodes. Registers all custom node types in FlowDiagram."
+            "body": "Adds 6 custom React Flow node types (OrchestratorNode, PhaseAgentNode, ReviewerNode, CoderShadowNode, SkippedPhaseNode, PhaseGroupNode) with a shared StatusDot sub-component and CSS. Extends the run-to-flow mapper to set `type` fields and populate phase-specific metadata on nodes. Registers all custom node types in FlowDiagram.",
+            "hash": "3ea187a47376d0ba62f39c43a274759127e7cc80"
           },
           {
             "description": "Add custom edge components with packet animation (#118)",
-            "body": "Adds custom React Flow edge components (`DispatchEdge`, `ReturnEdge`, `SpineEdge`) with a reusable `PacketAnimation` system for the Factory flow diagram. Edges visually distinguish completed from pending dispatches, carry criticality badges on return edges, and animate with network-style packet effects when new edges appear."
+            "body": "Adds custom React Flow edge components (`DispatchEdge`, `ReturnEdge`, `SpineEdge`) with a reusable `PacketAnimation` system for the Factory flow diagram. Edges visually distinguish completed from pending dispatches, carry criticality badges on return edges, and animate with network-style packet effects when new edges appear.",
+            "hash": "58fe002b35060a657adab09af3af8b046c870ef1"
           },
           {
             "description": "Implement review-cycle visualization and iteration tracking (#129)",
-            "body": "Extends the Factory flow diagram to visualize the orchestration system's parallel review cycle — reviewer fan-out, criticality badges, selective re-review with dimming, iteration counters, coder shadow nodes, edge accumulation, and staggered animations. All 13 acceptance criteria from CODY-100 are implemented across 11 files with 47 new/modified tests."
+            "body": "Extends the Factory flow diagram to visualize the orchestration system's parallel review cycle — reviewer fan-out, criticality badges, selective re-review with dimming, iteration counters, coder shadow nodes, edge accumulation, and staggered animations. All 13 acceptance criteria from CODY-100 are implemented across 11 files with 47 new/modified tests.",
+            "hash": "56b663fa776b500f01c676bbf0549f1aa21f8f31"
           },
           {
             "description": "Persist visualization mode in query string parameter (#142)",
-            "body": "Adds a `useVisualizationParam` hook that persists the Factory/Flow visualization mode toggle in a `visualization` query string parameter. The `VisualizationSwitcher` component swaps its bare `useState` for this hook, so the selected view survives page refreshes and can be shared via URL."
+            "body": "Adds a `useVisualizationParam` hook that persists the Factory/Flow visualization mode toggle in a `visualization` query string parameter. The `VisualizationSwitcher` component swaps its bare `useState` for this hook, so the selected view survives page refreshes and can be shared via URL.",
+            "hash": "cb8014dc80fd8c2ced6aaf9618cdccb2f49d0f2e"
           },
           {
             "description": "Propagate failure reason from run_failed event to CanonicalRunStatus (#167)",
-            "body": "Threads the `reason` field from `run_failed` events through the entire canonical run status pipeline — from `CanonicalRunStatus` type definition through event folding, data parsing, and into the Factory StatusBar UI."
+            "body": "Threads the `reason` field from `run_failed` events through the entire canonical run status pipeline — from `CanonicalRunStatus` type definition through event folding, data parsing, and into the Factory StatusBar UI.",
+            "hash": "5d6f312f2bff50b09aa7b03e93494d8de2c09f36"
           },
           {
             "description": "Scaffold catwalk visualization with empty scene (#189)",
-            "body": "Add a new \"Catwalk\" visualization to the factory package, scaffolding the `CatwalkCanvas` React component and `CatwalkScene` Excalibur scene with a dark background. The `VisualizationSwitcher` is extended with a third tab, and the `useVisualizationParam` hook now supports `'catwalk'` as a valid view. A separate commit updates the agents artifacts directory configuration."
+            "body": "Add a new \"Catwalk\" visualization to the factory package, scaffolding the `CatwalkCanvas` React component and `CatwalkScene` Excalibur scene with a dark background. The `VisualizationSwitcher` is extended with a third tab, and the `useVisualizationParam` hook now supports `'catwalk'` as a valid view. A separate commit updates the agents artifacts directory configuration.",
+            "hash": "7c5587469903c4d6c0a69e12761e12c4fb7c16aa"
           },
           {
             "description": "Integrate CatwalkScene with config-driven actor management (#201)",
-            "body": "Implements the milestone 1 integration scene for the catwalk visualization — wiring layout, mapper, and actors together into a working Excalibur scene. `CatwalkScene` receives `CanonicalRunStatus` updates, derives visual state via `mapRunToCatwalk` and `computeCatwalkLayout`, and creates all actor types (stations, agents, orchestrator, gates, chutes, artifacts) at layout-computed positions. The catwalk is now the default visualization tab."
+            "body": "Implements the milestone 1 integration scene for the catwalk visualization — wiring layout, mapper, and actors together into a working Excalibur scene. `CatwalkScene` receives `CanonicalRunStatus` updates, derives visual state via `mapRunToCatwalk` and `computeCatwalkLayout`, and creates all actor types (stations, agents, orchestrator, gates, chutes, artifacts) at layout-computed positions. The catwalk is now the default visualization tab.",
+            "hash": "9814e985ba30bbf2c3af9cab6939010d61af576d"
           },
           {
             "description": "Implement catwalk config differ (#211)",
-            "body": "Adds a pure-function structural differ that compares two `CatwalkSceneConfig` snapshots and produces typed change descriptors. Four sub-differs (`diffOrchestrator`, `diffAgents`, `diffGates`, `diffArtifacts`) are composed into a top-level `diffCatwalkConfig` function that returns a `CatwalkDiff` with a `hasChanges` boolean."
+            "body": "Adds a pure-function structural differ that compares two `CatwalkSceneConfig` snapshots and produces typed change descriptors. Four sub-differs (`diffOrchestrator`, `diffAgents`, `diffGates`, `diffArtifacts`) are composed into a top-level `diffCatwalkConfig` function that returns a `CatwalkDiff` with a `hasChanges` boolean.",
+            "hash": "c1438ede12ceb9acc61d4f8d09a846cd3feeaba7"
           },
           {
             "description": "Add run directory scanning and refactor ProjectScanner (#221)",
-            "body": "Adds run directory scanning infrastructure to `run-core` — a scanner (`discoverRunDirectories`), validator (`validateRunDirectory`), and CLI tool for checking and archiving invalid runs. Refactors `factory`'s `ProjectScanner` to delegate to these new shared scanners and introduces a central configuration module.\n\nModel: claude-opus-4-6\nWorkspaces: factory, run-core"
+            "body": "Adds run directory scanning infrastructure to `run-core` — a scanner (`discoverRunDirectories`), validator (`validateRunDirectory`), and CLI tool for checking and archiving invalid runs. Refactors `factory`'s `ProjectScanner` to delegate to these new shared scanners and introduces a central configuration module.\n\nModel: claude-opus-4-6\nWorkspaces: factory, run-core",
+            "hash": "52e07b6af26851ae23692ba751082d0507c0f81e"
           },
           {
             "description": "Add animated state transitions to catwalk actors (#225)",
-            "body": "Replace the tear-down-and-rebuild pattern in `CatwalkScene.updateStatus()` with diff-driven animation dispatch. Each actor type gains targeted animation methods — walk, pulse, fade, scale — driven by `CatwalkDiff` computations on each status update. A new `deactivated` agent state preserves visual history of completed agents at low opacity."
+            "body": "Replace the tear-down-and-rebuild pattern in `CatwalkScene.updateStatus()` with diff-driven animation dispatch. Each actor type gains targeted animation methods — walk, pulse, fade, scale — driven by `CatwalkDiff` computations on each status update. A new `deactivated` agent state preserves visual history of completed agents at low opacity.",
+            "hash": "642905d4217dae791a982923a6983dece8f96b1d"
           },
           {
             "description": "Create sprite-loading infrastructure for catwalk (#228)",
-            "body": "Replaces the catwalk visualization's geometric primitives (circles + text for station agents, rectangles + text for the orchestrator) with pixel art sprites loaded from PNG sprite sheets. Introduces a sprite loading/caching module, placeholder SVG sprite sheet assets, a Vite static import mapping layer, and refactors both actor classes to render via `Animation` + `GraphicsGroup`."
+            "body": "Replaces the catwalk visualization's geometric primitives (circles + text for station agents, rectangles + text for the orchestrator) with pixel art sprites loaded from PNG sprite sheets. Introduces a sprite loading/caching module, placeholder SVG sprite sheet assets, a Vite static import mapping layer, and refactors both actor classes to render via `Animation` + `GraphicsGroup`.",
+            "hash": "d106345c6b0fb2b637c5fb7b0bbf606df9ad515d"
           },
           {
             "description": "Pulse scale instead of opacity; extract opacity constants (#240)",
-            "body": "Replaces the catwalk visualization's opacity-based working pulse with a scale-based pulse, extracts all hardcoded opacity and scale values into named constants in a shared animation module, and removes baked-in opacity from the placeholder SVG sprites so the game engine has full control over actor visibility."
+            "body": "Replaces the catwalk visualization's opacity-based working pulse with a scale-based pulse, extracts all hardcoded opacity and scale values into named constants in a shared animation module, and removes baked-in opacity from the placeholder SVG sprites so the game engine has full control over actor visibility.",
+            "hash": "43be9d007bf08e30570e1179df3be7c31a906a60"
           },
           {
             "description": "Add chute animations, carried artifacts, and code badge (#241)",
-            "body": "Adds a promise-based choreography system that sequences artifact delivery animations through station chutes, renders carried-artifact badges trailing the orchestrator during walks, and displays a code-iteration badge (v2, v3) below the orchestrator sprite when implementation has been re-entered."
+            "body": "Adds a promise-based choreography system that sequences artifact delivery animations through station chutes, renders carried-artifact badges trailing the orchestrator during walks, and displays a code-iteration badge (v2, v3) below the orchestrator sprite when implementation has been re-entered.",
+            "hash": "c43b33bbdce433a76bb91a98cb135e53cc42a1ca"
           },
           {
             "description": "Generate block-robot pixel art sprites (#249)",
-            "body": "Replace the placeholder colored-rectangle sprite sheets in the catwalk visualization with composable block-robot pixel art silhouettes. A new multi-file module under `scripts/sprites/` defines reusable body parts, color palettes, and a renderer that composites 12 animation poses per robot type into 128×96 SVG sprite sheets. Both subagent (compact metallic worker) and orchestrator (taller gold command unit with antenna) are visually distinct and produce state-appropriate poses across idle, walking, working, resting, celebrating, and concerned animations."
+            "body": "Replace the placeholder colored-rectangle sprite sheets in the catwalk visualization with composable block-robot pixel art silhouettes. A new multi-file module under `scripts/sprites/` defines reusable body parts, color palettes, and a renderer that composites 12 animation poses per robot type into 128×96 SVG sprite sheets. Both subagent (compact metallic worker) and orchestrator (taller gold command unit with antenna) are visually distinct and produce state-appropriate poses across idle, walking, working, resting, celebrating, and concerned animations.",
+            "hash": "3e7fe4af1226abd278fba3d2eeffb66fab51da34"
           },
           {
             "description": "Generate HTML preview page for sprite sheets (#254)",
-            "body": "Adds a self-contained HTML preview page generator for sprite sheets. Running `pnpm run generate-sprites` from `packages/factory/` now produces both SVG sprite sheets and a timestamped HTML preview at `.local/sprites/`. The preview displays all 12 frames in a labeled 4x3 grid with animated previews for both subagent and orchestrator robot sprites."
+            "body": "Adds a self-contained HTML preview page generator for sprite sheets. Running `pnpm run generate-sprites` from `packages/factory/` now produces both SVG sprite sheets and a timestamped HTML preview at `.local/sprites/`. The preview displays all 12 frames in a labeled 4x3 grid with animated previews for both subagent and orchestrator robot sprites.",
+            "hash": "4cf7c643aaa51bed2fc9ab3097e41d68574ca294"
           },
           {
             "description": "Expand block-robot sprites and improve palette contrast (#268)",
-            "body": "Replace hardcoded hex palettes with an HSL-based parametric generator and scale both robot sprite characters to fill their 32×32 cells. The subagent shifts from blue-grey to cyan/teal for contrast against the dark catwalk background, and the orchestrator gold gets a saturation/lightness boost. Sprite bottom-padding constants are renamed with explicit `_PX` units and updated from 6/10px to 1px to match the new geometry."
+            "body": "Replace hardcoded hex palettes with an HSL-based parametric generator and scale both robot sprite characters to fill their 32×32 cells. The subagent shifts from blue-grey to cyan/teal for contrast against the dark catwalk background, and the orchestrator gold gets a saturation/lightness boost. Sprite bottom-padding constants are renamed with explicit `_PX` units and updated from 6/10px to 1px to match the new geometry.",
+            "hash": "69e993e013ea6a4b48ead28db07af78ab6b80bcc"
           },
           {
             "description": "Add progressive artifact reveal to catwalk demo replay (#272)",
-            "body": "Artifacts in the catwalk scene now appear progressively during demo playback — outputs fade in when produced, inputs are delivered by the orchestrator via a sequenced chute animation (ascend → walk → descend → land). The demo data model is simplified from event-folding to direct snapshot stepping, and all non-catwalk visualizations are removed."
+            "body": "Artifacts in the catwalk scene now appear progressively during demo playback — outputs fade in when produced, inputs are delivered by the orchestrator via a sequenced chute animation (ascend → walk → descend → land). The demo data model is simplified from event-folding to direct snapshot stepping, and all non-catwalk visualizations are removed.",
+            "hash": "72f82f13680513779d770d98d4aab05f033417f9"
           },
           {
             "description": "Redesign orchestrator sprite (#286)",
-            "body": "Replaces the orchestrator robot's visual design: swaps leg-based locomotion for tank treads, replaces the antenna with a 3-state beacon lamp, widens the torso, and introduces per-sprite-type animation configuration. The scale-pulse mechanism (`onPreUpdate`) is removed in favor of sprite-driven visual states."
+            "body": "Replaces the orchestrator robot's visual design: swaps leg-based locomotion for tank treads, replaces the antenna with a 3-state beacon lamp, widens the torso, and introduces per-sprite-type animation configuration. The scale-pulse mechanism (`onPreUpdate`) is removed in favor of sprite-driven visual states.",
+            "hash": "abe7325cd8d99e9308079f4f52e5a0d6498a7aaf"
           },
           {
             "description": "Add three-zone factory-floor visualization (#291)",
-            "body": "Adds an alternative \"factory-floor\" visualization to the Factory web app, rendering orchestration runs as a three-zone layout: upper tier (architect, planner), rail (coder, orchestrator, summary), and lower tier (reviewers, simplifier, holistic). Includes a visualization abstraction layer with a `vis` URL parameter to switch between the existing catwalk and the new factory-floor view. The layout features coder and orchestrator work rooms delineated by vertical lines, role-colored labels beneath each agent, and adaptive spacing that compresses lower-zone agents when reviewer count is high."
+            "body": "Adds an alternative \"factory-floor\" visualization to the Factory web app, rendering orchestration runs as a three-zone layout: upper tier (architect, planner), rail (coder, orchestrator, summary), and lower tier (reviewers, simplifier, holistic). Includes a visualization abstraction layer with a `vis` URL parameter to switch between the existing catwalk and the new factory-floor view. The layout features coder and orchestrator work rooms delineated by vertical lines, role-colored labels beneath each agent, and adaptive spacing that compresses lower-zone agents when reviewer count is high.",
+            "hash": "5389cc3a67e9d2a0deb360fbcdf9f30954ec0d8f"
           },
           {
             "description": "Show waiting-for-input state in factory visualization (#292)",
-            "body": "Adds end-to-end visibility for when an orchestrated run pauses for user input (permission prompts, elicitation dialogs, idle prompts). New `waiting_for_input` and `input_received` events flow through run-core's event log and Zod schemas into the canonical status model. The factory catwalk visualization derives a `waiting` state for the orchestrator, rendering a concerned animation at reduced opacity. Claude Code hooks detect input-waiting states and emit events to the run log automatically."
+            "body": "Adds end-to-end visibility for when an orchestrated run pauses for user input (permission prompts, elicitation dialogs, idle prompts). New `waiting_for_input` and `input_received` events flow through run-core's event log and Zod schemas into the canonical status model. The factory catwalk visualization derives a `waiting` state for the orchestrator, rendering a concerned animation at reduced opacity. Claude Code hooks detect input-waiting states and emit events to the run log automatically.",
+            "hash": "fdfb8a649cecbc03106798784ad03366afacc520"
           },
           {
             "description": "Add ?format=html param to artifact content endpoint (#300)",
-            "body": "Extends the `GET /runs/:projectSlug/:runId/artifacts/:filename` endpoint with an optional `?format=html` query parameter that renders markdown artifacts to HTML server-side using `marked`. The client API function `fetchArtifactContent()` gains a corresponding `options` parameter to request HTML-formatted content."
+            "body": "Extends the `GET /runs/:projectSlug/:runId/artifacts/:filename` endpoint with an optional `?format=html` query parameter that renders markdown artifacts to HTML server-side using `marked`. The client API function `fetchArtifactContent()` gains a corresponding `options` parameter to request HTML-formatted content.",
+            "hash": "27bcae7dc10c025d971917f9c9fc43b63509e8c9"
           },
           {
             "description": "Shared logical scene state for visualizations (#304)",
-            "body": "Extracts a visualization-agnostic `LogicalSceneState` layer into `packages/factory/src/client/visualizations/shared/` that interprets `CanonicalRunStatus` into present-tense workflow state — what each agent is doing, what state each artifact is in, what the orchestrator is carrying — independent of any visualization's spatial layout."
+            "body": "Extracts a visualization-agnostic `LogicalSceneState` layer into `packages/factory/src/client/visualizations/shared/` that interprets `CanonicalRunStatus` into present-tense workflow state — what each agent is doing, what state each artifact is in, what the orchestrator is carrying — independent of any visualization's spatial layout.",
+            "hash": "3873a04ecd6737b6c1a8dcefd46b77fdc752026c"
           },
           {
             "description": "Replace geometric placeholders with tileset rendering (#332)",
-            "body": "Replaces colored geometric primitives (circles for agents, rectangles for zones/artifacts) in the office visualization with LimeZu tileset sprites. Adds a full sprite asset pipeline — 23 PNGs, Vite imports, singleton sprite loader, furniture manifest, and character-role mapping — and rewrites `OfficeScene`'s rendering layer to draw tiled floors/walls, place 26 furniture sprites, and render directional character idle poses. Introduces `OfficeCanvas.tsx` as the React wrapper and registers the `office` visualization in the registry."
+            "body": "Replaces colored geometric primitives (circles for agents, rectangles for zones/artifacts) in the office visualization with LimeZu tileset sprites. Adds a full sprite asset pipeline — 23 PNGs, Vite imports, singleton sprite loader, furniture manifest, and character-role mapping — and rewrites `OfficeScene`'s rendering layer to draw tiled floors/walls, place 26 furniture sprites, and render directional character idle poses. Introduces `OfficeCanvas.tsx` as the React wrapper and registers the `office` visualization in the registry.",
+            "hash": "f68931c614903f467a10dc0d1c06b0f25ff5b66a"
           },
           {
             "description": "Animate office transitions (#336)",
-            "body": "Wires `OfficeScene` to consume `TransitionPlan` as animations instead of teleporting entities via `applyFullState()`. A new transition executor bridges the pure-data plan to Excalibur's action queue, handling all six transition types (walk, fade_in, fade_out, state_change, artifact_appear, artifact_deliver) with staggered timing and clean cancellation support."
+            "body": "Wires `OfficeScene` to consume `TransitionPlan` as animations instead of teleporting entities via `applyFullState()`. A new transition executor bridges the pure-data plan to Excalibur's action queue, handling all six transition types (walk, fade_in, fade_out, state_change, artifact_appear, artifact_deliver) with staggered timing and clean cancellation support.",
+            "hash": "00d140ca4b5341335d38fd92864129975a6eccf6"
           },
           {
             "description": "Use slot-based positioning for orchestrator (#340)",
-            "body": "The orchestrator character is now positioned at specific workstation and standing slots instead of geometric zone centers. Standing slots were added at the prep and workshop door tiles, `slotId` was threaded through the full state → assignment → position → transition pipeline, resting direction now uses slot-facing metadata, and walk waypoints are deduplicated to eliminate zero-length segments."
+            "body": "The orchestrator character is now positioned at specific workstation and standing slots instead of geometric zone centers. Standing slots were added at the prep and workshop door tiles, `slotId` was threaded through the full state → assignment → position → transition pipeline, resting direction now uses slot-facing metadata, and walk waypoints are deduplicated to eliminate zero-length segments.",
+            "hash": "fe6506cd812c38fe707269c5a3e9a387ea227cb7"
           },
           {
             "description": "Enable playback of completed orchestrated runs (#344)",
-            "body": "Adds the ability to replay any completed v3 orchestrated run as an animation in the Factory visualization. A new server endpoint returns raw run events, client-side snapshot generation produces intermediate states via fold-to-cursor, and a redesigned player UI separates source selection from transport controls following a streaming-app mental model."
+            "body": "Adds the ability to replay any completed v3 orchestrated run as an animation in the Factory visualization. A new server endpoint returns raw run events, client-side snapshot generation produces intermediate states via fold-to-cursor, and a redesigned player UI separates source selection from transport controls following a streaming-app mental model.",
+            "hash": "772360802d813c684473636215bbc6ab047574b9"
           },
           {
             "description": "Add `pick-demo-runs` script to rank archived runs (#436)",
-            "body": "Adds a script that scans the artifact archive and ranks orchestrated runs by their suitability for a demo recording. Each run is scored against seven weighted signals — run completion, parallel reviewer count, workflow completeness, review criticality, presence of usage metrics, event-count window, and recency — with weights totaling 100."
+            "body": "Adds a script that scans the artifact archive and ranks orchestrated runs by their suitability for a demo recording. Each run is scored against seven weighted signals — run completion, parallel reviewer count, workflow completeness, review criticality, presence of usage metrics, event-count window, and recency — with weights totaling 100.",
+            "hash": "27b37bab134169a321d9d91f40f142bde7168b41"
           }
         ]
       },
@@ -223,52 +324,67 @@
         "items": [
           {
             "description": "Accept no-reason phase decisions in run-index validator (#13)",
-            "body": "Makes the `reason` field optional in `PhaseDecision` validation, fixing a schema mismatch that caused newer orchestration runs to silently disappear from Factory dropdowns."
+            "body": "Makes the `reason` field optional in `PhaseDecision` validation, fixing a schema mismatch that caused newer orchestration runs to silently disappear from Factory dropdowns.",
+            "hash": "95335fe44fa475588841ede705e209ceb9919b66"
           },
           {
             "description": "Accept null phases and criticality in status-adapter (#37)",
-            "body": "Relaxes status-adapter validation to accept `null` phase entries and `null` values for criticality-related fields within phase objects. Adds an `isNullOrValid` helper that wraps existing validators, and updates `isValidPhasesObject` to skip `null` entries alongside `undefined`."
+            "body": "Relaxes status-adapter validation to accept `null` phase entries and `null` values for criticality-related fields within phase objects. Adds an `isNullOrValid` helper that wraps existing validators, and updates `isValidPhasesObject` to skip `null` entries alongside `undefined`.",
+            "hash": "ba1836cb7929a65bab8b25d79780e44fabd22e76"
           },
           {
             "description": "Correct structural element positioning in the factory scene (#44)",
-            "body": "Remove `useAnchor: false` from StationActor's GraphicsGroup so stations render centered on their position, aligning with upper review platforms.\n\nCompute gate, ladder, and station y-positions relative to the platform surface (`baseY - platformHeight/2`) instead of the platform center.\n\nMove the ladder to the left side of upper platforms and reduce upper platform width to 100px to avoid overlapping the gate."
+            "body": "Remove `useAnchor: false` from StationActor's GraphicsGroup so stations render centered on their position, aligning with upper review platforms.\n\nCompute gate, ladder, and station y-positions relative to the platform surface (`baseY - platformHeight/2`) instead of the platform center.\n\nMove the ladder to the left side of upper platforms and reduce upper platform width to 100px to avoid overlapping the gate.",
+            "hash": "0b88ade1a6bead39832a23530e3ac97d871cf999"
           },
           {
             "description": "Sync RunList selection with URL params and RunSelector dropdowns (#51)",
-            "body": "Lifts selection state (project, ticket, run) from `RunSelector` to `App`, establishing a single source of truth that both `RunSelector` and `RunList` share. `RunSelector` is converted from an uncontrolled component with internal state to a controlled component that receives selection values as props. A `useEffect` in `App` drives URL param updates whenever selection changes."
+            "body": "Lifts selection state (project, ticket, run) from `RunSelector` to `App`, establishing a single source of truth that both `RunSelector` and `RunList` share. `RunSelector` is converted from an uncontrolled component with internal state to a controlled component that receives selection values as props. A `useEffect` in `App` drives URL param updates whenever selection changes.",
+            "hash": "2afd3f0aaacc9836be0ac9e1c423d5ffc8a6ba50"
           },
-          { "description": "Fix avatar & artifact positions and left-align labels" },
+          {
+            "description": "Fix avatar & artifact positions and left-align labels",
+            "hash": "e6e15f0a44babe823879674a274c71648b53c72c"
+          },
           {
             "description": "Handle newer parallelReview schema shapes in scene mapper (#102)",
-            "body": "The orchestrate skill evolved its run-index.json format, producing three\nshapes for the parallelReview phase: flat `reviewers` record, `iterations[].perReviewer`\nrecords, and top-level `reviewerDetails`. The scene mapper only handled the first shape,\ncrashing with TypeError on newer runs.\n\nExtract reviewer names via a unified `extractReviewerNames()` helper that normalizes\nall three shapes, used by both `buildReviewerAgents()` and `computeOrchestratorLevel()`.\nFalls back to a generic reviewer agent when no known sub-properties are found."
+            "body": "The orchestrate skill evolved its run-index.json format, producing three\nshapes for the parallelReview phase: flat `reviewers` record, `iterations[].perReviewer`\nrecords, and top-level `reviewerDetails`. The scene mapper only handled the first shape,\ncrashing with TypeError on newer runs.\n\nExtract reviewer names via a unified `extractReviewerNames()` helper that normalizes\nall three shapes, used by both `buildReviewerAgents()` and `computeOrchestratorLevel()`.\nFalls back to a generic reviewer agent when no known sub-properties are found.",
+            "hash": "1d1044f903089d917a8782bdf7da4e2be54f945f"
           },
           {
             "description": "Fix canvas scaling to be width-driven with FitContainer (#125)",
-            "body": "Switches the Factory canvas from viewport-driven scaling (`DisplayMode.FitScreen`) to container-driven scaling (`DisplayMode.FitContainer`) and restructures the CSS layout so the canvas width fills available space, height derives from a 2:1 aspect ratio, and natural browser scrolling activates when content overflows. The visualization toggle is repositioned above the canvas in normal document flow.\n\nMove the `.canvas-container` wrapper from App.tsx into `VisualizationSwitcher` so the toggle sits above the canvas in normal document flow.\n\nChange `.main` overflow from hidden to auto to enable natural browser scrolling when the min-width constraint causes content to exceed the viewport.\n\nGive flow view an explicit min-height (600px) so `ReactFlow` gets a bounded parent height when `.main` has overflow: auto."
+            "body": "Switches the Factory canvas from viewport-driven scaling (`DisplayMode.FitScreen`) to container-driven scaling (`DisplayMode.FitContainer`) and restructures the CSS layout so the canvas width fills available space, height derives from a 2:1 aspect ratio, and natural browser scrolling activates when content overflows. The visualization toggle is repositioned above the canvas in normal document flow.\n\nMove the `.canvas-container` wrapper from App.tsx into `VisualizationSwitcher` so the toggle sits above the canvas in normal document flow.\n\nChange `.main` overflow from hidden to auto to enable natural browser scrolling when the min-width constraint causes content to exceed the viewport.\n\nGive flow view an explicit min-height (600px) so `ReactFlow` gets a bounded parent height when `.main` has overflow: auto.",
+            "hash": "60c1e400e83ea43b7409ad0f980304266ef3099c"
           },
           {
             "description": "Fix diagram view crash on undefined reviewers (#138)",
-            "body": "Fix a `TypeError: Cannot read properties of undefined` crash when switching to diagram view. The `ParallelReviewPhase.reviewers` field was declared as required in the TypeScript interface but could be `undefined` at runtime due to Zod `.partial().loose()` parsing of V2 run data. The fix makes the type optional to match runtime reality, then uses standard optional chaining at all access sites."
+            "body": "Fix a `TypeError: Cannot read properties of undefined` crash when switching to diagram view. The `ParallelReviewPhase.reviewers` field was declared as required in the TypeScript interface but could be `undefined` at runtime due to Zod `.partial().loose()` parsing of V2 run data. The fix makes the type optional to match runtime reality, then uses standard optional chaining at all access sites.",
+            "hash": "941d6581696bdb27ade9ee78ccb079c0ce6cc698"
           },
           {
             "description": "Skip interactive run directories in project scanner (#208)",
-            "body": "Adds a guard in the project scanner's `scanTicket` method to skip directories ending with `-interactive` before attempting to read run data. This eliminates noisy ENOENT warnings that appeared on every scan for interactive session directories."
+            "body": "Adds a guard in the project scanner's `scanTicket` method to skip directories ending with `-interactive` before attempting to read run data. This eliminates noisy ENOENT warnings that appeared on every scan for interactive session directories.",
+            "hash": "e8122f92f3c1a21cc95ff4a189ce4662ed959179"
           },
           {
             "description": "Guard against negative orchestrator station index (#242)",
-            "body": "Added a guard in `CatwalkScene.applyDiff()` to handle the -1 sentinel station index that `buildOrchestrator()` returns for terminal run states (failed, needs_manual_review). When the orchestrator moves to a negative station, it now fades out gracefully via a new `fadeOut()` method on `OrchestratorActor` instead of passing the invalid index to `orchestratorPosition()`, which threw a `RangeError`."
+            "body": "Added a guard in `CatwalkScene.applyDiff()` to handle the -1 sentinel station index that `buildOrchestrator()` returns for terminal run states (failed, needs_manual_review). When the orchestrator moves to a negative station, it now fades out gracefully via a new `fadeOut()` method on `OrchestratorActor` instead of passing the invalid index to `orchestratorPosition()`, which threw a `RangeError`.",
+            "hash": "f9bae7552b22a9bd2ae11781ab371c81a1411902"
           },
           {
             "description": "Fix canvas not scaling up on viewport resize (#243)",
-            "body": "The Excalibur game canvas scaled down correctly when the viewport shrank but did not scale back up when the viewport expanded. The root cause was twofold: the catwalk container lacked an explicit aspect-ratio (making its height content-dependent and locked to the canvas's previous pixel dimensions), and Excalibur's internally set inline pixel dimensions on the canvas prevented the container from growing.\n\nAdded a `useContainerResize` hook that observes the canvas container, resets inline dimensions to fluid CSS sizing, and triggers Excalibur's resize handler. Also added aspect-ratio: 2/1 to the catwalk container CSS."
+            "body": "The Excalibur game canvas scaled down correctly when the viewport shrank but did not scale back up when the viewport expanded. The root cause was twofold: the catwalk container lacked an explicit aspect-ratio (making its height content-dependent and locked to the canvas's previous pixel dimensions), and Excalibur's internally set inline pixel dimensions on the canvas prevented the container from growing.\n\nAdded a `useContainerResize` hook that observes the canvas container, resets inline dimensions to fluid CSS sizing, and triggers Excalibur's resize handler. Also added aspect-ratio: 2/1 to the catwalk container CSS.",
+            "hash": "ca8e15643cab0168c3087af0feb7c3f59861b8c0"
           },
           {
             "description": "Subagent sprites are not centered on station x position (#250)",
-            "body": "Fixes horizontal misalignment of station subagents relative to the orchestrator and chute by offsetting the `StationAgentActor` `GraphicsGroup` members by `-SPRITE_SIZE / 2` on the x-axis. The original ticket described the orchestrator as misaligned, but investigation of the screenshot confirmed the orchestrator and chute were correctly positioned — the subagents were shifted 16px to the right."
+            "body": "Fixes horizontal misalignment of station subagents relative to the orchestrator and chute by offsetting the `StationAgentActor` `GraphicsGroup` members by `-SPRITE_SIZE / 2` on the x-axis. The original ticket described the orchestrator as misaligned, but investigation of the screenshot confirmed the orchestrator and chute were correctly positioned — the subagents were shifted 16px to the right.",
+            "hash": "60293649751ec718b6f32bbbc7076194acb13d37"
           },
           {
             "description": "Fix catwalk layout geometry, actor rendering, and artifact positioning (#262)",
-            "body": "Overhauls the catwalk visualization layout system to use a single source of truth (`GROUND_LINE_Y`, `RAIL_Y`) for all spatial positioning, moves artifact/divider/label layout computations into the pure `computeCatwalkLayout()` function, fixes sprite floating caused by transparent padding in the pixel art sprite sheets, fixes station label double-centering, and adds comprehensive test coverage for the mapper, layout, and choreography modules."
+            "body": "Overhauls the catwalk visualization layout system to use a single source of truth (`GROUND_LINE_Y`, `RAIL_Y`) for all spatial positioning, moves artifact/divider/label layout computations into the pure `computeCatwalkLayout()` function, fixes sprite floating caused by transparent padding in the pixel art sprite sheets, fixes station label double-centering, and adds comprehensive test coverage for the mapper, layout, and choreography modules.",
+            "hash": "26a0fce4c3408f8e7cfa133ec2bb51cec63af33c"
           }
         ]
       },
@@ -278,7 +394,8 @@
         "items": [
           {
             "description": "Create 3-zone adapter for office visualization (#309)",
-            "body": "Adds a complete spatial adapter pipeline that maps `LogicalSceneState` to the 3-zone office facility layout (prep area, workshop, governor's office). The pipeline spans 18 new files (10 source, 8 test) implementing types, zone definitions, layout with corridor paths, agent/artifact-to-zone mapping, structural diffing, pixel-space position resolution, transition planning, and an Excalibur `OfficeScene` with geometric placeholders."
+            "body": "Adds a complete spatial adapter pipeline that maps `LogicalSceneState` to the 3-zone office facility layout (prep area, workshop, governor's office). The pipeline spans 18 new files (10 source, 8 test) implementing types, zone definitions, layout with corridor paths, agent/artifact-to-zone mapping, structural diffing, pixel-space position resolution, transition planning, and an Excalibur `OfficeScene` with geometric placeholders.",
+            "hash": "b52d760235a315f806f2cfa4ed97799841208541"
           }
         ]
       },
@@ -288,7 +405,8 @@
         "items": [
           {
             "description": "Move FlowDiagram to visualizations/flow/ (#244)",
-            "body": "Relocate the Flow diagram visualization from `components/FlowDiagram/` to `visualizations/flow/`, matching the directory structure already established by the catwalk visualization. Edge tests are co-located alongside their source files in `edges/__tests__/`."
+            "body": "Relocate the Flow diagram visualization from `components/FlowDiagram/` to `visualizations/flow/`, matching the directory structure already established by the catwalk visualization. Edge tests are co-located alongside their source files in `edges/__tests__/`.",
+            "hash": "3d8534f12fa21da0fc23cd31eb7ed843f38baf95"
           }
         ]
       },
@@ -298,19 +416,23 @@
         "items": [
           {
             "description": "Silence console noise in test output (#147)",
-            "body": "Introduces a `silencedConsole()` disposable utility and applies it across all factory test files that trigger expected console output during error-handling paths. This eliminates noisy console output from test runs while preserving the ability to assert on console calls."
+            "body": "Introduces a `silencedConsole()` disposable utility and applies it across all factory test files that trigger expected console output during error-handling paths. This eliminates noisy console output from test runs while preserving the ability to assert on console calls.",
+            "hash": "40e4fd12a887b201b763bd6cdaf76276ddc56fe0"
           },
           {
             "description": "Add catwalk differ boundary tests for agent (#212)",
-            "body": "Adds three boundary tests to the catwalk config differ test suite, pinning behavioral contracts for agent add/remove propagation through `diffCatwalkConfig` and the empty-array identity case in `diffAgents`."
+            "body": "Adds three boundary tests to the catwalk config differ test suite, pinning behavioral contracts for agent add/remove propagation through `diffCatwalkConfig` and the empty-array identity case in `diffAgents`.",
+            "hash": "8e4d0cfd8d50b68d91855aa8c6fa785a04cc09ba"
           },
           {
             "description": "Add edge-case tests for input deferral, playback, rebuild (#273)",
-            "body": "Cover four behavioral boundaries identified during #259 review:\n- Deferred input derivation: inputs withheld when orchestrator hasn't reached station, appear after advance.\n- `PlaybackController` `play()` from paused: re-emits current snapshot before scheduling next advance.\n- `PlaybackController` with empty snapshots: transitions to ended without emitting.\n- `CatwalkScene` `resetScene()` during active choreography: rebuilds correctly and accepts forward diffs."
+            "body": "Cover four behavioral boundaries identified during #259 review:\n- Deferred input derivation: inputs withheld when orchestrator hasn't reached station, appear after advance.\n- `PlaybackController` `play()` from paused: re-emits current snapshot before scheduling next advance.\n- `PlaybackController` with empty snapshots: transitions to ended without emitting.\n- `CatwalkScene` `resetScene()` during active choreography: rebuilds correctly and accepts forward diffs.",
+            "hash": "48081564c7c664daa0a64b4ac67e4505e1be1748"
           },
           {
             "description": "Require explicit method selection in silencedConsole (#326)",
-            "body": "Made the `methods` parameter required in `silencedConsole` so callers must specify which console methods to silence. The generic signature narrows the return type to only the requested methods, giving compile-time errors if a caller accesses a method it didn't silence. Updated all 21 call sites across 8 test files and added dedicated type-narrowing and runtime behavior tests."
+            "body": "Made the `methods` parameter required in `silencedConsole` so callers must specify which console methods to silence. The generic signature narrows the return type to only the requested methods, giving compile-time errors if a caller accesses a method it didn't silence. Updated all 21 call sites across 8 test files and added dedicated type-narrowing and runtime behavior tests.",
+            "hash": "e2b40c636af83e06e1577c403bd8017397828535"
           }
         ]
       },
@@ -320,15 +442,18 @@
         "items": [
           {
             "description": "Migrate to nmr script runner (#378)",
-            "body": "Replace hand-rolled `scripts/run-workspace-script.ts` and custom utility scripts with `@williamthorsen/nmr`. Root `package.json` scripts reduced from 35 to 4 (lifecycle hooks + repo-specific). Workspace packages no longer define a `ws` script — nmr serves as the workspace script runner directly.\n\nReplace hand-rolled consistency tests (`nodejs-version.app.test.ts`, `pnpm-version.app.test.ts`, and their helpers) with `runConsistencyChecks()` from `@williamthorsen/nmr/tests`.\n\nRemove orphaned root devDependencies: `@williamthorsen/toolbelt.objects`, `js-yaml`, `@types/js-yaml`."
+            "body": "Replace hand-rolled `scripts/run-workspace-script.ts` and custom utility scripts with `@williamthorsen/nmr`. Root `package.json` scripts reduced from 35 to 4 (lifecycle hooks + repo-specific). Workspace packages no longer define a `ws` script — nmr serves as the workspace script runner directly.\n\nReplace hand-rolled consistency tests (`nodejs-version.app.test.ts`, `pnpm-version.app.test.ts`, and their helpers) with `runConsistencyChecks()` from `@williamthorsen/nmr/tests`.\n\nRemove orphaned root devDependencies: `@williamthorsen/toolbelt.objects`, `js-yaml`, `@types/js-yaml`.",
+            "hash": "8729608389f460e00537ba491478f95f795c1fa4"
           },
           {
             "description": "Add readyup and default kit (#403)",
-            "body": "Add `readyup` as a dev dependency and configure it via `.config/rdy.config.ts` to resolve internal kits from `.rdy/kits/internal/`. The initial kit at `.rdy/kits/internal/default.ts` contains two diagnostic checks: `.agents/PROJECT.md` is non-empty, and `.claude/CLAUDE.md` references `@.agents/PROJECT.md` via Claude's raw-link convention. Invoke with `rdy run` from the repo root.\n\nRename the `factory` workspace package from `factory` to `@codeassembly/factory` for scope consistency with `@codeassembly/run-core`, `@codeassembly/mcp`, and `@codeassembly/agents`. No other workspace package depends on `factory`, so the rename is confined to `packages/factory/package.json`.\n\nAdd `.rdy/**/*.ts` to the `include` arrays of `tsconfig.json` and `tsconfig.eslint.json` alongside the existing `.config/**/*.ts` entry so kit files are covered by the same tooling as the repo's other root-level scripts."
+            "body": "Add `readyup` as a dev dependency and configure it via `.config/rdy.config.ts` to resolve internal kits from `.rdy/kits/internal/`. The initial kit at `.rdy/kits/internal/default.ts` contains two diagnostic checks: `.agents/PROJECT.md` is non-empty, and `.claude/CLAUDE.md` references `@.agents/PROJECT.md` via Claude's raw-link convention. Invoke with `rdy run` from the repo root.\n\nRename the `factory` workspace package from `factory` to `@codeassembly/factory` for scope consistency with `@codeassembly/run-core`, `@codeassembly/mcp`, and `@codeassembly/agents`. No other workspace package depends on `factory`, so the rename is confined to `packages/factory/package.json`.\n\nAdd `.rdy/**/*.ts` to the `include` arrays of `tsconfig.json` and `tsconfig.eslint.json` alongside the existing `.config/**/*.ts` entry so kit files are covered by the same tooling as the repo's other root-level scripts.",
+            "hash": "51793cca4c8805302a5c3f71d05d24d105131644"
           },
           {
             "description": "Automate replacement of dashed separator comments with headings or region folds (#451)",
-            "body": "Removes the noisy boxed and rulered comment separators that had accumulated across the codebase and replaces every occurrence with simpler forms or folding-region markers. Introduces a reusable sweep script to automate this process. Documents the convention in the `code-patterns` skill so future agent-generated TypeScript follows the same rule."
+            "body": "Removes the noisy boxed and rulered comment separators that had accumulated across the codebase and replaces every occurrence with simpler forms or folding-region markers. Introduces a reusable sweep script to automate this process. Documents the convention in the `code-patterns` skill so future agent-generated TypeScript follows the same rule.",
+            "hash": "5cdec612d29eb40b9f313819df70e7909d438a00"
           }
         ]
       }
