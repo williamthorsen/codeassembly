@@ -25,8 +25,8 @@ This skill bridges the gap between receiving a code review and implementing fixe
 1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it. Then emit `skill.started` (payload `{"skill":"respond-to-review"}`) per [Lifecycle events](#lifecycle-events).
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
-4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions. Then emit `skill.progress` (payload `{"step":"findings-parsed","count":<n>}`, where `<n>` is the number of findings) per [Lifecycle events](#lifecycle-events).
-5. **Evaluate each finding** following the evaluation protocol below. Once every finding has a disposition, emit `skill.progress` (payload `{"step":"findings-evaluated","accepted":<a>,"rejected":<r>,"partial":<p>}`) per [Lifecycle events](#lifecycle-events).
+4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
+5. **Evaluate each finding** following the evaluation protocol below.
 6. **Write response** per the output format
 7. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
 8. **Save** per the [Saving](#saving) section

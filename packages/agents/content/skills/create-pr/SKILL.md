@@ -31,11 +31,11 @@ git fetch origin
 git status
 ```
 
-If the branch is not up to date with remote, emit `skill.completed` (payload `{"outcome":"stopped: branch not in sync"}`) per [Lifecycle events](#lifecycle-events), then **STOP THIS TASK** and notify the user. Do not proceed to `summarize-change` or any later step. Otherwise, emit `skill.progress` (payload `{"step":"branch-sync-verified"}`) and continue.
+If the branch is not up to date with remote, emit `skill.completed` (payload `{"outcome":"stopped: branch not in sync"}`) per [Lifecycle events](#lifecycle-events), then **STOP THIS TASK** and notify the user. Do not proceed to `summarize-change` or any later step. Otherwise, continue.
 
 ### 3. Call `summarize-change`
 
-Invoke the `{skill:summarize-change}` skill to produce a change summary. This generates a markdown file with YAML frontmatter containing `title`, `ticket_id`, `commit`, `scope`, and `type`. Once it returns, emit `skill.progress` (payload `{"step":"change-summary-ready"}`) per [Lifecycle events](#lifecycle-events).
+Invoke the `{skill:summarize-change}` skill to produce a change summary. This generates a markdown file with YAML frontmatter containing `title`, `ticket_id`, `commit`, `scope`, and `type`.
 
 ### 4. Read frontmatter
 
@@ -88,7 +88,7 @@ Read `scm` from the session context manifest:
 
 - `"github"` -> delegate to `{skill:create-gh-pr}`
 - `"bitbucket"` -> delegate to `{skill:create-bitbucket-pr}`
-- Unknown or missing -> ask the user which platform to use. On this branch only, emit `input.requested` (payload `{"prompt":"platform"}`) per [Lifecycle events](#lifecycle-events) before asking, and emit `input.received` (payload `{"prompt":"platform"}`) on the turn where the user answers.
+- Unknown or missing -> ask the user which platform to use. On this branch only, emit `input.requested` (payload `{"prompt":"platform"}`) per [Lifecycle events](#lifecycle-events) before asking.
 
 ### 9. Append auto-close keyword (if applicable)
 

@@ -57,13 +57,11 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Commit each task's work as its own commit, composing the message with the `{skill:commit}` skill. Work that does not stand on its own (a scaffold a later task fills in) rides with the task that completes it. Everything the closing menu offers reads committed history, so work left uncommitted is work the next step cannot see.
 
-   After each completed task, emit `skill.progress` (payload `{"step":"task-completed","task":<n>,"of":<total>}`, where `<n>` is the task's number in plan order and `<total>` is the plan's task count) per [Lifecycle events](#lifecycle-events).
-
 6. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
 
 7. **Report completion.** Summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
 
-8. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events); on the turn where the user answers, emit `input.received` (payload `{"prompt":"next-steps"}`) before acting on the choice.
+8. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 ## Next-steps options
 
