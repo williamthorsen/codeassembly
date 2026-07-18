@@ -56,6 +56,30 @@ describe('configure-hooks', () => {
       expect(config).toContain('on_session_start');
     });
 
+    it('prints snippets for every harness when no harness home exists', async () => {
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await configureHooksCommand({ harness: 'all', print: true }, tempDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain('"SessionStart"');
+      expect(output).toContain('on_session_start');
+      expect(existsSync(path.join(tempDir, '.claude'))).toBe(false);
+      expect(existsSync(path.join(tempDir, '.rovodev'))).toBe(false);
+    });
+
+    it('fails loudly when run standalone against an unparseable config', async () => {
+      const settingsPath = path.join(tempDir, '.claude', 'settings.json');
+      await mkdir(path.dirname(settingsPath), { recursive: true });
+      await writeFile(settingsPath, '{ not json', 'utf8');
+
+      await expect(configureHooksCommand({ harness: 'claude' }, tempDir)).rejects.toThrow(/Cannot parse/);
+    });
+
     it('writes nothing in print mode', async () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       let output: string;

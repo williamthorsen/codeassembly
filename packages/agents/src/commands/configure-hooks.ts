@@ -15,7 +15,7 @@ import {
   ensureClaudeHookEntries,
   removeClaudeHookEntries,
 } from '../lib/claude-hook-settings.ts';
-import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { ALL_HARNESS_IDS, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import {
   buildClaudeHookEntries,
   buildRovoHookEntries,
@@ -40,7 +40,10 @@ export async function configureHooksCommand(
   options: Pick<InstallOptions, 'harness' | 'print'>,
   baseDir?: string,
 ): Promise<void> {
-  const harnesses = resolveHarnessIds(options.harness, baseDir);
+  // Printing writes nothing, so it does not gate on which harness homes exist — the manual-adoption reader may not
+  // have the harness materialized on this machine at all.
+  const harnesses =
+    options.print === true && options.harness === 'all' ? ALL_HARNESS_IDS : resolveHarnessIds(options.harness, baseDir);
   if (harnesses.length === 0) {
     console.info('No target harnesses detected. Nothing to configure.');
     return;
