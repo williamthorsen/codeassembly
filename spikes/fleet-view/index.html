@@ -73,6 +73,12 @@
       .session.stale {
         opacity: 0.5;
       }
+      .session.ended {
+        opacity: 0.45;
+      }
+      .session.ended .label {
+        text-decoration: line-through;
+      }
       .session.awaiting {
         border-left: 3px solid var(--awaiting);
         background: rgba(224, 175, 104, 0.07);
@@ -177,6 +183,7 @@
         const status = session.status ?? {};
         const classes = ['session'];
         if (status.awaitingInput) classes.push('awaiting');
+        if (status.ended) classes.push('ended');
         if (status.stale) classes.push('stale');
         const harness = session.harness || 'unknown';
         const tail = (session.tail ?? []).map(formatEvent).join('\n');

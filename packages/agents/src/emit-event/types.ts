@@ -6,11 +6,18 @@
 // zero exit. There is no out-of-band failure channel; the result union is total.
 
 /**
- * The v0 session-lifecycle vocabulary, ordered by the sequence an instrumented skill emits rather than alphabetically,
- * so the list doubles as the shape of a session. Membership is convention, not a gate: an undeclared type warns and is
- * still appended, which lets a skill emit a new type before the vocabulary catches up.
+ * The v0 session-lifecycle vocabulary, ordered by the sequence a session emits rather than alphabetically, so the list
+ * doubles as the shape of a session: session boundaries enclose turns, which enclose the skills a turn runs.
+ * Membership is convention, not a gate: an undeclared type warns and is still appended, which lets an emitter use a new
+ * type before the vocabulary catches up.
+ *
+ * Two channels feed the vocabulary. The `session.*` and `turn.*` boundaries come from the harness, relayed from its
+ * event hooks — a session ends and a turn completes at moments no skill is running to observe. The rest is work
+ * narration an instrumented skill emits about itself.
  */
 export const EVENT_TYPES = [
+  'session.started',
+  'turn.started',
   'skill.started',
   'skill.progress',
   'skill.completed',
@@ -18,6 +25,8 @@ export const EVENT_TYPES = [
   'input.requested',
   'input.received',
   'pr.created',
+  'turn.completed',
+  'session.ended',
 ] as const;
 
 /** One of the declared v0 event types. */

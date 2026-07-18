@@ -299,6 +299,55 @@ describe(installCommand, () => {
     expect(rovodevPaths).not.toContain('prompts.yml');
   });
 
+  describe('session-lifecycle hooks', () => {
+    it('wires the hook entries into the harness config by default', async () => {
+      const claudeHome = await setupClaudeHome();
+
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+      const settings = await readFile(path.join(claudeHome, 'settings.json'), 'utf8');
+      expect(settings).toContain('--sentinel codeassembly-agents');
+      expect(settings).toContain('SessionStart');
+    });
+
+    it('leaves the harness config untouched with --skip-hooks', async () => {
+      const claudeHome = await setupClaudeHome();
+
+      await installCommand(makeOptions({ harness: 'claude', hooks: false }), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
+    });
+
+    it('leaves the harness config untouched in dry-run mode', async () => {
+      const claudeHome = await setupClaudeHome();
+
+      await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
+    });
+
+    it('warns and completes the install when the harness config cannot be parsed', async () => {
+      const claudeHome = await setupClaudeHome();
+      const settingsPath = path.join(claudeHome, 'settings.json');
+      await writeFile(settingsPath, '{ not json', 'utf8');
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let warnLines: ReadonlyArray<string>;
+      try {
+        await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+        warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
+      } finally {
+        warnSpy.mockRestore();
+      }
+
+      expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
+      // The broken config is left alone, and the rest of the install still lands and is tracked.
+      expect(await readFile(settingsPath, 'utf8')).toBe('{ not json');
+      const manifest = await readManifest(getManifestPath(tempDir));
+      expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('scripts', () => {
     it('places scripts and sets the executable bit', async () => {
       const claudeHome = await setupClaudeHome();
@@ -308,6 +357,27 @@ describe(installCommand, () => {
       const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
       expect(existsSync(scriptPath)).toBe(true);
       expect(statSync(scriptPath).mode & 0o777).toBe(0o755);
+    });
+
+    it('places a bundled .mjs helper alongside the shell scripts', async () => {
+      const claudeHome = await setupClaudeHome();
+      // The hook relay ships as a bundled `.mjs` rather than a `.sh`: the harness invokes it directly, so it reaches a
+      // harness home by the same path as the shell helpers a skill invokes.
+      await buildContentTree(contentDir, { scripts: { 'relay-demo.mjs': 'process.stdout.write("{}")\n' } });
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'scripts', 'relay-demo.mjs'))).toBe(true);
+      expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
+    });
+
+    it('installs no file that is neither a shell script nor a bundle', async () => {
+      const claudeHome = await setupClaudeHome();
+      await buildContentTree(contentDir, { scripts: { 'README.md': '# Helper scripts\n' } });
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'scripts', 'README.md'))).toBe(false);
     });
 
     it('records script entries with a sha256 hash and linked:false in copy mode', async () => {

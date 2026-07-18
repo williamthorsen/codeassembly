@@ -3,6 +3,7 @@ import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
 import { removeItem } from '../lib/installer.js';
 import { getManifestPath, readManifest, resolveSharedHome, writeManifest } from '../lib/manifest.js';
 import type { AgentsManifest, InstallOptions, ManifestEntry, SharedManifest } from '../lib/types.js';
+import { removeHarnessHookEntries } from './configure-hooks.ts';
 
 /**
  * Executes the uninstall command, removing installed skills, subagents, and guidance files.
@@ -28,13 +29,23 @@ export async function uninstallCommand(
   }
 
   for (const harnessId of harnesses) {
+    console.info(`\nUninstalling for harness: ${harnessId}`);
+
+    // Remove the hook entries regardless of manifest state: they live inside a shared user config rather than as
+    // tracked files, and configure-hooks can have written them without an install. An unparseable config costs the
+    // hook removal a warning, never the removal of the tracked items or the manifest update.
+    try {
+      await removeHarnessHookEntries(harnessId, baseDir);
+    } catch (error) {
+      console.warn(`  ⚠️ Skipping hook-entry removal: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
     const harnessManifest = manifest.harnesses[harnessId];
     if (!harnessManifest) {
-      console.info(`\nNo installation found for harness: ${harnessId}`);
+      console.info('  No installed items tracked for this harness.');
       continue;
     }
 
-    console.info(`\nUninstalling for harness: ${harnessId}`);
     const paths = resolveHarnessPaths(harnessId, baseDir);
     const skippedEntries = await removeTrackedEntries(harnessManifest.entries, paths.harnessHome, options.force, '');
 

@@ -46,6 +46,63 @@ describe('statusCommand', () => {
     infoSpy.mockRestore();
   });
 
+  it('reports the session-lifecycle hook entries alongside the installed items', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeInstallOptions(), tempDir, contentDir);
+
+    const infoSpy = vi.spyOn(console, 'info');
+    await statusCommand({ harness: 'claude' }, tempDir);
+
+    const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(output).toContain('Hooks: 4 present, 0 drifted, 0 absent');
+
+    infoSpy.mockRestore();
+  });
+
+  it('warns and completes the report when the harness config cannot be parsed', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeInstallOptions({ hooks: false }), tempDir, contentDir);
+    await writeFile(path.join(claudeHome, 'settings.json'), '{ not json', 'utf8');
+
+    const infoSpy = vi.spyOn(console, 'info');
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let output: string;
+    let warnLines: ReadonlyArray<string>;
+    try {
+      await statusCommand({ harness: 'claude' }, tempDir);
+      output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
+    } finally {
+      infoSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
+
+    expect(warnLines.some((line) => line.includes('could not read the config'))).toBe(true);
+    expect(output).toContain('Summary:');
+  });
+
+  it('reports hooks as not configured after a --skip-hooks install', async () => {
+    const claudeHome = path.join(tempDir, '.claude');
+    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
+    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
+
+    await installCommand(makeInstallOptions({ hooks: false }), tempDir, contentDir);
+
+    const infoSpy = vi.spyOn(console, 'info');
+    await statusCommand({ harness: 'claude' }, tempDir);
+
+    const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+    expect(output).toContain('Hooks: not configured');
+
+    infoSpy.mockRestore();
+  });
+
   it('should report not installed for a harness with no manifest', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });

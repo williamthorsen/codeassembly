@@ -29,6 +29,13 @@ import type {
   ManifestEntry,
   SharedManifest,
 } from '../lib/types.js';
+import { ensureHarnessHookEntries } from './configure-hooks.ts';
+
+/**
+ * The extensions that ship from `content/scripts/` to a harness home: `.sh` helpers a skill invokes, and `.mjs` bundles
+ * the harness itself invokes. Anything else there — the README — documents the directory rather than shipping from it.
+ */
+const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
 
 /**
  * Executes the install command, installing skills and subagents for the specified harnesses.
@@ -111,6 +118,24 @@ export async function installCommand(
       options,
     );
     entries.push(...scriptEntries);
+
+    // Wire the session-lifecycle hook entries once the relay script is in place, so the configured commands point at
+    // a script that exists. `--skip-hooks` leaves the harness config untouched. A failure — an unparseable config —
+    // costs the hooks a warning, never the rest of the install: the manifest must still record what was copied.
+    if (options.hooks !== false) {
+      if (options.dryRun) {
+        console.info('    [hooks] Would wire session-lifecycle hook entries');
+      } else {
+        try {
+          await ensureHarnessHookEntries(harnessId, baseDir);
+        } catch (error) {
+          console.warn(
+            `  ⚠️ Skipping hook wiring: ${error instanceof Error ? error.message : String(error)} ` +
+              '(fix the config, then run configure-hooks)',
+          );
+        }
+      }
+    }
 
     // Install harness-specific guidance file
     const guidanceEntries = await installHarnessGuidance(contentDir, paths, harnessId, existingByPath, options);
@@ -367,8 +392,8 @@ async function installScripts(
       continue;
     }
 
-    // Skip non-script files (e.g. README.md); only `.sh` helpers ship to harness homes.
-    if (!entry.endsWith('.sh')) {
+    // Skip non-script files (e.g. README.md); only helper scripts ship to harness homes.
+    if (!SCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension))) {
       continue;
     }
 

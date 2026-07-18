@@ -2,6 +2,7 @@
 /* eslint unicorn/no-process-exit: off */
 import process from 'node:process';
 
+import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
@@ -28,6 +29,9 @@ async function main(): Promise<void> {
     switch (command) {
       case 'install':
         await installCommand(options);
+        break;
+      case 'configure-hooks':
+        await configureHooksCommand(options);
         break;
       case 'init':
         await (global ? initGlobalCommand(options) : initCommand(options));
@@ -95,6 +99,8 @@ function parseArgs(argv: ReadonlyArray<string>): {
   let link = false;
   let force = false;
   let dryRun = false;
+  let hooks = true;
+  let print = false;
   let help = false;
   let global = false;
 
@@ -115,6 +121,12 @@ function parseArgs(argv: ReadonlyArray<string>): {
         break;
       case 'dry-run':
         dryRun = true;
+        break;
+      case 'skip-hooks':
+        hooks = false;
+        break;
+      case 'print':
+        print = true;
         break;
       case 'global':
         global = true;
@@ -140,19 +152,23 @@ function parseArgs(argv: ReadonlyArray<string>): {
   return {
     command,
     subcommand,
-    options: { harness, link, force, dryRun },
+    options: { harness, link, force, dryRun, hooks, print },
     help,
     global,
   };
 }
 
-function parseFlag(arg: string): 'help' | 'link' | 'force' | 'dry-run' | 'global' | 'harness' | null {
-  const flags: Record<string, 'help' | 'link' | 'force' | 'dry-run' | 'global' | 'harness'> = {
+type FlagName = 'help' | 'link' | 'force' | 'dry-run' | 'skip-hooks' | 'print' | 'global' | 'harness';
+
+function parseFlag(arg: string): FlagName | null {
+  const flags: Record<string, FlagName> = {
     '--help': 'help',
     '-h': 'help',
     '--link': 'link',
     '--force': 'force',
     '--dry-run': 'dry-run',
+    '--skip-hooks': 'skip-hooks',
+    '--print': 'print',
     '--global': 'global',
     '--harness': 'harness',
   };
@@ -183,10 +199,11 @@ function printUsage(): void {
 
 Commands:
   install          Install shared guidance, harness-specific skills, scripts, and support data into harness directories
+  configure-hooks  Write the session-lifecycle hook entries into harness configs (also run by install; see --print)
   init             Scaffold .agents/codeassembly.yaml (or --global for ~/.agents/codeassembly.yaml)
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
-  uninstall        Remove installed guidance, skills, and subagents
-  status           Show the current state of installed items
+  uninstall        Remove installed guidance, skills, subagents, and hook entries
+  status           Show the current state of installed items, including hook entries
   library list     List available library artifacts (rulebooks, skills, subagents)
   generate <target> Generate a configuration file (e.g., label-map)
 
@@ -195,6 +212,8 @@ Options:
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
+  --skip-hooks       Leave harness configs untouched during install (install only)
+  --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
   --help, -h         Show this help message`);
 }

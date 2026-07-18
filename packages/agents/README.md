@@ -18,6 +18,111 @@ Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`
 
 Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. Run `codeassembly-agents --help` for the authoritative list.
 
+## Session-lifecycle hooks
+
+Skills report the work they do, but they cannot report a session opening, exiting, or handing a turn back to you — at those moments no skill is running. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
+
+| Event             | Claude Code        | Rovo Dev           |
+| ----------------- | ------------------ | ------------------ |
+| `session.started` | `SessionStart`     | `on_session_start` |
+| `session.ended`   | `SessionEnd`       | `on_session_end`   |
+| `turn.started`    | `UserPromptSubmit` | `on_user_prompt`   |
+| `turn.completed`  | `Stop`             | `on_complete`      |
+
+`install` places the relay in each harness's `scripts/` directory and then wires the entries below into the harness config (`~/.claude/settings.json`, `~/.rovodev/config.yml`) by default. The wiring is its own step, shared across the CLI:
+
+- `install --skip-hooks` installs everything else and leaves the configs untouched.
+- `codeassembly-agents configure-hooks` runs just the wiring, for re-applying it later.
+- `configure-hooks --print` prints the entries without writing anything — the manual-adoption path for a config you manage elsewhere. The snippets below are exactly what it emits.
+- `uninstall` removes the entries; `status` reports each one as present, drifted, or absent.
+
+Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: the CLI creates, replaces, and removes only entries whose command carries it, so your own hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
+
+The relay reports a boundary and nothing more. It never carries your prompt text, and it always exits 0 — a relay that failed loudly would be worse than the missing event, since both harnesses read some non-zero hook exits as a signal to block the agent.
+
+### Claude Code
+
+In `~/.claude/settings.json`, under `hooks`. Each entry names the hook it relays, so the relay never has to infer where it was called from:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionStart --sentinel codeassembly-agents"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionEnd --sentinel codeassembly-agents"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook UserPromptSubmit --sentinel codeassembly-agents"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook Stop --sentinel codeassembly-agents"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Omit `matcher` on all four. `SessionStart` and `SessionEnd` accept one to select a start source or an end reason, and leaving it out is what relays every one of them; `UserPromptSubmit` and `Stop` ignore it.
+
+Keep the whole invocation in `command` rather than splitting the flags into an `args` array: `~` expands only in the single-string form.
+
+### Rovo Dev
+
+In `~/.rovodev/config.yml`, under `eventHooks`:
+
+```yaml
+eventHooks:
+  events:
+    - name: on_session_start
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_start --sentinel codeassembly-agents
+    - name: on_session_end
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_session_end --sentinel codeassembly-agents
+    - name: on_user_prompt
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_user_prompt --sentinel codeassembly-agents
+    - name: on_complete
+      commands:
+        - command: node /Users/you/.rovodev/scripts/relay-hook-event.mjs --harness rovodev --hook on_complete --sentinel codeassembly-agents
+```
+
+Write your home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes your machine's absolute path here, matching the entries Rovo's own tooling generates.
+
+Two things to know about Rovo:
+
+- **Restart to pick up the change.** Rovo reads its config at startup, so a running session ignores hooks added under it.
+- **`on_complete` fires when a run completes successfully.** A turn that errors or is aborted may not report its end, leaving that session reading as still working until its next event.
+
 ## Project declaration
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly-agents init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).

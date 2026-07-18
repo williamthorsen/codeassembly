@@ -19,6 +19,8 @@ export interface HarnessConfig {
   readonly subagentsDirName: string;
   /** Name of the scripts directory under the harness home. */
   readonly scriptsDirName: string;
+  /** Filename of the harness's user-curated config file under its home (e.g. `settings.json`). */
+  readonly configFileName: string;
   /** Filename of the frontmatter overlay YAML for this harness. */
   readonly frontmatterFile: string;
   /** Prefix a `{skill:<slug>}` invocation token renders to (e.g. `/` for Claude, `!` for Rovo). */
@@ -41,6 +43,10 @@ export interface InstallOptions {
   readonly link: boolean;
   readonly force: boolean;
   readonly dryRun: boolean;
+  /** Whether `install` also wires the session-lifecycle hook entries; `--skip-hooks` clears it (absent reads as true). */
+  readonly hooks?: boolean;
+  /** Whether `configure-hooks` prints the hook entries instead of writing them (`--print`). */
+  readonly print?: boolean;
 }
 
 /** A single entry in the manifest tracking an installed file or directory. */

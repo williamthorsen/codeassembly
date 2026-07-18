@@ -80,6 +80,9 @@ function start() {
 }
 
 // Fold one parsed event into a session, keeping only the last CONFIG.tail events.
+// A turn boundary clears the running skill as well as skill.completed does: a turn
+// that ends with its skill.completed missing would otherwise leak a stale "running
+// {skill}" label into every later turn.
 function applyEvent(session, event) {
   session.events.push(event);
   if (session.events.length > CONFIG.tail) {
@@ -90,7 +93,7 @@ function applyEvent(session, event) {
   }
   if (event.type === 'skill.started') {
     session.currentSkill = event.payload?.skill ?? null;
-  } else if (event.type === 'skill.completed') {
+  } else if (event.type === 'skill.completed' || event.type === 'turn.started' || event.type === 'turn.completed') {
     session.currentSkill = null;
   }
 }
@@ -124,6 +127,7 @@ function buildSnapshot(nowMs) {
           phase: status.phase,
           label: status.label,
           awaitingInput: status.awaitingInput,
+          ended: status.ended,
           stale: status.stale,
         },
         lastEventTs: status.lastEventTs,
@@ -139,19 +143,20 @@ function buildSnapshot(nowMs) {
 
 // Compute a session's status as a pure function of its events and the clock.
 // Stale is an overlay that applies only to active phases (running, wrote artifact);
-// waiting and resting phases are expected to be quiet and never read as stale.
+// waiting, resting, and ended phases are expected to be quiet and never read as stale.
 function deriveStatus(session, nowMs) {
   const lastEventTs = session.lastEventTs ?? null;
   const last = session.events[session.events.length - 1];
   if (last === undefined) {
-    return { phase: 'idle', label: 'idle', awaitingInput: false, stale: false, lastEventTs };
+    return { phase: 'idle', label: 'idle', awaitingInput: false, ended: false, stale: false, lastEventTs };
   }
   const { phase, label } = resolvePhase(last, session.currentSkill);
   const awaitingInput = phase === 'awaiting input';
+  const ended = phase === 'ended';
   const isActive = phase === 'running' || phase === 'wrote artifact';
   const lastMs = toEpochMs(lastEventTs);
   const stale = isActive && lastMs > 0 && nowMs - lastMs > CONFIG.staleMs;
-  return { phase, label, awaitingInput, stale, lastEventTs };
+  return { phase, label, awaitingInput, ended, stale, lastEventTs };
 }
 
 // Read the newly appended bytes of one session file and fold complete lines.
@@ -290,8 +295,24 @@ function resolveHarness(session) {
 }
 
 // Map the last event to a phase key and a display label.
+//
+// Ended and waiting-on-user are both derived here rather than tracked: a session whose
+// latest event is session.ended has ended, and one whose latest event is turn.completed
+// has handed the conversation back to the user. Deriving keeps resume working for free —
+// Rovo ends a session on a switch, and switching back appends a session.started that
+// becomes the new latest event.
 function resolvePhase(event, currentSkill) {
   switch (event.type) {
+    case 'session.started':
+      // Open, but nothing asked of it yet. Not awaiting input: no turn has completed, so
+      // there is no answer for the user to read.
+      return { phase: 'idle', label: 'session started' };
+    case 'session.ended':
+      return { phase: 'ended', label: 'ended' };
+    case 'turn.started':
+      return { phase: 'running', label: 'running' };
+    case 'turn.completed':
+      return { phase: 'awaiting input', label: 'awaiting input' };
     case 'input.requested':
       return { phase: 'awaiting input', label: 'awaiting input' };
     case 'input.received':
