@@ -4,6 +4,8 @@
 
 import { closeSync, openSync, readSync, statSync } from 'node:fs';
 
+import { isMissingFileError } from './fs-errors.ts';
+
 const NEWLINE_BYTE = 0x0a;
 
 /**
@@ -59,12 +61,3 @@ export function readAppendedLines(input: { filePath: string; offset: number }): 
   // Advance by byte length, not string length, so multi-byte UTF-8 stays aligned.
   return { kind: 'appended', lines, offset: input.offset + complete.length };
 }
-
-// region | Helpers
-
-/** True when `error` is a filesystem error reporting a path that does not exist. */
-function isMissingFileError(error: unknown): boolean {
-  return error instanceof Error && 'code' in error && error.code === 'ENOENT';
-}
-
-// endregion | Helpers
