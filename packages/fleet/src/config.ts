@@ -13,6 +13,9 @@ export const DEBOUNCE_MS = 100;
 /** Interval between SSE comment heartbeats that keep idle connections alive through proxies and browsers. */
 export const HEARTBEAT_MS = 15_000;
 
+/** Window of lane-wide quiet (3 days) after which an idle lane is evicted from the store and drops from the fleet. */
+export const RETENTION_MS = 259_200_000;
+
 /** Resolved server configuration; every timing value is injectable so tests run on short intervals. */
 export interface FleetConfig {
   /** Milliseconds of lane-wide quiet after which a lane derives as closed. */
@@ -26,6 +29,8 @@ export interface FleetConfig {
   port: number;
   /** Milliseconds between full rescans of the events tree — the correctness backstop when watching degrades. */
   rescanMs: number;
+  /** Milliseconds of lane-wide quiet after which an idle lane is evicted from the store. */
+  retentionMs: number;
   /** Milliseconds of quiet after which a working session reads as stale. */
   staleMs: number;
 }
@@ -42,6 +47,7 @@ export function resolveConfig(env: Record<string, string | undefined>): FleetCon
     heartbeatMs: HEARTBEAT_MS,
     port: readNumber(env.FLEET_PORT) ?? 4178,
     rescanMs: readNumber(env.FLEET_RESCAN_MS) ?? 5000,
+    retentionMs: readNumber(env.FLEET_RETENTION_MS) ?? RETENTION_MS,
     staleMs: readNumber(env.FLEET_STALE_MS) ?? 90_000,
   };
 }
