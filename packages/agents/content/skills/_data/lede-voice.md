@@ -41,7 +41,7 @@ Verb choice and temporal framing make the delta explicit:
 
 **Exception for agent-guidance diffs.** When the change edits agent instructions, guidance, or rules, narrate the change to the _instruction_ ("agents are now instructed to X"), not the agent's behavior ("the agent now does X"). Agent compliance is nondeterministic and not assertable from the diff; see the agent-guidance carve-out under Rule 1.
 
-The two rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass both rules and still read like documentation rather than an announcement.
+The rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass every rule and still read like documentation rather than an announcement.
 
 **Bad → Good — change-narrating voice**
 
@@ -53,11 +53,11 @@ The two rules below still apply; the voice guidance is the register _within whic
 
 > Introduces a tag alias map that sets the canonical form of secondary frontmatter tags. The migration script now writes only these forms, and the `check:notes` script now warns when committed frontmatter uses a known alias instead of the canonical form.
 
-Both drafts pass Rule 1 and Rule 2. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
+Both drafts pass every rule. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
 
-## Two rules
+## The rules
 
-Apply both. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
+Apply all of them. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
 
 ### Rule 1: Per-sentence outcome test
 
@@ -123,6 +123,16 @@ When in doubt, leave the name out and describe the behavior. **Allowed is not th
 
 The one exception to the ban: User-configurable surface needed for migration may be named — both _removed_ identifiers (so the user recognizes what's gone) and _new_ defaults (so the user knows where to find or move them). Examples: "The `--fix-low` flag is replaced by `--approval-threshold`."; "The default config file is now `.config/v11y-check.config.json`."
 
+### Rule 3: Redundancy ban
+
+For each sentence, ask: **does it add anything the reader doesn't already have** — from the change itself, or from a sentence already written? If not, cut it. This is the axis Rules 1 and 2 miss: a sentence can be a genuine outcome (Rule 1) naming only permitted surface (Rule 2) and still tell the reader nothing new.
+
+Three forms to cut:
+
+- **Self-evident corollary** — a clause restating the obvious consequence of the change just stated. In "a cleanup step now runs at the end of the script, so temporary files are no longer left behind," the reader already draws the second clause from the first. Keep only the first. Spend any extra words on precision (an exact version range, a specific condition), never on restatement.
+- **Harm-avoided guarantee** — a promise against a harm the reader never suspected. Stating it doesn't reassure; it plants the doubt. The test: **"No one would think it did otherwise until you mentioned it."** A positive rephrasing ("each operation touches only its own entries") is the same defensive claim in new words. Silence on what a change doesn't do is the default, not an omission.
+- **Cross-sentence paraphrase** — a sentence restating a prior one's outcome in other words. Each may pass Rule 1 alone; together they say one thing twice. Apply the deletion test — "would cutting this change what the reader knows?" — across sentences, not only within one.
+
 ## Jargon at the lede
 
 Compression to a term of art saves words for a reader who already knows the term. For a reader who doesn't, it forces them to either skip the entry or do dictionary work the writer should have done. The lede is often the one place a reader meets the concept — spend the few extra words so the prose teaches as it announces.
@@ -137,29 +147,28 @@ This is the softer companion to Rule 2. Rule 2 bans internal _identifiers_ (func
 
 ## Title application
 
-A title is a single-sentence lede. Both rules apply, distilled:
+A title is a single-sentence lede. All the rules apply, distilled:
 
 - **Outcome, not mechanism.** The title goes to changelogs and release notes — readers often see only the title. Ask "what does this change deliver?", not "what did I edit?". Bad: "Upgrade hono from v1 to v2." Good: "Upgrade hono to patch authentication vulnerability."
+- **No redundant corollary.** State the change, not the consequence that self-evidently follows from it. Bad: "Add a cleanup step so temp files are no longer left behind." Good: "Add a cleanup step that removes temp files."
 - **The code change, not what prompted it.** Ask "what does the diff do?", not "why did I open the editor?". Bad: "Address review findings"; "Apply feedback"; "Incorporate suggestions". Good: "Add error logging to `handleStateUpdate`"; "Remove dead rejection handler".
 - **No ephemeral references.** If it would not make sense to a reader who has only `git log`, leave it out.
 - **Only what's in the diff.** External actions (updating a ticket, posting a comment, sending a notification) are not part of the change and do not belong in its title.
 
 ## Body content discipline
 
-Body text — that is, the text used in commit bodies, merge-commit bodies, and the `## What` section of a change summary — is subject to these proscriptions in addition to the two rules:
+Body text — that is, the text used in commit bodies, merge-commit bodies, and the `## What` section of a change summary — is subject to these proscriptions in addition to the rules above:
 
 - **Never reference automated tests or CI.** Formatting, linting, typechecking, and unit tests run automatically. Mentioning them in the body is process noise, not user content.
 - **Never use review finding IDs.** Identifiers like `F1`, `W2`, `T3` belong only in review documents — they are meaningless in `git log` and to any future reader.
 
 ## Length
 
-The entry is as long as needed to convey outcomes and migration info — and not one word longer.
-
-This is not a soft ceiling. It is the per-sentence test: Each sentence must pass Rule 1 and Rule 2. Four sentences is fine if each carries user-relevant content (a rename with multiple migration facts); one sentence is fine if one covers it.
+The entry is as long as needed to convey outcomes and migration info — and not one word longer. There is no fixed ceiling: a rename with several migration facts may earn four sentences, a simple change one, so long as each passes the rules above.
 
 ## Examples
 
-Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes both; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
+Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes every rule; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
 
 ### Cross-type one-liners
 
@@ -176,12 +185,6 @@ The voice is the same across every work type; only the subject changes:
 > The package previously published as `@williamthorsen/audit-deps` has been renamed to `v11y-check`. The CLI command is now `v11y-check`, and the default config file is `.config/v11y-check.config.json`. Existing users should install `v11y-check` in place of `@williamthorsen/audit-deps`, rename their config file, and update any scripts that invoke `audit-deps`.
 
 Why it works: Every sentence is migration info. All identifiers named are user-facing surface. The reader knows exactly what to do.
-
-### Good: Public tier, low-action feature
-
-> Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
-
-Why it works: The user knows the feature exists, who it's for, and roughly what it does. The schema, default filename, and field names belong in the docs they will consult when using it.
 
 ### Good: Internal tier
 
@@ -223,23 +226,11 @@ Cut: The mechanism clause ("Each CLI now reads its version directly from its `pa
 
 > Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. The check fails only on above-threshold, non-allowlisted vulnerabilities.
 
-Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message; the closing "Exit code behavior is unchanged" is recast as a positive statement of the failure criterion. Survives: Outcome (visibility) plus the explicit failure criterion.
-
-### Bad → Good: Format/glyph adoption
-
-**Bad** (output-format details under Rule 2):
-
-> Adds work-type emojis to PR descriptions: `## Details` subsections now render as `### 🎉 Features`, `### 🐛 Bug fixes`, `### ♻️ Refactoring`, `### 🧪 Tests`, and `### 📦 Dependencies`. Breaking changes in any subsection get a `🚨 **Breaking:**` Prefix on the entry's first line.
-
-**Good:**
-
-> Adds work-type emojis to PR-description section headings for at-a-glance scanning, and an inline marker on entries that introduce breaking changes.
-
-Cut: Every specific emoji, every header string, every marker glyph — all output-format details. Survives: The outcome (scanability) and the fact that breaking changes carry a marker, without naming the marker. The trap with this pattern is the urge to enumerate the new visuals because they feel like the user-facing change; they aren't — the user-facing change is "things are easier to scan."
+Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message; the closing "Exit code behavior is unchanged" falls to Rule 3 as a harm-avoided guarantee (no one doubted the exit code) and is recast as a positive statement of the failure criterion. Survives: Outcome (visibility) plus the explicit failure criterion.
 
 ### Bad → Good: Allowed identifier, no payoff
 
-**Bad** (both rules pass; identifier is allowed; but the file path buries the outcome):
+**Bad** (every rule passes; identifier is allowed; but the file path buries the outcome):
 
 > Adds a `.changelog-overrides.json` file to the repo root that lets `release-kit` consumers skip or correct historical changelog entries.
 
