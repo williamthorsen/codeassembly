@@ -1,3 +1,4 @@
+import { serve } from '@hono/node-server';
 import { hc } from 'hono/client';
 import { assert, describe, expect, it, vi } from 'vitest';
 
@@ -63,6 +64,28 @@ describe('createApp', () => {
     await readChunk(response);
 
     expect(subscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('disposes the subscription when the client aborts the stream', async () => {
+    // Abort propagation needs a real socket; an in-memory `app.request` cancellation never reaches `onAbort`.
+    const { app, unsubscribe } = composeApp();
+    const bound = Promise.withResolvers<number>();
+    const server = serve({ fetch: app.fetch, port: 0 }, (info) => bound.resolve(info.port));
+    try {
+      const response = await fetch(`http://localhost:${await bound.promise}/api/stream`);
+      await readChunk(response);
+
+      await vi.waitFor(() => {
+        expect(unsubscribe).toHaveBeenCalledTimes(1);
+      });
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => (error === undefined ? resolve() : reject(error)));
+        if ('closeAllConnections' in server) {
+          server.closeAllConnections();
+        }
+      });
+    }
   });
 
   it('exposes both routes to an hc typed client', () => {
