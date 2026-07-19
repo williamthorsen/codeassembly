@@ -1,5 +1,6 @@
-import { AppShell, Group, Text, Title } from '@mantine/core';
 import type { ReactElement } from 'react';
+
+import { AppShell, Group, Text, Title } from './integrations/mantine/index.ts';
 
 /** Shell chrome: the Foreman header with the connection status, and the main area the lane view fills. */
 export function App(): ReactElement {

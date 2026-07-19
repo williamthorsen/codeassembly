@@ -5,6 +5,23 @@ import baseConfig from '../../eslint.config.js';
 export default [
   ...baseConfig,
   {
+    files: ['src/**'],
+    ignores: ['src/integrations/mantine/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@mantine/*'],
+              message: 'Import Mantine through src/integrations/mantine, the sole vendor boundary.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['**/*.tsx'],
     languageOptions: {
       globals: {
