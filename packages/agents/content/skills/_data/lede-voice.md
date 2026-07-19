@@ -41,7 +41,7 @@ Verb choice and temporal framing make the delta explicit:
 
 **Exception for agent-guidance diffs.** When the change edits agent instructions, guidance, or rules, narrate the change to the _instruction_ ("agents are now instructed to X"), not the agent's behavior ("the agent now does X"). Agent compliance is nondeterministic and not assertable from the diff; see the agent-guidance carve-out under Rule 1.
 
-The three rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass all three rules and still read like documentation rather than an announcement.
+The rules below still apply; the voice guidance is the register _within which_ the rules operate. A sentence can pass every rule and still read like documentation rather than an announcement.
 
 **Bad → Good — change-narrating voice**
 
@@ -53,11 +53,11 @@ The three rules below still apply; the voice guidance is the register _within wh
 
 > Introduces a tag alias map that sets the canonical form of secondary frontmatter tags. The migration script now writes only these forms, and the `check:notes` script now warns when committed frontmatter uses a known alias instead of the canonical form.
 
-Both drafts pass all three rules. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
+Both drafts pass every rule. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
 
-## Three rules
+## The rules
 
-Apply all three. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
+Apply all of them. They are tight enough that a verbose draft cannot satisfy them on a literal-checklist read.
 
 ### Rule 1: Per-sentence outcome test
 
@@ -155,7 +155,7 @@ This is the softer companion to Rule 2. Rule 2 bans internal _identifiers_ (func
 
 ## Title application
 
-A title is a single-sentence lede. All three rules apply, distilled:
+A title is a single-sentence lede. All the rules apply, distilled:
 
 - **Outcome, not mechanism.** The title goes to changelogs and release notes — readers often see only the title. Ask "what does this change deliver?", not "what did I edit?". Bad: "Upgrade hono from v1 to v2." Good: "Upgrade hono to patch authentication vulnerability."
 - **No redundant corollary.** State the change, not the consequence that self-evidently follows from it. Bad: "Add a cleanup step so temp files are no longer left behind." Good: "Add a cleanup step that removes temp files."
@@ -165,7 +165,7 @@ A title is a single-sentence lede. All three rules apply, distilled:
 
 ## Body content discipline
 
-Body text — that is, the text used in commit bodies, merge-commit bodies, and the `## What` section of a change summary — is subject to these proscriptions in addition to the three rules:
+Body text — that is, the text used in commit bodies, merge-commit bodies, and the `## What` section of a change summary — is subject to these proscriptions in addition to the rules above:
 
 - **Never reference automated tests or CI.** Formatting, linting, typechecking, and unit tests run automatically. Mentioning them in the body is process noise, not user content.
 - **Never use review finding IDs.** Identifiers like `F1`, `W2`, `T3` belong only in review documents — they are meaningless in `git log` and to any future reader.
@@ -176,7 +176,7 @@ The entry is as long as needed to convey outcomes and migration info — and not
 
 ## Examples
 
-Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes all three; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
+Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes every rule; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
 
 ### Cross-type one-liners
 
@@ -238,7 +238,7 @@ Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format st
 
 ### Bad → Good: Allowed identifier, no payoff
 
-**Bad** (all three rules pass; identifier is allowed; but the file path buries the outcome):
+**Bad** (every rule passes; identifier is allowed; but the file path buries the outcome):
 
 > Adds a `.changelog-overrides.json` file to the repo root that lets `release-kit` consumers skip or correct historical changelog entries.
 
