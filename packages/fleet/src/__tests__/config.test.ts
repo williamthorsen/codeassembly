@@ -11,6 +11,7 @@ describe('resolveConfig', () => {
       closeAfterMs: CLOSE_AFTER_MS,
       debounceMs: DEBOUNCE_MS,
       eventsDir: join(homedir(), '.codeassembly', 'events'),
+      gitPollMs: 15_000,
       heartbeatMs: HEARTBEAT_MS,
       port: 4178,
       rescanMs: 5000,
@@ -22,6 +23,7 @@ describe('resolveConfig', () => {
   it('reads every FLEET_* override from the environment', () => {
     const config = resolveConfig({
       FLEET_EVENTS_DIR: '/srv/events',
+      FLEET_GIT_POLL_MS: '2000',
       FLEET_PORT: '9000',
       FLEET_RESCAN_MS: '250',
       FLEET_RETENTION_MS: '600000',
@@ -29,6 +31,7 @@ describe('resolveConfig', () => {
     });
 
     expect(config.eventsDir).toBe('/srv/events');
+    expect(config.gitPollMs).toBe(2000);
     expect(config.port).toBe(9000);
     expect(config.rescanMs).toBe(250);
     expect(config.retentionMs).toBe(600_000);

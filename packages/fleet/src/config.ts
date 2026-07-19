@@ -24,6 +24,8 @@ export interface FleetConfig {
   debounceMs: number;
   /** Root of the append-only lifecycle-event tree. */
   eventsDir: string;
+  /** Milliseconds between git-adapter poll passes over the resident lanes' worktrees. */
+  gitPollMs: number;
   /** Milliseconds between SSE comment heartbeats. */
   heartbeatMs: number;
   port: number;
@@ -44,6 +46,7 @@ export function resolveConfig(env: Record<string, string | undefined>): FleetCon
     closeAfterMs: CLOSE_AFTER_MS,
     debounceMs: DEBOUNCE_MS,
     eventsDir: readString(env.FLEET_EVENTS_DIR) ?? join(homedir(), '.codeassembly', 'events'),
+    gitPollMs: readNumber(env.FLEET_GIT_POLL_MS) ?? 15_000,
     heartbeatMs: HEARTBEAT_MS,
     port: readNumber(env.FLEET_PORT) ?? 4178,
     rescanMs: readNumber(env.FLEET_RESCAN_MS) ?? 5000,
