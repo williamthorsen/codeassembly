@@ -36,6 +36,7 @@ describe('createApp', () => {
           open: true,
           closedReason: null,
           lastEventTs: '2026-07-19T05:00:00.000Z',
+          git: null,
           sessions: [],
         },
       ],
