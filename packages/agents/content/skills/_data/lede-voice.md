@@ -53,7 +53,7 @@ The three rules below still apply; the voice guidance is the register _within wh
 
 > Introduces a tag alias map that sets the canonical form of secondary frontmatter tags. The migration script now writes only these forms, and the `check:notes` script now warns when committed frontmatter uses a known alias instead of the canonical form.
 
-Both drafts pass Rule 1 and Rule 2. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
+Both drafts pass all three rules. The Bad version uses neutral verbs (`canonicalizes`, `writes`, `warns`) with no temporal markers; the reader is left to infer the delta. The Good version uses a change verb (`introduces`) and temporal markers (`now`, `instead of`) so the delta is on the surface where it belongs.
 
 ## Three rules
 
@@ -172,13 +172,11 @@ Body text — that is, the text used in commit bodies, merge-commit bodies, and 
 
 ## Length
 
-The entry is as long as needed to convey outcomes and migration info — and not one word longer.
-
-This is not a soft ceiling. It is the per-sentence test: Each sentence must pass Rule 1 and Rule 2. Four sentences is fine if each carries user-relevant content (a rename with multiple migration facts); one sentence is fine if one covers it.
+The entry is as long as needed to convey outcomes and migration info — and not one word longer. There is no fixed ceiling: a rename with several migration facts may earn four sentences, a simple change one, so long as each passes the rules above.
 
 ## Examples
 
-Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes both; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
+Each Bad/Good pair below pairs a draft that fails at least one rule with a draft that passes all three; the annotation names which clause(s) the Bad version failed on and which survived in the Good version.
 
 ### Cross-type one-liners
 
@@ -195,12 +193,6 @@ The voice is the same across every work type; only the subject changes:
 > The package previously published as `@williamthorsen/audit-deps` has been renamed to `v11y-check`. The CLI command is now `v11y-check`, and the default config file is `.config/v11y-check.config.json`. Existing users should install `v11y-check` in place of `@williamthorsen/audit-deps`, rename their config file, and update any scripts that invoke `audit-deps`.
 
 Why it works: Every sentence is migration info. All identifiers named are user-facing surface. The reader knows exactly what to do.
-
-### Good: Public tier, low-action feature
-
-> Allows `release-kit` consumers to skip or correct historical changelog entries by means of an overrides file.
-
-Why it works: The user knows the feature exists, who it's for, and roughly what it does. The schema, default filename, and field names belong in the docs they will consult when using it.
 
 ### Good: Internal tier
 
@@ -243,18 +235,6 @@ Cut: The mechanism clause ("Each CLI now reads its version directly from its `pa
 > Below-threshold vulnerabilities are now surfaced in `check` output instead of silently hidden, so users can see what their configured threshold is filtering out. The check fails only on above-threshold, non-allowlisted vulnerabilities.
 
 Cut: Marker glyph, "ignored" annotation, JSON field name, scope-header format string, branch in the "no vulnerabilities" message; the closing "Exit code behavior is unchanged" falls to Rule 3 as a harm-avoided guarantee (no one doubted the exit code) and is recast as a positive statement of the failure criterion. Survives: Outcome (visibility) plus the explicit failure criterion.
-
-### Bad → Good: Format/glyph adoption
-
-**Bad** (output-format details under Rule 2):
-
-> Adds work-type emojis to PR descriptions: `## Details` subsections now render as `### 🎉 Features`, `### 🐛 Bug fixes`, `### ♻️ Refactoring`, `### 🧪 Tests`, and `### 📦 Dependencies`. Breaking changes in any subsection get a `🚨 **Breaking:**` Prefix on the entry's first line.
-
-**Good:**
-
-> Adds work-type emojis to PR-description section headings for at-a-glance scanning, and an inline marker on entries that introduce breaking changes.
-
-Cut: Every specific emoji, every header string, every marker glyph — all output-format details. Survives: The outcome (scanability) and the fact that breaking changes carry a marker, without naming the marker. The trap with this pattern is the urge to enumerate the new visuals because they feel like the user-facing change; they aren't — the user-facing change is "things are easier to scan."
 
 ### Bad → Good: Allowed identifier, no payoff
 
