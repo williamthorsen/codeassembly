@@ -12,6 +12,7 @@ export {
   type LaneProbes,
   type LaneState,
   type LaneStatus,
+  resolveLaneRecency,
   type SessionPhase,
   type SessionState,
   type SessionStatus,
