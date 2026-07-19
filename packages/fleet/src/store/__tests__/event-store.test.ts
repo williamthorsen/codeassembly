@@ -61,6 +61,23 @@ describe('createEventStore', () => {
     expect(lane102.sessions['sess-b']?.phase).toBe('waiting');
   });
 
+  it('folds two session files under one branch into a single lane', () => {
+    writeFileSync(composeSessionPath('acme/app', '101', 'sess-a'), composeLine('turn.started'));
+    writeFileSync(
+      composeSessionPath('acme/app', '101', 'sess-b'),
+      composeLine('turn.started') + composeLine('turn.completed'),
+    );
+    const store = createEventStore({ eventsDir, retentionMs: RETENTION_MS });
+
+    store.scanAndFold(NOW);
+
+    const lanes = store.listLanes();
+    expect(lanes).toHaveLength(1);
+    expect(lanes[0]?.branch).toBe('101');
+    expect(lanes[0]?.sessions['sess-a']?.phase).toBe('working');
+    expect(lanes[0]?.sessions['sess-b']?.phase).toBe('waiting');
+  });
+
   it('folds appended lines incrementally without double-counting on repeated scans', () => {
     const filePath = composeSessionPath('acme/app', '101', 'sess-a');
     writeFileSync(filePath, composeLine('turn.started'));
