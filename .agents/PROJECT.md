@@ -4,15 +4,17 @@
 
 ## Project structure
 
-This is a pnpm monorepo centered around agentic code-orchestration flows. It contains five packages:
+This is a pnpm monorepo centered around agentic code-orchestration flows. It contains seven packages:
 
 - **Run-core** (`packages/run-core/`) — canonical domain model, Zod schemas, and data parsing for orchestration runs; foundational library consumed by other packages
 - **MCP** (`packages/mcp/`) — MCP server exposing run-management tools (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`) built on run-core
 - **Agents** (`packages/agents/`) — CLI tool and content library of reusable AI agent skills and subagent definitions that power orchestrated development workflows
 - **Factory** (`packages/factory/`) — web-based visualization that renders orchestration runs as an interactive 2D game scene
 - **KB** (`packages/kb/`) — knowledge-base foundation library: discovery, registry loading, frontmatter parsing, tags, and type-blind vault-integrity checks
+- **Lifecycle** (`packages/lifecycle/`) — canonical session-lifecycle event envelope, vocabulary, and pure lane fold; consumed by instrumented skills and by Fleet
+- **Fleet** (`packages/fleet/`) — server of the fleet-visibility stack: watches the lifecycle-events root, folds lane state via lifecycle, and serves a typed lanes snapshot plus an SSE stream (see `packages/fleet/README.md`)
 
-The packages form a dependency chain: **run-core** ← **mcp** and **run-core** ← **factory**. Agents depends on **kb**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
+The packages form a dependency chain: **run-core** ← **mcp**, **run-core** ← **factory**, and **lifecycle** ← **fleet**. Agents depends on **kb**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
 
 ### Run-core (`packages/run-core/`)
 
