@@ -38,8 +38,8 @@ The dispatch prompt contains a structured set of fields:
 1. Read `{harness_home_dir}/skills/_data/lede-voice.md` in full.
 2. Parse the dispatch-prompt fields. If a required field for the assigned `mode` is missing, return a one-line error naming the missing field and stop.
 3. Apply the doctrine:
-   - For `write` and `rewrite`: Treat `outcome` and `context` as raw material to draw the delta from, not text to render faithfully — any mechanism they carry is yours to strip. Compose the entry, then self-audit against both rules and the voice/jargon guidance, explicitly confirming that no mechanism supplied through `outcome` survived. If any sentence fails, rewrite the sentence and re-audit. Return only when the draft is clean.
-   - For `audit`: Classify each sentence under Rule 1 (Outcome or Migration) and check identifiers against Rule 2 (allowed vs banned). Build the failure list per the format below.
+   - For `write` and `rewrite`: Treat `outcome` and `context` as raw material to draw the delta from, not text to render faithfully — any mechanism they carry is yours to strip. Compose the entry, then self-audit against all three rules and the voice/jargon guidance, explicitly confirming that no mechanism supplied through `outcome` survived and that no sentence restates the change's own implication or a sentence already written. If any sentence fails, rewrite the sentence and re-audit. Return only when the draft is clean.
+   - For `audit`: Classify each sentence under Rule 1 (Outcome or Migration) and check identifiers against Rule 2 (allowed vs banned). Then apply Rule 3 by comparing the sentences to one another and to the change's own implication, flagging any that only restate — a self-evident corollary, a harm-avoided guarantee, or a paraphrase of a prior sentence. Build the failure list per the format below.
 4. Return text via your task output. Do not write artifact files.
 
 ## Audit output
@@ -48,6 +48,7 @@ The dispatch prompt contains a structured set of fields:
 Failures:
 - Rule 1: "{quoted sentence or fragment}" — {brief reason: mechanism, internal naming, generic puffery, etc.}
 - Rule 2: `{identifier}` — {brief reason: schema field name, internal subsystem name, etc.}
+- Rule 3: "{quoted sentence or fragment}" — {restated corollary, harm-avoided guarantee, or paraphrase of a prior sentence}
 ```
 
 When the draft is clean:
