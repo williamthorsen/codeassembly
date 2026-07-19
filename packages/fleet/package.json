@@ -1,0 +1,24 @@
+{
+  "name": "@codeassembly/fleet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fleet-visibility server: watches the events root, folds lane state, and streams snapshots over SSE",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx --watch src/main.ts",
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@codeassembly/lifecycle": "workspace:*",
+    "@hono/node-server": "2.0.10",
+    "hono": "4.12.30"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
