@@ -17,5 +17,5 @@ export {
   type SessionState,
   type SessionStatus,
 } from './fold.ts';
-export { type LanePath, parseEventLine, parseLanePath } from './parse.ts';
+export { parseEventLine } from './parse.ts';
 export { parseTicketRef, type TicketRef } from './ticket-ref.ts';

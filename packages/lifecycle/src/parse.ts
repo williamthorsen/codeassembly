@@ -1,23 +1,8 @@
-// Tolerant readers for the event store: one JSONL line to an envelope, one relative file path to lane and session
-// identity. Both return `null` for input that does not fit, never throw: the store is append-only telemetry written by
-// concurrent emitters, so a reader must survive a torn line, a foreign file, or a shape from a newer writer. File
-// discovery and reading stay with the caller.
+// Tolerant reader for the event store: one JSONL line to an envelope, returning `null` for input that does not fit,
+// never throwing. The store is append-only telemetry written by concurrent emitters, so a reader must survive a torn
+// line, a foreign file, or a shape from a newer writer. File discovery and reading stay with the caller.
 
 import type { EventEnvelope } from './envelope.ts';
-
-/**
- * Lane and session identity carried by an event file's path within the events root:
- * `{owner}/{name}/{sanitized-branch}/{session}.jsonl`. Segments are reported as spelled on disk, placeholders
- * (`_no-repo`, `_no-branch`, `_no-session`) included.
- */
-export interface LanePath {
-  /** `owner/name` repo key. */
-  repo: string;
-  /** Sanitized branch name — the lane key within the repo. */
-  branch: string;
-  /** Session id — the file's basename without its extension. */
-  session: string;
-}
 
 /**
  * Parses one JSONL line into an envelope, or `null` when the line is not one: malformed JSON, a non-object, or an
@@ -51,34 +36,6 @@ export function parseEventLine(line: string): EventEnvelope | null {
     ...(typeof parsed.harness === 'string' && { harness: parsed.harness }),
     payload: isRecord(parsed.payload) ? parsed.payload : {},
   };
-}
-
-/**
- * Parses an event file's path, relative to the events root, into lane and session identity — or `null` when the path
- * is not an `owner/name/branch/session.jsonl` leaf. Accepts both `/` and `\` separators, so directory-walk output
- * parses identically on every platform.
- */
-export function parseLanePath(relativePath: string): LanePath | null {
-  const segments = relativePath.split(/[/\\]/);
-  const [owner, name, branch, file] = segments;
-  if (
-    segments.length !== 4 ||
-    owner === undefined ||
-    name === undefined ||
-    branch === undefined ||
-    file === undefined
-  ) {
-    return null;
-  }
-  if (!file.endsWith('.jsonl')) {
-    return null;
-  }
-
-  const session = file.slice(0, -'.jsonl'.length);
-  if (owner === '' || name === '' || branch === '' || session === '') {
-    return null;
-  }
-  return { repo: `${owner}/${name}`, branch, session };
 }
 
 // region | Helpers

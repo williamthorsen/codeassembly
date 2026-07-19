@@ -1,6 +1,6 @@
 import { assert, describe, expect, it } from 'vitest';
 
-import { parseEventLine, parseLanePath } from '../parse.ts';
+import { parseEventLine } from '../parse.ts';
 
 /** A minimal valid envelope line; tests override or delete fields from this base. */
 function composeLine(overrides: Record<string, unknown> = {}): string {
@@ -73,39 +73,5 @@ describe('parseEventLine', () => {
     ['a missing cwd', composeLine({ cwd: undefined })],
   ])('returns null for %s', (_label, line) => {
     expect(parseEventLine(line)).toBeNull();
-  });
-});
-
-describe('parseLanePath', () => {
-  it('parses an owner/name/branch/session.jsonl leaf', () => {
-    expect(parseLanePath('williamthorsen/codeassembly/1035/abc-123.jsonl')).toEqual({
-      repo: 'williamthorsen/codeassembly',
-      branch: '1035',
-      session: 'abc-123',
-    });
-  });
-
-  it('parses backslash separators identically', () => {
-    expect(parseLanePath(String.raw`owner\name\main\s1.jsonl`)).toEqual({
-      repo: 'owner/name',
-      branch: 'main',
-      session: 's1',
-    });
-  });
-
-  it('reports placeholder segments as spelled', () => {
-    const lane = parseLanePath('_no-repo/_no-repo/_no-branch/_no-session.jsonl');
-
-    expect(lane).toEqual({ repo: '_no-repo/_no-repo', branch: '_no-branch', session: '_no-session' });
-  });
-
-  it.each([
-    ['too few segments', 'owner/name/session.jsonl'],
-    ['too many segments', 'root/owner/name/branch/session.jsonl'],
-    ['a non-jsonl leaf', 'owner/name/branch/notes.md'],
-    ['an empty branch segment', 'owner/name//session.jsonl'],
-    ['an empty session name', 'owner/name/branch/.jsonl'],
-  ])('returns null for %s', (_label, path) => {
-    expect(parseLanePath(path)).toBeNull();
   });
 });
