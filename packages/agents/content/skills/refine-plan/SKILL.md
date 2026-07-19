@@ -3,6 +3,8 @@ name: refine-plan
 description: Review and refine an implementation plan for completeness and correctness
 user-invocable: true
 dependencies:
+  skills:
+    - emit-event
   subagents:
     - plan-reviewer
     - plan-reviser
@@ -37,6 +39,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
 4. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
+7. Emit `skill.started` (payload `{"skill":"refine-plan"}`) per [Lifecycle events](#lifecycle-events).
 
 ### 2. Detect plan format
 
@@ -79,7 +82,7 @@ Parse the return block:
 
 Evaluate the finding counts:
 
-- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): Skip the reviser entirely. Report that the plan needs no refinement, then present next steps.
+- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): Skip the reviser entirely. Emit `skill.completed` (payload `{"outcome":"no findings"}`) per [Lifecycle events](#lifecycle-events). Report that the plan needs no refinement, then present next steps, emitting `input.requested` (payload `{"prompt":"next-steps"}`) as you present the menu.
 
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
@@ -92,7 +95,7 @@ Evaluate the finding counts:
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): Skip user interaction. Proceed to step 5 with empty user answers.
 
-- **User questions present** (UserQuestions > 0): Read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
+- **User questions present** (UserQuestions > 0): Emit `input.requested` (payload `{"prompt":"plan-review questions"}`) per [Lifecycle events](#lifecycle-events) before presenting the questions. Read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 
   ```
   The plan review identified {UserQuestions} question(s) that need your input:
@@ -151,7 +154,7 @@ Plan revision failed -- the plan-reviser did not complete successfully.
   Review: {review_output_path}
 ```
 
-Stop here. Do not attempt provenance update or report completion.
+Emit `skill.completed` (payload `{"outcome":"stopped: revision failed"}`) per [Lifecycle events](#lifecycle-events). Stop here. Do not attempt provenance update or report completion.
 
 Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter — `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
 
@@ -227,9 +230,11 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    ---
    ```
 
+Once the revised plan is written, emit `artifact.written` (payload `{"path":"<path>","kind":"plan"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"plan-refined"}`) on the same turn. Emitting completion at the save point folds an abandoned session to a finished state.
+
 ### 6. Offer ticket update if approach diverged
 
-Compare the revised plan's approach/solution with the source ticket's solution section. If they materially diverge, offer to update the ticket to match the revised plan. If the approaches haven't diverged, skip this step silently.
+Compare the revised plan's approach/solution with the source ticket's solution section. If they materially diverge, emit `input.requested` (payload `{"prompt":"ticket-update"}`) per [Lifecycle events](#lifecycle-events), then offer to update the ticket to match the revised plan. If the approaches haven't diverged, skip this step silently.
 
 **Material divergence** means a different technical approach (e.g., build-time flag changed to runtime detection) or changed scope boundaries (features added or removed). **Non-divergence** means refined details within the same approach (e.g., different function names, reordered steps).
 
@@ -245,6 +250,8 @@ Plan refined:
   Review:  {review_output_path}
   Revised: {revision_output_path}
 ```
+
+As you present the next-steps menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 <HARD-GATE>
 Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed. If the review surfaced significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, either orchestration or implementation may apply depending on whether the work's consequences fit a single review pass. Use this as recommendation context. Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
@@ -264,3 +271,5 @@ Follow the options, output format, and recommendation rules in [next-steps optio
 <!-- include: ../_partials/next-steps-after-plan.md / -->
 
 <!-- include: ../_partials/option-format.md / -->
+
+<!-- include: ../_partials/lifecycle-events.md / -->

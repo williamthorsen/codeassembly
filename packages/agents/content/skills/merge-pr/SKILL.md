@@ -2,6 +2,9 @@
 name: merge-pr
 description: Merge a pull request by composing a merge-commit message, validating PR state, and delegating to the platform's merge API
 user-invocable: true
+dependencies:
+  skills:
+    - emit-event
 ---
 
 # Merge pull request
@@ -26,7 +29,7 @@ Merge a pull request on the appropriate platform. Composes the merge-commit titl
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `scm`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `scm`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it. Then emit `skill.started` (payload `{"skill":"merge-pr"}`) per [Lifecycle events](#lifecycle-events).
 
 ### 2. Resolve the PR
 
@@ -38,7 +41,7 @@ Read the PR's metadata for the steps below:
 gh pr view {pr} --json number,title,body,labels,headRefName,baseRefName,url
 ```
 
-If no PR can be resolved or discovered, stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
+If no PR can be resolved or discovered, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
 
 Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`, and `headRefName` (head branch) from the response. These feed the steps below.
 
@@ -131,7 +134,7 @@ If `scope.status` or `type.status` from step 3 is `ambiguous`, ask one question 
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md` — intentional redundancy.)
 - After the user resolves each ambiguous dimension, re-render the title (step 5) with the now-concrete values.
 
-Then render the proposed merge to the user:
+Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
 
 ```
 Proposed merge for PR #{pr_number}:
@@ -155,7 +158,7 @@ Render `{confirmation}` so the ask itself names every destructive side effect th
 - `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
 - `both` → `Merge PR #{pr_number} and delete the local and remote branch {headRefName}? 👍🏼👎🏼`
 
-If the user declines, stop with no API call and no artifact. If they approve, continue.
+If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events), then stop with no API call and no artifact. If they approve, continue.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -184,6 +187,8 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate — all values are concrete by this point.
 
+After the delegate returns, emit `skill.completed` (payload `{"outcome":"merged"}`, or `{"outcome":"stopped: <reason>"}` when the delegate stopped or failed) per [Lifecycle events](#lifecycle-events).
+
 ## Important
 
 - The orchestrator owns all decisions (PR resolution, scope/type/strategy/deletion-strategy resolution, body composition, approval gate). Delegates own only execution (platform API calls + state validation).
@@ -192,3 +197,5 @@ The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels 
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
 
 <!-- include: ../_partials/option-format.md / -->
+
+<!-- include: ../_partials/lifecycle-events.md / -->
