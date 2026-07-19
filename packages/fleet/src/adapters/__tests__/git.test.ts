@@ -3,9 +3,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createGitAdapter, type GitAdapter, type GitObservation, type GitTarget, probeWorktree } from '../git.ts';
+
+// The probe tests spawn real git processes against temp repos; under full-monorepo parallel load a single test can
+// exceed the default timeout without anything being wrong.
+vi.setConfig({ testTimeout: 20_000 });
 
 let adapter: GitAdapter | undefined;
 let scratchDir: string;
