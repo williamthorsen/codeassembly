@@ -4,6 +4,9 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
+/** Lane-wide quiet after which a lane derives as closed. */
+export const CLOSE_AFTER_MS = 1_800_000;
+
 /** Quiet window after a burst of watch events before the store folds and broadcasts once. */
 export const DEBOUNCE_MS = 100;
 
@@ -12,6 +15,8 @@ export const HEARTBEAT_MS = 15_000;
 
 /** Resolved server configuration; every timing value is injectable so tests run on short intervals. */
 export interface FleetConfig {
+  /** Milliseconds of lane-wide quiet after which a lane derives as closed. */
+  closeAfterMs: number;
   /** Milliseconds of watch-event quiet before a fold-and-broadcast fires. */
   debounceMs: number;
   /** Root of the append-only lifecycle-event tree. */
@@ -31,6 +36,7 @@ export interface FleetConfig {
  */
 export function resolveConfig(env: Record<string, string | undefined>): FleetConfig {
   return {
+    closeAfterMs: CLOSE_AFTER_MS,
     debounceMs: DEBOUNCE_MS,
     eventsDir: readString(env.FLEET_EVENTS_DIR) ?? join(homedir(), '.codeassembly', 'events'),
     heartbeatMs: HEARTBEAT_MS,

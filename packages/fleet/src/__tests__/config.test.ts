@@ -3,11 +3,12 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { DEBOUNCE_MS, HEARTBEAT_MS, resolveConfig } from '../config.ts';
+import { CLOSE_AFTER_MS, DEBOUNCE_MS, HEARTBEAT_MS, resolveConfig } from '../config.ts';
 
 describe('resolveConfig', () => {
   it('applies defaults when the environment is empty', () => {
     expect(resolveConfig({})).toEqual({
+      closeAfterMs: CLOSE_AFTER_MS,
       debounceMs: DEBOUNCE_MS,
       eventsDir: join(homedir(), '.codeassembly', 'events'),
       heartbeatMs: HEARTBEAT_MS,
