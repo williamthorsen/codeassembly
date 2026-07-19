@@ -134,7 +134,7 @@ export function deriveLaneStatus(
   input: { nowMs: number; closeAfterMs: number; probes?: LaneProbes },
 ): LaneStatus {
   const sessions = Object.values(lane.sessions);
-  const lastEventTs = resolveLaneRecency(sessions);
+  const lastEventTs = resolveLaneRecency(lane);
   const lastMs = toEpochMs(lastEventTs);
 
   let closedReason: LaneClosureReason | undefined;
@@ -156,23 +156,23 @@ export function deriveSessionStatus(state: SessionState, input: { nowMs: number;
   return { phase: state.phase, skill: state.currentSkill, ask: state.ask, stale, lastEventTs: state.lastEventTs };
 }
 
+/** The newest last-event timestamp across a lane's sessions, or `undefined` when none carries one. */
+export function resolveLaneRecency(lane: LaneState): string | undefined {
+  let newest: string | undefined;
+  for (const session of Object.values(lane.sessions)) {
+    if (session.lastEventTs !== undefined && toEpochMs(session.lastEventTs) > toEpochMs(newest)) {
+      newest = session.lastEventTs;
+    }
+  }
+  return newest;
+}
+
 // region | Helpers
 
 /** The `skill` narration label an event's payload carries, when it carries one. */
 function readSkill(envelope: EventEnvelope): string | undefined {
   const { skill } = envelope.payload;
   return typeof skill === 'string' ? skill : undefined;
-}
-
-/** The newest last-event timestamp across `sessions`, or `undefined` when no session has one. */
-function resolveLaneRecency(sessions: readonly SessionState[]): string | undefined {
-  let newest: string | undefined;
-  for (const session of sessions) {
-    if (session.lastEventTs !== undefined && toEpochMs(session.lastEventTs) > toEpochMs(newest)) {
-      newest = session.lastEventTs;
-    }
-  }
-  return newest;
 }
 
 /** Parses an ISO timestamp to epoch milliseconds, returning 0 when absent or unparseable. */

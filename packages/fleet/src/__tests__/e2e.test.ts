@@ -5,9 +5,17 @@ import { join } from 'node:path';
 import { afterEach, assert, beforeEach, describe, expect, it } from 'vitest';
 
 import type { FleetSnapshot } from '../api/snapshot.ts';
+import { RETENTION_MS } from '../config.ts';
 import { type RunningFleetServer, startFleetServer } from '../server.ts';
 
-const SHORT_INTERVALS = { closeAfterMs: 600_000, debounceMs: 10, heartbeatMs: 60_000, port: 0, rescanMs: 50 };
+const SHORT_INTERVALS = {
+  closeAfterMs: 600_000,
+  debounceMs: 10,
+  heartbeatMs: 60_000,
+  port: 0,
+  rescanMs: 50,
+  retentionMs: RETENTION_MS,
+};
 
 let eventsDir: string;
 let running: RunningFleetServer | undefined;

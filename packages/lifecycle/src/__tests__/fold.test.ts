@@ -8,6 +8,7 @@ import {
   createSessionState,
   deriveLaneStatus,
   deriveSessionStatus,
+  resolveLaneRecency,
   type SessionState,
 } from '../fold.ts';
 
@@ -204,5 +205,24 @@ describe('deriveLaneStatus', () => {
     const status = deriveLaneStatus(emptyLane, { nowMs: BASE_MS, closeAfterMs: 3_600_000 });
 
     expect(status).toEqual({ open: true, closedReason: undefined, lastEventTs: undefined });
+  });
+});
+
+describe('resolveLaneRecency', () => {
+  it('returns the newest last-event timestamp across the sessions', () => {
+    const older = applyLaneEvent(createLaneState({ repo: 'owner/name', branch: '984' }), {
+      sessionId: 'older',
+      envelope: composeEvent('turn.started', { ts: '2026-07-19T04:00:00.000Z' }),
+    });
+    const lane = applyLaneEvent(older, {
+      sessionId: 'newer',
+      envelope: composeEvent('turn.completed', { ts: '2026-07-19T06:00:00.000Z' }),
+    });
+
+    expect(resolveLaneRecency(lane)).toBe('2026-07-19T06:00:00.000Z');
+  });
+
+  it('returns undefined for a lane with no events', () => {
+    expect(resolveLaneRecency(createLaneState({ repo: 'owner/name', branch: '984' }))).toBeUndefined();
   });
 });

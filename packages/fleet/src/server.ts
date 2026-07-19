@@ -27,7 +27,7 @@ export async function startFleetServer(input: {
   const { config } = input;
   const log = input.log ?? ((message: string) => process.stderr.write(`fleet: ${message}\n`));
 
-  const store = createEventStore({ eventsDir: config.eventsDir });
+  const store = createEventStore({ eventsDir: config.eventsDir, retentionMs: config.retentionMs });
   const subscribers = new Set<(snapshot: FleetSnapshot) => void>();
   let lastPublishedJson: string;
 
@@ -41,7 +41,7 @@ export async function startFleetServer(input: {
 
   /** Folds pending events, then broadcasts — only when the snapshot actually changed. */
   function tick(): void {
-    store.scanAndFold();
+    store.scanAndFold(Date.now());
     const snapshot = buildCurrentSnapshot();
     const json = JSON.stringify(snapshot);
     if (json === lastPublishedJson) {
@@ -53,7 +53,7 @@ export async function startFleetServer(input: {
     }
   }
 
-  store.scanAndFold();
+  store.scanAndFold(Date.now());
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());
 
   const watcher = startWatcher({
