@@ -1,4 +1,6 @@
-import type { EmitContext, EventEnvelope } from './types.ts';
+import type { EventEnvelope } from '@codeassembly/lifecycle';
+
+import type { EmitContext } from './types.ts';
 
 /**
  * Composes the envelope from the agent-supplied `type` and `payload` plus the resolved context. Every context field is

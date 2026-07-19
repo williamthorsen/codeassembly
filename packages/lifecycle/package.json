@@ -1,0 +1,25 @@
+{
+  "name": "@codeassembly/lifecycle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Canonical lifecycle-event envelope, vocabulary, and lane fold",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js"
+    }
+  },
+  "main": "./dist/esm/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "nmr compile",
+    "prepare": "nmr compile"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  }
+}

@@ -1,22 +1,14 @@
 /**
  * Extract a ticket ID from a branch name per the contract in `_data/ticket-id-extraction.md`.
  *
- * Tries the Jira-style pattern first (case-insensitive `[A-Za-z]{2,}-[0-9]+`, uppercased on
- * output). Falls back to a bare-numeric match anchored at the start of the branch name,
- * formatted using the resolved `project.ticket_ref_prefix`.
+ * The revisit ordinal `parseTicketRef` captures is dropped: session context attributes to the parent ticket.
  */
+import { parseTicketRef } from '@codeassembly/lifecycle';
+
 import type { TicketIdResult } from './types.ts';
 
-/**
- * Jira-style pattern: two or more letters, hyphen, one or more digits, case-insensitive.
- * Deliberately unanchored so author-prefixed branches (e.g., `wt/MAC-130`) match correctly.
- * The greedy `[0-9]+` boundary stops at the first non-digit, so `.N` sub-ticket suffixes and
- * `-description` suffixes are naturally truncated.
- */
-const JIRA_STYLE_PATTERN = /[A-Za-z]{2,}-[0-9]+/;
-
-/** Bare-numeric prefix: one or more digits anchored at the start of the branch name. */
-const BARE_NUMERIC_PATTERN = /^[0-9]+/;
+/** Bare-numeric id — the form the configured `ticket_ref_prefix` applies to; a Jira-style key carries its own. */
+const BARE_NUMERIC_ID_PATTERN = /^[0-9]+$/;
 
 /** Pull-request sentinel: `PR-` followed by digits, matched against the canonical uppercased id. */
 const PR_IDENTIFIER_PATTERN = /^PR-[0-9]+$/;
@@ -36,28 +28,24 @@ const PR_IDENTIFIER_PATTERN = /^PR-[0-9]+$/;
  * - When no prefix is configured, both equal the bare number.
  */
 export function extractTicketId(input: { branchName: string; ticketRefPrefix?: string }): TicketIdResult {
-  const jiraMatch = input.branchName.match(JIRA_STYLE_PATTERN);
-  if (jiraMatch !== null) {
-    const id = jiraMatch[0].toUpperCase();
-    return { ticket_id: id, ticket_ref: id };
-  }
-
-  const bareMatch = input.branchName.match(BARE_NUMERIC_PATTERN);
-  if (bareMatch === null) {
+  const ref = parseTicketRef(input.branchName);
+  if (ref === undefined) {
     return { ticket_id: null, ticket_ref: null };
   }
-  const bareNumber = bareMatch[0];
+  if (!BARE_NUMERIC_ID_PATTERN.test(ref.ticketId)) {
+    return { ticket_id: ref.ticketId, ticket_ref: ref.ticketId };
+  }
 
   const prefix = input.ticketRefPrefix;
   if (prefix === '#') {
     // The `#` is a display-only convention; the canonical ID is the bare number.
-    return { ticket_id: bareNumber, ticket_ref: `#${bareNumber}` };
+    return { ticket_id: ref.ticketId, ticket_ref: `#${ref.ticketId}` };
   }
   if (prefix !== undefined && prefix !== '') {
-    const id = `${prefix}${bareNumber}`;
+    const id = `${prefix}${ref.ticketId}`;
     return { ticket_id: id, ticket_ref: id };
   }
-  return { ticket_id: bareNumber, ticket_ref: bareNumber };
+  return { ticket_id: ref.ticketId, ticket_ref: ref.ticketId };
 }
 
 /**

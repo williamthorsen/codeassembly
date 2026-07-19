@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@codeassembly/kb": "workspace:*",
+    "@codeassembly/lifecycle": "workspace:*",
     "ulid": "3.0.2",
     "yaml": "2.9.0",
     "zod": "4.4.3"
