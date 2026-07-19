@@ -11,6 +11,7 @@ import { type RunningFleetServer, startFleetServer } from '../server.ts';
 const SHORT_INTERVALS = {
   closeAfterMs: 600_000,
   debounceMs: 10,
+  gitPollMs: 60_000,
   heartbeatMs: 60_000,
   port: 0,
   rescanMs: 50,
