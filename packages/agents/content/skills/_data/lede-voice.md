@@ -130,16 +130,8 @@ For each sentence, ask: **does it add anything the reader doesn't already have**
 Three forms to cut:
 
 - **Self-evident corollary** — a clause restating the obvious consequence of the change just stated. In "a cleanup step now runs at the end of the script, so temporary files are no longer left behind," the reader already draws the second clause from the first. Keep only the first. Spend any extra words on precision (an exact version range, a specific condition), never on restatement.
-- **Harm-avoided guarantee** — a promise against a harm the reader never suspected. Stating it does not reassure; it plants the doubt. The test: **"No one would think it did otherwise until you mentioned it."** A positive rephrasing ("each operation touches only its own entries") is still the same defensive claim — rephrasing does not launder it. Silence on what a change does not do is the default, not an omission.
+- **Harm-avoided guarantee** — a promise against a harm the reader never suspected. Stating it doesn't reassure; it plants the doubt. The test: **"No one would think it did otherwise until you mentioned it."** A positive rephrasing ("each operation touches only its own entries") is the same defensive claim in new words. Silence on what a change doesn't do is the default, not an omission.
 - **Cross-sentence paraphrase** — a sentence restating a prior one's outcome in other words. Each may pass Rule 1 alone; together they say one thing twice. Apply the deletion test — "would cutting this change what the reader knows?" — across sentences, not only within one.
-
-**Bad → Good — self-evident corollary**
-
-**Bad:** "`nmr-compile` now rebuilds when the TypeScript version changes, instead of serving stale output from the previous compiler."
-
-**Good:** "`nmr-compile` now rebuilds when the TypeScript version changes."
-
-The trailing clause restates what "now rebuilds when the version changes" already tells the reader, and roughly doubles the sentence.
 
 ## Jargon at the lede
 
