@@ -1,4 +1,5 @@
-import { appendFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -19,15 +20,67 @@ const SHORT_INTERVALS = {
 };
 
 let eventsDir: string;
+let repoDir: string | undefined;
 let running: RunningFleetServer | undefined;
 
 /** Serializes one event envelope as a JSONL line. */
-function composeLine(type: string, ts: string): string {
-  return `${JSON.stringify({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV', ts, type, cwd: '/work/repo', payload: {} })}\n`;
+function composeLine(type: string, ts: string, cwd = '/work/repo'): string {
+  return `${JSON.stringify({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV', ts, type, cwd, payload: {} })}\n`;
+}
+
+/** Initializes a repository with one commit on `main` and its remote-tracking base ref in a fresh temp directory. */
+function createRepo(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'fleet-e2e-repo-'));
+  execFileSync('git', ['-C', dir, 'init', '--initial-branch=main'], { stdio: 'ignore' });
+  execFileSync(
+    'git',
+    [
+      '-C',
+      dir,
+      '-c',
+      'user.name=fleet-test',
+      '-c',
+      'user.email=fleet@test.invalid',
+      '-c',
+      'commit.gpgsign=false',
+      'commit',
+      '--allow-empty',
+      '--message',
+      'one',
+    ],
+    { stdio: 'ignore' },
+  );
+  execFileSync('git', ['-C', dir, 'update-ref', 'refs/remotes/origin/main', 'HEAD'], { stdio: 'ignore' });
+  return dir;
+}
+
+/** Polls `/api/lanes` until the predicate holds on the first lane, failing the test after the timeout. */
+async function fetchLaneUntil(
+  port: number,
+  predicate: (lane: FleetSnapshot['lanes'][number]) => boolean,
+  timeoutMs = 3000,
+): Promise<FleetSnapshot['lanes'][number]> {
+  const deadline = Date.now() + timeoutMs;
+  let lane: FleetSnapshot['lanes'][number] | undefined;
+  while (Date.now() < deadline) {
+    const response = await fetch(`http://localhost:${port}/api/lanes`);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- shape is produced by the server under test; test-code carve-out
+    const snapshot = (await response.json()) as FleetSnapshot;
+    lane = snapshot.lanes[0];
+    if (lane !== undefined && predicate(lane)) {
+      return lane;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert(lane !== undefined, 'A lane should have appeared before the timeout');
+  expect(predicate(lane)).toBe(true);
+  return lane;
 }
 
 /** Starts a server on an ephemeral port over the given events root. */
-async function startTestServer(overrides: { eventsDir?: string; staleMs?: number } = {}): Promise<void> {
+async function startTestServer(
+  overrides: { eventsDir?: string; gitPollMs?: number; staleMs?: number } = {},
+): Promise<void> {
   running = await startFleetServer({
     config: { ...SHORT_INTERVALS, eventsDir, staleMs: 90_000, ...overrides },
     log: () => {},
@@ -69,6 +122,10 @@ afterEach(async () => {
   await running?.stop();
   running = undefined;
   rmSync(eventsDir, { recursive: true, force: true });
+  if (repoDir !== undefined) {
+    rmSync(repoDir, { recursive: true, force: true });
+    repoDir = undefined;
+  }
 });
 
 describe('fleet server', () => {
@@ -105,6 +162,25 @@ describe('fleet server', () => {
     expect(elapsedMs).toBeLessThan(1000);
     expect(pushed.lanes[0]?.branch).toBe('101');
     expect(pushed.lanes[0]?.sessions[0]?.phase).toBe('working');
+  });
+
+  it('surfaces git ground truth within a poll interval and closes the lane when the worktree disappears', async () => {
+    repoDir = createRepo();
+    writeFileSync(join(repoDir, 'wip.txt'), 'wip');
+    const laneDir = join(eventsDir, 'acme', 'app', '101');
+    mkdirSync(laneDir, { recursive: true });
+    appendFileSync(join(laneDir, 'sess-a.jsonl'), composeLine('turn.started', new Date().toISOString(), repoDir));
+    await startTestServer({ gitPollMs: 50 });
+    assert(running !== undefined, 'The server should be running');
+
+    const probed = await fetchLaneUntil(running.port, (lane) => lane.git !== null);
+    expect(probed.git).toEqual({ branch: 'main', dirtyFiles: 1, ahead: 0, behind: 0, baseBranch: 'origin/main' });
+    expect(probed.open).toBe(true);
+
+    rmSync(repoDir, { recursive: true, force: true });
+
+    const closed = await fetchLaneUntil(running.port, (lane) => !lane.open);
+    expect(closed.closedReason).toBe('worktree-gone');
   });
 
   it('broadcasts a staleness crossing with no new event on disk', async () => {

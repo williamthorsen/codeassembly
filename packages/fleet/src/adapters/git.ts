@@ -45,10 +45,10 @@ export interface GitTarget {
 }
 
 /**
- * Starts polling the targets every `pollMs`, with the first pass fired immediately. A pass probes each current target
- * in sequence, drops observations for targets no longer listed, then invokes `onChange`; a tick that fires while a
- * pass is still running is skipped, so passes never overlap. `probe` is injectable for tests and defaults to
- * {@link probeWorktree}.
+ * Starts polling the targets every `pollMs`, with the first pass scheduled immediately on a microtask, so the call
+ * returns before any callback can fire. A pass probes each current target in sequence, drops observations for targets
+ * no longer listed, then invokes `onChange`; a tick that fires while a pass is still running is skipped, so passes
+ * never overlap. `probe` is injectable for tests and defaults to {@link probeWorktree}.
  */
 export function createGitAdapter(input: {
   listTargets: () => GitTarget[];
@@ -90,7 +90,9 @@ export function createGitAdapter(input: {
   const timer = setInterval(() => {
     void runPass();
   }, input.pollMs);
-  void runPass();
+  queueMicrotask(() => {
+    void runPass();
+  });
 
   return {
     getObservations: () => observations,

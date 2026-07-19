@@ -2,8 +2,10 @@
 // a rescan tick — folds and then publishes through one JSON-diff gate, so a staleness threshold crossing broadcasts
 // with no new event on disk, and a no-op scan broadcasts nothing.
 
+import { resolveLaneCwd } from '@codeassembly/lifecycle';
 import { serve } from '@hono/node-server';
 
+import { createGitAdapter, type GitTarget } from './adapters/git.ts';
 import { createApp } from './api/app.ts';
 import { buildSnapshot, type FleetSnapshot } from './api/snapshot.ts';
 import type { FleetConfig } from './config.ts';
@@ -35,7 +37,16 @@ export async function startFleetServer(input: {
     return buildSnapshot(store.listLanes(), {
       closeAfterMs: config.closeAfterMs,
       nowMs: Date.now(),
+      observations: gitAdapter.getObservations(),
       staleMs: config.staleMs,
+    });
+  }
+
+  /** The worktree of every lane that names one — what the git adapter polls. */
+  function listGitTargets(): GitTarget[] {
+    return store.listLanes().flatMap((lane) => {
+      const cwd = resolveLaneCwd(lane);
+      return cwd === undefined ? [] : [{ laneKey: `${lane.repo}/${lane.branch}`, cwd }];
     });
   }
 
@@ -54,6 +65,7 @@ export async function startFleetServer(input: {
   }
 
   store.scanAndFold(Date.now());
+  const gitAdapter = createGitAdapter({ listTargets: listGitTargets, onChange: tick, pollMs: config.gitPollMs });
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());
 
   const watcher = startWatcher({
@@ -83,6 +95,7 @@ export async function startFleetServer(input: {
   return {
     port,
     stop: async () => {
+      gitAdapter.stop();
       watcher.stop();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error === undefined ? resolve() : reject(error)));
