@@ -2,7 +2,7 @@
   "name": "@codeassembly/fleet",
   "version": "0.1.0",
   "private": true,
-  "description": "Fleet-visibility server: watches the events root, folds lane state, and streams snapshots over SSE",
+  "description": "Fleet-visibility server: Watches the events root, folds lane state, and streams snapshots over SSE",
   "type": "module",
   "exports": {
     ".": {
@@ -10,6 +10,7 @@
     }
   },
   "scripts": {
+    "build": ":",
     "dev": "tsx --watch src/main.ts",
     "start": "tsx src/main.ts"
   },
