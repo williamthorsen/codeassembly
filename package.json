@@ -54,17 +54,8 @@
     "vite": "8.1.5",
     "vitest": "4.1.10"
   },
-  "packageManager": "pnpm@10.34.5",
+  "packageManager": "pnpm@11.15.0",
   "engines": {
     "node": ">=24"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@tailwindcss/oxide",
-      "esbuild",
-      "lefthook",
-      "sharp",
-      "svelte-preprocess"
-    ]
   }
 }

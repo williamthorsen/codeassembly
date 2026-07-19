@@ -1,7 +1,17 @@
 packages:
   - packages/*
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - esbuild
-  - sharp
-  - svelte-preprocess
+
+allowBuilds:
+  '@tailwindcss/oxide': true
+  esbuild: true
+  lefthook: true
+  sharp: true
+  svelte-preprocess: true
+
+savePrefix: ''
+
+minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
+minimumReleaseAgeExclude:
+  - '@williamthorsen/*'
+  - readyup
+  - v11y-check
