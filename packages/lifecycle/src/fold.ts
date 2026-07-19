@@ -1,13 +1,9 @@
-// The pure lane fold: events in, state out. Accumulation (`applySessionEvent`, one small update per event) is
-// separated from derivation (`deriveSessionStatus` / `deriveLaneStatus`, computed from accumulated state plus the
-// clock and probe inputs), so an incremental caller folds cheaply per append and derives only when it renders.
+// The pure lane fold. Accumulation (`applySessionEvent`) is separated from derivation (`deriveSessionStatus` /
+// `deriveLaneStatus`): an incremental caller folds per append and derives only when it renders. Time arrives as
+// `nowMs` and server-side facts as probe results — nothing here reads the filesystem or the clock.
 //
-// Nothing here touches the filesystem or samples the clock: time arrives as `nowMs`, and server-side facts (worktree
-// existence) arrive as probe results. That is what keeps the fold browser-safe and testable without fakes.
-//
-// Working/waiting derives from the harness-relayed `turn.*` boundaries alone; `skill.*` events supply narration and
-// never flip the phase. A session whose boundaries are missing therefore reads as `idle` while still narrating its
-// skill — honest about what the log does not show.
+// Working/waiting derives from the `turn.*` boundaries alone; `skill.*` supplies narration and never flips the phase,
+// so a session with missing boundaries reads as `idle` while still narrating its skill.
 
 import type { EventEnvelope } from './envelope.ts';
 import { parseTicketRef, type TicketRef } from './ticket-ref.ts';
@@ -86,9 +82,8 @@ export function applyLaneEvent(lane: LaneState, input: { sessionId: string; enve
 /**
  * Folds one event into a session's state. Pure: returns a new state.
  *
- * Boundary semantics worth naming: every turn and session boundary clears the narration label, so a turn whose
- * `skill.completed` never arrived cannot leak a stale "running {skill}" into later turns; and a `session.started`
- * after `session.ended` reopens the session, which is how a resumed harness session comes back for free.
+ * Every turn and session boundary clears the narration label, so a turn whose `skill.completed` never arrived cannot
+ * leak a stale label into later turns. A `session.started` after `session.ended` reopens the session.
  */
 export function applySessionEvent(state: SessionState, envelope: EventEnvelope): SessionState {
   const next: SessionState = {
@@ -114,8 +109,7 @@ export function applySessionEvent(state: SessionState, envelope: EventEnvelope):
     case 'input.requested':
       return { ...next, ask: envelope.payload };
     default:
-      // Undeclared and narration-free types (`artifact.written`, `pr.created`, anything newer than this fold) still
-      // advance recency, so a future vocabulary addition is a non-breaking event to receive.
+      // Narration-free and undeclared types still advance recency; a new vocabulary type is non-breaking to receive.
       return next;
   }
 }

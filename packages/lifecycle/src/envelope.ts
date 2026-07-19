@@ -1,12 +1,10 @@
-// The canonical lifecycle-event vocabulary and envelope, defined once here and imported by every writer (the emit
-// helper and hook relay in `@codeassembly/agents`) and every reader (the lane fold, watching surfaces). This module is
-// dependency-free and browser-safe: it carries shapes and a membership check, never I/O.
+// The canonical lifecycle-event vocabulary and envelope.
 
 /**
  * The v0 session-lifecycle vocabulary, ordered by the sequence a session emits rather than alphabetically, so the list
  * doubles as the shape of a session: session boundaries enclose turns, which enclose the skills a turn runs.
- * Membership is convention, not a gate: an undeclared type warns and is still appended, which lets an emitter use a new
- * type before the vocabulary catches up.
+ * Membership is convention, not a gate: an undeclared type is still a valid event, so an emitter can use a new type
+ * before the vocabulary catches up.
  *
  * Two channels feed the vocabulary. The `session.*` and `turn.*` boundaries come from the harness, relayed from its
  * event hooks — a session ends and a turn completes at moments no skill is running to observe. The rest is work

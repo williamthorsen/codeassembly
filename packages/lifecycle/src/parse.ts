@@ -1,18 +1,14 @@
 // Tolerant readers for the event store: one JSONL line to an envelope, one relative file path to lane and session
 // identity. Both return `null` for input that does not fit, never throw: the store is append-only telemetry written by
-// concurrent emitters, so a reader must survive a torn line, a foreign file, or a shape from a newer writer.
-//
-// File discovery and reading stay with the caller; these helpers exist so the path layout and the envelope's minimum
-// shape are interpreted in one place, next to the vocabulary they belong to.
+// concurrent emitters, so a reader must survive a torn line, a foreign file, or a shape from a newer writer. File
+// discovery and reading stay with the caller.
 
 import type { EventEnvelope } from './envelope.ts';
 
 /**
  * Lane and session identity carried by an event file's path within the events root:
- * `{owner}/{name}/{sanitized-branch}/{session}.jsonl`.
- *
- * Segments are reported as spelled on disk, placeholders (`_no-repo`, `_no-branch`, `_no-session`) included: the
- * writer's placeholder is a real lane a watching surface may still want to render.
+ * `{owner}/{name}/{sanitized-branch}/{session}.jsonl`. Segments are reported as spelled on disk, placeholders
+ * (`_no-repo`, `_no-branch`, `_no-session`) included.
  */
 export interface LanePath {
   /** `owner/name` repo key. */
@@ -26,10 +22,7 @@ export interface LanePath {
 /**
  * Parses one JSONL line into an envelope, or `null` when the line is not one: malformed JSON, a non-object, or an
  * object missing any of the envelope's required `id`, `ts`, `type`, and `cwd` strings. A missing or non-object
- * `payload` becomes `{}`, matching what the writer emits when the caller supplies none.
- *
- * The declared vocabulary is deliberately not consulted: an undeclared `type` is a valid envelope by the envelope's
- * own contract.
+ * `payload` becomes `{}`. An undeclared `type` is a valid envelope; the vocabulary is not consulted.
  */
 export function parseEventLine(line: string): EventEnvelope | null {
   let parsed: unknown;

@@ -1,5 +1,5 @@
 // Writer-side shapes for the emit-event helper: the auto-filled context, the parsed CLI input, and the JSON result
-// emitted to stdout. The canonical envelope and vocabulary live in `@codeassembly/lifecycle`.
+// emitted to stdout.
 //
 // The helper must never block the skill it observes, so every failure it can reach — bad arguments, an unusable
 // payload, a failed write — surfaces as a `{ ok: false, error, message }` payload on stdout with a stderr warning and a

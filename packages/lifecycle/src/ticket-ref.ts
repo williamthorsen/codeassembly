@@ -1,11 +1,6 @@
-// Ticket attribution parsed from a branch name. This is the single home of the branch-name pattern contract in the
-// agents skills' `_data/ticket-id-extraction.md`: a Jira-style key anywhere in the name wins, then a bare-numeric
-// prefix, each with an optional `.N` revisit suffix. Session-context extraction in the agents package composes this
-// parser with its config-dependent concerns (`ticket_ref_prefix` formatting, PR sentinels); the lane fold consumes it
-// directly, so a lane whose branch encodes no ticket renders without a ticket rollup rather than breaking.
-//
-// The pattern accepts raw and sanitized branch spellings alike: neither pattern cares whether segments are separated
-// by `/` or `-`, so `wt/MAC-130` and its on-disk spelling `wt-MAC-130` parse identically.
+// Branch-name ticket parsing per the contract in the agents skills' `_data/ticket-id-extraction.md`: a Jira-style key
+// anywhere in the name wins, then a bare-numeric prefix, each with an optional `.N` revisit suffix. Raw and sanitized
+// branch spellings parse alike: neither pattern depends on `/` vs `-` separators.
 
 /** A ticket attribution parsed from a branch name. */
 export interface TicketRef {
@@ -16,8 +11,8 @@ export interface TicketRef {
 }
 
 /**
- * Jira-style key: two or more letters, hyphen, digits — deliberately unanchored so author-prefixed branches
- * (`wt/MAC-130`) match, with the digit run ending at the first non-digit.
+ * Jira-style key: two or more letters, hyphen, digits. Unanchored so author-prefixed branches (`wt/MAC-130`) match;
+ * the digit run ends at the first non-digit.
  */
 const JIRA_STYLE_PATTERN = /(?<ticketId>[A-Za-z]{2,}-[0-9]+)(?:\.(?<revisit>[0-9]+))?/;
 
@@ -26,8 +21,7 @@ const BARE_NUMERIC_PATTERN = /^(?<ticketId>[0-9]+)(?:\.(?<revisit>[0-9]+))?/;
 
 /**
  * Parses `branch` into a ticket ref, or `undefined` when the name encodes no ticket id. Jira-style keys are
- * uppercased to their canonical spelling. A `PR-<n>` branch parses as a Jira-style key; consumers that treat PR
- * sentinels specially filter downstream.
+ * uppercased to their canonical spelling; a `PR-<n>` name parses as a Jira-style key.
  */
 export function parseTicketRef(branch: string): TicketRef | undefined {
   const jira = JIRA_STYLE_PATTERN.exec(branch)?.groups;

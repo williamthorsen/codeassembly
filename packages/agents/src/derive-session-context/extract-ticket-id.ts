@@ -1,10 +1,7 @@
 /**
  * Extract a ticket ID from a branch name per the contract in `_data/ticket-id-extraction.md`.
  *
- * The pattern matching lives in `@codeassembly/lifecycle` (`parseTicketRef`), shared with the lane fold; this module
- * composes it with the concerns that are session-context-specific: formatting the bare-numeric form with the resolved
- * `project.ticket_ref_prefix`, and recognizing `PR-<n>` sentinels. The revisit ordinal the shared parser captures is
- * deliberately unused here — session context attributes to the parent ticket.
+ * The revisit ordinal `parseTicketRef` captures is dropped: session context attributes to the parent ticket.
  */
 import { parseTicketRef } from '@codeassembly/lifecycle';
 
