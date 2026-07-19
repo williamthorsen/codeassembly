@@ -18,5 +18,8 @@
   "scripts": {
     "build": "nmr compile",
     "prepare": "nmr compile"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
   }
 }

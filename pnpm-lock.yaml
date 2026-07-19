@@ -195,7 +195,11 @@ importers:
         specifier: 4.0.3
         version: 4.0.3
 
-  packages/lifecycle: {}
+  packages/lifecycle:
+    devDependencies:
+      esbuild:
+        specifier: 0.28.1
+        version: 0.28.1
 
   packages/mcp:
     dependencies:
