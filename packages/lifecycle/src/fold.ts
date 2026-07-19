@@ -20,6 +20,8 @@ export interface SessionState {
   phase: SessionPhase;
   /** The harness from the most recent event that carried one. */
   harness: string | undefined;
+  /** The working directory the most recent event ran from — the session's worktree. */
+  cwd: string | undefined;
   /** The skill currently narrating work; cleared at every turn and session boundary. */
   currentSkill: string | undefined;
   /** The pending ask's payload, set by `input.requested` and cleared when the next turn starts. */
@@ -89,6 +91,7 @@ export function applySessionEvent(state: SessionState, envelope: EventEnvelope):
   const next: SessionState = {
     ...state,
     harness: envelope.harness ?? state.harness,
+    cwd: envelope.cwd,
     lastEventTs: envelope.ts,
   };
   switch (envelope.type) {
@@ -121,7 +124,14 @@ export function createLaneState(input: { repo: string; branch: string }): LaneSt
 
 /** A session no events have been applied to. */
 export function createSessionState(): SessionState {
-  return { phase: 'idle', harness: undefined, currentSkill: undefined, ask: undefined, lastEventTs: undefined };
+  return {
+    phase: 'idle',
+    harness: undefined,
+    cwd: undefined,
+    currentSkill: undefined,
+    ask: undefined,
+    lastEventTs: undefined,
+  };
 }
 
 /**
@@ -154,6 +164,20 @@ export function deriveSessionStatus(state: SessionState, input: { nowMs: number;
   const lastMs = toEpochMs(state.lastEventTs);
   const stale = state.phase === 'working' && lastMs > 0 && input.nowMs - lastMs > input.staleMs;
   return { phase: state.phase, skill: state.currentSkill, ask: state.ask, stale, lastEventTs: state.lastEventTs };
+}
+
+/** The `cwd` of the lane's most recently active session — its worktree — or `undefined` when no session has one. */
+export function resolveLaneCwd(lane: LaneState): string | undefined {
+  let newestMs = -1;
+  let cwd: string | undefined;
+  for (const session of Object.values(lane.sessions)) {
+    const ms = toEpochMs(session.lastEventTs);
+    if (session.cwd !== undefined && ms > newestMs) {
+      newestMs = ms;
+      cwd = session.cwd;
+    }
+  }
+  return cwd;
 }
 
 /** The newest last-event timestamp across a lane's sessions, or `undefined` when none carries one. */

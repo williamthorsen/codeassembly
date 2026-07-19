@@ -8,6 +8,7 @@ import {
   createSessionState,
   deriveLaneStatus,
   deriveSessionStatus,
+  resolveLaneCwd,
   resolveLaneRecency,
   type SessionState,
 } from '../fold.ts';
@@ -90,6 +91,15 @@ describe('applySessionEvent', () => {
     expect(waiting.ask).toEqual({ prompt: 'next-steps' });
 
     expect(applySessionEvent(waiting, composeEvent('turn.started')).ask).toBeUndefined();
+  });
+
+  it('tracks the cwd of the most recent event', () => {
+    const state = foldSession([
+      composeEvent('turn.started', { cwd: '/work/repo.984' }),
+      composeEvent('turn.completed', { cwd: '/work/repo.984.2' }),
+    ]);
+
+    expect(state.cwd).toBe('/work/repo.984.2');
   });
 
   it('keeps the harness from the most recent event that carried one', () => {
@@ -205,6 +215,25 @@ describe('deriveLaneStatus', () => {
     const status = deriveLaneStatus(emptyLane, { nowMs: BASE_MS, closeAfterMs: 3_600_000 });
 
     expect(status).toEqual({ open: true, closedReason: undefined, lastEventTs: undefined });
+  });
+});
+
+describe('resolveLaneCwd', () => {
+  it('returns the cwd of the most recently active session', () => {
+    const older = applyLaneEvent(createLaneState({ repo: 'owner/name', branch: '984' }), {
+      sessionId: 'older',
+      envelope: composeEvent('turn.started', { ts: '2026-07-19T04:00:00.000Z', cwd: '/work/older' }),
+    });
+    const lane = applyLaneEvent(older, {
+      sessionId: 'newer',
+      envelope: composeEvent('turn.completed', { ts: '2026-07-19T06:00:00.000Z', cwd: '/work/newer' }),
+    });
+
+    expect(resolveLaneCwd(lane)).toBe('/work/newer');
+  });
+
+  it('returns undefined for a lane with no events', () => {
+    expect(resolveLaneCwd(createLaneState({ repo: 'owner/name', branch: '984' }))).toBeUndefined();
   });
 });
 
