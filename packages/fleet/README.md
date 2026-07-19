@@ -32,12 +32,13 @@ const client = hc<AppType>('http://localhost:4178');
 
 ## Configuration
 
-| Variable           | Default                  | Purpose                                                                          |
-| ------------------ | ------------------------ | -------------------------------------------------------------------------------- |
-| `FLEET_EVENTS_DIR` | `~/.codeassembly/events` | Root of the lifecycle-events tree to watch.                                      |
-| `FLEET_PORT`       | `4178`                   | Port to serve on.                                                                |
-| `FLEET_RESCAN_MS`  | `5000`                   | Interval between full rescans — the correctness backstop when watching degrades. |
-| `FLEET_STALE_MS`   | `90000`                  | Quiet threshold after which a working session reads as stale.                    |
+| Variable             | Default                  | Purpose                                                                                     |
+| -------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
+| `FLEET_EVENTS_DIR`   | `~/.codeassembly/events` | Root of the lifecycle-events tree to watch.                                                 |
+| `FLEET_PORT`         | `4178`                   | Port to serve on.                                                                           |
+| `FLEET_RESCAN_MS`    | `5000`                   | Interval between full rescans — the correctness backstop when watching degrades.            |
+| `FLEET_RETENTION_MS` | `259200000`              | How long an idle lane is retained (≈ 3 days) before it is evicted and drops from the fleet. |
+| `FLEET_STALE_MS`     | `90000`                  | Quiet threshold after which a working session reads as stale.                               |
 
 Empty or non-numeric values fall back to the defaults.
 
