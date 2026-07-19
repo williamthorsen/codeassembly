@@ -4,4 +4,4 @@
 
 import '@mantine/core/styles.css';
 
-export { AppShell, Group, MantineProvider, Text, Title } from '@mantine/core';
+export { AppShell, Badge, Card, Group, MantineProvider, Stack, Text, Title } from '@mantine/core';
