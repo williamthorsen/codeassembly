@@ -7,7 +7,8 @@
 // signals (a `Stop` hook exiting 2 blocks the agent from stopping), so a relay that exited non-zero on a bad payload
 // would not merely lose an event, it would wedge the session.
 
-import type { EventType } from '../emit-event/types.ts';
+import type { EventType } from '@codeassembly/lifecycle';
+
 import type { HarnessId } from '../lib/types.ts';
 
 /**

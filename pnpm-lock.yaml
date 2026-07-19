@@ -95,6 +95,9 @@ importers:
       '@codeassembly/kb':
         specifier: workspace:*
         version: link:../kb
+      '@codeassembly/lifecycle':
+        specifier: workspace:*
+        version: link:../lifecycle
       ulid:
         specifier: 3.0.2
         version: 3.0.2
@@ -191,6 +194,8 @@ importers:
       '@types/picomatch':
         specifier: 4.0.3
         version: 4.0.3
+
+  packages/lifecycle: {}
 
   packages/mcp:
     dependencies:

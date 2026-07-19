@@ -1,7 +1,7 @@
 import { appendFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { EventEnvelope } from './types.ts';
+import type { EventEnvelope } from '@codeassembly/lifecycle';
 
 /**
  * Appends one envelope as a single JSON line to `filePath`, creating the enclosing directories when absent.
