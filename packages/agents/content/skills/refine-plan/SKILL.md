@@ -234,7 +234,7 @@ Once the revised plan is written, emit `artifact.written` (payload `{"path":"<pa
 
 ### 6. Offer ticket update if approach diverged
 
-Compare the revised plan's approach/solution with the source ticket's solution section. If they materially diverge, offer to update the ticket to match the revised plan. If the approaches haven't diverged, skip this step silently.
+Compare the revised plan's approach/solution with the source ticket's solution section. If they materially diverge, emit `input.requested` (payload `{"prompt":"ticket-update"}`) per [Lifecycle events](#lifecycle-events), then offer to update the ticket to match the revised plan. If the approaches haven't diverged, skip this step silently.
 
 **Material divergence** means a different technical approach (e.g., build-time flag changed to runtime detection) or changed scope boundaries (features added or removed). **Non-divergence** means refined details within the same approach (e.g., different function names, reordered steps).
 
