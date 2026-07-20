@@ -8,6 +8,7 @@ import { serve } from '@hono/node-server';
 import { createGitAdapter, type GitTarget } from './adapters/git.ts';
 import { createApp } from './api/app.ts';
 import { buildSnapshot, type FleetSnapshot } from './api/snapshot.ts';
+import { buildLaneKey } from './common/lane-key.ts';
 import type { FleetConfig } from './config.ts';
 import { createEventStore } from './store/event-store.ts';
 import { startWatcher } from './store/watcher.ts';
@@ -46,7 +47,7 @@ export async function startFleetServer(input: {
   function listGitTargets(): GitTarget[] {
     return store.listLanes().flatMap((lane) => {
       const cwd = resolveLaneCwd(lane);
-      return cwd === undefined ? [] : [{ laneKey: `${lane.repo}/${lane.branch}`, cwd }];
+      return cwd === undefined ? [] : [{ laneKey: buildLaneKey(lane), cwd }];
     });
   }
 

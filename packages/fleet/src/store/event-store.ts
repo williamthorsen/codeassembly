@@ -19,6 +19,7 @@ import {
 
 import { isMissingFileError } from '../common/fs-errors.ts';
 import { readAppendedLines } from '../common/jsonl-tail.ts';
+import { buildLaneKey } from '../common/lane-key.ts';
 
 const JSONL_EXT = '.jsonl';
 
@@ -56,7 +57,7 @@ export function createEventStore(input: { eventsDir: string; retentionMs: number
     let changed = false;
 
     for (const location of enumerateBranches(input.eventsDir)) {
-      const laneKey = `${location.repo}/${location.branch}`;
+      const laneKey = buildLaneKey(location);
       if (!lanes.has(laneKey)) {
         const mtime = dirMtimeMs(location.dir);
         // A non-resident branch is walked only when its directory changed within the window; otherwise its files are

@@ -12,6 +12,7 @@ import {
 } from '@codeassembly/lifecycle';
 
 import type { GitObservation } from '../adapters/git.ts';
+import { buildLaneKey } from '../common/lane-key.ts';
 
 /** The full-fleet frame served by the lanes route and pushed over SSE. */
 export interface FleetSnapshot {
@@ -80,7 +81,7 @@ export function buildSnapshot(
   },
 ): FleetSnapshot {
   const laneSnapshots = lanes.map((lane) =>
-    buildLaneSnapshot(lane, input, input.observations?.get(`${lane.repo}/${lane.branch}`)),
+    buildLaneSnapshot(lane, input, input.observations?.get(buildLaneKey(lane))),
   );
   laneSnapshots.sort((a, b) => toEpochMs(b.lastEventTs) - toEpochMs(a.lastEventTs));
   return { lanes: laneSnapshots };
