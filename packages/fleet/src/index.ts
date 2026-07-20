@@ -2,4 +2,13 @@
 // clients. Server internals stay out — a consumer needs the contract, not the machinery.
 
 export type { AppType } from './api/app.ts';
-export type { FleetSnapshot, LaneSnapshot, SessionSnapshot, TicketRefSnapshot } from './api/snapshot.ts';
+export type {
+  FleetSnapshot,
+  ForgeLaneSnapshot,
+  LaneSnapshot,
+  PrSnapshot,
+  SessionSnapshot,
+  TicketRefSnapshot,
+  TicketSnapshot,
+} from './api/snapshot.ts';
+export type { CheckState, PrState, ReviewState } from './forge/adapter.ts';

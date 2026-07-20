@@ -2,7 +2,9 @@ import { applyLaneEvent, createLaneState, type EventEnvelope, type LaneState } f
 import { assert, describe, expect, it } from 'vitest';
 
 import type { GitObservation } from '../../adapters/git.ts';
-import { buildSnapshot } from '../snapshot.ts';
+import type { PrFacts } from '../../forge/adapter.ts';
+import type { ForgeLaneFacts } from '../../forge/poller.ts';
+import { buildSnapshot, type ForgeFactsLookup } from '../snapshot.ts';
 
 const BASE_TS = '2026-07-19T05:00:00.000Z';
 const BASE_MS = Date.parse(BASE_TS);
@@ -22,6 +24,25 @@ function composeLane(branch: string, sessions: Record<string, EventEnvelope[]>):
     }
   }
   return lane;
+}
+
+/** A forge-facts accessor over a map keyed by `repo/branch`. */
+function composeForge(byLane: Record<string, ForgeLaneFacts>): ForgeFactsLookup {
+  return (repo, branch) => byLane[`${repo}/${branch}`];
+}
+
+/** Pull-request facts with a sensible default, overridable per field. */
+function composePrFacts(overrides: Partial<PrFacts> = {}): PrFacts {
+  return {
+    number: 42,
+    title: 'Wire it',
+    url: 'https://x/pull/42',
+    state: 'open',
+    isDraft: false,
+    checks: undefined,
+    review: undefined,
+    ...overrides,
+  };
 }
 
 describe('buildSnapshot', () => {
@@ -147,5 +168,107 @@ describe('buildSnapshot', () => {
 
     expect(snapshot.lanes[0]?.open).toBe(false);
     expect(snapshot.lanes[0]?.closedReason).toBe('stale');
+  });
+
+  it('renders forge facts onto the wire for a lane', () => {
+    const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
+    const forge = composeForge({
+      'acme/app/101': {
+        pr: composePrFacts({ checks: 'passing', review: 'approved' }),
+        ticket: {
+          title: 'Do it',
+          state: 'open',
+          url: 'https://x/issues/101',
+          createdAt: '2026-07-01T00:00:00Z',
+          labels: ['bug'],
+        },
+        fetchedAt: BASE_TS,
+        stale: false,
+      },
+    });
+
+    const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, forge });
+
+    expect(snapshot.lanes[0]?.forge).toEqual({
+      pr: {
+        number: 42,
+        title: 'Wire it',
+        url: 'https://x/pull/42',
+        state: 'open',
+        isDraft: false,
+        checks: 'passing',
+        review: 'approved',
+      },
+      ticket: {
+        title: 'Do it',
+        state: 'open',
+        url: 'https://x/issues/101',
+        createdAt: '2026-07-01T00:00:00Z',
+        labels: ['bug'],
+      },
+      fetchedAt: BASE_TS,
+      stale: false,
+    });
+  });
+
+  it('spells an absent check verdict, review decision, and ticket as null so the wire survives a JSON round-trip', () => {
+    const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
+    const forge = composeForge({
+      'acme/app/101': { pr: composePrFacts(), ticket: undefined, fetchedAt: BASE_TS, stale: true },
+    });
+
+    const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, forge });
+
+    expect(snapshot.lanes[0]?.forge).toEqual({
+      pr: {
+        number: 42,
+        title: 'Wire it',
+        url: 'https://x/pull/42',
+        state: 'open',
+        isDraft: false,
+        checks: null,
+        review: null,
+      },
+      ticket: null,
+      fetchedAt: BASE_TS,
+      stale: true,
+    });
+    // eslint-disable-next-line unicorn/prefer-structured-clone -- the JSON round-trip is the behavior under test
+    expect(JSON.parse(JSON.stringify(snapshot))).toEqual(snapshot);
+  });
+
+  it('leaves forge null for a lane with no fetched facts', () => {
+    const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
+
+    const snapshot = buildSnapshot([lane], DERIVE_INPUT);
+
+    expect(snapshot.lanes[0]?.forge).toBeNull();
+  });
+
+  it('mints synthetic PR-<n> attribution for a lane with a pull request but no parsed ticket', () => {
+    const lane = composeLane('no-ticket-here', { 'sess-a': [composeEvent('turn.started')] });
+    const forge = composeForge({
+      'acme/app/no-ticket-here': {
+        pr: composePrFacts({ number: 42 }),
+        ticket: undefined,
+        fetchedAt: BASE_TS,
+        stale: false,
+      },
+    });
+
+    const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, forge });
+
+    expect(snapshot.lanes[0]?.ticketRef).toEqual({ ticketId: 'PR-42', revisit: null });
+  });
+
+  it('prefers a branch-parsed ticket ref over synthetic PR attribution', () => {
+    const lane = composeLane('984', { 'sess-a': [composeEvent('turn.started')] });
+    const forge = composeForge({
+      'acme/app/984': { pr: composePrFacts({ number: 42 }), ticket: undefined, fetchedAt: BASE_TS, stale: false },
+    });
+
+    const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, forge });
+
+    expect(snapshot.lanes[0]?.ticketRef).toEqual({ ticketId: '984', revisit: null });
   });
 });
