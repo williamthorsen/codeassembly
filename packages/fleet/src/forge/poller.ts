@@ -8,6 +8,7 @@
 
 import type { LaneState } from '@codeassembly/lifecycle';
 
+import { buildLaneKey } from '../common/lane-key.ts';
 import { getOrCreate, retainKeys } from '../common/maps.ts';
 import type { ForgeAdapter, PrFacts, TicketFacts } from './adapter.ts';
 
@@ -54,7 +55,7 @@ export function startForgePoller(input: {
     inFlight = true;
     try {
       const lanes = input.listLanes();
-      retainKeys(cache, new Set(lanes.map(laneKey)));
+      retainKeys(cache, new Set(lanes.map(buildLaneKey)));
       for (const group of groupLanesByRepo(lanes).values()) {
         await pollRepo(adapter, cache, group, input.now, input.log);
       }
@@ -67,7 +68,7 @@ export function startForgePoller(input: {
   const interval = adapter === undefined ? undefined : setInterval(() => void tick(), input.intervalMs);
 
   return {
-    getFacts: (repo, branch) => cache.get(`${repo}/${branch}`),
+    getFacts: (repo, branch) => cache.get(buildLaneKey({ repo, branch })),
     tick,
     stop: () => {
       if (interval !== undefined) {
@@ -106,11 +107,6 @@ function groupLanesByRepo(lanes: readonly LaneState[]): Map<string, RepoGroup> {
   return groups;
 }
 
-/** The cache key for a lane, matching the store's `owner/name/branch` lane identity. */
-function laneKey(lane: LaneState): string {
-  return `${lane.repo}/${lane.branch}`;
-}
-
 /**
  * Polls one repo and folds its facts into the cache. Success writes fresh facts with `stale: false`; a repo-level
  * failure retains each lane's last-known facts and flips `stale: true`, logging one notice.
@@ -131,7 +127,7 @@ async function pollRepo(
     });
     for (const lane of group.lanes) {
       const ticketId = forgeTicketId(lane);
-      cache.set(laneKey(lane), {
+      cache.set(buildLaneKey(lane), {
         pr: state.branchPrs[lane.branch],
         ticket: ticketId === undefined ? undefined : state.tickets[ticketId],
         fetchedAt,
@@ -140,7 +136,7 @@ async function pollRepo(
     }
   } catch (error) {
     for (const lane of group.lanes) {
-      const key = laneKey(lane);
+      const key = buildLaneKey(lane);
       const existing = cache.get(key);
       cache.set(
         key,
