@@ -15,6 +15,7 @@ function buildLane(branch: string): LaneSnapshot {
     open: true,
     closedReason: null,
     lastEventTs: '2026-07-19T11:59:48.000Z',
+    git: null,
     sessions: [],
   };
 }
