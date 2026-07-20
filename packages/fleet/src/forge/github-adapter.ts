@@ -11,6 +11,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { getOrCreate, retainKeys } from '../common/maps.ts';
 import type {
   CheckState,
   ForgeAdapter,
@@ -161,17 +162,6 @@ function classifyStatusState(state: unknown): CheckState {
   }
 }
 
-/** Returns the value at `key`, inserting one produced by `create` when absent. */
-function getOrCreate<K, V>(map: Map<K, V>, key: K, create: () => V): V {
-  const existing = map.get(key);
-  if (existing !== undefined) {
-    return existing;
-  }
-  const created = create();
-  map.set(key, created);
-  return created;
-}
-
 /** True when a `gh issue view` failure means the number resolves to no issue, rather than a repo-level fault. */
 function isMissingIssueError(error: unknown): boolean {
   return /could not resolve/i.test(readErrorText(error));
@@ -310,15 +300,6 @@ function readErrorText(error: unknown): string {
     parts.push(error.message);
   }
   return parts.length > 0 ? parts.join('\n') : String(error);
-}
-
-/** Drops every map key absent from `keep`, bounding the map to the currently resident set. */
-function retainKeys<K, V>(map: Map<K, V>, keep: ReadonlySet<K>): void {
-  for (const key of map.keys()) {
-    if (!keep.has(key)) {
-      map.delete(key);
-    }
-  }
 }
 
 /** Drops every set member absent from `keep`, bounding the set to the currently resident set. */
