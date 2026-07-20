@@ -1,4 +1,5 @@
-import { readdirSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { defineRdyKit } from 'readyup';
 import { isRecord, readFile, readJsonFile, readJsonValue } from 'readyup/check-utils';
@@ -101,16 +102,17 @@ export default defineRdyKit({
 
 /** Lists the immediate subdirectory names of `packages/`, or none when the directory is absent. */
 function listPackageDirNames(): string[] {
+  let entries: string[];
   try {
-    return readdirSync('packages', { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name);
+    entries = readdirSync('packages');
   } catch (error) {
     if (isRecord(error) && error.code === 'ENOENT') {
       return [];
     }
     throw error;
   }
+  // stat follows symlinks so symlinked package dirs count, matching the generated map; Dirent would drop them.
+  return entries.filter((entry) => statSync(join('packages', entry)).isDirectory());
 }
 
 /** Reads the installed `@williamthorsen/release-kit` version, or undefined when it cannot be resolved. */

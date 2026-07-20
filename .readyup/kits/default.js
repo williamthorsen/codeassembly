@@ -4,7 +4,8 @@ export const __readyupVersion = "0.21.2";
 
 
 // .readyup/kits/default.ts
-import { readdirSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { defineRdyKit } from "readyup";
 import { isRecord, readFile, readJsonFile, readJsonValue } from "readyup/check-utils";
 
@@ -124,14 +125,16 @@ var default_default = defineRdyKit({
   ]
 });
 function listPackageDirNames() {
+  let entries;
   try {
-    return readdirSync("packages", { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+    entries = readdirSync("packages");
   } catch (error) {
     if (isRecord(error) && error.code === "ENOENT") {
       return [];
     }
     throw error;
   }
+  return entries.filter((entry) => statSync(join("packages", entry)).isDirectory());
 }
 function readInstalledReleaseKitVersion() {
   const packageJson = readJsonFile(RELEASE_KIT_PACKAGE_JSON);
