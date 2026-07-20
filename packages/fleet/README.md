@@ -4,6 +4,12 @@ Fleet is the server of the fleet-visibility stack. It watches the lifecycle-even
 
 A missing or empty events root serves an empty fleet. The folded state is a rebuildable in-server cache: restarting the server re-folds from disk, and nothing here is a writer concern.
 
+## Git adapter
+
+Alongside the event fold, a git adapter polls each lane's worktree (the `cwd` its events report) with read-only git commands and overlays the results on the lane: checked-out branch, working-tree change count, ahead/behind against the base branch (`behind > 0` is base-branch advance), and the base ref compared against. Observations are held in memory and merged at snapshot time — never written to the event store — and the adapter never fetches or otherwise mutates a repository, so base-branch advance is measured against the local remote-tracking ref, which worktrees share.
+
+A lane whose worktree no longer exists closes as `worktree-gone`. An unreadable repository degrades that lane's git fields to `null` while the rest of the fleet is unaffected.
+
 ## Run
 
 From `packages/fleet/`:
@@ -35,6 +41,7 @@ const client = hc<AppType>('http://localhost:4178');
 | Variable             | Default                  | Purpose                                                                                     |
 | -------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
 | `FLEET_EVENTS_DIR`   | `~/.codeassembly/events` | Root of the lifecycle-events tree to watch.                                                 |
+| `FLEET_GIT_POLL_MS`  | `15000`                  | Interval between read-only git polls of the lanes' worktrees.                               |
 | `FLEET_PORT`         | `4178`                   | Port to serve on.                                                                           |
 | `FLEET_RESCAN_MS`    | `5000`                   | Interval between full rescans — the correctness backstop when watching degrades.            |
 | `FLEET_RETENTION_MS` | `259200000`              | How long an idle lane is retained (≈ 3 days) before it is evicted and drops from the fleet. |

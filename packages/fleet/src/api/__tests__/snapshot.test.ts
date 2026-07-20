@@ -1,6 +1,7 @@
 import { applyLaneEvent, createLaneState, type EventEnvelope, type LaneState } from '@codeassembly/lifecycle';
 import { assert, describe, expect, it } from 'vitest';
 
+import type { GitObservation } from '../../adapters/git.ts';
 import { buildSnapshot } from '../snapshot.ts';
 
 const BASE_TS = '2026-07-19T05:00:00.000Z';
@@ -82,6 +83,61 @@ describe('buildSnapshot', () => {
     const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, nowMs: BASE_MS + 90_001 });
 
     expect(snapshot.lanes[0]?.sessions[0]?.stale).toBe(true);
+  });
+
+  it("overlays a lane's git observation onto the wire shape", () => {
+    const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
+    const observation: GitObservation = {
+      worktreeExists: true,
+      branch: '101',
+      dirtyFiles: 2,
+      ahead: 3,
+      behind: 1,
+      baseBranch: 'origin/main',
+    };
+
+    const snapshot = buildSnapshot([lane], {
+      ...DERIVE_INPUT,
+      observations: new Map([['acme/app/101', observation]]),
+    });
+
+    expect(snapshot.lanes[0]?.open).toBe(true);
+    expect(snapshot.lanes[0]?.git).toEqual({
+      branch: '101',
+      dirtyFiles: 2,
+      ahead: 3,
+      behind: 1,
+      baseBranch: 'origin/main',
+    });
+  });
+
+  it('leaves the git block null for a lane the observations do not cover', () => {
+    const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
+
+    const snapshot = buildSnapshot([lane], { ...DERIVE_INPUT, observations: new Map() });
+
+    expect(snapshot.lanes[0]?.git).toBeNull();
+    expect(snapshot.lanes[0]?.open).toBe(true);
+  });
+
+  it('closes a lane whose observation reports the worktree gone', () => {
+    const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
+    const observation: GitObservation = {
+      worktreeExists: false,
+      branch: null,
+      dirtyFiles: null,
+      ahead: null,
+      behind: null,
+      baseBranch: null,
+    };
+
+    const snapshot = buildSnapshot([lane], {
+      ...DERIVE_INPUT,
+      observations: new Map([['acme/app/101', observation]]),
+    });
+
+    expect(snapshot.lanes[0]?.open).toBe(false);
+    expect(snapshot.lanes[0]?.closedReason).toBe('worktree-gone');
   });
 
   it('closes a lane whose sessions have all gone quiet past the closure threshold', () => {
