@@ -1,0 +1,35 @@
+{
+  "name": "@codeassembly/foreman",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fleet-visibility client: Renders the lane view over Fleet's snapshot and SSE stream",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm vite build",
+    "dev": "pnpm vite",
+    "preview": "pnpm vite preview"
+  },
+  "dependencies": {
+    "@codeassembly/fleet": "workspace:*",
+    "@mantine/core": "9.4.1",
+    "@mantine/hooks": "9.4.1",
+    "hono": "4.12.30",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "eslint-plugin-react": "7.37.5",
+    "jsdom": "29.1.1",
+    "postcss-preset-mantine": "1.18.0",
+    "postcss-simple-vars": "7.0.1"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

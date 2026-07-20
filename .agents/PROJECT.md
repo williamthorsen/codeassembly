@@ -4,7 +4,7 @@
 
 ## Project structure
 
-This is a pnpm monorepo centered around agentic code-orchestration flows. It contains seven packages:
+This is a pnpm monorepo centered around agentic code-orchestration flows. It contains eight packages:
 
 - **Run-core** (`packages/run-core/`) — canonical domain model, Zod schemas, and data parsing for orchestration runs; foundational library consumed by other packages
 - **MCP** (`packages/mcp/`) — MCP server exposing run-management tools (`init_run`, `emit_event`, `register_artifact`, `complete_run`, `get_run_state`) built on run-core
@@ -13,8 +13,9 @@ This is a pnpm monorepo centered around agentic code-orchestration flows. It con
 - **KB** (`packages/kb/`) — knowledge-base foundation library: discovery, registry loading, frontmatter parsing, tags, and type-blind vault-integrity checks
 - **Lifecycle** (`packages/lifecycle/`) — canonical session-lifecycle event envelope, vocabulary, and pure lane fold; consumed by instrumented skills and by Fleet
 - **Fleet** (`packages/fleet/`) — server of the fleet-visibility stack: watches the lifecycle-events root, folds lane state via lifecycle, and serves a typed lanes snapshot plus an SSE stream (see `packages/fleet/README.md`)
+- **Foreman** (`packages/foreman/`) — client app of the fleet-visibility stack: the Mantine lane view over Fleet's snapshot and SSE stream, served by Vite with `/api` proxied to Fleet (see `packages/foreman/README.md`)
 
-The packages form a dependency chain: **run-core** ← **mcp**, **run-core** ← **factory**, and **lifecycle** ← **fleet**. Agents depends on **kb**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
+The packages form a dependency chain: **run-core** ← **mcp**, **run-core** ← **factory**, **lifecycle** ← **fleet**, and **fleet** ← **foreman**. Agents depends on **kb**, which it bundles into the KB skills it ships (it also produces the artifact files that run-core parses). Co-locating the packages ensures schema changes can be made atomically.
 
 ### Run-core (`packages/run-core/`)
 
@@ -240,6 +241,10 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - `pnpm run dev` - Start both Express server and Vite dev server
 - `pnpm run dev:server` - Start Express server only (with tsx --watch)
 - `pnpm run dev:client` - Start Vite dev server only
+
+**Foreman package (`packages/foreman/`):**
+
+- `pnpm run dev` - Start the Vite dev server on port 4179 (proxies `/api` to Fleet)
 
 **Agents package (`packages/agents/`):**
 
