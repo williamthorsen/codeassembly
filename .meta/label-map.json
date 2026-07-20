@@ -1,5 +1,5 @@
 {
-  "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v5.2.0/packages/release-kit/schemas/label-map.json",
+  "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v8.0.1/packages/release-kit/schemas/label-map.json",
   "types": {
     "ai": "ai",
     "ci": "ci",
@@ -20,6 +20,7 @@
     "agents": "scope:agents",
     "factory": "scope:factory",
     "fleet": "scope:fleet",
+    "foreman": "scope:foreman",
     "kb": "scope:kb",
     "lifecycle": "scope:lifecycle",
     "mcp": "scope:mcp",
