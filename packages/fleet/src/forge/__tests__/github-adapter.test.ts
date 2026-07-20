@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createGithubAdapter, type ProcessRunner } from '../github-adapter.ts';
+import { ABSENCE_RECHECK_INTERVAL, createGithubAdapter, type ProcessRunner } from '../github-adapter.ts';
 
 const REPO = 'acme/app';
 
@@ -104,6 +104,21 @@ describe('createGithubAdapter', () => {
 
     expect(first.branchPrs['feature-x']).toBeUndefined();
     expect(calls.filter((args) => args[0] === 'pr' && args[1] === 'view')).toHaveLength(1);
+  });
+
+  it('re-probes a remembered absence on the recheck-interval boundary', async () => {
+    const { run, calls } = createRunner({
+      prList: [],
+      prView: { 'feature-x': composeGhError('no pull requests found for branch "feature-x"') },
+    });
+    const adapter = createGithubAdapter({ runProcess: run });
+
+    for (let poll = 0; poll < ABSENCE_RECHECK_INTERVAL; poll += 1) {
+      await adapter.fetchRepoState({ repo: REPO, branches: ['feature-x'], ticketIds: [] });
+    }
+
+    // The initial poll caches the absence; the interval-boundary poll clears it and re-probes — twice total, not once.
+    expect(calls.filter((args) => args[0] === 'pr' && args[1] === 'view')).toHaveLength(2);
   });
 
   it('normalizes a ticket, lowercasing its state and flattening its labels to names', async () => {

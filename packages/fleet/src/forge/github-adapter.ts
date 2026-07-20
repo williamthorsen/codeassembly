@@ -32,8 +32,15 @@ const PR_JSON_FIELDS = 'number,title,url,state,isDraft,headRefName,statusCheckRo
 /** The `--json` field set requested for every ticket query. */
 const ISSUE_JSON_FIELDS = 'title,state,url,createdAt,labels';
 
+/**
+ * Open pull requests fetched per repo in one `pr list`. `gh` defaults to 30; this ceiling is sized well past any
+ * realistic open-PR count so every resident lane stays covered by the single batched list rather than degrading to a
+ * recurring per-branch `pr view`.
+ */
+const OPEN_PR_LIST_LIMIT = 500;
+
 /** Polls between re-checks of branches remembered as having no pull request. */
-const ABSENCE_RECHECK_INTERVAL = 10;
+export const ABSENCE_RECHECK_INTERVAL = 10;
 
 /** Output cap for a single `gh` invocation, generous against large check rollups so a busy repo never truncates. */
 const MAX_OUTPUT_BYTES = 10_000_000;
@@ -64,7 +71,18 @@ export function createGithubAdapter(input: { runProcess?: ProcessRunner } = {}):
       absentBranches.clear();
     }
 
-    const listed = await runProcess('gh', ['pr', 'list', '--repo', repo, '--state', 'open', '--json', PR_JSON_FIELDS]);
+    const listed = await runProcess('gh', [
+      'pr',
+      'list',
+      '--repo',
+      repo,
+      '--state',
+      'open',
+      '--limit',
+      String(OPEN_PR_LIST_LIMIT),
+      '--json',
+      PR_JSON_FIELDS,
+    ]);
     const openPrs = parseOpenPrs(listed.stdout);
 
     const branchPrs: Record<string, PrFacts> = {};
