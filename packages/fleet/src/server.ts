@@ -5,7 +5,7 @@
 import { resolveLaneCwd } from '@codeassembly/lifecycle';
 import { serve } from '@hono/node-server';
 
-import { createGitAdapter, type GitTarget } from './adapters/git.ts';
+import { createGitAdapter, type GitObservation, type GitTarget } from './adapters/git.ts';
 import { createApp } from './api/app.ts';
 import { buildSnapshot, type FleetSnapshot } from './api/snapshot.ts';
 import { buildLaneKey } from './common/lane-key.ts';
@@ -27,6 +27,8 @@ export interface RunningFleetServer {
  */
 export async function startFleetServer(input: {
   config: FleetConfig;
+  /** Git-probe override; defaults to the real worktree probe. Tests inject it to drive observations deterministically. */
+  gitProbe?: ((cwd: string) => Promise<GitObservation>) | undefined;
   log?: (message: string) => void;
 }): Promise<RunningFleetServer> {
   const { config } = input;
@@ -80,7 +82,13 @@ export async function startFleetServer(input: {
   });
 
   store.scanAndFold(Date.now());
-  const gitAdapter = createGitAdapter({ listTargets: listGitTargets, onChange: tick, pollMs: config.gitPollMs });
+  const gitAdapter = createGitAdapter({
+    listTargets: listGitTargets,
+    onChange: tick,
+    pollMs: config.gitPollMs,
+    // Omit rather than pass undefined, so createGitAdapter applies its probeWorktree default on the production path.
+    ...(input.gitProbe === undefined ? {} : { probe: input.gitProbe }),
+  });
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());
   // Kick an initial round so forge facts populate promptly rather than after the first interval.
   void poller.tick();
