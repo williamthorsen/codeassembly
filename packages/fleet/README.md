@@ -26,6 +26,8 @@ The server runs from TypeScript source; there is no build step.
 - `GET /api/lanes` — the current full-fleet snapshot.
 - `GET /api/stream` — SSE stream pushing a full-fleet snapshot frame whenever fleet state changes.
 
+Each lane carries a `forge` field — pull-request state, CI status, review decision, and ticket metadata polled from the configured forge — that is `null` before the lane's first poll or when `FLEET_FORGE=none`. A lane whose branch has a pull request but no parsed ticket id gains synthetic `PR-<number>` attribution; this enrichment is merged at snapshot derivation and never enters the event store.
+
 Workspace packages import the route map and wire types from `@codeassembly/fleet`:
 
 ```ts
@@ -38,14 +40,16 @@ const client = hc<AppType>('http://localhost:4178');
 
 ## Configuration
 
-| Variable             | Default                  | Purpose                                                                                     |
-| -------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
-| `FLEET_EVENTS_DIR`   | `~/.codeassembly/events` | Root of the lifecycle-events tree to watch.                                                 |
-| `FLEET_GIT_POLL_MS`  | `15000`                  | Interval between read-only git polls of the lanes' worktrees.                               |
-| `FLEET_PORT`         | `4178`                   | Port to serve on.                                                                           |
-| `FLEET_RESCAN_MS`    | `5000`                   | Interval between full rescans — the correctness backstop when watching degrades.            |
-| `FLEET_RETENTION_MS` | `259200000`              | How long an idle lane is retained (≈ 3 days) before it is evicted and drops from the fleet. |
-| `FLEET_STALE_MS`     | `90000`                  | Quiet threshold after which a working session reads as stale.                               |
+| Variable              | Default                  | Purpose                                                                                     |
+| --------------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
+| `FLEET_EVENTS_DIR`    | `~/.codeassembly/events` | Root of the lifecycle-events tree to watch.                                                 |
+| `FLEET_FORGE`         | `github`                 | Forge backend polled for PR, CI, and ticket enrichment; `none` disables polling.            |
+| `FLEET_FORGE_POLL_MS` | `60000`                  | Interval between forge poll rounds.                                                         |
+| `FLEET_GIT_POLL_MS`   | `15000`                  | Interval between read-only git polls of the lanes' worktrees.                               |
+| `FLEET_PORT`          | `4178`                   | Port to serve on.                                                                           |
+| `FLEET_RESCAN_MS`     | `5000`                   | Interval between full rescans — the correctness backstop when watching degrades.            |
+| `FLEET_RETENTION_MS`  | `259200000`              | How long an idle lane is retained (≈ 3 days) before it is evicted and drops from the fleet. |
+| `FLEET_STALE_MS`      | `90000`                  | Quiet threshold after which a working session reads as stale.                               |
 
 Empty or non-numeric values fall back to the defaults.
 

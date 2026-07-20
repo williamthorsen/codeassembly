@@ -5,11 +5,13 @@
 import { resolveLaneCwd } from '@codeassembly/lifecycle';
 import { serve } from '@hono/node-server';
 
-import { createGitAdapter, type GitTarget } from './adapters/git.ts';
+import { createGitAdapter, type GitObservation, type GitTarget } from './adapters/git.ts';
 import { createApp } from './api/app.ts';
 import { buildSnapshot, type FleetSnapshot } from './api/snapshot.ts';
 import { buildLaneKey } from './common/lane-key.ts';
 import type { FleetConfig } from './config.ts';
+import { createGithubAdapter } from './forge/github-adapter.ts';
+import { startForgePoller } from './forge/poller.ts';
 import { createEventStore } from './store/event-store.ts';
 import { startWatcher } from './store/watcher.ts';
 
@@ -25,6 +27,8 @@ export interface RunningFleetServer {
  */
 export async function startFleetServer(input: {
   config: FleetConfig;
+  /** Git-probe override; defaults to the real worktree probe. Tests inject it to drive observations deterministically. */
+  gitProbe?: ((cwd: string) => Promise<GitObservation>) | undefined;
   log?: (message: string) => void;
 }): Promise<RunningFleetServer> {
   const { config } = input;
@@ -40,6 +44,7 @@ export async function startFleetServer(input: {
       nowMs: Date.now(),
       observations: gitAdapter.getObservations(),
       staleMs: config.staleMs,
+      forge: (repo, branch) => poller.getFacts(repo, branch),
     });
   }
 
@@ -65,9 +70,28 @@ export async function startFleetServer(input: {
     }
   }
 
+  // A disabled forge yields no adapter; the poller is then inert and every lane's `forge` stays null.
+  const adapter = config.forge === 'none' ? undefined : createGithubAdapter();
+  const poller = startForgePoller({
+    adapter,
+    intervalMs: config.forgePollMs,
+    listLanes: () => store.listLanes(),
+    log,
+    now: () => Date.now(),
+    onUpdate: tick,
+  });
+
   store.scanAndFold(Date.now());
-  const gitAdapter = createGitAdapter({ listTargets: listGitTargets, onChange: tick, pollMs: config.gitPollMs });
+  const gitAdapter = createGitAdapter({
+    listTargets: listGitTargets,
+    onChange: tick,
+    pollMs: config.gitPollMs,
+    // Omit rather than pass undefined, so createGitAdapter applies its probeWorktree default on the production path.
+    ...(input.gitProbe === undefined ? {} : { probe: input.gitProbe }),
+  });
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());
+  // Kick an initial round so forge facts populate promptly rather than after the first interval.
+  void poller.tick();
 
   const watcher = startWatcher({
     debounceMs: config.debounceMs,
@@ -97,6 +121,7 @@ export async function startFleetServer(input: {
     port,
     stop: async () => {
       gitAdapter.stop();
+      poller.stop();
       watcher.stop();
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error === undefined ? resolve() : reject(error)));

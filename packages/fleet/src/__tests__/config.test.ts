@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { CLOSE_AFTER_MS, DEBOUNCE_MS, HEARTBEAT_MS, resolveConfig, RETENTION_MS } from '../config.ts';
+import { CLOSE_AFTER_MS, DEBOUNCE_MS, FORGE_POLL_MS, HEARTBEAT_MS, resolveConfig, RETENTION_MS } from '../config.ts';
 
 describe('resolveConfig', () => {
   it('applies defaults when the environment is empty', () => {
@@ -11,6 +11,8 @@ describe('resolveConfig', () => {
       closeAfterMs: CLOSE_AFTER_MS,
       debounceMs: DEBOUNCE_MS,
       eventsDir: join(homedir(), '.codeassembly', 'events'),
+      forge: 'github',
+      forgePollMs: FORGE_POLL_MS,
       gitPollMs: 15_000,
       heartbeatMs: HEARTBEAT_MS,
       port: 4178,
@@ -23,6 +25,8 @@ describe('resolveConfig', () => {
   it('reads every FLEET_* override from the environment', () => {
     const config = resolveConfig({
       FLEET_EVENTS_DIR: '/srv/events',
+      FLEET_FORGE: 'none',
+      FLEET_FORGE_POLL_MS: '30000',
       FLEET_GIT_POLL_MS: '2000',
       FLEET_PORT: '9000',
       FLEET_RESCAN_MS: '250',
@@ -31,6 +35,8 @@ describe('resolveConfig', () => {
     });
 
     expect(config.eventsDir).toBe('/srv/events');
+    expect(config.forge).toBe('none');
+    expect(config.forgePollMs).toBe(30_000);
     expect(config.gitPollMs).toBe(2000);
     expect(config.port).toBe(9000);
     expect(config.rescanMs).toBe(250);
@@ -43,6 +49,16 @@ describe('resolveConfig', () => {
     ['non-numeric', 'not-a-number'],
   ])('when a numeric variable is %s, falls back to the default', (_label, value) => {
     expect(resolveConfig({ FLEET_PORT: value }).port).toBe(4178);
+    expect(resolveConfig({ FLEET_FORGE_POLL_MS: value }).forgePollMs).toBe(FORGE_POLL_MS);
+  });
+
+  it.each([
+    ['github', 'github'],
+    ['none', 'none'],
+    ['', 'github'],
+    ['gitlab', 'github'],
+  ])('resolves FLEET_FORGE %s to %s, defaulting anything but none to github', (value, expected) => {
+    expect(resolveConfig({ FLEET_FORGE: value }).forge).toBe(expected);
   });
 
   it('when the events dir is set to an empty string, falls back to the default', () => {

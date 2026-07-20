@@ -8,6 +8,7 @@ import { stat } from 'node:fs/promises';
 import { promisify } from 'node:util';
 
 import { isMissingFileError } from '../common/fs-errors.ts';
+import { retainKeys } from '../common/maps.ts';
 
 /** Ceiling on any single git invocation, so a wedged repository cannot stall a poll pass indefinitely. */
 const GIT_TIMEOUT_MS = 10_000;
@@ -68,12 +69,7 @@ export function createGitAdapter(input: {
     passInFlight = true;
     try {
       const targets = input.listTargets();
-      const targetKeys = new Set(targets.map((target) => target.laneKey));
-      for (const laneKey of observations.keys()) {
-        if (!targetKeys.has(laneKey)) {
-          observations.delete(laneKey);
-        }
-      }
+      retainKeys(observations, new Set(targets.map((target) => target.laneKey)));
       for (const target of targets) {
         const observation = await probe(target.cwd).catch(() => createUnprobedObservation(true));
         if (stopped) {
