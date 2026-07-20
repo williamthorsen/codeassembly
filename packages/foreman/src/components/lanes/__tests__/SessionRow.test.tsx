@@ -66,6 +66,17 @@ describe('SessionRow', () => {
     expect(screen.getByTestId('session-row')).toHaveStyle({ opacity: '0.5' });
   });
 
+  it('dims an ended session and strikes through its label', () => {
+    renderRow(buildSession({ phase: 'ended' }));
+    expect(screen.getByTestId('session-row')).toHaveStyle({ opacity: '0.5' });
+    expect(screen.getByText('ended')).toHaveStyle({ textDecoration: 'line-through' });
+  });
+
+  it('marks a waiting session with the accent border', () => {
+    renderRow(buildSession({ phase: 'waiting' }));
+    expect(screen.getByTestId('session-row')).toHaveStyle({ borderLeftStyle: 'solid', borderLeftWidth: '3px' });
+  });
+
   it('does not dim an active session', () => {
     renderRow(buildSession());
     expect(screen.getByTestId('session-row')).toHaveStyle({ opacity: '1' });

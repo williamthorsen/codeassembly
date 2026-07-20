@@ -29,7 +29,11 @@ export function SessionRow({ nowMs, session }: SessionRowProps): ReactElement {
       opacity={dimmed ? 0.5 : 1}
       px="sm"
       py="xs"
-      style={waiting ? { borderLeft: '3px solid var(--mantine-color-yellow-6)' } : undefined}
+      style={
+        waiting
+          ? { borderLeftColor: 'var(--mantine-color-yellow-6)', borderLeftStyle: 'solid', borderLeftWidth: 3 }
+          : undefined
+      }
     >
       <Text c="dimmed" ff="monospace" size="sm" title={session.session}>
         {session.session.slice(0, 8)}
