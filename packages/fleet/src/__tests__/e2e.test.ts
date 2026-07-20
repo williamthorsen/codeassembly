@@ -12,6 +12,10 @@ import { type RunningFleetServer, startFleetServer } from '../server.ts';
 const SHORT_INTERVALS = {
   closeAfterMs: 600_000,
   debounceMs: 10,
+  // Forge polling is disabled so the suite stays hermetic — no `gh`, no network. Forge derivation is covered by the
+  // layer tests; here one assertion confirms the wire serves `forge: null` with polling off.
+  forge: 'none' as const,
+  forgePollMs: 60_000,
   gitPollMs: 60_000,
   heartbeatMs: 60_000,
   port: 0,
@@ -162,6 +166,7 @@ describe('fleet server', () => {
     expect(elapsedMs).toBeLessThan(1000);
     expect(pushed.lanes[0]?.branch).toBe('101');
     expect(pushed.lanes[0]?.sessions[0]?.phase).toBe('working');
+    expect(pushed.lanes[0]?.forge).toBeNull();
   });
 
   it('surfaces git ground truth within a poll interval and closes the lane when the worktree disappears', async () => {

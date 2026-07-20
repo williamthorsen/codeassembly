@@ -10,11 +10,17 @@ export const CLOSE_AFTER_MS = 1_800_000;
 /** Quiet window after a burst of watch events before the store folds and broadcasts once. */
 export const DEBOUNCE_MS = 100;
 
+/** Default interval between forge poll rounds. */
+export const FORGE_POLL_MS = 60_000;
+
 /** Interval between SSE comment heartbeats that keep idle connections alive through proxies and browsers. */
 export const HEARTBEAT_MS = 15_000;
 
 /** Window of lane-wide quiet (3 days) after which an idle lane is evicted from the store and drops from the fleet. */
 export const RETENTION_MS = 259_200_000;
+
+/** Which forge backend Fleet polls for enrichment; `none` disables polling entirely. */
+export type ForgeKind = 'github' | 'none';
 
 /** Resolved server configuration; every timing value is injectable so tests run on short intervals. */
 export interface FleetConfig {
@@ -24,6 +30,10 @@ export interface FleetConfig {
   debounceMs: number;
   /** Root of the append-only lifecycle-event tree. */
   eventsDir: string;
+  /** The forge backend to poll for PR, CI, and ticket enrichment, or `none` to disable polling. */
+  forge: ForgeKind;
+  /** Milliseconds between forge poll rounds. */
+  forgePollMs: number;
   /** Milliseconds between git-adapter poll passes over the resident lanes' worktrees. */
   gitPollMs: number;
   /** Milliseconds between SSE comment heartbeats. */
@@ -46,6 +56,8 @@ export function resolveConfig(env: Record<string, string | undefined>): FleetCon
     closeAfterMs: CLOSE_AFTER_MS,
     debounceMs: DEBOUNCE_MS,
     eventsDir: readString(env.FLEET_EVENTS_DIR) ?? join(homedir(), '.codeassembly', 'events'),
+    forge: readForge(env.FLEET_FORGE),
+    forgePollMs: readNumber(env.FLEET_FORGE_POLL_MS) ?? FORGE_POLL_MS,
     gitPollMs: readNumber(env.FLEET_GIT_POLL_MS) ?? 15_000,
     heartbeatMs: HEARTBEAT_MS,
     port: readNumber(env.FLEET_PORT) ?? 4178,
@@ -56,6 +68,11 @@ export function resolveConfig(env: Record<string, string | undefined>): FleetCon
 }
 
 // region | Helpers
+
+/** Resolves the forge backend, defaulting to `github`; only the exact value `none` disables polling. */
+function readForge(value: string | undefined): ForgeKind {
+  return value === 'none' ? 'none' : 'github';
+}
 
 /** Parses an environment value as a finite number, returning `undefined` when absent or non-numeric. */
 function readNumber(value: string | undefined): number | undefined {
