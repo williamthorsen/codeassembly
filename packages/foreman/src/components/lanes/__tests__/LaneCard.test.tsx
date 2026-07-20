@@ -17,6 +17,7 @@ function buildLane(overrides: Partial<LaneSnapshot> = {}): LaneSnapshot {
     lastEventTs: '2026-07-19T11:59:48.000Z',
     git: null,
     sessions: [],
+    forge: null,
     ...overrides,
   };
 }
