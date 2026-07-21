@@ -133,6 +133,10 @@ Three forms to cut:
 - **Harm-avoided guarantee** — a promise against a harm the reader never suspected. Stating it doesn't reassure; it plants the doubt. The test: **"No one would think it did otherwise until you mentioned it."** A positive rephrasing ("each operation touches only its own entries") is the same defensive claim in new words. Silence on what a change doesn't do is the default, not an omission.
 - **Cross-sentence paraphrase** — a sentence restating a prior one's outcome in other words. Each may pass Rule 1 alone; together they say one thing twice. Apply the deletion test — "would cutting this change what the reader knows?" — across sentences, not only within one.
 
+### Rule 4: No second person
+
+Do not use the second person.
+
 ## Jargon at the lede
 
 Compression to a term of art saves words for a reader who already knows the term. For a reader who doesn't, it forces them to either skip the entry or do dictionary work the writer should have done. The lede is often the one place a reader meets the concept — spend the few extra words so the prose teaches as it announces.
