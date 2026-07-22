@@ -149,7 +149,7 @@ export async function syncGlobalCommand(
 
 /**
  * Resolves the `codeassembly.yaml` scope chain under `domain.baseDir`, materializes each declared rulebook's neutral
- * body to `<baseDir>/.agents/rulebooks/<slug>.md`, inlines `ambient` rulebooks into `domain.ambientHostPath`, writes
+ * body to `<baseDir>/.agents/rulebooks/<slug>.md`, delivers `ambient` rulebooks to `domain.ambient`'s target, writes
  * `skill` rulebooks as thin-wrapper skills into each targeted harness's skills dir, deploys declared skills and
  * subagents (the latter through the harness transform) into those harness dirs, and retracts anything no longer
  * declared. Installed state is derived from the filesystem, not a manifest, which keeps the command idempotent. An
