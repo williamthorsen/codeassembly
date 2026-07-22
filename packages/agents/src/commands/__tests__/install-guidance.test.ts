@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { extractAmbientRegionContent, hasAmbientRegion } from '../../lib/ambient-region.ts';
 import { getManifestPath, readManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
@@ -162,6 +163,19 @@ describe('guidance installation', () => {
       const harnessIndex = content.indexOf('## Fixture interaction');
       expect(sharedIndex).toBeGreaterThanOrEqual(0);
       expect(harnessIndex).toBeGreaterThan(sharedIndex);
+    });
+
+    it('renders an empty ambient region into the guidance file of each harness', async () => {
+      const claudeHome = await setupClaudeHome();
+      const rovodevHome = await setupRovodevHome();
+
+      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
+
+      for (const guidancePath of [path.join(claudeHome, 'CLAUDE.md'), path.join(rovodevHome, 'AGENTS.md')]) {
+        const content = await readFile(guidancePath, 'utf8');
+        expect(hasAmbientRegion(content)).toBe(true);
+        expect(extractAmbientRegionContent(content)).toBe('');
+      }
     });
 
     it('tracks harness guidance in harness manifest entries', async () => {
