@@ -4,6 +4,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+import { hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
@@ -75,10 +76,14 @@ interface HarnessSkillTarget {
   readonly deployContext: SkillDeployContext;
 }
 
-/** The one per-domain difference: the base dir to resolve and deploy under, and the file that hosts ambient blocks. */
+/** The one per-domain difference: the base dir to resolve and deploy under, and where ambient blocks land. */
 export interface SyncDomain {
   readonly baseDir: string;
-  readonly ambientHostPath: string;
+  /**
+   * Ambient delivery target: the repo domain inlines blocks into a single sync-managed host file, while the home
+   * domain injects them into the ambient region of each targeted harness's mechanically-loaded guidance file.
+   */
+  readonly ambient: { readonly kind: 'host-file'; readonly path: string } | { readonly kind: 'harness-regions' };
   readonly label: 'project' | 'global';
 }
 
@@ -103,16 +108,21 @@ export async function syncCommand(
   }
   await reconcileDomain(
     options,
-    { baseDir: projectRoot, ambientHostPath: path.join(projectRoot, '.agents', 'PROJECT.md'), label: 'project' },
+    {
+      baseDir: projectRoot,
+      ambient: { kind: 'host-file', path: path.join(projectRoot, '.agents', 'PROJECT.md') },
+      label: 'project',
+    },
     contentDirOverride,
   );
 }
 
 /**
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
- * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in
- * `~/.agents/GLOBAL.md` so install's whole-file `~/.agents/AGENTS.md` is never co-written. When the home declaration
- * is absent, makes no changes and directs the user to `init --global`.
+ * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Ambient blocks land in the
+ * ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
+ * mechanically; no agent-read host file is written. When the home declaration is absent, makes no changes and directs
+ * the user to `init --global`.
  *
  * @param homeDir The home directory whose `.agents/` is synced (defaults to the OS home dir; injected in tests).
  * @param contentDirOverride Override for the library source (defaults to the package content dir).
@@ -131,7 +141,7 @@ export async function syncGlobalCommand(
   }
   await reconcileDomain(
     options,
-    { baseDir: homeDir, ambientHostPath: path.join(homeDir, '.agents', 'GLOBAL.md'), label: 'global' },
+    { baseDir: homeDir, ambient: { kind: 'harness-regions' }, label: 'global' },
     contentDirOverride,
   );
 }
@@ -177,7 +187,7 @@ async function reconcileDomain(
   const declaredRulebooks = closure.rulebooks;
 
   const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
-  const ambientHostPath = domain.ambientHostPath;
+  const ambientHostPath = domain.ambient.kind === 'host-file' ? domain.ambient.path : undefined;
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
@@ -224,9 +234,13 @@ async function reconcileDomain(
     ),
   );
 
-  const existingAmbientHost = await readFileOrEmpty(ambientHostPath);
+  // Inline orphans exist only in host-file mode: a harness region is regenerated wholesale, so nothing lingers there.
+  const existingAmbientHost = ambientHostPath === undefined ? '' : await readFileOrEmpty(ambientHostPath);
   const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
-  const inlineOrphans = extractInstalledSlugs(existingAmbientHost).filter((slug) => !desiredAmbient.has(slug));
+  const inlineOrphans =
+    ambientHostPath === undefined
+      ? []
+      : extractInstalledSlugs(existingAmbientHost).filter((slug) => !desiredAmbient.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
@@ -284,7 +298,8 @@ async function reconcileDomain(
 
   if (options.dryRun) {
     reportDryRun({
-      ambientHostName: path.basename(ambientHostPath),
+      ambientHostName: ambientHostPath === undefined ? undefined : path.basename(ambientHostPath),
+      ambientRegionFiles: ambientHostPath === undefined ? resolveAmbientRegionFiles(options, domain) : [],
       resolutionReport,
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
@@ -308,7 +323,7 @@ async function reconcileDomain(
   let ambientHost = existingAmbientHost;
   for (const rulebook of resolved) {
     await writeIfChanged(path.join(neutralDir, `${rulebook.slug}.md`), rulebook.body);
-    if (rulebook.ambient) {
+    if (ambientHostPath !== undefined && rulebook.ambient) {
       ambientHost = injectRulebook(ambientHost, rulebook.slug, rulebook.body);
     }
   }
@@ -321,9 +336,13 @@ async function reconcileDomain(
     await rm(path.join(neutralDir, `${slug}.md`), { force: true });
   }
 
-  if (ambientHost !== existingAmbientHost) {
+  if (ambientHostPath !== undefined && ambientHost !== existingAmbientHost) {
     await mkdir(path.dirname(ambientHostPath), { recursive: true });
     await writeFile(ambientHostPath, ambientHost, 'utf8');
+  }
+
+  if (ambientHostPath === undefined) {
+    await injectAmbientRegions(options, domain, resolved);
   }
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
@@ -752,6 +771,55 @@ async function assertDeclaredSkillsRender(
 }
 
 /**
+ * Injects the resolved ambient rulebooks into the ambient region of each targeted harness's guidance file,
+ * regenerating the region's content wholesale (an empty ambient set empties the region). A guidance file that is
+ * missing or carries no region is skipped with a warning directing the user to `install`, so a stale install degrades
+ * delivery for that harness alone rather than failing the sync.
+ */
+async function injectAmbientRegions(
+  options: InstallOptions,
+  domain: SyncDomain,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+): Promise<void> {
+  const body = renderAmbientBody(resolved);
+  for (const guidanceFile of resolveAmbientRegionFiles(options, domain)) {
+    let content: string;
+    try {
+      content = await readFile(guidanceFile, 'utf8');
+    } catch (error: unknown) {
+      if (isMissingFile(error)) {
+        console.warn(
+          `⚠️ Skipping ambient delivery: ${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`,
+        );
+        continue;
+      }
+      throw error;
+    }
+    if (!hasAmbientRegion(content)) {
+      console.warn(
+        `⚠️ Skipping ambient delivery: ${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`,
+      );
+      continue;
+    }
+    await writeIfChanged(guidanceFile, injectAmbientRegion(content, body));
+  }
+}
+
+/** Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of an ambient region. */
+function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>): string {
+  return resolved
+    .filter((rulebook) => rulebook.ambient)
+    .reduce((body, rulebook) => injectRulebook(body, rulebook.slug, rulebook.body), '');
+}
+
+/** Lists the guidance files whose ambient regions a sync of `domain` targets — one per targeted harness. */
+function resolveAmbientRegionFiles(options: InstallOptions, domain: SyncDomain): ReadonlyArray<string> {
+  return resolveHarnessIds(options.harness, domain.baseDir).map(
+    (harnessId) => resolveHarnessPaths(harnessId, domain.baseDir).guidanceFile,
+  );
+}
+
+/**
  * Reconciles the Rovo Dev `prompts.yml` index so it lists the user-invocable skills currently in the harness skills
  * dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file, preserving any
  * foreign entries; when no skills remain, the region is stripped — and the file deleted when nothing foreign is left. A
@@ -792,7 +860,10 @@ function resolvePromptsYmlPaths(options: InstallOptions, domain: SyncDomain): Re
 
 /** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
 interface DryRunPlan {
-  readonly ambientHostName: string;
+  /** The ambient host file's name in host-file mode; `undefined` in harness-regions mode. */
+  readonly ambientHostName: string | undefined;
+  /** The guidance files whose ambient regions would be written in harness-regions mode; empty in host-file mode. */
+  readonly ambientRegionFiles: ReadonlyArray<string>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
   readonly retracted: ReadonlyArray<string>;
@@ -812,8 +883,12 @@ function reportDryRun(plan: DryRunPlan): void {
     console.info(renderResolutionReport(plan.resolutionReport));
   }
   console.info('[dry-run] sync would:');
+  for (const guidanceFile of plan.ambientRegionFiles) {
+    console.info(`  inject the ambient region in ${guidanceFile}`);
+  }
   for (const rulebook of plan.resolved) {
-    const inline = rulebook.ambient ? ` (+ inline into ${plan.ambientHostName})` : '';
+    const inline =
+      rulebook.ambient && plan.ambientHostName !== undefined ? ` (+ inline into ${plan.ambientHostName})` : '';
     console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
     if (rulebook.skill) {
       for (const { skillsDir } of plan.harnessSkillTargets) {

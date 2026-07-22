@@ -6,6 +6,7 @@ import path from 'node:path';
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { hasAmbientRegion } from '../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
@@ -1246,6 +1247,19 @@ describe(syncGlobalCommand, () => {
     await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), content, 'utf8');
   }
 
+  /** Seeds a rendered harness guidance file carrying an empty ambient region, as `install` renders it. */
+  async function seedGuidanceFile(harnessDir: string, name: string): Promise<string> {
+    const dir = path.join(homeDir, harnessDir);
+    await mkdir(dir, { recursive: true });
+    const file = path.join(dir, name);
+    await writeFile(
+      file,
+      '# Guidance\n\n<!-- codeassembly-ambient:start -->\n<!-- codeassembly-ambient:end -->\n',
+      'utf8',
+    );
+    return file;
+  }
+
   it('when no ~/.agents/codeassembly.yaml exists, makes no changes and points at init --global', async () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     let infoLines: ReadonlyArray<string>;
@@ -1270,16 +1284,85 @@ describe(syncGlobalCommand, () => {
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
   });
 
-  it('inlines ambient rulebooks into ~/.agents/GLOBAL.md, never PROJECT.md', async () => {
+  it('injects ambient rulebooks into the harness guidance ambient region, never GLOBAL.md or PROJECT.md', async () => {
+    const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
     await syncGlobalCommand(makeOptions(), homeDir, contentDir);
 
-    const globalMd = await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8');
-    expect(globalMd).toContain('<!-- rulebook:alpha -->');
-    expect(globalMd).toContain('Alpha rules.');
+    const content = await readFile(claudeMd, 'utf8');
+    expect(content).toContain('<!-- rulebook:alpha -->');
+    expect(content).toContain('Alpha rules.');
+    expect(existsSync(path.join(homeDir, '.agents', 'GLOBAL.md'))).toBe(false);
     expect(existsSync(path.join(homeDir, '.agents', 'PROJECT.md'))).toBe(false);
+  });
+
+  it('injects the ambient region of every targeted harness guidance file', async () => {
+    const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
+    const rovodevMd = await seedGuidanceFile('.rovodev', 'AGENTS.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, contentDir);
+
+    for (const guidanceFile of [claudeMd, rovodevMd]) {
+      expect(await readFile(guidanceFile, 'utf8')).toContain('<!-- rulebook:alpha -->');
+    }
+  });
+
+  it('warns and skips ambient delivery when the guidance file is missing', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('codeassembly-agents install');
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    // The rest of the sync still lands: the neutral file is materialized despite the skipped ambient delivery.
+    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
+  });
+
+  it('warns and skips ambient delivery when the guidance file carries no region', async () => {
+    const dir = path.join(homeDir, '.claude');
+    await mkdir(dir, { recursive: true });
+    const regionless = path.join(dir, 'CLAUDE.md');
+    await writeFile(regionless, '# Guidance without a region\n', 'utf8');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('no ambient region');
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    expect(await readFile(regionless, 'utf8')).toBe('# Guidance without a region\n');
+  });
+
+  it('previews ambient region injection in dry-run without writing', async () => {
+    const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
+    const before = await readFile(claudeMd, 'utf8');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('inject the ambient region in');
+    expect(await readFile(claudeMd, 'utf8')).toBe(before);
   });
 
   it('refuses to overwrite a home skill that lacks the sync ownership marker', async () => {
@@ -1297,17 +1380,19 @@ describe(syncGlobalCommand, () => {
     await expect(syncCommand(makeOptions(), homedir(), contentDir)).rejects.toThrow(/--global/);
   });
 
-  it('retracts a home ambient block on undeclare and never writes ~/.agents/AGENTS.md', async () => {
+  it('empties the ambient region on undeclare and never writes ~/.agents/AGENTS.md', async () => {
+    const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
     await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-    expect(await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8')).toContain('<!-- rulebook:alpha -->');
+    expect(await readFile(claudeMd, 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRaw('rulebooks:\n  use: []\n');
     await syncGlobalCommand(makeOptions(), homeDir, contentDir);
 
-    const globalMd = await readFile(path.join(homeDir, '.agents', 'GLOBAL.md'), 'utf8');
-    expect(globalMd).not.toContain('<!-- rulebook:alpha -->');
+    const content = await readFile(claudeMd, 'utf8');
+    expect(content).not.toContain('<!-- rulebook:alpha -->');
+    expect(hasAmbientRegion(content)).toBe(true);
     expect(existsSync(path.join(homeDir, '.agents', 'AGENTS.md'))).toBe(false);
   });
 
