@@ -1396,6 +1396,36 @@ describe(syncGlobalCommand, () => {
     expect(existsSync(path.join(homeDir, '.agents', 'AGENTS.md'))).toBe(false);
   });
 
+  it('deletes a legacy GLOBAL.md holding only sync-owned blocks', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+    await writeFile(legacyPath, '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    expect(existsSync(legacyPath)).toBe(false);
+  });
+
+  it('strips sync-owned blocks from a legacy GLOBAL.md and preserves foreign content', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+    await writeFile(
+      legacyPath,
+      '# My hand-written notes\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n',
+      'utf8',
+    );
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const remainder = await readFile(legacyPath, 'utf8');
+    expect(remainder).toContain('# My hand-written notes');
+    expect(remainder).not.toContain('<!-- rulebook:alpha -->');
+  });
+
   it('refreshes ~/.rovodev/prompts.yml with home-deployed Rovo Dev skills through the managed region', async () => {
     await writeLibrarySkill('people-report');
     await declareRaw('skills:\n  use:\n    - people-report\n');

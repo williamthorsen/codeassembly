@@ -144,6 +144,7 @@ export async function syncGlobalCommand(
     { baseDir: homeDir, ambient: { kind: 'harness-regions' }, label: 'global' },
     contentDirOverride,
   );
+  await retireLegacyGlobalMd(options, homeDir);
 }
 
 /**
@@ -803,6 +804,33 @@ async function injectAmbientRegions(
     }
     await writeIfChanged(guidanceFile, injectAmbientRegion(content, body));
   }
+}
+
+/**
+ * Retires the legacy `~/.agents/GLOBAL.md` ambient host: removes the sync-owned rulebook blocks it carries, deletes
+ * the file when nothing foreign remains, and otherwise writes the stripped remainder so hand-authored content
+ * survives. Ambient delivery targets the harness guidance regions now, so a lingering copy would present stale
+ * guidance as current. A missing file is a no-op.
+ */
+async function retireLegacyGlobalMd(options: InstallOptions, homeDir: string): Promise<void> {
+  const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+  let content: string;
+  try {
+    content = await readFile(legacyPath, 'utf8');
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return;
+    }
+    throw error;
+  }
+
+  if (options.dryRun) {
+    console.info(`[dry-run] sync would retire the legacy ambient host ${legacyPath}`);
+    return;
+  }
+
+  const stripped = extractInstalledSlugs(content).reduce((remainder, slug) => removeRulebook(remainder, slug), content);
+  await (stripped.trim() === '' ? rm(legacyPath, { force: true }) : writeIfChanged(legacyPath, stripped));
 }
 
 /** Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of an ambient region. */
