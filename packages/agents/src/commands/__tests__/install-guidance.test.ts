@@ -5,8 +5,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { extractAmbientRegionContent, hasAmbientRegion } from '../../lib/ambient-region.ts';
-import { getManifestPath, readManifest } from '../../lib/manifest.ts';
+import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
+import { computeContentHash, getManifestPath, readManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
@@ -201,6 +201,80 @@ describe('guidance installation', () => {
 
       const manifest = await readManifest(getManifestPath(tempDir));
       expect(manifest.harnesses.claude?.entries.find((e) => e.relativePath === 'CLAUDE.md')?.linked).toBe(false);
+    });
+  });
+
+  describe('ambient region preservation', () => {
+    const AMBIENT_BODY = '<!-- rulebook:writing-prefs -->\nNo em-dashes.\n<!-- /rulebook:writing-prefs -->';
+
+    /** Fills the installed file's ambient region as a `sync --global` run would. */
+    async function fillAmbientRegion(guidancePath: string): Promise<void> {
+      await writeFile(guidancePath, injectAmbientRegion(await readFile(guidancePath, 'utf8'), AMBIENT_BODY), 'utf8');
+    }
+
+    it('splices sync-written region content into a re-rendered guidance file', async () => {
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions(), tempDir, contentDir);
+      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
+      await fillAmbientRegion(claudeMd);
+
+      // A changed template forces a genuine re-render, so preservation is exercised as a splice, not as a skip.
+      await buildContentTree(contentDir, {
+        harnessGuidance: {
+          claude: {
+            'CLAUDE.md': [
+              'Fixture claude preamble v2.',
+              '',
+              '<!-- codeassembly-ambient:start -->',
+              '<!-- codeassembly-ambient:end -->',
+              '',
+            ].join('\n'),
+          },
+        },
+      });
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      const content = await readFile(claudeMd, 'utf8');
+      expect(content).toContain('Fixture claude preamble v2.');
+      expect(extractAmbientRegionContent(content)).toBe(AMBIENT_BODY);
+    });
+
+    it('does not report sync-written region content as drift', async () => {
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions(), tempDir, contentDir);
+      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
+      await fillAmbientRegion(claudeMd);
+
+      const infoSpy = vi.spyOn(console, 'info');
+      await statusCommand({ harness: 'claude' }, tempDir);
+
+      const output = infoSpy.mock.calls.map((call) => call.join(' ')).join('\n');
+      expect(output).not.toContain('modified: CLAUDE.md');
+
+      infoSpy.mockRestore();
+    });
+
+    it('still reports a hand edit outside the region as drift', async () => {
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions(), tempDir, contentDir);
+      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
+      const modified = (await readFile(claudeMd, 'utf8')) + '\n<!-- user modification -->\n';
+      await writeFile(claudeMd, modified, 'utf8');
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(await readFile(claudeMd, 'utf8')).toBe(modified);
+    });
+
+    it('hashes a guidance file independently of its region content', async () => {
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions(), tempDir, contentDir);
+      const claudeMd = path.join(claudeHome, 'CLAUDE.md');
+
+      const emptyRegionHash = await computeContentHash(claudeMd);
+      await fillAmbientRegion(claudeMd);
+
+      expect(await computeContentHash(claudeMd)).toBe(emptyRegionHash);
     });
   });
 
