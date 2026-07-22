@@ -236,12 +236,11 @@ async function reconcileDomain(
   );
 
   // Inline orphans exist only in host-file mode: a harness region is regenerated wholesale, so nothing lingers there.
-  const existingAmbientHost = ambientHostPath === undefined ? '' : await readFileOrEmpty(ambientHostPath);
+  const { content: existingAmbientHost, orphans: inlineOrphans } = await readAmbientHostState(
+    ambientHostPath,
+    desiredAmbient,
+  );
   const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
-  const inlineOrphans =
-    ambientHostPath === undefined
-      ? []
-      : extractInstalledSlugs(existingAmbientHost).filter((slug) => !desiredAmbient.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
@@ -298,9 +297,10 @@ async function reconcileDomain(
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
   if (options.dryRun) {
+    const ambientTarget = describeAmbientTarget(options, domain);
     reportDryRun({
-      ambientHostName: ambientHostPath === undefined ? undefined : path.basename(ambientHostPath),
-      ambientRegionFiles: ambientHostPath === undefined ? resolveAmbientRegionFiles(options, domain) : [],
+      ambientHostName: ambientTarget.hostName,
+      ambientRegionFiles: ambientTarget.regionFiles,
       resolutionReport,
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
@@ -320,16 +320,8 @@ async function reconcileDomain(
     await mkdir(neutralDir, { recursive: true });
   }
 
-  // The ambient host file is read once, mutated in memory across all inject/remove operations, and written once.
-  let ambientHost = existingAmbientHost;
   for (const rulebook of resolved) {
     await writeIfChanged(path.join(neutralDir, `${rulebook.slug}.md`), rulebook.body);
-    if (ambientHostPath !== undefined && rulebook.ambient) {
-      ambientHost = injectRulebook(ambientHost, rulebook.slug, rulebook.body);
-    }
-  }
-  for (const slug of inlineOrphans) {
-    ambientHost = removeRulebook(ambientHost, slug);
   }
 
   // `.agents/rulebooks/` is sync-owned, so deleting an undeclared neutral file here is safe, not user data loss.
@@ -337,14 +329,7 @@ async function reconcileDomain(
     await rm(path.join(neutralDir, `${slug}.md`), { force: true });
   }
 
-  if (ambientHostPath !== undefined && ambientHost !== existingAmbientHost) {
-    await mkdir(path.dirname(ambientHostPath), { recursive: true });
-    await writeFile(ambientHostPath, ambientHost, 'utf8');
-  }
-
-  if (ambientHostPath === undefined) {
-    await injectAmbientRegions(options, domain, resolved);
-  }
+  await deliverAmbient(options, domain, resolved, existingAmbientHost, inlineOrphans);
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
@@ -772,6 +757,63 @@ async function assertDeclaredSkillsRender(
 }
 
 /**
+ * Delivers the resolved ambient rulebooks to the domain's target. In host-file mode, inlines one sentinel block per
+ * ambient rulebook into the single sync-managed host, removes the orphaned blocks, and writes the host once, only
+ * on change. In harness-regions mode, injects the ambient regions of the targeted harness guidance files.
+ */
+async function deliverAmbient(
+  options: InstallOptions,
+  domain: SyncDomain,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  existingAmbientHost: string,
+  inlineOrphans: ReadonlyArray<string>,
+): Promise<void> {
+  if (domain.ambient.kind === 'harness-regions') {
+    await injectAmbientRegions(options, domain, resolved);
+    return;
+  }
+
+  let ambientHost = existingAmbientHost;
+  for (const rulebook of resolved) {
+    if (rulebook.ambient) {
+      ambientHost = injectRulebook(ambientHost, rulebook.slug, rulebook.body);
+    }
+  }
+  for (const slug of inlineOrphans) {
+    ambientHost = removeRulebook(ambientHost, slug);
+  }
+  if (ambientHost !== existingAmbientHost) {
+    await mkdir(path.dirname(domain.ambient.path), { recursive: true });
+    await writeFile(domain.ambient.path, ambientHost, 'utf8');
+  }
+}
+
+/** Describes the dry-run ambient target: the host file's name in host-file mode, the region files otherwise. */
+function describeAmbientTarget(
+  options: InstallOptions,
+  domain: SyncDomain,
+): { hostName: string | undefined; regionFiles: ReadonlyArray<string> } {
+  return domain.ambient.kind === 'host-file'
+    ? { hostName: path.basename(domain.ambient.path), regionFiles: [] }
+    : { hostName: undefined, regionFiles: resolveAmbientRegionFiles(options, domain) };
+}
+
+/**
+ * Reads the host-file ambient state: the host's current content and the inlined slugs no longer desired there.
+ * In harness-regions mode (no host path) both are empty — a region is regenerated wholesale, so nothing lingers.
+ */
+async function readAmbientHostState(
+  ambientHostPath: string | undefined,
+  desiredAmbient: ReadonlySet<string>,
+): Promise<{ content: string; orphans: ReadonlyArray<string> }> {
+  if (ambientHostPath === undefined) {
+    return { content: '', orphans: [] };
+  }
+  const content = await readFileOrEmpty(ambientHostPath);
+  return { content, orphans: extractInstalledSlugs(content).filter((slug) => !desiredAmbient.has(slug)) };
+}
+
+/**
  * Injects the resolved ambient rulebooks into the ambient region of each targeted harness's guidance file,
  * regenerating the region's content wholesale (an empty ambient set empties the region). A guidance file that is
  * missing or carries no region is skipped with a warning directing the user to `install`, so a stale install degrades
@@ -829,15 +871,22 @@ async function retireLegacyGlobalMd(options: InstallOptions, homeDir: string): P
     return;
   }
 
-  const stripped = extractInstalledSlugs(content).reduce((remainder, slug) => removeRulebook(remainder, slug), content);
+  let stripped = content;
+  for (const slug of extractInstalledSlugs(content)) {
+    stripped = removeRulebook(stripped, slug);
+  }
   await (stripped.trim() === '' ? rm(legacyPath, { force: true }) : writeIfChanged(legacyPath, stripped));
 }
 
 /** Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of an ambient region. */
 function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>): string {
-  return resolved
-    .filter((rulebook) => rulebook.ambient)
-    .reduce((body, rulebook) => injectRulebook(body, rulebook.slug, rulebook.body), '');
+  let body = '';
+  for (const rulebook of resolved) {
+    if (rulebook.ambient) {
+      body = injectRulebook(body, rulebook.slug, rulebook.body);
+    }
+  }
+  return body;
 }
 
 /** Lists the guidance files whose ambient regions a sync of `domain` targets — one per targeted harness. */
@@ -915,9 +964,9 @@ function reportDryRun(plan: DryRunPlan): void {
     console.info(`  inject the ambient region in ${guidanceFile}`);
   }
   for (const rulebook of plan.resolved) {
-    const inline =
-      rulebook.ambient && plan.ambientHostName !== undefined ? ` (+ inline into ${plan.ambientHostName})` : '';
-    console.info(`  write .agents/rulebooks/${rulebook.slug}.md${inline}`);
+    console.info(
+      `  write .agents/rulebooks/${rulebook.slug}.md${describeInlineSuffix(rulebook, plan.ambientHostName)}`,
+    );
     if (rulebook.skill) {
       for (const { skillsDir } of plan.harnessSkillTargets) {
         console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
@@ -960,6 +1009,11 @@ function reportDryRun(plan: DryRunPlan): void {
       `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
     );
   }
+}
+
+/** The dry-run suffix noting a rulebook's ambient inline target, present only when a host file carries one. */
+function describeInlineSuffix(rulebook: ResolvedRulebook, ambientHostName: string | undefined): string {
+  return rulebook.ambient && ambientHostName !== undefined ? ` (+ inline into ${ambientHostName})` : '';
 }
 
 /** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
