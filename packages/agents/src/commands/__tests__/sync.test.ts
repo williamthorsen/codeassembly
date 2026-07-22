@@ -1365,6 +1365,37 @@ describe(syncGlobalCommand, () => {
     expect(await readFile(claudeMd, 'utf8')).toBe(before);
   });
 
+  it('previews the ambient-delivery skip in dry-run when the guidance file is missing', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain('skip ambient delivery');
+    expect(output).toContain('codeassembly-agents install');
+    expect(output).not.toContain('inject the ambient region in');
+  });
+
+  it('does not retire a legacy GLOBAL.md in dry-run', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+    const legacyContent = '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n';
+    await writeFile(legacyPath, legacyContent, 'utf8');
+
+    await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+
+    expect(await readFile(legacyPath, 'utf8')).toBe(legacyContent);
+  });
+
   it('refuses to overwrite a home skill that lacks the sync ownership marker', async () => {
     await writeLibrarySkill('people-report');
     await declareRaw('skills:\n  use:\n    - people-report\n');

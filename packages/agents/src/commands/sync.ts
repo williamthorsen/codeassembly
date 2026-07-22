@@ -297,10 +297,10 @@ async function reconcileDomain(
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
   if (options.dryRun) {
-    const ambientTarget = describeAmbientTarget(options, domain);
+    const ambientTarget = await describeAmbientTarget(options, domain);
     reportDryRun({
       ambientHostName: ambientTarget.hostName,
-      ambientRegionFiles: ambientTarget.regionFiles,
+      ambientRegionPreviews: ambientTarget.regionPreviews,
       resolutionReport,
       resolved,
       retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
@@ -788,14 +788,58 @@ async function deliverAmbient(
   }
 }
 
-/** Describes the dry-run ambient target: the host file's name in host-file mode, the region files otherwise. */
-function describeAmbientTarget(
+/** A guidance file's readiness for ambient delivery: injectable, absent, or rendered without the region. */
+type AmbientTargetStatus = 'ready' | 'missing' | 'no-region';
+
+/** A probed guidance file: its content when ready for injection, or the reason delivery must skip it. */
+type AmbientTargetState =
+  { readonly status: 'ready'; readonly content: string } | { readonly status: 'missing' | 'no-region' };
+
+/** One guidance file's dry-run ambient preview: the injection the run would perform, or the skip it would take. */
+interface AmbientRegionPreview {
+  readonly guidanceFile: string;
+  readonly status: AmbientTargetStatus;
+}
+
+/**
+ * Describes the dry-run ambient target: the host file's name in host-file mode, the probed per-file previews
+ * otherwise. Probing here is what keeps the preview honest — a file the real run would skip previews as a skip.
+ */
+async function describeAmbientTarget(
   options: InstallOptions,
   domain: SyncDomain,
-): { hostName: string | undefined; regionFiles: ReadonlyArray<string> } {
-  return domain.ambient.kind === 'host-file'
-    ? { hostName: path.basename(domain.ambient.path), regionFiles: [] }
-    : { hostName: undefined, regionFiles: resolveAmbientRegionFiles(options, domain) };
+): Promise<{ hostName: string | undefined; regionPreviews: ReadonlyArray<AmbientRegionPreview> }> {
+  if (domain.ambient.kind === 'host-file') {
+    return { hostName: path.basename(domain.ambient.path), regionPreviews: [] };
+  }
+  const regionPreviews = await Promise.all(
+    resolveAmbientRegionFiles(options, domain).map(async (guidanceFile) => ({
+      guidanceFile,
+      status: (await probeAmbientTarget(guidanceFile)).status,
+    })),
+  );
+  return { hostName: undefined, regionPreviews };
+}
+
+/** The reason a guidance file is skipped for ambient delivery, naming the remedy. */
+function describeAmbientSkip(status: 'missing' | 'no-region', guidanceFile: string): string {
+  return status === 'missing'
+    ? `${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`
+    : `${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`;
+}
+
+/** Probes a guidance file for ambient delivery: its content when the region is present, or why delivery must skip. */
+async function probeAmbientTarget(guidanceFile: string): Promise<AmbientTargetState> {
+  let content: string;
+  try {
+    content = await readFile(guidanceFile, 'utf8');
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return { status: 'missing' };
+    }
+    throw error;
+  }
+  return hasAmbientRegion(content) ? { status: 'ready', content } : { status: 'no-region' };
 }
 
 /**
@@ -826,25 +870,12 @@ async function injectAmbientRegions(
 ): Promise<void> {
   const body = renderAmbientBody(resolved);
   for (const guidanceFile of resolveAmbientRegionFiles(options, domain)) {
-    let content: string;
-    try {
-      content = await readFile(guidanceFile, 'utf8');
-    } catch (error: unknown) {
-      if (isMissingFile(error)) {
-        console.warn(
-          `⚠️ Skipping ambient delivery: ${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`,
-        );
-        continue;
-      }
-      throw error;
-    }
-    if (!hasAmbientRegion(content)) {
-      console.warn(
-        `⚠️ Skipping ambient delivery: ${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`,
-      );
+    const target = await probeAmbientTarget(guidanceFile);
+    if (target.status !== 'ready') {
+      console.warn(`⚠️ Skipping ambient delivery: ${describeAmbientSkip(target.status, guidanceFile)}`);
       continue;
     }
-    await writeIfChanged(guidanceFile, injectAmbientRegion(content, body));
+    await writeIfChanged(guidanceFile, injectAmbientRegion(target.content, body));
   }
 }
 
@@ -939,8 +970,8 @@ function resolvePromptsYmlPaths(options: InstallOptions, domain: SyncDomain): Re
 interface DryRunPlan {
   /** The ambient host file's name in host-file mode; `undefined` in harness-regions mode. */
   readonly ambientHostName: string | undefined;
-  /** The guidance files whose ambient regions would be written in harness-regions mode; empty in host-file mode. */
-  readonly ambientRegionFiles: ReadonlyArray<string>;
+  /** The probed per-file ambient previews in harness-regions mode; empty in host-file mode. */
+  readonly ambientRegionPreviews: ReadonlyArray<AmbientRegionPreview>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
   readonly retracted: ReadonlyArray<string>;
@@ -960,8 +991,12 @@ function reportDryRun(plan: DryRunPlan): void {
     console.info(renderResolutionReport(plan.resolutionReport));
   }
   console.info('[dry-run] sync would:');
-  for (const guidanceFile of plan.ambientRegionFiles) {
-    console.info(`  inject the ambient region in ${guidanceFile}`);
+  for (const preview of plan.ambientRegionPreviews) {
+    console.info(
+      preview.status === 'ready'
+        ? `  inject the ambient region in ${preview.guidanceFile}`
+        : `  skip ambient delivery: ${describeAmbientSkip(preview.status, preview.guidanceFile)}`,
+    );
   }
   for (const rulebook of plan.resolved) {
     console.info(
