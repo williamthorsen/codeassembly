@@ -34,8 +34,8 @@
     "@vitest/coverage-v8": "4.1.10",
     "@vitest/eslint-plugin": "1.6.23",
     "@williamthorsen/eslint-config-typescript": "5.17.6",
-    "@williamthorsen/nmr": "0.18.2",
-    "@williamthorsen/release-kit": "8.0.1",
+    "@williamthorsen/nmr": "0.19.0",
+    "@williamthorsen/release-kit": "8.1.0",
     "@williamthorsen/strict-lint": "6.3.2",
     "dotenv": "17.4.2",
     "eslint": "9.39.5",
@@ -45,16 +45,16 @@
     "eslint-plugin-testing-library": "7.16.2",
     "glob": "13.0.6",
     "lefthook": "2.1.10",
-    "prettier": "3.9.5",
+    "prettier": "3.9.6",
     "readyup": "0.21.2",
     "tsx": "4.23.1",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.64.0",
-    "v11y-check": "0.11.0",
+    "typescript-eslint": "8.65.0",
+    "v11y-check": "0.11.1",
     "vite": "8.1.5",
     "vitest": "4.1.10"
   },
-  "packageManager": "pnpm@11.15.0",
+  "packageManager": "pnpm@11.15.1",
   "engines": {
     "node": ">=24"
   }
