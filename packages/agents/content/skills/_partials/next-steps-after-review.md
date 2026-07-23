@@ -16,7 +16,7 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
 
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
-- **Ticket targets** derive their delta from `## Specification compliance`: its ⚠️ Partial and ❌ Not addressed criteria rows, plus its Unplanned work bullets.
+- **Ticket targets** derive their delta from `## Specification compliance` (its ⚠️ Partial and ❌ Not addressed criteria rows, plus its Unplanned work bullets) and, for `Rewrite:` lines, from the divergent `D{n}` rows the ratification carries into the ticket's narrative sections.
   - `Add: {criterion}` for unplanned work the reviewer judges to be a criterion
   - `Reword: {old} → {new}` for a criterion the implementation met differently
   - `Drop: {criterion}` for a criterion the implementation abandoned
@@ -38,10 +38,10 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 
 #### Options
 
-| #   | Emoji | Option                         | Description                                                                                                 |
-| --- | ----- | ------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria to match the implementation, via `align-ticket-with-implementation` |
-| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                            |
+| #   | Emoji | Option                         | Description                                                                                                                       |
+| --- | ----- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria to match the implementation, via `align-ticket-with-implementation` in criteria-only mode |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                  |
 
 #### Output format
 
