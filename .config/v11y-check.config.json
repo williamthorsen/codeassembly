@@ -6,6 +6,14 @@
   },
   "prod": {
     "severityThreshold": "low",
-    "allowlist": []
+    "allowlist": [
+      {
+        "addedAt": "2026-07-23T01:00:08.782Z",
+        "id": "1124006",
+        "path": "packages__mcp>@modelcontextprotocol/sdk>@hono/node-server",
+        "reason": "Added by v11y sync at 2026-07-23 01:00:08 UTC",
+        "url": "https://github.com/advisories/GHSA-frvp-7c67-39w9"
+      }
+    ]
   }
 }
