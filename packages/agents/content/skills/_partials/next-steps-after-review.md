@@ -44,7 +44,7 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. The agent runs `align-ticket-with-implementation` in the current session, so the render is a bare action; the skill lives in the Options table above.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content. The agent runs `align-ticket-with-implementation` in the current session, so the render is a bare action; the skill lives in the Options table above.
 
 Example (rendered for the recommendation case):
 
@@ -52,6 +52,12 @@ Example (rendered for the recommendation case):
 Next steps:
 
 Deviations from ticket:
+
+Proposed edit to the acceptance criteria:
+- Add: The installer rejects a skill whose frontmatter omits `description`
+- Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
+- Drop: A `--strict` flag gates the new validation
+
 1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is
 ```
