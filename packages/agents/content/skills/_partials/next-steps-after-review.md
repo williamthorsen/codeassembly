@@ -26,7 +26,7 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
 
 Render no exclusions line. A deviation genuinely arguable as a criterion belongs in the delta, where the user can strike it; a mechanism-only deviation produces no line at all. Listing what was left out over-triggers into noise and buries the proposal it was meant to qualify.
 
-**Open findings.** When a delta line would settle or moot an open finding, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
+**Open findings.** When a delta line would settle or obviate an open finding, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
