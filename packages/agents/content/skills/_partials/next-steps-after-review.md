@@ -20,16 +20,17 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
   - `Add: {criterion}` for unplanned work the reviewer judges to be a criterion
   - `Reword: {old} → {new}` for a criterion the implementation met differently
   - `Drop: {criterion}` for a criterion the implementation abandoned
+  - `Rewrite: {## Section} — {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
 - **Both targets** render both groups, each under its own label.
 
 Render no exclusions line. A deviation genuinely arguable as a criterion belongs in the delta, where the user can strike it; a mechanism-only deviation produces no line at all. Listing what was left out over-triggers into noise and buries the proposal it was meant to qualify.
 
-**Open findings.** When a delta line would settle a question an open finding raises, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
+**Open findings.** When a delta line would settle or moot an open finding, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
 
-**The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given. The review's own divergence diagnosis is what seeds the preview and the edit alike, which is why these options preserve conversation context.
+**The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, because every deviation is mechanism rather than contract, the update option has nothing to propose. Omit the preview, and let the recommendation rules favor "Leave as-is".
+**Empty delta.** When no line survives the judgment, because every deviation is mechanism rather than contract, the update option has nothing to propose: omit the preview, and assign markers by the Deviations sub-block's empty-delta rule. A source divergence always leaves a claim to reconcile, so its delta is never empty.
 
 ### Deviations sub-block
 
@@ -66,10 +67,11 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Recommendation rules
 
-1. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured.
-2. **No recommendation** (omit markers from both options): deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). The user decides.
+1. **Recommend "Leave as-is"** (■■□ on it, ■□□ on Update the acceptance criteria): the criteria delta is empty, so the update option has nothing to apply. See [proposed-edit preview](#proposed-edit-preview).
+2. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured.
+3. **No recommendation** (omit markers from both options): deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). The user decides.
 
-When uncertain, recommend updating the ticket.
+When the delta is non-empty and the call is uncertain, recommend updating the ticket.
 
 ### Source divergence sub-block
 
@@ -113,6 +115,7 @@ Source divergence:
 Proposed edit to the ticket:
 - Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
 - ⚠️ W2 asks whether the cap belongs in configuration; accepting this reword settles it as a fixed value
+- Rewrite: ## Proposed solution — records the backoff schedule the branch implements
 
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
@@ -125,6 +128,7 @@ Source divergence:
 
 Proposed edit to the ticket:
 - Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
+- Rewrite: ## Proposed solution — records the backoff schedule the branch implements
 
 Proposed edit to the PR description:
 - D2: "Retries use a fixed 200ms delay" → "Retries use exponential backoff from 200ms"
@@ -248,6 +252,7 @@ Proposed edit to the acceptance criteria:
 
 Proposed edit to the ticket:
 - Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
+- Rewrite: ## Proposed solution — records the fail-fast validation the branch implements
 
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
