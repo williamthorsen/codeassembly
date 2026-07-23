@@ -40,6 +40,8 @@ The skeleton's `## Proposed solution` section is forward-looking by default; her
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
 
+**Criteria-only mode.** When the caller scopes the revision to acceptance criteria, revise `## Acceptance criteria` alone and carry `## Problem`, `## Context`, and `## Proposed solution` through verbatim from the source ticket the caller names. A review names it in its `## Specification compliance` section, which records whether the remote issue or a local snapshot won. The saved artifact is still a complete ticket; only its generation is partial. A caller that ratifies the whole ticket gets the default behavior.
+
 **Spike mode.** If the branch implements a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md), reconciling whether the investigation answered its questions rather than whether the branch met acceptance criteria.
 
 - Keep tone professional and objective

@@ -70,7 +70,19 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
 const NEXT_STEPS_AFTER_REVIEW: Spec = {
   name: 'next-steps-after-review',
   heading: '## Next-steps options',
-  rules: ['### Source divergence sub-block', '### Combined output format'],
+  rules: [
+    '### Source divergence sub-block',
+    '### Combined output format',
+    // The heading both artifact-mutating sub-blocks link to. Renaming it breaks the `#proposed-edit-preview`
+    // anchors silently, leaving each sub-block pointing at nothing.
+    '### Proposed-edit preview',
+    // The carve-out that exempts the preview from the sub-blocks' terseness default. Without it that default
+    // suppresses the preview again, which is the consent-blind render this spec exists to prevent.
+    'it never suppresses the proposed-edit preview, which is required content',
+    // The mode that keeps the Deviations edit inside the criteria it previews. Without it the option invokes
+    // the default whole-ticket regeneration and the preview under-describes the edit again.
+    'in criteria-only mode',
+  ],
 };
 
 const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: ReadonlyArray<Spec> }> = [
