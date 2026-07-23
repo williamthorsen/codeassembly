@@ -8,6 +8,29 @@ Use `~/`-relative paths where possible and absolute paths otherwise. Every line 
 
 **Reviewer and author roles.** A review surfaces findings; the author disposes of them. The options below route the reviewer's output to the author or record what the review found — they never ask the reviewer to re-design, re-plan, or orchestrate a workflow, none of which is the reviewer's job.
 
+### Proposed-edit preview
+
+Two of the sub-blocks below offer options that rewrite an artifact: the ticket's acceptance criteria, the PR description, or both. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which deviations become criteria is a judgment the reviewer makes (a platform-floor bump becomes a criterion; a refactor does not), and the preview is where that judgment becomes reviewable instead of silent.
+
+**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: the preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, "Leave as-is" above all, carries no preview.
+
+**Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
+
+- **Ticket targets** derive their delta from `## Specification compliance`: its ⚠️ Partial and ❌ Not addressed criteria rows, plus its Unplanned work bullets.
+  - `Add: {criterion}` for unplanned work the reviewer judges to be a criterion
+  - `Reword: {old} → {new}` for a criterion the implementation met differently
+  - `Drop: {criterion}` for a criterion the implementation abandoned
+- **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
+- **Both targets** render both groups, each under its own label.
+
+Render no exclusions line. A deviation genuinely arguable as a criterion belongs in the delta, where the user can strike it; a mechanism-only deviation produces no line at all. Listing what was left out over-triggers into noise and buries the proposal it was meant to qualify.
+
+**Open findings.** When a delta line would settle a question an open finding raises, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
+
+**The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given. The review's own divergence diagnosis is what seeds the preview and the edit alike, which is why these options preserve conversation context.
+
+**Empty delta.** When no line survives the judgment, because every deviation is mechanism rather than contract, the update option has nothing to propose. Omit the preview, and let the recommendation rules favor "Leave as-is".
+
 ### Deviations sub-block
 
 Shown when the ticket compliance section reports gaps (partial or unaddressed acceptance criteria) or unplanned work.
