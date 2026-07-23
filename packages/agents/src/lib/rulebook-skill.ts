@@ -24,7 +24,7 @@ export function renderSkillFile(
 ): string {
   const frontmatter = {
     name: skillName,
-    ...(description ? { description } : {}),
+    ...(description && { description }),
     'user-invocable': true,
   };
   const yaml = stringifyYaml(frontmatter, { lineWidth: 0 });

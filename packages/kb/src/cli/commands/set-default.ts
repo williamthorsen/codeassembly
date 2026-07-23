@@ -67,7 +67,7 @@ export async function runSetDefault(input: {
     if (entries.length === 0) {
       return { exitCode: 2, stdout: '', stderr: buildNoStoresMessage() };
     }
-    if (!entries.some((entry) => entry.name === options.name)) {
+    if (entries.every((entry) => entry.name !== options.name)) {
       return { exitCode: 2, stdout: '', stderr: buildNotRegisteredMessage(options.name, entries) };
     }
     await setDefaultKb({ registryPath, name: options.name });

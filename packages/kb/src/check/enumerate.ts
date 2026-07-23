@@ -62,7 +62,7 @@ export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }
 function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string> | null {
   const dirs = new Set<string>();
   for (const target of targets) {
-    const firstSegment = target.split('/')[0] ?? '';
+    const firstSegment = target.split('/', 1)[0] ?? '';
     if (firstSegment === '' || isGlobSegment(firstSegment)) {
       return null;
     }

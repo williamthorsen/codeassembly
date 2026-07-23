@@ -23,7 +23,7 @@ describe('useContainerResize', () => {
   let originalResizeObserver: typeof globalThis.ResizeObserver;
 
   beforeEach(() => {
-    originalResizeObserver = globalThis.ResizeObserver;
+    originalResizeObserver = ResizeObserver;
     globalThis.ResizeObserver = MockResizeObserver;
     capturedCallback = undefined;
     mockObserve.mockClear();

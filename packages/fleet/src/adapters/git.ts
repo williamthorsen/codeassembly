@@ -155,7 +155,7 @@ async function readAheadBehind(cwd: string, baseBranch: string): Promise<{ ahead
   if (output === null) {
     return null;
   }
-  const [aheadText, behindText] = output.split(/\s+/);
+  const [aheadText, behindText] = output.split(/\s+/, 2);
   if (aheadText === undefined || behindText === undefined) {
     return null;
   }

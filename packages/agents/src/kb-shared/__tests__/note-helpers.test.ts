@@ -116,6 +116,6 @@ describe(readStringList, () => {
   });
 
   it('returns an empty list for a whitespace-only scalar', () => {
-    expect(readStringList({ 'addressed-by': '   ' }, 'addressed-by')).toEqual([]);
+    expect(readStringList({ 'addressed-by': ' '.repeat(3) }, 'addressed-by')).toEqual([]);
   });
 });

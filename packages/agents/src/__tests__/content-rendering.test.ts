@@ -9,7 +9,7 @@ const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 // sole reason to type one into guidance is to indent a subordinate line, and a blanket check needs no parsing to
 // decide. The scan decodes each file rather than matching bytes — 0xA0 is a continuation byte of ■ (U+25A0) and ➕
 // (U+2795), so a byte-level search reports every gradient example as a hit.
-const NBSP = '\u00A0';
+const NBSP = '\u{A0}';
 
 describe('content rendering', () => {
   it('no Markdown under content/ carries a non-breaking space', async () => {

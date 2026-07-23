@@ -367,7 +367,7 @@ function buildLayoutEntries(config: FactoryFloorSceneConfig): StationLayoutEntry
   const agentCountByStation = buildAgentCountByStation(config);
   return config.stations.map((station, index) => ({
     agentCount: agentCountByStation.get(index) ?? 0,
-    ...(station.absent ? { absent: true } : {}),
+    ...(station.absent && { absent: true }),
   }));
 }
 

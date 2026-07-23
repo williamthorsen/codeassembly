@@ -77,7 +77,7 @@ export async function searchNotes(input: {
 
   // `scopedKbs` reports the KBs actually searched, so exclude any whose path was missing; the dead paths surface in
   // `warnings` instead.
-  const searchedKbs = inScopeKbs.filter((kb) => !missingKbs.some((missing) => missing.path === kb.path));
+  const searchedKbs = inScopeKbs.filter((kb) => missingKbs.every((missing) => missing.path !== kb.path));
 
   return {
     hits,
@@ -120,7 +120,8 @@ async function loadMatchersForHits(input: {
 }): Promise<{ matchers: Map<string, NoteScopeMatcher>; warnings: string[] }> {
   const matchers = new Map<string, NoteScopeMatcher>();
   const warnings: string[] = [];
-  for (const kbPath of new Set(input.hits.map((hit) => hit.kbPath))) {
+  const kbPaths = new Set(input.hits.map((rawHit) => rawHit.kbPath));
+  for (const kbPath of kbPaths) {
     let config = defaultKbConfig;
     try {
       config = await loadKbConfig({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath) } });
@@ -165,7 +166,7 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
   if (filters.tag !== undefined) {
     const wanted = filters.tag.toLowerCase();
     const tags = frontmatter?.tags ?? [];
-    if (!tags.some((tag) => tag.toLowerCase() === wanted)) {
+    if (tags.every((tag) => tag.toLowerCase() !== wanted)) {
       return false;
     }
   }

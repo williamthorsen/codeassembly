@@ -76,7 +76,7 @@ async function reconcileIndexes(paths: readonly string[]): Promise<Map<string, b
       const result = removeMemoryIndexEntry(content, basename(path));
       content = result.content;
       indexUpdated.set(path, result.removed);
-      changed = changed || result.removed;
+      changed ||= result.removed;
     }
     if (changed) {
       await writeFile(indexPath, content, 'utf8');

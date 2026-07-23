@@ -11,7 +11,7 @@ import { BASIC } from '@hyperjump/json-schema/experimental';
 import { describe, expect, it } from 'vitest';
 
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
-type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
+type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
 /** Shape of a single record under `types[]` — used to type the live JSON for cross-element checks. */
 interface WorkTypeRecord {

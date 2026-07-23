@@ -147,7 +147,7 @@ function buildArtifactStates(status: CanonicalRunStatus): LogicalArtifactState[]
       color: lookupArtifactColor(entry.type),
       status: artifactStatus,
       producerPhase: effectivePhase,
-      ...(entry.iteration === undefined ? {} : { iteration: entry.iteration }),
+      ...(entry.iteration !== undefined && { iteration: entry.iteration }),
     });
   }
 

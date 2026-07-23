@@ -144,9 +144,11 @@ export class PlaybackController implements PlaybackControls {
   }
 
   private cancelPending(): void {
-    if (this.pendingTimeout !== null) {
-      clearTimeout(this.pendingTimeout);
-      this.pendingTimeout = null;
+    if (this.pendingTimeout === null) {
+      return;
     }
+
+    clearTimeout(this.pendingTimeout);
+    this.pendingTimeout = null;
   }
 }

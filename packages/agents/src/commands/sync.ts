@@ -1070,10 +1070,10 @@ async function buildResolutionReport(
   skills: ReadonlyArray<ResolvedSkill>,
   subagents: ReadonlyArray<ResolvedSubagent>,
 ): Promise<ReadonlyArray<ResolutionEntry>> {
-  const artifacts: Array<{ type: ArtifactType; slug: string; source: string | undefined }> = [];
-  for (const rulebook of rulebooks) {
-    artifacts.push({ type: 'rulebook', slug: rulebook.slug, source: rulebook.source });
-  }
+  const artifacts: Array<{ type: ArtifactType; slug: string; source: string | undefined }> = Array.from(
+    rulebooks,
+    (rulebook) => ({ type: 'rulebook', slug: rulebook.slug, source: rulebook.source }),
+  );
   for (const skill of skills) {
     artifacts.push({ type: 'skill', slug: skill.slug, source: skill.source });
   }

@@ -31,10 +31,10 @@ interface StatusIndicator {
 const DEFAULT_INDICATOR: StatusIndicator = { symbol: '?', color: PALETTE.white };
 
 const STATUS_INDICATORS: Record<string, StatusIndicator> = {
-  in_progress: { symbol: '\u25B6', color: PALETTE.cyan },
-  completed: { symbol: '\u2714', color: PALETTE.green },
-  failed: { symbol: '\u2718', color: PALETTE.red },
-  needs_manual_review: { symbol: '\u26A0', color: PALETTE.yellow },
+  in_progress: { symbol: '\u{25B6}', color: PALETTE.cyan },
+  completed: { symbol: '\u{2714}', color: PALETTE.green },
+  failed: { symbol: '\u{2718}', color: PALETTE.red },
+  needs_manual_review: { symbol: '\u{26A0}', color: PALETTE.yellow },
 } satisfies Record<RunStatus, StatusIndicator>;
 
 export function RunList({
@@ -71,10 +71,12 @@ export function RunList({
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelectRun(run.projectSlug, run.runId);
+                  if (!(e.key === 'Enter' || e.key === ' ')) {
+                    return;
                   }
+
+                  e.preventDefault();
+                  onSelectRun(run.projectSlug, run.runId);
                 }}
               >
                 <span className="run-list-item-status" style={{ color: indicator.color }}>
@@ -94,7 +96,7 @@ export function RunList({
                   }}
                   aria-label={`Dismiss ${formatRunId(run.runId)}`}
                 >
-                  {'\u00D7'}
+                  {'\u{D7}'}
                 </button>
               </div>
             );

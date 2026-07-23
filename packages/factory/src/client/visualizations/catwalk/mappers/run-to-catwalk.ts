@@ -362,7 +362,7 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
       label: entry.type,
       color: lookupArtifactColor(entry.type),
       slot: 'output',
-      ...(entry.iteration === undefined ? {} : { version: entry.iteration }),
+      ...(entry.iteration !== undefined && { version: entry.iteration }),
     });
   }
 

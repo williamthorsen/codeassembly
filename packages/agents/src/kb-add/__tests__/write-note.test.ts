@@ -31,7 +31,7 @@ describe(composeFilename, () => {
   });
 
   it('rejects an empty title', () => {
-    expect(composeFilename('   ')).toMatchObject({ ok: false, reason: 'invalid-title' });
+    expect(composeFilename(' '.repeat(3))).toMatchObject({ ok: false, reason: 'invalid-title' });
   });
 
   it('rejects a title containing a forward slash', () => {

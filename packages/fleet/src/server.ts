@@ -87,7 +87,7 @@ export async function startFleetServer(input: {
     onChange: tick,
     pollMs: config.gitPollMs,
     // Omit rather than pass undefined, so createGitAdapter applies its probeWorktree default on the production path.
-    ...(input.gitProbe === undefined ? {} : { probe: input.gitProbe }),
+    ...(input.gitProbe !== undefined && { probe: input.gitProbe }),
   });
   lastPublishedJson = JSON.stringify(buildCurrentSnapshot());
   // Kick an initial round so forge facts populate promptly rather than after the first interval.

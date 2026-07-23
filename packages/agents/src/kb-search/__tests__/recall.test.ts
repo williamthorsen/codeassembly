@@ -71,7 +71,7 @@ describe(recallNotes, () => {
   });
 
   it('returns an empty array for a blank query', async () => {
-    const { hits } = await recallNotes({ query: '   ', scopedKbs: notesVaultScope });
+    const { hits } = await recallNotes({ query: ' '.repeat(3), scopedKbs: notesVaultScope });
 
     expect(hits).toEqual([]);
   });

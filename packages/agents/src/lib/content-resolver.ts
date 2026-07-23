@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
-import { dirname } from 'node:path';
 import path from 'node:path';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /**

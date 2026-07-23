@@ -95,19 +95,19 @@ describe('RunList', () => {
     const view = within(container);
 
     // in_progress: ▶ cyan
-    const inProgressIndicator = view.getByText('\u25B6');
+    const inProgressIndicator = view.getByText('\u{25B6}');
     expect(inProgressIndicator).toHaveStyle({ color: '#55FFFF' });
 
     // completed: ✔ green
-    const completedIndicator = view.getByText('\u2714');
+    const completedIndicator = view.getByText('\u{2714}');
     expect(completedIndicator).toHaveStyle({ color: '#55FF55' });
 
     // failed: ✘ red
-    const failedIndicator = view.getByText('\u2718');
+    const failedIndicator = view.getByText('\u{2718}');
     expect(failedIndicator).toHaveStyle({ color: '#FF5555' });
 
     // needs_manual_review: ⚠ yellow
-    const reviewIndicator = view.getByText('\u26A0');
+    const reviewIndicator = view.getByText('\u{26A0}');
     expect(reviewIndicator).toHaveStyle({ color: '#FFFF55' });
   });
 

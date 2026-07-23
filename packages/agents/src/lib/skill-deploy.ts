@@ -166,7 +166,7 @@ function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<
  */
 function stripHarnessesDirective(content: string): string {
   const { lines, body } = parseFrontmatter(content);
-  if (!lines.some((line) => /^harnesses\s*:/.test(line))) {
+  if (lines.every((line) => !/^harnesses\s*:/.test(line))) {
     return content;
   }
 

@@ -68,10 +68,10 @@ export function reportResults(results: ValidationResult[]): number {
 
   for (const result of results) {
     if (result.valid) {
-      console.info(`\u2713 PASS: ${result.filePath}`);
+      console.info(`\u{2713} PASS: ${result.filePath}`);
       passed++;
     } else {
-      console.info(`\u2717 FAIL: ${result.filePath}`);
+      console.info(`\u{2717} FAIL: ${result.filePath}`);
       for (const error of result.errors) {
         console.info(error);
       }

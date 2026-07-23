@@ -3,7 +3,7 @@ import type { FeedbackMemorySummary, ProjectSummary, SkippedMemory } from './typ
 const EMOJI = '📦';
 const FALLBACK_WIDTH = 120;
 const GAP = '  ';
-const INDENT = '   ';
+const INDENT = ' '.repeat(3);
 
 /**
  * Renders a feedback-memory summary as human-readable text. The bare form is a three-column table (project, memory

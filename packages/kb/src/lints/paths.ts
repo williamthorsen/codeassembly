@@ -14,16 +14,13 @@ export interface PathsNote {
  * too.
  */
 export function pathsFindings(note: PathsNote): Finding[] {
-  const findings: Finding[] = [];
-  for (const match of note.content.matchAll(USER_HOME)) {
-    findings.push({
-      path: note.path,
-      line: countNewlines(note.content, match.index) + 1,
-      rule: 'paths.user-home',
-      severity: 'error',
-      message: `hardcoded "${match[0]}" — replace with ~/`,
-    });
-  }
+  const findings: Finding[] = Array.from(note.content.matchAll(USER_HOME), (match) => ({
+    path: note.path,
+    line: countNewlines(note.content, match.index) + 1,
+    rule: 'paths.user-home',
+    severity: 'error',
+    message: `hardcoded "${match[0]}" — replace with ~/`,
+  }));
   return findings;
 }
 

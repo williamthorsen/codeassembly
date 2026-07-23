@@ -30,10 +30,12 @@ export function useRunPlayback(projectSlug: string | null, runId: string | null)
 
   // Trigger auto-play after a new source is set and the controller is ready
   useEffect(() => {
-    if (activeSource && autoPlayRef.current) {
-      autoPlayRef.current = false;
-      playback.controls.play();
+    if (!(activeSource && autoPlayRef.current)) {
+      return;
     }
+
+    autoPlayRef.current = false;
+    playback.controls.play();
   }, [activeSource, playback.controls]);
 
   const startReplay = useCallback(() => {

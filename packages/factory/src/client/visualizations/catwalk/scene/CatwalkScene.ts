@@ -391,7 +391,7 @@ export class CatwalkScene extends Scene {
   private addDividers(config: CatwalkSceneConfig, layout: CatwalkLayoutResult): void {
     const agentCountByStation = buildAgentCountByStation(config);
 
-    for (const [i] of config.stations.entries()) {
+    for (const i of config.stations.keys()) {
       const agentCount = agentCountByStation.get(i);
       if (agentCount === undefined || agentCount === 0) continue;
 
@@ -434,7 +434,7 @@ function buildLayoutEntries(config: CatwalkSceneConfig): StationLayoutEntry[] {
   const agentCountByStation = buildAgentCountByStation(config);
   return config.stations.map((station, index) => ({
     agentCount: agentCountByStation.get(index) ?? 0,
-    ...(station.absent ? { absent: true } : {}),
+    ...(station.absent && { absent: true }),
   }));
 }
 

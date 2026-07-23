@@ -16,7 +16,7 @@ export async function resolveMemoryStore(input: {
   memoryStores: readonly string[];
   projectsRoot: string;
   resolveRepo?: (slug: string) => Promise<string | null>;
-}): Promise<{ ok: true; memoryStore: string } | EnumerateFailure> {
+}): Promise<EnumerateFailure | { ok: true; memoryStore: string }> {
   if (input.memoryStores.includes(input.requested)) {
     return { ok: true, memoryStore: input.requested };
   }

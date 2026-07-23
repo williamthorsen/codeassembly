@@ -29,8 +29,8 @@ export async function registerArtifact(input: RegisterArtifactInput): Promise<Em
       agent,
       type,
       phase,
-      ...(iteration === undefined ? {} : { iteration }),
-      ...(note === undefined ? {} : { note }),
+      ...(iteration !== undefined && { iteration }),
+      ...(note !== undefined && { note }),
     },
   });
 }

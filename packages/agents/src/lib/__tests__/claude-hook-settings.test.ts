@@ -72,7 +72,7 @@ describe(ensureClaudeHookEntries, () => {
   it.each([
     { name: 'tab', unit: '\t' },
     { name: 'two-space', unit: '  ' },
-    { name: 'four-space', unit: '    ' },
+    { name: 'four-space', unit: ' '.repeat(4) },
   ])('preserves $name indentation', async ({ unit }) => {
     const file = await writeSettings(`{\n${unit}"model": "opus"\n}\n`);
 

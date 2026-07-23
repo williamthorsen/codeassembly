@@ -41,10 +41,12 @@ export function useDismissedRuns(): UseDismissedRunsResult {
     let changed = false;
     const next = { ...prev };
     for (const { key, status } of entries) {
-      if (next[key]?.status !== status) {
-        next[key] = { status };
-        changed = true;
+      if (next[key]?.status === status) {
+        continue;
       }
+
+      next[key] = { status };
+      changed = true;
     }
     if (!changed) return;
 

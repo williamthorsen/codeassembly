@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
-type JsonValue = string | number | boolean | null | { [key: string]: JsonValue } | JsonValue[];
+type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
 /**
  * The test file lives at `packages/agents/src/lib/__tests__/preferences-schema.test.ts`.

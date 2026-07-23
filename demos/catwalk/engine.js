@@ -57,7 +57,7 @@ export function createEngine(state, playback) {
   }
 
   function animateProp(target, prop, end, duration, easeFn) {
-    duration = duration / playback.speedMultiplier;
+    duration /= playback.speedMultiplier;
     if (easeFn === undefined) easeFn = easeInOutCubic;
     const start = target[prop];
     const startTime = performance.now();
@@ -143,10 +143,12 @@ export function createEngine(state, playback) {
   // § GATE + TRANSIENT HELPERS
 
   async function openGate(index) {
-    if (index >= 0 && index < state.gates.length && !state.gates[index].open) {
-      state.gates[index].open = true;
-      await animateProp(state.gates[index], 'size', 0, 300);
+    if (!(index >= 0 && index < state.gates.length && !state.gates[index].open)) {
+      return;
     }
+
+    state.gates[index].open = true;
+    await animateProp(state.gates[index], 'size', 0, 300);
   }
 
   function orchAddTransient(label, color) {
@@ -367,10 +369,12 @@ export function createEngine(state, playback) {
     state.completed = true;
 
     for (let i = 0; i < state.gates.length; i++) {
-      if (!state.gates[i].open) {
-        state.gates[i].open = true;
-        state.gates[i].size = 0;
+      if (state.gates[i].open) {
+        continue;
       }
+
+      state.gates[i].open = true;
+      state.gates[i].size = 0;
     }
 
     const allAgents = Object.keys(state.agents);
@@ -474,25 +478,24 @@ export function createEngine(state, playback) {
           break;
         }
 
-        case 'reviewCycle':
-          {
-            state.currentPhase = step.station;
-            await showPhaseLabel(PHASES[step.station].name);
-            state.stationInputs[step.station].push({ label: 'reqs', color: ARTIFACT_COLORS.reqs });
-            var planTransient = state.orch.transient.find(function (t) {
-              return t.label === 'plan';
-            });
-            if (planTransient) {
-              state.stationInputs[step.station].push({ label: 'plan', color: ARTIFACT_COLORS.plan });
-              await orchFadeTransient('plan');
-            }
-            state.stationInputs[step.station].push({
-              label: 'code v' + codeVersionRef.version,
-              color: ARTIFACT_COLORS.code,
-            });
-            await reviewCycle(step.station, step.rounds, codeVersionRef);
+        case 'reviewCycle': {
+          state.currentPhase = step.station;
+          await showPhaseLabel(PHASES[step.station].name);
+          state.stationInputs[step.station].push({ label: 'reqs', color: ARTIFACT_COLORS.reqs });
+          var planTransient = state.orch.transient.find(function (t) {
+            return t.label === 'plan';
+          });
+          if (planTransient) {
+            state.stationInputs[step.station].push({ label: 'plan', color: ARTIFACT_COLORS.plan });
+            await orchFadeTransient('plan');
           }
+          state.stationInputs[step.station].push({
+            label: 'code v' + codeVersionRef.version,
+            color: ARTIFACT_COLORS.code,
+          });
+          await reviewCycle(step.station, step.rounds, codeVersionRef);
           break;
+        }
 
         case 'fixShuttle':
           state.stationInputs[step.targetStation].push({ label: 'fixes', color: ARTIFACT_COLORS.fixes });

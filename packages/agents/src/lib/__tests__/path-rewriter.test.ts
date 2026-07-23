@@ -33,8 +33,8 @@ describe(rewriteMarkdownPaths, () => {
     {
       name: 'leaves http URL links untouched',
       fileRelPath: 'commit/SKILL.md',
-      content: 'Visit [docs](http://example.com/docs) for info.',
-      expected: 'Visit [docs](http://example.com/docs) for info.',
+      content: 'Visit [docs](https://example.com/docs) for info.',
+      expected: 'Visit [docs](https://example.com/docs) for info.',
     },
     {
       name: 'leaves absolute paths untouched',

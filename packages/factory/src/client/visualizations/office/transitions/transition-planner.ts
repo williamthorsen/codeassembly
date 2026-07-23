@@ -137,7 +137,6 @@ export function planTransitions(
         from: statusChange.from,
         to: statusChange.to,
       });
-      staggerIndex++;
     } else {
       transitions.push({
         type: 'state_change',
@@ -147,8 +146,8 @@ export function planTransitions(
         from: statusChange.from,
         to: statusChange.to,
       });
-      staggerIndex++;
     }
+    staggerIndex++;
   }
 
   for (const removed of diff.artifacts.removed) {

@@ -39,7 +39,7 @@ export function resolveEventPath(input: { home: string; repo?: string; branch?: 
 
 /** Splits an `owner/name` repo into its two path segments, falling back to the placeholder for either half. */
 function splitRepo(repo: string | undefined): [owner: string, name: string] {
-  const [owner, name] = (repo ?? '').split('/');
+  const [owner, name] = (repo ?? '').split('/', 2);
   return [toSafeSegment(owner ?? '', PLACEHOLDERS.repo), toSafeSegment(name ?? '', PLACEHOLDERS.repo)];
 }
 

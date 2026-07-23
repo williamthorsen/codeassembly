@@ -394,7 +394,7 @@ async function installScripts(
     }
 
     // Skip non-script files (e.g. README.md); only helper scripts ship to harness homes.
-    if (!SCRIPT_EXTENSIONS.some((extension) => entry.endsWith(extension))) {
+    if (SCRIPT_EXTENSIONS.every((extension) => !entry.endsWith(extension))) {
       continue;
     }
 

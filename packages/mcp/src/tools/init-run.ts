@@ -87,8 +87,8 @@ export async function initRun(input: InitRunInput): Promise<InitRunResult> {
     },
     config: {
       ...config,
-      ...(pipeline === undefined ? {} : { pipeline }),
-      ...(models === undefined ? {} : { models }),
+      ...(pipeline !== undefined && { pipeline }),
+      ...(models !== undefined && { models }),
     },
   };
 

@@ -134,8 +134,9 @@ function assertAllOwned(entries: readonly HookEntry[], isOwned: HookSentinelMatc
 
 /** Throws {@link RovoConfigParseError} when the document carries parse errors, guarding every mutation and read. */
 function assertParsable(doc: Document): void {
-  if (doc.errors.length > 0) {
-    throw new RovoConfigParseError(doc.errors.map((error) => error.message));
+  const errorMessages = doc.errors.map((error) => error.message);
+  if (errorMessages.length > 0) {
+    throw new RovoConfigParseError(errorMessages);
   }
 }
 

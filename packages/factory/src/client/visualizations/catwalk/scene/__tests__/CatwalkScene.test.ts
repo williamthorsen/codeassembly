@@ -568,7 +568,7 @@ describe('CatwalkScene', () => {
       }
       const entries = config.stations.map((station, index) => ({
         agentCount: agentCountByStation.get(index) ?? 0,
-        ...(station.absent ? { absent: true as const } : {}),
+        ...(station.absent && { absent: true as const }),
       }));
       const layout = computeCatwalkLayout({ stations: entries });
       return { config, layout, agentCountByStation };
