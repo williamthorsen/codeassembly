@@ -235,7 +235,7 @@ See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the cost-aware
 
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. When both sub-blocks offer a ticket edit and the user selects both, run `align-ticket-with-implementation` once in whole-ticket mode, taking the union of the two previews as the contract. Source divergence appears only in PR reviews, so a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; the recommendation rules in each sub-block determine which marker applies to each option:
 
 ```
 Next steps:
