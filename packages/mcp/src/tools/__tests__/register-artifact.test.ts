@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { registerArtifact } from '../register-artifact.js';
+import { registerArtifact } from '../register-artifact.ts';
 
 describe('registerArtifact', () => {
   async function createRunDir(): Promise<string> {

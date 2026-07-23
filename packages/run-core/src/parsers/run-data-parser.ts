@@ -1,14 +1,14 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { foldEvents } from '../event-folder.js';
-import { RunDataParseError } from '../run-data-parse-error.js';
-import { v2RunIndexSchema } from '../schemas/run-index-schema.js';
-import { parseRunLogLine, v3RunIndexSchema } from '../schemas/run-log-schema.js';
-import { v1StatusSchema } from '../schemas/status-json-schema.js';
-import { isEnoent } from '../type-guards.js';
-import type { ArtifactEntry, CanonicalRunStatus, PhaseDecision, Phases, RunStatus } from '../types/canonical.js';
-import type { RunEvent, RunHeader } from '../types/run-log.js';
+import { foldEvents } from '../event-folder.ts';
+import { RunDataParseError } from '../run-data-parse-error.ts';
+import { v2RunIndexSchema } from '../schemas/run-index-schema.ts';
+import { parseRunLogLine, v3RunIndexSchema } from '../schemas/run-log-schema.ts';
+import { v1StatusSchema } from '../schemas/status-json-schema.ts';
+import { isEnoent } from '../type-guards.ts';
+import type { ArtifactEntry, CanonicalRunStatus, PhaseDecision, Phases, RunStatus } from '../types/canonical.ts';
+import type { RunEvent, RunHeader } from '../types/run-log.ts';
 
 /** Read and parse a v3 run's raw header + events without folding into a final snapshot. */
 export async function parseRunRawData(runPath: string): Promise<{ header: RunHeader; events: RunEvent[] }> {

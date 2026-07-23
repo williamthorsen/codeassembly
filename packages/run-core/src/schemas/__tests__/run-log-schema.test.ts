@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseRunLogLine, v3RunIndexSchema } from '../run-log-schema.js';
+import { parseRunLogLine, v3RunIndexSchema } from '../run-log-schema.ts';
 
 describe('parseRunLogLine', () => {
   it('parses a run_started event', () => {

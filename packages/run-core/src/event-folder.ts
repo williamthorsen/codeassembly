@@ -1,4 +1,4 @@
-import { isRecord } from './type-guards.js';
+import { isRecord } from './type-guards.ts';
 import type {
   ArchitecturePhase,
   ArtifactEntry,
@@ -13,8 +13,8 @@ import type {
   QualityGates,
   ReviewIteration,
   UsageMetrics,
-} from './types/canonical.js';
-import type { EventPhaseName, RunEvent, RunHeader } from './types/run-log.js';
+} from './types/canonical.ts';
+import type { EventPhaseName, RunEvent, RunHeader } from './types/run-log.ts';
 
 // region | Type guard helpers
 

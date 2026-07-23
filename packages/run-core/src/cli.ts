@@ -5,9 +5,9 @@ import { dirname, join, relative } from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
 
-import { resolveProjectsDir } from './resolve-projects-dir.js';
-import { discoverRunDirectories, validateRunDirectory } from './scanners/index.js';
-import type { RunDirectoryEntry } from './scanners/run-directory-scanner.js';
+import { resolveProjectsDir } from './resolve-projects-dir.ts';
+import { discoverRunDirectories, validateRunDirectory } from './scanners/index.ts';
+import type { RunDirectoryEntry } from './scanners/run-directory-scanner.ts';
 
 interface InvalidEntry {
   entry: RunDirectoryEntry;

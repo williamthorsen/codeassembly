@@ -1,4 +1,4 @@
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { Client } from '@modelcontextprotocol/sdk/client';
 
 /** Type guard: narrows unknown to Record<string, unknown>. */
 function isRecord(value: unknown): value is Record<string, unknown> {

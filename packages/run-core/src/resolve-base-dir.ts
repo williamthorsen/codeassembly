@@ -4,7 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
 
-import { isRecord } from './type-guards.js';
+import { isRecord } from './type-guards.ts';
 
 /**
  * Expand a leading `~/` prefix to the home directory.

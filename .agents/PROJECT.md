@@ -278,13 +278,13 @@ Deleting `dist/` does not force a rebuild. The build cache lives outside it and 
 ### TypeScript
 
 - Strict mode across all packages (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitReturns`)
-- `moduleResolution: NodeNext`, `target: ES2022`
+- `moduleResolution: NodeNext`, `target: ES2025`
 - Type checking via `tsgo` (`@typescript/native-preview`) for speed
 
 ### Testing
 
 - Vitest across all packages with shared configuration
-- Base config in `config/vitest.config.ts`
+- Base config in `.config/vitest/vitest.config.ts`
 - Coverage reporting with v8 provider
 - Package-specific configurations for different test types
 - Real-library / full-install tests (e.g. real installs) are deliberate-only `*.int.test.ts` tests: excluded from the default unit suite and CI, run on demand via `nmr test:integration`. A package opts in by providing `vitest.integration.config.ts` and `vitest.standalone.config.ts` (see `packages/agents/`). Land new real-library/full-install tests here, not in the unit suite.

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { validateRunDirectory } from '../run-directory-validator.js';
+import { validateRunDirectory } from '../run-directory-validator.ts';
 
 const { mockedReadFile } = vi.hoisted(() => ({
   mockedReadFile: vi.fn(),

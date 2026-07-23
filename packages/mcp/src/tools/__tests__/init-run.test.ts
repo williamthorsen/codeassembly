@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { v3RunIndexSchema } from '@codeassembly/run-core';
 import { describe, expect, it, vi } from 'vitest';
 
-import { initRun, sanitizeTicketId } from '../init-run.js';
+import { initRun, sanitizeTicketId } from '../init-run.ts';
 
 describe('initRun', () => {
   async function createTmpDir(): Promise<string> {

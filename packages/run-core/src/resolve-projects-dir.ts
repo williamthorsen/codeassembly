@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { resolveBaseDir, type ResolveBaseDirOptions } from './resolve-base-dir.js';
+import { resolveBaseDir, type ResolveBaseDirOptions } from './resolve-base-dir.ts';
 
 /**
  * Expand a leading `~/` prefix to the home directory.

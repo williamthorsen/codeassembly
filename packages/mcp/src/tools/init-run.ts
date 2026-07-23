@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { resolveBaseDir } from '@codeassembly/run-core/config';
 
-import { emitEvent } from './emit-event.js';
+import { emitEvent } from './emit-event.ts';
 
 export interface InitRunInput {
   projectSlug: string;

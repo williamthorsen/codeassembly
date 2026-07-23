@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { emitEvent } from '../emit-event.js';
+import { emitEvent } from '../emit-event.ts';
 
 describe('emitEvent', () => {
   async function createRunDir(): Promise<string> {

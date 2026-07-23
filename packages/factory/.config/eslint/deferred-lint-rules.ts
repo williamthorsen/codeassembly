@@ -1,0 +1,15 @@
+export const deferredLintRules = {
+  'unicorn/better-dom-traversing': 'warn',
+  'unicorn/consistent-class-member-order': 'warn',
+  'unicorn/max-nested-calls': 'warn',
+  'unicorn/no-declarations-before-early-exit': 'warn',
+  'unicorn/no-duplicate-if-branches': 'warn',
+  'unicorn/no-global-object-property-assignment': 'warn',
+  'unicorn/no-nonstandard-builtin-properties': 'warn',
+  'unicorn/no-top-level-assignment-in-function': 'warn',
+  'unicorn/prefer-await': 'warn',
+  'unicorn/prefer-includes-over-repeated-comparisons': 'warn',
+  'unicorn/prefer-promise-with-resolvers': 'warn',
+  'unicorn/prefer-simple-condition-first': 'warn',
+  'unicorn/require-array-sort-compare': 'warn',
+} as const;

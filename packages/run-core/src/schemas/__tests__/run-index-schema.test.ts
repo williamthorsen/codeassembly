@@ -12,7 +12,7 @@ import {
   v2ConfigSchema,
   v2ContextSchema,
   v2RunIndexSchema,
-} from '../run-index-schema.js';
+} from '../run-index-schema.ts';
 
 // -- fixtures --
 

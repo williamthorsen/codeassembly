@@ -7,5 +7,12 @@
     "strict": true,
     "useDefineForClassFields": true,
   },
-  "include": ["src/", "scripts/", "docs/visions/", "*.ts"],
+  // prettier-ignore
+  "include": [
+    "./.config/**/*.ts",
+    "docs/visions/",
+    "src/",
+    "scripts/",
+    "*.ts",
+  ],
 }

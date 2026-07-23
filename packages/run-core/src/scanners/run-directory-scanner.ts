@@ -1,7 +1,7 @@
 import { readdir, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { isEnoent } from '../type-guards.js';
+import { isEnoent } from '../type-guards.ts';
 
 export interface RunDirectoryEntry {
   projectSlug: string;

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import type { RunEvent } from '../types/run-log.js';
-import { criticalitySchema, runStatusSchema } from './run-index-schema.js';
+import type { RunEvent } from '../types/run-log.ts';
+import { criticalitySchema, runStatusSchema } from './run-index-schema.ts';
 
 // -- Individual event schemas --
 //

@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { z } from 'zod';
 
-import { emitEvent } from './emit-event.js';
+import { emitEvent } from './emit-event.ts';
 
 /** Allowed completion statuses (excludes `in_progress`). */
 const completionStatusSchema = z.enum(['completed', 'failed', 'needs_manual_review']);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPES } from '../role-types.js';
+import { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPES } from '../role-types.ts';
 
 describe('PHASE_NAMES', () => {
   it('contains the expected set of phases', () => {

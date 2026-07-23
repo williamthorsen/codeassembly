@@ -1,8 +1,10 @@
+import { defineConfig } from 'eslint/config';
 import reactPlugin from 'eslint-plugin-react';
 
-import baseConfig from '../../eslint.config.js';
+import baseConfig from '../../eslint.config.ts';
+import { deferredLintRules } from './.config/eslint/deferred-lint-rules.ts';
 
-export default [
+const config = defineConfig([
   ...baseConfig,
   {
     files: ['src/**'],
@@ -38,8 +40,16 @@ export default [
     },
     settings: {
       react: {
-        version: 'detect',
+        // Pin the version: eslint-plugin-react's `detect` path calls the eslint 9 `context.getFilename()`,
+        // removed in eslint 10, which throws while loading React rules.
+        version: '19.2.8',
       },
     },
   },
-];
+  {
+    files: ['**/*.ts', '**/*.tsx', '**/*.md/*.ts'],
+    rules: deferredLintRules,
+  },
+]);
+
+export default config;

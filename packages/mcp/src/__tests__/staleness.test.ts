@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { Client } from '@modelcontextprotocol/sdk/client';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { isBuildStale } from '../staleness.js';
-import { getStringField, toRecord } from './helpers.js';
+import { isBuildStale } from '../staleness.ts';
+import { getStringField, toRecord } from './helpers.ts';
 
 // region | Test helper: create a fake package directory mirroring packages/mcp layout
 
@@ -186,7 +186,7 @@ describe('stale build warning delivery', () => {
       isBuildStale: mockIsBuildStale,
     }));
 
-    const { createServer } = await import('../server.js');
+    const { createServer } = await import('../server.ts');
     const server = createServer();
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);

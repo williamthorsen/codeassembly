@@ -1,7 +1,7 @@
 import createReactPlugin from '@vitejs/plugin-react';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
-import baseConfig from '../../config/vitest.config.js';
+import baseConfig from '../../.config/vitest/vitest.config.ts';
 
 const config = defineConfig({
   plugins: [createReactPlugin()],

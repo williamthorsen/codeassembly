@@ -1,5 +1,5 @@
-import type { CanonicalRunStatus } from '../src/types/canonical.js';
-import type { RunEvent } from '../src/types/run-log.js';
+import type { CanonicalRunStatus } from '../src/types/canonical.ts';
+import type { RunEvent } from '../src/types/run-log.ts';
 
 export const WEIGHTS = {
   completed: 30,

@@ -1,4 +1,4 @@
-import type { Criticality, PhaseStatus, ReviewerStatus, RunStatus, WaitingForInputReason } from './canonical.js';
+import type { Criticality, PhaseStatus, ReviewerStatus, RunStatus, WaitingForInputReason } from './canonical.ts';
 
 /** Static run metadata extracted from a v3 run-index.json header. */
 export interface RunHeader {

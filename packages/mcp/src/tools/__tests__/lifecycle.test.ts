@@ -4,11 +4,11 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { completeRun } from '../complete-run.js';
-import { emitEvent } from '../emit-event.js';
-import { getRunState } from '../get-run-state.js';
-import { initRun } from '../init-run.js';
-import { registerArtifact } from '../register-artifact.js';
+import { completeRun } from '../complete-run.ts';
+import { emitEvent } from '../emit-event.ts';
+import { getRunState } from '../get-run-state.ts';
+import { initRun } from '../init-run.ts';
+import { registerArtifact } from '../register-artifact.ts';
 
 describe('lifecycle integration', () => {
   it('supports the full run lifecycle: init -> emit events -> artifact -> complete -> get_state', async () => {

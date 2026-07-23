@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { foldEvents } from '../event-folder.js';
-import type { RunEvent, RunHeader } from '../types/run-log.js';
+import { foldEvents } from '../event-folder.ts';
+import type { RunEvent, RunHeader } from '../types/run-log.ts';
 
 function createHeader(overrides: Partial<RunHeader> = {}): RunHeader {
   return {

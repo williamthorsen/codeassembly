@@ -1,20 +1,14 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import baseConfig from '@williamthorsen/eslint-config-typescript';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
-import config from '@williamthorsen/eslint-config-typescript';
-import { globalIgnores } from 'eslint/config';
+import { deferredLintRules } from './.config/eslint/deferred-lint-rules.ts';
 
-const thisFilePath = fileURLToPath(import.meta.url);
-const thisDirPath = dirname(thisFilePath);
-
-/**
- * @type {import('eslint').Linter.FlatConfig[]}
- */
-export default [
-  ...config,
+const config = defineConfig([
+  ...baseConfig,
   globalIgnores([
     '**/*.sh',
-    '.readyup/**/*.js',
+    '**/.claude/**',
+    '**/.readyup/**/*.js',
     '**.playwright-mcp/**',
     '**/coverage/**',
     '**/dist/**',
@@ -22,12 +16,13 @@ export default [
     // Throwaway spikes live outside the workspace and are exempt from lint.
     'spikes/**',
     // Ignore test fixtures that are intentionally syntactically broken.
-    '**/__tests__/**/fixtures/**/malformed-aliases/**',
-    '**/__tests__/**/fixtures/**/malformed-no-kb/**',
-    '**/__tests__/**/fixtures/**/malformed-yaml/**',
-    '**/__tests__/**/fixtures/**/malformed-registry/**',
-    '**/__tests__/**/fixtures/**/syntactically-malformed.*',
+    '**/__tests__/**/fixtures/**/*malformed*/**',
+    '**/__tests__/**/fixtures/**/*malformed*',
   ]),
+  {
+    files: ['**/*.ts', '**/*.mts', '**/*.tsx', '**/*.md/*.ts', '**/*.js'],
+    rules: deferredLintRules,
+  },
   {
     files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
     rules: {
@@ -40,8 +35,8 @@ export default [
     files: ['**/*.ts', '**/*.mts', '**/*.tsx', '**/*.md/*.ts'],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.eslint.json', './packages/*/tsconfig.eslint.json'],
-        tsconfigRootDir: thisDirPath,
+        // Anchor the project service (enabled by the base config) at the repo root.
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
@@ -68,4 +63,6 @@ export default [
       '@typescript-eslint/no-unsafe-assignment': 'off',
     },
   },
-];
+]);
+
+export default config;

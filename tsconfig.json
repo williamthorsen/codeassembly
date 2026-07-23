@@ -25,11 +25,9 @@
     "forceConsistentCasingInFileNames": true,
     // Enable stricter transpilation for better output.
     "isolatedModules": true,
-    "lib": ["ESNext"],
+    "lib": ["ES2025"],
     "module": "NodeNext",
     "moduleDetection": "force",
-    // Enable node-style module resolution for things like NPM package imports.
-    "moduleResolution": "NodeNext",
     "noEmit": true,
     // Report errors for fallthrough cases in switch statements.
     "noFallthroughCasesInSwitch": true,
@@ -62,8 +60,7 @@
     // "strictNullChecks": true,             // implied by "strict"
     // "strictPropertyInitialization": true, // implied by "strict"
 
-    // Enable top-level `await` and other modern ESM features.
-    "target": "ES2022",
+    "target": "ES2025",
     // "useDefineForClassFields": true, // implied by target >= ES2022 (including ESNext)
   },
   "exclude": ["node_modules"],
@@ -74,5 +71,6 @@
     "__tests__/",
     "config/",
     "scripts/",
+    "*.ts",
   ],
 }

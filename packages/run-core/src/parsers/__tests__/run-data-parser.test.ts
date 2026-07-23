@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { RunDataParseError } from '../../run-data-parse-error.js';
-import { parseRunData, parseRunRawData, parseStatusFile } from '../run-data-parser.js';
+import { RunDataParseError } from '../../run-data-parse-error.ts';
+import { parseRunData, parseRunRawData, parseStatusFile } from '../run-data-parser.ts';
 
 const { mockedReadFile } = vi.hoisted(() => ({
   mockedReadFile: vi.fn(),

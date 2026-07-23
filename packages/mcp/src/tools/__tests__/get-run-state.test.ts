@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { getRunState } from '../get-run-state.js';
+import { getRunState } from '../get-run-state.ts';
 
 describe('getRunState', () => {
   function makeRunIndex() {

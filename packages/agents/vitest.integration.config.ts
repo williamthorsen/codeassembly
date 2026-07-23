@@ -1,7 +1,7 @@
 import { defineConfig, mergeConfig } from 'vitest/config';
 
-import { baseConfig } from '../../config/vitest.config.js';
-import { integrationTestPatterns } from '../../config/vitest.integration.config.js';
+import { baseConfig } from '../../.config/vitest/vitest.config.ts';
+import { integrationTestPatterns } from '../../.config/vitest/vitest.integration.config.ts';
 
 // Deliberate-only run for `*.int.test.ts` (real-library / full-install tests). Built from the root base
 // config — which carries no `include` — so the integration `include` selects only `*.int.test.ts` rather

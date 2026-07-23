@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { phaseDecisionMapSchema, phasesSchema, runStatusSchema } from './run-index-schema.js';
+import { phaseDecisionMapSchema, phasesSchema, runStatusSchema } from './run-index-schema.ts';
 
-export { criticalitySchema, phaseStatusSchema, runStatusSchema } from './run-index-schema.js';
+export { criticalitySchema, phaseStatusSchema, runStatusSchema } from './run-index-schema.ts';
 
 /**
  * V1 status.json schema. Flat structure with `phaseDecision` (singular)

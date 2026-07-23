@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { discoverRunDirectories } from '../run-directory-scanner.js';
+import { discoverRunDirectories } from '../run-directory-scanner.ts';
 
 const { mockedReaddir, mockedStat } = vi.hoisted(() => ({
   mockedReaddir: vi.fn(),

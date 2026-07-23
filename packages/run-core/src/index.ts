@@ -21,7 +21,7 @@ export type {
   SelectiveReReview,
   UsageMetrics,
   WaitingForInputReason,
-} from './types/canonical.js';
+} from './types/canonical.ts';
 
 // Types — run-log event model
 export type {
@@ -44,11 +44,11 @@ export type {
   RunHeader,
   RunStartedEvent,
   WaitingForInputEvent,
-} from './types/run-log.js';
+} from './types/run-log.ts';
 
 // Constants — domain role types and phase names
-export type { PhaseName, RoleType } from './constants/role-types.js';
-export { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPES } from './constants/role-types.js';
+export type { PhaseName, RoleType } from './constants/role-types.ts';
+export { PHASE_NAMES, PHASE_ROLE, PHASE_ROLE_TYPE, ROLE_TYPES } from './constants/role-types.ts';
 
 // Schemas — run-index (v2)
 export {
@@ -63,23 +63,23 @@ export {
   v2ConfigSchema,
   v2ContextSchema,
   v2RunIndexSchema,
-} from './schemas/run-index-schema.js';
+} from './schemas/run-index-schema.ts';
 
 // Schemas — run-log (v3 events + header)
-export { parseRunLogLine, runEventSchema, v3RunIndexSchema } from './schemas/run-log-schema.js';
+export { parseRunLogLine, runEventSchema, v3RunIndexSchema } from './schemas/run-log-schema.ts';
 
 // Schemas — status.json (v1)
-export { v1StatusSchema } from './schemas/status-json-schema.js';
+export { v1StatusSchema } from './schemas/status-json-schema.ts';
 
 // Errors — structured parse error class
-export type { RunDataParseErrorCategory } from './run-data-parse-error.js';
-export { RunDataParseError } from './run-data-parse-error.js';
+export type { RunDataParseErrorCategory } from './run-data-parse-error.ts';
+export { RunDataParseError } from './run-data-parse-error.ts';
 
 // Event folder — reconstruct CanonicalRunStatus from header + events
-export { foldEvents } from './event-folder.js';
+export { foldEvents } from './event-folder.ts';
 
 // Type guards
-export { isEnoent } from './type-guards.js';
+export { isEnoent } from './type-guards.ts';
 
 // Parsers are NOT exported from the root entry point because they use Node.js
 // APIs (node:fs/promises, node:path) that are incompatible with browser builds.

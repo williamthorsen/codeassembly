@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { resolveBaseDir } from '../resolve-base-dir.js';
+import { resolveBaseDir } from '../resolve-base-dir.ts';
 
 describe('resolveBaseDir', () => {
   async function createTmpDir(prefix = 'run-core-test-resolve-'): Promise<string> {

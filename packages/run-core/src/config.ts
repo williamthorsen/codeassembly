@@ -1,2 +1,2 @@
-export { resolveBaseDir, type ResolveBaseDirOptions } from './resolve-base-dir.js';
-export { resolveProjectsDir } from './resolve-projects-dir.js';
+export { resolveBaseDir, type ResolveBaseDirOptions } from './resolve-base-dir.ts';
+export { resolveProjectsDir } from './resolve-projects-dir.ts';

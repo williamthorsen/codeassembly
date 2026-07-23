@@ -8,9 +8,9 @@ import type {
   PlanningPhase,
   ReviewerInfo,
   RunStatus,
-} from '../../src/types/canonical.js';
-import type { RunEvent } from '../../src/types/run-log.js';
-import { scoreRun, WEIGHTS } from '../demo-scorer.js';
+} from '../../src/types/canonical.ts';
+import type { RunEvent } from '../../src/types/run-log.ts';
+import { scoreRun, WEIGHTS } from '../demo-scorer.ts';
 
 const NOW = new Date('2026-04-19T00:00:00Z');
 

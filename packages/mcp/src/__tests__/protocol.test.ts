@@ -3,11 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { v3RunIndexSchema } from '@codeassembly/run-core';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { Client } from '@modelcontextprotocol/sdk/client';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createServer } from '../server.js';
+import { createServer } from '../server.ts';
 import {
   getStringField,
   isErrorResult,
@@ -15,7 +15,7 @@ import {
   parseJsonlLine,
   parseToolResult,
   toRecord,
-} from './helpers.js';
+} from './helpers.ts';
 
 // region | Helpers
 

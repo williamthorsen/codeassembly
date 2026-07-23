@@ -1,17 +1,17 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { z } from 'zod';
 
-import { isBuildStale } from './staleness.js';
-import { completeRun } from './tools/complete-run.js';
-import { emitEvent } from './tools/emit-event.js';
-import { getRunState } from './tools/get-run-state.js';
-import { initRun } from './tools/init-run.js';
-import { registerArtifact } from './tools/register-artifact.js';
+import { isBuildStale } from './staleness.ts';
+import { completeRun } from './tools/complete-run.ts';
+import { emitEvent } from './tools/emit-event.ts';
+import { getRunState } from './tools/get-run-state.ts';
+import { initRun } from './tools/init-run.ts';
+import { registerArtifact } from './tools/register-artifact.ts';
 
 let hasWarned = false;
 
 const STALE_BUILD_WARNING =
-  '\u26A0\uFE0F MCP server build is stale \u2014 source files are newer than compiled output. Run `pnpm run ws compile` in packages/mcp/ to rebuild.\n\n';
+  '\u{26A0}\u{FE0F} MCP server build is stale \u{2014} source files are newer than compiled output. Run `pnpm run ws compile` in packages/mcp/ to rebuild.\n\n';
 
 /**
  * If the build is stale and the warning hasn't been shown yet, return a content

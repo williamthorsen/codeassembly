@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { completeRun } from '../complete-run.js';
+import { completeRun } from '../complete-run.ts';
 
 describe('completeRun', () => {
   async function createRunDir(): Promise<string> {

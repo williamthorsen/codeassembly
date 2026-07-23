@@ -67,9 +67,18 @@
 - name: scope:factory
   color: 00ff96
   description: factory package
+- name: scope:fleet
+  color: 00ff96
+  description: fleet package
+- name: scope:foreman
+  color: 00ff96
+  description: foreman package
 - name: scope:kb
   color: 00ff96
   description: kb package
+- name: scope:lifecycle
+  color: 00ff96
+  description: lifecycle package
 - name: scope:mcp
   color: 00ff96
   description: mcp package
