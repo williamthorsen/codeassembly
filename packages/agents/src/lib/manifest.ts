@@ -4,6 +4,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
+import { hasAmbientRegion, stripAmbientRegionContent } from './ambient-region.ts';
 import { isRecord } from './type-guards.ts';
 import type { AgentsManifest, ManifestEntry } from './types.js';
 
@@ -82,13 +83,17 @@ export async function writeManifest(manifestPath: string, manifest: AgentsManife
 }
 
 /**
- * Computes the SHA-256 content hash of a file.
+ * Computes the SHA-256 content hash of a file. Content inside an ambient region is excluded before hashing, so a
+ * sync-written region never reads as user drift; files without region markers hash over their raw bytes unchanged.
  * @param filePath Absolute path to the file.
  * @returns Hash string prefixed with `sha256:`.
  */
 export async function computeContentHash(filePath: string): Promise<string> {
   const content = await readFile(filePath);
-  const hash = createHash('sha256').update(content).digest('hex');
+  const text = content.toString('utf8');
+  const hash = createHash('sha256')
+    .update(hasAmbientRegion(text) ? stripAmbientRegionContent(text) : content)
+    .digest('hex');
   return `sha256:${hash}`;
 }
 

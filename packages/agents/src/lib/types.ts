@@ -23,6 +23,8 @@ export interface HarnessConfig {
   readonly configFileName: string;
   /** Filename of the frontmatter overlay YAML for this harness. */
   readonly frontmatterFile: string;
+  /** Filename of the mechanically-loaded guidance file under the harness home that hosts the ambient region. */
+  readonly guidanceFileName: string;
   /** Prefix a `{skill:<slug>}` invocation token renders to (e.g. `/` for Claude, `!` for Rovo). */
   readonly skillSigil: string;
   /** Prefix a `{subagent:<slug>}` invocation token renders to; empty on both current harnesses (a bare slug dispatches). */

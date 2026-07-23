@@ -6,9 +6,7 @@ Always act as a conscientious and courteous collaborator. Follow best practices 
 
 ## Project discovery
 
-- Read ~/.agents/GLOBAL.md (if it exists) for user-global guidance
 - Read .agents/PROJECT.md (if it exists) for project information
-- Read .agents/preferences.yaml (if it exists) for agent settings
 
 ## Interactive work
 

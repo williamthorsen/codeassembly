@@ -180,12 +180,23 @@ const DEFAULT_SHARED_GUIDANCE: Record<string, string> = {
 
 const DEFAULT_HARNESS_GUIDANCE: Record<HarnessId, Record<string, string>> = {
   claude: {
-    'CLAUDE.md': ['Fixture claude preamble.', '', '<!-- include: ../../shared/AGENTS.md / -->', ''].join('\n'),
+    'CLAUDE.md': [
+      'Fixture claude preamble.',
+      '',
+      '<!-- include: ../../shared/AGENTS.md / -->',
+      '',
+      '<!-- codeassembly-ambient:start -->',
+      '<!-- codeassembly-ambient:end -->',
+      '',
+    ].join('\n'),
   },
   rovodev: {
     'AGENTS.md': [
       '<!-- include: ../../shared/AGENTS.md / -->',
       '<!-- include: ./codeassembly-guidance.md / -->',
+      '',
+      '<!-- codeassembly-ambient:start -->',
+      '<!-- codeassembly-ambient:end -->',
       '',
     ].join('\n'),
     'codeassembly-guidance.md': '## Fixture interaction\n\nRovodev-specific body.\n',

@@ -1,6 +1,7 @@
-import { chmod, mkdir, readdir, stat, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
@@ -602,6 +603,10 @@ async function installHarnessGuidance(
       }
     }
 
+    // The wholesale re-render below would drop whatever sync wrote into the ambient region, so capture the existing
+    // destination's region content first; it is spliced back once the fresh render is in place.
+    const preservedAmbient = entry.endsWith('.md') ? await readAmbientRegionContent(destPath) : undefined;
+
     await unlinkIfSymlink(destPath);
     await copyItem(srcPath, destPath);
 
@@ -613,6 +618,16 @@ async function installHarnessGuidance(
       }
       await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, harnessConfig.homeDir, harnessConfig.id);
       await injectMarkerInFile(destPath, buildSourceUrl(`guidance/_harnesses/${harnessId}/${entry}`));
+
+      // Splice the preserved region content into the fresh render. The region's location comes from the template;
+      // its content belongs to sync and must survive an install. A template that no longer carries the region wins:
+      // the content is dropped and the next `sync` re-delivers or warns.
+      if (preservedAmbient !== undefined && preservedAmbient !== '') {
+        const rendered = await readFile(destPath, 'utf8');
+        if (hasAmbientRegion(rendered)) {
+          await writeFile(destPath, injectAmbientRegion(rendered, preservedAmbient), 'utf8');
+        }
+      }
     }
 
     entries.push({
@@ -623,6 +638,21 @@ async function installHarnessGuidance(
   }
 
   return entries;
+}
+
+/**
+ * Reads the ambient-region content of the file at `filePath`, returning `undefined` when the file is absent or
+ * carries no complete region.
+ */
+async function readAmbientRegionContent(filePath: string): Promise<string | undefined> {
+  try {
+    return extractAmbientRegionContent(await readFile(filePath, 'utf8'));
+  } catch (error: unknown) {
+    if (isEnoent(error)) {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
 /**

@@ -14,6 +14,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     scriptsDirName: 'scripts',
     configFileName: 'settings.json',
     frontmatterFile: 'claude.yaml',
+    guidanceFileName: 'CLAUDE.md',
     skillSigil: '/',
     subagentSigil: '',
   },
@@ -25,6 +26,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     scriptsDirName: 'scripts',
     configFileName: 'config.yml',
     frontmatterFile: 'rovodev.yaml',
+    guidanceFileName: 'AGENTS.md',
     skillSigil: '!',
     subagentSigil: '',
   },
@@ -67,6 +69,7 @@ export function resolveHarnessPaths(
   subagentsDir: string;
   scriptsDir: string;
   configFile: string;
+  guidanceFile: string;
 } {
   const home = baseDir ?? homedir();
   const config = HARNESSES[harnessId];
@@ -77,6 +80,7 @@ export function resolveHarnessPaths(
     subagentsDir: path.join(harnessHome, config.subagentsDirName),
     scriptsDir: path.join(harnessHome, config.scriptsDirName),
     configFile: path.join(harnessHome, config.configFileName),
+    guidanceFile: path.join(harnessHome, config.guidanceFileName),
   };
 }
 
