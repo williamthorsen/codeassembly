@@ -12,7 +12,7 @@ Use `~/`-relative paths where possible and absolute paths otherwise. Every line 
 
 Two of the sub-blocks below offer options that rewrite an artifact: the ticket's acceptance criteria, the PR description, or both. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which deviations become criteria is a judgment the reviewer makes (a platform-floor bump becomes a criterion; a refactor does not), and the preview is where that judgment becomes reviewable instead of silent.
 
-**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: the preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, "Leave as-is" above all, carries no preview.
+**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: the preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", carries no preview.
 
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
@@ -90,12 +90,16 @@ Each case renders two of these options; the specific options and their ordering 
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker per case. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a context-specific tradeoff (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" carries none. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a context-specific tradeoff (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
 
 Case 2 — implementation matches ticket; PR description is the stale source:
 
 ```
 Source divergence:
+
+Proposed edit to the PR description:
+- D2: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
+
 1. 📝 ■■□ Update PR description:
    - Edit the PR description to match the implementation, which matches the ticket
 2. ⏭️ ■□□ Leave as-is
@@ -105,6 +109,11 @@ Case 3 — implementation matches PR description; ticket is the stale source:
 
 ```
 Source divergence:
+
+Proposed edit to the ticket:
+- Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
+- ⚠️ W2 asks whether the cap belongs in configuration; accepting this reword settles it as a fixed value
+
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
 ```
@@ -113,13 +122,20 @@ Case 4 — implementation matches neither source (severe):
 
 ```
 Source divergence:
+
+Proposed edit to the ticket:
+- Reword: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
+
+Proposed edit to the PR description:
+- D2: "Retries use a fixed 200ms delay" → "Retries use exponential backoff from 200ms"
+
 1. 📝 Update ticket and PR description
 2. ⏭️ Leave as-is
 ```
 
 Case 4 renders marker-free: the reviewer cannot tell whether the code or the specs are the wrong one, so it recommends neither. The "code is wrong" path is not offered here — the review's findings already surface a divergence when the code is at fault, and disposing of those findings is the author's job (see the Findings sub-block).
 
-Source-divergence options preserve conversation context because the divergence diagnosis from the review is the seed for whichever reconciliation action is taken.
+Source-divergence options preserve conversation context, and the preview each renders binds the reconciliation that follows, per [proposed-edit preview](#proposed-edit-preview).
 
 #### Recommendation rules
 
@@ -221,10 +237,18 @@ When multiple sub-blocks are shown, present them as separate sections within a s
 Next steps:
 
 **A1 — Deviations from ticket:**
+
+Proposed edit to the acceptance criteria:
+- Add: The installer rejects a skill whose frontmatter omits `description`
+
 1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is
 
 **A2 — Source divergence:**
+
+Proposed edit to the ticket:
+- Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
+
 1. 📝 ■■□ Update the stale ticket
 2. ⏭️ ■□□ Leave as-is
 
