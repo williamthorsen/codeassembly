@@ -2,6 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { buildRecallStub } from '../../kb-search/test-utils/build-recall-stub.ts';
 import { parseArgs, runRetrieve } from '../cli.ts';
 
 // The vault and registry fixtures live with the shared search primitive (kb-search), which owns scope and recall; the
@@ -96,6 +97,7 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')] }),
     });
 
     expect(result.candidates.map((candidate) => candidate.title)).toContain('Working with Node.js streams');
@@ -108,9 +110,10 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [eventNote('01HZCEVENTAAAAAAAAAAAAAAAA.md')] }),
     });
 
-    // phantomwidget matches only an event, so the assertion table is empty and the diagnostic routes to event recall.
+    // The only recalled note is an event, so the assertion table is empty and the diagnostic routes to event recall.
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toMatch(/kb-retrieve-events/);
   });
@@ -121,6 +124,7 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'legacy-untyped.md')] }),
     });
 
     expect(result.candidates).toHaveLength(1);
@@ -134,10 +138,18 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      // hooks.md is diataxis: reference, so the filter has something to exclude.
+      recall: buildRecallStub({
+        hits: [
+          join(NOTES_VAULT, 'new-guide.md'),
+          join(NOTES_VAULT, 'mid-guide.md'),
+          join(NOTES_VAULT, 'sub', 'hooks.md'),
+        ],
+      }),
     });
 
     expect(result.candidates.every((candidate) => candidate.diataxis === 'howto')).toBe(true);
-    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates).toHaveLength(2);
   });
 
   it('reports a diagnostic and no candidates when nothing matches', async () => {
@@ -146,6 +158,7 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub(),
     });
 
     expect(result.candidates).toEqual([]);
@@ -159,6 +172,7 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')] }),
     });
 
     expect(result.candidates).toEqual([]);
@@ -167,7 +181,13 @@ describe(runRetrieve, () => {
   });
 
   it('reports a diagnostic when no knowledge base is configured or discovered', async () => {
-    const result = await runRetrieve({ argv: ['anything'], startDir: '/', now: NOW, home: FIXTURES });
+    const result = await runRetrieve({
+      argv: ['anything'],
+      startDir: '/',
+      now: NOW,
+      home: FIXTURES,
+      recall: buildRecallStub(),
+    });
 
     expect(result.scopedKbs).toEqual([]);
     expect(result.warnings).toEqual([]);
@@ -180,6 +200,7 @@ describe(runRetrieve, () => {
       startDir: NOTES_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub(),
     });
 
     expect(result.scopedKbs).toEqual([]);
@@ -187,14 +208,25 @@ describe(runRetrieve, () => {
   });
 
   it('reports a diagnostic when the query is blank', async () => {
-    const result = await runRetrieve({ argv: ['--all-kbs'], startDir: NOTES_VAULT, now: NOW });
+    const result = await runRetrieve({
+      argv: ['--all-kbs'],
+      startDir: NOTES_VAULT,
+      now: NOW,
+      recall: buildRecallStub(),
+    });
 
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('no query provided');
   });
 
   it('names the registry defect in warnings and diagnostic when a malformed registry is the only KB', async () => {
-    const result = await runRetrieve({ argv: ['anything'], startDir: MALFORMED_NO_KB, now: NOW, home: FIXTURES });
+    const result = await runRetrieve({
+      argv: ['anything'],
+      startDir: MALFORMED_NO_KB,
+      now: NOW,
+      home: FIXTURES,
+      recall: buildRecallStub(),
+    });
 
     expect(result.candidates).toEqual([]);
     expect(result.scopedKbs).toEqual([]);
@@ -204,7 +236,13 @@ describe(runRetrieve, () => {
   });
 
   it('returns candidates while still warning about a malformed registry alongside a discovered KB', async () => {
-    const result = await runRetrieve({ argv: ['zarquon'], startDir: MALFORMED_REGISTRY, now: NOW, home: FIXTURES });
+    const result = await runRetrieve({
+      argv: ['zarquon'],
+      startDir: MALFORMED_REGISTRY,
+      now: NOW,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(MALFORMED_REGISTRY, 'searchable-note.md')] }),
+    });
 
     expect(result.candidates.length).toBeGreaterThan(0);
     expect(result.warnings).toHaveLength(1);
@@ -213,33 +251,44 @@ describe(runRetrieve, () => {
   });
 
   it('warns about a dead-path entry that is the only KB and excludes it from scopedKbs', async () => {
-    const result = await runRetrieve({ argv: ['anything'], startDir: DEAD_PATH_REGISTRY, now: NOW, home: FIXTURES });
+    const ghostPath = join(DEAD_PATH_REGISTRY, '.agents', 'no-such-kb-directory');
+    const result = await runRetrieve({
+      argv: ['anything'],
+      startDir: DEAD_PATH_REGISTRY,
+      now: NOW,
+      home: FIXTURES,
+      recall: buildRecallStub({ missing: [ghostPath] }),
+    });
 
     expect(result.candidates).toEqual([]);
     expect(result.scopedKbs).toEqual([]);
-    expect(result.warnings).toEqual([
-      `registry KB "ghost-vault" path does not exist: ${join(DEAD_PATH_REGISTRY, '.agents', 'no-such-kb-directory')}`,
-    ]);
+    expect(result.warnings).toEqual([`registry KB "ghost-vault" path does not exist: ${ghostPath}`]);
     expect(result.diagnostic).toBe('no notes matched the query');
   });
 
   it('returns candidates while warning about a dead-path entry alongside a live KB', async () => {
+    const ghostPath = join(MIXED_REGISTRY, '.agents', 'no-such-kb-directory');
     const result = await runRetrieve({
       argv: ['backpressure', '--all-kbs'],
       startDir: MIXED_REGISTRY,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')], missing: [ghostPath] }),
     });
 
     expect(result.candidates.length).toBeGreaterThan(0);
-    expect(result.warnings).toEqual([
-      `registry KB "ghost-vault" path does not exist: ${join(MIXED_REGISTRY, '.agents', 'no-such-kb-directory')}`,
-    ]);
+    expect(result.warnings).toEqual([`registry KB "ghost-vault" path does not exist: ${ghostPath}`]);
     expect(result.diagnostic).toBeUndefined();
   });
 
   it('keeps warnings empty when no registry is configured and a discovered KB is searched', async () => {
-    const result = await runRetrieve({ argv: ['backpressure'], startDir: NOTES_VAULT, now: NOW, home: FIXTURES });
+    const result = await runRetrieve({
+      argv: ['backpressure'],
+      startDir: NOTES_VAULT,
+      now: NOW,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')] }),
+    });
 
     expect(result.candidates.length).toBeGreaterThan(0);
     expect(result.warnings).toEqual([]);
@@ -251,6 +300,7 @@ describe(runRetrieve, () => {
       startDir: CUSTOM_SCHEMA_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(CUSTOM_SCHEMA_VAULT, 'insight-note.md')] }),
     });
 
     // insight-note declares recordType: insight — neither an assertion nor an event — so no retrieve command claims it.
@@ -265,6 +315,7 @@ describe(runRetrieve, () => {
       startDir: MALFORMED_SCHEMA_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(MALFORMED_SCHEMA_VAULT, 'plain-note.md')] }),
     });
 
     expect(result.candidates.length).toBeGreaterThan(0);
@@ -280,6 +331,9 @@ describe(runRetrieve, () => {
       startDir: MULTI_SCHEMA_REGISTRY,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({
+        hits: [join(CUSTOM_SCHEMA_VAULT, 'insight-note.md'), join(MALFORMED_SCHEMA_VAULT, 'plain-note.md')],
+      }),
     });
 
     const insight = result.candidates.find((candidate) => candidate.path.includes('insight-note.md'));
@@ -291,9 +345,21 @@ describe(runRetrieve, () => {
   });
 
   it('recalls only notes inside the configured targets, skipping root and excluded markdown', async () => {
-    // scoped-vault stores `zephyrquux` in README.md (root), content/in-scope.md, and content/drafts/excluded.md;
-    // its config targets `content/**/*.md` and excludes `content/drafts/**`, so only in-scope.md is a note.
-    const result = await runRetrieve({ argv: ['zephyrquux'], startDir: SCOPED_VAULT, now: NOW, home: FIXTURES });
+    // scoped-vault's config targets `content/**/*.md` and excludes `content/drafts/**`, so of the three recalled
+    // notes only in-scope.md is inside the note set.
+    const result = await runRetrieve({
+      argv: ['zephyrquux'],
+      startDir: SCOPED_VAULT,
+      now: NOW,
+      home: FIXTURES,
+      recall: buildRecallStub({
+        hits: [
+          join(SCOPED_VAULT, 'README.md'),
+          join(SCOPED_VAULT, 'content', 'drafts', 'excluded.md'),
+          join(SCOPED_VAULT, 'content', 'in-scope.md'),
+        ],
+      }),
+    });
 
     expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['in-scope.md']);
     expect(result.warnings).toEqual([]);
@@ -306,6 +372,9 @@ describe(runRetrieve, () => {
       startDir: DEFAULT_SCOPE_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({
+        hits: [join(DEFAULT_SCOPE_VAULT, 'README.md'), join(DEFAULT_SCOPE_VAULT, 'content', 'note.md')],
+      }),
     });
 
     expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
@@ -317,12 +386,18 @@ describe(runRetrieve, () => {
       startDir: MALFORMED_CONFIG_VAULT,
       now: NOW,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(MALFORMED_CONFIG_VAULT, 'content', 'note.md')] }),
     });
 
-    // The content/ note still recalls under the degraded default config, and the defect surfaces as one warning.
+    // The content/ note still survives under the degraded default config, and the defect surfaces as one warning.
     expect(result.candidates.map((candidate) => candidate.path.split('/').at(-1))).toEqual(['note.md']);
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0]).toMatch(/config invalid/);
     expect(result.diagnostic).toBeUndefined();
   });
 });
+
+/** Resolves an event record's filename to its absolute path in the shared fixture vault. */
+function eventNote(name: string): string {
+  return join(NOTES_VAULT, 'content', 'events', name);
+}
