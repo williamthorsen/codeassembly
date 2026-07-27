@@ -214,6 +214,7 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 **Root-level development (via `@williamthorsen/nmr`):**
 
 - `pnpm install` - Install all dependencies
+- `pnpm run bootstrap` - Build every package; required after install before the MCP server or CLI bins will run
 - `nmr check` - Run typecheck, format check, lint check, and tests
 - `nmr check:strict` - Strict checks including coverage and audit
 - `nmr ci` - Full CI pipeline (strict checks + build)
