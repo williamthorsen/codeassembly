@@ -27,7 +27,11 @@ export const RulebookFrontmatterSchema = z.object({
     .regex(KEBAB_CASE, 'skill-name must be lowercase kebab-case (e.g. shell-conventions-rulebook)')
     .optional(),
   delivery: z
-    .union([DeliveryModeSchema, z.array(DeliveryModeSchema)])
+    // The message rides the union, not `DeliveryModeSchema`: a union reports its own failure and discards the
+    // messages of the members it tried.
+    .union([DeliveryModeSchema, z.array(DeliveryModeSchema)], {
+      error: "delivery must be 'ambient', 'skill', or a list of the two",
+    })
     .default('ambient')
     .transform((value) => (typeof value === 'string' ? [value] : value)),
   version: z
