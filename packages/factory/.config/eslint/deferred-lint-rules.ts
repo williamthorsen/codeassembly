@@ -1,4 +1,5 @@
 export const deferredLintRules = {
+  '@typescript-eslint/no-deprecated': 'warn',
   'unicorn/better-dom-traversing': 'warn',
   'unicorn/consistent-class-member-order': 'warn',
   'unicorn/max-nested-calls': 'warn',

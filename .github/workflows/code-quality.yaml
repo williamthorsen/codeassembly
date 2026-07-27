@@ -8,17 +8,21 @@ on:
   push:
     branches:
       - main
+      - next
 
   pull_request:
     branches:
       - main
+      - next
 
   workflow_dispatch: {}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code-quality:
-    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v5
+    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v7
     with:
-      check-command: 'pnpm exec nmr build && pnpm exec nmr check:strict'
-      setup-command: 'sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep'
-      node-version: '24.14.1'
+      check-command: pnpm exec nmr build && pnpm exec nmr check:strict

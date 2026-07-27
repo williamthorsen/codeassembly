@@ -2,11 +2,15 @@
   "version": 1,
   "kits": [
     {
+      "checklists": [
+        "default"
+      ],
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.21.2",
+      "readyupVersion": "0.22.0",
       "source": "kits/default.ts",
-      "targetHash": "f675b237"
+      "sourceHash": "f237c8c6",
+      "targetHash": "1df841dc"
     }
   ]
 }
