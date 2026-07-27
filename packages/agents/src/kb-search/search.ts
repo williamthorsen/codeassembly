@@ -6,6 +6,7 @@ import type { ParsedNote } from '@codeassembly/kb/frontmatter';
 import { resolveKbDir } from '@codeassembly/kb/layout';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
+import type { RecallFn } from './recall.ts';
 import { recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
 import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from './types.ts';
@@ -24,7 +25,8 @@ import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from '.
  * frontmatter still becomes a hit (a degraded one), so a broken note is not hidden from the projecting command.
  *
  * `home` overrides the directory the user-global `kb.yaml` is read from; it exists so tests can isolate registry
- * resolution from the developer's environment.
+ * resolution from the developer's environment. `recall` overrides how candidate notes are recalled, defaulting to
+ * ripgrep; it exists so a test of scoping, filtering, or projection never spawns a process.
  */
 export async function searchNotes(input: {
   query: string;
@@ -33,6 +35,7 @@ export async function searchNotes(input: {
   filters: RecallFilters;
   startDir: string;
   home?: string;
+  recall?: RecallFn;
 }): Promise<SearchResult> {
   const {
     kbs: inScopeKbs,
@@ -54,7 +57,8 @@ export async function searchNotes(input: {
     };
   }
 
-  const { hits: rawHits, missingKbs } = await recallNotes({ query: input.query, scopedKbs: inScopeKbs });
+  const recall = input.recall ?? recallNotes;
+  const { hits: rawHits, missingKbs } = await recall({ query: input.query, scopedKbs: inScopeKbs });
 
   // Scope ripgrep's raw hits to each KB's configured note set — the same `targets`/`exclude` definition `kb check`
   // enforces — so non-note markdown under the root and excluded paths never reach the candidate table.

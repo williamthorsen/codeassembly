@@ -18,6 +18,12 @@ const execFileAsync = promisify(execFile);
  */
 export type ProcessRunner = (command: string, args: readonly string[]) => Promise<{ stdout: string }>;
 
+/**
+ * Recalls notes for a query across the in-scope KBs. The seam `searchNotes` injects, so a test of scoping, filtering,
+ * or a command's projection never reaches ripgrep.
+ */
+export type RecallFn = (input: { query: string; scopedKbs: ScopedKb[] }) => Promise<RecallResult>;
+
 /** Output cap for one ripgrep invocation, sized well past the match set of a large vault. */
 const RIPGREP_MAX_BUFFER = 32 * 1024 * 1024;
 

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@codeassembly/kb/records';
 
+import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
 import type { RecallFilters } from '../kb-search/types.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
@@ -117,6 +118,7 @@ export async function runRetrieveEvents(input: {
   argv: readonly string[];
   startDir: string;
   home?: string;
+  recall?: RecallFn;
 }): Promise<EventRetrieveResult> {
   const { query, allKbs, storeName, filters, minImpact } = parseArgs(input.argv);
 
@@ -131,6 +133,7 @@ export async function runRetrieveEvents(input: {
     startDir: input.startDir,
     ...(storeName !== null && { storeName }),
     ...(input.home !== undefined && { home: input.home }),
+    ...(input.recall !== undefined && { recall: input.recall }),
   });
 
   if (search.emptyScopeDiagnostic !== undefined) {
