@@ -21,6 +21,7 @@
   "scripts": {
     "agents:install": "tsx packages/agents/src/cli.ts install",
     "agents:install-launchers": "bash packages/agents/scripts/install-launchers.sh",
+    "bootstrap": "nmr build",
     "ci:post": "pnpm --filter agents run test:sh",
     "prepare": "lefthook install"
   },
