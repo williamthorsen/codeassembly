@@ -244,7 +244,7 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(MALFORMED_REGISTRY, 'searchable-note.md')] }),
     });
 
-    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates).toHaveLength(1);
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0]).toMatch(/^registry invalid: /);
     expect(result.diagnostic).toBeUndefined();
@@ -276,7 +276,7 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')], missing: [ghostPath] }),
     });
 
-    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates).toHaveLength(1);
     expect(result.warnings).toEqual([`registry KB "ghost-vault" path does not exist: ${ghostPath}`]);
     expect(result.diagnostic).toBeUndefined();
   });
@@ -290,7 +290,7 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')] }),
     });
 
-    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates).toHaveLength(1);
     expect(result.warnings).toEqual([]);
   });
 
@@ -318,7 +318,7 @@ describe(runRetrieve, () => {
       recall: buildRecallStub({ hits: [join(MALFORMED_SCHEMA_VAULT, 'plain-note.md')] }),
     });
 
-    expect(result.candidates.length).toBeGreaterThan(0);
+    expect(result.candidates).toHaveLength(1);
     expect(result.warnings).toEqual([]);
     // Ranking is unaffected: the assertion note still ranks by freshness (2026-04-20 to 2026-05-01).
     expect(result.candidates[0]?.lastVerifiedAgeDays).toBe(11);
