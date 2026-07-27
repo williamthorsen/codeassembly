@@ -235,7 +235,7 @@ async function runRipgrepProcess(command: string, args: readonly string[]): Prom
   return execFileAsync(command, [...args], { maxBuffer: RIPGREP_MAX_BUFFER });
 }
 
-/** Runs a single ripgrep invocation across one KB and collect its hits, de-duplicated by note path. */
+/** Runs a single ripgrep invocation across one KB and attributes each parsed entry to it. */
 async function searchKb(input: { kb: ScopedKb; terms: string[]; runner: ProcessRunner }): Promise<RawHit[]> {
   const pattern = input.terms.map(escapeRegExp).join('|');
   const stdout = await runRipgrep({ pattern, searchDir: input.kb.path, runner: input.runner });
@@ -249,19 +249,12 @@ async function searchKb(input: { kb: ScopedKb; terms: string[]; runner: ProcessR
     );
   }
 
-  const byPath = new Map<string, RawHit>();
-  for (const match of matches) {
-    if (byPath.has(match.path)) {
-      continue;
-    }
-    byPath.set(match.path, {
-      path: match.path,
-      kbName: input.kb.name,
-      kbPath: input.kb.path,
-      snippet: match.snippet,
-    });
-  }
-  return [...byPath.values()];
+  return matches.map((match) => ({
+    path: match.path,
+    kbName: input.kb.name,
+    kbPath: input.kb.path,
+    snippet: match.snippet,
+  }));
 }
 
 /** Splits a query string into lowercase search terms, dropping empties. */
