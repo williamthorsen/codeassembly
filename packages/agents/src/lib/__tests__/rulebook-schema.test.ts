@@ -38,6 +38,14 @@ describe(parseRulebookFile, () => {
     expect(rulebook.delivery).toEqual(['ambient']);
   });
 
+  it('throws when delivery names a mode the resolver does not act on', () => {
+    expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: skil'))).toThrow(/delivery/);
+  });
+
+  it('throws when a delivery list carries a mode the resolver does not act on', () => {
+    expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: [ambient, skil]'))).toThrow(/delivery/);
+  });
+
   it('coerces a numeric version to a string', () => {
     const { rulebook } = parseRulebookFile(rulebookFile('slug: x\nversion: 3'));
 

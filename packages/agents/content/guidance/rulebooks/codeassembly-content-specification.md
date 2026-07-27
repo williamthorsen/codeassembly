@@ -11,9 +11,13 @@ The declaration contract for CodeAssembly artifacts -- skills, subagents, rulebo
 
 ## Enforcement
 
-Most of what follows is validated at parse time. A malformed `slug` or `skill-name`, a `delivery` value outside the permitted set, an unknown artifact-type key, a non-list value under one, a `members:` block on anything but a collection, a token naming an artifact that does not exist, or a harness that has not declared its sigil each fail the run with an error naming the source file.
+Every rule below belongs to one of three classes, marked where it appears.
 
-The remainder is convention, marked as such where it appears. Nothing checks it.
+**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`skill`, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Two more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
+
+**Enforced by test.** The suites in `packages/agents/src/__tests__/` read the shipped library and assert its conventions hold. A rule one of them guards names its test.
+
+**Convention.** The rest is marked _(Convention; not enforced.)_ Nothing checks it.
 
 ## Declaring dependencies
 
@@ -58,10 +62,12 @@ members:
 
 ## Frontmatter fields
 
-- **Rulebooks:** `slug`, `description`, `delivery` (`ambient`, `skill`, or both), optional `skill-name`, optional `version`.
+- **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `skill`, or both; defaults to `ambient`), optional `skill-name`, optional `version`.
 - **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
 - **Subagents:** `name`, `description`, `tools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context; `sync` pulls them into the deploy closure automatically).
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
+
+Only the rulebook row is validated on parse; a `members:` block is validated wherever it appears. The other rows are read leniently: a field a deploy pass consumes takes effect, and an absent one falls back to a default rather than failing, so a skill with no `description` reaches Rovo's prompt index with an empty one. _(Convention; not enforced.)_
 
 ## Naming
 
@@ -75,4 +81,4 @@ A `codeassembly-` prefix marks an artifact governing this repository's own mecha
 
 Behavioural rules that govern an agent's output -- the recommendation gradient, the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs, then restated at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when it sits beside the action it governs than when it was read once at session start, and it imitates a nearby concrete example more reliably still than it follows a directive.
 
-Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect.
+Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.test.ts`.)_
