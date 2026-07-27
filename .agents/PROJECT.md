@@ -117,7 +117,7 @@ content/
 
 #### Content authoring
 
-When authoring a skill, subagent, rulebook, or collection, consult `packages/agents/content/guidance/rulebooks/authoring-guidance.md` (the `consult-authoring-guidance` skill) for `dependencies:`/`members:`, frontmatter, and naming conventions.
+When authoring a skill, subagent, rulebook, or collection, consult `packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md` (the `consult-codeassembly-content-specification` skill) for `dependencies:`/`members:`, frontmatter, and naming conventions.
 
 The `packages/agents/content/` tree supports **partials** — reusable Markdown fragments inlined at install time. The expander produces byte-identical installed output, so partials are the correct DRY mechanism even when "verbatim execution context" is a requirement. See `packages/agents/content/_partials/README.md` for the canonical reference.
 

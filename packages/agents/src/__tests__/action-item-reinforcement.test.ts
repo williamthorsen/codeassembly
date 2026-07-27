@@ -4,8 +4,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // The duplication this list guards is deliberate: the convention is also stated globally, and a DRY-driven refactor
-// that strips the skill-local copies removes the mechanism by which the global rule takes effect. See the authoring
-// rulebook, § "Skill-local reinforcement".
+// that strips the skill-local copies removes the mechanism by which the global rule takes effect. See the
+// `codeassembly-content-specification` rulebook, § "Skill-local reinforcement".
 //
 // Membership is skills that routinely close a turn awaiting a user response. Skills whose only ask is an exception
 // path (`create-pr`'s unknown-platform fallback, `capture-feedback`'s ambiguity confirm) are absent by design; a

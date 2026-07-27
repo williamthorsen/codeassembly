@@ -1,6 +1,6 @@
 rulebooks:
   use:
-    - authoring-guidance
+    - codeassembly-content-specification
 collections:
   use:
     - recommended
