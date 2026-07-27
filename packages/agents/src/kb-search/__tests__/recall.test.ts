@@ -110,8 +110,6 @@ describe(recallNotes, () => {
   });
 
   it('throws when ripgrep reports matches but none of its output can be parsed', async () => {
-    // An unreadable --json shape must not degrade to "no matches", which would report an empty vault to the reader
-    // while recall is in fact broken.
     const runner = vi.fn<ProcessRunner>().mockResolvedValue({ stdout: '{"type":"match","data":{"unexpected":true}}' });
 
     await expect(recallNotes({ query: 'backpressure', scopedKbs: notesVaultScope, runner })).rejects.toThrow(
@@ -148,8 +146,7 @@ describe(recallNotes, () => {
 
 describe(parseRipgrepOutput, () => {
   it('reads a note path from the structured field rather than from the line text', () => {
-    // Digit runs in a path such as 2026-06-01/2026-05-01-meeting-notes.md are what a line-oriented parser misread as
-    // ripgrep's line-number field. The --json events carry the path in its own field, so the ambiguity cannot arise.
+    // The date-patterned segments carry digit runs that resemble ripgrep's line-number field.
     const stream = buildRipgrepOutput([['/vault/2026-06-01/2026-05-01-meeting-notes.md', 'grumbletwist']]);
 
     expect(parseRipgrepOutput(stream)).toEqual([

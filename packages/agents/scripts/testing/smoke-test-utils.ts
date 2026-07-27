@@ -187,8 +187,7 @@ export function makeKbEditSmokeTest(): SmokeTestInvocation {
  * store name the registry does not carry. Exercises the bundled resolver from home discovery through registry parse to
  * the scope verdict and the JSON result shape, stopping short of recall.
  *
- * Recall itself is deliberately not exercised here: reaching it would put ripgrep on the critical path of every build,
- * and the read → parse → project pipeline beneath it is already covered by the kb-update-events pairing.
+ * Keep the invocation off the recall path: recalling here would put ripgrep on the critical path of every build.
  */
 export function makeKbRetrieveEventsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-store-'));

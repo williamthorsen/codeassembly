@@ -13,15 +13,11 @@ const execFileAsync = promisify(execFile);
 
 /**
  * Runs a process and resolves its captured stdout, rejecting with an error carrying `code` on a non-zero exit or a
- * failed spawn. Recall reaches ripgrep only through this seam, so tests assert the arguments it is called with and
- * drive the exit-code and missing-binary branches without spawning anything.
+ * failed spawn. The only path by which recall reaches ripgrep, so a caller can substitute one and spawn nothing.
  */
 export type ProcessRunner = (command: string, args: readonly string[]) => Promise<{ stdout: string }>;
 
-/**
- * Recalls notes for a query across the in-scope KBs. The seam `searchNotes` injects, so a test of scoping, filtering,
- * or a command's projection never reaches ripgrep.
- */
+/** Recalls notes for a query across the in-scope KBs. The seam `searchNotes` injects, so a caller can substitute one. */
 export type RecallFn = (input: { query: string; scopedKbs: ScopedKb[] }) => Promise<RecallResult>;
 
 /** Output cap for one ripgrep invocation, sized well past the match set of a large vault. */
@@ -247,7 +243,6 @@ async function searchKb(input: { kb: ScopedKb; terms: string[]; runner: ProcessR
 
   // ripgrep exits 1 when nothing matched, which `runRipgrep` maps to an empty string, so output here means it found
   // something. Parsing none of it therefore means the `--json` event shape no longer matches what this module reads.
-  // Reporting that as "no matches" would hide a broken recall behind an ordinary-looking empty result.
   if (stdout.trim() !== '' && matches.length === 0) {
     throw new Error(
       `ripgrep reported matches in ${input.kb.path} but none of its output could be parsed; its --json event format may have changed`,

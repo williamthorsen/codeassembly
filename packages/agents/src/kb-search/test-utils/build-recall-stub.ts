@@ -1,7 +1,3 @@
-// Test-only construction of the recall seam `searchNotes` accepts. A test of scoping, filtering, or a command's
-// projection states which notes recall found instead of matching them for real, so it needs neither ripgrep nor a
-// query that happens to hit the right fixture notes.
-
 import { sep } from 'node:path';
 
 import type { RecallFn, RecallResult } from '../recall.ts';
@@ -9,8 +5,7 @@ import type { RawHit, ScopedKb } from '../types.ts';
 
 /**
  * Builds a recall stub reporting `hits` as the notes found, attributing each to whichever in-scope KB contains it, and
- * reporting the KB roots in `missing` as absent. Every query recalls the same notes: what a test states here is the
- * recall outcome it wants, not a matcher to be re-derived.
+ * reporting the KB roots in `missing` as absent. The query is ignored: every call recalls the same notes.
  *
  * A hit path under no in-scope KB throws, since it can only mean the test named a note the scope never covered.
  */
