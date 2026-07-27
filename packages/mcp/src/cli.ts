@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { createServer } from './server.ts';
 
