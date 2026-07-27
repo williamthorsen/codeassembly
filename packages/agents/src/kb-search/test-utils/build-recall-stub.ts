@@ -16,7 +16,7 @@ import type { RawHit, ScopedKb } from '../types.ts';
  */
 export function buildRecallStub(input: { hits?: readonly string[]; missing?: readonly string[] } = {}): RecallFn {
   const hitPaths = input.hits ?? [];
-  const missingPaths = new Set(input.missing ?? []);
+  const missingPaths = new Set(input.missing);
 
   return function recallStub({ scopedKbs }): Promise<RecallResult> {
     const searched = scopedKbs.filter((kb) => !missingPaths.has(kb.path));

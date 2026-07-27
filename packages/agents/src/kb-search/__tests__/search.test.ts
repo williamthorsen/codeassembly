@@ -34,7 +34,7 @@ describe(searchNotes, () => {
       startDir: NOTES_VAULT,
       home: FIXTURES,
       recall: buildRecallStub({
-        hits: [notePath('new-guide.md'), notePath('mid-guide.md'), notePath(join('sub', 'hooks.md'))],
+        hits: [notePath('new-guide.md'), notePath('mid-guide.md'), notePath('sub/hooks.md')],
       }),
     });
 
