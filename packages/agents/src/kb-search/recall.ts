@@ -11,6 +11,16 @@ import type { RawHit, ScopedKb } from './types.ts';
 
 const execFileAsync = promisify(execFile);
 
+/**
+ * Runs a process and resolves its captured stdout, rejecting with an error carrying `code` on a non-zero exit or a
+ * failed spawn. Recall reaches ripgrep only through this seam, so tests assert the arguments it is called with and
+ * drive the exit-code and missing-binary branches without spawning anything.
+ */
+export type ProcessRunner = (command: string, args: readonly string[]) => Promise<{ stdout: string }>;
+
+/** Output cap for one ripgrep invocation, sized well past the match set of a large vault. */
+const RIPGREP_MAX_BUFFER = 32 * 1024 * 1024;
+
 /** Number of context lines captured on each side of a ripgrep match for the snippet. */
 const SNIPPET_CONTEXT_LINES = 1;
 
@@ -33,14 +43,20 @@ export interface RecallResult {
  * An in-scope KB whose path is absent (`ENOENT` / `ENOTDIR`) is skipped and reported in `missingKbs` so that callers
  * can surface the dead path; a permission error (`EACCES` / `EPERM`) on a path that does exist still throws.
  *
- * ripgrep is required on `PATH`; an absent binary throws with a remediation hint.
+ * ripgrep is required on `PATH`; an absent binary throws with a remediation hint. `runner` overrides how the process is
+ * reached, defaulting to a real `rg` invocation.
  */
-export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] }): Promise<RecallResult> {
+export async function recallNotes(input: {
+  query: string;
+  scopedKbs: ScopedKb[];
+  runner?: ProcessRunner;
+}): Promise<RecallResult> {
   const baseTerms = tokenizeQuery(input.query);
   if (baseTerms.length === 0) {
     return { hits: [], missingKbs: [] };
   }
 
+  const runner = input.runner ?? runRipgrepProcess;
   const hits: RawHit[] = [];
   const missingKbs: ScopedKb[] = [];
   for (const kb of input.scopedKbs) {
@@ -50,7 +66,7 @@ export async function recallNotes(input: { query: string; scopedKbs: ScopedKb[] 
     }
     const aliases = await loadAliasesForKb(kb.path);
     const terms = expandTerms(baseTerms, aliases);
-    const kbHits = await searchKb({ kb, terms });
+    const kbHits = await searchKb({ kb, terms, runner });
     hits.push(...kbHits);
   }
   return { hits, missingKbs };
@@ -185,24 +201,20 @@ export function parseRipgrepOutput(stdout: string): Array<{ path: string; snippe
 }
 
 /** Invokes ripgrep over `*.md` files and return its stdout; an empty match set yields an empty string. */
-async function runRipgrep(input: { pattern: string; searchDir: string }): Promise<string> {
+async function runRipgrep(input: { pattern: string; searchDir: string; runner: ProcessRunner }): Promise<string> {
   try {
-    const { stdout } = await execFileAsync(
-      'rg',
-      [
-        '--ignore-case',
-        '--glob',
-        '*.md',
-        '--glob',
-        `!${KB_DIR}/**`,
-        '--context',
-        String(SNIPPET_CONTEXT_LINES),
-        '--json',
-        input.pattern,
-        input.searchDir,
-      ],
-      { maxBuffer: 32 * 1024 * 1024 },
-    );
+    const { stdout } = await input.runner('rg', [
+      '--ignore-case',
+      '--glob',
+      '*.md',
+      '--glob',
+      `!${KB_DIR}/**`,
+      '--context',
+      String(SNIPPET_CONTEXT_LINES),
+      '--json',
+      input.pattern,
+      input.searchDir,
+    ]);
     return stdout;
   } catch (error) {
     // ripgrep exits 1 when no matches are found — that is an empty result, not a failure.
@@ -216,11 +228,25 @@ async function runRipgrep(input: { pattern: string; searchDir: string }): Promis
   }
 }
 
+/** The default {@link ProcessRunner}: spawns the real binary, capping its output at {@link RIPGREP_MAX_BUFFER}. */
+async function runRipgrepProcess(command: string, args: readonly string[]): Promise<{ stdout: string }> {
+  return execFileAsync(command, [...args], { maxBuffer: RIPGREP_MAX_BUFFER });
+}
+
 /** Runs a single ripgrep invocation across one KB and collect its hits, de-duplicated by note path. */
-async function searchKb(input: { kb: ScopedKb; terms: string[] }): Promise<RawHit[]> {
+async function searchKb(input: { kb: ScopedKb; terms: string[]; runner: ProcessRunner }): Promise<RawHit[]> {
   const pattern = input.terms.map(escapeRegExp).join('|');
-  const stdout = await runRipgrep({ pattern, searchDir: input.kb.path });
+  const stdout = await runRipgrep({ pattern, searchDir: input.kb.path, runner: input.runner });
   const matches = parseRipgrepOutput(stdout);
+
+  // ripgrep exits 1 when nothing matched, which `runRipgrep` maps to an empty string, so output here means it found
+  // something. Parsing none of it therefore means the `--json` event shape no longer matches what this module reads.
+  // Reporting that as "no matches" would hide a broken recall behind an ordinary-looking empty result.
+  if (stdout.trim() !== '' && matches.length === 0) {
+    throw new Error(
+      `ripgrep reported matches in ${input.kb.path} but none of its output could be parsed; its --json event format may have changed`,
+    );
+  }
 
   const byPath = new Map<string, RawHit>();
   for (const match of matches) {
