@@ -35,8 +35,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "nmr compile",
-    "prepare": "nmr compile"
+    "build": "nmr compile"
   },
   "dependencies": {
     "yaml": "2.9.0",

@@ -12,8 +12,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "nmr compile",
-    "prepare": "nmr compile"
+    "build": "nmr compile"
   },
   "dependencies": {
     "@codeassembly/run-core": "workspace:*",
