@@ -30,11 +30,11 @@ importers:
         specifier: 8.1.0
         version: 8.1.0(@types/estree@1.0.8)(@typescript-eslint/parser@8.65.0(eslint@10.7.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@typescript-eslint/utils@8.65.0(eslint@10.7.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.7.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(ts-declaration-location@1.0.7(typescript@6.0.3))(typescript@6.0.3)
       '@williamthorsen/nmr':
-        specifier: 0.19.0
-        version: 0.19.0(typescript@6.0.3)
+        specifier: 0.20.0
+        version: 0.20.0(typescript@6.0.3)
       '@williamthorsen/release-kit':
-        specifier: 8.1.0
-        version: 8.1.0
+        specifier: 9.0.0
+        version: 9.0.0
       '@williamthorsen/strict-lint':
         specifier: 9.0.1
         version: 9.0.1(eslint@10.7.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -78,8 +78,8 @@ importers:
         specifier: 8.65.0
         version: 8.65.0(eslint@10.7.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       v11y-check:
-        specifier: 0.11.1
-        version: 0.11.1
+        specifier: 0.11.2
+        version: 0.11.2
       vite:
         specifier: 8.1.5
         version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.19))(tsx@4.23.1)(yaml@2.9.0)
@@ -136,8 +136,8 @@ importers:
         specifier: 5.2.1
         version: 5.2.1(supports-color@7.2.0)
       marked:
-        specifier: 18.0.6
-        version: 18.0.6
+        specifier: 18.0.7
+        version: 18.0.7
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -152,8 +152,8 @@ importers:
         specifier: 10.4.1
         version: 10.4.1
       '@testing-library/jest-dom':
-        specifier: 6.9.1
-        version: 6.9.1
+        specifier: 7.0.0
+        version: 7.0.0(@testing-library/dom@10.4.1)
       '@testing-library/react':
         specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -216,8 +216,8 @@ importers:
         specifier: 10.4.1
         version: 10.4.1
       '@testing-library/jest-dom':
-        specifier: 6.9.1
-        version: 6.9.1
+        specifier: 7.0.0
+        version: 7.0.0(@testing-library/dom@10.4.1)
       '@testing-library/react':
         specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -916,9 +916,11 @@ packages:
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
     engines: {node: '>=18'}
 
-  '@testing-library/jest-dom@6.9.1':
-    resolution: {integrity: sha512-zIcONa+hVtVSSep9UT3jZ5rizo2BsxgyDYU7WFD5eICBE7no3881HGeb/QkGfsJs6JTkY1aQhT7rIPC7e+0nnA==}
-    engines: {node: '>=14', npm: '>=6', yarn: '>=1'}
+  '@testing-library/jest-dom@7.0.0':
+    resolution: {integrity: sha512-HKAH9C6mBo5yBG6yRO5i43L2iisencAo5z+o5P/saHUoY+miC5ivXRxHBJcFyB5ypPNxHJdK3BoF/3O4DIptMg==}
+    engines: {node: '>=22', npm: '>=6', yarn: '>=1'}
+    peerDependencies:
+      '@testing-library/dom': '>=10 <11'
 
   '@testing-library/react@16.3.2':
     resolution: {integrity: sha512-XU5/SytQM+ykqMnAnvB2umaJNIOsLF3PVv//1Ew4CTcpz0/BRyy/af40qqrt7SjKpDdT1saBMc42CUok5gaw+g==}
@@ -1286,19 +1288,19 @@ packages:
       eslint: '>=10'
       typescript: '>=5'
 
-  '@williamthorsen/nmr-core@0.7.1':
-    resolution: {integrity: sha512-gDX/5kGXWGmZ2ItroqhJWw1yp9nDOhIbpkwMimR1fBAVXpvq+ck+slPOfBfLHwO/Xa1OnW5mFapuZgW70OQc7Q==}
+  '@williamthorsen/nmr-core@0.7.2':
+    resolution: {integrity: sha512-/9rV8J9OaA2eCZkGyMipS9TihsVwL4giRQXnT4/uob1F0bfjtwCwPPoHgJtbMEkLJUKbt7tEaH1uNuqdcEp0wQ==}
     engines: {node: '>=24'}
 
-  '@williamthorsen/nmr@0.19.0':
-    resolution: {integrity: sha512-lgjVAgonhQ559eMPJ6+Oomnhrsc0/fYGMevJioKDfs+7FOWHcpaOPZphwTyMiN1y9QdHBvzXQtvkrvPvJq52cw==}
-    engines: {node: '>=24'}
+  '@williamthorsen/nmr@0.20.0':
+    resolution: {integrity: sha512-VEEcpl18IjF4VH0BZZhI/9cg1ZHdO+GGoZSXfEFbhedL56uUBVFPKzqv3jmW46VrX5bsV/7AFrxWHCe8/hOejg==}
+    engines: {node: '>=24.16.0'}
     hasBin: true
     peerDependencies:
       typescript: '>=5.7.0 <7'
 
-  '@williamthorsen/release-kit@8.1.0':
-    resolution: {integrity: sha512-USwmXw7o/QowJjIRwrv2DTMLA/K9gu5OXaLxX5r1tH0fgdK8BjjDYmSOzoqbfR7B+sNox7LCYdyjS99KM2D3jg==}
+  '@williamthorsen/release-kit@9.0.0':
+    resolution: {integrity: sha512-njUEmbtKFDgs7pUYSl5sKLUw5aVLZxf7AYSL6c8uGnumuOUs/IH0/F5OV/RY4yZM07bN4EkbDsZT6j+oHt/qpw==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -2040,8 +2042,8 @@ packages:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
 
-  express-rate-limit@8.5.2:
-    resolution: {integrity: sha512-5Kb34ipNX694DH48vN9irak1Qx30nb0PLYHXfJgw4YEjiC3ZEmZJhwOp+VfiCYwFzvFTdB9QkArYS5kXa2cx2A==}
+  express-rate-limit@8.6.1:
+    resolution: {integrity: sha512-0D493aP61w0TJ2A0wy27riRsO7FMQ7FK+KUHOKCSfPvYo0R55aiC6emCVgFUeShH0fq0ICPVzNcgoS+BsbXQCA==}
     engines: {node: '>= 16'}
     peerDependencies:
       express: '>= 4.11'
@@ -2281,8 +2283,8 @@ packages:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
     engines: {node: '>= 0.4'}
 
-  ip-address@10.2.0:
-    resolution: {integrity: sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA==}
+  ip-address@10.3.1:
+    resolution: {integrity: sha512-1e9d3kb97NHJTIJDZW9rKqW2h6+dFa50Dy0fpPSMQp2ADje5gvKsXmdiK6dwY5t76TaTt5+P5N1Y/LoToIxP6g==}
     engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
@@ -2436,8 +2438,8 @@ packages:
   jju@1.4.0:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
 
-  jose@6.2.3:
-    resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
+  jose@6.2.4:
+    resolution: {integrity: sha512-N8acGzVsQy6M/fjFcxtysNc4Q379TcM5dM/qKkNtsHFji88yANnXTr7BLeP75iPnFwBfQzM/jg2BZ9+HZrHCZA==}
 
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
@@ -2688,8 +2690,8 @@ packages:
   map-stream@0.0.7:
     resolution: {integrity: sha512-C0X0KQmGm3N2ftbTGBhSyuydQ+vV1LC3f3zPvT3RXHXNZrvfPZcoXp/N5DOa8vedX/rTMm2CjTtivFg2STJMRQ==}
 
-  marked@18.0.6:
-    resolution: {integrity: sha512-MrV5puXBfuiy6wl6DLaq3BtIJQAJToAd5zt/ZKhRfGRAuFPALE7/4Y7jnxRQoEgK/pBgurGqLyAuRgZ2xOjr6w==}
+  marked@18.0.7:
+    resolution: {integrity: sha512-iDVQ5ldaiKXn6b2JroX5kgRfmwgqolW7NpaEzTl1k/2Zh1njIEN9yniyLV/mOvWwtsE8OGgkjsCYvijuPk1dtA==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -3523,8 +3525,8 @@ packages:
     resolution: {integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==}
     hasBin: true
 
-  v11y-check@0.11.1:
-    resolution: {integrity: sha512-Z5OyKE29lEGFXP76vOAyF8o5fbjYrYqJ4cchfvRrmBI30tndgDedCEBu+E6CcJw8vR3ipqs/r6VpTdJ4NxrK9w==}
+  v11y-check@0.11.2:
+    resolution: {integrity: sha512-VsZjeURJwTYpmSTYlZ78ndXMYOA6b1TVqfnk0FOpB/INhnmW3LtumLbM/HC4eQLTJlXvGb1BjclAdGjyZELFLA==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -4197,9 +4199,9 @@ snapshots:
       eventsource: 3.0.7
       eventsource-parser: 3.1.0
       express: 5.2.1(supports-color@7.2.0)
-      express-rate-limit: 8.5.2(express@5.2.1(supports-color@7.2.0))
+      express-rate-limit: 8.6.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0)
       hono: 4.12.31
-      jose: 6.2.3
+      jose: 6.2.4
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
@@ -4291,9 +4293,10 @@ snapshots:
       picocolors: 1.1.1
       pretty-format: 27.5.1
 
-  '@testing-library/jest-dom@6.9.1':
+  '@testing-library/jest-dom@7.0.0(@testing-library/dom@10.4.1)':
     dependencies:
       '@adobe/css-tools': 4.4.4
+      '@testing-library/dom': 10.4.1
       aria-query: 5.3.0
       css.escape: 1.5.1
       dom-accessibility-api: 0.6.3
@@ -4737,21 +4740,20 @@ snapshots:
       - supports-color
       - ts-declaration-location
 
-  '@williamthorsen/nmr-core@0.7.1': {}
+  '@williamthorsen/nmr-core@0.7.2': {}
 
-  '@williamthorsen/nmr@0.19.0(typescript@6.0.3)':
+  '@williamthorsen/nmr@0.20.0(typescript@6.0.3)':
     dependencies:
-      '@williamthorsen/nmr-core': 0.7.1
+      '@williamthorsen/nmr-core': 0.7.2
       glob: 13.0.6
       jiti: 2.7.0
       taze: 19.15.1
       typescript: 6.0.3
       yaml: 2.9.0
-      zod: 4.4.3
 
-  '@williamthorsen/release-kit@8.1.0':
+  '@williamthorsen/release-kit@9.0.0':
     dependencies:
-      '@williamthorsen/nmr-core': 0.7.1
+      '@williamthorsen/nmr-core': 0.7.2
       glob: 13.0.6
       jiti: 2.7.0
       json-stringify-pretty-compact: 4.0.0
@@ -5729,10 +5731,13 @@ snapshots:
 
   expect-type@1.3.0: {}
 
-  express-rate-limit@8.5.2(express@5.2.1(supports-color@7.2.0)):
+  express-rate-limit@8.6.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
+      debug: 4.4.3(supports-color@7.2.0)
       express: 5.2.1(supports-color@7.2.0)
-      ip-address: 10.2.0
+      ip-address: 10.3.1
+    transitivePeerDependencies:
+      - supports-color
 
   express@5.2.1(supports-color@7.2.0):
     dependencies:
@@ -5979,7 +5984,7 @@ snapshots:
       hasown: 2.0.2
       side-channel: 1.1.0
 
-  ip-address@10.2.0: {}
+  ip-address@10.3.1: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -6135,7 +6140,7 @@ snapshots:
 
   jju@1.4.0: {}
 
-  jose@6.2.3: {}
+  jose@6.2.4: {}
 
   js-tokens@10.0.0: {}
 
@@ -6354,7 +6359,7 @@ snapshots:
 
   map-stream@0.0.7: {}
 
-  marked@18.0.6: {}
+  marked@18.0.7: {}
 
   math-intrinsics@1.1.0: {}
 
@@ -7268,9 +7273,9 @@ snapshots:
 
   uuid@14.0.0: {}
 
-  v11y-check@0.11.1:
+  v11y-check@0.11.2:
     dependencies:
-      '@williamthorsen/nmr-core': 0.7.1
+      '@williamthorsen/nmr-core': 0.7.2
       audit-ci: 7.1.0
       zod: 4.4.3
 
