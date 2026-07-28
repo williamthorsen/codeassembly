@@ -2,7 +2,7 @@
 // an always-on rescan interval as the correctness backstop. Watching is best-effort — recursive support varies by
 // platform, and a watch can fail mid-run — so degradation to rescan-only is announced, never silent, and never fatal.
 
-import { type FSWatcher, watch } from 'node:fs';
+import { type FSWatcher, statSync, watch } from 'node:fs';
 
 /** A running watcher; `stop` releases the watch handle and every timer. */
 export interface Watcher {
@@ -35,6 +35,9 @@ export function startWatcher(input: {
   }
 
   try {
+    // `fs.watch` reports a missing target inconsistently across platforms, returning an inert watcher on Linux, so its
+    // not throwing is no evidence that the watch is live.
+    statSync(input.dir);
     watcher = watch(input.dir, { recursive: true }, handleWatchEvent);
     watcher.on('error', (error) => {
       // A mid-run watch error — the tree removed, an OS watch limit — must not crash the server; the rescan
@@ -45,7 +48,7 @@ export function startWatcher(input: {
     });
     input.log(`recursive watch active on ${input.dir}; rescan backstop every ${input.rescanMs}ms`);
   } catch (error) {
-    input.log(`fs.watch unavailable (${readMessage(error)}); rescan-only every ${input.rescanMs}ms`);
+    input.log(`cannot watch ${input.dir} (${readMessage(error)}); rescan-only every ${input.rescanMs}ms`);
   }
 
   const rescanTimer = setInterval(() => input.onDirty(), input.rescanMs);
