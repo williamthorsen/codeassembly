@@ -11,7 +11,7 @@ const entryPoint = new URL('../dist/esm/cli/index.js', import.meta.url);
 // module in the graph, so keying the build-first message off the error code would also
 // fire when the build is present and one of its imports is missing.
 if (!existsSync(entryPoint)) {
-  process.stderr.write('kb: build output not found — run `pnpm run build` first\n');
+  process.stderr.write('kb: build output not found — run `pnpm run bootstrap` first\n');
   process.exit(1);
 }
 

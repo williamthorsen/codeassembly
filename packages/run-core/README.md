@@ -29,8 +29,6 @@ codeassembly-runs --path <dir>       # override the base projects directory
 
 ### Bin wrapper pattern
 
-The `bin` field in `package.json` points to `bin/codeassembly-runs.js`, a committed wrapper script that dynamically imports the build output at runtime. Do not point `bin` entries directly into `dist/` — pnpm creates bin symlinks during install, before lifecycle scripts like `prepare` run, so the target won't exist in a fresh worktree and `pnpm install` will emit confusing "Failed to create bin" warnings.
-
-If invoked before building, the wrapper finds the entry file absent and tells the user to run `pnpm run build`. It checks for the file directly rather than keying off `ERR_MODULE_NOT_FOUND`, which Node raises for any unresolved module in the graph — including a missing dependency of a build output that is present, where advising a rebuild would be wrong. Any other load failure is reported verbatim.
+The `bin` field in `package.json` points to `bin/codeassembly-runs.js`, a committed wrapper script that dynamically imports the build output at runtime. Do not point `bin` entries directly into `dist/` — pnpm creates bin symlinks during install, and nothing compiles until `pnpm run bootstrap` runs afterward, so the target won't exist in a fresh worktree and `pnpm install` will emit confusing "Failed to create bin" warnings.
 
 Any new `bin` entry in this monorepo should follow the same pattern. See `bin/codeassembly-runs.js` for the template, and the `@williamthorsen/node-monorepo-tools` packages for the original rationale.

@@ -76,8 +76,7 @@
     "!dist/esm/test-utils"
   ],
   "scripts": {
-    "build": "nmr compile",
-    "prepare": "nmr compile"
+    "build": "nmr compile"
   },
   "dependencies": {
     "picomatch": "4.0.5",
