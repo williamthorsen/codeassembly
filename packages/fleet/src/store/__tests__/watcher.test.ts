@@ -80,11 +80,36 @@ describe('startWatcher', () => {
   });
 
   it('fires onDirty on every rescan tick', async () => {
-    const { onDirty } = startTestWatcher();
+    const { onDirty } = startTestWatcher({ startWatch: createFakeWatch().startWatch });
 
     await vi.waitFor(() => {
       expect(onDirty.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
+  });
+
+  it('collapses a burst of watch events into one onDirty', async () => {
+    const fake = createFakeWatch();
+    // The rescan interval fires the same callback, so it is pushed past this test's lifetime to leave the count
+    // attributable to the burst alone.
+    const { onDirty } = startTestWatcher({ rescanMs: 60_000, startWatch: fake.startWatch });
+
+    fake.fireEvent();
+    fake.fireEvent();
+    fake.fireEvent();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(onDirty).toHaveBeenCalledOnce();
+  });
+
+  it('when the watch emits an error, announces the downgrade and closes the handle', () => {
+    const fake = createFakeWatch();
+    const { log } = startTestWatcher({ startWatch: fake.startWatch });
+    log.mockClear();
+
+    fake.emitError(new Error('EMFILE: too many open files'));
+
+    expect(log).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('downgrading to rescan-only'));
+    expect(fake.isClosed()).toBe(true);
   });
 
   it('when the directory does not exist, announces rescan-only mode and still rescans', async () => {
@@ -117,7 +142,7 @@ describe('startWatcher', () => {
   });
 
   it('stops firing after stop()', async () => {
-    const { onDirty } = startTestWatcher();
+    const { onDirty } = startTestWatcher({ startWatch: createFakeWatch().startWatch });
     await vi.waitFor(() => {
       expect(onDirty).toHaveBeenCalled();
     });
