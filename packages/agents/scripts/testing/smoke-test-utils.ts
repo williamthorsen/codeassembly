@@ -183,34 +183,15 @@ export function makeKbEditSmokeTest(): SmokeTestInvocation {
 }
 
 /**
- * Stands up an event store carrying a single seed event plus an isolated home registering it as `default_kb`, then
- * returns a `SmokeTestInvocation` that recalls the event by a body term scoped to that store. Exercises the full scope →
- * ripgrep recall → note-set scoping → event projection pipeline, the only path that wires the bundled search primitive
- * and the event projection together. `ripgrep` (`rg`) must be on PATH for recall to find the seed event.
+ * Stands up an event store plus an isolated home registering it, then returns a `SmokeTestInvocation` that scopes to a
+ * store name the registry does not carry. Exercises the bundled resolver from home discovery through registry parse to
+ * the scope verdict and the JSON result shape, stopping short of recall.
+ *
+ * Keep the invocation off the recall path: recalling here would put ripgrep on the critical path of every build.
  */
 export function makeKbRetrieveEventsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-store-'));
   mkdirSync(resolveKbDir(storePath), { recursive: true });
-
-  mkdirSync(resolveEventsDir(storePath), { recursive: true });
-  writeFileSync(
-    resolveEventPath({ storePath, id: 'smoke-event' }),
-    [
-      '---',
-      'recordType: event',
-      'id: smoke-event',
-      'captured-at: 2026-06-18T09:41:02Z',
-      'session: smoke',
-      'cwd: /tmp/smoke',
-      'summary: Smoke retrieve event',
-      'repo: owner/repo-smoke',
-      '---',
-      '',
-      'A smoke note mentioning retrievesmokequux.',
-      '',
-    ].join('\n'),
-    'utf8',
-  );
 
   const home = mkdtempSync(path.join(tmpdir(), 'kb-retrieve-events-home-'));
   mkdirSync(path.join(home, '.agents'), { recursive: true });
@@ -221,7 +202,7 @@ export function makeKbRetrieveEventsSmokeTest(): SmokeTestInvocation {
   );
 
   return {
-    args: ['retrievesmokequux', '--store', 'codeassembly'],
+    args: ['retrievesmokequux', '--store', 'no-such-store'],
     env: { ...process.env, HOME: home },
     assertResult: assertKbRetrieveEventsSmokeResult,
   };
@@ -466,23 +447,19 @@ function assertKbEditSmokeResult(result: unknown): void {
   }
 }
 
-/** Assert the kb-retrieve-events smoke recalled the seed event and projected it with its summary and capture timestamp. */
+/** Assert the kb-retrieve-events smoke resolved the registry and reported the requested store as unregistered. */
 function assertKbRetrieveEventsSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-retrieve-events');
   }
-  if (!Array.isArray(result.candidates) || result.candidates.length === 0) {
-    throw new Error(`expected at least one event candidate, got ${JSON.stringify(result)}`);
+  if (!Array.isArray(result.candidates) || result.candidates.length > 0) {
+    throw new Error(`expected an empty candidate table, got ${JSON.stringify(result)}`);
   }
-  const candidate: unknown = result.candidates[0];
-  if (!isRecord(candidate)) {
-    throw new TypeError('expected a candidate object');
+  if (!Array.isArray(result.scopedKbs) || result.scopedKbs.length > 0) {
+    throw new Error(`expected an empty scope, got ${JSON.stringify(result.scopedKbs)}`);
   }
-  if (candidate.summary !== 'Smoke retrieve event') {
-    throw new Error(`expected summary 'Smoke retrieve event', got ${JSON.stringify(candidate.summary)}`);
-  }
-  if (typeof candidate.capturedAt !== 'string' || !candidate.capturedAt.includes('2026-06-18')) {
-    throw new Error(`expected an ISO capturedAt, got ${JSON.stringify(candidate.capturedAt)}`);
+  if (typeof result.diagnostic !== 'string' || !result.diagnostic.includes('is not registered in kb.yaml')) {
+    throw new Error(`expected an unregistered-store diagnostic, got ${JSON.stringify(result.diagnostic)}`);
   }
 }
 

@@ -2,6 +2,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { buildRecallStub } from '../../kb-search/test-utils/build-recall-stub.ts';
 import { parseArgs, runRetrieveEvents } from '../cli.ts';
 
 // The vault and registry fixtures live with the shared search primitive (kb-search), which owns scope and recall.
@@ -58,7 +59,12 @@ describe(parseArgs, () => {
 
 describe(runRetrieveEvents, () => {
   it('returns an event candidate carrying its recurrence signals', async () => {
-    const result = await runRetrieveEvents({ argv: ['phantomwidget'], startDir: NOTES_VAULT, home: FIXTURES });
+    const result = await runRetrieveEvents({
+      argv: ['phantomwidget'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: [eventNote('01HZCEVENTAAAAAAAAAAAAAAAA.md')] }),
+    });
 
     expect(result.candidates).toHaveLength(1);
     expect(result.candidates[0]).toMatchObject({
@@ -70,15 +76,25 @@ describe(runRetrieveEvents, () => {
   });
 
   it('excludes assertion records, pointing the reader at assertion recall', async () => {
-    const result = await runRetrieveEvents({ argv: ['backpressure'], startDir: NOTES_VAULT, home: FIXTURES });
+    const result = await runRetrieveEvents({
+      argv: ['backpressure'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: [join(NOTES_VAULT, 'streams.md')] }),
+    });
 
-    // backpressure matches only an assertion, so the event table is empty and the diagnostic routes to assertion recall.
+    // The only recalled note is an assertion, so the event table is empty and the diagnostic routes to assertion recall.
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toMatch(/kb-retrieve/);
   });
 
   it('reports a no-match diagnostic when nothing matches', async () => {
-    const result = await runRetrieveEvents({ argv: ['zzzznomatch'], startDir: NOTES_VAULT, home: FIXTURES });
+    const result = await runRetrieveEvents({
+      argv: ['zzzznomatch'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub(),
+    });
 
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('no notes matched the query');
@@ -89,6 +105,7 @@ describe(runRetrieveEvents, () => {
       argv: ['phantomwidget', '--store', 'no-such-store'],
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub(),
     });
 
     expect(result.candidates).toEqual([]);
@@ -97,14 +114,24 @@ describe(runRetrieveEvents, () => {
   });
 
   it('reports a diagnostic when the query is blank', async () => {
-    const result = await runRetrieveEvents({ argv: [], startDir: NOTES_VAULT, home: FIXTURES });
+    const result = await runRetrieveEvents({
+      argv: [],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub(),
+    });
 
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('no query provided');
   });
 
   it('surfaces a declared impact on a candidate and omits it on an unrated one', async () => {
-    const result = await runRetrieveEvents({ argv: ['snorkleweft'], startDir: NOTES_VAULT, home: FIXTURES });
+    const result = await runRetrieveEvents({
+      argv: ['snorkleweft'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: snorkleweftEvents() }),
+    });
 
     const byImpact = new Map(result.candidates.map((candidate) => [candidate.summary, candidate.impact]));
     expect(byImpact.get('A snorkleweft outage rated high')).toBe('high');
@@ -116,6 +143,7 @@ describe(runRetrieveEvents, () => {
       argv: ['snorkleweft', '--min-impact', 'high'],
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: snorkleweftEvents() }),
     });
 
     expect(result.candidates).toHaveLength(1);
@@ -127,9 +155,24 @@ describe(runRetrieveEvents, () => {
       argv: ['snorkleweft', '--min-impact', 'critical'],
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: snorkleweftEvents() }),
     });
 
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('all matches were below the --min-impact threshold of critical');
   });
 });
+
+/** Resolves an event record's filename to its absolute path in the shared fixture vault. */
+function eventNote(name: string): string {
+  return join(NOTES_VAULT, 'content', 'events', name);
+}
+
+/** The fixture events mentioning `snorkleweft`: one rated high, one rated lower, one left unrated. */
+function snorkleweftEvents(): string[] {
+  return [
+    eventNote('01HZCEVENTHGHAAAAAAAAAAAAA.md'),
+    eventNote('01HZCEVENTMNRAAAAAAAAAAAAA.md'),
+    eventNote('01HZCEVENTNRTAAAAAAAAAAAAA.md'),
+  ];
+}

@@ -2,7 +2,9 @@ import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
+import type { RecallFn } from '../recall.ts';
 import { searchNotes } from '../search.ts';
+import { buildRecallStub } from '../test-utils/build-recall-stub.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
@@ -15,6 +17,7 @@ describe(searchNotes, () => {
       filters: {},
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [notePath('streams.md')] }),
     });
 
     const streams = result.hits.find((hit) => hit.hit.path.endsWith('streams.md'));
@@ -30,11 +33,14 @@ describe(searchNotes, () => {
       filters: { diataxis: 'howto' },
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub({
+        hits: [notePath('new-guide.md'), notePath('mid-guide.md'), notePath('sub/hooks.md')],
+      }),
     });
 
-    expect(result.hits.length).toBeGreaterThan(0);
     expect(result.hits.every((hit) => hit.note.frontmatter?.extra.diataxis === 'howto')).toBe(true);
-    expect(result.recalledCount).toBeGreaterThanOrEqual(result.hits.length);
+    expect(result.hits).toHaveLength(2);
+    expect(result.recalledCount).toBe(3);
   });
 
   it('returns no hits but a positive recalledCount when a filter excludes every match', async () => {
@@ -44,13 +50,16 @@ describe(searchNotes, () => {
       filters: { folder: 'zzz-nonexistent' },
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [notePath('streams.md')] }),
     });
 
     expect(result.hits).toEqual([]);
-    expect(result.recalledCount).toBeGreaterThan(0);
+    expect(result.recalledCount).toBe(1);
   });
 
-  it('sets an empty-scope diagnostic and searches nothing for an unregistered store', async () => {
+  it('sets an empty-scope diagnostic and recalls nothing for an unregistered store', async () => {
+    const recall = vi.fn<RecallFn>(buildRecallStub({ hits: [notePath('streams.md')] }));
+
     const result = await searchNotes({
       query: 'anything',
       allKbs: false,
@@ -58,11 +67,13 @@ describe(searchNotes, () => {
       filters: {},
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall,
     });
 
     expect(result.hits).toEqual([]);
     expect(result.scopedKbs).toEqual([]);
     expect(result.emptyScopeDiagnostic).toMatch(/not registered/);
+    expect(recall).not.toHaveBeenCalled();
   });
 
   it('skips an unreadable note and surfaces a warning rather than dropping it silently', async () => {
@@ -85,6 +96,7 @@ describe(searchNotes, () => {
       filters: {},
       startDir: NOTES_VAULT,
       home: FIXTURES,
+      recall: buildRecallStub({ hits: [notePath('streams.md'), notePath('new-guide.md')] }),
     });
 
     expect(result.hits.some((hit) => hit.hit.path.endsWith('streams.md'))).toBe(false);
@@ -96,3 +108,8 @@ describe(searchNotes, () => {
     vi.resetModules();
   });
 });
+
+/** Resolves a note's vault-relative name to its absolute path in the shared fixture vault. */
+function notePath(name: string): string {
+  return join(NOTES_VAULT, name);
+}

@@ -4,6 +4,7 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
 import type { RecallFilters } from '../kb-search/types.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
@@ -124,6 +125,7 @@ export async function runRetrieve(input: {
   startDir: string;
   now: Date;
   home?: string;
+  recall?: RecallFn;
 }): Promise<RetrieveResult> {
   const { query, allKbs, storeName, filters } = parseArgs(input.argv);
 
@@ -138,6 +140,7 @@ export async function runRetrieve(input: {
     startDir: input.startDir,
     ...(storeName !== null && { storeName }),
     ...(input.home !== undefined && { home: input.home }),
+    ...(input.recall !== undefined && { recall: input.recall }),
   });
 
   if (search.emptyScopeDiagnostic !== undefined) {
