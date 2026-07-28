@@ -37,7 +37,7 @@ describe('startWatcher', () => {
     fake.fireEvent();
     fake.fireEvent();
     fake.fireEvent();
-    await new Promise((resolve) => setTimeout(resolve, 30));
+    await vi.waitFor(() => expect(onDirty).toHaveBeenCalled());
 
     expect(onDirty).toHaveBeenCalledOnce();
   });
