@@ -10,6 +10,6 @@ See [`.agents/PROJECT.md`](.agents/PROJECT.md) for project structure, commands, 
 
 ```bash
 pnpm install
-pnpm run bootstrap  # Build every package; required before running the MCP server or CLI bins
-nmr check           # Run all checks (typecheck, format, lint, test)
+pnpm run bootstrap   # Build every package; required before running the MCP server or CLI bins
+pnpm exec nmr check  # Run all checks (typecheck, format, lint, test)
 ```
