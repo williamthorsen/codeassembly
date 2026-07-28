@@ -7,6 +7,12 @@ import { parseFrontmatter } from './frontmatter-merger.ts';
 const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
+ * The delivery modes the resolver acts on: an inlined ambient block, a `consult-<slug>` skill, or both. A value
+ * outside the pair would satisfy neither membership test, delivering the rulebook nowhere, so the set is closed.
+ */
+const DeliveryModeSchema = z.enum(['ambient', 'skill']);
+
+/**
  * Frontmatter schema for a rulebook source file. The operational fields drive the resolver; unknown keys
  * (e.g. future classification metadata) are accepted but dropped, not preserved on the parsed object.
  * `delivery` is normalized to an array, and `version` is treated as an opaque string, never parsed as semver.
@@ -21,7 +27,11 @@ export const RulebookFrontmatterSchema = z.object({
     .regex(KEBAB_CASE, 'skill-name must be lowercase kebab-case (e.g. shell-conventions-rulebook)')
     .optional(),
   delivery: z
-    .union([z.string(), z.array(z.string())])
+    // The message rides the union, not `DeliveryModeSchema`: a union reports its own failure and discards the
+    // messages of the members it tried.
+    .union([DeliveryModeSchema, z.array(DeliveryModeSchema)], {
+      error: "delivery must be 'ambient', 'skill', or a list of the two",
+    })
     .default('ambient')
     .transform((value) => (typeof value === 'string' ? [value] : value)),
   version: z

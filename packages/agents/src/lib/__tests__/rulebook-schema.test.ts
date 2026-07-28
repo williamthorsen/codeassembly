@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { parseRulebookFile } from '../rulebook-schema.ts';
 
+/** The rejection an unrecognized delivery mode must carry: naming the permitted set, not a bare "Invalid input". */
+const DELIVERY_MESSAGE = "delivery must be 'ambient', 'skill', or a list of the two";
+
 /** Wraps frontmatter and a body into a rulebook source file. */
 function rulebookFile(frontmatter: string, body = '# Shell conventions\n\nUse strict mode.'): string {
   return `---\n${frontmatter}\n---\n\n${body}\n`;
@@ -36,6 +39,14 @@ describe(parseRulebookFile, () => {
     const { rulebook } = parseRulebookFile(rulebookFile('slug: x'));
 
     expect(rulebook.delivery).toEqual(['ambient']);
+  });
+
+  it('throws when delivery names a mode the resolver does not act on', () => {
+    expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: skil'))).toThrow(DELIVERY_MESSAGE);
+  });
+
+  it('throws when a delivery list carries a mode the resolver does not act on', () => {
+    expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: [ambient, skil]'))).toThrow(DELIVERY_MESSAGE);
   });
 
   it('coerces a numeric version to a string', () => {
