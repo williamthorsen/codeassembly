@@ -1,7 +1,9 @@
+import { execFile } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 
 import { unindent } from '@williamthorsen/toolbelt.strings/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,6 +12,8 @@ import { hasAmbientRegion } from '../../lib/ambient-region.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
+
+const execFileAsync = promisify(execFile);
 
 /** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
 const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
@@ -295,6 +299,69 @@ describe(syncCommand, () => {
     expect(output).toContain('retire the neutral rulebook tree');
     expect(await readFile(projectMdPath(), 'utf8')).toBe(projectMd);
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
+  });
+
+  it('warns once when the local host it writes is not git-ignored', async () => {
+    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
+    await writeFile(path.join(projectRoot, '.gitignore'), 'node_modules/\n', 'utf8');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    let warnings: ReadonlyArray<string>;
+    try {
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      warnings = warnSpy.mock.calls.map((call) => String(call[0]));
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    const notIgnored = warnings.filter((line) => line.includes('is not git-ignored'));
+    expect(notIgnored).toHaveLength(1);
+    expect(notIgnored[0]).toContain(localHostPath());
+    expect(notIgnored[0]).toContain('.gitignore');
+  });
+
+  it('stays silent when the local host is git-ignored', async () => {
+    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
+    await writeFile(path.join(projectRoot, '.gitignore'), '*.local.*\n', 'utf8');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('stays silent when the project is not a repository and the check cannot answer', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('does not check the ignore status of a host it is not writing', async () => {
+    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).not.toContain('is not git-ignored');
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('throws when a declared rulebook has no library file', async () => {

@@ -22,6 +22,7 @@ import {
 } from '../lib/content-sources.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
+import { checkGitIgnored } from '../lib/git-ignore.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
@@ -736,6 +737,9 @@ async function deliverAmbient(
       }
       continue;
     }
+    if (domain.ambient === 'project-local') {
+      await warnWhenHostNotIgnored(domain.baseDir, hostPath);
+    }
     await writeIfChanged(hostPath, plan.content);
   }
 }
@@ -821,6 +825,20 @@ async function previewAmbientHosts(
       ),
     ),
   );
+}
+
+/**
+ * Warns when a host `sync` is about to write is not git-ignored, so machine-local guidance does not quietly become a
+ * commit candidate. Purely advisory: an ignored host says nothing, and so does a check that cannot answer — the
+ * project may not be a repository at all, which is no reason to fail a sync.
+ */
+async function warnWhenHostNotIgnored(projectRoot: string, hostPath: string): Promise<void> {
+  if ((await checkGitIgnored(projectRoot, hostPath)) === false) {
+    console.warn(
+      `⚠️ ${hostPath} is not git-ignored. It carries machine-local guidance, so add it to .gitignore to keep it ` +
+        'out of version control.',
+    );
+  }
 }
 
 /** Probes an ambient host for its content and region state. */
