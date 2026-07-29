@@ -1,10 +1,10 @@
 import { constants, type Dirent, existsSync } from 'node:fs';
-import { access, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, rm, rmdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
+import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
@@ -16,8 +16,9 @@ import {
   type SourceResolver,
 } from '../lib/content-sources.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
-import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
-import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
+import { checkGitIgnored } from '../lib/git-ignore.ts';
+import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
@@ -34,7 +35,7 @@ import {
 } from '../lib/subagent-deploy.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
-import type { HarnessId, InstallOptions } from '../lib/types.ts';
+import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
 
 const skillMarker = makeArtifactMarker('skill');
 const subagentMarker = makeArtifactMarker('subagent');
@@ -80,10 +81,11 @@ interface HarnessSkillTarget {
 export interface SyncDomain {
   readonly baseDir: string;
   /**
-   * Ambient delivery target: the repo domain inlines blocks into a single sync-managed host file, while the home
-   * domain injects them into the ambient region of each targeted harness's mechanically-loaded guidance file.
+   * Which guidance file hosts this domain's ambient region. Both domains inject into a per-harness region; they
+   * differ only in the host and in who creates it — `install` renders the harness-home region, while `sync` owns
+   * the project-local one because `install` does not manage user-local files.
    */
-  readonly ambient: { readonly kind: 'host-file'; readonly path: string } | { readonly kind: 'harness-regions' };
+  readonly ambient: AmbientHostKind;
   readonly label: 'project' | 'global';
 }
 
@@ -108,11 +110,7 @@ export async function syncCommand(
   }
   await reconcileDomain(
     options,
-    {
-      baseDir: projectRoot,
-      ambient: { kind: 'host-file', path: path.join(projectRoot, '.agents', 'PROJECT.md') },
-      label: 'project',
-    },
+    { baseDir: projectRoot, ambient: 'project-local', label: 'project' },
     contentDirOverride,
   );
 }
@@ -139,12 +137,8 @@ export async function syncGlobalCommand(
     );
     return;
   }
-  await reconcileDomain(
-    options,
-    { baseDir: homeDir, ambient: { kind: 'harness-regions' }, label: 'global' },
-    contentDirOverride,
-  );
-  await retireLegacyGlobalMd(options, homeDir);
+  await reconcileDomain(options, { baseDir: homeDir, ambient: 'harness-home', label: 'global' }, contentDirOverride);
+  await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
 }
 
 /**
@@ -187,9 +181,6 @@ async function reconcileDomain(
   );
   const declaredRulebooks = closure.rulebooks;
 
-  const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
-  const ambientHostPath = domain.ambient.kind === 'host-file' ? domain.ambient.path : undefined;
-
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
   const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, resolver)));
@@ -197,11 +188,6 @@ async function reconcileDomain(
   const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, resolver)));
   const resolvedSubagents = await Promise.all(closure.subagents.map((slug) => resolveDeclaredSubagent(slug, resolver)));
 
-  // Reconcile two surfaces against the filesystem independently. Neutral files track the declared set;
-  // PROJECT.md tracks the desired *ambient* set. Keying PROJECT.md on declaration alone would strand a block
-  // whose rulebook is still declared but whose delivery no longer includes `ambient`.
-  const declaredSet = new Set(declaredRulebooks);
-  const desiredAmbient = new Set(resolved.filter((rulebook) => rulebook.ambient).map((rulebook) => rulebook.slug));
   // Maps each skill-delivery rulebook's stable slug to the directory its skill currently belongs in. Retraction
   // compares this against what each owned directory's marker reports, so a renamed skill retracts its old dir.
   const desiredSkillDirs = new Map(
@@ -235,12 +221,6 @@ async function reconcileDomain(
     ),
   );
 
-  // Inline orphans exist only in host-file mode: a harness region is regenerated wholesale, so nothing lingers there.
-  const { content: existingAmbientHost, orphans: inlineOrphans } = await readAmbientHostState(
-    ambientHostPath,
-    desiredAmbient,
-  );
-  const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
@@ -292,18 +272,20 @@ async function reconcileDomain(
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
 
+  // Reject a sync-owned ambient host whose region is half-written before anything is written, dry-run included.
+  // Appending beside a stray marker is the one path in this command that can destroy hand-authored content.
+  await assertAmbientHostsWritable(options, domain, resolved);
+
   // Attribute each deployed artifact to the source it resolved from, flagging any that shadows a same-slug library
   // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
   if (options.dryRun) {
-    const ambientTarget = await describeAmbientTarget(options, domain);
+    await retireRetiredOutputs(options, domain);
     reportDryRun({
-      ambientHostName: ambientTarget.hostName,
-      ambientRegionPreviews: ambientTarget.regionPreviews,
+      ambientHostPreviews: await previewAmbientHosts(options, domain, resolved),
       resolutionReport,
       resolved,
-      retracted: [...new Set([...neutralOrphans, ...inlineOrphans])],
       harnessSkillTargets,
       skillOrphansByDir,
       resolvedSkills,
@@ -316,20 +298,9 @@ async function reconcileDomain(
     return;
   }
 
-  if (resolved.length > 0) {
-    await mkdir(neutralDir, { recursive: true });
-  }
+  await retireRetiredOutputs(options, domain);
 
-  for (const rulebook of resolved) {
-    await writeIfChanged(path.join(neutralDir, `${rulebook.slug}.md`), rulebook.body);
-  }
-
-  // `.agents/rulebooks/` is sync-owned, so deleting an undeclared neutral file here is safe, not user data loss.
-  for (const slug of neutralOrphans) {
-    await rm(path.join(neutralDir, `${slug}.md`), { force: true });
-  }
-
-  await deliverAmbient(options, domain, resolved, existingAmbientHost, inlineOrphans);
+  await deliverAmbient(options, domain, resolved);
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
@@ -379,7 +350,7 @@ async function reconcileDomain(
     `Synced ${resolved.length} rulebook(s), ${resolvedSkills.length} declared skill(s), and ` +
       `${resolvedSubagents.length} declared subagent(s); delivered ${skillFilesWritten} rulebook-skill file(s), ` +
       `${declaredSkillsDeployed} declared-skill dir(s), and ${subagentsDeployed} declared-subagent file(s) across ` +
-      `${harnessSkillDirs.length} harness(s); retracted ${neutralOrphans.length} neutral file(s), ` +
+      `${harnessSkillDirs.length} harness(s); retracted ` +
       `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
       `${subagentRetractions} declared-subagent file(s).`,
   );
@@ -564,20 +535,6 @@ function assertNoSkillNameCollisions(resolved: ReadonlyArray<ResolvedRulebook>):
   }
 }
 
-/** Lists the slugs of materialized neutral files, returning an empty list when the directory is absent. */
-async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<string>> {
-  let entries: ReadonlyArray<string>;
-  try {
-    entries = await readdir(neutralDir);
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      return [];
-    }
-    throw error;
-  }
-  return entries.filter((entry) => entry.endsWith('.md')).map((entry) => entry.slice(0, -'.md'.length));
-}
-
 /**
  * Lists the declared skills sync owns under `skillsDir` as `{ dir, slug }` pairs — those whose `SKILL.md` carries the
  * declared-skill marker, paired with the slug recovered from it. Reads only the declared-skill marker, so it never
@@ -757,139 +714,193 @@ async function assertDeclaredSkillsRender(
 }
 
 /**
- * Delivers the resolved ambient rulebooks to the domain's target. In host-file mode, inlines one sentinel block per
- * ambient rulebook into the single sync-managed host, removes the orphaned blocks, and writes the host once, only
- * on change. In harness-regions mode, injects the ambient regions of the targeted harness guidance files.
+ * Delivers the resolved ambient rulebooks into the ambient region of each targeted harness's host, regenerating the
+ * region's content wholesale (an empty ambient set empties an existing region). Both domains share this one path,
+ * differing only in the host each targets and in who owns region creation there.
  */
 async function deliverAmbient(
   options: InstallOptions,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
-  existingAmbientHost: string,
-  inlineOrphans: ReadonlyArray<string>,
 ): Promise<void> {
-  if (domain.ambient.kind === 'harness-regions') {
-    await injectAmbientRegions(options, domain, resolved);
-    return;
-  }
-
-  let ambientHost = existingAmbientHost;
-  for (const rulebook of resolved) {
-    if (rulebook.ambient) {
-      ambientHost = injectRulebook(ambientHost, rulebook.slug, rulebook.body);
+  const body = renderAmbientBody(resolved);
+  for (const hostPath of resolveAmbientHostPaths(options, domain)) {
+    const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
+    if (plan.kind === 'skip') {
+      if (plan.warn) {
+        console.warn(`⚠️ Skipping ambient delivery: ${plan.reason}`);
+      }
+      continue;
     }
-  }
-  for (const slug of inlineOrphans) {
-    ambientHost = removeRulebook(ambientHost, slug);
-  }
-  if (ambientHost !== existingAmbientHost) {
-    await mkdir(path.dirname(domain.ambient.path), { recursive: true });
-    await writeFile(domain.ambient.path, ambientHost, 'utf8');
+    if (domain.ambient === 'project-local') {
+      await warnWhenHostNotIgnored(domain.baseDir, hostPath);
+    }
+    await writeIfChanged(hostPath, plan.content);
   }
 }
 
-/** A guidance file's readiness for ambient delivery: injectable, absent, or rendered without the region. */
-type AmbientTargetStatus = 'ready' | 'missing' | 'no-region';
+/** A probed ambient host: its content when present, plus how its region stands. */
+type AmbientHostState =
+  { readonly status: 'missing' } | { readonly status: 'malformed' | 'no-region' | 'ready'; readonly content: string };
 
-/** A probed guidance file: its content when ready for injection, or the reason delivery must skip it. */
-type AmbientTargetState =
-  { readonly status: 'ready'; readonly content: string } | { readonly status: 'missing' | 'no-region' };
+/**
+ * What a sync would do to one ambient host: write the given content, or skip for the given reason. `warn` marks a
+ * skip the user should hear about — a stale install on the harness-home path — as opposed to the ordinary case of a
+ * scope that simply declares no ambient rulebooks.
+ */
+type AmbientHostPlan =
+  | { readonly kind: 'skip'; readonly reason: string; readonly warn: boolean }
+  | { readonly kind: 'write'; readonly action: 'append' | 'create' | 'inject'; readonly content: string };
 
-/** One guidance file's dry-run ambient preview: the injection the run would perform, or the skip it would take. */
-interface AmbientRegionPreview {
-  readonly guidanceFile: string;
-  readonly status: AmbientTargetStatus;
+/** The reason a harness-home guidance file is skipped for ambient delivery, naming the remedy. */
+function describeAmbientSkip(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
+  switch (status) {
+    case 'missing':
+      return `${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`;
+    case 'no-region':
+      return `${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`;
+    case 'malformed':
+      return `${guidanceFile} carries a damaged ambient region — an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
+  }
+}
+
+/** The dry-run line for one host's plan, naming the host and the action a real run would take on it. */
+function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): string {
+  if (plan.kind === 'skip') {
+    return `  skip ambient delivery: ${plan.reason}`;
+  }
+  switch (plan.action) {
+    case 'append':
+      return `  append the ambient region to ${hostPath}`;
+    case 'create':
+      return `  create ${hostPath}, carrying the ambient region`;
+    case 'inject':
+      return `  inject the ambient region in ${hostPath}`;
+  }
 }
 
 /**
- * Describes the dry-run ambient target: the host file's name in host-file mode, the probed per-file previews
- * otherwise. Probing here is what keeps the preview honest — a file the real run would skip previews as a skip.
+ * Decides what a sync does to one ambient host. The harness-home host is `install`'s to create, so anything but a
+ * rendered region is skipped with the remedy named. The project-local host is sync's own, and is materialized only
+ * when there is ambient content to carry: an absent host with nothing to deliver stays absent, matching how the
+ * `prompts.yml` region and the legacy ambient host withdraw rather than persist empty.
  */
-async function describeAmbientTarget(
+function planAmbientHost(
+  hostKind: AmbientHostKind,
+  host: AmbientHostState,
+  hostPath: string,
+  body: string,
+): AmbientHostPlan {
+  if (host.status === 'ready') {
+    return { kind: 'write', action: 'inject', content: injectAmbientRegion(host.content, body) };
+  }
+  if (hostKind === 'harness-home') {
+    return { kind: 'skip', reason: describeAmbientSkip(host.status, hostPath), warn: true };
+  }
+  if (body === '') {
+    return { kind: 'skip', reason: `${hostPath} is not needed: no ambient rulebooks are declared.`, warn: false };
+  }
+  // A damaged region never reaches a write: `assertAmbientHostsWritable` has already failed the run.
+  return host.status === 'malformed'
+    ? { kind: 'skip', reason: `${hostPath} carries a damaged ambient region.`, warn: false }
+    : {
+        kind: 'write',
+        action: host.status === 'missing' ? 'create' : 'append',
+        content: appendAmbientRegion(host.status === 'missing' ? '' : host.content, body),
+      };
+}
+
+/** Pairs each targeted host with the plan a real run would carry out, so the dry-run preview cannot drift from it. */
+async function previewAmbientHosts(
   options: InstallOptions,
   domain: SyncDomain,
-): Promise<{ hostName: string | undefined; regionPreviews: ReadonlyArray<AmbientRegionPreview> }> {
-  if (domain.ambient.kind === 'host-file') {
-    return { hostName: path.basename(domain.ambient.path), regionPreviews: [] };
-  }
-  const regionPreviews = await Promise.all(
-    resolveAmbientRegionFiles(options, domain).map(async (guidanceFile) => ({
-      guidanceFile,
-      status: (await probeAmbientTarget(guidanceFile)).status,
-    })),
+  resolved: ReadonlyArray<ResolvedRulebook>,
+): Promise<ReadonlyArray<string>> {
+  const body = renderAmbientBody(resolved);
+  return Promise.all(
+    resolveAmbientHostPaths(options, domain).map(async (hostPath) =>
+      describeAmbientHostPlan(
+        hostPath,
+        planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body),
+      ),
+    ),
   );
-  return { hostName: undefined, regionPreviews };
 }
 
-/** The reason a guidance file is skipped for ambient delivery, naming the remedy. */
-function describeAmbientSkip(status: 'missing' | 'no-region', guidanceFile: string): string {
-  return status === 'missing'
-    ? `${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`
-    : `${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`;
+/**
+ * Warns when a host `sync` is about to write is not git-ignored, so machine-local guidance does not quietly become a
+ * commit candidate. Purely advisory: an ignored host says nothing, and so does a check that cannot answer — the
+ * project may not be a repository at all, which is no reason to fail a sync.
+ */
+async function warnWhenHostNotIgnored(projectRoot: string, hostPath: string): Promise<void> {
+  if ((await checkGitIgnored(projectRoot, hostPath)) === false) {
+    console.warn(
+      `⚠️ ${hostPath} is not git-ignored. It carries machine-local guidance, so add it to .gitignore to keep it ` +
+        'out of version control.',
+    );
+  }
 }
 
-/** Probes a guidance file for ambient delivery: its content when the region is present, or why delivery must skip. */
-async function probeAmbientTarget(guidanceFile: string): Promise<AmbientTargetState> {
+/** Probes an ambient host for its content and region state. */
+async function probeAmbientHost(hostPath: string): Promise<AmbientHostState> {
   let content: string;
   try {
-    content = await readFile(guidanceFile, 'utf8');
+    content = await readFile(hostPath, 'utf8');
   } catch (error: unknown) {
     if (isMissingFile(error)) {
       return { status: 'missing' };
     }
     throw error;
   }
-  return hasAmbientRegion(content) ? { status: 'ready', content } : { status: 'no-region' };
-}
-
-/**
- * Reads the host-file ambient state: the host's current content and the inlined slugs no longer desired there.
- * In harness-regions mode (no host path) both are empty — a region is regenerated wholesale, so nothing lingers.
- */
-async function readAmbientHostState(
-  ambientHostPath: string | undefined,
-  desiredAmbient: ReadonlySet<string>,
-): Promise<{ content: string; orphans: ReadonlyArray<string> }> {
-  if (ambientHostPath === undefined) {
-    return { content: '', orphans: [] };
+  switch (classifyAmbientRegion(content)) {
+    case 'complete':
+      return { status: 'ready', content };
+    case 'malformed':
+      return { status: 'malformed', content };
+    case 'absent':
+      return { status: 'no-region', content };
   }
-  const content = await readFileOrEmpty(ambientHostPath);
-  return { content, orphans: extractInstalledSlugs(content).filter((slug) => !desiredAmbient.has(slug)) };
 }
 
 /**
- * Injects the resolved ambient rulebooks into the ambient region of each targeted harness's guidance file,
- * regenerating the region's content wholesale (an empty ambient set empties the region). A guidance file that is
- * missing or carries no region is skipped with a warning directing the user to `install`, so a stale install degrades
- * delivery for that harness alone rather than failing the sync.
+ * Throws when a host `sync` would write already carries a damaged region — an unmatched marker, or more than one.
+ * Only the sync-owned project-local host can be appended to, so only it needs the guard; the harness-home path skips
+ * such a file with a warning instead. Runs before any write so a dry-run surfaces the conflict with nothing changed.
  */
-async function injectAmbientRegions(
+async function assertAmbientHostsWritable(
   options: InstallOptions,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
 ): Promise<void> {
-  const body = renderAmbientBody(resolved);
-  for (const guidanceFile of resolveAmbientRegionFiles(options, domain)) {
-    const target = await probeAmbientTarget(guidanceFile);
-    if (target.status !== 'ready') {
-      console.warn(`⚠️ Skipping ambient delivery: ${describeAmbientSkip(target.status, guidanceFile)}`);
-      continue;
+  if (domain.ambient !== 'project-local' || renderAmbientBody(resolved) === '') {
+    return;
+  }
+  const malformed: Array<string> = [];
+  for (const hostPath of resolveAmbientHostPaths(options, domain)) {
+    if ((await probeAmbientHost(hostPath)).status === 'malformed') {
+      malformed.push(hostPath);
     }
-    await writeIfChanged(guidanceFile, injectAmbientRegion(target.content, body));
+  }
+  if (malformed.length > 0) {
+    throw new Error(
+      `Refusing to deliver ambient guidance into ${malformed.length} file(s) carrying a damaged ambient region ` +
+        `(an unmatched marker, or more than one region): ${malformed.join(', ')}. Repair the codeassembly-ambient ` +
+        'markers, then re-run.',
+    );
   }
 }
 
 /**
- * Retires the legacy `~/.agents/GLOBAL.md` ambient host: removes the sync-owned rulebook blocks it carries, deletes
- * the file when nothing foreign remains, and otherwise writes the stripped remainder so hand-authored content
- * survives. Ambient delivery targets the harness guidance regions now, so a lingering copy would present stale
- * guidance as current. A missing file is a no-op.
+ * Retires a former ambient host: removes the sync-owned rulebook blocks it carries and writes back the stripped
+ * remainder, so hand-authored content survives. Ambient delivery targets the harness regions now, and a lingering
+ * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing — right for
+ * one sync created itself, wrong for a hand-authored file like `.agents/PROJECT.md`, which is never deleted. A
+ * missing host, and one carrying nothing to retire, are both no-ops.
  */
-async function retireLegacyGlobalMd(options: InstallOptions, homeDir: string): Promise<void> {
-  const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+async function retireAmbientHost(options: InstallOptions, hostPath: string, deleteWhenEmpty: boolean): Promise<void> {
   let content: string;
   try {
-    content = await readFile(legacyPath, 'utf8');
+    content = await readFile(hostPath, 'utf8');
   } catch (error: unknown) {
     if (isMissingFile(error)) {
       return;
@@ -897,16 +908,62 @@ async function retireLegacyGlobalMd(options: InstallOptions, homeDir: string): P
     throw error;
   }
 
-  if (options.dryRun) {
-    console.info(`[dry-run] sync would retire the legacy ambient host ${legacyPath}`);
-    return;
-  }
-
   let stripped = content;
   for (const slug of extractInstalledSlugs(content)) {
     stripped = removeRulebook(stripped, slug);
   }
-  await (stripped.trim() === '' ? rm(legacyPath, { force: true }) : writeIfChanged(legacyPath, stripped));
+  const deletable = deleteWhenEmpty && stripped.trim() === '';
+  if (stripped === content && !deletable) {
+    return;
+  }
+
+  if (options.dryRun) {
+    console.info(
+      deletable
+        ? `[dry-run] sync would delete ${hostPath}, which holds only retired rulebook blocks`
+        : `[dry-run] sync would retire the rulebook blocks in ${hostPath}`,
+    );
+    return;
+  }
+  await (deletable ? rm(hostPath, { force: true }) : writeIfChanged(hostPath, stripped));
+}
+
+/**
+ * Retires the neutral rulebook tree at `<baseDir>/.agents/rulebooks/`. Nothing reads it, so it is removed rather than
+ * maintained. Only the `.md` files sync materialized are deleted, and the directory itself only once nothing else
+ * remains in it, so anything a user placed alongside them survives. A missing directory is a no-op.
+ */
+async function retireNeutralRulebooks(options: InstallOptions, baseDir: string): Promise<void> {
+  const neutralDir = path.join(baseDir, '.agents', 'rulebooks');
+  if (!existsSync(neutralDir)) {
+    return;
+  }
+
+  if (options.dryRun) {
+    console.info(`[dry-run] sync would retire the neutral rulebook tree ${neutralDir}`);
+    return;
+  }
+  const entries = await readDirEntries(neutralDir);
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith('.md')) {
+      await rm(path.join(neutralDir, entry.name), { force: true });
+    }
+  }
+  if ((await readDirEntries(neutralDir)).length === 0) {
+    await rmdir(neutralDir);
+  }
+}
+
+/**
+ * Retires the outputs this domain no longer produces: the neutral rulebook tree in both domains, and, in the project
+ * domain, the rulebook blocks `.agents/PROJECT.md` used to host. Runs on every sync that has a declaration to act on,
+ * so a project picks the retirement up on its next run rather than needing a migration step.
+ */
+async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain): Promise<void> {
+  await retireNeutralRulebooks(options, domain.baseDir);
+  if (domain.ambient === 'project-local') {
+    await retireAmbientHost(options, path.join(domain.baseDir, '.agents', 'PROJECT.md'), false);
+  }
 }
 
 /** Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of an ambient region. */
@@ -921,9 +978,9 @@ function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>): string {
 }
 
 /** Lists the guidance files whose ambient regions a sync of `domain` targets — one per targeted harness. */
-function resolveAmbientRegionFiles(options: InstallOptions, domain: SyncDomain): ReadonlyArray<string> {
-  return resolveHarnessIds(options.harness, domain.baseDir).map(
-    (harnessId) => resolveHarnessPaths(harnessId, domain.baseDir).guidanceFile,
+function resolveAmbientHostPaths(options: InstallOptions, domain: SyncDomain): ReadonlyArray<string> {
+  return resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
+    resolveAmbientHostPath(harnessId, domain.ambient, domain.baseDir),
   );
 }
 
@@ -968,13 +1025,10 @@ function resolvePromptsYmlPaths(options: InstallOptions, domain: SyncDomain): Re
 
 /** The writes and retractions the dry-run reporter previews, gathered from the pre-write reconciliation. */
 interface DryRunPlan {
-  /** The ambient host file's name in host-file mode; `undefined` in harness-regions mode. */
-  readonly ambientHostName: string | undefined;
-  /** The probed per-file ambient previews in harness-regions mode; empty in host-file mode. */
-  readonly ambientRegionPreviews: ReadonlyArray<AmbientRegionPreview>;
+  /** One rendered line per targeted ambient host, naming it and the action a real run would take. */
+  readonly ambientHostPreviews: ReadonlyArray<string>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
-  readonly retracted: ReadonlyArray<string>;
   readonly harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>;
   readonly skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
@@ -991,17 +1045,10 @@ function reportDryRun(plan: DryRunPlan): void {
     console.info(renderResolutionReport(plan.resolutionReport));
   }
   console.info('[dry-run] sync would:');
-  for (const preview of plan.ambientRegionPreviews) {
-    console.info(
-      preview.status === 'ready'
-        ? `  inject the ambient region in ${preview.guidanceFile}`
-        : `  skip ambient delivery: ${describeAmbientSkip(preview.status, preview.guidanceFile)}`,
-    );
+  for (const preview of plan.ambientHostPreviews) {
+    console.info(preview);
   }
   for (const rulebook of plan.resolved) {
-    console.info(
-      `  write .agents/rulebooks/${rulebook.slug}.md${describeInlineSuffix(rulebook, plan.ambientHostName)}`,
-    );
     if (rulebook.skill) {
       for (const { skillsDir } of plan.harnessSkillTargets) {
         console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
@@ -1020,9 +1067,6 @@ function reportDryRun(plan: DryRunPlan): void {
     for (const target of plan.harnessSubagentTargets) {
       console.info(`  deploy declared subagent ${path.join(target.subagentsDir, `${subagent.slug}.md`)}`);
     }
-  }
-  for (const slug of plan.retracted) {
-    console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
   }
   for (const { skillsDir, orphans } of plan.skillOrphansByDir) {
     for (const dir of orphans) {
@@ -1044,11 +1088,6 @@ function reportDryRun(plan: DryRunPlan): void {
       `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
     );
   }
-}
-
-/** The dry-run suffix noting a rulebook's ambient inline target, present only when a host file carries one. */
-function describeInlineSuffix(rulebook: ResolvedRulebook, ambientHostName: string | undefined): string {
-  return rulebook.ambient && ambientHostName !== undefined ? ` (+ inline into ${ambientHostName})` : '';
 }
 
 /** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */

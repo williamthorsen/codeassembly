@@ -8,6 +8,13 @@ export interface AgentsManifest {
   readonly harnesses: Partial<Record<HarnessId, HarnessManifest>>;
 }
 
+/**
+ * Which guidance file hosts a domain's ambient region. `harness-home` is the mechanically-loaded file under the
+ * harness's home directory, rendered by `install`; `project-local` is the harness's machine-local project guidance
+ * file at the project root, created and owned by `sync`.
+ */
+export type AmbientHostKind = 'harness-home' | 'project-local';
+
 /** Configuration for a single harness. */
 export interface HarnessConfig {
   readonly id: HarnessId;
@@ -25,6 +32,11 @@ export interface HarnessConfig {
   readonly frontmatterFile: string;
   /** Filename of the mechanically-loaded guidance file under the harness home that hosts the ambient region. */
   readonly guidanceFileName: string;
+  /**
+   * Filename of the machine-local project guidance file the harness loads at launch from the project root (e.g.
+   * `CLAUDE.local.md`). Hosts the project domain's ambient region.
+   */
+  readonly localGuidanceFileName: string;
   /** Prefix a `{skill:<slug>}` invocation token renders to (e.g. `/` for Claude, `!` for Rovo). */
   readonly skillSigil: string;
   /** Prefix a `{subagent:<slug>}` invocation token renders to; empty on both current harnesses (a bare slug dispatches). */

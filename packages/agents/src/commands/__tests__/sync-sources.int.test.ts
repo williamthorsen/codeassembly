@@ -40,7 +40,7 @@ describe('sync with a declared source (real library fallback)', () => {
     );
   }
 
-  const neutralPath = (slug: string): string => path.join(projectRoot, '.agents', 'rulebooks', `${slug}.md`);
+  const localHostPath = (): string => path.join(projectRoot, 'CLAUDE.local.md');
   const skillPath = (slug: string): string => path.join(projectRoot, '.claude', 'skills', slug, 'SKILL.md');
   const subagentPath = (slug: string): string => path.join(projectRoot, '.claude', 'agents', `${slug}.md`);
 
@@ -54,20 +54,16 @@ describe('sync with a declared source (real library fallback)', () => {
 
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
-    expect(await readFile(neutralPath('org-rules'), 'utf8')).toContain('Source-provided guidance.');
-    expect(await readFile(neutralPath('shell-conventions'), 'utf8')).toContain('# Shell script conventions');
-    const projectMd = await readFile(path.join(projectRoot, '.agents', 'PROJECT.md'), 'utf8');
-    expect(projectMd).toContain('<!-- rulebook:org-rules -->');
-    expect(projectMd).toContain('Source-provided guidance.');
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('<!-- rulebook:org-rules -->');
+    expect(localHost).toContain('Source-provided guidance.');
+    expect(await readFile(skillPath('consult-shell-conventions'), 'utf8')).toContain('# Shell script conventions');
 
     await declare('rulebooks:\n  use:\n    - shell-conventions\n');
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
-    expect(existsSync(neutralPath('org-rules'))).toBe(false);
-    expect(existsSync(neutralPath('shell-conventions'))).toBe(true);
-    expect(await readFile(path.join(projectRoot, '.agents', 'PROJECT.md'), 'utf8')).not.toContain(
-      '<!-- rulebook:org-rules -->',
-    );
+    expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:org-rules -->');
+    expect(existsSync(skillPath('consult-shell-conventions'))).toBe(true);
   });
 
   it('deploys a source skill and source subagent — expanding a source-local include — then retracts them', async () => {
@@ -125,12 +121,12 @@ describe('sync with a declared source (real library fallback)', () => {
     // A source collection is traversal-only: its members deploy — the source skill and the real library rulebook —
     // while the collection itself is never emitted.
     expect(await readFile(skillPath('org-skill'), 'utf8')).toContain('Org-provided skill.');
-    expect(await readFile(neutralPath('shell-conventions'), 'utf8')).toContain('# Shell script conventions');
+    expect(await readFile(skillPath('consult-shell-conventions'), 'utf8')).toContain('# Shell script conventions');
 
     await declare('collections:\n  use: []\n');
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
     expect(existsSync(skillPath('org-skill'))).toBe(false);
-    expect(existsSync(neutralPath('shell-conventions'))).toBe(false);
+    expect(existsSync(skillPath('consult-shell-conventions'))).toBe(false);
   });
 });

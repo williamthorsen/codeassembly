@@ -54,6 +54,6 @@ describe('sync --global (real library, all collection)', () => {
 
     // Subagents and rulebooks reach the home domain through `@library` too.
     expect((await readdir(path.join(homeDir, '.claude', 'agents'))).length).toBeGreaterThan(0);
-    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'shell-conventions.md'))).toBe(true);
+    expect(existsSync(path.join(skillsDir, 'consult-shell-conventions', 'SKILL.md'))).toBe(true);
   });
 });
