@@ -53,10 +53,12 @@ export function classifyAmbientRegion(content: string): AmbientRegionState {
 
 /**
  * Returns the region's inner content with no surrounding newlines (an empty string for an empty region), or
- * `undefined` when no complete marker pair is present.
+ * `undefined` unless exactly one well-formed region is present. A damaged host yields `undefined` rather than the
+ * widened span `REGION_PATTERN` matches there, so a caller preserving region content across a re-render cannot carry
+ * text the region does not own back into it.
  */
 export function extractAmbientRegionContent(content: string): string | undefined {
-  const match = REGION_PATTERN.exec(content);
+  const match = hasAmbientRegion(content) ? REGION_PATTERN.exec(content) : null;
   if (match === null) {
     return undefined;
   }

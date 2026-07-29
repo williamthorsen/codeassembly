@@ -104,6 +104,14 @@ describe('single-region invariant', () => {
 
     expect(stripAmbientRegionContent(doubled)).toBe(doubled);
   });
+
+  it('extracts nothing from a host it refuses to inject into, so a re-render cannot absorb foreign text', () => {
+    const stray = `# Notes\n\n${AMBIENT_OPEN_MARKER}\nMy sandbox URL.\n\n${FILLED_REGION}\n`;
+    const doubled = `${FILLED_REGION}\n\n# Notes\n\n${FILLED_REGION}\n`;
+
+    expect(extractAmbientRegionContent(stray)).toBeUndefined();
+    expect(extractAmbientRegionContent(doubled)).toBeUndefined();
+  });
 });
 
 describe(extractAmbientRegionContent, () => {
