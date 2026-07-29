@@ -1,5 +1,5 @@
 import { constants, type Dirent, existsSync } from 'node:fs';
-import { access, mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { access, mkdir, readdir, readFile, rm, rmdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -21,7 +21,7 @@ import {
   type SourceResolver,
 } from '../lib/content-sources.ts';
 import { resolveClosure } from '../lib/dependency-resolver.ts';
-import { readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
+import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
@@ -142,7 +142,7 @@ export async function syncGlobalCommand(
     return;
   }
   await reconcileDomain(options, { baseDir: homeDir, ambient: 'harness-home', label: 'global' }, contentDirOverride);
-  await retireLegacyGlobalMd(options, homeDir);
+  await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
 }
 
 /**
@@ -185,8 +185,6 @@ async function reconcileDomain(
   );
   const declaredRulebooks = closure.rulebooks;
 
-  const neutralDir = path.join(domain.baseDir, '.agents', 'rulebooks');
-
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so a missing library
   // file, invalid frontmatter, or a still-`install` artifact fails the whole run rather than leaving a partial sync.
   const resolved = await Promise.all(declaredRulebooks.map((slug) => resolveRulebook(slug, resolver)));
@@ -194,7 +192,6 @@ async function reconcileDomain(
   const resolvedSkills = await Promise.all(closure.skills.map((slug) => resolveDeclaredSkill(slug, resolver)));
   const resolvedSubagents = await Promise.all(closure.subagents.map((slug) => resolveDeclaredSubagent(slug, resolver)));
 
-  const declaredSet = new Set(declaredRulebooks);
   // Maps each skill-delivery rulebook's stable slug to the directory its skill currently belongs in. Retraction
   // compares this against what each owned directory's marker reports, so a renamed skill retracts its old dir.
   const desiredSkillDirs = new Map(
@@ -228,7 +225,6 @@ async function reconcileDomain(
     ),
   );
 
-  const neutralOrphans = (await listNeutralSlugs(neutralDir)).filter((slug) => !declaredSet.has(slug));
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
@@ -289,11 +285,11 @@ async function reconcileDomain(
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
   if (options.dryRun) {
+    await retireRetiredOutputs(options, domain);
     reportDryRun({
       ambientHostPreviews: await previewAmbientHosts(options, domain, resolved),
       resolutionReport,
       resolved,
-      retracted: neutralOrphans,
       harnessSkillTargets,
       skillOrphansByDir,
       resolvedSkills,
@@ -306,18 +302,7 @@ async function reconcileDomain(
     return;
   }
 
-  if (resolved.length > 0) {
-    await mkdir(neutralDir, { recursive: true });
-  }
-
-  for (const rulebook of resolved) {
-    await writeIfChanged(path.join(neutralDir, `${rulebook.slug}.md`), rulebook.body);
-  }
-
-  // `.agents/rulebooks/` is sync-owned, so deleting an undeclared neutral file here is safe, not user data loss.
-  for (const slug of neutralOrphans) {
-    await rm(path.join(neutralDir, `${slug}.md`), { force: true });
-  }
+  await retireRetiredOutputs(options, domain);
 
   await deliverAmbient(options, domain, resolved);
 
@@ -369,7 +354,7 @@ async function reconcileDomain(
     `Synced ${resolved.length} rulebook(s), ${resolvedSkills.length} declared skill(s), and ` +
       `${resolvedSubagents.length} declared subagent(s); delivered ${skillFilesWritten} rulebook-skill file(s), ` +
       `${declaredSkillsDeployed} declared-skill dir(s), and ${subagentsDeployed} declared-subagent file(s) across ` +
-      `${harnessSkillDirs.length} harness(s); retracted ${neutralOrphans.length} neutral file(s), ` +
+      `${harnessSkillDirs.length} harness(s); retracted ` +
       `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
       `${subagentRetractions} declared-subagent file(s).`,
   );
@@ -552,20 +537,6 @@ function assertNoSkillNameCollisions(resolved: ReadonlyArray<ResolvedRulebook>):
       );
     }
   }
-}
-
-/** Lists the slugs of materialized neutral files, returning an empty list when the directory is absent. */
-async function listNeutralSlugs(neutralDir: string): Promise<ReadonlyArray<string>> {
-  let entries: ReadonlyArray<string>;
-  try {
-    entries = await readdir(neutralDir);
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      return [];
-    }
-    throw error;
-  }
-  return entries.filter((entry) => entry.endsWith('.md')).map((entry) => entry.slice(0, -'.md'.length));
 }
 
 /**
@@ -897,16 +868,16 @@ async function assertAmbientHostsWritable(
 }
 
 /**
- * Retires the legacy `~/.agents/GLOBAL.md` ambient host: removes the sync-owned rulebook blocks it carries, deletes
- * the file when nothing foreign remains, and otherwise writes the stripped remainder so hand-authored content
- * survives. Ambient delivery targets the harness guidance regions now, so a lingering copy would present stale
- * guidance as current. A missing file is a no-op.
+ * Retires a former ambient host: removes the sync-owned rulebook blocks it carries and writes back the stripped
+ * remainder, so hand-authored content survives. Ambient delivery targets the harness regions now, and a lingering
+ * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing — right for
+ * one sync created itself, wrong for a hand-authored file like `.agents/PROJECT.md`, which is never deleted. A
+ * missing host, and one carrying nothing to retire, are both no-ops.
  */
-async function retireLegacyGlobalMd(options: InstallOptions, homeDir: string): Promise<void> {
-  const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+async function retireAmbientHost(options: InstallOptions, hostPath: string, deleteWhenEmpty: boolean): Promise<void> {
   let content: string;
   try {
-    content = await readFile(legacyPath, 'utf8');
+    content = await readFile(hostPath, 'utf8');
   } catch (error: unknown) {
     if (isMissingFile(error)) {
       return;
@@ -914,16 +885,58 @@ async function retireLegacyGlobalMd(options: InstallOptions, homeDir: string): P
     throw error;
   }
 
-  if (options.dryRun) {
-    console.info(`[dry-run] sync would retire the legacy ambient host ${legacyPath}`);
-    return;
-  }
-
   let stripped = content;
   for (const slug of extractInstalledSlugs(content)) {
     stripped = removeRulebook(stripped, slug);
   }
-  await (stripped.trim() === '' ? rm(legacyPath, { force: true }) : writeIfChanged(legacyPath, stripped));
+  const deletable = deleteWhenEmpty && stripped.trim() === '';
+  if (stripped === content && !deletable) {
+    return;
+  }
+
+  if (options.dryRun) {
+    console.info(`[dry-run] sync would retire the rulebook blocks in ${hostPath}`);
+    return;
+  }
+  await (deletable ? rm(hostPath, { force: true }) : writeIfChanged(hostPath, stripped));
+}
+
+/**
+ * Retires the neutral rulebook tree at `<baseDir>/.agents/rulebooks/`. Nothing reads it, so it is removed rather than
+ * maintained. Only the `.md` files sync materialized are deleted, and the directory itself only once nothing else
+ * remains in it, so anything a user placed alongside them survives. A missing directory is a no-op.
+ */
+async function retireNeutralRulebooks(options: InstallOptions, baseDir: string): Promise<void> {
+  const neutralDir = path.join(baseDir, '.agents', 'rulebooks');
+  if (!existsSync(neutralDir)) {
+    return;
+  }
+
+  if (options.dryRun) {
+    console.info(`[dry-run] sync would retire the neutral rulebook tree ${neutralDir}`);
+    return;
+  }
+  const entries = await readDirEntries(neutralDir);
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith('.md')) {
+      await rm(path.join(neutralDir, entry.name), { force: true });
+    }
+  }
+  if ((await readDirEntries(neutralDir)).length === 0) {
+    await rmdir(neutralDir);
+  }
+}
+
+/**
+ * Retires the outputs this domain no longer produces: the neutral rulebook tree in both domains, and, in the project
+ * domain, the rulebook blocks `.agents/PROJECT.md` used to host. Runs on every sync that has a declaration to act on,
+ * so a project picks the retirement up on its next run rather than needing a migration step.
+ */
+async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain): Promise<void> {
+  await retireNeutralRulebooks(options, domain.baseDir);
+  if (domain.ambient === 'project-local') {
+    await retireAmbientHost(options, path.join(domain.baseDir, '.agents', 'PROJECT.md'), false);
+  }
 }
 
 /** Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of an ambient region. */
@@ -989,7 +1002,6 @@ interface DryRunPlan {
   readonly ambientHostPreviews: ReadonlyArray<string>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly resolved: ReadonlyArray<ResolvedRulebook>;
-  readonly retracted: ReadonlyArray<string>;
   readonly harnessSkillTargets: ReadonlyArray<HarnessSkillTarget>;
   readonly skillOrphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
@@ -1010,7 +1022,6 @@ function reportDryRun(plan: DryRunPlan): void {
     console.info(preview);
   }
   for (const rulebook of plan.resolved) {
-    console.info(`  write .agents/rulebooks/${rulebook.slug}.md`);
     if (rulebook.skill) {
       for (const { skillsDir } of plan.harnessSkillTargets) {
         console.info(`  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}`);
@@ -1029,9 +1040,6 @@ function reportDryRun(plan: DryRunPlan): void {
     for (const target of plan.harnessSubagentTargets) {
       console.info(`  deploy declared subagent ${path.join(target.subagentsDir, `${subagent.slug}.md`)}`);
     }
-  }
-  for (const slug of plan.retracted) {
-    console.info(`  retract ${slug} (no longer declared, or no longer ambient)`);
   }
   for (const { skillsDir, orphans } of plan.skillOrphansByDir) {
     for (const dir of orphans) {

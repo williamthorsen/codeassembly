@@ -55,10 +55,6 @@ describe(syncCommand, () => {
     await writeFile(path.join(projectRoot, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
   }
 
-  function neutralPath(slug: string): string {
-    return path.join(projectRoot, '.agents', 'rulebooks', `${slug}.md`);
-  }
-
   const projectMdPath = (): string => path.join(projectRoot, '.agents', 'PROJECT.md');
 
   /** The project-local ambient host for a harness, which `sync` owns and creates. */
@@ -74,15 +70,15 @@ describe(syncCommand, () => {
     expect(existsSync(projectMdPath())).toBe(false);
   });
 
-  it('writes the neutral body with frontmatter stripped for a declared rulebook', async () => {
+  it('delivers the rulebook body with its frontmatter stripped', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    const neutral = await readFile(neutralPath('alpha'), 'utf8');
-    expect(neutral).toBe('# Alpha\n\nAlpha rules.\n');
-    expect(neutral).not.toContain('slug:');
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('# Alpha\n\nAlpha rules.\n');
+    expect(localHost).not.toContain('slug:');
   });
 
   it('creates the local host carrying the ambient region when one is absent', async () => {
@@ -131,14 +127,10 @@ describe(syncCommand, () => {
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
     const firstLocalHost = await readFile(localHostPath(), 'utf8');
-    const firstNeutral = await readFile(neutralPath('alpha'), 'utf8');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
-    const secondLocalHost = await readFile(localHostPath(), 'utf8');
-    const secondNeutral = await readFile(neutralPath('alpha'), 'utf8');
 
-    expect(secondLocalHost).toBe(firstLocalHost);
-    expect(secondNeutral).toBe(firstNeutral);
+    expect(await readFile(localHostPath(), 'utf8')).toBe(firstLocalHost);
   });
 
   it('creates no local host when the scope declares no ambient rulebook', async () => {
@@ -175,7 +167,7 @@ describe(syncCommand, () => {
     await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/incomplete ambient region/);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(broken);
-    expect(existsSync(neutralPath('alpha'))).toBe(false);
+    expect(existsSync(skillPath('consult-alpha'))).toBe(false);
   });
 
   it('refuses a local host carrying an unmatched ambient marker in dry-run too', async () => {
@@ -194,13 +186,11 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha', 'beta');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('beta'))).toBe(true);
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:beta -->');
 
     await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('beta'))).toBe(false);
-    expect(existsSync(neutralPath('alpha'))).toBe(true);
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).not.toContain('<!-- rulebook:beta -->');
     expect(localHost).toContain('<!-- rulebook:alpha -->');
@@ -215,21 +205,96 @@ describe(syncCommand, () => {
     await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('alpha'))).toBe(true);
+    expect(existsSync(skillPath('consult-alpha'))).toBe(true);
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
   });
 
-  it('when the manifest is emptied, retracts every block and neutral file', async () => {
+  it('when the manifest is emptied, retracts every delivered block', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
-    expect(existsSync(neutralPath('alpha'))).toBe(true);
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRulebooks();
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('alpha'))).toBe(false);
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+  });
+
+  it('strips retired rulebook blocks from PROJECT.md, keeping hand-authored content and the file', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(
+      projectMdPath(),
+      '# Project\n\n@nmr/AGENTS.md\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n\nTail prose.\n',
+      'utf8',
+    );
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const projectMd = await readFile(projectMdPath(), 'utf8');
+    expect(projectMd).not.toContain('<!-- rulebook:alpha -->');
+    expect(projectMd).toContain('@nmr/AGENTS.md');
+    expect(projectMd).toContain('Tail prose.');
+  });
+
+  it('never deletes PROJECT.md, even once nothing but the retired blocks remains', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(projectMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(projectMdPath())).toBe(true);
+    expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+  });
+
+  it('retires a pre-existing .agents/rulebooks/ tree and writes none of its own', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    const neutralDir = path.join(projectRoot, '.agents', 'rulebooks');
+    await mkdir(neutralDir, { recursive: true });
+    await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(neutralDir)).toBe(false);
+  });
+
+  it('leaves PROJECT.md and the neutral tree untouched when neither is present', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(projectMdPath())).toBe(false);
+    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+  });
+
+  it('previews both retirements in dry-run without performing them', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await mkdir(path.join(projectRoot, '.agents', 'rulebooks'), { recursive: true });
+    const projectMd = '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n';
+    await writeFile(projectMdPath(), projectMd, 'utf8');
+    await writeFile(path.join(projectRoot, '.agents', 'rulebooks', 'alpha.md'), '# Alpha\n', 'utf8');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain(`retire the rulebook blocks in ${projectMdPath()}`);
+    expect(output).toContain('retire the neutral rulebook tree');
+    expect(await readFile(projectMdPath(), 'utf8')).toBe(projectMd);
+    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
   });
 
   it('throws when a declared rulebook has no library file', async () => {
@@ -244,7 +309,6 @@ describe(syncCommand, () => {
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('gamma'))).toBe(true);
     expect(existsSync(localHostPath())).toBe(false);
     const skill = await readFile(skillPath('consult-gamma'), 'utf8');
     expect(skill).toContain('name: consult-gamma');
@@ -309,7 +373,7 @@ describe(syncCommand, () => {
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(path.dirname(skillPath('consult-gamma')))).toBe(false);
-    expect(existsSync(neutralPath('gamma'))).toBe(true);
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:gamma -->');
   });
 
   it('retracts the prior skill directory when a rulebook resolved skill name changes', async () => {
@@ -352,14 +416,14 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', '.rovodev'))).toBe(false);
   });
 
-  it('with no detected harness, writes no skill files but still writes the neutral file', async () => {
-    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+  it('with no detected harness, writes no skill file and no local host', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
 
     await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('gamma'))).toBe(true);
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
+    expect(existsSync(localHostPath())).toBe(false);
   });
 
   it('never deletes a hand-authored skill that lacks the sync marker', async () => {
@@ -382,7 +446,6 @@ describe(syncCommand, () => {
 
     await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('alpha'))).toBe(false);
     expect(existsSync(localHostPath())).toBe(false);
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
   });
@@ -425,17 +488,14 @@ describe(syncCommand, () => {
     await declareRulebooks('shell-conventions');
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
-    const neutral = await readFile(neutralPath('shell-conventions'), 'utf8');
-    expect(neutral).toContain('# Shell script conventions');
-    expect(neutral).not.toContain('slug:');
     const skill = await readFile(skillPath('consult-shell-conventions'), 'utf8');
     expect(skill).toContain('name: consult-shell-conventions');
     expect(skill).toContain('# Shell script conventions');
+    expect(skill).not.toContain('slug:');
 
     await declareRulebooks();
     await syncCommand(makeOptions(), projectRoot, resolveContentDir());
 
-    expect(existsSync(neutralPath('shell-conventions'))).toBe(false);
     expect(existsSync(path.dirname(skillPath('consult-shell-conventions')))).toBe(false);
   });
 
@@ -446,14 +506,16 @@ describe(syncCommand, () => {
     await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('alpha'))).toBe(true);
-    expect(existsSync(neutralPath('beta'))).toBe(true);
+    const both = await readFile(localHostPath(), 'utf8');
+    expect(both).toContain('<!-- rulebook:alpha -->');
+    expect(both).toContain('<!-- rulebook:beta -->');
 
     await writeLocalDeclaration('rulebooks:\n  use:\n    - beta\n  drop:\n    - alpha\n');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(existsSync(neutralPath('alpha'))).toBe(false);
-    expect(existsSync(neutralPath('beta'))).toBe(true);
+    const dropped = await readFile(localHostPath(), 'utf8');
+    expect(dropped).not.toContain('<!-- rulebook:alpha -->');
+    expect(dropped).toContain('<!-- rulebook:beta -->');
   });
 
   it('fails when two skill rulebooks resolve to the same skill name, naming both slugs', async () => {
@@ -532,7 +594,6 @@ describe(syncCommand, () => {
 
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
-      expect(await readFile(neutralPath('source-only'), 'utf8')).toContain('Org rules.');
       const skill = await readFile(skillPath('consult-source-only'), 'utf8');
       expect(skill).toContain('description: From org.');
       expect(skill).toContain('Org rules.');
@@ -550,7 +611,6 @@ describe(syncCommand, () => {
       await declareWithSource('rulebooks:\n  use: []\n');
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
-      expect(existsSync(neutralPath('ambient-src'))).toBe(false);
       expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:ambient-src -->');
     });
 
@@ -561,7 +621,7 @@ describe(syncCommand, () => {
 
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
-      expect(await readFile(neutralPath('shadowed'), 'utf8')).toContain('Source body.');
+      expect(await readFile(localHostPath(), 'utf8')).toContain('Source body.');
     });
 
     it('fails the run when a declared source directory does not exist, writing nothing', async () => {
@@ -1421,8 +1481,8 @@ describe(syncGlobalCommand, () => {
       warnSpy.mockRestore();
     }
 
-    // The rest of the sync still lands: the neutral file is materialized despite the skipped ambient delivery.
-    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
+    // The skip is confined to ambient delivery: the rest of the sync still lands.
+    expect(existsSync(path.join(homeDir, '.claude', 'skills'))).toBe(false);
   });
 
   it('warns and skips ambient delivery when the guidance file carries no region', async () => {
@@ -1595,15 +1655,31 @@ describe(syncGlobalCommand, () => {
     expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(true);
   });
 
-  it('reconciles ~/.agents/rulebooks/ as wholesale sync-owned, removing an undeclared neutral file', async () => {
+  it('retires a pre-existing ~/.agents/rulebooks/ tree, and writes none of its own', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
-    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-    await writeFile(path.join(homeDir, '.agents', 'rulebooks', 'stray.md'), '# Stray\n', 'utf8');
+    const neutralDir = path.join(homeDir, '.agents', 'rulebooks');
+    await mkdir(neutralDir, { recursive: true });
+    await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
 
     await syncGlobalCommand(makeOptions(), homeDir, contentDir);
 
-    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'stray.md'))).toBe(false);
-    expect(existsSync(path.join(homeDir, '.agents', 'rulebooks', 'alpha.md'))).toBe(true);
+    expect(existsSync(neutralDir)).toBe(false);
+  });
+
+  it('keeps a ~/.agents/rulebooks/ entry it does not own, and the directory holding it', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const neutralDir = path.join(homeDir, '.agents', 'rulebooks');
+    await mkdir(neutralDir, { recursive: true });
+    await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
+    await writeFile(path.join(neutralDir, 'notes.txt'), 'mine\n', 'utf8');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    expect(existsSync(path.join(neutralDir, 'alpha.md'))).toBe(false);
+    expect(await readFile(path.join(neutralDir, 'notes.txt'), 'utf8')).toBe('mine\n');
   });
 });
