@@ -61,6 +61,9 @@ describe(syncCommand, () => {
 
   const projectMdPath = (): string => path.join(projectRoot, '.agents', 'PROJECT.md');
 
+  /** The project-local ambient host for a harness, which `sync` owns and creates. */
+  const localHostPath = (name = 'CLAUDE.local.md'): string => path.join(projectRoot, name);
+
   const skillPath = (slug: string, dotDir = '.claude'): string =>
     path.join(projectRoot, dotDir, 'skills', slug, 'SKILL.md');
 
@@ -82,29 +85,44 @@ describe(syncCommand, () => {
     expect(neutral).not.toContain('slug:');
   });
 
-  it('inlines an ambient rulebook into PROJECT.md between sentinels, creating the file', async () => {
+  it('creates the local host carrying the ambient region when one is absent', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    const projectMd = await readFile(projectMdPath(), 'utf8');
-    expect(projectMd).toContain('<!-- rulebook:alpha -->');
-    expect(projectMd).toContain('<!-- /rulebook:alpha -->');
-    expect(projectMd).toContain('Alpha rules.');
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('<!-- codeassembly-ambient:start -->');
+    expect(localHost).toContain('<!-- rulebook:alpha -->');
+    expect(localHost).toContain('<!-- /rulebook:alpha -->');
+    expect(localHost).toContain('Alpha rules.');
+    expect(existsSync(projectMdPath())).toBe(false);
   });
 
-  it('preserves hand-authored PROJECT.md content when inlining', async () => {
+  it('appends the region to a hand-authored local host, leaving its other content byte-identical', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
-    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
-    await writeFile(projectMdPath(), '# Project\n\nHand-authored intro.\n', 'utf8');
+    const handAuthored = '# Personal notes\n\nMy sandbox URL is http://localhost:9999.\n';
+    await writeFile(localHostPath(), handAuthored, 'utf8');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    const projectMd = await readFile(projectMdPath(), 'utf8');
-    expect(projectMd).toContain('Hand-authored intro.');
-    expect(projectMd).toContain('<!-- rulebook:alpha -->');
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost.startsWith(handAuthored)).toBe(true);
+    expect(localHost).toContain('<!-- rulebook:alpha -->');
+  });
+
+  it('delivers into each targeted harness own local host', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
+    await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+
+    for (const name of ['CLAUDE.local.md', 'AGENTS.local.md']) {
+      expect(await readFile(localHostPath(name), 'utf8')).toContain('<!-- rulebook:alpha -->');
+    }
   });
 
   it('when re-run with the same manifest, produces no file changes', async () => {
@@ -112,15 +130,62 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
-    const firstProjectMd = await readFile(projectMdPath(), 'utf8');
+    const firstLocalHost = await readFile(localHostPath(), 'utf8');
     const firstNeutral = await readFile(neutralPath('alpha'), 'utf8');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
-    const secondProjectMd = await readFile(projectMdPath(), 'utf8');
+    const secondLocalHost = await readFile(localHostPath(), 'utf8');
     const secondNeutral = await readFile(neutralPath('alpha'), 'utf8');
 
-    expect(secondProjectMd).toBe(firstProjectMd);
+    expect(secondLocalHost).toBe(firstLocalHost);
     expect(secondNeutral).toBe(firstNeutral);
+  });
+
+  it('creates no local host when the scope declares no ambient rulebook', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
+    await declareRulebooks('gamma');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(localHostPath())).toBe(false);
+  });
+
+  it('empties the region of an existing local host once nothing is ambient, keeping the file', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
+
+    await declareRulebooks();
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).not.toContain('<!-- rulebook:alpha -->');
+    expect(localHost).toContain('# Personal notes');
+    expect(localHost).toContain('<!-- codeassembly-ambient:start -->');
+  });
+
+  it('refuses to write a local host carrying an unmatched ambient marker, changing nothing', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    const broken = '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nStranded text.\n';
+    await writeFile(localHostPath(), broken, 'utf8');
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/incomplete ambient region/);
+
+    expect(await readFile(localHostPath(), 'utf8')).toBe(broken);
+    expect(existsSync(neutralPath('alpha'))).toBe(false);
+  });
+
+  it('refuses a local host carrying an unmatched ambient marker in dry-run too', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(localHostPath(), '<!-- codeassembly-ambient:start -->\nStranded text.\n', 'utf8');
+
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      /incomplete ambient region/,
+    );
   });
 
   it('retracts a rulebook that is no longer declared', async () => {
@@ -136,23 +201,22 @@ describe(syncCommand, () => {
 
     expect(existsSync(neutralPath('beta'))).toBe(false);
     expect(existsSync(neutralPath('alpha'))).toBe(true);
-    const projectMd = await readFile(projectMdPath(), 'utf8');
-    expect(projectMd).not.toContain('<!-- rulebook:beta -->');
-    expect(projectMd).toContain('<!-- rulebook:alpha -->');
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).not.toContain('<!-- rulebook:beta -->');
+    expect(localHost).toContain('<!-- rulebook:alpha -->');
   });
 
-  it('retracts the inlined block when a rulebook delivery changes away from ambient', async () => {
+  it('retracts the delivered block when a rulebook delivery changes away from ambient', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await syncCommand(makeOptions(), projectRoot, contentDir);
-    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('alpha'))).toBe(true);
-    const projectMd = await readFile(projectMdPath(), 'utf8');
-    expect(projectMd).not.toContain('<!-- rulebook:alpha -->');
+    expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
   });
 
   it('when the manifest is emptied, retracts every block and neutral file', async () => {
@@ -165,7 +229,7 @@ describe(syncCommand, () => {
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('alpha'))).toBe(false);
-    expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+    expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
   });
 
   it('throws when a declared rulebook has no library file', async () => {
@@ -174,14 +238,14 @@ describe(syncCommand, () => {
     await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/ghost/);
   });
 
-  it('writes a skill file for a skill-only rulebook without inlining it into PROJECT.md', async () => {
+  it('writes a skill file for a skill-only rulebook without delivering it as ambient', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\ndescription: Gamma desc.', 'Gamma rules.');
     await declareRulebooks('gamma');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('gamma'))).toBe(true);
-    expect(existsSync(projectMdPath())).toBe(false);
+    expect(existsSync(localHostPath())).toBe(false);
     const skill = await readFile(skillPath('consult-gamma'), 'utf8');
     expect(skill).toContain('name: consult-gamma');
     expect(skill).toContain('description: Gamma desc.');
@@ -201,13 +265,13 @@ describe(syncCommand, () => {
     expect(skill).toContain('<!-- codeassembly-rulebook:gamma -->');
   });
 
-  it('writes a skill file for a multi-modal rulebook and also inlines it into PROJECT.md', async () => {
+  it('writes a skill file for a multi-modal rulebook and also delivers it as ambient', async () => {
     await writeLibraryRulebook('delta', 'delivery: [ambient, skill]', 'Delta rules.');
     await declareRulebooks('delta');
 
     await syncCommand(makeOptions(), projectRoot, contentDir);
 
-    expect(await readFile(projectMdPath(), 'utf8')).toContain('<!-- rulebook:delta -->');
+    expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:delta -->');
     expect(await readFile(skillPath('consult-delta'), 'utf8')).toContain('Delta rules.');
   });
 
@@ -319,8 +383,42 @@ describe(syncCommand, () => {
     await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
 
     expect(existsSync(neutralPath('alpha'))).toBe(false);
-    expect(existsSync(projectMdPath())).toBe(false);
+    expect(existsSync(localHostPath())).toBe(false);
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
+  });
+
+  it('in dry-run mode, names each local host and the action it would take', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain(`create ${localHostPath()}, carrying the ambient region`);
+  });
+
+  it('in dry-run mode, reports appending to a local host that already exists', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain(`append the ambient region to ${localHostPath()}`);
+    expect(await readFile(localHostPath(), 'utf8')).toBe('# Personal notes\n');
   });
 
   it('deploys and retracts the real shell-conventions canary end-to-end', async () => {
@@ -440,20 +538,20 @@ describe(syncCommand, () => {
       expect(skill).toContain('Org rules.');
     });
 
-    it('inlines an ambient source rulebook into PROJECT.md and retracts it on removal', async () => {
+    it('delivers an ambient source rulebook to the local host and retracts it on removal', async () => {
       await writeSourceRulebook('ambient-src', 'delivery: ambient', 'Ambient org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - ambient-src\n');
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
-      const projectMd = await readFile(projectMdPath(), 'utf8');
-      expect(projectMd).toContain('<!-- rulebook:ambient-src -->');
-      expect(projectMd).toContain('Ambient org rules.');
+      const localHost = await readFile(localHostPath(), 'utf8');
+      expect(localHost).toContain('<!-- rulebook:ambient-src -->');
+      expect(localHost).toContain('Ambient org rules.');
 
       await declareWithSource('rulebooks:\n  use: []\n');
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
       expect(existsSync(neutralPath('ambient-src'))).toBe(false);
-      expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:ambient-src -->');
+      expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:ambient-src -->');
     });
 
     it('prefers a source rulebook over a same-slug library rulebook', async () => {

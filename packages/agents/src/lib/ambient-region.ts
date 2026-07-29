@@ -11,6 +11,21 @@ export const AMBIENT_CLOSE_MARKER = '<!-- codeassembly-ambient:end -->';
 
 const REGION_PATTERN = /^<!-- codeassembly-ambient:start -->\n([\s\S]*?)^<!-- codeassembly-ambient:end -->[ \t]*$/m;
 
+// Anchored like `REGION_PATTERN`, so a marker these match is one that could take part in a region match, while a
+// mention inside prose (indented, or inline) is not mistaken for one.
+const OPEN_MARKER_LINE = /^<!-- codeassembly-ambient:start -->$/m;
+const CLOSE_MARKER_LINE = /^<!-- codeassembly-ambient:end -->[ \t]*$/m;
+
+/**
+ * Appends a region carrying `body` to `content`, separated from any existing text by a blank line. Content that is
+ * blank yields the region alone. For a host `sync` owns but did not necessarily create, this is what adds the region
+ * without disturbing what the user wrote above it.
+ */
+export function appendAmbientRegion(content: string, body: string): string {
+  const region = `${renderRegion(body)}\n`;
+  return content.trim() === '' ? region : `${content.replace(/\n*$/, '\n')}\n${region}`;
+}
+
 /**
  * Returns the region's inner content with no surrounding newlines (an empty string for an empty region), or
  * `undefined` when no complete marker pair is present.
@@ -26,6 +41,19 @@ export function extractAmbientRegionContent(content: string): string | undefined
 /** True when the content holds a complete ambient region marker pair. */
 export function hasAmbientRegion(content: string): boolean {
   return REGION_PATTERN.test(content);
+}
+
+/**
+ * True when the content carries a region marker but no complete pair — a half-written or hand-broken region. Appending
+ * a fresh region to such content would leave two open markers, and the next injection would then match from the
+ * earlier one through the new region's close marker, replacing everything the user wrote in between. Callers that
+ * create regions must reject this state rather than append to it.
+ */
+export function hasIncompleteAmbientRegion(content: string): boolean {
+  if (hasAmbientRegion(content)) {
+    return false;
+  }
+  return OPEN_MARKER_LINE.test(content) || CLOSE_MARKER_LINE.test(content);
 }
 
 /**

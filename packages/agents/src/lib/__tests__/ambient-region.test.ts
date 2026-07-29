@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  appendAmbientRegion,
   extractAmbientRegionContent,
   hasAmbientRegion,
+  hasIncompleteAmbientRegion,
   injectAmbientRegion,
   stripAmbientRegionContent,
 } from '../ambient-region.ts';
@@ -16,6 +18,54 @@ const FILLED_REGION = `<!-- codeassembly-ambient:start -->\n${BODY}\n<!-- codeas
 
 /** A rendered guidance file whose template carries an empty region between foreign sections. */
 const GUIDANCE = `# Guidance\n\nIntro prose.\n\n${EMPTY_REGION}\n\n## Tail section\n`;
+
+describe(appendAmbientRegion, () => {
+  it('yields the region alone for blank content', () => {
+    expect(appendAmbientRegion('', BODY)).toBe(`${FILLED_REGION}\n`);
+    expect(appendAmbientRegion('\n\n', BODY)).toBe(`${FILLED_REGION}\n`);
+  });
+
+  it('keeps existing content verbatim above the appended region', () => {
+    const existing = '# Personal notes\n\nMy sandbox URL.\n';
+
+    const result = appendAmbientRegion(existing, BODY);
+
+    expect(result.startsWith(existing)).toBe(true);
+    expect(result).toBe(`${existing}\n${FILLED_REGION}\n`);
+  });
+
+  it('separates the region by exactly one blank line regardless of trailing newlines', () => {
+    expect(appendAmbientRegion('# Notes', BODY)).toBe(`# Notes\n\n${FILLED_REGION}\n`);
+    expect(appendAmbientRegion('# Notes\n\n\n', BODY)).toBe(`# Notes\n\n${FILLED_REGION}\n`);
+  });
+
+  it('produces content a later injection can target, so appending happens only once', () => {
+    const appended = appendAmbientRegion('# Notes\n', BODY);
+
+    expect(hasAmbientRegion(appended)).toBe(true);
+    expect(injectAmbientRegion(appended, BODY)).toBe(appended);
+  });
+});
+
+describe(hasIncompleteAmbientRegion, () => {
+  it('detects an open marker with no close', () => {
+    expect(hasIncompleteAmbientRegion('# Notes\n\n<!-- codeassembly-ambient:start -->\nStranded.\n')).toBe(true);
+  });
+
+  it('detects a close marker with no open', () => {
+    expect(hasIncompleteAmbientRegion('# Notes\n\n<!-- codeassembly-ambient:end -->\n')).toBe(true);
+  });
+
+  it('is false for a complete region and for content carrying no marker', () => {
+    expect(hasIncompleteAmbientRegion(GUIDANCE)).toBe(false);
+    expect(hasIncompleteAmbientRegion(injectAmbientRegion(GUIDANCE, BODY))).toBe(false);
+    expect(hasIncompleteAmbientRegion('# Notes\n')).toBe(false);
+  });
+
+  it('ignores a marker mentioned inline rather than on its own line', () => {
+    expect(hasIncompleteAmbientRegion('Write `<!-- codeassembly-ambient:start -->` to open a region.\n')).toBe(false);
+  });
+});
 
 describe(extractAmbientRegionContent, () => {
   it('returns the inner content of a filled region', () => {
