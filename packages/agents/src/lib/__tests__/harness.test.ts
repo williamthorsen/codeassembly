@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { detectHarnesses, HARNESSES, resolveHarnessPaths } from '../harness.js';
+import { detectHarnesses, HARNESSES, resolveAmbientHostPath, resolveHarnessPaths } from '../harness.js';
 
 describe('harness', () => {
   let tempDir: string;
@@ -18,7 +18,7 @@ describe('harness', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  describe('detectHarnesses', () => {
+  describe(detectHarnesses, () => {
     it('should return empty array when no harness directories exist', () => {
       const result = detectHarnesses(tempDir);
       expect(result).toEqual([]);
@@ -47,7 +47,30 @@ describe('harness', () => {
     });
   });
 
-  describe('resolveHarnessPaths', () => {
+  describe(resolveAmbientHostPath, () => {
+    it('should resolve the harness-home host to the guidance file under the harness home', () => {
+      expect(resolveAmbientHostPath('claude', 'harness-home', tempDir)).toBe(
+        path.join(tempDir, '.claude', 'CLAUDE.md'),
+      );
+      expect(resolveAmbientHostPath('rovodev', 'harness-home', tempDir)).toBe(
+        path.join(tempDir, '.rovodev', 'AGENTS.md'),
+      );
+    });
+
+    it('should resolve the project-local host to the machine-local file at the base, not under the harness home', () => {
+      expect(resolveAmbientHostPath('claude', 'project-local', tempDir)).toBe(path.join(tempDir, 'CLAUDE.local.md'));
+      expect(resolveAmbientHostPath('rovodev', 'project-local', tempDir)).toBe(path.join(tempDir, 'AGENTS.local.md'));
+    });
+
+    it('should give every harness a local guidance filename distinct from its harness-home one', () => {
+      for (const config of Object.values(HARNESSES)) {
+        expect(config.localGuidanceFileName).not.toBe(config.guidanceFileName);
+        expect(config.localGuidanceFileName).toMatch(/\.local\.md$/);
+      }
+    });
+  });
+
+  describe(resolveHarnessPaths, () => {
     it('should resolve correct paths for claude harness', () => {
       const result = resolveHarnessPaths('claude', tempDir);
 

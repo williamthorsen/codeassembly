@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import type { HarnessConfig, HarnessId, InstallOptions } from './types.js';
+import type { AmbientHostKind, HarnessConfig, HarnessId, InstallOptions } from './types.js';
 
 /** Harness configuration table. */
 export const HARNESSES: Record<HarnessId, HarnessConfig> = {
@@ -15,6 +15,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     configFileName: 'settings.json',
     frontmatterFile: 'claude.yaml',
     guidanceFileName: 'CLAUDE.md',
+    localGuidanceFileName: 'CLAUDE.local.md',
     skillSigil: '/',
     subagentSigil: '',
   },
@@ -27,6 +28,7 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     configFileName: 'config.yml',
     frontmatterFile: 'rovodev.yaml',
     guidanceFileName: 'AGENTS.md',
+    localGuidanceFileName: 'AGENTS.local.md',
     skillSigil: '!',
     subagentSigil: '',
   },
@@ -53,6 +55,20 @@ export function detectHarnesses(baseDir?: string): ReadonlyArray<HarnessId> {
     const config = HARNESSES[id];
     return existsSync(path.join(home, config.homeDir));
   });
+}
+
+/**
+ * Resolves the guidance file that hosts a harness's ambient region under `baseDir`, which is the domain's base: the
+ * home directory for the home domain, the project root for the project domain. The home domain's host sits under the
+ * harness home; the project domain's sits at the project root, because that is where each harness loads its
+ * machine-local project guidance from. `baseDir` is required — unlike the harness-home paths, a project-local host
+ * has no meaningful default.
+ */
+export function resolveAmbientHostPath(harnessId: HarnessId, hostKind: AmbientHostKind, baseDir: string): string {
+  const config = HARNESSES[harnessId];
+  return hostKind === 'harness-home'
+    ? path.join(baseDir, config.homeDir, config.guidanceFileName)
+    : path.join(baseDir, config.localGuidanceFileName);
 }
 
 /**
