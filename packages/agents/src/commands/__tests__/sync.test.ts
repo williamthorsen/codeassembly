@@ -168,7 +168,7 @@ describe(syncCommand, () => {
     const broken = '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nStranded text.\n';
     await writeFile(localHostPath(), broken, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/incomplete ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/damaged ambient region/);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(broken);
     expect(existsSync(skillPath('consult-alpha'))).toBe(false);
@@ -180,8 +180,36 @@ describe(syncCommand, () => {
     await writeFile(localHostPath(), '<!-- codeassembly-ambient:start -->\nStranded text.\n', 'utf8');
 
     await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
-      /incomplete ambient region/,
+      /damaged ambient region/,
     );
+  });
+
+  it('refuses a local host with a stray marker above the managed region, keeping the text between them', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    const stray = (await readFile(localHostPath(), 'utf8')).replace(
+      '# Personal notes\n',
+      '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nMy sandbox URL.\n',
+    );
+    await writeFile(localHostPath(), stray, 'utf8');
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/damaged ambient region/);
+
+    expect(await readFile(localHostPath(), 'utf8')).toBe(stray);
+  });
+
+  it('refuses a local host carrying two ambient regions rather than leaving the second stale', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    const region = '<!-- codeassembly-ambient:start -->\n<!-- codeassembly-ambient:end -->';
+    const doubled = `${region}\n\n# Personal notes\n\n${region}\n`;
+    await writeFile(localHostPath(), doubled, 'utf8');
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/damaged ambient region/);
+
+    expect(await readFile(localHostPath(), 'utf8')).toBe(doubled);
   });
 
   it('retracts a rulebook that is no longer declared', async () => {
@@ -1538,7 +1566,8 @@ describe(syncGlobalCommand, () => {
 
   it('warns and skips ambient delivery when the guidance file is missing', async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
-    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    await writeLibraryRulebook('beta', 'delivery: skill', 'Beta rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n    - beta\n');
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
@@ -1548,8 +1577,30 @@ describe(syncGlobalCommand, () => {
       warnSpy.mockRestore();
     }
 
-    // The skip is confined to ambient delivery: the rest of the sync still lands.
-    expect(existsSync(path.join(homeDir, '.claude', 'skills'))).toBe(false);
+    // The skip is confined to ambient delivery: skill delivery, which shares the run, still lands.
+    expect(await readFile(path.join(homeDir, '.claude', 'skills', 'consult-beta', 'SKILL.md'), 'utf8')).toContain(
+      'Beta rules.',
+    );
+  });
+
+  it('warns and skips ambient delivery when the guidance file carries a damaged region', async () => {
+    const dir = path.join(homeDir, '.claude');
+    await mkdir(dir, { recursive: true });
+    const damaged = path.join(dir, 'CLAUDE.md');
+    const before = '# Guidance\n\n<!-- codeassembly-ambient:start -->\nStranded.\n';
+    await writeFile(damaged, before, 'utf8');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('damaged ambient region');
+    } finally {
+      warnSpy.mockRestore();
+    }
+
+    expect(await readFile(damaged, 'utf8')).toBe(before);
   });
 
   it('warns and skips ambient delivery when the guidance file carries no region', async () => {
@@ -1606,6 +1657,45 @@ describe(syncGlobalCommand, () => {
     expect(output).toContain('skip ambient delivery');
     expect(output).toContain('codeassembly-agents install');
     expect(output).not.toContain('inject the ambient region in');
+  });
+
+  it('predicts deletion in dry-run when the legacy GLOBAL.md holds only sync-owned blocks', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+    await writeFile(legacyPath, '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain(`would delete ${legacyPath}`);
+  });
+
+  it('predicts a strip, not a deletion, when the legacy GLOBAL.md also holds hand-written content', async () => {
+    await seedGuidanceFile('.claude', 'CLAUDE.md');
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+    const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
+    await writeFile(legacyPath, 'Mine.\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
+
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let output: string;
+    try {
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, contentDir);
+      output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    expect(output).toContain(`retire the rulebook blocks in ${legacyPath}`);
+    expect(output).not.toContain('would delete');
   });
 
   it('does not retire a legacy GLOBAL.md in dry-run', async () => {

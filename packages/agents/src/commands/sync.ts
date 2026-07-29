@@ -4,12 +4,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import {
-  appendAmbientRegion,
-  hasAmbientRegion,
-  hasIncompleteAmbientRegion,
-  injectAmbientRegion,
-} from '../lib/ambient-region.ts';
+import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
 import { artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
@@ -759,9 +754,14 @@ type AmbientHostPlan =
 
 /** The reason a harness-home guidance file is skipped for ambient delivery, naming the remedy. */
 function describeAmbientSkip(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
-  return status === 'missing'
-    ? `${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`
-    : `${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`;
+  switch (status) {
+    case 'missing':
+      return `${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`;
+    case 'no-region':
+      return `${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`;
+    case 'malformed':
+      return `${guidanceFile} carries a damaged ambient region — an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
+  }
 }
 
 /** The dry-run line for one host's plan, naming the host and the action a real run would take on it. */
@@ -800,9 +800,9 @@ function planAmbientHost(
   if (body === '') {
     return { kind: 'skip', reason: `${hostPath} is not needed: no ambient rulebooks are declared.`, warn: false };
   }
-  // A half-written region never reaches a write: `assertAmbientHostsWritable` has already failed the run.
+  // A damaged region never reaches a write: `assertAmbientHostsWritable` has already failed the run.
   return host.status === 'malformed'
-    ? { kind: 'skip', reason: `${hostPath} carries an incomplete ambient region.`, warn: false }
+    ? { kind: 'skip', reason: `${hostPath} carries a damaged ambient region.`, warn: false }
     : {
         kind: 'write',
         action: host.status === 'missing' ? 'create' : 'append',
@@ -852,16 +852,20 @@ async function probeAmbientHost(hostPath: string): Promise<AmbientHostState> {
     }
     throw error;
   }
-  if (hasAmbientRegion(content)) {
-    return { status: 'ready', content };
+  switch (classifyAmbientRegion(content)) {
+    case 'complete':
+      return { status: 'ready', content };
+    case 'malformed':
+      return { status: 'malformed', content };
+    case 'absent':
+      return { status: 'no-region', content };
   }
-  return { status: hasIncompleteAmbientRegion(content) ? 'malformed' : 'no-region', content };
 }
 
 /**
- * Throws when a host `sync` would create a region in already carries a half-written one. Only the sync-owned
- * project-local host can be appended to, so only it needs the guard; the harness-home path skips such a file with a
- * warning instead. Runs before any write so a dry-run surfaces the conflict with nothing changed.
+ * Throws when a host `sync` would write already carries a damaged region — an unmatched marker, or more than one.
+ * Only the sync-owned project-local host can be appended to, so only it needs the guard; the harness-home path skips
+ * such a file with a warning instead. Runs before any write so a dry-run surfaces the conflict with nothing changed.
  */
 async function assertAmbientHostsWritable(
   options: InstallOptions,
@@ -879,8 +883,9 @@ async function assertAmbientHostsWritable(
   }
   if (malformed.length > 0) {
     throw new Error(
-      `Refusing to deliver ambient guidance into ${malformed.length} file(s) carrying an incomplete ambient ` +
-        `region: ${malformed.join(', ')}. Repair or remove the stray codeassembly-ambient marker, then re-run.`,
+      `Refusing to deliver ambient guidance into ${malformed.length} file(s) carrying a damaged ambient region ` +
+        `(an unmatched marker, or more than one region): ${malformed.join(', ')}. Repair the codeassembly-ambient ` +
+        'markers, then re-run.',
     );
   }
 }
@@ -913,7 +918,11 @@ async function retireAmbientHost(options: InstallOptions, hostPath: string, dele
   }
 
   if (options.dryRun) {
-    console.info(`[dry-run] sync would retire the rulebook blocks in ${hostPath}`);
+    console.info(
+      deletable
+        ? `[dry-run] sync would delete ${hostPath}, which holds only retired rulebook blocks`
+        : `[dry-run] sync would retire the rulebook blocks in ${hostPath}`,
+    );
     return;
   }
   await (deletable ? rm(hostPath, { force: true }) : writeIfChanged(hostPath, stripped));
