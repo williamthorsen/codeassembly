@@ -43,6 +43,8 @@ describe(initCommand, () => {
       skills: [],
       subagents: [],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -98,6 +100,8 @@ describe(initGlobalCommand, () => {
       skills: [],
       subagents: [],
       collections: ['all'],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });

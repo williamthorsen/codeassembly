@@ -47,6 +47,8 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -58,6 +60,8 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -69,6 +73,8 @@ describe(resolveDeclaration, () => {
       skills: ['one', 'two'],
       subagents: [],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -80,6 +86,8 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: ['canary', 'other'],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -91,6 +99,8 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: ['recommended', 'other'],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -104,6 +114,8 @@ describe(resolveDeclaration, () => {
       skills: ['one'],
       subagents: ['canary'],
       collections: ['recommended'],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -118,6 +130,8 @@ describe(resolveDeclaration, () => {
       skills: ['one', 'two'],
       subagents: ['canary', 'other'],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -130,6 +144,8 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -142,22 +158,83 @@ describe(resolveDeclaration, () => {
       skills: [],
       subagents: [],
       collections: ['other'],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
 
+  it('resolves additive package use, deduplicating', async () => {
+    await writeProject("packages:\n  use:\n    - '@williamthorsen/nmr'\n    - readyup\n    - '@williamthorsen/nmr'\n");
+    expect(await resolveDeclaration({ cwd })).toEqual({
+      rulebooks: [],
+      skills: [],
+      subagents: [],
+      collections: [],
+      packages: ['@williamthorsen/nmr', 'readyup'],
+      declinedPackages: [],
+      sources: [],
+    });
+  });
+
+  it('lets a higher tier drop a package inherited from a lower tier, recording it as declined', async () => {
+    await writeProject("packages:\n  use:\n    - '@williamthorsen/nmr'\n    - readyup\n");
+    await writeLocal("packages:\n  drop:\n    - '@williamthorsen/nmr'\n");
+    expect(await resolveDeclaration({ cwd })).toEqual({
+      rulebooks: [],
+      skills: [],
+      subagents: [],
+      collections: [],
+      packages: ['readyup'],
+      declinedPackages: ['@williamthorsen/nmr'],
+      sources: [],
+    });
+  });
+
+  it('orders packages highest tier first, matching how sources are ordered', async () => {
+    await writeProject("packages:\n  use:\n    - '@acme/base'\n");
+    await writeLocal("packages:\n  use:\n    - '@acme/local'\n");
+
+    expect((await resolveDeclaration({ cwd }))?.packages).toEqual(['@acme/local', '@acme/base']);
+  });
+
+  it('orders packages declared in one tier last-declared first', async () => {
+    await writeProject("packages:\n  use:\n    - '@acme/first'\n    - '@acme/second'\n");
+
+    expect((await resolveDeclaration({ cwd }))?.packages).toEqual(['@acme/second', '@acme/first']);
+  });
+
+  it('treats a package re-adopted by a higher tier as adopted rather than declined', async () => {
+    await writeProject("packages:\n  drop:\n    - '@acme/pkg'\n");
+    await writeLocal("packages:\n  use:\n    - '@acme/pkg'\n");
+
+    const declaration = await resolveDeclaration({ cwd });
+
+    expect(declaration?.packages).toEqual(['@acme/pkg']);
+    expect(declaration?.declinedPackages).toEqual([]);
+  });
+
+  it('clears declined packages when a higher tier declares root: true', async () => {
+    await writeProject("packages:\n  drop:\n    - '@acme/pkg'\n");
+    await writeLocal('root: true\n');
+
+    expect((await resolveDeclaration({ cwd }))?.declinedPackages).toEqual([]);
+  });
+
   it('discards every type from lower tiers when a higher tier declares root: true', async () => {
     await writeProject(
-      'rulebooks:\n  use:\n    - alpha\nskills:\n  use:\n    - one\nsubagents:\n  use:\n    - canary\ncollections:\n  use:\n    - recommended\n',
+      "rulebooks:\n  use:\n    - alpha\nskills:\n  use:\n    - one\nsubagents:\n  use:\n    - canary\ncollections:\n  use:\n    - recommended\npackages:\n  use:\n    - '@acme/old'\n",
     );
     await writeLocal(
-      'root: true\nrulebooks:\n  use:\n    - beta\nskills:\n  use:\n    - two\nsubagents:\n  use:\n    - other\ncollections:\n  use:\n    - fresh\n',
+      "root: true\nrulebooks:\n  use:\n    - beta\nskills:\n  use:\n    - two\nsubagents:\n  use:\n    - other\ncollections:\n  use:\n    - fresh\npackages:\n  use:\n    - '@acme/new'\n",
     );
     expect(await resolveDeclaration({ cwd })).toEqual({
       rulebooks: ['beta'],
       skills: ['two'],
       subagents: ['other'],
       collections: ['fresh'],
+      packages: ['@acme/new'],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -169,6 +246,8 @@ describe(resolveDeclaration, () => {
       skills: ['gamma'],
       subagents: [],
       collections: [],
+      packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });

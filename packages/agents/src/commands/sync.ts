@@ -6,7 +6,7 @@ import process from 'node:process';
 
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
+import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import {
@@ -15,11 +15,13 @@ import {
   hasLibraryArtifact,
   type SourceResolver,
 } from '../lib/content-sources.ts';
-import { resolveClosure } from '../lib/dependency-resolver.ts';
+import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
+import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
+import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
@@ -163,20 +165,32 @@ async function reconcileDomain(
 
   const contentDir = contentDirOverride ?? resolveContentDir();
 
+  // A declared package contributes both a source and a set of seeds: Its content dir joins the search order below the
+  // hand-declared sources, so a hand-pointed local directory outranks a dependency, and everything it ships seeds the
+  // closure — which is what makes naming the package the whole declaration.
+  const packageSources = await resolvePackageSources(declaration.packages, domain.baseDir);
+  const sources = [...declaration.sources, ...packageSources];
+
   // Resolution searches declared sources (highest precedence first) then the built-in library. Validate each declared
   // source up front so a missing or non-directory source fails the whole run — dry-run included — before any write.
-  const resolver = createSourceResolver(declaration.sources, contentDir);
-  await assertValidSources(declaration.sources);
+  const resolver = createSourceResolver(sources, contentDir);
+  await assertValidSources(sources);
+
+  // Enumerated after validation, so a package whose content dir is missing has already failed the run.
+  const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
   const closure = await resolveClosure(
-    {
-      rulebook: declaration.rulebooks,
-      skill: declaration.skills,
-      subagent: declaration.subagents,
-      collection: declaration.collections,
-    },
+    mergeSeeds([
+      {
+        rulebook: declaration.rulebooks,
+        skill: declaration.skills,
+        subagent: declaration.subagents,
+        collection: declaration.collections,
+      },
+      ...packageCatalogs,
+    ]),
     resolver,
   );
   const declaredRulebooks = closure.rulebooks;
@@ -197,7 +211,7 @@ async function reconcileDomain(
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
   // delivery namespaces would clobber, so reject the overlap before any write.
-  assertNoCrossNamespaceCollisions([...desiredSkillDirs.values()], declaredSkillSet);
+  assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
@@ -248,7 +262,7 @@ async function reconcileDomain(
       };
     }),
   );
-  // Declared subagents reconcile file-based (flat `.md` files, not directories): an owned subagent file is one whose
+  // Declared subagents reconcile file-based (flat `.md` files, not directories): An owned subagent file is one whose
   // content carries the `codeassembly-subagent:` marker. It is an orphan once its slug is no longer declared. A
   // marker-less hand-authored file is never claimed, so it survives untouched.
   const subagentOrphansByDir = await Promise.all(
@@ -323,11 +337,11 @@ async function reconcileDomain(
     }
   }
 
-  // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: retract owned
+  // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills);
 
-  // Reconcile declared subagents per targeted harness, independently of the skill passes: retract owned subagent
+  // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
   // transform applied and the ownership marker stamped.
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
@@ -361,18 +375,28 @@ async function reconcileDomain(
   if (shadows.length > 0) {
     console.warn(renderShadowWarning(shadows));
   }
+
+  // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This is
+  // advice, not action: Nothing is deployed until the project declares the package.
+  const undeclared = await findUndeclaredGuidancePackages(
+    [...declaration.packages, ...declaration.declinedPackages],
+    domain.baseDir,
+  );
+  if (undeclared.length > 0) {
+    console.info(renderPackageAdvice(undeclared));
+  }
 }
 
 // region | Helpers
 
-/** True when a skill targets the given harness — either it names no harnesses (so all) or lists this one. */
+/** True when a skill targets the given harness; either it names no harnesses (so all) or lists this one. */
 function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
   return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
 }
 
 /**
  * Throws when any declared source path is missing, not a directory, or unreadable, so a bad source fails the whole
- * run — dry-run included — before any file is touched. The error names each offending source and what is wrong with it.
+ * run (dry-run included) before any file is touched. The error names each offending source and what is wrong with it.
  */
 async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: string }>): Promise<void> {
   const invalid: Array<string> = [];
@@ -390,10 +414,10 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
 }
 
 /**
- * Reports what disqualifies `dir` as a source — that it is missing, not a directory, or unreadable — or `undefined`
+ * Reports what disqualifies `dir` as a source (that it is missing, not a directory, or unreadable) or `undefined`
  * when valid. Validity requires both that `dir` is a directory and that the process can read and traverse it, because
  * `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the parent chain,
- * not on `dir`). Any permission failure — from the `stat` or the read-and-traverse access probe — folds into the
+ * not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) folds into the
  * "unreadable" case so it surfaces through the attributed `Invalid declared source(s)` error naming `dir`.
  */
 async function describeSourceProblem(dir: string): Promise<string | undefined> {
@@ -412,6 +436,21 @@ async function describeSourceProblem(dir: string): Promise<string | undefined> {
     }
     return `unreadable — ${error instanceof Error ? error.message : String(error)}`;
   }
+}
+
+/**
+ * Concatenates per-type seed sets into the one set that seeds closure resolution. Deduping is deliberately left out:
+ * `resolveClosure` already dedupes by slug as it walks, so a slug both declared directly and enumerated from a
+ * package's catalog is visited once.
+ */
+function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
+  const merged: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };
+  for (const set of sets) {
+    for (const type of ARTIFACT_TYPE_VALUES) {
+      merged[type].push(...(set[type] ?? []));
+    }
+  }
+  return merged;
 }
 
 /** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
@@ -500,10 +539,10 @@ function assertNoCrossNamespaceCollisions(
   rulebookSkillDirs: ReadonlyArray<string>,
   declaredSkillSlugs: Set<string>,
 ): void {
-  const collisions = [...new Set(rulebookSkillDirs)].filter((dir) => declaredSkillSlugs.has(dir));
-  if (collisions.length > 0) {
+  const collisions = new Set(rulebookSkillDirs).intersection(declaredSkillSlugs);
+  if (collisions.size > 0) {
     throw new Error(
-      `Skill directory name collision across delivery namespaces: ${collisions.join(', ')} ` +
+      `Skill directory name collision across delivery namespaces: ${Array.from(collisions).join(', ')} ` +
         'is delivered as both a rulebook skill and a declared skill. Rename one so they no longer share a directory.',
     );
   }
@@ -1151,6 +1190,19 @@ function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string
     return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← ${origin}${shadow}`;
   });
   return ['[dry-run] sync would resolve:', ...lines].join('\n');
+}
+
+/**
+ * Renders the advice naming each dependency that ships content the project has not declared, as the `packages:` block
+ * that adopts them. Emitted as the block rather than as prose so it can be pasted rather than transcribed.
+ */
+function renderPackageAdvice(names: ReadonlyArray<string>): string {
+  const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
+  const entries = names.map((name) => `    - '${name}'`).join('\n');
+  return (
+    `💡 ${names.length} ${subject} CodeAssembly guidance this project has not declared. ` +
+    `To adopt, add to .agents/codeassembly.yaml:\n\npackages:\n  use:\n${entries}\n`
+  );
 }
 
 /** Renders the real-run warning naming each deployed artifact that shadows a same-slug library artifact. */
