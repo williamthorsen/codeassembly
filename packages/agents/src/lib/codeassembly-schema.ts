@@ -15,14 +15,17 @@ export const SourceSchema = z.object({ name: z.string().min(1), path: z.string()
 
 /**
  * Schema for a single grouped `codeassembly.yaml` declaration: a top-level `root` flag, an optional `sources` list,
- * plus one optional block per artifact type (`rulebooks`, `skills`, `subagents`, `collections`). The top level is
- * closed (an unrecognized key triggers an error); entries are open (unknown keys pass through). Each type's block
- * resolves to `{ use, drop }` lists; an absent or null block is omitted.
+ * an optional `packages` block naming installed packages that ship content, plus one optional block per artifact type
+ * (`rulebooks`, `skills`, `subagents`, `collections`). The top level is closed (an unrecognized key triggers an
+ * error); entries are open (unknown keys pass through). Each type's block resolves to `{ use, drop }` lists; an absent
+ * or null block is omitted. `packages` reuses that same block shape, so `use`, `drop`, and `root` apply to a package
+ * name exactly as they do to an artifact slug.
  */
 const CodeAssemblySchema = z
   .object({
     root: z.boolean().default(false),
     sources: optionalSourceList(),
+    packages: optionalTypeDeclaration(),
     rulebooks: optionalTypeDeclaration(),
     skills: optionalTypeDeclaration(),
     subagents: optionalTypeDeclaration(),

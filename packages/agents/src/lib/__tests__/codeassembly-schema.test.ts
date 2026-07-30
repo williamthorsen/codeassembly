@@ -47,6 +47,26 @@ describe(parseCodeAssemblyFile, () => {
     expect(declaration.collections?.use).toEqual([{ name: 'gamma' }]);
   });
 
+  it('parses a packages declaration of scoped and unscoped names', () => {
+    const declaration = parseCodeAssemblyFile(
+      "packages:\n  use:\n    - '@williamthorsen/nmr'\n    - readyup\n  drop:\n    - '@acme/legacy'\n",
+    );
+
+    expect(declaration.packages?.use).toEqual([{ name: '@williamthorsen/nmr' }, { name: 'readyup' }]);
+    expect(declaration.packages?.drop).toEqual([{ name: '@acme/legacy' }]);
+  });
+
+  it('tolerates a packages key whose value is null (all entries commented out)', () => {
+    const declaration = parseCodeAssemblyFile('packages:\n');
+
+    expect(declaration.packages).toBeUndefined();
+    expect(declaration.root).toBe(false);
+  });
+
+  it('throws on an unknown key inside the packages block', () => {
+    expect(() => parseCodeAssemblyFile('packages:\n  install:\n    - alpha\n')).toThrow(/install/);
+  });
+
   it('throws on an unknown top-level key (typo protection)', () => {
     expect(() => parseCodeAssemblyFile('rulebookz:\n  use:\n    - alpha\n')).toThrow(/rulebookz/);
   });

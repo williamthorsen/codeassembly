@@ -10,7 +10,8 @@ import { resolveSourcePath } from './source-path.ts';
  * The effective slugs a project declares per artifact type, after combining the scope chain. `rulebooks`, `skills`,
  * and `subagents` are deployable; `collections` are dependency-only aggregates the caller expands into the others.
  * `sources` are the declared content sources, each resolved to an absolute directory, in precedence order (highest
- * first).
+ * first). `packages` are the declared package names, left unresolved: locating one probes `node_modules`, which is
+ * filesystem work this parser deliberately leaves to its caller.
  */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
@@ -18,6 +19,7 @@ export interface ResolvedDeclaration {
   readonly subagents: ReadonlyArray<string>;
   readonly collections: ReadonlyArray<string>;
   readonly sources: ReadonlyArray<{ name: string; dir: string }>;
+  readonly packages: ReadonlyArray<string>;
 }
 
 /**
@@ -44,6 +46,7 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
   const skills = new Set<string>();
   const subagents = new Set<string>();
   const collections = new Set<string>();
+  const packages = new Set<string>();
   // Sources key on `name` so a repeated name remaps its path; the value is the resolved absolute dir.
   const sources = new Map<string, string>();
   for (const filePath of chain) {
@@ -54,12 +57,14 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
       skills.clear();
       subagents.clear();
       collections.clear();
+      packages.clear();
       sources.clear();
     }
     accumulateType(rulebooks, declaration.rulebooks);
     accumulateType(skills, declaration.skills);
     accumulateType(subagents, declaration.subagents);
     accumulateType(collections, declaration.collections);
+    accumulateType(packages, declaration.packages);
     accumulateSources(sources, declaration.sources, path.dirname(filePath));
   }
 
@@ -68,6 +73,7 @@ export async function resolveDeclaration(options: { cwd: string }): Promise<Reso
     skills: [...skills],
     subagents: [...subagents],
     collections: [...collections],
+    packages: [...packages],
     // The map is insertion-ordered lowest-to-highest precedence; reverse it so the highest-precedence source is first.
     sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
   };

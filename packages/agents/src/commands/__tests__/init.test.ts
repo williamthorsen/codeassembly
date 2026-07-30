@@ -43,6 +43,7 @@ describe(initCommand, () => {
       skills: [],
       subagents: [],
       collections: [],
+      packages: [],
       sources: [],
     });
   });
@@ -98,6 +99,7 @@ describe(initGlobalCommand, () => {
       skills: [],
       subagents: [],
       collections: ['all'],
+      packages: [],
       sources: [],
     });
   });
