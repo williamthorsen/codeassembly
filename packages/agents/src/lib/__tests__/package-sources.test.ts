@@ -6,30 +6,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../package-sources.ts';
 
-/**
- * Installs a fixture package under `baseDir`'s `node_modules` and returns its directory. Fixture names are
- * deliberately distinctive: resolution searches every ancestor `node_modules`, so a common name could resolve against
- * a real package outside the temp tree.
- */
-async function installPackage(baseDir: string, name: string, manifest: Record<string, unknown>): Promise<string> {
-  const dir = path.join(baseDir, 'node_modules', name);
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, 'package.json'), JSON.stringify({ name, ...manifest }), 'utf8');
-  return dir;
-}
-
-/** Creates a uniquely named temp directory to act as a project root. */
-async function makeBaseDir(label: string): Promise<string> {
-  const dir = path.join(tmpdir(), `agents-test-${label}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  await mkdir(dir, { recursive: true });
-  return dir;
-}
-
-/** Writes the consuming project's own `package.json` at `baseDir`. */
-async function writeProjectManifest(baseDir: string, manifest: Record<string, unknown>): Promise<void> {
-  await writeFile(path.join(baseDir, 'package.json'), JSON.stringify(manifest), 'utf8');
-}
-
 describe(resolvePackageSources, () => {
   let baseDir: string;
 
@@ -207,3 +183,31 @@ describe(findUndeclaredGuidancePackages, () => {
     expect(await findUndeclaredGuidancePackages([], baseDir)).toEqual(['@ca-fixture/ships']);
   });
 });
+
+// region | Helpers
+
+/**
+ * Installs a fixture package under `baseDir`'s `node_modules` and returns its directory. Fixture names are
+ * deliberately distinctive: Resolution searches every ancestor `node_modules`, so a common name could resolve against
+ * a real package outside the temp tree.
+ */
+async function installPackage(baseDir: string, name: string, manifest: Record<string, unknown>): Promise<string> {
+  const dir = path.join(baseDir, 'node_modules', name);
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(dir, 'package.json'), JSON.stringify({ name, ...manifest }), 'utf8');
+  return dir;
+}
+
+/** Creates a uniquely named temp directory to act as a project root. */
+async function makeBaseDir(label: string): Promise<string> {
+  const dir = path.join(tmpdir(), `agents-test-${label}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  await mkdir(dir, { recursive: true });
+  return dir;
+}
+
+/** Writes the consuming project's own `package.json` at `baseDir`. */
+async function writeProjectManifest(baseDir: string, manifest: Record<string, unknown>): Promise<void> {
+  await writeFile(path.join(baseDir, 'package.json'), JSON.stringify(manifest), 'utf8');
+}
+
+// endregion | Helpers

@@ -165,7 +165,7 @@ async function reconcileDomain(
 
   const contentDir = contentDirOverride ?? resolveContentDir();
 
-  // A declared package contributes both a source and a set of seeds: its content dir joins the search order below the
+  // A declared package contributes both a source and a set of seeds: Its content dir joins the search order below the
   // hand-declared sources, so a hand-pointed local directory outranks a dependency, and everything it ships seeds the
   // closure — which is what makes naming the package the whole declaration.
   const packageSources = await resolvePackageSources(declaration.packages, domain.baseDir);
@@ -211,7 +211,7 @@ async function reconcileDomain(
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
   // delivery namespaces would clobber, so reject the overlap before any write.
-  assertNoCrossNamespaceCollisions([...desiredSkillDirs.values()], declaredSkillSet);
+  assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
@@ -262,7 +262,7 @@ async function reconcileDomain(
       };
     }),
   );
-  // Declared subagents reconcile file-based (flat `.md` files, not directories): an owned subagent file is one whose
+  // Declared subagents reconcile file-based (flat `.md` files, not directories): An owned subagent file is one whose
   // content carries the `codeassembly-subagent:` marker. It is an orphan once its slug is no longer declared. A
   // marker-less hand-authored file is never claimed, so it survives untouched.
   const subagentOrphansByDir = await Promise.all(
@@ -337,11 +337,11 @@ async function reconcileDomain(
     }
   }
 
-  // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: retract owned
+  // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills);
 
-  // Reconcile declared subagents per targeted harness, independently of the skill passes: retract owned subagent
+  // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
   // transform applied and the ownership marker stamped.
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
@@ -377,7 +377,7 @@ async function reconcileDomain(
   }
 
   // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This is
-  // advice, not action: nothing is deployed until the project declares the package.
+  // advice, not action: Nothing is deployed until the project declares the package.
   const undeclared = await findUndeclaredGuidancePackages(declaration.packages, domain.baseDir);
   if (undeclared.length > 0) {
     console.info(renderPackageAdvice(undeclared));
@@ -386,14 +386,14 @@ async function reconcileDomain(
 
 // region | Helpers
 
-/** True when a skill targets the given harness — either it names no harnesses (so all) or lists this one. */
+/** True when a skill targets the given harness; either it names no harnesses (so all) or lists this one. */
 function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
   return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
 }
 
 /**
  * Throws when any declared source path is missing, not a directory, or unreadable, so a bad source fails the whole
- * run — dry-run included — before any file is touched. The error names each offending source and what is wrong with it.
+ * run (dry-run included) before any file is touched. The error names each offending source and what is wrong with it.
  */
 async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: string }>): Promise<void> {
   const invalid: Array<string> = [];
@@ -411,10 +411,10 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
 }
 
 /**
- * Reports what disqualifies `dir` as a source — that it is missing, not a directory, or unreadable — or `undefined`
+ * Reports what disqualifies `dir` as a source (that it is missing, not a directory, or unreadable) or `undefined`
  * when valid. Validity requires both that `dir` is a directory and that the process can read and traverse it, because
  * `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the parent chain,
- * not on `dir`). Any permission failure — from the `stat` or the read-and-traverse access probe — folds into the
+ * not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) folds into the
  * "unreadable" case so it surfaces through the attributed `Invalid declared source(s)` error naming `dir`.
  */
 async function describeSourceProblem(dir: string): Promise<string | undefined> {
@@ -536,10 +536,10 @@ function assertNoCrossNamespaceCollisions(
   rulebookSkillDirs: ReadonlyArray<string>,
   declaredSkillSlugs: Set<string>,
 ): void {
-  const collisions = [...new Set(rulebookSkillDirs)].filter((dir) => declaredSkillSlugs.has(dir));
-  if (collisions.length > 0) {
+  const collisions = new Set(rulebookSkillDirs).intersection(declaredSkillSlugs);
+  if (collisions.size > 0) {
     throw new Error(
-      `Skill directory name collision across delivery namespaces: ${collisions.join(', ')} ` +
+      `Skill directory name collision across delivery namespaces: ${Array.from(collisions).join(', ')} ` +
         'is delivered as both a rulebook skill and a declared skill. Rename one so they no longer share a directory.',
     );
   }
