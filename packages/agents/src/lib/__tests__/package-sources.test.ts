@@ -78,6 +78,27 @@ describe(resolvePackageSources, () => {
     await expect(resolvePackageSources(['node:fs'], baseDir)).rejects.toThrow(/"node:fs" is not installed/);
   });
 
+  // Node answers a relative specifier with the anchor directory itself, so a path here names a directory rather than
+  // resolving through `node_modules`: `./guidance` sits under `baseDir`, and `../sibling` outside it.
+  it.each(['./guidance', '../sibling', '.', path.join(path.sep, 'abs', 'path')])(
+    'throws when a declared name is the filesystem path %s',
+    async (name) => {
+      await expect(resolvePackageSources([name], baseDir)).rejects.toThrow(/is a filesystem path, not a package name/);
+    },
+  );
+
+  it('resolves a path-shaped name to nothing rather than a directory that happens to sit there', async () => {
+    const stray = path.join(baseDir, 'guidance');
+    await mkdir(stray, { recursive: true });
+    await writeFile(
+      path.join(stray, 'package.json'),
+      JSON.stringify({ name: 'stray', codeassembly: { content: 'c' } }),
+      'utf8',
+    );
+
+    await expect(resolvePackageSources(['./guidance'], baseDir)).rejects.toThrow(/is a filesystem path/);
+  });
+
   it('throws when a package declares no codeassembly content', async () => {
     await installPackage(baseDir, '@ca-fixture/plain', {});
 

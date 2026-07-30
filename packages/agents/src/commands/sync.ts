@@ -378,7 +378,10 @@ async function reconcileDomain(
 
   // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This is
   // advice, not action: Nothing is deployed until the project declares the package.
-  const undeclared = await findUndeclaredGuidancePackages(declaration.packages, domain.baseDir);
+  const undeclared = await findUndeclaredGuidancePackages(
+    [...declaration.packages, ...declaration.declinedPackages],
+    domain.baseDir,
+  );
   if (undeclared.length > 0) {
     console.info(renderPackageAdvice(undeclared));
   }

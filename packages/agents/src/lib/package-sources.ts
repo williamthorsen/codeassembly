@@ -35,19 +35,21 @@ export interface PackageSource {
 }
 
 /**
- * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content but are absent from
- * `declared`, sorted by name, so a caller can name the declaration that would adopt each. Purely advisory: it
- * contributes no source and cannot fail a run, so an unreadable or absent `package.json` yields nothing — which is
- * also what lets the home domain share this path with no carve-out. Because a package must declare its content
- * directory to ship any, detection reads that declaration and cannot report a false positive.
+ * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content and are absent from
+ * `addressed`, sorted by name, so a caller can name the declaration that would adopt each. `addressed` carries every
+ * name the project has spoken about, adopted and declined alike, so a package a project turned down stays quiet.
+ * Purely advisory: it contributes no source and cannot fail a run, so an
+ * unreadable or absent `package.json` yields nothing — which is also what lets the home domain share this path with no
+ * carve-out. Because a package must declare its content directory to ship any, detection reads that declaration and
+ * cannot report a false positive.
  */
 export async function findUndeclaredGuidancePackages(
-  declared: ReadonlyArray<string>,
+  addressed: ReadonlyArray<string>,
   baseDir: string,
 ): Promise<ReadonlyArray<string>> {
   try {
-    const declaredNames = new Set(declared);
-    const candidates = (await readDirectDependencies(baseDir)).filter((name) => !declaredNames.has(name));
+    const addressedNames = new Set(addressed);
+    const candidates = (await readDirectDependencies(baseDir)).filter((name) => !addressedNames.has(name));
     const shipping = await Promise.all(
       candidates.map(async (name) => ((await shipsGuidance(name, baseDir)) ? name : undefined)),
     );
@@ -62,9 +64,10 @@ export async function findUndeclaredGuidancePackages(
  * Resolves each declared package name to the content directory it ships, in declaration order, for use as a content
  * source. Resolution walks the `node_modules` chain Node itself would search from `baseDir`, so it holds under pnpm's
  * symlinked layout and under `workspace:*` links — which is what lets a producing repo consume its own guidance
- * through the same declaration a third party writes. Throws when a declared package is not installed or declares no
- * content directory; whether that directory exists is left to the caller's source validation, so a package source and
- * a hand-declared one fail through one path.
+ * through the same declaration a third party writes. Throws when a declared name is a filesystem path rather than a
+ * package name, when a declared package is not installed, or when it declares no content directory; whether that
+ * directory exists is left to the caller's source validation, so a package source and a hand-declared one fail through
+ * one path.
  */
 export async function resolvePackageSources(
   names: ReadonlyArray<string>,
@@ -72,6 +75,7 @@ export async function resolvePackageSources(
 ): Promise<ReadonlyArray<PackageSource>> {
   const resolved: Array<PackageSource> = [];
   for (const name of names) {
+    assertPackageName(name);
     const installed = await findInstalledPackage(name, baseDir);
     if (installed === undefined) {
       throw new Error(
@@ -84,6 +88,19 @@ export async function resolvePackageSources(
 }
 
 // region | Helpers
+
+/**
+ * Throws when `name` is a filesystem path rather than a package name. Node's resolver answers a relative specifier
+ * with the anchor directory itself, so `./guidance` would otherwise resolve to `<baseDir>/guidance` and `../sibling`
+ * would escape `baseDir` entirely — a second, undocumented path-source route beside `sources`.
+ */
+function assertPackageName(name: string): void {
+  if (name.startsWith('.') || path.isAbsolute(name)) {
+    throw new Error(
+      `Declared package "${name}" is a filesystem path, not a package name. Point at a directory with a \`sources\` entry instead.`,
+    );
+  }
+}
 
 /**
  * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory
@@ -108,8 +125,8 @@ async function findInstalledPackage(
 function listCandidateDirs(name: string, baseDir: string): ReadonlyArray<string> {
   // `createRequire` needs only a path to anchor resolution; the file itself need not exist.
   const requireFromBase = createRequire(path.join(baseDir, 'package.json'));
-  // `resolve.paths` returns null for a specifier Node would never look up in `node_modules` (a core module, a
-  // relative path), which a garbage declaration can produce — an empty candidate list reports it as not installed.
+  // `resolve.paths` returns null for a core module, which a garbage declaration can produce; an empty candidate list
+  // reports it as not installed.
   return (requireFromBase.resolve.paths(name) ?? []).map((nodeModules) => path.join(nodeModules, name));
 }
 

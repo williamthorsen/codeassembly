@@ -198,6 +198,63 @@ describe('sync with a declared package', () => {
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('Ambient package rules.');
   });
 
+  it('lets a higher-tier package outrank a committed-tier one on a shared slug', async () => {
+    await installPackage('@ca-fixture/base', 'codeassembly');
+    await installPackage('@ca-fixture/local', 'codeassembly');
+    const baseContent = path.join(projectRoot, 'node_modules', '@ca-fixture/base', 'codeassembly');
+    const localContent = path.join(projectRoot, 'node_modules', '@ca-fixture/local', 'codeassembly');
+    await writeRulebook(baseContent, 'contested', 'delivery: ambient', 'Base body.');
+    await writeRulebook(localContent, 'contested', 'delivery: ambient', 'Local body.');
+    await declare("packages:\n  use:\n    - '@ca-fixture/base'\n");
+    await writeFile(
+      path.join(projectRoot, '.agents', 'codeassembly.local.yaml'),
+      "packages:\n  use:\n    - '@ca-fixture/local'\n",
+      'utf8',
+    );
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('Local body.');
+    expect(localHost).not.toContain('Base body.');
+  });
+
+  it('lets the last package declared in a tier outrank an earlier one on a shared slug', async () => {
+    await installPackage('@ca-fixture/first', 'codeassembly');
+    await installPackage('@ca-fixture/second', 'codeassembly');
+    const firstContent = path.join(projectRoot, 'node_modules', '@ca-fixture/first', 'codeassembly');
+    const secondContent = path.join(projectRoot, 'node_modules', '@ca-fixture/second', 'codeassembly');
+    await writeRulebook(firstContent, 'contested', 'delivery: ambient', 'First body.');
+    await writeRulebook(secondContent, 'contested', 'delivery: ambient', 'Second body.');
+    await declare("packages:\n  use:\n    - '@ca-fixture/first'\n    - '@ca-fixture/second'\n");
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('Second body.');
+    expect(localHost).not.toContain('First body.');
+  });
+
+  it('stops advising a package the project declined with drop', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
+    await writeFile(
+      path.join(projectRoot, 'package.json'),
+      JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
+      'utf8',
+    );
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+    await writeFile(
+      path.join(projectRoot, '.agents', 'codeassembly.local.yaml'),
+      `packages:\n  drop:\n    - '${PACKAGE_NAME}'\n`,
+      'utf8',
+    );
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(info.mock.calls.flat().join('\n')).not.toContain(PACKAGE_NAME);
+  });
+
   it('advises adopting an installed dependency that ships guidance the project has not declared', async () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     await writeFile(
