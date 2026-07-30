@@ -155,6 +155,8 @@ A declared subagent is deployed into each detected harness's project-local subag
 
 `rulebooks`, `skills`, `subagents`, and `collections` are all deployed.
 
+Two further top-level keys name where artifacts come from rather than which to adopt: `sources` (see [Sources](#sources)) and `packages` (see [Packages](#packages)). `packages` takes the same `use`/`drop` shape as a type block, so the semantics above carry over to it unchanged.
+
 ### Collections
 
 A collection is a traversal-only aggregate: It deploys no file of its own, but declaring it pulls in its members' transitive closure, which `sync` then deploys. Declare one like any other type:
@@ -218,9 +220,64 @@ rulebooks:
 
 Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. Declaration entries stay bare slugs — resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, with no per-entry `from:` syntax.
 
-**Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, so a source can override a same-slug library artifact. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
+**Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, so a source can override a same-slug library artifact. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
 
 Every artifact type resolves through sources: An artifact's body and its closure edges (`dependencies:`, or `members:` for a collection) resolve from the source that owns it, with ownership and retraction semantics identical to a library artifact's. A source-resolved skill or subagent expands its `<!-- include: … -->` directives against its own source root — it can reuse partials within its own source tree, but a target that resolves outside that root fails. A source-resolved **collection** expands its members through the resolver like any other type, and its `'@library'` token is source-scoped: It enumerates that source's own catalog rather than the built-in library. A declared source that is missing or not a directory fails the run — dry-run included — before any file is written, and a slug found in no source or the library fails with an error naming every location searched.
+
+### Packages
+
+A dependency can ship the guidance for using it, and a project adopts it by naming the package — no filesystem path, no generated file to keep in sync:
+
+```yaml
+packages:
+  use:
+    - '@williamthorsen/nmr'
+```
+
+That one line does two things: the package's content directory joins the source search order, and everything the package ships is deployed. Nothing else is needed, because a package's whole catalog is its declaration — which is also why granularity is all-or-nothing. Adopting a package takes every artifact it ships; an individual artifact its catalog contributed cannot be dropped, matching the existing limitation on collection members.
+
+`packages:` is an ordinary declaration block, so `use`, `drop`, and `root: true` behave exactly as they do for an artifact type. A project-local tier can therefore decline a package the committed tier adopted:
+
+```yaml
+# .agents/codeassembly.local.yaml
+packages:
+  drop:
+    - '@williamthorsen/nmr'
+```
+
+**Precedence.** Within a tier, hand-declared `sources` entries outrank packages, and packages outrank the built-in library — a directory you pointed at by hand should win over a dependency's. A package that masks a library slug is reported by the same shadow warning a declared source triggers.
+
+**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain Node itself searches, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, declares no content directory, or points at a missing one fails the run — dry-run included — before any file is written, naming what was searched.
+
+**Discovery.** `sync` reports any direct dependency that ships content the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: a dependency contributes nothing until the project declares it, so installing a package can never quietly change what an agent reads.
+
+#### Shipping guidance from a package
+
+A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like the library's `content/`:
+
+```json
+{
+  "name": "@williamthorsen/nmr",
+  "codeassembly": { "content": "content/agents" },
+  "files": ["bin", "content", "dist"]
+}
+```
+
+```
+content/agents/
+  collections/
+  guidance/rulebooks/
+  skills/
+  subagents/
+```
+
+The key is required and has no default location. That is deliberate: a default would claim a directory name in every producer's package root, so instead a producer says where its content lives and can nest it under a directory it already owns — including build output, if a build step puts it there.
+
+**Include the content directory in `files`.** This is the one thing most likely to go wrong, because a `workspace:*` self-link resolves the live source tree and so never exercises packing. A producer that omits the entry sees its own guidance work perfectly and every consumer's install fail. `pnpm pack` and inspecting the tarball is the check that catches it.
+
+Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens.
+
+One shape cannot consume its own guidance: a single-package repo whose package is the repo root has no `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
 
 ### Scopes
 
