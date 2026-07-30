@@ -58,7 +58,7 @@ export function parseCodeAssemblyFile(raw: string, sourceLabel?: string): CodeAs
     parsed = parseYaml(raw);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid codeassembly.yaml${where}: malformed YAML — ${message}`);
+    throw new Error(`Invalid codeassembly.yaml${where}: malformed YAML — ${message}`, { cause: error });
   }
 
   // An empty or comment-only document parses to nullish; treat it as "nothing declared".
