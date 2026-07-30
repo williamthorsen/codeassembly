@@ -1,0 +1,219 @@
+import { existsSync } from 'node:fs';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { InstallOptions } from '../../lib/types.ts';
+import { syncCommand } from '../sync.ts';
+
+// Exercises the `packages:` declaration: a package's content dir joins the source search order and its catalog seeds
+// the closure, so naming the package is the whole declaration. Fixture packages live under the temp project's own
+// `node_modules`, which is the first directory Node's resolver searches from there — no real install involved.
+describe('sync with a declared package', () => {
+  const PACKAGE_NAME = '@ca-fixture/guide';
+
+  let projectRoot: string;
+  let contentDir: string;
+  let packageDir: string;
+
+  beforeEach(async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    projectRoot = path.join(tmpdir(), `agents-test-sync-pkg-proj-${stamp}`);
+    contentDir = path.join(tmpdir(), `agents-test-sync-pkg-content-${stamp}`);
+    packageDir = path.join(projectRoot, 'node_modules', PACKAGE_NAME);
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await mkdir(path.join(contentDir, 'guidance', 'rulebooks'), { recursive: true });
+    await writeOverlays();
+    await installPackage(PACKAGE_NAME, 'codeassembly');
+  });
+
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await rm(projectRoot, { recursive: true, force: true });
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
+    return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
+  }
+
+  const skillPath = (slug: string): string => path.join(projectRoot, '.claude', 'skills', slug, 'SKILL.md');
+  const subagentPath = (slug: string): string => path.join(projectRoot, '.claude', 'agents', `${slug}.md`);
+  const localHostPath = (): string => path.join(projectRoot, 'CLAUDE.local.md');
+
+  /** Installs a fixture package under the project's `node_modules`, declaring `content` as its content directory. */
+  async function installPackage(name: string, content: string): Promise<void> {
+    const dir = path.join(projectRoot, 'node_modules', name);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'package.json'), JSON.stringify({ name, codeassembly: { content } }), 'utf8');
+  }
+
+  /** Writes the project-scope codeassembly.yaml verbatim. */
+  async function declare(body: string): Promise<void> {
+    await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), body, 'utf8');
+  }
+
+  /** Writes a rulebook into a content root, which may be the package's, a plain source's, or the library's. */
+  async function writeRulebook(root: string, slug: string, frontmatter: string, body: string): Promise<void> {
+    const dir = path.join(root, 'guidance', 'rulebooks');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, `${slug}.md`), `---\nslug: ${slug}\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
+  }
+
+  /** Writes a skill into a content root, with an optional `dependencies:` block. */
+  async function writeSkill(root: string, slug: string, frontmatter = ''): Promise<void> {
+    const dir = path.join(root, 'skills', slug);
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n${frontmatter}---\n\n# ${slug}\n`, 'utf8');
+  }
+
+  /** Writes a subagent into a content root. */
+  async function writeSubagent(root: string, slug: string): Promise<void> {
+    const dir = path.join(root, 'subagents');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n# ${slug}\n\nUse {tool:Read}.\n`, 'utf8');
+  }
+
+  /** Writes a members-based collection into a content root. */
+  async function writeCollection(root: string, slug: string, skills: ReadonlyArray<string>): Promise<void> {
+    const dir = path.join(root, 'collections');
+    await mkdir(dir, { recursive: true });
+    const members = `members:\n  skills:\n${skills.map((member) => `    - ${member}`).join('\n')}\n`;
+    await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n${members}---\n\n# ${slug}\n`, 'utf8');
+  }
+
+  /** Writes the Claude harness overlay into the library, which is where the subagent transform reads it from. */
+  async function writeOverlays(): Promise<void> {
+    const dataDir = path.join(contentDir, 'subagents', '_data');
+    await mkdir(dataDir, { recursive: true });
+    await writeFile(
+      path.join(dataDir, 'claude.yaml'),
+      '_tools:\n  Read: Read\n\n_defaults:\n  model: sonnet\n',
+      'utf8',
+    );
+  }
+
+  /** The package's content root, as resolved from its declared `codeassembly.content`. */
+  const packageContent = (): string => path.join(packageDir, 'codeassembly');
+
+  it('deploys every deployable artifact the package ships, from the package name alone', async () => {
+    await writeRulebook(packageContent(), 'pkg-rules', 'delivery: skill\ndescription: From the package.', 'Pkg rules.');
+    await writeSkill(packageContent(), 'pkg-skill');
+    await writeSubagent(packageContent(), 'pkg-agent');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(skillPath('consult-pkg-rules'), 'utf8')).toContain('Pkg rules.');
+    expect(existsSync(skillPath('pkg-skill'))).toBe(true);
+    expect(existsSync(subagentPath('pkg-agent'))).toBe(true);
+  });
+
+  it('delivers an ambient rulebook the package ships to the local host', async () => {
+    await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
+  });
+
+  it('resolves a collection the package ships when the project declares it', async () => {
+    await writeSkill(packageContent(), 'member-skill');
+    await writeCollection(packageContent(), 'pkg-bundle', ['member-skill']);
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\ncollections:\n  use:\n    - pkg-bundle\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(skillPath('member-skill'))).toBe(true);
+  });
+
+  it('pulls in a library artifact a package artifact depends on', async () => {
+    await writeRulebook(contentDir, 'library-dep', 'delivery: skill', 'Library dependency.');
+    await writeSkill(packageContent(), 'pkg-skill', 'dependencies:\n  rulebooks:\n    - library-dep\n');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(skillPath('consult-library-dep'), 'utf8')).toContain('Library dependency.');
+  });
+
+  it('lets a hand-declared source outrank a package source on a shared slug', async () => {
+    const sourceDir = path.join(projectRoot, 'local-guidance');
+    await writeRulebook(sourceDir, 'contested', 'delivery: ambient', 'Source body.');
+    await writeRulebook(packageContent(), 'contested', 'delivery: ambient', 'Package body.');
+    await declare(
+      `sources:\n  - name: org\n    path: ${sourceDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\nrulebooks:\n  use:\n    - contested\n`,
+    );
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('Source body.');
+    expect(localHost).not.toContain('Package body.');
+  });
+
+  it('warns when a package source shadows a same-slug library artifact', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await writeRulebook(contentDir, 'shadowed', 'delivery: ambient', 'Library body.');
+    await writeRulebook(packageContent(), 'shadowed', 'delivery: ambient', 'Package body.');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(localHostPath(), 'utf8')).toContain('Package body.');
+    expect(warn.mock.calls.flat().join('\n')).toMatch(/shadow.*shadowed/s);
+  });
+
+  it('keeps a hand-declared source resolving alongside a declared package', async () => {
+    const sourceDir = path.join(projectRoot, 'local-guidance');
+    await writeRulebook(sourceDir, 'from-source', 'delivery: ambient', 'Source rules.');
+    await writeRulebook(packageContent(), 'from-package', 'delivery: ambient', 'Package rules.');
+    await declare(
+      `sources:\n  - name: org\n    path: ${sourceDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\nrulebooks:\n  use:\n    - from-source\n`,
+    );
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).toContain('Source rules.');
+    expect(localHost).toContain('Package rules.');
+  });
+
+  it('retracts a package artifact once a higher tier drops the package', async () => {
+    await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+    expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
+
+    await writeFile(
+      path.join(projectRoot, '.agents', 'codeassembly.local.yaml'),
+      `packages:\n  drop:\n    - '${PACKAGE_NAME}'\n`,
+      'utf8',
+    );
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(await readFile(localHostPath(), 'utf8')).not.toContain('Ambient package rules.');
+  });
+
+  it('fails the run when a declared package is not installed, writing nothing', async () => {
+    await declare("packages:\n  use:\n    - '@ca-fixture/absent'\n");
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+      /"@ca-fixture\/absent" is not installed/,
+    );
+    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+  });
+
+  it('fails the run when a declared package ships no content directory, writing nothing', async () => {
+    await installPackage('@ca-fixture/empty', 'missing-dir');
+    await declare("packages:\n  use:\n    - '@ca-fixture/empty'\n");
+
+    await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+      /Invalid declared source.*@ca-fixture\/empty/s,
+    );
+    expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+  });
+});

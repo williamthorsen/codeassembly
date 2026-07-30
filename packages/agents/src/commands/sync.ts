@@ -6,7 +6,7 @@ import process from 'node:process';
 
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
+import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import {
@@ -15,11 +15,13 @@ import {
   hasLibraryArtifact,
   type SourceResolver,
 } from '../lib/content-sources.ts';
-import { resolveClosure } from '../lib/dependency-resolver.ts';
+import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
+import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
+import { resolvePackageSources } from '../lib/package-sources.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
@@ -163,20 +165,32 @@ async function reconcileDomain(
 
   const contentDir = contentDirOverride ?? resolveContentDir();
 
+  // A declared package contributes both a source and a set of seeds: its content dir joins the search order below the
+  // hand-declared sources, so a hand-pointed local directory outranks a dependency, and everything it ships seeds the
+  // closure — which is what makes naming the package the whole declaration.
+  const packageSources = await resolvePackageSources(declaration.packages, domain.baseDir);
+  const sources = [...declaration.sources, ...packageSources];
+
   // Resolution searches declared sources (highest precedence first) then the built-in library. Validate each declared
   // source up front so a missing or non-directory source fails the whole run — dry-run included — before any write.
-  const resolver = createSourceResolver(declaration.sources, contentDir);
-  await assertValidSources(declaration.sources);
+  const resolver = createSourceResolver(sources, contentDir);
+  await assertValidSources(sources);
+
+  // Enumerated after validation, so a package whose content dir is missing has already failed the run.
+  const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
 
   // Expand declared collections — and any artifact's own dependencies — into the deployable per-type sets before
   // resolving against the sources and library, so a declared collection deploys exactly its transitive closure.
   const closure = await resolveClosure(
-    {
-      rulebook: declaration.rulebooks,
-      skill: declaration.skills,
-      subagent: declaration.subagents,
-      collection: declaration.collections,
-    },
+    mergeSeeds([
+      {
+        rulebook: declaration.rulebooks,
+        skill: declaration.skills,
+        subagent: declaration.subagents,
+        collection: declaration.collections,
+      },
+      ...packageCatalogs,
+    ]),
     resolver,
   );
   const declaredRulebooks = closure.rulebooks;
@@ -412,6 +426,21 @@ async function describeSourceProblem(dir: string): Promise<string | undefined> {
     }
     return `unreadable — ${error instanceof Error ? error.message : String(error)}`;
   }
+}
+
+/**
+ * Concatenates per-type seed sets into the one set that seeds closure resolution. Deduping is deliberately left out:
+ * `resolveClosure` already dedupes by slug as it walks, so a slug both declared directly and enumerated from a
+ * package's catalog is visited once.
+ */
+function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
+  const merged: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };
+  for (const set of sets) {
+    for (const type of ARTIFACT_TYPE_VALUES) {
+      merged[type].push(...(set[type] ?? []));
+    }
+  }
+  return merged;
 }
 
 /** A planned write whose destination must be sync-owned (or absent) before the write proceeds. */
