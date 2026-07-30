@@ -100,6 +100,16 @@ Relay the comment verbatim. It is free text on purpose: naming which doctrine ru
 
 Report the written `path` on success.
 
+### Recording a pull request merged outside the merge flow
+
+Such a pull request wrote no merge artifact, so the merged lede has to be supplied. Fetch the body, take its `## What` section, write that to a file, and pass the file:
+
+```bash
+gh pr view <number> --json body --jq '.body' > "$TMPDIR/merged-body.md"
+```
+
+Then hand the `## What` section's text to `--merged-lede-file` and continue from step 2. Everything else resolves from the ticket's artifacts as usual.
+
 ## The record
 
 One event per decision, in the named store:
