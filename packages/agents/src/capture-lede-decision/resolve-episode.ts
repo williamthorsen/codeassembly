@@ -229,8 +229,20 @@ async function readChangeSummaryFields(
   return {
     type: extractString(fields, 'type'),
     scope: extractString(fields, 'scope'),
-    ticket: extractString(fields, 'ticket_id'),
+    ticket: readIdentifier(fields, 'ticket_id'),
   };
+}
+
+/**
+ * Reads an identifier field that YAML may have typed as a number: a wholly numeric ticket id is written unquoted, so a
+ * string-only read would silently drop it, while a prefixed key such as `MAC-42` arrives as a string.
+ */
+function readIdentifier(fields: Record<string, unknown>, key: string): string | null {
+  const value = fields[key];
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return extractString(fields, key);
 }
 
 /** Reads a file as UTF-8, yielding `null` when it does not exist. */

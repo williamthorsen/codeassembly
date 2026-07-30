@@ -31,6 +31,8 @@ export async function createLedeFixture(
     type?: string;
     mergedLede?: string;
     omit?: 'pull-request' | 'merge';
+    /** Ticket id as the change summary spells it; a wholly numeric id is written unquoted, as the real artifact does. */
+    ticketId?: string;
   } = {},
 ): Promise<LedeFixture> {
   const root = await mkdtemp(join(tmpdir(), 'lede-decision-'));
@@ -53,7 +55,7 @@ export async function createLedeFixture(
   await writeArtifact(
     artifactDir,
     '20260730-174234Z_fixture_change-summary.md',
-    "---\ntype: fix\nscope: kb\nticket_id: '1107'\n---\n\n# Title\n",
+    `---\ntype: fix\nscope: kb\nticket_id: ${overrides.ticketId ?? '1107'}\n---\n\n# Title\n`,
   );
 
   await writeFile(join(dataDir, 'lede-voice.md'), '# Lede voice\n\nDoctrine text.\n', 'utf8');

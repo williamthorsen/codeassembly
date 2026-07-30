@@ -69,6 +69,18 @@ describe(resolveEpisode, () => {
     expect(episode.identity).toMatchObject({ type: 'fix', scope: 'kb', ticket: '1107' });
   });
 
+  it('reads a wholly numeric ticket id, which the change summary writes unquoted', async () => {
+    const fixture = await createLedeFixture({ ticketId: '1107' });
+
+    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).identity.ticket).toBe('1107');
+  });
+
+  it('reads a prefixed ticket key, which the change summary writes as a string', async () => {
+    const fixture = await createLedeFixture({ ticketId: 'MAC-42' });
+
+    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).identity.ticket).toBe('MAC-42');
+  });
+
   it('reads a lede from an override file rather than its artifact', async () => {
     const fixture = await createLedeFixture();
     const overrideFile = join(fixture.root, 'override.md');
