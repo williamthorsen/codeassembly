@@ -234,7 +234,7 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-That one line does two things: the package's content directory joins the source search order, and everything the package ships is deployed. Nothing else is needed, because a package's whole catalog is its declaration — which is also why granularity is all-or-nothing. Adopting a package takes every artifact it ships; an individual artifact its catalog contributed cannot be dropped, matching the existing limitation on collection members.
+That one line does two things: the package's content directory joins the source search order, and every rulebook, skill, and subagent the package ships is deployed. Nothing else is needed, because a package's whole catalog is its declaration — which is also why granularity is all-or-nothing. Adopting a package takes every artifact in its catalog; an individual one cannot be dropped, matching the existing limitation on collection members.
 
 `packages:` is an ordinary declaration block, so `use`, `drop`, and `root: true` behave exactly as they do for an artifact type. A project-local tier can therefore decline a package the committed tier adopted:
 
@@ -245,11 +245,13 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-**Precedence.** Within a tier, hand-declared `sources` entries outrank packages, and packages outrank the built-in library — a directory you pointed at by hand should win over a dependency's. A package that masks a library slug is reported by the same shadow warning a declared source triggers.
+**Precedence.** Every `sources` entry, from any tier, outranks every package, and every package outranks the built-in library — a directory you pointed at by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. A package that masks a library slug is reported by the same shadow warning a declared source triggers; two packages that ship the same slug resolve by precedence with no warning, and `sync --dry-run` names the source each artifact resolved from.
 
 **Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain Node itself searches, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, declares no content directory, or points at a missing one fails the run — dry-run included — before any file is written, naming what was searched.
 
-**Discovery.** `sync` reports any direct dependency that ships content the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: a dependency contributes nothing until the project declares it, so installing a package can never quietly change what an agent reads.
+**Discovery.** `sync` reports any direct dependency that ships content the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: an undeclared dependency contributes nothing, so installing one changes nothing about what an agent reads, and `drop` silences the advice for a package the project has turned down.
+
+Upgrading an already-declared package is the other case. Its catalog is read from the filesystem, so a version that adds an artifact deploys it with no declaration change — the freshness property that makes the rendered guidance a function of what is installed. `sync --dry-run` prints the resolution report naming every artifact and the source it came from, which is where that change is visible.
 
 #### Shipping guidance from a package
 
@@ -272,6 +274,8 @@ content/agents/
 ```
 
 The key is required and has no default location. That is deliberate: a default would claim a directory name in every producer's package root, so instead a producer says where its content lives and can nest it under a directory it already owns — including build output, if a build step puts it there.
+
+A package's catalog is its rulebooks, skills, and subagents; a `collections/` entry is resolvable but not adopted on its own, so a collection reaches a consumer only when that consumer declares it by name. Its members are already in the catalog anyway, so the way to pull in an artifact from outside the package — a library rulebook, say — is a `dependencies:` edge on an artifact the catalog does contain.
 
 **Include the content directory in `files`.** This is the one thing most likely to go wrong, because a `workspace:*` self-link resolves the live source tree and so never exercises packing. A producer that omits the entry sees its own guidance work perfectly and every consumer's install fail. `pnpm pack` and inspecting the tarball is the check that catches it.
 
