@@ -1253,7 +1253,7 @@ describe(syncCommand, () => {
         permissionMode: bypassPermissions
 
     `;
-    const ROVODEV_OVERLAY = unindent`
+    const ROVO_OVERLAY = unindent`
       _tools:
         Read: open_files
 
@@ -1270,7 +1270,7 @@ describe(syncCommand, () => {
       const dataDir = path.join(contentDir, 'subagents', '_data');
       await mkdir(dataDir, { recursive: true });
       await writeFile(path.join(dataDir, 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
-      await writeFile(path.join(dataDir, 'rovodev.yaml'), ROVODEV_OVERLAY, 'utf8');
+      await writeFile(path.join(dataDir, 'rovodev.yaml'), ROVO_OVERLAY, 'utf8');
     }
 
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
