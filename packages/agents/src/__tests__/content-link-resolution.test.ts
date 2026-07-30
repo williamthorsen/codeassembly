@@ -19,9 +19,15 @@ import { isRewritableLinkTarget } from '../lib/path-rewriter.ts';
 //
 // Host roots only. A `_partials/` file is never installed standalone, and its links are authored against the host that
 // inlines it — checking one in isolation would misresolve every `../` it carries. Include expansion below reaches them
-// through each host, which is the only context where they mean anything. `guidance/` is copied verbatim with no link
-// rewriting, so it is out of scope.
-const HOST_ROOTS: ReadonlyArray<string> = ['skills', 'subagents'];
+// through each host, which is the only context where they mean anything.
+//
+// `guidance/rulebooks/` is a host root because `sync` renders a rulebook body per harness and resolves its links the
+// same way this test does: against the file's own place in the content tree. The rest of `guidance/` stays out of
+// scope for the opposite reason. `_harnesses/` files are rewritten at install time, but anchored at the harness home
+// they install into rather than at their source directory, so resolving one here against the source tree would
+// misreport every link it carries. `shared/` installs verbatim to a harness-neutral location, which no rewritten path
+// could name a harness in.
+const HOST_ROOTS: ReadonlyArray<string> = ['guidance/rulebooks', 'skills', 'subagents'];
 
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 
