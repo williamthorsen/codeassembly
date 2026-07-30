@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 5
+version: 6
 ---
 
 # CodeAssembly content specification
@@ -13,7 +13,7 @@ The declaration contract for CodeAssembly artifacts -- skills, subagents, rulebo
 
 Every rule below belongs to one of three classes, marked where it appears.
 
-**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`skill`, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Three more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
+**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`skill`, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Four more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, a rulebook token naming a target that deploys no skill to invoke fails the same pre-write pass, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
 
 **Enforced by test.** The suites in `packages/agents/src/__tests__/` read the shipped library and assert its conventions hold. A rule one of them guards names its test.
 
@@ -37,6 +37,7 @@ dependencies:
 
 When a skill or subagent invocation appears inline in a skill's or subagent's body, write it as a token rather than a hardcoded harness-specific form:
 
+- `{rulebook:<slug>}` renders to the harness skill sigil plus the skill name the named rulebook deploys under -- its `skill-name` when it declares one, `consult-<slug>` otherwise. Because it resolves through the target rather than echoing the slug, an override on the target stays honest at every call site.
 - `{skill:<slug>}` renders to the harness skill sigil plus the slug -- `/<slug>` on Claude, `!<slug>` on Rovo.
 - `{subagent:<slug>}` renders to the harness subagent sigil plus the slug. That sigil is empty on both current harnesses, so it renders to the bare slug, which is how a subagent is dispatched on each.
 
@@ -44,17 +45,21 @@ Slugs are kebab-case and letter-led (`[a-z][a-z0-9-]*`). The sigils are a typed 
 
 A token is also a dependency edge: `sync` extracts the tokens from a skill's or subagent's include-expanded body and pulls each target into the deploy closure. An inline invocation is therefore expressed once, as the token -- it needs no duplicate `dependencies:` entry, and a token naming a non-existent artifact fails the run just as a missing `dependencies:` edge does. Because extraction runs on the include-expanded body, a token inside a shared `_partials` file becomes an edge for every skill that includes it.
 
-Tokens are honored only in skills and subagents. A rulebook body does pass through a render pass, but a narrower one: it receives link and template rewriting (see [Links in rulebook bodies](#links-in-rulebook-bodies)) and not token rewriting, which is why rulebooks keep `dependencies:`, as collections keep `members:`. Reserve a `dependencies:` entry for a non-inline edge; use a token for any invocation that appears in the body. _(Convention; not enforced.)_
+Rulebooks, skills, and subagents all honor tokens; collections carry no body to render. `{rulebook:<slug>}` is the exception: only a rulebook body renders one, because `install` deploys skills without resolving a declaration and so has no rulebook to resolve against. A rulebook token elsewhere fails the run, as does one naming a rulebook that deploys no skill -- an `ambient`-only target is already in the reader's context, so there is nothing to route to. Express that relationship with `dependencies:` instead.
+
+Reserve a `dependencies:` entry for a non-inline edge; use a token for any invocation that appears in the body. _(Convention; not enforced.)_
 
 ## Links in rulebook bodies
 
 A rulebook addresses a file by linking to it, not by naming it in prose. Author the target relative to the rulebook's own place in the content tree, which is `guidance/rulebooks/<slug>.md`, and `sync` emits the absolute path each target harness can follow. A target of `../../skills/_data/concision.md` reaches Claude as `~/.claude/skills/_data/concision.md` and Rovo as `~/.rovodev/skills/_data/concision.md`. `{harness_home_dir}` and `{harness_id}` expand per harness, including where one opens a link target.
 
-A rulebook may link only into `skills/` and `scripts/`, the two trees whose source layout matches where they deploy under every harness home. Any other target fails the run, with an error naming the rulebook, the target as authored, and whether it resolved outside a linkable root or escaped the content root. `subagents/` is rejected because a subagent is dispatched rather than read, so no link into one is worth authoring; `_partials/`, `collections/`, and `guidance/` never deploy as files, so a link into one would name nothing. Nor can a rulebook link to the skill another rulebook delivers: that `SKILL.md` is generated rather than authored, and `dependencies:` already expresses the relationship. _(Validated on parse.)_
+A rulebook may link only into `skills/` and `scripts/`, the two trees whose source layout matches where they deploy under every harness home. Any other target fails the run, with an error naming the rulebook, the target as authored, and why it was rejected. `subagents/` is rejected because a subagent is dispatched rather than read, so no link into one is worth authoring; `_partials/` and `collections/` never deploy as files, so a link into one would name nothing.
+
+A link to a sibling rulebook is rejected too, and its error names the `{rulebook:<slug>}` token that addresses it instead. A rulebook is invoked rather than read: the skill it deploys is discovered by name, so an invocation resolves wherever it was deployed, while a path would be right in one domain and dead in the other. _(Validated on parse.)_
 
 A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.test.ts`, which also resolves every anchor fragment to exactly one heading. _(Enforced by test.)_
 
-One limitation is worth knowing before writing a rulebook that documents linking: rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead.
+One limitation is worth knowing before writing a rulebook that documents linking: rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Invocation tokens rewrite the same way, so an example token keeps the `<slug>` placeholder rather than naming a real artifact.
 
 ## Collections
 
