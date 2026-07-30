@@ -214,7 +214,8 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 **Root-level development (via `@williamthorsen/nmr`):**
 
 - `pnpm install` - Install all dependencies
-- `pnpm run bootstrap` - Build every package; required after install before the MCP server or CLI bins will run
+- `pnpm run bootstrap` - Build every package, then deploy current guidance into the worktree's harness dirs; required after install before the MCP server or CLI bins will run
+- `pnpm run agents:sync` - Deploy current guidance on its own (the second half of bootstrap)
 - `nmr check` - Run typecheck, format check, lint check, and tests
 - `nmr check:strict` - Strict checks including coverage and audit
 - `nmr ci` - Full CI pipeline (strict checks + build)
@@ -223,7 +224,7 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - `nmr lint` - Fix lint in all packages
 - `nmr lint:check` - Check for lint in all packages
 - `nmr typecheck` - TypeScript check all packages
-- `nmr root:test` - Run only root-level tests (in `__tests__/`)
+- `nmr root:test` - Run only root-level tests (those outside `packages/`)
 - `nmr root:lint` - Lint only root-level files
 
 **Workspace packages (via nmr):**
@@ -255,9 +256,8 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 
 ### Root-level tests
 
-- Located in `__tests__/` directory
-- Consistency checks (Node.js and pnpm version alignment) via `@williamthorsen/nmr/tests`
-- Use Vitest with config in `vitest.root.config.ts`
+- Located in `scripts/__tests__/` and `.readyup/lib/__tests__/`
+- Use Vitest with config in `vitest.root.config.ts`, which excludes `packages/**`
 
 ### Workspace script system
 
