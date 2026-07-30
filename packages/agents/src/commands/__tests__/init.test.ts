@@ -44,6 +44,7 @@ describe(initCommand, () => {
       subagents: [],
       collections: [],
       packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
@@ -100,6 +101,7 @@ describe(initGlobalCommand, () => {
       subagents: [],
       collections: ['all'],
       packages: [],
+      declinedPackages: [],
       sources: [],
     });
   });
