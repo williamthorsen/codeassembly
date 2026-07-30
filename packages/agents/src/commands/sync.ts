@@ -210,12 +210,10 @@ async function reconcileDomain(
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
   // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
-  // tool-name/link rewriting. `harnessSkillDirs` is the plain dir list the rulebook-skill passes and orphan scans use,
-  // which need no transform context.
+  // tool-name/link rewriting, and the harness id each rulebook body renders for.
   const harnessSkillTargets = await Promise.all(
     harnessIds.map((harnessId) => resolveSkillTarget(harnessId, domain.baseDir, contentDir)),
   );
-  const harnessSkillDirs = harnessSkillTargets.map((target) => target.skillsDir);
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
   // mapping so the deploy applies the same transform `install` would. Resolved separately from skills because the
@@ -229,7 +227,8 @@ async function reconcileDomain(
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
   const skillOrphansByDir = await Promise.all(
-    harnessSkillDirs.map(async (skillsDir) => ({
+    harnessSkillTargets.map(async ({ harnessId, skillsDir }) => ({
+      harnessId,
       skillsDir,
       orphans: (await listOwnedSkills(skillsDir))
         .filter(({ dir, slug }) => desiredSkillDirs.get(slug) !== dir)
@@ -315,12 +314,7 @@ async function reconcileDomain(
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
   // before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
   // of the write being clobbered by a later retract.
-  // Iterates the skill targets rather than the orphan scan, because only the targets carry the harness id each
-  // rulebook body renders for; the scan is keyed back in by its skills dir.
-  const orphansBySkillsDir = new Map(skillOrphansByDir.map(({ skillsDir, orphans }) => [skillsDir, orphans]));
-  for (const { harnessId, skillsDir } of harnessSkillTargets) {
-    // The scan covers every target's skills dir, so the fallback stands in for the map's optional lookup type only.
-    const orphans = orphansBySkillsDir.get(skillsDir) ?? [];
+  for (const { harnessId, skillsDir, orphans } of skillOrphansByDir) {
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
@@ -355,7 +349,7 @@ async function reconcileDomain(
   await refreshPromptsYml(harnessIds, domain);
 
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
-  const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
+  const skillFilesWritten = desiredSkillDirs.size * harnessSkillTargets.length;
   const declaredSkillRetractions = declaredSkillOrphansByDir.reduce(
     (total, harness) => total + harness.orphans.length,
     0,
@@ -370,7 +364,7 @@ async function reconcileDomain(
     `Synced ${resolved.length} rulebook(s), ${resolvedSkills.length} declared skill(s), and ` +
       `${resolvedSubagents.length} declared subagent(s); delivered ${skillFilesWritten} rulebook-skill file(s), ` +
       `${declaredSkillsDeployed} declared-skill dir(s), and ${subagentsDeployed} declared-subagent file(s) across ` +
-      `${harnessSkillDirs.length} harness(s); retracted ` +
+      `${harnessSkillTargets.length} harness(s); retracted ` +
       `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
       `${subagentRetractions} declared-subagent file(s).`,
   );
