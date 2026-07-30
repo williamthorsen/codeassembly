@@ -4,7 +4,33 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { rewriteMarkdownPaths, rewritePathsInDirectory, rewriteTemplateVariables } from '../path-rewriter.js';
+import {
+  isRewritableLinkTarget,
+  rewriteMarkdownPaths,
+  rewritePathsInDirectory,
+  rewriteTemplateVariables,
+} from '../path-rewriter.js';
+
+describe(isRewritableLinkTarget, () => {
+  it.each(['../_data/concision.md', './modules/review-cycle.md', 'SKILL.md', 'scripts/run.sh'])(
+    'treats %s as rewritable',
+    (target) => {
+      expect(isRewritableLinkTarget(target)).toBe(true);
+    },
+  );
+
+  it.each([
+    'https://example.com/docs',
+    // eslint-disable-next-line unicorn/prefer-https -- Test data: the passthrough set covers plain HTTP too, which is what the regex's optional `s` exists for.
+    'http://example.com/docs',
+    '/absolute/path.md',
+    '~/.claude/skills/_data/concision.md',
+    '#anchor-only',
+    '{harness_home_dir}/scripts/describe-change.sh',
+  ])('treats %s as passthrough', (target) => {
+    expect(isRewritableLinkTarget(target)).toBe(false);
+  });
+});
 
 describe(rewriteMarkdownPaths, () => {
   const skillsPrefix = '.claude/skills';
@@ -26,12 +52,6 @@ describe(rewriteMarkdownPaths, () => {
     },
     {
       name: 'leaves URL links untouched',
-      fileRelPath: 'commit/SKILL.md',
-      content: 'Visit [docs](https://example.com/docs) for info.',
-      expected: 'Visit [docs](https://example.com/docs) for info.',
-    },
-    {
-      name: 'leaves http URL links untouched',
       fileRelPath: 'commit/SKILL.md',
       content: 'Visit [docs](https://example.com/docs) for info.',
       expected: 'Visit [docs](https://example.com/docs) for info.',
@@ -65,6 +85,12 @@ describe(rewriteMarkdownPaths, () => {
       fileRelPath: 'orchestrate/SKILL.md',
       content: 'See [review cycle](./modules/review-cycle.md) for details.',
       expected: 'See [review cycle](~/.claude/skills/orchestrate/modules/review-cycle.md) for details.',
+    },
+    {
+      name: 'leaves template-variable-prefixed targets untouched',
+      fileRelPath: 'commit/SKILL.md',
+      content: 'Run [describe-change]({harness_home_dir}/scripts/describe-change.sh) first.',
+      expected: 'Run [describe-change]({harness_home_dir}/scripts/describe-change.sh) first.',
     },
     {
       name: 'leaves anchor-only links untouched',
@@ -233,6 +259,21 @@ describe(rewritePathsInDirectory, () => {
     expect(result).toBe(
       'See [format](~/.claude/skills/_data/title-templates.md). Run ~/.claude/scripts/describe-change.sh.',
     );
+  });
+
+  it('expands a template variable inside a link target instead of resolving it as a relative path', async () => {
+    const skillDir = path.join(skillsDestDir, 'commit');
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(
+      path.join(skillDir, 'SKILL.md'),
+      'Run [describe-change]({harness_home_dir}/scripts/describe-change.sh) first.',
+      'utf8',
+    );
+
+    await rewritePathsInDirectory(skillDir, skillsDestDir, '.claude/skills', '.claude', 'claude');
+
+    const result = await readFile(path.join(skillDir, 'SKILL.md'), 'utf8');
+    expect(result).toBe('Run [describe-change](~/.claude/scripts/describe-change.sh) first.');
   });
 
   it('does not write files when no changes are needed', async () => {

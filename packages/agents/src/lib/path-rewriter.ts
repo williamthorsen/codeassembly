@@ -2,6 +2,22 @@ import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /**
+ * Reports whether a Markdown link target is one this module resolves as a source-tree-relative path. False for the
+ * forms that already name their destination or name nothing to resolve: `http(s)` URLs, absolute paths, `~`-prefixed
+ * paths, anchor-only links, and targets opening with a `{template_variable}`, which expands to its own absolute path
+ * after this pass. Exported so a caller that validates link targets tests exactly the set that gets rewritten.
+ */
+export function isRewritableLinkTarget(target: string): boolean {
+  return !(
+    /^https?:\/\//.test(target) ||
+    target.startsWith('/') ||
+    target.startsWith('~') ||
+    target.startsWith('#') ||
+    target.startsWith('{')
+  );
+}
+
+/**
  * Rewrites relative Markdown link targets in `content` to absolute `~`-prefixed paths.
  * Resolves each relative target against the directory of `fileRelPath` within the tree rooted
  * at `pathPrefix`, then maps to `~/{pathPrefix}/{resolved}`. The prefix is the harness-relative
@@ -13,8 +29,7 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathP
 
   // Match Markdown links [text](target) where target is a relative path
   return content.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (_match, text: string, target: string) => {
-    // Skip non-relative targets: URLs, absolute paths, tilde paths, anchor-only links
-    if (/^https?:\/\//.test(target) || target.startsWith('/') || target.startsWith('~') || target.startsWith('#')) {
+    if (!isRewritableLinkTarget(target)) {
       return `[${text}](${target})`;
     }
 

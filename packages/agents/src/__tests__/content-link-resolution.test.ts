@@ -5,6 +5,7 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../lib/directive-expander.ts';
+import { isRewritableLinkTarget } from '../lib/path-rewriter.ts';
 
 // A Markdown link in installable content is rewritten at install time by `rewriteMarkdownPaths`, which resolves a
 // relative target against the *host* file's directory — the skill or subagent the link renders into, not the partial
@@ -76,8 +77,10 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
     const file = path.relative(CONTENT_ROOT, hostFile);
 
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
+      // The rewriter's own set, plus anchor-only targets: those name no file to rewrite, but they do name a fragment
+      // this test resolves against the host's own headings.
       const target = match[1];
-      if (target === undefined || !isRelativeTarget(target)) {
+      if (target === undefined || !(isRewritableLinkTarget(target) || target.startsWith('#'))) {
         continue;
       }
 
@@ -121,11 +124,6 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
     `partial rather than the host.`;
   const lines = violations.map((v) => `  [${v.reason}] ${v.file}: ${v.target}`);
   return [header, ...lines].join('\n');
-}
-
-/** Reports whether a link target is one the install pipeline resolves — a relative path, an anchor, or both. */
-function isRelativeTarget(target: string): boolean {
-  return !(/^https?:\/\//.test(target) || target.startsWith('/') || target.startsWith('~') || target.startsWith('{'));
 }
 
 async function readHeadingSlugs(
