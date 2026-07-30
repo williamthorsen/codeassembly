@@ -980,6 +980,16 @@ describe(syncCommand, () => {
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), content, 'utf8');
     }
 
+    it('fails a dry run with nothing written when a skill body carries a rulebook token', async () => {
+      await writeLibrarySkill('people-report', { body: 'See {rulebook:nmr-scripts}.' });
+      await declareSkills('people-report');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /\{rulebook:nmr-scripts\} in skills\/people-report\/SKILL\.md[\s\S]*only in a rulebook body/,
+      );
+      expect(existsSync(skillPath('people-report'))).toBe(false);
+    });
+
     it('deploys a declared skill into the project-local skills dir with the ownership marker', async () => {
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');

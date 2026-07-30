@@ -52,7 +52,12 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
   assertLinkTargetsAreDeliverable(body, slug);
   assertRulebookTokensResolve(body, slug, context.rulebooks);
   const pathRewritten = rewriteMarkdownPaths(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`, context.homeDir);
-  const tokenRewritten = rewriteInvocationTokens(pathRewritten, context, context.rulebooks);
+  const tokenRewritten = rewriteInvocationTokens(
+    pathRewritten,
+    context,
+    `${RULEBOOK_SOURCE_DIR}/${slug}.md`,
+    context.rulebooks,
+  );
   return rewriteTemplateVariables(tokenRewritten, context.homeDir, context.harnessId);
 }
 

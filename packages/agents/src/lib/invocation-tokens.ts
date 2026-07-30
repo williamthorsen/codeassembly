@@ -77,7 +77,7 @@ export function resolveRulebookToken(
   rulebooks: RulebookInvocationCatalog | undefined,
 ): RulebookTokenResolution {
   if (rulebooks === undefined) {
-    return { kind: 'rejected', reason: 'a rulebook token is honored only in a rulebook body' };
+    return { kind: 'rejected', reason: 'is honored only in a rulebook body' };
   }
   const target = rulebooks.get(slug);
   if (target === undefined) {
@@ -100,19 +100,21 @@ export function resolveRulebookToken(
  * `rulebooks` — so a rulebook is addressed by the name it actually deploys under, not by its slug.
  *
  * Throws when a rulebook token cannot render: no catalog (the host does not honor them), an unknown slug, or an
- * ambient-only target. Skill and subagent tokens have no such failure path — their sigils are fixed properties of the
- * typed harness config. Non-token text passes through unchanged.
+ * ambient-only target. `sourceLabel` names the host in that error, so an author sees which file to fix. Skill and
+ * subagent tokens have no such failure path — their sigils are fixed properties of the typed harness config.
+ * Non-token text passes through unchanged.
  */
 export function rewriteInvocationTokens(
   content: string,
   sigils: InvocationSigils,
+  sourceLabel: string,
   rulebooks?: RulebookInvocationCatalog,
 ): string {
   return content.replace(INVOCATION_TOKEN_RE, (_match: string, kind: string, slug: string): string => {
     if (kind === 'rulebook') {
       const resolution = resolveRulebookToken(slug, rulebooks);
       if (resolution.kind === 'rejected') {
-        throw new Error(`Unusable invocation token {rulebook:${slug}}: it ${resolution.reason}.`);
+        throw new Error(`Unusable invocation token {rulebook:${slug}} in ${sourceLabel}: it ${resolution.reason}.`);
       }
       return `${sigils.skillSigil}${resolution.skillName}`;
     }
