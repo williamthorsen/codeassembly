@@ -151,11 +151,20 @@ describe(renderRulebookBody, () => {
       { name: 'a target under subagents/', target: '../../subagents/canary.md' },
       { name: 'a target under _partials/', target: '../../_partials/shared.md' },
       { name: 'a target under collections/', target: '../../collections/library.md' },
-      { name: 'a sibling rulebook', target: './other-rulebook.md' },
       { name: 'a target in the content root itself', target: '../../README.md' },
     ])('rejects $name', ({ target }) => {
       expect(() => renderRulebookBody(`See [x](${target}).`, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
         /not under a linkable root/,
+      );
+    });
+
+    it.each([
+      { name: 'a sibling rulebook', target: './nmr-scripts.md' },
+      { name: 'a sibling rulebook named without a leading dot', target: 'nmr-scripts.md' },
+      { name: 'an ambient-only sibling, which is undeliverable either way', target: './nmr-cheatsheet.md' },
+    ])('rejects $name, naming the token that replaces the link', ({ target }) => {
+      expect(() => renderRulebookBody(`See [x](${target}).`, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
+        /invoked rather than linked: write \{rulebook:nmr-[a-z]+\} instead/,
       );
     });
 
