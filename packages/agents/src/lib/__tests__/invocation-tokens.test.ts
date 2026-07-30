@@ -1,31 +1,87 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractInvocationEdges, type InvocationSigils, rewriteInvocationTokens } from '../invocation-tokens.ts';
+import {
+  extractInvocationEdges,
+  type InvocationSigils,
+  resolveRulebookToken,
+  rewriteInvocationTokens,
+  type RulebookInvocationCatalog,
+} from '../invocation-tokens.ts';
 
 const CLAUDE_SIGILS: InvocationSigils = { skillSigil: '/', subagentSigil: '' };
 const ROVO_SIGILS: InvocationSigils = { skillSigil: '!', subagentSigil: '' };
 
+// `shell-conventions` carries a `skill-name` override, so its deployed name is not `consult-<slug>`.
+const RULEBOOKS: RulebookInvocationCatalog = new Map([
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+]);
+
 describe(extractInvocationEdges, () => {
   it('returns empty groups when no tokens are present', () => {
-    expect(extractInvocationEdges('No tokens here.')).toEqual({ skills: [], subagents: [] });
+    expect(extractInvocationEdges('No tokens here.')).toEqual({ rulebooks: [], skills: [], subagents: [] });
   });
 
   it('groups slugs by kind', () => {
-    const content = 'Run {skill:plan} and {subagent:planner}, then {skill:review-branch}.';
+    const content = 'Run {skill:plan} and {subagent:planner}, see {rulebook:nmr-scripts}, then {skill:review-branch}.';
     expect(extractInvocationEdges(content)).toEqual({
+      rulebooks: ['nmr-scripts'],
       skills: ['plan', 'review-branch'],
       subagents: ['planner'],
     });
   });
 
   it('ignores non-token text and malformed tokens', () => {
-    const content = 'Prose {skill:commit} and {skill:} and {tool:Read} and {subagent:9bad}.';
-    expect(extractInvocationEdges(content)).toEqual({ skills: ['commit'], subagents: [] });
+    const content = 'Prose {skill:commit} and {skill:} and {tool:Read} and {rulebook:} and {subagent:9bad}.';
+    expect(extractInvocationEdges(content)).toEqual({ rulebooks: [], skills: ['commit'], subagents: [] });
   });
 
   it('returns slugs in source order without deduping repeats', () => {
     const content = '{skill:commit} then {skill:commit} again.';
-    expect(extractInvocationEdges(content)).toEqual({ skills: ['commit', 'commit'], subagents: [] });
+    expect(extractInvocationEdges(content)).toEqual({ rulebooks: [], skills: ['commit', 'commit'], subagents: [] });
+  });
+});
+
+describe(resolveRulebookToken, () => {
+  it('resolves a skill-delivered rulebook to its deployed skill name', () => {
+    expect(resolveRulebookToken('nmr-scripts', RULEBOOKS)).toEqual({
+      kind: 'resolved',
+      skillName: 'consult-nmr-scripts',
+    });
+  });
+
+  it('resolves through a skill-name override rather than the slug', () => {
+    expect(resolveRulebookToken('shell-conventions', RULEBOOKS)).toEqual({
+      kind: 'resolved',
+      skillName: 'shell-rules',
+    });
+  });
+
+  it.each([
+    {
+      name: 'when no catalog is supplied, rejects as honored only in a rulebook body',
+      slug: 'nmr-scripts',
+      rulebooks: undefined,
+      reason: /only in a rulebook body/,
+    },
+    {
+      name: 'when the slug names no deployed rulebook, rejects as absent from the deployed set',
+      slug: 'never-declared',
+      rulebooks: RULEBOOKS,
+      reason: /no rulebook in the deployed set/,
+    },
+    {
+      name: 'when the target is ambient-only, rejects and names dependencies: as the alternative',
+      slug: 'nmr-cheatsheet',
+      rulebooks: RULEBOOKS,
+      reason: /ambient-only rulebook[\s\S]*`dependencies:`/,
+    },
+  ])('$name', ({ slug, rulebooks, reason }) => {
+    const resolution = resolveRulebookToken(slug, rulebooks);
+
+    expect(resolution.kind).toBe('rejected');
+    expect(resolution.kind === 'rejected' && resolution.reason).toMatch(reason);
   });
 });
 
@@ -54,6 +110,31 @@ describe(rewriteInvocationTokens, () => {
   it('renders a subagent token with a non-empty sigil', () => {
     const sigils: InvocationSigils = { skillSigil: '/', subagentSigil: '@' };
     expect(rewriteInvocationTokens('Dispatch {subagent:code-reviewer}.', sigils)).toBe('Dispatch @code-reviewer.');
+  });
+
+  it('renders a rulebook token as the skill sigil plus the target skill name', () => {
+    expect(rewriteInvocationTokens('See {rulebook:nmr-scripts}.', CLAUDE_SIGILS, RULEBOOKS)).toBe(
+      'See /consult-nmr-scripts.',
+    );
+    expect(rewriteInvocationTokens('See {rulebook:nmr-scripts}.', ROVO_SIGILS, RULEBOOKS)).toBe(
+      'See !consult-nmr-scripts.',
+    );
+  });
+
+  it('renders a rulebook token through its skill-name override', () => {
+    expect(rewriteInvocationTokens('See {rulebook:shell-conventions}.', CLAUDE_SIGILS, RULEBOOKS)).toBe(
+      'See /shell-rules.',
+    );
+  });
+
+  it.each([
+    { name: 'when no catalog is supplied', rulebooks: undefined, slug: 'nmr-scripts' },
+    { name: 'when the slug names no deployed rulebook', rulebooks: RULEBOOKS, slug: 'never-declared' },
+    { name: 'when the target is ambient-only', rulebooks: RULEBOOKS, slug: 'nmr-cheatsheet' },
+  ])('throws naming the offending token $name', ({ rulebooks, slug }) => {
+    expect(() => rewriteInvocationTokens(`See {rulebook:${slug}}.`, CLAUDE_SIGILS, rulebooks)).toThrow(
+      new RegExp(String.raw`\{rulebook:${slug}\}`),
+    );
   });
 
   it('handles hyphenated multi-segment slugs', () => {
