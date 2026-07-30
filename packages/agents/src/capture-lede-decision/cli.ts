@@ -68,7 +68,7 @@ async function main(): Promise<void> {
       cwd: process.cwd(),
       env: process.env,
       now: new Date(),
-      defaultDataDir: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '_data'),
+      defaultDataDir: resolveDefaultDataDir(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
@@ -205,21 +205,11 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
   }
 
-  const inspect = flags.some((flag) => flag.name === 'inspect');
-  const rawVerdict = raw.verdict;
-  if (inspect && rawVerdict !== undefined) {
-    throw new Error('--inspect and --verdict are mutually exclusive');
-  }
-  if (!inspect && rawVerdict === undefined) {
-    throw new Error(`one of --inspect or --verdict <${LEDE_VERDICTS.join('|')}> is required`);
-  }
-  if (rawVerdict !== undefined && !isLedeVerdict(rawVerdict)) {
-    throw new Error(`--verdict must be one of ${LEDE_VERDICTS.join(', ')}`);
-  }
+  const { mode, verdict } = resolveMode({ inspect: flags.some((flag) => flag.name === 'inspect'), raw });
 
   return {
-    mode: inspect ? 'inspect' : 'commit',
-    verdict: isLedeVerdict(rawVerdict) ? rawVerdict : null,
+    mode,
+    verdict,
     artifactDir: requireFlag(raw, 'artifact-dir'),
     pr: requireFlag(raw, 'pr'),
     mergeCommit: requireFlag(raw, 'merge-commit'),
@@ -292,6 +282,33 @@ function isEntryPoint(): boolean {
     process.stderr.write(`capture-lede-decision: warning: could not determine entry point: ${message}\n`);
     return false;
   }
+}
+
+/** Resolves the `_data` directory shipped beside the installed helper, holding the doctrine and the work-type taxonomy. */
+function resolveDefaultDataDir(): string {
+  const helperDir = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(helperDir, '..', '_data');
+}
+
+/**
+ * Resolves which mode the invocation selects, rejecting an argv that names both or neither. Exactly one of `--inspect`
+ * and `--verdict` must appear, so the mode and the verdict are decided together rather than validated separately.
+ */
+function resolveMode(input: { inspect: boolean; raw: Record<string, string> }): {
+  mode: 'inspect' | 'commit';
+  verdict: LedeVerdict | null;
+} {
+  const rawVerdict = input.raw.verdict;
+  if (rawVerdict !== undefined && input.inspect) {
+    throw new Error('--inspect and --verdict are mutually exclusive');
+  }
+  if (rawVerdict === undefined && !input.inspect) {
+    throw new Error(`one of --inspect or --verdict <${LEDE_VERDICTS.join('|')}> is required`);
+  }
+  if (rawVerdict !== undefined && !isLedeVerdict(rawVerdict)) {
+    throw new Error(`--verdict must be one of ${LEDE_VERDICTS.join(', ')}`);
+  }
+  return input.inspect ? { mode: 'inspect', verdict: null } : { mode: 'commit', verdict: rawVerdict ?? null };
 }
 
 /** Reads a required value-bearing flag, throwing a usage-style message when it is absent. */

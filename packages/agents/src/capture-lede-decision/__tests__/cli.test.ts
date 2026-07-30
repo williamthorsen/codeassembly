@@ -140,7 +140,9 @@ describe(runDecision, () => {
     const fixture = await createLedeFixture();
     const argv = ['--inspect', ...flagsFor({ ...fixture, artifactDir: join(fixture.root, 'absent') })];
 
-    expect(expectFailure(await runDecision(runInput({ argv, fixture })))).toBe('no-artifact-dir');
+    const result = await runDecision(runInput({ argv, fixture }));
+
+    expect(expectFailure(result)).toBe('no-artifact-dir');
   });
 
   it('refuses to record a decision with no named store', async () => {
@@ -156,7 +158,9 @@ describe(runDecision, () => {
   it('reports an invalid invocation without touching the artifacts', async () => {
     const fixture = await createLedeFixture();
 
-    expect(expectFailure(await runDecision(runInput({ argv: ['--inspect'], fixture })))).toBe('invalid-args');
+    const result = await runDecision(runInput({ argv: ['--inspect'], fixture }));
+
+    expect(expectFailure(result)).toBe('invalid-args');
   });
 });
 

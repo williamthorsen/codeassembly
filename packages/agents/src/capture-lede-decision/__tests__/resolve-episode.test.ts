@@ -29,20 +29,20 @@ describe(resolveEpisode, () => {
   it('reports the ledes as differing when the merged text was rewritten', async () => {
     const fixture = await createLedeFixture();
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).differ).toBe(true);
+    expect((await resolveFor(fixture)).differ).toBe(true);
   });
 
   it('reports the ledes as identical when they differ only by whitespace', async () => {
     const fixture = await createLedeFixture({ mergedLede: `${FIXTURE_AGENT_LEDE.replace(' ', '\n  ')}\n` });
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).differ).toBe(false);
+    expect((await resolveFor(fixture)).differ).toBe(false);
   });
 
   it('reads the newest artifact of each kind', async () => {
     const fixture = await createLedeFixture();
     await writeArtifact(fixture.artifactDir, '20260731-090000Z_later_merge.md', renderSection('Body', 'A later lede.'));
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).mergedLede).toBe('A later lede.');
+    expect((await resolveFor(fixture)).mergedLede).toBe('A later lede.');
   });
 
   it('finds an artifact nested in a run subdirectory', async () => {
@@ -51,13 +51,13 @@ describe(resolveEpisode, () => {
     await mkdir(runDir, { recursive: true });
     await writeArtifact(runDir, '20260731-100000Z_run_merge.md', renderSection('Body', 'A lede from a run.'));
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).mergedLede).toBe('A lede from a run.');
+    expect((await resolveFor(fixture)).mergedLede).toBe('A lede from a run.');
   });
 
   it('derives the tier from a work type declared as an alias', async () => {
     const fixture = await createLedeFixture();
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture, { type: 'feature' }))).identity.tier).toBe('public');
+    expect((await resolveFor(fixture, { type: 'feature' })).identity.tier).toBe('public');
   });
 
   it('falls back to the change summary for a type and scope the caller did not pass', async () => {
@@ -72,13 +72,13 @@ describe(resolveEpisode, () => {
   it('reads a wholly numeric ticket id, which the change summary writes unquoted', async () => {
     const fixture = await createLedeFixture({ ticketId: '1107' });
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).identity.ticket).toBe('1107');
+    expect((await resolveFor(fixture)).identity.ticket).toBe('1107');
   });
 
   it('reads a prefixed ticket key, which the change summary writes as a string', async () => {
     const fixture = await createLedeFixture({ ticketId: 'MAC-42' });
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).identity.ticket).toBe('MAC-42');
+    expect((await resolveFor(fixture)).identity.ticket).toBe('MAC-42');
   });
 
   it('reads a lede from an override file rather than its artifact', async () => {
@@ -94,14 +94,14 @@ describe(resolveEpisode, () => {
   it('omits the agents version when the install manifest is unreadable', async () => {
     const fixture = await createLedeFixture();
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).agentsVersion).toBeUndefined();
+    expect((await resolveFor(fixture)).agentsVersion).toBeUndefined();
   });
 
   it('reads the agents version from the install manifest', async () => {
     const fixture = await createLedeFixture();
     await writeFile(fixture.manifestPath, JSON.stringify({ shared: { version: '1.2.3' } }), 'utf8');
 
-    expect(expectEpisode(await resolveEpisode(inputFor(fixture))).agentsVersion).toBe('1.2.3');
+    expect((await resolveFor(fixture)).agentsVersion).toBe('1.2.3');
   });
 
   it('reports a missing artifact directory', async () => {
@@ -115,26 +115,34 @@ describe(resolveEpisode, () => {
   it('reports an absent pull-request artifact separately from an absent merge artifact', async () => {
     const fixture = await createLedeFixture({ omit: 'pull-request' });
 
-    expect(expectFailure(await resolveEpisode(inputFor(fixture)))).toBe('no-agent-lede');
+    const outcome = await resolveEpisode(inputFor(fixture));
+
+    expect(expectFailure(outcome)).toBe('no-agent-lede');
   });
 
   it('reports a merge artifact carrying no body section', async () => {
     const fixture = await createLedeFixture({ mergedLede: '' });
 
-    expect(expectFailure(await resolveEpisode(inputFor(fixture)))).toBe('no-merged-lede');
+    const outcome = await resolveEpisode(inputFor(fixture));
+
+    expect(expectFailure(outcome)).toBe('no-merged-lede');
   });
 
   it('reports an unreadable doctrine file', async () => {
     const fixture = await createLedeFixture();
     await rm(join(fixture.dataDir, 'lede-voice.md'));
 
-    expect(expectFailure(await resolveEpisode(inputFor(fixture)))).toBe('no-doctrine');
+    const outcome = await resolveEpisode(inputFor(fixture));
+
+    expect(expectFailure(outcome)).toBe('no-doctrine');
   });
 
   it('reports a work type the taxonomy does not declare', async () => {
     const fixture = await createLedeFixture();
 
-    expect(expectFailure(await resolveEpisode(inputFor(fixture, { type: 'invented' })))).toBe('unresolved-identity');
+    const outcome = await resolveEpisode(inputFor(fixture, { type: 'invented' }));
+
+    expect(expectFailure(outcome)).toBe('unresolved-identity');
   });
 });
 
@@ -199,6 +207,11 @@ function inputFor(fixture: LedeFixture, overrides: { type?: string } = {}): Para
     scope: 'agents',
     manifestPath: fixture.manifestPath,
   };
+}
+
+/** Resolves an episode over a fixture and narrows it to the success arm, so an assertion reads as one call. */
+async function resolveFor(fixture: LedeFixture, overrides: { type?: string } = {}): Promise<LedeEpisode> {
+  return expectEpisode(await resolveEpisode(inputFor(fixture, overrides)));
 }
 
 // endregion | Helpers
