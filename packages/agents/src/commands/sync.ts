@@ -6,15 +6,10 @@ import process from 'node:process';
 
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
+import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import {
-  createSourceResolver,
-  describeSearchedLocations,
-  hasLibraryArtifact,
-  type SourceResolver,
-} from '../lib/content-sources.ts';
+import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../lib/content-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
@@ -24,8 +19,9 @@ import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
-import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
+import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.ts';
+import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
+import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
@@ -41,18 +37,6 @@ import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts
 
 const skillMarker = makeArtifactMarker('skill');
 const subagentMarker = makeArtifactMarker('subagent');
-
-/** A declared rulebook resolved against its owning source: its neutral body and which delivery modes it requests. */
-interface ResolvedRulebook {
-  readonly slug: string;
-  readonly skillName: string;
-  readonly body: string;
-  readonly ambient: boolean;
-  readonly skill: boolean;
-  readonly description: string | undefined;
-  /** The name of the declared source it resolved from, or `undefined` for the built-in library. */
-  readonly source: string | undefined;
-}
 
 /**
  * One deployed artifact's resolution outcome: its type and slug, the source it resolved from (`undefined` = library),
@@ -70,6 +54,12 @@ interface ResolutionEntry {
 interface HarnessSubagentTarget {
   readonly subagentsDir: string;
   readonly deployContext: SubagentDeployContext;
+}
+
+/** One targeted harness's ambient host, paired with the harness id whose paths its rulebook bodies render for. */
+interface AmbientHostTarget {
+  readonly harnessId: HarnessId;
+  readonly hostPath: string;
 }
 
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
@@ -213,33 +203,32 @@ async function reconcileDomain(
   // delivery namespaces would clobber, so reject the overlap before any write.
   assertNoCrossNamespaceCollisions(desiredSkillDirs.values().toArray(), declaredSkillSet);
 
+  // Every delivery pass below targets this one set of harnesses, and each renders its content for the harness it
+  // lands on, so the set is resolved once and threaded rather than re-derived per pass.
+  const harnessIds = resolveHarnessIds(options.harness, domain.baseDir);
+
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
   // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
-  // tool-name/link rewriting. `harnessSkillDirs` is the plain dir list the rulebook-skill passes and orphan scans use,
-  // which need no transform context.
+  // tool-name/link rewriting, and the harness id each rulebook body renders for.
   const harnessSkillTargets = await Promise.all(
-    resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
-      resolveSkillTarget(harnessId, domain.baseDir, contentDir),
-    ),
+    harnessIds.map((harnessId) => resolveSkillTarget(harnessId, domain.baseDir, contentDir)),
   );
-  const harnessSkillDirs = harnessSkillTargets.map((target) => target.skillsDir);
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
   // mapping so the deploy applies the same transform `install` would. Resolved separately from skills because the
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
-      resolveSubagentTarget(harnessId, domain.baseDir, contentDir),
-    ),
+    harnessIds.map((harnessId) => resolveSubagentTarget(harnessId, domain.baseDir, contentDir)),
   );
 
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
   // hand-authored skills safe. An owned dir is an orphan when its marker slug no longer maps to that directory —
   // because the rulebook is no longer skill-delivered, or because its resolved skill name (and dir) changed.
   const skillOrphansByDir = await Promise.all(
-    harnessSkillDirs.map(async (skillsDir) => ({
+    harnessSkillTargets.map(async ({ harnessId, skillsDir }) => ({
+      harnessId,
       skillsDir,
       orphans: (await listOwnedSkills(skillsDir))
         .filter(({ dir, slug }) => desiredSkillDirs.get(slug) !== dir)
@@ -286,9 +275,14 @@ async function reconcileDomain(
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
 
+  // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
+  // pass writes, rather than shipping a path that resolves to nothing.
+  assertRulebooksRender(harnessIds, resolved);
+
   // Reject a sync-owned ambient host whose region is half-written before anything is written, dry-run included.
   // Appending beside a stray marker is the one path in this command that can destroy hand-authored content.
-  await assertAmbientHostsWritable(options, domain, resolved);
+  const ambientHosts = resolveAmbientHosts(harnessIds, domain);
+  await assertAmbientHostsWritable(ambientHosts, domain, resolved);
 
   // Attribute each deployed artifact to the source it resolved from, flagging any that shadows a same-slug library
   // artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow warning.
@@ -297,7 +291,7 @@ async function reconcileDomain(
   if (options.dryRun) {
     await retireRetiredOutputs(options, domain);
     reportDryRun({
-      ambientHostPreviews: await previewAmbientHosts(options, domain, resolved),
+      ambientHostPreviews: await previewAmbientHosts(ambientHosts, domain, resolved),
       resolutionReport,
       resolved,
       harnessSkillTargets,
@@ -307,23 +301,24 @@ async function reconcileDomain(
       resolvedSubagents,
       harnessSubagentTargets,
       subagentOrphansByDir,
-      promptsYmlPaths: resolvePromptsYmlPaths(options, domain),
+      promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
     });
     return;
   }
 
   await retireRetiredOutputs(options, domain);
 
-  await deliverAmbient(options, domain, resolved);
+  await deliverAmbient(ambientHosts, domain, resolved);
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
   // before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
   // of the write being clobbered by a later retract.
-  for (const { skillsDir, orphans } of skillOrphansByDir) {
+  for (const { harnessId, skillsDir, orphans } of skillOrphansByDir) {
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
+    const context = resolveRulebookRenderContext(harnessId);
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -332,7 +327,12 @@ async function reconcileDomain(
       await mkdir(skillDir, { recursive: true });
       await writeIfChanged(
         path.join(skillDir, 'SKILL.md'),
-        renderSkillFile(rulebook.skillName, rulebook.slug, rulebook.description, rulebook.body),
+        renderSkillFile(
+          rulebook.skillName,
+          rulebook.slug,
+          rulebook.description,
+          renderRulebookBody(rulebook.body, rulebook.slug, context),
+        ),
       );
     }
   }
@@ -346,10 +346,10 @@ async function reconcileDomain(
   // transform applied and the ownership marker stamped.
   await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
 
-  await refreshPromptsYml(options, domain);
+  await refreshPromptsYml(harnessIds, domain);
 
   const skillRetractions = skillOrphansByDir.reduce((total, harness) => total + harness.orphans.length, 0);
-  const skillFilesWritten = desiredSkillDirs.size * harnessSkillDirs.length;
+  const skillFilesWritten = desiredSkillDirs.size * harnessSkillTargets.length;
   const declaredSkillRetractions = declaredSkillOrphansByDir.reduce(
     (total, harness) => total + harness.orphans.length,
     0,
@@ -364,7 +364,7 @@ async function reconcileDomain(
     `Synced ${resolved.length} rulebook(s), ${resolvedSkills.length} declared skill(s), and ` +
       `${resolvedSubagents.length} declared subagent(s); delivered ${skillFilesWritten} rulebook-skill file(s), ` +
       `${declaredSkillsDeployed} declared-skill dir(s), and ${subagentsDeployed} declared-subagent file(s) across ` +
-      `${harnessSkillDirs.length} harness(s); retracted ` +
+      `${harnessSkillTargets.length} harness(s); retracted ` +
       `${skillRetractions} rulebook-skill dir(s), ${declaredSkillRetractions} declared-skill dir(s), and ` +
       `${subagentRetractions} declared-subagent file(s).`,
   );
@@ -753,17 +753,31 @@ async function assertDeclaredSkillsRender(
 }
 
 /**
+ * Renders every resolved rulebook against every targeted harness, discarding the output, so a link target the
+ * delivery pipeline cannot honor throws before any file is written. Both delivery passes re-render at write time;
+ * this pass exists only to fail the run closed, including under `--dry-run`.
+ */
+function assertRulebooksRender(harnessIds: ReadonlyArray<HarnessId>, resolved: ReadonlyArray<ResolvedRulebook>): void {
+  for (const harnessId of harnessIds) {
+    const context = resolveRulebookRenderContext(harnessId);
+    for (const rulebook of resolved) {
+      renderRulebookBody(rulebook.body, rulebook.slug, context);
+    }
+  }
+}
+
+/**
  * Delivers the resolved ambient rulebooks into the ambient region of each targeted harness's host, regenerating the
  * region's content wholesale (an empty ambient set empties an existing region). Both domains share this one path,
  * differing only in the host each targets and in who owns region creation there.
  */
 async function deliverAmbient(
-  options: InstallOptions,
+  hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
 ): Promise<void> {
-  const body = renderAmbientBody(resolved);
-  for (const hostPath of resolveAmbientHostPaths(options, domain)) {
+  for (const { harnessId, hostPath } of hosts) {
+    const body = renderAmbientBody(resolved, harnessId);
     const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
     if (plan.kind === 'skip') {
       if (plan.warn) {
@@ -851,16 +865,20 @@ function planAmbientHost(
 
 /** Pairs each targeted host with the plan a real run would carry out, so the dry-run preview cannot drift from it. */
 async function previewAmbientHosts(
-  options: InstallOptions,
+  hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
 ): Promise<ReadonlyArray<string>> {
-  const body = renderAmbientBody(resolved);
   return Promise.all(
-    resolveAmbientHostPaths(options, domain).map(async (hostPath) =>
+    hosts.map(async ({ harnessId, hostPath }) =>
       describeAmbientHostPlan(
         hostPath,
-        planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body),
+        planAmbientHost(
+          domain.ambient,
+          await probeAmbientHost(hostPath),
+          hostPath,
+          renderAmbientBody(resolved, harnessId),
+        ),
       ),
     ),
   );
@@ -907,15 +925,17 @@ async function probeAmbientHost(hostPath: string): Promise<AmbientHostState> {
  * such a file with a warning instead. Runs before any write so a dry-run surfaces the conflict with nothing changed.
  */
 async function assertAmbientHostsWritable(
-  options: InstallOptions,
+  hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
 ): Promise<void> {
-  if (domain.ambient !== 'project-local' || renderAmbientBody(resolved) === '') {
+  // Asks whether anything would be delivered, which is a property of the declaration alone. Rendering could answer it
+  // too, but rendering can now fail on a bad link, and this guard is about region damage rather than link validity.
+  if (domain.ambient !== 'project-local' || resolved.every((rulebook) => !rulebook.ambient)) {
     return;
   }
   const malformed: Array<string> = [];
-  for (const hostPath of resolveAmbientHostPaths(options, domain)) {
+  for (const { hostPath } of hosts) {
     if ((await probeAmbientHost(hostPath)).status === 'malformed') {
       malformed.push(hostPath);
     }
@@ -1005,22 +1025,39 @@ async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain)
   }
 }
 
-/** Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of an ambient region. */
-function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>): string {
+/**
+ * Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of one harness's ambient
+ * region. Each body is rendered for `harnessId`, so the same rulebook yields that harness's own absolute paths.
+ */
+function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId: HarnessId): string {
+  const context = resolveRulebookRenderContext(harnessId);
   let body = '';
   for (const rulebook of resolved) {
     if (rulebook.ambient) {
-      body = injectRulebook(body, rulebook.slug, rulebook.body);
+      body = injectRulebook(body, rulebook.slug, renderRulebookBody(rulebook.body, rulebook.slug, context));
     }
   }
   return body;
 }
 
-/** Lists the guidance files whose ambient regions a sync of `domain` targets — one per targeted harness. */
-function resolveAmbientHostPaths(options: InstallOptions, domain: SyncDomain): ReadonlyArray<string> {
-  return resolveHarnessIds(options.harness, domain.baseDir).map((harnessId) =>
-    resolveAmbientHostPath(harnessId, domain.ambient, domain.baseDir),
-  );
+/** The per-harness inputs a rulebook render depends on, read off the harness config. */
+function resolveRulebookRenderContext(harnessId: HarnessId): RulebookRenderContext {
+  const config = HARNESSES[harnessId];
+  return { homeDir: config.homeDir, harnessId: config.id };
+}
+
+/**
+ * Lists the guidance files whose ambient regions a sync of `domain` targets — one per targeted harness, each paired
+ * with the harness id its content is rendered for.
+ */
+function resolveAmbientHosts(
+  harnessIds: ReadonlyArray<HarnessId>,
+  domain: SyncDomain,
+): ReadonlyArray<AmbientHostTarget> {
+  return harnessIds.map((harnessId) => ({
+    harnessId,
+    hostPath: resolveAmbientHostPath(harnessId, domain.ambient, domain.baseDir),
+  }));
 }
 
 /**
@@ -1030,8 +1067,8 @@ function resolveAmbientHostPaths(options: InstallOptions, domain: SyncDomain): R
  * no-op for non-Rovo Dev harnesses and for a file carrying no codeassembly region. Both domains share this one path, so
  * the home file is merged rather than whole-file overwritten, matching the repo file's non-clobbering shape.
  */
-async function refreshPromptsYml(options: InstallOptions, domain: SyncDomain): Promise<void> {
-  for (const harnessId of resolveHarnessIds(options.harness, domain.baseDir)) {
+async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): Promise<void> {
+  for (const harnessId of harnessIds) {
     if (harnessId !== 'rovodev') {
       continue;
     }
@@ -1056,8 +1093,8 @@ async function refreshPromptsYml(options: InstallOptions, domain: SyncDomain): P
 }
 
 /** Lists the Rovo Dev `prompts.yml` paths a sync of `domain` would reconcile — one per targeted Rovo Dev harness. */
-function resolvePromptsYmlPaths(options: InstallOptions, domain: SyncDomain): ReadonlyArray<string> {
-  return resolveHarnessIds(options.harness, domain.baseDir)
+function resolvePromptsYmlPaths(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): ReadonlyArray<string> {
+  return harnessIds
     .filter((harnessId) => harnessId === 'rovodev')
     .map((harnessId) => path.join(resolveHarnessPaths(harnessId, domain.baseDir).harnessHome, 'prompts.yml'));
 }
@@ -1214,42 +1251,6 @@ function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
   const plural = shadows.length === 1 ? '' : 's';
   const verb = shadows.length === 1 ? 's' : '';
   return `⚠️ ${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
-}
-
-/**
- * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), validates
- * its frontmatter, and returns its neutral body and delivery. A missing frontmatter file throws an error naming the
- * resolving source.
- */
-async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<ResolvedRulebook> {
-  const resolved = await resolver.resolve('rulebook', slug);
-  if (resolved === undefined) {
-    const searched = describeSearchedLocations(resolver, 'rulebook', slug);
-    throw new Error(`Declared rulebook "${slug}" was not found in any of: ${searched}`);
-  }
-
-  const srcPath = path.join(resolved.dir, artifactFrontmatterPath('rulebook', slug));
-  let content: string;
-  try {
-    content = await readFile(srcPath, 'utf8');
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      const origin = resolved.source === undefined ? 'the library' : `source "${resolved.source}"`;
-      throw new Error(`Declared rulebook "${slug}" was not found in ${origin} at ${srcPath}`);
-    }
-    throw error;
-  }
-
-  const { rulebook, body } = parseRulebookFile(content, `${slug}.md`);
-  return {
-    slug,
-    skillName: resolveSkillName(slug, rulebook['skill-name']),
-    body: `${body.trim()}\n`,
-    ambient: rulebook.delivery.includes('ambient'),
-    skill: rulebook.delivery.includes('skill'),
-    description: rulebook.description,
-    source: resolved.source,
-  };
 }
 
 /**

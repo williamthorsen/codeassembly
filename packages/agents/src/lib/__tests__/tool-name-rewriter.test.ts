@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.js';
 
-const IDENTITY = new Map<string, string>([
+const IDENTITY_MAP = new Map<string, string>([
   ['Bash', 'Bash'],
   ['Edit', 'Edit'],
   ['Glob', 'Glob'],
@@ -11,7 +11,7 @@ const IDENTITY = new Map<string, string>([
   ['Write', 'Write'],
 ]);
 
-const ROVODEV = new Map<string, string>([
+const ROVO_TOOLS_MAP = new Map<string, string>([
   ['Bash', 'bash'],
   ['Edit', 'find_and_replace_code'],
   ['Glob', 'expand_folder'],
@@ -23,43 +23,45 @@ const ROVODEV = new Map<string, string>([
 describe('rewriteToolNames', () => {
   it('returns content unchanged when no placeholders are present', () => {
     const content = 'Plain text with no placeholders.';
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe(content);
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(content);
   });
 
   it('leaves canonical names intact when given an identity mapping', () => {
     const content = 'Use {tool:Glob}, {tool:Grep}, and {tool:Read} to explore.';
-    expect(rewriteToolNames(content, IDENTITY, 'test.md')).toBe('Use Glob, Grep, and Read to explore.');
+    expect(rewriteToolNames(content, IDENTITY_MAP, 'test.md')).toBe('Use Glob, Grep, and Read to explore.');
   });
 
   it('replaces placeholders with harness-native names for a non-identity mapping', () => {
     const content = 'Use {tool:Glob}, {tool:Grep}, and {tool:Read} to explore.';
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe('Use expand_folder, grep, and open_files to explore.');
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(
+      'Use expand_folder, grep, and open_files to explore.',
+    );
   });
 
   it('replaces multiple placeholders on a single line', () => {
     const content = 'Not a `{tool:Read}`, not a `{tool:Grep}`, not a `{tool:Bash}` — a `{tool:Write}`.';
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe(
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(
       'Not a `open_files`, not a `grep`, not a `bash` — a `create_file`.',
     );
   });
 
   it('preserves inline-code backticks around placeholders', () => {
     const content = 'You have `{tool:Write}` but not `{tool:Edit}`.';
-    expect(rewriteToolNames(content, IDENTITY, 'test.md')).toBe('You have `Write` but not `Edit`.');
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe(
+    expect(rewriteToolNames(content, IDENTITY_MAP, 'test.md')).toBe('You have `Write` but not `Edit`.');
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(
       'You have `create_file` but not `find_and_replace_code`.',
     );
   });
 
   it('throws ToolNameRewriteError for an unmapped name', () => {
     const content = 'Use {tool:NonExistent} for nothing.';
-    expect(() => rewriteToolNames(content, ROVODEV, 'test.md')).toThrow(ToolNameRewriteError);
+    expect(() => rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toThrow(ToolNameRewriteError);
   });
 
   it('carries toolName, contextLabel, and line on the error', () => {
     const content = ['Line one is fine.', 'Line two has {tool:NonExistent} on it.'].join('\n');
     try {
-      rewriteToolNames(content, ROVODEV, 'fixtures/sample.md');
+      rewriteToolNames(content, ROVO_TOOLS_MAP, 'fixtures/sample.md');
       expect.fail('Expected ToolNameRewriteError to be thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(ToolNameRewriteError);
@@ -77,7 +79,7 @@ describe('rewriteToolNames', () => {
   it('reports a line of 1 for placeholders on the first line', () => {
     const content = '{tool:Unknown} at the very start.';
     try {
-      rewriteToolNames(content, ROVODEV, 'x.md');
+      rewriteToolNames(content, ROVO_TOOLS_MAP, 'x.md');
       expect.fail('Expected ToolNameRewriteError');
     } catch (error) {
       if (!(error instanceof ToolNameRewriteError)) {
@@ -102,17 +104,17 @@ describe('rewriteToolNames', () => {
 
   it('does not match malformed placeholders with internal whitespace', () => {
     const content = 'Not a match: {tool: Read} and {tool : Read}.';
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe(content);
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(content);
   });
 
   it('does not match empty placeholder content', () => {
     const content = 'Not a match: {tool:} and {tool:_leading_underscore}.';
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe(content);
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(content);
   });
 
   it('does not match placeholders missing the closing brace', () => {
     const content = 'Not a match: {tool:Read without close.';
-    expect(rewriteToolNames(content, ROVODEV, 'test.md')).toBe(content);
+    expect(rewriteToolNames(content, ROVO_TOOLS_MAP, 'test.md')).toBe(content);
   });
 
   it('throws on empty mapping when any placeholder is present', () => {

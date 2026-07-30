@@ -2,6 +2,46 @@ import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /**
+ * The Markdown link grammar this module rewrites: `[text](target)`, capturing text then target. Exported because the
+ * grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must match
+ * on both to see the same set. Safe to share despite the `g` flag: `replace` and `matchAll` each leave `lastIndex`
+ * untouched between calls.
+ */
+export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
+
+/**
+ * Reports whether a Markdown link target is one this module resolves as a source-tree-relative path. False for the
+ * forms that already name their destination or name nothing to resolve: `http(s)` URLs, absolute paths, `~`-prefixed
+ * paths, anchor-only links, and targets opening with a `{template_variable}`, which expands to its own absolute path
+ * after this pass. Exported so a caller that validates link targets tests exactly the set that gets rewritten.
+ */
+export function isRewritableLinkTarget(target: string): boolean {
+  return !(
+    /^https?:\/\//.test(target) ||
+    target.startsWith('/') ||
+    target.startsWith('~') ||
+    target.startsWith('#') ||
+    target.startsWith('{')
+  );
+}
+
+/**
+ * Lists the link targets in `content` that `rewriteMarkdownPaths` would rewrite, in source order and with duplicates
+ * kept, so a caller that validates link targets tests exactly the set that gets rewritten. A caller needing a wider
+ * set — anchor-only targets, say — matches on `MARKDOWN_LINK_REGEX` and filters for itself.
+ */
+export function listRewritableLinkTargets(content: string): ReadonlyArray<string> {
+  const targets: Array<string> = [];
+  for (const match of content.matchAll(MARKDOWN_LINK_REGEX)) {
+    const target = match[2];
+    if (target !== undefined && isRewritableLinkTarget(target)) {
+      targets.push(target);
+    }
+  }
+  return targets;
+}
+
+/**
  * Rewrites relative Markdown link targets in `content` to absolute `~`-prefixed paths.
  * Resolves each relative target against the directory of `fileRelPath` within the tree rooted
  * at `pathPrefix`, then maps to `~/{pathPrefix}/{resolved}`. The prefix is the harness-relative
@@ -11,10 +51,8 @@ import path from 'node:path';
 export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathPrefix: string): string {
   const fileDir = path.posix.dirname(fileRelPath);
 
-  // Match Markdown links [text](target) where target is a relative path
-  return content.replace(/\[([^\]]*)\]\(([^)]+)\)/g, (_match, text: string, target: string) => {
-    // Skip non-relative targets: URLs, absolute paths, tilde paths, anchor-only links
-    if (/^https?:\/\//.test(target) || target.startsWith('/') || target.startsWith('~') || target.startsWith('#')) {
+  return content.replace(MARKDOWN_LINK_REGEX, (_match, text: string, target: string) => {
+    if (!isRewritableLinkTarget(target)) {
       return `[${text}](${target})`;
     }
 

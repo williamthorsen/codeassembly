@@ -1,10 +1,13 @@
 import { existsSync } from 'node:fs';
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../lib/directive-expander.ts';
+import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
+import { parseRulebookFile } from '../lib/rulebook-schema.ts';
+import { renderRulebookBody } from '../lib/rulebook-transform.ts';
 
 // A Markdown link in installable content is rewritten at install time by `rewriteMarkdownPaths`, which resolves a
 // relative target against the *host* file's directory — the skill or subagent the link renders into, not the partial
@@ -18,15 +21,25 @@ import { expandIncludes } from '../lib/directive-expander.ts';
 //
 // Host roots only. A `_partials/` file is never installed standalone, and its links are authored against the host that
 // inlines it — checking one in isolation would misresolve every `../` it carries. Include expansion below reaches them
-// through each host, which is the only context where they mean anything. `guidance/` is copied verbatim with no link
-// rewriting, so it is out of scope.
-const HOST_ROOTS: ReadonlyArray<string> = ['skills', 'subagents'];
+// through each host, which is the only context where they mean anything.
+//
+// `guidance/rulebooks/` is a host root because `sync` renders a rulebook body per harness and resolves its links the
+// same way this test does: against the file's own place in the content tree. The rest of `guidance/` stays out of
+// scope for the opposite reason. `_harnesses/` files are rewritten at install time, but anchored at the harness home
+// they install into rather than at their source directory, so resolving one here against the source tree would
+// misreport every link it carries. `shared/` installs verbatim to a harness-neutral location, which no rewritten path
+// could name a harness in.
+//
+// A rulebook carries a second requirement the file-existence check cannot express: its target must be rooted in a tree
+// that deploys under a harness home. A link to `subagents/canary.md` names a file that exists, so it satisfies
+// everything above, and still fails every `sync`. The last suite below closes that gap over shipped rulebooks.
+const RULEBOOK_ROOT = 'guidance/rulebooks';
+
+const HOST_ROOTS: ReadonlyArray<string> = [RULEBOOK_ROOT, 'skills', 'subagents'];
 
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 
 const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
-
-const MARKDOWN_LINK_REGEX = /\[[^\]]*\]\(([^)]+)\)/g;
 
 type Reason = 'ambiguous-anchor' | 'dead-anchor' | 'missing-file';
 
@@ -76,8 +89,10 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
     const file = path.relative(CONTENT_ROOT, hostFile);
 
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
-      const target = match[1];
-      if (target === undefined || !isRelativeTarget(target)) {
+      // The rewriter's own set, plus anchor-only targets: those name no file to rewrite, but they do name a fragment
+      // this test resolves against the host's own headings.
+      const target = match[2];
+      if (target === undefined || !(isRewritableLinkTarget(target) || target.startsWith('#'))) {
         continue;
       }
 
@@ -121,11 +136,6 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
     `partial rather than the host.`;
   const lines = violations.map((v) => `  [${v.reason}] ${v.file}: ${v.target}`);
   return [header, ...lines].join('\n');
-}
-
-/** Reports whether a link target is one the install pipeline resolves — a relative path, an anchor, or both. */
-function isRelativeTarget(target: string): boolean {
-  return !(/^https?:\/\//.test(target) || target.startsWith('/') || target.startsWith('~') || target.startsWith('{'));
 }
 
 async function readHeadingSlugs(
@@ -191,3 +201,31 @@ describe('installable-content link resolution', () => {
     expect(anchors, formatViolations(anchors)).toEqual([]);
   });
 });
+
+describe('shipped rulebook link deliverability', () => {
+  it('every rulebook link target is rooted in a tree that deploys under a harness home', async () => {
+    const rejections = await findRulebookRejections();
+    expect(rejections, rejections.join('\n')).toEqual([]);
+  });
+});
+
+/**
+ * Renders every shipped rulebook the way `sync` does, collecting the error from each that names an undeliverable link
+ * target. The root allowlist is lexical and harness-invariant, so one harness context stands for all of them.
+ */
+async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
+  const rulebookFiles: Array<string> = [];
+  await collectHostFiles(path.join(CONTENT_ROOT, RULEBOOK_ROOT), rulebookFiles);
+
+  const rejections: Array<string> = [];
+  for (const file of rulebookFiles) {
+    const slug = path.basename(file, '.md');
+    const { body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
+    try {
+      renderRulebookBody(body, slug, { homeDir: '.claude', harnessId: 'claude' });
+    } catch (error) {
+      rejections.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+  return rejections;
+}

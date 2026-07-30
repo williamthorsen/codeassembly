@@ -1155,6 +1155,95 @@ describe(syncCommand, () => {
     });
   });
 
+  describe('rulebook body rendering', () => {
+    /** Creates both harness home dirs so `harness: 'all'` detects claude and rovodev. */
+    async function detectBothHarnesses(): Promise<void> {
+      await mkdir(path.join(projectRoot, '.claude'), { recursive: true });
+      await mkdir(path.join(projectRoot, '.rovodev'), { recursive: true });
+    }
+
+    it('rewrites a relative link into the target harness absolute path in skill delivery', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: skill', 'See [concision](../../skills/_data/concision.md).');
+      await declareRulebooks('alpha');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
+        'See [concision](~/.claude/skills/_data/concision.md).',
+      );
+    });
+
+    it('preserves an anchor fragment on a rewritten target', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: skill', 'See [block](../../skills/_data/action-items.md#block).');
+      await declareRulebooks('alpha');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
+        '(~/.claude/skills/_data/action-items.md#block)',
+      );
+    });
+
+    it('expands harness template variables in the delivered body', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: skill', 'Run {harness_home_dir}/scripts/x.sh as {harness_id}.');
+      await declareRulebooks('alpha');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain('Run ~/.claude/scripts/x.sh as claude.');
+    });
+
+    it('gives each harness its own absolute path, in both skill and ambient delivery', async () => {
+      await detectBothHarnesses();
+      await writeLibraryRulebook(
+        'alpha',
+        'delivery: [ambient, skill]',
+        'See [concision](../../skills/_data/concision.md).',
+      );
+      await declareRulebooks('alpha');
+
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('consult-alpha', '.claude'), 'utf8')).toContain(
+        '~/.claude/skills/_data/concision.md',
+      );
+      expect(await readFile(skillPath('consult-alpha', '.rovodev'), 'utf8')).toContain(
+        '~/.rovodev/skills/_data/concision.md',
+      );
+      expect(await readFile(localHostPath('CLAUDE.local.md'), 'utf8')).toContain('~/.claude/skills/_data/concision.md');
+      expect(await readFile(localHostPath('AGENTS.local.md'), 'utf8')).toContain(
+        '~/.rovodev/skills/_data/concision.md',
+      );
+    });
+
+    it('fails the run when a link target is not under a linkable root, naming the rulebook and the target', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: skill', 'See [canary](../../subagents/canary.md).');
+      await declareRulebooks('alpha');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+        /alpha[\s\S]*subagents\/canary\.md/,
+      );
+    });
+
+    it('fails the run when a link target escapes the content root', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: ambient', 'See [x](../../../elsewhere/a.md).');
+      await declareRulebooks('alpha');
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(/escapes the content root/);
+    });
+
+    it('fails a dry run on a bad link target, writing nothing', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: [ambient, skill]', 'See [canary](../../subagents/canary.md).');
+      await declareRulebooks('alpha');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /unusable Markdown link target/,
+      );
+      expect(existsSync(skillPath('consult-alpha'))).toBe(false);
+      expect(existsSync(localHostPath())).toBe(false);
+    });
+  });
+
   describe('declared subagents', () => {
     const CLAUDE_OVERLAY = unindent`
       _tools:
@@ -1164,7 +1253,7 @@ describe(syncCommand, () => {
         permissionMode: bypassPermissions
 
     `;
-    const ROVODEV_OVERLAY = unindent`
+    const ROVO_OVERLAY = unindent`
       _tools:
         Read: open_files
 
@@ -1181,7 +1270,7 @@ describe(syncCommand, () => {
       const dataDir = path.join(contentDir, 'subagents', '_data');
       await mkdir(dataDir, { recursive: true });
       await writeFile(path.join(dataDir, 'claude.yaml'), CLAUDE_OVERLAY, 'utf8');
-      await writeFile(path.join(dataDir, 'rovodev.yaml'), ROVODEV_OVERLAY, 'utf8');
+      await writeFile(path.join(dataDir, 'rovodev.yaml'), ROVO_OVERLAY, 'utf8');
     }
 
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
