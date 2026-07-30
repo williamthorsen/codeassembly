@@ -318,7 +318,7 @@ async function reconcileDomain(
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
-    const context = resolveRulebookRenderContext(harnessId);
+    const context = resolveRulebookRenderContext(harnessId, resolved);
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -759,7 +759,7 @@ async function assertDeclaredSkillsRender(
  */
 function assertRulebooksRender(harnessIds: ReadonlyArray<HarnessId>, resolved: ReadonlyArray<ResolvedRulebook>): void {
   for (const harnessId of harnessIds) {
-    const context = resolveRulebookRenderContext(harnessId);
+    const context = resolveRulebookRenderContext(harnessId, resolved);
     for (const rulebook of resolved) {
       renderRulebookBody(rulebook.body, rulebook.slug, context);
     }
@@ -1030,7 +1030,7 @@ async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain)
  * region. Each body is rendered for `harnessId`, so the same rulebook yields that harness's own absolute paths.
  */
 function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId: HarnessId): string {
-  const context = resolveRulebookRenderContext(harnessId);
+  const context = resolveRulebookRenderContext(harnessId, resolved);
   let body = '';
   for (const rulebook of resolved) {
     if (rulebook.ambient) {
@@ -1040,10 +1040,24 @@ function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId:
   return body;
 }
 
-/** The per-harness inputs a rulebook render depends on, read off the harness config. */
-function resolveRulebookRenderContext(harnessId: HarnessId): RulebookRenderContext {
+/**
+ * The per-harness inputs a rulebook render depends on: the harness config's own segments and sigils, plus the deployed
+ * rulebooks indexed by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys under.
+ */
+function resolveRulebookRenderContext(
+  harnessId: HarnessId,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+): RulebookRenderContext {
   const config = HARNESSES[harnessId];
-  return { homeDir: config.homeDir, harnessId: config.id };
+  return {
+    homeDir: config.homeDir,
+    harnessId: config.id,
+    skillSigil: config.skillSigil,
+    subagentSigil: config.subagentSigil,
+    rulebooks: new Map(
+      resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]),
+    ),
+  };
 }
 
 /**

@@ -5,8 +5,10 @@ import path from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../lib/directive-expander.ts';
+import type { RulebookInvocationCatalog } from '../lib/invocation-tokens.ts';
 import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
+import { resolveSkillName } from '../lib/rulebook-skill.ts';
 import { renderRulebookBody } from '../lib/rulebook-transform.ts';
 
 // A Markdown link in installable content is rewritten at install time by `rewriteMarkdownPaths`, which resolves a
@@ -202,8 +204,8 @@ describe('installable-content link resolution', () => {
   });
 });
 
-describe('shipped rulebook link deliverability', () => {
-  it('every rulebook link target is rooted in a tree that deploys under a harness home', async () => {
+describe('shipped rulebook reference deliverability', () => {
+  it('every rulebook link target and invocation token names something that deploys', async () => {
     const rejections = await findRulebookRejections();
     expect(rejections, rejections.join('\n')).toEqual([]);
   });
@@ -211,18 +213,40 @@ describe('shipped rulebook link deliverability', () => {
 
 /**
  * Renders every shipped rulebook the way `sync` does, collecting the error from each that names an undeliverable link
- * target. The root allowlist is lexical and harness-invariant, so one harness context stands for all of them.
+ * target or an unusable `{rulebook:<slug>}` token. Every shipped rulebook stands in for the deployed set, which is the
+ * strictest catalog available here: a token naming one that is missing or ambient-only has nothing to invoke under any
+ * declaration. The root allowlist and the catalog are both harness-invariant, so one harness context stands for all.
  */
 async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
   const rulebookFiles: Array<string> = [];
   await collectHostFiles(path.join(CONTENT_ROOT, RULEBOOK_ROOT), rulebookFiles);
 
+  const parsed = await Promise.all(
+    rulebookFiles.map(async (file) => {
+      const slug = path.basename(file, '.md');
+      const { rulebook, body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
+      return {
+        slug,
+        body,
+        skillName: resolveSkillName(slug, rulebook['skill-name']),
+        skill: rulebook.delivery.includes('skill'),
+      };
+    }),
+  );
+  const rulebooks: RulebookInvocationCatalog = new Map(
+    parsed.map(({ slug, skillName, skill }) => [slug, { skillName, skill }]),
+  );
+
   const rejections: Array<string> = [];
-  for (const file of rulebookFiles) {
-    const slug = path.basename(file, '.md');
-    const { body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
+  for (const { slug, body } of parsed) {
     try {
-      renderRulebookBody(body, slug, { homeDir: '.claude', harnessId: 'claude' });
+      renderRulebookBody(body, slug, {
+        homeDir: '.claude',
+        harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
+        rulebooks,
+      });
     } catch (error) {
       rejections.push(error instanceof Error ? error.message : String(error));
     }

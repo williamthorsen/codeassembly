@@ -1,9 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
+import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../rulebook-transform.ts';
 
-const CLAUDE_CONTEXT: RulebookRenderContext = { homeDir: '.claude', harnessId: 'claude' };
-const ROVO_CONTEXT: RulebookRenderContext = { homeDir: '.rovodev', harnessId: 'rovodev' };
+// `shell-conventions` carries a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it deploys no skill.
+const RULEBOOKS: RulebookInvocationCatalog = new Map([
+  ['a-rulebook', { skillName: 'consult-a-rulebook', skill: true }],
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+]);
+
+const CLAUDE_CONTEXT: RulebookRenderContext = {
+  homeDir: '.claude',
+  harnessId: 'claude',
+  skillSigil: '/',
+  subagentSigil: '',
+  rulebooks: RULEBOOKS,
+};
+const ROVO_CONTEXT: RulebookRenderContext = {
+  homeDir: '.rovodev',
+  harnessId: 'rovodev',
+  skillSigil: '!',
+  subagentSigil: '',
+  rulebooks: RULEBOOKS,
+};
 
 describe(renderRulebookBody, () => {
   describe('link rewriting', () => {
@@ -52,6 +73,59 @@ describe(renderRulebookBody, () => {
       expect(
         renderRulebookBody('Run [helper]({harness_home_dir}/scripts/helper.sh).', 'a-rulebook', CLAUDE_CONTEXT),
       ).toBe('Run [helper](~/.claude/scripts/helper.sh).');
+    });
+  });
+
+  describe('invocation tokens', () => {
+    it('renders a rulebook token as the deployed skill name of the target rulebook', () => {
+      const body = 'See {rulebook:nmr-scripts} for the full reference.';
+      expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe(
+        'See /consult-nmr-scripts for the full reference.',
+      );
+      expect(renderRulebookBody(body, 'a-rulebook', ROVO_CONTEXT)).toBe(
+        'See !consult-nmr-scripts for the full reference.',
+      );
+    });
+
+    it('renders a rulebook token through the skill-name override on the target', () => {
+      expect(renderRulebookBody('See {rulebook:shell-conventions}.', 'a-rulebook', CLAUDE_CONTEXT)).toBe(
+        'See /shell-rules.',
+      );
+    });
+
+    it('renders skill and subagent tokens alongside rulebook tokens', () => {
+      const body = 'Invoke {skill:capture-feedback}, dispatch {subagent:planner}, read {rulebook:nmr-scripts}.';
+      expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe(
+        'Invoke /capture-feedback, dispatch planner, read /consult-nmr-scripts.',
+      );
+    });
+
+    it('renders a token naming the rulebook itself', () => {
+      expect(renderRulebookBody('Re-read {rulebook:a-rulebook}.', 'a-rulebook', CLAUDE_CONTEXT)).toBe(
+        'Re-read /consult-a-rulebook.',
+      );
+    });
+
+    it('rejects a token naming an ambient-only rulebook, pointing at dependencies:', () => {
+      expect(() => renderRulebookBody('See {rulebook:nmr-cheatsheet}.', 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
+        /a-rulebook[\s\S]*\{rulebook:nmr-cheatsheet\}[\s\S]*ambient-only[\s\S]*`dependencies:`/,
+      );
+    });
+
+    it('rejects a token naming no deployed rulebook', () => {
+      expect(() => renderRulebookBody('See {rulebook:never-declared}.', 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
+        /\{rulebook:never-declared\}[\s\S]*no rulebook in the deployed set/,
+      );
+    });
+
+    it('reports every offending token in one error', () => {
+      const body = 'See {rulebook:never-declared} and {rulebook:nmr-cheatsheet}.';
+      expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(/2 unusable invocation token/);
+    });
+
+    it('validates before rewriting, so a bad token yields no partial output', () => {
+      const body = 'Good {rulebook:nmr-scripts}, bad {rulebook:nmr-cheatsheet}.';
+      expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow();
     });
   });
 
