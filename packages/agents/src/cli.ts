@@ -18,7 +18,7 @@ const VALID_HARNESS_IDS = new Set<string>(['claude', 'rovodev', 'all']);
  * Main CLI entry point.
  */
 async function main(): Promise<void> {
-  const { command, subcommand, options, help, global } = parseArgs(process.argv);
+  const { command, subcommand, options, help, global, warnOnly } = parseArgs(process.argv);
 
   if (help || !command) {
     printUsage();
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
         await (global ? initGlobalCommand(options) : initCommand(options));
         break;
       case 'sync':
-        await (global ? syncGlobalCommand(options) : syncCommand(options));
+        await runSync(options, global, warnOnly);
         break;
       case 'uninstall':
         await uninstallCommand({ harness: options.harness, force: options.force });
@@ -91,6 +91,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   options: InstallOptions;
   help: boolean;
   global: boolean;
+  warnOnly: boolean;
 } {
   const args = argv.slice(2);
   let command = '';
@@ -103,6 +104,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   let print = false;
   let help = false;
   let global = false;
+  let warnOnly = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -131,6 +133,9 @@ function parseArgs(argv: ReadonlyArray<string>): {
       case 'global':
         global = true;
         break;
+      case 'warn-only':
+        warnOnly = true;
+        break;
       case 'harness': {
         const result = parseHarnessArg(args, i);
         harness = result.harness;
@@ -155,10 +160,11 @@ function parseArgs(argv: ReadonlyArray<string>): {
     options: { harness, link, force, dryRun, hooks, print },
     help,
     global,
+    warnOnly,
   };
 }
 
-type FlagName = 'help' | 'link' | 'force' | 'dry-run' | 'skip-hooks' | 'print' | 'global' | 'harness';
+type FlagName = 'help' | 'link' | 'force' | 'dry-run' | 'skip-hooks' | 'print' | 'global' | 'warn-only' | 'harness';
 
 function parseFlag(arg: string): FlagName | null {
   const flags: Record<string, FlagName> = {
@@ -170,6 +176,7 @@ function parseFlag(arg: string): FlagName | null {
     '--skip-hooks': 'skip-hooks',
     '--print': 'print',
     '--global': 'global',
+    '--warn-only': 'warn-only',
     '--harness': 'harness',
   };
   return flags[arg] ?? null;
@@ -215,7 +222,25 @@ Options:
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
+  --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
+}
+
+/**
+ * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
+ * the posture a package-manager lifecycle hook needs, where aborting the install costs far more than stale guidance.
+ * The default rethrows, so an explicitly invoked sync still fails closed on every guard the command raises.
+ */
+async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {
+  try {
+    await (global ? syncGlobalCommand(options) : syncCommand(options));
+  } catch (error: unknown) {
+    if (!warnOnly) {
+      throw error;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`⚠️ sync failed: ${message}\n   Deployed guidance may be stale.`);
+  }
 }
 
 // endregion | Helpers

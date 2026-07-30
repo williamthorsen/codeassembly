@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -125,5 +125,47 @@ describe('CLI harness flag', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('--harness');
     expect(result.stdout).not.toContain('--platform');
+  });
+});
+
+describe('CLI sync --warn-only', () => {
+  let projectRoot: string;
+
+  // A declaration naming a source that does not exist fails `sync` before it writes anything, which makes it the
+  // cheapest way to exercise the two failure postures against the same input.
+  beforeEach(async () => {
+    projectRoot = path.join(tmpdir(), `agents-test-warn-only-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+    await writeFile(
+      path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+      'sources:\n  - name: missing-source\n    path: ./nowhere\n',
+      'utf8',
+    );
+  });
+
+  afterEach(async () => {
+    await rm(projectRoot, { recursive: true, force: true });
+  });
+
+  it('when a declared source is missing, exits 1 and names the source', async () => {
+    const result = await runCliIn(projectRoot, 'sync');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('missing-source');
+  });
+
+  it('when --warn-only is passed, exits 0 and warns that guidance may be stale', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--warn-only');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain('missing-source');
+    expect(result.stderr).toContain('may be stale');
+  });
+
+  it('lists --warn-only in --help', async () => {
+    const result = await runCli('--help');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('--warn-only');
   });
 });
