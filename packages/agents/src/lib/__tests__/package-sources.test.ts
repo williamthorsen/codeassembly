@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -62,6 +62,24 @@ describe(resolvePackageSources, () => {
 
     expect(await resolvePackageSources(['@ca-fixture/guidance-only'], baseDir)).toEqual([
       { name: '@ca-fixture/guidance-only', dir: path.join(dir, 'guidance') },
+    ]);
+  });
+
+  // Mirrors how pnpm lays out both an external dependency (a link into `.pnpm/`) and a `workspace:*` sibling: the
+  // `node_modules` entry is a symlink, and the content resolves through it to the real directory.
+  it('resolves a package whose node_modules entry is a symlink', async () => {
+    const realDir = path.join(baseDir, 'workspace-packages', 'linked');
+    await mkdir(realDir, { recursive: true });
+    await writeFile(
+      path.join(realDir, 'package.json'),
+      JSON.stringify({ name: '@ca-fixture/linked', codeassembly: { content: 'guidance' } }),
+      'utf8',
+    );
+    await mkdir(path.join(baseDir, 'node_modules', '@ca-fixture'), { recursive: true });
+    await symlink(realDir, path.join(baseDir, 'node_modules', '@ca-fixture', 'linked'), 'dir');
+
+    expect(await resolvePackageSources(['@ca-fixture/linked'], baseDir)).toEqual([
+      { name: '@ca-fixture/linked', dir: path.join(baseDir, 'node_modules', '@ca-fixture', 'linked', 'guidance') },
     ]);
   });
 
