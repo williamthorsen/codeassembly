@@ -44,12 +44,16 @@ The agents package is a CLI tool (`codeassembly-agents`) that installs reusable 
 
 **CLI commands:**
 
-| Command             | Description                                                                                   |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `generate <target>` | Scaffolds project files (`label-map`)                                                         |
-| `install`           | Copies or symlinks skills and subagents into harness directories; prunes deleted-source files |
-| `status`            | Shows current vs modified vs missing installed items                                          |
-| `uninstall`         | Removes previously installed items (respects drift detection)                                 |
+| Command             | Description                                                                                     |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `configure-hooks`   | Writes the session-lifecycle hook entries into harness configs (also run by `install`)          |
+| `generate <target>` | Scaffolds project files (`label-map`)                                                           |
+| `init`              | Scaffolds `.agents/codeassembly.yaml` (or `~/.agents/codeassembly.yaml` with `--global`)        |
+| `install`           | Copies or symlinks skills and subagents into harness directories; prunes deleted-source files   |
+| `library list`      | Lists available library artifacts (rulebooks, skills, subagents)                                |
+| `status`            | Shows current vs modified vs missing installed items                                            |
+| `sync`              | Resolves `.agents/codeassembly.yaml` and materializes declared rulebooks, skills, and subagents |
+| `uninstall`         | Removes previously installed items (respects drift detection)                                   |
 
 Key flags: `--harness <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`.
 
