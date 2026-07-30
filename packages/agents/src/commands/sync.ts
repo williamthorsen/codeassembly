@@ -6,15 +6,10 @@ import process from 'node:process';
 
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { makeArtifactMarker } from '../lib/artifact-marker.ts';
-import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../lib/artifact-types.ts';
+import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import {
-  createSourceResolver,
-  describeSearchedLocations,
-  hasLibraryArtifact,
-  type SourceResolver,
-} from '../lib/content-sources.ts';
+import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../lib/content-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
@@ -24,8 +19,8 @@ import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
-import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { extractRulebookSkillSlug, renderSkillFile, resolveSkillName } from '../lib/rulebook-skill.ts';
+import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.ts';
+import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
@@ -41,18 +36,6 @@ import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts
 
 const skillMarker = makeArtifactMarker('skill');
 const subagentMarker = makeArtifactMarker('subagent');
-
-/** A declared rulebook resolved against its owning source: its neutral body and which delivery modes it requests. */
-interface ResolvedRulebook {
-  readonly slug: string;
-  readonly skillName: string;
-  readonly body: string;
-  readonly ambient: boolean;
-  readonly skill: boolean;
-  readonly description: string | undefined;
-  /** The name of the declared source it resolved from, or `undefined` for the built-in library. */
-  readonly source: string | undefined;
-}
 
 /**
  * One deployed artifact's resolution outcome: its type and slug, the source it resolved from (`undefined` = library),
@@ -1214,42 +1197,6 @@ function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
   const plural = shadows.length === 1 ? '' : 's';
   const verb = shadows.length === 1 ? 's' : '';
   return `⚠️ ${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
-}
-
-/**
- * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), validates
- * its frontmatter, and returns its neutral body and delivery. A missing frontmatter file throws an error naming the
- * resolving source.
- */
-async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<ResolvedRulebook> {
-  const resolved = await resolver.resolve('rulebook', slug);
-  if (resolved === undefined) {
-    const searched = describeSearchedLocations(resolver, 'rulebook', slug);
-    throw new Error(`Declared rulebook "${slug}" was not found in any of: ${searched}`);
-  }
-
-  const srcPath = path.join(resolved.dir, artifactFrontmatterPath('rulebook', slug));
-  let content: string;
-  try {
-    content = await readFile(srcPath, 'utf8');
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      const origin = resolved.source === undefined ? 'the library' : `source "${resolved.source}"`;
-      throw new Error(`Declared rulebook "${slug}" was not found in ${origin} at ${srcPath}`);
-    }
-    throw error;
-  }
-
-  const { rulebook, body } = parseRulebookFile(content, `${slug}.md`);
-  return {
-    slug,
-    skillName: resolveSkillName(slug, rulebook['skill-name']),
-    body: `${body.trim()}\n`,
-    ambient: rulebook.delivery.includes('ambient'),
-    skill: rulebook.delivery.includes('skill'),
-    description: rulebook.description,
-    source: resolved.source,
-  };
 }
 
 /**
