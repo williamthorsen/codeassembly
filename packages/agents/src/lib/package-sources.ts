@@ -20,10 +20,42 @@ const PackageManifestSchema = z
   })
   .loose();
 
+/** The dependency fields of the consuming project's own `package.json`, read for the advisory scan alone. */
+const ProjectManifestSchema = z
+  .object({
+    dependencies: z.record(z.string(), z.string()).optional(),
+    devDependencies: z.record(z.string(), z.string()).optional(),
+  })
+  .loose();
+
 /** A declared package resolved to the content directory it ships, named by the package it came from. */
 export interface PackageSource {
   readonly name: string;
   readonly dir: string;
+}
+
+/**
+ * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content but are absent from
+ * `declared`, sorted by name, so a caller can name the declaration that would adopt each. Purely advisory: it
+ * contributes no source and cannot fail a run, so an unreadable or absent `package.json` yields nothing — which is
+ * also what lets the home domain share this path with no carve-out. Because a package must declare its content
+ * directory to ship any, detection reads that declaration and cannot report a false positive.
+ */
+export async function findUndeclaredGuidancePackages(
+  declared: ReadonlyArray<string>,
+  baseDir: string,
+): Promise<ReadonlyArray<string>> {
+  try {
+    const declaredNames = new Set(declared);
+    const candidates = (await readDirectDependencies(baseDir)).filter((name) => !declaredNames.has(name));
+    const shipping = await Promise.all(
+      candidates.map(async (name) => ((await shipsGuidance(name, baseDir)) ? name : undefined)),
+    );
+    return shipping.filter((name): name is string => name !== undefined).toSorted((a, b) => a.localeCompare(b));
+  } catch {
+    // A suggestion is never worth failing a run for, so any surprise here yields no advice rather than an error.
+    return [];
+  }
 }
 
 /**
@@ -81,6 +113,15 @@ function listCandidateDirs(name: string, baseDir: string): ReadonlyArray<string>
   return (requireFromBase.resolve.paths(name) ?? []).map((nodeModules) => path.join(nodeModules, name));
 }
 
+/** Parses JSON, resolving to `undefined` rather than throwing, for the advisory scan that must not fail a run. */
+function parseJsonOrUndefined(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
+  }
+}
+
 /** Parses a package's `package.json` text, naming the package so a syntax error is attributable. */
 function parsePackageManifest(name: string, raw: string): unknown {
   try {
@@ -116,6 +157,24 @@ function readContentPath(name: string, manifest: unknown): string {
 }
 
 /**
+ * Reads the direct dependency names declared by the project at `baseDir`, or nothing when it has no readable manifest.
+ * Direct dependencies only: guidance is something a project opts into by depending on the package that ships it, and
+ * pnpm's strict layout would not surface a transitive package at the probed paths anyway.
+ */
+async function readDirectDependencies(baseDir: string): Promise<ReadonlyArray<string>> {
+  const raw = await readFileIfPresent(path.join(baseDir, 'package.json'));
+  if (raw === undefined) {
+    return [];
+  }
+
+  const result = ProjectManifestSchema.safeParse(parseJsonOrUndefined(raw));
+  if (!result.success) {
+    return [];
+  }
+  return [...Object.keys(result.data.dependencies ?? {}), ...Object.keys(result.data.devDependencies ?? {})];
+}
+
+/**
  * Reads `filePath`, resolving to `undefined` when it is absent. Any other failure — e.g. `EACCES` on an unreadable
  * `node_modules` directory — rethrows, so a permission problem surfaces instead of reading as a bare absence and
  * sending resolution on to the next candidate.
@@ -128,6 +187,25 @@ async function readFileIfPresent(filePath: string): Promise<string | undefined> 
       return undefined;
     }
     throw error;
+  }
+}
+
+/**
+ * Reports whether `name` resolves to an installed package that declares a content directory. Advisory: a package that
+ * is absent, or whose `package.json` will not parse, answers `false` rather than throwing, because the scan consuming
+ * this must never be the thing that fails a run.
+ */
+async function shipsGuidance(name: string, baseDir: string): Promise<boolean> {
+  try {
+    const installed = await findInstalledPackage(name, baseDir);
+    if (installed === undefined) {
+      return false;
+    }
+
+    const result = PackageManifestSchema.safeParse(installed.manifest);
+    return result.success && result.data.codeassembly?.content !== undefined;
+  } catch {
+    return false;
   }
 }
 

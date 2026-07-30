@@ -21,7 +21,7 @@ import { checkGitIgnored } from '../lib/git-ignore.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
-import { resolvePackageSources } from '../lib/package-sources.ts';
+import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
@@ -374,6 +374,13 @@ async function reconcileDomain(
   const shadows = resolutionReport.filter((entry) => entry.shadowsLibrary);
   if (shadows.length > 0) {
     console.warn(renderShadowWarning(shadows));
+  }
+
+  // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This is
+  // advice, not action: nothing is deployed until the project declares the package.
+  const undeclared = await findUndeclaredGuidancePackages(declaration.packages, domain.baseDir);
+  if (undeclared.length > 0) {
+    console.info(renderPackageAdvice(undeclared));
   }
 }
 
@@ -1180,6 +1187,19 @@ function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string
     return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← ${origin}${shadow}`;
   });
   return ['[dry-run] sync would resolve:', ...lines].join('\n');
+}
+
+/**
+ * Renders the advice naming each dependency that ships content the project has not declared, as the `packages:` block
+ * that adopts them. Emitted as the block rather than as prose so it can be pasted rather than transcribed.
+ */
+function renderPackageAdvice(names: ReadonlyArray<string>): string {
+  const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
+  const entries = names.map((name) => `    - '${name}'`).join('\n');
+  return (
+    `💡 ${names.length} ${subject} CodeAssembly guidance this project has not declared. ` +
+    `To adopt, add to .agents/codeassembly.yaml:\n\npackages:\n  use:\n${entries}\n`
+  );
 }
 
 /** Renders the real-run warning naming each deployed artifact that shadows a same-slug library artifact. */

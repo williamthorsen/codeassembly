@@ -198,6 +198,37 @@ describe('sync with a declared package', () => {
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('Ambient package rules.');
   });
 
+  it('advises adopting an installed dependency that ships guidance the project has not declared', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    await writeFile(
+      path.join(projectRoot, 'package.json'),
+      JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
+      'utf8',
+    );
+    await declare('rulebooks:\n  use: []\n');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const advice = info.mock.calls.flat().join('\n');
+    expect(advice).toContain(PACKAGE_NAME);
+    expect(advice).toMatch(/packages:\n {2}use:/);
+  });
+
+  it('stops advising once the dependency is declared', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    await writeFile(
+      path.join(projectRoot, 'package.json'),
+      JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
+      'utf8',
+    );
+    await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
+    await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(info.mock.calls.flat().join('\n')).not.toContain('has not declared');
+  });
+
   it('fails the run when a declared package is not installed, writing nothing', async () => {
     await declare("packages:\n  use:\n    - '@ca-fixture/absent'\n");
 
