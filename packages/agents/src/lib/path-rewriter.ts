@@ -1,8 +1,13 @@
 import { lstat, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-/** The Markdown link grammar this module rewrites: `[text](target)`. */
-const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
+/**
+ * The Markdown link grammar this module rewrites: `[text](target)`, capturing text then target. Exported because the
+ * grammar and the passthrough predicate together define what gets rewritten, so a caller inspecting links must match
+ * on both to see the same set. Safe to share despite the `g` flag: `replace` and `matchAll` each leave `lastIndex`
+ * untouched between calls.
+ */
+export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 
 /**
  * Reports whether a Markdown link target is one this module resolves as a source-tree-relative path. False for the
@@ -22,8 +27,8 @@ export function isRewritableLinkTarget(target: string): boolean {
 
 /**
  * Lists the link targets in `content` that `rewriteMarkdownPaths` would rewrite, in source order and with duplicates
- * kept. Exported so a caller that validates link targets tests exactly the set that gets rewritten, against the same
- * link grammar, rather than a second copy of it that can drift.
+ * kept, so a caller that validates link targets tests exactly the set that gets rewritten. A caller needing a wider
+ * set — anchor-only targets, say — matches on `MARKDOWN_LINK_REGEX` and filters for itself.
  */
 export function listRewritableLinkTargets(content: string): ReadonlyArray<string> {
   const targets: Array<string> = [];

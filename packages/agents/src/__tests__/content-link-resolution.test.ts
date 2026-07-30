@@ -1,11 +1,13 @@
 import { existsSync } from 'node:fs';
-import { readdir } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../lib/directive-expander.ts';
-import { isRewritableLinkTarget } from '../lib/path-rewriter.ts';
+import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
+import { parseRulebookFile } from '../lib/rulebook-schema.ts';
+import { renderRulebookBody } from '../lib/rulebook-transform.ts';
 
 // A Markdown link in installable content is rewritten at install time by `rewriteMarkdownPaths`, which resolves a
 // relative target against the *host* file's directory — the skill or subagent the link renders into, not the partial
@@ -27,13 +29,17 @@ import { isRewritableLinkTarget } from '../lib/path-rewriter.ts';
 // they install into rather than at their source directory, so resolving one here against the source tree would
 // misreport every link it carries. `shared/` installs verbatim to a harness-neutral location, which no rewritten path
 // could name a harness in.
-const HOST_ROOTS: ReadonlyArray<string> = ['guidance/rulebooks', 'skills', 'subagents'];
+//
+// A rulebook carries a second requirement the file-existence check cannot express: its target must be rooted in a tree
+// that deploys under a harness home. A link to `subagents/canary.md` names a file that exists, so it satisfies
+// everything above, and still fails every `sync`. The last suite below closes that gap over shipped rulebooks.
+const RULEBOOK_ROOT = 'guidance/rulebooks';
+
+const HOST_ROOTS: ReadonlyArray<string> = [RULEBOOK_ROOT, 'skills', 'subagents'];
 
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 
 const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
-
-const MARKDOWN_LINK_REGEX = /\[[^\]]*\]\(([^)]+)\)/g;
 
 type Reason = 'ambiguous-anchor' | 'dead-anchor' | 'missing-file';
 
@@ -85,7 +91,7 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
       // The rewriter's own set, plus anchor-only targets: those name no file to rewrite, but they do name a fragment
       // this test resolves against the host's own headings.
-      const target = match[1];
+      const target = match[2];
       if (target === undefined || !(isRewritableLinkTarget(target) || target.startsWith('#'))) {
         continue;
       }
@@ -195,3 +201,31 @@ describe('installable-content link resolution', () => {
     expect(anchors, formatViolations(anchors)).toEqual([]);
   });
 });
+
+describe('shipped rulebook link deliverability', () => {
+  it('every rulebook link target is rooted in a tree that deploys under a harness home', async () => {
+    const rejections = await findRulebookRejections();
+    expect(rejections, rejections.join('\n')).toEqual([]);
+  });
+});
+
+/**
+ * Renders every shipped rulebook the way `sync` does, collecting the error from each that names an undeliverable link
+ * target. The root allowlist is lexical and harness-invariant, so one harness context stands for all of them.
+ */
+async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
+  const rulebookFiles: Array<string> = [];
+  await collectHostFiles(path.join(CONTENT_ROOT, RULEBOOK_ROOT), rulebookFiles);
+
+  const rejections: Array<string> = [];
+  for (const file of rulebookFiles) {
+    const slug = path.basename(file, '.md');
+    const { body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
+    try {
+      renderRulebookBody(body, slug, { homeDir: '.claude', harnessId: 'claude' });
+    } catch (error) {
+      rejections.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+  return rejections;
+}
