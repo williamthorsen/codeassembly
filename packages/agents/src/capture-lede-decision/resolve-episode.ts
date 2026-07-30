@@ -284,12 +284,12 @@ async function resolveIdentity(input: {
   const fallback = await readChangeSummaryFields(input.artifactDir);
 
   const type = input.type ?? fallback.type;
-  if (type === null || type === undefined) {
+  if (type === null) {
     return { ok: false, error: 'unresolved-identity', message: 'work type could not be resolved; pass --type' };
   }
 
   const scope = input.scope ?? fallback.scope;
-  if (scope === null || scope === undefined) {
+  if (scope === null) {
     return { ok: false, error: 'unresolved-identity', message: 'scope could not be resolved; pass --scope' };
   }
 
@@ -312,7 +312,7 @@ async function resolveIdentity(input: {
       scope,
       pr: input.pr,
       mergeCommit: input.mergeCommit,
-      ...(ticket !== null && ticket !== undefined && { ticket }),
+      ...(ticket !== null && { ticket }),
     },
   };
 }
