@@ -7,6 +7,7 @@ skills:
   - anti-patterns
   - commit
   - common-mistakes
+  - software-engineering
   - testing-conventions
 ---
 
