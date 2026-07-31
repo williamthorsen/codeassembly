@@ -102,13 +102,18 @@ Report the written `path` on success.
 
 ### Recording a pull request merged outside the merge flow
 
-Such a pull request wrote no merge artifact, so the merged lede has to be supplied. Fetch the body, take its `## What` section, write that to a file, and pass the file:
+Such a pull request wrote no merge artifact, so the merged lede has to be supplied. A lede file is read whole and recorded as the lede, with none of the heading extraction the artifact path applies: a file holding the entire pull-request body records the entire body as the lede. Extract the `## What` section as the file is written:
 
 ```bash
-gh pr view <number> --json body --jq '.body' > "$TMPDIR/merged-body.md"
+gh pr view <number> --json body --jq '.body' \
+  | awk '{ sub(/\r$/, "") }
+         tolower($0) ~ /^## what[[:space:]]*$/ { capturing = 1; next }
+         /^## / { capturing = 0 }
+         capturing' \
+  > "$TMPDIR/merged-lede.md"
 ```
 
-Then hand the `## What` section's text to `--merged-lede-file` and continue from step 2. Everything else resolves from the ticket's artifacts as usual.
+Pass that file to `--merged-lede-file` and continue from step 2. Everything else resolves from the ticket's artifacts as usual.
 
 ## The record
 

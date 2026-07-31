@@ -187,11 +187,13 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate — all values are concrete by this point.
 
-If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report and continue.
+If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it carries one, and continue.
 
 ### 10. Record the lede decision
 
-The merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge — never present a failure at this step as a merge failure.
+Skip this step when the delegate's completion report carries no merge commit SHA: nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+
+Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge — never present a failure at this step as a merge failure.
 
 Invoke `{skill:capture-lede-decision}` with:
 
