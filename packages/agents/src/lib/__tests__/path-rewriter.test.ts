@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  homeAnchor,
   isRewritableLinkTarget,
   rewriteMarkdownPaths,
   rewritePathsInDirectory,
@@ -33,7 +34,7 @@ describe(isRewritableLinkTarget, () => {
 });
 
 describe(rewriteMarkdownPaths, () => {
-  const skillsPrefix = '.claude/skills';
+  const skillsAnchor = homeAnchor('.claude/skills');
 
   it.each([
     {
@@ -106,23 +107,23 @@ describe(rewriteMarkdownPaths, () => {
         'See [format](~/.claude/skills/_data/title-templates.md) and [types](~/.claude/skills/_data/work-types.md).',
     },
   ])('$name', ({ fileRelPath, content, expected }) => {
-    expect(rewriteMarkdownPaths(content, fileRelPath, skillsPrefix)).toBe(expected);
+    expect(rewriteMarkdownPaths(content, fileRelPath, skillsAnchor)).toBe(expected);
   });
 
   it('returns empty content unchanged', () => {
-    expect(rewriteMarkdownPaths('', 'commit/SKILL.md', skillsPrefix)).toBe('');
+    expect(rewriteMarkdownPaths('', 'commit/SKILL.md', skillsAnchor)).toBe('');
   });
 
   it('returns content with no links unchanged', () => {
     const content = '# Heading\n\nSome text without links.\n';
-    expect(rewriteMarkdownPaths(content, 'commit/SKILL.md', skillsPrefix)).toBe(content);
+    expect(rewriteMarkdownPaths(content, 'commit/SKILL.md', skillsAnchor)).toBe(content);
   });
 
   it('handles mixed link types in the same line', () => {
     const content = 'See [local](../_data/file.md) and [remote](https://example.com) and [abs](/path.md).';
     const expected =
       'See [local](~/.claude/skills/_data/file.md) and [remote](https://example.com) and [abs](/path.md).';
-    expect(rewriteMarkdownPaths(content, 'commit/SKILL.md', skillsPrefix)).toBe(expected);
+    expect(rewriteMarkdownPaths(content, 'commit/SKILL.md', skillsAnchor)).toBe(expected);
   });
 });
 

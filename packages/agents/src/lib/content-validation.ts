@@ -9,6 +9,7 @@ import { listVisibleMarkdownFiles } from './fs-helpers.ts';
 import { HARNESSES, resolveSkillsPathPrefix } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
+import { homeAnchor } from './path-rewriter.ts';
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
 import { renderRulebookBody, type RulebookRenderContext } from './rulebook-transform.ts';
 import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
@@ -211,7 +212,7 @@ async function renderForHarness(
   const toolMapping = loadToolMapping(overlayYaml);
   const skillContext: SkillDeployContext = {
     toolMapping,
-    pathPrefix: resolveSkillsPathPrefix(config),
+    anchor: homeAnchor(resolveSkillsPathPrefix(config)),
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
@@ -220,12 +221,14 @@ async function renderForHarness(
   const subagentContext: SubagentDeployContext = {
     overlayYaml,
     toolMapping,
+    anchor: homeAnchor(config.homeDir),
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
   };
   const rulebookContext: RulebookRenderContext = {
+    anchor: homeAnchor(config.homeDir),
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,

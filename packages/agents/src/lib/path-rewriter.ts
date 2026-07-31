@@ -10,6 +10,23 @@ import path from 'node:path';
 export const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 
 /**
+ * Maps a resolved link target to the absolute path it deploys at. The argument is normalized and fragment-free, so an
+ * implementation decides only which tree the target lands in, never how the target itself was resolved.
+ *
+ * Deployment location is not a property of the rewriting file: the same relative target can name a tree `install`
+ * populates in the harness home and one `sync` populates in a project, so the caller that knows which supplies this.
+ */
+export type ResolveLinkAnchor = (normalizedTarget: string) => string;
+
+/**
+ * Anchors every target under one harness-relative prefix in the harness home, the single behavior every caller had
+ * before targets could land anywhere else.
+ */
+export function homeAnchor(pathPrefix: string): ResolveLinkAnchor {
+  return (normalizedTarget) => `~/${pathPrefix}/${normalizedTarget}`;
+}
+
+/**
  * Reports whether a Markdown link target is one this module resolves as a source-tree-relative path. False for the
  * forms that already name their destination or name nothing to resolve: `http(s)` URLs, absolute paths, `~`-prefixed
  * paths, anchor-only links, and targets opening with a `{template_variable}`, which expands to its own absolute path
@@ -42,13 +59,11 @@ export function listRewritableLinkTargets(content: string): ReadonlyArray<string
 }
 
 /**
- * Rewrites relative Markdown link targets in `content` to absolute `~`-prefixed paths.
- * Resolves each relative target against the directory of `fileRelPath` within the tree rooted
- * at `pathPrefix`, then maps to `~/{pathPrefix}/{resolved}`. The prefix is the harness-relative
- * directory under which the tree lives (e.g., `.claude/skills` for skills, `.claude` for
- * harness guidance files that sit directly in the harness home).
+ * Rewrites relative Markdown link targets in `content` to the absolute paths their targets deploy at. Each target
+ * resolves against the directory of `fileRelPath`, and `anchor` maps the resolved result to its deployed location;
+ * pass `homeAnchor` for a tree that lives entirely under one harness-relative prefix.
  */
-export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathPrefix: string): string {
+export function rewriteMarkdownPaths(content: string, fileRelPath: string, anchor: ResolveLinkAnchor): string {
   const fileDir = path.posix.dirname(fileRelPath);
 
   return content.replace(MARKDOWN_LINK_REGEX, (_match, text: string, target: string) => {
@@ -72,7 +87,7 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, pathP
     const joined = path.posix.join(fileDir, pathPart);
     const normalized = path.posix.normalize(joined);
 
-    return `[${text}](~/${pathPrefix}/${normalized}${fragment})`;
+    return `[${text}](${anchor(normalized)}${fragment})`;
   });
 }
 
@@ -100,7 +115,7 @@ export async function rewritePathsInFile(
 ): Promise<void> {
   try {
     const content = await readFile(filePath, 'utf8');
-    let rewritten = rewriteMarkdownPaths(content, fileRelPath, pathPrefix);
+    let rewritten = rewriteMarkdownPaths(content, fileRelPath, homeAnchor(pathPrefix));
     rewritten = rewriteTemplateVariables(rewritten, homeDir, harnessId);
     if (rewritten !== content) {
       await writeFile(filePath, rewritten, 'utf8');

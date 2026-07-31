@@ -7,14 +7,18 @@ import {
   rewriteInvocationTokens,
   type RulebookInvocationCatalog,
 } from './invocation-tokens.ts';
-import { listRewritableLinkTargets, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import {
+  listRewritableLinkTargets,
+  rewriteMarkdownPaths,
+  type ResolveLinkAnchor,
+  rewriteTemplateVariables,
+} from './path-rewriter.ts';
 
 /** The per-harness inputs a rulebook body render depends on, resolved once per harness by the caller. */
 export interface RulebookRenderContext {
-  /**
-   * Harness home segment: both the prefix `~/`-prefixed link targets are built under and the `{harness_home_dir}`
-   * expansion target (e.g. `.claude`).
-   */
+  /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
+  readonly anchor: ResolveLinkAnchor;
+  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
   readonly harnessId: string;
@@ -55,7 +59,7 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
   assertAnchorsResolve(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`);
   assertLinkTargetsAreDeliverable(body, slug);
   assertRulebookTokensResolve(body, slug, context.rulebooks);
-  const pathRewritten = rewriteMarkdownPaths(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`, context.homeDir);
+  const pathRewritten = rewriteMarkdownPaths(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`, context.anchor);
   const tokenRewritten = rewriteInvocationTokens(
     pathRewritten,
     context,

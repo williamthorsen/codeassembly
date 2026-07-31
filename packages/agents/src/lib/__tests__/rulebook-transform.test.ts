@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { RulebookInvocationCatalog } from '../invocation-tokens.ts';
+import { homeAnchor } from '../path-rewriter.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../rulebook-transform.ts';
 
 // `shell-conventions` carries a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it deploys no skill.
@@ -12,6 +13,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
 ]);
 
 const CLAUDE_CONTEXT: RulebookRenderContext = {
+  anchor: homeAnchor('.claude'),
   homeDir: '.claude',
   harnessId: 'claude',
   skillSigil: '/',
@@ -19,6 +21,7 @@ const CLAUDE_CONTEXT: RulebookRenderContext = {
   rulebooks: RULEBOOKS,
 };
 const ROVO_CONTEXT: RulebookRenderContext = {
+  anchor: homeAnchor('.rovodev'),
   homeDir: '.rovodev',
   harnessId: 'rovodev',
   skillSigil: '!',

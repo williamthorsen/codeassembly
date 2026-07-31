@@ -6,6 +6,7 @@ import { artifactFrontmatterPath } from './artifact-types.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { writeIfChanged } from './fs-helpers.ts';
+import type { ResolveLinkAnchor } from './path-rewriter.ts';
 import { renderSubagentForHarness } from './subagent-transform.ts';
 
 /**
@@ -26,7 +27,9 @@ export interface SubagentDeployContext {
   readonly overlayYaml: string;
   /** Canonical → harness tool-name mapping for the body-text placeholder rewriter. */
   readonly toolMapping: ReadonlyMap<string, string>;
-  /** Harness-relative prefix for `~/`-prefixed Markdown link targets, and the `{harness_home_dir}` expansion target. */
+  /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
+  readonly anchor: ResolveLinkAnchor;
+  /** Harness home segment that `{harness_home_dir}` tokens expand to. */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to. */
   readonly harnessId: string;
@@ -67,7 +70,7 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
     toolMapping: context.toolMapping,
     fileRelPath: fileName,
     sourceLabel: `subagents/${fileName}`,
-    pathPrefix: context.homeDir,
+    anchor: context.anchor,
     homeDir: context.homeDir,
     harnessId: context.harnessId,
     skillSigil: context.skillSigil,

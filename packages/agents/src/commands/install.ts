@@ -19,7 +19,7 @@ import {
   writeManifest,
 } from '../lib/manifest.js';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.js';
-import { rewritePathsInFile } from '../lib/path-rewriter.js';
+import { homeAnchor, rewritePathsInFile } from '../lib/path-rewriter.js';
 import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.js';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -268,7 +268,7 @@ async function installSkillEntry(
   // same render `validate` runs, which is what keeps the two passes agreeing on what a support entry is.
   const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
     toolMapping,
-    pathPrefix: skillsPrefix,
+    anchor: homeAnchor(skillsPrefix),
     homeDir,
     harnessId,
     skillSigil,
