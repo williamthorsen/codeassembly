@@ -13,10 +13,11 @@ Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`
 | `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
 | `status`            | Show the current state of installed items                                                                  |
+| `validate`          | Check a content root for defects that would fail at a consumer; writes nothing                             |
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
-Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. Run `codeassembly-agents --help` for the authoritative list.
+Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone. Run `codeassembly-agents --help` for the authoritative list.
 
 ## Session-lifecycle hooks
 
@@ -280,6 +281,16 @@ A package's catalog is its rulebooks, skills, and subagents; a `collections/` en
 **Include the content directory in `files`.** This is the one thing most likely to go wrong, because a `workspace:*` self-link resolves the live source tree and so never exercises packing. A producer that omits the entry sees its own guidance work perfectly and every consumer's install fail. `pnpm pack` and inspecting the tarball is the check that catches it.
 
 Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens.
+
+**Gate the content in the producer's own build.** `codeassembly-agents validate` runs the checks a consumer's `sync` runs before writing — dependency closure, artifact resolution, delivery collisions, and a per-harness render — over the whole content root, writing nothing:
+
+```
+codeassembly-agents validate
+```
+
+It reads no `codeassembly.yaml`, so a package that produces guidance without consuming any still has a gate: wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness the root could deploy to, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file.
+
+Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that carry no `SKILL.md`. Link-target existence and cross-file anchors are not checked — a target resolves against the deployed tree, which unions this content with the library's and with every other declared source's.
 
 One shape cannot consume its own guidance: a single-package repo whose package is the repo root has no `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
 
