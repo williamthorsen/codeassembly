@@ -2,6 +2,7 @@ import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promis
 import path from 'node:path';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
+import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
@@ -488,6 +489,13 @@ async function installSharedGuidance(
     const srcPath = path.join(sharedSrcDir, entry);
     const destPath = path.join(sharedHome, entry);
 
+    // Shared guidance ships verbatim, with no include expansion and no rewriting, so the anchor check reads the source
+    // itself rather than riding a render. It runs before the dry-run gate, and in link mode too: a symlinked file
+    // reaches the reader with the same dead locator a copied one would.
+    if (entry.endsWith('.md')) {
+      assertAnchorsResolve(await readFile(srcPath, 'utf8'), `guidance/shared/${entry}`);
+    }
+
     if (options.dryRun) {
       const action = options.link ? 'link' : 'copy';
       console.info(`    [${action}] ${entry} -> ~/.agents/${entry}`);
@@ -579,11 +587,13 @@ async function installHarnessGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
-    // Resolve include directives at source-tree level. Run before the dry-run gate so missing
-    // targets, cycles, and out-of-tree references surface even when no files are written.
+    // Resolve include directives at source-tree level, then check the expanded text for anchors that name nothing.
+    // Both run before the dry-run gate so missing targets, cycles, out-of-tree references, and dead in-body locators
+    // surface even when no files are written.
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
       expandedContent = await expandIncludes(srcPath, contentDir);
+      assertAnchorsResolve(expandedContent, `guidance/_harnesses/${harnessId}/${entry}`);
     }
 
     if (options.dryRun) {

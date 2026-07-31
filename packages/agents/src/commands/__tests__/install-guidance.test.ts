@@ -463,4 +463,41 @@ describe('guidance installation', () => {
       });
     });
   });
+
+  describe('unresolvable in-body anchors', () => {
+    const DEAD_ANCHOR_BODY = '# Fixture guidance\n\nSee [the events](#lifecycle-events).\n';
+
+    it('fails a dry run on a harness guidance file whose anchor names no heading, writing nothing', async () => {
+      const badContentDir = path.join(tempDir, 'bad-content');
+      await buildContentTree(badContentDir, { harnessGuidance: { claude: { 'CLAUDE.md': DEAD_ANCHOR_BODY } } });
+      const claudeHome = await setupClaudeHome();
+
+      await expect(
+        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
+      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md carries 1 unresolvable anchor link target/);
+      expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
+    });
+
+    it('fails a dry run on a shared guidance file whose anchor names no heading, writing nothing', async () => {
+      const badContentDir = path.join(tempDir, 'bad-content');
+      await buildContentTree(badContentDir, { sharedGuidance: { 'AGENTS.md': DEAD_ANCHOR_BODY } });
+      await setupClaudeHome();
+
+      await expect(
+        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
+      ).rejects.toThrow(/guidance\/shared\/AGENTS\.md carries 1 unresolvable anchor link target/);
+      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
+    });
+
+    it('fails a shared guidance file in link mode, where the symlink would carry the dead locator', async () => {
+      const badContentDir = path.join(tempDir, 'bad-content');
+      await buildContentTree(badContentDir, { sharedGuidance: { 'AGENTS.md': DEAD_ANCHOR_BODY } });
+      await setupClaudeHome();
+
+      await expect(
+        installCommand(makeOptions({ harness: 'claude', link: true }), tempDir, badContentDir),
+      ).rejects.toThrow(/guidance\/shared\/AGENTS\.md carries 1 unresolvable anchor link target/);
+      expect(existsSync(path.join(tempDir, '.agents', 'AGENTS.md'))).toBe(false);
+    });
+  });
 });
