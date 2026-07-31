@@ -28,7 +28,6 @@ const DOCTRINE_RULES: ReadonlyArray<string> = [
 
 /** The skills that inline the doctrine. Each writes comments, judges them, or proposes their text. */
 const CARRIER_SKILLS: ReadonlyArray<string> = [
-  'code-patterns',
   'respond-to-review',
   'review-criteria',
   'revise-comments',
