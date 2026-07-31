@@ -187,7 +187,27 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes ambiguous-status dimensions or `prompt` sentinels to the delegate — all values are concrete by this point.
 
-After the delegate returns, emit `skill.completed` (payload `{"outcome":"merged"}`, or `{"outcome":"stopped: <reason>"}` when the delegate stopped or failed) per [Lifecycle events](#lifecycle-events).
+If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture the merge commit SHA from the delegate's completion report, if it carries one, and continue.
+
+### 10. Record the lede decision
+
+Skip this step when the delegate's completion report carries no merge commit SHA: nothing merged, so there is no shipped lede to decide about. The Bitbucket delegate is the standing case, since it prints the resolved values and exits successfully without merging. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+
+Otherwise the merge has already happened, so this step can only add a record. Declining costs a data point and nothing else, and nothing here can undo or re-run the merge — never present a failure at this step as a merge failure.
+
+Invoke `{skill:capture-lede-decision}` with:
+
+| Input               | Value                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `--artifact-dir`    | `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`                                                        |
+| `--pr`              | Resolved PR number                                                                                                        |
+| `--merge-commit`    | The merge commit SHA from the delegate's completion report                                                                |
+| `--type`, `--scope` | The values resolved in step 3, as settled at the approval gate                                                            |
+| `--store`           | `codeassembly` — the project's agent-guidance KB. Pass a different store only when the user directs the record elsewhere. |
+
+That skill owns the prompt and the record: it asks once, writes one event on a decision, and writes nothing on a skip. Do not ask again, and do not infer a verdict from whether the ledes differ — a lede that shipped unchanged under time pressure is not an accepted lede.
+
+Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle events](#lifecycle-events).
 
 ## Important
 

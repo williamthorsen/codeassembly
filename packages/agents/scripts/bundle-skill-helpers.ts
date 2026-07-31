@@ -65,6 +65,10 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/capture-event/capture-event.mjs',
   },
   {
+    entry: 'src/capture-lede-decision/cli.ts',
+    outFile: 'content/skills/capture-lede-decision/capture-lede-decision.mjs',
+  },
+  {
     entry: 'src/kb-update-events/cli.ts',
     outFile: 'content/skills/kb-update-events/kb-update-events.mjs',
   },
