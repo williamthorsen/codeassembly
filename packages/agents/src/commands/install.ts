@@ -201,6 +201,18 @@ async function installSupportDirectories(
   const skillsSrcDir = path.join(contentDir, 'skills');
   const entries: Array<ManifestEntry> = [];
 
+  // `listSupportEntries` reports an absent directory as empty, so the absence is probed separately: content shipping no
+  // `skills/` has lost the support files every skill reads at runtime, and a silent success would hide that.
+  try {
+    await stat(skillsSrcDir);
+  } catch (error: unknown) {
+    if (!isEnoent(error)) {
+      throw error;
+    }
+    console.warn(`  ⚠️ Warning: no skills directory found at ${skillsSrcDir}, skipping skill support installation`);
+    return [];
+  }
+
   // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). What
   // counts as one is `listSupportEntries`, shared with `validate` so the pass that checks these and the pass that
   // deploys them cannot come to disagree about which entries they are.
