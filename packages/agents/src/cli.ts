@@ -10,6 +10,7 @@ import { libraryListCommand, printLibraryUsage } from './commands/library-list.t
 import { statusCommand } from './commands/status.ts';
 import { syncCommand, syncGlobalCommand } from './commands/sync.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
+import { validateCommand } from './commands/validate.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
 const VALID_HARNESS_IDS = new Set<string>(['claude', 'rovodev', 'all']);
@@ -18,7 +19,7 @@ const VALID_HARNESS_IDS = new Set<string>(['claude', 'rovodev', 'all']);
  * Main CLI entry point.
  */
 async function main(): Promise<void> {
-  const { command, subcommand, options, help, global, warnOnly } = parseArgs(process.argv);
+  const { command, subcommand, options, content, help, global, warnOnly } = parseArgs(process.argv);
 
   if (help || !command) {
     printUsage();
@@ -44,6 +45,13 @@ async function main(): Promise<void> {
         break;
       case 'status':
         await statusCommand({ harness: options.harness });
+        break;
+      // Exits here rather than through the `catch` below: a defect report is a multi-line list of findings, which that
+      // handler would prefix with `Error:` as though it were one failure.
+      case 'validate':
+        if (!(await validateCommand({ content, harness: options.harness }))) {
+          process.exit(1);
+        }
         break;
       case 'library':
         if (subcommand === 'list') {
@@ -89,6 +97,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   command: string;
   subcommand: string;
   options: InstallOptions;
+  content: string | undefined;
   help: boolean;
   global: boolean;
   warnOnly: boolean;
@@ -96,6 +105,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   const args = argv.slice(2);
   let command = '';
   let subcommand = '';
+  let content: string | undefined;
   let harness: InstallOptions['harness'] = 'all';
   let link = false;
   let force = false;
@@ -136,6 +146,12 @@ function parseArgs(argv: ReadonlyArray<string>): {
       case 'warn-only':
         warnOnly = true;
         break;
+      case 'content': {
+        const result = parseValueArg(args, i, '--content', '<dir>');
+        content = result.value;
+        i = result.nextIndex;
+        break;
+      }
       case 'harness': {
         const result = parseHarnessArg(args, i);
         harness = result.harness;
@@ -158,13 +174,15 @@ function parseArgs(argv: ReadonlyArray<string>): {
     command,
     subcommand,
     options: { harness, link, force, dryRun, hooks, print },
+    content,
     help,
     global,
     warnOnly,
   };
 }
 
-type FlagName = 'help' | 'link' | 'force' | 'dry-run' | 'skip-hooks' | 'print' | 'global' | 'warn-only' | 'harness';
+type FlagName =
+  'content' | 'dry-run' | 'force' | 'global' | 'harness' | 'help' | 'link' | 'print' | 'skip-hooks' | 'warn-only';
 
 function parseFlag(arg: string): FlagName | null {
   const flags: Record<string, FlagName> = {
@@ -177,6 +195,7 @@ function parseFlag(arg: string): FlagName | null {
     '--print': 'print',
     '--global': 'global',
     '--warn-only': 'warn-only',
+    '--content': 'content',
     '--harness': 'harness',
   };
   return flags[arg] ?? null;
@@ -186,16 +205,27 @@ function parseHarnessArg(
   args: ReadonlyArray<string>,
   index: number,
 ): { harness: HarnessId | 'all'; nextIndex: number } {
+  const { value, nextIndex } = parseValueArg(args, index, '--harness', 'claude, rovodev, or all');
+  if (!isValidHarness(value)) {
+    console.error(`Error: Invalid harness "${value}". Valid options: claude, rovodev, all`);
+    process.exit(1);
+  }
+  return { harness: value, nextIndex };
+}
+
+/** Reads the value following a value-taking flag, exiting with an attributed error when the flag stands alone. */
+function parseValueArg(
+  args: ReadonlyArray<string>,
+  index: number,
+  flag: string,
+  expected: string,
+): { value: string; nextIndex: number } {
   const nextArg = args[index + 1];
   if (!nextArg || nextArg.startsWith('--')) {
-    console.error('Error: --harness requires a value (claude, rovodev, or all)');
+    console.error(`Error: ${flag} requires a value (${expected})`);
     process.exit(1);
   }
-  if (!isValidHarness(nextArg)) {
-    console.error(`Error: Invalid harness "${nextArg}". Valid options: claude, rovodev, all`);
-    process.exit(1);
-  }
-  return { harness: nextArg, nextIndex: index + 1 };
+  return { value: nextArg, nextIndex: index + 1 };
 }
 
 /**
@@ -211,10 +241,12 @@ Commands:
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
   uninstall        Remove installed guidance, skills, subagents, and hook entries
   status           Show the current state of installed items, including hook entries
+  validate         Check a content root for defects that would fail at a consumer; writes nothing
   library list     List available library artifacts (rulebooks, skills, subagents)
   generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
+  --content <dir>   Content root to validate; defaults to codeassembly.content in ./package.json (validate only)
   --harness <name>  Target harness: claude, rovodev, or all (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)

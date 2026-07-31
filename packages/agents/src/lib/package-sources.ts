@@ -35,6 +35,22 @@ export interface PackageSource {
 }
 
 /**
+ * Reads the content directory a package manifest declares under `codeassembly.content`, or `undefined` when the key is
+ * absent. A malformed `codeassembly` key still throws, naming the package: absence is a package that ships no content,
+ * which some callers answer for themselves, but a key that is present and wrong is a defect either way.
+ */
+export function findContentPath(name: string, manifest: unknown): string | undefined {
+  const result = PackageManifestSchema.safeParse(manifest);
+  if (!result.success) {
+    const detail = result.error.issues
+      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
+      .join('; ');
+    throw new Error(`Package "${name}" declares an invalid "codeassembly" key: ${detail}.`);
+  }
+  return result.data.codeassembly?.content;
+}
+
+/**
  * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content and are absent from
  * `addressed`, sorted by name, so a caller can name the declaration that would adopt each. `addressed` carries every
  * name the project has spoken about, adopted and declined alike, so a package a project turned down stays quiet.
@@ -156,15 +172,7 @@ function parsePackageManifest(name: string, raw: string): unknown {
  * the package either way.
  */
 function readContentPath(name: string, manifest: unknown): string {
-  const result = PackageManifestSchema.safeParse(manifest);
-  if (!result.success) {
-    const detail = result.error.issues
-      .map((issue) => `${issue.path.join('.') || '(root)'}: ${issue.message}`)
-      .join('; ');
-    throw new Error(`Package "${name}" declares an invalid "codeassembly" key: ${detail}.`);
-  }
-
-  const content = result.data.codeassembly?.content;
+  const content = findContentPath(name, manifest);
   if (content === undefined) {
     throw new Error(
       `Package "${name}" declares no CodeAssembly content. A package that ships content sets "codeassembly": { "content": "<dir>" } in its package.json, and includes that directory in its published "files".`,
