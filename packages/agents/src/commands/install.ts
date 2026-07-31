@@ -21,7 +21,7 @@ import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '..
 import { rewritePathsInFile } from '../lib/path-rewriter.js';
 import { type RenderedSkillEntry, renderSkillDirectory } from '../lib/skill-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
-import { isEnoent } from '../lib/type-guards.ts';
+import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   HarnessConfig,
@@ -246,7 +246,9 @@ async function isSkillDirectory(entryDir: string): Promise<boolean> {
     await stat(path.join(entryDir, 'SKILL.md'));
     return true;
   } catch (error: unknown) {
-    if (isEnoent(error)) {
+    // A regular `.md` sitting directly under `content/skills/` fails the probe with ENOTDIR, not ENOENT; both mean
+    // "no skill here", which is the pair `isMissingFile` covers.
+    if (isMissingFile(error)) {
       return false;
     }
     throw error;
@@ -293,7 +295,9 @@ async function installSkillEntry(
     });
   } else if (srcPath.endsWith('.md')) {
     const expanded = await expandIncludes(srcPath, contentDir);
-    expandedFileContent = rewriteToolNames(expanded, toolMapping, relativeFromContent(contentDir, srcPath));
+    const contextLabel = relativeFromContent(contentDir, srcPath);
+    assertAnchorsResolve(expanded, contextLabel);
+    expandedFileContent = rewriteToolNames(expanded, toolMapping, contextLabel);
   }
 
   // A support directory holding only dotfiles or `_partials/` renders to zero entries — nothing to install. Skip it
