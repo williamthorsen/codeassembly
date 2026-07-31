@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { collectHeadingSlugs, normalizeForAnchorScan } from '../lib/anchor-resolution.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import type { RulebookInvocationCatalog } from '../lib/invocation-tokens.ts';
 import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
@@ -20,6 +21,12 @@ import { renderRulebookBody } from '../lib/rulebook-transform.ts';
 // Both halves of a link are checked: the file must exist, and any `#fragment` must name exactly one heading in the
 // file it points into. Skills reach their inlined output-shaping specs through in-file anchors, so an unvalidated
 // fragment is a dead locator repeated across every consumer.
+//
+// The render pass rejects a same-body anchor on its own, over content from any source. This suite still covers it,
+// because it reports every violation across the tree at once where the render pass throws on the first artifact, and
+// because a fragment on a cross-file target is checked nowhere else: the deployed tree unions library content with
+// each declared source's, so the render pass cannot resolve one from the content root at hand. Both share one slug
+// algorithm through `anchor-resolution`.
 //
 // Host roots only. A `_partials/` file is never installed standalone, and its links are authored against the host that
 // inlines it — checking one in isolation would misresolve every `../` it carries. Include expansion below reaches them
@@ -41,24 +48,12 @@ const HOST_ROOTS: ReadonlyArray<string> = [RULEBOOK_ROOT, 'skills', 'subagents']
 
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 
-const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
-
 type Reason = 'ambiguous-anchor' | 'dead-anchor' | 'missing-file';
 
 interface Violation {
   readonly file: string;
   readonly target: string;
   readonly reason: Reason;
-}
-
-/** Counts each heading slug in a body, so a fragment matching two headings is reported rather than silently resolved. */
-function collectHeadingSlugs(body: string): ReadonlyMap<string, number> {
-  const counts = new Map<string, number>();
-  for (const match of body.matchAll(HEADING_REGEX)) {
-    const slug = slugify(match[1] ?? '');
-    counts.set(slug, (counts.get(slug) ?? 0) + 1);
-  }
-  return counts;
 }
 
 /** Recursively collects installable host `.md` files, skipping `_partials/` at any depth and dotfiles. */
@@ -87,7 +82,7 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
   const violations: Array<Violation> = [];
 
   for (const hostFile of hostFiles) {
-    const body = stripFencedBlocks(await expandIncludes(hostFile, CONTENT_ROOT));
+    const body = normalizeForAnchorScan(await expandIncludes(hostFile, CONTENT_ROOT));
     const file = path.relative(CONTENT_ROOT, hostFile);
 
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
@@ -148,42 +143,9 @@ async function readHeadingSlugs(
   if (cached !== undefined) {
     return cached;
   }
-  const slugs = collectHeadingSlugs(stripFencedBlocks(await expandIncludes(file, CONTENT_ROOT)));
+  const slugs = collectHeadingSlugs(normalizeForAnchorScan(await expandIncludes(file, CONTENT_ROOT)));
   cache.set(file, slugs);
   return slugs;
-}
-
-/**
- * Derives a heading's anchor the way GitHub does: lowercase, drop everything but letters, numbers, spaces, and
- * hyphens, then map each remaining space to a hyphen. Runs of spaces are preserved rather than collapsed — stripping
- * punctuation between two spaces is what yields the double hyphen in an anchor such as `#finding-scheme-fwtrs--legacy-suffix`.
- */
-function slugify(heading: string): string {
-  return heading
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{Letter}\p{Number}\s-]/gu, '')
-    .trim()
-    .replaceAll(' ', '-');
-}
-
-/**
- * Blanks fenced code blocks. A fence illustrates output rather than declaring it, so a link or heading inside one is a
- * sample, not a target: `review-branch` prints a `## Specification consistency` heading inside its output-format fence,
- * which a naive scan would offer as a real anchor.
- */
-function stripFencedBlocks(content: string): string {
-  let inFence = false;
-  return content
-    .split('\n')
-    .map((line) => {
-      if (/^\s*```/.test(line)) {
-        inFence = !inFence;
-        return '';
-      }
-      return inFence ? '' : line;
-    })
-    .join('\n');
 }
 
 describe('installable-content link resolution', () => {
