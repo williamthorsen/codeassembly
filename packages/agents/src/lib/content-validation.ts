@@ -1,3 +1,4 @@
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { assertAnchorsResolve } from './anchor-resolution.ts';
@@ -10,7 +11,7 @@ import { expandIncludes } from './directive-expander.ts';
 import { listVisibleMarkdownFiles, readDirEntries } from './fs-helpers.ts';
 import { HARNESSES } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
-import { enumerateCatalogSlugs, listSkillDirectories } from './library-catalog.ts';
+import { enumerateCatalogSlugs } from './library-catalog.ts';
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
 import { renderRulebookBody, type RulebookRenderContext } from './rulebook-transform.ts';
 import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
@@ -23,6 +24,7 @@ import {
   type SubagentDeployContext,
 } from './subagent-deploy.ts';
 import { loadToolMapping, rewriteToolNames } from './tool-name-rewriter.ts';
+import { isMissingFile } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
 /** Which stage rejected an artifact, so a report can group by cause rather than presenting one undifferentiated list. */
@@ -49,18 +51,21 @@ const EXCLUDED_SUPPORT_ENTRIES: ReadonlySet<string> = new Set(['_harnesses', '_p
  * resolves rather than dangling.
  *
  * Every stage after the root check runs to completion, and a defect in one artifact never suppresses the rest: one run
- * reports the whole list an author has to fix.
+ * reports the whole list an author has to fix. Only the root's own artifacts are reported on; see `renderForHarness`.
+ *
+ * `libraryDir` overrides the library the root resolves against, matching `sync`'s own override.
  */
 export async function validateContentRoot(
   root: string,
   harnessIds: ReadonlyArray<HarnessId>,
+  libraryDir: string = resolveContentDir(),
 ): Promise<ReadonlyArray<ContentDefect>> {
   const problem = await describeSourceProblem(root);
   if (problem !== undefined) {
     return [{ file: '.', kind: 'root', detail: `Content root is unusable: ${problem}.` }];
   }
 
-  const resolver = createSourceResolver([{ name: root, dir: root }], resolveContentDir());
+  const resolver = createSourceResolver([{ name: root, dir: root }], libraryDir);
   const seeded = await resolveSeedClosures(await collectSeeds(root), resolver);
   const artifacts = await resolveArtifacts(seeded.closure, resolver);
 
@@ -68,7 +73,7 @@ export async function validateContentRoot(
   // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses it affects.
   const rendered: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
-    rendered.push(...(await renderForHarness(harnessId, root, artifacts)));
+    rendered.push(...(await renderForHarness(harnessId, root, libraryDir, artifacts)));
   }
 
   return [
@@ -119,12 +124,16 @@ function describeError(error: unknown): string {
  */
 function findCollisionDefects(artifacts: ResolvedArtifacts): ReadonlyArray<ContentDefect> {
   const defects: Array<ContentDefect> = [];
+  const ownedRulebooks = artifacts.rulebooks.filter(ownedByRoot);
+  const ownedSkillSlugs = new Set(artifacts.skills.filter(ownedByRoot).map((skill) => skill.slug));
 
   for (const { skillName, slugs } of findSkillNameCollisions(artifacts.rulebooks)) {
-    const [first] = slugs;
-    if (first !== undefined) {
+    // Attributed to a rulebook the root owns. A collision entirely between library rulebooks is the library's to fix
+    // and names no file the root carries, so it is left to the library's own gate.
+    const owned = slugs.find((slug) => ownedRulebooks.some((book) => book.slug === slug));
+    if (owned !== undefined) {
       defects.push({
-        file: artifactFrontmatterPath('rulebook', first),
+        file: artifactFrontmatterPath('rulebook', owned),
         kind: 'collision',
         detail: `Rulebooks ${slugs.join(', ')} all resolve to skill "${skillName}"; give all but one a distinct \`skill-name\`.`,
       });
@@ -134,11 +143,18 @@ function findCollisionDefects(artifacts: ResolvedArtifacts): ReadonlyArray<Conte
   const rulebookSkillDirs = artifacts.rulebooks.filter((book) => book.skill).map((book) => book.skillName);
   const declaredSkillSlugs = new Set(artifacts.skills.map((skill) => skill.slug));
   for (const name of findCrossNamespaceCollisions(rulebookSkillDirs, declaredSkillSlugs)) {
-    defects.push({
-      file: artifactFrontmatterPath('skill', name),
-      kind: 'collision',
-      detail: `"${name}" is delivered as both a rulebook skill and a declared skill; rename one so they no longer share a directory.`,
-    });
+    // Whichever side the root owns carries the report, since that is the side its author can rename.
+    const ownedRulebook = ownedRulebooks.find((book) => book.skill && book.skillName === name);
+    const file = ownedSkillSlugs.has(name)
+      ? artifactFrontmatterPath('skill', name)
+      : ownedRulebook && artifactFrontmatterPath('rulebook', ownedRulebook.slug);
+    if (file !== undefined) {
+      defects.push({
+        file,
+        kind: 'collision',
+        detail: `"${name}" is delivered as both a rulebook skill and a declared skill; rename one so they no longer share a directory.`,
+      });
+    }
   }
 
   return defects;
@@ -172,33 +188,72 @@ function foldHarnessDefects(
 }
 
 /**
- * Lists the non-skill entries directly under `skills/` that install alongside skills. Mirrors the installer's own
- * selection rule rather than the skill catalog's: `skills/_data/` carries no `SKILL.md`, so a catalog walk would skip
- * it, and it goes through the same transform on the install path — an unmapped token there is a real shipping defect.
+ * Reports whether `entryDir` holds a `SKILL.md`, the installer's test for a skill directory. A regular file directly
+ * under `skills/` fails the probe with `ENOTDIR` rather than `ENOENT`; both mean "no skill here".
  */
-async function listSupportEntries(root: string): Promise<ReadonlyArray<string>> {
-  const skillsDir = path.join(root, ARTIFACT_TYPES.skill.contentPath);
-  const skillDirs = new Set(await listSkillDirectories(skillsDir));
-  return (await readDirEntries(skillsDir))
-    .map((entry) => entry.name)
-    .filter((name) => !EXCLUDED_SUPPORT_ENTRIES.has(name) && !name.startsWith('.') && !skillDirs.has(name))
-    .toSorted();
+async function holdsSkillFile(entryDir: string): Promise<boolean> {
+  try {
+    await stat(path.join(entryDir, 'SKILL.md'));
+    return true;
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 /**
- * Renders every reached artifact for one harness, discarding the output. Each render is caught independently so one
- * broken artifact does not hide the rest, and the deployed-rulebook catalog is the whole reached set, which is what
- * lets a `{rulebook:<slug>}` token resolve the way it will at a consumer.
+ * Lists the non-skill entries directly under `skills/` that install alongside skills. Mirrors the installer's own
+ * selection rule rather than the skill catalog's: `skills/_data/` carries no `SKILL.md`, so a catalog walk would skip
+ * it, and it goes through the same transform on the install path — an unmapped token there is a real shipping defect.
+ * A skill directory is recognized the way the installer recognizes one, by the presence of a `SKILL.md`, so an entry
+ * the installer would leave to `sync` is left to it here too.
+ */
+async function listSupportEntries(root: string): Promise<ReadonlyArray<string>> {
+  const skillsDir = path.join(root, ARTIFACT_TYPES.skill.contentPath);
+  const names = (await readDirEntries(skillsDir))
+    .map((entry) => entry.name)
+    .filter((name) => !EXCLUDED_SUPPORT_ENTRIES.has(name) && !name.startsWith('.'))
+    .toSorted();
+
+  const support: Array<string> = [];
+  for (const name of names) {
+    if (!(await holdsSkillFile(path.join(skillsDir, name)))) {
+      support.push(name);
+    }
+  }
+  return support;
+}
+
+/** True when an artifact resolved from the content root rather than from the built-in library behind it. */
+function ownedByRoot(artifact: { readonly source: string | undefined }): boolean {
+  return artifact.source !== undefined;
+}
+
+/**
+ * Renders the root's own artifacts for one harness, discarding the output. Each render is caught independently so one
+ * broken artifact does not hide the rest.
+ *
+ * Only artifacts the root owns are rendered. The closure follows dependency edges into the built-in library so a
+ * producer's `dependencies:` resolves the way it will at a consumer, but a library artifact is context rather than
+ * subject: its content-root-relative path would name a file the producer does not have, and a defect in it is neither
+ * theirs to fix nor introduced by them. The one library failure that is theirs — naming an artifact that resolves from
+ * nowhere — is a dependency defect, reported against the artifact of theirs that declared the edge.
+ *
+ * The deployed-rulebook catalog stays the whole reached set regardless, since a `{rulebook:<slug>}` token in the root's
+ * own body may name a library rulebook and must resolve the way it will at a consumer.
  */
 async function renderForHarness(
   harnessId: HarnessId,
   root: string,
+  libraryDir: string,
   artifacts: ResolvedArtifacts,
 ): Promise<ReadonlyArray<HarnessDefect>> {
   const config = HARNESSES[harnessId];
   // The overlay comes from the library, never from the root under validation: `{tool:NAME}` names are library-defined,
   // and this is the mapping a consumer's deploy would apply to the root's content.
-  const overlayYaml = await loadHarnessOverlay(resolveContentDir(), config);
+  const overlayYaml = await loadHarnessOverlay(libraryDir, config);
   const toolMapping = loadToolMapping(overlayYaml);
   const skillContext: SkillDeployContext = {
     toolMapping,
@@ -232,6 +287,9 @@ async function renderForHarness(
   }
 
   for (const rulebook of artifacts.rulebooks) {
+    if (!ownedByRoot(rulebook)) {
+      continue;
+    }
     try {
       renderRulebookBody(rulebook.body, rulebook.slug, rulebookContext);
     } catch (error: unknown) {
@@ -240,7 +298,7 @@ async function renderForHarness(
   }
 
   for (const skill of artifacts.skills) {
-    if (!skillTargetsHarness(skill, harnessId)) {
+    if (!ownedByRoot(skill) || !skillTargetsHarness(skill, harnessId)) {
       continue;
     }
     try {
@@ -251,6 +309,9 @@ async function renderForHarness(
   }
 
   for (const subagent of artifacts.subagents) {
+    if (!ownedByRoot(subagent)) {
+      continue;
+    }
     try {
       await renderSubagent(subagent, subagentContext);
     } catch (error: unknown) {
@@ -264,8 +325,12 @@ async function renderForHarness(
 
 /**
  * Renders the support entries under `skills/`, mirroring how the installer treats each: a directory goes through the
- * whole skill transform, a loose `.md` file through include expansion, the anchor gate, and the tool-name rewrite
- * alone. Matching the installer is what makes a defect here one that would really ship.
+ * whole skill transform, a loose `.md` file through include expansion, the anchor gate, and the tool-name rewrite, and
+ * anything else installs as a verbatim copy and so has nothing to check. Matching the installer arm for arm is what
+ * makes a defect here one that would really ship — and keeps a shape it installs cleanly from failing this gate.
+ *
+ * The directory test is the installer's `stat`, not the directory entry's own type, so a symlinked support directory
+ * is treated as the directory it points at, exactly as an install would treat it.
  */
 async function renderSupportEntries(
   harnessId: HarnessId,
@@ -280,12 +345,12 @@ async function renderSupportEntries(
     const srcPath = path.join(skillsDir, name);
     const relPath = `${ARTIFACT_TYPES.skill.contentPath}/${name}`;
     try {
-      if (name.endsWith('.md')) {
+      if ((await stat(srcPath)).isDirectory()) {
+        await renderSkillDirectory(srcPath, name, root, skillContext);
+      } else if (name.endsWith('.md')) {
         const expanded = await expandIncludes(srcPath, root);
         assertAnchorsResolve(expanded, relPath);
         rewriteToolNames(expanded, toolMapping, relPath);
-      } else {
-        await renderSkillDirectory(srcPath, name, root, skillContext);
       }
     } catch (error: unknown) {
       raised.push({ harnessId, defect: { file: relPath, kind: 'render', detail: describeError(error) } });
@@ -298,6 +363,10 @@ async function renderSupportEntries(
 /**
  * Resolves every artifact the closure reached against its owning source, so a body that never parses is reported once
  * here rather than as a render failure per harness. Each resolution is caught independently.
+ *
+ * Library artifacts are resolved but never reported on, for the reason `renderForHarness` gives: they are reached so
+ * the root's own artifacts see the catalog a consumer would, not because they are under examination. A failure here
+ * means the installed library is damaged, which no edit to the root can repair.
  */
 async function resolveArtifacts(closure: ResolvedClosure, resolver: SourceResolver): Promise<ResolvedArtifacts> {
   const defects: Array<ContentDefect> = [];
@@ -305,7 +374,10 @@ async function resolveArtifacts(closure: ResolvedClosure, resolver: SourceResolv
   const skills: Array<ResolvedSkill> = [];
   const subagents: Array<ResolvedSubagent> = [];
 
-  function record(type: ArtifactType, slug: string, error: unknown): void {
+  async function record(type: ArtifactType, slug: string, error: unknown): Promise<void> {
+    if ((await resolver.resolve(type, slug))?.source === undefined) {
+      return;
+    }
     defects.push({ file: artifactFrontmatterPath(type, slug), kind: 'resolution', detail: describeError(error) });
   }
 
@@ -313,21 +385,21 @@ async function resolveArtifacts(closure: ResolvedClosure, resolver: SourceResolv
     try {
       rulebooks.push(await resolveRulebook(slug, resolver));
     } catch (error: unknown) {
-      record('rulebook', slug, error);
+      await record('rulebook', slug, error);
     }
   }
   for (const slug of closure.skills) {
     try {
       skills.push(await resolveDeclaredSkill(slug, resolver));
     } catch (error: unknown) {
-      record('skill', slug, error);
+      await record('skill', slug, error);
     }
   }
   for (const slug of closure.subagents) {
     try {
       subagents.push(await resolveDeclaredSubagent(slug, resolver));
     } catch (error: unknown) {
-      record('subagent', slug, error);
+      await record('subagent', slug, error);
     }
   }
 

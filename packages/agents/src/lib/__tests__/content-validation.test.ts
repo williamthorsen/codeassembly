@@ -46,6 +46,26 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
+  it('stays silent about a defect in a library artifact a dependency edge reached', async () => {
+    const library = path.join(root, 'library');
+    await writeSubagent(library, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
+    const producer = path.join(root, 'producer');
+    await writeSkill(producer, 'alpha', { dependencies: { subagents: ['lib-helper'] } });
+
+    expect(await validateContentRoot(producer, ALL_HARNESS_IDS, library)).toEqual([]);
+  });
+
+  it('reports the same defect when the artifact carrying it belongs to the root', async () => {
+    const library = path.join(root, 'library');
+    const producer = path.join(root, 'producer');
+    await writeSubagent(producer, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
+
+    const defects = await validateContentRoot(producer, ALL_HARNESS_IDS, library);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: 'subagents/lib-helper.md', kind: 'render' });
+  });
+
   it('reports an unmapped tool placeholder in a skill support file, which carries no SKILL.md', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n\nRun {tool:NoSuchTool} to proceed.\n');
@@ -55,6 +75,14 @@ describe(validateContentRoot, () => {
     expect(defects).toHaveLength(1);
     expect(defects[0]).toMatchObject({ file: 'skills/_data', kind: 'render' });
     expect(defects[0]?.detail).toContain('NoSuchTool');
+  });
+
+  it('passes a support entry the installer copies verbatim rather than rendering', async () => {
+    await writeSkill(root, 'alpha');
+    await writeFileAt(root, 'skills/notes.json', '{ "note": "installed as a plain copy" }\n');
+    await writeFileAt(root, 'skills/_data/logo.svg', '<svg />\n');
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
   it('reports every defect in one run rather than stopping at the first', async () => {
