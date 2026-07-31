@@ -96,7 +96,7 @@ function isTagStartChar(char: string): boolean {
 /** Parse a single tag starting at `html[start]` (which is `<`). Returns the token and the index just past `>`. */
 function parseTag(html: string, start: number): { token: Token; nextIndex: number } {
   const isClose = html[start + 1] === '/';
-  const nameStart = isClose ? start + 2 : start + 1;
+  const nameStart = start + (isClose ? 2 : 1);
   const nameEnd = readWhile(html, nameStart, isNameChar);
   const rawName = html.slice(nameStart, nameEnd);
   const name = rawName.toLowerCase();
@@ -228,7 +228,7 @@ function isAttrNameChar(char: string): boolean {
 }
 
 function isWhitespace(char: string): boolean {
-  return char === ' ' || char === '\t' || char === '\n' || char === '\r' || char === '\f';
+  return [' ', '\t', '\n', '\r', '\f'].includes(char);
 }
 
 /** Derive a 1-based line number from a byte offset into the original source. */

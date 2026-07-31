@@ -1,4 +1,5 @@
 /* global requestAnimationFrame */
+/* eslint-disable unicorn/prefer-await */
 
 import {
   agentX,
@@ -243,7 +244,7 @@ export function createEngine(state, playback) {
       state.reviewRound.current = displayRound;
 
       // Clear verdicts for dispatched reviewers (outcome pending)
-      for (var vi = 0; vi < round.reviewers.length; vi++) {
+      for (let vi = 0; vi < round.reviewers.length; vi++) {
         clearVerdict(reviewAgents[round.reviewers[vi]]);
       }
 
@@ -266,10 +267,10 @@ export function createEngine(state, playback) {
           const agent = reviewAgents[reviewerIdx];
           return wait(WORK_DURATION + arrIdx * 400).then(function () {
             state.agents[agent] = 'resting';
-            if (!state.agentRecords[agent]) state.agentRecords[agent] = [];
+            if (!Object.hasOwn(state.agentRecords, agent)) state.agentRecords[agent] = [];
             state.agentRecords[agent].push({ label: 'rev ' + (ri + 1), color: ARTIFACT_COLORS.review });
-            var verdict = round.verdicts ? round.verdicts[arrIdx] : 'none';
-            var dismissed = !round.fix && verdict !== 'none';
+            const verdict = round.verdicts ? round.verdicts[arrIdx] : 'none';
+            const dismissed = !round.fix && verdict !== 'none';
             setVerdict(agent, verdict, dismissed);
             return chuteAscend(agentX(station, reviewerIdx, reviewAgents.length), 'review', ARTIFACT_COLORS.review);
           });
@@ -482,7 +483,7 @@ export function createEngine(state, playback) {
           state.currentPhase = step.station;
           await showPhaseLabel(PHASES[step.station].name);
           state.stationInputs[step.station].push({ label: 'reqs', color: ARTIFACT_COLORS.reqs });
-          var planTransient = state.orch.transient.find(function (t) {
+          const planTransient = state.orch.transient.find(function (t) {
             return t.label === 'plan';
           });
           if (planTransient) {

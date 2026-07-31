@@ -306,7 +306,7 @@ function isCurrentSchema(value: unknown): value is BranchManifest {
     return false;
   }
   for (const field of REQUIRED_MANIFEST_FIELDS) {
-    if (!(field in value)) {
+    if (!Object.hasOwn(value, field)) {
       return false;
     }
   }

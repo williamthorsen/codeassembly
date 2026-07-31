@@ -49,9 +49,10 @@ export function rewriteWikilinks(input: { body: string; vaultIndex: VaultIndex }
   for (const match of masked.matchAll(WIKILINK)) {
     const fullMatch = match[0];
     const inner = match[1];
+    if (inner === undefined) continue;
+
     const start = match.index;
     const end = start + fullMatch.length;
-    if (inner === undefined) continue;
 
     const replacement = rewriteLink({ fullMatch, inner, vaultIndex });
     if (replacement === null) continue;

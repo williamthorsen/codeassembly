@@ -61,7 +61,7 @@ export async function runFeedbackMemories(input: {
 }): Promise<RenderedResult> {
   const [subcommand, ...rest] = input.argv;
 
-  if (subcommand === '--help' || subcommand === '-h' || subcommand === 'help') {
+  if (subcommand && ['--help', '-h', 'help'].includes(subcommand)) {
     return text(usage());
   }
 

@@ -87,8 +87,12 @@ async function runBundle(target: BundleTarget, invocation: SmokeTestInvocation):
     const child = spawn(process.execPath, [bundlePath, ...args], spawnOptions);
     const stdoutChunks: Buffer[] = [];
     const stderrChunks: Buffer[] = [];
-    child.stdout.on('data', (chunk: Buffer) => stdoutChunks.push(chunk));
-    child.stderr.on('data', (chunk: Buffer) => stderrChunks.push(chunk));
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdoutChunks.push(chunk);
+    });
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderrChunks.push(chunk);
+    });
     child.on('error', reject);
     child.on('close', (code) => {
       const stdout = Buffer.concat(stdoutChunks).toString('utf8');
