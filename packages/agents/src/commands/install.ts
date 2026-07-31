@@ -485,54 +485,20 @@ async function installSharedGuidance(
 
   let anyWritten = false;
 
-  for (const entry of dirEntries) {
-    if (entry.startsWith('.')) {
+  for (const fileName of dirEntries) {
+    if (fileName.startsWith('.')) {
       continue;
     }
 
-    const srcPath = path.join(sharedSrcDir, entry);
-    const destPath = path.join(sharedHome, entry);
-
-    // Shared guidance ships verbatim, with no include expansion and no rewriting, so the anchor check reads the source
-    // itself rather than riding a render. It runs before the dry-run gate, and in link mode too: a symlinked file
-    // reaches the reader with the same dead locator a copied one would.
-    if (entry.endsWith('.md')) {
-      assertAnchorsResolve(await readFile(srcPath, 'utf8'), `guidance/shared/${entry}`);
-    }
-
-    if (options.dryRun) {
-      const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${entry} -> ~/.agents/${entry}`);
-      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
-      continue;
-    }
-
-    // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(entry);
-    if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, sharedHome);
-      if (drift === 'modified') {
-        console.warn(`  ⚠️ Skipping modified item: ~/.agents/${entry}`);
-        entries.push(existingEntry);
-        continue;
-      }
-    }
-
-    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
-
-    // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
-    // to the source file; marking them would mislabel the source itself.
-    if (!options.link && entry.endsWith('.md')) {
-      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${entry}`));
-    }
-
-    anyWritten = true;
-
-    entries.push({
-      relativePath: entry,
-      contentHash: await computeContentHash(options.link ? srcPath : destPath),
-      linked: options.link,
-    });
+    const { manifestEntry, written } = await installSharedGuidanceEntry(
+      fileName,
+      sharedSrcDir,
+      sharedHome,
+      existingByPath.get(fileName),
+      options,
+    );
+    entries.push(manifestEntry);
+    anyWritten ||= written;
   }
 
   // Reconcile shared guidance against the previous manifest before reporting or persisting, so deleted-source
@@ -551,6 +517,62 @@ async function installSharedGuidance(
     version: '0.1.0',
     installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
     entries,
+  };
+}
+
+/**
+ * Installs one shared guidance file into `~/.agents/`, reporting the manifest entry to record and whether the install
+ * touched the destination. A dry run and a skipped user-modified file both report `written: false`, which keeps the
+ * caller's `installedAt` on its previous value when nothing reached disk.
+ */
+async function installSharedGuidanceEntry(
+  fileName: string,
+  sharedSrcDir: string,
+  sharedHome: string,
+  existingEntry: ManifestEntry | undefined,
+  options: InstallOptions,
+): Promise<{ manifestEntry: ManifestEntry; written: boolean }> {
+  const srcPath = path.join(sharedSrcDir, fileName);
+  const destPath = path.join(sharedHome, fileName);
+  const isMarkdown = fileName.endsWith('.md');
+
+  // Shared guidance ships verbatim, with no include expansion and no rewriting, so the anchor check reads the source
+  // itself rather than riding a render. It runs before the dry-run gate, and in link mode too: a symlinked file
+  // reaches the reader with the same dead locator a copied one would.
+  if (isMarkdown) {
+    assertAnchorsResolve(await readFile(srcPath, 'utf8'), `guidance/shared/${fileName}`);
+  }
+
+  if (options.dryRun) {
+    const action = options.link ? 'link' : 'copy';
+    console.info(`    [${action}] ${fileName} -> ~/.agents/${fileName}`);
+    return { manifestEntry: { relativePath: fileName, contentHash: 'dry-run', linked: options.link }, written: false };
+  }
+
+  // Check for user modifications before overwriting
+  if (existingEntry && !options.force) {
+    const drift = await detectDrift(existingEntry, sharedHome);
+    if (drift === 'modified') {
+      console.warn(`  ⚠️ Skipping modified item: ~/.agents/${fileName}`);
+      return { manifestEntry: existingEntry, written: false };
+    }
+  }
+
+  await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+  // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
+  // to the source file; marking them would mislabel the source itself.
+  if (!options.link && isMarkdown) {
+    await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${fileName}`));
+  }
+
+  return {
+    manifestEntry: {
+      relativePath: fileName,
+      contentHash: await computeContentHash(options.link ? srcPath : destPath),
+      linked: options.link,
+    },
+    written: true,
   };
 }
 
