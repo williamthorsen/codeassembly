@@ -28,7 +28,6 @@ export interface LedeFixture {
  */
 export async function createLedeFixture(
   overrides: {
-    type?: string;
     mergedLede?: string;
     omit?: 'pull-request' | 'merge';
     /** Ticket id as the change summary spells it; a wholly numeric id is written unquoted, as the real artifact does. */
