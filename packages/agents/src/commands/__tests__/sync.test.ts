@@ -990,6 +990,16 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('people-report'))).toBe(false);
     });
 
+    it('fails a dry run with nothing written when a skill body carries an anchor naming no heading', async () => {
+      await writeLibrarySkill('people-report', { body: 'See [the events](#lifecycle-events).' });
+      await declareSkills('people-report');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /skills\/people-report\/SKILL\.md carries 1 unresolvable anchor link target/,
+      );
+      expect(existsSync(skillPath('people-report'))).toBe(false);
+    });
+
     it('deploys a declared skill into the project-local skills dir with the ownership marker', async () => {
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');
@@ -1302,6 +1312,17 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('consult-alpha'))).toBe(false);
       expect(existsSync(localHostPath())).toBe(false);
     });
+
+    it('fails a dry run on an anchor naming no heading in the rulebook body, writing nothing', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: [ambient, skill]', 'See [the events](#lifecycle-events).');
+      await declareRulebooks('alpha');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /guidance\/rulebooks\/alpha\.md carries 1 unresolvable anchor link target/,
+      );
+      expect(existsSync(skillPath('consult-alpha'))).toBe(false);
+      expect(existsSync(localHostPath())).toBe(false);
+    });
   });
 
   describe('declared subagents', () => {
@@ -1358,6 +1379,17 @@ describe(syncCommand, () => {
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in subagents\/canary\.md[\s\S]*only in a rulebook body/,
+      );
+      expect(existsSync(subagentPath('canary'))).toBe(false);
+    });
+
+    it('fails a dry run with nothing written when a subagent body carries an anchor naming no heading', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary', { body: 'See [the findings](#finding-scheme).' });
+      await declareSubagents('canary');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /subagents\/canary\.md carries 1 unresolvable anchor link target/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });

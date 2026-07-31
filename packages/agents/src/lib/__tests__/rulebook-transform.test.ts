@@ -64,8 +64,12 @@ describe(renderRulebookBody, () => {
       'Visit [docs](https://example.com/docs).',
       'See [file](/absolute/path.md).',
       'See [file](~/.claude/skills/_data/concision.md).',
-      'See [section](#a-heading).',
     ])('leaves a passthrough target untouched: %s', (body) => {
+      expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe(body);
+    });
+
+    it('leaves an anchor-only target untouched', () => {
+      const body = '## A heading\n\nSee [section](#a-heading).';
       expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe(body);
     });
 
@@ -183,6 +187,17 @@ describe(renderRulebookBody, () => {
     it('validates before rewriting, so a bad target yields no partial output', () => {
       const body = 'Good [a](../../skills/a.md), bad [b](../../subagents/b.md).';
       expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow();
+    });
+
+    it('rejects an anchor naming no heading in the same body, naming the rulebook source file', () => {
+      expect(() => renderRulebookBody('See [x](#nowhere).', 'shell-conventions', CLAUDE_CONTEXT)).toThrow(
+        /guidance\/rulebooks\/shell-conventions\.md carries 1 unresolvable anchor link target/,
+      );
+    });
+
+    it('rejects an anchor naming more than one heading', () => {
+      const body = '## Naming\n\n### Naming\n\nSee [x](#naming).';
+      expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(/#naming -- names 2 headings/);
     });
   });
 

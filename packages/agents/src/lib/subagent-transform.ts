@@ -1,3 +1,4 @@
+import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
@@ -29,6 +30,7 @@ export interface SubagentRenderContext {
  * Renders a subagent's harness-specific deployed body from its include-expanded source: merges the harness overlay
  * frontmatter, rewrites `{tool:NAME}` placeholders, rewrites relative Markdown links, then expands template variables.
  * Pure string in, marker-free string out — both `install` and `sync` compose ownership/provenance marking around it.
+ * In-body anchors are validated on the source text, ahead of every rewrite, so the verdict holds for every harness.
  *
  * `pathPrefix` and `homeDir` are distinct named arguments even though every current caller passes the same value:
  * `pathPrefix` is the harness-relative directory used to build `~/`-prefixed link targets, while `homeDir` is the
@@ -49,6 +51,7 @@ export function renderSubagentForHarness(
     subagentSigil,
   }: SubagentRenderContext,
 ): string {
+  assertAnchorsResolve(expandedSource, sourceLabel);
   const merged = mergeFrontmatter(expandedSource, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
   const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil }, sourceLabel);
