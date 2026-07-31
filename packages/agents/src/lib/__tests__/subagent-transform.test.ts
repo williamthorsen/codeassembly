@@ -133,6 +133,24 @@ describe(renderSubagentForHarness, () => {
     expect(output).toContain('[the guide](~/.claude/guide.md)');
   });
 
+  it('throws a source-labelled error for an anchor naming no heading in the same body', () => {
+    const source = `${SOURCE}See [the findings](#finding-scheme).\n`;
+
+    expect(() =>
+      renderSubagentForHarness(source, {
+        overlayYaml: CLAUDE_OVERLAY,
+        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+        fileRelPath: 'demo-agent.md',
+        sourceLabel: 'subagents/demo-agent.md',
+        pathPrefix: '.claude',
+        homeDir: '.claude',
+        harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
+      }),
+    ).toThrow(/subagents\/demo-agent\.md carries 1 unresolvable anchor link target/);
+  });
+
   it('throws ToolNameRewriteError when a placeholder has no overlay mapping', () => {
     expect(() =>
       renderSubagentForHarness(SOURCE, {

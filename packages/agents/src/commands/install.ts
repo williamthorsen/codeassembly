@@ -2,6 +2,7 @@ import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promis
 import path from 'node:path';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
+import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
@@ -20,7 +21,7 @@ import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '..
 import { rewritePathsInFile } from '../lib/path-rewriter.js';
 import { type RenderedSkillEntry, renderSkillDirectory } from '../lib/skill-transform.ts';
 import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
-import { isEnoent } from '../lib/type-guards.ts';
+import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   HarnessConfig,
@@ -245,7 +246,9 @@ async function isSkillDirectory(entryDir: string): Promise<boolean> {
     await stat(path.join(entryDir, 'SKILL.md'));
     return true;
   } catch (error: unknown) {
-    if (isEnoent(error)) {
+    // A regular `.md` sitting directly under `content/skills/` fails the probe with ENOTDIR, not ENOENT; both mean
+    // "no skill here", which is the pair `isMissingFile` covers.
+    if (isMissingFile(error)) {
       return false;
     }
     throw error;
@@ -292,7 +295,9 @@ async function installSkillEntry(
     });
   } else if (srcPath.endsWith('.md')) {
     const expanded = await expandIncludes(srcPath, contentDir);
-    expandedFileContent = rewriteToolNames(expanded, toolMapping, relativeFromContent(contentDir, srcPath));
+    const contextLabel = relativeFromContent(contentDir, srcPath);
+    assertAnchorsResolve(expanded, contextLabel);
+    expandedFileContent = rewriteToolNames(expanded, toolMapping, contextLabel);
   }
 
   // A support directory holding only dotfiles or `_partials/` renders to zero entries — nothing to install. Skip it
@@ -480,47 +485,20 @@ async function installSharedGuidance(
 
   let anyWritten = false;
 
-  for (const entry of dirEntries) {
-    if (entry.startsWith('.')) {
+  for (const fileName of dirEntries) {
+    if (fileName.startsWith('.')) {
       continue;
     }
 
-    const srcPath = path.join(sharedSrcDir, entry);
-    const destPath = path.join(sharedHome, entry);
-
-    if (options.dryRun) {
-      const action = options.link ? 'link' : 'copy';
-      console.info(`    [${action}] ${entry} -> ~/.agents/${entry}`);
-      entries.push({ relativePath: entry, contentHash: 'dry-run', linked: options.link });
-      continue;
-    }
-
-    // Check for user modifications before overwriting
-    const existingEntry = existingByPath.get(entry);
-    if (existingEntry && !options.force) {
-      const drift = await detectDrift(existingEntry, sharedHome);
-      if (drift === 'modified') {
-        console.warn(`  ⚠️ Skipping modified item: ~/.agents/${entry}`);
-        entries.push(existingEntry);
-        continue;
-      }
-    }
-
-    await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
-
-    // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
-    // to the source file; marking them would mislabel the source itself.
-    if (!options.link && entry.endsWith('.md')) {
-      await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${entry}`));
-    }
-
-    anyWritten = true;
-
-    entries.push({
-      relativePath: entry,
-      contentHash: await computeContentHash(options.link ? srcPath : destPath),
-      linked: options.link,
-    });
+    const { manifestEntry, written } = await installSharedGuidanceEntry(
+      fileName,
+      sharedSrcDir,
+      sharedHome,
+      existingByPath.get(fileName),
+      options,
+    );
+    entries.push(manifestEntry);
+    anyWritten ||= written;
   }
 
   // Reconcile shared guidance against the previous manifest before reporting or persisting, so deleted-source
@@ -539,6 +517,62 @@ async function installSharedGuidance(
     version: '0.1.0',
     installedAt: anyWritten ? new Date().toISOString() : (manifest.shared?.installedAt ?? new Date().toISOString()),
     entries,
+  };
+}
+
+/**
+ * Installs one shared guidance file into `~/.agents/`, reporting the manifest entry to record and whether the install
+ * touched the destination. A dry run and a skipped user-modified file both report `written: false`, which keeps the
+ * caller's `installedAt` on its previous value when nothing reached disk.
+ */
+async function installSharedGuidanceEntry(
+  fileName: string,
+  sharedSrcDir: string,
+  sharedHome: string,
+  existingEntry: ManifestEntry | undefined,
+  options: InstallOptions,
+): Promise<{ manifestEntry: ManifestEntry; written: boolean }> {
+  const srcPath = path.join(sharedSrcDir, fileName);
+  const destPath = path.join(sharedHome, fileName);
+  const isMarkdown = fileName.endsWith('.md');
+
+  // Shared guidance ships verbatim, with no include expansion and no rewriting, so the anchor check reads the source
+  // itself rather than riding a render. It runs before the dry-run gate, and in link mode too: a symlinked file
+  // reaches the reader with the same dead locator a copied one would.
+  if (isMarkdown) {
+    assertAnchorsResolve(await readFile(srcPath, 'utf8'), `guidance/shared/${fileName}`);
+  }
+
+  if (options.dryRun) {
+    const action = options.link ? 'link' : 'copy';
+    console.info(`    [${action}] ${fileName} -> ~/.agents/${fileName}`);
+    return { manifestEntry: { relativePath: fileName, contentHash: 'dry-run', linked: options.link }, written: false };
+  }
+
+  // Check for user modifications before overwriting
+  if (existingEntry && !options.force) {
+    const drift = await detectDrift(existingEntry, sharedHome);
+    if (drift === 'modified') {
+      console.warn(`  ⚠️ Skipping modified item: ~/.agents/${fileName}`);
+      return { manifestEntry: existingEntry, written: false };
+    }
+  }
+
+  await (options.link ? linkItem(srcPath, destPath) : copyItem(srcPath, destPath));
+
+  // Copy-mode .md files receive a provenance marker. Link-mode entries are symlinks
+  // to the source file; marking them would mislabel the source itself.
+  if (!options.link && isMarkdown) {
+    await injectMarkerInFile(destPath, buildSourceUrl(`guidance/shared/${fileName}`));
+  }
+
+  return {
+    manifestEntry: {
+      relativePath: fileName,
+      contentHash: await computeContentHash(options.link ? srcPath : destPath),
+      linked: options.link,
+    },
+    written: true,
   };
 }
 
@@ -579,11 +613,13 @@ async function installHarnessGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
-    // Resolve include directives at source-tree level. Run before the dry-run gate so missing
-    // targets, cycles, and out-of-tree references surface even when no files are written.
+    // Resolve include directives at source-tree level, then check the expanded text for anchors that name nothing.
+    // Both run before the dry-run gate so missing targets, cycles, out-of-tree references, and dead in-body locators
+    // surface even when no files are written.
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
       expandedContent = await expandIncludes(srcPath, contentDir);
+      assertAnchorsResolve(expandedContent, `guidance/_harnesses/${harnessId}/${entry}`);
     }
 
     if (options.dryRun) {

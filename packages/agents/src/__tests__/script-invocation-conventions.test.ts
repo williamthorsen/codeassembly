@@ -30,10 +30,40 @@ interface Violation {
 // operator. Anything else (a closing backtick, prose word, punctuation) is treated as a non-invocation mention.
 const INVOCATION_SUFFIX = /^(?:--|-[A-Za-z]|\\\s*$|"|'|\$[A-Za-z_(@{*]|\||>|<|;|&)/;
 
-function followsInvocationPattern(after: string): boolean {
-  const trimmed = after.replace(/^[ \t]+/, '');
-  return INVOCATION_SUFFIX.test(trimmed);
-}
+describe('helper-script invocation conventions', () => {
+  it('every executable invocation of a known helper script uses the {harness_home_dir}/scripts/ prefix', async () => {
+    const violations = await findViolations();
+    expect(violations, formatViolations(violations)).toEqual([]);
+  });
+
+  describe('classifier', () => {
+    it('flags a bare CLI-flag invocation', () => {
+      expect(followsInvocationPattern(' --skill orchestrate --interactive false')).toBe(true);
+    });
+
+    it('flags a bare line-continuation invocation', () => {
+      expect(followsInvocationPattern(' \\')).toBe(true);
+    });
+
+    it('flags a shell-operator invocation', () => {
+      expect(followsInvocationPattern(' | grep foo')).toBe(true);
+    });
+
+    it('does not flag a closing-backtick prose mention', () => {
+      expect(followsInvocationPattern('`')).toBe(false);
+    });
+
+    it('does not flag a prose follow-on word', () => {
+      expect(followsInvocationPattern(' script renders')).toBe(false);
+    });
+
+    it('does not flag punctuation-terminated prose', () => {
+      expect(followsInvocationPattern('.')).toBe(false);
+    });
+  });
+});
+
+// region | Helpers
 
 async function collectMarkdownFiles(dir: string, root: string, out: Array<string>): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -83,6 +113,11 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
   return violations;
 }
 
+function followsInvocationPattern(after: string): boolean {
+  const trimmed = after.replace(/^[ \t]+/, '');
+  return INVOCATION_SUFFIX.test(trimmed);
+}
+
 function formatViolations(violations: ReadonlyArray<Violation>): string {
   if (violations.length === 0) return '';
   const header =
@@ -93,35 +128,4 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   return [header, ...lines].join('\n');
 }
 
-describe('helper-script invocation conventions', () => {
-  it('every executable invocation of a known helper script uses the {harness_home_dir}/scripts/ prefix', async () => {
-    const violations = await findViolations();
-    expect(violations, formatViolations(violations)).toEqual([]);
-  });
-
-  describe('classifier', () => {
-    it('flags a bare CLI-flag invocation', () => {
-      expect(followsInvocationPattern(' --skill orchestrate --interactive false')).toBe(true);
-    });
-
-    it('flags a bare line-continuation invocation', () => {
-      expect(followsInvocationPattern(' \\')).toBe(true);
-    });
-
-    it('flags a shell-operator invocation', () => {
-      expect(followsInvocationPattern(' | grep foo')).toBe(true);
-    });
-
-    it('does not flag a closing-backtick prose mention', () => {
-      expect(followsInvocationPattern('`')).toBe(false);
-    });
-
-    it('does not flag a prose follow-on word', () => {
-      expect(followsInvocationPattern(' script renders')).toBe(false);
-    });
-
-    it('does not flag punctuation-terminated prose', () => {
-      expect(followsInvocationPattern('.')).toBe(false);
-    });
-  });
-});
+// endregion | Helpers

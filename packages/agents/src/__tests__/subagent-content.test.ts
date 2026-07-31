@@ -16,6 +16,15 @@ interface Violation {
   readonly line: number;
 }
 
+describe('subagent content', () => {
+  it(`does not reference ${FORBIDDEN_SUBSTRING}`, async () => {
+    const violations = await findViolations();
+    expect(violations).toEqual([]);
+  });
+});
+
+// region | Helpers
+
 /** Scan top-level .md files in the subagents directory for the forbidden substring. */
 async function findViolations(): Promise<ReadonlyArray<Violation>> {
   const entries = await readdir(SUBAGENTS_DIR);
@@ -38,9 +47,4 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
   return violations;
 }
 
-describe('subagent content', () => {
-  it(`does not reference ${FORBIDDEN_SUBSTRING}`, async () => {
-    const violations = await findViolations();
-    expect(violations).toEqual([]);
-  });
-});
+// endregion | Helpers

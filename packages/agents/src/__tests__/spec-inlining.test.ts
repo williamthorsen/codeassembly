@@ -105,15 +105,6 @@ const RELOCATED_SPEC_LINKS: ReadonlyArray<string> = [
   '_data/next-steps-after-review.md',
 ];
 
-/** Returns a skill's include-expanded `SKILL.md` — the body the install pipeline goes on to rewrite and write out. */
-async function expandSkill(slug: string): Promise<string> {
-  return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
-}
-
-function countOccurrences(haystack: string, needle: string): number {
-  return haystack.split(needle).length - 1;
-}
-
 describe('output-shaping spec inlining', () => {
   describe.each(CONSUMERS)('$slug', ({ slug, specs }) => {
     it.each(specs)('inlines the $name spec', async (spec) => {
@@ -155,3 +146,16 @@ describe('output-shaping spec inlining', () => {
     expect(violations, message).toEqual([]);
   });
 });
+
+// region | Helpers
+
+function countOccurrences(haystack: string, needle: string): number {
+  return haystack.split(needle).length - 1;
+}
+
+/** Returns a skill's include-expanded `SKILL.md` — the body the install pipeline goes on to rewrite and write out. */
+async function expandSkill(slug: string): Promise<string> {
+  return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
+}
+
+// endregion | Helpers

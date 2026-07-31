@@ -94,6 +94,33 @@ describe(renderSkillDirectory, () => {
     );
   });
 
+  it('throws a source-labelled error for an anchor naming no heading in the same file', async () => {
+    await writeSkill({ 'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n' });
+
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+      /skills\/demo\/SKILL\.md carries 1 unresolvable anchor link target/,
+    );
+  });
+
+  it('resolves an anchor against a heading the include expansion brought in', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n\n<!-- include: _partials/events.md / -->\n',
+      '_partials/events.md': '## Lifecycle events\n',
+    });
+
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).resolves.toBeDefined();
+  });
+
+  it('rejects an anchor to the rendered slug of a heading carrying a tool placeholder', async () => {
+    // The heading slugs differently on each harness, so no single fragment addresses it. Checking ahead of the
+    // rewrite is what makes that unauthorable rather than live on one harness and dead on the other.
+    await writeSkill({ 'SKILL.md': '# Demo\n\n## {tool:Read} return parsing\n\n[x](#read-return-parsing)\n' });
+
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+      /#read-return-parsing -- names no heading/,
+    );
+  });
+
   it('throws on a broken include directive', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- include: _partials/missing.md / -->\n' });
 

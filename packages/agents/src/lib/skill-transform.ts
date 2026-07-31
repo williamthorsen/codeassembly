@@ -1,6 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
+import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
@@ -91,6 +92,9 @@ async function collectEntries(
  * rewrite, template expansion. Invocation tokens are rewritten after tool names (the two grammars are disjoint, so
  * their relative order is immaterial) and before link rewriting (a rendered `/slug` is not a Markdown link, so path
  * rewriting leaves it untouched).
+ *
+ * In-body anchors are validated on the expanded text, ahead of every rewrite: an anchor-only target is never rewritten,
+ * so the verdict holds for every harness and a heading carrying a `{tool:NAME}` token is correctly unaddressable.
  */
 async function renderMarkdown(
   srcPath: string,
@@ -102,6 +106,7 @@ async function renderMarkdown(
   const { toolMapping, pathPrefix, homeDir, harnessId, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const expanded = await expandIncludes(srcPath, contentRoot);
+  assertAnchorsResolve(expanded, contextLabel);
   const toolRewritten = rewriteToolNames(expanded, toolMapping, contextLabel);
   const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil }, contextLabel);
   const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, pathPrefix);

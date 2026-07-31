@@ -348,6 +348,33 @@ describe(installCommand, () => {
     });
   });
 
+  describe('a flat .md directly under content/skills/', () => {
+    /** Writes a top-level `.md` beside the skill directories, the shape whose `SKILL.md` probe yields ENOTDIR. */
+    async function writeFlatSkill(body: string): Promise<string> {
+      const filePath = path.join(contentDir, 'skills', 'flat-note.md');
+      await writeFile(filePath, body, 'utf8');
+      return filePath;
+    }
+
+    it('installs it rather than aborting the run on the skill-directory probe', async () => {
+      const claudeHome = await setupClaudeHome();
+      await writeFlatSkill('# Flat note\n\nSee [the note](#flat-note).\n');
+
+      await installCommand(makeOptions(), tempDir, contentDir);
+
+      expect(existsSync(path.join(claudeHome, 'skills', 'flat-note.md'))).toBe(true);
+    });
+
+    it('fails the run when its anchor names no heading', async () => {
+      await setupClaudeHome();
+      await writeFlatSkill('# Flat note\n\nSee [the events](#lifecycle-events).\n');
+
+      await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(
+        /skills\/flat-note\.md carries 1 unresolvable anchor link target/,
+      );
+    });
+  });
+
   describe('scripts', () => {
     it('places scripts and sets the executable bit', async () => {
       const claudeHome = await setupClaudeHome();
