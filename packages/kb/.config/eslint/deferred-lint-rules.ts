@@ -8,6 +8,5 @@ export const deferredLintRules = {
   'unicorn/prefer-iterator-to-array': 'warn',
   'unicorn/prefer-number-is-safe-integer': 'warn',
   'unicorn/prefer-simple-condition-first': 'warn',
-  'unicorn/require-array-sort-compare': 'warn',
   'preserve-caught-error': 'warn',
 } as const;

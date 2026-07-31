@@ -1,5 +1,4 @@
 export const deferredLintRules = {
-  'unicorn/max-nested-calls': 'warn',
   'unicorn/no-computed-property-existence-check': 'warn',
   'unicorn/no-declarations-before-early-exit': 'warn',
   'unicorn/no-duplicate-loops': 'warn',
@@ -15,6 +14,5 @@ export const deferredLintRules = {
   'unicorn/prefer-object-iterable-methods': 'warn',
   'unicorn/prefer-set-methods': 'warn',
   'unicorn/prefer-simple-condition-first': 'warn',
-  'unicorn/require-array-sort-compare': 'warn',
   'preserve-caught-error': 'warn',
 } as const;
