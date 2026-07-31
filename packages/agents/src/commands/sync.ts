@@ -24,7 +24,7 @@ import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.t
 import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
-import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
+import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import { describeSourceProblem } from '../lib/source-validation.ts';
 import {
@@ -395,11 +395,6 @@ async function reconcileDomain(
 }
 
 // region | Helpers
-
-/** True when a skill targets the given harness; either it names no harnesses (so all) or lists this one. */
-function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
-  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
-}
 
 /**
  * Throws when any declared source path is missing, not a directory, or unreadable, so a bad source fails the whole

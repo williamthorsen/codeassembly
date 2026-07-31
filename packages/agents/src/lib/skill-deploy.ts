@@ -86,6 +86,11 @@ export async function deploySkill(skill: ResolvedSkill, destDir: string, context
   }
 }
 
+/** True when a skill targets `harnessId`; either it names no harnesses (so all of them) or lists this one. */
+export function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
+  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
+}
+
 // region | Helpers
 
 /** Copies `srcPath` to `destPath` only when the bytes differ, so that unchanged files are left untouched. */
