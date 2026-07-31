@@ -21,8 +21,6 @@ A barrel -- an `index.ts` that re-exports a directory's modules -- is permitted 
 
 A barrel makes a package's public surface explicit, which is worth having at the boundary. Inside the package it buys nothing and costs on every consumer: importing one symbol loads every module the barrel touches, which inflates test startup as much as it inflates a bundle. Biome files its barrel rules under `performance` for that reason, and Next.js added `optimizePackageImports` specifically to undo the cost for third-party barrels it cannot control. Nothing undoes it for your own.
 
-Biome can enforce this; ESLint ships no first-party equivalent, so under ESLint the rule holds by convention alone and nothing will flag a violation.
-
 ## Import specifiers
 
 Write the specifier that names the file on disk: `./parse-note.ts`, not `./parse-note.js`.
@@ -102,8 +100,6 @@ if (!isConfig(parsed)) {
 - **Prefer `undefined` over `null`** unless serialization requires it
 - **Never use type assertions** - JSON.parse is always unsafe
 - **Always properly type or use `unknown`** instead of `any`
-
-Nothing in the compiler enforces this section: TypeScript accepts every construct banned above, so these rules bind only where a linter supplies them. Under `@typescript-eslint` that means `consistent-type-assertions` with `assertionStyle: 'never'`, `no-explicit-any`, and `no-non-null-assertion`; other linters cover the same ground under their own names. A project whose linter enables none of them gets no signal.
 
 ## Functions
 
