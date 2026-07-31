@@ -21,6 +21,8 @@ A barrel -- an `index.ts` that re-exports a directory's modules -- is permitted 
 
 A barrel makes a package's public surface explicit, which is worth having at the boundary. Inside the package it buys nothing and costs on every consumer: importing one symbol loads every module the barrel touches, which inflates test startup as much as it inflates a bundle. Biome files its barrel rules under `performance` for that reason, and Next.js added `optimizePackageImports` specifically to undo the cost for third-party barrels it cannot control. Nothing undoes it for your own.
 
+Biome can enforce this; ESLint ships no first-party equivalent, so under ESLint the rule holds by convention alone and nothing will flag a violation.
+
 ## Import specifiers
 
 Write the specifier that names the file on disk: `./parse-note.ts`, not `./parse-note.js`.
