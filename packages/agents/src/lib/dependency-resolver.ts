@@ -26,9 +26,9 @@ export interface ResolvedClosure {
 /**
  * Expands the directly-declared artifacts into their transitive closure, reading each visited artifact's edges — a
  * collection's `members:`, every other type's `dependencies:`, a subagent's top-level `skills:` injection list, plus
- * the invocation tokens in a skill's or subagent's include-expanded body — and following them across every type. The
- * result is
- * deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending path. A
+ * the invocation tokens in a rulebook's, skill's, or subagent's body — and following them across every type. The
+ * result is deduped (a diamond dependency appears once) and acyclic — a cycle throws an error naming the offending
+ * path. A
  * collection is a traversal-only node: its members are followed but the collection itself is dropped from the
  * deployable result. A referenced artifact that resolves from no source or the library throws an error naming its
  * type and slug and every location searched.
@@ -91,8 +91,10 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
  * partial becomes an edge for every artifact that includes it — and a subagent further unions its top-level `skills:`
  * injection list. A body token that names the artifact itself is dropped rather than unioned: a self-reference renders
  * per harness but is not a dependency and must not trip the cycle check; a self-dependency written in `dependencies:`
- * is not dropped, so it still errors. A rulebook keeps `dependencies:` only; its body is embedded without the render
- * pass. Every unioned edge enters the closure without a duplicate `dependencies:` declaration.
+ * is not dropped, so it still errors. A rulebook unions its own body tokens the same way, reading them off the file as
+ * read: its frontmatter file is also its body file, and it carries no includes to expand. A `{rulebook:<slug>}` token
+ * is unioned only from a rulebook, because only a rulebook body renders one. Every unioned edge enters the closure
+ * without a duplicate `dependencies:` declaration.
  */
 async function readArtifactEdges(
   type: ArtifactType,
@@ -117,9 +119,14 @@ async function readArtifactEdges(
   }
 
   const dependencies = readDependencies(content, label);
-  // A rulebook's body is embedded without the render pass, so only its declared `dependencies:` are edges.
   if (type === 'rulebook') {
-    return dependencies;
+    const tokens = extractInvocationEdges(content);
+    return {
+      ...dependencies,
+      rulebook: [...(dependencies.rulebook ?? []), ...tokens.rulebooks.filter((edge) => edge !== slug)],
+      skill: [...(dependencies.skill ?? []), ...tokens.skills],
+      subagent: [...(dependencies.subagent ?? []), ...tokens.subagents],
+    };
   }
 
   // For a skill or subagent, the frontmatter file is also the body file. Expand its includes to match the render

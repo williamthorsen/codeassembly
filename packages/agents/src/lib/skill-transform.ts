@@ -103,7 +103,7 @@ async function renderMarkdown(
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const expanded = await expandIncludes(srcPath, contentRoot);
   const toolRewritten = rewriteToolNames(expanded, toolMapping, contextLabel);
-  const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil });
+  const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil }, contextLabel);
   const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, pathPrefix);
   return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
 }

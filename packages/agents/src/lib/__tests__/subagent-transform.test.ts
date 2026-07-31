@@ -158,7 +158,11 @@ describe(renderSubagentForHarness, () => {
       const toolMapping = loadToolMapping(overlayYaml);
       const merged = mergeFrontmatter(SOURCE, overlayYaml);
       const rewrittenTools = rewriteToolNames(merged, toolMapping, 'subagents/demo-agent.md');
-      const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil });
+      const rewrittenInvocations = rewriteInvocationTokens(
+        rewrittenTools,
+        { skillSigil, subagentSigil },
+        'subagents/demo-agent.md',
+      );
       const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, 'demo-agent.md', homeDir);
       const expected = rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 

@@ -27,6 +27,7 @@ import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/sk
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import {
   deploySubagent,
+  renderSubagent,
   resolveDeclaredSubagent,
   type ResolvedSubagent,
   type SubagentDeployContext,
@@ -275,6 +276,10 @@ async function reconcileDomain(
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
 
+  // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
+  // host and every skill file are already on disk.
+  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents);
+
   // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
   assertRulebooksRender(harnessIds, resolved);
@@ -318,7 +323,7 @@ async function reconcileDomain(
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
-    const context = resolveRulebookRenderContext(harnessId);
+    const context = resolveRulebookRenderContext(harnessId, resolved);
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -753,13 +758,29 @@ async function assertDeclaredSkillsRender(
 }
 
 /**
+ * Renders every declared subagent against every targeted harness, discarding the output, so an unmapped tool
+ * placeholder or a rulebook token throws before any file is written. `reconcileDeclaredSubagents` re-renders at write
+ * time; this pass exists only to fail the run closed, including under `--dry-run`.
+ */
+async function assertDeclaredSubagentsRender(
+  targets: ReadonlyArray<HarnessSubagentTarget>,
+  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+): Promise<void> {
+  for (const target of targets) {
+    for (const subagent of resolvedSubagents) {
+      await renderSubagent(subagent, target.deployContext);
+    }
+  }
+}
+
+/**
  * Renders every resolved rulebook against every targeted harness, discarding the output, so a link target the
  * delivery pipeline cannot honor throws before any file is written. Both delivery passes re-render at write time;
  * this pass exists only to fail the run closed, including under `--dry-run`.
  */
 function assertRulebooksRender(harnessIds: ReadonlyArray<HarnessId>, resolved: ReadonlyArray<ResolvedRulebook>): void {
   for (const harnessId of harnessIds) {
-    const context = resolveRulebookRenderContext(harnessId);
+    const context = resolveRulebookRenderContext(harnessId, resolved);
     for (const rulebook of resolved) {
       renderRulebookBody(rulebook.body, rulebook.slug, context);
     }
@@ -1030,7 +1051,7 @@ async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain)
  * region. Each body is rendered for `harnessId`, so the same rulebook yields that harness's own absolute paths.
  */
 function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId: HarnessId): string {
-  const context = resolveRulebookRenderContext(harnessId);
+  const context = resolveRulebookRenderContext(harnessId, resolved);
   let body = '';
   for (const rulebook of resolved) {
     if (rulebook.ambient) {
@@ -1040,10 +1061,24 @@ function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId:
   return body;
 }
 
-/** The per-harness inputs a rulebook render depends on, read off the harness config. */
-function resolveRulebookRenderContext(harnessId: HarnessId): RulebookRenderContext {
+/**
+ * The per-harness inputs a rulebook render depends on: the harness config's own segments and sigils, plus the deployed
+ * rulebooks indexed by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys under.
+ */
+function resolveRulebookRenderContext(
+  harnessId: HarnessId,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+): RulebookRenderContext {
   const config = HARNESSES[harnessId];
-  return { homeDir: config.homeDir, harnessId: config.id };
+  return {
+    homeDir: config.homeDir,
+    harnessId: config.id,
+    skillSigil: config.skillSigil,
+    subagentSigil: config.subagentSigil,
+    rulebooks: new Map(
+      resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]),
+    ),
+  };
 }
 
 /**

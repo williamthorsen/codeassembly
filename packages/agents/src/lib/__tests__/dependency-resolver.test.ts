@@ -231,14 +231,49 @@ describe(resolveClosure, () => {
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
 
-    it('does not treat a rulebook body token as an edge', async () => {
-      // A rulebook body is embedded without the render pass, so a token in it is literal text, not an edge: the named
-      // skill is neither pulled into the closure nor existence-checked (here it does not exist, and the run succeeds).
+    it('pulls a skill named by a rulebook body token into the closure', async () => {
+      await writeArtifact(contentDir, 'skill', 'capture-event');
       await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Invoke {skill:capture-event}.');
 
       const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, libraryResolver(contentDir));
 
-      expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: [] });
+      expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: ['capture-event'], subagents: [] });
+    });
+
+    it('pulls a subagent named by a rulebook body token into the closure', async () => {
+      await writeArtifact(contentDir, 'subagent', 'planner');
+      await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Dispatch {subagent:planner}.');
+
+      const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: ['planner'] });
+    });
+
+    it('pulls a rulebook named by a rulebook body token into the closure', async () => {
+      await writeArtifact(contentDir, 'rulebook', 'nmr-scripts');
+      await writeArtifactWithBody(contentDir, 'rulebook', 'nmr-cheatsheet', 'See {rulebook:nmr-scripts}.');
+
+      const closure = await resolveClosure({ rulebook: ['nmr-cheatsheet'] }, libraryResolver(contentDir));
+
+      expect(closure.rulebooks.toSorted()).toEqual(['nmr-cheatsheet', 'nmr-scripts']);
+    });
+
+    it('drops a rulebook body self-token so a self-reference renders without becoming an edge', async () => {
+      await writeArtifactWithBody(contentDir, 'rulebook', 'nmr-scripts', 'Re-read {rulebook:nmr-scripts} for detail.');
+
+      const closure = await resolveClosure({ rulebook: ['nmr-scripts'] }, libraryResolver(contentDir));
+
+      expect(closure.rulebooks).toEqual(['nmr-scripts']);
+    });
+
+    it('leaves a rulebook token in a skill body out of the closure', async () => {
+      // Only a rulebook body renders a rulebook token, so unioning one here would deploy a target for a reference the
+      // render pass rejects. The named rulebook is not existence-checked either: it does not exist, and this resolves.
+      await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', 'See {rulebook:nmr-scripts}.');
+
+      const closure = await resolveClosure({ skill: ['wrap-up'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: [], skills: ['wrap-up'], subagents: [] });
     });
 
     it('drops a skill body self-token so a self-reference renders without becoming an edge', async () => {

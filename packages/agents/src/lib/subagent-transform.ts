@@ -51,7 +51,7 @@ export function renderSubagentForHarness(
 ): string {
   const merged = mergeFrontmatter(expandedSource, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
-  const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil });
+  const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil }, sourceLabel);
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, pathPrefix);
   return rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 }
