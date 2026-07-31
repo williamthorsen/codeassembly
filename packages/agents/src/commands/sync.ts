@@ -33,7 +33,7 @@ import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
-import { describeSourceProblem } from '../lib/source-validation.ts';
+import { describeSourceNameProblem, describeSourceProblem } from '../lib/source-validation.ts';
 import { deploySourceSupport, renderSourceSupport, retractUndeclaredSourceSupport } from '../lib/support-deploy.ts';
 import {
   deploySubagent,
@@ -192,6 +192,7 @@ async function reconcileDomain(
   // source up front so a missing or non-directory source fails the whole run — dry-run included — before any write.
   const resolver = createSourceResolver(sources, contentDir);
   await assertValidSources(sources);
+  assertUsableSourceNames(sources);
 
   // Enumerated after validation, so a package whose content dir is missing has already failed the run.
   const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
@@ -472,6 +473,25 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
   if (invalid.length > 0) {
     throw new Error(
       `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing, readable directory.`,
+    );
+  }
+}
+
+/**
+ * Throws when a declared source's name cannot serve as the directory segments its support entries deploy under, so a
+ * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
+ * name is reported together, so a declaration with two of them takes one fix rather than two runs.
+ */
+function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
+  const unusable = sources
+    .map((source) => ({ source, problem: describeSourceNameProblem(source.name) }))
+    .filter((entry) => entry.problem !== undefined)
+    .map((entry) => `"${entry.source.name}": ${entry.problem}`);
+
+  if (unusable.length > 0) {
+    throw new Error(
+      `Unusable declared source name(s): ${unusable.join('; ')}. A source name becomes a directory under the ` +
+        'harness skills dir, so it must name one.',
     );
   }
 }

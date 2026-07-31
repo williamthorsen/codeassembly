@@ -868,6 +868,19 @@ describe(syncCommand, () => {
       expect(await readFile(skillPath('source-skill'), 'utf8')).toContain('<!-- codeassembly-skill:source-skill -->');
     });
 
+    it('fails the run with nothing written when a source name cannot name a directory', async () => {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: ../escape\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`,
+        'utf8',
+      );
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /Unusable declared source name.*\.\.\/escape.*relative path segment/s,
+      );
+    });
+
     it("delivers a source's skill support entries into that source's namespace", async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
