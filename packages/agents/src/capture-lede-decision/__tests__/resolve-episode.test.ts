@@ -104,6 +104,22 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).agentsVersion).toBe('1.2.3');
   });
 
+  it('resolves the default manifest path against the caller-supplied home', async () => {
+    const fixture = await createLedeFixture();
+    const home = join(fixture.root, 'home');
+    await mkdir(join(home, '.codeassembly'), { recursive: true });
+    await writeFile(
+      join(home, '.codeassembly', 'agents-manifest.json'),
+      JSON.stringify({ shared: { version: '4.5.6' } }),
+      'utf8',
+    );
+    const { manifestPath: _manifestPath, ...withoutManifest } = inputFor(fixture);
+
+    const episode = expectEpisode(await resolveEpisode({ ...withoutManifest, home }));
+
+    expect(episode.agentsVersion).toBe('4.5.6');
+  });
+
   it('reports a missing artifact directory', async () => {
     const fixture = await createLedeFixture();
 

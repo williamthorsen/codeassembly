@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 
 import { readNoteContent } from '@codeassembly/kb/note-io';
 
@@ -41,6 +41,8 @@ export async function resolveEpisode(input: {
   mergedLedeFile?: string;
   /** Install manifest supplying the agents-package version; defaults to the user-global manifest. */
   manifestPath?: string;
+  /** Home directory the user-global manifest path resolves against; defaults to the real home. */
+  home?: string;
 }): Promise<ResolveEpisodeOutcome> {
   if (!(await isDirectory(input.artifactDir))) {
     return { ok: false, error: 'no-artifact-dir', message: `artifact directory not found: ${input.artifactDir}` };
@@ -83,7 +85,7 @@ export async function resolveEpisode(input: {
     return identity;
   }
 
-  const agentsVersion = await readAgentsVersion(input.manifestPath);
+  const agentsVersion = await readAgentsVersion({ manifestPath: input.manifestPath, home: input.home });
 
   return {
     ok: true,
@@ -186,8 +188,11 @@ function normalizeLede(value: string): string {
 }
 
 /** Reads the installed agents-package version from the install manifest; `null` when it is absent or unreadable. */
-async function readAgentsVersion(manifestPath: string | undefined): Promise<string | null> {
-  const resolved = manifestPath ?? path.join(process.env.HOME ?? '', '.codeassembly', 'agents-manifest.json');
+async function readAgentsVersion(input: {
+  manifestPath: string | undefined;
+  home: string | undefined;
+}): Promise<string | null> {
+  const resolved = input.manifestPath ?? path.join(input.home ?? homedir(), '.codeassembly', 'agents-manifest.json');
   const content = await readFileSafely(resolved);
   if (content === null) {
     return null;

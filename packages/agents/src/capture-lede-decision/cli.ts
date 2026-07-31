@@ -120,6 +120,7 @@ export async function runDecision(input: {
     ...(args.agentLedeFile !== null && { agentLedeFile: args.agentLedeFile }),
     ...(args.mergedLedeFile !== null && { mergedLedeFile: args.mergedLedeFile }),
     ...(args.manifest !== null && { manifestPath: args.manifest }),
+    ...(input.home !== undefined && { home: input.home }),
   });
   if (!resolved.ok) {
     return { ok: false, error: resolved.error, message: resolved.message };
