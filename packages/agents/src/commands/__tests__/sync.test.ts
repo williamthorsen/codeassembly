@@ -1334,11 +1334,13 @@ describe(syncCommand, () => {
     }
 
     /** Writes a fixture subagent `<slug>.md` into the temp content library's `subagents/`. */
-    async function writeLibrarySubagent(slug: string): Promise<void> {
+    async function writeLibrarySubagent(
+      slug: string,
+      { body = `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.` }: { body?: string } = {},
+    ): Promise<void> {
       const dir = path.join(contentDir, 'subagents');
       await mkdir(dir, { recursive: true });
-      const content = `# ${slug}\n\nUse {tool:Read}; run \`{harness_home_dir}/scripts/x.sh\`.`;
-      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n${content}\n`, 'utf8');
+      await writeFile(path.join(dir, `${slug}.md`), `---\nname: ${slug}\n---\n\n${body}\n`, 'utf8');
     }
 
     /** Writes the project-scope codeassembly.yaml declaring the given subagent slugs. */
@@ -1348,6 +1350,36 @@ describe(syncCommand, () => {
         slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `subagents:\n${useBlock}`, 'utf8');
     }
+
+    it('fails a dry run with nothing written when a subagent body carries a rulebook token', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
+      await declareSubagents('canary');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /\{rulebook:nmr-scripts\} in subagents\/canary\.md[\s\S]*only in a rulebook body/,
+      );
+      expect(existsSync(subagentPath('canary'))).toBe(false);
+    });
+
+    it('fails a real sync before the ambient host is written when a subagent body carries a rulebook token', async () => {
+      // Subagents deploy last, so this pins the failure ahead of the earlier ambient and skill write passes.
+      await writeOverlays();
+      await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+      await writeLibrarySubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        'rulebooks:\n  use:\n    - alpha\nsubagents:\n  use:\n    - canary\n',
+        'utf8',
+      );
+
+      await expect(syncCommand(makeOptions(), projectRoot, contentDir)).rejects.toThrow(
+        /\{rulebook:nmr-scripts\} in subagents\/canary\.md/,
+      );
+      expect(existsSync(localHostPath())).toBe(false);
+      expect(existsSync(subagentPath('canary'))).toBe(false);
+    });
 
     it('deploys a declared subagent with the transform applied and the ownership marker, no provenance marker', async () => {
       await writeOverlays();

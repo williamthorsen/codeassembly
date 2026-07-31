@@ -27,6 +27,7 @@ import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/sk
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import {
   deploySubagent,
+  renderSubagent,
   resolveDeclaredSubagent,
   type ResolvedSubagent,
   type SubagentDeployContext,
@@ -274,6 +275,10 @@ async function reconcileDomain(
   // placeholder fails the whole run — dry-run included — before any file is written. The rendered output is discarded
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
+
+  // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
+  // host and every skill file are already on disk.
+  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents);
 
   // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
@@ -748,6 +753,22 @@ async function assertDeclaredSkillsRender(
         continue;
       }
       await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, target.deployContext);
+    }
+  }
+}
+
+/**
+ * Renders every declared subagent against every targeted harness, discarding the output, so an unmapped tool
+ * placeholder or a rulebook token throws before any file is written. `reconcileDeclaredSubagents` re-renders at write
+ * time; this pass exists only to fail the run closed, including under `--dry-run`.
+ */
+async function assertDeclaredSubagentsRender(
+  targets: ReadonlyArray<HarnessSubagentTarget>,
+  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+): Promise<void> {
+  for (const target of targets) {
+    for (const subagent of resolvedSubagents) {
+      await renderSubagent(subagent, target.deployContext);
     }
   }
 }

@@ -49,9 +49,20 @@ export async function deploySubagent(
   destPath: string,
   context: SubagentDeployContext,
 ): Promise<void> {
+  const rendered = await renderSubagent(resolved, context);
+  await mkdir(path.dirname(destPath), { recursive: true });
+  await writeIfChanged(destPath, subagentMarker.injectMarker(rendered, resolved.slug));
+}
+
+/**
+ * Renders a resolved subagent for one harness: include expansion, then the harness transform. Throws on a broken
+ * include, an unmapped `{tool:NAME}` placeholder, or a `{rulebook:<slug>}` token, which no subagent body may carry.
+ * The pre-write render gate and `deploySubagent` share this one path, so the gate raises exactly what the write would.
+ */
+export async function renderSubagent(resolved: ResolvedSubagent, context: SubagentDeployContext): Promise<string> {
   const expanded = await expandIncludes(resolved.srcPath, resolved.contentRoot);
   const fileName = `${resolved.slug}.md`;
-  const rendered = renderSubagentForHarness(expanded, {
+  return renderSubagentForHarness(expanded, {
     overlayYaml: context.overlayYaml,
     toolMapping: context.toolMapping,
     fileRelPath: fileName,
@@ -62,8 +73,6 @@ export async function deploySubagent(
     skillSigil: context.skillSigil,
     subagentSigil: context.subagentSigil,
   });
-  await mkdir(path.dirname(destPath), { recursive: true });
-  await writeIfChanged(destPath, subagentMarker.injectMarker(rendered, resolved.slug));
 }
 
 /**
