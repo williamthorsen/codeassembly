@@ -17,7 +17,12 @@ import { checkGitIgnored } from '../lib/git-ignore.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
-import { createContentRootLinkAnchor, createSkillLinkAnchor, type LinkAnchorContext } from '../lib/link-anchor.ts';
+import {
+  createContentRootLinkAnchor,
+  createSkillLinkAnchor,
+  type LinkAnchorContext,
+  SOURCE_SUPPORT_DIR,
+} from '../lib/link-anchor.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
 import type { ResolveLinkAnchor } from '../lib/path-rewriter.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
@@ -29,6 +34,7 @@ import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/se
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import { describeSourceProblem } from '../lib/source-validation.ts';
+import { deploySourceSupport, renderSourceSupport, retractUndeclaredSourceSupport } from '../lib/support-deploy.ts';
 import {
   deploySubagent,
   renderSubagent,
@@ -326,6 +332,9 @@ async function reconcileDomain(
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
 
+  // Same gate for each source's support entries, whose defects would otherwise surface only at the write below.
+  await assertSourceSupportRenders(harnessSkillTargets, sources, anchors);
+
   // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
   // host and every skill file are already on disk.
   await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents);
@@ -356,6 +365,7 @@ async function reconcileDomain(
       resolvedSubagents,
       harnessSubagentTargets,
       subagentOrphansByDir,
+      sourceSupportPlans: await planSourceSupport(harnessSkillTargets, sources, anchors),
       promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
     });
     return;
@@ -395,6 +405,9 @@ async function reconcileDomain(
   // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills);
+
+  // Deliver each source's support entries into its own namespace, then retract the namespaces no source claims.
+  await reconcileSourceSupport(harnessSkillTargets, sources, anchors);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
@@ -743,6 +756,77 @@ async function reconcileDeclaredSkills(
         continue;
       }
       await deploySkill(skill, path.join(target.skillsDir, skill.slug), target.deployContext);
+    }
+  }
+}
+
+/**
+ * Delivers each source's skill support entries into that source's namespace under every targeted harness's skills dir,
+ * then retracts the namespaces no declared source claims. Delivery runs first so a source that dropped its last
+ * support entry leaves an empty namespace root for the retraction to retire in the same pass.
+ */
+async function reconcileSourceSupport(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  sources: ReadonlyArray<{ name: string; dir: string }>,
+  anchors: AnchorResolver,
+): Promise<void> {
+  for (const target of targets) {
+    const sourcesRoot = path.join(target.skillsDir, SOURCE_SUPPORT_DIR);
+    for (const source of sources) {
+      await deploySourceSupport(source.dir, path.join(sourcesRoot, source.name), {
+        ...target.deployContext,
+        anchor: anchors.forSkill(target.harnessId, source.name),
+      });
+    }
+    await retractUndeclaredSourceSupport(
+      sourcesRoot,
+      sources.map((source) => source.name),
+    );
+  }
+}
+
+/**
+ * Lists the support deliveries a real run would make, one per source that ships any, for the dry-run preview. Renders
+ * through the same path the write does, so the preview cannot claim a delivery the run would not make.
+ */
+async function planSourceSupport(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  sources: ReadonlyArray<{ name: string; dir: string }>,
+  anchors: AnchorResolver,
+): Promise<ReadonlyArray<{ destDir: string; fileCount: number }>> {
+  const plans: Array<{ destDir: string; fileCount: number }> = [];
+  for (const target of targets) {
+    for (const source of sources) {
+      const entries = await renderSourceSupport(source.dir, {
+        ...target.deployContext,
+        anchor: anchors.forSkill(target.harnessId, source.name),
+      });
+      if (entries.length > 0) {
+        plans.push({
+          destDir: path.join(target.skillsDir, SOURCE_SUPPORT_DIR, source.name),
+          fileCount: entries.length,
+        });
+      }
+    }
+  }
+  return plans;
+}
+
+/**
+ * Renders every source's support entries against every targeted harness, discarding the output, so a defect in a
+ * package's reference content fails the run — dry-run included — before anything is written.
+ */
+async function assertSourceSupportRenders(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  sources: ReadonlyArray<{ name: string; dir: string }>,
+  anchors: AnchorResolver,
+): Promise<void> {
+  for (const target of targets) {
+    for (const source of sources) {
+      await renderSourceSupport(source.dir, {
+        ...target.deployContext,
+        anchor: anchors.forSkill(target.harnessId, source.name),
+      });
     }
   }
 }
@@ -1164,6 +1248,8 @@ interface DryRunPlan {
   readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
   readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
   readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
+  /** One entry per source that would deliver support content, naming its namespace dir and how many files land there. */
+  readonly sourceSupportPlans: ReadonlyArray<{ destDir: string; fileCount: number }>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
 }
 
@@ -1190,6 +1276,9 @@ function reportDryRun(plan: DryRunPlan): void {
       }
       console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
     }
+  }
+  for (const { destDir, fileCount } of plan.sourceSupportPlans) {
+    console.info(`  deliver ${fileCount} source support file(s) to ${destDir}`);
   }
   for (const subagent of plan.resolvedSubagents) {
     for (const target of plan.harnessSubagentTargets) {

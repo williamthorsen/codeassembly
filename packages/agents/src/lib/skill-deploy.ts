@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { parse as parseYaml } from 'yaml';
@@ -7,10 +7,10 @@ import { makeArtifactMarker } from './artifact-marker.ts';
 import { artifactFrontmatterPath } from './artifact-types.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
-import { writeIfChanged } from './fs-helpers.ts';
 import { ALL_HARNESS_IDS, isHarnessId } from './harness.ts';
+import { writeRenderedTree } from './rendered-tree.ts';
 import { renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
-import { isEnoent, isRecord } from './type-guards.ts';
+import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
 const skillMarker = makeArtifactMarker('skill');
@@ -64,26 +64,16 @@ export async function resolveDeclaredSkill(slug: string, resolver: SourceResolve
  */
 export async function deploySkill(skill: ResolvedSkill, destDir: string, context: SkillDeployContext): Promise<void> {
   const entries = await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, context);
-  await mkdir(destDir, { recursive: true });
-
-  const expectedFiles = new Set(entries.map((entry) => entry.relPath));
-  await pruneOrphans(destDir, '', expectedFiles);
-
-  for (const entry of entries) {
-    const destPath = path.join(destDir, entry.relPath);
-    await mkdir(path.dirname(destPath), { recursive: true });
-    if (entry.kind === 'markdown') {
-      // Strip the build-only `harnesses:` directive from the deployed root SKILL.md — it steers deployment, not the
-      // harness, which would otherwise carry a frontmatter key it ignores.
-      const body =
-        entry.relPath === 'SKILL.md'
-          ? skillMarker.injectMarker(stripHarnessesDirective(entry.content), skill.slug)
-          : entry.content;
-      await writeIfChanged(destPath, body);
-    } else {
-      await copyFileIfChanged(entry.srcPath, destPath);
-    }
-  }
+  // Strip the build-only `harnesses:` directive from the deployed root SKILL.md — it steers deployment, not the
+  // harness, which would otherwise carry a frontmatter key it ignores.
+  await writeRenderedTree(
+    destDir,
+    entries.map((entry) =>
+      entry.kind === 'markdown' && entry.relPath === 'SKILL.md'
+        ? { ...entry, content: skillMarker.injectMarker(stripHarnessesDirective(entry.content), skill.slug) }
+        : entry,
+    ),
+  );
 }
 
 /** True when a skill targets `harnessId`; either it names no harnesses (so all of them) or lists this one. */
@@ -92,47 +82,6 @@ export function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId):
 }
 
 // region | Helpers
-
-/** Copies `srcPath` to `destPath` only when the bytes differ, so that unchanged files are left untouched. */
-async function copyFileIfChanged(srcPath: string, destPath: string): Promise<void> {
-  const desired = await readFile(srcPath);
-  const current = await readFileOrUndefined(destPath);
-  if (current?.equals(desired)) {
-    return;
-  }
-  await writeFile(destPath, desired);
-}
-
-/**
- * Removes every destination file absent from `expectedFiles`, then any directory left empty by those removals, so a
- * skill's dropped files — and the directories that held them — do not linger across re-deploys.
- */
-async function pruneOrphans(destDir: string, relDir: string, expectedFiles: ReadonlySet<string>): Promise<void> {
-  for (const entry of await readdir(path.join(destDir, relDir), { withFileTypes: true })) {
-    const rel = relDir === '' ? entry.name : `${relDir}/${entry.name}`;
-    const absPath = path.join(destDir, rel);
-    if (entry.isDirectory()) {
-      await pruneOrphans(destDir, rel, expectedFiles);
-      if ((await readdir(absPath)).length === 0) {
-        await rm(absPath, { recursive: true, force: true });
-      }
-    } else if (!expectedFiles.has(rel)) {
-      await rm(absPath, { force: true });
-    }
-  }
-}
-
-/** Reads a file as a buffer, returning `undefined` when it does not exist. */
-async function readFileOrUndefined(filePath: string): Promise<Buffer | undefined> {
-  try {
-    return await readFile(filePath);
-  } catch (error: unknown) {
-    if (isEnoent(error)) {
-      return;
-    }
-    throw error;
-  }
-}
 
 /**
  * Reads a skill's `harnesses:` frontmatter field, normalizing a string or list into a harness-id array. Returns
