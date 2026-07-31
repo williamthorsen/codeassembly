@@ -103,6 +103,8 @@ if (!isConfig(parsed)) {
 - **Never use type assertions** - JSON.parse is always unsafe
 - **Always properly type or use `unknown`** instead of `any`
 
+Nothing in the compiler enforces this section: TypeScript accepts every construct banned above. The rules that bind it come from `@typescript-eslint` -- `consistent-type-assertions` with `assertionStyle: 'never'`, `no-explicit-any`, and `no-non-null-assertion` -- and a project that has not enabled them gets no signal.
+
 ## Functions
 
 Prefer function declarations to function expressions, unless the variable is typed:
