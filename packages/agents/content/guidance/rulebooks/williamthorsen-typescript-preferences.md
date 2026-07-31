@@ -103,7 +103,7 @@ if (!isConfig(parsed)) {
 - **Never use type assertions** - JSON.parse is always unsafe
 - **Always properly type or use `unknown`** instead of `any`
 
-Nothing in the compiler enforces this section: TypeScript accepts every construct banned above. The rules that bind it come from `@typescript-eslint` -- `consistent-type-assertions` with `assertionStyle: 'never'`, `no-explicit-any`, and `no-non-null-assertion` -- and a project that has not enabled them gets no signal.
+Nothing in the compiler enforces this section: TypeScript accepts every construct banned above, so these rules bind only where a linter supplies them. Under `@typescript-eslint` that means `consistent-type-assertions` with `assertionStyle: 'never'`, `no-explicit-any`, and `no-non-null-assertion`; other linters cover the same ground under their own names. A project whose linter enables none of them gets no signal.
 
 ## Functions
 
