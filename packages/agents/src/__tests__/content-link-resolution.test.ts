@@ -60,6 +60,81 @@ interface Violation {
   readonly reason: Reason;
 }
 
+describe('installable-content link resolution', () => {
+  let violations: ReadonlyArray<Violation> = [];
+
+  beforeAll(async () => {
+    violations = await findViolations();
+  });
+
+  it('every relative Markdown link in an installable host resolves to a real file', () => {
+    const missing = violations.filter((v) => v.reason === 'missing-file');
+    expect(missing, formatViolations(missing)).toEqual([]);
+  });
+
+  it('every anchor fragment resolves to exactly one heading in the file it points into', () => {
+    const anchors = violations.filter((v) => v.reason === 'ambiguous-anchor' || v.reason === 'dead-anchor');
+    expect(anchors, formatViolations(anchors)).toEqual([]);
+  });
+
+  it('no installable host leaves a code fence open, which would hide every anchor below it', () => {
+    const fences = violations.filter((v) => v.reason === 'unterminated-fence');
+    expect(fences, formatFenceViolations(fences)).toEqual([]);
+  });
+});
+
+describe('shipped rulebook reference deliverability', () => {
+  it('every rulebook link target and invocation token names something that deploys', async () => {
+    const rejections = await findRulebookRejections();
+    expect(rejections, rejections.join('\n')).toEqual([]);
+  });
+});
+
+/**
+ * Renders every shipped rulebook the way `sync` does, collecting the error from each that names an undeliverable link
+ * target or an unusable `{rulebook:<slug>}` token. Every shipped rulebook stands in for the deployed set, which is the
+ * strictest catalog available here: a token naming one that is missing or ambient-only has nothing to invoke under any
+ * declaration. The root allowlist and the catalog are both harness-invariant, so one harness context stands for all.
+ */
+async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
+  const rulebookFiles: Array<string> = [];
+  await collectHostFiles(path.join(CONTENT_ROOT, RULEBOOK_ROOT), rulebookFiles);
+
+  const parsed = await Promise.all(
+    rulebookFiles.map(async (file) => {
+      const slug = path.basename(file, '.md');
+      const { rulebook, body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
+      return {
+        slug,
+        body,
+        skillName: resolveSkillName(slug, rulebook['skill-name']),
+        skill: rulebook.delivery.includes('skill'),
+      };
+    }),
+  );
+  const rulebooks: RulebookInvocationCatalog = new Map(
+    parsed.map(({ slug, skillName, skill }) => [slug, { skillName, skill }]),
+  );
+
+  const rejections: Array<string> = [];
+  for (const { slug, body } of parsed) {
+    try {
+      renderRulebookBody(body, slug, {
+        homeDir: '.claude',
+        harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
+        rulebooks,
+      });
+    } catch (error) {
+      rejections.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+  return rejections;
+}
+
+// region | Helpers
+
 /** Recursively collects installable host `.md` files, skipping `_partials/` at any depth and dotfiles. */
 async function collectHostFiles(dir: string, out: Array<string>): Promise<void> {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -136,19 +211,6 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
   return violations;
 }
 
-function formatViolations(violations: ReadonlyArray<Violation>): string {
-  if (violations.length === 0) {
-    return '';
-  }
-  const header =
-    `Found ${violations.length} unresolvable Markdown link(s). Each is resolved the way the install pipeline ` +
-    `resolves it: a relative path against the host file's directory, and a fragment against the headings of the ` +
-    `file it points into. A link authored in a partial is reported against every host that inlines it, so fix the ` +
-    `partial rather than the host.`;
-  const lines = violations.map((v) => `  [${v.reason}] ${v.file}: ${v.target}`);
-  return [header, ...lines].join('\n');
-}
-
 /** Renders the unterminated-fence violations, whose subject is a fence rather than a link target. */
 function formatFenceViolations(violations: ReadonlyArray<Violation>): string {
   if (violations.length === 0) {
@@ -159,6 +221,19 @@ function formatFenceViolations(violations: ReadonlyArray<Violation>): string {
     `anchor there is checked and a clean result over it carries no information. A closing fence repeats the opening ` +
     `character at least as many times.`;
   const lines = violations.map((v) => `  [${v.reason}] ${v.file}: opened with ${v.target}`);
+  return [header, ...lines].join('\n');
+}
+
+function formatViolations(violations: ReadonlyArray<Violation>): string {
+  if (violations.length === 0) {
+    return '';
+  }
+  const header =
+    `Found ${violations.length} unresolvable Markdown link(s). Each is resolved the way the install pipeline ` +
+    `resolves it: a relative path against the host file's directory, and a fragment against the headings of the ` +
+    `file it points into. A link authored in a partial is reported against every host that inlines it, so fix the ` +
+    `partial rather than the host.`;
+  const lines = violations.map((v) => `  [${v.reason}] ${v.file}: ${v.target}`);
   return [header, ...lines].join('\n');
 }
 
@@ -175,75 +250,4 @@ async function readHeadingSlugs(
   return slugs;
 }
 
-describe('installable-content link resolution', () => {
-  let violations: ReadonlyArray<Violation> = [];
-
-  beforeAll(async () => {
-    violations = await findViolations();
-  });
-
-  it('every relative Markdown link in an installable host resolves to a real file', () => {
-    const missing = violations.filter((v) => v.reason === 'missing-file');
-    expect(missing, formatViolations(missing)).toEqual([]);
-  });
-
-  it('every anchor fragment resolves to exactly one heading in the file it points into', () => {
-    const anchors = violations.filter((v) => v.reason === 'ambiguous-anchor' || v.reason === 'dead-anchor');
-    expect(anchors, formatViolations(anchors)).toEqual([]);
-  });
-
-  it('no installable host leaves a code fence open, which would hide every anchor below it', () => {
-    const fences = violations.filter((v) => v.reason === 'unterminated-fence');
-    expect(fences, formatFenceViolations(fences)).toEqual([]);
-  });
-});
-
-describe('shipped rulebook reference deliverability', () => {
-  it('every rulebook link target and invocation token names something that deploys', async () => {
-    const rejections = await findRulebookRejections();
-    expect(rejections, rejections.join('\n')).toEqual([]);
-  });
-});
-
-/**
- * Renders every shipped rulebook the way `sync` does, collecting the error from each that names an undeliverable link
- * target or an unusable `{rulebook:<slug>}` token. Every shipped rulebook stands in for the deployed set, which is the
- * strictest catalog available here: a token naming one that is missing or ambient-only has nothing to invoke under any
- * declaration. The root allowlist and the catalog are both harness-invariant, so one harness context stands for all.
- */
-async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
-  const rulebookFiles: Array<string> = [];
-  await collectHostFiles(path.join(CONTENT_ROOT, RULEBOOK_ROOT), rulebookFiles);
-
-  const parsed = await Promise.all(
-    rulebookFiles.map(async (file) => {
-      const slug = path.basename(file, '.md');
-      const { rulebook, body } = parseRulebookFile(await readFile(file, 'utf8'), `${slug}.md`);
-      return {
-        slug,
-        body,
-        skillName: resolveSkillName(slug, rulebook['skill-name']),
-        skill: rulebook.delivery.includes('skill'),
-      };
-    }),
-  );
-  const rulebooks: RulebookInvocationCatalog = new Map(
-    parsed.map(({ slug, skillName, skill }) => [slug, { skillName, skill }]),
-  );
-
-  const rejections: Array<string> = [];
-  for (const { slug, body } of parsed) {
-    try {
-      renderRulebookBody(body, slug, {
-        homeDir: '.claude',
-        harnessId: 'claude',
-        skillSigil: '/',
-        subagentSigil: '',
-        rulebooks,
-      });
-    } catch (error) {
-      rejections.push(error instanceof Error ? error.message : String(error));
-    }
-  }
-  return rejections;
-}
+// endregion | Helpers

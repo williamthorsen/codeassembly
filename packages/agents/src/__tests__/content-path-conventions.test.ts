@@ -26,6 +26,23 @@ interface Violation {
   readonly text: string;
 }
 
+describe('installable-content path conventions', () => {
+  it(`no installable Markdown file outside the allowlist contains a raw \`${FORBIDDEN_PATTERN}\` reference`, async () => {
+    const violations = await findViolations();
+    expect(violations, formatViolations(violations)).toEqual([]);
+  });
+
+  it('every allowlist entry resolves to a real file', async () => {
+    const files: Array<string> = [];
+    await collectMarkdownFiles(CONTENT_ROOT, CONTENT_ROOT, files);
+    const present = new Set(files.map((f) => f.split(path.sep).join('/')));
+    const missing = ALLOWLIST.filter((entry) => !present.has(entry));
+    expect(missing, `Stale allowlist entries (file no longer exists): ${missing.join(', ')}`).toEqual([]);
+  });
+});
+
+// region | Helpers
+
 async function collectMarkdownFiles(dir: string, root: string, out: Array<string>): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -75,17 +92,4 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   return [header, ...lines].join('\n');
 }
 
-describe('installable-content path conventions', () => {
-  it(`no installable Markdown file outside the allowlist contains a raw \`${FORBIDDEN_PATTERN}\` reference`, async () => {
-    const violations = await findViolations();
-    expect(violations, formatViolations(violations)).toEqual([]);
-  });
-
-  it('every allowlist entry resolves to a real file', async () => {
-    const files: Array<string> = [];
-    await collectMarkdownFiles(CONTENT_ROOT, CONTENT_ROOT, files);
-    const present = new Set(files.map((f) => f.split(path.sep).join('/')));
-    const missing = ALLOWLIST.filter((entry) => !present.has(entry));
-    expect(missing, `Stale allowlist entries (file no longer exists): ${missing.join(', ')}`).toEqual([]);
-  });
-});
+// endregion | Helpers
