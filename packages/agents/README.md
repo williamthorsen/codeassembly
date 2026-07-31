@@ -299,6 +299,21 @@ The key is required and has no default location. That is deliberate: a default w
 
 A package's catalog is its rulebooks, skills, and subagents; a `collections/` entry is resolvable but not adopted on its own, so a collection reaches a consumer only when that consumer declares it by name. Its members are already in the catalog anyway, so the way to pull in an artifact from outside the package — a library rulebook, say — is a `dependencies:` edge on an artifact the catalog does contain.
 
+**Shipping support files.** Anything under `skills/` that carries no `SKILL.md` is a support entry: shared reference content a skill or rulebook reads at runtime by path, `skills/_data/` being the usual case. A package ships them by placing them where the library does, and they deploy alongside the skills whenever the package is adopted — no declaration of their own, since nothing names them but the links that reach them.
+
+```
+content/agents/
+  skills/
+    _data/
+      house-style.md
+    org-review/
+      SKILL.md          # links to ../_data/house-style.md
+```
+
+Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the built-in library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links exactly as the library does — relative to the file's own place in the content tree — and delivery rewrites them to wherever they land; a source name that could not name a directory fails the run rather than being silently reshaped.
+
+`_partials/` is the exception, being an include target inlined into the files that include it rather than a file that deploys.
+
 **Include the content directory in `files`.** This is the one thing most likely to go wrong, because a `workspace:*` self-link resolves the live source tree and so never exercises packing. A producer that omits the entry sees its own guidance work perfectly and every consumer's install fail. `pnpm pack` and inspecting the tarball is the check that catches it.
 
 Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens.
