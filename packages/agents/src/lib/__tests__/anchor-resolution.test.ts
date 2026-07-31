@@ -90,6 +90,17 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
 
+    it('fails on a fence nothing closes rather than passing over the unchecked remainder', () => {
+      const body = '# T\n\n```ts\nconst x = 1;\n\n## Real heading\n\n[x](#nowhere)\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/opens a code fence with ``` that nothing closes/);
+    });
+
+    it('fails when a longer opening run meets a shorter closing one', () => {
+      // The four-tick form is how a fenced example carries a fence of its own, so the mismatch belongs to that case.
+      const body = '# T\n\n````markdown\nsample\n```\n\n## Real heading\n\n[x](#real-heading)\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/opens a code fence with ```` that nothing closes/);
+    });
+
     it('does not scan a link inside an inline code span', () => {
       const body = 'Point at it with `[option format](#option-format)` in prose.\n';
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();

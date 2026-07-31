@@ -1,8 +1,5 @@
 import { MARKDOWN_LINK_REGEX } from './path-rewriter.ts';
 
-/** The ATX heading grammar this module derives anchors from. No content file uses the setext form. */
-const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
-
 /** An anchor-only link target, up to the whitespace that would begin a Markdown link title. */
 const ANCHOR_TARGET_REGEX = /^#\S*/;
 
@@ -15,10 +12,22 @@ const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
 /** A top-level YAML key, the shape that tells a frontmatter block from a pair of thematic breaks. */
 const FRONTMATTER_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_-]*\s*:(\s|$)/;
 
+/** The ATX heading grammar this module derives anchors from. No content file uses the setext form. */
+const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
+
+/** A body's lines with its frontmatter and fenced blocks blanked, plus the opening run of any fence left unclosed. */
+interface FenceScan {
+  readonly lines: ReadonlyArray<string>;
+  readonly unterminated: string | undefined;
+}
+
 /**
  * Throws when an anchor-only link target in `body` names no heading, or more than one, in the same body. Every
  * offending target is reported together, so an author fixing an artifact sees the whole list rather than one per run,
  * and a target repeated across the body is reported once.
+ *
+ * A fence that nothing closes throws too. Everything below it reads as code, so no anchor there can be checked, and a
+ * silent pass over an unchecked remainder is indistinguishable from a clean one.
  *
  * `body` is checked before any rewriting, and where the pipeline expands includes, after that expansion. Rewriting
  * leaves anchor-only targets untouched, so the verdict is harness-invariant: one failure per artifact, phrased against
@@ -30,7 +39,15 @@ const FRONTMATTER_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_-]*\s*:(\s|$)/;
  * library content with each declared source's content, so it cannot be settled from the one content root at hand.
  */
 export function assertAnchorsResolve(body: string, sourceLabel: string): void {
-  const normalized = normalizeForAnchorScan(body);
+  const scan = scanFences(body);
+  if (scan.unterminated !== undefined) {
+    throw new Error(
+      `${sourceLabel} opens a code fence with ${scan.unterminated} that nothing closes, so every anchor below it ` +
+        'goes unchecked. A closing fence repeats the same character at least as many times as the opening run.',
+    );
+  }
+
+  const normalized = scan.lines.join('\n');
   const headings = collectHeadingSlugs(normalized);
 
   const rejections: Array<string> = [];
@@ -80,9 +97,9 @@ export function collectHeadingSlugs(normalized: string): ReadonlyMap<string, num
  * scan would offer as a real target. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned
  * as a body link.
  *
- * Inline code spans survive here and are blanked by `blankCodeSpans` on the link-scanning side alone. A span inside a
- * heading is part of that heading's text, and dropping it would change the slug: `### The \`respond-to-review\` path`
- * anchors as `#the-respond-to-review-path`, which the slugifier already reaches by stripping backticks as punctuation.
+ * Inline code spans survive here and are blanked on the link-scanning side alone. A span inside a heading is part of
+ * that heading's text, and dropping it would change the slug: `### The \`respond-to-review\` path` anchors as
+ * `#the-respond-to-review-path`, which the slugifier already reaches by stripping backticks as punctuation.
  *
  * An indented code block is not recognized. Telling one from a nested list item needs block-level parsing, and getting
  * that wrong would blank a list item's real anchor, which fails toward accepting a dead locator.
@@ -90,31 +107,7 @@ export function collectHeadingSlugs(normalized: string): ReadonlyMap<string, num
  * Blanking preserves line count and column positions, so every surviving character keeps its place in the body.
  */
 export function normalizeForAnchorScan(content: string): string {
-  const lines = content.split('\n');
-  const bodyStart = findBodyStart(lines);
-  // The opening marker, held while inside a fence: only a marker of the same character and at least its length closes
-  // the block, so a shorter or differently-fenced run inside it is content.
-  let fence: string | undefined;
-
-  return lines
-    .map((line, index) => {
-      if (index < bodyStart) {
-        return '';
-      }
-      const marker = FENCE_REGEX.exec(line)?.[1];
-      if (fence === undefined) {
-        if (marker === undefined) {
-          return line;
-        }
-        fence = marker;
-        return '';
-      }
-      if (marker !== undefined && marker[0] === fence[0] && marker.length >= fence.length) {
-        fence = undefined;
-      }
-      return '';
-    })
-    .join('\n');
+  return scanFences(content).lines.join('\n');
 }
 
 // region | Helpers
@@ -158,6 +151,37 @@ function findBodyStart(lines: ReadonlyArray<string>): number {
  */
 function readAnchorTarget(target: string | undefined): string | undefined {
   return target === undefined ? undefined : (ANCHOR_TARGET_REGEX.exec(target.trim())?.[0] ?? undefined);
+}
+
+/**
+ * Walks `content` a line at a time, blanking its frontmatter and every fenced code block, and reports the opening run
+ * of a fence nothing closed. A block closes only on a marker of the same character and at least the opening length,
+ * which is what lets a fenced example carry a shorter fence of its own.
+ */
+function scanFences(content: string): FenceScan {
+  const lines = content.split('\n');
+  const bodyStart = findBodyStart(lines);
+  let fence: string | undefined;
+
+  const blanked = lines.map((line, index) => {
+    if (index < bodyStart) {
+      return '';
+    }
+    const marker = FENCE_REGEX.exec(line)?.[1];
+    if (fence === undefined) {
+      if (marker === undefined) {
+        return line;
+      }
+      fence = marker;
+      return '';
+    }
+    if (marker !== undefined && marker[0] === fence[0] && marker.length >= fence.length) {
+      fence = undefined;
+    }
+    return '';
+  });
+
+  return { lines: blanked, unterminated: fence };
 }
 
 /**
