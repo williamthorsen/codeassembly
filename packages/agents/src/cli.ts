@@ -54,22 +54,10 @@ async function main(): Promise<void> {
         }
         break;
       case 'library':
-        if (subcommand === 'list') {
-          await libraryListCommand();
-        } else {
-          if (subcommand) console.error(`Error: Unknown library subcommand "${subcommand}"`);
-          printLibraryUsage();
-          process.exit(1);
-        }
+        await runLibrary(subcommand);
         break;
       case 'generate':
-        if (subcommand === 'label-map') {
-          await generateLabelMap({ force: options.force });
-        } else {
-          if (subcommand) console.error(`Error: Unknown generate target "${subcommand}"`);
-          printGenerateUsage();
-          process.exit(1);
-        }
+        await runGenerate(subcommand, options);
         break;
       default:
         console.error(`Error: Unknown command "${command}"`);
@@ -256,6 +244,26 @@ Options:
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
+}
+
+/** Dispatches a `generate` target, printing that command's usage and exiting non-zero when the target is unknown. */
+async function runGenerate(subcommand: string, options: InstallOptions): Promise<void> {
+  if (subcommand !== 'label-map') {
+    if (subcommand) console.error(`Error: Unknown generate target "${subcommand}"`);
+    printGenerateUsage();
+    process.exit(1);
+  }
+  await generateLabelMap({ force: options.force });
+}
+
+/** Dispatches a `library` subcommand, printing that command's usage and exiting non-zero when it is unknown. */
+async function runLibrary(subcommand: string): Promise<void> {
+  if (subcommand !== 'list') {
+    if (subcommand) console.error(`Error: Unknown library subcommand "${subcommand}"`);
+    printLibraryUsage();
+    process.exit(1);
+  }
+  await libraryListCommand();
 }
 
 /**
