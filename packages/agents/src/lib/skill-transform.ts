@@ -1,4 +1,4 @@
-import { readdir } from 'node:fs/promises';
+import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { assertAnchorsResolve } from './anchor-resolution.ts';
@@ -32,6 +32,15 @@ export type RenderedSkillEntry =
   | { readonly kind: 'asset'; readonly relPath: string; readonly srcPath: string };
 
 /**
+ * One `skills/` support entry's rendered form, discriminated by how it materializes: a directory yields the rendered
+ * tree, a Markdown file its transformed text, and anything else nothing at all, because it installs byte-for-byte.
+ */
+export type RenderedSupportEntry =
+  | { readonly kind: 'directory'; readonly entries: ReadonlyArray<RenderedSkillEntry> }
+  | { readonly kind: 'markdown'; readonly content: string }
+  | { readonly kind: 'verbatim' };
+
+/**
  * Renders a declared skill's directory for one harness: Every `.md` file is include-expanded, then tool-name-rewritten,
  * then link/template-rewritten; non-`.md` files are returned as assets to copy verbatim.
  * Read-only; the caller composes its own write strategy and markers around the transform.
@@ -54,6 +63,35 @@ export async function renderSkillDirectory(
   const entries: Array<RenderedSkillEntry> = [];
   await collectEntries(srcDir, '', slug, contentRoot, context, entries);
   return entries;
+}
+
+/**
+ * Renders one `skills/` support entry the way an install materializes it: a directory through the whole skill
+ * transform, a Markdown file through include expansion, the anchor gate, and the tool-name rewrite, and anything else
+ * not at all, since it is copied byte-for-byte and has nothing to check.
+ *
+ * Shared by the installer, which writes what comes back, and by `validate`, which discards it. Rendering is where a
+ * defect surfaces, so the pass that checks a support entry and the pass that ships it have to run the same one — when
+ * they did not, `validate` rejected a shape the installer copies without complaint.
+ *
+ * `destName` is the entry's deployed directory name, which anchors link rewriting for a directory entry.
+ */
+export async function renderSupportEntry(
+  srcPath: string,
+  destName: string,
+  contentRoot: string,
+  context: SkillDeployContext,
+): Promise<RenderedSupportEntry> {
+  if ((await stat(srcPath)).isDirectory()) {
+    return { kind: 'directory', entries: await renderSkillDirectory(srcPath, destName, contentRoot, context) };
+  }
+  if (!srcPath.endsWith('.md')) {
+    return { kind: 'verbatim' };
+  }
+  const expanded = await expandIncludes(srcPath, contentRoot);
+  const sourceLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
+  assertAnchorsResolve(expanded, sourceLabel);
+  return { kind: 'markdown', content: rewriteToolNames(expanded, context.toolMapping, sourceLabel) };
 }
 
 // region | Helpers

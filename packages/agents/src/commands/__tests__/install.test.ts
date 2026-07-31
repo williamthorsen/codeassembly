@@ -158,6 +158,24 @@ describe(installCommand, () => {
     expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
   });
 
+  it('warns when the content ships no skills directory, rather than reporting a clean install', async () => {
+    await setupClaudeHome();
+    await rm(path.join(contentDir, 'skills'), { recursive: true, force: true });
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let warnLines: ReadonlyArray<string>;
+    try {
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+      warnLines = warnSpy.mock.calls.map((call) => String(call[0]));
+    } finally {
+      warnSpy.mockRestore();
+      infoSpy.mockRestore();
+    }
+
+    expect(warnLines.some((line) => line.includes('no skills directory found'))).toBe(true);
+  });
+
   it('copies support directories but symlinks scripts in link mode', async () => {
     const claudeHome = await setupClaudeHome();
 

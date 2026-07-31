@@ -1,5 +1,5 @@
-import { constants, type Dirent, existsSync } from 'node:fs';
-import { access, mkdir, readdir, readFile, rm, rmdir, stat } from 'node:fs/promises';
+import { type Dirent, existsSync } from 'node:fs';
+import { mkdir, readdir, readFile, rm, rmdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -11,9 +11,16 @@ import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../lib/content-sources.ts';
 import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver.ts';
+import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
-import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import {
+  HARNESSES,
+  resolveAmbientHostPath,
+  resolveHarnessIds,
+  resolveHarnessPaths,
+  resolveSkillsPathPrefix,
+} from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
@@ -23,8 +30,9 @@ import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.t
 import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill.ts';
 import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
-import { deploySkill, resolveDeclaredSkill, type ResolvedSkill } from '../lib/skill-deploy.ts';
+import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
+import { describeSourceProblem } from '../lib/source-validation.ts';
 import {
   deploySubagent,
   renderSubagent,
@@ -394,11 +402,6 @@ async function reconcileDomain(
 
 // region | Helpers
 
-/** True when a skill targets the given harness; either it names no harnesses (so all) or lists this one. */
-function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
-  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
-}
-
 /**
  * Throws when any declared source path is missing, not a directory, or unreadable, so a bad source fails the whole
  * run (dry-run included) before any file is touched. The error names each offending source and what is wrong with it.
@@ -415,31 +418,6 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
     throw new Error(
       `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing, readable directory.`,
     );
-  }
-}
-
-/**
- * Reports what disqualifies `dir` as a source (that it is missing, not a directory, or unreadable) or `undefined`
- * when valid. Validity requires both that `dir` is a directory and that the process can read and traverse it, because
- * `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the parent chain,
- * not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) folds into the
- * "unreadable" case so it surfaces through the attributed `Invalid declared source(s)` error naming `dir`.
- */
-async function describeSourceProblem(dir: string): Promise<string | undefined> {
-  try {
-    if (!(await stat(dir)).isDirectory()) {
-      return 'not a directory';
-    }
-    // Probe the read+traverse access the resolver's frontmatter lookups rely on, so a directory that stats as a
-    // directory but is itself unreadable (e.g. mode 000) fails here with the attributed error rather than as a raw
-    // EACCES mid-resolution — or not at all when no declared artifact happens to reach into it.
-    await access(dir, constants.R_OK | constants.X_OK);
-    return undefined;
-  } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      return 'does not exist';
-    }
-    return `unreadable — ${error instanceof Error ? error.message : String(error)}`;
   }
 }
 
@@ -542,12 +520,12 @@ function collectOwnedTargets(
  */
 function assertNoCrossNamespaceCollisions(
   rulebookSkillDirs: ReadonlyArray<string>,
-  declaredSkillSlugs: Set<string>,
+  declaredSkillSlugs: ReadonlySet<string>,
 ): void {
-  const collisions = new Set(rulebookSkillDirs).intersection(declaredSkillSlugs);
-  if (collisions.size > 0) {
+  const collisions = findCrossNamespaceCollisions(rulebookSkillDirs, declaredSkillSlugs);
+  if (collisions.length > 0) {
     throw new Error(
-      `Skill directory name collision across delivery namespaces: ${Array.from(collisions).join(', ')} ` +
+      `Skill directory name collision across delivery namespaces: ${collisions.join(', ')} ` +
         'is delivered as both a rulebook skill and a declared skill. Rename one so they no longer share a directory.',
     );
   }
@@ -559,23 +537,12 @@ function assertNoCrossNamespaceCollisions(
  * override rather than silently letting the last write win.
  */
 function assertNoSkillNameCollisions(resolved: ReadonlyArray<ResolvedRulebook>): void {
-  const slugsByName = new Map<string, Array<string>>();
-  for (const rulebook of resolved) {
-    if (!rulebook.skill) {
-      continue;
-    }
-    const slugs = slugsByName.get(rulebook.skillName) ?? [];
-    slugs.push(rulebook.slug);
-    slugsByName.set(rulebook.skillName, slugs);
-  }
-
-  for (const [skillName, slugs] of slugsByName) {
-    if (slugs.length > 1) {
-      throw new Error(
-        `Skill name collision: rulebooks ${slugs.join(', ')} all resolve to skill "${skillName}". ` +
-          'Give all but one a distinct `skill-name`.',
-      );
-    }
+  const collision = findSkillNameCollisions(resolved)[0];
+  if (collision !== undefined) {
+    throw new Error(
+      `Skill name collision: rulebooks ${collision.slugs.join(', ')} all resolve to skill "${collision.skillName}". ` +
+        'Give all but one a distinct `skill-name`.',
+    );
   }
 }
 
@@ -1330,7 +1297,7 @@ async function resolveSkillTarget(
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       toolMapping: loadToolMapping(overlayYaml),
-      pathPrefix: `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`,
+      pathPrefix: resolveSkillsPathPrefix(harnessConfig),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

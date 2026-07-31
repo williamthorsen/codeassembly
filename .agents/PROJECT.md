@@ -54,8 +54,9 @@ The agents package is a CLI tool (`codeassembly-agents`) that installs reusable 
 | `status`            | Shows current vs modified vs missing installed items                                            |
 | `sync`              | Resolves `.agents/codeassembly.yaml` and materializes declared rulebooks, skills, and subagents |
 | `uninstall`         | Removes previously installed items (respects drift detection)                                   |
+| `validate`          | Checks a content root for defects that would fail at a consumer; requires no declaration        |
 
-Key flags: `--harness <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`.
+Key flags: `--harness <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`, `--content <dir>` (`validate` only).
 
 **Supported harnesses:**
 
