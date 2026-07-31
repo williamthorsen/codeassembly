@@ -6,9 +6,10 @@ import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
-import { HARNESSES, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.js';
+import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.js';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
+import { listSupportEntries } from '../lib/library-catalog.ts';
 import {
   computeContentHash,
   detectDrift,
@@ -19,9 +20,9 @@ import {
 } from '../lib/manifest.js';
 import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.js';
 import { rewritePathsInFile } from '../lib/path-rewriter.js';
-import { type RenderedSkillEntry, renderSkillDirectory } from '../lib/skill-transform.ts';
-import { loadToolMapping, rewriteToolNames } from '../lib/tool-name-rewriter.js';
-import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
+import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
+import { loadToolMapping } from '../lib/tool-name-rewriter.js';
+import { isEnoent } from '../lib/type-guards.ts';
 import type {
   AgentsManifest,
   HarnessConfig,
@@ -94,7 +95,7 @@ export async function installCommand(
     const toolMapping = loadToolMapping(overlayYaml);
 
     // Install skill support directories (e.g. `_data`). Skills themselves deploy per-declaration via `sync`.
-    const skillsPrefix = `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`;
+    const skillsPrefix = resolveSkillsPathPrefix(harnessConfig);
     const supportEntries = await installSupportDirectories(
       contentDir,
       paths.skillsDir,
@@ -198,20 +199,12 @@ async function installSupportDirectories(
   subagentSigil: string,
 ): Promise<ReadonlyArray<ManifestEntry>> {
   const skillsSrcDir = path.join(contentDir, 'skills');
-  const dirEntries = await readdir(skillsSrcDir);
   const entries: Array<ManifestEntry> = [];
 
-  // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). Skip
-  // `_partials` (an install-time include target inlined into including skills) and `_harnesses` (no longer an install
-  // target — harness skills live in the flat catalog and deploy via `sync`), plus dotfiles, and skip any skill
-  // directory, since those deploy per-declaration via `sync`, never unconditionally.
-  for (const entry of dirEntries) {
-    if (entry === '_partials' || entry === '_harnesses' || entry.startsWith('.')) {
-      continue;
-    }
-    if (await isSkillDirectory(path.join(skillsSrcDir, entry))) {
-      continue;
-    }
+  // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). What
+  // counts as one is `listSupportEntries`, shared with `validate` so the pass that checks these and the pass that
+  // deploys them cannot come to disagree about which entries they are.
+  for (const entry of await listSupportEntries(skillsSrcDir)) {
     const result = await installSkillEntry(
       path.join(skillsSrcDir, entry),
       path.join(skillsDestDir, entry),
@@ -237,25 +230,6 @@ async function installSupportDirectories(
 }
 
 /**
- * Reports whether `entryDir` is a skill directory — one holding a `SKILL.md`. Skill directories deploy
- * per-declaration via `sync`, so the install pass skips them; a support directory such as `_data` (no `SKILL.md`)
- * is not a skill and stays on the install path.
- */
-async function isSkillDirectory(entryDir: string): Promise<boolean> {
-  try {
-    await stat(path.join(entryDir, 'SKILL.md'));
-    return true;
-  } catch (error: unknown) {
-    // A regular `.md` sitting directly under `content/skills/` fails the probe with ENOTDIR, not ENOENT; both mean
-    // "no skill here", which is the pair `isMissingFile` covers.
-    if (isMissingFile(error)) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/**
  * Installs a single skill entry (directory or file) from source to destination.
  * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time
  * — the same pattern subagents use for frontmatter merging.
@@ -277,32 +251,21 @@ async function installSkillEntry(
   subagentSigil: string,
   label = '',
 ): Promise<ManifestEntry | undefined> {
-  // Eagerly render the skill's final body before the dry-run gate, so missing include targets, cycles, out-of-tree
-  // references, and unmapped tool placeholders surface even when no files are written. Directory entries render the
-  // whole tree (include expansion, tool-name + link/template rewriting) into the exact bytes the write phase emits;
-  // single-file `.md` entries expand and tool-rewrite directly.
-  const srcStats = await stat(srcPath);
-  let expandedFileContent: string | undefined;
-  let renderedDir: ReadonlyArray<RenderedSkillEntry> | undefined;
-  if (srcStats.isDirectory()) {
-    renderedDir = await renderSkillDirectory(srcPath, path.basename(destPath), contentDir, {
-      toolMapping,
-      pathPrefix: skillsPrefix,
-      homeDir,
-      harnessId,
-      skillSigil,
-      subagentSigil,
-    });
-  } else if (srcPath.endsWith('.md')) {
-    const expanded = await expandIncludes(srcPath, contentDir);
-    const contextLabel = relativeFromContent(contentDir, srcPath);
-    assertAnchorsResolve(expanded, contextLabel);
-    expandedFileContent = rewriteToolNames(expanded, toolMapping, contextLabel);
-  }
+  // Eagerly render the entry before the dry-run gate, so missing include targets, cycles, out-of-tree references,
+  // dead anchors, and unmapped tool placeholders surface even when no files are written. `renderSupportEntry` is the
+  // same render `validate` runs, which is what keeps the two passes agreeing on what a support entry is.
+  const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
+    toolMapping,
+    pathPrefix: skillsPrefix,
+    homeDir,
+    harnessId,
+    skillSigil,
+    subagentSigil,
+  });
 
   // A support directory holding only dotfiles or `_partials/` renders to zero entries — nothing to install. Skip it
   // entirely: no destination, no markers, no manifest entry. The orphan-prune pass clears any previously installed copy.
-  if (renderedDir !== undefined && renderedDir.length === 0) {
+  if (rendered.kind === 'directory' && rendered.entries.length === 0) {
     console.info(`    [skip] ${relativePath}${label ? ` ${label}` : ''} (no installable entries)`);
     return undefined;
   }
@@ -322,25 +285,21 @@ async function installSkillEntry(
     }
   }
 
-  if (srcStats.isDirectory()) {
-    // The rendered tree is non-undefined here because srcStats.isDirectory() implies the directory branch above ran.
-    if (renderedDir === undefined) {
-      throw new Error(`Invariant violation: renderedDir undefined for directory ${srcPath}`);
-    }
+  if (rendered.kind === 'directory') {
     // Clean-write directories CodeAssembly previously installed: remove the prior copy so files deleted from the
     // source skill don't survive in the destination. Gated on prior ownership (a manifest entry exists) so a
     // first-time install never wipes a coincidentally same-named directory the user already had.
     if (existingEntry) {
       await removeItem(destPath);
     }
-    await writeRenderedSkillDir(destPath, renderedDir);
+    await writeRenderedSkillDir(destPath, rendered.entries);
     await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
-  } else if (srcPath.endsWith('.md') && expandedFileContent !== undefined) {
+  } else if (rendered.kind === 'markdown') {
     // Single-file `.md` skill entries: write the previously expanded content directly.
     // Skipping the verbatim copy avoids the expand-copy-expand-overwrite redundancy
     // and ensures the validated content is the content written to disk (no second read).
     await mkdir(path.dirname(destPath), { recursive: true });
-    await writeFile(destPath, expandedFileContent, 'utf8');
+    await writeFile(destPath, rendered.content, 'utf8');
     await injectMarkerInFile(destPath, buildSourceUrl(sourceRelativeRoot));
   } else {
     // Single-file non-`.md` skill entries: plain copy, no expansion.
@@ -349,7 +308,7 @@ async function installSkillEntry(
 
   return {
     relativePath,
-    contentHash: srcStats.isDirectory() ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
+    contentHash: rendered.kind === 'directory' ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
     linked: false,
   };
 }
@@ -689,12 +648,4 @@ async function readAmbientRegionContent(filePath: string): Promise<string | unde
     }
     throw error;
   }
-}
-
-/**
- * Returns a POSIX-style path label for a skill source file relative to `contentDir`, used as the `contextLabel`
- * argument to `rewriteToolNames` so install errors include a stable, harness-independent file reference.
- */
-function relativeFromContent(contentDir: string, srcPath: string): string {
-  return path.relative(contentDir, srcPath).split(path.sep).join('/');
 }

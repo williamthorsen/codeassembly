@@ -14,7 +14,13 @@ import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
-import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
+import {
+  HARNESSES,
+  resolveAmbientHostPath,
+  resolveHarnessIds,
+  resolveHarnessPaths,
+  resolveSkillsPathPrefix,
+} from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
@@ -1291,7 +1297,7 @@ async function resolveSkillTarget(
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       toolMapping: loadToolMapping(overlayYaml),
-      pathPrefix: `${harnessConfig.homeDir}/${harnessConfig.skillsDirName}`,
+      pathPrefix: resolveSkillsPathPrefix(harnessConfig),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

@@ -1,21 +1,18 @@
-import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
 import { resolveContentDir } from './content-resolver.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, resolveClosure, type ResolvedClosure } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
-import { expandIncludes } from './directive-expander.ts';
-import { listVisibleMarkdownFiles, readDirEntries } from './fs-helpers.ts';
-import { HARNESSES } from './harness.ts';
+import { listVisibleMarkdownFiles } from './fs-helpers.ts';
+import { HARNESSES, resolveSkillsPathPrefix } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
-import { enumerateCatalogSlugs } from './library-catalog.ts';
+import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
 import { renderRulebookBody, type RulebookRenderContext } from './rulebook-transform.ts';
 import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
-import { renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
+import { renderSkillDirectory, renderSupportEntry, type SkillDeployContext } from './skill-transform.ts';
 import { describeSourceProblem } from './source-validation.ts';
 import {
   renderSubagent,
@@ -23,8 +20,7 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from './subagent-deploy.ts';
-import { loadToolMapping, rewriteToolNames } from './tool-name-rewriter.ts';
-import { isMissingFile } from './type-guards.ts';
+import { loadToolMapping } from './tool-name-rewriter.ts';
 import type { HarnessId } from './types.ts';
 
 /** Which stage rejected an artifact, so a report can group by cause rather than presenting one undifferentiated list. */
@@ -36,9 +32,6 @@ export interface ContentDefect {
   readonly kind: ContentDefectKind;
   readonly detail: string;
 }
-
-/** The `skills/` entries the installer never treats as support content: an include target and a retired deploy path. */
-const EXCLUDED_SUPPORT_ENTRIES: ReadonlySet<string> = new Set(['_harnesses', '_partials']);
 
 /**
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
@@ -187,45 +180,6 @@ function foldHarnessDefects(
   );
 }
 
-/**
- * Reports whether `entryDir` holds a `SKILL.md`, the installer's test for a skill directory. A regular file directly
- * under `skills/` fails the probe with `ENOTDIR` rather than `ENOENT`; both mean "no skill here".
- */
-async function holdsSkillFile(entryDir: string): Promise<boolean> {
-  try {
-    await stat(path.join(entryDir, 'SKILL.md'));
-    return true;
-  } catch (error: unknown) {
-    if (isMissingFile(error)) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/**
- * Lists the non-skill entries directly under `skills/` that install alongside skills. Mirrors the installer's own
- * selection rule rather than the skill catalog's: `skills/_data/` carries no `SKILL.md`, so a catalog walk would skip
- * it, and it goes through the same transform on the install path — an unmapped token there is a real shipping defect.
- * A skill directory is recognized the way the installer recognizes one, by the presence of a `SKILL.md`, so an entry
- * the installer would leave to `sync` is left to it here too.
- */
-async function listSupportEntries(root: string): Promise<ReadonlyArray<string>> {
-  const skillsDir = path.join(root, ARTIFACT_TYPES.skill.contentPath);
-  const names = (await readDirEntries(skillsDir))
-    .map((entry) => entry.name)
-    .filter((name) => !EXCLUDED_SUPPORT_ENTRIES.has(name) && !name.startsWith('.'))
-    .toSorted();
-
-  const support: Array<string> = [];
-  for (const name of names) {
-    if (!(await holdsSkillFile(path.join(skillsDir, name)))) {
-      support.push(name);
-    }
-  }
-  return support;
-}
-
 /** True when an artifact resolved from the content root rather than from the built-in library behind it. */
 function ownedByRoot(artifact: { readonly source: string | undefined }): boolean {
   return artifact.source !== undefined;
@@ -257,7 +211,7 @@ async function renderForHarness(
   const toolMapping = loadToolMapping(overlayYaml);
   const skillContext: SkillDeployContext = {
     toolMapping,
-    pathPrefix: `${config.homeDir}/${config.skillsDirName}`,
+    pathPrefix: resolveSkillsPathPrefix(config),
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
@@ -319,39 +273,27 @@ async function renderForHarness(
     }
   }
 
-  raised.push(...(await renderSupportEntries(harnessId, root, skillContext, toolMapping)));
+  raised.push(...(await renderSupportEntries(harnessId, root, skillContext)));
   return raised;
 }
 
 /**
- * Renders the support entries under `skills/`, mirroring how the installer treats each: a directory goes through the
- * whole skill transform, a loose `.md` file through include expansion, the anchor gate, and the tool-name rewrite, and
- * anything else installs as a verbatim copy and so has nothing to check. Matching the installer arm for arm is what
- * makes a defect here one that would really ship — and keeps a shape it installs cleanly from failing this gate.
- *
- * The directory test is the installer's `stat`, not the directory entry's own type, so a symlinked support directory
- * is treated as the directory it points at, exactly as an install would treat it.
+ * Renders the support entries under `skills/` and discards the output, through the same `renderSupportEntry` the
+ * installer runs. Sharing the render is what makes a defect here one that would really ship, and keeps a shape the
+ * installer copies without complaint from failing this gate.
  */
 async function renderSupportEntries(
   harnessId: HarnessId,
   root: string,
   skillContext: SkillDeployContext,
-  toolMapping: ReadonlyMap<string, string>,
 ): Promise<ReadonlyArray<HarnessDefect>> {
   const skillsDir = path.join(root, ARTIFACT_TYPES.skill.contentPath);
   const raised: Array<HarnessDefect> = [];
 
-  for (const name of await listSupportEntries(root)) {
-    const srcPath = path.join(skillsDir, name);
+  for (const name of await listSupportEntries(skillsDir)) {
     const relPath = `${ARTIFACT_TYPES.skill.contentPath}/${name}`;
     try {
-      if ((await stat(srcPath)).isDirectory()) {
-        await renderSkillDirectory(srcPath, name, root, skillContext);
-      } else if (name.endsWith('.md')) {
-        const expanded = await expandIncludes(srcPath, root);
-        assertAnchorsResolve(expanded, relPath);
-        rewriteToolNames(expanded, toolMapping, relPath);
-      }
+      await renderSupportEntry(path.join(skillsDir, name), name, root, skillContext);
     } catch (error: unknown) {
       raised.push({ harnessId, defect: { file: relPath, kind: 'render', detail: describeError(error) } });
     }

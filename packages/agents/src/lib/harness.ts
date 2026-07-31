@@ -101,6 +101,17 @@ export function resolveHarnessPaths(
 }
 
 /**
+ * The harness-relative prefix a deployed skill's `~/`-prefixed link targets are built under (e.g. `.claude/skills`).
+ *
+ * Shared by every pass that renders a skill — install, sync, and validate. The value is a formula rather than a field,
+ * so a private copy of it would not fail to compile when the formula changed; it would just start emitting link targets
+ * that resolve nowhere, on whichever pass was not updated.
+ */
+export function resolveSkillsPathPrefix(config: HarnessConfig): string {
+  return `${config.homeDir}/${config.skillsDirName}`;
+}
+
+/**
  * Resolves which harness IDs to target based on the option value.
  * @param harness A specific harness ID or 'all' to detect available harnesses.
  * @param baseDir Override for the home directory (defaults to `os.homedir()`).

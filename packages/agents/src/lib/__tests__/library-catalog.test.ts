@@ -1,11 +1,11 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ArtifactDependencies } from '../dependency-frontmatter.ts';
-import { enumerateCatalogSlugs } from '../library-catalog.ts';
+import { enumerateCatalogSlugs, isSkillDirectory, listSupportEntries } from '../library-catalog.ts';
 
 describe(enumerateCatalogSlugs, () => {
   let contentDir: string;
@@ -93,6 +93,77 @@ describe(enumerateCatalogSlugs, () => {
     const catalog = await enumerateCatalogSlugs(contentDir);
 
     expect(catalog).toEqual({ rulebook: [], skill: ['people-report'], subagent: [] });
+  });
+});
+
+describe(isSkillDirectory, () => {
+  let contentDir: string;
+
+  beforeEach(async () => {
+    contentDir = path.join(tmpdir(), `agents-test-skilldir-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(contentDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  it('recognizes a directory holding a SKILL.md file', async () => {
+    await writeSkill(contentDir, 'people-report');
+
+    expect(await isSkillDirectory(path.join(contentDir, 'skills', 'people-report'))).toBe(true);
+  });
+
+  it('rejects a directory named SKILL.md, which carries no body to install', async () => {
+    await mkdir(path.join(contentDir, 'skills', 'weird', 'SKILL.md'), { recursive: true });
+
+    expect(await isSkillDirectory(path.join(contentDir, 'skills', 'weird'))).toBe(false);
+  });
+
+  it('follows a symlinked SKILL.md to the file it points at', async () => {
+    await writeSkill(contentDir, 'people-report');
+    const linked = path.join(contentDir, 'skills', 'linked');
+    await mkdir(linked, { recursive: true });
+    await symlink(path.join(contentDir, 'skills', 'people-report', 'SKILL.md'), path.join(linked, 'SKILL.md'));
+
+    expect(await isSkillDirectory(linked)).toBe(true);
+  });
+
+  it('rejects a plain file sitting directly under skills/', async () => {
+    const skillsDir = path.join(contentDir, 'skills');
+    await mkdir(skillsDir, { recursive: true });
+    await writeFile(path.join(skillsDir, 'notes.json'), '{}\n', 'utf8');
+
+    expect(await isSkillDirectory(path.join(skillsDir, 'notes.json'))).toBe(false);
+  });
+});
+
+describe(listSupportEntries, () => {
+  let contentDir: string;
+
+  beforeEach(async () => {
+    contentDir = path.join(tmpdir(), `agents-test-support-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(contentDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  it('lists everything under skills/ that is neither a skill, a reserved entry, nor a dotfile', async () => {
+    const skillsDir = path.join(contentDir, 'skills');
+    await writeSkill(contentDir, 'people-report');
+    await mkdir(path.join(skillsDir, '_data'), { recursive: true });
+    await mkdir(path.join(skillsDir, '_partials'), { recursive: true });
+    await mkdir(path.join(skillsDir, '_harnesses'), { recursive: true });
+    await writeFile(path.join(skillsDir, 'notes.json'), '{}\n', 'utf8');
+    await writeFile(path.join(skillsDir, '.DS_Store'), '', 'utf8');
+
+    expect(await listSupportEntries(skillsDir)).toEqual(['_data', 'notes.json']);
+  });
+
+  it('returns nothing for an absent skills directory', async () => {
+    expect(await listSupportEntries(path.join(contentDir, 'skills'))).toEqual([]);
   });
 });
 
