@@ -35,7 +35,7 @@
     "@vitest/eslint-plugin": "1.6.24",
     "@williamthorsen/eslint-config-typescript": "8.1.0",
     "@williamthorsen/nmr": "0.20.0",
-    "@williamthorsen/release-kit": "9.0.0",
+    "@williamthorsen/release-kit": "9.1.0",
     "@williamthorsen/strict-lint": "9.0.1",
     "dotenv": "17.4.2",
     "eslint": "10.7.0",
