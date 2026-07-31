@@ -91,6 +91,15 @@ export function collectHeadingSlugs(normalized: string): ReadonlyMap<string, num
 }
 
 /**
+ * Reports the opening run of a fenced code block that nothing closes, or `undefined` when every fence in `content` is
+ * closed. `assertAnchorsResolve` throws on this condition; a caller that collects results instead of throwing has to
+ * ask for it, because a body with an open fence is unscannable below that point and its clean result means nothing.
+ */
+export function findUnterminatedFence(content: string): string | undefined {
+  return scanFences(content).unterminated;
+}
+
+/**
  * Blanks the block-level regions that illustrate rather than declare: a leading frontmatter block and every fenced
  * code block. A fence shows sample output, so a heading inside one offers no anchor and a link inside one requests
  * none; `review-branch` prints a `## Specification consistency` heading inside its output-format fence, which a naive

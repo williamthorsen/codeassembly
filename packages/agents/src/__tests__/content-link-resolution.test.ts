@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { collectHeadingSlugs, normalizeForAnchorScan } from '../lib/anchor-resolution.ts';
+import { collectHeadingSlugs, findUnterminatedFence, normalizeForAnchorScan } from '../lib/anchor-resolution.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import type { RulebookInvocationCatalog } from '../lib/invocation-tokens.ts';
 import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
@@ -21,6 +21,10 @@ import { renderRulebookBody } from '../lib/rulebook-transform.ts';
 // Both halves of a link are checked: the file must exist, and any `#fragment` must name exactly one heading in the
 // file it points into. Skills reach their inlined output-shaping specs through in-file anchors, so an unvalidated
 // fragment is a dead locator repeated across every consumer.
+//
+// A host that leaves a code fence open is reported before either check runs. Everything below such a fence is read as
+// code, so the links and headings the host appears to carry are not the ones it carries, and a clean result over it
+// would be indistinguishable from a checked one. The render gate throws on the same condition.
 //
 // The render pass rejects a same-body anchor on its own, over content from any source. This suite still covers it,
 // because it reports every violation across the tree at once where the render pass throws on the first artifact, and
@@ -48,7 +52,7 @@ const HOST_ROOTS: ReadonlyArray<string> = [RULEBOOK_ROOT, 'skills', 'subagents']
 
 const CONTENT_ROOT = new URL('../../content/', import.meta.url).pathname;
 
-type Reason = 'ambiguous-anchor' | 'dead-anchor' | 'missing-file';
+type Reason = 'ambiguous-anchor' | 'dead-anchor' | 'missing-file' | 'unterminated-fence';
 
 interface Violation {
   readonly file: string;
@@ -82,8 +86,18 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
   const violations: Array<Violation> = [];
 
   for (const hostFile of hostFiles) {
-    const body = normalizeForAnchorScan(await expandIncludes(hostFile, CONTENT_ROOT));
+    const expanded = await expandIncludes(hostFile, CONTENT_ROOT);
     const file = path.relative(CONTENT_ROOT, hostFile);
+
+    // Everything below an open fence is blanked, so the anchors and links this host appears to carry are not the ones
+    // it carries. Reporting the fence and moving on matches the order the render gate uses for the same reason.
+    const unterminated = findUnterminatedFence(expanded);
+    if (unterminated !== undefined) {
+      violations.push({ file, target: unterminated, reason: 'unterminated-fence' });
+      continue;
+    }
+
+    const body = normalizeForAnchorScan(expanded);
 
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
       // The rewriter's own set, plus anchor-only targets: those name no file to rewrite, but they do name a fragment
@@ -135,6 +149,19 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   return [header, ...lines].join('\n');
 }
 
+/** Renders the unterminated-fence violations, whose subject is a fence rather than a link target. */
+function formatFenceViolations(violations: ReadonlyArray<Violation>): string {
+  if (violations.length === 0) {
+    return '';
+  }
+  const header =
+    `Found ${violations.length} unterminated code fence(s). Everything below an open fence reads as code, so no ` +
+    `anchor there is checked and a clean result over it carries no information. A closing fence repeats the opening ` +
+    `character at least as many times.`;
+  const lines = violations.map((v) => `  [${v.reason}] ${v.file}: opened with ${v.target}`);
+  return [header, ...lines].join('\n');
+}
+
 async function readHeadingSlugs(
   file: string,
   cache: Map<string, ReadonlyMap<string, number>>,
@@ -161,8 +188,13 @@ describe('installable-content link resolution', () => {
   });
 
   it('every anchor fragment resolves to exactly one heading in the file it points into', () => {
-    const anchors = violations.filter((v) => v.reason !== 'missing-file');
+    const anchors = violations.filter((v) => v.reason === 'ambiguous-anchor' || v.reason === 'dead-anchor');
     expect(anchors, formatViolations(anchors)).toEqual([]);
+  });
+
+  it('no installable host leaves a code fence open, which would hide every anchor below it', () => {
+    const fences = violations.filter((v) => v.reason === 'unterminated-fence');
+    expect(fences, formatFenceViolations(fences)).toEqual([]);
   });
 });
 
