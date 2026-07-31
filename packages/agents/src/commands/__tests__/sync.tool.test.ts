@@ -916,6 +916,30 @@ describe(syncCommand, () => {
       expect(existsSync(target)).toBe(true);
     });
 
+    it("resolves a source rulebook's link into its own support entry at the deployed location", async () => {
+      await writeSourceRulebook(
+        'org-rules',
+        'delivery: skill\ndescription: Org rules.',
+        'Follow [house style](../../skills/_data/house-style.md).',
+      );
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use:\n    - org-rules\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const target = path.join(
+        path.resolve(projectRoot),
+        '.claude',
+        'skills',
+        '_sources',
+        'org',
+        '_data',
+        'house-style.md',
+      );
+      expect(await readFile(skillPath('consult-org-rules'), 'utf8')).toContain(`[house style](${target})`);
+      expect(existsSync(target)).toBe(true);
+    });
+
     it('keeps the library and two sources from masking one another', async () => {
       const otherDir = `${sourceDir}-other`;
       await writeSourceSupport('_data/shared.md', 'From org.\n');
