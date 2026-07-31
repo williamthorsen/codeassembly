@@ -240,6 +240,15 @@ describe(resolveClosure, () => {
       expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: ['capture-event'], subagents: [] });
     });
 
+    it('pulls a subagent named by a rulebook body token into the closure', async () => {
+      await writeArtifact(contentDir, 'subagent', 'planner');
+      await writeArtifactWithBody(contentDir, 'rulebook', 'some-rulebook', 'Dispatch {subagent:planner}.');
+
+      const closure = await resolveClosure({ rulebook: ['some-rulebook'] }, libraryResolver(contentDir));
+
+      expect(closure).toEqual({ rulebooks: ['some-rulebook'], skills: [], subagents: ['planner'] });
+    });
+
     it('pulls a rulebook named by a rulebook body token into the closure', async () => {
       await writeArtifact(contentDir, 'rulebook', 'nmr-scripts');
       await writeArtifactWithBody(contentDir, 'rulebook', 'nmr-cheatsheet', 'See {rulebook:nmr-scripts}.');

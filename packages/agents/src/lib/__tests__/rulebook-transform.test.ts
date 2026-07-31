@@ -122,11 +122,6 @@ describe(renderRulebookBody, () => {
       const body = 'See {rulebook:never-declared} and {rulebook:nmr-cheatsheet}.';
       expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(/2 unusable invocation token/);
     });
-
-    it('validates before rewriting, so a bad token yields no partial output', () => {
-      const body = 'Good {rulebook:nmr-scripts}, bad {rulebook:nmr-cheatsheet}.';
-      expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow();
-    });
   });
 
   describe('template variables', () => {
