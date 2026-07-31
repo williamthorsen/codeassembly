@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 6
+version: 7
 ---
 
 # CodeAssembly content specification
@@ -13,7 +13,7 @@ The declaration contract for CodeAssembly artifacts -- skills, subagents, rulebo
 
 Every rule below belongs to one of three classes, marked where it appears.
 
-**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`skill`, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Four more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, a rulebook token naming a target that deploys no skill to invoke fails the same pre-write pass, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
+**Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`skill`, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Five more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, a rulebook link target outside a linkable root fails the run before anything is written, a rulebook token naming a target that deploys no skill to invoke fails the same pre-write pass, an anchor-only link target that names no heading in its own body fails wherever that body is rendered or shipped, and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
 
 **Enforced by test.** The suites in `packages/agents/src/__tests__/` read the shipped library and assert its conventions hold. A rule one of them guards names its test.
 
@@ -59,9 +59,19 @@ A rulebook may link only into `skills/` and `scripts/`, the two trees whose sour
 
 A link to a sibling rulebook is rejected too, and its error names the `{rulebook:<slug>}` token that addresses it instead. A rulebook is invoked rather than read: the skill it deploys is discovered by name, so an invocation resolves wherever it was deployed, while a path would be right in one domain and dead in the other. _(Validated on parse.)_
 
-A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.test.ts`, which also resolves every anchor fragment to exactly one heading. _(Enforced by test.)_
+A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.test.ts`, which also resolves a fragment carried on such a target to exactly one heading in the file it points into. _(Enforced by test.)_
 
 One limitation is worth knowing before writing a rulebook that documents linking: rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Invocation tokens rewrite the same way, so an example token keeps the `<slug>` placeholder rather than naming a real artifact.
+
+## Anchor links
+
+An anchor-only link addresses the body it appears in, so its fragment must name exactly one heading there. Naming none fails the run, and so does naming two: a locator that resolves by accident is not a locator. The rule covers every rulebook, skill, and subagent, and the guidance files `install` ships. _(Validated on parse.)_
+
+The body checked is the include-expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial.
+
+Frontmatter and fenced code blocks are exempt on both sides: a heading inside one offers no anchor, and a link inside one requests none. Show an example anchor inside a fence. An anchor-only target is never rewritten, so unlike a relative one it survives a fence intact.
+
+A heading carrying a token cannot be anchored: it renders to a different slug on each harness, so no one fragment reaches it everywhere. Give such a heading a token-free title where a link must address it. _(Validated on parse.)_
 
 ## Collections
 

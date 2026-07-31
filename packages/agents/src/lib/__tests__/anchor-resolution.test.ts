@@ -109,9 +109,9 @@ describe(collectHeadingSlugs, () => {
 describe(normalizeForAnchorScan, () => {
   it('blanks lines rather than removing them, so surviving lines keep their positions', () => {
     const content = '---\nname: a-skill\n---\n\n# Title\n\n```ts\nconst x = 1;\n```\n\nTail\n';
-    const normalized = normalizeForAnchorScan(content);
-    expect(normalized.split('\n')).toHaveLength(content.split('\n').length);
-    expect(normalized.split('\n')[4]).toBe('# Title');
-    expect(normalized.split('\n')[10]).toBe('Tail');
+    const lines = normalizeForAnchorScan(content).split('\n');
+    expect(lines).toHaveLength(content.split('\n').length);
+    expect(lines[4]).toBe('# Title');
+    expect(lines[10]).toBe('Tail');
   });
 });
