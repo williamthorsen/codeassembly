@@ -3,15 +3,28 @@ import { MARKDOWN_LINK_REGEX } from './path-rewriter.ts';
 /** The ATX heading grammar this module derives anchors from. No content file uses the setext form. */
 const HEADING_REGEX = /^#{1,6}\s+(.+?)\s*$/gm;
 
+/** An anchor-only link target, up to the whitespace that would begin a Markdown link title. */
+const ANCHOR_TARGET_REGEX = /^#\S*/;
+
+/** An inline code span: a backtick run, same-line content, and a closing run of the same length. */
+const CODE_SPAN_REGEX = /(`+)[^\n`]*\1/g;
+
+/** A fenced code block's opening or closing marker: three or more backticks, or three or more tildes. */
+const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
+
+/** A top-level YAML key, the shape that tells a frontmatter block from a pair of thematic breaks. */
+const FRONTMATTER_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_-]*\s*:(\s|$)/;
+
 /**
  * Throws when an anchor-only link target in `body` names no heading, or more than one, in the same body. Every
  * offending target is reported together, so an author fixing an artifact sees the whole list rather than one per run,
  * and a target repeated across the body is reported once.
  *
- * `body` is the include-expanded source, checked before any rewriting. Rewriting leaves anchor-only targets untouched,
- * so the verdict is harness-invariant: one failure per artifact, phrased against the file the author edits, rather
- * than one per harness. That ordering also settles the case rewriting would confuse, since a heading carrying a
- * `{tool:NAME}` token slugs differently on each harness and so can be addressed by no single fragment.
+ * `body` is checked before any rewriting, and where the pipeline expands includes, after that expansion. Rewriting
+ * leaves anchor-only targets untouched, so the verdict is harness-invariant: one failure per artifact, phrased against
+ * the file the author edits, rather than one per harness. That ordering also settles the case rewriting would confuse,
+ * since a heading carrying a `{tool:NAME}` token slugs differently on each harness and so can be addressed by no
+ * single fragment.
  *
  * Only same-body anchors are checked. A fragment on a path target resolves against the deployed tree, which unions
  * library content with each declared source's content, so it cannot be settled from the one content root at hand.
@@ -22,9 +35,9 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
 
   const rejections: Array<string> = [];
   const seen = new Set<string>();
-  for (const match of normalized.matchAll(MARKDOWN_LINK_REGEX)) {
-    const target = match[2];
-    if (target === undefined || !target.startsWith('#') || seen.has(target)) {
+  for (const match of blankCodeSpans(normalized).matchAll(MARKDOWN_LINK_REGEX)) {
+    const target = readAnchorTarget(match[2]);
+    if (target === undefined || seen.has(target)) {
       continue;
     }
     seen.add(target);
@@ -41,7 +54,7 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
     throw new Error(
       `${sourceLabel} carries ${rejections.length} unresolvable anchor link target(s). An anchor-only target must ` +
         `name exactly one heading in the same body:\n${rejections.join('\n')}\n` +
-        'An anchor authored in a _partials file is reported against each artifact that inlines it, so fix the partial.',
+        'If a target was authored in an inlined _partials/ file, fix it there rather than in the file named above.',
     );
   }
 }
@@ -61,29 +74,45 @@ export function collectHeadingSlugs(normalized: string): ReadonlyMap<string, num
 }
 
 /**
- * Blanks the regions that illustrate rather than declare: a leading frontmatter block, and every fenced code block. A
- * fence shows sample output, so a heading inside one offers no anchor and a link inside one requests none;
- * `review-branch` prints a `## Specification consistency` heading inside its output-format fence, which a naive scan
- * would offer as a real target. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned as
- * a body link.
+ * Blanks the block-level regions that illustrate rather than declare: a leading frontmatter block and every fenced
+ * code block. A fence shows sample output, so a heading inside one offers no anchor and a link inside one requests
+ * none; `review-branch` prints a `## Specification consistency` heading inside its output-format fence, which a naive
+ * scan would offer as a real target. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned
+ * as a body link.
  *
- * Lines are blanked rather than removed, so every surviving line keeps its position in the body.
+ * Inline code spans survive here and are blanked by `blankCodeSpans` on the link-scanning side alone. A span inside a
+ * heading is part of that heading's text, and dropping it would change the slug: `### The \`respond-to-review\` path`
+ * anchors as `#the-respond-to-review-path`, which the slugifier already reaches by stripping backticks as punctuation.
+ *
+ * An indented code block is not recognized. Telling one from a nested list item needs block-level parsing, and getting
+ * that wrong would blank a list item's real anchor, which fails toward accepting a dead locator.
+ *
+ * Blanking preserves line count and column positions, so every surviving character keeps its place in the body.
  */
 export function normalizeForAnchorScan(content: string): string {
   const lines = content.split('\n');
   const bodyStart = findBodyStart(lines);
-  let inFence = false;
+  // The opening marker, held while inside a fence: only a marker of the same character and at least its length closes
+  // the block, so a shorter or differently-fenced run inside it is content.
+  let fence: string | undefined;
 
   return lines
     .map((line, index) => {
       if (index < bodyStart) {
         return '';
       }
-      if (/^\s*```/.test(line)) {
-        inFence = !inFence;
+      const marker = FENCE_REGEX.exec(line)?.[1];
+      if (fence === undefined) {
+        if (marker === undefined) {
+          return line;
+        }
+        fence = marker;
         return '';
       }
-      return inFence ? '' : line;
+      if (marker !== undefined && marker[0] === fence[0] && marker.length >= fence.length) {
+        fence = undefined;
+      }
+      return '';
     })
     .join('\n');
 }
@@ -91,17 +120,44 @@ export function normalizeForAnchorScan(content: string): string {
 // region | Helpers
 
 /**
+ * Blanks inline code spans, so a link written inside one is read as an illustration rather than a request. Applies to
+ * link scanning only: a span inside a heading contributes to that heading's slug and must survive `collectHeadingSlugs`.
+ *
+ * A span is matched within one line. A code span may span lines, but a runaway match across a stray backtick would
+ * blank real anchors, and losing a locator to a silent pass is the failure this module exists to prevent.
+ */
+function blankCodeSpans(content: string): string {
+  return content.replace(CODE_SPAN_REGEX, (span) => ' '.repeat(span.length));
+}
+
+/**
  * Reports the index of the first body line, skipping a leading frontmatter block. A block is recognized only when the
- * first line is exactly `---` and a later `---` closes it, so a body opening on a thematic break is left alone. An
- * unterminated block counts as body too: scanning a malformed file is the safe direction, where blanking it to the
- * end would skip the check entirely.
+ * first line is exactly `---`, a later `---` closes it, and the lines between carry a top-level YAML key. A body
+ * opening on a thematic break satisfies the first two and fails the third, so its headings are scanned rather than
+ * blanked; an unterminated or empty block counts as body for the same reason, since scanning is the direction that
+ * cannot skip the check. A YAML comment is not the discriminator, because `# Text` is also an ATX heading.
+ *
+ * A prose line of the form `Word: text` at column zero inside a thematic-break pair reads as a key. Real frontmatter
+ * always carries one, so the recognition is loose in that one direction rather than tight enough to miss it.
  */
 function findBodyStart(lines: ReadonlyArray<string>): number {
   if (lines[0] !== '---') {
     return 0;
   }
   const closingIndex = lines.indexOf('---', 1);
-  return closingIndex === -1 ? 0 : closingIndex + 1;
+  if (closingIndex === -1) {
+    return 0;
+  }
+  return lines.slice(1, closingIndex).some((line) => FRONTMATTER_KEY_REGEX.test(line)) ? closingIndex + 1 : 0;
+}
+
+/**
+ * Reads the anchor a link target addresses, or `undefined` when the target names something other than a heading in
+ * this body. A Markdown link title (`#section "Some title"`) is dropped, so a titled link is resolved on its fragment
+ * rather than rejected for a fragment it never had.
+ */
+function readAnchorTarget(target: string | undefined): string | undefined {
+  return target === undefined ? undefined : (ANCHOR_TARGET_REGEX.exec(target.trim())?.[0] ?? undefined);
 }
 
 /**

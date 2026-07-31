@@ -25,6 +25,11 @@ describe(assertAnchorsResolve, () => {
       const body = '###### Deeply nested\n\n[x](#deeply-nested)\n';
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
+
+    it('resolves a target carrying a Markdown link title on its fragment alone', () => {
+      const body = '## Lifecycle events\n\nSee [the events](#lifecycle-events "the events").\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
+    });
   });
 
   describe('reporting', () => {
@@ -38,8 +43,9 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/carries 1 unresolvable/);
     });
 
-    it('points the author at the partial an inlined anchor came from', () => {
-      expect(() => assertAnchorsResolve('[a](#nope)\n', LABEL)).toThrow(/fix the partial/);
+    it('offers the partial as a conditional lead rather than asserting one was inlined', () => {
+      // Two wiring sites expand no includes at all, so a body reaching this error may have no partial behind it.
+      expect(() => assertAnchorsResolve('[a](#nope)\n', LABEL)).toThrow(/If a target was authored in an inlined/);
     });
   });
 
@@ -64,8 +70,41 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
     });
 
-    it('scans a body opening on a thematic break', () => {
-      const body = '---\n\n## Lifecycle events\n\n---\n\n[x](#nowhere)\n';
+    it('scans a body opening on a thematic break, whose delimiters carry no YAML key', () => {
+      const body = '---\n\n## Lifecycle events\n\n---\n\n[x](#lifecycle-events)\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
+    });
+
+    it('does not scan a link inside a tilde fence', () => {
+      const body = 'Write it as:\n\n~~~markdown\n[the events](#lifecycle-events)\n~~~\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
+    });
+
+    it('does not offer a heading inside a tilde fence as a target', () => {
+      const body = '~~~markdown\n## Sample heading\n~~~\n\n[x](#sample-heading)\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
+    });
+
+    it('keeps a shorter fence run inside a longer one as content', () => {
+      const body = '````markdown\n```\n[x](#nowhere)\n```\n````\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
+    });
+
+    it('does not scan a link inside an inline code span', () => {
+      const body = 'Point at it with `[option format](#option-format)` in prose.\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
+    });
+
+    it('keeps an inline code span in a heading, whose backticks the slug drops as punctuation', () => {
+      // Blanking the span here would rewrite the slug; anchors into `_data/pr-source-resolution.md` depend on it.
+      const body = '### The `respond-to-review` path\n\n[x](#the-respond-to-review-path)\n';
+      expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
+    });
+
+    it('scans a link inside an indented code block, which is not an exempt region', () => {
+      // Telling an indented block from a nested list item needs block-level parsing, and a wrong call there would
+      // blank a list item's real anchor. The specification records the exemption boundary.
+      const body = 'Example:\n\n    [x](#nowhere)\n';
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/#nowhere -- names no heading/);
     });
 

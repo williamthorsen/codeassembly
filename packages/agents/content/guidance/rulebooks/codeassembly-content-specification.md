@@ -67,9 +67,9 @@ One limitation is worth knowing before writing a rulebook that documents linking
 
 An anchor-only link addresses the body it appears in, so its fragment must name exactly one heading there. Naming none fails the run, and so does naming two: a locator that resolves by accident is not a locator. The rule covers every rulebook, skill, and subagent, and the guidance files `install` ships. _(Validated on parse.)_
 
-The body checked is the include-expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial.
+Where the pipeline expands includes -- skills, subagents, and harness guidance -- the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it, and the error names that artifact rather than the partial. A rulebook body and a shared guidance file are checked as authored, since neither inlines a partial.
 
-Frontmatter and fenced code blocks are exempt on both sides: a heading inside one offers no anchor, and a link inside one requests none. Show an example anchor inside a fence. An anchor-only target is never rewritten, so unlike a relative one it survives a fence intact.
+Frontmatter, fenced code blocks (backtick or tilde), and inline code spans are exempt on both sides: a heading inside one offers no anchor, and a link inside one requests none. An indented code block is not exempt, because telling one from a nested list item would take block-level parsing, so show an example anchor in a fence or a code span. An anchor-only target is never rewritten, so unlike a relative one it survives either intact.
 
 A heading carrying a token cannot be anchored: it renders to a different slug on each harness, so no one fragment reaches it everywhere. Give such a heading a token-free title where a link must address it. _(Validated on parse.)_
 
