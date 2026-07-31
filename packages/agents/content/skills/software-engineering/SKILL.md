@@ -20,6 +20,14 @@ Follow established software engineering best practices:
 - Apply SOLID principles
 - Minimize coupling between components
 
+## Library adoption
+
+### Research before implementation
+
+- **Always investigate existing libraries before hand-rolling complex code** - Research and adopt reliable, lightweight solutions like `cli-table3` for table formatting and `chalk` for terminal colors
+- **Don't write complicated functions solvable by lightweight libraries** - Use established libraries like `semver` instead of custom parsing
+- **Prefer chalk for terminal colors** - Use `chalk.red()` instead of manual ANSI escape codes
+
 ## Design evaluation
 
 Rank design options on correctness — behavior, API quality, architectural soundness, testability, maintainability — and treat convenience considerations (effort, blast radius, consistency with existing code) as secondary. See [design priorities](../_data/design-priorities.md).
