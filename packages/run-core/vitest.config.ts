@@ -1,13 +1,3 @@
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineRepoVitestConfig } from '../../.config/vitest/define-config.ts';
 
-import baseConfig from '../../.config/vitest/vitest.config.ts';
-
-const config = defineConfig({
-  test: {
-    coverage: { include: ['src/**/*.ts'] },
-    environment: 'node',
-    include: ['src/**/__tests__/*.test.ts', 'scripts/**/__tests__/*.test.ts'],
-  },
-});
-
-export default mergeConfig(baseConfig, config);
+export default defineRepoVitestConfig();
