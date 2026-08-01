@@ -34,12 +34,12 @@ Never use a type assertion (`as Type`, `<Type>value`): it claims a runtime guara
 ```typescript
 // ❌ Claims a type nothing verified
 function readConfig<T>(path: string): T {
-  return JSON.parse(fs.readFileSync(path)) as T;
+  return JSON.parse(fs.readFileSync(path, 'utf8')) as T;
 }
 
 // ✅ Returns what it knows; the caller narrows
 function readConfig(path: string): unknown {
-  return JSON.parse(fs.readFileSync(path));
+  return JSON.parse(fs.readFileSync(path, 'utf8'));
 }
 
 function isConfig(value: unknown): value is Config {
