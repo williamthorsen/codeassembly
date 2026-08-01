@@ -30,11 +30,11 @@ importers:
         specifier: 8.1.1
         version: 8.1.1(@types/estree@1.0.9)(@typescript-eslint/parser@8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@typescript-eslint/utils@8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       '@williamthorsen/nmr':
-        specifier: 0.20.0
-        version: 0.20.0(typescript@6.0.3)
+        specifier: 0.23.0
+        version: 0.23.0(prettier@3.9.6)(typescript@6.0.3)(vitest@4.1.10)
       '@williamthorsen/release-kit':
-        specifier: 9.1.0
-        version: 9.1.0
+        specifier: 9.1.1
+        version: 9.1.1
       '@williamthorsen/strict-lint':
         specifier: 9.1.0
         version: 9.1.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -66,8 +66,8 @@ importers:
         specifier: 3.9.6
         version: 3.9.6
       readyup:
-        specifier: 0.22.0
-        version: 0.22.0(esbuild@0.28.1)
+        specifier: 0.23.0
+        version: 0.23.0(esbuild@0.28.1)
       tsx:
         specifier: 4.23.1
         version: 4.23.1
@@ -78,8 +78,8 @@ importers:
         specifier: 8.65.0
         version: 8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       v11y-check:
-        specifier: 0.11.3
-        version: 0.11.3
+        specifier: 0.11.4
+        version: 0.11.4
       vite:
         specifier: 8.1.5
         version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.25))(tsx@4.23.1)(yaml@2.9.0)
@@ -788,6 +788,31 @@ packages:
   '@quansync/fs@1.0.0':
     resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
 
+  '@reteps/dockerfmt-darwin-arm64@0.5.4':
+    resolution: {integrity: sha512-urMqV+dQyvVI8/WrXwClX9e1PEyS35wFdwJjpZYmL09AkV4Io5U1oam8UBKK7jZk0+YsdF88ay6e86Kn6DIyQg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@reteps/dockerfmt-darwin-x64@0.5.4':
+    resolution: {integrity: sha512-fJORy6DFxbgDiMqxpLTPZlb5KUY0Vq0iR4NGnyKnuYZ9LdZUS508DK2kt/AJ87/jIKNV1qRG0JXG1Tc6xdvWjw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@reteps/dockerfmt-linux-arm64@0.5.4':
+    resolution: {integrity: sha512-6pVakO06eXtDuvxy1Dnjs/gQyUoGGycle8PRSt5IFRwLi/AVaOQwfkfmW0WP8VH9wNUeti6BfJ3ksTn2G+XMxg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@reteps/dockerfmt-linux-x64@0.5.4':
+    resolution: {integrity: sha512-OD6SIlUV1D4TgJoTui3FMBAZsGbTSPYsiT0BKhD6jMUcJb3GpFTa7dY9rL8rP9FUqfL7OTHVUGUOL4Rh64Olog==}
+    cpu: [x64]
+    os: [linux]
+
+  '@reteps/dockerfmt@0.5.4':
+    resolution: {integrity: sha512-HEGgXVVOb+JtGUSSzXl/XPKFIZjMDTUoHarCjaQdkY+cb5M9K/O3b5xm+x0IPIk3SfHurbc0bSgcFsQlzjitxA==}
+    engines: {node: ^v12.20.0 || ^14.13.0 || >=16.0.0}
+    hasBin: true
+
   '@rolldown/binding-android-arm64@1.1.5':
     resolution: {integrity: sha512-lZg8fqIv2v7FF237bwMgzGZEJvGL79/s5knJ/i6FmsGF4XXlzccZ4jb+TrFIxtSSxFtIpdsgrPZeMk1I9AFcyQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1184,23 +1209,26 @@ packages:
       eslint: '>=10'
       typescript: '>=5'
 
-  '@williamthorsen/nmr-core@0.7.2':
-    resolution: {integrity: sha512-/9rV8J9OaA2eCZkGyMipS9TihsVwL4giRQXnT4/uob1F0bfjtwCwPPoHgJtbMEkLJUKbt7tEaH1uNuqdcEp0wQ==}
-    engines: {node: '>=24'}
-
   '@williamthorsen/nmr-core@0.7.3':
     resolution: {integrity: sha512-NhQqRBDQRPx+AQmPjgPvOE1DL3Ob8AkYSkr9DFxdrODnTJfNdFVJcIwiBF8kR74Ui+YXGAtwx6Rw87+T5zjsRw==}
     engines: {node: '>=24'}
 
-  '@williamthorsen/nmr@0.20.0':
-    resolution: {integrity: sha512-VEEcpl18IjF4VH0BZZhI/9cg1ZHdO+GGoZSXfEFbhedL56uUBVFPKzqv3jmW46VrX5bsV/7AFrxWHCe8/hOejg==}
+  '@williamthorsen/nmr@0.23.0':
+    resolution: {integrity: sha512-5JX2AJ3Kwe6/+l2BHGjYlra9F+zJHqSjcXwSI61oqQPpv1TgnUfhN6fInU2lbxPoq0a9FzQyYD6Yy+NTBNhh9g==}
     engines: {node: '>=24.16.0'}
     hasBin: true
     peerDependencies:
+      prettier: '>=3.9.5 <4'
       typescript: '>=5.7.0 <7'
+      vitest: '>=4.0.0 <5'
+    peerDependenciesMeta:
+      prettier:
+        optional: true
+      vitest:
+        optional: true
 
-  '@williamthorsen/release-kit@9.1.0':
-    resolution: {integrity: sha512-YAnIBVP3QCe08QwvGbW33kYd0w5FnGi81/uWRVYdjgFAy07BTGt261Cms82iSaG0N98NUf1duNGWRzIERptUTg==}
+  '@williamthorsen/release-kit@9.1.1':
+    resolution: {integrity: sha512-z/ZEJTjsxTouAvwxV7Sfqp/PFDElfoivmZt6EjCR6uJG2V0WH2Te+pYRRnHGnclXIOG8R0O7IuahBA/TFGx6Lw==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -2847,6 +2875,12 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
+  prettier-plugin-sh@0.19.0:
+    resolution: {integrity: sha512-39VXFZH/cOGtcuu8aeSvqp/hhwomOR4QroZUj+jBz2cNb3os9s0sqFZSNlYts6jdtLLDU7D2YT3Z1+abtb7adQ==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      prettier: ^3.6.0
+
   prettier@3.9.6:
     resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
     engines: {node: '>=14'}
@@ -2949,8 +2983,8 @@ packages:
     resolution: {integrity: sha512-7KA6+N9IGat52d83dvxnApAWN+MtVb1MiVuMR/cf1O4kYsJG+g/Aav0AHcHKsb6StinayfPLne0+fMX2sOzAKg==}
     engines: {node: '>=6'}
 
-  readyup@0.22.0:
-    resolution: {integrity: sha512-p8vA82m9e2TvX2MBnv9kgILaHLzbeeCFuO0rm/o+Sb07kMSFV28Utueo1ZskgVL+CQDWEdMukPs38l4OOIgqrA==}
+  readyup@0.23.0:
+    resolution: {integrity: sha512-a+QiEgbgdmcjnX6EMRNSZGJ9GB5tF5Ef521IECmyPpUmlJlf4cQ+z/iYNmNdOwHF8yqn4m2Gxp33Jwhp8kmajQ==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -3068,6 +3102,10 @@ packages:
 
   setprototypeof@1.2.0:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
+
+  sh-syntax@0.6.0:
+    resolution: {integrity: sha512-52VK6z/cdZHv7UURjIcwfBUQZrAhIEEe0bY4lrkfypjnFIKsDZdD3Uaz/dBiw/sF8BeX0Mssv140s8EnrsJ9dQ==}
+    engines: {node: '>=16.0.0'}
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -3222,8 +3260,8 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
-  taze@19.15.1:
-    resolution: {integrity: sha512-nQ52myEfhTUyz18LCPtXmBC0lMSGaNz5ncuVsBKa+rXyJVXCkETUuXwIBqgta0TQs9pB0BvHEGMqCAaIO+pRkQ==}
+  taze@19.16.0:
+    resolution: {integrity: sha512-E33PiGSHYB40yKOgi/KvaBDvRJEn5ajRa6xeGS7V/02aLBSWkpQ68ayUMDRQOYbyaBMPZ+xqbkH41woACluQTg==}
     hasBin: true
 
   through2@4.0.2:
@@ -3400,8 +3438,8 @@ packages:
     resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
-  v11y-check@0.11.3:
-    resolution: {integrity: sha512-njRxEhWVLJuM7yfpEUisK0PclkvG+HEZD7Is3VssyZIBPWCDPgaEYYZ5OTpu7CNnBWfE5ESktmb2wAKOIjF5BQ==}
+  v11y-check@0.11.4:
+    resolution: {integrity: sha512-llmkn6LGH2JAfEi/Lv0mW2Ibge/EB85Pc/1JvXY2Zh0AdrOMNQiMSlQ9RN8P5m+F5tj2yFTiRT1Ur9lpsntLlw==}
     engines: {node: '>=24'}
     hasBin: true
 
@@ -4086,6 +4124,25 @@ snapshots:
     dependencies:
       quansync: 1.0.0
 
+  '@reteps/dockerfmt-darwin-arm64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt-darwin-x64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt-linux-arm64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt-linux-x64@0.5.4':
+    optional: true
+
+  '@reteps/dockerfmt@0.5.4':
+    optionalDependencies:
+      '@reteps/dockerfmt-darwin-arm64': 0.5.4
+      '@reteps/dockerfmt-darwin-x64': 0.5.4
+      '@reteps/dockerfmt-linux-arm64': 0.5.4
+      '@reteps/dockerfmt-linux-x64': 0.5.4
+
   '@rolldown/binding-android-arm64@1.1.5':
     optional: true
 
@@ -4492,20 +4549,22 @@ snapshots:
       - supports-color
       - ts-declaration-location
 
-  '@williamthorsen/nmr-core@0.7.2': {}
-
   '@williamthorsen/nmr-core@0.7.3': {}
 
-  '@williamthorsen/nmr@0.20.0(typescript@6.0.3)':
+  '@williamthorsen/nmr@0.23.0(prettier@3.9.6)(typescript@6.0.3)(vitest@4.1.10)':
     dependencies:
-      '@williamthorsen/nmr-core': 0.7.2
+      '@williamthorsen/nmr-core': 0.7.3
       glob: 13.0.6
       jiti: 2.7.0
-      taze: 19.15.1
+      prettier-plugin-sh: 0.19.0(prettier@3.9.6)
+      taze: 19.16.0
       typescript: 6.0.3
       yaml: 2.9.0
+    optionalDependencies:
+      prettier: 3.9.6
+      vitest: 4.1.10(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(sugarss@5.0.1(postcss@8.5.25))(tsx@4.23.1)(yaml@2.9.0))
 
-  '@williamthorsen/release-kit@9.1.0':
+  '@williamthorsen/release-kit@9.1.1':
     dependencies:
       '@williamthorsen/nmr-core': 0.7.3
       glob: 13.0.6
@@ -6304,6 +6363,12 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
+  prettier-plugin-sh@0.19.0(prettier@3.9.6):
+    dependencies:
+      '@reteps/dockerfmt': 0.5.4
+      prettier: 3.9.6
+      sh-syntax: 0.6.0
+
   prettier@3.9.6: {}
 
   pretty-format@27.5.1:
@@ -6396,7 +6461,7 @@ snapshots:
 
   readline-transform@1.0.0: {}
 
-  readyup@0.22.0(esbuild@0.28.1):
+  readyup@0.23.0(esbuild@0.28.1):
     dependencies:
       jiti: 2.7.0
       jsonc-parser: 3.3.1
@@ -6570,6 +6635,8 @@ snapshots:
       es-object-atoms: 1.1.2
 
   setprototypeof@1.2.0: {}
+
+  sh-syntax@0.6.0: {}
 
   shebang-command@2.0.0:
     dependencies:
@@ -6752,7 +6819,7 @@ snapshots:
 
   tapable@2.3.3: {}
 
-  taze@19.15.1:
+  taze@19.16.0:
     dependencies:
       '@antfu/ni': 30.3.0
       '@henrygd/queue': 1.2.0
@@ -6950,7 +7017,7 @@ snapshots:
 
   uuid@14.0.1: {}
 
-  v11y-check@0.11.3:
+  v11y-check@0.11.4:
     dependencies:
       '@williamthorsen/nmr-core': 0.7.3
       audit-ci: 7.1.0
