@@ -35,7 +35,7 @@ export function defineRepoRootVitestConfig(options: RootVitestConfigOptions): Vi
 
 /** Builds a package's config. Caller options merge over the repo-wide defaults rather than replacing them. */
 export function defineRepoVitestConfig(options: VitestConfigOptions = {}): ViteUserConfig {
-  return defineVitestConfig(withSharedOptions(options));
+  return defineVitestConfig({ ...options, ...withSharedOptions(options) });
 }
 
 /**
