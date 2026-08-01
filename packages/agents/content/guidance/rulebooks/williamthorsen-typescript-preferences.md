@@ -13,19 +13,19 @@ Where files and directories go, and what they are called, lives in a companion r
 
 ## Exports
 
-Export by name. Never use a default export: a default has no name at the definition site, so every importer is free to invent a different one, and no rename ever propagates.
+Export by name. Never use a default export: importers invent their own names, and renames never propagate.
 
 ## Barrels
 
 A barrel -- an `index.ts` that re-exports a directory's modules -- is permitted only at a package's published entry point: a module named in the package's `exports` map, whether the root entry or a subpath. Everywhere else, an import reaches the defining module directly.
 
-A barrel makes a package's public surface explicit, which is worth having at the boundary. Inside the package it buys nothing and costs on every consumer: importing one symbol loads every module the barrel touches, which inflates test startup as much as it inflates a bundle. Biome files its barrel rules under `performance` for that reason, and Next.js added `optimizePackageImports` specifically to undo the cost for third-party barrels it cannot control. Nothing undoes it for your own.
+Importing one symbol through a barrel loads every module it touches.
 
 ## Import specifiers
 
 Write the specifier that names the file on disk: `./parse-note.ts`, not `./parse-note.js`.
 
-The `.js` form is what `moduleResolution: NodeNext` requires when nothing rewrites extensions, since it resolves against emitted output. Where a build rewrites them -- and where `allowImportingTsExtensions` is set -- the `.js` specifier names a file that does not exist in source, and every reader has to know the convention to follow the import.
+This requires `allowImportingTsExtensions` and a build that rewrites extensions in output and declarations. Without both, use the `.js` form.
 
 ## Type safety
 
@@ -130,10 +130,8 @@ Keep types in the same file as their sole provider (component or function). This
 
 ## Documentation
 
-Omit `@param` and `@returns`. The signature already carries the parameter names, their types, and the return type, and a description that restates them adds a second place to go stale. A constraint no name or type can express -- a valid range, a precondition, two parameters that cannot both be set -- belongs in the description, which can state a relationship across parameters that a per-parameter tag fragments.
+Omit `@param` and `@returns`. A constraint no name or type can express -- a valid range, a precondition, two parameters that cannot both be set -- goes in the description instead.
 
-The one exception is a symbol exported from a package's published entry point, where a consumer reads the emitted declarations rather than the source and their editor surfaces per-parameter text. That is the same boundary the barrel rule uses, so it is checkable from the file's path.
-
-The exception depends on the emitted declarations carrying comments at all. A project compiling with `removeComments` strips them from its `.d.ts` output, and every tag written under this exception reaches nobody.
+The one exception is a symbol exported from a package's published entry point, the same boundary the barrel rule uses. The exception is void where declarations are compiled with `removeComments`, which strips the tags from `.d.ts` output.
 
 Descriptions themselves -- what earns one, and what a comment may say -- are governed by comment discipline, not here.
