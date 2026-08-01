@@ -289,16 +289,17 @@ Deleting `dist/` does not force a rebuild. The build cache lives outside it and 
 
 ### Testing
 
-- Vitest across all packages with shared configuration
-- Base config in `.config/vitest/vitest.config.ts`
+- Vitest across all packages, built on `@williamthorsen/nmr/vitest` and its projects model
+- Every config composes `.config/vitest/define-config.ts`, which adds the two settings nmr does not provide: the `source` resolve conditions that let workspace packages resolve from `.ts` source without a prior build, and the setup file keeping test git subprocesses out of the developer's global git config
+- Each workspace package carries a `vitest.config.ts`, even where it adds nothing. Suites are selected by `--project`, and a package without a config makes `nmr test:integration` fail the whole recursive run
+- Package-specific options go through the `project` seam, not `root`; Vitest ignores collection options at the root once `projects` exists
 - Coverage reporting with v8 provider
-- Package-specific configurations for different test types
-- Real-library / full-install tests (e.g. real installs) are deliberate-only `*.int.test.ts` tests: excluded from the default unit suite and CI, run on demand via `nmr test:integration`. A package opts in by providing `vitest.integration.config.ts` and `vitest.standalone.config.ts` (see `packages/agents/`). Land new real-library/full-install tests here, not in the unit suite.
+- Real-library / full-install tests (e.g. real installs) are deliberate-only `*.int.test.ts` tests: excluded from the default unit suite and CI, run on demand via `nmr test:integration`. The `*.int.test.ts` name is the whole opt-in. Land new real-library/full-install tests here, not in the unit suite.
 
 ### Code quality
 
 - ESLint with `@williamthorsen/eslint-config-typescript`
-- Prettier for formatting
+- Prettier via `@williamthorsen/nmr/prettier`, which also formats shell scripts and Dockerfiles; `nmr fmt` covers them, so the repo runs no separate `shfmt` step
 - TypeScript strict mode
 - Optional strict linting with `@williamthorsen/strict-lint`
 
