@@ -50,7 +50,7 @@ function getProjectSetupFiles(config: ViteUserConfig): string[][] {
 
   return projects.flatMap((project) => {
     if (typeof project !== 'object' || !('test' in project)) return [];
-    const setupFiles = project.test?.setupFiles;
+    const setupFiles = project.test.setupFiles;
     return setupFiles === undefined ? [] : [Array.isArray(setupFiles) ? setupFiles : [setupFiles]];
   });
 }
