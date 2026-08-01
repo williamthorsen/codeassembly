@@ -2,6 +2,10 @@
 name: common-mistakes
 description: Common mistakes to avoid across categories with cross-references to specific rule files
 user-invocable: false
+dependencies:
+  rulebooks:
+    - williamthorsen-code-layout-preferences
+    - williamthorsen-typescript-preferences
 ---
 
 # Common mistakes
@@ -14,9 +18,9 @@ This file has high importance because it describes mistakes commonly made despit
 
 When implementing rules, follow complete guidance from the appropriate category:
 
-- **Language mechanics** → See `typescript-conventions` skill
+- **Language mechanics** → See `consult-williamthorsen-typescript-preferences` skill
 - **Development processes** → See `development-workflows` skill
-- **Code organization** → See `code-patterns` skill
+- **Code organization** → See `consult-williamthorsen-code-layout-preferences` skill
 - **Testing** → See `testing-conventions` skill and `typescript-testing-conventions` skill
 
 Don't pick and choose from rules without considering the full context of each category.

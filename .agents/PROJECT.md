@@ -307,10 +307,6 @@ Deleting `dist/` does not force a rebuild. The build cache lives outside it and 
 - Write modular, composable code, even when there is only a single consumer.
 - Nest directories intelligently to provide useful groupings. Do not start with a flat directory structure and then entrench it as convention.
 
-## Skills
-
-Always invoke the `typescript-conventions` skill before writing or modifying TypeScript code.
-
 ## Dependency management
 
 - Use exact versions in package.json (no `^` or `~` range indicators)

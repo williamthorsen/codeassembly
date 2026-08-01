@@ -5,7 +5,6 @@ tools: [Read, Grep, Glob, Bash, Write]
 maxTurns: 15
 skills:
   - review-criteria
-  - code-patterns
 ---
 
 # Code simplification reviewer

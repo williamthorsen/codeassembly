@@ -96,6 +96,28 @@ The smell is shared _setup with one variable_, not shared _shape with different 
 
 <!-- include: ../../_partials/test-structure-audit-checklist.md / -->
 
+## Test organization
+
+- **Use function/class reference as describe argument** - `describe(myFunction, ...)` instead of `describe('myFunction', ...)`
+
+## Mocking principles
+
+Mock only what matters in component tests. Don't forward irrelevant props or replicate complex implementation details.
+
+```typescript
+// ✅ Good - focused on test needs
+jest.mock('@atlaskit/component', () => ({
+  Component: ({ children, isOpen }: Props) =>
+    isOpen ? <div data-testid="component">{children}</div> : null
+}));
+
+// ❌ Avoid - unnecessary complexity
+jest.mock('@atlaskit/component', () => ({
+  Component: ({ children, isOpen, width, onClose, ...props }: ComplexProps) =>
+    <div {...props} style={{ width }}>{isOpen && children}</div>
+}));
+```
+
 ## Additional patterns
 
 ### Omit "should" from test names
