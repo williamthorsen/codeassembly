@@ -43,7 +43,7 @@ A helper reached by a `../../` hop into a sibling module's `test-utils/` has out
 
 ## Fixtures
 
-Fixture **data** -- JSON, Markdown, sample sources, directory trees -- lives in `__tests__/fixtures/`, where the exemptions that cover `__tests__/` are correct for it.
+Fixture **data** -- JSON, Markdown, sample sources, directory trees -- lives in `__tests__/fixtures/`, so one exemption covers tests and fixture data alike.
 
 Fixture **builders** are code, and follow the test-helper rule above.
 
@@ -95,6 +95,6 @@ Identifier naming (no abbreviations, unit-of-measure suffixes, verb-led function
 
 ## What binds only through configuration
 
-The directory names above carry no tooling default. A project adopting these conventions states them in its own coverage and lint configuration; unwired, they bind nothing.
+State the directory names above in the project's own coverage and lint configuration; unwired, they bind nothing.
 
 Scope those globs by directory rather than by filename.
