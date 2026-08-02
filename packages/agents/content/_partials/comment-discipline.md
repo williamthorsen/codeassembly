@@ -8,6 +8,8 @@ The reader is an engineer six months from now with no transcript, no session, an
 
 Every non-trivial function, method, class, and component carries a one-line description of what it does. Trivial code — a getter, a one-line helper whose name says it all — needs none. The baseline is a floor, not a licence to elaborate above it.
 
+A function, method, or component description leads with a verb; a verbless noun phrase ("Construction of the payload shape") is a defect, and existing noun-phrase descriptions are drift, not local standard. A type, interface, or constant description may be a noun phrase, since it names a thing rather than an action. The line states what the function returns, and under what condition that varies, in the function's own terms — only what the function itself can see. Material that names a caller or recounts a past state cannot be verified from where it sits; cut it rather than reword it. The verb's mood is a project preference and is not set here.
+
 ### Three tests
 
 Apply all three to every comment you write or keep. A comment that fails one is cut, not softened. Comments are code: read, maintained, and trusted. Every line pays rent.
