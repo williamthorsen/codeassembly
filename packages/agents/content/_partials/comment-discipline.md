@@ -1,12 +1,18 @@
 ## Comment discipline
 
-Every comment you write **into source** is governed here — writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment and takes the same audit.
+Every comment you write **into source** is governed here: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment and takes the same audit.
 
 The reader is an engineer six months from now with no transcript, no session, and no memory of the change. Write for that reader.
 
 ### The baseline
 
-Every non-trivial function, method, class, and component carries a one-line description of what it does. Trivial code — a getter, a one-line helper whose name says it all — needs none. The baseline is a floor, not a licence to elaborate above it.
+Every function, method, class, and component **must** carry a description. One line is often enough. Exceed that length only when a reader would be substantially helped by a longer explanation (and don't include anything readily apparent from a quick glance at the code). If in doubt, be terse. 
+
+The description of a function or method describes what it **does** and leads with a verb; any other opening is nonstandard and should not be emulated. The verb's mood is a project preference and is not set here.
+
+The description of a class or component describes what it **is**.
+
+Add descriptions of constants only if a description meaningfully facilitates understanding of the code. Load-bearing constants are good candidates for description. Most other constants are not; rely on good variable names instead. Do not describe an interface or type unless its purpose is nonobvious. 
 
 ### Three tests
 
@@ -30,12 +36,12 @@ The library's behavior belongs in the library's docs. A helper's contract belong
 
 These survive the tests. They are permissions, not requirements.
 
-- **Test comments** — non-obvious setup the test name does not convey; an indirect assertion, naming the reason for the indirection; the rationale for a skip.
-- **`eslint-disable` rationales** — why _this_ rule is suppressed _here_, and nothing more: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.` The carve-out governs the comment, not the suppression; whether to suppress at all is an `anti-patterns` question.
+- **Test comments**: non-obvious setup the test name does not convey; an indirect assertion, naming the reason for the indirection; the rationale for a skip.
+- **`eslint-disable` rationales**: why _this_ rule is suppressed _here_, and nothing more: `// eslint-disable-next-line no-explicit-any -- third-party Stripe type ships as any.` The carve-out governs the comment, not the suppression; whether to suppress at all is an `anti-patterns` question.
 
 ### Before and after
 
-**Written for the reviewer** — fails the stranger test. The comment defends the edit and describes what the code is _not_.
+**Written for the reviewer**: Fails the stranger test. The comment defends the edit and describes what the code is _not_.
 
 Before:
 
@@ -50,7 +56,7 @@ After:
 // `spawnSync` returns null for a stream redirected to a file descriptor; `runAttw` reads the output back from the file.
 ```
 
-**Restating the call below it** — fails the deletion test. The helper's own contract, re-narrated at the call site.
+**Restating the call below it**: Fails the deletion test. The helper's own contract, re-narrated at the call site.
 
 Before:
 
@@ -66,7 +72,7 @@ After:
 useDocumentTitle(buildDocumentTitle(EMPLOYEE_COMP_TITLE, data.employee.name));
 ```
 
-**Proposed inside a review finding** — a suggested replacement comment is a source comment. This one restates the lookup the code already expresses and copies an example ID out of the source.
+**Proposed inside a review finding**: A suggested replacement comment is a source comment. This one restates the lookup the code already expresses and copies an example ID out of the source.
 
 Before:
 

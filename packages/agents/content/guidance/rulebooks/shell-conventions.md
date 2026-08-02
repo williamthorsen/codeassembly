@@ -7,7 +7,7 @@ version: 1
 
 # Shell script conventions
 
-Conventions for writing production-quality bash scripts in this repository. These complement the universal style rules (imperative-mood comments, verb-led function names, primary logic first, long-form CLI options).
+Conventions for writing production-quality bash scripts in this repository. These complement the universal style rules (verb-led function names, primary logic first, long-form CLI options).
 
 ## Script anatomy
 
