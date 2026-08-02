@@ -19,7 +19,6 @@ Always act as a conscientious and courteous collaborator. Follow best practices 
 - Order lists and collections logically (alphabetically unless there is a good reason to sort or group differently).
 - Use long-form CLI options (`--force`, not `-f`) in generated commands and scripts.
 - Structure code so the primary logic comes first; place helper functions at the end.
-- Write explanatory comments in imperative mood ("Validate arguments", not "Argument validation").
 - Name functions with a leading verb (`show_usage`, not `usage`; `build_payload`, not `payload`).
 
 ## Writing style
