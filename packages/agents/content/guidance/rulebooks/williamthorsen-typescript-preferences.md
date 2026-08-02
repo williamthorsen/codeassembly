@@ -1,6 +1,6 @@
 ---
 slug: williamthorsen-typescript-preferences
-description: TypeScript language mechanics, module shape, and documentation form -- type safety, exports and barrels, import specifiers, type placement, and doc tags. Consult before writing or modifying TypeScript.
+description: 'TypeScript language mechanics, module shape, and documentation form: type safety, exports and barrels, import specifiers, type placement, and doc tags. Consult before writing or modifying TypeScript.'
 delivery: skill
 version: 1
 ---
@@ -80,6 +80,9 @@ Keep types in the same file as their sole provider (component or function). This
 
 ## Documentation
 
-Omit `@param`, `@returns`, and other tags. If a parameter has a constraint that its name and type cannot express -- such as a valid range, a precondition, or mutual incompatibility with another parameter, describe the constraint in the description.
+Omit `@param`, `@returns`, and other tags; if a parameter has a constraint that its name and type cannot express -- such as a valid range, a precondition, or mutual incompatibility with another parameter -- describe the constraint in the description.
 
-Symbols exported from a package's published entry point are exempt from this rule.
+This prohibition against `@` tags does not apply to
+
+- symbols exported from a package's published entry point
+- custom tags such as `@internal` and `@stage`
