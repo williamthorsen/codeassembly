@@ -17,4 +17,4 @@ Existing imperative descriptions are drift, not local standard. Do not imitate t
 
 ## Inline comments
 
-An explanatory inline comment is imperative: "Validate arguments", not "Argument validation".
+An explanatory inline comment describing a logical step is imperative, not declarative or passive: "Validate arguments", not "Validates arguments" or "Argument validation".
