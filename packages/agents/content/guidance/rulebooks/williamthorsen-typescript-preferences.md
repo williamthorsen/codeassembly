@@ -86,4 +86,4 @@ Omit `@param` and `@returns`. A constraint no name or type can express -- a vali
 
 The one exception is a symbol exported from a package's published entry point, the same boundary the barrel rule uses. The exception is void where declarations are compiled with `removeComments`, which strips the tags from `.d.ts` output.
 
-Descriptions themselves -- what earns one, and what a comment may say -- are governed by comment discipline, not here.
+Descriptions themselves -- what earns one, and what a comment may say -- are governed by comment discipline; the mood of a description's verb by comment preferences. Neither is set here.
