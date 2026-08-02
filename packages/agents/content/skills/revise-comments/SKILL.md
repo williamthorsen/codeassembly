@@ -59,8 +59,8 @@ src/lib/payload.ts
 | ---- | --------- | ------------ | -------------------------------- |
 | 1    | deleted   | one-location | duplicates the per-function docs |
 | 2    | deleted   | stranger     | PR reference                     |
-| 6    | rewritten | stranger     | "we discussed"                   |
-| 8    | kept      | —            | why-inline                       |
+| 4    | rewritten | stranger     | "we discussed"                   |
+| 6    | kept      | —            | why-inline                       |
 ```
 
 Line numbers anchor to the pre-edit file, so the summary can be cross-referenced against `git diff` output. A comment failing more than one test names the first it fails.
@@ -81,9 +81,7 @@ A small file demonstrating multi-comment revision end-to-end.
 // Helpers for building the request payload sent to the orchestrator API.
 // Originally added in PR #423 to consolidate the type narrowing logic.
 
-import type { Payload } from './types';
-
-// Build the canonical payload shape. We discussed inlining but it's used at three call sites.
+// Builds the canonical payload shape. We discussed inlining but it's used at three call sites.
 export function buildPayload(input: Input): Payload {
   // react-select types value as a union; narrow to array.
   const items = Array.isArray(input.value) ? input.value : [input.value];
@@ -94,9 +92,7 @@ export function buildPayload(input: Input): Payload {
 **After:**
 
 ```ts
-import type { Payload } from './types';
-
-/** Build the canonical payload shape. */
+/** Builds the canonical payload shape. */
 export function buildPayload(input: Input): Payload {
   // react-select types value as a union; narrow to array.
   const items = Array.isArray(input.value) ? input.value : [input.value];
@@ -114,6 +110,6 @@ src/lib/payload.ts
 | ---- | --------- | ------------ | -------------------------------- |
 | 1    | deleted   | one-location | duplicates the per-function docs |
 | 2    | deleted   | stranger     | PR reference                     |
-| 6    | rewritten | stranger     | "we discussed"                   |
-| 8    | kept      | —            | why-inline                       |
+| 4    | rewritten | stranger     | "we discussed"                   |
+| 6    | kept      | —            | why-inline                       |
 ```
