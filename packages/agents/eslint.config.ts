@@ -16,6 +16,14 @@ const config = defineConfig([
     plugins: {},
     rules: deferredLintRules,
   },
+  {
+    files: ['package.json'],
+    rules: {
+      // The package ships a CLI and no importable surface: its empty `exports` forecloses deep imports into the
+      // build output, leaving the rule no root export to style.
+      'package-json/exports-subpaths-style': 'off',
+    },
+  },
 ]);
 
 export default config;

@@ -1,14 +1,37 @@
 {
   "name": "codeassembly",
   "version": "0.3.0",
-  "private": true,
-  "description": "Specialized subagents for orchestrated development workflows",
+  "description": "CLI that installs reusable AI agent guidance (rulebooks, skills, and subagents) into coding-harness directories",
+  "keywords": [
+    "agents",
+    "ai",
+    "claude-code",
+    "cli",
+    "skills"
+  ],
+  "homepage": "https://github.com/williamthorsen/codeassembly/tree/main/packages/agents#readme",
+  "bugs": {
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamthorsen/codeassembly.git",
+    "directory": "packages/agents"
+  },
+  "license": "ISC",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
+  "exports": {},
   "bin": {
     "codeassembly": "bin/codeassembly.js"
   },
+  "files": [
+    "bin",
+    "dist"
+  ],
   "scripts": {
     "build": "nmr compile && tsx scripts/bundle-skill-helpers.ts && tsx scripts/copy-content.ts",
+    "prepublishOnly": "nmr build",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",
     "test:smoke": "tsx scripts/__tests__/smoke-test-skill-helpers.ts"

@@ -1,6 +1,27 @@
 # codeassembly
 
-Specialized subagents for orchestrated development workflows. This package provides skills, subagent definitions, and scripts that power the orchestration pipeline.
+A CLI that installs reusable AI agent guidance into coding-harness directories, and the library of rulebooks, skills, and subagents it deploys.
+
+<!-- section:release-notes --><!-- /section:release-notes -->
+
+## Installation
+
+No install needed to try it:
+
+```bash
+npx codeassembly install
+npx codeassembly sync
+```
+
+Add it to a project when the repo ships guidance of its own, or wants `sync` to run from a script:
+
+```bash
+pnpm add --save-dev codeassembly
+```
+
+`install` deploys the built-in library into your harness directories. `sync` resolves `.agents/codeassembly.yaml` and materializes exactly what the project declares, including guidance shipped by its dependencies (see [Packages](#packages)).
+
+Supported harnesses are Claude Code and Rovo Dev; `--harness` narrows a run to one.
 
 ## Commands
 

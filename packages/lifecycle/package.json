@@ -1,8 +1,24 @@
 {
   "name": "codeassembly-lifecycle",
   "version": "0.1.0",
-  "private": true,
   "description": "Canonical lifecycle-event envelope, vocabulary, and lane fold",
+  "keywords": [
+    "events",
+    "lifecycle",
+    "observability",
+    "sessions"
+  ],
+  "homepage": "https://github.com/williamthorsen/codeassembly/tree/main/packages/lifecycle#readme",
+  "bugs": {
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamthorsen/codeassembly.git",
+    "directory": "packages/lifecycle"
+  },
+  "license": "ISC",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "exports": {
     ".": {
@@ -16,9 +32,13 @@
     "dist"
   ],
   "scripts": {
-    "build": "nmr compile"
+    "build": "nmr compile",
+    "prepublishOnly": "nmr build"
   },
   "devDependencies": {
     "esbuild": "0.28.1"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

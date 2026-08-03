@@ -102,6 +102,9 @@ export async function bundleSkillHelpers(): Promise<void> {
       format: 'esm',
       target: 'es2022',
       banner: { js: requireShim },
+      minify: true,
+      // Keeps a deployed helper's stack traces legible.
+      keepNames: true,
       // Resolve `@williamthorsen/kb` (and any future workspace dep) from its `source` `.ts` export
       // condition so the bundle does not require those packages to be pre-built.
       conditions: ['source'],
