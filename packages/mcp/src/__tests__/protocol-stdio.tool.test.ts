@@ -12,7 +12,7 @@ import { isErrorResult, parseAndGetString } from './helpers.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(__dirname, '../cli.ts');
 
-describe('stdio transport smoke test', { timeout: 20_000 }, () => {
+describe('stdio transport smoke test', () => {
   it('spawns MCP server subprocess and calls init_run successfully', async () => {
     const transport = new StdioClientTransport({
       command: process.execPath,
