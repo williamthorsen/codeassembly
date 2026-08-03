@@ -1802,6 +1802,20 @@ describe(syncGlobalCommand, () => {
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
   });
 
+  // A link to a skill the run deploys is the one target whose anchor reads the domain base, so it is where a home
+  // domain anchored anywhere but `~` would show itself. Every other target is tilde-anchored outright and would
+  // survive such a change unmarked.
+  it('anchors a link to a delivered skill at the harness home, where the home domain writes it', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'See [beta](../../skills/consult-beta/SKILL.md).');
+    await writeLibraryRulebook('beta', 'delivery: skill', 'Beta body.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n    - beta\n');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'consult-alpha', 'SKILL.md'), 'utf8');
+    expect(skill).toContain('[beta](~/.claude/skills/consult-beta/SKILL.md)');
+  });
+
   it('injects ambient rulebooks into the harness guidance ambient region, never GLOBAL.md or PROJECT.md', async () => {
     const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
