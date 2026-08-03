@@ -1,8 +1,24 @@
 {
   "name": "@williamthorsen/kb",
   "version": "0.2.0",
-  "private": true,
   "description": "Knowledge-base foundation: discovery, config, frontmatter parsing, records, tags, and vault-integrity checks",
+  "keywords": [
+    "frontmatter",
+    "knowledge-base",
+    "markdown",
+    "notes"
+  ],
+  "homepage": "https://github.com/williamthorsen/codeassembly/tree/main/packages/kb#readme",
+  "bugs": {
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamthorsen/codeassembly.git",
+    "directory": "packages/kb"
+  },
+  "license": "ISC",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "exports": {
     ".": {
@@ -75,7 +91,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "nmr compile"
+    "build": "nmr compile",
+    "prepublishOnly": "nmr build"
   },
   "dependencies": {
     "picomatch": "4.0.5",
