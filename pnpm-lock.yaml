@@ -30,8 +30,8 @@ importers:
         specifier: 8.3.0
         version: 8.3.0(@typescript-eslint/parser@8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@typescript-eslint/utils@8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       '@williamthorsen/nmr':
-        specifier: 0.23.0
-        version: 0.23.0(prettier@3.9.6)(typescript@6.0.3)(vitest@4.1.10)
+        specifier: 0.24.0
+        version: 0.24.0(prettier@3.9.6)(typescript@6.0.3)(vitest@4.1.10)
       '@williamthorsen/release-kit':
         specifier: 10.0.0
         version: 10.0.0
@@ -1209,16 +1209,12 @@ packages:
       eslint: '>=10'
       typescript: '>=5'
 
-  '@williamthorsen/nmr-core@0.7.3':
-    resolution: {integrity: sha512-NhQqRBDQRPx+AQmPjgPvOE1DL3Ob8AkYSkr9DFxdrODnTJfNdFVJcIwiBF8kR74Ui+YXGAtwx6Rw87+T5zjsRw==}
-    engines: {node: '>=24'}
-
   '@williamthorsen/nmr-core@0.8.0':
     resolution: {integrity: sha512-6jI+Oz/Nw9+JMZSFqKGHIBHi/+g2wQSv8Rzk8r2EYu7qW6fonU8cWhoxRjT68N529Nn2dSLhsOLU79BOu66eGg==}
     engines: {node: '>=24'}
 
-  '@williamthorsen/nmr@0.23.0':
-    resolution: {integrity: sha512-5JX2AJ3Kwe6/+l2BHGjYlra9F+zJHqSjcXwSI61oqQPpv1TgnUfhN6fInU2lbxPoq0a9FzQyYD6Yy+NTBNhh9g==}
+  '@williamthorsen/nmr@0.24.0':
+    resolution: {integrity: sha512-oqPWS5iJQWV+AOqn0c0hwbMnzBuL+OvHvRo0CH08sqOPd+0Hy1R4v1m2QtrwAxgScqzm0Dz7xtoJLQb61plZ7Q==}
     engines: {node: '>=24.16.0'}
     hasBin: true
     peerDependencies:
@@ -4549,15 +4545,12 @@ snapshots:
       - supports-color
       - ts-declaration-location
 
-  '@williamthorsen/nmr-core@0.7.3': {}
-
   '@williamthorsen/nmr-core@0.8.0': {}
 
-  '@williamthorsen/nmr@0.23.0(prettier@3.9.6)(typescript@6.0.3)(vitest@4.1.10)':
+  '@williamthorsen/nmr@0.24.0(prettier@3.9.6)(typescript@6.0.3)(vitest@4.1.10)':
     dependencies:
-      '@williamthorsen/nmr-core': 0.7.3
+      '@williamthorsen/nmr-core': 0.8.0
       glob: 13.0.6
-      jiti: 2.7.0
       prettier-plugin-sh: 0.19.0(prettier@3.9.6)
       taze: 19.16.0
       typescript: 6.0.3

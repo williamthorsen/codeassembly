@@ -11,9 +11,9 @@ const PACKAGES_DIR = new URL('../../../packages/', import.meta.url).pathname;
 const SHARED_FACTORY_PATH = '.config/vitest/define-config.ts';
 const GIT_ISOLATION_SETUP_FILE = new URL('../vitest.setup.ts', import.meta.url).pathname;
 
-// nmr's project categories, pinned so that one it adds or drops fails here rather than passing with a
-// project fewer checked.
-const PROJECT_NAMES = ['app', 'integration', 'unit'];
+// nmr's isolation tiers, in the order it generates them: the residual tier first, then the named ones.
+// Pinned so that a tier it adds or drops fails here rather than passing with a project fewer checked.
+const PROJECT_NAMES = ['unit', 'tool', 'localhost', 'remote'];
 
 // A package whose config bypasses the shared factory loses git isolation silently: nothing fails, and
 // a suite that spawns git blocks on the developer's signing passphrase instead.
