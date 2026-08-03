@@ -6,6 +6,7 @@ import { resolveContentDir } from '../../lib/content-resolver.ts';
 import { expandIncludes } from '../../lib/directive-expander.ts';
 import { HARNESSES } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
+import { homeAnchor } from '../../lib/path-rewriter.ts';
 import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
 import { loadToolMapping } from '../../lib/tool-name-rewriter.ts';
 
@@ -35,7 +36,7 @@ describe('reviewer and coder partials render correctly', () => {
       toolMapping,
       fileRelPath: fileName,
       sourceLabel: `subagents/${fileName}`,
-      pathPrefix: harnessConfig.homeDir,
+      anchor: homeAnchor(harnessConfig.homeDir),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
-import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
+import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { deploySkill, resolveDeclaredSkill } from '../skill-deploy.ts';
 import { type SkillDeployContext } from '../skill-transform.ts';
 import { rewriteToolNames } from '../tool-name-rewriter.ts';
@@ -129,7 +129,7 @@ describe(deploySkill, () => {
     // Recompose install's pipeline for SKILL.md independently: expand → tools → markdown paths → template vars.
     const expanded = await expandIncludes(path.join(librarySkillsDir, 'demo', 'SKILL.md'), librarySkillsDir);
     const tooled = rewriteToolNames(expanded, toolMapping, 'demo/SKILL.md');
-    const pathed = rewriteMarkdownPaths(tooled, 'demo/SKILL.md', '.claude/skills');
+    const pathed = rewriteMarkdownPaths(tooled, 'demo/SKILL.md', homeAnchor('.claude/skills'));
     const expected = rewriteTemplateVariables(pathed, '.claude', 'claude');
 
     const deployed = await readFile(path.join(destDir, 'SKILL.md'), 'utf8');
@@ -145,7 +145,7 @@ describe(deploySkill, () => {
   function context(toolMapping: ReadonlyMap<string, string> = new Map()): SkillDeployContext {
     return {
       toolMapping,
-      pathPrefix: '.claude/skills',
+      anchor: homeAnchor('.claude/skills'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',

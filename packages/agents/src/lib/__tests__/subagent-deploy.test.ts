@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeArtifactMarker } from '../artifact-marker.ts';
 import { createSourceResolver, libraryResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
+import { homeAnchor } from '../path-rewriter.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping } from '../tool-name-rewriter.ts';
@@ -50,6 +51,7 @@ describe(deploySubagent, () => {
     return {
       overlayYaml: CLAUDE_OVERLAY,
       toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+      anchor: homeAnchor('.claude'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -65,7 +67,7 @@ describe(deploySubagent, () => {
       toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'canary.md',
       sourceLabel: 'subagents/canary.md',
-      pathPrefix: '.claude',
+      anchor: homeAnchor('.claude'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',

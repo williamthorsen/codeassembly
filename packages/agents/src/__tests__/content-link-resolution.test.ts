@@ -7,7 +7,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { collectHeadingSlugs, findUnterminatedFence, normalizeForAnchorScan } from '../lib/anchor-resolution.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import type { RulebookInvocationCatalog } from '../lib/invocation-tokens.ts';
-import { isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
+import { homeAnchor, isRewritableLinkTarget, MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { resolveSkillName } from '../lib/rulebook-skill.ts';
 import { renderRulebookBody } from '../lib/rulebook-transform.ts';
@@ -120,6 +120,7 @@ async function findRulebookRejections(): Promise<ReadonlyArray<string>> {
   for (const { slug, body } of parsed) {
     try {
       renderRulebookBody(body, slug, {
+        anchor: homeAnchor('.claude'),
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',

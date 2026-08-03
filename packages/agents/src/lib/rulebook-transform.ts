@@ -7,14 +7,18 @@ import {
   rewriteInvocationTokens,
   type RulebookInvocationCatalog,
 } from './invocation-tokens.ts';
-import { listRewritableLinkTargets, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import {
+  listRewritableLinkTargets,
+  type ResolveLinkAnchor,
+  rewriteMarkdownPaths,
+  rewriteTemplateVariables,
+} from './path-rewriter.ts';
 
 /** The per-harness inputs a rulebook body render depends on, resolved once per harness by the caller. */
 export interface RulebookRenderContext {
-  /**
-   * Harness home segment: both the prefix `~/`-prefixed link targets are built under and the `{harness_home_dir}`
-   * expansion target (e.g. `.claude`).
-   */
+  /** Maps a resolved Markdown link target, relative to the content root, to the path it deploys at. */
+  readonly anchor: ResolveLinkAnchor;
+  /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
   readonly harnessId: string;
@@ -46,8 +50,9 @@ const LINKABLE_ROOTS: ReadonlyArray<string> = ['scripts', 'skills'];
  * honor fails the run instead of shipping as a dead address.
  *
  * `slug` anchors link rewriting: a relative target resolves against `guidance/rulebooks/<slug>.md`, matching where the
- * rulebook sits in its content root, and the emitted path is rooted at the harness home. A `{rulebook:<slug>}` token
- * renders the deployed skill name of the rulebook it names, which is why the context carries the deployed set.
+ * rulebook sits in its content root, and the context's anchor maps that result to its deployed path.
+ * A `{rulebook:<slug>}` token renders the deployed skill name of the rulebook it names, which is why the context
+ * carries the deployed set.
  */
 export function renderRulebookBody(body: string, slug: string, context: RulebookRenderContext): string {
   // Labelled by source path where the two asserts below name the slug: this rejection is raised identically for
@@ -55,7 +60,7 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
   assertAnchorsResolve(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`);
   assertLinkTargetsAreDeliverable(body, slug);
   assertRulebookTokensResolve(body, slug, context.rulebooks);
-  const pathRewritten = rewriteMarkdownPaths(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`, context.homeDir);
+  const pathRewritten = rewriteMarkdownPaths(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`, context.anchor);
   const tokenRewritten = rewriteInvocationTokens(
     pathRewritten,
     context,

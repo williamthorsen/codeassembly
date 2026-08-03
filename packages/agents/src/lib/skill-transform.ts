@@ -4,15 +4,15 @@ import path from 'node:path';
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
-import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The per-harness inputs a declared-skill render depends on, resolved once per harness by the caller. */
 export interface SkillDeployContext {
   /** Canonical → harness tool-name mapping for the `{tool:NAME}` body-text rewriter. */
   readonly toolMapping: ReadonlyMap<string, string>;
-  /** Harness-relative prefix under which `~/`-prefixed Markdown link targets are built (e.g. `.claude/skills`). */
-  readonly pathPrefix: string;
+  /** Maps a resolved Markdown link target, relative to the harness skills dir, to the path it deploys at. */
+  readonly anchor: ResolveLinkAnchor;
   /** Harness home segment that `{harness_home_dir}` tokens expand to (e.g. `.claude`). */
   readonly homeDir: string;
   /** Harness identifier that `{harness_id}` tokens expand to (e.g. `claude`). */
@@ -46,9 +46,10 @@ export type RenderedSupportEntry =
  * Read-only; the caller composes its own write strategy and markers around the transform.
  * Throws (with a file:line anchor) on a broken include or an unmapped `{tool:NAME}` placeholder.
  *
- * `slug` anchors link rewriting: a relative Markdown link resolves against `<slug>/<file>` under `pathPrefix`, matching
- * how the deployed skill sits at `<pathPrefix>/<slug>/`. `_partials/` directories and dotfiles are skipped at every
- * depth — partials are include targets, never deployed artifacts.
+ * `slug` anchors link rewriting: a relative Markdown link resolves against `<slug>/<file>`, matching how the deployed
+ * skill sits under the harness skills dir, and the context's anchor maps that result to its deployed path.
+ * `_partials/` directories and dotfiles are skipped at every depth — partials are include targets, never deployed
+ * artifacts.
  *
  * `contentRoot` is the include-containment root — every `<!-- include: … -->` target must resolve within it, and it
  * roots the source label in unmapped-tool errors. It is the skill's own content root: the library for a library skill,
@@ -141,13 +142,13 @@ async function renderMarkdown(
   contentRoot: string,
   context: SkillDeployContext,
 ): Promise<string> {
-  const { toolMapping, pathPrefix, homeDir, harnessId, skillSigil, subagentSigil } = context;
+  const { anchor, toolMapping, homeDir, harnessId, skillSigil, subagentSigil } = context;
   const contextLabel = path.relative(contentRoot, srcPath).split(path.sep).join('/');
   const expanded = await expandIncludes(srcPath, contentRoot);
   assertAnchorsResolve(expanded, contextLabel);
   const toolRewritten = rewriteToolNames(expanded, toolMapping, contextLabel);
   const invocationRewritten = rewriteInvocationTokens(toolRewritten, { skillSigil, subagentSigil }, contextLabel);
-  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, pathPrefix);
+  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, `${slug}/${relPath}`, anchor);
   return rewriteTemplateVariables(pathRewritten, homeDir, harnessId);
 }
 

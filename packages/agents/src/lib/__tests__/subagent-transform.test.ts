@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { mergeFrontmatter } from '../frontmatter-merger.ts';
 import { rewriteInvocationTokens } from '../invocation-tokens.ts';
-import { rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
+import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from '../path-rewriter.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 import { loadToolMapping, rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
@@ -45,7 +45,7 @@ describe(renderSubagentForHarness, () => {
       toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      pathPrefix: '.claude',
+      anchor: homeAnchor('.claude'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -65,7 +65,7 @@ describe(renderSubagentForHarness, () => {
       toolMapping: loadToolMapping(ROVO_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      pathPrefix: '.rovodev',
+      anchor: homeAnchor('.rovodev'),
       homeDir: '.rovodev',
       harnessId: 'rovodev',
       skillSigil: '!',
@@ -93,7 +93,7 @@ describe(renderSubagentForHarness, () => {
       toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      pathPrefix: '.claude',
+      anchor: homeAnchor('.claude'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -108,7 +108,7 @@ describe(renderSubagentForHarness, () => {
       toolMapping: loadToolMapping(ROVO_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      pathPrefix: '.rovodev',
+      anchor: homeAnchor('.rovodev'),
       homeDir: '.rovodev',
       harnessId: 'rovodev',
       skillSigil: '!',
@@ -117,13 +117,13 @@ describe(renderSubagentForHarness, () => {
     expect(rovo).toContain('Invoke !capture-event, then dispatch code-reviewer.');
   });
 
-  it('rewrites a relative Markdown link to a tilde-prefixed path under pathPrefix', () => {
+  it('rewrites a relative Markdown link to the path its anchor names', () => {
     const output = renderSubagentForHarness(SOURCE, {
       overlayYaml: CLAUDE_OVERLAY,
       toolMapping: loadToolMapping(CLAUDE_OVERLAY),
       fileRelPath: 'demo-agent.md',
       sourceLabel: 'subagents/demo-agent.md',
-      pathPrefix: '.claude',
+      anchor: homeAnchor('.claude'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',
@@ -142,7 +142,7 @@ describe(renderSubagentForHarness, () => {
         toolMapping: loadToolMapping(CLAUDE_OVERLAY),
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
-        pathPrefix: '.claude',
+        anchor: homeAnchor('.claude'),
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -158,7 +158,7 @@ describe(renderSubagentForHarness, () => {
         toolMapping: loadToolMapping('_tools: {}\n'),
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
-        pathPrefix: '.claude',
+        anchor: homeAnchor('.claude'),
         homeDir: '.claude',
         harnessId: 'claude',
         skillSigil: '/',
@@ -181,7 +181,7 @@ describe(renderSubagentForHarness, () => {
         { skillSigil, subagentSigil },
         'subagents/demo-agent.md',
       );
-      const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, 'demo-agent.md', homeDir);
+      const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, 'demo-agent.md', homeAnchor(homeDir));
       const expected = rewriteTemplateVariables(rewrittenPaths, homeDir, harnessId);
 
       const rendered = renderSubagentForHarness(SOURCE, {
@@ -189,7 +189,7 @@ describe(renderSubagentForHarness, () => {
         toolMapping,
         fileRelPath: 'demo-agent.md',
         sourceLabel: 'subagents/demo-agent.md',
-        pathPrefix: homeDir,
+        anchor: homeAnchor(homeDir),
         homeDir,
         harnessId,
         skillSigil,

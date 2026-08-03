@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DirectiveExpansionError } from '../directive-expander.ts';
+import { homeAnchor } from '../path-rewriter.ts';
 import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../skill-transform.ts';
 import { ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
@@ -134,7 +135,7 @@ describe(renderSkillDirectory, () => {
   function context(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
     return {
       toolMapping: TOOL_MAPPING,
-      pathPrefix: '.claude/skills',
+      anchor: homeAnchor('.claude/skills'),
       homeDir: '.claude',
       harnessId: 'claude',
       skillSigil: '/',

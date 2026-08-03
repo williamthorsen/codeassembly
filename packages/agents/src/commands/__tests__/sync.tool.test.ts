@@ -1135,9 +1135,25 @@ describe(syncCommand, () => {
       const skill = await readFile(skillPath('demo'), 'utf8');
       expect(skill).toContain('Shared fragment.');
       expect(skill).toContain('Use open_files.');
-      expect(skill).toContain('[guide](~/.claude/skills/demo/guide.md)');
+      // Anchored in the project, where this same run deployed the target, rather than in the home harness dir a
+      // project sync never populates.
+      expect(skill).toContain(`[guide](${path.resolve(projectRoot)}/.claude/skills/demo/guide.md)`);
       expect(skill).not.toContain('{tool:Read}');
       expect(existsSync(path.join(projectRoot, '.claude', 'skills', 'demo', '_partials'))).toBe(false);
+    });
+
+    it('leaves a link to a skill this run does not deploy anchored at the harness home', async () => {
+      await writeLibrarySkill('demo', { body: 'See [the other one](../undeclared-skill/SKILL.md).' });
+      await writeLibrarySkill('undeclared-skill');
+      await declareSkills('demo');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      // The target exists in the content root but is undeclared, so no project tree holds it. Re-pointing the link
+      // there would make it unresolvable outright; the harness home is where an installed copy can still answer it.
+      expect(await readFile(skillPath('demo'), 'utf8')).toContain(
+        '[the other one](~/.claude/skills/undeclared-skill/SKILL.md)',
+      );
     });
 
     it('fails before writing when a declared skill has an unmapped tool placeholder, dry-run included', async () => {
@@ -1251,6 +1267,18 @@ describe(syncCommand, () => {
 
       expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
         '(~/.claude/skills/_data/action-items.md#block)',
+      );
+    });
+
+    it('anchors a link to a delivered skill in the project, where the same run writes it', async () => {
+      await writeLibraryRulebook('alpha', 'delivery: skill', 'See [beta](../../skills/consult-beta/SKILL.md).');
+      await writeLibraryRulebook('beta', 'delivery: skill', 'Beta body.');
+      await declareRulebooks('alpha', 'beta');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(await readFile(skillPath('consult-alpha'), 'utf8')).toContain(
+        `[beta](${path.resolve(projectRoot)}/.claude/skills/consult-beta/SKILL.md)`,
       );
     });
 
@@ -1371,6 +1399,30 @@ describe(syncCommand, () => {
         slugs.length === 0 ? '  use: []\n' : `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
       await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `subagents:\n${useBlock}`, 'utf8');
     }
+
+    it('anchors a project-deployed subagent link in the project, where the same run deploys the target', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary', { body: 'See [the skill](skills/commit/SKILL.md).' });
+      await mkdir(path.join(contentDir, 'skills', 'commit'), { recursive: true });
+      await writeFile(
+        path.join(contentDir, 'skills', 'commit', 'SKILL.md'),
+        '---\nname: commit\n---\n\n# Commit\n',
+        'utf8',
+      );
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        'skills:\n  use:\n    - commit\nsubagents:\n  use:\n    - canary\n',
+        'utf8',
+      );
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const target = path.join(path.resolve(projectRoot), '.claude', 'skills', 'commit', 'SKILL.md');
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).toContain(`[the skill](${target})`);
+      expect(existsSync(target)).toBe(true);
+    });
 
     it('fails a dry run with nothing written when a subagent body carries a rulebook token', async () => {
       await writeOverlays();
@@ -1748,6 +1800,20 @@ describe(syncGlobalCommand, () => {
 
     const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'), 'utf8');
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
+  });
+
+  // A link to a skill the run deploys is the one target whose anchor reads the domain base, so it is where a home
+  // domain anchored anywhere but `~` would show itself. Every other target is tilde-anchored outright and would
+  // survive such a change unmarked.
+  it('anchors a link to a delivered skill at the harness home, where the home domain writes it', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'See [beta](../../skills/consult-beta/SKILL.md).');
+    await writeLibraryRulebook('beta', 'delivery: skill', 'Beta body.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n    - beta\n');
+
+    await syncGlobalCommand(makeOptions(), homeDir, contentDir);
+
+    const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'consult-alpha', 'SKILL.md'), 'utf8');
+    expect(skill).toContain('[beta](~/.claude/skills/consult-beta/SKILL.md)');
   });
 
   it('injects ambient rulebooks into the harness guidance ambient region, never GLOBAL.md or PROJECT.md', async () => {

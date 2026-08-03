@@ -14,16 +14,12 @@ import { type DirectArtifacts, resolveClosure } from '../lib/dependency-resolver
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../lib/deploy-collisions.ts';
 import { readDirEntries, readFileOrEmpty, writeIfChanged } from '../lib/fs-helpers.ts';
 import { checkGitIgnored } from '../lib/git-ignore.ts';
-import {
-  HARNESSES,
-  resolveAmbientHostPath,
-  resolveHarnessIds,
-  resolveHarnessPaths,
-  resolveSkillsPathPrefix,
-} from '../lib/harness.ts';
+import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
+import { createContentRootLinkAnchor, createSkillLinkAnchor, type LinkAnchorContext } from '../lib/link-anchor.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
+import type { ResolveLinkAnchor } from '../lib/path-rewriter.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
 import { hasPromptsRegion, injectPromptsRegion, removePromptsRegion } from '../lib/prompts-yml-region.ts';
 import { type ResolvedRulebook, resolveRulebook } from '../lib/rulebook-deploy.ts';
@@ -71,6 +67,12 @@ interface AmbientHostTarget {
   readonly hostPath: string;
 }
 
+/**
+ * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so the pre-write gate,
+ * ambient delivery, and skill delivery all render a rulebook body against the same anchor.
+ */
+type ResolveRulebookContext = (harnessId: HarnessId) => RulebookRenderContext;
+
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
 interface HarnessSkillTarget {
   readonly harnessId: HarnessId;
@@ -88,6 +90,12 @@ export interface SyncDomain {
    */
   readonly ambient: AmbientHostKind;
   readonly label: 'project' | 'global';
+  /**
+   * Root that rendered links to this domain's own deployed trees are written under: `~` for the home domain, the
+   * absolute project root for the project domain. Without it a project-deployed artifact addresses the home harness
+   * dir, which a project sync never populates.
+   */
+  readonly anchorBase: string;
 }
 
 /**
@@ -111,7 +119,7 @@ export async function syncCommand(
   }
   await reconcileDomain(
     options,
-    { baseDir: projectRoot, ambient: 'project-local', label: 'project' },
+    { baseDir: projectRoot, ambient: 'project-local', label: 'project', anchorBase: path.resolve(projectRoot) },
     contentDirOverride,
   );
 }
@@ -138,7 +146,11 @@ export async function syncGlobalCommand(
     );
     return;
   }
-  await reconcileDomain(options, { baseDir: homeDir, ambient: 'harness-home', label: 'global' }, contentDirOverride);
+  await reconcileDomain(
+    options,
+    { baseDir: homeDir, ambient: 'harness-home', label: 'global', anchorBase: '~' },
+    contentDirOverride,
+  );
   await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
 }
 
@@ -216,12 +228,35 @@ async function reconcileDomain(
   // lands on, so the set is resolved once and threaded rather than re-derived per pass.
   const harnessIds = resolveHarnessIds(options.harness, domain.baseDir);
 
+  // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
+  // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
+  // everything this run writes into a domain skills dir, and the collision gate has already proven them disjoint.
+  function resolveAnchorContext(harnessId: HarnessId): LinkAnchorContext {
+    const config = HARNESSES[harnessId];
+    return {
+      // Declared skills are filtered per harness because a skill may target only some; rulebook-delivered skill names
+      // are not, because every skill-delivery rulebook is written to every targeted harness.
+      deployedSkillDirs: new Set([
+        ...resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+        ...desiredSkillDirs.values(),
+      ]),
+      domainBase: domain.anchorBase,
+      homeDir: config.homeDir,
+      skillsDirName: config.skillsDirName,
+    };
+  }
+
+  const resolveRulebookContext: ResolveRulebookContext = (harnessId) =>
+    buildRulebookRenderContext(harnessId, resolved, createContentRootLinkAnchor(resolveAnchorContext(harnessId)));
+
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
   // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
   // tool-name/link rewriting, and the harness id each rulebook body renders for.
   const harnessSkillTargets = await Promise.all(
-    harnessIds.map((harnessId) => resolveSkillTarget(harnessId, domain.baseDir, contentDir)),
+    harnessIds.map((harnessId) =>
+      resolveSkillTarget(harnessId, domain.baseDir, contentDir, createSkillLinkAnchor(resolveAnchorContext(harnessId))),
+    ),
   );
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
@@ -229,7 +264,14 @@ async function reconcileDomain(
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    harnessIds.map((harnessId) => resolveSubagentTarget(harnessId, domain.baseDir, contentDir)),
+    harnessIds.map((harnessId) =>
+      resolveSubagentTarget(
+        harnessId,
+        domain.baseDir,
+        contentDir,
+        createContentRootLinkAnchor(resolveAnchorContext(harnessId)),
+      ),
+    ),
   );
 
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
@@ -290,7 +332,7 @@ async function reconcileDomain(
 
   // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
-  assertRulebooksRender(harnessIds, resolved);
+  assertRulebooksRender(harnessIds, resolved, resolveRulebookContext);
 
   // Reject a sync-owned ambient host whose region is half-written before anything is written, dry-run included.
   // Appending beside a stray marker is the one path in this command that can destroy hand-authored content.
@@ -304,7 +346,7 @@ async function reconcileDomain(
   if (options.dryRun) {
     await retireRetiredOutputs(options, domain);
     reportDryRun({
-      ambientHostPreviews: await previewAmbientHosts(ambientHosts, domain, resolved),
+      ambientHostPreviews: await previewAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext),
       resolutionReport,
       resolved,
       harnessSkillTargets,
@@ -321,7 +363,7 @@ async function reconcileDomain(
 
   await retireRetiredOutputs(options, domain);
 
-  await deliverAmbient(ambientHosts, domain, resolved);
+  await deliverAmbient(ambientHosts, domain, resolved, resolveRulebookContext);
 
   // Reconcile skill files per targeted harness: Retract sync-owned skill dirs that are no longer current, then
   // write every skill-delivery rulebook. Orphans were computed against the pre-write filesystem, so retracting
@@ -331,7 +373,7 @@ async function reconcileDomain(
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
-    const context = resolveRulebookRenderContext(harnessId, resolved);
+    const context = resolveRulebookContext(harnessId);
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -745,9 +787,13 @@ async function assertDeclaredSubagentsRender(
  * delivery pipeline cannot honor throws before any file is written. Both delivery passes re-render at write time;
  * this pass exists only to fail the run closed, including under `--dry-run`.
  */
-function assertRulebooksRender(harnessIds: ReadonlyArray<HarnessId>, resolved: ReadonlyArray<ResolvedRulebook>): void {
+function assertRulebooksRender(
+  harnessIds: ReadonlyArray<HarnessId>,
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  resolveRulebookContext: ResolveRulebookContext,
+): void {
   for (const harnessId of harnessIds) {
-    const context = resolveRulebookRenderContext(harnessId, resolved);
+    const context = resolveRulebookContext(harnessId);
     for (const rulebook of resolved) {
       renderRulebookBody(rulebook.body, rulebook.slug, context);
     }
@@ -763,9 +809,10 @@ async function deliverAmbient(
   hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
+  resolveRulebookContext: ResolveRulebookContext,
 ): Promise<void> {
   for (const { harnessId, hostPath } of hosts) {
-    const body = renderAmbientBody(resolved, harnessId);
+    const body = renderAmbientBody(resolved, resolveRulebookContext(harnessId));
     const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
     if (plan.kind === 'skip') {
       if (plan.warn) {
@@ -856,6 +903,7 @@ async function previewAmbientHosts(
   hosts: ReadonlyArray<AmbientHostTarget>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
+  resolveRulebookContext: ResolveRulebookContext,
 ): Promise<ReadonlyArray<string>> {
   return Promise.all(
     hosts.map(async ({ harnessId, hostPath }) =>
@@ -865,7 +913,7 @@ async function previewAmbientHosts(
           domain.ambient,
           await probeAmbientHost(hostPath),
           hostPath,
-          renderAmbientBody(resolved, harnessId),
+          renderAmbientBody(resolved, resolveRulebookContext(harnessId)),
         ),
       ),
     ),
@@ -1015,10 +1063,9 @@ async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain)
 
 /**
  * Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of one harness's ambient
- * region. Each body is rendered for `harnessId`, so the same rulebook yields that harness's own absolute paths.
+ * region. The context is one harness's, so the same rulebook yields that harness's own absolute paths.
  */
-function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId: HarnessId): string {
-  const context = resolveRulebookRenderContext(harnessId, resolved);
+function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, context: RulebookRenderContext): string {
   let body = '';
   for (const rulebook of resolved) {
     if (rulebook.ambient) {
@@ -1029,15 +1076,18 @@ function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, harnessId:
 }
 
 /**
- * The per-harness inputs a rulebook render depends on: the harness config's own segments and sigils, plus the deployed
- * rulebooks indexed by slug, so a `{rulebook:<slug>}` token renders the skill name its target deploys under.
+ * The per-harness inputs a rulebook render depends on: the harness config's own segments and sigils, the anchor its
+ * link targets resolve through, and the deployed rulebooks indexed by slug, so a `{rulebook:<slug>}` token renders the
+ * skill name its target deploys under.
  */
-function resolveRulebookRenderContext(
+function buildRulebookRenderContext(
   harnessId: HarnessId,
   resolved: ReadonlyArray<ResolvedRulebook>,
+  anchor: ResolveLinkAnchor,
 ): RulebookRenderContext {
   const config = HARNESSES[harnessId];
   return {
+    anchor,
     homeDir: config.homeDir,
     harnessId: config.id,
     skillSigil: config.skillSigil,
@@ -1257,13 +1307,14 @@ function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
 
 /**
  * Resolves one harness's project-local subagents dir together with the per-harness inputs the deploy transform needs:
- * the harness overlay YAML, its tool-name mapping, the home-dir segment, and the harness id. Passing `projectRoot` as
- * the base keeps delivery project-scoped, matching the skill passes.
+ * the harness overlay YAML, its tool-name mapping, the link anchor, the home-dir segment, and the harness id. Passing
+ * `projectRoot` as the base keeps delivery project-scoped, matching the skill passes.
  */
 async function resolveSubagentTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
+  anchor: ResolveLinkAnchor,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
@@ -1271,6 +1322,7 @@ async function resolveSubagentTarget(
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {
       overlayYaml,
+      anchor,
       toolMapping: loadToolMapping(overlayYaml),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
@@ -1282,13 +1334,14 @@ async function resolveSubagentTarget(
 
 /**
  * Resolves one harness's project-local skills dir together with the per-harness inputs the skill transform needs: the
- * tool-name mapping (from the harness overlay), the link-rewrite prefix, the home-dir segment, and the harness id.
+ * tool-name mapping (from the harness overlay), the link anchor, the home-dir segment, and the harness id.
  * Passing `projectRoot` as the base keeps delivery project-scoped.
  */
 async function resolveSkillTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
+  anchor: ResolveLinkAnchor,
 ): Promise<HarnessSkillTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
@@ -1297,7 +1350,7 @@ async function resolveSkillTarget(
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       toolMapping: loadToolMapping(overlayYaml),
-      pathPrefix: resolveSkillsPathPrefix(harnessConfig),
+      anchor,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,
