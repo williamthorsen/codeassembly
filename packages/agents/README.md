@@ -589,3 +589,11 @@ editors:
     command: webstorm
     extensions: '*.md'
 ```
+
+## Development
+
+### Bin wrapper pattern
+
+A package's `bin` field points to a committed wrapper script under `bin/` that dynamically imports the build output at runtime. Do not point `bin` entries directly into `dist/`: pnpm creates bin symlinks during install, and nothing compiles until `pnpm run bootstrap` runs afterward, so the target won't exist in a fresh worktree and `pnpm install` will emit confusing "Failed to create bin" warnings.
+
+Any new `bin` entry in this monorepo should follow the same pattern. See `packages/mcp/bin/codeassembly-mcp.js` for the template, and the `@williamthorsen/node-monorepo-tools` packages for the original rationale.

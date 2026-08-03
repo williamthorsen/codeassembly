@@ -27,11 +27,7 @@
     }
   },
   "main": "./dist/esm/index.js",
-  "bin": {
-    "codeassembly-runs": "bin/codeassembly-runs.js"
-  },
   "files": [
-    "bin",
     "dist"
   ],
   "scripts": {
