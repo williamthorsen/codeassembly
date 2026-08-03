@@ -18,6 +18,13 @@ const config = defineConfig({
       'scope:run-core': { color: '00ff96' },
     },
   },
+  workspaces: [
+    { dir: 'agents', legacyIdentities: [{ name: '@codeassembly/agents', tagPrefix: 'agents-v' }] },
+    { dir: 'fleet', shouldExclude: true },
+    { dir: 'foreman', shouldExclude: true },
+    { dir: 'mcp', legacyIdentities: [{ name: '@codeassembly/mcp', tagPrefix: 'mcp-v' }] },
+    { dir: 'run-core', legacyIdentities: [{ name: '@codeassembly/run-core', tagPrefix: 'run-core-v' }] },
+  ],
 });
 
 export default config;
