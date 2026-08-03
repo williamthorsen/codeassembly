@@ -66,6 +66,13 @@ describe(buildRovoHookEntries, () => {
   });
 
   it('does not claim a foreign entry that merely mentions the CLI name', () => {
-    expect(isSentinelOwned({ name: 'on_complete', commands: ['codeassembly-agents status'] })).toBe(false);
+    expect(isSentinelOwned({ name: 'on_complete', commands: ['codeassembly status'] })).toBe(false);
+  });
+
+  it('keeps the sentinel value frozen', () => {
+    // Pinned to the literal: entries carrying this string are already written into users' harness
+    // configs, and a new value would strand them behind a parallel set of entries. Every other
+    // assertion here compares against the constant and would pass for any value.
+    expect(HOOK_SENTINEL).toBe('--sentinel codeassembly-agents');
   });
 });
