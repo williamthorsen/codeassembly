@@ -134,7 +134,7 @@ export async function syncGlobalCommand(
   const declarationPath = path.join(homeDir, '.agents', 'codeassembly.yaml');
   if (!existsSync(declarationPath)) {
     console.info(
-      `No ${declarationPath} found. Run \`codeassembly-agents init --global\` to create one, then re-run \`sync --global\`.`,
+      `No ${declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`,
     );
     return;
   }
@@ -797,9 +797,9 @@ type AmbientHostPlan =
 function describeAmbientSkip(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
   switch (status) {
     case 'missing':
-      return `${guidanceFile} does not exist. Run \`codeassembly-agents install\`, then re-run \`sync --global\`.`;
+      return `${guidanceFile} does not exist. Run \`codeassembly install\`, then re-run \`sync --global\`.`;
     case 'no-region':
-      return `${guidanceFile} carries no ambient region. Run \`codeassembly-agents install\` to refresh it, then re-run \`sync --global\`.`;
+      return `${guidanceFile} carries no ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
     case 'malformed':
       return `${guidanceFile} carries a damaged ambient region — an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
   }

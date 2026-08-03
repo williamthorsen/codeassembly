@@ -153,7 +153,7 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
  * Prints usage information for the `generate` command.
  */
 export function printGenerateUsage(): void {
-  console.info(`Usage: codeassembly-agents generate <target> [options]
+  console.info(`Usage: codeassembly generate <target> [options]
 
 Targets:
   label-map   Generate .meta/label-map.json with type and scope mappings

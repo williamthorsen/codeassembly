@@ -14,7 +14,7 @@ import {
 
 const LABEL_MAP_PATH = '.meta/label-map.json';
 const RELEASE_KIT_PACKAGE_JSON = 'node_modules/@williamthorsen/release-kit/package.json';
-const REGENERATE_FIX = 'Run `codeassembly-agents generate label-map --force` to regenerate the label map';
+const REGENERATE_FIX = 'Run `codeassembly generate label-map --force` to regenerate the label map';
 
 /**
  * Default internal rdy kit for the codeassembly monorepo.
@@ -50,7 +50,7 @@ export default defineRdyKit({
             const content = readFile(LABEL_MAP_PATH);
             return content !== undefined;
           },
-          fix: 'Run `codeassembly-agents generate label-map` to create a starter label map',
+          fix: 'Run `codeassembly generate label-map` to create a starter label map',
         },
         {
           name: '.meta/label-map.json scopes match the workspace',

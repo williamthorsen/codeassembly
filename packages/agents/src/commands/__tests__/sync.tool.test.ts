@@ -1785,7 +1785,7 @@ describe(syncGlobalCommand, () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       await syncGlobalCommand(makeOptions(), homeDir, contentDir);
-      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('codeassembly-agents install');
+      expect(warnSpy.mock.calls.map((call) => String(call[0])).join('\n')).toContain('codeassembly install');
     } finally {
       warnSpy.mockRestore();
     }
@@ -1868,7 +1868,7 @@ describe(syncGlobalCommand, () => {
     }
 
     expect(output).toContain('skip ambient delivery');
-    expect(output).toContain('codeassembly-agents install');
+    expect(output).toContain('codeassembly install');
     expect(output).not.toContain('inject the ambient region in');
   });
 

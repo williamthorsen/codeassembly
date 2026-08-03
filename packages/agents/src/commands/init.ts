@@ -6,7 +6,7 @@ import process from 'node:process';
 
 import type { InstallOptions } from '../lib/types.ts';
 
-const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly-agents sync\`.
+const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
 #
 # rulebooks.use lists the rulebook slugs this project adopts. Each is materialized under .agents/ and, per its
 # delivery mode, inlined into PROJECT.md and/or delivered as a consult-<slug> skill.
@@ -41,7 +41,7 @@ rulebooks:
 `;
 
 const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
-# \`codeassembly-agents sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
+# \`codeassembly sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
 #
 # \`all\` is the full catalog — every rulebook, skill, and subagent. Replace it with a narrower collection or an
 # explicit member list to trim what deploys.

@@ -220,7 +220,7 @@ function parseValueArg(
  * Prints usage information to stdout.
  */
 function printUsage(): void {
-  console.info(`Usage: codeassembly-agents <command> [options]
+  console.info(`Usage: codeassembly <command> [options]
 
 Commands:
   install          Install shared guidance, harness-specific skills, scripts, and support data into harness directories

@@ -6,7 +6,7 @@ pnpm-lock.yaml
 # `yaml` package surfaces the pattern), so the bundles are excluded at the root level too.
 packages/agents/content/skills/**/*.mjs
 
-# Harness artifacts deployed by `codeassembly-agents sync`: generated, gitignored, and carrying
+# Harness artifacts deployed by `codeassembly sync`: generated, gitignored, and carrying
 # copies of the skill-helper bundles excluded above, which sync copies verbatim into each
 # deployed skill directory. The exclusion above covers the source path only.
 .claude/agents/
