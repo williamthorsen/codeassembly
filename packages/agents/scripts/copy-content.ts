@@ -33,6 +33,9 @@ console.info('  Done.');
 
 // 2. Prepend shebang to dist/esm/cli.js
 console.info('Adding shebang to dist/esm/cli.js...');
+// This read is unconditional by design. `nmr compile` keeps its content-hash cache outside `dist/`, so deleting
+// `dist/` alone does not force a rebuild; an absent entry point throws here and fails the build, which is what stops
+// a skipped compile from publishing a tarball whose bin dies at its own gate. Guarding the read would silence that.
 const cliContent = await readFile(cliEntry, 'utf8');
 if (!cliContent.startsWith('#!/')) {
   await writeFile(cliEntry, `#!/usr/bin/env node\n${cliContent}`, 'utf8');
