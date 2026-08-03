@@ -47,7 +47,7 @@ A partial's own includes are resolved relative to that partial's directory, not 
 
 Installable content is rewritten at install time. Author cross-references in one of three forms, depending on intent:
 
-- **Runtime references** — paths the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths.
+- **Runtime references** — paths the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/lede-voice.md`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, except that a link naming a skill the same run deploys is anchored under the project root rather than the harness home.
 - **Source-tree citations** — prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
 - **Self-referential prose** about the source tree itself (e.g., this paragraph) is treated as a source-tree citation.
 
