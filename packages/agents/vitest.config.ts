@@ -1,13 +1,6 @@
-import { defineConfig, mergeConfig } from 'vitest/config';
+import { defineRepoVitestConfig } from '../../.config/vitest/define-config.ts';
 
-import baseConfig from '../../.config/vitest/vitest.config.ts';
-
-const config = defineConfig({
-  test: {
-    coverage: { include: ['src/**/*.ts'] },
-    environment: 'node',
-    include: ['src/**/__tests__/*.test.ts'],
-  },
-});
-
-export default mergeConfig(baseConfig, config);
+// The integration suite installs the real content catalog end to end and runs off the CI path, so it
+// needs far more than the default timeout. Vitest applies project options to every category, which
+// leaves the unit suite a ceiling it never approaches.
+export default defineRepoVitestConfig({ project: { testTimeout: 120_000 } });
