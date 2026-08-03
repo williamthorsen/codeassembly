@@ -1,7 +1,7 @@
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { mergeFrontmatter } from './frontmatter-merger.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
-import { rewriteMarkdownPaths, type ResolveLinkAnchor, rewriteTemplateVariables } from './path-rewriter.ts';
+import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The harness-specific inputs a subagent render depends on, resolved once per harness by the caller. */

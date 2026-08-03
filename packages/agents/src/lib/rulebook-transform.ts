@@ -9,8 +9,8 @@ import {
 } from './invocation-tokens.ts';
 import {
   listRewritableLinkTargets,
-  rewriteMarkdownPaths,
   type ResolveLinkAnchor,
+  rewriteMarkdownPaths,
   rewriteTemplateVariables,
 } from './path-rewriter.ts';
 

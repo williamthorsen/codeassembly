@@ -4,7 +4,7 @@ import path from 'node:path';
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
-import { rewriteMarkdownPaths, type ResolveLinkAnchor, rewriteTemplateVariables } from './path-rewriter.ts';
+import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
 
 /** The per-harness inputs a declared-skill render depends on, resolved once per harness by the caller. */
