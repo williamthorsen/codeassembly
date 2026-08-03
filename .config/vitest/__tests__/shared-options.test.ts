@@ -9,7 +9,7 @@ import type { ProjectConfig } from 'vitest/node';
 
 import { sharedVitestOptions } from '../shared-options.ts';
 
-const PACKAGES_DIR = new URL('../../../packages/', import.meta.url).pathname;
+const PACKAGES_DIR = fileURLToPath(new URL('../../../packages/', import.meta.url));
 const SHARED_OPTIONS_PATH = '.config/vitest/shared-options.ts';
 const GIT_ISOLATION_SETUP_FILE = fileURLToPath(new URL('../vitest.setup.ts', import.meta.url));
 
