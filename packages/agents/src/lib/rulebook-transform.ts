@@ -50,8 +50,9 @@ const LINKABLE_ROOTS: ReadonlyArray<string> = ['scripts', 'skills'];
  * honor fails the run instead of shipping as a dead address.
  *
  * `slug` anchors link rewriting: a relative target resolves against `guidance/rulebooks/<slug>.md`, matching where the
- * rulebook sits in its content root, and the emitted path is rooted at the harness home. A `{rulebook:<slug>}` token
- * renders the deployed skill name of the rulebook it names, which is why the context carries the deployed set.
+ * rulebook sits in its content root, and the context's anchor maps that result to its deployed path.
+ * A `{rulebook:<slug>}` token renders the deployed skill name of the rulebook it names, which is why the context
+ * carries the deployed set.
  */
 export function renderRulebookBody(body: string, slug: string, context: RulebookRenderContext): string {
   // Labelled by source path where the two asserts below name the slug: this rejection is raised identically for
