@@ -1,1 +1,1 @@
-export { isEnoent } from '@codeassembly/run-core';
+export { isEnoent } from 'codeassembly-run-core';

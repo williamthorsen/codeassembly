@@ -1,6 +1,6 @@
-import type { AliasMap } from '@codeassembly/kb';
-import type { KbEvent } from '@codeassembly/kb/records';
-import { canonicalize } from '@codeassembly/kb/tags';
+import type { AliasMap } from '@williamthorsen/kb';
+import type { KbEvent } from '@williamthorsen/kb/records';
+import { canonicalize } from '@williamthorsen/kb/tags';
 
 import { dedupeInOrder } from '../../kb-shared/note-helpers.ts';
 

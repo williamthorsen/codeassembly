@@ -5,7 +5,7 @@
 // batch returns `{ ok: true, ..., results }`, where each event carries its own success or failed-with-reason entry.
 // System errors (out-of-disk, permission denied) are out of band: they print to stderr and exit non-zero.
 
-import type { EventImpact } from '@codeassembly/kb/records';
+import type { EventImpact } from '@williamthorsen/kb/records';
 
 /** Operation names — one per mutually-exclusive op flag. */
 export type OperationName = 'add-addressed-by' | 'retag' | 'set-impact';

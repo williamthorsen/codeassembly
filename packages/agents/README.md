@@ -1,10 +1,10 @@
-# @codeassembly/agents
+# codeassembly
 
 Specialized subagents for orchestrated development workflows. This package provides skills, subagent definitions, and scripts that power the orchestration pipeline.
 
 ## Commands
 
-Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`.
+Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 
 | Command             | Description                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -17,7 +17,7 @@ Run via the `codeassembly-agents` CLI: `codeassembly-agents <command> [options]`
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
-Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone. Run `codeassembly-agents --help` for the authoritative list.
+Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone. Run `codeassembly --help` for the authoritative list.
 
 ## Session-lifecycle hooks
 
@@ -33,7 +33,7 @@ Skills report the work they do, but they cannot report a session opening, exitin
 `install` places the relay in each harness's `scripts/` directory and then wires the entries below into the harness config (`~/.claude/settings.json`, `~/.rovodev/config.yml`) by default. The wiring is its own step, shared across the CLI:
 
 - `install --skip-hooks` installs everything else and leaves the configs untouched.
-- `codeassembly-agents configure-hooks` runs just the wiring, for re-applying it later.
+- `codeassembly configure-hooks` runs just the wiring, for re-applying it later.
 - `configure-hooks --print` prints the entries without writing anything — the manual-adoption path for a config you manage elsewhere. The snippets below are exactly what it emits.
 - `uninstall` removes the entries; `status` reports each one as present, drifted, or absent.
 
@@ -126,7 +126,7 @@ Two things to know about Rovo:
 
 ## Project declaration
 
-A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly-agents init` to scaffold one, declare the artifacts you want, then run `codeassembly-agents sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly-agents init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).
+A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts you want, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains — the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `all` collection. See [Scopes](#scopes).
 
 Authoring conventions for the artifacts you declare — frontmatter fields, the `dependencies:` and `members:` blocks, and naming — live in the `codeassembly-content-specification` rulebook (`content/guidance/rulebooks/codeassembly-content-specification.md`). This section documents the declaration mechanism itself.
 
@@ -180,7 +180,7 @@ members:
 
 `members:` is collections-only; rulebooks, skills, and subagents declare prerequisite edges under `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error that names the offending artifact.
 
-Dropping or omitting a collection, or setting `root: true`, excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead. The shipped `all` collection is the whole catalog; `recommended` bundles a smaller default set. `codeassembly-agents init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `collections: use: [all]`, so `sync --global` deploys the whole catalog into the home directories; a project adds a collection for repo deployment by declaring it explicitly.
+Dropping or omitting a collection, or setting `root: true`, excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead. The shipped `all` collection is the whole catalog; `recommended` bundles a smaller default set. `codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `collections: use: [all]`, so `sync --global` deploys the whole catalog into the home directories; a project adds a collection for repo deployment by declaring it explicitly.
 
 #### The `@library` token
 
@@ -282,10 +282,10 @@ A package's catalog is its rulebooks, skills, and subagents; a `collections/` en
 
 Authoring the artifacts themselves is no different from authoring library content; see the content specification for frontmatter fields, `dependencies:`, `members:`, and invocation tokens.
 
-**Gate the content in the producer's own build.** `codeassembly-agents validate` runs the checks a consumer's `sync` runs before writing — dependency closure, artifact resolution, delivery collisions, and a per-harness render — over the whole content root, writing nothing:
+**Gate the content in the producer's own build.** `codeassembly validate` runs the checks a consumer's `sync` runs before writing — dependency closure, artifact resolution, delivery collisions, and a per-harness render — over the whole content root, writing nothing:
 
 ```
-codeassembly-agents validate
+codeassembly validate
 ```
 
 It reads no `codeassembly.yaml`, so a package that produces guidance without consuming any still has a gate: wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness the root could deploy to, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file.
@@ -298,12 +298,12 @@ One shape cannot consume its own guidance: a single-package repo whose package i
 
 The declaration resolves in two independent **domains**, each with its own base and local tiers and its own deployment target. The tiers within a domain run lowest to highest precedence.
 
-**Repo domain** — `codeassembly-agents sync`, deploying into the repo:
+**Repo domain** — `codeassembly sync`, deploying into the repo:
 
 1. **Project** — `.agents/codeassembly.yaml`, committed and shared with the team.
 2. **Project-local** — `.agents/codeassembly.local.yaml`, gitignored, for personal overrides.
 
-**Home domain** — `codeassembly-agents sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovodev`) and `~/.agents/`:
+**Home domain** — `codeassembly sync --global`, deploying into the home harness directories (`~/.claude`, `~/.rovodev`) and `~/.agents/`:
 
 1. **User-global** — `~/.agents/codeassembly.yaml`, created by `init --global` (declares `all` by default).
 2. **User-global-local** — `~/.agents/codeassembly.local.yaml`, for personal overrides that survive reinstalls.
@@ -326,14 +326,14 @@ When upgrading from a build where `install` deployed the catalog, run `install` 
 ```json
 {
   "scripts": {
-    "postinstall": "codeassembly-agents sync --warn-only"
+    "postinstall": "codeassembly sync --warn-only"
   }
 }
 ```
 
 `--warn-only` reports a failure and exits 0, and it belongs on this trigger specifically. `sync` fails closed on a missing declared source, an unresolvable slug, a foreign-owned target, or a damaged ambient region; without the flag, any of those aborts `pnpm install` for everything downstream, which costs far more than the stale guidance it guards against. `pnpm install --ignore-scripts` skips the hook, so a tree installed that way carries whatever the last sync left.
 
-**Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: the build has already succeeded by then, so the tree is usable and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync reached before the build stops at the `codeassembly-agents` wrapper's build-output gate instead of deploying skill directories without the helper bundles the build produces. That same gate is why this trigger cannot move to `postinstall`: pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
+**Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: the build has already succeeded by then, so the tree is usable and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync reached before the build stops at the `codeassembly` wrapper's build-output gate instead of deploying skill directories without the helper bundles the build produces. That same gate is why this trigger cannot move to `postinstall`: pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
 
 A repo whose bootstrap always follows its install needs only the post-build trigger, which covers its package-borne artifacts too. Re-running `sync` on unchanged content rewrites nothing, so a repo with reason to wire both pays only the second run's startup. Either trigger is a no-op in a project that declares no artifacts.
 
@@ -589,3 +589,11 @@ editors:
     command: webstorm
     extensions: '*.md'
 ```
+
+## Development
+
+### Bin wrapper pattern
+
+A package's `bin` field points to a committed wrapper script under `bin/` that dynamically imports the build output at runtime. Do not point `bin` entries directly into `dist/`: pnpm creates bin symlinks during install, and nothing compiles until `pnpm run bootstrap` runs afterward, so the target won't exist in a fresh worktree and `pnpm install` will emit confusing "Failed to create bin" warnings.
+
+Any new `bin` entry in this monorepo should follow the same pattern. See `packages/mcp/bin/codeassembly-mcp.js` for the template, and the `@williamthorsen/node-monorepo-tools` packages for the original rationale.

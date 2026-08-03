@@ -1,4 +1,4 @@
-import type { KbAssertion } from '@codeassembly/kb/records';
+import type { KbAssertion } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { bumpUpdated } from '../bump-updated.ts';

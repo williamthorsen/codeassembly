@@ -1,9 +1,9 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
-import type { Finding } from '@codeassembly/kb';
-import type { EnumeratedNote } from '@codeassembly/kb/check';
-import { asStringList } from '@codeassembly/kb/note-io';
-import { buildVaultIndex } from '@codeassembly/kb/vault-integrity';
+import type { Finding } from '@williamthorsen/kb';
+import type { EnumeratedNote } from '@williamthorsen/kb/check';
+import { asStringList } from '@williamthorsen/kb/note-io';
+import { buildVaultIndex } from '@williamthorsen/kb/vault-integrity';
 
 import { canonicalizeTags } from './apply/canonicalize-tags.ts';
 import { rewriteWikilinks } from './apply/rewrite-wikilinks.ts';

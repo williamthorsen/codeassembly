@@ -32,7 +32,7 @@ Which notes are curated is governed by the store's `.kb/config.yaml`: by default
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
 - **Sibling `kb-edit.mjs`** — required only for `--apply` tag canonicalization. The helper resolves it next to its own bundle; if the skills are deployed without co-location, tag fixes fail with a clear message while the read-only report and the wikilink sweep are unaffected.
 
 ## Detection categories

@@ -2,7 +2,7 @@
  * Build step: Bundle each TypeScript helper into a single self-contained `.mjs` placed inside the content tree.
  *
  * A helper installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
- * esbuild bundles it with `@codeassembly/kb` and its `yaml` / `zod` dependencies inlined, producing a file that runs
+ * esbuild bundles it with `@williamthorsen/kb` and its `yaml` / `zod` dependencies inlined, producing a file that runs
  * under `node` with no monorepo packages present on disk.
  * The bundle is written under `content/`, so a subsequent `copy-content.ts` carries it into `dist/content/`
  * and the dev and built layouts both ship the helper.
@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 import { build } from 'esbuild';
 
-/** Absolute path to the `@codeassembly/agents` package root. */
+/** Absolute path to the `codeassembly` package root. */
 export const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** One helper to bundle: its TypeScript entry point and the `.mjs` output it produces. */
@@ -102,7 +102,7 @@ export async function bundleSkillHelpers(): Promise<void> {
       format: 'esm',
       target: 'es2022',
       banner: { js: requireShim },
-      // Resolve `@codeassembly/kb` (and any future workspace dep) from its `source` `.ts` export
+      // Resolve `@williamthorsen/kb` (and any future workspace dep) from its `source` `.ts` export
       // condition so the bundle does not require those packages to be pre-built.
       conditions: ['source'],
     });

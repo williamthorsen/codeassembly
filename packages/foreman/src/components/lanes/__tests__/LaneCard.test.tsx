@@ -1,5 +1,5 @@
-import type { LaneSnapshot, SessionSnapshot } from '@codeassembly/fleet';
 import { render, screen } from '@testing-library/react';
+import type { LaneSnapshot, SessionSnapshot } from 'codeassembly-fleet';
 import { describe, expect, it } from 'vitest';
 
 import { MantineProvider } from '../../../integrations/mantine/index.ts';

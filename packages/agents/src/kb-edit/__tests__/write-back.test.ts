@@ -2,7 +2,7 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { KbAssertion } from '@codeassembly/kb/records';
+import type { KbAssertion } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { writeBackNote } from '../write-back.ts';

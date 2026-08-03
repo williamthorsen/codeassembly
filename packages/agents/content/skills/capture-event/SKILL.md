@@ -38,7 +38,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 ### Auto-filled vs agent-supplied
 
 - **Auto-filled by the helper:** `recordType` (`event`), `id` (ULID), `captured-at`, `cwd`, `session` (`CLAUDE_CODE_SESSION_ID`, best-effort — omitted silently on a harness that exposes no session id), and `repo` (the `owner/name` git remote at `cwd`, best-effort — omitted silently when no remote resolves).
-- **Template-injected:** `harness` — `codeassembly-agents` writes the agent platform (`claude` or `rovodev`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
+- **Template-injected:** `harness` — `codeassembly` writes the agent platform (`claude` or `rovodev`) into the `--harness` flag when it installs this skill. Unlike `model`, which varies per session and is self-reported, the harness is fixed at install time; keep the injected `--harness` flag verbatim rather than filling in a value yourself.
 - **Agent-supplied:** `summary`, the optional `skill`/`model`/`tags`/`impact`, and the body.
 
 ### Store selection
@@ -55,7 +55,7 @@ Amend is a plain in-place edit and does not consult push state. To correct an ev
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
 
 ## Process
 

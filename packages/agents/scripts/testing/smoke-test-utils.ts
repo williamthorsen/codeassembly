@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { CONTENT_DIR, resolveEventPath, resolveEventsDir, resolveKbDir } from '@codeassembly/kb/layout';
+import { CONTENT_DIR, resolveEventPath, resolveEventsDir, resolveKbDir } from '@williamthorsen/kb/layout';
 
 /** How the smoke test should invoke a bundle. Stdin is piped only when `stdin` is provided. */
 export interface SmokeTestInvocation {

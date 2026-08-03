@@ -2,7 +2,7 @@
 // `kb-search` primitive and projects event records into candidates carrying their recurrence signals; the agent ranks
 // by recurrence then recency and presents.
 
-import type { EventImpact } from '@codeassembly/kb/records';
+import type { EventImpact } from '@williamthorsen/kb/records';
 
 import type { ScopedKb } from '../kb-search/types.ts';
 

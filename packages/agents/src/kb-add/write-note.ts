@@ -1,10 +1,10 @@
 import { mkdir } from 'node:fs/promises';
 import { join, relative, resolve, sep } from 'node:path';
 
-import { pathExists } from '@codeassembly/kb/filesystem';
-import { ASSERTIONS_DIR, ASSERTIONS_SEGMENT, resolveAssertionsDir } from '@codeassembly/kb/layout';
-import { writeNote as writeNoteAtomic } from '@codeassembly/kb/note-io';
-import { type KbAssertion, renderAssertion } from '@codeassembly/kb/records';
+import { pathExists } from '@williamthorsen/kb/filesystem';
+import { ASSERTIONS_DIR, ASSERTIONS_SEGMENT, resolveAssertionsDir } from '@williamthorsen/kb/layout';
+import { writeNote as writeNoteAtomic } from '@williamthorsen/kb/note-io';
+import { type KbAssertion, renderAssertion } from '@williamthorsen/kb/records';
 
 /** Successful write: the absolute path the note landed at. */
 export interface WriteSuccess {

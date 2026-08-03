@@ -20,7 +20,7 @@ import { homedir } from 'node:os';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { EVENT_TYPES, isEventType } from '@codeassembly/lifecycle';
+import { EVENT_TYPES, isEventType } from 'codeassembly-lifecycle';
 import { ulid } from 'ulid';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';

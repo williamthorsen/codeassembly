@@ -1,5 +1,5 @@
-import { readNoteContent, renderNote } from '@codeassembly/kb/note-io';
-import { type KbEvent, parseEvent, renderEvent } from '@codeassembly/kb/records';
+import { readNoteContent, renderNote } from '@williamthorsen/kb/note-io';
+import { type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/records';
 
 import type { LedeEpisode, LedeVerdict } from './types.ts';
 

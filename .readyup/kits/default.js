@@ -47,7 +47,7 @@ function parseReleaseKitVersion(schemaUrl) {
 // .readyup/kits/default.ts
 var LABEL_MAP_PATH = ".meta/label-map.json";
 var RELEASE_KIT_PACKAGE_JSON = "node_modules/@williamthorsen/release-kit/package.json";
-var REGENERATE_FIX = "Run `codeassembly-agents generate label-map --force` to regenerate the label map";
+var REGENERATE_FIX = "Run `codeassembly generate label-map --force` to regenerate the label map";
 var default_default = defineRdyKit({
   checklists: [
     {
@@ -75,7 +75,7 @@ var default_default = defineRdyKit({
             const content = readFile(LABEL_MAP_PATH);
             return content !== void 0;
           },
-          fix: "Run `codeassembly-agents generate label-map` to create a starter label map"
+          fix: "Run `codeassembly generate label-map` to create a starter label map"
         },
         {
           name: ".meta/label-map.json scopes match the workspace",

@@ -9,7 +9,7 @@ import {
   type LaneState,
   type SessionPhase,
   type SessionState,
-} from '@codeassembly/lifecycle';
+} from 'codeassembly-lifecycle';
 
 import type { GitObservation } from '../adapters/git.ts';
 import { buildLaneKey } from '../common/lane-key.ts';

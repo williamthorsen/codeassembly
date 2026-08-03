@@ -1,6 +1,6 @@
 # Fleet
 
-Fleet is the server of the fleet-visibility stack. It watches the lifecycle-events root, folds each session's append-only event log into per-lane state via `@codeassembly/lifecycle`, and serves the result as a lanes snapshot and an SSE stream of full-fleet frames. Foreman, the stack's client app, consumes Fleet's route types as an end-to-end typed client via `hono/client` — no hand-synced contracts file.
+Fleet is the server of the fleet-visibility stack. It watches the lifecycle-events root, folds each session's append-only event log into per-lane state via `codeassembly-lifecycle`, and serves the result as a lanes snapshot and an SSE stream of full-fleet frames. Foreman, the stack's client app, consumes Fleet's route types as an end-to-end typed client via `hono/client` — no hand-synced contracts file.
 
 A missing or empty events root serves an empty fleet. The folded state is a rebuildable in-server cache: restarting the server re-folds from disk, and nothing here is a writer concern.
 
@@ -28,12 +28,12 @@ The server runs from TypeScript source; there is no build step.
 
 Each lane carries a `forge` field — pull-request state, CI status, review decision, and ticket metadata polled from the configured forge — that is `null` before the lane's first poll or when `FLEET_FORGE=none`. A lane whose branch has a pull request but no parsed ticket id gains synthetic `PR-<number>` attribution; this enrichment is merged at snapshot derivation and never enters the event store.
 
-Workspace packages import the route map and wire types from `@codeassembly/fleet`:
+Workspace packages import the route map and wire types from `codeassembly-fleet`:
 
 ```ts
 import { hc } from 'hono/client';
 
-import type { AppType } from '@codeassembly/fleet';
+import type { AppType } from 'codeassembly-fleet';
 
 const client = hc<AppType>('http://localhost:4178');
 ```

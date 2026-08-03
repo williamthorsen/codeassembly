@@ -5,7 +5,7 @@
 // validation, invalid args) return `{ ok: false, error, ... }`; a success returns `{ ok: true, ... }`. System errors
 // (out-of-disk, permission denied) are out of band: they print to stderr and exit non-zero.
 
-import type { EventImpact } from '@codeassembly/kb/records';
+import type { EventImpact } from '@williamthorsen/kb/records';
 
 /** Parsed command-line invocation of the capture-event helper. */
 export interface ParsedArgs {

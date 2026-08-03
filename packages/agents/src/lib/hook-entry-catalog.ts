@@ -19,6 +19,11 @@ import type { HookEntry, HookSentinelMatcher } from './rovo-config-hooks.ts';
  * The ownership marker carried in every managed hook command. The config utilities find, replace, and remove only
  * commands containing this exact string, so it includes the flag name: the bare value could collide with an unrelated
  * command that merely mentions the CLI's name.
+ *
+ * The value is frozen. It is matched against entries already written into users' harness configs, so any new value
+ * strands them: the config utilities stop recognizing what they wrote, `configure-hooks` adds a parallel set
+ * alongside, and every session-lifecycle event fires twice. The relay accepts the flag and ignores it, so the value
+ * carries no meaning beyond being stable.
  */
 export const HOOK_SENTINEL = '--sentinel codeassembly-agents';
 

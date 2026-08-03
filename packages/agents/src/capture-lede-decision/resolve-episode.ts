@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
-import { readNoteContent } from '@codeassembly/kb/note-io';
+import { readNoteContent } from '@williamthorsen/kb/note-io';
 
 import { extractString } from '../kb-shared/note-helpers.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';

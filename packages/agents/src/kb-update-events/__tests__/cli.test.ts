@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { readNoteContent } from '@codeassembly/kb/note-io';
-import { parseEvent } from '@codeassembly/kb/records';
+import { readNoteContent } from '@williamthorsen/kb/note-io';
+import { parseEvent } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runUpdate } from '../cli.ts';

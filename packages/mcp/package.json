@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/mcp",
+  "name": "codeassembly-mcp",
   "version": "0.2.1",
   "private": true,
   "description": "MCP server for orchestrated run management",
@@ -15,8 +15,8 @@
     "build": "nmr compile"
   },
   "dependencies": {
-    "@codeassembly/run-core": "workspace:*",
     "@modelcontextprotocol/sdk": "1.29.0",
+    "codeassembly-run-core": "workspace:*",
     "zod": "4.4.3"
   }
 }

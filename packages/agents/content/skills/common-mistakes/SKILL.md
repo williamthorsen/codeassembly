@@ -78,11 +78,11 @@ Look for a provenance marker at the top of the file. Generated files carry one o
 - **YAML frontmatter:** three `# GENERATED FILE …` comment lines immediately after the opening `---`
 - **No frontmatter:** three `<!-- GENERATED FILE … -->` comment lines at the top
 
-If you see a marker, **do not edit the file in place** — the change will be silently overwritten on the next `codeassembly-agents install`. Instead:
+If you see a marker, **do not edit the file in place** — the change will be silently overwritten on the next `codeassembly install`. Instead:
 
 1. Edit the source file in `williamthorsen/codeassembly` (the marker's `Source:` line links directly to it)
 2. Open a PR against that repo
-3. After merge, re-run `codeassembly-agents install` to pick up the change
+3. After merge, re-run `codeassembly install` to pick up the change
 
 ## Cross-cutting issues
 

@@ -1,5 +1,5 @@
-import type { AliasMap } from '@codeassembly/kb';
-import type { KbAssertion } from '@codeassembly/kb/records';
+import type { AliasMap } from '@williamthorsen/kb';
+import type { KbAssertion } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { retag } from '../retag.ts';

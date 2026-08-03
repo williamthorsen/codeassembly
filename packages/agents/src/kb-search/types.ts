@@ -3,7 +3,7 @@
 // scoping, schema validation, parsing, and the mechanical filters; the assertion and event retrieve commands each
 // project these hits into their own candidate shape.
 
-import type { ParsedNote } from '@codeassembly/kb/frontmatter';
+import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 
 /** A single ripgrep hit before frontmatter parsing and normalization. */
 export interface RawHit {

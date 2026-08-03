@@ -1,4 +1,4 @@
-import { tryLoadKbRegistry } from '@codeassembly/kb/discovery';
+import { tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 
 import { DEFAULT_KB_SENTINEL } from './default-kb-sentinel.ts';
 import { resolveStoreByName, type ResolveStoreOutcome } from './resolve-store-by-name.ts';

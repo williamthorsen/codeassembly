@@ -31,7 +31,7 @@ The `--auto` flag is consumed by you, not the helper; it controls whether you pr
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
 
 ## Modes
 

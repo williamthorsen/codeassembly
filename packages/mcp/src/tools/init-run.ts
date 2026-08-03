@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { resolveBaseDir } from '@codeassembly/run-core/config';
+import { resolveBaseDir } from 'codeassembly-run-core/config';
 
 import { emitEvent } from './emit-event.ts';
 

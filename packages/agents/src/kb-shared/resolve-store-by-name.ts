@@ -1,4 +1,4 @@
-import { tryLoadKbRegistry } from '@codeassembly/kb/discovery';
+import { tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 
 /** A knowledge base resolved by registry name. */
 export interface ResolvedStore {

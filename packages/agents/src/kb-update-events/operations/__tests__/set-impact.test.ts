@@ -1,4 +1,4 @@
-import type { KbEvent } from '@codeassembly/kb/records';
+import type { KbEvent } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
 import { setImpact } from '../set-impact.ts';

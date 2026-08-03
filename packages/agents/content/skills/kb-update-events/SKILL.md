@@ -30,7 +30,7 @@ A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,obs
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
 
 ## Process
 

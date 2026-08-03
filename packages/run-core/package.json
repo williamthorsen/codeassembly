@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/run-core",
+  "name": "codeassembly-run-core",
   "version": "0.2.1",
   "private": true,
   "description": "Core runtime for orchestrated development runs",
@@ -27,11 +27,7 @@
     }
   },
   "main": "./dist/esm/index.js",
-  "bin": {
-    "codeassembly-runs": "bin/codeassembly-runs.js"
-  },
   "files": [
-    "bin",
     "dist"
   ],
   "scripts": {

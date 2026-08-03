@@ -4,10 +4,10 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import type { Finding } from '@codeassembly/kb';
-import type { EnumeratedNote } from '@codeassembly/kb/check';
-import { check } from '@codeassembly/kb/check';
-import { isKbLoaderError } from '@codeassembly/kb/config';
+import type { Finding } from '@williamthorsen/kb';
+import type { EnumeratedNote } from '@williamthorsen/kb/check';
+import { check } from '@williamthorsen/kb/check';
+import { isKbLoaderError } from '@williamthorsen/kb/config';
 
 import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';

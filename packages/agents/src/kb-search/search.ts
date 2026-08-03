@@ -1,9 +1,9 @@
 import { relative, sep } from 'node:path';
 
-import type { NoteScopeMatcher } from '@codeassembly/kb/config';
-import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@codeassembly/kb/config';
-import type { ParsedNote } from '@codeassembly/kb/frontmatter';
-import { resolveKbDir } from '@codeassembly/kb/layout';
+import type { NoteScopeMatcher } from '@williamthorsen/kb/config';
+import { createNoteScopeMatcher, defaultKbConfig, loadKbConfig } from '@williamthorsen/kb/config';
+import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
+import { resolveKbDir } from '@williamthorsen/kb/layout';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
 import type { RecallFn } from './recall.ts';

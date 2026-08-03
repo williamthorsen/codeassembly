@@ -1,4 +1,4 @@
-import type { EventImpact, KbEvent } from '@codeassembly/kb/records';
+import type { EventImpact, KbEvent } from '@williamthorsen/kb/records';
 
 /**
  * Replaces an event's impact rating. Impact is a revisable subjective assessment, so this overwrites any prior value and

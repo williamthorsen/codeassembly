@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { hostname } from 'node:os';
 import { basename, join } from 'node:path';
 
-import { readNoteContent } from '@codeassembly/kb/note-io';
+import { readNoteContent } from '@williamthorsen/kb/note-io';
 
 import { isMissingFile, isRecord } from '../lib/type-guards.ts';
 import { resolveMemoryStore } from './resolve-memory-store.ts';

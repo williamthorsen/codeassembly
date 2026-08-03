@@ -1,4 +1,4 @@
-import { applyLaneEvent, createLaneState, type EventEnvelope, type LaneState } from '@codeassembly/lifecycle';
+import { applyLaneEvent, createLaneState, type EventEnvelope, type LaneState } from 'codeassembly-lifecycle';
 import { assert, describe, expect, it } from 'vitest';
 
 import type { GitObservation } from '../../adapters/git.ts';

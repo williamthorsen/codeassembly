@@ -1,6 +1,6 @@
-import type { AliasMap } from '@codeassembly/kb';
-import { parseAssertion, renderAssertion } from '@codeassembly/kb/records';
-import { parseAliases } from '@codeassembly/kb/tags';
+import type { AliasMap } from '@williamthorsen/kb';
+import { parseAssertion, renderAssertion } from '@williamthorsen/kb/records';
+import { parseAliases } from '@williamthorsen/kb/tags';
 import { describe, expect, it } from 'vitest';
 
 import { prepareNote } from '../prepare-note.ts';

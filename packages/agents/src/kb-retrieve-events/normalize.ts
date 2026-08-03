@@ -1,6 +1,6 @@
 import { basename } from 'node:path';
 
-import { isEventImpact } from '@codeassembly/kb/records';
+import { isEventImpact } from '@williamthorsen/kb/records';
 
 import type { SearchHit } from '../kb-search/types.ts';
 import { extractString, readStringList } from '../kb-shared/note-helpers.ts';

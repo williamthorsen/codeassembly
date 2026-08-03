@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { link, mkdir, unlink, writeFile } from 'node:fs/promises';
 
-import { resolveEventPath, resolveEventsDir } from '@codeassembly/kb/layout';
+import { resolveEventPath, resolveEventsDir } from '@williamthorsen/kb/layout';
 
 /**
  * Writes a new event record to the store's events directory, creating that directory with `mkdir -p` semantics when

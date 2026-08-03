@@ -21,9 +21,9 @@
   "scripts": {
     "agents:install": "tsx packages/agents/src/cli.ts install",
     "agents:install-launchers": "bash packages/agents/scripts/install-launchers.sh",
-    "agents:sync": "node packages/agents/bin/codeassembly-agents.js sync",
+    "agents:sync": "node packages/agents/bin/codeassembly.js sync",
     "bootstrap": "nmr build && pnpm run agents:sync",
-    "ci:post": "pnpm --filter agents run test:sh",
+    "ci:post": "pnpm --filter codeassembly run test:sh",
     "prepare": "lefthook install"
   },
   "devDependencies": {

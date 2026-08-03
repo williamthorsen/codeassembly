@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { CanonicalRunStatus, RunEvent, RunHeader } from '@codeassembly/run-core';
-import { foldEvents, parseRunLogLine, v3RunIndexSchema } from '@codeassembly/run-core';
+import type { CanonicalRunStatus, RunEvent, RunHeader } from 'codeassembly-run-core';
+import { foldEvents, parseRunLogLine, v3RunIndexSchema } from 'codeassembly-run-core';
 
 export interface GetRunStateInput {
   runDir: string;

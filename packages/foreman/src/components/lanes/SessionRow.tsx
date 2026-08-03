@@ -1,4 +1,4 @@
-import type { SessionSnapshot } from '@codeassembly/fleet';
+import type { SessionSnapshot } from 'codeassembly-fleet';
 import type { ReactElement } from 'react';
 
 import { formatFreshness } from '../../format/freshness.ts';

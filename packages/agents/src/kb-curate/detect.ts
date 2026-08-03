@@ -1,5 +1,5 @@
-import type { Finding } from '@codeassembly/kb';
-import type { EnumeratedNote } from '@codeassembly/kb/check';
+import type { Finding } from '@williamthorsen/kb';
+import type { EnumeratedNote } from '@williamthorsen/kb/check';
 
 import { detectStaleness, vaultUsesVerification } from './detect-staleness.ts';
 import { detectSupersede } from './detect-supersede.ts';
@@ -7,7 +7,7 @@ import { detectSupersede } from './detect-supersede.ts';
 /**
  * Produces the curate-only findings over an already-enumerated note set: verification staleness (threshold
  * `staleAfterDays`) and supersede-graph defects. Whole-vault integrity (unresolved links, basename collisions) and the
- * `tag-alias`/`paths` lints are owned by `@codeassembly/kb/check`; curate layers only its own detectors over the same
+ * `tag-alias`/`paths` lints are owned by `@williamthorsen/kb/check`; curate layers only its own detectors over the same
  * enumeration here.
  */
 export function detectCurateFindings(input: {

@@ -2,7 +2,7 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { v3RunIndexSchema } from '@codeassembly/run-core';
+import { v3RunIndexSchema } from 'codeassembly-run-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { initRun, sanitizeTicketId } from '../init-run.ts';
@@ -168,7 +168,7 @@ describe('initRun', () => {
     const fakeBase = await createTmpDir();
 
     // Mock resolveBaseDir to return a controlled path, making this test hermetic
-    const resolveBaseDirModule = await import('@codeassembly/run-core/config');
+    const resolveBaseDirModule = await import('codeassembly-run-core/config');
     const spy = vi.spyOn(resolveBaseDirModule, 'resolveBaseDir').mockResolvedValueOnce(fakeBase);
 
     try {

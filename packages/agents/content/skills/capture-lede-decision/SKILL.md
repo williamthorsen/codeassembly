@@ -42,7 +42,7 @@ Exactly one of `--inspect` and `--verdict` must appear. The author's comment is 
 
 ## Runtime dependencies
 
-- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@codeassembly/kb`.
+- **`node` ≥ 24** — the bundled helper inherits the Node version floor of `@williamthorsen/kb`.
 
 ## Process
 

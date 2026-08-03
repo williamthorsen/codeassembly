@@ -1,1 +1,1 @@
-export { foldEvents } from '@codeassembly/run-core';
+export { foldEvents } from 'codeassembly-run-core';

@@ -1,4 +1,4 @@
-// Root barrel for @codeassembly/kb.
+// Root barrel for @williamthorsen/kb.
 //
 // Re-exports the types and constants used most widely across consumers. The behavioral surface lives behind the
 // subpath entries so consumers tree-shake to only the module they need.

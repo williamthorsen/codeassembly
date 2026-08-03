@@ -5,9 +5,9 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, KbRoot } from '@codeassembly/kb';
-import { resolveKbDir } from '@codeassembly/kb/layout';
-import { loadAliases } from '@codeassembly/kb/tags';
+import type { AliasMap, KbRoot } from '@williamthorsen/kb';
+import { resolveKbDir } from '@williamthorsen/kb/layout';
+import { loadAliases } from '@williamthorsen/kb/tags';
 
 import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
 import { resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';

@@ -1,4 +1,4 @@
-import type { EventEnvelope } from '@codeassembly/lifecycle';
+import type { EventEnvelope } from 'codeassembly-lifecycle';
 
 import type { EmitContext } from './types.ts';
 

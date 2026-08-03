@@ -1,6 +1,6 @@
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 
-import type { ParsedNote } from '@codeassembly/kb/frontmatter';
+import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 
 import type { RawHit, SearchHit } from '../kb-search/types.ts';
 import { computeAgeDays, extractString, parseNoteSafely, readStringList } from '../kb-shared/note-helpers.ts';

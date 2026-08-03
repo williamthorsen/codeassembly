@@ -78,7 +78,7 @@ export async function libraryListCommand(contentDir: string = resolveContentDir(
 
 /** Prints usage information for the `library` command. */
 export function printLibraryUsage(): void {
-  console.info(`Usage: codeassembly-agents library <subcommand>
+  console.info(`Usage: codeassembly library <subcommand>
 
 Subcommands:
   list   List available library artifacts (rulebooks, skills, subagents, collections)`);

@@ -1,4 +1,4 @@
-import { resolveProjectsDir } from '@codeassembly/run-core/config';
+import { resolveProjectsDir } from 'codeassembly-run-core/config';
 import cors from 'cors';
 import type { ErrorRequestHandler } from 'express';
 import express from 'express';

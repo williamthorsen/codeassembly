@@ -1,4 +1,4 @@
-import type { KbEvent } from '@codeassembly/kb/records';
+import type { KbEvent } from '@williamthorsen/kb/records';
 
 import { dedupeInOrder } from '../../kb-shared/note-helpers.ts';
 
