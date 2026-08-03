@@ -34,7 +34,7 @@
     "@vitest/coverage-v8": "4.1.10",
     "@vitest/eslint-plugin": "1.6.24",
     "@williamthorsen/eslint-config-typescript": "8.3.0",
-    "@williamthorsen/nmr": "0.23.0",
+    "@williamthorsen/nmr": "0.24.0",
     "@williamthorsen/release-kit": "10.0.0",
     "@williamthorsen/strict-lint": "9.2.0",
     "dotenv": "17.4.2",

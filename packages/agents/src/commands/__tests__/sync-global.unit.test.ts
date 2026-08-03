@@ -11,7 +11,10 @@ import { syncGlobalCommand } from '../sync.ts';
 
 // Runs `init --global` then `sync --global` against the real content library to catch failures that
 // only show up with real content.
-describe('sync --global (real library, all collection)', () => {
+//
+// Deploying the whole catalog runs long under parallel-worker load, which the tier's own budget is
+// too tight to absorb. The ceiling here matches what the tiers above `unit` carry.
+describe('sync --global (real library, all collection)', { timeout: 30_000 }, () => {
   let homeDir: string;
 
   beforeEach(async () => {

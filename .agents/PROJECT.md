@@ -238,7 +238,9 @@ The package README documents the `kb.yaml` configuration schema and merge semant
 - `nmr test` - Run tests
 - `nmr test:watch` - Run tests in watch mode
 - `nmr test:coverage` - Run tests with coverage
-- `nmr test:integration` - Run deliberate-only integration tests (`*.int.test.ts`), excluded from the unit suite and CI
+- `nmr test:tool` - Run only the `tool` tier (`*.tool.test.ts`), the tests that reach a program the environment supplies
+- `nmr test:unit` - Run only the `unit` tier
+- `nmr test:all` - Run every tier, including the two that carry no default script
 - `nmr lint` - Fix lint
 - `nmr lint:check` - Check for lint
 - `nmr typecheck` - TypeScript check
@@ -290,11 +292,29 @@ Deleting `dist/` does not force a rebuild. The build cache lives outside it and 
 ### Testing
 
 - Vitest across all packages, built on `@williamthorsen/nmr/vitest` and its projects model
-- Every config composes `.config/vitest/define-config.ts`, which adds the two settings nmr does not provide: the `source` resolve conditions that let workspace packages resolve from `.ts` source without a prior build, and the setup file keeping test git subprocesses out of the developer's global git config
-- Each workspace package carries a `vitest.config.ts`, even where it adds nothing. Suites are selected by `--project`, and a package without a config makes `nmr test:integration` fail the whole recursive run
-- Package-specific options go through the `project` seam, not `root`; Vitest ignores collection options at the root once `projects` exists
+- Every config layers in `.config/vitest/shared-options.ts`, which adds the two settings nmr does not provide: the `source` resolve conditions that let workspace packages resolve from `.ts` source without a prior build, and the setup file keeping test git subprocesses out of the developer's global git config. A config that omits the layer loses both silently, so the guard beside that module fails when a package bypasses it
+- Each workspace package carries a `vitest.config.ts`, even where it adds nothing, because that layer is what it exists to apply
+- Package-specific options go through the `project` seam, not `root`; Vitest ignores collection options at the root once `projects` exists. To reach a single tier, use the `tiers` seam
 - Coverage reporting with v8 provider
-- Real-library / full-install tests (e.g. real installs) are deliberate-only `*.int.test.ts` tests: excluded from the default unit suite and CI, run on demand via `nmr test:integration`. The `*.int.test.ts` name is the whole opt-in. Land new real-library/full-install tests here, not in the unit suite.
+
+#### Test tiers
+
+Tests are grouped by **what they reach while running**, on nmr's four-tier ladder. A tier is named in the filename; `unit` is residual, claiming every file the named tiers do not.
+
+| Tier        | Filename              | Reaches                            | In the default gate? |
+| ----------- | --------------------- | ---------------------------------- | -------------------- |
+| `unit`      | no infix required     | nothing outside the test process   | yes                  |
+| `tool`      | `*.tool.test.ts`      | a program the environment supplies | yes                  |
+| `localhost` | `*.localhost.test.ts` | a service on this machine          | no                   |
+| `remote`    | `*.remote.test.ts`    | a machine that isn't this one      | no                   |
+
+`nmr test` and CI's `check:strict` both run `unit` and `tool`. Classify a new test by what it reaches, not by how much of the codebase it covers or how faithful its fixtures are: a suite driving the real content library through the filesystem is `unit`, and one spawning `git` is `tool` even when git's answer is not asserted.
+
+Reach is transitive, and a test file rarely shows it. A suite that spawns nothing itself is `tool` when the code it drives spawns something, which no grep of the test file reveals and no import graph settles either -- a spawn inside a dependency is invisible to both. Determine it by shimming `node:child_process` and running the tier, attributing each spawn to the suite on its stack. A shim on a named program only confirms a suspicion already held. A suite whose production code can spawn but whose tests never take that path is `unit`, and stays `unit` only until one does.
+
+Because `unit` is residual, an unrecognized infix is safe and reads as documentation: `install-real-library.unit.test.ts` runs under `unit` and names its tier beside `install.unit.test.ts`.
+
+The former deliberate-only exclusion of real-library suites is retired, and they run in the default gate. A suite that installs or deploys the whole content catalog declares its own `{ timeout }` instead, which is the protection that exclusion was actually providing.
 
 ### Code quality
 

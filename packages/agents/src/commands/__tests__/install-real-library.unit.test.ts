@@ -12,7 +12,10 @@ import { installCommand } from '../install.ts';
 
 // Installs the real content library, not a fixture, to catch failures that only show up with real
 // content, such as an unreplaced `{...}` token or a link that wasn't rewritten.
-describe('install (real library, full catalog)', () => {
+//
+// Installing the whole catalog runs long under parallel-worker load, which the tier's own budget is
+// too tight to absorb. The ceiling here matches what the tiers above `unit` carry.
+describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
   let tempDir: string;
 
   beforeEach(async () => {
