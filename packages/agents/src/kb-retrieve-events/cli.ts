@@ -4,7 +4,7 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@codeassembly/kb/records';
+import { EVENT_IMPACT_LEVELS, type EventImpact, isEventImpact } from '@williamthorsen/kb/records';
 
 import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';

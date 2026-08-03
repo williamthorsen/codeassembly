@@ -18,4 +18,4 @@ export type {
   ReviewIteration,
   RunStatus,
   SelectiveReReview,
-} from '@codeassembly/run-core';
+} from 'codeassembly-run-core';

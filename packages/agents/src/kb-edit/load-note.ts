@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
-import { readNoteContent } from '@codeassembly/kb/note-io';
-import { type KbAssertion, parseAssertion } from '@codeassembly/kb/records';
+import { readNoteContent } from '@williamthorsen/kb/note-io';
+import { type KbAssertion, parseAssertion } from '@williamthorsen/kb/records';
 
 import { isEnoent } from '../lib/type-guards.ts';
 

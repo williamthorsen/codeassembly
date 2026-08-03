@@ -1,4 +1,4 @@
-import type { VaultIndex } from '@codeassembly/kb/vault-integrity';
+import type { VaultIndex } from '@williamthorsen/kb/vault-integrity';
 import { describe, expect, it } from 'vitest';
 
 import { rewriteWikilinks } from '../apply/rewrite-wikilinks.ts';

@@ -1,5 +1,5 @@
-import { renderNote, writeNote } from '@codeassembly/kb/note-io';
-import { type KbAssertion, parseAssertion, renderAssertion } from '@codeassembly/kb/records';
+import { renderNote, writeNote } from '@williamthorsen/kb/note-io';
+import { type KbAssertion, parseAssertion, renderAssertion } from '@williamthorsen/kb/records';
 
 /** A rendered record that re-parsed cleanly: the frontmatter field map, the body, and the serialized note content. */
 export interface RenderedNote {

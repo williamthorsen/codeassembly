@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/agents",
+  "name": "codeassembly",
   "version": "0.3.0",
   "private": true,
   "description": "Specialized subagents for orchestrated development workflows",
@@ -14,8 +14,8 @@
     "test:smoke": "tsx scripts/__tests__/smoke-test-skill-helpers.ts"
   },
   "dependencies": {
-    "@codeassembly/kb": "workspace:*",
-    "@codeassembly/lifecycle": "workspace:*",
+    "@williamthorsen/kb": "workspace:*",
+    "codeassembly-lifecycle": "workspace:*",
     "ulid": "3.0.2",
     "yaml": "2.9.0",
     "zod": "4.4.3"

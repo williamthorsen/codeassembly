@@ -15,7 +15,7 @@ import {
   type LaneState,
   parseEventLine,
   resolveLaneRecency,
-} from '@codeassembly/lifecycle';
+} from 'codeassembly-lifecycle';
 
 import { isMissingFileError } from '../common/fs-errors.ts';
 import { readAppendedLines } from '../common/jsonl-tail.ts';

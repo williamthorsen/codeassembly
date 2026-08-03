@@ -2,7 +2,7 @@
 // a rescan tick — folds and then publishes through one JSON-diff gate, so a staleness threshold crossing broadcasts
 // with no new event on disk, and a no-op scan broadcasts nothing.
 
-import { resolveLaneCwd } from '@codeassembly/lifecycle';
+import { resolveLaneCwd } from 'codeassembly-lifecycle';
 import { serve } from '@hono/node-server';
 
 import { createGitAdapter, type GitObservation, type GitTarget } from './adapters/git.ts';

@@ -1,5 +1,5 @@
-import type { Finding } from '@codeassembly/kb';
-import type { EnumeratedNote } from '@codeassembly/kb/check';
+import type { Finding } from '@williamthorsen/kb';
+import type { EnumeratedNote } from '@williamthorsen/kb/check';
 
 import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 

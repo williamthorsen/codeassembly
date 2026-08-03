@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { RunDataParseError } from '@codeassembly/run-core';
+import { RunDataParseError } from 'codeassembly-run-core';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 import { marked } from 'marked';

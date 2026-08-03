@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { RunDataParseError } from '@codeassembly/run-core';
+import { RunDataParseError } from 'codeassembly-run-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProjectIndex } from '../../../shared/types/api.js';

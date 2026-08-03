@@ -1,10 +1,10 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import { directoryExists } from '@codeassembly/kb/filesystem';
-import { KB_DIR, resolveKbDir } from '@codeassembly/kb/layout';
-import type { AliasMap } from '@codeassembly/kb/tags';
-import { loadAliases } from '@codeassembly/kb/tags';
+import { directoryExists } from '@williamthorsen/kb/filesystem';
+import { KB_DIR, resolveKbDir } from '@williamthorsen/kb/layout';
+import type { AliasMap } from '@williamthorsen/kb/tags';
+import { loadAliases } from '@williamthorsen/kb/tags';
 
 import { isErrorCode, isRecord } from '../lib/type-guards.ts';
 import type { RawHit, ScopedKb } from './types.ts';

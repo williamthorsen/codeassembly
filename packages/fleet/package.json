@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/fleet",
+  "name": "codeassembly-fleet",
   "version": "0.1.0",
   "private": true,
   "description": "Fleet-visibility server: Watches the events root, folds lane state, and streams snapshots over SSE",
@@ -15,7 +15,7 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@codeassembly/lifecycle": "workspace:*",
+    "codeassembly-lifecycle": "workspace:*",
     "@hono/node-server": "2.0.12",
     "hono": "4.12.32"
   },

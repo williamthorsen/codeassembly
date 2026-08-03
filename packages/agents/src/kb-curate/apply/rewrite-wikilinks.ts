@@ -6,7 +6,7 @@ import {
   maskInlineCode,
   type VaultIndex,
   WIKILINK,
-} from '@codeassembly/kb/vault-integrity';
+} from '@williamthorsen/kb/vault-integrity';
 
 /** The result of sweeping one note's body for stale path-qualified wikilinks. */
 export interface RewriteResult {

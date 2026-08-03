@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { parseNote } from '@codeassembly/kb/frontmatter';
+import { parseNote } from '@williamthorsen/kb/frontmatter';
 import { describe, expect, it } from 'vitest';
 
 import type { SearchHit } from '../../kb-search/types.ts';

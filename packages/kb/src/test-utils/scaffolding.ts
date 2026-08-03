@@ -1,4 +1,4 @@
-// Shared test-support helpers for @codeassembly/kb.
+// Shared test-support helpers for @williamthorsen/kb.
 //
 // `nmr-compile` ignores only `**/__tests__/**`, so this directory is compiled into `dist`; the package's `files`
 // allowlist keeps it out of the published tarball, so it may freely import `node:` test scaffolding. Consumers are

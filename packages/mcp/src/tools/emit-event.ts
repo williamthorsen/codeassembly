@@ -1,7 +1,7 @@
 import { appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { runEventSchema } from '@codeassembly/run-core';
+import { runEventSchema } from 'codeassembly-run-core';
 
 export interface EmitEventInput {
   runDir: string;

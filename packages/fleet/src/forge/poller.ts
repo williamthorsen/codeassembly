@@ -6,7 +6,7 @@
 // and its last-known facts keep being served until a poll succeeds. Rounds never overlap — a tick fired while one is in
 // flight is skipped rather than queued — and with no adapter (`FLEET_FORGE=none`) the loop is inert.
 
-import type { LaneState } from '@codeassembly/lifecycle';
+import type { LaneState } from 'codeassembly-lifecycle';
 
 import { buildLaneKey } from '../common/lane-key.ts';
 import { getOrCreate, retainKeys } from '../common/maps.ts';

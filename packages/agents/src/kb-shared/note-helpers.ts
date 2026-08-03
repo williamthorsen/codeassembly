@@ -1,5 +1,5 @@
-import type { ParsedNote } from '@codeassembly/kb/frontmatter';
-import { parseNote } from '@codeassembly/kb/frontmatter';
+import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
+import { parseNote } from '@williamthorsen/kb/frontmatter';
 
 /** Whole-day divisor for converting a date delta in milliseconds to an age in days. */
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;

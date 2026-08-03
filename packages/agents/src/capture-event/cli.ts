@@ -5,8 +5,8 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import { resolveEventPath } from '@codeassembly/kb/layout';
-import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
+import { resolveEventPath } from '@williamthorsen/kb/layout';
+import { type ReadNote, readNote, writeNote } from '@williamthorsen/kb/note-io';
 import {
   EVENT_IMPACT_LEVELS,
   type EventImpact,
@@ -14,7 +14,7 @@ import {
   type KbEvent,
   parseEvent,
   renderEvent,
-} from '@codeassembly/kb/records';
+} from '@williamthorsen/kb/records';
 import { ulid } from 'ulid';
 
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';

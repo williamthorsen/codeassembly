@@ -1,5 +1,5 @@
 {
-  "name": "@codeassembly/foreman",
+  "name": "codeassembly-foreman",
   "version": "0.1.0",
   "private": true,
   "description": "Fleet-visibility client: Renders the lane view over Fleet's snapshot and SSE stream",
@@ -10,9 +10,9 @@
     "preview": "pnpm vite preview"
   },
   "dependencies": {
-    "@codeassembly/fleet": "workspace:*",
     "@mantine/core": "9.5.0",
     "@mantine/hooks": "9.5.0",
+    "codeassembly-fleet": "workspace:*",
     "hono": "4.12.32",
     "react": "19.2.8",
     "react-dom": "19.2.8"

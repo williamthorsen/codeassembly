@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { enumerateNotes } from '@codeassembly/kb/check';
-import { defaultKbConfig } from '@codeassembly/kb/config';
+import { enumerateNotes } from '@williamthorsen/kb/check';
+import { defaultKbConfig } from '@williamthorsen/kb/config';
 import { describe, expect, it } from 'vitest';
 
 import { detectCurateFindings, sortFindings } from '../detect.ts';

@@ -3,16 +3,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
 
-import { check } from '@codeassembly/kb/check';
-import { defaultKbConfig, KbLoaderError } from '@codeassembly/kb/config';
+import { check } from '@williamthorsen/kb/check';
+import { defaultKbConfig, KbLoaderError } from '@williamthorsen/kb/config';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runCurate } from '../cli.ts';
 
 // Mock `check` with a passthrough to the real implementation so most tests run
 // against real vaults; the error-path tests override it per-call.
-vi.mock('@codeassembly/kb/check', async () => {
-  const actual = await vi.importActual<typeof import('@codeassembly/kb/check')>('@codeassembly/kb/check');
+vi.mock('@williamthorsen/kb/check', async () => {
+  const actual = await vi.importActual<typeof import('@williamthorsen/kb/check')>('@williamthorsen/kb/check');
   return { ...actual, check: vi.fn(actual.check) };
 });
 

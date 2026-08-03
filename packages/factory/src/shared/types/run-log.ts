@@ -15,4 +15,4 @@ export type {
   RunFailedEvent,
   RunHeader,
   RunStartedEvent,
-} from '@codeassembly/run-core';
+} from 'codeassembly-run-core';

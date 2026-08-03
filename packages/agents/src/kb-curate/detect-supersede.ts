@@ -1,7 +1,7 @@
 import { dirname, isAbsolute, resolve } from 'node:path';
 
-import type { Finding } from '@codeassembly/kb';
-import type { EnumeratedNote } from '@codeassembly/kb/check';
+import type { Finding } from '@williamthorsen/kb';
+import type { EnumeratedNote } from '@williamthorsen/kb/check';
 
 /** A note's resolved supersession edges, keyed by absolute path. */
 interface SupersedeNode {

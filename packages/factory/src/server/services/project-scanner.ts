@@ -1,4 +1,4 @@
-import { discoverRunDirectories, validateRunDirectory } from '@codeassembly/run-core/scanners';
+import { discoverRunDirectories, validateRunDirectory } from 'codeassembly-run-core/scanners';
 
 import { factoryConfig } from '../../config.js';
 import type { ProjectIndex, ProjectInfo, RunInfo, TicketInfo } from '../../shared/types/api.js';

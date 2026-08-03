@@ -1,4 +1,4 @@
-import type { FleetSnapshot } from '@codeassembly/fleet';
+import type { FleetSnapshot } from 'codeassembly-fleet';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

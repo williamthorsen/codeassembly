@@ -1,6 +1,6 @@
-import type { AliasMap } from '@codeassembly/kb';
-import type { KbAssertion } from '@codeassembly/kb/records';
-import { canonicalize } from '@codeassembly/kb/tags';
+import type { AliasMap } from '@williamthorsen/kb';
+import type { KbAssertion } from '@williamthorsen/kb/records';
+import { canonicalize } from '@williamthorsen/kb/tags';
 
 import { dedupeInOrder, formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import type { ParsedArgs, PreparedNote } from './types.ts';

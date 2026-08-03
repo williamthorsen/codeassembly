@@ -1,4 +1,4 @@
-// Shared type vocabulary for @codeassembly/kb.
+// Shared type vocabulary for @williamthorsen/kb.
 //
 // This file is the documented exception to the "types live with their provider" convention:
 // The modules below all consume the same shapes, so co-locating them keeps the contract single-sourced.

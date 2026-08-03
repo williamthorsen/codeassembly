@@ -4,11 +4,11 @@ import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, KbRoot } from '@codeassembly/kb';
-import { resolveEventPath, resolveKbDir } from '@codeassembly/kb/layout';
-import { type ReadNote, readNote, writeNote } from '@codeassembly/kb/note-io';
-import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@codeassembly/kb/records';
-import { loadAliases } from '@codeassembly/kb/tags';
+import type { AliasMap, KbRoot } from '@williamthorsen/kb';
+import { resolveEventPath, resolveKbDir } from '@williamthorsen/kb/layout';
+import { type ReadNote, readNote, writeNote } from '@williamthorsen/kb/note-io';
+import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEvent } from '@williamthorsen/kb/records';
+import { loadAliases } from '@williamthorsen/kb/tags';
 
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';

@@ -1,5 +1,5 @@
-import type { EnumeratedNote } from '@codeassembly/kb/check';
-import { readNoteContent } from '@codeassembly/kb/note-io';
+import type { EnumeratedNote } from '@williamthorsen/kb/check';
+import { readNoteContent } from '@williamthorsen/kb/note-io';
 import { describe, expect, it } from 'vitest';
 
 import { detectSupersede } from '../detect-supersede.ts';

@@ -10,4 +10,4 @@ export {
   v2ConfigSchema,
   v2ContextSchema,
   v2RunIndexSchema,
-} from '@codeassembly/run-core';
+} from 'codeassembly-run-core';

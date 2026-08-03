@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readdir, readFile, stat, writeFile } from 'node:fs/prom
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import type { KbAssertion } from '@codeassembly/kb/records';
+import type { KbAssertion } from '@williamthorsen/kb/records';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { composeFilename, writeNote } from '../write-note.ts';

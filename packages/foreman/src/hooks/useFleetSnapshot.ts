@@ -1,4 +1,4 @@
-import type { FleetSnapshot } from '@codeassembly/fleet';
+import type { FleetSnapshot } from 'codeassembly-fleet';
 import { useEffect, useState } from 'react';
 
 import { fleetClient } from '../api/client.ts';

@@ -89,10 +89,10 @@ importers:
 
   packages/agents:
     dependencies:
-      '@codeassembly/kb':
+      '@williamthorsen/kb':
         specifier: workspace:*
         version: link:../kb
-      '@codeassembly/lifecycle':
+      codeassembly-lifecycle:
         specifier: workspace:*
         version: link:../lifecycle
       ulid:
@@ -120,12 +120,12 @@ importers:
 
   packages/factory:
     dependencies:
-      '@codeassembly/run-core':
-        specifier: workspace:*
-        version: link:../run-core
       '@xyflow/react':
         specifier: 12.11.2
         version: 12.11.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      codeassembly-run-core:
+        specifier: workspace:*
+        version: link:../run-core
       cors:
         specifier: 2.8.6
         version: 2.8.6
@@ -181,27 +181,27 @@ importers:
 
   packages/fleet:
     dependencies:
-      '@codeassembly/lifecycle':
-        specifier: workspace:*
-        version: link:../lifecycle
       '@hono/node-server':
         specifier: 2.0.12
         version: 2.0.12(hono@4.12.32)
+      codeassembly-lifecycle:
+        specifier: workspace:*
+        version: link:../lifecycle
       hono:
         specifier: 4.12.32
         version: 4.12.32
 
   packages/foreman:
     dependencies:
-      '@codeassembly/fleet':
-        specifier: workspace:*
-        version: link:../fleet
       '@mantine/core':
         specifier: 9.5.0
         version: 9.5.0(@mantine/hooks@9.5.0(react@19.2.8))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@mantine/hooks':
         specifier: 9.5.0
         version: 9.5.0(react@19.2.8)
+      codeassembly-fleet:
+        specifier: workspace:*
+        version: link:../fleet
       hono:
         specifier: 4.12.32
         version: 4.12.32
@@ -267,12 +267,12 @@ importers:
 
   packages/mcp:
     dependencies:
-      '@codeassembly/run-core':
-        specifier: workspace:*
-        version: link:../run-core
       '@modelcontextprotocol/sdk':
         specifier: 1.29.0
         version: 1.29.0(supports-color@7.2.0)(zod@4.4.3)
+      codeassembly-run-core:
+        specifier: workspace:*
+        version: link:../run-core
       zod:
         specifier: 4.4.3
         version: 4.4.3

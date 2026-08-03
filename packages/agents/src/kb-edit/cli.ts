@@ -6,10 +6,10 @@ import process from 'node:process';
 import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
-import type { AliasMap, KbRoot } from '@codeassembly/kb';
-import { resolveKbDir } from '@codeassembly/kb/layout';
-import type { KbAssertion } from '@codeassembly/kb/records';
-import { loadAliases } from '@codeassembly/kb/tags';
+import type { AliasMap, KbRoot } from '@williamthorsen/kb';
+import { resolveKbDir } from '@williamthorsen/kb/layout';
+import type { KbAssertion } from '@williamthorsen/kb/records';
+import { loadAliases } from '@williamthorsen/kb/tags';
 
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
 import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';

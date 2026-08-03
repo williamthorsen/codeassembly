@@ -1,4 +1,4 @@
-import { createLaneState, type LaneState } from '@codeassembly/lifecycle';
+import { createLaneState, type LaneState } from 'codeassembly-lifecycle';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ForgeAdapter, PrFacts, TicketFacts } from '../adapter.ts';

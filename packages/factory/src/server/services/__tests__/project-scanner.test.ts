@@ -9,7 +9,7 @@ const { mockedDiscover, mockedValidate } = vi.hoisted(() => ({
   mockedValidate: vi.fn(),
 }));
 
-vi.mock('@codeassembly/run-core/scanners', () => ({
+vi.mock('codeassembly-run-core/scanners', () => ({
   discoverRunDirectories: mockedDiscover,
   validateRunDirectory: mockedValidate,
 }));

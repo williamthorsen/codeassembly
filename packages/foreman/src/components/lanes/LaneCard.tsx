@@ -1,4 +1,4 @@
-import type { LaneSnapshot } from '@codeassembly/fleet';
+import type { LaneSnapshot } from 'codeassembly-fleet';
 import type { ReactElement } from 'react';
 
 import { Badge, Card, Group, Text } from '../../integrations/mantine/index.ts';

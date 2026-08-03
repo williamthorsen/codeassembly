@@ -1,4 +1,4 @@
-import type { FleetSnapshot, LaneSnapshot } from '@codeassembly/fleet';
+import type { FleetSnapshot, LaneSnapshot } from 'codeassembly-fleet';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 

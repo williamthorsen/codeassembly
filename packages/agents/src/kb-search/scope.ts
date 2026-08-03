@@ -1,4 +1,4 @@
-import { findKbRoot, tryLoadKbRegistry } from '@codeassembly/kb/discovery';
+import { findKbRoot, tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 
 import type { ScopedKb } from './types.ts';
 

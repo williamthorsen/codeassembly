@@ -1,4 +1,4 @@
-import type { KbAssertion } from '@codeassembly/kb/records';
+import type { KbAssertion } from '@williamthorsen/kb/records';
 
 import { formatUtcTimestamp } from '../../kb-shared/note-helpers.ts';
 
