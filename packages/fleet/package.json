@@ -15,8 +15,8 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "codeassembly-lifecycle": "workspace:*",
     "@hono/node-server": "2.0.12",
+    "codeassembly-lifecycle": "workspace:*",
     "hono": "4.12.32"
   },
   "engines": {

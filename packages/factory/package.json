@@ -13,8 +13,8 @@
     "validate:run-index": "tsx src/scripts/validate-run-index.ts"
   },
   "dependencies": {
-    "codeassembly-run-core": "workspace:*",
     "@xyflow/react": "12.11.2",
+    "codeassembly-run-core": "workspace:*",
     "cors": "2.8.6",
     "excalibur": "0.32.0",
     "express": "5.2.1",

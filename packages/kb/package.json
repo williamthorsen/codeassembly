@@ -74,9 +74,6 @@
     "bin",
     "dist"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "nmr compile"
   },
@@ -90,5 +87,8 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
