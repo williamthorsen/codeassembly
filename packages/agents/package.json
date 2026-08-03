@@ -21,6 +21,7 @@
   "license": "ISC",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
+  "exports": {},
   "bin": {
     "codeassembly": "bin/codeassembly.js"
   },
