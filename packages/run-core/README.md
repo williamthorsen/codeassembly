@@ -1,4 +1,4 @@
-# @codeassembly/run-core
+# codeassembly-run-core
 
 Core runtime library for orchestrated development runs. Provides the canonical domain model, Zod schemas, event folding, and data parsing consumed by the MCP server and Factory visualization.
 

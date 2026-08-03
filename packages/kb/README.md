@@ -1,8 +1,8 @@
-# @codeassembly/kb
+# @williamthorsen/kb
 
 Foundation library for knowledge-base tooling.
 Provides knowledge-base discovery, registry loading, frontmatter parsing and writing, tag canonicalization, and type-blind vault-integrity checks.
-It underpins the knowledge-base skills — among them `kb-retrieve` (assertion recall) and `kb-retrieve-events` (event recall), `kb-add`, `kb-curate`, `capture-event`, and `kb-update-events` — and the planned `@codeassembly/kb-mcp` server.
+It underpins the knowledge-base skills — among them `kb-retrieve` (assertion recall) and `kb-retrieve-events` (event recall), `kb-add`, `kb-curate`, `capture-event`, and `kb-update-events` — and the planned `@williamthorsen/kb-mcp` server.
 
 ## Exports
 
@@ -30,7 +30,7 @@ The library throws on errors; success/failure shaping is left to consumers.
 `findKbRoot({ startDir })` walks ancestor directories looking for a `.kb/` folder and returns the first match (or `null` at the filesystem root).
 
 ```ts
-import { findKbRoot } from '@codeassembly/kb/discovery';
+import { findKbRoot } from '@williamthorsen/kb/discovery';
 
 const root = await findKbRoot({ startDir: process.cwd() });
 ```
@@ -75,7 +75,7 @@ Configuration keys, per KB entry under `kbs.<name>`:
 - Path existence is not checked at load time.
 
 ```ts
-import { loadKbRegistry } from '@codeassembly/kb/discovery';
+import { loadKbRegistry } from '@williamthorsen/kb/discovery';
 
 const config = await loadKbRegistry({ projectDir: process.cwd() });
 // config.entries: KbRegistryEntry[] with absolute, resolved paths
@@ -111,7 +111,7 @@ missing files (when a path is given) throw.
 The type-blind per-note lints — `tagAliasFindings(note, aliases)` (`tag-alias`, warning) and `pathsFindings(note)` (`paths.user-home`, error) — catch what write-time record validation can't: alias-vocabulary drift and hardcoded `/Users/{name}/` paths in captured content.
 
 ```ts
-import { checkVaultIntegrity } from '@codeassembly/kb/vault-integrity';
+import { checkVaultIntegrity } from '@williamthorsen/kb/vault-integrity';
 
 const findings = checkVaultIntegrity(notes);
 ```
@@ -121,7 +121,7 @@ const findings = checkVaultIntegrity(notes);
 `check({ kbRoot })` runs a store's full check in one call: it loads `.kb/config.yaml` and `.kb/tag-aliases.yaml`, enumerates the notes the config selects, and composes whole-vault integrity with the `tag-alias` and `paths` lints. It performs no frontmatter validation — record types own that at write time. It returns **both** the enumerated notes and the findings, so a consumer can layer its own detectors over the same enumeration without walking the store twice.
 
 ```ts
-import { check } from '@codeassembly/kb/check';
+import { check } from '@williamthorsen/kb/check';
 
 const { notes, findings } = await check({ kbRoot });
 ```
@@ -145,7 +145,7 @@ exclude:
 | `targets` | `['content/**/*.md']`    | Glob patterns (store-root-relative) selecting which notes a check enumerates |
 | `exclude` | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches           |
 
-Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@codeassembly/kb/config`.
+Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `.agents`) are skipped without naming them. The default targets the `content/`-scoped layout; a store with a different layout overrides `targets` to match. `loadKbConfig({ kbRoot })` returns the effective config and is exported from `@williamthorsen/kb/config`.
 
 ## The `kb` command
 
@@ -219,7 +219,7 @@ Exit codes:
 
 ## Error and exception model
 
-The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@codeassembly/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
+The checks **return** findings; they never throw. Loaders (`loadKbConfig`, `loadAliases`) **throw** a typed `KbLoaderError` on structural defects or malformed YAML, with the offending file path named in the message. `KbLoaderError` (exported from `@williamthorsen/kb/config`) carries a `kind: 'KbLoaderError'` discriminant — and an `isKbLoaderError` type guard — so a caller can distinguish a recoverable config or alias defect from any other throw. `loadKbRegistry` throws a plain `Error` on its own structural defects. I/O errors other than a missing optional file propagate.
 
 ## MCP wrappability
 

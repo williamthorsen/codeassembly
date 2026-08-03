@@ -26,21 +26,21 @@ Shared runtime library. Exports via three subpath entries:
 - `./parsers` — Node.js file parsers for run data
 - `./scanners` — directory scanning and validation
 
-**Package:** `@codeassembly/run-core` (private)
+**Package:** `codeassembly-run-core` (private)
 
 ### MCP (`packages/mcp/`)
 
 MCP server for orchestrated run management. Wraps run-core capabilities as five MCP tools for Claude integration.
 
-**Package:** `@codeassembly/mcp` (private)
+**Package:** `codeassembly-mcp` (private)
 
 **Bin:** `codeassembly-mcp` — the stdio server entry point. `.claude/settings.json` launches the server through `packages/mcp/bin/codeassembly-mcp.js`.
 
 ### Agents (`packages/agents/`)
 
-The agents package is a CLI tool (`codeassembly-agents`) that installs reusable AI skills and subagent definitions into harness-specific directories. It also serves as the canonical home for all skill and subagent content.
+The agents package is a CLI tool (`codeassembly`) that installs reusable AI skills and subagent definitions into harness-specific directories. It also serves as the canonical home for all skill and subagent content.
 
-**Package:** `@codeassembly/agents` (private)
+**Package:** `codeassembly` (private)
 
 **CLI commands:**
 
@@ -208,9 +208,9 @@ packages/factory/src/
 
 ### KB (`packages/kb/`)
 
-Foundation library for knowledge-base tooling, consumed by the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@codeassembly/kb-mcp` server. Exposes subpath entries covering KB discovery and `kb.yaml` registry loading, note frontmatter parsing and writing, per-type record parsing, tag canonicalization, and type-blind vault-integrity checks.
+Foundation library for knowledge-base tooling, consumed by the `kb-retrieve` and `kb-add` skills, the planned `kb-curate` skill, and the planned `@williamthorsen/kb-mcp` server. Exposes subpath entries covering KB discovery and `kb.yaml` registry loading, note frontmatter parsing and writing, per-type record parsing, tag canonicalization, and type-blind vault-integrity checks.
 
-**Package:** `@codeassembly/kb` (private)
+**Package:** `@williamthorsen/kb` (private)
 
 The package README documents the `kb.yaml` configuration schema and merge semantics and the error model — consult it before declaring a KB or consuming the library.
 
