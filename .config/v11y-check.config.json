@@ -8,11 +8,11 @@
     "severityThreshold": "low",
     "allowlist": [
       {
-        "addedAt": "2026-07-23T01:00:08.782Z",
-        "id": "1124006",
-        "path": "packages__mcp>@modelcontextprotocol/sdk>@hono/node-server",
-        "reason": "Added by v11y sync at 2026-07-23 01:00:08 UTC",
-        "url": "https://github.com/advisories/GHSA-frvp-7c67-39w9"
+        "addedAt": "2026-08-03T22:02:58.453Z",
+        "id": "1130733",
+        "path": "packages__fleet>@hono/node-server>hono",
+        "reason": "Added by v11y sync at 2026-08-03 22:02:58 UTC",
+        "url": "https://github.com/advisories/GHSA-8j4g-w8fx-2239"
       }
     ]
   }
