@@ -70,9 +70,8 @@ describe(buildRovoHookEntries, () => {
   });
 
   it('keeps the sentinel value frozen', () => {
-    // Pinned to the literal: entries carrying this string are already written into users' harness
-    // configs, and a new value would strand them behind a parallel set of entries. Every other
-    // assertion here compares against the constant and would pass for any value.
+    // Asserted as a literal: every other assertion in this file compares against the constant and
+    // would pass for any value.
     expect(HOOK_SENTINEL).toBe('--sentinel codeassembly-agents');
   });
 });

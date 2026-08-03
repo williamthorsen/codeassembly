@@ -20,11 +20,10 @@ import type { HookEntry, HookSentinelMatcher } from './rovo-config-hooks.ts';
  * commands containing this exact string, so it includes the flag name: the bare value could collide with an unrelated
  * command that merely mentions the CLI's name.
  *
- * The value is frozen and deliberately does not track the CLI's name. It is matched against entries already written
- * into users' harness configs, so any new value strands them: the config utilities stop recognizing what they wrote,
- * `configure-hooks` adds a parallel set alongside, and every session-lifecycle event fires twice. The relay accepts
- * the flag and ignores it, so the value carries no meaning beyond being stable. A test pins the literal, because every
- * other assertion compares against this constant and would pass for any value.
+ * The value is frozen. It is matched against entries already written into users' harness configs, so any new value
+ * strands them: the config utilities stop recognizing what they wrote, `configure-hooks` adds a parallel set
+ * alongside, and every session-lifecycle event fires twice. The relay accepts the flag and ignores it, so the value
+ * carries no meaning beyond being stable.
  */
 export const HOOK_SENTINEL = '--sentinel codeassembly-agents';
 
