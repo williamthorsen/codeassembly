@@ -72,8 +72,7 @@
   },
   "files": [
     "bin",
-    "dist",
-    "!dist/esm/test-utils"
+    "dist"
   ],
   "scripts": {
     "build": "nmr compile"
