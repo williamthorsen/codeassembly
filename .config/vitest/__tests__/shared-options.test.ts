@@ -1,40 +1,43 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 import type { ViteUserConfig } from 'vitest/config';
 import type { ProjectConfig } from 'vitest/node';
 
-import { defineRepoVitestConfig } from '../define-config.ts';
+import { defineVitestConfig } from '@williamthorsen/nmr/vitest';
+
+import { sharedVitestOptions } from '../shared-options.ts';
 
 const PACKAGES_DIR = new URL('../../../packages/', import.meta.url).pathname;
-const SHARED_FACTORY_PATH = '.config/vitest/define-config.ts';
-const GIT_ISOLATION_SETUP_FILE = new URL('../vitest.setup.ts', import.meta.url).pathname;
+const SHARED_OPTIONS_PATH = '.config/vitest/shared-options.ts';
+const GIT_ISOLATION_SETUP_FILE = fileURLToPath(new URL('../vitest.setup.ts', import.meta.url));
 
 // nmr's isolation tiers, in the order it generates them: the residual tier first, then the named ones.
 // Pinned so that a tier it adds or drops fails here rather than passing with a project fewer checked.
 const PROJECT_NAMES = ['unit', 'tool', 'localhost', 'remote'];
 
-// A package whose config bypasses the shared factory loses git isolation silently: nothing fails, and
-// a suite that spawns git blocks on the developer's signing passphrase instead.
+// A package whose config omits the shared layer loses git isolation silently: nothing fails, and a
+// suite that spawns git blocks on the developer's signing passphrase instead.
 describe('workspace Vitest configs', () => {
-  it.each(listWorkspacePackages())('%s composes the shared factory', (packageName) => {
+  it.each(listWorkspacePackages())('%s layers in the shared options', (packageName) => {
     const configPath = path.join(PACKAGES_DIR, packageName, 'vitest.config.ts');
 
     expect(existsSync(configPath), `${packageName} has no vitest.config.ts`).toBe(true);
-    expect(readFileSync(configPath, 'utf8')).toContain(SHARED_FACTORY_PATH);
+    expect(readFileSync(configPath, 'utf8')).toContain(SHARED_OPTIONS_PATH);
   });
 });
 
-describe(defineRepoVitestConfig, () => {
+describe('shared Vitest options', () => {
   it('isolates git subprocesses in every project', () => {
-    expect(getProjectSetupFiles(defineRepoVitestConfig())).toEqual(
+    expect(getProjectSetupFiles(defineVitestConfig(sharedVitestOptions))).toEqual(
       PROJECT_NAMES.map((name) => [name, [GIT_ISOLATION_SETUP_FILE]]),
     );
   });
 
   it("keeps a caller's own setup files alongside the shared one", () => {
-    const config = defineRepoVitestConfig({ project: { setupFiles: ['./local.setup.ts'] } });
+    const config = defineVitestConfig(sharedVitestOptions, { project: { setupFiles: ['./local.setup.ts'] } });
 
     expect(getProjectSetupFiles(config)).toEqual(
       PROJECT_NAMES.map((name) => [name, [GIT_ISOLATION_SETUP_FILE, './local.setup.ts']]),
@@ -42,7 +45,7 @@ describe(defineRepoVitestConfig, () => {
   });
 
   it('resolves workspace packages from source, so a suite runs without a prior build', () => {
-    expect(defineRepoVitestConfig().resolve?.conditions).toContain('source');
+    expect(defineVitestConfig(sharedVitestOptions).resolve?.conditions).toContain('source');
   });
 });
 

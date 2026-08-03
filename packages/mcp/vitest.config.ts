@@ -1,3 +1,5 @@
-import { defineRepoVitestConfig } from '../../.config/vitest/define-config.ts';
+import { defineVitestConfig } from '@williamthorsen/nmr/vitest';
 
-export default defineRepoVitestConfig();
+import { sharedVitestOptions } from '../../.config/vitest/shared-options.ts';
+
+export default defineVitestConfig(sharedVitestOptions);
