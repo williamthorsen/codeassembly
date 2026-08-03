@@ -310,7 +310,9 @@ Tests are grouped by **what they reach while running**, on nmr's four-tier ladde
 
 `nmr test` and CI's `check:strict` both run `unit` and `tool`. Classify a new test by what it reaches, not by how much of the codebase it covers or how faithful its fixtures are: a suite driving the real content library through the filesystem is `unit`, and one spawning `git` is `tool` even when git's answer is not asserted.
 
-Because `unit` is residual, an unrecognized infix is safe and reads as documentation — `install-real-library.unit.test.ts` runs under `unit` and names its tier beside `install.unit.test.ts`.
+Reach is transitive, and a test file rarely shows it. A suite that spawns nothing itself is `tool` when the code it drives spawns something, which no grep of the test file reveals and no import graph settles either -- a spawn inside a dependency is invisible to both. Determine it by running the suite against a logging shim on the program in question. A suite whose production code can spawn but whose tests never take that path is `unit`, and stays `unit` only until one does.
+
+Because `unit` is residual, an unrecognized infix is safe and reads as documentation: `install-real-library.unit.test.ts` runs under `unit` and names its tier beside `install.unit.test.ts`.
 
 The former deliberate-only exclusion of real-library suites is retired, and they run in the default gate. A suite that installs or deploys the whole content catalog declares its own `{ timeout }` instead, which is the protection that exclusion was actually providing.
 
