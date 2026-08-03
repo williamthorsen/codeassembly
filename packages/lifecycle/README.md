@@ -4,6 +4,8 @@ Canonical session-lifecycle event envelope, vocabulary, and lane fold.
 
 This package defines the JSONL event format that instrumented skills append to the lifecycle-events root, and the pure fold that turns that log into lane and session state. Producers and consumers share it so a log means the same thing on both sides: the `codeassembly` CLI ships the helpers that write events, and Fleet reads them back.
 
+<!-- section:release-notes --><!-- /section:release-notes -->
+
 ## Installation
 
 ```bash

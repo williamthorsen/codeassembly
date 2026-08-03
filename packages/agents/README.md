@@ -2,6 +2,8 @@
 
 A CLI that installs reusable AI agent guidance into coding-harness directories, and the library of rulebooks, skills, and subagents it deploys.
 
+<!-- section:release-notes --><!-- /section:release-notes -->
+
 ## Installation
 
 No install needed to try it:

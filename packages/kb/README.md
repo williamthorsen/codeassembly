@@ -4,6 +4,8 @@ Foundation library for knowledge-base tooling.
 Provides knowledge-base discovery, registry loading, frontmatter parsing and writing, tag canonicalization, and type-blind vault-integrity checks.
 It underpins the knowledge-base skills — among them `kb-retrieve` (assertion recall) and `kb-retrieve-events` (event recall), `kb-add`, `kb-curate`, `capture-event`, and `kb-update-events` — and the planned `@williamthorsen/kb-mcp` server.
 
+<!-- section:release-notes --><!-- /section:release-notes -->
+
 ## Exports
 
 The package exposes ten subpath entries plus a root barrel:
