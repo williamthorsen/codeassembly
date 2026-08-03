@@ -2,11 +2,10 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { defineVitestConfig } from '@williamthorsen/nmr/vitest';
 import { describe, expect, it } from 'vitest';
 import type { ViteUserConfig } from 'vitest/config';
 import type { ProjectConfig } from 'vitest/node';
-
-import { defineVitestConfig } from '@williamthorsen/nmr/vitest';
 
 import { sharedVitestOptions } from '../shared-options.ts';
 
