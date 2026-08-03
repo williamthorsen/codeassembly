@@ -13,9 +13,9 @@ const contentDest = path.join(packageRoot, 'dist', 'content');
 const cliEntry = path.join(packageRoot, 'dist', 'esm', 'cli.js');
 
 /**
- * Reports whether `source` belongs in the built content tree. Excludes dotfiles, and any `__tests__` directory: the
- * build output is what the package publishes, so a test directory anywhere under `content/` would otherwise ship to
- * every consumer. `cp` skips a rejected directory's whole subtree, so rejecting the directory is enough.
+ * Reports whether `source` belongs in the built content tree. The build output is what the package publishes, so a
+ * `__tests__` directory anywhere under `content/` would otherwise ship to every consumer. `cp` skips a rejected
+ * directory's whole subtree, so rejecting the directory is enough.
  */
 function shouldCopy(source: string): boolean {
   const name = path.basename(source);
@@ -24,8 +24,8 @@ function shouldCopy(source: string): boolean {
 
 // 1. Copy content/ to dist/content/
 console.info('Copying content/ to dist/content/...');
-// Discard the previous copy first: `cp` overwrites but never deletes, so anything since removed from `content/` --
-// or newly excluded by `shouldCopy` -- would survive in the build output and ship to every consumer.
+// Discard the previous copy first: `cp` overwrites but never deletes, so a file dropped from `content/` or rejected
+// by `shouldCopy` would survive in the build output and ship to every consumer.
 await rm(contentDest, { force: true, recursive: true });
 await mkdir(path.dirname(contentDest), { recursive: true });
 await cp(contentSrc, contentDest, { recursive: true, filter: shouldCopy });

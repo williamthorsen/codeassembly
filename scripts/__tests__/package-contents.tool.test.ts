@@ -34,8 +34,7 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
   });
 
   it('excludes the TypeScript sources', () => {
-    // A package with no `files` allowlist falls back to `.gitignore`, which ignores `dist/` and ships `src/`
-    // instead: the exact inversion of what a consumer needs.
+    // A package with no `files` allowlist falls back to `.gitignore`, which ignores `dist/` and ships `src/`.
     expect(packed.filter((entry) => entry.startsWith('src/'))).toEqual([]);
   });
 
@@ -55,8 +54,8 @@ interface PublishablePackage {
 }
 
 /**
- * Lists the workspace packages that publish, read from the manifests rather than named here, so a package that
- * later drops `private` is covered without editing this suite.
+ * Lists the workspace packages that publish, discovered from the manifests so that a package dropping `private` is
+ * covered without editing this suite.
  */
 function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
   const packages = readdirSync(packagesDir, { withFileTypes: true })
@@ -107,17 +106,16 @@ function readPackedPaths(dir: string): ReadonlyArray<string> {
 }
 
 /**
- * Reads the file list out of an `npm pack --json` report, throwing when the report is not shaped as expected.
- * Validating rather than trusting the shape means a change in npm's output fails here, naming itself, instead of
- * yielding an empty list that turns every exclusion assertion into a vacuous pass.
+ * Reads the file list out of an `npm pack --json` report, throwing when the report is not shaped as expected. A
+ * change in npm's output would otherwise yield an empty list, turning every exclusion assertion into a vacuous pass.
  */
 function readReportPaths(stdout: string): ReadonlyArray<string> {
   const parsed: unknown = JSON.parse(stdout);
   if (!Array.isArray(parsed) || parsed.length === 0) {
     throw new TypeError('`npm pack --json` returned no report.');
   }
-  // Annotated rather than inferred at each step: `Array.isArray` widens an `unknown` to `any[]`, which would carry
-  // an implicit `any` through every access below and defeat the validation this function exists to perform.
+  // `Array.isArray` narrows an `unknown` to `any[]`, so the explicit annotations here and below are what keep an
+  // implicit `any` from flowing through every access and defeating the validation.
   const [report]: ReadonlyArray<unknown> = parsed;
   if (typeof report !== 'object' || report === null || !('files' in report)) {
     throw new TypeError('`npm pack --json` report carries no `files` array.');

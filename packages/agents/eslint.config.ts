@@ -19,9 +19,8 @@ const config = defineConfig([
   {
     files: ['package.json'],
     rules: {
-      // This package ships a CLI and no importable surface, so its `exports` is deliberately empty: it forecloses
-      // deep imports into the build output rather than describing an entry point. The rule styles a root export
-      // that does not exist here.
+      // The package ships a CLI and no importable surface: its empty `exports` forecloses deep imports into the
+      // build output, leaving the rule no root export to style.
       'package-json/exports-subpaths-style': 'off',
     },
   },
