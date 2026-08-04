@@ -24,7 +24,7 @@ export function describeSourceNameProblem(name: string): string | undefined {
     return 'it is an absolute path';
   }
   const segments = name.split('/');
-  if (segments.some((segment) => segment === '')) {
+  if (segments.includes('')) {
     return 'it carries an empty path segment';
   }
   if (segments.some((segment) => segment === '.' || segment === '..')) {

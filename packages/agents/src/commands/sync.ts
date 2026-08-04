@@ -34,7 +34,6 @@ import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/se
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
 import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import { describeSourceNameProblem, describeSourceProblem } from '../lib/source-validation.ts';
-import { deploySourceSupport, renderSourceSupport, retractUndeclaredSourceSupport } from '../lib/support-deploy.ts';
 import {
   deploySubagent,
   renderSubagent,
@@ -42,6 +41,7 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from '../lib/subagent-deploy.ts';
+import { deploySourceSupport, renderSourceSupport, retractUndeclaredSourceSupport } from '../lib/support-deploy.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
