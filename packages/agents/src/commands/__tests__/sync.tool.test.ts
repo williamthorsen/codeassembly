@@ -1011,6 +1011,31 @@ describe(syncCommand, () => {
       expect(skill).toContain('# people-report');
     });
 
+    it('deploys a hook-bearing skill carrying no directive, since `sync` binds nothing to the hook yet', async () => {
+      await writeLibrarySkill('people-report', {
+        body: '# people-report\n\n<!-- guidance-hook: implementation-preferences -->\n\nBody.',
+      });
+      await declareSkills('people-report');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const skill = await readFile(skillPath('people-report'), 'utf8');
+      expect(skill).not.toContain('guidance-hook');
+      expect(skill).toContain('Body.');
+    });
+
+    it('fails a dry run with nothing written when a skill declares the same hook twice', async () => {
+      await writeLibrarySkill('people-report', {
+        body: '<!-- guidance-hook: preferences -->\n<!-- guidance-hook: preferences -->',
+      });
+      await declareSkills('people-report');
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /skills\/people-report\/SKILL\.md:\d+ name="preferences" .*reason=duplicate-hook/,
+      );
+      expect(existsSync(skillPath('people-report'))).toBe(false);
+    });
+
     it('when re-run with unchanged content, does not rewrite the declared skill file', async () => {
       await writeLibrarySkill('people-report');
       await declareSkills('people-report');
@@ -1478,6 +1503,20 @@ describe(syncCommand, () => {
       expect(deployed).toContain('Use Read;');
       expect(deployed).toContain('~/.claude/scripts/x.sh');
       expect(deployed).not.toContain('GENERATED FILE');
+    });
+
+    it('deploys a hook-bearing subagent carrying no directive, since `sync` binds nothing to the hook yet', async () => {
+      await writeOverlays();
+      await writeLibrarySubagent('canary', {
+        body: '# canary\n\n<!-- guidance-hook: implementation-preferences -->\n\nBody.',
+      });
+      await declareSubagents('canary');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const deployed = await readFile(subagentPath('canary'), 'utf8');
+      expect(deployed).not.toContain('guidance-hook');
+      expect(deployed).toContain('Body.');
     });
 
     it('when re-run with unchanged content, leaves the declared subagent file byte-identical and unwritten', async () => {

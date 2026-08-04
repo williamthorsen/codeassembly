@@ -5,8 +5,14 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DirectiveExpansionError } from '../directive-expander.ts';
+import { GuidanceHookError } from '../guidance-hooks.ts';
 import { homeAnchor } from '../path-rewriter.ts';
-import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../skill-transform.ts';
+import {
+  type RenderedSkillEntry,
+  renderSkillDirectory,
+  renderSupportEntry,
+  type SkillDeployContext,
+} from '../skill-transform.ts';
 import { ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 const TOOL_MAPPING = new Map([['Read', 'open_files']]);
@@ -130,6 +136,48 @@ describe(renderSkillDirectory, () => {
     );
   });
 
+  it('strips a declared guidance hook from every .md the skill deploys', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n\n<!-- guidance-hook: implementation-preferences -->\n\nProse.\n',
+      'reference/guide.md': '<!-- guidance-hook: glossary -->\nGuide.\n',
+    });
+
+    const entries = await renderSkillDirectory(skillDir, 'demo', contentDir, context());
+
+    expect(markdownContent(entries, 'SKILL.md')).toBe('# Demo\n\n\nProse.\n');
+    expect(markdownContent(entries, 'reference/guide.md')).toBe('Guide.\n');
+  });
+
+  it('strips a guidance hook an included partial declares', async () => {
+    await writeSkill({
+      'SKILL.md': '# Demo\n\n<!-- include: _partials/hook.md / -->\n\nProse.\n',
+      '_partials/hook.md': '<!-- guidance-hook: implementation-preferences -->\n',
+    });
+
+    const content = markdownContent(await renderSkillDirectory(skillDir, 'demo', contentDir, context()), 'SKILL.md');
+
+    expect(content).not.toContain('guidance-hook');
+    expect(content).toBe('# Demo\n\n\nProse.\n');
+  });
+
+  it('rejects a hook the host and an included partial both declare', async () => {
+    // Expansion runs first, so the partial's declaration is the host's own: two slots of one name, no fill order.
+    await writeSkill({
+      'SKILL.md': '# Demo\n\n<!-- guidance-hook: preferences -->\n\n<!-- include: _partials/hook.md / -->\n',
+      '_partials/hook.md': '<!-- guidance-hook: preferences -->\n',
+    });
+
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(
+      /skills\/demo\/SKILL\.md:5 name="preferences" firstDeclaredAt=3 reason=duplicate-hook/,
+    );
+  });
+
+  it('rejects a malformed hook name', async () => {
+    await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- guidance-hook: Mixed-Case -->\n' });
+
+    await expect(renderSkillDirectory(skillDir, 'demo', contentDir, context())).rejects.toThrow(GuidanceHookError);
+  });
+
   // region | Helpers
 
   function context(overrides: Partial<SkillDeployContext> = {}): SkillDeployContext {
@@ -163,4 +211,37 @@ describe(renderSkillDirectory, () => {
   }
 
   // endregion | Helpers
+});
+
+describe(renderSupportEntry, () => {
+  let contentDir: string;
+  let skillsDir: string;
+
+  beforeEach(async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    contentDir = path.join(tmpdir(), `agents-test-support-${stamp}`);
+    skillsDir = path.join(contentDir, 'skills');
+    await mkdir(skillsDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(contentDir, { recursive: true, force: true });
+  });
+
+  it('strips a declared guidance hook from a flat Markdown support entry', async () => {
+    const srcPath = path.join(skillsDir, '_data', 'table.md');
+    await mkdir(path.dirname(srcPath), { recursive: true });
+    await writeFile(srcPath, '# Table\n\n<!-- guidance-hook: implementation-preferences -->\n\nRows.\n', 'utf8');
+
+    const rendered = await renderSupportEntry(srcPath, '_data', contentDir, {
+      toolMapping: TOOL_MAPPING,
+      anchor: homeAnchor('.claude/skills'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+    });
+
+    expect(rendered).toEqual({ kind: 'markdown', content: '# Table\n\n\nRows.\n' });
+  });
 });

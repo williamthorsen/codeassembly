@@ -52,9 +52,7 @@ describe(listGuidanceHooks, () => {
     expect(() => listGuidanceHooks(body, SOURCE_LABEL)).toThrow(
       /skills\/demo\/SKILL\.md:5 name="preferences" firstDeclaredAt=1 reason=duplicate-hook/,
     );
-    expect(() => listGuidanceHooks(body, SOURCE_LABEL)).toThrowError(
-      expect.objectContaining({ reason: 'duplicate-hook' }),
-    );
+    expect(() => listGuidanceHooks(body, SOURCE_LABEL)).toThrow(expect.objectContaining({ reason: 'duplicate-hook' }));
   });
 
   it('accepts two distinct hooks in one body', () => {

@@ -133,6 +133,43 @@ describe(renderSubagentForHarness, () => {
     expect(output).toContain('[the guide](~/.claude/guide.md)');
   });
 
+  it('strips a declared guidance hook from the deployed body', () => {
+    const source = `${SOURCE}<!-- guidance-hook: implementation-preferences -->\n\nTail prose.\n`;
+
+    const output = renderSubagentForHarness(source, {
+      overlayYaml: CLAUDE_OVERLAY,
+      toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+      fileRelPath: 'demo-agent.md',
+      sourceLabel: 'subagents/demo-agent.md',
+      anchor: homeAnchor('.claude'),
+      homeDir: '.claude',
+      harnessId: 'claude',
+      skillSigil: '/',
+      subagentSigil: '',
+    });
+
+    expect(output).not.toContain('guidance-hook');
+    expect(output).toContain('Tail prose.');
+  });
+
+  it('throws a source-labelled error for a hook declared twice in one body', () => {
+    const source = `${SOURCE}<!-- guidance-hook: preferences -->\n<!-- guidance-hook: preferences -->\n`;
+
+    expect(() =>
+      renderSubagentForHarness(source, {
+        overlayYaml: CLAUDE_OVERLAY,
+        toolMapping: loadToolMapping(CLAUDE_OVERLAY),
+        fileRelPath: 'demo-agent.md',
+        sourceLabel: 'subagents/demo-agent.md',
+        anchor: homeAnchor('.claude'),
+        homeDir: '.claude',
+        harnessId: 'claude',
+        skillSigil: '/',
+        subagentSigil: '',
+      }),
+    ).toThrow(/subagents\/demo-agent\.md:\d+ name="preferences" .* reason=duplicate-hook/);
+  });
+
   it('throws a source-labelled error for an anchor naming no heading in the same body', () => {
     const source = `${SOURCE}See [the findings](#finding-scheme).\n`;
 
