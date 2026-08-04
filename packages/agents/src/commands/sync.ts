@@ -32,7 +32,7 @@ import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill
 import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
-import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
+import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
 import { describeSourceNameProblem, describeSourceProblem } from '../lib/source-validation.ts';
 import {
   deploySubagent,
@@ -41,7 +41,12 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from '../lib/subagent-deploy.ts';
-import { deploySourceSupport, renderSourceSupport, retractUndeclaredSourceSupport } from '../lib/support-deploy.ts';
+import {
+  deploySourceSupport,
+  listUndeclaredSourceSupport,
+  renderSourceSupport,
+  retractUndeclaredSourceSupport,
+} from '../lib/support-deploy.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
@@ -87,6 +92,12 @@ type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string | 
  * tree from the same target written by a library artifact.
  */
 type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
+
+/** One source's support entries rendered for one harness, paired with the namespace directory they deploy into. */
+interface SourceSupportPlan {
+  readonly destDir: string;
+  readonly entries: ReadonlyArray<RenderedSkillEntry>;
+}
 
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
 interface HarnessSkillTarget {
@@ -203,6 +214,7 @@ async function reconcileDomain(
   const resolver = createSourceResolver(sources, contentDir);
   await assertValidSources(sources);
   assertUsableSourceNames(sources);
+  assertDistinctSourceNames(sources);
 
   // Enumerated after validation, so a package whose content dir is missing has already failed the run.
   const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
@@ -339,8 +351,9 @@ async function reconcileDomain(
   // here; `deploySkill` re-renders it at write time.
   await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills, resolveAnchorContext);
 
-  // Same gate for each source's support entries, whose defects would otherwise surface only at the write below.
-  await assertSourceSupportRenders(harnessSkillTargets, sources, resolveAnchorContext);
+  // Same gate for each source's support entries, whose defects would otherwise surface only at the write below. The
+  // rendered result is carried to the preview and the delivery pass rather than rendered again by each.
+  const sourceSupportPlans = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
 
   // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
   // host and every skill file are already on disk.
@@ -372,7 +385,8 @@ async function reconcileDomain(
       resolvedSubagents,
       harnessSubagentTargets,
       subagentOrphansByDir,
-      sourceSupportPlans: await planSourceSupport(harnessSkillTargets, sources, resolveAnchorContext),
+      sourceSupportPlans,
+      sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sources),
       promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
     });
     return;
@@ -413,7 +427,7 @@ async function reconcileDomain(
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
 
   // Deliver each source's support entries into its own namespace, then retract the namespaces no source claims.
-  await reconcileSourceSupport(harnessSkillTargets, sources, resolveAnchorContext);
+  await reconcileSourceSupport(harnessSkillTargets, sources, sourceSupportPlans);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
@@ -492,6 +506,34 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
  * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
  * name is reported together, so a declaration with two of them takes one fix rather than two runs.
  */
+/**
+ * Throws when two declared sources share a name, which the hand-declared tier and the package tier can each satisfy
+ * independently: names are unique within a tier, and nothing reconciles one tier's against the other's.
+ *
+ * A shared name would let both claim one support namespace, so the source that wins artifact resolution and the one
+ * whose support files survive delivery are different sources, and links rendered for the first reach the second's
+ * files. Failing here, before any write, forces the conflict to be resolved by renaming rather than by delivery order.
+ */
+function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
+  const dirsByName = new Map<string, Array<string>>();
+  for (const source of sources) {
+    dirsByName.set(source.name, [...(dirsByName.get(source.name) ?? []), source.dir]);
+  }
+
+  const collisions = dirsByName
+    .entries()
+    .filter(([, dirs]) => dirs.length > 1)
+    .map(([name, dirs]) => `"${name}" (${dirs.join(', ')})`)
+    .toArray();
+
+  if (collisions.length > 0) {
+    throw new Error(
+      `Declared source name(s) claimed more than once: ${collisions.join('; ')}. A source name is the directory its ` +
+        'support files deploy under, so two sources cannot share one. Rename one of them.',
+    );
+  }
+}
+
 function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
   const unusable = sources
     .map((source) => ({ source, problem: describeSourceNameProblem(source.name) }))
@@ -806,67 +848,62 @@ async function reconcileDeclaredSkills(
 async function reconcileSourceSupport(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
-  resolveAnchorContext: ResolveAnchorContext,
+  plans: ReadonlyArray<SourceSupportPlan>,
 ): Promise<void> {
+  for (const plan of plans) {
+    await deploySourceSupport(plan.destDir, plan.entries);
+  }
   for (const target of targets) {
-    const sourcesRoot = path.join(target.skillsDir, SOURCE_SUPPORT_DIR);
-    for (const source of sources) {
-      await deploySourceSupport(source.dir, path.join(sourcesRoot, source.name), {
-        ...target.deployContext,
-        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
-      });
-    }
     await retractUndeclaredSourceSupport(
-      sourcesRoot,
+      path.join(target.skillsDir, SOURCE_SUPPORT_DIR),
       sources.map((source) => source.name),
     );
   }
 }
 
 /**
- * Lists the support deliveries a real run would make, one per source that ships any, for the dry-run preview. Renders
- * through the same path the write does, so the preview cannot claim a delivery the run would not make.
+ * Renders every source's support entries for every targeted harness, pairing each result with where it deploys.
+ *
+ * Rendering is where a defect in a package's reference content surfaces, so calling this ahead of every write is what
+ * fails the run — dry-run included — before anything lands. The gate, the dry-run preview, and the delivery pass all
+ * read this one result, which is what keeps them from disagreeing about what a source ships and from rendering the
+ * same content more than once.
  */
-async function planSourceSupport(
+async function renderSourceSupportPlans(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
   resolveAnchorContext: ResolveAnchorContext,
-): Promise<ReadonlyArray<{ destDir: string; fileCount: number }>> {
-  const plans: Array<{ destDir: string; fileCount: number }> = [];
+): Promise<ReadonlyArray<SourceSupportPlan>> {
+  const plans: Array<SourceSupportPlan> = [];
   for (const target of targets) {
     for (const source of sources) {
-      const entries = await renderSourceSupport(source.dir, {
-        ...target.deployContext,
-        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
+      plans.push({
+        destDir: path.join(target.skillsDir, SOURCE_SUPPORT_DIR, source.name),
+        entries: await renderSourceSupport(source.dir, {
+          ...target.deployContext,
+          anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
+        }),
       });
-      if (entries.length > 0) {
-        plans.push({
-          destDir: path.join(target.skillsDir, SOURCE_SUPPORT_DIR, source.name),
-          fileCount: entries.length,
-        });
-      }
     }
   }
   return plans;
 }
 
-/**
- * Renders every source's support entries against every targeted harness, discarding the output, so a defect in a
- * package's reference content fails the run — dry-run included — before anything is written.
- */
-async function assertSourceSupportRenders(
+/** Lists the namespace paths a real run would retract, one per targeted harness's support root. */
+async function planSourceSupportRetractions(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
-  resolveAnchorContext: ResolveAnchorContext,
-): Promise<void> {
+): Promise<ReadonlyArray<string>> {
+  const retractions: Array<string> = [];
   for (const target of targets) {
-    for (const source of sources) {
-      await renderSourceSupport(source.dir, {
-        ...target.deployContext,
-        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
-      });
-    }
+    retractions.push(
+      ...(await listUndeclaredSourceSupport(
+        path.join(target.skillsDir, SOURCE_SUPPORT_DIR),
+        sources.map((source) => source.name),
+      )),
+    );
   }
+  return retractions;
 }
 
 /**
@@ -1300,7 +1337,9 @@ interface DryRunPlan {
   readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
   readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
   /** One entry per source that would deliver support content, naming its namespace dir and how many files land there. */
-  readonly sourceSupportPlans: ReadonlyArray<{ destDir: string; fileCount: number }>;
+  readonly sourceSupportPlans: ReadonlyArray<SourceSupportPlan>;
+  /** Namespace paths under each target's support root that no declared source claims. */
+  readonly sourceSupportRetractions: ReadonlyArray<string>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
 }
 
@@ -1328,8 +1367,13 @@ function reportDryRun(plan: DryRunPlan): void {
       console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
     }
   }
-  for (const { destDir, fileCount } of plan.sourceSupportPlans) {
-    console.info(`  deliver ${fileCount} source support file(s) to ${destDir}`);
+  for (const { destDir, entries } of plan.sourceSupportPlans) {
+    if (entries.length > 0) {
+      console.info(`  deliver ${entries.length} source support file(s) to ${destDir}`);
+    }
+  }
+  for (const retraction of plan.sourceSupportRetractions) {
+    console.info(`  retract source support ${retraction} (no longer declared)`);
   }
   for (const subagent of plan.resolvedSubagents) {
     for (const target of plan.harnessSubagentTargets) {

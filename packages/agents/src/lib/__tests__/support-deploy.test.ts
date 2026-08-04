@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createSkillLinkAnchor } from '../link-anchor.ts';
 import type { SkillDeployContext } from '../skill-transform.ts';
-import { deploySourceSupport, renderSourceSupport, retractUndeclaredSourceSupport } from '../support-deploy.ts';
+import {
+  deploySourceSupport,
+  listUndeclaredSourceSupport,
+  renderSourceSupport,
+  retractUndeclaredSourceSupport,
+} from '../support-deploy.ts';
 
 describe('source support delivery', () => {
   let sourceDir: string;
@@ -78,7 +83,7 @@ describe('source support delivery', () => {
       await writeSupportFile('_data/house-style.md', '# House style\n');
       const destDir = path.join(destParent, 'org');
 
-      await deploySourceSupport(sourceDir, destDir, context());
+      await deploySourceSupport(destDir, await renderSourceSupport(sourceDir, context()));
 
       expect(await readFile(path.join(destDir, '_data', 'house-style.md'), 'utf8')).toContain('# House style');
     });
@@ -87,10 +92,10 @@ describe('source support delivery', () => {
       await writeSupportFile('_data/keep.md', '# Keep\n');
       await writeSupportFile('_data/drop.md', '# Drop\n');
       const destDir = path.join(destParent, 'org');
-      await deploySourceSupport(sourceDir, destDir, context());
+      await deploySourceSupport(destDir, await renderSourceSupport(sourceDir, context()));
 
       await rm(path.join(sourceDir, 'skills', '_data', 'drop.md'));
-      await deploySourceSupport(sourceDir, destDir, context());
+      await deploySourceSupport(destDir, await renderSourceSupport(sourceDir, context()));
 
       expect(existsSync(path.join(destDir, '_data', 'keep.md'))).toBe(true);
       expect(existsSync(path.join(destDir, '_data', 'drop.md'))).toBe(false);
@@ -99,10 +104,10 @@ describe('source support delivery', () => {
     it('retires the namespace directory when the source drops its last support entry', async () => {
       await writeSupportFile('_data/only.md', '# Only\n');
       const destDir = path.join(destParent, 'org');
-      await deploySourceSupport(sourceDir, destDir, context());
+      await deploySourceSupport(destDir, await renderSourceSupport(sourceDir, context()));
 
       await rm(path.join(sourceDir, 'skills', '_data'), { recursive: true });
-      await deploySourceSupport(sourceDir, destDir, context());
+      await deploySourceSupport(destDir, await renderSourceSupport(sourceDir, context()));
 
       expect(existsSync(destDir)).toBe(false);
     });
@@ -132,6 +137,19 @@ describe('source support delivery', () => {
       expect(existsSync(path.join(destParent, '@williamthorsen', 'other'))).toBe(false);
     });
 
+    it('removes a scope directory left holding no declared package', async () => {
+      await mkdir(path.join(destParent, '@williamthorsen', 'nmr'), { recursive: true });
+      await mkdir(path.join(destParent, 'org', '_data'), { recursive: true });
+      await writeFile(path.join(destParent, 'org', '_data', 'a.md'), '# A\n', 'utf8');
+      // The scope's only package dropped its last support entry, so delivery already removed the package directory.
+      await rm(path.join(destParent, '@williamthorsen', 'nmr'), { recursive: true });
+
+      await retractUndeclaredSourceSupport(destParent, ['@williamthorsen/nmr', 'org']);
+
+      expect(existsSync(path.join(destParent, '@williamthorsen'))).toBe(false);
+      expect(existsSync(path.join(destParent, 'org', '_data', 'a.md'))).toBe(true);
+    });
+
     it('removes the root once no source claims anything under it', async () => {
       await mkdir(path.join(destParent, 'dropped'), { recursive: true });
 
@@ -144,6 +162,26 @@ describe('source support delivery', () => {
       const absent = path.join(destParent, 'never-created');
 
       await expect(retractUndeclaredSourceSupport(absent, ['org'])).resolves.toBeUndefined();
+    });
+  });
+
+  describe(listUndeclaredSourceSupport, () => {
+    it('names a dropped namespace without naming what removing it already covers', async () => {
+      await mkdir(path.join(destParent, 'dropped', '_data'), { recursive: true });
+      await writeFile(path.join(destParent, 'dropped', '_data', 'b.md'), '# B\n', 'utf8');
+      await mkdir(path.join(destParent, 'kept'), { recursive: true });
+
+      expect(await listUndeclaredSourceSupport(destParent, ['kept'])).toEqual([path.join(destParent, 'dropped')]);
+    });
+
+    it('names the root alone when nothing under it survives', async () => {
+      await mkdir(path.join(destParent, 'dropped'), { recursive: true });
+
+      expect(await listUndeclaredSourceSupport(destParent, [])).toEqual([destParent]);
+    });
+
+    it('names nothing for a missing root', async () => {
+      expect(await listUndeclaredSourceSupport(path.join(destParent, 'absent'), ['org'])).toEqual([]);
     });
   });
 

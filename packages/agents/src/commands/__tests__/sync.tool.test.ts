@@ -881,6 +881,33 @@ describe(syncCommand, () => {
       );
     });
 
+    it('retracts a scope directory left empty when its package drops its last support entry', async () => {
+      const scopedDir = `${sourceDir}-scoped`;
+      await mkdir(path.join(scopedDir, 'skills', '_data'), { recursive: true });
+      await writeFile(path.join(scopedDir, 'skills', '_data', 'a.md'), '# A\n', 'utf8');
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      const declare = (): Promise<void> =>
+        writeFile(
+          path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+          `sources:\n  - name: '@acme/guidance'\n    path: ${scopedDir}\nrulebooks:\n  use: []\n`,
+          'utf8',
+        );
+
+      try {
+        await declare();
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+        const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+        expect(existsSync(path.join(sourcesRoot, '@acme', 'guidance', '_data', 'a.md'))).toBe(true);
+
+        await rm(path.join(scopedDir, 'skills', '_data'), { recursive: true });
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+
+        expect(existsSync(sourcesRoot)).toBe(false);
+      } finally {
+        await rm(scopedDir, { recursive: true, force: true });
+      }
+    });
+
     it("delivers a source's skill support entries into that source's namespace", async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
@@ -995,6 +1022,26 @@ describe(syncCommand, () => {
         `deliver 1 source support file(s) to ${path.join(projectRoot, '.claude', 'skills', '_sources', 'org')}`,
       );
       expect(existsSync(path.join(projectRoot, '.claude', 'skills', '_sources'))).toBe(false);
+    });
+
+    it('names the source-support retraction a real run would perform, writing nothing', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), 'rulebooks:\n  use: []\n', 'utf8');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(`retract source support ${sourcesRoot} (no longer declared)`);
+      expect(existsSync(path.join(sourcesRoot, 'org', '_data', 'house-style.md'))).toBe(true);
     });
 
     it('deploys a declared source subagent from its source into the harness subagents dir', async () => {

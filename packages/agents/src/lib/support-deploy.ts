@@ -45,22 +45,12 @@ export async function renderSourceSupport(
 }
 
 /**
- * Delivers one source's support entries into `destDir`, which is that source's own namespace under the harness skills
- * dir. Entries the source no longer carries are pruned, so the delivered tree tracks the source exactly.
+ * Delivers one source's rendered support entries into `destDir`, that source's own namespace under the harness skills
+ * dir. Entries the source no longer carries are pruned, so the delivered tree tracks the source exactly, and a source
+ * carrying none leaves no directory behind.
  */
-export async function deploySourceSupport(
-  sourceDir: string,
-  destDir: string,
-  context: SkillDeployContext,
-): Promise<void> {
-  const entries = await renderSourceSupport(sourceDir, context);
-  if (entries.length === 0) {
-    // Nothing to deliver, and nothing should be left behind either: a source that dropped its last support entry
-    // retracts the directory rather than leaving an empty one.
-    await rm(destDir, { recursive: true, force: true });
-    return;
-  }
-  await writeRenderedTree(destDir, entries);
+export async function deploySourceSupport(destDir: string, entries: ReadonlyArray<RenderedSkillEntry>): Promise<void> {
+  await (entries.length === 0 ? rm(destDir, { recursive: true, force: true }) : writeRenderedTree(destDir, entries));
 }
 
 /**
@@ -78,29 +68,50 @@ export async function retractUndeclaredSourceSupport(
   sourcesRoot: string,
   declaredNames: ReadonlyArray<string>,
 ): Promise<void> {
-  const retained = await retractUnder(sourcesRoot, '', declaredNames);
-  if (!retained) {
-    await rm(sourcesRoot, { recursive: true, force: true });
+  for (const target of await listUndeclaredSourceSupport(sourcesRoot, declaredNames)) {
+    await rm(target, { recursive: true, force: true });
   }
+}
+
+/**
+ * Lists the paths under `sourcesRoot` that no declared source claims: a namespace a dropped source left, a scope
+ * directory holding no declared package, and the root itself once nothing under it survives, in which case removing
+ * the root is the whole retraction and the paths beneath it are left implicit.
+ *
+ * Shared by the retraction and by the dry-run preview, so what a preview names and what a real run removes are decided
+ * by one rule. A missing root claims nothing.
+ */
+export async function listUndeclaredSourceSupport(
+  sourcesRoot: string,
+  declaredNames: ReadonlyArray<string>,
+): Promise<ReadonlyArray<string>> {
+  const undeclared: Array<string> = [];
+  const present = await collectUndeclared(sourcesRoot, '', declaredNames, undeclared);
+  if (present === 'missing') {
+    return [];
+  }
+  return present === 'retained' ? undeclared : [sourcesRoot];
 }
 
 // region | Helpers
 
 /**
- * Prunes one level under `sourcesRoot`, recursing into any directory that leads to a declared name, and reports
- * whether anything survived, so a caller can retire a level left empty.
+ * Walks one level under `sourcesRoot`, accumulating what no declared source claims and recursing into any directory
+ * that leads to a declared name. Reports whether the level is absent, holds something a source claims, or survives
+ * holding nothing — the last being what lets a caller retire a scope directory emptied by its final package.
  */
-async function retractUnder(
+async function collectUndeclared(
   sourcesRoot: string,
   relDir: string,
   declaredNames: ReadonlyArray<string>,
-): Promise<boolean> {
+  undeclared: Array<string>,
+): Promise<'missing' | 'retained' | 'empty'> {
   let entries: ReadonlyArray<Dirent>;
   try {
     entries = await readdir(path.join(sourcesRoot, relDir), { withFileTypes: true });
   } catch (error: unknown) {
     if (isEnoent(error)) {
-      return false;
+      return 'missing';
     }
     throw error;
   }
@@ -114,12 +125,21 @@ async function retractUnder(
       continue;
     }
     if (entry.isDirectory() && declaredNames.some((name) => name.startsWith(`${rel}/`))) {
-      retained = (await retractUnder(sourcesRoot, rel, declaredNames)) || retained;
+      // Collected apart so a directory that keeps nothing is named on its own, rather than alongside the entries
+      // removing it already covers.
+      const nested: Array<string> = [];
+      const state = await collectUndeclared(sourcesRoot, rel, declaredNames, nested);
+      if (state === 'retained') {
+        retained = true;
+        undeclared.push(...nested);
+      } else if (state === 'empty') {
+        undeclared.push(path.join(sourcesRoot, rel));
+      }
       continue;
     }
-    await rm(path.join(sourcesRoot, rel), { recursive: true, force: true });
+    undeclared.push(path.join(sourcesRoot, rel));
   }
-  return retained;
+  return retained ? 'retained' : 'empty';
 }
 
 // endregion | Helpers
