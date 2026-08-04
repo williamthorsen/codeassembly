@@ -19,7 +19,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill my-skill --intera
 
 At install time, `{harness_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.opencode`, or the equivalent per target platform, producing an explicit absolute path the agent can execute.
 
-Bare invocations (e.g., `` Run `resolve-frontmatter.sh ...` ``) do not resolve at runtime: The install directory is not on `$PATH`, and only the launcher set (`claude.sh`, `rovo.sh`, etc.) is symlinked into `/usr/local/bin`. An agent that encounters a bare invocation typically guesses a path and fails before succeeding, wasting tool calls.
+Bare invocations (e.g., `` Run `resolve-frontmatter.sh ...` ``) do not resolve at runtime: The install directory is not on `$PATH`, and only `feedback-memories.sh` is symlinked into `/usr/local/bin`. An agent that encounters a bare invocation typically guesses a path and fails before succeeding, wasting tool calls.
 
 Prose mentions of script names that are not invocations (e.g., ``"the `describe-change.sh` script renders titles"``) do not need the prefix.
 
