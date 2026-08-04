@@ -2,6 +2,10 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import { parse as parseYaml } from 'yaml';
+
+import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
+import { isRecord } from '../lib/type-guards.ts';
 
 // Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
 // path rewrites invocation tokens: a harness-neutral destination carries no sigil to render, so `{skill:<slug>}` is
@@ -21,7 +25,7 @@ const SKILL_REFERENCE_PATTERNS: ReadonlyArray<RegExp> = [
 ];
 
 describe('shared guidance references', () => {
-  it('names only skills that exist', async () => {
+  it('names only skills that deploy to every harness', async () => {
     const deployed = new Set(await listUniversalSkillSlugs());
     const violations: Array<string> = [];
 
@@ -38,6 +42,22 @@ describe('shared guidance references', () => {
       'Shared guidance names a skill that does not deploy to every harness. An agent following the pointer finds ' +
       `nothing and falls back to its own defaults:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
+  });
+
+  // Every other assertion here is negative, so a detector that silently stopped matching would leave the suite green
+  // and the guard gone. These pin each pattern against the reference that outlived its skill.
+  describe('detection', () => {
+    it.each([
+      ['name before the word', 'Title: 72 chars max. Format per `git-commit-conventions` skill.'],
+      ['name after the word', 'See the skill `git-commit-conventions` for the full format.'],
+    ])('extracts a skill named with the %s', (_form, line) => {
+      expect([...collectSkillReferences(line)]).toEqual(['git-commit-conventions']);
+    });
+
+    it('ignores a backticked identifier that names no skill', () => {
+      const line = 'Name functions with a leading verb (`show_usage`, not `usage`; `build_payload`, not `payload`).';
+      expect([...collectSkillReferences(line)]).toEqual([]);
+    });
   });
 });
 
@@ -65,13 +85,43 @@ async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Returns the slugs of every skill that deploys to all harnesses. `_`-prefixed directories are excluded, which drops
- * the shared `_data` tree and the per-harness skills under `_harnesses/`: shared guidance serves every harness, so a
- * skill only one of them receives is as dead a pointer there as one that does not exist.
+ * Returns the slugs of every skill that reaches all harnesses: a directory under `skills/` holding a `SKILL.md` whose
+ * frontmatter declares no `harnesses:` narrowing. `_`-prefixed directories hold the shared `_data` and `_partials`
+ * trees, and a directory with no `SKILL.md` holds a bundled helper; neither deploys a skill to invoke. Shared guidance
+ * serves every harness, so a skill only some of them receive is as dead a pointer there as one that does not exist.
  */
 async function listUniversalSkillSlugs(): Promise<ReadonlyArray<string>> {
   const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
-  return entries.filter((entry) => entry.isDirectory() && !entry.name.startsWith('_')).map((entry) => entry.name);
+  const slugs: Array<string> = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith('_')) {
+      continue;
+    }
+    const definition = await readSkillDefinition(path.join(SKILLS_ROOT, entry.name, 'SKILL.md'));
+    if (definition !== undefined && !narrowsToSomeHarness(definition)) {
+      slugs.push(entry.name);
+    }
+  }
+  return slugs;
+}
+
+/** Reports whether a skill's frontmatter restricts it to a subset of harnesses. */
+function narrowsToSomeHarness(definition: string): boolean {
+  const { lines } = parseFrontmatter(definition);
+  const parsed: unknown = parseYaml(lines.join('\n'));
+  if (!isRecord(parsed) || parsed.harnesses === undefined || parsed.harnesses === null) {
+    return false;
+  }
+  return !Array.isArray(parsed.harnesses) || parsed.harnesses.length > 0;
+}
+
+/** Reads a `SKILL.md`, reporting `undefined` when the directory holds no skill definition. */
+async function readSkillDefinition(skillPath: string): Promise<string | undefined> {
+  try {
+    return await readFile(skillPath, 'utf8');
+  } catch {
+    return undefined;
+  }
 }
 
 // endregion | Helpers
