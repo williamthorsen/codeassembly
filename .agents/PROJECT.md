@@ -94,12 +94,7 @@ content/
       commit-format.md             # Commit title format specification
       git-commands.md              # Git command reference
       work-types.json              # Commit work-type taxonomy (JSON SSOT; companion schema at schemas/work-types.schema.json)
-    _harnesses/                    # Harness-specific skills (not installed to all harnesses)
-      claude/                      # Skills installed only to Claude Code
-        {skill-name}/SKILL.md
-      rovodev/                     # Skills installed only to Rovo Dev
-        {skill-name}/SKILL.md
-        {skill-name}/              # Multi-file skills with supporting documents
+    _partials/                     # Reusable Markdown fragments inlined at install time
     {skill-name}/SKILL.md          # Each skill is a directory with a single SKILL.md file
     orchestrate/                   # Multi-file skill with sub-modules
       SKILL.md
@@ -112,13 +107,13 @@ content/
     {agent-name}.md                # Each subagent is a single .md file
 ```
 
-**Skill frontmatter:** `name`, `description`, `user-invocable` (true = directly invocable, false = internal/referenced by other skills).
+**Skill frontmatter:** `name`, `description`, `user-invocable` (true = directly invocable, false = internal/referenced by other skills), `harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
 
 **Subagent frontmatter:** `name`, `description`, `tools` (allowed tools), `maxTurns`, `skills` (injected skill references).
 
 **Harness overlay mechanism:** `claude.yaml` and `rovodev.yaml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
 
-**Harness-specific skills:** Directories prefixed with `_` under `skills/` (e.g., `_data`, `_harnesses`) are not regular skills and are not installed directly. Skills in `_harnesses/{harnessId}/` are installed only when the install target matches that harness. For Rovo Dev, the CLI also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
+**Harness-scoped skills:** A skill narrows itself through its `harnesses:` frontmatter field; one declaring none deploys to every harness. Directories prefixed with `_` under `skills/` (`_data`, `_partials`) hold shared reference data and inlined fragments rather than skills, and deploy nothing invocable. For Rovo Dev, `sync` also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
 
 #### Content authoring
 

@@ -76,19 +76,14 @@ export async function deploySkill(skill: ResolvedSkill, destDir: string, context
   );
 }
 
-/** True when a skill targets `harnessId`; either it names no harnesses (so all of them) or lists this one. */
-export function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
-  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
-}
-
-// region | Helpers
-
 /**
  * Reads a skill's `harnesses:` frontmatter field, normalizing a string or list into a harness-id array. Returns
  * `undefined` when the field is absent or empty, meaning the skill targets all harnesses. Throws when a listed value
  * is not a known harness id, naming the slug and the offending value.
+ *
+ * Exported so a caller asking whether a skill reaches every harness reads the narrowing here rather than modelling it.
  */
-function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<HarnessId> | undefined {
+export function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<HarnessId> | undefined {
   const { lines } = parseFrontmatter(skillContent);
   const parsed: unknown = parseYaml(lines.join('\n'));
   if (!isRecord(parsed) || parsed.harnesses === undefined || parsed.harnesses === null) {
@@ -112,6 +107,13 @@ function readTargetHarnesses(skillContent: string, slug: string): ReadonlyArray<
   }
   return harnesses;
 }
+
+/** True when a skill targets `harnessId`; either it names no harnesses (so all of them) or lists this one. */
+export function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
+  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
+}
+
+// region | Helpers
 
 /**
  * Removes the `harnesses:` build directive from a skill's frontmatter, dropping the key line and any indented
