@@ -63,8 +63,10 @@ interface ResolutionEntry {
 
 /** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
 interface HarnessSubagentTarget {
+  readonly harnessId: HarnessId;
   readonly subagentsDir: string;
-  readonly deployContext: SubagentDeployContext;
+  /** Everything but the anchor, which the owning source decides and so is supplied per subagent. */
+  readonly deployContext: Omit<SubagentDeployContext, 'anchor'>;
 }
 
 /** One targeted harness's ambient host, paired with the harness id whose paths its rulebook bodies render for. */
@@ -77,13 +79,21 @@ interface AmbientHostTarget {
  * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so the pre-write gate,
  * ambient delivery, and skill delivery all render a rulebook body against the same anchor.
  */
-type ResolveRulebookContext = (harnessId: HarnessId) => RulebookRenderContext;
+type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string | undefined) => RulebookRenderContext;
+
+/**
+ * Resolves the anchor inputs for one harness and one owning source (`undefined` = the built-in library). The owner is
+ * a per-artifact input rather than a per-harness one, because only it distinguishes a link into a source's own support
+ * tree from the same target written by a library artifact.
+ */
+type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
 
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
 interface HarnessSkillTarget {
   readonly harnessId: HarnessId;
   readonly skillsDir: string;
-  readonly deployContext: SkillDeployContext;
+  /** Everything but the anchor, which the owning source decides and so is supplied per skill. */
+  readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
 }
 
 /** The one per-domain difference: the base dir to resolve and deploy under, and where ambient blocks land. */
@@ -238,9 +248,10 @@ async function reconcileDomain(
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
   // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
   // everything this run writes into a domain skills dir, and the collision gate has already proven them disjoint.
-  function resolveAnchorContext(harnessId: HarnessId): LinkAnchorContext {
+  const resolveAnchorContext: ResolveAnchorContext = (harnessId, supportNamespace) => {
     const config = HARNESSES[harnessId];
     return {
+      supportNamespace,
       // Declared skills are filtered per harness because a skill may target only some; rulebook-delivered skill names
       // are not, because every skill-delivery rulebook is written to every targeted harness.
       deployedSkillDirs: new Set([
@@ -251,19 +262,21 @@ async function reconcileDomain(
       homeDir: config.homeDir,
       skillsDirName: config.skillsDirName,
     };
-  }
+  };
 
-  const resolveRulebookContext: ResolveRulebookContext = (harnessId) =>
-    buildRulebookRenderContext(harnessId, resolved, createContentRootLinkAnchor(resolveAnchorContext(harnessId)));
+  const resolveRulebookContext: ResolveRulebookContext = (harnessId, supportNamespace) =>
+    buildRulebookRenderContext(
+      harnessId,
+      resolved,
+      createContentRootLinkAnchor(resolveAnchorContext(harnessId, supportNamespace)),
+    );
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
   // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
   // tool-name/link rewriting, and the harness id each rulebook body renders for.
   const harnessSkillTargets = await Promise.all(
-    harnessIds.map((harnessId) =>
-      resolveSkillTarget(harnessId, domain.baseDir, contentDir, createSkillLinkAnchor(resolveAnchorContext(harnessId))),
-    ),
+    harnessIds.map((harnessId) => resolveSkillTarget(harnessId, domain.baseDir, contentDir)),
   );
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
@@ -271,14 +284,7 @@ async function reconcileDomain(
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    harnessIds.map((harnessId) =>
-      resolveSubagentTarget(
-        harnessId,
-        domain.baseDir,
-        contentDir,
-        createContentRootLinkAnchor(resolveAnchorContext(harnessId)),
-      ),
-    ),
+    harnessIds.map((harnessId) => resolveSubagentTarget(harnessId, domain.baseDir, contentDir)),
   );
 
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
@@ -331,14 +337,14 @@ async function reconcileDomain(
   // Render every declared skill against every targeted harness up front, so a broken include or an unmapped tool
   // placeholder fails the whole run — dry-run included — before any file is written. The rendered output is discarded
   // here; `deploySkill` re-renders it at write time.
-  await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
+  await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills, resolveAnchorContext);
 
   // Same gate for each source's support entries, whose defects would otherwise surface only at the write below.
-  await assertSourceSupportRenders(harnessSkillTargets, sources, anchors);
+  await assertSourceSupportRenders(harnessSkillTargets, sources, resolveAnchorContext);
 
   // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
   // host and every skill file are already on disk.
-  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents);
+  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents, resolveAnchorContext);
 
   // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
@@ -366,7 +372,7 @@ async function reconcileDomain(
       resolvedSubagents,
       harnessSubagentTargets,
       subagentOrphansByDir,
-      sourceSupportPlans: await planSourceSupport(harnessSkillTargets, sources, anchors),
+      sourceSupportPlans: await planSourceSupport(harnessSkillTargets, sources, resolveAnchorContext),
       promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
     });
     return;
@@ -384,7 +390,6 @@ async function reconcileDomain(
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
-    const context = resolveRulebookContext(harnessId);
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -397,7 +402,7 @@ async function reconcileDomain(
           rulebook.skillName,
           rulebook.slug,
           rulebook.description,
-          renderRulebookBody(rulebook.body, rulebook.slug, context),
+          renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
         ),
       );
     }
@@ -405,15 +410,20 @@ async function reconcileDomain(
 
   // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
-  await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills);
+  await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
 
   // Deliver each source's support entries into its own namespace, then retract the namespaces no source claims.
-  await reconcileSourceSupport(harnessSkillTargets, sources, anchors);
+  await reconcileSourceSupport(harnessSkillTargets, sources, resolveAnchorContext);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
   // transform applied and the ownership marker stamped.
-  await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
+  await reconcileDeclaredSubagents(
+    harnessSubagentTargets,
+    subagentOrphansByDir,
+    resolvedSubagents,
+    resolveAnchorContext,
+  );
 
   await refreshPromptsYml(harnessIds, domain);
 
@@ -744,6 +754,7 @@ async function reconcileDeclaredSubagents(
   targets: ReadonlyArray<HarnessSubagentTarget>,
   orphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     const orphans = orphansByDir.find((entry) => entry.subagentsDir === target.subagentsDir)?.orphans ?? [];
@@ -751,7 +762,10 @@ async function reconcileDeclaredSubagents(
       await rm(path.join(target.subagentsDir, file), { force: true });
     }
     for (const subagent of resolvedSubagents) {
-      await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), target.deployContext);
+      await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), {
+        ...target.deployContext,
+        anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+      });
     }
   }
 }
@@ -765,6 +779,7 @@ async function reconcileDeclaredSkills(
   targets: ReadonlyArray<HarnessSkillTarget>,
   orphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     const orphans = orphansByDir.find((entry) => entry.skillsDir === target.skillsDir)?.orphans ?? [];
@@ -775,7 +790,10 @@ async function reconcileDeclaredSkills(
       if (!skillTargetsHarness(skill, target.harnessId)) {
         continue;
       }
-      await deploySkill(skill, path.join(target.skillsDir, skill.slug), target.deployContext);
+      await deploySkill(skill, path.join(target.skillsDir, skill.slug), {
+        ...target.deployContext,
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
+      });
     }
   }
 }
@@ -788,14 +806,14 @@ async function reconcileDeclaredSkills(
 async function reconcileSourceSupport(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
-  anchors: AnchorResolver,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     const sourcesRoot = path.join(target.skillsDir, SOURCE_SUPPORT_DIR);
     for (const source of sources) {
       await deploySourceSupport(source.dir, path.join(sourcesRoot, source.name), {
         ...target.deployContext,
-        anchor: anchors.forSkill(target.harnessId, source.name),
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
       });
     }
     await retractUndeclaredSourceSupport(
@@ -812,14 +830,14 @@ async function reconcileSourceSupport(
 async function planSourceSupport(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
-  anchors: AnchorResolver,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<ReadonlyArray<{ destDir: string; fileCount: number }>> {
   const plans: Array<{ destDir: string; fileCount: number }> = [];
   for (const target of targets) {
     for (const source of sources) {
       const entries = await renderSourceSupport(source.dir, {
         ...target.deployContext,
-        anchor: anchors.forSkill(target.harnessId, source.name),
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
       });
       if (entries.length > 0) {
         plans.push({
@@ -839,13 +857,13 @@ async function planSourceSupport(
 async function assertSourceSupportRenders(
   targets: ReadonlyArray<HarnessSkillTarget>,
   sources: ReadonlyArray<{ name: string; dir: string }>,
-  anchors: AnchorResolver,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     for (const source of sources) {
       await renderSourceSupport(source.dir, {
         ...target.deployContext,
-        anchor: anchors.forSkill(target.harnessId, source.name),
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
       });
     }
   }
@@ -859,13 +877,17 @@ async function assertSourceSupportRenders(
 async function assertDeclaredSkillsRender(
   targets: ReadonlyArray<HarnessSkillTarget>,
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     for (const skill of resolvedSkills) {
       if (!skillTargetsHarness(skill, target.harnessId)) {
         continue;
       }
-      await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, target.deployContext);
+      await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, {
+        ...target.deployContext,
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
+      });
     }
   }
 }
@@ -878,10 +900,14 @@ async function assertDeclaredSkillsRender(
 async function assertDeclaredSubagentsRender(
   targets: ReadonlyArray<HarnessSubagentTarget>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     for (const subagent of resolvedSubagents) {
-      await renderSubagent(subagent, target.deployContext);
+      await renderSubagent(subagent, {
+        ...target.deployContext,
+        anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+      });
     }
   }
 }
@@ -897,9 +923,8 @@ function assertRulebooksRender(
   resolveRulebookContext: ResolveRulebookContext,
 ): void {
   for (const harnessId of harnessIds) {
-    const context = resolveRulebookContext(harnessId);
     for (const rulebook of resolved) {
-      renderRulebookBody(rulebook.body, rulebook.slug, context);
+      renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
     }
   }
 }
@@ -916,7 +941,7 @@ async function deliverAmbient(
   resolveRulebookContext: ResolveRulebookContext,
 ): Promise<void> {
   for (const { harnessId, hostPath } of hosts) {
-    const body = renderAmbientBody(resolved, resolveRulebookContext(harnessId));
+    const body = renderAmbientBody(resolved, harnessId, resolveRulebookContext);
     const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
     if (plan.kind === 'skip') {
       if (plan.warn) {
@@ -1017,7 +1042,7 @@ async function previewAmbientHosts(
           domain.ambient,
           await probeAmbientHost(hostPath),
           hostPath,
-          renderAmbientBody(resolved, resolveRulebookContext(harnessId)),
+          renderAmbientBody(resolved, harnessId, resolveRulebookContext),
         ),
       ),
     ),
@@ -1169,12 +1194,18 @@ async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain)
  * Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of one harness's ambient
  * region. The context is one harness's, so the same rulebook yields that harness's own absolute paths.
  */
-function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, context: RulebookRenderContext): string {
+function renderAmbientBody(
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  harnessId: HarnessId,
+  resolveRulebookContext: ResolveRulebookContext,
+): string {
   let body = '';
   for (const rulebook of resolved) {
-    if (rulebook.ambient) {
-      body = injectRulebook(body, rulebook.slug, renderRulebookBody(rulebook.body, rulebook.slug, context));
+    if (!rulebook.ambient) {
+      continue;
     }
+    const context = resolveRulebookContext(harnessId, rulebook.source);
+    body = injectRulebook(body, rulebook.slug, renderRulebookBody(rulebook.body, rulebook.slug, context));
   }
   return body;
 }
@@ -1423,15 +1454,14 @@ async function resolveSubagentTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
-  anchor: ResolveLinkAnchor,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
+    harnessId,
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {
       overlayYaml,
-      anchor,
       toolMapping: loadToolMapping(overlayYaml),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
@@ -1450,7 +1480,6 @@ async function resolveSkillTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
-  anchor: ResolveLinkAnchor,
 ): Promise<HarnessSkillTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
@@ -1459,7 +1488,6 @@ async function resolveSkillTarget(
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       toolMapping: loadToolMapping(overlayYaml),
-      anchor,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

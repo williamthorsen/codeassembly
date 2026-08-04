@@ -153,11 +153,11 @@ describe('source support delivery', () => {
     return {
       toolMapping,
       anchor: createSkillLinkAnchor({
-        source: 'org',
+        supportNamespace: 'org',
         domainBase: '~',
         homeDir: '.claude',
         skillsDirName: 'skills',
-        sourceSkillSlugs: new Set(),
+        deployedSkillDirs: new Set(),
       }),
       homeDir: '.claude',
       harnessId: 'claude',
