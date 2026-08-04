@@ -3,10 +3,9 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { artifactFrontmatterPath } from '../lib/artifact-types.ts';
+import { libraryResolver } from '../lib/content-sources.ts';
 import { enumerateCatalogSlugs, listSkillDirectories } from '../lib/library-catalog.ts';
-import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { resolveSkillName } from '../lib/rulebook-skill.ts';
+import { resolveRulebook } from '../lib/rulebook-deploy.ts';
 import { readTargetHarnesses } from '../lib/skill-deploy.ts';
 
 // Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
@@ -50,6 +49,12 @@ describe('shared guidance references', () => {
   // only ever reports names it fails to find, so a rulebook half that returned nothing would leave it green.
   it('accepts a skill that a rulebook deploys', async () => {
     expect(await listDeployedSkillNames()).toContain('consult-shell-conventions');
+  });
+
+  // The harness filter is the whole of the "every harness" half of the contract, and every other assertion here would
+  // pass without it. This pins an exclusion beside the inclusion above.
+  it('excludes a skill that narrows itself to one harness', async () => {
+    expect(await listDeployedSkillNames()).not.toContain('review-permissions');
   });
 
   // Every other assertion here is negative, so a detector that silently stopped matching would leave the suite green
@@ -102,21 +107,14 @@ async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Returns the names that `delivery: skill` rulebooks deploy their skills under, which is the `skill-name` override
- * where one is declared. Rulebook frontmatter carries no `harnesses:` field, so every such skill reaches all of them.
+ * Returns the names that `delivery: skill` rulebooks deploy their skills under, read off the deploy path rather than
+ * recomputed here. Rulebook frontmatter carries no `harnesses:` field, so every such skill reaches all of them.
  */
 async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
+  const resolver = libraryResolver(CONTENT_ROOT);
   const { rulebook: slugs = [] } = await enumerateCatalogSlugs(CONTENT_ROOT);
-  const names: Array<string> = [];
-  for (const slug of slugs) {
-    const sourcePath = artifactFrontmatterPath('rulebook', slug);
-    const content = await readFile(path.join(CONTENT_ROOT, sourcePath), 'utf8');
-    const { rulebook } = parseRulebookFile(content, sourcePath);
-    if (rulebook.delivery.includes('skill')) {
-      names.push(resolveSkillName(slug, rulebook['skill-name']));
-    }
-  }
-  return names;
+  const rulebooks = await Promise.all(slugs.map((slug) => resolveRulebook(slug, resolver)));
+  return rulebooks.filter((rulebook) => rulebook.skill).map((rulebook) => rulebook.skillName);
 }
 
 /**
