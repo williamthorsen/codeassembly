@@ -56,7 +56,7 @@ It prints `{ ok, machine, projectsRoot, memories, skipped }`. Each entry in `mem
 
 Work through the memories **one store at a time**, not as a single undifferentiated batch. The `memories` array is already ordered by store, so group it by the `memoryStore` field and process each group in turn. On a machine with many memories, prefer scoping each run to one store with `--memory-store <name>`: a fresh invocation per store keeps the context lean and grounded in a single project. Processing all stores in one run stays the default, and is fine when the machine holds few.
 
-Before classifying a store's memories, ground yourself in that project: when `repoPath` is set, read that repo's `.agents/PROJECT.md` and any project guidance it points to, so the routing calls reflect what the project already codifies. When `repoPath` is null — the store's slug does not resolve to a working repo on this machine — classify that store's memories ungrounded. Grounding is best-effort, never a blocker.
+Before classifying a store's memories, ground yourself in that project: when `repoPath` is set, read that repo's root `AGENTS.md` and any project guidance it points to, so the routing calls reflect what the project already codifies. When `repoPath` is null — the store's slug does not resolve to a working repo on this machine — classify that store's memories ungrounded. Grounding is best-effort, never a blocker.
 
 Then decide one destination per memory:
 
