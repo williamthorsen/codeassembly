@@ -120,7 +120,7 @@ describe('source support delivery', () => {
       await mkdir(path.join(destParent, 'dropped', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'dropped', '_data', 'b.md'), '# B\n', 'utf8');
 
-      await retractUndeclaredSourceSupport(destParent, ['kept']);
+      await retractUndeclaredSourceSupport(destParent, { surviving: ['kept'], emptied: [] });
 
       expect(existsSync(path.join(destParent, 'kept', '_data', 'a.md'))).toBe(true);
       expect(existsSync(path.join(destParent, 'dropped'))).toBe(false);
@@ -131,7 +131,7 @@ describe('source support delivery', () => {
       await writeFile(path.join(destParent, '@williamthorsen', 'nmr', '_data', 'a.md'), '# A\n', 'utf8');
       await mkdir(path.join(destParent, '@williamthorsen', 'other'), { recursive: true });
 
-      await retractUndeclaredSourceSupport(destParent, ['@williamthorsen/nmr']);
+      await retractUndeclaredSourceSupport(destParent, { surviving: ['@williamthorsen/nmr'], emptied: [] });
 
       expect(existsSync(path.join(destParent, '@williamthorsen', 'nmr', '_data', 'a.md'))).toBe(true);
       expect(existsSync(path.join(destParent, '@williamthorsen', 'other'))).toBe(false);
@@ -144,7 +144,7 @@ describe('source support delivery', () => {
       // The scope's only package dropped its last support entry, so delivery already removed the package directory.
       await rm(path.join(destParent, '@williamthorsen', 'nmr'), { recursive: true });
 
-      await retractUndeclaredSourceSupport(destParent, ['@williamthorsen/nmr', 'org']);
+      await retractUndeclaredSourceSupport(destParent, { surviving: ['org'], emptied: ['@williamthorsen/nmr'] });
 
       expect(existsSync(path.join(destParent, '@williamthorsen'))).toBe(false);
       expect(existsSync(path.join(destParent, 'org', '_data', 'a.md'))).toBe(true);
@@ -153,7 +153,7 @@ describe('source support delivery', () => {
     it('removes the root once no source claims anything under it', async () => {
       await mkdir(path.join(destParent, 'dropped'), { recursive: true });
 
-      await retractUndeclaredSourceSupport(destParent, []);
+      await retractUndeclaredSourceSupport(destParent, { surviving: [], emptied: [] });
 
       expect(existsSync(destParent)).toBe(false);
     });
@@ -161,7 +161,9 @@ describe('source support delivery', () => {
     it('treats a missing root as nothing to do', async () => {
       const absent = path.join(destParent, 'never-created');
 
-      await expect(retractUndeclaredSourceSupport(absent, ['org'])).resolves.toBeUndefined();
+      await expect(
+        retractUndeclaredSourceSupport(absent, { surviving: ['org'], emptied: [] }),
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -171,17 +173,53 @@ describe('source support delivery', () => {
       await writeFile(path.join(destParent, 'dropped', '_data', 'b.md'), '# B\n', 'utf8');
       await mkdir(path.join(destParent, 'kept'), { recursive: true });
 
-      expect(await listUndeclaredSourceSupport(destParent, ['kept'])).toEqual([path.join(destParent, 'dropped')]);
+      expect(await listUndeclaredSourceSupport(destParent, { surviving: ['kept'], emptied: [] })).toEqual([
+        path.join(destParent, 'dropped'),
+      ]);
     });
 
     it('names the root alone when nothing under it survives', async () => {
       await mkdir(path.join(destParent, 'dropped'), { recursive: true });
 
-      expect(await listUndeclaredSourceSupport(destParent, [])).toEqual([destParent]);
+      expect(await listUndeclaredSourceSupport(destParent, { surviving: [], emptied: [] })).toEqual([destParent]);
     });
 
     it('names nothing for a missing root', async () => {
-      expect(await listUndeclaredSourceSupport(path.join(destParent, 'absent'), ['org'])).toEqual([]);
+      expect(
+        await listUndeclaredSourceSupport(path.join(destParent, 'absent'), { surviving: ['org'], emptied: [] }),
+      ).toEqual([]);
+    });
+
+    it('keeps the root for a surviving source delivery has yet to create', async () => {
+      await mkdir(path.join(destParent, 'old'), { recursive: true });
+
+      expect(await listUndeclaredSourceSupport(destParent, { surviving: ['new'], emptied: [] })).toEqual([
+        path.join(destParent, 'old'),
+      ]);
+    });
+
+    it('keeps a scope directory for a surviving package delivery has yet to create', async () => {
+      await mkdir(path.join(destParent, '@acme', 'stale'), { recursive: true });
+
+      expect(await listUndeclaredSourceSupport(destParent, { surviving: ['@acme/fresh'], emptied: [] })).toEqual([
+        path.join(destParent, '@acme', 'stale'),
+      ]);
+    });
+
+    it('leaves a namespace delivery empties to delivery, claiming neither the removal nor the directory', async () => {
+      await mkdir(path.join(destParent, 'emptied'), { recursive: true });
+      await mkdir(path.join(destParent, 'kept'), { recursive: true });
+
+      expect(await listUndeclaredSourceSupport(destParent, { surviving: ['kept'], emptied: ['emptied'] })).toEqual([]);
+    });
+
+    it('names a scope directory whose only package delivery empties', async () => {
+      await mkdir(path.join(destParent, '@acme', 'gone'), { recursive: true });
+      await mkdir(path.join(destParent, 'kept'), { recursive: true });
+
+      expect(await listUndeclaredSourceSupport(destParent, { surviving: ['kept'], emptied: ['@acme/gone'] })).toEqual([
+        path.join(destParent, '@acme'),
+      ]);
     });
   });
 

@@ -46,6 +46,7 @@ import {
   listUndeclaredSourceSupport,
   renderSourceSupport,
   retractUndeclaredSourceSupport,
+  type SourceSupportOutcome,
 } from '../lib/support-deploy.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
@@ -93,10 +94,18 @@ type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string | 
  */
 type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
 
-/** One source's support entries rendered for one harness, paired with the namespace directory they deploy into. */
+/**
+ * One source's support entries rendered for one harness, paired with the namespace directory they deploy into and
+ * what delivery will do there: write the entries, remove a namespace the source no longer fills, or nothing at all.
+ * Carrying the verdict is what lets the preview describe the removals without re-deriving them from the tree that
+ * delivery is about to change.
+ */
 interface SourceSupportPlan {
+  readonly sourcesRoot: string;
+  readonly name: string;
   readonly destDir: string;
   readonly entries: ReadonlyArray<RenderedSkillEntry>;
+  readonly kind: 'deliver' | 'retract' | 'none';
 }
 
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
@@ -386,7 +395,7 @@ async function reconcileDomain(
       harnessSubagentTargets,
       subagentOrphansByDir,
       sourceSupportPlans,
-      sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sources),
+      sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sourceSupportPlans),
       promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
     });
     return;
@@ -427,7 +436,7 @@ async function reconcileDomain(
   await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
 
   // Deliver each source's support entries into its own namespace, then retract the namespaces no source claims.
-  await reconcileSourceSupport(harnessSkillTargets, sources, sourceSupportPlans);
+  await reconcileSourceSupport(harnessSkillTargets, sourceSupportPlans);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
@@ -847,18 +856,30 @@ async function reconcileDeclaredSkills(
  */
 async function reconcileSourceSupport(
   targets: ReadonlyArray<HarnessSkillTarget>,
-  sources: ReadonlyArray<{ name: string; dir: string }>,
   plans: ReadonlyArray<SourceSupportPlan>,
 ): Promise<void> {
   for (const plan of plans) {
     await deploySourceSupport(plan.destDir, plan.entries);
   }
-  for (const target of targets) {
-    await retractUndeclaredSourceSupport(
-      path.join(target.skillsDir, SOURCE_SUPPORT_DIR),
-      sources.map((source) => source.name),
-    );
+  // Rooted in the targets rather than the plans: a run that declares no source has no plans, and its support roots
+  // are exactly the ones whose every namespace is now undeclared.
+  for (const sourcesRoot of resolveSupportRoots(targets)) {
+    await retractUndeclaredSourceSupport(sourcesRoot, resolveSupportOutcome(plans, sourcesRoot));
   }
+}
+
+/** Lists the support root each targeted harness keeps its per-source namespaces under. */
+function resolveSupportRoots(targets: ReadonlyArray<HarnessSkillTarget>): ReadonlyArray<string> {
+  return targets.map((target) => path.join(target.skillsDir, SOURCE_SUPPORT_DIR));
+}
+
+/** Groups one support root's plans into what delivery leaves there: the namespaces that hold content, and the rest. */
+function resolveSupportOutcome(plans: ReadonlyArray<SourceSupportPlan>, sourcesRoot: string): SourceSupportOutcome {
+  const rooted = plans.filter((plan) => plan.sourcesRoot === sourcesRoot);
+  return {
+    surviving: rooted.filter((plan) => plan.kind === 'deliver').map((plan) => plan.name),
+    emptied: rooted.filter((plan) => plan.kind !== 'deliver').map((plan) => plan.name),
+  };
 }
 
 /**
@@ -876,32 +897,45 @@ async function renderSourceSupportPlans(
 ): Promise<ReadonlyArray<SourceSupportPlan>> {
   const plans: Array<SourceSupportPlan> = [];
   for (const target of targets) {
+    const sourcesRoot = path.join(target.skillsDir, SOURCE_SUPPORT_DIR);
     for (const source of sources) {
+      const destDir = path.join(sourcesRoot, source.name);
+      const entries = await renderSourceSupport(source.dir, {
+        ...target.deployContext,
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
+      });
       plans.push({
-        destDir: path.join(target.skillsDir, SOURCE_SUPPORT_DIR, source.name),
-        entries: await renderSourceSupport(source.dir, {
-          ...target.deployContext,
-          anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
-        }),
+        sourcesRoot,
+        name: source.name,
+        destDir,
+        entries,
+        kind: resolveSupportVerdict(entries.length > 0, existsSync(destDir)),
       });
     }
   }
   return plans;
 }
 
-/** Lists the namespace paths a real run would retract, one per targeted harness's support root. */
+/** Names what delivery does at a namespace directory, given whether its source ships content and whether it exists. */
+function resolveSupportVerdict(shipsContent: boolean, destExists: boolean): SourceSupportPlan['kind'] {
+  if (shipsContent) {
+    return 'deliver';
+  }
+  return destExists ? 'retract' : 'none';
+}
+
+/**
+ * Lists the namespace paths a real run would retract, one per targeted harness's support root, judged against the tree
+ * delivery leaves rather than the one on disk. The plans name both halves of that: which namespaces gain content and
+ * which delivery empties.
+ */
 async function planSourceSupportRetractions(
   targets: ReadonlyArray<HarnessSkillTarget>,
-  sources: ReadonlyArray<{ name: string; dir: string }>,
+  plans: ReadonlyArray<SourceSupportPlan>,
 ): Promise<ReadonlyArray<string>> {
   const retractions: Array<string> = [];
-  for (const target of targets) {
-    retractions.push(
-      ...(await listUndeclaredSourceSupport(
-        path.join(target.skillsDir, SOURCE_SUPPORT_DIR),
-        sources.map((source) => source.name),
-      )),
-    );
+  for (const sourcesRoot of resolveSupportRoots(targets)) {
+    retractions.push(...(await listUndeclaredSourceSupport(sourcesRoot, resolveSupportOutcome(plans, sourcesRoot))));
   }
   return retractions;
 }
@@ -1367,13 +1401,8 @@ function reportDryRun(plan: DryRunPlan): void {
       console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
     }
   }
-  for (const { destDir, entries } of plan.sourceSupportPlans) {
-    if (entries.length > 0) {
-      console.info(`  deliver ${entries.length} source support file(s) to ${destDir}`);
-    }
-  }
-  for (const retraction of plan.sourceSupportRetractions) {
-    console.info(`  retract source support ${retraction} (no longer declared)`);
+  for (const line of describeSourceSupport(plan.sourceSupportPlans, plan.sourceSupportRetractions)) {
+    console.info(line);
   }
   for (const subagent of plan.resolvedSubagents) {
     for (const target of plan.harnessSubagentTargets) {
@@ -1400,6 +1429,24 @@ function reportDryRun(plan: DryRunPlan): void {
       `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
     );
   }
+}
+
+/**
+ * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
+ * because their source ships nothing, and which ones retraction removes because no source claims them.
+ */
+function describeSourceSupport(
+  plans: ReadonlyArray<SourceSupportPlan>,
+  retractions: ReadonlyArray<string>,
+): ReadonlyArray<string> {
+  const lines = plans
+    .filter((plan) => plan.kind !== 'none')
+    .map((plan) =>
+      plan.kind === 'deliver'
+        ? `  deliver ${plan.entries.length} source support file(s) to ${plan.destDir}`
+        : `  retract source support ${plan.destDir} (source ships none)`,
+    );
+  return [...lines, ...retractions.map((retraction) => `  retract source support ${retraction} (no longer declared)`)];
 }
 
 /** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */

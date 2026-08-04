@@ -57,8 +57,8 @@ export async function deploySourceSupport(destDir: string, entries: ReadonlyArra
  * Removes the namespace directories under `sourcesRoot` that no declared source claims, then the root itself once it
  * holds nothing, so dropping a source retracts what it delivered.
  *
- * `declaredNames` are source names, which may carry a `/` when a scoped package nests as its own segments; a directory
- * on the way to a declared name is kept and descended rather than removed. A missing root is a no-op.
+ * Source names may carry a `/` when a scoped package nests as its own segments; a directory on the way to a surviving
+ * name is kept and descended rather than removed. A missing root is a no-op.
  *
  * Runs after delivery rather than before it, unlike the skill and subagent passes: source names are unique within a
  * run, so no name is freed for another to claim, and running last is what lets a source that dropped its final support
@@ -66,27 +66,39 @@ export async function deploySourceSupport(destDir: string, entries: ReadonlyArra
  */
 export async function retractUndeclaredSourceSupport(
   sourcesRoot: string,
-  declaredNames: ReadonlyArray<string>,
+  outcome: SourceSupportOutcome,
 ): Promise<void> {
-  for (const target of await listUndeclaredSourceSupport(sourcesRoot, declaredNames)) {
+  for (const target of await listUndeclaredSourceSupport(sourcesRoot, outcome)) {
     await rm(target, { recursive: true, force: true });
   }
 }
 
 /**
- * Lists the paths under `sourcesRoot` that no declared source claims: a namespace a dropped source left, a scope
- * directory holding no declared package, and the root itself once nothing under it survives, in which case removing
- * the root is the whole retraction and the paths beneath it are left implicit.
+ * What delivery leaves behind, which decides what is left for retraction to remove. `surviving` names the sources that
+ * will hold content afterwards, `emptied` those whose namespace delivery removes because they render nothing.
+ */
+export interface SourceSupportOutcome {
+  readonly surviving: ReadonlyArray<string>;
+  readonly emptied: ReadonlyArray<string>;
+}
+
+/**
+ * Lists the paths under `sourcesRoot` that no source claims once delivery has run: a namespace a dropped source left,
+ * a scope directory holding no surviving package, and the root itself once nothing under it survives, in which case
+ * removing the root is the whole retraction and the paths beneath it are left implicit.
  *
- * Shared by the retraction and by the dry-run preview, so what a preview names and what a real run removes are decided
- * by one rule. A missing root claims nothing.
+ * Judged against the tree delivery will leave rather than the one on disk, so a name delivery is about to create
+ * counts as present and one it is about to empty does not. Evaluating the on-disk tree instead would let a preview
+ * name a retraction the run does not perform, which is how a renamed source reads as the whole root being dropped.
+ *
+ * A missing root claims nothing.
  */
 export async function listUndeclaredSourceSupport(
   sourcesRoot: string,
-  declaredNames: ReadonlyArray<string>,
+  outcome: SourceSupportOutcome,
 ): Promise<ReadonlyArray<string>> {
   const undeclared: Array<string> = [];
-  const present = await collectUndeclared(sourcesRoot, '', declaredNames, undeclared);
+  const present = await collectUndeclared(sourcesRoot, '', outcome, undeclared);
   if (present === 'missing') {
     return [];
   }
@@ -96,14 +108,17 @@ export async function listUndeclaredSourceSupport(
 // region | Helpers
 
 /**
- * Walks one level under `sourcesRoot`, accumulating what no declared source claims and recursing into any directory
- * that leads to a declared name. Reports whether the level is absent, holds something a source claims, or survives
- * holding nothing — the last being what lets a caller retire a scope directory emptied by its final package.
+ * Walks one level under `sourcesRoot`, accumulating what no surviving source claims and recursing into any directory
+ * that leads to one. Reports whether the level is absent, holds something a source claims, or survives holding
+ * nothing — the last being what lets a caller retire a scope directory emptied by its final package.
+ *
+ * A level counts as retained when a surviving name lands at or under it, whether or not that name is on disk yet, so
+ * the answer describes the tree after delivery rather than before it.
  */
 async function collectUndeclared(
   sourcesRoot: string,
   relDir: string,
-  declaredNames: ReadonlyArray<string>,
+  outcome: SourceSupportOutcome,
   undeclared: Array<string>,
 ): Promise<'missing' | 'retained' | 'empty'> {
   let entries: ReadonlyArray<Dirent>;
@@ -116,19 +131,23 @@ async function collectUndeclared(
     throw error;
   }
 
-  let retained = false;
+  let retained = deliversUnder(relDir, outcome.surviving);
   for (const entry of entries) {
     const rel = relDir === '' ? entry.name : `${relDir}/${entry.name}`;
-    if (declaredNames.includes(rel)) {
-      // The delivery pass owns everything inside a declared source's directory, pruning it against the source itself.
+    if (outcome.surviving.includes(rel)) {
+      // The delivery pass owns everything inside a surviving source's directory, pruning it against the source itself.
       retained = true;
       continue;
     }
-    if (entry.isDirectory() && declaredNames.some((name) => name.startsWith(`${rel}/`))) {
+    if (outcome.emptied.includes(rel)) {
+      // Delivery removes this one, so retraction neither keeps it nor claims the removal.
+      continue;
+    }
+    if (entry.isDirectory() && outcome.surviving.some((name) => name.startsWith(`${rel}/`))) {
       // Collected apart so a directory that keeps nothing is named on its own, rather than alongside the entries
       // removing it already covers.
       const nested: Array<string> = [];
-      const state = await collectUndeclared(sourcesRoot, rel, declaredNames, nested);
+      const state = await collectUndeclared(sourcesRoot, rel, outcome, nested);
       if (state === 'retained') {
         retained = true;
         undeclared.push(...nested);
@@ -140,6 +159,13 @@ async function collectUndeclared(
     undeclared.push(path.join(sourcesRoot, rel));
   }
   return retained ? 'retained' : 'empty';
+}
+
+/** Reports whether any surviving source's namespace lands at or under `relDir`, the root being under itself. */
+function deliversUnder(relDir: string, surviving: ReadonlyArray<string>): boolean {
+  return relDir === ''
+    ? surviving.length > 0
+    : surviving.some((name) => name === relDir || name.startsWith(`${relDir}/`));
 }
 
 // endregion | Helpers

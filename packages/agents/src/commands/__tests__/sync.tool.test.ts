@@ -1024,6 +1024,53 @@ describe(syncCommand, () => {
       expect(existsSync(path.join(projectRoot, '.claude', 'skills', '_sources'))).toBe(false);
     });
 
+    // The preview is computed before delivery and the run acts after it, so a renamed source is the shape that catches
+    // a preview judging the tree it is about to change: the incoming namespace does not exist yet.
+    it('names only the outgoing namespace when a source is renamed', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: renamed\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`,
+        'utf8',
+      );
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (no longer declared)`);
+      expect(output).not.toContain(`retract source support ${sourcesRoot} (`);
+    });
+
+    it('names the namespace a still-declared source empties', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      await rm(path.join(sourceDir, 'skills', '_data'), { recursive: true });
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source ships none)`);
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(false);
+    });
+
     it('names the source-support retraction a real run would perform, writing nothing', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
