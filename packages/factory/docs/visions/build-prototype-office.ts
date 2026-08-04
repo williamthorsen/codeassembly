@@ -64,15 +64,15 @@ for (const [key, filePath] of Object.entries(assetPaths)) {
   const buf = fs.readFileSync(filePath);
   assets[key] = 'data:image/png;base64,' + buf.toString('base64');
   totalBytes += buf.length;
-  console.log(`  ${key}: ${(buf.length / 1024).toFixed(1)} KB`);
+  console.log(`  ${key}: ${(buf.length / 1_024).toFixed(1)} KB`);
 }
-console.log(`Total asset data: ${(totalBytes / 1024).toFixed(0)} KB`);
+console.log(`Total asset data: ${(totalBytes / 1_024).toFixed(0)} KB`);
 
 // ── Generate the HTML ───────────────────────────────────────────────────────
 const html = buildHTML(JSON.stringify(assets));
 const outPath = path.join(import.meta.dirname, 'prototype-office.html');
 fs.writeFileSync(outPath, html);
-console.log(`Written: ${outPath} (${(html.length / 1024).toFixed(0)} KB)`);
+console.log(`Written: ${outPath} (${(html.length / 1_024).toFixed(0)} KB)`);
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function buildHTML(assetsJSON: string): string {

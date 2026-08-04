@@ -17,9 +17,9 @@ export interface ResolvedArtifactSource {
  * not-found error that enumerates every location searched.
  */
 export interface SourceResolver {
-  resolve(type: ArtifactType, slug: string): Promise<ResolvedArtifactSource | undefined>;
   readonly libraryDir: string;
   readonly sources: ReadonlyArray<{ name: string; dir: string }>;
+  resolve(type: ArtifactType, slug: string): Promise<ResolvedArtifactSource | undefined>;
 }
 
 /**

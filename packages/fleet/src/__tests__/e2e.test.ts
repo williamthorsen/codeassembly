@@ -35,7 +35,7 @@ function composeLine(type: string, ts: string, cwd = '/work/repo'): string {
 async function fetchLaneUntil(
   port: number,
   predicate: (lane: FleetSnapshot['lanes'][number]) => boolean,
-  timeoutMs = 3000,
+  timeoutMs = 3_000,
 ): Promise<FleetSnapshot['lanes'][number]> {
   const deadline = Date.now() + timeoutMs;
   let lane: FleetSnapshot['lanes'][number] | undefined;
@@ -139,7 +139,7 @@ describe('fleet server', () => {
     const elapsedMs = Date.now() - appendedAt;
 
     await reader.cancel();
-    expect(elapsedMs).toBeLessThan(1000);
+    expect(elapsedMs).toBeLessThan(1_000);
     expect(pushed.lanes[0]?.branch).toBe('101');
     expect(pushed.lanes[0]?.sessions[0]?.phase).toBe('working');
     expect(pushed.lanes[0]?.forge).toBeNull();
@@ -160,7 +160,7 @@ describe('fleet server', () => {
     await startTestServer({ gitPollMs: 50, gitProbe: () => Promise.resolve(observation) });
     assert(running !== undefined, 'The server should be running');
 
-    const probed = await fetchLaneUntil(running.port, (lane) => lane.git !== null, 2000);
+    const probed = await fetchLaneUntil(running.port, (lane) => lane.git !== null, 2_000);
     expect(probed.git).toEqual({ branch: 'main', dirtyFiles: 1, ahead: 0, behind: 0, baseBranch: 'origin/main' });
     expect(probed.open).toBe(true);
 
@@ -173,7 +173,7 @@ describe('fleet server', () => {
       baseBranch: null,
     };
 
-    const closed = await fetchLaneUntil(running.port, (lane) => !lane.open, 2000);
+    const closed = await fetchLaneUntil(running.port, (lane) => !lane.open, 2_000);
     expect(closed.closedReason).toBe('worktree-gone');
   });
 

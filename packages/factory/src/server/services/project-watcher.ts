@@ -8,7 +8,7 @@ export interface Scannable {
   getBasePath(): string;
 }
 
-const DEBOUNCE_MS = 1000;
+const DEBOUNCE_MS = 1_000;
 
 export class ProjectWatcher {
   private scanner: Scannable;

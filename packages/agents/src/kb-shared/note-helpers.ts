@@ -2,7 +2,7 @@ import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 import { parseNote } from '@williamthorsen/kb/frontmatter';
 
 /** Whole-day divisor for converting a date delta in milliseconds to an age in days. */
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
 
 /** Matches the two accepted stored-date forms: bare `YYYY-MM-DD` or second-precision UTC `YYYY-MM-DDTHH:MM:SSZ`. */
 const ACCEPTED_DATE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$/;

@@ -80,7 +80,7 @@ export const ORCH_CELEBRATING_FRAME_COORDINATES: ReadonlyArray<{ x: number; y: n
 export const ORCH_CONCERNED_FRAME_COORDINATES: ReadonlyArray<{ x: number; y: number }> = [{ x: 2, y: 0 }];
 
 // Orchestrator timing (per frame)
-export const ORCH_IDLE_DURATION = 1200;
+export const ORCH_IDLE_DURATION = 1_200;
 export const ORCH_WORKING_DURATION = 500;
 export const ORCH_WALKING_DURATION = 300;
 export const ORCH_CELEBRATING_DURATION = 250;

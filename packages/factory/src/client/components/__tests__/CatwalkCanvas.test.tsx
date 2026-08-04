@@ -57,7 +57,7 @@ vi.mock('../../visualizations/catwalk/scene/CatwalkScene.js', () => ({
 }));
 
 vi.mock('../../visualizations/catwalk/constants/dimensions.js', () => ({
-  ENGINE_WIDTH: 1200,
+  ENGINE_WIDTH: 1_200,
   ENGINE_HEIGHT: 600,
 }));
 
@@ -96,7 +96,7 @@ describe('CatwalkCanvas', () => {
     expect(mockEngineConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         canvasElement: expect.any(HTMLCanvasElement),
-        width: 1200,
+        width: 1_200,
         height: 600,
         displayMode: 'FitContainer',
       }),

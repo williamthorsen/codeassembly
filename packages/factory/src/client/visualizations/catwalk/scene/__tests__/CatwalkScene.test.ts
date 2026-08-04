@@ -32,9 +32,11 @@ vi.mock('excalibur', () => {
 
   class MockColor {
     hex: string;
+
     constructor(hex: string) {
       this.hex = hex;
     }
+
     static fromHex(hex: string) {
       return new MockColor(hex);
     }
@@ -71,40 +73,36 @@ vi.mock('excalibur', () => {
 // Mock all actor imports to avoid pulling in real Excalibur dependencies
 vi.mock('../../actors/index.js', () => ({
   ArtifactActor: class MockArtifactActor {
-    constructor(
-      public config: unknown,
-      public position: unknown,
-    ) {}
     updateConfig = vi.fn();
     fadeIn = vi.fn();
-  },
-  CatwalkStationActor: class MockCatwalkStationActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+  },
+  CatwalkStationActor: class MockCatwalkStationActor {
     updateConfig = vi.fn();
+    constructor(
+      public config: unknown,
+      public position: unknown,
+    ) {}
   },
   ChuteActor: class MockChuteActor {
+    updateConfig = vi.fn();
     constructor(
       public config: unknown,
       public endpoints: unknown,
     ) {}
-    updateConfig = vi.fn();
   },
   GateActor: class MockGateActor {
-    constructor(
-      public config: unknown,
-      public position: unknown,
-    ) {}
     updateConfig = vi.fn();
     animateOpen = vi.fn();
-  },
-  OrchestratorActor: class MockOrchestratorActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+  },
+  OrchestratorActor: class MockOrchestratorActor {
     animateMoveTo = vi.fn().mockResolvedValue(undefined);
     fadeOut = vi.fn();
     celebrate = vi.fn();
@@ -114,24 +112,28 @@ vi.mock('../../actors/index.js', () => ({
     actions = {
       moveTo: vi.fn().mockReturnValue({ toPromise: vi.fn().mockResolvedValue(undefined) }),
     };
-  },
-  StationAgentActor: class MockStationAgentActor {
     constructor(
       public config: unknown,
       public position: unknown,
     ) {}
+  },
+  StationAgentActor: class MockStationAgentActor {
     animateToState = vi.fn();
     fadeIn = vi.fn();
+    constructor(
+      public config: unknown,
+      public position: unknown,
+    ) {}
   },
   FlyingArtifactActor: class MockFlyingArtifactActor {
+    ascend = vi.fn().mockResolvedValue(undefined);
+    descend = vi.fn().mockResolvedValue(undefined);
+    kill = vi.fn();
     constructor(
       public config: unknown,
       public endpoints: unknown,
       public direction: string,
     ) {}
-    ascend = vi.fn().mockResolvedValue(undefined);
-    descend = vi.fn().mockResolvedValue(undefined);
-    kill = vi.fn();
   },
 }));
 

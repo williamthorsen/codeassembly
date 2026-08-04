@@ -9,7 +9,7 @@ interface UseRunStatusResult {
   error: Error | null;
 }
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 2_000;
 
 export function useRunStatus(projectSlug: string | null, runId: string | null): UseRunStatusResult {
   const [data, setData] = useState<CanonicalRunStatus | null>(null);

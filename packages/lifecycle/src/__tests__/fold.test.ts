@@ -175,7 +175,7 @@ describe('deriveLaneStatus', () => {
 
   it('closes when a probe reports the worktree gone, regardless of activity', () => {
     const status = deriveLaneStatus(activeLane, {
-      nowMs: BASE_MS + 1000,
+      nowMs: BASE_MS + 1_000,
       closeAfterMs: 3_600_000,
       probes: { worktreeExists: false },
     });
@@ -186,7 +186,7 @@ describe('deriveLaneStatus', () => {
   it('closes when every session has ended', () => {
     const endedLane = applyLaneEvent(activeLane, { sessionId: 'abc', envelope: composeEvent('session.ended') });
 
-    const status = deriveLaneStatus(endedLane, { nowMs: BASE_MS + 1000, closeAfterMs: 3_600_000 });
+    const status = deriveLaneStatus(endedLane, { nowMs: BASE_MS + 1_000, closeAfterMs: 3_600_000 });
 
     expect(status.open).toBe(false);
     expect(status.closedReason).toBe('all-sessions-ended');
@@ -201,7 +201,7 @@ describe('deriveLaneStatus', () => {
 
   it('stays open with recent activity, a live worktree probe notwithstanding', () => {
     const status = deriveLaneStatus(activeLane, {
-      nowMs: BASE_MS + 1000,
+      nowMs: BASE_MS + 1_000,
       closeAfterMs: 3_600_000,
       probes: { worktreeExists: true },
     });

@@ -80,7 +80,7 @@ export function createEngine(state, playback) {
 
   function orchWalkTo(targetX) {
     const distance = Math.abs(targetX - state.orch.x);
-    const duration = (distance / WALK_SPEED) * 1000;
+    const duration = (distance / WALK_SPEED) * 1_000;
     return animateProp(state.orch, 'x', targetX, duration);
   }
 
@@ -384,7 +384,7 @@ export function createEngine(state, playback) {
     }
     state.orch.working = true;
 
-    await wait(2000);
+    await wait(2_000);
 
     for (const agent of allAgents) {
       state.agents[agent] = 'resting';

@@ -8,7 +8,7 @@ import { buildSnapshot, type ForgeFactsLookup } from '../snapshot.ts';
 
 const BASE_TS = '2026-07-19T05:00:00.000Z';
 const BASE_MS = Date.parse(BASE_TS);
-const DERIVE_INPUT = { closeAfterMs: 600_000, nowMs: BASE_MS + 1000, staleMs: 90_000 };
+const DERIVE_INPUT = { closeAfterMs: 600_000, nowMs: BASE_MS + 1_000, staleMs: 90_000 };
 
 /** A minimal envelope of the given type. */
 function composeEvent(type: string, overrides: Partial<EventEnvelope> = {}): EventEnvelope {
@@ -92,7 +92,7 @@ describe('buildSnapshot', () => {
       newer: [composeEvent('turn.started', { ts: laterTs })],
     });
 
-    const snapshot = buildSnapshot([quietLane, busyLane], { ...DERIVE_INPUT, nowMs: Date.parse(laterTs) + 1000 });
+    const snapshot = buildSnapshot([quietLane, busyLane], { ...DERIVE_INPUT, nowMs: Date.parse(laterTs) + 1_000 });
 
     expect(snapshot.lanes.map((lane) => lane.branch)).toEqual(['102', '101']);
     expect(snapshot.lanes[0]?.sessions.map((session) => session.session)).toEqual(['newer', 'older']);

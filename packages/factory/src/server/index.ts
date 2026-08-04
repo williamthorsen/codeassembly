@@ -10,7 +10,7 @@ import { ProjectScanner } from './services/project-scanner.js';
 import { ProjectWatcher } from './services/project-watcher.js';
 import { SettingsStore } from './services/settings-store.js';
 
-const port = 5181;
+const port = 5_181;
 
 const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   console.error('Server error:', err);

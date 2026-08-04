@@ -12,7 +12,7 @@ describe('timing constants', () => {
   });
 
   it('has WORK_DURATION equal to 1200 milliseconds', () => {
-    expect(WORK_DURATION).toBe(1200);
+    expect(WORK_DURATION).toBe(1_200);
   });
 
   it('has PAUSE_DURATION equal to 300 milliseconds', () => {

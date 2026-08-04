@@ -246,7 +246,7 @@ describe('sprite definitions', () => {
     });
 
     it('ORCH_IDLE_DURATION is 1200ms', () => {
-      expect(ORCH_IDLE_DURATION).toBe(1200);
+      expect(ORCH_IDLE_DURATION).toBe(1_200);
     });
 
     it('ORCH_WALKING_DURATION is 300ms', () => {

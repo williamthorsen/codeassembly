@@ -37,11 +37,12 @@ vi.mock('excalibur', () => {
   };
 
   class MockAnimation {
+    static fromSpriteSheetCoordinates = mockAnimationFromCoords;
+
     config: Record<string, unknown>;
     constructor(config: Record<string, unknown>) {
       this.config = config;
     }
-    static fromSpriteSheetCoordinates = mockAnimationFromCoords;
   }
 
   return {

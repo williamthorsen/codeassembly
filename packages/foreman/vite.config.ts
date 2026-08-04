@@ -11,7 +11,7 @@ const fleetPort = process.env.FLEET_PORT ?? '4178';
 export default mergeConfig(baseConfig, {
   plugins: [createReactPlugin()],
   server: {
-    port: 4179,
+    port: 4_179,
     proxy: {
       '/api': `http://localhost:${fleetPort}`,
     },

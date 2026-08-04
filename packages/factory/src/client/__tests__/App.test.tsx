@@ -714,10 +714,10 @@ describe('App', () => {
         expect(mockFetchProjects).toHaveBeenCalledOnce();
       });
 
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(mockFetchProjects).toHaveBeenCalledTimes(2);
 
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(5_000);
       expect(mockFetchProjects).toHaveBeenCalledTimes(3);
     });
 
@@ -734,7 +734,7 @@ describe('App', () => {
 
       // Next poll fails
       mockFetchProjects.mockRejectedValueOnce(new Error('Network error'));
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(5_000);
 
       // Should not display the poll error
       expect(view.queryByText('Network error')).not.toBeInTheDocument();

@@ -129,7 +129,7 @@ function perfectStatus(): CanonicalRunStatus {
 
 function perfectEvents(): RunEvent[] {
   const events: RunEvent[] = [
-    { t: '2026-04-10T00:01:00Z', event: 'phase_completed', phase: 'architecture', status: 'completed', tokens: 1000 },
+    { t: '2026-04-10T00:01:00Z', event: 'phase_completed', phase: 'architecture', status: 'completed', tokens: 1_000 },
   ];
   // Add one usage-carrying event.
   for (let i = 1; i < 50; i++) {
@@ -269,19 +269,19 @@ describe('scoreRun', () => {
 
   describe('recency boundaries', () => {
     it('startedAt exactly 30 days before now is recent', () => {
-      const thirtyDaysAgo = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const thirtyDaysAgo = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1_000).toISOString();
       const status = buildStatus({ startedAt: thirtyDaysAgo });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(true);
     });
 
     it('startedAt 30 days + 1 second before now is not recent', () => {
-      const justTooOld = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000 - 1000).toISOString();
+      const justTooOld = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1_000 - 1_000).toISOString();
       const status = buildStatus({ startedAt: justTooOld });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(false);
     });
 
     it('future startedAt is treated as recent (no clock-skew handling)', () => {
-      const future = new Date(NOW.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      const future = new Date(NOW.getTime() + 24 * 60 * 60 * 1_000).toISOString();
       const status = buildStatus({ startedAt: future });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(true);
     });
@@ -385,7 +385,7 @@ describe('scoreRun', () => {
           event: 'phase_completed',
           phase: 'architecture',
           status: 'completed',
-          durationMs: 1234,
+          durationMs: 1_234,
         },
       ];
       expect(scoreRun(status(), events, NOW).signals.usageData).toBe(true);

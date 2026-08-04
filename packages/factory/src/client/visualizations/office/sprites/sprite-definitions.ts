@@ -60,7 +60,7 @@ export const FURNITURE_MANIFEST: readonly FurnitureItem[] = [
   { label: 'Plant (prep NW)', asset: 'plant100', tx: 1, ty: 1 },
   { label: 'Plant (prep S)', asset: 'plant100', tx: 10.81, ty: 8.44 },
   // Workshop: coder
-  { label: 'Desk (coder)', region: { sheet: 'officeSheet', sx: 32, sy: 1120, sw: 64, sh: 64 }, tx: 17, ty: 7 },
+  { label: 'Desk (coder)', region: { sheet: 'officeSheet', sx: 32, sy: 1_120, sw: 64, sh: 64 }, tx: 17, ty: 7 },
   { label: 'Monitors (coder)', region: { sheet: 'officeSheet', sx: 416, sy: 384, sw: 96, sh: 32 }, tx: 16.5, ty: 6.5 },
   { label: 'Keyboard (coder)', region: { sheet: 'officeSheet', sx: 448, sy: 448, sw: 32, sh: 32 }, tx: 17.5, ty: 7.5 },
   { label: 'Shelf (workshop)', asset: 'modernShelf205', tx: 16.78, ty: 0.88 },
@@ -109,7 +109,7 @@ export function resolveCharacterName(phase: string, agentId: string): CharacterN
   // Reviewer phases use a rotating pool based on agent ID hash
   if (phase === 'review' || phase === 'simplifier' || phase === 'holistic') {
     // Compute a stable index using a djb2-style multiplicative hash for better distribution
-    let hash = 5381;
+    let hash = 5_381;
     for (let i = 0; i < agentId.length; i++) {
       hash = Math.trunc(hash * 33 + (agentId.codePointAt(i) ?? 0));
     }

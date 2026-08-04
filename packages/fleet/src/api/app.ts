@@ -14,8 +14,8 @@ import type { FleetSnapshot } from './snapshot.ts';
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types -- the inferred route map is the contract `AppType` extracts; an explicit annotation would discard it
 export function createApp(input: {
-  getSnapshot(): FleetSnapshot;
   heartbeatMs: number;
+  getSnapshot(): FleetSnapshot;
   subscribe(listener: (snapshot: FleetSnapshot) => void): () => void;
 }) {
   return new Hono()

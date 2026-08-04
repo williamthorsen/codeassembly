@@ -26,15 +26,15 @@ import type {
 
 /** Callback interface that decouples the executor from scene internals. */
 export interface TransitionContext {
+  config: OfficeSceneConfig;
+  layout: FacilityLayout;
+  nextPositions: ResolvedPositions;
   findActor(entityId: string, entityKind: EntityKind): Actor | undefined;
   createAgent(agentId: string, pos: Position, phase: string): Actor;
   createArtifact(artifactId: string, pos: Position, color: string): Actor;
   createOrchestrator(pos: Position): Actor;
   removeActor(entityId: string, entityKind: EntityKind): void;
   updateSprite(actor: Actor, entityId: string, entityKind: EntityKind, direction: number): void;
-  config: OfficeSceneConfig;
-  nextPositions: ResolvedPositions;
-  layout: FacilityLayout;
 }
 
 // -- AnimationHandle — returned to the caller for interrupt support --

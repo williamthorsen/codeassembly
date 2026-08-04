@@ -38,7 +38,7 @@ describe('animation constants', () => {
   });
 
   it('derives scale speed from phase duration and overshoot', () => {
-    const expected = ARTIFACT_OVERSHOOT_SCALE / (ARTIFACT_APPEAR_PHASE_MS / 1000);
+    const expected = ARTIFACT_OVERSHOOT_SCALE / (ARTIFACT_APPEAR_PHASE_MS / 1_000);
     expect(ARTIFACT_APPEAR_SCALE_SPEED).toBeCloseTo(expected);
   });
 

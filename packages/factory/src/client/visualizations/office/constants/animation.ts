@@ -21,7 +21,7 @@ export const ARTIFACT_OVERSHOOT_SCALE = 1.2;
 export const ARTIFACT_APPEAR_PHASE_MS = 200;
 
 /** Speed for computing `scaleTo` velocity during artifact-appear (scale units per second). */
-export const ARTIFACT_APPEAR_SCALE_SPEED = ARTIFACT_OVERSHOOT_SCALE / (ARTIFACT_APPEAR_PHASE_MS / 1000);
+export const ARTIFACT_APPEAR_SCALE_SPEED = ARTIFACT_OVERSHOOT_SCALE / (ARTIFACT_APPEAR_PHASE_MS / 1_000);
 
 /** Movement speed for artifact delivery in pixels per second. */
 export const ARTIFACT_DELIVER_SPEED_PX_PER_SEC = 160;

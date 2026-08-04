@@ -6,7 +6,7 @@ import baseConfig from '../../vite.config.ts';
 export default mergeConfig(baseConfig, {
   plugins: [createReactPlugin()],
   server: {
-    port: 5180,
+    port: 5_180,
     proxy: {
       '/api': 'http://localhost:5181',
     },

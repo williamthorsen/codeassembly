@@ -63,6 +63,8 @@ export interface Bounds {
 }
 
 export interface CatwalkLayoutResult {
+  bounds: Bounds;
+  platformWidth: number;
   stationX(index: number): number;
   /** Agent position on the ground line. Anchor: bottom-center of the agent visual (ground line intersection). */
   agentPosition(stationIndex: number, slotIndex: number, agentCount: number): Position;
@@ -85,8 +87,6 @@ export interface CatwalkLayoutResult {
   stationLabelPosition(stationIndex: number): Position;
   railEndpoints(): LineEndpoints;
   groundEndpoints(): LineEndpoints;
-  bounds: Bounds;
-  platformWidth: number;
 }
 
 function assertDefined<T>(value: T | undefined, message: string): asserts value is T {

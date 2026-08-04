@@ -65,7 +65,7 @@ describe('useRunStatus', () => {
     });
 
     // Advance past the poll interval to trigger a second fetch
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2_000);
 
     await waitFor(() => {
       expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
@@ -86,14 +86,14 @@ describe('useRunStatus', () => {
     });
 
     // Advance to trigger second fetch which returns completed
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2_000);
 
     await waitFor(() => {
       expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
     });
 
     // Advance again — no more fetches should happen since polling stopped
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2_000);
 
     // Small wait to confirm no additional calls were made
     await waitFor(() => {
@@ -112,7 +112,7 @@ describe('useRunStatus', () => {
     });
 
     // Advance well past the poll interval
-    vi.advanceTimersByTime(4000);
+    vi.advanceTimersByTime(4_000);
 
     // No additional fetches should have been made
     expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
@@ -132,7 +132,7 @@ describe('useRunStatus', () => {
     unmount();
 
     // Advance past the poll interval — no new fetches should occur
-    vi.advanceTimersByTime(4000);
+    vi.advanceTimersByTime(4_000);
 
     expect(mockedFetchRunStatus).toHaveBeenCalledTimes(1);
   });
@@ -165,7 +165,7 @@ describe('useRunStatus', () => {
 
     // Advance past the poll interval to confirm polling works for the new run
     const callsAfterSwitch = mockedFetchRunStatus.mock.calls.length;
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2_000);
 
     await waitFor(() => {
       expect(mockedFetchRunStatus).toHaveBeenCalledTimes(callsAfterSwitch + 1);
@@ -213,7 +213,7 @@ describe('useRunStatus', () => {
     });
 
     // Advance to trigger the failing poll
-    vi.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2_000);
 
     await waitFor(() => {
       expect(result.current.error).not.toBeNull();
@@ -225,7 +225,7 @@ describe('useRunStatus', () => {
     expect(result.current.data).not.toBeNull();
 
     // Advance again — polling should have stopped after the error, so no additional fetches
-    vi.advanceTimersByTime(4000);
+    vi.advanceTimersByTime(4_000);
     expect(mockedFetchRunStatus).toHaveBeenCalledTimes(2);
   });
 });

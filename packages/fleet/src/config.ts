@@ -60,8 +60,8 @@ export function resolveConfig(env: Record<string, string | undefined>): FleetCon
     forgePollMs: readNumber(env.FLEET_FORGE_POLL_MS) ?? FORGE_POLL_MS,
     gitPollMs: readNumber(env.FLEET_GIT_POLL_MS) ?? 15_000,
     heartbeatMs: HEARTBEAT_MS,
-    port: readNumber(env.FLEET_PORT) ?? 4178,
-    rescanMs: readNumber(env.FLEET_RESCAN_MS) ?? 5000,
+    port: readNumber(env.FLEET_PORT) ?? 4_178,
+    rescanMs: readNumber(env.FLEET_RESCAN_MS) ?? 5_000,
     retentionMs: readNumber(env.FLEET_RETENTION_MS) ?? RETENTION_MS,
     staleMs: readNumber(env.FLEET_STALE_MS) ?? 90_000,
   };

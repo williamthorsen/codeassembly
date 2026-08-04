@@ -83,7 +83,7 @@ export class StationAgentActor extends Actor {
   override onPreUpdate(_engine: unknown, deltaMs: number): void {
     if (!this._pulsing) return;
     this._elapsed += deltaMs;
-    const t = Math.sin((this._elapsed * PULSE_FREQUENCY * Math.PI * 2) / 1000);
+    const t = Math.sin((this._elapsed * PULSE_FREQUENCY * Math.PI * 2) / 1_000);
     const s = SCALE_PULSE_MIN + ((SCALE_PULSE_MAX - SCALE_PULSE_MIN) * (t + 1)) / 2;
     this.scale = vec(s, s);
   }

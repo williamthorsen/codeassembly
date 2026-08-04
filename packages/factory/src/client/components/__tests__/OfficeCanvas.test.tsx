@@ -57,7 +57,7 @@ vi.mock('../../visualizations/office/scene/OfficeScene.js', () => ({
 }));
 
 vi.mock('../../visualizations/office/constants/dimensions.js', () => ({
-  CANVAS_WIDTH_PX: 1152,
+  CANVAS_WIDTH_PX: 1_152,
   CANVAS_HEIGHT_PX: 704,
   TILE_SIZE: 32,
 }));
@@ -97,7 +97,7 @@ describe('OfficeCanvas', () => {
     expect(mockEngineConstructor).toHaveBeenCalledWith(
       expect.objectContaining({
         canvasElement: expect.any(HTMLCanvasElement),
-        width: 1152,
+        width: 1_152,
         height: 704,
         displayMode: 'FitContainer',
       }),

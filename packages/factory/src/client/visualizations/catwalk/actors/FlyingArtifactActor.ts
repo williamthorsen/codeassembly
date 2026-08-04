@@ -69,6 +69,6 @@ export class FlyingArtifactActor extends Actor {
   /** Derive speed from chute height and configured duration. */
   private computeSpeed(): number {
     const distance = Math.abs(this.endpoints.botY - this.endpoints.topY);
-    return (distance / CHUTE_DURATION) * 1000;
+    return (distance / CHUTE_DURATION) * 1_000;
   }
 }

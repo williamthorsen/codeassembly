@@ -21,7 +21,7 @@ import { DEFAULT_VIS, visualizationRegistry } from './visualizations/registry.js
 
 import './App.css';
 
-const PROJECT_POLL_INTERVAL_MS = 5000;
+const PROJECT_POLL_INTERVAL_MS = 5_000;
 
 interface SourceControlsProps {
   showDemoSelector: boolean;

@@ -70,6 +70,8 @@ export interface RoomBounds {
 }
 
 export interface FactoryFloorLayoutResult {
+  bounds: Bounds;
+  platformWidth: number;
   /** Station center position (x, y varies by zone). */
   stationPosition(index: number): Position;
   /** Agent position on the platform. Anchor: bottom-center of the agent visual. */
@@ -92,8 +94,6 @@ export interface FactoryFloorLayoutResult {
   coderRoomBounds(): RoomBounds;
   /** Orchestrator room rectangle (between upper and lower boundaries). */
   orchestratorRoomBounds(): RoomBounds;
-  bounds: Bounds;
-  platformWidth: number;
 }
 
 /** Height of an agent visual (sprite + accent bar minus bottom padding). */

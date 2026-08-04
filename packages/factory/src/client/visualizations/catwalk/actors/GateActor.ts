@@ -33,7 +33,7 @@ export class GateActor extends Actor {
 
   /** Animate the gate opening by scaling Y to zero over PAUSE_DURATION ms. */
   animateOpen(): void {
-    const scaleSpeed = 1 / (PAUSE_DURATION / 1000);
+    const scaleSpeed = 1 / (PAUSE_DURATION / 1_000);
     this.actions.scaleTo(vec(1, 0), vec(scaleSpeed, scaleSpeed));
   }
 }

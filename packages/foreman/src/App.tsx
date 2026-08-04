@@ -8,7 +8,7 @@ import { AppShell, Group, Text, Title } from './integrations/mantine/index.ts';
 /** Shell chrome: the Foreman header with the live connection status, and the lane view under it. */
 export function App(): ReactElement {
   const { connection, snapshot } = useFleetSnapshot();
-  const nowMs = useNow(1000);
+  const nowMs = useNow(1_000);
   return (
     <AppShell data-test-id="app" header={{ height: 48 }} padding="md">
       <AppShell.Header>

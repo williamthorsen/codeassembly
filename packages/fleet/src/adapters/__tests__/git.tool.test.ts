@@ -60,7 +60,7 @@ function runGitCommand(dir: string, ...args: string[]): void {
 }
 
 /** Waits until `condition` holds, polling briefly; fails the test after the timeout. */
-async function waitFor(condition: () => boolean, timeoutMs = 2000): Promise<void> {
+async function waitFor(condition: () => boolean, timeoutMs = 2_000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (!condition() && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 5));

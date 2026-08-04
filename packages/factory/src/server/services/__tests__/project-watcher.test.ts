@@ -74,7 +74,7 @@ describe('ProjectWatcher', () => {
     expect(scanner.scan).not.toHaveBeenCalled();
 
     // Advance past the 1-second debounce
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1_000);
 
     expect(scanner.scan).toHaveBeenCalledOnce();
 
@@ -98,7 +98,7 @@ describe('ProjectWatcher', () => {
     watchCallback('rename', 'file-3');
 
     // Advance past the debounce (1s from last event)
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1_000);
 
     expect(scanner.scan).toHaveBeenCalledOnce();
 
@@ -136,7 +136,7 @@ describe('ProjectWatcher', () => {
     const watchCallback = getWatchCallback();
     watchCallback('rename', 'new-file');
 
-    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(1_000);
 
     expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('rescan'), expect.any(Error));
 

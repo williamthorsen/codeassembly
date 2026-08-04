@@ -12,7 +12,7 @@ export function StatusBar({ status }: StatusBarProps): React.JSX.Element {
   const duration =
     status.completedAt === undefined
       ? null
-      : Math.round((new Date(status.completedAt).getTime() - new Date(status.startedAt).getTime()) / 1000);
+      : Math.round((new Date(status.completedAt).getTime() - new Date(status.startedAt).getTime()) / 1_000);
 
   return (
     <div className="status-bar">

@@ -29,7 +29,7 @@ export const GATE_W = 6;
 // Timing (ms)
 export const WALK_SPEED = 400; // px/sec
 export const CHUTE_DURATION = 600;
-export const WORK_DURATION = 1200;
+export const WORK_DURATION = 1_200;
 export const PAUSE_DURATION = 300;
 
 // Station colors (CGA-16)

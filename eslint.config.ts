@@ -56,6 +56,7 @@ const config = defineConfig([
           allowNumber: true,
         },
       ],
+      'unicorn/consistent-class-member-order': 'off', // 🔴⚫ Conflicts with `@typescript-eslint/member-ordering` and most style guides
     },
   },
   {

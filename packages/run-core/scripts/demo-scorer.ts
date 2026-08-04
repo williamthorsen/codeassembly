@@ -14,7 +14,7 @@ export const WEIGHTS = {
 const EVENT_COUNT_MIN = 30;
 const EVENT_COUNT_MAX = 80;
 const RECENCY_WINDOW_DAYS = 30;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MS_PER_DAY = 24 * 60 * 60 * 1_000;
 
 export interface SignalBreakdown {
   completed: boolean;

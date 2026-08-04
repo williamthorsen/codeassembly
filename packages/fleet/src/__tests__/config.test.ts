@@ -15,8 +15,8 @@ describe('resolveConfig', () => {
       forgePollMs: FORGE_POLL_MS,
       gitPollMs: 15_000,
       heartbeatMs: HEARTBEAT_MS,
-      port: 4178,
-      rescanMs: 5000,
+      port: 4_178,
+      rescanMs: 5_000,
       retentionMs: RETENTION_MS,
       staleMs: 90_000,
     });
@@ -37,18 +37,18 @@ describe('resolveConfig', () => {
     expect(config.eventsDir).toBe('/srv/events');
     expect(config.forge).toBe('none');
     expect(config.forgePollMs).toBe(30_000);
-    expect(config.gitPollMs).toBe(2000);
-    expect(config.port).toBe(9000);
+    expect(config.gitPollMs).toBe(2_000);
+    expect(config.port).toBe(9_000);
     expect(config.rescanMs).toBe(250);
     expect(config.retentionMs).toBe(600_000);
-    expect(config.staleMs).toBe(1000);
+    expect(config.staleMs).toBe(1_000);
   });
 
   it.each([
     ['empty', ''],
     ['non-numeric', 'not-a-number'],
   ])('when a numeric variable is %s, falls back to the default', (_label, value) => {
-    expect(resolveConfig({ FLEET_PORT: value }).port).toBe(4178);
+    expect(resolveConfig({ FLEET_PORT: value }).port).toBe(4_178);
     expect(resolveConfig({ FLEET_FORGE_POLL_MS: value }).forgePollMs).toBe(FORGE_POLL_MS);
   });
 

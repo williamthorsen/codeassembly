@@ -59,6 +59,8 @@ export interface Position {
 
 /** Query interface for the spatial layout consumed by downstream layers. */
 export interface FacilityLayout {
+  /** All zone definitions. */
+  zones: readonly ZoneDefinition[];
   /** Return pixel position for a given slot ID. */
   slotPosition(slotId: string): Position;
   /** Return pixel center of a zone. */
@@ -69,8 +71,6 @@ export interface FacilityLayout {
   corridorPath(fromZoneId: string, toZoneId: string): Position[];
   /** Return the slot definition for a given slot ID, or undefined if not found. */
   slotDefinition(slotId: string): SlotDefinition | undefined;
-  /** All zone definitions. */
-  zones: readonly ZoneDefinition[];
 }
 
 // -- Office scene config (spatial layer output) --

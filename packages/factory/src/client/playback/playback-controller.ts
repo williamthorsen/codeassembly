@@ -23,26 +23,26 @@ export interface PlaybackControls {
 
 const MIN_SPEED = 0.25;
 const MAX_SPEED = 32;
-const BASE_INTERVAL_MS = 1500;
+const BASE_INTERVAL_MS = 1_500;
 const MIN_INTERVAL_MS = 300;
 
 /** Snapshot-based playback controller that steps through a sequence of `CanonicalRunStatus` snapshots. */
 export class PlaybackController implements PlaybackControls {
-  private readonly snapshots: ReadonlyArray<CanonicalRunStatus>;
-  private readonly onUpdate: (status: CanonicalRunStatus) => void;
-  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
-
   state: PlaybackState = 'stopped';
   cursor = -1;
   speed = 1;
 
-  get snapshotCount(): number {
-    return this.snapshots.length;
-  }
+  private readonly snapshots: ReadonlyArray<CanonicalRunStatus>;
+  private readonly onUpdate: (status: CanonicalRunStatus) => void;
+  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(snapshots: ReadonlyArray<CanonicalRunStatus>, onUpdate: (status: CanonicalRunStatus) => void) {
     this.snapshots = snapshots;
     this.onUpdate = onUpdate;
+  }
+
+  get snapshotCount(): number {
+    return this.snapshots.length;
   }
 
   play(): void {

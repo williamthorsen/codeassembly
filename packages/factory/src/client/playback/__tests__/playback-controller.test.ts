@@ -123,7 +123,7 @@ describe('PlaybackController', () => {
     expect(updates).toHaveLength(1);
 
     // Base interval at 1x = 1500ms
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(1_500);
     expect(ctrl.cursor).toBe(1);
     expect(updates).toHaveLength(2);
   });
@@ -146,7 +146,7 @@ describe('PlaybackController', () => {
     ctrl.play();
 
     // Advance to cursor 1
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(1_500);
     expect(ctrl.cursor).toBe(1);
     expect(updates).toHaveLength(2);
 
@@ -159,7 +159,7 @@ describe('PlaybackController', () => {
     expect(updates).toHaveLength(countAfterPause + 1);
 
     // After 1500ms, should advance to cursor 2
-    vi.advanceTimersByTime(1500);
+    vi.advanceTimersByTime(1_500);
     expect(ctrl.cursor).toBe(2);
     expect(updates).toHaveLength(countAfterPause + 2);
   });
@@ -178,9 +178,9 @@ describe('PlaybackController', () => {
     ctrl.play();
 
     // 4 snapshots: first emitted immediately, then 3 more at 1500ms intervals
-    vi.advanceTimersByTime(1500); // cursor 1
-    vi.advanceTimersByTime(1500); // cursor 2
-    vi.advanceTimersByTime(1500); // cursor 3
+    vi.advanceTimersByTime(1_500); // cursor 1
+    vi.advanceTimersByTime(1_500); // cursor 2
+    vi.advanceTimersByTime(1_500); // cursor 3
 
     expect(ctrl.cursor).toBe(3);
     expect(ctrl.state).toBe('ended');

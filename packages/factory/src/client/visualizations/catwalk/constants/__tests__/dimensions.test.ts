@@ -18,7 +18,7 @@ import {
 
 describe('canvas dimensions', () => {
   it('has CANVAS_W equal to 1400', () => {
-    expect(CANVAS_W).toBe(1400);
+    expect(CANVAS_W).toBe(1_400);
   });
 
   it('has CANVAS_H equal to 540', () => {

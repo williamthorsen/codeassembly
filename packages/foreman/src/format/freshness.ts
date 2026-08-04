@@ -7,7 +7,7 @@ export function formatFreshness(tsIso: string | null, nowMs: number): string {
   if (!Number.isFinite(elapsedMs)) {
     return '—';
   }
-  const seconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  const seconds = Math.max(0, Math.floor(elapsedMs / 1_000));
   if (seconds < 60) {
     return `${seconds}s ago`;
   }

@@ -11,12 +11,13 @@ const mockObserve = vi.fn();
 const mockDisconnect = vi.fn();
 
 class MockResizeObserver {
-  constructor(callback: ResizeCallback) {
-    capturedCallback = callback;
-  }
   observe = mockObserve;
   unobserve = vi.fn();
   disconnect = mockDisconnect;
+
+  constructor(callback: ResizeCallback) {
+    capturedCallback = callback;
+  }
 }
 
 describe('useContainerResize', () => {

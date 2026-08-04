@@ -21,7 +21,7 @@ export type ProcessRunner = (command: string, args: readonly string[]) => Promis
 export type RecallFn = (input: { query: string; scopedKbs: ScopedKb[] }) => Promise<RecallResult>;
 
 /** Output cap for one ripgrep invocation, sized well past the match set of a large vault. */
-const RIPGREP_MAX_BUFFER = 32 * 1024 * 1024;
+const RIPGREP_MAX_BUFFER = 32 * 1_024 * 1_024;
 
 /** Number of context lines captured on each side of a ripgrep match for the snippet. */
 const SNIPPET_CONTEXT_LINES = 1;
