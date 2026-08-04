@@ -98,6 +98,21 @@ describe('sync with a declared package', () => {
   /** The package's content root, as resolved from its declared `codeassembly.content`. */
   const packageContent = (): string => path.join(packageDir, 'codeassembly');
 
+  // A hand-declared source outranks a package, so overriding one by pointing a `sources` entry at a local directory is
+  // the documented pattern; naming that entry after the package it overrides is what makes the two tiers collide.
+  it('fails the run with nothing written when a hand-declared source takes an adopted package name', async () => {
+    const localDir = path.join(projectRoot, 'local-guidance');
+    await mkdir(path.join(localDir, 'skills'), { recursive: true });
+    await mkdir(path.join(packageDir, 'codeassembly', 'skills'), { recursive: true });
+    await declare(
+      `sources:\n  - name: '${PACKAGE_NAME}'\n    path: ${localDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\n`,
+    );
+
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      /claimed more than once.*@ca-fixture\/guide/s,
+    );
+  });
+
   it('deploys every deployable artifact the package ships, from the package name alone', async () => {
     await writeRulebook(packageContent(), 'pkg-rules', 'delivery: skill\ndescription: From the package.', 'Pkg rules.');
     await writeSkill(packageContent(), 'pkg-skill');

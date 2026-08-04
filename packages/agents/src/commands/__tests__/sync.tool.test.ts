@@ -752,6 +752,13 @@ describe(syncCommand, () => {
       await writeFile(path.join(dir, 'SKILL.md'), `---\nname: ${slug}\n---\n\n# ${slug}\n`, 'utf8');
     }
 
+    /** Writes a support file under a source's `skills/` directory, creating parents as needed. */
+    async function writeSourceSupport(relPath: string, content: string): Promise<void> {
+      const full = path.join(sourceDir, 'skills', relPath);
+      await mkdir(path.dirname(full), { recursive: true });
+      await writeFile(full, content, 'utf8');
+    }
+
     /** Writes the project-scope codeassembly.yaml declaring one `org` source plus the given verbatim body. */
     async function declareWithSource(body: string, dir = sourceDir): Promise<void> {
       await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
@@ -859,6 +866,229 @@ describe(syncCommand, () => {
       await syncCommand(makeOptions(), projectRoot, contentDir);
 
       expect(await readFile(skillPath('source-skill'), 'utf8')).toContain('<!-- codeassembly-skill:source-skill -->');
+    });
+
+    it('fails the run with nothing written when a source name cannot name a directory', async () => {
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: ../escape\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`,
+        'utf8',
+      );
+
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+        /Unusable declared source name.*\.\.\/escape.*relative path segment/s,
+      );
+    });
+
+    it('retracts a scope directory left empty when its package drops its last support entry', async () => {
+      const scopedDir = `${sourceDir}-scoped`;
+      await mkdir(path.join(scopedDir, 'skills', '_data'), { recursive: true });
+      await writeFile(path.join(scopedDir, 'skills', '_data', 'a.md'), '# A\n', 'utf8');
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      const declare = (): Promise<void> =>
+        writeFile(
+          path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+          `sources:\n  - name: '@acme/guidance'\n    path: ${scopedDir}\nrulebooks:\n  use: []\n`,
+          'utf8',
+        );
+
+      try {
+        await declare();
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+        const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+        expect(existsSync(path.join(sourcesRoot, '@acme', 'guidance', '_data', 'a.md'))).toBe(true);
+
+        await rm(path.join(scopedDir, 'skills', '_data'), { recursive: true });
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+
+        expect(existsSync(sourcesRoot)).toBe(false);
+      } finally {
+        await rm(scopedDir, { recursive: true, force: true });
+      }
+    });
+
+    it("delivers a source's skill support entries into that source's namespace", async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const delivered = path.join(projectRoot, '.claude', 'skills', '_sources', 'org', '_data', 'house-style.md');
+      expect(await readFile(delivered, 'utf8')).toContain('# House style');
+    });
+
+    it("resolves a source skill's link into its own support entry at the deployed location", async () => {
+      await mkdir(path.join(sourceDir, 'skills', 'org-skill'), { recursive: true });
+      await writeFile(
+        path.join(sourceDir, 'skills', 'org-skill', 'SKILL.md'),
+        '---\nname: org-skill\n---\n\nSee [house style](../_data/house-style.md).\n',
+        'utf8',
+      );
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('skills:\n  use:\n    - org-skill\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const target = path.join(
+        path.resolve(projectRoot),
+        '.claude',
+        'skills',
+        '_sources',
+        'org',
+        '_data',
+        'house-style.md',
+      );
+      expect(await readFile(skillPath('org-skill'), 'utf8')).toContain(`[house style](${target})`);
+      expect(existsSync(target)).toBe(true);
+    });
+
+    it("resolves a source rulebook's link into its own support entry at the deployed location", async () => {
+      await writeSourceRulebook(
+        'org-rules',
+        'delivery: skill\ndescription: Org rules.',
+        'Follow [house style](../../skills/_data/house-style.md).',
+      );
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use:\n    - org-rules\n');
+
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      const target = path.join(
+        path.resolve(projectRoot),
+        '.claude',
+        'skills',
+        '_sources',
+        'org',
+        '_data',
+        'house-style.md',
+      );
+      expect(await readFile(skillPath('consult-org-rules'), 'utf8')).toContain(`[house style](${target})`);
+      expect(existsSync(target)).toBe(true);
+    });
+
+    it('keeps the library and two sources from masking one another', async () => {
+      const otherDir = `${sourceDir}-other`;
+      await writeSourceSupport('_data/shared.md', 'From org.\n');
+      await mkdir(path.join(otherDir, 'skills', '_data'), { recursive: true });
+      await writeFile(path.join(otherDir, 'skills', '_data', 'shared.md'), 'From other.\n', 'utf8');
+      await mkdir(path.join(contentDir, 'skills', '_data'), { recursive: true });
+      await writeFile(path.join(contentDir, 'skills', '_data', 'shared.md'), 'From library.\n', 'utf8');
+      await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: org\n    path: ${sourceDir}\n  - name: other\n    path: ${otherDir}\nrulebooks:\n  use: []\n`,
+        'utf8',
+      );
+
+      try {
+        await syncCommand(makeOptions(), projectRoot, contentDir);
+
+        const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+        expect(await readFile(path.join(sourcesRoot, 'org', '_data', 'shared.md'), 'utf8')).toContain('From org.');
+        expect(await readFile(path.join(sourcesRoot, 'other', '_data', 'shared.md'), 'utf8')).toContain('From other.');
+      } finally {
+        await rm(otherDir, { recursive: true, force: true });
+      }
+    });
+
+    it('retracts the support entries a dropped source delivered', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(true);
+
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), 'rulebooks:\n  use: []\n', 'utf8');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+
+      expect(existsSync(sourcesRoot)).toBe(false);
+    });
+
+    it('names the support deliveries a real run would make in a dry run, writing nothing', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(
+        `deliver 1 source support file(s) to ${path.join(projectRoot, '.claude', 'skills', '_sources', 'org')}`,
+      );
+      expect(existsSync(path.join(projectRoot, '.claude', 'skills', '_sources'))).toBe(false);
+    });
+
+    // The preview is computed before delivery and the run acts after it, so a renamed source is the shape that catches
+    // a preview judging the tree it is about to change: the incoming namespace does not exist yet.
+    it('names only the outgoing namespace when a source is renamed', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.yaml'),
+        `sources:\n  - name: renamed\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`,
+        'utf8',
+      );
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (no longer declared)`);
+      expect(output).not.toContain(`retract source support ${sourcesRoot} (`);
+    });
+
+    it('names the namespace a still-declared source empties', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      await rm(path.join(sourceDir, 'skills', '_data'), { recursive: true });
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source ships none)`);
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(false);
+    });
+
+    it('names the source-support retraction a real run would perform, writing nothing', async () => {
+      await writeSourceSupport('_data/house-style.md', '# House style\n');
+      await declareWithSource('rulebooks:\n  use: []\n');
+      await syncCommand(makeOptions(), projectRoot, contentDir);
+      const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
+      await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), 'rulebooks:\n  use: []\n', 'utf8');
+
+      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+      let output: string;
+      try {
+        await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir);
+        output = infoSpy.mock.calls.map((call) => String(call[0])).join('\n');
+      } finally {
+        infoSpy.mockRestore();
+      }
+
+      expect(output).toContain(`retract source support ${sourcesRoot} (no longer declared)`);
+      expect(existsSync(path.join(sourcesRoot, 'org', '_data', 'house-style.md'))).toBe(true);
     });
 
     it('deploys a declared source subagent from its source into the harness subagents dir', async () => {

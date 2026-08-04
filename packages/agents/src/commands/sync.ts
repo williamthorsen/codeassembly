@@ -17,7 +17,12 @@ import { checkGitIgnored } from '../lib/git-ignore.ts';
 import { HARNESSES, resolveAmbientHostPath, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { enumerateCatalogSlugs } from '../lib/library-catalog.ts';
-import { createContentRootLinkAnchor, createSkillLinkAnchor, type LinkAnchorContext } from '../lib/link-anchor.ts';
+import {
+  createContentRootLinkAnchor,
+  createSkillLinkAnchor,
+  type LinkAnchorContext,
+  SOURCE_SUPPORT_DIR,
+} from '../lib/link-anchor.ts';
 import { findUndeclaredGuidancePackages, resolvePackageSources } from '../lib/package-sources.ts';
 import type { ResolveLinkAnchor } from '../lib/path-rewriter.ts';
 import { collectPromptEntries, renderPromptEntries } from '../lib/prompts-yml.ts';
@@ -27,8 +32,8 @@ import { extractRulebookSkillSlug, renderSkillFile } from '../lib/rulebook-skill
 import { renderRulebookBody, type RulebookRenderContext } from '../lib/rulebook-transform.ts';
 import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../lib/sentinel-inliner.ts';
 import { deploySkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from '../lib/skill-deploy.ts';
-import { renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
-import { describeSourceProblem } from '../lib/source-validation.ts';
+import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from '../lib/skill-transform.ts';
+import { describeSourceNameProblem, describeSourceProblem } from '../lib/source-validation.ts';
 import {
   deploySubagent,
   renderSubagent,
@@ -36,6 +41,13 @@ import {
   type ResolvedSubagent,
   type SubagentDeployContext,
 } from '../lib/subagent-deploy.ts';
+import {
+  deploySourceSupport,
+  listUndeclaredSourceSupport,
+  renderSourceSupport,
+  retractUndeclaredSourceSupport,
+  type SourceSupportOutcome,
+} from '../lib/support-deploy.ts';
 import { loadToolMapping } from '../lib/tool-name-rewriter.ts';
 import { isEnoent, isMissingFile } from '../lib/type-guards.ts';
 import type { AmbientHostKind, HarnessId, InstallOptions } from '../lib/types.ts';
@@ -57,8 +69,10 @@ interface ResolutionEntry {
 
 /** One targeted harness's project-local subagents dir paired with the per-harness inputs the deploy transform needs. */
 interface HarnessSubagentTarget {
+  readonly harnessId: HarnessId;
   readonly subagentsDir: string;
-  readonly deployContext: SubagentDeployContext;
+  /** Everything but the anchor, which the owning source decides and so is supplied per subagent. */
+  readonly deployContext: Omit<SubagentDeployContext, 'anchor'>;
 }
 
 /** One targeted harness's ambient host, paired with the harness id whose paths its rulebook bodies render for. */
@@ -71,13 +85,35 @@ interface AmbientHostTarget {
  * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so the pre-write gate,
  * ambient delivery, and skill delivery all render a rulebook body against the same anchor.
  */
-type ResolveRulebookContext = (harnessId: HarnessId) => RulebookRenderContext;
+type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string | undefined) => RulebookRenderContext;
+
+/**
+ * Resolves the anchor inputs for one harness and one owning source (`undefined` = the built-in library). The owner is
+ * a per-artifact input rather than a per-harness one, because only it distinguishes a link into a source's own support
+ * tree from the same target written by a library artifact.
+ */
+type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
+
+/**
+ * One source's support entries rendered for one harness, paired with the namespace directory they deploy into and
+ * what delivery will do there: write the entries, remove a namespace the source no longer fills, or nothing at all.
+ * Carrying the verdict is what lets the preview describe the removals without re-deriving them from the tree that
+ * delivery is about to change.
+ */
+interface SourceSupportPlan {
+  readonly sourcesRoot: string;
+  readonly name: string;
+  readonly destDir: string;
+  readonly entries: ReadonlyArray<RenderedSkillEntry>;
+  readonly kind: 'deliver' | 'retract' | 'none';
+}
 
 /** One targeted harness's id and project-local skills dir paired with the per-harness inputs the skill transform needs. */
 interface HarnessSkillTarget {
   readonly harnessId: HarnessId;
   readonly skillsDir: string;
-  readonly deployContext: SkillDeployContext;
+  /** Everything but the anchor, which the owning source decides and so is supplied per skill. */
+  readonly deployContext: Omit<SkillDeployContext, 'anchor'>;
 }
 
 /** The one per-domain difference: the base dir to resolve and deploy under, and where ambient blocks land. */
@@ -186,6 +222,8 @@ async function reconcileDomain(
   // source up front so a missing or non-directory source fails the whole run — dry-run included — before any write.
   const resolver = createSourceResolver(sources, contentDir);
   await assertValidSources(sources);
+  assertUsableSourceNames(sources);
+  assertDistinctSourceNames(sources);
 
   // Enumerated after validation, so a package whose content dir is missing has already failed the run.
   const packageCatalogs = await Promise.all(packageSources.map((source) => enumerateCatalogSlugs(source.dir)));
@@ -231,9 +269,10 @@ async function reconcileDomain(
   // Resolved before every render gate, so the gates and the writes they guard cannot disagree about where a link
   // target lands. The deployed skill dirs it reads are settled above: `resolvedSkills` and `desiredSkillDirs` name
   // everything this run writes into a domain skills dir, and the collision gate has already proven them disjoint.
-  function resolveAnchorContext(harnessId: HarnessId): LinkAnchorContext {
+  const resolveAnchorContext: ResolveAnchorContext = (harnessId, supportNamespace) => {
     const config = HARNESSES[harnessId];
     return {
+      supportNamespace,
       // Declared skills are filtered per harness because a skill may target only some; rulebook-delivered skill names
       // are not, because every skill-delivery rulebook is written to every targeted harness.
       deployedSkillDirs: new Set([
@@ -244,19 +283,21 @@ async function reconcileDomain(
       homeDir: config.homeDir,
       skillsDirName: config.skillsDirName,
     };
-  }
+  };
 
-  const resolveRulebookContext: ResolveRulebookContext = (harnessId) =>
-    buildRulebookRenderContext(harnessId, resolved, createContentRootLinkAnchor(resolveAnchorContext(harnessId)));
+  const resolveRulebookContext: ResolveRulebookContext = (harnessId, supportNamespace) =>
+    buildRulebookRenderContext(
+      harnessId,
+      resolved,
+      createContentRootLinkAnchor(resolveAnchorContext(harnessId, supportNamespace)),
+    );
 
   // Skill delivery targets project-local harness skills dirs, gated by detection (or `--harness`). Passing
   // `projectRoot` as the base is what keeps the skills project-scoped, and keeps tests out of the real home dir. Each
   // target carries the per-harness skill-transform inputs so declared-skill deployment applies include expansion and
   // tool-name/link rewriting, and the harness id each rulebook body renders for.
   const harnessSkillTargets = await Promise.all(
-    harnessIds.map((harnessId) =>
-      resolveSkillTarget(harnessId, domain.baseDir, contentDir, createSkillLinkAnchor(resolveAnchorContext(harnessId))),
-    ),
+    harnessIds.map((harnessId) => resolveSkillTarget(harnessId, domain.baseDir, contentDir)),
   );
 
   // Subagent delivery targets each harness's project-local subagents dir, loading that harness's overlay and tool
@@ -264,14 +305,7 @@ async function reconcileDomain(
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = await Promise.all(
-    harnessIds.map((harnessId) =>
-      resolveSubagentTarget(
-        harnessId,
-        domain.baseDir,
-        contentDir,
-        createContentRootLinkAnchor(resolveAnchorContext(harnessId)),
-      ),
-    ),
+    harnessIds.map((harnessId) => resolveSubagentTarget(harnessId, domain.baseDir, contentDir)),
   );
 
   // A skill dir is sync-owned only when its `SKILL.md` carries the provenance marker; that gate is what keeps
@@ -324,11 +358,15 @@ async function reconcileDomain(
   // Render every declared skill against every targeted harness up front, so a broken include or an unmapped tool
   // placeholder fails the whole run — dry-run included — before any file is written. The rendered output is discarded
   // here; `deploySkill` re-renders it at write time.
-  await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills);
+  await assertDeclaredSkillsRender(harnessSkillTargets, resolvedSkills, resolveAnchorContext);
+
+  // Same gate for each source's support entries, whose defects would otherwise surface only at the write below. The
+  // rendered result is carried to the preview and the delivery pass rather than rendered again by each.
+  const sourceSupportPlans = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
 
   // Same gate for subagents, whose deploy is the last write pass: without it a render failure lands after the ambient
   // host and every skill file are already on disk.
-  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents);
+  await assertDeclaredSubagentsRender(harnessSubagentTargets, resolvedSubagents, resolveAnchorContext);
 
   // Same gate for rulebooks: a link target the delivery pipeline cannot honor fails the run before either delivery
   // pass writes, rather than shipping a path that resolves to nothing.
@@ -356,6 +394,8 @@ async function reconcileDomain(
       resolvedSubagents,
       harnessSubagentTargets,
       subagentOrphansByDir,
+      sourceSupportPlans,
+      sourceSupportRetractions: await planSourceSupportRetractions(harnessSkillTargets, sourceSupportPlans),
       promptsYmlPaths: resolvePromptsYmlPaths(harnessIds, domain),
     });
     return;
@@ -373,7 +413,6 @@ async function reconcileDomain(
     for (const dir of orphans) {
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
-    const context = resolveRulebookContext(harnessId);
     for (const rulebook of resolved) {
       if (!rulebook.skill) {
         continue;
@@ -386,7 +425,7 @@ async function reconcileDomain(
           rulebook.skillName,
           rulebook.slug,
           rulebook.description,
-          renderRulebookBody(rulebook.body, rulebook.slug, context),
+          renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source)),
         ),
       );
     }
@@ -394,12 +433,20 @@ async function reconcileDomain(
 
   // Reconcile declared skills per targeted harness, independently of the rulebook-skill pass above: Retract owned
   // declared-skill dirs no longer declared, then deploy each declared skill into `<skillsDir>/<slug>/`.
-  await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills);
+  await reconcileDeclaredSkills(harnessSkillTargets, declaredSkillOrphansByDir, resolvedSkills, resolveAnchorContext);
+
+  // Deliver each source's support entries into its own namespace, then retract the namespaces no source claims.
+  await reconcileSourceSupport(harnessSkillTargets, sourceSupportPlans);
 
   // Reconcile declared subagents per targeted harness, independently of the skill passes: Retract owned subagent
   // files no longer declared, then deploy each declared subagent as `<subagentsDir>/<slug>.md` with the harness
   // transform applied and the ownership marker stamped.
-  await reconcileDeclaredSubagents(harnessSubagentTargets, subagentOrphansByDir, resolvedSubagents);
+  await reconcileDeclaredSubagents(
+    harnessSubagentTargets,
+    subagentOrphansByDir,
+    resolvedSubagents,
+    resolveAnchorContext,
+  );
 
   await refreshPromptsYml(harnessIds, domain);
 
@@ -459,6 +506,53 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
   if (invalid.length > 0) {
     throw new Error(
       `Invalid declared source(s): ${invalid.join('; ')}. Each source path must be an existing, readable directory.`,
+    );
+  }
+}
+
+/**
+ * Throws when two declared sources share a name, which the hand-declared tier and the package tier can each satisfy
+ * independently: names are unique within a tier, and nothing reconciles one tier's against the other's.
+ *
+ * A shared name would let both claim one support namespace, so the source that wins artifact resolution and the one
+ * whose support files survive delivery are different sources, and links rendered for the first reach the second's
+ * files. Failing here, before any write, forces the conflict to be resolved by renaming rather than by delivery order.
+ */
+function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
+  const dirsByName = new Map<string, Array<string>>();
+  for (const source of sources) {
+    dirsByName.set(source.name, [...(dirsByName.get(source.name) ?? []), source.dir]);
+  }
+
+  const collisions = dirsByName
+    .entries()
+    .filter(([, dirs]) => dirs.length > 1)
+    .map(([name, dirs]) => `"${name}" (${dirs.join(', ')})`)
+    .toArray();
+
+  if (collisions.length > 0) {
+    throw new Error(
+      `Declared source name(s) claimed more than once: ${collisions.join('; ')}. A source name is the directory its ` +
+        'support files deploy under, so two sources cannot share one. Rename one of them.',
+    );
+  }
+}
+
+/**
+ * Throws when a declared source's name cannot serve as the directory segments its support entries deploy under, so a
+ * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
+ * name is reported together, so a declaration with two of them takes one fix rather than two runs.
+ */
+function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
+  const unusable = sources
+    .map((source) => ({ source, problem: describeSourceNameProblem(source.name) }))
+    .filter((entry) => entry.problem !== undefined)
+    .map((entry) => `"${entry.source.name}": ${entry.problem}`);
+
+  if (unusable.length > 0) {
+    throw new Error(
+      `Unusable declared source name(s): ${unusable.join('; ')}. A source name becomes a directory under the ` +
+        'harness skills dir, so it must name one.',
     );
   }
 }
@@ -711,6 +805,7 @@ async function reconcileDeclaredSubagents(
   targets: ReadonlyArray<HarnessSubagentTarget>,
   orphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     const orphans = orphansByDir.find((entry) => entry.subagentsDir === target.subagentsDir)?.orphans ?? [];
@@ -718,7 +813,10 @@ async function reconcileDeclaredSubagents(
       await rm(path.join(target.subagentsDir, file), { force: true });
     }
     for (const subagent of resolvedSubagents) {
-      await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), target.deployContext);
+      await deploySubagent(subagent, path.join(target.subagentsDir, `${subagent.slug}.md`), {
+        ...target.deployContext,
+        anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+      });
     }
   }
 }
@@ -732,6 +830,7 @@ async function reconcileDeclaredSkills(
   targets: ReadonlyArray<HarnessSkillTarget>,
   orphansByDir: ReadonlyArray<{ skillsDir: string; orphans: ReadonlyArray<string> }>,
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     const orphans = orphansByDir.find((entry) => entry.skillsDir === target.skillsDir)?.orphans ?? [];
@@ -742,9 +841,103 @@ async function reconcileDeclaredSkills(
       if (!skillTargetsHarness(skill, target.harnessId)) {
         continue;
       }
-      await deploySkill(skill, path.join(target.skillsDir, skill.slug), target.deployContext);
+      await deploySkill(skill, path.join(target.skillsDir, skill.slug), {
+        ...target.deployContext,
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
+      });
     }
   }
+}
+
+/**
+ * Delivers each source's skill support entries into that source's namespace under every targeted harness's skills dir,
+ * then retracts the namespaces no declared source claims. Delivery runs first so a source that dropped its last
+ * support entry leaves an empty namespace root for the retraction to retire in the same pass.
+ */
+async function reconcileSourceSupport(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  plans: ReadonlyArray<SourceSupportPlan>,
+): Promise<void> {
+  for (const plan of plans) {
+    await deploySourceSupport(plan.destDir, plan.entries);
+  }
+  // Rooted in the targets rather than the plans: a run that declares no source has no plans, and its support roots
+  // are exactly the ones whose every namespace is now undeclared.
+  for (const sourcesRoot of resolveSupportRoots(targets)) {
+    await retractUndeclaredSourceSupport(sourcesRoot, resolveSupportOutcome(plans, sourcesRoot));
+  }
+}
+
+/** Lists the support root each targeted harness keeps its per-source namespaces under. */
+function resolveSupportRoots(targets: ReadonlyArray<HarnessSkillTarget>): ReadonlyArray<string> {
+  return targets.map((target) => path.join(target.skillsDir, SOURCE_SUPPORT_DIR));
+}
+
+/** Groups one support root's plans into what delivery leaves there: the namespaces that hold content, and the rest. */
+function resolveSupportOutcome(plans: ReadonlyArray<SourceSupportPlan>, sourcesRoot: string): SourceSupportOutcome {
+  const rooted = plans.filter((plan) => plan.sourcesRoot === sourcesRoot);
+  return {
+    surviving: rooted.filter((plan) => plan.kind === 'deliver').map((plan) => plan.name),
+    emptied: rooted.filter((plan) => plan.kind !== 'deliver').map((plan) => plan.name),
+  };
+}
+
+/**
+ * Renders every source's support entries for every targeted harness, pairing each result with where it deploys.
+ *
+ * Rendering is where a defect in a package's reference content surfaces, so calling this ahead of every write is what
+ * fails the run — dry-run included — before anything lands. The gate, the dry-run preview, and the delivery pass all
+ * read this one result, which is what keeps them from disagreeing about what a source ships and from rendering the
+ * same content more than once.
+ */
+async function renderSourceSupportPlans(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  sources: ReadonlyArray<{ name: string; dir: string }>,
+  resolveAnchorContext: ResolveAnchorContext,
+): Promise<ReadonlyArray<SourceSupportPlan>> {
+  const plans: Array<SourceSupportPlan> = [];
+  for (const target of targets) {
+    const sourcesRoot = path.join(target.skillsDir, SOURCE_SUPPORT_DIR);
+    for (const source of sources) {
+      const destDir = path.join(sourcesRoot, source.name);
+      const entries = await renderSourceSupport(source.dir, {
+        ...target.deployContext,
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, source.name)),
+      });
+      plans.push({
+        sourcesRoot,
+        name: source.name,
+        destDir,
+        entries,
+        kind: resolveSupportVerdict(entries.length > 0, existsSync(destDir)),
+      });
+    }
+  }
+  return plans;
+}
+
+/** Names what delivery does at a namespace directory, given whether its source ships content and whether it exists. */
+function resolveSupportVerdict(shipsContent: boolean, destExists: boolean): SourceSupportPlan['kind'] {
+  if (shipsContent) {
+    return 'deliver';
+  }
+  return destExists ? 'retract' : 'none';
+}
+
+/**
+ * Lists the namespace paths a real run would retract, one per targeted harness's support root, judged against the tree
+ * delivery leaves rather than the one on disk. The plans name both halves of that: which namespaces gain content and
+ * which delivery empties.
+ */
+async function planSourceSupportRetractions(
+  targets: ReadonlyArray<HarnessSkillTarget>,
+  plans: ReadonlyArray<SourceSupportPlan>,
+): Promise<ReadonlyArray<string>> {
+  const retractions: Array<string> = [];
+  for (const sourcesRoot of resolveSupportRoots(targets)) {
+    retractions.push(...(await listUndeclaredSourceSupport(sourcesRoot, resolveSupportOutcome(plans, sourcesRoot))));
+  }
+  return retractions;
 }
 
 /**
@@ -755,13 +948,17 @@ async function reconcileDeclaredSkills(
 async function assertDeclaredSkillsRender(
   targets: ReadonlyArray<HarnessSkillTarget>,
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     for (const skill of resolvedSkills) {
       if (!skillTargetsHarness(skill, target.harnessId)) {
         continue;
       }
-      await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, target.deployContext);
+      await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, {
+        ...target.deployContext,
+        anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
+      });
     }
   }
 }
@@ -774,10 +971,14 @@ async function assertDeclaredSkillsRender(
 async function assertDeclaredSubagentsRender(
   targets: ReadonlyArray<HarnessSubagentTarget>,
   resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
+  resolveAnchorContext: ResolveAnchorContext,
 ): Promise<void> {
   for (const target of targets) {
     for (const subagent of resolvedSubagents) {
-      await renderSubagent(subagent, target.deployContext);
+      await renderSubagent(subagent, {
+        ...target.deployContext,
+        anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
+      });
     }
   }
 }
@@ -793,9 +994,8 @@ function assertRulebooksRender(
   resolveRulebookContext: ResolveRulebookContext,
 ): void {
   for (const harnessId of harnessIds) {
-    const context = resolveRulebookContext(harnessId);
     for (const rulebook of resolved) {
-      renderRulebookBody(rulebook.body, rulebook.slug, context);
+      renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
     }
   }
 }
@@ -812,7 +1012,7 @@ async function deliverAmbient(
   resolveRulebookContext: ResolveRulebookContext,
 ): Promise<void> {
   for (const { harnessId, hostPath } of hosts) {
-    const body = renderAmbientBody(resolved, resolveRulebookContext(harnessId));
+    const body = renderAmbientBody(resolved, harnessId, resolveRulebookContext);
     const plan = planAmbientHost(domain.ambient, await probeAmbientHost(hostPath), hostPath, body);
     if (plan.kind === 'skip') {
       if (plan.warn) {
@@ -913,7 +1113,7 @@ async function previewAmbientHosts(
           domain.ambient,
           await probeAmbientHost(hostPath),
           hostPath,
-          renderAmbientBody(resolved, resolveRulebookContext(harnessId)),
+          renderAmbientBody(resolved, harnessId, resolveRulebookContext),
         ),
       ),
     ),
@@ -1065,12 +1265,18 @@ async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain)
  * Renders the ambient rulebooks as concatenated sentinel blocks — the wholesale content of one harness's ambient
  * region. The context is one harness's, so the same rulebook yields that harness's own absolute paths.
  */
-function renderAmbientBody(resolved: ReadonlyArray<ResolvedRulebook>, context: RulebookRenderContext): string {
+function renderAmbientBody(
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  harnessId: HarnessId,
+  resolveRulebookContext: ResolveRulebookContext,
+): string {
   let body = '';
   for (const rulebook of resolved) {
-    if (rulebook.ambient) {
-      body = injectRulebook(body, rulebook.slug, renderRulebookBody(rulebook.body, rulebook.slug, context));
+    if (!rulebook.ambient) {
+      continue;
     }
+    const context = resolveRulebookContext(harnessId, rulebook.source);
+    body = injectRulebook(body, rulebook.slug, renderRulebookBody(rulebook.body, rulebook.slug, context));
   }
   return body;
 }
@@ -1164,6 +1370,10 @@ interface DryRunPlan {
   readonly resolvedSubagents: ReadonlyArray<ResolvedSubagent>;
   readonly harnessSubagentTargets: ReadonlyArray<HarnessSubagentTarget>;
   readonly subagentOrphansByDir: ReadonlyArray<{ subagentsDir: string; orphans: ReadonlyArray<string> }>;
+  /** One entry per source that would deliver support content, naming its namespace dir and how many files land there. */
+  readonly sourceSupportPlans: ReadonlyArray<SourceSupportPlan>;
+  /** Namespace paths under each target's support root that no declared source claims. */
+  readonly sourceSupportRetractions: ReadonlyArray<string>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
 }
 
@@ -1191,6 +1401,9 @@ function reportDryRun(plan: DryRunPlan): void {
       console.info(`  deploy declared skill ${path.join(skillsDir, skill.slug)}`);
     }
   }
+  for (const line of describeSourceSupport(plan.sourceSupportPlans, plan.sourceSupportRetractions)) {
+    console.info(line);
+  }
   for (const subagent of plan.resolvedSubagents) {
     for (const target of plan.harnessSubagentTargets) {
       console.info(`  deploy declared subagent ${path.join(target.subagentsDir, `${subagent.slug}.md`)}`);
@@ -1216,6 +1429,24 @@ function reportDryRun(plan: DryRunPlan): void {
       `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
     );
   }
+}
+
+/**
+ * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
+ * because their source ships nothing, and which ones retraction removes because no source claims them.
+ */
+function describeSourceSupport(
+  plans: ReadonlyArray<SourceSupportPlan>,
+  retractions: ReadonlyArray<string>,
+): ReadonlyArray<string> {
+  const lines = plans
+    .filter((plan) => plan.kind !== 'none')
+    .map((plan) =>
+      plan.kind === 'deliver'
+        ? `  deliver ${plan.entries.length} source support file(s) to ${plan.destDir}`
+        : `  retract source support ${plan.destDir} (source ships none)`,
+    );
+  return [...lines, ...retractions.map((retraction) => `  retract source support ${retraction} (no longer declared)`)];
 }
 
 /** Rank used to group resolution entries by type before the within-type slug sort, matching `library list`'s order. */
@@ -1314,15 +1545,14 @@ async function resolveSubagentTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
-  anchor: ResolveLinkAnchor,
 ): Promise<HarnessSubagentTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
   return {
+    harnessId,
     subagentsDir: resolveHarnessPaths(harnessId, projectRoot).subagentsDir,
     deployContext: {
       overlayYaml,
-      anchor,
       toolMapping: loadToolMapping(overlayYaml),
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
@@ -1341,7 +1571,6 @@ async function resolveSkillTarget(
   harnessId: HarnessId,
   projectRoot: string,
   contentDir: string,
-  anchor: ResolveLinkAnchor,
 ): Promise<HarnessSkillTarget> {
   const harnessConfig = HARNESSES[harnessId];
   const overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
@@ -1350,7 +1579,6 @@ async function resolveSkillTarget(
     skillsDir: resolveHarnessPaths(harnessId, projectRoot).skillsDir,
     deployContext: {
       toolMapping: loadToolMapping(overlayYaml),
-      anchor,
       homeDir: harnessConfig.homeDir,
       harnessId: harnessConfig.id,
       skillSigil: harnessConfig.skillSigil,

@@ -1,6 +1,15 @@
 import type { ResolveLinkAnchor } from './path-rewriter.ts';
 
-/** What deciding a target's deployed location depends on, resolved once per harness by the caller. */
+/**
+ * Directory under a harness skills dir holding each declared source's support entries, one subtree per source. Kept out
+ * of the skills dir's flat namespace so a source's `_data` can never mask the library's, or another source's.
+ */
+export const SOURCE_SUPPORT_DIR = '_sources';
+
+/**
+ * What deciding a target's deployed location depends on, resolved once per harness — and, where support entries are
+ * reachable, once per owning source — by the caller.
+ */
 export interface LinkAnchorContext {
   /**
    * Skill directory names this run writes into the domain's skills dir, for the harness being rendered for. A target
@@ -16,6 +25,12 @@ export interface LinkAnchorContext {
   readonly homeDir: string;
   /** Skills directory name within the harness home (e.g. `skills`). */
   readonly skillsDirName: string;
+  /**
+   * Name of the declared source that owns the body being rendered, or `undefined` for the built-in library. A source
+   * ships its own support entries, which deploy into a namespace of its own; the library's stay where `install` puts
+   * them. Nothing about the target itself distinguishes the two, since `_data/x.md` reads the same either way.
+   */
+  readonly supportNamespace: string | undefined;
 }
 
 /**
@@ -35,20 +50,26 @@ export function createContentRootLinkAnchor(context: LinkAnchorContext): Resolve
 /**
  * Anchors targets written relative to a harness skills dir, the form a skill body's links resolve to.
  *
- * Two destinations, decided by whether the target's first segment names a skill directory this run deploys. One that
- * does resolves under the deploying domain, because that is where the run just wrote it. Everything else keeps the
- * harness home: a support entry lands there because `install` puts it there in either domain, and a skill this run
- * does not deploy is addressable there or nowhere.
+ * Three destinations. A target whose first segment names a skill directory this run deploys resolves under the
+ * deploying domain, because that is where the run just wrote it. A target owned by a declared source resolves into
+ * that source's support namespace under the domain, because this run delivers it there. Everything else keeps the
+ * harness home: the library's support entries land there because `install` puts them there in either domain, and a
+ * skill this run does not deploy is addressable there or nowhere.
  *
- * In the home domain the two destinations coincide, so home-domain output cannot change whatever the set holds.
+ * In the home domain the domain-rooted destinations coincide with the harness home, so home-domain output changes only
+ * where a source namespace applies — which is content that reached no address at all before.
  */
 export function createSkillLinkAnchor(context: LinkAnchorContext): ResolveLinkAnchor {
-  const { deployedSkillDirs, domainBase, homeDir, skillsDirName } = context;
+  const { deployedSkillDirs, domainBase, homeDir, skillsDirName, supportNamespace } = context;
   const skillsRoot = `${homeDir}/${skillsDirName}`;
-  return (normalizedTarget) =>
-    deployedSkillDirs.has(readFirstSegment(normalizedTarget))
-      ? `${domainBase}/${skillsRoot}/${normalizedTarget}`
-      : `~/${skillsRoot}/${normalizedTarget}`;
+  return (normalizedTarget) => {
+    if (deployedSkillDirs.has(readFirstSegment(normalizedTarget))) {
+      return `${domainBase}/${skillsRoot}/${normalizedTarget}`;
+    }
+    return supportNamespace === undefined
+      ? `~/${skillsRoot}/${normalizedTarget}`
+      : `${domainBase}/${skillsRoot}/${SOURCE_SUPPORT_DIR}/${supportNamespace}/${normalizedTarget}`;
+  };
 }
 
 // region | Helpers
