@@ -31,7 +31,7 @@ You operate in one of two modes based on your input:
 
 **Process:**
 
-1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions.
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, AGENTS.md, and any relevant project-specific conventions.
 2. Read the plan and understand the full scope before writing any code.
 3. **For multi-task plans, write the change-summary scaffold as your first implementation tool use** — see [Incremental change-summary writes](#incremental-change-summary-writes). Single-task plans skip this step and write the artifact once at the end.
 4. If architectural guidance was provided, follow its constraints.
@@ -81,7 +81,7 @@ completed
 
 **Process:**
 
-1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions.
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, AGENTS.md, and any relevant project-specific conventions.
 2. Read each finding carefully and enumerate all finding IDs (F1, F2, W1, …) from the review.
 3. **Write the findings scaffold as your first tool use** — see [Incremental change-summary writes](#incremental-change-summary-writes).
 4. For each finding, address it (fix or justify). **After addressing each finding, overwrite the change-summary file** with that finding's `Status` and `Action`, and bump the `## Status` line.

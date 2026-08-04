@@ -25,7 +25,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, AGENTS.md, and any relevant project-specific conventions
 2. **Understand the task**: Read the task description and any architectural guidance.
 3. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to understand the relevant code, patterns, and conventions. Identify the files that will need to change.
 4. **Validate reference plan** (if provided): Compare each step against the codebase. Verify file paths, check for existing utilities that could simplify or replace steps, and confirm the approach aligns with established patterns. Address any assumption issues flagged by the architect. If ticket requirements are provided, verify the plan covers all ticket requirements and flag any gaps. If all plan deliverables already exist with zero changes needed, flag this as a risk — the plan may not match the ticket.
