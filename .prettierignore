@@ -1,5 +1,5 @@
 pnpm-lock.yaml
-.readyup/manifest.json
+**/.readyup/manifest.json
 
 # Generated esbuild bundles of skill helpers, not authored source. Prettier exhibits a
 # non-idempotent reformatting bug on long ternary expressions emitted by the bundler (the

@@ -26,11 +26,15 @@
     "codeassembly": "bin/codeassembly.js"
   },
   "files": [
+    ".readyup/kits/*.js",
+    ".readyup/manifest.json",
     "bin",
     "dist"
   ],
   "scripts": {
     "build": "nmr compile && tsx scripts/bundle-skill-helpers.ts && tsx scripts/copy-content.ts",
+    "build:post": "rdy compile",
+    "build:pre": "rdy verify",
     "prepublishOnly": "nmr build",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",
@@ -47,7 +51,8 @@
     "@hyperjump/json-schema": "1.17.7",
     "@types/node": "24.13.3",
     "@williamthorsen/toolbelt.strings": "3.1.8",
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "readyup": "0.23.0"
   },
   "engines": {
     "node": ">=24"

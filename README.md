@@ -4,7 +4,7 @@ Pnpm monorepo infrastructure for agentic code-orchestration flows.
 
 ## For AI agents
 
-See [`.agents/PROJECT.md`](.agents/PROJECT.md) for project structure, commands, and architecture.
+See [`AGENTS.md`](AGENTS.md) for project structure, commands, and architecture.
 
 ## Quick start
 

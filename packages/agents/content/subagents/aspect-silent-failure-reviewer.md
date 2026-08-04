@@ -25,7 +25,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: Read ~/.agents/AGENTS.md, .agents/PROJECT.md, and any relevant project-specific conventions
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, ./AGENTS.md, and any relevant project-specific conventions
 2. **Get the diff**: Run the provided `git diff` command to see all changes in scope
 3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path — see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
 4. **Read changed files**: Read the full files to understand error-handling context

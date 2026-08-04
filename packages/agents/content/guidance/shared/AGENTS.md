@@ -1,9 +1,5 @@
 # Shared agent instructions
 
-## Project discovery
-
-- Read .agents/PROJECT.md (if it exists) for project information
-
 ## Interactive work
 
 - Invoke the `collaborate` skill when working interactively with the user (not applicable to orchestrated subagent work)

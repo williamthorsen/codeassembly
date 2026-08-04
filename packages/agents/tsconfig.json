@@ -4,6 +4,7 @@
   // prettier-ignore
   "include": [
     ".config/**/*.ts",
+    ".readyup/**/*.ts",
     "scripts/",
     "src/",
     "*.ts",
