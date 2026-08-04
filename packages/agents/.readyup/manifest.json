@@ -3,14 +3,15 @@
   "kits": [
     {
       "checklists": [
-        "default"
+        "guidance"
       ],
+      "description": "Project-guidance wiring and freshness",
       "name": "default",
       "path": "kits/default.js",
       "readyupVersion": "0.23.0",
       "source": "kits/default.ts",
-      "sourceHash": "19e3fc49",
-      "targetHash": "aec02ba4"
+      "sourceHash": "aa41357e",
+      "targetHash": "658cab1a"
     }
   ]
 }

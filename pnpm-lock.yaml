@@ -38,6 +38,9 @@ importers:
       '@williamthorsen/strict-lint':
         specifier: 9.3.0
         version: 9.3.0(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))
+      codeassembly:
+        specifier: workspace:*
+        version: link:packages/agents
       dotenv:
         specifier: 17.4.2
         version: 17.4.2
@@ -117,6 +120,9 @@ importers:
       esbuild:
         specifier: 0.28.1
         version: 0.28.1
+      readyup:
+        specifier: 0.23.0
+        version: 0.23.0(esbuild@0.28.1)
 
   packages/factory:
     dependencies:

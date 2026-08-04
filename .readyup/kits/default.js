@@ -1,6 +1,6 @@
 /** @noformat — @generated. Do not edit. Compiled by rdy. */
 /* eslint-disable */
-export const __readyupVersion = "0.22.0";
+export const __readyupVersion = "0.23.0";
 
 
 // .readyup/kits/default.ts
@@ -53,22 +53,6 @@ var default_default = defineRdyKit({
     {
       name: "default",
       checks: [
-        {
-          name: ".agents/PROJECT.md is non-empty",
-          check: () => {
-            const content = readFile(".agents/PROJECT.md");
-            return content !== void 0 && content.trim().length > 0;
-          },
-          fix: "Populate .agents/PROJECT.md with project context for AI agents"
-        },
-        {
-          name: ".claude/CLAUDE.md references @.agents/PROJECT.md",
-          check: () => {
-            const content = readFile(".claude/CLAUDE.md");
-            return content !== void 0 && content.includes("@.agents/PROJECT.md");
-          },
-          fix: "Add `@.agents/PROJECT.md` to .claude/CLAUDE.md so Claude reads project context"
-        },
         {
           name: ".meta/label-map.json exists",
           check: () => {

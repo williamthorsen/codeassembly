@@ -37,6 +37,7 @@
     "@williamthorsen/nmr": "0.26.1",
     "@williamthorsen/release-kit": "10.2.1",
     "@williamthorsen/strict-lint": "9.3.0",
+    "codeassembly": "workspace:*",
     "dotenv": "17.4.2",
     "eslint": "10.8.0",
     "eslint-plugin-import": "2.32.0",
