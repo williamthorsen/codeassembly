@@ -511,11 +511,6 @@ async function assertValidSources(sources: ReadonlyArray<{ name: string; dir: st
 }
 
 /**
- * Throws when a declared source's name cannot serve as the directory segments its support entries deploy under, so a
- * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
- * name is reported together, so a declaration with two of them takes one fix rather than two runs.
- */
-/**
  * Throws when two declared sources share a name, which the hand-declared tier and the package tier can each satisfy
  * independently: names are unique within a tier, and nothing reconciles one tier's against the other's.
  *
@@ -543,6 +538,11 @@ function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: s
   }
 }
 
+/**
+ * Throws when a declared source's name cannot serve as the directory segments its support entries deploy under, so a
+ * name that would escape its namespace fails the run — dry-run included — before any file is written. Every offending
+ * name is reported together, so a declaration with two of them takes one fix rather than two runs.
+ */
 function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
   const unusable = sources
     .map((source) => ({ source, problem: describeSourceNameProblem(source.name) }))
