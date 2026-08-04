@@ -26,7 +26,7 @@ You will receive:
 
 ## Process
 
-1. **Read project guidelines**: Read ~/.agents/AGENTS.md, AGENTS.md, and any relevant project-specific conventions
+1. **Read project guidelines**: Read ~/.agents/AGENTS.md, ./AGENTS.md, and any relevant project-specific conventions
 2. **Read the original plan**: Understand its structure, format, and content.
 3. **Read the review findings**: Understand each C and X finding.
 4. **For auto-resolvable findings (X and auto-tagged C)**: Explore the codebase to gather the information needed to resolve each finding. Read the files, check the patterns, verify the corrections.
