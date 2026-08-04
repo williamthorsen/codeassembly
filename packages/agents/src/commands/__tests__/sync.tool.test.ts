@@ -412,6 +412,35 @@ describe(syncCommand, () => {
     expect(skill).toContain('Gamma rules.');
   });
 
+  it('delivers a hook-bearing rulebook body carrying no directive, in both delivery modes', async () => {
+    await writeLibraryRulebook(
+      'gamma',
+      'delivery: [ambient, skill]',
+      '<!-- guidance-hook: implementation-preferences -->\n\nGamma rules.',
+    );
+    await declareRulebooks('gamma');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const skill = await readFile(skillPath('consult-gamma'), 'utf8');
+    expect(skill).not.toContain('guidance-hook');
+    expect(skill).toContain('Gamma rules.');
+
+    const localHost = await readFile(localHostPath(), 'utf8');
+    expect(localHost).not.toContain('guidance-hook');
+    expect(localHost).toContain('Gamma rules.');
+  });
+
+  it('fails a dry run with nothing written when a rulebook body carries a near-miss directive', async () => {
+    await writeLibraryRulebook('gamma', 'delivery: skill', '<!-- guidance-hooks: preferences -->');
+    await declareRulebooks('gamma');
+
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir)).rejects.toThrow(
+      /guidance\/rulebooks\/gamma\.md:1 .*reason=unrecognized-directive/,
+    );
+    expect(existsSync(skillPath('consult-gamma'))).toBe(false);
+  });
+
   it('renders a skill-name override as the skill directory and name, keeping the marker on the slug', async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill\nskill-name: gamma-rulebook', 'Gamma rules.');
     await declareRulebooks('gamma');

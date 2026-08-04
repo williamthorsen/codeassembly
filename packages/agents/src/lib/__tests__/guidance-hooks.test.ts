@@ -32,6 +32,41 @@ describe(listGuidanceHooks, () => {
     expect(listGuidanceHooks(body, SOURCE_LABEL)).toEqual([]);
   });
 
+  it('rejects a full-line comment that misses the directive shape while reaching for it', () => {
+    for (const line of [
+      '<!-- guidance-hooks: implementation-preferences -->',
+      '<!-- guidance-hook -->',
+      '<!-- guidance hook: preferences -->',
+      '<!-- Guidance-Hook: preferences -->',
+      '<!-- guidancehook: preferences -->',
+    ]) {
+      expect(() => listGuidanceHooks(line, SOURCE_LABEL), line).toThrow(
+        expect.objectContaining({ reason: 'unrecognized-directive' }),
+      );
+    }
+  });
+
+  it('leaves prose and the neighbouring comment grammars unrejected', () => {
+    for (const line of [
+      '<!-- guidance hooks are described below -->',
+      'Write `<!-- guidance-hooks: x -->` to see nothing happen.',
+      '<!-- include: _partials/frag.md / -->',
+      '<!-- children -->',
+      '<!-- slot: preferences -->',
+      '<!-- codeassembly-skill:commit -->',
+    ]) {
+      expect(listGuidanceHooks(line, SOURCE_LABEL), line).toEqual([]);
+    }
+  });
+
+  it('anchors an unrecognized-directive rejection to the source and line', () => {
+    const body = '# Demo\n\n<!-- guidance-hooks: preferences -->';
+
+    expect(() => listGuidanceHooks(body, SOURCE_LABEL)).toThrow(
+      /skills\/demo\/SKILL\.md:3 line="<!-- guidance-hooks: preferences -->" reason=unrecognized-directive/,
+    );
+  });
+
   it('rejects a hook name outside the kebab-case, letter-led slug grammar', () => {
     for (const name of ['', '-leading', '2fa', 'Mixed-Case', 'under_score', 'two words']) {
       expect(() => listGuidanceHooks(`<!-- guidance-hook: ${name} -->`, SOURCE_LABEL), name).toThrow(GuidanceHookError);

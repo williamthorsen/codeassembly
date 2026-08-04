@@ -14,11 +14,22 @@
 /** Matches a guidance-hook directive on its own line: `<!-- guidance-hook: name -->`. The captured group is the name. */
 const HOOK_DIRECTIVE_REGEX = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*(.*?)[ \t]*-->[ \t]*$/;
 
+/**
+ * Matches a full-line comment whose opening token is a near-miss of `guidance-hook:` — a plural `guidance-hooks:`, a
+ * space for the hyphen, a different case, or the token with no name at all. Tested only once the directive pattern has
+ * failed, so a well-formed directive never reaches it.
+ *
+ * The plural is the likeliest miss, because `guidance-hooks:` is the key a declaration binds under, so an author moving
+ * between the two spellings has nothing but this to tell them which one they wrote. The trailing group admits a payload
+ * only behind a colon, which keeps prose that merely mentions a guidance hook from reading as an attempt to declare one.
+ */
+const HOOK_LIKE_REGEX = /^[ \t]*<!--[ \t]*guidance[ \t-]?hooks?[ \t]*(?::[^>]*)?-->[ \t]*$/i;
+
 /** The kebab-case, letter-led slug grammar a hook name must satisfy, matching every other slug in the system. */
 const HOOK_NAME_REGEX = /^[a-z][a-z0-9-]*$/;
 
 /** Reason a body's guidance-hook declarations were rejected, surfaced in error messages. */
-type FailureReason = 'duplicate-hook' | 'malformed-name';
+type FailureReason = 'duplicate-hook' | 'malformed-name' | 'unrecognized-directive';
 
 /** A guidance-hook declaration in a body: the slot name and the 1-based line its directive occupies. */
 export interface GuidanceHookDeclaration {
@@ -42,7 +53,8 @@ export class GuidanceHookError extends Error {
 
 /**
  * Collects every guidance hook `body` declares, in source order. Throws `GuidanceHookError` for a name outside the slug
- * grammar and for a hook declared twice, each anchored to `sourceLabel` and the offending line.
+ * grammar, for a line that misses the directive shape while plainly reaching for it, and for a hook declared twice,
+ * each anchored to `sourceLabel` and the offending line.
  *
  * A duplicate is rejected rather than collapsed because a binding fills a hook by name: two slots of one name have no
  * defined fill order and no way for an author to tell which one received the guidance.
@@ -54,6 +66,13 @@ export function listGuidanceHooks(body: string, sourceLabel: string): ReadonlyAr
   for (const [index, line] of body.split('\n').entries()) {
     const name = HOOK_DIRECTIVE_REGEX.exec(line)?.[1];
     if (name === undefined) {
+      if (HOOK_LIKE_REGEX.test(line)) {
+        throw new GuidanceHookError(
+          `Line reaches for the guidance-hook directive but misses its shape: ${sourceLabel}:${index + 1} ` +
+            `line="${line.trim()}" reason=unrecognized-directive. The directive is \`<!-- guidance-hook: name -->\`.`,
+          'unrecognized-directive',
+        );
+      }
       continue;
     }
 

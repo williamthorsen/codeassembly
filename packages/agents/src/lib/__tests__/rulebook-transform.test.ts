@@ -204,6 +204,30 @@ describe(renderRulebookBody, () => {
     });
   });
 
+  describe('guidance hooks', () => {
+    it('strips a declared hook, so neither delivery mode carries the directive', () => {
+      const body = '# Heading\n\n<!-- guidance-hook: implementation-preferences -->\n\nGuidance text.\n';
+
+      expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe('# Heading\n\n\nGuidance text.\n');
+    });
+
+    it('rejects a hook declared twice, naming the rulebook source file', () => {
+      const body = '<!-- guidance-hook: preferences -->\n<!-- guidance-hook: preferences -->\n';
+
+      expect(() => renderRulebookBody(body, 'shell-conventions', CLAUDE_CONTEXT)).toThrow(
+        /guidance\/rulebooks\/shell-conventions\.md:2 name="preferences" .*reason=duplicate-hook/,
+      );
+    });
+
+    it('rejects a near-miss directive, naming the rulebook source file', () => {
+      const body = '<!-- guidance-hooks: preferences -->\n';
+
+      expect(() => renderRulebookBody(body, 'shell-conventions', CLAUDE_CONTEXT)).toThrow(
+        /guidance\/rulebooks\/shell-conventions\.md:1 .*reason=unrecognized-directive/,
+      );
+    });
+  });
+
   it('returns a body with no links or variables unchanged', () => {
     const body = '# Heading\n\nPlain guidance text.\n';
     expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe(body);

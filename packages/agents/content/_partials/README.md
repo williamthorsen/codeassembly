@@ -145,7 +145,7 @@ The grammar reserves additional tokens for future use. Partial authors must not 
 
 - `<!-- slot: name -->`, `<!-- slot: name / -->`, `<!-- /slot -->` — reserved for future named-slot support.
 - `<!-- children -->` — the canonical default-slot placeholder. Use exactly this token; do not invent variants.
-- `<!-- guidance-hook: name -->` — the guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. Every render seam removes the line after includes expand, so a hook a partial declares is declared by each body that inlines it. Keep the two grammars disjoint: a slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
+- `<!-- guidance-hook: name -->` — the guidance-hook directive, a separate mechanism with its own grammar. It occupies a full line, its name is kebab-case and letter-led, and a body may declare each hook once. Every render seam removes the line — skills, subagents, rulebooks, and harness guidance alike — and where includes expand it runs after them, so a hook a partial declares is declared by each body that inlines it. A line reaching for the directive but missing its shape, such as the plural `guidance-hooks:` or a token with no name, is rejected rather than shipped as a stray comment. Keep the two grammars disjoint: a slot token never names a guidance hook, and a guidance-hook directive never takes an include parameter.
 
 The expander rejects unrecognized parameters following `include:` with an `unrecognized-parameter` error. This protects the grammar from typos quietly slipping past.
 
