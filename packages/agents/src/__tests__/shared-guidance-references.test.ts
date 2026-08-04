@@ -2,10 +2,9 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { parse as parseYaml } from 'yaml';
 
-import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
-import { isRecord } from '../lib/type-guards.ts';
+import { listSkillDirectories } from '../lib/library-catalog.ts';
+import { readTargetHarnesses } from '../lib/skill-deploy.ts';
 
 // Shared guidance ships verbatim to `~/.agents/AGENTS.md` and is inlined into every harness guidance file, and neither
 // path rewrites invocation tokens: a harness-neutral destination carries no sigil to render, so `{skill:<slug>}` is
@@ -85,43 +84,20 @@ async function listMarkdownFiles(root: string): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Returns the slugs of every skill that reaches all harnesses: a directory under `skills/` holding a `SKILL.md` whose
- * frontmatter declares no `harnesses:` narrowing. `_`-prefixed directories hold the shared `_data` and `_partials`
- * trees, and a directory with no `SKILL.md` holds a bundled helper; neither deploys a skill to invoke. Shared guidance
- * serves every harness, so a skill only some of them receive is as dead a pointer there as one that does not exist.
+ * Returns the slugs of every catalog skill that reaches all harnesses: one whose frontmatter declares no `harnesses:`
+ * narrowing. Shared guidance serves every harness, so a skill only some of them receive is as dead a pointer there as
+ * one that does not exist.
  */
 async function listUniversalSkillSlugs(): Promise<ReadonlyArray<string>> {
-  const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
-  const slugs: Array<string> = [];
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith('_')) {
-      continue;
-    }
-    const definition = await readSkillDefinition(path.join(SKILLS_ROOT, entry.name, 'SKILL.md'));
-    if (definition !== undefined && !narrowsToSomeHarness(definition)) {
-      slugs.push(entry.name);
+  const catalogSlugs = await listSkillDirectories(SKILLS_ROOT);
+  const universal: Array<string> = [];
+  for (const slug of catalogSlugs) {
+    const definition = await readFile(path.join(SKILLS_ROOT, slug, 'SKILL.md'), 'utf8');
+    if (readTargetHarnesses(definition, slug) === undefined) {
+      universal.push(slug);
     }
   }
-  return slugs;
-}
-
-/** Reports whether a skill's frontmatter restricts it to a subset of harnesses. */
-function narrowsToSomeHarness(definition: string): boolean {
-  const { lines } = parseFrontmatter(definition);
-  const parsed: unknown = parseYaml(lines.join('\n'));
-  if (!isRecord(parsed) || parsed.harnesses === undefined || parsed.harnesses === null) {
-    return false;
-  }
-  return !Array.isArray(parsed.harnesses) || parsed.harnesses.length > 0;
-}
-
-/** Reads a `SKILL.md`, reporting `undefined` when the directory holds no skill definition. */
-async function readSkillDefinition(skillPath: string): Promise<string | undefined> {
-  try {
-    return await readFile(skillPath, 'utf8');
-  } catch {
-    return undefined;
-  }
+  return universal;
 }
 
 // endregion | Helpers
