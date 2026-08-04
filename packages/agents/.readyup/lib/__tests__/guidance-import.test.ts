@@ -77,4 +77,40 @@ describe(resolveGuidanceImports, () => {
 
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
   });
+
+  it('reads no import from a fenced code block', () => {
+    const document = '# CLAUDE.md\n\n```markdown\n@../AGENTS.md\n```\n';
+
+    const outcome = resolveGuidanceImports(document, IMPORTING_DIR, GUIDANCE_PATH);
+
+    expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
+  });
+
+  it('reads no import from a tilde-fenced code block', () => {
+    const outcome = resolveGuidanceImports('~~~\n@../AGENTS.md\n~~~\n', IMPORTING_DIR, GUIDANCE_PATH);
+
+    expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
+  });
+
+  it('reads no import from a fence left unclosed', () => {
+    const outcome = resolveGuidanceImports('```\n@../AGENTS.md\n', IMPORTING_DIR, GUIDANCE_PATH);
+
+    expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
+  });
+
+  it('reads a live import beside a fenced block that shows another', () => {
+    const document = '@../AGENTS.md\n\n```markdown\n@.agents/PROJECT.md\n```\n';
+
+    const outcome = resolveGuidanceImports(document, IMPORTING_DIR, GUIDANCE_PATH);
+
+    expect(outcome).toEqual({ doesReachGuidance: true, resolvedPaths: [GUIDANCE_PATH] });
+  });
+
+  it('reads no import from a code span holding a spaced path', () => {
+    const document = 'Write ` @../AGENTS.md ` to import it.\n';
+
+    const outcome = resolveGuidanceImports(document, IMPORTING_DIR, GUIDANCE_PATH);
+
+    expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
+  });
 });

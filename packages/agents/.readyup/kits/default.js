@@ -11,13 +11,39 @@ import { fileExists, readFile } from "readyup/check-utils";
 // .readyup/lib/guidance-import.ts
 import { homedir } from "node:os";
 import { isAbsolute, resolve } from "node:path";
+var CODE_SPAN_PATTERN = /(`+)[^\n]*?\1/g;
+var FENCE_CLOSER_PATTERN = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
+var FENCE_OPENER_PATTERN = /^ {0,3}(`{3,}|~{3,})/;
 var IMPORT_PATTERN = /(?<=^|\s)@\S+/g;
 function resolveGuidanceImports(documentText, importingDirPath, guidancePath) {
-  const resolvedPaths = documentText.matchAll(IMPORT_PATTERN).map((match) => resolveImportPath(match[0].slice(1), importingDirPath)).toArray();
+  const resolvedPaths = maskCodeSpans(maskFencedBlocks(documentText)).matchAll(IMPORT_PATTERN).map((match) => resolveImportPath(match[0].slice(1), importingDirPath)).toArray();
   return {
     doesReachGuidance: resolvedPaths.includes(resolve(guidancePath)),
     resolvedPaths
   };
+}
+function maskCodeSpans(documentText) {
+  return documentText.replaceAll(CODE_SPAN_PATTERN, (span) => " ".repeat(span.length));
+}
+function maskFencedBlocks(documentText) {
+  const lines = documentText.split("\n");
+  let openDelimiter;
+  for (const [index, line] of lines.entries()) {
+    if (openDelimiter === void 0) {
+      const opener = FENCE_OPENER_PATTERN.exec(line)?.[1];
+      if (opener !== void 0) {
+        openDelimiter = opener;
+        lines[index] = "";
+      }
+      continue;
+    }
+    const closer = FENCE_CLOSER_PATTERN.exec(line)?.[1];
+    if (closer?.startsWith(openDelimiter) === true) {
+      openDelimiter = void 0;
+    }
+    lines[index] = "";
+  }
+  return lines.join("\n");
 }
 function resolveImportPath(importPath, importingDirPath) {
   if (importPath === "~" || importPath.startsWith("~/")) {
