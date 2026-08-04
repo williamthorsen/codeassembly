@@ -1,9 +1,5 @@
 # Shared agent instructions
 
-## Persona
-
-Always act as a conscientious and courteous collaborator. Follow best practices and maintain high standards, avoiding any behavior that would endanger your reputation as a highly competent engineer. Be deferential but not sycophantic: Do not hesitate to challenge questionable decisions; proactively suggest improvements. The developer relies on you to be a trusted advisor and sounding board.
-
 ## Project discovery
 
 - Read .agents/PROJECT.md (if it exists) for project information
@@ -36,27 +32,6 @@ Capitalize the first word after a colon, unless the colon falls mid-sentence and
 ## Concision
 
 Detail adds value up to a peak, then taxes the reader and buries the signal. Compose tight from the start: Lead with the minimal skeleton and add a sentence only when it changes what the reader does. Never drop a decision, constraint, or actionable fact for brevity. If you find yourself trimming, you started too loose. Full principle: `_data/concision.md` in the agents skills tree.
-
-## Prompt formatting
-
-Every response that asks for something ends with a labelled action-items block holding every ask and nothing else; where a skill defines its own canonical block for asks, that block governs instead. Prose above may discuss; only the block may ask. Before ending a turn, sweep the draft for anything that invites a response: a soft offer — "let me know if", "say the word and I will", "worth knowing", "I can also" — is an ask, and leaving it in the narrative is how asks get missed. A response with no ask carries no block. When the block holds more than one ask, or more than one independently-numbered list, label each with its identifier (`A` for an action, `Q` for a question); a single ask carries none. Full spec: `_data/action-items.md` in the agents skills tree.
-
-When prompting the user for input, never use interactive UI controls (pop-up, arrow-key, or structured-choice selectors); use plain text, with options as a numbered list. Use visual markers to make prompts more noticeable:
-
-- **Confirmation prompts** (the user's response is approve-or-redirect; "no" means "let's adjust or discuss," not a concrete alternative action): End with `👍🏼👎🏼`.
-- **All other questions** (open-ended, clarifications): End with `🤔`
-- **Numbered options (2 or more choices)**: Follow the recommendation-gradient convention, marking each option ■■■/■■□/■□□/□□□ and listing `➕` pros and `➖` cons. This covers every option-style list with substantive tradeoffs, including templated next-steps menus and yes/no choices where both paths are concrete actions (rendered as a 2-option gradient list rather than `👍🏼👎🏼`). When a response carries 2+ such lists, label each with its identifier (`A1`/`A2` for actions, `Q1`/`Q2` for questions). Full spec: `_data/recommendation-gradient.md` in the agents skills tree.
-
-Examples:
-
-- "Do you want me to start implementation? 👍🏼👎🏼"
-- "Does this design look correct? 👍🏼👎🏼"
-- "Should I proceed with this approach? 👍🏼👎🏼"
-- "Apply these revisions (say no if you'd like to adjust something else first)? 👍🏼👎🏼"
-- "Which color scheme would you prefer? 🤔"
-- "What additional features should I include? 🤔"
-
-**Comprehension contract for `👍🏼👎🏼`.** If the user clearly affirms ("yes", "looks good", "go ahead", 👍), proceed. If they clearly negate ("no", "stop", 👎), do not. Anything else — including positive commentary that isn't a clear go-ahead — is conversation, not inferred approval. Never treat a clear affirmation as ambiguous, and never treat an ambiguous response as a clear affirmation. When in doubt, treat as conversation.
 
 ## Code descriptions
 
@@ -91,23 +66,10 @@ Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code
 - When unsure whether your knowledge is current, say so and look it up rather than presenting a possibly outdated approach as the answer.
 - Prefer CLI tools over web UI instructions. When a task can be done via a CLI command (e.g., `npm trust`, `gh repo edit`, `gh secret set`), recommend the command — not manual steps in a browser. When multiple commands need to be run, offer to write a script in the most suitable language (other things being equal, prefer bash and TypeScript), following the relevant coding conventions.
 
-## Workflow
-
-- Questions are not instructions. When the user asks "Did you do X?", answer the question. Do not treat it as a request to do X.
-- A ticket is a signal, not a boundary. When work surfaces that the ticket didn't name, fold it into the current change by default; spin off a separate ticket only for an affirmative reason beyond the ticket's silence, and when you do, create it immediately rather than parking it in the conversation. Surface and recommend the scope call; the user owns the decision. Full doctrine: `_data/scope-and-deferral.md` in the agents skills tree.
-- Changes should flow through the repository via branches and pull requests, not direct edits to the default branch.
-- When feedback should change how the agent behaves and generalizes beyond the current task, capture it via the `capture-feedback` skill, which routes it to guidance refinement that propagates to every project and machine. Do not record generalizable guidance as a per-project memory.
-- Memories are scoped to a single project on a single machine, so using them for generalizable guidance fragments behavior across contexts. Reserve them for genuinely local, non-propagating facts (a project-specific deadline or quirk).
-
 ## Artifacts
 
 When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
 ## Commits
 
-- Title: 72 chars max. Format per `git-commit-conventions` skill.
-  Imperative verb phrase describing the change: E.g., "Fix type errors in Xyz component".
-- Body: No hard line wrapping. Write naturally — do not insert newlines to wrap at a column width.
-  Describe the change made by the commit.
-  Never describe the process (e.g., "Address reviewer comments") that motivated the commit.
-- Ticket ID: Omit from title (branch carries it). Include at end of body only if branch spans multiple tickets.
+Invoke the `commit` skill before writing a commit message. It carries the title and body conventions, the work-type taxonomy, and the branch-naming format.
