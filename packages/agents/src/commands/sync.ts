@@ -1189,8 +1189,8 @@ async function assertAmbientHostsWritable(
  * Retires a former ambient host: removes the sync-owned rulebook blocks it carries and writes back the stripped
  * remainder, so hand-authored content survives. Ambient delivery targets the harness regions now, and a lingering
  * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing — right for
- * one sync created itself, wrong for a hand-authored file like `.agents/PROJECT.md`, which is never deleted. A
- * missing host, and one carrying nothing to retire, are both no-ops.
+ * one sync created itself, wrong for a hand-authored file like the project's own `AGENTS.md`, which is never
+ * deleted. A missing host, and one carrying nothing to retire, are both no-ops.
  */
 async function retireAmbientHost(options: InstallOptions, hostPath: string, deleteWhenEmpty: boolean): Promise<void> {
   let content: string;
@@ -1251,13 +1251,17 @@ async function retireNeutralRulebooks(options: InstallOptions, baseDir: string):
 
 /**
  * Retires the outputs this domain no longer produces: the neutral rulebook tree in both domains, and, in the project
- * domain, the rulebook blocks `.agents/PROJECT.md` used to host. Runs on every sync that has a declaration to act on,
- * so a project picks the retirement up on its next run rather than needing a migration step.
+ * domain, the rulebook blocks the hand-authored project guidance used to host. Runs on every sync that has a
+ * declaration to act on, so a project picks the retirement up on its next run rather than needing a migration step.
+ *
+ * Both guidance locations are swept. A project that renames `.agents/PROJECT.md` to the repository-root `AGENTS.md`
+ * before its next sync would otherwise carry the stale blocks into the new location for good.
  */
 async function retireRetiredOutputs(options: InstallOptions, domain: SyncDomain): Promise<void> {
   await retireNeutralRulebooks(options, domain.baseDir);
   if (domain.ambient === 'project-local') {
     await retireAmbientHost(options, path.join(domain.baseDir, '.agents', 'PROJECT.md'), false);
+    await retireAmbientHost(options, path.join(domain.baseDir, 'AGENTS.md'), false);
   }
 }
 

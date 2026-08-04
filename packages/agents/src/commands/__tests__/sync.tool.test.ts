@@ -61,6 +61,8 @@ describe(syncCommand, () => {
 
   const projectMdPath = (): string => path.join(projectRoot, '.agents', 'PROJECT.md');
 
+  const agentsMdPath = (): string => path.join(projectRoot, 'AGENTS.md');
+
   /** The project-local ambient host for a harness, which `sync` owns and creates. */
   const localHostPath = (name = 'CLAUDE.local.md'): string => path.join(projectRoot, name);
 
@@ -304,6 +306,43 @@ describe(syncCommand, () => {
 
     expect(existsSync(projectMdPath())).toBe(false);
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
+  });
+
+  it('strips retired rulebook blocks from AGENTS.md, keeping hand-authored content and the file', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(
+      agentsMdPath(),
+      '# Project\n\n@.agents/nmr/AGENTS.md\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n\nTail prose.\n',
+      'utf8',
+    );
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    const agentsMd = await readFile(agentsMdPath(), 'utf8');
+    expect(agentsMd).not.toContain('<!-- rulebook:alpha -->');
+    expect(agentsMd).toContain('@.agents/nmr/AGENTS.md');
+    expect(agentsMd).toContain('Tail prose.');
+  });
+
+  it('never deletes AGENTS.md, even once nothing but the retired blocks remains', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: skill', 'Alpha rules.');
+    await declareRulebooks('alpha');
+    await writeFile(agentsMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(agentsMdPath())).toBe(true);
+    expect(await readFile(agentsMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
+  });
+
+  it('leaves AGENTS.md untouched when it is not present', async () => {
+    await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
+    await declareRulebooks('alpha');
+
+    await syncCommand(makeOptions(), projectRoot, contentDir);
+
+    expect(existsSync(agentsMdPath())).toBe(false);
   });
 
   it('previews both retirements in dry-run without performing them', async () => {
