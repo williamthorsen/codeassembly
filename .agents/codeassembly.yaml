@@ -1,6 +1,9 @@
-rulebooks:
-  use:
-    - codeassembly-content-specification
 collections:
   use:
     - recommended
+packages:
+  use:
+    - '@williamthorsen/nmr'
+rulebooks:
+  use:
+    - codeassembly-content-specification
