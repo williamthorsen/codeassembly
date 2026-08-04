@@ -1,6 +1,6 @@
 # CodeAssembly monorepo
 
-@nmr/AGENTS.md
+@.agents/nmr/AGENTS.md
 
 ## Project structure
 
