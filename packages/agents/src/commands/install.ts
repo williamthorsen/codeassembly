@@ -6,6 +6,7 @@ import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
 import { pruneOrphanedEntries } from '../lib/entry-remover.ts';
+import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessIds, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.js';
 import { loadHarnessOverlay } from '../lib/harness-overlay.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
@@ -584,13 +585,15 @@ async function installHarnessGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
-    // Resolve include directives at source-tree level, then check the expanded text for anchors that name nothing.
-    // Both run before the dry-run gate so missing targets, cycles, out-of-tree references, and dead in-body locators
-    // surface even when no files are written.
+    // Resolve include directives at source-tree level, strip the guidance-hook declarations the expansion carried in,
+    // then check the result for anchors that name nothing. All three run before the dry-run gate so missing targets,
+    // cycles, out-of-tree references, malformed hooks, and dead in-body locators surface even when no files are
+    // written.
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
-      expandedContent = await expandIncludes(srcPath, contentDir);
-      assertAnchorsResolve(expandedContent, `guidance/_harnesses/${harnessId}/${entry}`);
+      const sourceLabel = `guidance/_harnesses/${harnessId}/${entry}`;
+      expandedContent = stripGuidanceHooks(await expandIncludes(srcPath, contentDir), sourceLabel);
+      assertAnchorsResolve(expandedContent, sourceLabel);
     }
 
     if (options.dryRun) {

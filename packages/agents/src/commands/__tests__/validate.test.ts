@@ -39,6 +39,19 @@ describe(validateCommand, () => {
     expect(report).toContain('[render]');
   });
 
+  it('reports a skill declaring the same guidance hook twice, naming the offending file', async () => {
+    await writeSkill(
+      path.join(projectDir, 'content'),
+      'alpha',
+      '<!-- guidance-hook: preferences -->\n<!-- guidance-hook: preferences -->',
+    );
+
+    expect(await validateCommand({ content: 'content', harness: 'all' }, projectDir)).toBe(false);
+    const report = reportedText();
+    expect(report).toContain('skills/alpha/SKILL.md');
+    expect(report).toContain('reason=duplicate-hook');
+  });
+
   it("falls back to the content root the working directory's package.json declares", async () => {
     await writeSkill(path.join(projectDir, 'guidance'), 'alpha');
     await writeManifest(projectDir, { codeassembly: { content: 'guidance' } });

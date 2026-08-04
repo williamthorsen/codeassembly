@@ -1,5 +1,6 @@
 import { assertAnchorsResolve } from './anchor-resolution.ts';
 import { mergeFrontmatter } from './frontmatter-merger.ts';
+import { stripGuidanceHooks } from './guidance-hooks.ts';
 import { rewriteInvocationTokens } from './invocation-tokens.ts';
 import { type ResolveLinkAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { rewriteToolNames } from './tool-name-rewriter.ts';
@@ -27,10 +28,14 @@ export interface SubagentRenderContext {
 }
 
 /**
- * Renders a subagent's harness-specific deployed body from its include-expanded source: merges the harness overlay
- * frontmatter, rewrites `{tool:NAME}` placeholders, rewrites relative Markdown links, then expands template variables.
- * Pure string in, marker-free string out — both `install` and `sync` compose ownership/provenance marking around it.
- * In-body anchors are validated on the source text, ahead of every rewrite, so the verdict holds for every harness.
+ * Renders a subagent's harness-specific deployed body from its include-expanded source: strips guidance-hook
+ * declarations, merges the harness overlay frontmatter, rewrites `{tool:NAME}` placeholders, rewrites relative Markdown
+ * links, then expands template variables. Pure string in, marker-free string out — both `install` and `sync` compose
+ * ownership/provenance marking around it. In-body anchors are validated on the stripped text, ahead of every rewrite,
+ * so the verdict holds for every harness.
+ *
+ * The strip lives here rather than beside the caller's include expansion, so every path that renders a subagent body
+ * passes through it.
  *
  * `anchor` and `homeDir` are distinct arguments because they answer different questions: the anchor places a link
  * target in whichever tree deploys it, while `homeDir` expands `{harness_home_dir}` tokens, which name the harness
@@ -50,8 +55,9 @@ export function renderSubagentForHarness(
     subagentSigil,
   }: SubagentRenderContext,
 ): string {
-  assertAnchorsResolve(expandedSource, sourceLabel);
-  const merged = mergeFrontmatter(expandedSource, overlayYaml);
+  const stripped = stripGuidanceHooks(expandedSource, sourceLabel);
+  assertAnchorsResolve(stripped, sourceLabel);
+  const merged = mergeFrontmatter(stripped, overlayYaml);
   const rewrittenTools = rewriteToolNames(merged, toolMapping, sourceLabel);
   const rewrittenInvocations = rewriteInvocationTokens(rewrittenTools, { skillSigil, subagentSigil }, sourceLabel);
   const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);

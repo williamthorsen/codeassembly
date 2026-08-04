@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { assertAnchorsResolve } from './anchor-resolution.ts';
+import { stripGuidanceHooks } from './guidance-hooks.ts';
 import {
   extractInvocationEdges,
   resolveRulebookToken,
@@ -44,10 +45,13 @@ const RULEBOOK_SOURCE_DIR = 'guidance/rulebooks';
 const LINKABLE_ROOTS: ReadonlyArray<string> = ['scripts', 'skills'];
 
 /**
- * Renders one rulebook's neutral body for a single harness: relative Markdown links become that harness's absolute
- * paths, invocation tokens become that harness's sigil plus the slug they invoke, and template variables expand.
- * In-body anchors, link targets, and rulebook tokens are validated first, so a reference the delivery pipeline cannot
- * honor fails the run instead of shipping as a dead address.
+ * Renders one rulebook's neutral body for a single harness: guidance-hook declarations are stripped, relative Markdown
+ * links become that harness's absolute paths, invocation tokens become that harness's sigil plus the slug they invoke,
+ * and template variables expand. In-body anchors, link targets, and rulebook tokens are validated after the strip, so a
+ * reference the delivery pipeline cannot honor fails the run instead of shipping as a dead address.
+ *
+ * Both delivery modes render through here, so the strip covers the `consult-<slug>` skill a rulebook deploys as and the
+ * ambient region its body is spliced into.
  *
  * `slug` anchors link rewriting: a relative target resolves against `guidance/rulebooks/<slug>.md`, matching where the
  * rulebook sits in its content root, and the context's anchor maps that result to its deployed path.
@@ -55,18 +59,15 @@ const LINKABLE_ROOTS: ReadonlyArray<string> = ['scripts', 'skills'];
  * carries the deployed set.
  */
 export function renderRulebookBody(body: string, slug: string, context: RulebookRenderContext): string {
-  // Labelled by source path where the two asserts below name the slug: this rejection is raised identically for
-  // skills and subagents, so it identifies a rulebook the way it identifies them.
-  assertAnchorsResolve(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`);
-  assertLinkTargetsAreDeliverable(body, slug);
-  assertRulebookTokensResolve(body, slug, context.rulebooks);
-  const pathRewritten = rewriteMarkdownPaths(body, `${RULEBOOK_SOURCE_DIR}/${slug}.md`, context.anchor);
-  const tokenRewritten = rewriteInvocationTokens(
-    pathRewritten,
-    context,
-    `${RULEBOOK_SOURCE_DIR}/${slug}.md`,
-    context.rulebooks,
-  );
+  // Labelled by source path where the asserts below name the slug: this rejection is raised identically for skills and
+  // subagents, so it identifies a rulebook the way it identifies them.
+  const sourceLabel = `${RULEBOOK_SOURCE_DIR}/${slug}.md`;
+  const stripped = stripGuidanceHooks(body, sourceLabel);
+  assertAnchorsResolve(stripped, sourceLabel);
+  assertLinkTargetsAreDeliverable(stripped, slug);
+  assertRulebookTokensResolve(stripped, slug, context.rulebooks);
+  const pathRewritten = rewriteMarkdownPaths(stripped, sourceLabel, context.anchor);
+  const tokenRewritten = rewriteInvocationTokens(pathRewritten, context, sourceLabel, context.rulebooks);
   return rewriteTemplateVariables(tokenRewritten, context.homeDir, context.harnessId);
 }
 
