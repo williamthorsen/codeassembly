@@ -1,5 +1,186 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-08-04",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Let reviewers emit gated insights into review artifacts (#1031)",
+            "body": "Code-review agents are now permitted to record \"insights\" -- non-obvious knowledge worth preserving, such as a pattern, gotcha, or architectural learning that isn't an actionable finding -- in their reviews. Previously a reviewer who noticed such knowledge had to drop it or force it into a finding it didn't fit. The housekeeping steps that follow a review are now instructed to collect these insights, so the knowledge is carried forward instead of being rediscovered later.",
+            "hash": "9879f3bd84e63133684cb7da450af1bec446ecbb"
+          },
+          {
+            "description": "Rule out absence-of-removed-code tests (#1032)",
+            "body": "Agents are now instructed not to add a test whose only purpose is to assert that removed code, text, or behavior stays gone, and reviewers are now instructed not to recommend one. The guidance directs that a removal-only change needs no new test, and that confirming a removal is complete belongs in a one-time pre-merge check rather than a permanent absence assertion.",
+            "hash": "941816d3314ea07094328b406251bd64c1bc1cc5"
+          },
+          {
+            "description": "Add a redundancy rule to the lede-voice doctrine (#1058)",
+            "body": "The changelog-voice doctrine gains a third drafting rule that aims to reduce verbosity by eliminating statements containing trivial or redundant information. The drafting checklist and the automated draft audit now screen for it too, and the audit gains the cross-sentence comparison it previously could not make.",
+            "hash": "e7c0dfee1126016404df923cc0cb7568869ef910"
+          },
+          {
+            "description": "Add a no-second-person rule to the lede-voice doctrine (#1070)",
+            "body": "Agents composing changelog and release-notes entries are now instructed not to use the second person.",
+            "hash": "5dadfe29e415a140316feac7d6fb943eb382f168"
+          },
+          {
+            "description": "Deliver ambient rulebooks mechanically, retiring GLOBAL.md (#1075)",
+            "body": "A rule declared in a rulebook holds in every session, on both Claude Code and Rovo Dev. Previously it held only when an agent chose to look it up, so one session could obey it and the next ignore it, with nothing to show which had happened. Claude Code's built-in Explore and Plan agents are the exception; they do not pick up global rules.\n\nMachine-specific guidance can be declared through a local source rather than committed to the repository.\n\n`~/.agents/GLOBAL.md` is retired: `sync --global` removes it, preserving any hand-written content. Upgrading requires running `install` once before the first `sync --global`.",
+            "hash": "c051e462d79d1f3259a68e2104573a60fdb3b603"
+          },
+          {
+            "description": "Show the proposed edit above post-review menu options (#1078)",
+            "body": "Agents offering next steps after a code review are now instructed to show the exact edit an option would make to the ticket or pull request description above the numbered options, flagging any part of that edit that would settle or obviate an open review finding.",
+            "hash": "396ee43ec27f9514ccb4e9092d19abf02e1de2df"
+          },
+          {
+            "description": "Deliver project ambient rulebooks per harness (#1113)",
+            "body": "Fixes an asymmetry in the availability of project guidance by revising the delivery mechanism. That guidance is now delivered through the harness's `.local.md` files, which guarantees injection into either harness's main agent. Ambient rulebooks should now be the preferred way to deliver guidance to both harnesses. \r\n\r\nBecause those files are git-ignored, `codeassembly-agents sync` must be run once in each worktree of a repository. `sync` no longer generates content in `.agents/PROJECT.md` or `.agents/rulebooks/`.",
+            "hash": "947511aef072edd73f382592dde1ba4a5c24120f"
+          },
+          {
+            "description": "Adopt a dependency's guidance by naming the package (#1121)",
+            "body": "A project can now adopt guidance accompanying a package by naming the package in `codeassembly.yaml`. This brings in every rulebook, skill, and subagent that the package carries. The `sync` command and `drop` key support this new guidance-delivery method.\n\nA package makes its guidance available by naming the content directory in its `package.json`.",
+            "hash": "cc5d2382e180d59c626853a181f89be0e891422c"
+          },
+          {
+            "description": "Sync guidance at build and install so an upgrade cannot leave it stale (#1123)",
+            "body": "Guidance artifacts declared by a project are now redeployed automatically, so that a fresh worktree, or a tree whose declared package has changed, carries artifacts matching what is installed. A project that consumes guidance from a package can wire the same refresh to its own install using the new `sync --warn-only` flag, which reports a failed sync as a warning rather than aborting.",
+            "hash": "57a92c77f3252b25589f03719466856ddc40b21a"
+          },
+          {
+            "description": "Render rulebook links and path tokens per harness (#1124)",
+            "body": "Rulebooks can now address a file by linking to it: A Markdown link to a skill or script, or a home-directory placeholder anywhere in the body, reaches each harness with that harness's own absolute path filled in. A link target that names a place no harness creates is now rejected with an error naming the rulebook and the target. Links opening with a home-directory placeholder now resolve in skills and subagents as well.",
+            "hash": "35aa58d7739db21b6c5a9bce71b10bb439a1a368"
+          },
+          {
+            "description": "Honor invocation tokens in rulebook bodies (#1129)",
+            "body": "A rulebook can now route an agent to another skill, subagent, or rulebook as a direct invocation rather than a name mentioned in prose, and each delivery renders that invocation in the form the receiving harness understands. A rulebook that routes to a missing target, or to one that deploys nothing an agent can invoke, now fails the run rather than shipping a dead reference. Naming a routing target is now enough to have it deployed alongside the rulebook that names it.",
+            "hash": "ca9c72db8d99d11a57ece44561ff4059297a2ed6"
+          },
+          {
+            "description": "Capture lede decisions as an accumulating corpus (#1132)",
+            "body": "After a pull request merges, agents are now instructed to ask the author whether the agent's lede (the paragraph summarizing the change) shipped as written or was rewritten before merge. Each decision adds to a body of evidence for refining the lede guidance: the agent's draft, the text that shipped, and the guidance in force at the time. A pull request that merged elsewhere can be recorded on request.",
+            "hash": "32e90442f2a9f73f5181f57d539ba0e4b464d436"
+          },
+          {
+            "description": "Check a package's own guidance content before it ships (#1138)",
+            "body": "Adds a `validate` command that checks the CodeAssembly guidance bundled with a package and reports all defects found. The check covers every type of content and all harnesses to which it could be deployed.",
+            "hash": "68818b5f28fc5126a85595a5c37c63c5a9961ba4"
+          },
+          {
+            "description": "Establish personal rulebooks for code layout and TypeScript preferences (#1144)",
+            "body": "Adds two rulebooks describing code-layout and TypeScript conventions for agent-authored code, covering such topics as naming conventions, placement of test helpers and fixture data, use of JSDoc params, and preference for named exports. The `code-patterns` and `typescript-conventions` skills have been removed, and their content has been absorbed into the new rulebooks.",
+            "hash": "796137b4b0883fde4c632f2d1af7d5256a4ff4be"
+          },
+          {
+            "description": "Make codeassembly and kb CLI tools publishable (#1164)",
+            "body": "The `codeassembly` CLI now installs from npm, and its `install` and `sync` commands deploy the rulebooks, skills, and subagents it ships into any consuming project. The knowledge-base library `@williamthorsen/kb` and the session-lifecycle event package `codeassembly-lifecycle` are published alongside it.",
+            "hash": "e8f7a6ddd4eeb7f0cfda594d5cee120cf1bc369a"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Normalize action and question label identifiers across asks blocks (#1025)",
+            "body": "Fixes inconsistent identifiers in prompts that ask more than one thing: Some asks carried no identifier, and numbering restarted with each list, so a bare \"1\" was ambiguous and a secondary ask was easy to miss. Agents are now instructed to give every ask in such a prompt a distinct identifier, so a user can answer them all at once by identifier on one line instead of retyping a prose label.",
+            "hash": "0c691105d85eb2e3539d8401eb981319c84e8dea"
+          },
+          {
+            "description": "Name the side effects an approval ask authorizes (#1029)",
+            "body": "Fixes an issue where merging a pull request that also deleted the remote branch required a separate approval just for that deletion. Agents are now instructed to include the branch deletion in the approval they request for a merge, so that a single approval covers both. More broadly, any request for approval must now name the consequential, hard-to-reverse side effects it authorizes, such as force-pushing or closing an issue.",
+            "hash": "f3fc9c9bd145a4e25d60255a869d2b41a5c8a482"
+          },
+          {
+            "description": "Reject an anchor link that names no heading (#1135)",
+            "body": "A link pointing at a heading in its own document now fails `sync` and `install` when no such heading exists, or when two do. Every path that renders or ships a body carries the check (rulebooks, skills, subagents, and the guidance files `install` deploys). If the check fails, the deployment is aborted before anything is written.",
+            "hash": "368ac82d4d0cade677f8d1b0cb3f513f2bd943b7"
+          },
+          {
+            "description": "State doc-description form and make comment mood opt-in (#1151)",
+            "body": "Comment discipline now requires descriptions that describe \"what the function does\" and class and component descriptions that say \"what the thing is\". Function descriptions must start with a verb, and any other opening is declared nonstandard. The guidance also states how long a description may run and which constants, interfaces, and types warrant a description at all.\n\nGrammatical mood is no longer prescribed universally. The `williamthorsen-comment-preferences` rulebook declares a preference for the third-person indicative in descriptions and the imperative in inline comments.",
+            "hash": "42d2e25c51706593d5eabc53c3977c88c34f1aac"
+          },
+          {
+            "description": "Anchor a project-deployed link where its target deploys (#1159)",
+            "body": "Fixes an issue where cross-references between guidance files that `sync` deploys into a project worked only if the linked guidance was also installed in the user's home directory, silently degrading agent output for anyone else.",
+            "hash": "2f0ddaadfafc524aa59206b52fb00811453c9ba3"
+          }
+        ]
+      },
+      {
+        "title": "🏗️ Internal features",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Retire input.received and redundant skill.progress emits (#1030)",
+            "body": "The instrumented skills no longer emit routine mid-run progress milestones or a redundant resume signal, and that resume signal is retired from the lifecycle-event vocabulary entirely. Fleet monitoring still derives the same waiting and resume states from a slimmer per-run event stream.",
+            "hash": "aa40ac80d77cca38904154b272977167d494b129"
+          },
+          {
+            "description": "Extend lifecycle-event instrumentation to five high-traffic skills (#1034)",
+            "body": "Sessions running plan, refine-plan, design-and-plan, and merge-pr, along with orchestrated runs, now surface in the live lane view. A watcher sees each run start, where it pauses waiting on a specific question or approval, the artifacts it saves, and how it ends: completed, stopped, or declined. In design-and-plan, every question in the design dialogue now surfaces individually, so a watcher can tell at a glance which one a paused session is waiting on. Orchestrated runs are labeled with the workflow that launched them.",
+            "hash": "6dfe4398f169df9534360ab71696f38bb65a85e0"
+          },
+          {
+            "description": "Add lifecycle workspace with the canonical envelope, vocabulary & lane fold (#1049)",
+            "body": "Introduces `@codeassembly/lifecycle`, a shared workspace package that houses the canonical lifecycle-event envelope, the event vocabulary, and the fold that turns a lane's events into session and lane state. The package is dependency-free and browser-bundle-safe.",
+            "hash": "0dd4d156b8725aa7bd22d9887413e9cfd587c96e"
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Remove the ambient ripgrep dependency from the test suite (#1097)",
+            "body": "Tests and the post-build smoke check no longer depend on ripgrep. Separately, the knowledge-base retrieval skills now fail with an explicit error when ripgrep returns output they cannot interpret, instead of reporting an empty result when matching notes exist.",
+            "hash": "164d0b653be18f1f60abf771b772574204a33e09"
+          },
+          {
+            "description": "Rename the authoring rulebook and mark its enforced rules (#1092)",
+            "body": "Renames the rulebook for authoring CodeAssembly skills, subagents, rulebooks, and collections from `authoring-guidance` to `codeassembly-content-specification`, which authors now consult through the `consult-codeassembly-content-specification` skill. Each rule now marks whether violating it breaks the build, fails a test, or carries no automated check because the rule is house style.",
+            "hash": "115154ce0441261e5c2fc5b6159cd97101bfdb89"
+          },
+          {
+            "description": "Rename packages to publishable names (#1157)",
+            "body": "Renames CodeAssembly packages in preparation for their initial publication. The package responsible for deploying and syncing agent guidance is now called `codeassembly`.",
+            "hash": "f508636e70f89ce8e3733dac59b3b3ea432a9860"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Move compilation out of the install lifecycle into a bootstrap step (#1102)",
+            "body": "Fixes an issue where installation of dependencies failed intermittently. Reaching a usable tree afterward now takes one command, `pnpm run bootstrap`, and every workflow that needs a built tree runs it. A command-line tool invoked before bootstrapping now points to a command that exists.",
+            "hash": "7c195d2f9757492d8606cd0659ac1c9b94aadac9"
+          },
+          {
+            "description": "Migrate Vitest to nmr's centralized model (#1154)",
+            "body": "Changes Vitest configuration so that test suites are selected by project (\"unit\", \"integration\", and \"app\"), eliminating the need for category-specific configuration files. Every package keeps a single Vitest config file, which composes the repo's shared settings rather than carrying its own copy. The nmr fmt command now formats shell scripts as well, and the corresponding package-file scripts have been removed as redundant.",
+            "hash": "cbcd30a4755a37696236c0deef02e8b8ed2f8873"
+          },
+          {
+            "description": "Run every test in the default gate, classified by what it reaches (#1155)",
+            "body": "Upgrades `nmr` to 0.24, which changes Vitest configuration so that test suites are selected by a tier (\"unit\", \"tool\", \"localhost\", and \"remote\") corresponding to the services they use. `nmr test:unit` and `nmr test:tool` each run one of these; `nmr test:all` runs every suite. All tests are covered by the default run. `nmr test:integration` no longer exists, and no tests carry the `.int.` infix. The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.",
+            "hash": "2efd05b0be54e7cc59e98b53d2f5d145610420be"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.3.0",
     "date": "2026-07-18",
     "sections": [
@@ -1036,6 +1217,11 @@
             "description": "Make review fan-out mode-aware and remove lite mode (#203)",
             "body": "Thread `aspect_reviewers` through the mode cascade so modes control review fan-out, and remove `--lite` mode (superseded by #199 auto-sizing).\n\norchestrate-dev: Remove lite mode argument, preset column, and pipeline section. Add `aspect_reviewers` row to mode preset table — vibe sets all to `false` (deactivated), default/strict use `—` (file-pattern defaults). Use `excluded` for phases not in pipeline to disambiguate from `—`.\n\norchestrate: Remove lite from wrapper reference. Add `{aspect_reviewers}` to review-cycle context preparation, derived via shared conversation context.\n\nreview-cycle: Add `{aspect_reviewers}` to inputs table. Replace preferences.yaml activation lookup with two-step resolution (override then file-pattern default). Make aspect-code-reviewer dispatch conditional. Add key-to-reviewer mapping annotations.",
             "hash": "bdcb9a43ace67928abb7b424d6c0c662b827b828"
+          },
+          {
+            "description": "Replace orchestration mode system with effort system (#206)",
+            "body": "Replace `--mode=vibe|lite|strict` with `--effort=low|medium|high` across the orchestration system. Effort defines a ceiling on permitted investment — the orchestrator right-sizes to the task; the effort level determines how far it is allowed to go.\n\nKey changes:\n\n- Rewrite orchestrate-dev/SKILL.md with effort presets, resolution cascade, piggybacking rule, and deferred-item handling. Single pipeline replaces per-mode variants.\n- Revise finding scheme from per-category severity names to canonical criticality levels (high/medium/low/none). Max-severity-wins replaces quantity-based aggregation.\n- Add `effort`, `approvalThreshold`, `budgetThreshold` to run-core types, Zod schemas, event-folder, and all three parser paths (v1/v2/v3).\n- Remove `fixLowFindings` field and `--fix-low`/`--no-fix-low` CLI aliases entirely — no consumers remain.\n- Update orchestrate/SKILL.md and orchestrate-review/SKILL.md with effort references.\n- Update all factory and MCP fixture/test construction sites for new type shape.\n\nModel: claude-opus-4-6\nWorkspaces: agents, factory, mcp, run-core",
+            "hash": "e96f26fd8a969735ed04fb5387176e92a93c5263"
           },
           {
             "description": "Create sprite-loading infrastructure for catwalk (#228)",

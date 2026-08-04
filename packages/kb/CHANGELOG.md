@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 — 2026-08-04
+
+### 🎉 Features
+
+- Make codeassembly and kb CLI tools publishable (#1164)
+
+  The `codeassembly` CLI now installs from npm, and its `install` and `sync` commands deploy the rulebooks, skills, and subagents it ships into any consuming project. The knowledge-base library `@williamthorsen/kb` and the session-lifecycle event package `codeassembly-lifecycle` are published alongside it.
+
+### ♻️ Refactoring
+
+- Rename packages to publishable names (#1157)
+
+  Renames CodeAssembly packages in preparation for their initial publication. The package responsible for deploying and syncing agent guidance is now called `codeassembly`.
+
+### ⚙️ Tooling
+
+- Move compilation out of the install lifecycle into a bootstrap step (#1102)
+
+  Fixes an issue where installation of dependencies failed intermittently. Reaching a usable tree afterward now takes one command, `pnpm run bootstrap`, and every workflow that needs a built tree runs it. A command-line tool invoked before bootstrapping now points to a command that exists.
+
+- Migrate Vitest to nmr's centralized model (#1154)
+
+  Changes Vitest configuration so that test suites are selected by project ("unit", "integration", and "app"), eliminating the need for category-specific configuration files. Every package keeps a single Vitest config file, which composes the repo's shared settings rather than carrying its own copy. The nmr fmt command now formats shell scripts as well, and the corresponding package-file scripts have been removed as redundant.
+
+- Run every test in the default gate, classified by what it reaches (#1155)
+
+  Upgrades `nmr` to 0.24, which changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. `nmr test:unit` and `nmr test:tool` each run one of these; `nmr test:all` runs every suite. All tests are covered by the default run. `nmr test:integration` no longer exists, and no tests carry the `.int.` infix. The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
+
 ## 0.2.0 — 2026-07-18
 
 ### 🎉 Features

@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.2 — 2026-08-04
+
+### ♻️ Refactoring
+
+- Rename packages to publishable names (#1157)
+
+  Renames CodeAssembly packages in preparation for their initial publication. The package responsible for deploying and syncing agent guidance is now called `codeassembly`.
+
+### ⚙️ Tooling
+
+- Move compilation out of the install lifecycle into a bootstrap step (#1102)
+
+  Fixes an issue where installation of dependencies failed intermittently. Reaching a usable tree afterward now takes one command, `pnpm run bootstrap`, and every workflow that needs a built tree runs it. A command-line tool invoked before bootstrapping now points to a command that exists.
+
+- Migrate Vitest to nmr's centralized model (#1154)
+
+  Changes Vitest configuration so that test suites are selected by project ("unit", "integration", and "app"), eliminating the need for category-specific configuration files. Every package keeps a single Vitest config file, which composes the repo's shared settings rather than carrying its own copy. The nmr fmt command now formats shell scripts as well, and the corresponding package-file scripts have been removed as redundant.
+
+- Run every test in the default gate, classified by what it reaches (#1155)
+
+  Upgrades `nmr` to 0.24, which changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. `nmr test:unit` and `nmr test:tool` each run one of these; `nmr test:all` runs every suite. All tests are covered by the default run. `nmr test:integration` no longer exists, and no tests carry the `.int.` infix. The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
+
 ## 0.2.1 — 2026-07-18
 
 ### ⚙️ Tooling
@@ -28,6 +50,22 @@ All notable changes to this project will be documented in this file.
 - Warn when compiled output is stale if using development MCP code (#166)
 
   Adds a one-time-per-session staleness warning when the MCP server's compiled output is older than its TypeScript source files. A new `staleness.ts` module recursively compares `src/**/*.ts` mtimes against `dist/esm/cli.js`, and `server.ts` wraps all 5 tool handlers to prepend the warning as a separate content item on the first tool call when the build is stale.
+
+- Replace orchestration mode system with effort system (#206)
+
+  Replace `--mode=vibe|lite|strict` with `--effort=low|medium|high` across the orchestration system. Effort defines a ceiling on permitted investment — the orchestrator right-sizes to the task; the effort level determines how far it is allowed to go.
+
+  Key changes:
+
+  - Rewrite orchestrate-dev/SKILL.md with effort presets, resolution cascade, piggybacking rule, and deferred-item handling. Single pipeline replaces per-mode variants.
+  - Revise finding scheme from per-category severity names to canonical criticality levels (high/medium/low/none). Max-severity-wins replaces quantity-based aggregation.
+  - Add `effort`, `approvalThreshold`, `budgetThreshold` to run-core types, Zod schemas, event-folder, and all three parser paths (v1/v2/v3).
+  - Remove `fixLowFindings` field and `--fix-low`/`--no-fix-low` CLI aliases entirely — no consumers remain.
+  - Update orchestrate/SKILL.md and orchestrate-review/SKILL.md with effort references.
+  - Update all factory and MCP fixture/test construction sites for new type shape.
+
+  Model: claude-opus-4-6
+  Workspaces: agents, factory, mcp, run-core
 
 ### 🐛 Bug fixes
 

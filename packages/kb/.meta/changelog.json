@@ -1,5 +1,54 @@
 [
   {
+    "version": "0.3.0",
+    "date": "2026-08-04",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Make codeassembly and kb CLI tools publishable (#1164)",
+            "body": "The `codeassembly` CLI now installs from npm, and its `install` and `sync` commands deploy the rulebooks, skills, and subagents it ships into any consuming project. The knowledge-base library `@williamthorsen/kb` and the session-lifecycle event package `codeassembly-lifecycle` are published alongside it.",
+            "hash": "e8f7a6ddd4eeb7f0cfda594d5cee120cf1bc369a"
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rename packages to publishable names (#1157)",
+            "body": "Renames CodeAssembly packages in preparation for their initial publication. The package responsible for deploying and syncing agent guidance is now called `codeassembly`.",
+            "hash": "f508636e70f89ce8e3733dac59b3b3ea432a9860"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Move compilation out of the install lifecycle into a bootstrap step (#1102)",
+            "body": "Fixes an issue where installation of dependencies failed intermittently. Reaching a usable tree afterward now takes one command, `pnpm run bootstrap`, and every workflow that needs a built tree runs it. A command-line tool invoked before bootstrapping now points to a command that exists.",
+            "hash": "7c195d2f9757492d8606cd0659ac1c9b94aadac9"
+          },
+          {
+            "description": "Migrate Vitest to nmr's centralized model (#1154)",
+            "body": "Changes Vitest configuration so that test suites are selected by project (\"unit\", \"integration\", and \"app\"), eliminating the need for category-specific configuration files. Every package keeps a single Vitest config file, which composes the repo's shared settings rather than carrying its own copy. The nmr fmt command now formats shell scripts as well, and the corresponding package-file scripts have been removed as redundant.",
+            "hash": "cbcd30a4755a37696236c0deef02e8b8ed2f8873"
+          },
+          {
+            "description": "Run every test in the default gate, classified by what it reaches (#1155)",
+            "body": "Upgrades `nmr` to 0.24, which changes Vitest configuration so that test suites are selected by a tier (\"unit\", \"tool\", \"localhost\", and \"remote\") corresponding to the services they use. `nmr test:unit` and `nmr test:tool` each run one of these; `nmr test:all` runs every suite. All tests are covered by the default run. `nmr test:integration` no longer exists, and no tests carry the `.int.` infix. The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.",
+            "hash": "2efd05b0be54e7cc59e98b53d2f5d145610420be"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.0",
     "date": "2026-07-18",
     "sections": [

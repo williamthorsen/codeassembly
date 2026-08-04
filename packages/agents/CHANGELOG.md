@@ -2,6 +2,144 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 — 2026-08-04
+
+### 🎉 Features
+
+- Let reviewers emit gated insights into review artifacts (#1031)
+
+  Code-review agents are now permitted to record "insights" -- non-obvious knowledge worth preserving, such as a pattern, gotcha, or architectural learning that isn't an actionable finding -- in their reviews. Previously a reviewer who noticed such knowledge had to drop it or force it into a finding it didn't fit. The housekeeping steps that follow a review are now instructed to collect these insights, so the knowledge is carried forward instead of being rediscovered later.
+
+- Rule out absence-of-removed-code tests (#1032)
+
+  Agents are now instructed not to add a test whose only purpose is to assert that removed code, text, or behavior stays gone, and reviewers are now instructed not to recommend one. The guidance directs that a removal-only change needs no new test, and that confirming a removal is complete belongs in a one-time pre-merge check rather than a permanent absence assertion.
+
+- Add a redundancy rule to the lede-voice doctrine (#1058)
+
+  The changelog-voice doctrine gains a third drafting rule that aims to reduce verbosity by eliminating statements containing trivial or redundant information. The drafting checklist and the automated draft audit now screen for it too, and the audit gains the cross-sentence comparison it previously could not make.
+
+- Add a no-second-person rule to the lede-voice doctrine (#1070)
+
+  Agents composing changelog and release-notes entries are now instructed not to use the second person.
+
+- Deliver ambient rulebooks mechanically, retiring GLOBAL.md (#1075)
+
+  A rule declared in a rulebook holds in every session, on both Claude Code and Rovo Dev. Previously it held only when an agent chose to look it up, so one session could obey it and the next ignore it, with nothing to show which had happened. Claude Code's built-in Explore and Plan agents are the exception; they do not pick up global rules.
+
+  Machine-specific guidance can be declared through a local source rather than committed to the repository.
+
+  `~/.agents/GLOBAL.md` is retired: `sync --global` removes it, preserving any hand-written content. Upgrading requires running `install` once before the first `sync --global`.
+
+- Show the proposed edit above post-review menu options (#1078)
+
+  Agents offering next steps after a code review are now instructed to show the exact edit an option would make to the ticket or pull request description above the numbered options, flagging any part of that edit that would settle or obviate an open review finding.
+
+- Deliver project ambient rulebooks per harness (#1113)
+
+  Fixes an asymmetry in the availability of project guidance by revising the delivery mechanism. That guidance is now delivered through the harness's `.local.md` files, which guarantees injection into either harness's main agent. Ambient rulebooks should now be the preferred way to deliver guidance to both harnesses.
+
+  Because those files are git-ignored, `codeassembly-agents sync` must be run once in each worktree of a repository. `sync` no longer generates content in `.agents/PROJECT.md` or `.agents/rulebooks/`.
+
+- Adopt a dependency's guidance by naming the package (#1121)
+
+  A project can now adopt guidance accompanying a package by naming the package in `codeassembly.yaml`. This brings in every rulebook, skill, and subagent that the package carries. The `sync` command and `drop` key support this new guidance-delivery method.
+
+  A package makes its guidance available by naming the content directory in its `package.json`.
+
+- Sync guidance at build and install so an upgrade cannot leave it stale (#1123)
+
+  Guidance artifacts declared by a project are now redeployed automatically, so that a fresh worktree, or a tree whose declared package has changed, carries artifacts matching what is installed. A project that consumes guidance from a package can wire the same refresh to its own install using the new `sync --warn-only` flag, which reports a failed sync as a warning rather than aborting.
+
+- Render rulebook links and path tokens per harness (#1124)
+
+  Rulebooks can now address a file by linking to it: A Markdown link to a skill or script, or a home-directory placeholder anywhere in the body, reaches each harness with that harness's own absolute path filled in. A link target that names a place no harness creates is now rejected with an error naming the rulebook and the target. Links opening with a home-directory placeholder now resolve in skills and subagents as well.
+
+- Honor invocation tokens in rulebook bodies (#1129)
+
+  A rulebook can now route an agent to another skill, subagent, or rulebook as a direct invocation rather than a name mentioned in prose, and each delivery renders that invocation in the form the receiving harness understands. A rulebook that routes to a missing target, or to one that deploys nothing an agent can invoke, now fails the run rather than shipping a dead reference. Naming a routing target is now enough to have it deployed alongside the rulebook that names it.
+
+- Capture lede decisions as an accumulating corpus (#1132)
+
+  After a pull request merges, agents are now instructed to ask the author whether the agent's lede (the paragraph summarizing the change) shipped as written or was rewritten before merge. Each decision adds to a body of evidence for refining the lede guidance: the agent's draft, the text that shipped, and the guidance in force at the time. A pull request that merged elsewhere can be recorded on request.
+
+- Check a package's own guidance content before it ships (#1138)
+
+  Adds a `validate` command that checks the CodeAssembly guidance bundled with a package and reports all defects found. The check covers every type of content and all harnesses to which it could be deployed.
+
+- Establish personal rulebooks for code layout and TypeScript preferences (#1144)
+
+  Adds two rulebooks describing code-layout and TypeScript conventions for agent-authored code, covering such topics as naming conventions, placement of test helpers and fixture data, use of JSDoc params, and preference for named exports. The `code-patterns` and `typescript-conventions` skills have been removed, and their content has been absorbed into the new rulebooks.
+
+- Make codeassembly and kb CLI tools publishable (#1164)
+
+  The `codeassembly` CLI now installs from npm, and its `install` and `sync` commands deploy the rulebooks, skills, and subagents it ships into any consuming project. The knowledge-base library `@williamthorsen/kb` and the session-lifecycle event package `codeassembly-lifecycle` are published alongside it.
+
+### 🐛 Bug fixes
+
+- Normalize action and question label identifiers across asks blocks (#1025)
+
+  Fixes inconsistent identifiers in prompts that ask more than one thing: Some asks carried no identifier, and numbering restarted with each list, so a bare "1" was ambiguous and a secondary ask was easy to miss. Agents are now instructed to give every ask in such a prompt a distinct identifier, so a user can answer them all at once by identifier on one line instead of retyping a prose label.
+
+- Name the side effects an approval ask authorizes (#1029)
+
+  Fixes an issue where merging a pull request that also deleted the remote branch required a separate approval just for that deletion. Agents are now instructed to include the branch deletion in the approval they request for a merge, so that a single approval covers both. More broadly, any request for approval must now name the consequential, hard-to-reverse side effects it authorizes, such as force-pushing or closing an issue.
+
+- Reject an anchor link that names no heading (#1135)
+
+  A link pointing at a heading in its own document now fails `sync` and `install` when no such heading exists, or when two do. Every path that renders or ships a body carries the check (rulebooks, skills, subagents, and the guidance files `install` deploys). If the check fails, the deployment is aborted before anything is written.
+
+- State doc-description form and make comment mood opt-in (#1151)
+
+  Comment discipline now requires descriptions that describe "what the function does" and class and component descriptions that say "what the thing is". Function descriptions must start with a verb, and any other opening is declared nonstandard. The guidance also states how long a description may run and which constants, interfaces, and types warrant a description at all.
+
+  Grammatical mood is no longer prescribed universally. The `williamthorsen-comment-preferences` rulebook declares a preference for the third-person indicative in descriptions and the imperative in inline comments.
+
+- Anchor a project-deployed link where its target deploys (#1159)
+
+  Fixes an issue where cross-references between guidance files that `sync` deploys into a project worked only if the linked guidance was also installed in the user's home directory, silently degrading agent output for anyone else.
+
+### 🏗️ Internal features
+
+- Retire input.received and redundant skill.progress emits (#1030)
+
+  The instrumented skills no longer emit routine mid-run progress milestones or a redundant resume signal, and that resume signal is retired from the lifecycle-event vocabulary entirely. Fleet monitoring still derives the same waiting and resume states from a slimmer per-run event stream.
+
+- Extend lifecycle-event instrumentation to five high-traffic skills (#1034)
+
+  Sessions running plan, refine-plan, design-and-plan, and merge-pr, along with orchestrated runs, now surface in the live lane view. A watcher sees each run start, where it pauses waiting on a specific question or approval, the artifacts it saves, and how it ends: completed, stopped, or declined. In design-and-plan, every question in the design dialogue now surfaces individually, so a watcher can tell at a glance which one a paused session is waiting on. Orchestrated runs are labeled with the workflow that launched them.
+
+- Add lifecycle workspace with the canonical envelope, vocabulary & lane fold (#1049)
+
+  Introduces `@codeassembly/lifecycle`, a shared workspace package that houses the canonical lifecycle-event envelope, the event vocabulary, and the fold that turns a lane's events into session and lane state. The package is dependency-free and browser-bundle-safe.
+
+### ♻️ Refactoring
+
+- Remove the ambient ripgrep dependency from the test suite (#1097)
+
+  Tests and the post-build smoke check no longer depend on ripgrep. Separately, the knowledge-base retrieval skills now fail with an explicit error when ripgrep returns output they cannot interpret, instead of reporting an empty result when matching notes exist.
+
+- Rename the authoring rulebook and mark its enforced rules (#1092)
+
+  Renames the rulebook for authoring CodeAssembly skills, subagents, rulebooks, and collections from `authoring-guidance` to `codeassembly-content-specification`, which authors now consult through the `consult-codeassembly-content-specification` skill. Each rule now marks whether violating it breaks the build, fails a test, or carries no automated check because the rule is house style.
+
+- Rename packages to publishable names (#1157)
+
+  Renames CodeAssembly packages in preparation for their initial publication. The package responsible for deploying and syncing agent guidance is now called `codeassembly`.
+
+### ⚙️ Tooling
+
+- Move compilation out of the install lifecycle into a bootstrap step (#1102)
+
+  Fixes an issue where installation of dependencies failed intermittently. Reaching a usable tree afterward now takes one command, `pnpm run bootstrap`, and every workflow that needs a built tree runs it. A command-line tool invoked before bootstrapping now points to a command that exists.
+
+- Migrate Vitest to nmr's centralized model (#1154)
+
+  Changes Vitest configuration so that test suites are selected by project ("unit", "integration", and "app"), eliminating the need for category-specific configuration files. Every package keeps a single Vitest config file, which composes the repo's shared settings rather than carrying its own copy. The nmr fmt command now formats shell scripts as well, and the corresponding package-file scripts have been removed as redundant.
+
+- Run every test in the default gate, classified by what it reaches (#1155)
+
+  Upgrades `nmr` to 0.24, which changes Vitest configuration so that test suites are selected by a tier ("unit", "tool", "localhost", and "remote") corresponding to the services they use. `nmr test:unit` and `nmr test:tool` each run one of these; `nmr test:all` runs every suite. All tests are covered by the default run. `nmr test:integration` no longer exists, and no tests carry the `.int.` infix. The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.
+
 ## 0.3.0 — 2026-07-18
 
 ### 🎉 Features
@@ -847,6 +985,22 @@ All notable changes to this project will be documented in this file.
   orchestrate: Remove lite from wrapper reference. Add `{aspect_reviewers}` to review-cycle context preparation, derived via shared conversation context.
 
   review-cycle: Add `{aspect_reviewers}` to inputs table. Replace preferences.yaml activation lookup with two-step resolution (override then file-pattern default). Make aspect-code-reviewer dispatch conditional. Add key-to-reviewer mapping annotations.
+
+- Replace orchestration mode system with effort system (#206)
+
+  Replace `--mode=vibe|lite|strict` with `--effort=low|medium|high` across the orchestration system. Effort defines a ceiling on permitted investment — the orchestrator right-sizes to the task; the effort level determines how far it is allowed to go.
+
+  Key changes:
+
+  - Rewrite orchestrate-dev/SKILL.md with effort presets, resolution cascade, piggybacking rule, and deferred-item handling. Single pipeline replaces per-mode variants.
+  - Revise finding scheme from per-category severity names to canonical criticality levels (high/medium/low/none). Max-severity-wins replaces quantity-based aggregation.
+  - Add `effort`, `approvalThreshold`, `budgetThreshold` to run-core types, Zod schemas, event-folder, and all three parser paths (v1/v2/v3).
+  - Remove `fixLowFindings` field and `--fix-low`/`--no-fix-low` CLI aliases entirely — no consumers remain.
+  - Update orchestrate/SKILL.md and orchestrate-review/SKILL.md with effort references.
+  - Update all factory and MCP fixture/test construction sites for new type shape.
+
+  Model: claude-opus-4-6
+  Workspaces: agents, factory, mcp, run-core
 
 - Create sprite-loading infrastructure for catwalk (#228)
 

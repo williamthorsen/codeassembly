@@ -1,5 +1,43 @@
 [
   {
+    "version": "0.2.2",
+    "date": "2026-08-04",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rename packages to publishable names (#1157)",
+            "body": "Renames CodeAssembly packages in preparation for their initial publication. The package responsible for deploying and syncing agent guidance is now called `codeassembly`.",
+            "hash": "f508636e70f89ce8e3733dac59b3b3ea432a9860"
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Move compilation out of the install lifecycle into a bootstrap step (#1102)",
+            "body": "Fixes an issue where installation of dependencies failed intermittently. Reaching a usable tree afterward now takes one command, `pnpm run bootstrap`, and every workflow that needs a built tree runs it. A command-line tool invoked before bootstrapping now points to a command that exists.",
+            "hash": "7c195d2f9757492d8606cd0659ac1c9b94aadac9"
+          },
+          {
+            "description": "Migrate Vitest to nmr's centralized model (#1154)",
+            "body": "Changes Vitest configuration so that test suites are selected by project (\"unit\", \"integration\", and \"app\"), eliminating the need for category-specific configuration files. Every package keeps a single Vitest config file, which composes the repo's shared settings rather than carrying its own copy. The nmr fmt command now formats shell scripts as well, and the corresponding package-file scripts have been removed as redundant.",
+            "hash": "cbcd30a4755a37696236c0deef02e8b8ed2f8873"
+          },
+          {
+            "description": "Run every test in the default gate, classified by what it reaches (#1155)",
+            "body": "Upgrades `nmr` to 0.24, which changes Vitest configuration so that test suites are selected by a tier (\"unit\", \"tool\", \"localhost\", and \"remote\") corresponding to the services they use. `nmr test:unit` and `nmr test:tool` each run one of these; `nmr test:all` runs every suite. All tests are covered by the default run. `nmr test:integration` no longer exists, and no tests carry the `.int.` infix. The upgraded `nmr` includes a caching feature that skips checks that already succeeded against an identical working tree.",
+            "hash": "2efd05b0be54e7cc59e98b53d2f5d145610420be"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.1",
     "date": "2026-07-18",
     "sections": [
@@ -74,6 +112,16 @@
             "description": "Propagate failure reason from run_failed event to CanonicalRunStatus (#167)",
             "body": "Threads the `reason` field from `run_failed` events through the entire canonical run status pipeline — from `CanonicalRunStatus` type definition through event folding, data parsing, and into the Factory StatusBar UI.",
             "hash": "5d6f312f2bff50b09aa7b03e93494d8de2c09f36"
+          },
+          {
+            "description": "Gracefully handle invalid log files in orchestrated-run directories (#174)",
+            "body": "Introduces a structured `RunDataParseError` class in `run-core` that distinguishes known parse failures (corrupt JSON, schema mismatches, missing companion files) from unexpected errors. The Factory server's `ProjectScanner` now catches these specifically and logs actionable `console.warn` messages with fix suggestions instead of alarming `console.error` stack traces.\n\nModel: claude-opus-4-6\nWorkspaces: factory, run-core",
+            "hash": "1773eb0f48c5fe22f3fe9ace321ae41a856ca689"
+          },
+          {
+            "description": "Replace orchestration mode system with effort system (#206)",
+            "body": "Replace `--mode=vibe|lite|strict` with `--effort=low|medium|high` across the orchestration system. Effort defines a ceiling on permitted investment — the orchestrator right-sizes to the task; the effort level determines how far it is allowed to go.\n\nKey changes:\n\n- Rewrite orchestrate-dev/SKILL.md with effort presets, resolution cascade, piggybacking rule, and deferred-item handling. Single pipeline replaces per-mode variants.\n- Revise finding scheme from per-category severity names to canonical criticality levels (high/medium/low/none). Max-severity-wins replaces quantity-based aggregation.\n- Add `effort`, `approvalThreshold`, `budgetThreshold` to run-core types, Zod schemas, event-folder, and all three parser paths (v1/v2/v3).\n- Remove `fixLowFindings` field and `--fix-low`/`--no-fix-low` CLI aliases entirely — no consumers remain.\n- Update orchestrate/SKILL.md and orchestrate-review/SKILL.md with effort references.\n- Update all factory and MCP fixture/test construction sites for new type shape.\n\nModel: claude-opus-4-6\nWorkspaces: agents, factory, mcp, run-core",
+            "hash": "e96f26fd8a969735ed04fb5387176e92a93c5263"
           },
           {
             "description": "Add run directory scanning and refactor ProjectScanner (#221)",
