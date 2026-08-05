@@ -2424,8 +2424,9 @@ describe(syncGlobalCommand, () => {
 
     await syncGlobalCommand(makeOptions({ harness: 'claude' }), homeDir, resolveContentDir());
 
-    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(true);
+    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'capture-event', 'SKILL.md'))).toBe(true);
+    // `canary` is standalone: a vetted collection whose closure reaches it is a defect.
+    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(false);
   });
 
   it('retires a pre-existing ~/.agents/rulebooks/ tree, and writes none of its own', async () => {

@@ -43,11 +43,13 @@ rulebooks:
 const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
 # \`codeassembly sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
 #
-# \`all\` is the full catalog — every rulebook, skill, and subagent. Replace it with a narrower collection or an
-# explicit member list to trim what deploys.
+# Each collection carries a claim about its members: \`recommended\` is vetted and generally applicable, and
+# \`triage\` holds what nobody has examined yet. Add any other collection the library or a source ships, or declare
+# \`all\` in their place to take the whole catalog, including the artifacts every collection deliberately omits.
 collections:
   use:
-    - all
+    - recommended
+    - triage
 `;
 
 /**

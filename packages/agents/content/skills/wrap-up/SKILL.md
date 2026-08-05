@@ -2,6 +2,9 @@
 name: wrap-up
 description: Post-session housekeeping — create tickets for deferred items, post insights, and generate devlogs
 user-invocable: true
+dependencies:
+  skills:
+    - save-artifact
 ---
 
 # Wrap up

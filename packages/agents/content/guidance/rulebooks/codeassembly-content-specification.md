@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter fields, dependency blocks, and invocation tokens.
 delivery: skill
-version: 7
+version: 8
 ---
 
 # CodeAssembly content specification
@@ -59,7 +59,7 @@ A rulebook may link only into `skills/` and `scripts/`, the two trees whose sour
 
 A link to a sibling rulebook is rejected too, and its error names the `{rulebook:<slug>}` token that addresses it instead. A rulebook is invoked rather than read: the skill it deploys is discovered by name, so an invocation resolves wherever it was deployed, while a path would be right in one domain and dead in the other. _(Validated on parse.)_
 
-A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.test.ts`, which also resolves a fragment carried on such a target to exactly one heading in the file it points into. _(Enforced by test.)_
+A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `content-link-resolution.unit.test.ts`, which also resolves a fragment carried on such a target to exactly one heading in the file it points into. _(Enforced by test.)_
 
 One limitation is worth knowing before writing a rulebook that documents linking: rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Invocation tokens rewrite the same way, so an example token keeps the `<slug>` placeholder rather than naming a real artifact.
 
@@ -89,6 +89,37 @@ members:
 
 `members:` is collections-only; rulebooks, skills, and subagents use `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error. The resolver follows both keys identically -- the split is semantic: a collection contains members, an artifact depends on prerequisites.
 
+A collection enumerates every member, not just its dependency roots. Roots-only membership would leave an unexamined artifact free to enter through an edge and be treated as examined, which is the outcome the dispositions below exist to prevent.
+
+### Dispositions
+
+Declaring a collection is a claim about its members, so every artifact carries a disposition recording which claim it is under. An artifact under none is an oversight rather than a decision. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+
+Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
+
+1. **Read the prose** for personal doctrine -- a preference stated as a rule that another team would answer differently.
+2. **Ask what the artifact names that exists only here** -- a store, path, host, repository, tracker, or tool a consumer would not have. Such coupling hides in a default value or an example rather than in the prose, so the first pass passes it over.
+
+**A public collection** (`recommended` here) is one anyone may declare, so membership claims general fitness. Every criterion must hold:
+
+- Nothing it names is specific to the author's environment.
+- It states no personal doctrine.
+- Its prerequisites appear where a reader looks before invoking, rather than surfacing on failure.
+- Its closure holds only public members.
+- It deploys where it works: an artifact that functions on one harness alone declares that harness rather than shipping everywhere under a general claim.
+
+**A personal collection** (`williamthorsen` here) claims deliberate fit for one author rather than general fitness:
+
+- It deliberately encodes that author's preferences, environment, or domain -- whatever disqualifies it from the public collection is what qualifies it here.
+- Its closure reaches only personal and public members.
+- It is invoked often enough to repay a standing line in the skill index.
+
+**Standalone** is membership in no collection: deliberate, declared directly where wanted, and recorded so the coverage check reads it as a decision rather than an omission. An artifact lands here when it is deliberate but rarely invoked, or wanted only in specific projects. Every deployed skill costs a line in the skill index at every session, and a rarely-invoked artifact does not repay that.
+
+**Triage** (`triage` here) holds what has not been examined. It is where new content lands, and it shrinks by promotion rather than growing.
+
+A vetted collection is closed under its dependency edges, which is what makes the vetting real: without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure reaches. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+
 ## Frontmatter fields
 
 - **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `skill`, or both; defaults to `ambient`), optional `skill-name`, optional `version`.
@@ -110,4 +141,4 @@ A `codeassembly-` prefix marks an artifact governing this repository's own mecha
 
 Behavioural rules that govern an agent's output -- the recommendation gradient, the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs, then restated at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when it sits beside the action it governs than when it was read once at session start, and it imitates a nearby concrete example more reliably still than it follows a directive.
 
-Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.test.ts` and `spec-inlining.test.ts`.)_
+Treat that restatement as load-bearing redundancy, not duplication. A DRY-driven refactor that strips the skill-local pointers and leaves only the global rule removes the mechanism by which the global rule takes effect. _(Enforced by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_

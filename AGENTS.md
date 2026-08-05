@@ -2,6 +2,10 @@
 
 @.agents/nmr/AGENTS.md
 
+## Repository visibility
+
+This repository is public. Anything committed here is world-readable, so no credential, personal detail, or workplace-internal fact belongs in it. The `private: true` markers on the package manifests below say only that a package is not published to a registry; they say nothing about who can read the source.
+
 ## Project structure
 
 This is a pnpm monorepo centered around agentic code-orchestration flows. It contains eight packages:
