@@ -24,7 +24,9 @@ function expectAppended(result: TailResult): { lines: string[]; offset: number }
 }
 
 afterEach(() => {
-  for (const dir of tempDirs.splice(0)) {
+  const pending = [...tempDirs];
+  tempDirs.length = 0;
+  for (const dir of pending) {
     rmSync(dir, { recursive: true, force: true });
   }
 });
