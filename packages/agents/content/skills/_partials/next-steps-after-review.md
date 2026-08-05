@@ -165,10 +165,10 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Options — PR variant (review-pr)
 
-| #   | Emoji | Option                  | Description                                                                                                                                  |
-| --- | ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📋    | Post findings on the PR | Post the findings as comments on the pull request. On Bitbucket, via `bb-pr-inline-comment`; GitHub has no posting mechanism yet (see #1018) |
-| 2   | 🚀    | Implement directly      | Fix the findings in this session                                                                                                             |
+| #   | Emoji | Option                  | Description                                                                                                                                                                                     |
+| --- | ----- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR | Post the findings as comments anchored to file and line. On Bitbucket, use whatever Bitbucket tooling is available (MCP server, REST API, CLI); GitHub has no posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly      | Fix the findings in this session                                                                                                                                                                |
 
 #### Options — local-branch variant (review-branch)
 
@@ -207,7 +207,7 @@ If the author is an agent, run `respond-to-review` in that session.
 
 Which skill names appear in the render follows the session-boundary rule:
 
-- **Post findings on the PR** — the agent posts in the current session, so no skill is named in the render; the posting mechanism (`bb-pr-inline-comment` on Bitbucket) lives in the Options table.
+- **Post findings on the PR** — the agent posts in the current session, so no skill is named in the render; the platform's posting mechanism lives in the Options table.
 - **Ask the author to address the findings** — the author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
 - **Wait for the author to address the findings, then re-review** — names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix: the reviewer's memory of what it found is what lets it check the fixes.
 - **Implement directly** — the reviewer makes the fixes in this session; no skill is invoked.
