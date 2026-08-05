@@ -43,11 +43,16 @@ export interface TaxonomyEntry {
 }
 
 /**
- * The on-disk `.kb/taxonomy.yaml` shape. Both blocks are optional so a file may declare only one, and a description may
- * be null so a key written bare (`engineering/tooling:`) loads rather than failing: that is what a hand editor types
- * and what a back-filled entry round-trips to.
+ * The on-disk `.kb/taxonomy.yaml` shape.
+ *
+ * Both blocks are optional and nullable, so a file may declare only one, and a block header left with nothing under it
+ * loads as declaring nothing rather than failing. YAML reads such a header as null, and it is the state promoting the
+ * last entry out of a block leaves behind.
+ *
+ * A description may likewise be null, so a key written bare (`engineering/tooling:`) loads: that is what a hand editor
+ * types and what a domain declared without a description round-trips to.
  */
 export const taxonomyFileShape = z.object({
-  domains: z.record(z.string(), z.string().nullable()).optional(),
-  provisional: z.record(z.string(), z.string().nullable()).optional(),
+  domains: z.record(z.string(), z.string().nullable()).nullable().optional(),
+  provisional: z.record(z.string(), z.string().nullable()).nullable().optional(),
 });

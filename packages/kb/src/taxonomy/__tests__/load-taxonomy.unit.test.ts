@@ -46,6 +46,26 @@ describe(loadTaxonomy, () => {
     expect(taxonomy.get('engineering')).toEqual({ description: '', provisional: true });
   });
 
+  it('reads a block header with nothing under it as declaring nothing', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains:\n  engineering: Practice\nprovisional:\n' });
+
+    expect(await loadTaxonomy({ kbRoot })).toEqual(
+      new Map([['engineering', { description: 'Practice', provisional: false }]]),
+    );
+  });
+
+  it('returns an empty taxonomy when both block headers have nothing under them', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains:\nprovisional:\n' });
+
+    expect(await loadTaxonomy({ kbRoot })).toEqual(new Map());
+  });
+
+  it('names the offending key when a block is the wrong type', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains: not-a-mapping\n' });
+
+    await expect(loadTaxonomy({ kbRoot })).rejects.toThrow(/at domains/);
+  });
+
   it('loads a file declaring only one of the two blocks', async () => {
     const kbRoot = await makeKbRoot({ taxonomy: 'provisional:\n  tools: Tooling\n' });
 

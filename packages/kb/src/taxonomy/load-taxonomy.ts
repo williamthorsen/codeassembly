@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { parse } from 'yaml';
+import type { ZodError } from 'zod';
 
 import { KbLoaderError } from '../config/kb-loader-error.ts';
 import { TAXONOMY_FILE } from '../layout/index.ts';
@@ -41,12 +42,13 @@ export async function loadTaxonomy(input: { kbRoot: KbRoot }): Promise<Taxonomy>
   // A comment-only file parses to null, which is a taxonomy declaring nothing rather than a defect.
   const result = taxonomyFileShape.safeParse(parsed ?? {});
   if (!result.success) {
-    throw new KbLoaderError(`${path}: invalid taxonomy.yaml — ${result.error.issues[0]?.message ?? 'unknown error'}`);
+    throw new KbLoaderError(`${path}: invalid taxonomy.yaml${describeIssueLocation(result.error)}`);
   }
 
+  // A block header with nothing under it parses to null, which declares nothing, exactly as an absent block does.
   const entries = new Map<string, TaxonomyEntry>();
-  collectBlock({ entries, block: result.data.domains, provisional: false, path });
-  collectBlock({ entries, block: result.data.provisional, provisional: true, path });
+  collectBlock({ entries, block: result.data.domains ?? undefined, provisional: false, path });
+  collectBlock({ entries, block: result.data.provisional ?? undefined, provisional: true, path });
   return entries;
 }
 
@@ -77,6 +79,16 @@ function collectBlock(input: {
     }
     entries.set(key, { description: description ?? '', provisional });
   }
+}
+
+/** Renders a schema failure's first issue, naming the key at fault so a malformed block is identifiable. */
+function describeIssueLocation(error: ZodError): string {
+  const issue = error.issues[0];
+  if (issue === undefined) {
+    return ' — unknown error';
+  }
+  const location = issue.path.length > 0 ? ` at ${issue.path.join('.')}` : '';
+  return `${location} — ${issue.message}`;
 }
 
 // endregion | Helpers

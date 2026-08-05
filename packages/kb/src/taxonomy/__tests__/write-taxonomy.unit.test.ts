@@ -131,6 +131,42 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe(`${stub}\nprovisional:\n  engineering:\n`);
   });
 
+  it('fills a block header that has nothing under it, in place', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains:\nprovisional:\n  tools: Tooling\n' });
+
+    const { added } = await writeTaxonomy({
+      kbRoot,
+      declarations: [{ path: 'engineering', description: 'Practice', provisional: false }],
+    });
+
+    expect(added).toEqual(['engineering']);
+    expect(await readTaxonomy(kbRoot)).toBe('domains:\n  engineering: Practice\nprovisional:\n  tools: Tooling\n');
+  });
+
+  it('writes a description-less domain into an empty block as a bare key', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: 'domains:\nprovisional:\n' });
+
+    await writeTaxonomy({
+      kbRoot,
+      declarations: [
+        { path: 'engineering', provisional: true },
+        { path: 'tools', provisional: true },
+      ],
+    });
+
+    expect(await readTaxonomy(kbRoot)).toBe('domains:\nprovisional:\n  engineering:\n  tools:\n');
+  });
+
+  it('keeps a comment attached to an empty block', async () => {
+    const kbRoot = await makeKbRoot({ taxonomy: '# header\ndomains:\n# between the blocks\nprovisional:\n  t: T\n' });
+
+    await writeTaxonomy({ kbRoot, declarations: [{ path: 'engineering', provisional: false }] });
+
+    const written = await readTaxonomy(kbRoot);
+    expect(written).toContain('# header');
+    expect(written).toContain('# between the blocks');
+  });
+
   it('writes what loadTaxonomy reads back', async () => {
     const kbRoot = await makeKbRoot();
 
