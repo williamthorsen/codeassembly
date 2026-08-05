@@ -51,7 +51,8 @@ async function createConnectedClient(): Promise<ConnectedClient> {
 const cleanups: Array<() => Promise<void>> = [];
 
 afterEach(async () => {
-  const pending = cleanups.splice(0);
+  const pending = [...cleanups];
+  cleanups.length = 0;
   await Promise.allSettled(pending.map((fn) => fn()));
 });
 
