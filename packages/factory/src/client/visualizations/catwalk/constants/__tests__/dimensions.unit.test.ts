@@ -6,13 +6,11 @@ import {
   ART_W,
   CANVAS_H,
   CANVAS_W,
-  CATWALK_Y,
-  CHUTE_BOT,
-  CHUTE_TOP,
   GATE_W,
-  GROUND_Y,
+  GROUND_LINE_Y,
   LAYOUT_MARGIN,
   ORCH_RADIUS,
+  RAIL_Y,
   STATION_GAP,
 } from '../dimensions.js';
 
@@ -26,23 +24,13 @@ describe('canvas dimensions', () => {
   });
 });
 
-describe('derived vertical positions', () => {
-  it('derives CHUTE_TOP as CATWALK_Y + 48', () => {
-    expect(CHUTE_TOP).toBe(CATWALK_Y + 48);
-  });
-
-  it('derives CHUTE_BOT as GROUND_Y - 20', () => {
-    expect(CHUTE_BOT).toBe(GROUND_Y - 20);
-  });
-});
-
 describe('anchor values', () => {
-  it('has CATWALK_Y equal to 100', () => {
-    expect(CATWALK_Y).toBe(100);
+  it('has RAIL_Y equal to 100', () => {
+    expect(RAIL_Y).toBe(100);
   });
 
-  it('has GROUND_Y equal to 340', () => {
-    expect(GROUND_Y).toBe(340);
+  it('has GROUND_LINE_Y equal to 382', () => {
+    expect(GROUND_LINE_Y).toBe(382);
   });
 });
 

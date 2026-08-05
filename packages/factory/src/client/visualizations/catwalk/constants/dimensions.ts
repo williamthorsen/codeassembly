@@ -14,12 +14,6 @@ export const RAIL_Y = 100;
 /** Y coordinate of the ground line where agents stand. */
 export const GROUND_LINE_Y = RAIL_Y + 282; // 382
 
-// Backward-compatible aliases (deprecated -- prefer RAIL_Y and GROUND_LINE_Y)
-/** @deprecated Use RAIL_Y */
-export const CATWALK_Y = RAIL_Y;
-/** @deprecated This value (340) does not match GROUND_LINE_Y (382). Do not use for new code. */
-export const GROUND_Y = 340;
-
 // -- Agent rendering (upward from GROUND_LINE_Y) --
 
 /** Sprite pixel size (mirrors SPRITE_SIZE from sprite-definitions.ts to avoid excalibur dependency). */
@@ -41,12 +35,6 @@ export const CHUTE_TOP_BELOW_RAIL = 48;
 
 /** Distance above the agent sprite top where the chute bottom ends. */
 export const CHUTE_BOT_ABOVE_GROUND = 20;
-
-// Backward-compatible derived constants
-/** @deprecated Derive from RAIL_Y + CHUTE_TOP_BELOW_RAIL */
-export const CHUTE_TOP = RAIL_Y + CHUTE_TOP_BELOW_RAIL; // 148
-/** @deprecated Value (320) preserves old geometry and does not match GROUND_LINE_Y-based derivation (326). Do not use for new code. */
-export const CHUTE_BOT = GROUND_Y - 20; // kept for backward compatibility; updated in layout
 
 // -- Entity sizing --
 
