@@ -1,6 +1,7 @@
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher } from '../config/note-scope.ts';
 import { ASSERTIONS_DIR } from '../layout/index.ts';
+import { resolveDomain, resolveParent } from '../taxonomy/domain-paths.ts';
 import type { Taxonomy } from '../taxonomy/taxonomy-schema.ts';
 import type { Finding } from '../types.ts';
 
@@ -96,24 +97,6 @@ function holdsNote(domain: string, observed: ReadonlySet<string>): boolean {
     }
   }
   return false;
-}
-
-/**
- * Derives the domain a note sits in, or `undefined` when the note is not an assertion or sits at the assertions root.
- * Scoping to the assertions root is what keeps event records from registering as undeclared domains.
- */
-function resolveDomain(relativePath: string): string | undefined {
-  const prefix = `${ASSERTIONS_DIR}/`;
-  if (!relativePath.startsWith(prefix)) {
-    return undefined;
-  }
-  return resolveParent(relativePath.slice(prefix.length));
-}
-
-/** Derives a slash-path's parent, or `undefined` when it has no separator and so sits at the top level. */
-function resolveParent(path: string): string | undefined {
-  const lastSlash = path.lastIndexOf('/');
-  return lastSlash === -1 ? undefined : path.slice(0, lastSlash);
 }
 
 // endregion | Helpers

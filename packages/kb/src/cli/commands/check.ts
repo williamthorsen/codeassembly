@@ -1,10 +1,10 @@
 import { check, type CheckResult } from '../../check/check.ts';
 import type { EnumeratedNote } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
-import { findKbRoot } from '../../discovery/find-kb-root.ts';
-import { tryLoadKbRegistry } from '../../discovery/load-registry.ts';
 import type { Finding } from '../../types.ts';
 import { type CheckScope, formatHuman, formatJson, type StoreRef, summarize } from '../format.ts';
+import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
+import { resolveStore } from '../resolve-store.ts';
 import { resolveChangedPaths } from '../targeting/resolve-changed-paths.ts';
 import { selectNotes } from '../targeting/select-notes.ts';
 
@@ -220,56 +220,6 @@ async function resolveSelection(input: {
   const selectedPaths = new Set(selection.selected.map((entry) => entry.path));
   const findings = result.findings.filter((finding) => finding.scope === 'vault' || selectedPaths.has(finding.path));
   return { ok: true, scope, notes: selection.selected, findings };
-}
-
-/** The store-resolution outcome: a resolved store, or a categorical failure message for exit 2. */
-type ResolveStoreOutcome = { ok: true; store: StoreRef } | { ok: false; message: string };
-
-/**
- * Resolves the store to check. An explicit `--kb <name>` is looked up in the merged registry (`tryLoadKbRegistry`
- * with `projectDir: cwd`, so project-local `.agents/kb.yaml` entries join the user-global registry); without a flag,
- * the nearest ancestor `.kb/` directory is used. An unknown `--kb` name or a missing `.kb/` fails for exit 2.
- */
-async function resolveStore(input: {
-  explicitKb: string | null;
-  cwd: string;
-  home?: string;
-}): Promise<ResolveStoreOutcome> {
-  if (input.explicitKb !== null) {
-    const { config } = await tryLoadKbRegistry({
-      projectDir: input.cwd,
-      ...(input.home !== undefined && { home: input.home }),
-    });
-    const match = config.entries.find((entry) => entry.name === input.explicitKb);
-    if (match === undefined) {
-      return { ok: false, message: `--kb "${input.explicitKb}" does not match any registered knowledge base` };
-    }
-    return { ok: true, store: { name: match.name, path: match.path } };
-  }
-
-  const discovered = await findKbRoot({ startDir: input.cwd });
-  if (discovered === null) {
-    return { ok: false, message: 'no .kb/ directory found in the current directory or any ancestor' };
-  }
-  return { ok: true, store: { name: null, path: discovered.path } };
-}
-
-/** Reads the value from an inline flag (`--kb=x`), throwing when it is empty. */
-function takeInlineValue(arg: string, prefix: string): string {
-  const value = arg.slice(prefix.length);
-  if (value === '') {
-    throw new Error(`${prefix.replace(/=$/, '')} requires a value`);
-  }
-  return value;
-}
-
-/** Reads the value after a space-form flag (`--kb x`), throwing when it is missing or looks like another flag. */
-function takeValue(argv: readonly string[], index: number, flag: string): string {
-  const next = argv[index + 1] ?? null;
-  if (next === null || next.startsWith('--')) {
-    throw new Error(`${flag} requires a value`);
-  }
-  return next;
 }
 
 // endregion | Helpers
