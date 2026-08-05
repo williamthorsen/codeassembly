@@ -91,7 +91,7 @@ Do not use multi-line boxed separators or rulered headings. They wrap awkwardly 
 
 ## Naming of identifiers
 
-Identifier naming (no abbreviations, unit-of-measure suffixes, verb-led function names, boolean prefixes) is specified in [naming conventions](../../skills/_data/naming-conventions.md).
+Identifier naming (no abbreviations, kind-bearing tails, unit-of-measure suffixes, verb-led function names, and when a boolean takes a prefix) is specified in [naming conventions](../../skills/_data/naming-conventions.md).
 
 ## What binds only through configuration
 
