@@ -91,9 +91,11 @@ describe(initGlobalCommand, () => {
     expect(content).toContain('collections:');
     expect(content).toContain('- recommended');
     expect(content).toContain('- triage');
+    // A personal collection is fitted to one author by definition, so the scaffold names none.
+    expect(content).not.toContain('williamthorsen');
   });
 
-  it('scaffolds a file that declares the seeded collections and leaves the personal one commented', async () => {
+  it('scaffolds a file that declares the seeded collections', async () => {
     await initGlobalCommand(makeOptions(), homeDir);
 
     expect(await resolveDeclaration({ cwd: homeDir })).toEqual({
