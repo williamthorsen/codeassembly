@@ -10,42 +10,45 @@ Use `~/`-relative paths where possible and absolute paths otherwise. Every line 
 
 ### Proposed-edit preview
 
-Two of the sub-blocks below offer options that rewrite an artifact: the ticket's acceptance criteria, the PR description, or both. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which deviations become criteria is a judgment the reviewer makes (a platform-floor bump becomes a criterion; a refactor does not), and the preview is where that judgment becomes reviewable instead of silent.
+Two of the sub-blocks below offer options that rewrite an artifact: the ticket's acceptance criteria, the PR description, or both. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit it would make. Which criteria are genuinely in conflict with the implementation is a judgment the reviewer makes, and the preview is where that judgment becomes reviewable instead of silent.
 
 **Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change. Option lines stay bare actions: the preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", carries no preview.
 
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
-- **Ticket targets** derive their delta from `## Specification compliance` (its ⚠️ Partial and ❌ Not addressed criteria rows, plus its Unplanned work bullets) and, for `Rewrite:` lines, from the divergent `D{n}` rows the ratification carries into the ticket's narrative sections.
-  - `Add: {criterion}` for unplanned work the reviewer judges to be a criterion
-  - `Reword: {old} → {new}` for a criterion the implementation met differently
-  - `Drop: {criterion}` for a criterion the implementation abandoned
+- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection and, for `Rewrite:` lines, from the divergent `D{n}` rows of `## Specification consistency` that the ratification carries into the ticket's narrative sections. Unplanned work is never a source: implementation that goes beyond the criteria is not a deviation, so it yields no line.
+  - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
+  - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
   - `Rewrite: {## Section} — {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
 - **Both targets** render both groups, each under its own label.
 
-Render no exclusions line. A deviation genuinely arguable as a criterion belongs in the delta, where the user can strike it; a mechanism-only deviation produces no line at all. Listing what was left out over-triggers into noise and buries the proposal it was meant to qualify.
+Render no exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out over-triggers into noise and buries the proposal it was meant to qualify.
 
 **Open findings.** When a delta line would settle or obviate an open finding, follow it with a sibling `⚠️` list item naming that finding, so the user can see that accepting the edit pre-empts the finding's disposition. The preview list stays flat; nothing nests beneath a delta line.
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out surfaces a change the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, because every deviation is mechanism rather than contract, the update option has nothing to propose: omit the preview, and assign markers by the Deviations sub-block's empty-delta rule. A source divergence always leaves a claim to reconcile, so its delta is never empty.
+**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). A source divergence always leaves a claim to reconcile, so its delta is never empty.
 
 ### Deviations sub-block
 
-Shown when the ticket compliance section reports gaps (partial or unaddressed acceptance criteria) or unplanned work.
+Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta carries at least one line. Compute the delta first: an empty delta renders no sub-block.
+
+A criterion from another spec source never fires this sub-block, whose only edit rewrites the ticket. A PR description at odds with the implementation is the [source divergence sub-block](#source-divergence-sub-block)'s case 2.
+
+A criterion that is merely unbuilt contributes no line. The work is unfinished, not redirected, and a contract is not revised to match a moving target. Implementation that exceeds the criteria contributes none either.
 
 #### Options
 
-| #   | Emoji | Option                         | Description                                                                                                                       |
-| --- | ----- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria to match the implementation, via `align-ticket-with-implementation` in criteria-only mode |
-| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                  |
+| #   | Emoji | Option                         | Description                                                                                                                        |
+| --- | ----- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📝    | Update the acceptance criteria | Revise the ticket's acceptance criteria via `align-ticket-with-implementation` in criteria-only mode, bound to the previewed delta |
+| 2   | ⏭️    | Leave as-is                    | Accept the deviation without updating the ticket                                                                                   |
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the abandoned criterion was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
 
 Example (rendered for the recommendation case):
 
@@ -55,7 +58,6 @@ Next steps:
 Deviations from ticket:
 
 Proposed edit to the acceptance criteria:
-- Add: The installer rejects a skill whose frontmatter omits `description`
 - Reword: "Warns on an unknown directive" → "Fails on an unknown directive"
 - Drop: A `--strict` flag gates the new validation
 
@@ -67,11 +69,9 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Recommendation rules
 
-1. **Recommend "Leave as-is"** (■■□ on it, ■□□ on Update the acceptance criteria): the criteria delta is empty, so the update option has nothing to apply. See [proposed-edit preview](#proposed-edit-preview).
-2. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): acceptance criteria are missing or substantially different from what was implemented, OR significant unplanned work was done that should be captured.
-3. **No recommendation** (omit markers from both options): deviations are minor and intentional (e.g., a criterion was addressed differently than originally described but the intent is met). The user decides.
-
-When the delta is non-empty and the call is uncertain, recommend updating the ticket.
+1. **Recommend "Update the acceptance criteria"** (■■□ on it, ■□□ on Leave as-is): the implementation's direction is deliberate and sound, so the criteria as written would lead a later reader to judge correct code wrong.
+2. **Recommend "Leave as-is"** (■■□ on it, ■□□ on Update the acceptance criteria): the review raised a finding on the conflicting behavior. The code is what is in question, and revising the contract to match it would bury the finding.
+3. **No recommendation** (omit markers from both options): the reviewer cannot tell whether the criteria or the implementation is the wrong one. The user decides.
 
 ### Source divergence sub-block
 
@@ -230,7 +230,7 @@ Next steps:
 **A1 — Deviations from ticket:**
 
 Proposed edit to the acceptance criteria:
-- Add: The installer rejects a skill whose frontmatter omits `description`
+- Drop: A `--strict` flag gates the new validation
 
 1. 📝 ■■□ Update the acceptance criteria
 2. ⏭️ ■□□ Leave as-is

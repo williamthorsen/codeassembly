@@ -31,6 +31,17 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
     },
     mode: 'criteria-only mode',
   },
+  {
+    caller: {
+      path: '_partials/next-steps-after-review.md',
+      phrase: 'bound to the previewed delta',
+    },
+    callee: {
+      path: 'align-ticket-with-implementation/SKILL.md',
+      phrase: 'the previewed delta is the whole of the revision',
+    },
+    mode: 'ratified-delta mode',
+  },
 ];
 
 describe('skill mode contracts', () => {

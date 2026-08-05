@@ -49,7 +49,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 8. **Assign a score** out of 10.
 9. **Resolve frontmatter fields** before saving; see [Frontmatter resolution](#frontmatter-resolution).
 10. **Save the review** per the [Saving](#saving) section.
-11. **Present next steps**: After saving, present a next-steps prompt following [next-steps options](#next-steps-options). Supply recommendation context: finding counts and categories from the review, whether specification compliance gaps or unplanned work were identified, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact. As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
+11. **Present next steps**: After saving, present a next-steps prompt following [next-steps options](#next-steps-options). Supply recommendation context: finding counts and categories from the review, which criteria the specification compliance section marked in conflict with the implementation, and the consistency verdict when the consistency section was rendered. The next-steps prompt is interactive output only and is not saved in the review artifact. As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 ## Frontmatter resolution
 
@@ -190,6 +190,13 @@ Score: X/10
 | 1   | {criterion text} | {status} | {notes} |
 
 Status values: ✅ Met, ⚠️ Partial, ❌ Not addressed
+
+Assign the status against the criterion's substantive guarantee, not its wording. A criterion is ✅ Met when the implementation delivers that guarantee, whatever shape it took: a criterion phrased "merges additively" is met by an implementation that refuses by default and merges under a flag, because it never overwrites. Implementation that goes beyond a criterion is ✅ Met as well; the excess is reported under Unplanned work and is never a shortfall.
+
+⚠️ Partial and ❌ Not addressed mean the guarantee is undelivered. Two situations produce them, and the Notes cell states which, because only one is a deviation:
+
+- **Unbuilt**: the work is incomplete. At review time this is ordinary, and the contract is not in question.
+- **In conflict**: the implementation took a direction the criterion contradicts, such that a reader holding the criteria would judge the implementation wrong. In a ticket source, this is the sole input to the Deviations sub-block in [next-steps options](#next-steps-options).
 
 Extract criteria from whatever structure the source uses (numbered lists, checkboxes, prose). If the source does not have clearly delimited acceptance criteria, derive them from its problem statement and solution description. PR descriptions typically expose criteria as the bullet items under `## What`, `## Summary`, or an explicit acceptance-criteria heading; fall back to the description body when no list is present.
 
