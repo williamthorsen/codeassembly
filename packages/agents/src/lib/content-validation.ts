@@ -1,10 +1,14 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+
+import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
 import { resolveContentDir } from './content-resolver.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, resolveClosure, type ResolvedClosure } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
+import { parseFrontmatter } from './frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from './fs-helpers.ts';
 import { HARNESSES, resolveSkillsPathPrefix } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
@@ -12,7 +16,12 @@ import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts'
 import { homeAnchor } from './path-rewriter.ts';
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
 import { renderRulebookBody, type RulebookRenderContext } from './rulebook-transform.ts';
-import { resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
+import {
+  resolveDeclaredSkill,
+  type ResolvedSkill,
+  skillTargetsHarness,
+  SUPPORTED_HARNESSES_KEY,
+} from './skill-deploy.ts';
 import { renderSkillDirectory, renderSupportEntry, type SkillDeployContext } from './skill-transform.ts';
 import { describeSourceProblem } from './source-validation.ts';
 import {
@@ -22,10 +31,18 @@ import {
   type SubagentDeployContext,
 } from './subagent-deploy.ts';
 import { loadToolMapping } from './tool-name-rewriter.ts';
+import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
 /** Which stage rejected an artifact, so a report can group by cause rather than presenting one undifferentiated list. */
-export type ContentDefectKind = 'collision' | 'dependency' | 'render' | 'resolution' | 'root';
+export type ContentDefectKind = 'collision' | 'dependency' | 'frontmatter' | 'render' | 'resolution' | 'root';
+
+/**
+ * The frontmatter key `supported-harnesses:` replaced. Nothing reads it any more, so a skill left declaring it deploys
+ * to every harness and carries the key into deployed output — neither of which raises anything on its own, which is
+ * why this pass reports it.
+ */
+const RETIRED_HARNESSES_KEY = 'harnesses';
 
 /** One rejected artifact: where it lives relative to the content root, which stage rejected it, and why. */
 export interface ContentDefect {
@@ -74,6 +91,7 @@ export async function validateContentRoot(
     ...seeded.defects,
     ...artifacts.defects,
     ...findCollisionDefects(artifacts),
+    ...(await findRetiredKeyDefects(artifacts)),
     ...foldHarnessDefects(rendered, harnessIds),
   ];
 }
@@ -104,6 +122,13 @@ async function collectSeeds(root: string): Promise<DirectArtifacts> {
   const collectionDir = path.join(root, ARTIFACT_TYPES.collection.contentPath);
   const collection = (await listVisibleMarkdownFiles(collectionDir)).map((file) => path.basename(file, '.md'));
   return { ...catalog, collection };
+}
+
+/** True when a skill's frontmatter still carries the retired harness-narrowing key, whatever value it holds. */
+function declaresRetiredHarnessesKey(content: string): boolean {
+  const { lines } = parseFrontmatter(content);
+  const parsed: unknown = parseYaml(lines.join('\n'));
+  return isRecord(parsed) && parsed[RETIRED_HARNESSES_KEY] !== undefined;
 }
 
 /** Renders an unknown thrown value as the message a report line carries. */
@@ -151,6 +176,35 @@ function findCollisionDefects(artifacts: ResolvedArtifacts): ReadonlyArray<Conte
     }
   }
 
+  return defects;
+}
+
+/**
+ * Reports every root-owned skill whose frontmatter still declares the retired harness-narrowing key. The rename is
+ * silent at deploy time in both directions — the skill stops narrowing and reaches every harness, and the key survives
+ * into the deployed `SKILL.md` because the strip pattern no longer matches it — so this pass is what surfaces it.
+ *
+ * Harness-independent, so it runs once over the resolved artifacts rather than inside the per-harness render.
+ */
+async function findRetiredKeyDefects(artifacts: ResolvedArtifacts): Promise<ReadonlyArray<ContentDefect>> {
+  const defects: Array<ContentDefect> = [];
+  for (const skill of artifacts.skills) {
+    if (!ownedByRoot(skill)) {
+      continue;
+    }
+    const file = artifactFrontmatterPath('skill', skill.slug);
+    try {
+      if (declaresRetiredHarnessesKey(await readFile(path.join(skill.srcDir, 'SKILL.md'), 'utf8'))) {
+        defects.push({
+          file,
+          kind: 'frontmatter',
+          detail: `Frontmatter declares the retired \`${RETIRED_HARNESSES_KEY}:\` key, which no longer narrows deployment; rename it to \`${SUPPORTED_HARNESSES_KEY}:\`.`,
+        });
+      }
+    } catch (error: unknown) {
+      defects.push({ file, kind: 'frontmatter', detail: describeError(error) });
+    }
+  }
   return defects;
 }
 

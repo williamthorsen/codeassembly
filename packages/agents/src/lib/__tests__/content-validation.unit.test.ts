@@ -117,6 +117,32 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('(claude)');
   });
 
+  it('reports a skill whose frontmatter still declares the retired harnesses key', async () => {
+    await writeSkill(root, 'alpha', { retiredHarnesses: ['claude'] });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.kind).toBe('frontmatter');
+    expect(defects[0]?.file).toBe('skills/alpha/SKILL.md');
+    expect(defects[0]?.detail).toContain('supported-harnesses');
+  });
+
+  it('reports the retired key even when the skill also declares the current one', async () => {
+    await writeSkill(root, 'alpha', { retiredHarnesses: ['claude'], supportedHarnesses: ['claude'] });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]?.kind).toBe('frontmatter');
+  });
+
+  it('passes a skill that declares only the current harness-narrowing key', async () => {
+    await writeSkill(root, 'alpha', { supportedHarnesses: ['claude'] });
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+  });
+
   it('reports two skill-delivery rulebooks that resolve to one skill name', async () => {
     await writeRulebook(root, 'first', { delivery: 'skill', skillName: 'shared-name' });
     await writeRulebook(root, 'second', { delivery: 'skill', skillName: 'shared-name' });
@@ -205,6 +231,8 @@ async function writeSkill(
   options: {
     body?: string;
     dependencies?: Record<string, ReadonlyArray<string>>;
+    /** Emits the retired `harnesses:` key instead of the current one, for the pass that reports it. */
+    retiredHarnesses?: ReadonlyArray<string>;
     supportedHarnesses?: ReadonlyArray<string>;
   } = {},
 ): Promise<void> {
@@ -215,6 +243,9 @@ async function writeSkill(
     ...(options.supportedHarnesses === undefined
       ? []
       : ['supported-harnesses:', ...options.supportedHarnesses.map((id) => `  - ${id}`)]),
+    ...(options.retiredHarnesses === undefined
+      ? []
+      : ['harnesses:', ...options.retiredHarnesses.map((id) => `  - ${id}`)]),
     ...renderDependencies(options.dependencies),
     '---',
   ];
