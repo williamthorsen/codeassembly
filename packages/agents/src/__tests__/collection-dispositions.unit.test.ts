@@ -67,6 +67,23 @@ describe('collection dispositions', () => {
     expect(defects).toEqual([]);
   });
 
+  // What standalone buys is a skill-index line nobody pays for unless they ask, and that survives only while no
+  // collection's closure reaches the artifact. `triage` is the 71-member surface where a new edge is likeliest, and
+  // it is constrained by no vetted-closure rule.
+  it('keeps every standalone artifact out of the collections’ combined closure', async () => {
+    const collections = await readExplicitCollections(contentDir);
+    const closure = await resolveClosure({ collection: [...collections.keys()] }, libraryResolver(contentDir));
+
+    const defects = findClosureDefects(
+      'every collection',
+      listClosureIds(closure),
+      [...collections.keys()],
+      buildDispositionMap(collections, Object.keys(STANDALONE)),
+    );
+
+    expect(defects).toEqual([]);
+  });
+
   it('records a standalone reason for every artifact it exempts', () => {
     expect(Object.values(STANDALONE).filter((reason) => reason.length === 0)).toEqual([]);
   });
