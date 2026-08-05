@@ -201,7 +201,20 @@ members:
 
 `members:` is collections-only; rulebooks, skills, and subagents declare prerequisite edges under `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error that names the offending artifact.
 
-Dropping or omitting a collection, or setting `root: true`, excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead. The shipped `all` collection is the whole catalog; `recommended` bundles a smaller default set. `codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `collections: use: [all]`, so `sync --global` deploys the whole catalog into the home directories; a project adds a collection for repo deployment by declaring it explicitly.
+Dropping or omitting a collection, or setting `root: true`, excludes its entire closure; dropping a single member that a collection contributed is not supported, so opt out of the whole collection or declare members à la carte instead.
+
+Four collections ship, each carrying a claim a reader can act on:
+
+| Collection       | Claim                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.    |
+| `williamthorsen` | Examined and found deliberately personal — one author's preferences, environment, and domain.              |
+| `triage`         | Not yet examined, and where new content lands. It shrinks by promotion.                                    |
+| `all`            | The whole catalog, computed. It carries no claim, and is the escape hatch rather than the expected choice. |
+
+An artifact in none of them is standalone: deliberate, declared directly where wanted, and too rarely invoked to repay a standing line in the skill index. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
+
+`codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`, and offers `williamthorsen` as a commented line; a project adds a collection for repo deployment by declaring it explicitly.
 
 #### The `@library` token
 
