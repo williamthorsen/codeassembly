@@ -2,23 +2,13 @@ import { appendFileSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, assert, describe, expect, it, vi } from 'vitest';
+import { assert, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { createEventStore } from '../event-store.ts';
 
 const BASE_TS = '2026-07-19T05:00:00.000Z';
 const NOW = Date.parse(BASE_TS);
 const RETENTION_MS = 1_800_000;
-
-const tempDirs: string[] = [];
-
-afterEach(() => {
-  const pending = [...tempDirs];
-  tempDirs.length = 0;
-  for (const dir of pending) {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
 
 describe('createEventStore', () => {
   it('backfills every lane and session on the first scan', () => {
@@ -218,10 +208,10 @@ function composeSessionPath(eventsDir: string, repo: string, branch: string, ses
   return join(dir, `${session}.jsonl`);
 }
 
-/** Creates a fresh events root, registered for removal once the test ends. */
+/** Creates a fresh events root, removed when the test finishes. */
 function createEventsDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'event-store-'));
-  tempDirs.push(dir);
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 

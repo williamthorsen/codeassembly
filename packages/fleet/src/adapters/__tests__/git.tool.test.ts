@@ -3,26 +3,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { createGitAdapter, type GitAdapter, type GitObservation, type GitTarget, probeWorktree } from '../git.ts';
-
-const adapters: GitAdapter[] = [];
-const scratchDirs: string[] = [];
-
-afterEach(() => {
-  const pendingAdapters = [...adapters];
-  adapters.length = 0;
-  for (const adapter of pendingAdapters) {
-    adapter.stop();
-  }
-
-  const pendingDirs = [...scratchDirs];
-  scratchDirs.length = 0;
-  for (const dir of pendingDirs) {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
 
 describe('probeWorktree', () => {
   it('reports a clean repository in sync with its base branch', async () => {
@@ -223,10 +206,10 @@ function createRepo(name: string): string {
   return dir;
 }
 
-/** Creates a fresh scratch directory, registered for removal once the test ends. */
+/** Creates a fresh scratch directory, removed when the test finishes. */
 function createScratchDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'fleet-git-'));
-  scratchDirs.push(dir);
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
@@ -235,10 +218,10 @@ function runGitCommand(dir: string, ...args: string[]): void {
   execFileSync('git', ['-C', dir, ...args], { stdio: 'ignore' });
 }
 
-/** Starts an adapter registered for shutdown once the test ends. */
+/** Starts an adapter stopped when the test finishes. */
 function startAdapter(input: Parameters<typeof createGitAdapter>[0]): GitAdapter {
   const adapter = createGitAdapter(input);
-  adapters.push(adapter);
+  onTestFinished(() => adapter.stop());
   return adapter;
 }
 

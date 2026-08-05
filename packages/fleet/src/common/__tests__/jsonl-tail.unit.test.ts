@@ -2,19 +2,9 @@ import { appendFileSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, assert, describe, expect, it } from 'vitest';
+import { assert, describe, expect, it, onTestFinished } from 'vitest';
 
 import { readAppendedLines, type TailResult } from '../jsonl-tail.ts';
-
-const tempDirs: string[] = [];
-
-afterEach(() => {
-  const pending = [...tempDirs];
-  tempDirs.length = 0;
-  for (const dir of pending) {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
 
 describe('readAppendedLines', () => {
   it('returns all complete lines from offset 0', () => {
@@ -79,8 +69,7 @@ describe('readAppendedLines', () => {
   });
 
   it('reports a vanished file instead of throwing', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'jsonl-tail-'));
-    tempDirs.push(dir);
+    const dir = createTempDir();
 
     expect(readAppendedLines({ filePath: join(dir, 'gone.jsonl'), offset: 0 })).toEqual({ kind: 'missing' });
   });
@@ -90,11 +79,16 @@ describe('readAppendedLines', () => {
 
 /** Writes `content` to a fresh temp file and returns its path. */
 function composeFile(content: string): string {
-  const dir = mkdtempSync(join(tmpdir(), 'jsonl-tail-'));
-  tempDirs.push(dir);
-  const filePath = join(dir, 'session.jsonl');
+  const filePath = join(createTempDir(), 'session.jsonl');
   writeFileSync(filePath, content);
   return filePath;
+}
+
+/** Creates a fresh temp directory, removed when the test finishes. */
+function createTempDir(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'jsonl-tail-'));
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
+  return dir;
 }
 
 /** Narrows a result to the `appended` variant. */

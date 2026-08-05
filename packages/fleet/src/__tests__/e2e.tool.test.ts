@@ -2,7 +2,7 @@ import { appendFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, assert, describe, expect, it } from 'vitest';
+import { assert, describe, expect, it, onTestFinished } from 'vitest';
 
 import type { GitObservation } from '../adapters/git.ts';
 import type { FleetSnapshot } from '../api/snapshot.ts';
@@ -22,21 +22,6 @@ const SHORT_INTERVALS = {
   rescanMs: 50,
   retentionMs: RETENTION_MS,
 };
-
-const servers: RunningFleetServer[] = [];
-const tempDirs: string[] = [];
-
-afterEach(async () => {
-  const pendingServers = [...servers];
-  servers.length = 0;
-  await Promise.allSettled(pendingServers.map((server) => server.stop()));
-
-  const pendingDirs = [...tempDirs];
-  tempDirs.length = 0;
-  for (const dir of pendingDirs) {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
 
 describe('fleet server', () => {
   it('serves an empty fleet when started against a missing events root', async () => {
@@ -135,10 +120,10 @@ function composeLine(type: string, ts: string, cwd = '/work/repo'): string {
   return `${JSON.stringify({ id: '01ARZ3NDEKTSV4RRFFQ69G5FAV', ts, type, cwd, payload: {} })}\n`;
 }
 
-/** Creates a fresh events root, registered for removal once the test ends. */
+/** Creates a fresh events root, removed when the test finishes. */
 function createEventsDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'fleet-e2e-'));
-  tempDirs.push(dir);
+  onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
   return dir;
 }
 
@@ -192,7 +177,7 @@ async function readSnapshotFrame(
   return parsed as FleetSnapshot;
 }
 
-/** Starts a server on an ephemeral port over `eventsDir`, registered for shutdown once the test ends. */
+/** Starts a server on an ephemeral port over `eventsDir`, stopped when the test finishes. */
 async function startTestServer(
   eventsDir: string,
   overrides: {
@@ -207,7 +192,8 @@ async function startTestServer(
     gitProbe,
     log: () => {},
   });
-  servers.push(server);
+  // Registered after the events root, so the reverse-ordered teardown stops the server before the root is removed.
+  onTestFinished(() => server.stop());
   return server;
 }
 
