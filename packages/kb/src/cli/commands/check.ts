@@ -185,9 +185,10 @@ type SelectionOutcome =
 /**
  * Narrows a whole-vault `CheckResult` to the notes the run targets. A bare run passes through unchanged; `--vs`
  * resolves changed paths via git (a bad ref fails for exit 2), and pattern selection drops non-notes while reporting
- * a path that matches nothing real as a usage error. Findings are filtered to the selected notes by their absolute
- * path, so cross-references stay resolved against the whole vault while the report and exit code cover only the
- * selection.
+ * a path that matches nothing real as a usage error. Note-scoped findings are filtered to the selected notes by their
+ * absolute path, so cross-references stay resolved against the whole vault while the report and exit code cover only
+ * the selection. Vault-scoped findings describe the store rather than any one note, so they bypass the filter and
+ * appear under every selection.
  */
 async function resolveSelection(input: {
   options: CheckOptions;
@@ -217,7 +218,7 @@ async function resolveSelection(input: {
   }
 
   const selectedPaths = new Set(selection.selected.map((entry) => entry.path));
-  const findings = result.findings.filter((finding) => selectedPaths.has(finding.path));
+  const findings = result.findings.filter((finding) => finding.scope === 'vault' || selectedPaths.has(finding.path));
   return { ok: true, scope, notes: selection.selected, findings };
 }
 
