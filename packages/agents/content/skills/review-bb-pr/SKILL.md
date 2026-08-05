@@ -36,13 +36,22 @@ On HEAD mismatch, do not return — exit non-zero with the mismatch error. `revi
 
 ## Bitbucket access
 
-Use the same access mechanism as `bb-pr-inline-comment` — the Bitbucket Cloud REST API at `https://api.bitbucket.org/2.0/`. **Do not introduce a new client.** Authentication resolves in priority order:
+Fetch PR metadata through the Bitbucket Cloud REST API at `https://api.bitbucket.org/2.0/`. This delegate pins REST rather than using whatever Bitbucket tooling is available, because the _Verify HEAD_ step fails closed on `source.commit.hash` and a generic instruction cannot guarantee a client surfaces that field. **Use one client for every call below.**
 
-1. **Bot credentials (Basic auth):** `BITBUCKET_BOT_USERNAME` + `BITBUCKET_BOT_TOKEN` env vars.
-2. **API token (Bearer auth):** `BITBUCKET_API_TOKEN` env var.
-3. **macOS keychain (Bearer auth):** `security find-generic-password -a "$USER" -s "bitbucket-api-token" -w`.
+Authentication resolves in priority order:
 
-If no credentials are available, exit non-zero with the same auth-setup hint that `bb-pr-inline-comment` prints.
+1. **Bot credentials (Basic auth):** `BITBUCKET_BOT_USERNAME` + `BITBUCKET_BOT_TOKEN` env vars. Basic auth pairs an Atlassian API token with the account's email, so `BITBUCKET_BOT_USERNAME` holds that email.
+2. **Access token (Bearer auth):** `BITBUCKET_API_TOKEN` env var, holding a repository, project, or workspace access token.
+3. **macOS keychain (Bearer auth):** `security find-generic-password -a "$USER" -s "bitbucket-api-token" -w`, holding an access token of the same kind.
+
+If no credentials are available, exit non-zero with:
+
+```
+No authentication configured
+  Set BITBUCKET_BOT_USERNAME + BITBUCKET_BOT_TOKEN, or
+  Set BITBUCKET_API_TOKEN, or
+  Add macOS keychain entry 'bitbucket-api-token'
+```
 
 ## Process
 
@@ -50,7 +59,7 @@ If no credentials are available, exit non-zero with the same auth-setup hint tha
 
 If `pr_id` is a URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}`, extract `{workspace}`, `{repo}`, and `{number}`.
 
-Otherwise treat `pr_id` as the number directly. Auto-detect workspace and repo from `git remote get-url origin` using the same parser as `bb-pr-inline-comment` (supports both `https://bitbucket.org/ws/repo` and `git@bitbucket.org:ws/repo.git`).
+Otherwise treat `pr_id` as the number directly. Auto-detect workspace and repo from `git remote get-url origin`: strip a trailing `.git`, then take the two path segments following `bitbucket.org`, which either `/` or `:` separates from the host. This accepts the HTTPS form (`https://{user}@bitbucket.org/{workspace}/{repo}.git`) and the SSH form (`git@bitbucket.org:{workspace}/{repo}.git`) alike.
 
 ### 2. Fetch PR metadata
 

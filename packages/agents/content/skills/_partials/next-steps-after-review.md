@@ -45,7 +45,7 @@ Shown when the ticket compliance section reports gaps (partial or unaddressed ac
 
 #### Output format
 
-Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content. The agent runs `align-ticket-with-implementation` in the current session, so the render is a bare action; the skill lives in the Options table above.
+Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which markers apply. Option 1 renders the criteria delta above the list per [proposed-edit preview](#proposed-edit-preview). Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific deviation presents a context-specific tradeoff (e.g., "the missing AC was load-bearing for downstream tests"). Generic restatements ("ships faster," "ticket drifts from reality") are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
 
 Example (rendered for the recommendation case):
 
@@ -88,24 +88,13 @@ The base option pool is:
 | 📝    | Update ticket and PR description | Ratify the implementation in the ticket (via `align-ticket-with-implementation`), then edit the PR description |
 | ⏭️    | Leave as-is                      | Accept the divergence                                                                                          |
 
-Each case renders two of these options; the specific options and their ordering are shown in the Output format section. The agent performs each of these in the current session (a ticket amendment, a PR-description edit, or both), so the render is a bare action and the skill lives in the pool above.
+Each case renders two of these options; the specific options and their ordering are shown in the Output format section.
 
 #### Output format
 
 Render the list per [option format](#option-format). Each option carries a marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option earns the strongest marker per case. Option 1 renders the delta for every target it would rewrite, above the list, per [proposed-edit preview](#proposed-edit-preview); "Leave as-is" carries none. Pros and cons are omitted by default — add a `➕` or `➖` line only when the specific divergence presents a context-specific tradeoff (e.g., "the diverging AC was load-bearing for adjacent work that has already shipped"). Generic restatements are noise and must be omitted. That default governs pros and cons alone: it never suppresses the proposed-edit preview, which is required content.
 
-Case 2 — implementation matches ticket; PR description is the stale source:
-
-```
-Source divergence:
-
-Proposed edit to the PR description:
-- D2: "Retries are capped at 3" → "Retries are capped at 5, with exponential backoff"
-
-1. 📝 ■■□ Update PR description:
-   - Edit the PR description to match the implementation, which matches the ticket
-2. ⏭️ ■□□ Leave as-is
-```
+Case 2 (implementation matches ticket; PR description is the stale source) mirrors case 3 with the PR description as the target: its delta uses the `D{n}:` notation and option 1 reads "Update PR description".
 
 Case 3 — implementation matches PR description; ticket is the stale source:
 
@@ -165,10 +154,10 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Options — PR variant (review-pr)
 
-| #   | Emoji | Option                  | Description                                                                                                                                  |
-| --- | ----- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📋    | Post findings on the PR | Post the findings as comments on the pull request. On Bitbucket, via `bb-pr-inline-comment`; GitHub has no posting mechanism yet (see #1018) |
-| 2   | 🚀    | Implement directly      | Fix the findings in this session                                                                                                             |
+| #   | Emoji | Option                  | Description                                                                                                                                                                                     |
+| --- | ----- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR | Post the findings as comments anchored to file and line. On Bitbucket, use whatever Bitbucket tooling is available (MCP server, REST API, CLI); GitHub has no posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly      | Fix the findings in this session                                                                                                                                                                |
 
 #### Options — local-branch variant (review-branch)
 
@@ -205,12 +194,10 @@ Actionable findings:
 If the author is an agent, run `respond-to-review` in that session.
 ```
 
-Which skill names appear in the render follows the session-boundary rule:
+Per the session-boundary rule, two options name a skill in the render:
 
-- **Post findings on the PR** — the agent posts in the current session, so no skill is named in the render; the posting mechanism (`bb-pr-inline-comment` on Bitbucket) lives in the Options table.
 - **Ask the author to address the findings** — the author's disposition happens in another session. The hoisted line names `respond-to-review` for the case where that author is an agent.
 - **Wait for the author to address the findings, then re-review** — names `review-branch` in the render, because the re-review runs after a wait only the user can end. It carries no "Clear context" prefix: the reviewer's memory of what it found is what lets it check the fixes.
-- **Implement directly** — the reviewer makes the fixes in this session; no skill is invoked.
 
 #### Recommendation rules
 
