@@ -17,7 +17,7 @@ Two of the sub-blocks below offer options that rewrite an artifact: the ticket's
 **Notation.** The preview is a delta. It never restates the ticket or the PR description whole, and it renders one line per change:
 
 - **Ticket targets** derive their delta from `## Specification compliance`'s in-conflict criteria rows and, for `Rewrite:` lines, from the divergent `D{n}` rows the ratification carries into the ticket's narrative sections. Unplanned work is never a source: implementation that goes beyond the criteria is not a deviation, so it yields no line.
-  - `Reword: {old} → {new}` for a criterion the implementation satisfied by deliberately taking a different direction
+  - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion the implementation deliberately abandoned, never for one it has not yet reached
   - `Rewrite: {## Section} — {gist of the new content}` for a narrative section the edit regenerates, which arises only where the option ratifies the whole ticket rather than its criteria alone
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row it came from: `D2: {claim as written} → {claim as built}`.
