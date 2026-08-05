@@ -2424,8 +2424,10 @@ describe(syncGlobalCommand, () => {
 
     await syncGlobalCommand(makeOptions({ harness: 'claude' }), homeDir, resolveContentDir());
 
-    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'))).toBe(true);
-    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(true);
+    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'capture-event', 'SKILL.md'))).toBe(true);
+    // The collection claims general applicability, so a standalone artifact reaching it would be a defect rather than
+    // a bonus. Presence alone would let the set grow back into the proof-of-mechanism bundle it used to be.
+    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(false);
   });
 
   it('retires a pre-existing ~/.agents/rulebooks/ tree, and writes none of its own', async () => {
