@@ -143,6 +143,15 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
+  it('stays silent about a library skill declaring the retired key, which the root cannot rename', async () => {
+    const library = path.join(root, 'library');
+    await writeSkill(library, 'lib-legacy', { retiredHarnesses: ['claude'] });
+    const producer = path.join(root, 'producer');
+    await writeSkill(producer, 'alpha', { dependencies: { skills: ['lib-legacy'] } });
+
+    expect(await validateContentRoot(producer, ALL_HARNESS_IDS, library)).toEqual([]);
+  });
+
   it('reports two skill-delivery rulebooks that resolve to one skill name', async () => {
     await writeRulebook(root, 'first', { delivery: 'skill', skillName: 'shared-name' });
     await writeRulebook(root, 'second', { delivery: 'skill', skillName: 'shared-name' });
