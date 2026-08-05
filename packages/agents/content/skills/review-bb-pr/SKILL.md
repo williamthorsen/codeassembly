@@ -53,8 +53,6 @@ No authentication configured
   Add macOS keychain entry 'bitbucket-api-token'
 ```
 
-An Atlassian API token is created at https://id.atlassian.com/manage-profile/security/api-tokens through **Create API token with scopes**; the plain **Create API token** button mints an unscoped token that carries no Bitbucket permissions. Select Bitbucket as the app, then grant `read:repository:bitbucket` and `read:pullrequest:bitbucket`. The latter also permits commenting, so the credential serves the posting path without a write scope. An access token is created in the repository, project, or workspace settings and carries the same two scopes. The keychain entry is added with `security add-generic-password -a "$USER" -s "bitbucket-api-token" -w "<token>"`.
-
 ## Process
 
 ### 1. Normalize `pr_id` and detect workspace/repo
