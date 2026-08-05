@@ -24,8 +24,10 @@ interface SpriteCache {
   singleSprites: Map<SingleAssetKey, Sprite>;
 }
 
-let cache: SpriteCache | undefined;
-let inflight: Promise<void> | undefined;
+const spriteState: { sprites: SpriteCache | undefined; inflight: Promise<void> | undefined } = {
+  sprites: undefined,
+  inflight: undefined,
+};
 
 // -- Loader --
 
@@ -36,13 +38,21 @@ let inflight: Promise<void> | undefined;
  * Concurrent callers share the same in-flight promise.
  */
 export function loadOfficeSprites(): Promise<void> {
-  if (cache !== undefined) return Promise.resolve();
-  if (inflight !== undefined) return inflight;
+  if (spriteState.sprites !== undefined) return Promise.resolve();
+  if (spriteState.inflight !== undefined) return spriteState.inflight;
 
-  inflight = doLoad().finally(() => {
-    inflight = undefined;
-  });
-  return inflight;
+  const load = releaseInflightAfter(doLoad());
+  spriteState.inflight = load;
+  return load;
+}
+
+/** Awaits a load, releasing the shared in-flight slot once it settles either way. */
+async function releaseInflightAfter(load: Promise<void>): Promise<void> {
+  try {
+    await load;
+  } finally {
+    spriteState.inflight = undefined;
+  }
 }
 
 /** Perform the actual sprite loading and cache population. */
@@ -127,8 +137,8 @@ async function doLoad(): Promise<void> {
     singleSprites.set(key, Sprite.from(imageSource));
   }
 
-  // Populate cache synchronously so getters work immediately.
-  cache = {
+  // Populate the cache synchronously so getters work immediately.
+  spriteState.sprites = {
     roomSheets,
     roomImageSources,
     characterSprites,
@@ -138,7 +148,7 @@ async function doLoad(): Promise<void> {
   try {
     await Promise.all(imageSources.map((source) => source.load()));
   } catch (error: unknown) {
-    cache = undefined;
+    spriteState.sprites = undefined;
     throw error;
   }
 }
@@ -147,44 +157,44 @@ async function doLoad(): Promise<void> {
 
 /** Return the floor tile sprite sheet. Throws if sprites have not been loaded. */
 export function getFloorSheet(): SpriteSheet {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomSheets.floors;
+  return spriteState.sprites.roomSheets.floors;
 }
 
 /** Return the wall tile sprite sheet. Throws if sprites have not been loaded. */
 export function getWallSheet(): SpriteSheet {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomSheets.walls;
+  return spriteState.sprites.roomSheets.walls;
 }
 
 /** Return the floor shadow sprite sheet. Throws if sprites have not been loaded. */
 export function getShadowSheet(): SpriteSheet {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomSheets.shadows;
+  return spriteState.sprites.roomSheets.shadows;
 }
 
 /** Return the office furniture sprite sheet. Throws if sprites have not been loaded. */
 export function getOfficeSheet(): SpriteSheet {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomSheets.office;
+  return spriteState.sprites.roomSheets.office;
 }
 
 /** Return a character sprite for the given name and direction (0-3). */
 export function getCharacterSprite(name: CharacterName, direction: number): Sprite {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
 
   const key = `${name}:${String(direction)}`;
-  const sprite = cache.characterSprites.get(key);
+  const sprite = spriteState.sprites.characterSprites.get(key);
   if (sprite === undefined) {
     throw new Error(`No character sprite found for "${name}" direction ${String(direction)}.`);
   }
@@ -193,11 +203,11 @@ export function getCharacterSprite(name: CharacterName, direction: number): Spri
 
 /** Return the standalone sprite for a furniture single asset. */
 export function getSingleSprite(key: SingleAssetKey): Sprite {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
 
-  const sprite = cache.singleSprites.get(key);
+  const sprite = spriteState.sprites.singleSprites.get(key);
   if (sprite === undefined) {
     throw new Error(`No single sprite found for key "${key}".`);
   }
@@ -206,39 +216,39 @@ export function getSingleSprite(key: SingleAssetKey): Sprite {
 
 /** Return the raw ImageSource for the floor sheet (needed for Canvas-based tile drawing). */
 export function getFloorImageSource(): ImageSource {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomImageSources.floors;
+  return spriteState.sprites.roomImageSources.floors;
 }
 
 /** Return the raw ImageSource for the wall sheet (needed for Canvas-based tile drawing). */
 export function getWallImageSource(): ImageSource {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomImageSources.walls;
+  return spriteState.sprites.roomImageSources.walls;
 }
 
 /** Return the raw ImageSource for the shadow sheet (needed for Canvas-based tile drawing). */
 export function getShadowImageSource(): ImageSource {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomImageSources.shadows;
+  return spriteState.sprites.roomImageSources.shadows;
 }
 
 /** Return the raw ImageSource for the office furniture sheet (needed for Canvas-based region drawing). */
 export function getOfficeImageSource(): ImageSource {
-  if (cache === undefined) {
+  if (spriteState.sprites === undefined) {
     throw new Error('Office sprites have not been loaded. Call loadOfficeSprites() first.');
   }
-  return cache.roomImageSources.office;
+  return spriteState.sprites.roomImageSources.office;
 }
 
 /** Clear the office sprite cache, allowing sprites to be reloaded. Useful for tests. */
 export function clearOfficeSpriteCache(): void {
-  cache = undefined;
+  spriteState.sprites = undefined;
 }
 
 // endregion | Getters

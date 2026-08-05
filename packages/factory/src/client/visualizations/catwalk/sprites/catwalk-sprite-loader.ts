@@ -43,7 +43,9 @@ import { type CatwalkSpriteType, SPRITE_SHEET_URLS } from './sprite-sheet-urls.j
 
 const SPRITE_TYPES: readonly CatwalkSpriteType[] = ['subagent', 'orchestrator'];
 
-let animationCache: Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>> | undefined;
+type AnimationsBySpriteType = Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>>;
+
+const spriteCache: { animations: AnimationsBySpriteType | undefined } = { animations: undefined };
 
 interface FrameConfig {
   frameCoordinates: ReadonlyArray<{ x: number; y: number }>;
@@ -181,9 +183,9 @@ function buildAnimationsForSheet(
  * immediately after invoking this function -- matching the `agent-sprite-loader` pattern
  * where `SpriteSheet.fromImageSource` and animation creation are synchronous operations. */
 export async function loadAllCatwalkSprites(): Promise<void> {
-  if (animationCache !== undefined) return;
+  if (spriteCache.animations !== undefined) return;
 
-  const cache = new Map<CatwalkSpriteType, Map<AgentAnimationState, Animation>>();
+  const animations: AnimationsBySpriteType = new Map();
   const imageSources: ImageSource[] = [];
 
   for (const spriteType of SPRITE_TYPES) {
@@ -201,29 +203,28 @@ export async function loadAllCatwalkSprites(): Promise<void> {
       },
     });
 
-    cache.set(spriteType, buildAnimationsForSheet(spriteSheet, spriteType));
+    animations.set(spriteType, buildAnimationsForSheet(spriteSheet, spriteType));
   }
 
-  // Populate cache synchronously so getAnimation() works immediately.
-  // Concurrent callers are deduplicated by the animationCache check above.
-  animationCache = cache;
+  // Populate the cache synchronously so getAnimation() works immediately.
+  spriteCache.animations = animations;
 
   try {
     await Promise.all(imageSources.map((source) => source.load()));
   } catch (error: unknown) {
-    // Reset cache so a subsequent call can retry the load
-    animationCache = undefined;
+    // Reset the cache so a subsequent call can retry the load
+    spriteCache.animations = undefined;
     throw error;
   }
 }
 
 /** Return the cached animation for the given sprite type and state. Throws if sprites have not been loaded. */
 export function getAnimation(spriteType: CatwalkSpriteType, state: AgentAnimationState): Animation {
-  if (animationCache === undefined) {
+  if (spriteCache.animations === undefined) {
     throw new Error('Catwalk sprites have not been loaded. Call loadAllCatwalkSprites() first.');
   }
 
-  const stateMap = animationCache.get(spriteType);
+  const stateMap = spriteCache.animations.get(spriteType);
   if (stateMap === undefined) {
     throw new Error(`No animations found for sprite type "${spriteType}".`);
   }
@@ -238,5 +239,5 @@ export function getAnimation(spriteType: CatwalkSpriteType, state: AgentAnimatio
 
 /** Clear the catwalk sprite cache, allowing sprites to be reloaded. Useful for tests. */
 export function clearCatwalkSpriteCache(): void {
-  animationCache = undefined;
+  spriteCache.animations = undefined;
 }
