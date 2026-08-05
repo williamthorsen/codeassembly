@@ -38,7 +38,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
-Global options: `--harness <claude\|rovodev\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone. Run `codeassembly --help` for the authoritative list.
+Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone. Run `codeassembly --help` for the authoritative list.
 
 ## Session-lifecycle hooks
 
@@ -171,7 +171,7 @@ A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is 
 
 A declared skill is deployed into each detected harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
 
-A skill may restrict itself to specific harnesses with a `harnesses:` frontmatter field (a single harness id or a list, e.g. `harnesses: [rovodev]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill with no `harnesses:` field deploys to every harness. This is how a skill that one harness provides natively — but the library supplies for the others — is targeted at just the harnesses that need it, without duplicating it per harness.
+A skill may restrict itself to specific harnesses with a `supported-harnesses:` frontmatter field (a single harness id or a list, e.g. `supported-harnesses: [rovo]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill with no `supported-harnesses:` field deploys to every harness. This is how a skill that one harness provides natively — but the library supplies for the others — is targeted at just the harnesses that need it, without duplicating it per harness.
 
 A declared subagent is deployed into each detected harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
 

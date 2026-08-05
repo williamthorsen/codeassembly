@@ -36,7 +36,7 @@ For the same reason, the corpus is outcome-selected: it holds only changes someo
 | `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                              | No       |
 | `--merged-lede-file` | File holding the merged lede, for a pull request that wrote no merge artifact.          | No       |
 | `--agent-lede-file`  | File holding the agent's lede, for a pull request that wrote no pull-request artifact.  | No       |
-| `--harness`          | The agent platform (`claude`, `rovodev`); install-injected — keep as-is.                | Injected |
+| `--harness`          | The agent platform (`claude`, `rovo`); install-injected — keep as-is.                   | Injected |
 
 Exactly one of `--inspect` and `--verdict` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
 

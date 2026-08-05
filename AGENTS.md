@@ -56,12 +56,12 @@ The agents package is a CLI tool (`codeassembly`) that installs reusable AI skil
 | `uninstall`         | Removes previously installed items (respects drift detection)                                   |
 | `validate`          | Checks a content root for defects that would fail at a consumer; requires no declaration        |
 
-Key flags: `--harness <claude|rovodev|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`, `--content <dir>` (`validate` only).
+Key flags: `--harness <claude|rovo|all>`, `--link` (symlink instead of copy), `--force` (overwrite modified), `--dry-run`, `--content <dir>` (`validate` only).
 
 **Supported harnesses:**
 
 - **Claude Code** (`claude`) — installs into `~/.claude/skills/` and `~/.claude/agents/`
-- **Rovo Dev** (`rovodev`) — installs into `~/.rovodev/skills/` and `~/.rovodev/subagents/`
+- **Rovo Dev** (`rovo`) — installs into `~/.rovodev/skills/` and `~/.rovodev/subagents/`
 
 **Source layout:**
 
@@ -103,17 +103,17 @@ content/
   subagents/
     _data/
       claude.yaml                  # Harness frontmatter overrides for Claude Code
-      rovodev.yaml                 # Harness frontmatter overrides for Rovo Dev
+      rovo.yaml                    # Harness frontmatter overrides for Rovo Dev
     {agent-name}.md                # Each subagent is a single .md file
 ```
 
-**Skill frontmatter:** `name`, `description`, `user-invocable` (true = directly invocable, false = internal/referenced by other skills), `harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
+**Skill frontmatter:** `name`, `description`, `user-invocable` (true = directly invocable, false = internal/referenced by other skills), `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
 
 **Subagent frontmatter:** `name`, `description`, `tools` (allowed tools), `maxTurns`, `skills` (injected skill references).
 
-**Harness overlay mechanism:** `claude.yaml` and `rovodev.yaml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
+**Harness overlay mechanism:** `claude.yaml` and `rovo.yaml` contain per-agent frontmatter overrides (plus `_defaults`). During install, the CLI merges matching keys into each subagent's frontmatter using key-level replacement.
 
-**Harness-scoped skills:** A skill narrows itself through its `harnesses:` frontmatter field; one declaring none deploys to every harness. Directories prefixed with `_` under `skills/` (`_data`, `_partials`) hold shared reference data and inlined fragments rather than skills, and deploy nothing invocable. For Rovo Dev, `sync` also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
+**Harness-scoped skills:** A skill narrows itself through its `supported-harnesses:` frontmatter field; one declaring none deploys to every harness. Directories prefixed with `_` under `skills/` (`_data`, `_partials`) hold shared reference data and inlined fragments rather than skills, and deploy nothing invocable. For Rovo Dev, `sync` also generates `~/.rovodev/prompts.yml` as a skill discovery file, listing all user-invocable skills (skills with `user-invocable: false` are excluded).
 
 #### Content authoring
 

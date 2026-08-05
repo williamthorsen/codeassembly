@@ -3,7 +3,7 @@ set -euo pipefail
 
 # extract-plugin-skills.sh — Extract skills from Claude Code plugins for Rovo Dev.
 #
-# Copies SKILL.md files (and companion files) from the plugin cache to agents/rovodev/skills/.
+# Copies SKILL.md files (and companion files) from the plugin cache to agents/rovo/skills/.
 # Finds the latest installed version of the plugin automatically.
 #
 # Usage:
@@ -16,7 +16,7 @@ source "$(git rev-parse --show-toplevel)/functions/colors.sh"
 
 repo_root="$(git rev-parse --show-toplevel)"
 plugin_cache="$HOME/.claude/plugins/cache/claude-plugins-official"
-output_base="$repo_root/agents/rovodev/skills"
+output_base="$repo_root/agents/rovo/skills"
 
 # -- Main flow --
 

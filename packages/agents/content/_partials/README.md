@@ -84,7 +84,7 @@ Expansion runs before the dry-run gate, so missing partials, cycles, and out-of-
 Subagent and skill body text reference tools using the `{tool:NAME}` placeholder so the same source can install for platforms that name their tools differently. `NAME` is the canonical (Claude) tool name (`AskUserQuestion`, `Bash`, `Edit`, `Glob`, `Grep`, `Read`, `Task`, `Write`). The install pipeline rewrites each placeholder using the platform's `_tools:` mapping, which lives at the top of each overlay YAML at `content/subagents/_data/{platform}.yaml`.
 
 ```yaml
-# content/subagents/_data/rovodev.yaml
+# content/subagents/_data/rovo.yaml
 _tools:
   Bash: bash
   Edit: find_and_replace_code

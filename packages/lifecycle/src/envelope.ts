@@ -57,7 +57,7 @@ export interface EventEnvelope {
   session?: string;
   /** Absolute working directory the emission ran from. */
   cwd: string;
-  /** The agent platform (`claude`, `rovodev`), injected into the invocation template at install time. */
+  /** The agent platform (`claude`, `rovo`), injected into the invocation template at install time. */
   harness?: string;
   /** The per-family event body; `{}` when the caller supplies none. */
   payload: Record<string, unknown>;
