@@ -384,6 +384,28 @@ describe('kb check vault-scoped findings', () => {
     expect(result.stdout).toContain('taxonomy.undeclared');
   });
 
+  it('reports real taxonomy drift under a run targeting an unrelated note', async () => {
+    const store = await makeStore({
+      '.kb/taxonomy.yaml': 'domains:\n  languages: Programming languages\n',
+      'content/assertions/engineering/Note.md': VALID,
+      'content/assertions/languages/Other.md': VALID,
+    });
+
+    const result = await run({ argv: ['check', 'content/assertions/languages/Other.md'], cwd: store });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('taxonomy.undeclared');
+    expect(result.stdout).toContain('"engineering"');
+  });
+
+  it('stays silent on a store that declares no taxonomy', async () => {
+    const store = await makeStore({ 'content/assertions/engineering/Note.md': VALID });
+
+    const result = await run({ argv: ['check'], cwd: store });
+
+    expect(result.stdout).toBe('✓ no findings (1 notes checked)\n');
+  });
+
   it('carries the scope through the JSON report', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
     stubVaultFinding();
